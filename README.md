@@ -239,6 +239,55 @@
 
 ---
 
+## 📚 自定义规则库
+
+本项目配套的自定义识别词、渲染词、替换词等规则库，托管在 [pipi20xx/555999](https://github.com/pipi20xx/555999) 仓库中。
+
+### 📦 规则文件说明
+
+#### 自定义制作组
+- **Group.txt** - 字幕组制作组定义
+  - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/Group.txt
+
+#### 自定义替换词
+1. **CHSCHTRE.txt** - CHS 替换为简体等
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/CHSCHTRE.txt
+2. **GroupRE.txt** - 字幕组名字替换
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/GroupRE.txt
+3. **anime.txt** - 常用替换
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/anime.txt
+4. **animepisodegroup.txt** - 常用替换（需要搭配剧集组）
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/animepisodegroup.txt
+
+#### 自定义渲染词
+1. **CHSCHTRE.txt** - CHS 替换为简体等
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/CHSCHTRE.txt
+2. **GroupRE.txt** - 字幕组名字替换
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/GroupRE.txt
+3. **animeifre.txt** - 常用替换
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/animeifre.txt
+4. **episodegroupRE.txt** - 需配合剧集组
+   - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/episodegroupRE.txt
+
+#### 自定义特权规则
+- **Privileged.txt** - 特权规则（数字表示优先级顺位）
+  - 下载地址: https://raw.githubusercontent.com/pipi20xx/555999/refs/heads/main/anime/Privileged.txt
+
+### ⚙️ 特殊规则说明
+
+以下两条规则会自动给 `SXXEXX`、`EPXX` 里面的集号添加中括号：
+- **非必要不使用**，不使用源文件名时没有必要使用
+- 规则 1: `(S\d+E\d+)(.*)\b(S\d+E\d+)\b => \1\2[\3]`
+- 规则 2: `(S\d+E\d+)(.*)\b(E.\d+)\b => \1\2[\3]`
+
+### 📖 使用说明
+
+1. 访问 [pipi20xx/555999](https://github.com/pipi20xx/555999) 仓库查看完整规则
+2. 根据需要下载对应的规则文件
+3. 将规则文件导入到番剧管家的对应配置中
+
+---
+
 ## 🤝 贡献与声明
 
 本项目仅供学习交流使用，请勿用于非法用途。
