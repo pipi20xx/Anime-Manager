@@ -1,0 +1,40 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Databases & Cache
+shibie/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend
+shibie/frontend/node_modules/
+shibie/frontend/dist/
+shibie/frontend/.env.local
+shibie/frontend/.env.development.local
+shibie/frontend/.env.test.local
+shibie/frontend/.env.production.local
+
+# Docker
+.env
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+meta_cache.db
+aadata
+data
+ANIMEProMatcher_20251230_224042
+cs123

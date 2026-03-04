@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  apm:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: apm-matcher
+    volumes:
+      - ./data:/app/data
+      # 映射你的媒体目录
+      - /vol1/1000/NVME:/202nvme
+    ports:
+      - "6868:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Shanghai 
+      - DB_HOST=192.168.50.12
+      - DB_PORT=5433
+      - DB_USER=abc
+      - DB_PASS=123456
+      - DB_NAME=abc             
+    restart: always
+ 

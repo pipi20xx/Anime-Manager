@@ -1,0 +1,74 @@
+<script setup lang="ts">
+import { 
+  NTabs, NTabPane
+} from 'naive-ui'
+import RecognitionPipeline from '../../components/RecognitionPipeline.vue'
+import RecognitionRules from '../../components/RecognitionRules.vue'
+import PrivilegedRules from '../../components/PrivilegedRules.vue'
+import RenderRules from '../../components/RenderRules.vue'
+import RssRuleGuide from '../../components/RssRuleGuide.vue'
+import SubscriptionGuide from '../../components/SubscriptionGuide.vue'
+import DataCenterGuide from '../../components/DataCenterGuide.vue'
+import StrmGuide from '../../components/StrmGuide.vue'
+import { useUsageGuide } from '../../composables/views/useUsageGuide'
+
+const { activeTab } = useUsageGuide()
+</script>
+
+<template>
+  <div class="guide-view">
+    <div class="header mb-8">
+      <h1>规则使用说明</h1>
+      <div class="subtitle">规则与正则指南</div>
+    </div>
+
+    <n-tabs v-model:value="activeTab" type="line" animated>
+      <!-- TAB 0: 全链路识别流水线 -->
+      <n-tab-pane name="pipeline" tab="全链路识别流水线">
+        <RecognitionPipeline />
+      </n-tab-pane>
+
+      <!-- TAB 1: 识别词 -->
+      <n-tab-pane name="recognition" tab="自定义识别词 (预处理)">
+        <RecognitionRules />
+      </n-tab-pane>
+
+      <!-- TAB 2: 特权规则 -->
+      <n-tab-pane name="privileged" tab="自定义特权规则 (优先提取)">
+        <PrivilegedRules />
+      </n-tab-pane>
+
+      <!-- TAB 3: 渲染词 -->
+      <n-tab-pane name="render" tab="自定义渲染词 (后处理)">
+        <RenderRules />
+      </n-tab-pane>
+
+      <!-- TAB 4: 下载规则 (RSS) -->
+      <n-tab-pane name="rss" tab="下载规则配置 (RSS)">
+        <RssRuleGuide />
+      </n-tab-pane>
+
+      <!-- TAB 5: 追剧订阅 (TMDB) -->
+      <n-tab-pane name="subscription" tab="追剧订阅配置 (TMDB)">
+        <SubscriptionGuide />
+      </n-tab-pane>
+
+      <!-- TAB 6: STRM -->
+      <n-tab-pane name="strm" tab="虚拟库 (STRM)">
+        <StrmGuide />
+      </n-tab-pane>
+
+      <!-- TAB 7: 数据中心架构 -->
+      <n-tab-pane name="datacenter" tab="数据中心架构">
+        <DataCenterGuide />
+      </n-tab-pane>
+    </n-tabs>
+  </div>
+</template>
+
+<style scoped>
+.guide-view { width: 100%; margin: 0 auto; padding: 0; }
+.header h1 { margin: 0; font-size: 28px; color: var(--n-text-color-1); }
+.subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.mb-8 { margin-bottom: 32px; }
+</style>

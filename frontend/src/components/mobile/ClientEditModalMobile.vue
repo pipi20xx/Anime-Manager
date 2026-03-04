@@ -1,0 +1,108 @@
+<script setup lang="ts">
+import { 
+  NModal, NSpace, NFormItem, NInput, NSelect, 
+  NButton, NIcon, NAlert, NSwitch, NForm
+} from 'naive-ui'
+import {
+  SaveOutlined as SaveIcon,
+  CloudUploadOutlined as TestIcon,
+} from '@vicons/material'
+import { useClientEdit } from '../../composables/modals/useClientEdit'
+
+const props = defineProps<{
+  show: boolean
+  clientData: any
+  isNew: boolean
+  allClients: any[]
+}>()
+
+const emit = defineEmits(['update:show', 'save'])
+
+const {
+  form,
+  testLoading,
+  testResult,
+  typeOptions,
+  handleTest,
+  handleSave
+} = useClientEdit(props, emit)
+</script>
+
+<template>
+  <n-modal 
+    :show="show" 
+    @update:show="val => emit('update:show', val)" 
+    preset="card" 
+    style="width: 100%; height: 100vh; margin: 0;"
+    content-style="padding: 16px; overflow-y: auto;"
+    :title="isNew ? '添加下载器' : '编辑下载器'"
+  >
+    <n-form label-placement="top">
+      <n-space vertical size="large">
+        <n-form-item label="类型">
+          <n-select v-model:value="form.type" :options="typeOptions" />
+        </n-form-item>
+        
+        <n-form-item label="名称">
+          <n-input v-model:value="form.name" placeholder="起个名字" />
+        </n-form-item>
+        
+        <n-form-item label="地址 (URL)">
+          <n-input v-model:value="form.url" placeholder="http://192.168.1.x:8080" />
+        </n-form-item>
+        
+        <n-form-item label="用户名">
+          <n-input v-model:value="form.username" placeholder="admin" />
+        </n-form-item>
+        
+        <n-form-item label="密码">
+          <n-input v-model:value="form.password" type="text" placeholder="password" />
+        </n-form-item>
+
+        <n-form-item label="默认下载路径 (选填)">
+          <n-input v-model:value="form.default_save_path" placeholder="留空默认" />
+        </n-form-item>
+
+        <n-form-item v-if="form.type === 'cd2'" label="CD2 本地挂载点">
+          <n-input v-model:value="form.mount_path" placeholder="例如: /NVME/..." />
+        </n-form-item>
+
+        <n-form-item v-if="form.type === 'cd2'">
+             <n-switch v-model:value="form.monitor_enabled">
+                <template #checked>已开启后台传输监控</template>
+                <template #unchecked>开启后台传输监控</template>
+            </n-switch>
+            <div style="font-size: 12px; color: #aaa; margin-top: 4px">轮询云端任务触发STRM联动</div>
+        </n-form-item>
+
+        <n-form-item label="选项">
+          <n-space>
+              <n-switch v-model:value="form.is_default">
+                  <template #checked>设为默认客户端</template>
+                  <template #unchecked>非默认</template>
+              </n-switch>
+          </n-space>
+        </n-form-item>
+
+        <n-alert v-if="testResult" :type="testResult.success ? 'success' : 'error'" title="测试结果">
+          {{ testResult.message }}
+        </n-alert>
+
+      </n-space>
+    </n-form>
+    
+    <template #footer>
+      <n-space justify="space-between">
+        <n-button :loading="testLoading" @click="handleTest" ghost type="info" size="small">
+          测试连接
+        </n-button>
+        <n-space>
+          <n-button @click="emit('update:show', false)" size="small">取消</n-button>
+          <n-button type="primary" @click="handleSave" size="small">
+            保存
+          </n-button>
+        </n-space>
+      </n-space>
+    </template>
+  </n-modal>
+</template>

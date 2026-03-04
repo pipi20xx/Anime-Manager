@@ -1,0 +1,149 @@
+:root {
+  --app-bg-color: #101014;
+  --sidebar-bg-color: #18181c;
+  --header-height: 60px;
+  
+  /* 视觉统一底座变量 */
+  --app-surface-subtle: rgba(255, 255, 255, 0.01);
+  --app-surface-card: rgba(255, 255, 255, 0.03);
+  --app-surface-inner: rgba(0, 0, 0, 0.25);
+  --app-border-light: rgba(255, 255, 255, 0.06);
+  --app-border-medium: rgba(255, 255, 255, 0.12);
+  
+  /* 代码块与底框文字专用变量 */
+  --code-radius: 6px;
+  --code-bg: rgba(0, 0, 0, 0.3);
+  --code-font: 'JetBrains Mono', 'Fira Code', monospace;
+  --app-code-primary: color-mix(in srgb, var(--n-primary-color), transparent 92%);
+  --app-code-border: color-mix(in srgb, var(--n-primary-color), transparent 85%);
+}
+
+/* 1. 基础 code 标签：所有组件通用继承 */
+code {
+  font-family: var(--code-font);
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: var(--code-radius);
+  color: var(--n-primary-color);
+  font-size: 0.9em;
+  border: 1px solid var(--app-border-light);
+  margin: 0 2px;
+  vertical-align: middle;
+}
+
+/* 2. 语义化工具类：直接在 HTML 中引用 */
+
+/* 用于路径、文件名：低调的深色底 */
+.path-inline {
+  font-family: var(--code-font);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ccc;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--app-border-light);
+  font-size: 0.9em;
+}
+
+/* 用于规则、逻辑公式：带主题色的底框 */
+.rule-inline {
+  font-family: var(--code-font);
+  background: var(--app-code-primary);
+  color: var(--n-primary-color);
+  padding: 2px 8px;
+  border-radius: var(--code-radius);
+  border: 1px solid var(--app-code-border);
+  font-size: 0.9em;
+  display: inline-block;
+}
+
+/* 用于大块代码展示区 */
+.code-block-container {
+  background: var(--app-surface-inner);
+  border: 1px solid var(--app-border-light);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--code-font);
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--app-bg-color);
+  color: var(--n-text-color-1); 
+  font-weight: 400;
+  overflow: hidden;
+  line-height: 1.4; /* 更紧凑的行高 */
+  font-size: 13px;  /* PC 端更标准的字体大小 */
+}
+
+/* 所有的输入框、按钮文字强制跟随主题 */
+input, textarea, select, button {
+  color: inherit;
+  font-family: inherit;
+  font-size: 12px; /* 控件字体更小 */
+}
+
+/* 全局滚动条主题化 - PC 端更纤细 */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--n-primary-color), transparent 85%);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--n-primary-color), transparent 60%);
+}
+
+/* Naive UI 统一覆盖增强 - 降低 Padding */
+.n-card {
+  border-radius: var(--card-border-radius, 8px) !important;
+}
+.n-card > .n-card__content {
+  padding: 12px 16px !important;
+}
+.n-card-header {
+  padding: 10px 16px !important;
+}
+
+/* 通用工具类重构 - 极致紧凑 */
+.mt-4 { margin-top: 12px; }
+.mt-6 { margin-top: 16px; }
+.mb-6 { margin-bottom: 16px; }
+.mb-8 { margin-bottom: 24px; }
+.pa-6 { padding: 16px !important; }
+
+/* 页面标准布局样式 */
+.view-wrapper {
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.page-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--app-border-light);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 20px; /* 标题缩小 */
+  font-weight: 800;
+  color: var(--n-text-color-1);
+}
+
+.page-header .subtitle {
+  font-size: 12px;
+  color: var(--n-primary-color);
+  margin-top: 4px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
