@@ -195,8 +195,8 @@
 | 分辨率 | `1080p`、`2160p`、`4K` | 1080P、4K |
 | 视频编码 | `x265`、`HEVC`、`H.264` | H.265、H.264 |
 | 音频编码 | `Atmos5.1`、`DTS-HD`、`AAC` | Dolby Atmos 5.1、DTS-HD MA、AAC |
-| 介质来源 | `WEB-DL`、`Blu-ray`、`WebRip` | WEB-DL、Blu-ray、WebRip |
-| 动态范围 | `HDR`、`HDR10+`、`Dolby Vision` | HDR、HDR10+、Dolby Vision |
+| 来源 | `WEB-DL`、`Blu-ray`、`WebRip` | WEB-DL、Blu-ray、WebRip |
+| 视频特效 | `HDR`、`HDR10+`、`Dolby Vision` | HDR、HDR10+、Dolby Vision |
 | 字幕语言 | `简繁内封`、`双语`、`CHS&CHT` | 简繁内封、简日双语 |
 
 #### 噪声屏蔽

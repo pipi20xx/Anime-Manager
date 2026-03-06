@@ -16,8 +16,8 @@
 | **分辨率** | `{resolution}` | `4K`, `1080P`, `720P`, `540P`, `480P` |
 | **视频编码** | `{video_encode}` | `H.265`, `H.264`, `AV1`, `AVC`, `HEVC` |
 | **音频编码** | `{audio_encode}` | `Dolby Atmos`, `TrueHD`, `DTS-HD MA`, `DTS-HD`, `DTS`, `LPCM`, `E-AC-3`, `AC-3`, `FLAC`, `Opus`, `Vorbis`, `AAC` <br>*(注：通常带声道后缀，如：`FLAC 2.0`, `Dolby Atmos 7.1`, `E-AC-3 5.1`)* |
-| **来源介质** | `{source}` | `Blu-ray`, `Remux`, `WEB-DL`, `WebRip`, `HDTV`, `UHDTV`, `BD-Rip`, `DVD-Rip`, `DVD-SCR`, `UHD`, `PDTV`, `WEB` |
-| **动态范围** | `{video_effect}` | `Dolby Vision`, `HDR10+`, `HDR10`, `HDR`, `HLG`, `IMAX`, `SDR` |
+| **来源** | `{source}` | `Blu-ray`, `Remux`, `WEB-DL`, `WebRip`, `HDTV`, `UHDTV`, `BD-Rip`, `DVD-Rip`, `DVD-SCR`, `UHD`, `PDTV`, `WEB` |
+| **视频特效** | `{video_effect}` | `Dolby Vision`, `HDR10+`, `HDR10`, `HDR`, `HLG`, `IMAX`, `SDR` |
 | **发布平台** | `{platform}` | `Crunchyroll`, `Netflix`, `Amazon`, `Disney+`, `AppleTV+`, `Baha`, `Bilibili`, `AbemaTV`, `iQIYI`, `LINE TV`, `KKTV`, `YouTube`, `iTunes`, `HIDIVE`, `B-Global`, `friDay`, `Hulu`, `HBO`, `playWEB` |
 | **字幕语言** | `{subtitle}` | `简体内封`, `繁体内封`, `简日双语`, `繁日双语`, `简体内嵌`, `繁体内嵌`, `简繁内封`, `日文内封`, `英文内封`, `简繁日内封`, `中英双语` |
 

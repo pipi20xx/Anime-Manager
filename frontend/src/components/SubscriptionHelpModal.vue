@@ -19,7 +19,7 @@ const columns = [
 const data = [
   { label: '分辨率', tag: '{resolution}', desc: '资源的画面清晰度', example: '1080P, 4K' },
   { label: '制作组', tag: '{team} / {group}', desc: '发布资源的字幕组或压制组', example: 'Mikan, 喵萌奶茶屋, VCB-Studio' },
-  { label: '来源', tag: '{source}', desc: '资源的介质来源', example: 'WebDL, Baha, BDRip, TV' },
+  { label: '来源', tag: '{source}', desc: '资源的介质来源', example: 'WEB-DL, Blu-ray, WebRip, HDTV' },
   { label: '视频编码', tag: '{video_encode}', desc: '视频的压缩编码格式', example: 'H265, HEVC, H264, AVC' },
   { label: '音频编码', tag: '{audio_encode}', desc: '音频的编码格式', example: 'FLAC, AAC, OPUS' },
   { label: '字幕语言', tag: '{subtitle}', desc: '资源包含的字幕语言', example: 'CHS, CHT, GB, BIG5, JAP' },
