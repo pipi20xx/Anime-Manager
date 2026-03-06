@@ -57,6 +57,13 @@ const {
         <n-input v-model:value="form.password" type="password" show-password-on="click" placeholder="password" />
       </n-form-item>
 
+      <n-form-item v-if="form.type === 'cd2'" label="API Token (选填)">
+        <n-input v-model:value="form.api_token" type="password" show-password-on="click" placeholder="直接使用 API Token，无需用户名密码" />
+        <template #feedback>
+          如果填写了 API Token，将优先使用 Token 认证，忽略用户名和密码
+        </template>
+      </n-form-item>
+
       <n-form-item label="默认下载路径 (选填)">
         <n-input v-model:value="form.default_save_path" placeholder="留空则使用下载器全局设置" />
       </n-form-item>

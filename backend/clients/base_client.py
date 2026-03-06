@@ -13,6 +13,7 @@ class BaseClient(ABC):
         self.url = client_config.get('url', '').rstrip('/')
         self.username = client_config.get('username', '')
         self.password = client_config.get('password', '')
+        self.api_token = client_config.get('api_token', '')
         self.logged_in = False
 
     @abstractmethod

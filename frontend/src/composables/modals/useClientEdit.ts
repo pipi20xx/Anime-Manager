@@ -12,6 +12,7 @@ export function useClientEdit(props: any, emit: any) {
     url: '',
     username: '',
     password: '',
+    api_token: '',
     default_save_path: '',
     mount_path: '',
     monitor_enabled: false,
@@ -43,6 +44,7 @@ export function useClientEdit(props: any, emit: any) {
         form.url = 'http://127.0.0.1:8080'
         form.username = 'admin'
         form.password = 'adminadmin'
+        form.api_token = ''
         form.default_save_path = ''
         form.mount_path = ''
         form.monitor_enabled = true

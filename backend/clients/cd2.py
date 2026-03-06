@@ -44,6 +44,13 @@ class CD2Client(BaseClient):
     async def login_async(self) -> bool:
         """异步登录逻辑"""
         stub = await self._get_async_stub()
+        
+        if self.api_token:
+            self.token = self.api_token
+            self.logged_in = True
+            logger.info(f"[{self.name}] CD2 使用 API Token 登录成功")
+            return True
+        
         try:
             req = self.pb2.GetTokenRequest(userName=self.username, password=self.password)
             resp = await stub.GetToken(req, timeout=10)
@@ -60,6 +67,12 @@ class CD2Client(BaseClient):
     def login(self) -> bool:
         if not self._connect():
             return False
+
+        if self.api_token:
+            self.token = self.api_token
+            self.logged_in = True
+            logger.info(f"[{self.name}] CD2 使用 API Token 登录成功")
+            return True
 
         try:
             req = self.pb2.GetTokenRequest(userName=self.username, password=self.password)

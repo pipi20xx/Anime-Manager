@@ -59,6 +59,10 @@ const {
           <n-input v-model:value="form.password" type="password" show-password-on="click" placeholder="password" />
         </n-form-item>
 
+        <n-form-item v-if="form.type === 'cd2'" label="API Token (选填)">
+          <n-input v-model:value="form.api_token" type="password" show-password-on="click" placeholder="直接使用 API Token" />
+        </n-form-item>
+
         <n-form-item label="默认下载路径 (选填)">
           <n-input v-model:value="form.default_save_path" placeholder="留空默认" />
         </n-form-item>
