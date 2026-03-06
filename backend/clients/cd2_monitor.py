@@ -116,6 +116,7 @@ class CD2TransferMonitor:
         
         try:
             host = self.client_config.get("url", "").replace("http://", "").replace("https://", "").rstrip("/")
+            api_token = self.client_config.get("api_token", "")
             user = self.client_config.get("username", "")
             password = self.client_config.get("password", "")
 
@@ -123,6 +124,11 @@ class CD2TransferMonitor:
             
             self.channel = grpc.insecure_channel(host)
             self.stub = self.pb2_grpc.CloudDriveFileSrvStub(self.channel)
+
+            if api_token:
+                self.token = api_token
+                logger.info("CD2 监控使用 API Token 登录成功")
+                return True
 
             req = self.pb2.GetTokenRequest(userName=user, password=password)
             resp = self.stub.GetToken(req, timeout=10)
