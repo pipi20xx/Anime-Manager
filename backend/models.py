@@ -71,6 +71,7 @@ class Feed(SQLModel, table=True):
     for_subscription: bool = Field(default=True) # 是否用于订阅匹配
     for_rules: bool = Field(default=True)        # 是否用于规则匹配
     anime_priority: bool = Field(default=True)   # 是否动漫优先
+    check_emby_exists: bool = Field(default=False) # 检查 Emby 库是否存在
     include_keywords: Optional[str] = None # 前置包含词
     exclude_keywords: Optional[str] = None # 前置排除词
     last_update: Optional[datetime] = None

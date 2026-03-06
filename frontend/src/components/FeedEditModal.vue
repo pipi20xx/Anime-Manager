@@ -18,6 +18,7 @@ const form = reactive({
   for_subscription: true,
   for_rules: true,
   anime_priority: true,
+  check_emby_exists: false,
   include_keywords: '',
   exclude_keywords: ''
 })
@@ -32,6 +33,7 @@ watch(() => props.show, (newVal) => {
       form.for_subscription = true
       form.for_rules = true
       form.anime_priority = true
+      form.check_emby_exists = false
       form.include_keywords = ''
       form.exclude_keywords = ''
     } else {
@@ -40,6 +42,7 @@ watch(() => props.show, (newVal) => {
       if (data.for_subscription === undefined) data.for_subscription = true
       if (data.for_rules === undefined) data.for_rules = true
       if (data.anime_priority === undefined) data.anime_priority = true
+      if (data.check_emby_exists === undefined) data.check_emby_exists = false
       Object.assign(form, data)
     }
   }
@@ -97,6 +100,10 @@ const handleSave = () => {
             <n-switch v-model:value="form.anime_priority">
               <template #checked>动漫优先：启用</template>
               <template #unchecked>动漫优先：禁用</template>
+            </n-switch>
+            <n-switch v-model:value="form.check_emby_exists">
+              <template #checked>Emby 检查：启用</template>
+              <template #unchecked>Emby 检查：禁用</template>
             </n-switch>
           </n-space>
         </n-space>
