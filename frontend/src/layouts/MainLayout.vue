@@ -11,7 +11,9 @@ import {
   NIcon,
   NSpace,
   NDrawer,
-  NDrawerContent
+  NDrawerContent,
+  NNotificationProvider,
+  useNotification
 } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
@@ -55,6 +57,8 @@ import ExternalControlView from '../views/ExternalControlView.vue'
 import JackettSearchModal from '../components/JackettSearchModal.vue'
 import LogConsoleModal from '../components/LogConsoleModal.vue'
 import ReloadPrompt from '../components/ReloadPrompt.vue'
+import { systemApi } from '../api/system'
+import { APP_VERSION } from '../version'
 
 import { 
   currentViewKey, isSearchOpen, isLogConsoleOpen, 
@@ -63,6 +67,37 @@ import {
 import { currentThemeType, logoColor } from '../store/themeStore'
 import { themeOptions } from '../themes'
 import { useIsMobile } from '../composables/useIsMobile'
+
+const notification = useNotification()
+
+const checkVersionUpdate = async () => {
+  try {
+    const response = await systemApi.checkVersion()
+    const data = response.data
+    
+    if (data.latest_version && data.latest_version !== APP_VERSION) {
+      notification.info({
+        title: '发现新版本',
+        content: `当前版本: ${APP_VERSION}，最新版本: ${data.latest_version}`,
+        duration: 0,
+        action: () => [
+          h(NButton, {
+            size: 'small',
+            onClick: () => {
+              window.open('https://hub.docker.com/r/pipi20xx/anime-manager/tags', '_blank')
+            }
+          }, { default: () => '查看更新' })
+        ]
+      })
+    }
+  } catch (error) {
+    console.error('版本检查失败:', error)
+  }
+}
+
+onMounted(() => {
+  checkVersionUpdate()
+})
 
 function renderIcon(icon: Component) {
   return () => h(NIcon, null, { default: () => h(icon) })
@@ -164,7 +199,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
             <n-icon size="24" :color="logoColor"><MovieIcon /></n-icon>
             <div v-if="!collapsed" class="logo-text">
               <span class="title" :style="{ color: logoColor }">番剧管家</span>
-              <div class="version">v1.2.4</div>
+              <div class="version">v{{ APP_VERSION }}</div>
             </div>
           </div>
           <n-button 
@@ -265,7 +300,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
             <n-icon size="22" :color="logoColor"><MovieIcon /></n-icon>
             <div style="display: flex; flex-direction: column;">
               <span class="title" :style="{ color: logoColor, fontWeight: '800', lineHeight: '1.2' }">番剧管家</span>
-              <span style="font-size: 10px; opacity: 0.6; margin-top: -2px;">v1.2.4</span>
+              <span style="font-size: 10px; opacity: 0.6; margin-top: -2px;">v{{ APP_VERSION }}</span>
             </div>
           </div>
           <n-button circle quaternary size="small" @click="isSearchOpen = true">

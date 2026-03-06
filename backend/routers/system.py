@@ -893,6 +893,62 @@ async def get_system_logs(
         stmt = stmt.order_by(SystemLog.timestamp.desc()).offset(offset).limit(limit)
         return await db.all(SystemLog, stmt)
 
+_version_cache = {
+    "version": None,
+    "timestamp": None,
+    "cache_duration": 7200  # 2小时缓存
+}
+
+@router.get("/version/check", summary="检查版本更新")
+async def check_version():
+    """
+    检查Docker Hub上的最新版本号。
+    使用2小时缓存机制，避免频繁请求Docker Hub API。
+    """
+    import time
+    from models import DiscoverCache
+    
+    current_time = time.time()
+    
+    # 检查缓存是否有效
+    if _version_cache["version"] and _version_cache["timestamp"]:
+        cache_age = current_time - _version_cache["timestamp"]
+        if cache_age < _version_cache["cache_duration"]:
+            return {
+                "latest_version": _version_cache["version"],
+                "cached": True,
+                "cache_age_seconds": int(cache_age)
+            }
+    
+    # 缓存过期或不存在，从Docker Hub获取最新版本
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get("https://hub.docker.com/v2/repositories/pipi20xx/anime-manager/tags/")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("results") and len(data["results"]) > 0:
+                    # 过滤掉 "latest" 标签，获取第一个真正的版本号
+                    for tag_info in data["results"]:
+                        tag_name = tag_info["name"]
+                        if tag_name != "latest":
+                            latest_tag = tag_name
+                            _version_cache["version"] = latest_tag
+                            _version_cache["timestamp"] = current_time
+                            
+                            return {
+                                "latest_version": latest_tag,
+                                "cached": False
+                            }
+    except Exception as e:
+        print(f"获取Docker Hub版本失败: {e}")
+    
+    # 如果获取失败，返回缓存版本或空值
+    return {
+        "latest_version": _version_cache["version"] or "",
+        "cached": True,
+        "error": "无法获取最新版本信息"
+    }
+
 
 
 

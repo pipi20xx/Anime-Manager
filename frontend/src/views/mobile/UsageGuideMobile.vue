@@ -40,6 +40,15 @@ const { activeTab } = useUsageGuide()
       class="mobile-tabs"
       pane-class="mobile-tab-pane"
     >
+      <n-tab-pane name="settings" tab="设置说明">
+        <template #tab>
+           <div class="tab-label"><n-icon><SettingsIcon /></n-icon><span>设置</span></div>
+        </template>
+        <div class="content-wrapper">
+          <SettingsGuide />
+        </div>
+      </n-tab-pane>
+
       <n-tab-pane name="pipeline" tab="识别流水线">
         <template #tab>
           <div class="tab-label"><n-icon><PipelineIcon /></n-icon><span>流水线</span></div>
@@ -111,15 +120,6 @@ const { activeTab } = useUsageGuide()
           <DataCenterGuide />
         </div>
       </n-tab-pane>
-
-      <n-tab-pane name="settings" tab="设置说明">
-        <template #tab>
-           <div class="tab-label"><n-icon><SettingsIcon /></n-icon><span>设置</span></div>
-        </template>
-        <div class="content-wrapper">
-          <SettingsGuide />
-        </div>
-      </n-tab-pane>
     </n-tabs>
   </div>
 </template>
@@ -147,6 +147,54 @@ const { activeTab } = useUsageGuide()
 
 :deep(.n-tabs-nav) {
   padding: 0 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: auto;
+  scrollbar-color: var(--n-scrollbar-color-hover) var(--n-scrollbar-color);
+}
+
+/* 移动端更明显的滑动条 */
+:deep(.n-tabs-nav)::-webkit-scrollbar {
+  height: 10px;
+}
+
+:deep(.n-tabs-nav)::-webkit-scrollbar-track {
+  background: var(--n-scrollbar-color);
+  border-radius: 5px;
+  margin: 4px 0;
+}
+
+:deep(.n-tabs-nav)::-webkit-scrollbar-thumb {
+  background: var(--n-scrollbar-color-hover);
+  border-radius: 5px;
+  border: 2px solid var(--n-scrollbar-color);
+}
+
+:deep(.n-tabs-nav)::-webkit-scrollbar-thumb:hover {
+  background: var(--n-primary-color);
+}
+
+/* 移动端滑动提示 */
+:deep(.n-tabs-nav)::after {
+  content: '→ 滑动查看更多';
+  position: fixed;
+  right: 10px;
+  top: 90px;
+  background: var(--n-primary-color);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.n-tabs-nav:hover)::after {
+  opacity: 1;
 }
 
 :deep(.n-tabs-pane-wrapper) {
