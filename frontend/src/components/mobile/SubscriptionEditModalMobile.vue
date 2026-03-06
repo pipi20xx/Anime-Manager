@@ -202,7 +202,10 @@ watch(() => props.show, (newVal) => {
           </n-gi>
           <n-gi>
             <n-form-item label="定时补全">
-              <n-switch v-model:value="formModel.auto_fill" />
+              <n-space vertical :size="4">
+                <n-switch v-model:value="formModel.auto_fill" />
+                <span style="font-size: 12px; color: #999;">自动从 Jackett 所有源搜索，无法指定源</span>
+              </n-space>
             </n-form-item>
           </n-gi>
         </n-grid>

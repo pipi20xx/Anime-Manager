@@ -128,11 +128,14 @@ const fetchToken = async () => {
       </n-form-item>
 
       <n-form-item label="用户 ID">
-        <n-input 
-          :value="embyUserId" 
-          placeholder="自动获取或手动输入"
-          @update:value="(val: string) => emit('update:embyUserId', val)"
-        />
+        <n-space vertical :size="2" style="width: 100%">
+          <n-input 
+            :value="embyUserId" 
+            placeholder="自动获取或手动输入"
+            @update:value="(val: string) => emit('update:embyUserId', val)"
+          />
+          <span style="font-size: 12px; color: #666;">在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值</span>
+        </n-space>
       </n-form-item>
 
       <n-form-item label="操作">

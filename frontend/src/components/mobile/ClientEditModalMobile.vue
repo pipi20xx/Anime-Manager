@@ -52,11 +52,11 @@ const {
         </n-form-item>
         
         <n-form-item label="用户名">
-          <n-input v-model:value="form.username" placeholder="admin" />
+          <n-input v-model:value="form.username" placeholder="admin" type="password" show-password-on="click" />
         </n-form-item>
         
         <n-form-item label="密码">
-          <n-input v-model:value="form.password" type="text" placeholder="password" />
+          <n-input v-model:value="form.password" type="password" show-password-on="click" placeholder="password" />
         </n-form-item>
 
         <n-form-item label="默认下载路径 (选填)">

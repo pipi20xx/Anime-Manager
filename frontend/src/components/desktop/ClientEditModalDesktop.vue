@@ -49,14 +49,13 @@ const {
         <n-input v-model:value="form.url" placeholder="http://192.168.1.x:8080" />
       </n-form-item>
       
-      <n-space>
-        <n-form-item label="用户名">
-          <n-input v-model:value="form.username" placeholder="admin" />
-        </n-form-item>
-        <n-form-item label="密码">
-          <n-input v-model:value="form.password" type="text" placeholder="password" />
-        </n-form-item>
-      </n-space>
+      <n-form-item label="用户名">
+        <n-input v-model:value="form.username" placeholder="admin" type="password" show-password-on="click" />
+      </n-form-item>
+      
+      <n-form-item label="密码">
+        <n-input v-model:value="form.password" type="password" show-password-on="click" placeholder="password" />
+      </n-form-item>
 
       <n-form-item label="默认下载路径 (选填)">
         <n-input v-model:value="form.default_save_path" placeholder="留空则使用下载器全局设置" />

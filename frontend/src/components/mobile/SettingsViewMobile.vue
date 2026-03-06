@@ -58,10 +58,10 @@ const {
             <n-card :bordered="false" title="TMDB 设置" size="small">
               <n-form label-placement="top">
                 <n-form-item label="TMDB API Key">
-                  <n-input v-model:value="config.tmdb_api_key" placeholder="输入 Key" />
+                  <n-input v-model:value="config.tmdb_api_key" type="password" show-password-on="click" placeholder="输入 Key" />
                 </n-form-item>
                 <n-form-item label="Bangumi Token">
-                  <n-input v-model:value="config.bangumi_token" placeholder="可选 Token" />
+                  <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选 Token" />
                 </n-form-item>
                 
                 <n-divider dashed>策略开关</n-divider>
@@ -82,7 +82,7 @@ const {
                   <n-input v-model:value="config.jackett_url" placeholder="http://ip:port" />
                 </n-form-item>
                 <n-form-item label="API Key">
-                  <n-input v-model:value="config.jackett_api_key" placeholder="API Key" />
+                  <n-input v-model:value="config.jackett_api_key" type="password" show-password-on="click" placeholder="API Key" />
                 </n-form-item>
                 <n-form-item label="管理密码">
                   <n-input v-model:value="config.jackett_password" type="password" show-password-on="click" placeholder="可选" />
@@ -106,7 +106,7 @@ const {
             <n-card :bordered="false" title="通知设置 (Telegram)" size="small">
               <n-form label-placement="top">
                 <n-form-item label="Bot Token">
-                   <n-input v-model:value="config.telegram.bot_token" placeholder="Bot Token" />
+                   <n-input v-model:value="config.telegram.bot_token" type="password" show-password-on="click" placeholder="Bot Token" />
                 </n-form-item>
                 <n-form-item label="Chat ID">
                   <n-input v-model:value="config.telegram.chat_id" placeholder="Chat ID" />

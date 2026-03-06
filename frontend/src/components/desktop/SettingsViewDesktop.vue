@@ -66,13 +66,13 @@ const {
               <n-form label-placement="left" label-width="100">
                 <n-form-item label="TMDB API">
                   <n-space vertical :size="2" style="width: 100%">
-                    <n-input v-model:value="config.tmdb_api_key" type="text" placeholder="输入 TMDB API Key" />
+                    <n-input v-model:value="config.tmdb_api_key" type="password" show-password-on="click" placeholder="输入 TMDB API Key" />
                     <a href="https://www.themoviedb.org/settings/api" target="_blank" style="font-size: 12px; color: var(--n-primary-color); text-decoration: none;">这是 TMDB API KEY https://www.themoviedb.org/settings/api 申请。</a>
                   </n-space>
                 </n-form-item>
                 <n-form-item label="BGM Token">
                   <n-space vertical :size="2" style="width: 100%">
-                    <n-input v-model:value="config.bangumi_token" type="text" placeholder="可选: 输入 Bangumi Access Token" />
+                    <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选: 输入 Bangumi Access Token" />
                     <a href="https://next.bgm.tv/demo/access-token" target="_blank" style="font-size: 12px; color: var(--n-primary-color); text-decoration: none;">从 https://next.bgm.tv/demo/access-token 获取。</a>
                   </n-space>
                 </n-form-item>
@@ -124,7 +124,7 @@ const {
                   </n-space>
                 </n-form-item>
                 <n-form-item label="API Key">
-                  <n-input v-model:value="config.jackett_api_key" type="text" placeholder="Jackett API Key" />
+                  <n-input v-model:value="config.jackett_api_key" type="password" show-password-on="click" placeholder="Jackett API Key" />
                 </n-form-item>
                 <n-form-item label="管理密码">
                   <n-space vertical :size="2" style="width: 100%">
@@ -160,7 +160,7 @@ const {
               <n-form label-placement="left" label-width="100">
                 <n-form-item label="Bot Token">
                   <n-space vertical :size="2" style="width: 100%">
-                     <n-input v-model:value="config.telegram.bot_token" type="text" placeholder="123456789:ABCdefGHIjklMNOpqrs..." />
+                     <n-input v-model:value="config.telegram.bot_token" type="password" show-password-on="click" placeholder="123456789:ABCdefGHIjklMNOpqrs..." />
                      <a href="https://t.me/BotFather" target="_blank" style="font-size: 12px; color: var(--n-primary-color); text-decoration: none;">从 @BotFather 获取的 Bot Token，用于发送消息。</a>
                   </n-space>
                 </n-form-item>
