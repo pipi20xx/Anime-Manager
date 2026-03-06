@@ -922,7 +922,10 @@ async def check_version():
     
     # 缓存过期或不存在，从Docker Hub获取最新版本
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        proxy = ConfigManager.get_proxy("remote_rules")
+        if proxy:
+            print(f"[版本检查] 🌐 通过代理 {proxy} 访问Docker Hub")
+        async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:
             resp = await client.get("https://hub.docker.com/v2/repositories/pipi20xx/anime-manager/tags/")
             if resp.status_code == 200:
                 data = resp.json()
