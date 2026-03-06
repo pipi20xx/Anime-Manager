@@ -11,7 +11,9 @@ import {
   RefreshOutlined as SyncIcon,
   FileDownloadOutlined as ExportIcon,
   CloudSyncOutlined as SytmdbIcon,
-  CheckCircleOutlined as CustomIcon
+  CheckCircleOutlined as CustomIcon,
+  AddOutlined as AddIcon,
+  DeleteSweepOutlined as ClearIcon
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
 
@@ -54,11 +56,26 @@ const {
           </n-input-group>
         </n-space>
         <n-space>
-          <n-button ghost type="info" @click="handleExport">导出字典</n-button>
-          <n-button ghost type="warning" @click="handleRefreshAll">全量刷新</n-button>
-          <n-button ghost type="warning" @click="clearFingerprints">清空智能记忆</n-button>
-          <n-button ghost type="info" @click="handleSyncSytmdb">同步 SYTMDB</n-button>
-          <n-button type="primary" secondary @click="openCreate">手动新增</n-button>
+          <n-button ghost type="info" @click="handleExport">
+            <template #icon><n-icon><ExportIcon /></n-icon></template>
+            导出字典
+          </n-button>
+          <n-button ghost type="warning" @click="handleRefreshAll">
+            <template #icon><n-icon><SyncIcon /></n-icon></template>
+            全量刷新
+          </n-button>
+          <n-button ghost type="warning" @click="clearFingerprints">
+            <template #icon><n-icon><ClearIcon /></n-icon></template>
+            清空智能记忆
+          </n-button>
+          <n-button ghost type="info" @click="handleSyncSytmdb">
+            <template #icon><n-icon><SytmdbIcon /></n-icon></template>
+            同步 SYTMDB
+          </n-button>
+          <n-button type="primary" secondary @click="openCreate">
+            <template #icon><n-icon><AddIcon /></n-icon></template>
+            手动新增
+          </n-button>
           <n-button quaternary circle @click="fetchBrowserData" :loading="browserLoading"><template #icon><n-icon><SyncIcon /></n-icon></template></n-button>
         </n-space>
       </div>

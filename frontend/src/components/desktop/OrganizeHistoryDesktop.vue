@@ -13,7 +13,8 @@ import {
   StorageOutlined as SizeIcon,
   DoneAllOutlined as SuccessIcon,
   ErrorOutlineOutlined as ErrorIcon,
-  KeyboardDoubleArrowDownOutlined as MoreIcon
+  KeyboardDoubleArrowDownOutlined as MoreIcon,
+  RefreshOutlined as RefreshIcon
 } from '@vicons/material'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
 
@@ -81,7 +82,6 @@ const handleRefresh = () => {
   <div class="history-view">
     <div class="page-header mb-6">
       <div class="d-flex align-center gap-3">
-        <n-icon size="32" style="color: var(--n-primary-color)"><HistoryIcon /></n-icon>
         <div>
           <h1 class="m-0">整理历史</h1>
           <div class="subtitle">记录所有成功的媒体识别与入库流水</div>
@@ -106,7 +106,10 @@ const handleRefresh = () => {
           </template>
           确定要彻底删除所有整理记录吗？这不会影响磁盘上的文件。
         </n-popconfirm>
-        <n-button @click="handleRefresh" :loading="loading">刷新数据</n-button>
+        <n-button @click="handleRefresh" :loading="loading">
+          <template #icon><n-icon><RefreshIcon /></n-icon></template>
+          刷新数据
+        </n-button>
       </n-space>
     </div>
 

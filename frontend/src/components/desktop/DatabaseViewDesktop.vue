@@ -122,7 +122,6 @@ const dataTableColumns = computed(() => {
   <div class="db-view">
     <div class="page-header">
       <div class="d-flex align-center gap-3">
-        <n-icon size="32" color="var(--n-primary-color)"><DbIcon /></n-icon>
         <div>
           <h1>数据中心</h1>
           <div class="subtitle">高性能 PostgreSQL 引擎与超级元数据资产管理</div>

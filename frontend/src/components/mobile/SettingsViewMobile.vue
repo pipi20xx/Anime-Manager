@@ -109,7 +109,7 @@ const {
                    <n-input v-model:value="config.telegram.bot_token" type="password" show-password-on="click" placeholder="Bot Token" />
                 </n-form-item>
                 <n-form-item label="Chat ID">
-                  <n-input v-model:value="config.telegram.chat_id" placeholder="Chat ID" />
+                  <n-input v-model:value="config.telegram.chat_id" type="password" show-password-on="click" placeholder="Chat ID" />
                 </n-form-item>
                 <n-form-item label="通知类型">
                   <n-grid :cols="2" :y-gap="8">

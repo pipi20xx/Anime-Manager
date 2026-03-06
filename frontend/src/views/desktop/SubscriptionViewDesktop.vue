@@ -10,7 +10,7 @@ import {
   EditOutlined as EditIcon,
   DeleteOutlined as DeleteIcon,
   RssFeedOutlined as FeedIcon,
-  RuleOutlined as RuleIcon,
+  DownloadOutlined as AutoIcon,
   ListAltOutlined as ListIcon,
   HistoryOutlined as ResetIcon,
   ContentCopyOutlined as CopyIcon,
@@ -196,7 +196,7 @@ onMounted(fetchData)
         <n-card bordered>
           <template #header>
             <div class="card-title-box">
-              <n-icon size="20" style="color: var(--n-warning-color)"><RuleIcon /></n-icon>
+              <n-icon size="20" style="color: var(--n-warning-color)"><AutoIcon /></n-icon>
               <span class="card-title-text">自动匹配与推送逻辑</span>
             </div>
           </template>
@@ -307,6 +307,17 @@ onMounted(fetchData)
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .page-header h1 { margin: 0; font-size: 24px; color: #fff; }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+
+.card-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.card-title-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #eee;
+}
 
 .feed-card { 
   border: 1px solid var(--app-border-light) !important; 

@@ -7,7 +7,7 @@ import {
   AddOutlined as AddIcon,
   PlayArrowOutlined as RunIcon,
   DeleteOutlined as DeleteIcon,
-  LinkOutlined as LinkIcon,
+  VideoLibraryOutlined as LinkIcon,
   ContentCopyOutlined as CopyIcon,
   BoltOutlined as BoltIcon,
   AccessTimeOutlined as ScheduleIcon
@@ -51,7 +51,6 @@ onMounted(fetchTasks)
       <n-card bordered>
         <template #header>
           <div class="card-title-box">
-            <n-icon color="#2080f0"><LinkIcon /></n-icon>
             <span class="card-title-text">STRM 任务管理</span>
           </div>
         </template>

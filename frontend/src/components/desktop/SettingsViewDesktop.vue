@@ -166,7 +166,7 @@ const {
                 </n-form-item>
                 <n-form-item label="Chat ID">
                   <n-space vertical :size="2" style="width: 100%">
-                    <n-input v-model:value="config.telegram.chat_id" placeholder="用户或群组 ID (如 12345678)" />
+                    <n-input v-model:value="config.telegram.chat_id" type="password" show-password-on="click" placeholder="用户或群组 ID (如 12345678)" />
                     <a href="https://t.me/userinfobot" target="_blank" style="font-size: 12px; color: var(--n-primary-color); text-decoration: none;">发送消息给 @userinfobot 获取你的个人 Chat ID，或获取群组/频道的 Chat ID (通常以 -100 开头)。</a>
                   </n-space>
                 </n-form-item>

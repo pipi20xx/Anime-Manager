@@ -137,6 +137,8 @@ const fetchToken = async () => {
         <n-space vertical :size="2" style="width: 100%">
           <n-input 
             :value="embyUserId" 
+            type="password" 
+            show-password-on="click" 
             placeholder="自动获取或手动输入"
             @update:value="(val: string) => emit('update:embyUserId', val)"
           />
