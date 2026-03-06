@@ -32,9 +32,9 @@
 > 2. **URL 结尾：** CD2 的 Webhook URL 结尾必须包含 `/`，否则路径拼接会导致 404 错误。
 > 3. **任务开关：** 确保 STRM 任务配置中的 **"响应 CD2 Webhook 推送"** 开关已开启（默认开启）。
 
-#### 3. Emby/Jellyfin Webhook 集成
+#### 3. Emby Webhook 集成
 
-支持接收 Emby/Jellyfin 的媒体库事件通知，并自动转发到 Telegram。
+支持接收 Emby 的媒体库事件通知，并自动转发到 Telegram。
 
 **Webhook 地址：** `http://{你的IP}:8000/api/webhook/emby`
 

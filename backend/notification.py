@@ -412,7 +412,7 @@ class NotificationManager:
 
     @staticmethod
     async def push_library_new_notification(payload: dict):
-        """Emby/Jellyfin 新入库通知 (精简美化版)"""
+        """Emby 新入库通知 (精简美化版)"""
         config = ConfigManager.get_config()
         if not config.get("telegram", {}).get("enabled"): return
         if not config.get("telegram", {}).get("notify_on_library_new", True): return
@@ -526,7 +526,7 @@ class NotificationManager:
 
     @staticmethod
     async def push_emby_delete_notification(payload):
-        """Emby/Jellyfin 删除事件通知"""
+        """Emby 删除事件通知"""
         config = ConfigManager.get_config()
         if not config.get("telegram", {}).get("enabled"): return
 

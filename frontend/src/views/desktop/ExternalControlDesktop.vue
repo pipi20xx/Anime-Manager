@@ -229,7 +229,7 @@ const logColumns = [
               </n-form-item>
             </div>
 
-            <n-divider title-placement="left">Emby / Jellyfin Webhook</n-divider>
+            <n-divider title-placement="left">Emby Webhook</n-divider>
             <n-alert title="Emby 配置指引" type="info" style="margin-bottom: 12px">
               在 Emby 设置的 <b>控制面板 -> Webhook</b> 中添加该地址，并确保以下设置：
               <ul style="margin: 8px 0 0 16px; padding: 0;">

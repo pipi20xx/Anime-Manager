@@ -148,15 +148,14 @@ async def cd2_webhook(request: Request, tail: str = ""):
     return {"status": "success", "source": source_desc, "triggered": triggered}
 
 
-@router.post("/emby", summary="Emby/Jellyfin Webhook")
+@router.post("/emby", summary="Emby Webhook")
 async def emby_webhook(request: Request):
     """
-    接收 Emby/Jellyfin 的 Webhook 通知。
+    接收 Emby 的 Webhook 通知。
     支持入库通知推送和删除事件通知。
     """
     try:
         # Emby 的 Webhook 格式有时是 multipart/form-data (payload 字段)
-        # Jellyfin 通常是 application/json
         content_type = request.headers.get("content-type", "")
         if "multipart/form-data" in content_type:
             form = await request.form()
@@ -170,7 +169,7 @@ async def emby_webhook(request: Request):
 
     event = payload.get("Event")
     item_title = payload.get("Item", {}).get("Name", "未知")
-    logger.info(f"Received Emby/Jellyfin event: {event} for {item_title}")
+    logger.info(f"Received Emby event: {event} for {item_title}")
 
     if event == "library.new":
         log_audit("Webhook", "Emby入库", f"收到新媒体入库通知: {item_title}")

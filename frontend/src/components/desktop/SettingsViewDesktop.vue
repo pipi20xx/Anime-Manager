@@ -135,7 +135,7 @@ const {
               </n-form>
             </n-card>
 
-            <!-- Emby/Jellyfin 设置 -->
+            <!-- Emby 设置 -->
             <EmbyConfig
               :emby-url="config.emby_url || ''"
               :emby-api-key="config.emby_api_key || ''"

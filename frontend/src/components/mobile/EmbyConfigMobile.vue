@@ -86,7 +86,7 @@ const fetchToken = async () => {
     <template #header>
       <div class="card-title-box">
         <n-icon size="18" style="color: var(--n-primary-color)"><EmbyIcon /></n-icon>
-        <span class="card-title-text">Emby/Jellyfin 设置</span>
+        <span class="card-title-text">Emby 设置</span>
       </div>
     </template>
     

@@ -86,7 +86,7 @@ const fetchToken = async () => {
     <template #header>
       <div class="card-title-box">
         <n-icon size="20" style="color: var(--n-primary-color)"><EmbyIcon /></n-icon>
-        <span class="card-title-text">Emby/Jellyfin 设置</span>
+        <span class="card-title-text">Emby 设置</span>
       </div>
     </template>
     
@@ -98,7 +98,7 @@ const fetchToken = async () => {
             placeholder="http://localhost:8096" 
             @update:value="(val: string) => emit('update:embyUrl', val)"
           />
-          <span style="font-size: 12px; color: #666;">Emby/Jellyfin 服务器地址，包含端口号</span>
+          <span style="font-size: 12px; color: #666;">Emby 服务器地址，包含端口号</span>
         </n-space>
       </n-form-item>
 
@@ -111,7 +111,7 @@ const fetchToken = async () => {
             placeholder="输入 API Key"
             @update:value="(val: string) => emit('update:embyApiKey', val)"
           />
-          <span style="font-size: 12px; color: #666;">在 Emby/Jellyfin 设置中生成 API Key，或使用下方按钮自动获取</span>
+          <span style="font-size: 12px; color: #666;">在 Emby 设置中生成 API Key，或使用下方按钮自动获取</span>
         </n-space>
       </n-form-item>
 
