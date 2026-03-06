@@ -43,7 +43,13 @@ export function useSettings() {
     stalled_timeout_minutes: 0,
     stalled_monitor_interval: 30,
     health_check_enabled: true,
-    health_check_interval: 30
+    health_check_interval: 30,
+    emby_enabled: false,
+    emby_url: '',
+    emby_api_key: '',
+    emby_username: '',
+    emby_password: '',
+    emby_user_id: ''
   })
 
   const clients = ref<any[]>([])
@@ -75,6 +81,25 @@ export function useSettings() {
         if (tg.notify_on_strm_link === undefined) tg.notify_on_strm_link = true
         if (tg.notify_on_sub_del === undefined) tg.notify_on_sub_del = true
         if (tg.notify_on_sub_complete === undefined) tg.notify_on_sub_complete = true
+      }
+
+      if (!config.value.emby_enabled) {
+        config.value.emby_enabled = false
+      }
+      if (!config.value.emby_url) {
+        config.value.emby_url = ''
+      }
+      if (!config.value.emby_api_key) {
+        config.value.emby_api_key = ''
+      }
+      if (!config.value.emby_username) {
+        config.value.emby_username = ''
+      }
+      if (!config.value.emby_password) {
+        config.value.emby_password = ''
+      }
+      if (!config.value.emby_user_id) {
+        config.value.emby_user_id = ''
       }
       
       const clientRes = await fetch(`${API_BASE}/api/clients`)

@@ -16,6 +16,7 @@ import {
 import ConfigSection from '../../components/ConfigSection.vue'
 import ClientEditModal from '../../components/ClientEditModal.vue'
 import HealthCheckManager from '../../components/HealthCheckManager.vue'
+import EmbyConfigMobile from '../../components/mobile/EmbyConfigMobile.vue'
 import AiLabView from '../../views/AiLabView.vue'
 import AccountTab from '../../views/settings/AccountTab.vue'
 import { useSettings } from '../../composables/views/useSettings'
@@ -88,6 +89,21 @@ const {
                 </n-form-item>
               </n-form>
             </n-card>
+
+            <EmbyConfigMobile
+              :emby-url="config.emby_url || ''"
+              :emby-api-key="config.emby_api_key || ''"
+              :emby-username="config.emby_username || ''"
+              :emby-password="config.emby_password || ''"
+              :emby-user-id="config.emby_user_id || ''"
+              :emby-enabled="config.emby_enabled || false"
+              @update:emby-url="(val: string) => config.emby_url = val"
+              @update:emby-api-key="(val: string) => config.emby_api_key = val"
+              @update:emby-username="(val: string) => config.emby_username = val"
+              @update:emby-password="(val: string) => config.emby_password = val"
+              @update:emby-user-id="(val: string) => config.emby_user_id = val"
+              @update:emby-enabled="(val: boolean) => config.emby_enabled = val"
+            />
 
             <n-card :bordered="false" title="通知设置 (Telegram)" size="small">
               <n-form label-placement="top">

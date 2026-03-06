@@ -31,6 +31,12 @@ class ConfigManager:
         "jackett_url": "",
         "jackett_api_key": "",
         "jackett_password": "",
+        "emby_enabled": False,
+        "emby_url": "",
+        "emby_api_key": "",
+        "emby_username": "",
+        "emby_password": "",
+        "emby_user_id": "",
         "telegram": {
             "bot_token": "",
             "chat_id": "",
