@@ -10,6 +10,7 @@ import RssRuleGuide from '../../components/RssRuleGuide.vue'
 import SubscriptionGuide from '../../components/SubscriptionGuide.vue'
 import DataCenterGuide from '../../components/DataCenterGuide.vue'
 import StrmGuide from '../../components/StrmGuide.vue'
+import SettingsGuide from '../../components/SettingsGuide.vue'
 import { useUsageGuide } from '../../composables/views/useUsageGuide'
 
 const { activeTab } = useUsageGuide()
@@ -61,6 +62,11 @@ const { activeTab } = useUsageGuide()
       <!-- TAB 7: 数据中心架构 -->
       <n-tab-pane name="datacenter" tab="数据中心架构">
         <DataCenterGuide />
+      </n-tab-pane>
+
+      <!-- TAB 8: 设置说明 -->
+      <n-tab-pane name="settings" tab="设置说明">
+        <SettingsGuide />
       </n-tab-pane>
     </n-tabs>
   </div>

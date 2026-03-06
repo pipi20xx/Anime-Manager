@@ -10,7 +10,8 @@ import {
   RssFeedOutlined as RssIcon,
   SubscriptionsOutlined as SubIcon,
   MovieOutlined as StrmIcon,
-  StorageOutlined as DataIcon
+  StorageOutlined as DataIcon,
+  SettingsOutlined as SettingsIcon
 } from '@vicons/material'
 import RecognitionPipeline from '../../components/RecognitionPipeline.vue'
 import RecognitionRules from '../../components/RecognitionRules.vue'
@@ -20,6 +21,7 @@ import RssRuleGuide from '../../components/RssRuleGuide.vue'
 import SubscriptionGuide from '../../components/SubscriptionGuide.vue'
 import DataCenterGuide from '../../components/DataCenterGuide.vue'
 import StrmGuide from '../../components/StrmGuide.vue'
+import SettingsGuide from '../../components/SettingsGuide.vue'
 import { useUsageGuide } from '../../composables/views/useUsageGuide'
 
 const { activeTab } = useUsageGuide()
@@ -107,6 +109,15 @@ const { activeTab } = useUsageGuide()
         </template>
         <div class="content-wrapper">
           <DataCenterGuide />
+        </div>
+      </n-tab-pane>
+
+      <n-tab-pane name="settings" tab="设置说明">
+        <template #tab>
+           <div class="tab-label"><n-icon><SettingsIcon /></n-icon><span>设置</span></div>
+        </template>
+        <div class="content-wrapper">
+          <SettingsGuide />
         </div>
       </n-tab-pane>
     </n-tabs>
