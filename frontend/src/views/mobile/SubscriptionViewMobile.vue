@@ -5,7 +5,8 @@ import {
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
-  MoreVertOutlined as MoreIcon
+  MoreVertOutlined as MoreIcon,
+  CloudSyncOutlined as SyncIcon
 } from '@vicons/material'
 
 import FeedEditModal from '../../components/FeedEditModal.vue'
@@ -48,7 +49,8 @@ const {
   runNow,
   retryRecognition,
   clearCache,
-  clearBlacklist
+  clearBlacklist,
+  syncJackettFeeds
 } = useSubscriptionView()
 
 // Apply Back Button support to Modals
@@ -103,10 +105,16 @@ onMounted(fetchData)
       <!-- 订阅源管理 -->
       <n-tab-pane name="feeds" tab="订阅源">
         <div class="tab-content">
-          <n-button block dashed type="primary" @click="openAddFeed" style="margin-bottom: 12px">
-            <template #icon><n-icon><AddIcon/></n-icon></template>
-            新增订阅源
-          </n-button>
+          <n-space vertical :size="12">
+            <n-button block dashed type="info" @click="syncJackettFeeds">
+              <template #icon><n-icon><SyncIcon/></n-icon></template>
+              同步 Jackett 源
+            </n-button>
+            <n-button block dashed type="primary" @click="openAddFeed">
+              <template #icon><n-icon><AddIcon/></n-icon></template>
+              新增订阅源
+            </n-button>
+          </n-space>
           <MobileFeedList 
             :feeds="feeds" 
             @edit="openEditFeed"

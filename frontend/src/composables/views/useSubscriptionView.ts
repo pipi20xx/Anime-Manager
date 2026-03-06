@@ -166,6 +166,21 @@ export function useSubscriptionView() {
     } catch (e) { message.error('清空失败') }
   }
 
+  const syncJackettFeeds = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/feeds/sync-jackett`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        message.success(data.message)
+        fetchData()
+      } else {
+        message.error(data.message || '同步失败')
+      }
+    } catch (e: any) {
+      message.error(e.message || '同步失败')
+    }
+  }
+
   return {
     feeds,
     rules,
@@ -197,6 +212,7 @@ export function useSubscriptionView() {
     runNow,
     retryRecognition,
     clearCache,
-    clearBlacklist
+    clearBlacklist,
+    syncJackettFeeds
   }
 }

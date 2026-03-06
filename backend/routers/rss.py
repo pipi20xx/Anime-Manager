@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 from models import Feed, Rule, DownloadHistory, FeedItem, Subscription, SubscribedEpisode
 from rss_core.manager import RssManager
 from rss_core.scheduler import refresh_all_feeds
+from clients.jackett import JackettClient
 from logger import log_audit
 from database import db
 from sqlmodel import select, delete, text, or_
@@ -143,6 +144,71 @@ async def retry_feed_recognition(feed_id: int):
     
     log_audit("RSS", "重试识别", f"手动触发了源 (ID: {feed_id}) 的识别失败项重试，共 {len(items)} 条")
     return {"success": True, "message": f"已启动 {len(items)} 个条目的重试任务，请稍后刷新列表", "count": len(items)}
+
+@router.post("/feeds/sync-jackett", summary="同步 Jackett 源")
+async def sync_jackett_feeds():
+    """
+    从 Jackett 获取所有已配置的索引站，并自动添加为 RSS 订阅源。
+    """
+    from config_manager import ConfigManager
+    
+    # 获取 Jackett 配置
+    config = ConfigManager.get_config()
+    jackett_url = config.get("jackett_url", "").rstrip("/")
+    api_key = config.get("jackett_api_key", "")
+    
+    if not jackett_url or not api_key:
+        raise HTTPException(status_code=400, detail="Jackett 未配置，请先在设置中配置 Jackett")
+    
+    # 获取 Jackett 索引站列表
+    indexers = await JackettClient.get_indexers()
+    if not indexers:
+        return {"success": True, "message": "Jackett 中没有已配置的索引站", "added": 0, "skipped": 0}
+    
+    # 获取现有的 RSS 源
+    existing_feeds = await RssManager.get_feeds()
+    existing_urls = {feed.url for feed in existing_feeds}
+    
+    added_count = 0
+    skipped_count = 0
+    
+    # 为每个索引站生成 RSS URL 并添加
+    for indexer in indexers:
+        indexer_id = indexer.get("id")
+        indexer_name = indexer.get("name")
+        
+        if not indexer_id:
+            continue
+        
+        # 生成 Jackett RSS URL
+        rss_url = f"{jackett_url}/api/v2.0/indexers/{indexer_id}/results/torznab/api?apikey={api_key}&t=search&cat=&q="
+        
+        # 检查是否已存在
+        if rss_url in existing_urls:
+            skipped_count += 1
+            continue
+        
+        # 创建新的 RSS 源
+        new_feed = Feed(
+            url=rss_url,
+            title=f"Jackett - {indexer_name}",
+            enabled=True,
+            for_subscription=True,
+            for_rules=True,
+            anime_priority=True
+        )
+        
+        await RssManager.save_feed(new_feed)
+        added_count += 1
+    
+    log_audit("RSS", "同步 Jackett 源", f"从 Jackett 同步了 {added_count} 个新源，跳过 {skipped_count} 个已存在的源")
+    
+    return {
+        "success": True,
+        "message": f"成功添加 {added_count} 个新源，跳过 {skipped_count} 个已存在的源",
+        "added": added_count,
+        "skipped": skipped_count
+    }
 
 # --- Rules ---
 @router.get("/rules", response_model=List[Rule], summary="获取下载规则列表")

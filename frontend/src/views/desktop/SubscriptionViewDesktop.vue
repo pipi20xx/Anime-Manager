@@ -13,7 +13,8 @@ import {
   RuleOutlined as RuleIcon,
   ListAltOutlined as ListIcon,
   HistoryOutlined as ResetIcon,
-  ContentCopyOutlined as CopyIcon
+  ContentCopyOutlined as CopyIcon,
+  CloudSyncOutlined as SyncIcon
 } from '@vicons/material'
 
 import FeedEditModal from '../../components/FeedEditModal.vue'
@@ -55,7 +56,8 @@ const {
   runNow,
   retryRecognition,
   clearCache,
-  clearBlacklist
+  clearBlacklist,
+  syncJackettFeeds
 } = useSubscriptionView()
 
 onMounted(fetchData)
@@ -115,10 +117,16 @@ onMounted(fetchData)
             </div>
           </template>
           <template #header-extra>
-            <n-button type="primary" size="small" @click="openAddFeed">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
-              新增订阅源
-            </n-button>
+            <n-space :size="8">
+              <n-button type="info" size="small" @click="syncJackettFeeds">
+                <template #icon><n-icon><SyncIcon/></n-icon></template>
+                同步 Jackett 源
+              </n-button>
+              <n-button type="primary" size="small" @click="openAddFeed">
+                <template #icon><n-icon><AddIcon/></n-icon></template>
+                新增订阅源
+              </n-button>
+            </n-space>
           </template>
           
           <n-grid :x-gap="12" :y-gap="12" :cols="3" v-if="feeds.length > 0">
