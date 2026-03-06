@@ -139,6 +139,44 @@ class FileProcessor:
             # 补全控制台识别结果日志
             log_audit("整理", "识别成功", f"识别结论: {final['title']} - S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
 
+            # --- [New] Emby Check ---
+            check_emby_exists = task.get("check_emby_exists", False)
+            if check_emby_exists:
+                from emby_client import get_emby_client
+                emby_client = get_emby_client()
+                
+                tmdb_id = final.get("tmdb_id")
+                media_type = final.get("category")
+                season = final.get("season")
+                episode = final.get("episode")
+                
+                if tmdb_id and emby_client:
+                    try:
+                        exists = False
+                        if media_type == "电影":
+                            exists = emby_client.check_movie_exists(tmdb_id)
+                        elif media_type == "剧集" and season is not None and episode is not None:
+                            exists = emby_client.check_episode_exists(tmdb_id, season, episode)
+                        
+                        if exists:
+                            log_audit("整理", "Emby检查", f"Emby库中已存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})")
+                            if not dry_run:
+                                from models import OrganizeHistory
+                                from database import db
+                                async with db.session_scope():
+                                    history = OrganizeHistory(
+                                        source_path=v_path, filename=v_file,
+                                        tmdb_id=str(tmdb_id), title=final.get("title"),
+                                        season=season, episode=str(episode),
+                                        media_type=media_type,
+                                        action_type=action_type,
+                                        status="skipped", message="Emby库中已存在"
+                                    )
+                                    await db.save(history, audit=False)
+                            return [{"type": "skip", "source": v_path, "reason": "Emby库中已存在"}]
+                    except Exception as e:
+                        log_audit("整理", "Emby检查失败", f"Emby检查异常: {str(e)}", level="WARN")
+
             final["filename"] = v_file
             final["path"] = v_path
             

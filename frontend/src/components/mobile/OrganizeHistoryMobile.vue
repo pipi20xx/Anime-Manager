@@ -123,6 +123,7 @@ const menuOptions = [
         <n-radio-group v-model:value="statusFilter" size="small">
           <n-radio-button value="all">全部</n-radio-button>
           <n-radio-button value="success">成功</n-radio-button>
+          <n-radio-button value="skipped">跳过</n-radio-button>
           <n-radio-button value="failed">失败</n-radio-button>
         </n-radio-group>
       </div>
@@ -144,6 +145,7 @@ const menuOptions = [
           </div>
           <div class="card-status">
              <n-icon v-if="item.status === 'failed'" color="#e88080" size="20"><ErrorIcon/></n-icon>
+             <n-icon v-else-if="item.status === 'skipped'" color="#f0a020" size="20"><ArrowIcon/></n-icon>
              <n-icon v-else color="#63e2b7" size="20"><SuccessIcon/></n-icon>
           </div>
         </div>
@@ -157,6 +159,10 @@ const menuOptions = [
         </div>
 
         <div v-if="item.status === 'failed' && item.message" class="error-box">
+           {{ item.message }}
+        </div>
+
+        <div v-if="item.status === 'skipped' && item.message" class="skipped-box">
            {{ item.message }}
         </div>
 
@@ -258,6 +264,15 @@ const menuOptions = [
 .error-box {
   background: rgba(232, 128, 128, 0.1);
   color: #e88080;
+  font-size: 11px;
+  padding: 6px;
+  border-radius: var(--button-border-radius, 4px);
+  margin-bottom: 10px;
+}
+
+.skipped-box {
+  background: rgba(240, 160, 32, 0.1);
+  color: #f0a020;
   font-size: 11px;
   padding: 6px;
   border-radius: var(--button-border-radius, 4px);

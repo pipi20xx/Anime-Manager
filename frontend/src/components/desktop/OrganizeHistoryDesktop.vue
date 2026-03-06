@@ -91,6 +91,7 @@ const handleRefresh = () => {
         <n-radio-group v-model:value="statusFilter" size="medium">
           <n-radio-button value="all">全部</n-radio-button>
           <n-radio-button value="success">成功</n-radio-button>
+          <n-radio-button value="skipped">跳过</n-radio-button>
           <n-radio-button value="failed">失败</n-radio-button>
         </n-radio-group>
         <n-input v-model:value="searchQuery" placeholder="搜索标题或文件名..." style="width: 250px">
@@ -129,12 +130,18 @@ const handleRefresh = () => {
             <n-tag size="tiny" type="default" bordered class="ml-1" v-if="item.team">{{ item.team }}</n-tag>
           </div>
           <div class="item-status">
-            <n-tag :type="item.status === 'failed' ? 'error' : 'success'" size="small" ghost bordered>
+            <n-tag 
+              :type="item.status === 'failed' ? 'error' : (item.status === 'skipped' ? 'warning' : 'success')" 
+              size="small" 
+              ghost 
+              bordered
+            >
               <template #icon>
                 <n-icon v-if="item.status === 'failed'"><ErrorIcon /></n-icon>
+                <n-icon v-else-if="item.status === 'skipped'"><ArrowIcon /></n-icon>
                 <n-icon v-else><SuccessIcon /></n-icon>
               </template>
-              {{ item.status === 'failed' ? '失败' : '成功' }}
+              {{ item.status === 'failed' ? '失败' : (item.status === 'skipped' ? '跳过' : '成功') }}
             </n-tag>
             <n-popconfirm 
               @positive-click="deleteItem(item.id, shouldDeleteFile)" 
@@ -163,6 +170,13 @@ const handleRefresh = () => {
         <!-- Error Message Row -->
         <div v-if="item.status === 'failed' && item.message" class="error-msg-row mt-2">
           <n-alert type="error" :show-icon="false" size="small" class="py-1">
+            {{ item.message }}
+          </n-alert>
+        </div>
+
+        <!-- Skipped Message Row -->
+        <div v-if="item.status === 'skipped' && item.message" class="skipped-msg-row mt-2">
+          <n-alert type="warning" :show-icon="false" size="small" class="py-1">
             {{ item.message }}
           </n-alert>
         </div>

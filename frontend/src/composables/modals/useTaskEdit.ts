@@ -19,7 +19,8 @@ export function useTaskEdit(props: any, emit: any) {
     ignore_file_regex: [],
     ignore_dir_regex: [],
     trigger_strm: false,
-    ignore_history: false
+    ignore_history: false,
+    check_emby_exists: false
   })
 
   const showPicker = ref(false)

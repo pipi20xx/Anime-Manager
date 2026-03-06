@@ -129,6 +129,13 @@ const {
               <n-gi><n-checkbox v-model:checked="form.clean_empty_dir">清理空目录</n-checkbox></n-gi>
               <n-gi><n-checkbox v-model:checked="form.ignore_history">忽略历史</n-checkbox></n-gi>
             </n-grid>
+            
+            <n-form-item label="Emby 检查" class="mt-4">
+              <n-space align="center">
+                <n-switch v-model:value="form.check_emby_exists" />
+                <span style="font-size: 12px; color: #666;">检测 Emby 库是否存在，存在则跳过处理</span>
+              </n-space>
+            </n-form-item>
           </n-space>
         </n-tab-pane>
       </n-tabs>
