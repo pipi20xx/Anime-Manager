@@ -1,5 +1,5 @@
 import { ref, reactive, onMounted, h } from 'vue'
-import { useMessage, useDialog, NIcon } from 'naive-ui'
+import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
 import { DeleteSweepOutlined, CloseOutlined } from '@vicons/material'
 
 export function useTmdbData() {
@@ -137,13 +137,12 @@ export function useTmdbData() {
     dialog.warning({
       title: '确认清空智能记忆',
       content: '这将删除所有智能记忆。',
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;' }, [
-        h('button', {
-          style: 'padding: 8px 16px; border: 1px solid #e0e0e6; background: #fff; color: #333; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, {
           onClick: () => dialog.destroyAll()
-        }, [h(NIcon, { size: 16 }, { default: () => h(CloseOutlined) }), '取消']),
-        h('button', {
-          style: 'padding: 8px 16px; border: none; background: #f0a020; color: white; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
+        h(NButton, {
+          type: 'warning',
           onClick: async () => {
             try {
               const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
@@ -153,7 +152,7 @@ export function useTmdbData() {
               message.error("操作失败")
             }
           }
-        }, [h(NIcon, { size: 16 }, { default: () => h(DeleteSweepOutlined) }), '清空记忆'])
+        }, { icon: () => h(NIcon, null, { default: () => h(DeleteSweepOutlined) }), default: () => '清空记忆' })
       ])
     })
   }

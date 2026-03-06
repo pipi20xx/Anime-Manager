@@ -1,5 +1,5 @@
 import { ref, watch, onMounted, onUnmounted, h } from 'vue'
-import { useMessage, useDialog, NIcon } from 'naive-ui'
+import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
 import { DeleteOutlined, PreviewOutlined, PlayArrowOutlined, CloseOutlined } from '@vicons/material'
 
 export function useOrganizerView() {
@@ -113,15 +113,14 @@ export function useOrganizerView() {
     dialog.warning({
       title: '确认删除规则', 
       content: '确定要删除这条规则吗？',
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;' }, [
-        h('button', {
-          style: 'padding: 8px 16px; border: 1px solid #e0e0e6; background: #fff; color: #333; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, {
           onClick: () => dialog.destroyAll()
-        }, [h(NIcon, { size: 16 }, { default: () => h(CloseOutlined) }), '取消']),
-        h('button', {
-          style: 'padding: 8px 16px; border: none; background: #f0a020; color: white; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
+        h(NButton, {
+          type: 'warning',
           onClick: () => { rules.value.splice(index, 1); saveConfig(); dialog.destroyAll() }
-        }, [h(NIcon, { size: 16 }, { default: () => h(DeleteOutlined) }), '确认'])
+        }, { icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) }), default: () => '确认' })
       ])
     })
   }
@@ -161,15 +160,14 @@ export function useOrganizerView() {
     dialog.warning({
       title: '确认删除任务', 
       content: `确定要删除任务 "${tasks.value[index].name}" 吗？`,
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;' }, [
-        h('button', {
-          style: 'padding: 8px 16px; border: 1px solid #e0e0e6; background: #fff; color: #333; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, {
           onClick: () => dialog.destroyAll()
-        }, [h(NIcon, { size: 16 }, { default: () => h(CloseOutlined) }), '取消']),
-        h('button', {
-          style: 'padding: 8px 16px; border: none; background: #f0a020; color: white; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
+        h(NButton, {
+          type: 'warning',
           onClick: () => { tasks.value.splice(index, 1); saveConfig(); dialog.destroyAll() }
-        }, [h(NIcon, { size: 16 }, { default: () => h(DeleteOutlined) }), '确认'])
+        }, { icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) }), default: () => '确认' })
       ])
     })
   }
@@ -282,13 +280,12 @@ export function useOrganizerView() {
     dialog.info({
       title: '启动整理任务',
       content: `您希望如何运行任务 "${task.name}"？`,
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;' }, [
-        h('button', {
-          style: 'padding: 8px 16px; border: 1px solid #e0e0e6; background: #fff; color: #333; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, {
           onClick: () => { runTask(task, true); dialog.destroyAll() }
-        }, [h(NIcon, { size: 16 }, { default: () => h(PreviewOutlined) }), '预览并手动执行']),
-        h('button', {
-          style: 'padding: 8px 16px; border: none; background: #2080f0; color: white; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+        }, { icon: () => h(NIcon, null, { default: () => h(PreviewOutlined) }), default: () => '预览并手动执行' }),
+        h(NButton, {
+          type: 'primary',
           onClick: async () => {
             try {
               const res = await fetch(`${API_BASE}/api/organize/start_background?dry_run=false`, {
@@ -302,7 +299,7 @@ export function useOrganizerView() {
             } catch (e) { message.error('网络错误') }
             dialog.destroyAll()
           }
-        }, [h(NIcon, { size: 16 }, { default: () => h(PlayArrowOutlined) }), '后台静默执行'])
+        }, { icon: () => h(NIcon, null, { default: () => h(PlayArrowOutlined) }), default: () => '后台静默执行' })
       ])
     })
   }
