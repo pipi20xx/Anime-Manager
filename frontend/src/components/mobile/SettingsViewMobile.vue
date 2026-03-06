@@ -146,6 +146,7 @@ const {
                     <n-gi><n-checkbox v-model:checked="config.proxy_services.rss">RSS</n-checkbox></n-gi>
                     <n-gi><n-checkbox v-model:checked="config.proxy_services.jackett">Jackett</n-checkbox></n-gi>
                     <n-gi><n-checkbox v-model:checked="config.proxy_services.remote_rules">远程规则</n-checkbox></n-gi>
+                    <n-gi><n-checkbox v-model:checked="config.proxy_services.docker_hub">Docker Hub</n-checkbox></n-gi>
                   </n-grid>
                 </n-form-item>
               </n-form>

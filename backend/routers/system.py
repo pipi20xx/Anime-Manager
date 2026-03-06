@@ -922,7 +922,7 @@ async def check_version():
     
     # 缓存过期或不存在，从Docker Hub获取最新版本
     try:
-        proxy = ConfigManager.get_proxy("remote_rules")
+        proxy = ConfigManager.get_proxy("docker_hub")
         if proxy:
             print(f"[版本检查] 🌐 通过代理 {proxy} 访问Docker Hub")
         async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:

@@ -214,6 +214,7 @@ const {
                     <n-checkbox v-model:checked="config.proxy_services.tmdb">TMDB</n-checkbox>
                     <n-checkbox v-model:checked="config.proxy_services.bangumi">Bangumi</n-checkbox>
                     <n-checkbox v-model:checked="config.proxy_services.remote_rules">远程规则</n-checkbox>
+                    <n-checkbox v-model:checked="config.proxy_services.docker_hub">Docker Hub</n-checkbox>
                     <n-checkbox v-model:checked="config.proxy_services.jackett">Jackett</n-checkbox>
                     <n-checkbox v-model:checked="config.proxy_services.telegram">Telegram</n-checkbox>
                     <n-checkbox v-model:checked="config.proxy_services.rss">RSS 订阅</n-checkbox>

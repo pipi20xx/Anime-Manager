@@ -14,7 +14,7 @@ export function useSettings() {
     bangumi_priority: false,
     bangumi_failover: true,
     http_proxy: '',
-    proxy_services: { tmdb: false, bangumi: false, remote_rules: false },
+    proxy_services: { tmdb: false, bangumi: false, remote_rules: false, docker_hub: false },
     telegram: { bot_token: '', chat_id: '', enabled: false, notify_on_download: true, notify_on_organize: true },
     anime_priority: true,
     offline_priority: true,

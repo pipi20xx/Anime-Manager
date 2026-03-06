@@ -26,7 +26,8 @@ class ConfigManager:
             "remote_rules": False,
             "jackett": False,
             "telegram": False,
-            "rss": False
+            "rss": False,
+            "docker_hub": False
         },
         "jackett_url": "",
         "jackett_api_key": "",
