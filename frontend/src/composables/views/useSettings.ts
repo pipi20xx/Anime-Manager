@@ -44,7 +44,6 @@ export function useSettings() {
     stalled_monitor_interval: 30,
     health_check_enabled: true,
     health_check_interval: 30,
-    emby_enabled: false,
     emby_url: '',
     emby_api_key: '',
     emby_username: '',
@@ -83,9 +82,6 @@ export function useSettings() {
         if (tg.notify_on_sub_complete === undefined) tg.notify_on_sub_complete = true
       }
 
-      if (!config.value.emby_enabled) {
-        config.value.emby_enabled = false
-      }
       if (!config.value.emby_url) {
         config.value.emby_url = ''
       }

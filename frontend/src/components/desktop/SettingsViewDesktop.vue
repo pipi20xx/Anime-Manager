@@ -142,13 +142,11 @@ const {
               :emby-username="config.emby_username || ''"
               :emby-password="config.emby_password || ''"
               :emby-user-id="config.emby_user_id || ''"
-              :emby-enabled="config.emby_enabled || false"
               @update:emby-url="(val: string) => config.emby_url = val"
               @update:emby-api-key="(val: string) => config.emby_api_key = val"
               @update:emby-username="(val: string) => config.emby_username = val"
               @update:emby-password="(val: string) => config.emby_password = val"
               @update:emby-user-id="(val: string) => config.emby_user_id = val"
-              @update:emby-enabled="(val: boolean) => config.emby_enabled = val"
             />
 
             <!-- Telegram 通知设置 -->
