@@ -1,5 +1,6 @@
-import { ref, onMounted } from 'vue'
-import { useMessage, useDialog } from 'naive-ui'
+import { ref, onMounted, h } from 'vue'
+import { useMessage, useDialog, NIcon } from 'naive-ui'
+import { DeleteOutlined, CloseOutlined } from '@vicons/material'
 
 export function useStrmGeneratorView() {
   const message = useMessage()
@@ -109,18 +110,27 @@ export function useStrmGeneratorView() {
     dialog.warning({
       title: '删除任务',
       content: '确定要删除此 STRM 任务吗？',
-      positiveText: '确定',
-      onPositiveClick: async () => {
-        const configRes = await fetch(`${API_BASE}/api/config`)
-        const config = await configRes.json()
-        config.strm_tasks.splice(index, 1)
-        await fetch(`${API_BASE}/api/config`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config)
-        })
-        fetchTasks()
-      }
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;' }, [
+        h('button', {
+          style: 'padding: 8px 16px; border: 1px solid #e0e0e6; background: #fff; color: #333; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+          onClick: () => dialog.destroyAll()
+        }, [h(NIcon, { size: 16 }, { default: () => h(CloseOutlined) }), '取消']),
+        h('button', {
+          style: 'padding: 8px 16px; border: none; background: #f0a020; color: white; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px;',
+          onClick: async () => {
+            const configRes = await fetch(`${API_BASE}/api/config`)
+            const config = await configRes.json()
+            config.strm_tasks.splice(index, 1)
+            await fetch(`${API_BASE}/api/config`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(config)
+            })
+            fetchTasks()
+            dialog.destroyAll()
+          }
+        }, [h(NIcon, { size: 16 }, { default: () => h(DeleteOutlined) }), '确定'])
+      ])
     })
   }
 
