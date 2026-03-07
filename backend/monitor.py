@@ -4,7 +4,7 @@ import asyncio
 import logging
 import threading
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
@@ -195,6 +195,15 @@ class MonitorManager:
     _loop: asyncio.AbstractEventLoop = None
     _queues: Dict[str, asyncio.Queue] = {} # task_id -> queue
     _workers: List[asyncio.Task] = []
+
+    @staticmethod
+    def _get_task_config(task_id: str, is_strm: bool = False) -> Optional[Dict[str, Any]]:
+        config = ConfigManager.get_config()
+        if is_strm:
+            tasks = config.get("strm_tasks", [])
+        else:
+            tasks = config.get("organize_tasks", [])
+        return next((t for t in tasks if t.get("id") == task_id), None)
 
     @staticmethod
     def init(loop: asyncio.AbstractEventLoop):
@@ -576,15 +585,22 @@ class MonitorManager:
 
     @staticmethod
     async def _task_worker(task: Dict[str, Any], queue: asyncio.Queue):
+        task_id = task.get("id")
         is_strm = task.get("is_strm", False)
-        task_name = task.get("name", "未命名")
 
         while True:
             try:
                 file_path = await queue.get()
                 from logger import log_audit
                 
-                # 稳定性检查 (这里是 Worker 运行时，可以进行同步 IO 检查)
+                current_task = MonitorManager._get_task_config(task_id, is_strm)
+                if not current_task:
+                    log_audit("监控", "配置丢失", f"任务配置已删除: {task_id}", level="WARN")
+                    queue.task_done()
+                    continue
+                
+                task_name = current_task.get("name", "未命名")
+                
                 is_stable = await StabilityChecker.wait_for_stability(file_path)
                 if not is_stable:
                     log_audit("监控", "任务跳过", f"文件不稳定或已消失: {os.path.basename(file_path)}", level="WARN")
@@ -594,17 +610,16 @@ class MonitorManager:
                 try:
                     if is_strm:
                         log_audit("监控", "STRM任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
-                        res = await StrmProcessor.process_single_file(file_path, task)
+                        res = await StrmProcessor.process_single_file(file_path, current_task)
                     else:
                         log_audit("监控", "整理任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
-                        await Organizer.organize_video_file(file_path, task, dry_run=False)
+                        await Organizer.organize_video_file(file_path, current_task, dry_run=False)
                 except Exception as e:
                     log_audit("监控", "处理错误", f"后台执行失败: {str(e)}", level="ERROR", details=file_path)
                 
                 queue.task_done()
                 
-                # 限流间隔
-                interval = float(task.get("process_interval", 0))
+                interval = float(current_task.get("process_interval", 0))
                 if interval > 0:
                     await asyncio.sleep(interval)
                 
@@ -638,28 +653,35 @@ class MonitorManager:
 
     @staticmethod
     def _start_scheduler(task: Dict[str, Any], interval_seconds: int):
+        task_id = task.get("id")
+        is_strm = task.get("is_strm", False)
         MonitorManager._scheduler.add_job(
             MonitorManager._scheduled_scan_job,
             'interval',
             seconds=interval_seconds,
-            args=[task]
+            args=[task_id, is_strm]
         )
 
     @staticmethod
-    async def _scheduled_scan_job(task: Dict[str, Any]):
-        logger.info(f"[Scheduled] Starting scan for {task['name']}")
-        source_dir = task.get("source_dir")
-        if not os.path.exists(source_dir): return
+    async def _scheduled_scan_job(task_id: str, is_strm: bool = False):
+        current_task = MonitorManager._get_task_config(task_id, is_strm)
+        if not current_task:
+            logger.warning(f"[Scheduled] 任务配置已删除: {task_id}")
+            return
+            
+        task_name = current_task.get("name", "未命名")
+        logger.info(f"[Scheduled] Starting scan for {task_name}")
+        source_dir = current_task.get("source_dir") or current_task.get("source_path")
+        if not source_dir or not os.path.exists(source_dir): return
         
-        queue = MonitorManager._queues.get(task['id'])
+        queue = MonitorManager._queues.get(task_id)
         if not queue: return
 
-        # 使用线程池执行同步的 os.walk，防止阻塞主循环
         def _scan():
             found_files = []
-            ignore_file_regex = task.get("ignore_file_regex", [])
+            ignore_file_regex = current_task.get("ignore_file_regex", [])
             for root, dirs, files in os.walk(source_dir):
-                if task.get("ignore_dir_regex") and Organizer._is_regex_match(os.path.basename(root), task.get("ignore_dir_regex")):
+                if current_task.get("ignore_dir_regex") and Organizer._is_regex_match(os.path.basename(root), current_task.get("ignore_dir_regex")):
                     continue
 
                 for f in files:
@@ -672,10 +694,9 @@ class MonitorManager:
                         found_files.append(f_path)
             return found_files
 
-        # 在线程池中运行扫描
         files_to_process = await MonitorManager._loop.run_in_executor(None, _scan)
         
         for f_path in files_to_process:
             await queue.put(f_path)
         
-        logger.info(f"[Scheduled] Found {len(files_to_process)} files pushed to queue for {task['name']}")
+        logger.info(f"[Scheduled] Found {len(files_to_process)} files pushed to queue for {task_name}")
