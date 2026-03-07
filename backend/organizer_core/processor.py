@@ -303,26 +303,45 @@ class FileProcessor:
                                 )
                                 await db.save(history, audit=False)
                                 
-                                # [New] Save FileHash
+                                # [New] Save FileHash (按 ED2K 去重)
                                 if hash_result:
-                                    file_hash = FileHash(
-                                        sha1=hash_result.sha1,
-                                        ed2k=hash_result.ed2k,
-                                        ed2k_link=hash_result.ed2k_link,
-                                        original_filename=v_file,
-                                        file_size=hash_result.file_size,
-                                        tmdb_id=str(final.get("tmdb_id")),
-                                        title=final.get("title"),
-                                        season=final.get("season"),
-                                        episode=str(final.get("episode")),
-                                        media_type=final.get("category"),
-                                        resolution=final.get("resolution"),
-                                        team=final.get("team"),
-                                        video_encode=final.get("video_encode"),
-                                        source_path=v_path,
-                                        target_path=new_abs_path
-                                    )
-                                    await db.save(file_hash, audit=False)
+                                    existing = await db.select(FileHash).where(FileHash.ed2k == hash_result.ed2k).first()
+                                    if existing:
+                                        existing.sha1 = hash_result.sha1
+                                        existing.ed2k_link = hash_result.ed2k_link
+                                        existing.original_filename = v_file
+                                        existing.file_size = hash_result.file_size
+                                        existing.tmdb_id = str(final.get("tmdb_id"))
+                                        existing.title = final.get("title")
+                                        existing.season = final.get("season")
+                                        existing.episode = str(final.get("episode"))
+                                        existing.media_type = final.get("category")
+                                        existing.resolution = final.get("resolution")
+                                        existing.team = final.get("team")
+                                        existing.video_encode = final.get("video_encode")
+                                        existing.source_path = v_path
+                                        existing.target_path = new_abs_path
+                                        existing.calculated_at = datetime.now()
+                                        await db.save(existing, audit=False)
+                                    else:
+                                        file_hash = FileHash(
+                                            sha1=hash_result.sha1,
+                                            ed2k=hash_result.ed2k,
+                                            ed2k_link=hash_result.ed2k_link,
+                                            original_filename=v_file,
+                                            file_size=hash_result.file_size,
+                                            tmdb_id=str(final.get("tmdb_id")),
+                                            title=final.get("title"),
+                                            season=final.get("season"),
+                                            episode=str(final.get("episode")),
+                                            media_type=final.get("category"),
+                                            resolution=final.get("resolution"),
+                                            team=final.get("team"),
+                                            video_encode=final.get("video_encode"),
+                                            source_path=v_path,
+                                            target_path=new_abs_path
+                                        )
+                                        await db.save(file_hash, audit=False)
                         
                         # [Always Trigger] 使用模拟 Webhook 方式触发 STRM
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
@@ -374,26 +393,45 @@ class FileProcessor:
                         )
                         await db.save(history, audit=False)
                         
-                        # [New] Save FileHash
+                        # [New] Save FileHash (按 ED2K 去重)
                         if hash_result and v_res == "success":
-                            file_hash = FileHash(
-                                sha1=hash_result.sha1,
-                                ed2k=hash_result.ed2k,
-                                ed2k_link=hash_result.ed2k_link,
-                                original_filename=v_file,
-                                file_size=hash_result.file_size,
-                                tmdb_id=str(final.get("tmdb_id")),
-                                title=final.get("title"),
-                                season=final.get("season"),
-                                episode=str(final.get("episode")),
-                                media_type=final.get("category"),
-                                resolution=final.get("resolution"),
-                                team=final.get("team"),
-                                video_encode=final.get("video_encode"),
-                                source_path=v_path,
-                                target_path=new_abs_path
-                            )
-                            await db.save(file_hash, audit=False)
+                            existing = await db.select(FileHash).where(FileHash.ed2k == hash_result.ed2k).first()
+                            if existing:
+                                existing.sha1 = hash_result.sha1
+                                existing.ed2k_link = hash_result.ed2k_link
+                                existing.original_filename = v_file
+                                existing.file_size = hash_result.file_size
+                                existing.tmdb_id = str(final.get("tmdb_id"))
+                                existing.title = final.get("title")
+                                existing.season = final.get("season")
+                                existing.episode = str(final.get("episode"))
+                                existing.media_type = final.get("category")
+                                existing.resolution = final.get("resolution")
+                                existing.team = final.get("team")
+                                existing.video_encode = final.get("video_encode")
+                                existing.source_path = v_path
+                                existing.target_path = new_abs_path
+                                existing.calculated_at = datetime.now()
+                                await db.save(existing, audit=False)
+                            else:
+                                file_hash = FileHash(
+                                    sha1=hash_result.sha1,
+                                    ed2k=hash_result.ed2k,
+                                    ed2k_link=hash_result.ed2k_link,
+                                    original_filename=v_file,
+                                    file_size=hash_result.file_size,
+                                    tmdb_id=str(final.get("tmdb_id")),
+                                    title=final.get("title"),
+                                    season=final.get("season"),
+                                    episode=str(final.get("episode")),
+                                    media_type=final.get("category"),
+                                    resolution=final.get("resolution"),
+                                    team=final.get("team"),
+                                    video_encode=final.get("video_encode"),
+                                    source_path=v_path,
+                                    target_path=new_abs_path
+                                )
+                                await db.save(file_hash, audit=False)
 
                     if v_res == "success":
                         # [New] 清理源空目录 (向上递归)
