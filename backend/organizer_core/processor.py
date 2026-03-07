@@ -424,7 +424,7 @@ class FileProcessor:
                     # 匹配成功，触发单文件处理
                     # 注意：处理时需要将正确的映射配置传给 StrmGenerator
                     asyncio.create_task(FileProcessor._process_strm_and_notify(new_abs_path, strm_task))
-                    log_audit("整理", "联动", f"触发 STRM 生成: {os.path.basename(new_abs_path)}", details=strm_task.get("name"))
+                    log_audit("主动联动STRM", "联动STRM", f"主动触发: {os.path.basename(new_abs_path)}", details=strm_task.get("name"))
                     return
             
             # log_audit("整理", "联动", "未找到匹配的 STRM 任务", level="WARN", details=new_abs_path)
@@ -433,14 +433,37 @@ class FileProcessor:
 
     @staticmethod
     async def _process_strm_and_notify(file_path: str, task_config: Dict[str, Any]):
-        """Helper to process STRM and send notification on success"""
+        """
+        处理视频文件及其关联字幕。
+        视频生成 STRM，字幕同步到 STRM 目标目录（需开启 copy_meta）。
+        """
         from strm.strm_generator import StrmGenerator
+        
         try:
+            # 1. 处理视频文件（生成 STRM）
             res = await StrmGenerator.process_single_file(file_path, task_config)
             if res.get("status") == "success":
                 await NotificationManager.push_strm_link_notification(
                     os.path.basename(file_path), 
                     task_config.get("name", "Unknown Task")
                 )
+            
+            # 2. 处理同目录下的字幕文件（需开启同步元数据）
+            if task_config.get("copy_meta", False):
+                video_dir = os.path.dirname(file_path)
+                video_base = os.path.splitext(os.path.basename(file_path))[0]
+                
+                try:
+                    all_files = await asyncio.to_thread(os.listdir, video_dir)
+                    for f in all_files:
+                        f_ext = os.path.splitext(f)[1].lower()
+                        if f_ext in FileProcessor.SUB_EXTS and f.startswith(video_base):
+                            sub_path = os.path.join(video_dir, f)
+                            sub_res = await StrmGenerator.process_single_file(sub_path, task_config)
+                            if sub_res.get("status") == "success":
+                                log_audit("STRM", "联动", f"同步字幕: {f}", details=task_config.get("name"))
+                except Exception as scan_e:
+                    log_audit("STRM", "联动", f"扫描字幕失败: {scan_e}", level="WARN")
+                    
         except Exception as e:
             log_audit("STRM", "联动异常", str(e), level="ERROR")
