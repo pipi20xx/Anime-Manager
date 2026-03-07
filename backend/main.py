@@ -14,6 +14,21 @@ from auth_utils import decode_access_token
 
 logger = logging.getLogger(__name__)
 
+def _get_version():
+    paths = [
+        "/app/VERSION",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "VERSION"),
+    ]
+    for version_file in paths:
+        try:
+            with open(version_file, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        except Exception:
+            continue
+    return "unknown"
+
+__version__ = _get_version()
+
 # Import Routers
 from routers import (
     recognition, organizer, cache, strm, config, 
@@ -26,9 +41,9 @@ app = FastAPI(
 番剧管家后端管理接口。
 提供高性能动画识别、全自动整理重命名、RSS 订阅管理以及 PostgreSQL 超级元数据中心。
     """,
-    version="2.1.0",
-    docs_url=None,   # 禁用默认路径
-    redoc_url=None   # 禁用默认路径
+    version=__version__,
+    docs_url=None,
+    redoc_url=None
 )
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 

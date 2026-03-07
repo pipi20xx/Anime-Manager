@@ -906,31 +906,30 @@ async def check_version():
     使用2小时缓存机制，避免频繁请求Docker Hub API。
     """
     import time
-    from models import DiscoverCache
+    from main import __version__
     
     current_time = time.time()
     
-    # 检查缓存是否有效
     if _version_cache["version"] and _version_cache["timestamp"]:
         cache_age = current_time - _version_cache["timestamp"]
         if cache_age < _version_cache["cache_duration"]:
+            latest = _version_cache["version"]
+            if latest and latest != __version__:
+                log_audit("系统", "版本检查", f"发现新版本: {latest} (当前: {__version__})", level="INFO")
             return {
+                "current_version": __version__,
                 "latest_version": _version_cache["version"],
                 "cached": True,
                 "cache_age_seconds": int(cache_age)
             }
     
-    # 缓存过期或不存在，从Docker Hub获取最新版本
     try:
         proxy = ConfigManager.get_proxy("docker_hub")
-        if proxy:
-            print(f"[版本检查] 🌐 通过代理 {proxy} 访问Docker Hub")
         async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:
             resp = await client.get("https://hub.docker.com/v2/repositories/pipi20xx/anime-manager/tags/")
             if resp.status_code == 200:
                 data = resp.json()
                 if data.get("results") and len(data["results"]) > 0:
-                    # 过滤掉 "latest" 标签，获取第一个真正的版本号
                     for tag_info in data["results"]:
                         tag_name = tag_info["name"]
                         if tag_name != "latest":
@@ -938,15 +937,21 @@ async def check_version():
                             _version_cache["version"] = latest_tag
                             _version_cache["timestamp"] = current_time
                             
+                            if latest_tag != __version__:
+                                log_audit("系统", "版本检查", f"发现新版本: {latest_tag} (当前: {__version__})")
+                            else:
+                                log_audit("系统", "版本检查", f"已是最新版本: {__version__}")
+                            
                             return {
+                                "current_version": __version__,
                                 "latest_version": latest_tag,
                                 "cached": False
                             }
     except Exception as e:
-        print(f"获取Docker Hub版本失败: {e}")
+        log_audit("系统", "版本检查", f"检查失败: {e}", level="WARN")
     
-    # 如果获取失败，返回缓存版本或空值
     return {
+        "current_version": __version__,
         "latest_version": _version_cache["version"] or "",
         "cached": True,
         "error": "无法获取最新版本信息"
