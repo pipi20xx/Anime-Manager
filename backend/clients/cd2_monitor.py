@@ -34,6 +34,7 @@ class CD2TransferMonitor:
     def _refresh_config(self):
         """重新加载配置"""
         self.client_config = self._get_cd2_config()
+        self.monitor_interval = self.client_config.get("monitor_interval", 5) if self.client_config else 5
 
     @classmethod
     def start(cls):
@@ -41,10 +42,6 @@ class CD2TransferMonitor:
             cls._instance = cls()
         else:
             cls._instance._refresh_config()
-        
-        if cls._instance._thread and cls._instance._thread.is_alive():
-            logger.debug("CD2 监控线程已在运行中")
-            return
 
         if not cls._instance.client_config:
             logger.warning("未找到有效的 CD2 客户端配置，传输监控无法启动。")
@@ -60,14 +57,17 @@ class CD2TransferMonitor:
             return
 
         cls._stop_event.clear()
-        cls._thread = threading.Thread(target=cls._instance._run_loop, name="CD2MonitorThread", daemon=True)
-        cls._thread.start()
-        
+
+        if cls._instance._thread and cls._instance._thread.is_alive():
+            logger.debug("CD2 监控线程已在运行中，仅重启看门狗")
+        else:
+            cls._thread = threading.Thread(target=cls._instance._run_loop, name="CD2MonitorThread", daemon=True)
+            cls._thread.start()
+            log_audit("CD2监控", "启动", "CD2 传输监控服务已启动 🚀")
+
         if cls._watchdog_thread is None or not cls._watchdog_thread.is_alive():
             cls._watchdog_thread = threading.Thread(target=cls._watchdog, name="CD2WatchdogThread", daemon=True)
             cls._watchdog_thread.start()
-        
-        log_audit("CD2监控", "启动", "CD2 传输监控服务已启动 🚀")
 
     @classmethod
     def stop(cls):
@@ -198,8 +198,7 @@ class CD2TransferMonitor:
                     
                     del self.last_scan_cache[path]
 
-                # 轮询间隔：5秒
-                time.sleep(5)
+                time.sleep(self.monitor_interval)
 
             except grpc.RpcError as e:
                 # 忽略一些常规超时或断连，尝试重连

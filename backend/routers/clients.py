@@ -8,6 +8,7 @@ from clients.qbittorrent import QBClient
 from clients.cd2 import CD2Client
 from clients.jackett import JackettClient
 from logger import log_audit
+from monitor import MonitorManager
 import requests
 
 router = APIRouter(tags=["下载与外部客户端"])
@@ -46,18 +47,17 @@ async def save_clients(clients: List[Dict[str, Any]] = Body(...)):
     """
     批量更新下载客户端配置。
     """
-    # 限制只能有一个 CD2 客户端
     cd2_clients = [c for c in clients if c.get('type') == 'cd2']
     if len(cd2_clients) > 1:
         raise HTTPException(status_code=400, detail="系统中仅允许配置一个 CloudDrive2 客户端实例。")
 
-    # Add IDs if missing (simple generation)
     import uuid
     for c in clients:
         if not c.get('id'):
             c['id'] = str(uuid.uuid4())[:8]
     
     ConfigManager.update_config({"download_clients": clients})
+    await MonitorManager.reload()
     log_audit("系统", "客户端更新", f"更新了下载客户端配置 (共 {len(clients)} 个)")
     return {"message": "Clients configuration saved."}
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
   NModal, NSpace, NFormItem, NInput, NSelect, 
-  NButton, NIcon, NAlert, NSwitch
+  NButton, NIcon, NAlert, NSwitch, NInputNumber
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
@@ -81,8 +81,14 @@ const {
                 <template #checked>已开启后台传输监控</template>
                 <template #unchecked>开启后台传输监控</template>
             </n-switch>
-            <span style="font-size: 12px; color: #aaa">自动轮询云端复制/上传任务，完成后触发 STRM 生成</span>
          </n-space>
+      </n-form-item>
+
+      <n-form-item v-if="form.type === 'cd2' && form.monitor_enabled" label="监控间隔 (秒)">
+        <n-input-number v-model:value="form.monitor_interval" :min="1" :max="60" placeholder="5" style="width: 120px" />
+        <template #feedback>
+          轮询 CD2 传输任务列表的间隔，默认 5 秒。gRPC 开销很小，可适当降低。
+        </template>
       </n-form-item>
 
       <n-form-item label="选项">

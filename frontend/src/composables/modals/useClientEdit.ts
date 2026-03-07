@@ -16,6 +16,7 @@ export function useClientEdit(props: any, emit: any) {
     default_save_path: '',
     mount_path: '',
     monitor_enabled: false,
+    monitor_interval: 5,
     is_default: false
   })
 
@@ -48,6 +49,7 @@ export function useClientEdit(props: any, emit: any) {
         form.default_save_path = ''
         form.mount_path = ''
         form.monitor_enabled = true
+        form.monitor_interval = 5
         form.is_default = false
       } else {
         Object.assign(form, JSON.parse(JSON.stringify(props.clientData)))

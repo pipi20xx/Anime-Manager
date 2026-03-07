@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
   NModal, NSpace, NFormItem, NInput, NSelect, 
-  NButton, NIcon, NAlert, NSwitch, NForm
+  NButton, NIcon, NAlert, NSwitch, NForm, NInputNumber
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
@@ -77,6 +77,11 @@ const {
                 <template #unchecked>开启后台传输监控</template>
             </n-switch>
             <div style="font-size: 12px; color: #aaa; margin-top: 4px">轮询云端任务触发STRM联动</div>
+        </n-form-item>
+
+        <n-form-item v-if="form.type === 'cd2' && form.monitor_enabled" label="监控间隔 (秒)">
+          <n-input-number v-model:value="form.monitor_interval" :min="1" :max="60" placeholder="5" style="width: 100%" />
+          <div style="font-size: 12px; color: #aaa; margin-top: 4px">默认 5 秒，gRPC 开销小可适当降低</div>
         </n-form-item>
 
         <n-form-item label="选项">
