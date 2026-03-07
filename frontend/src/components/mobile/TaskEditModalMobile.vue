@@ -137,9 +137,14 @@ const {
               </n-space>
             </n-form-item>
             <n-form-item label="哈希计算" class="mt-2">
-              <n-space align="center">
-                <n-switch v-model:value="form.calculate_hash" />
-                <span style="font-size: 12px; color: #666;">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+              <n-space vertical :size="8">
+                <n-space align="center">
+                  <n-switch v-model:value="form.calculate_hash" />
+                  <span style="font-size: 12px; color: #666;">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                </n-space>
+                <div style="font-size: 11px; color: #e57373; padding: 4px 8px; background: #ffebee; border-radius: 4px;">
+                  ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
+                </div>
               </n-space>
             </n-form-item>
           </n-space>

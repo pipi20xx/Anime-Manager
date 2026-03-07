@@ -85,6 +85,7 @@ async def api_audit_middleware(request: Request, call_next):
         "/api/system/openapi.json",
         "/api/organize/execute", 
         "/api/organize/stream",
+        "/api/organize/background_tasks",
         "/api/strm/execute"
     ]
     if any(p in path for p in skip_paths):
