@@ -233,11 +233,23 @@ class TMDBProvider:
         if cached: return cached
 
         params = {"query": query, "include_adult": "false", "language": lang}
-        if year: params["year" if media_type == "movie" else "first_air_date_year"] = year
+        
+        # 只有电影才在第一次搜索时带年份，TV 第一次不带年份
+        if year and media_type == "movie":
+            params["year"] = year
+        
         data = await self._fetch(f"/search/{media_type}", params, logs=logs)
         results = (data or {}).get("results", [])
+        
+        # 如果没有结果，进行第二次搜索
         if not results and year:
-            params.pop("year" if media_type == "movie" else "first_air_date_year")
+            if media_type == "tv":
+                # TV 第一次没带年份，第二次尝试带年份
+                params["first_air_date_year"] = year
+            else:
+                # 电影第一次带了年份，第二次尝试不带年份
+                params.pop("year")
+            
             data_retry = await self._fetch(f"/search/{media_type}", params, logs=logs)
             if data_retry: results = data_retry.get("results", [])
             
