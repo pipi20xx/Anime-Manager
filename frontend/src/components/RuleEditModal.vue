@@ -5,7 +5,6 @@ import {
   NIcon, NGrid, NGi, NButton
 } from 'naive-ui'
 import {
-  TextFormatOutlined as RuleIcon,
   CodeOutlined as VariableIcon
 } from '@vicons/material'
 
@@ -102,15 +101,25 @@ const handleSave = () => {
         <n-input v-model:value="form.name" placeholder="起个名字方便辨认" />
       </n-form-item>
       
-      <div class="p-box">
-        <div class="p-l"><n-icon><RuleIcon /></n-icon> 电影命名模板</div>
-        <n-input v-model:value="form.movie_pattern" type="textarea" :autosize="{minRows:2}" class="mono-i" placeholder="{title} ({year})/{title} ({year})" />
-      </div>
+      <n-form-item label="电影命名模板">
+        <n-input 
+          v-model:value="form.movie_pattern" 
+          type="textarea" 
+          :autosize="{minRows:2}" 
+          placeholder="{title} ({year})/{title} ({year})"
+          style="font-family: var(--code-font);"
+        />
+      </n-form-item>
       
-      <div class="p-box">
-        <div class="p-l"><n-icon><RuleIcon /></n-icon> 剧集命名模板</div>
-        <n-input v-model:value="form.tv_pattern" type="textarea" :autosize="{minRows:2}" class="mono-i" placeholder="{title} ({year})/Season {season}/S{season_02}E{episode_02} - {title}" />
-      </div>
+      <n-form-item label="剧集命名模板">
+        <n-input 
+          v-model:value="form.tv_pattern" 
+          type="textarea" 
+          :autosize="{minRows:2}" 
+          placeholder="{title} ({year})/Season {season}/S{season_02}E{episode_02} - {title}"
+          style="font-family: var(--code-font);"
+        />
+      </n-form-item>
       
       <n-collapse class="mt-4">
         <n-collapse-item title="可用变量手册" name="1">
@@ -138,20 +147,6 @@ const handleSave = () => {
 </template>
 
 <style scoped>
-.p-box { 
-  background: var(--app-surface-card); 
-  padding: 16px; 
-  border-radius: var(--card-border-radius, 8px); 
-  border: 1px solid var(--app-border-light); 
-}
-.p-l { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: var(--n-text-color-3); margin-bottom: 8px; }
-.mono-i :deep(textarea) { 
-  font-family: var(--code-font); 
-  font-size: 13px; 
-  background: var(--app-surface-inner) !important; 
-  color: var(--n-info-color); 
-  border-radius: var(--button-border-radius, 4px);
-}
 .v-manual { 
   padding: 12px; 
   background: var(--app-surface-inner); 

@@ -12,14 +12,7 @@ import UserMappingView from '../../views/UserMappingView.vue'
 import {
   PlayArrowOutlined as RunIcon,
   RefreshOutlined as RefreshIcon,
-  DeleteOutlined as DeleteIcon,
-  StorageOutlined as DbIcon,
-  DnsOutlined as MetaIcon,
-  TerminalOutlined as SqlIcon,
-  SettingsOutlined as ConfigIcon,
-  CategoryOutlined as RuleIcon,
-  BuildOutlined as BuildIcon,
-  LabelOutlined as MappingIcon
+  DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import { useDatabase } from '../../composables/views/useDatabase'
 
@@ -131,22 +124,18 @@ const dataTableColumns = computed(() => {
 
     <n-tabs type="card" animated v-model:value="activeTab" class="main-tabs">
       <n-tab-pane name="metadata" tab="元数据资产">
-        <template #tab><n-space :size="4" align="center"><n-icon><MetaIcon /></n-icon> 元数据资产</n-space></template>
         <div class="pane-content"><TmdbFullDataView /></div>
       </n-tab-pane>
 
       <n-tab-pane name="rules" tab="二级分类规则">
-        <template #tab><n-space :size="4" align="center"><n-icon><RuleIcon /></n-icon> 二级分类规则</n-space></template>
         <div class="pane-content"><SecondaryRuleView /></div>
       </n-tab-pane>
 
       <n-tab-pane name="mapping" tab="ID映射管理">
-        <template #tab><n-space :size="4" align="center"><n-icon><MappingIcon /></n-icon> ID映射管理</n-space></template>
         <div class="pane-content"><UserMappingView /></div>
       </n-tab-pane>
 
       <n-tab-pane name="lab" tab="SQL 实验室">
-        <template #tab><n-space :size="4" align="center"><n-icon><SqlIcon /></n-icon> SQL 实验室</n-space></template>
         <n-space vertical size="large" class="pane-content">
           <n-alert type="warning" title="高级操作提示">此处直接操作生产数据库。如果您不熟悉 SQL 语法，请谨慎执行修改操作。</n-alert>
           <n-card bordered size="small">
@@ -174,12 +163,10 @@ const dataTableColumns = computed(() => {
       </n-tab-pane>
 
       <n-tab-pane name="config" tab="引擎配置">
-        <template #tab><n-space :size="4" align="center"><n-icon><ConfigIcon /></n-icon> 引擎配置</n-space></template>
         <div class="pane-content"><DatabaseConfig /></div>
       </n-tab-pane>
 
       <n-tab-pane name="maintenance" tab="维护中心">
-        <template #tab><n-space :size="4" align="center"><n-icon><BuildIcon /></n-icon> 维护中心</n-space></template>
         <div class="pane-content">
           <MaintenanceManager />
         </div>

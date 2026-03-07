@@ -8,10 +8,7 @@ import {
 import {
   ContentCopyOutlined as CopyIcon,
   RefreshOutlined as RefreshIcon,
-  HistoryOutlined as LogIcon,
-  SettingsOutlined as SettingIcon,
-  DescriptionOutlined as DocIcon,
-  VpnKeyOutlined as KeyIcon
+  DescriptionOutlined as DocIcon
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
 
@@ -144,13 +141,6 @@ const logColumns = [
       >
         <!-- 板块 1: API 密钥 -->
         <n-tab-pane name="keys" tab="API 密钥">
-          <template #tab>
-            <n-space :size="8" align="center">
-              <n-icon><KeyIcon /></n-icon>
-              <span>API 密钥</span>
-            </n-space>
-          </template>
-          
           <div class="tab-content">
             <div class="content-header">
               <h3>访问令牌管理</h3>
@@ -271,13 +261,6 @@ const logColumns = [
 
         <!-- 板块 2: 设置 -->
         <n-tab-pane name="settings" tab="设置">
-          <template #tab>
-            <n-space :size="8" align="center">
-              <n-icon><SettingIcon /></n-icon>
-              <span>设置</span>
-            </n-space>
-          </template>
-
           <div class="tab-content small-content">
             <div class="content-header">
               <h3>API 功能配置</h3>
@@ -314,14 +297,7 @@ const logColumns = [
         </n-tab-pane>
 
         <!-- 板块 3: 访问日志 -->
-        <n-tab-pane name="logs" tab="API 访问日志">
-          <template #tab>
-            <n-space :size="8" align="center">
-              <n-icon><LogIcon /></n-icon>
-              <span>访问日志</span>
-            </n-space>
-          </template>
-
+        <n-tab-pane name="logs" tab="访问日志">
           <div class="tab-content full-width">
             <div class="table-actions">
               <n-button secondary @click="fetchLogs" :loading="logLoading">
@@ -343,13 +319,6 @@ const logColumns = [
 
         <!-- 板块 4: API 文档 -->
         <n-tab-pane name="docs" tab="API 文档">
-          <template #tab>
-            <n-space :size="8" align="center">
-              <n-icon><DocIcon /></n-icon>
-              <span>API 文档</span>
-            </n-space>
-          </template>
-
           <div class="tab-content docs-container">
             <div class="docs-wrapper">
               <iframe 
