@@ -23,6 +23,10 @@ async def update_config(config: dict):
     更新并保存全局配置，同时触发后台监控器的动态重载。
     """
     ConfigManager.update_config(config)
+    from clients.manager import ClientManager
+    ClientManager.clear_cache()
+    from database import init_engine
+    init_engine()
     await MonitorManager.reload()
     log_audit("系统", "配置", "更新系统配置")
     return {"status": "success"}

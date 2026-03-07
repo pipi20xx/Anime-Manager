@@ -17,6 +17,12 @@ class ClientManager:
     _instances: Dict[str, BaseClient] = {}
 
     @staticmethod
+    def clear_cache():
+        """清除客户端实例缓存，配置更新时调用"""
+        ClientManager._instances.clear()
+        logger.info("客户端实例缓存已清除")
+
+    @staticmethod
     async def add_task(client_id: str, url: str, **kwargs) -> Tuple[bool, str]:
         """
         Unified entry point to add a download task.
