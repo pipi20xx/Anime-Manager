@@ -271,6 +271,28 @@ export function useCalendar() {
     } catch (e) { message.error('同步失败') }
   }
 
+  const refreshAllSubjects = async () => {
+    if (trackingList.value.length === 0) {
+      message.info('没有需要刷新的追踪项')
+      return
+    }
+    loading.value = true
+    message.info(`正在刷新 ${trackingList.value.length} 个追踪项...`)
+    try {
+      const API_BASE = (import.meta.env.VITE_API_BASE as string) || (window.location.origin)
+      const res = await fetch(`${API_BASE}/api/calendar/subjects/refresh_all`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        message.success(data.message)
+        fetchData()
+      }
+    } catch (e) {
+      message.error('批量刷新失败')
+    } finally {
+      loading.value = false
+    }
+  }
+
   const deleteSubject = async (id: number) => {
     try {
       const API_BASE = (import.meta.env.VITE_API_BASE as string) || (window.location.origin)
@@ -304,6 +326,7 @@ export function useCalendar() {
     saveEdit,
     handleAddSubject,
     refreshSubject,
+    refreshAllSubjects,
     deleteSubject
   }
 }

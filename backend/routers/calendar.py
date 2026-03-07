@@ -55,6 +55,47 @@ async def refresh_subject(subject_id: int):
             return {"success": True, "message": "已同步最新放送计划"}
     return {"success": False, "message": "无法从 TMDB 获取数据"}
 
+@router.post("/subjects/refresh_all", summary="批量刷新所有条目的放送日期")
+async def refresh_all_subjects():
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    async with db.session_scope():
+        stmt = select(CalendarSubject).where(CalendarSubject.media_type == "tv")
+        subjects = await db.all(CalendarSubject, stmt)
+        
+        if not subjects:
+            return {"success": True, "message": "没有需要刷新的剧集", "updated": 0}
+        
+        logger.info(f"✨ [日历] 批量刷新开始: 共 {len(subjects)} 个追踪项")
+        tmdb = TMDBProvider()
+        updated_count = 0
+        failed_count = 0
+        
+        for idx, subject in enumerate(subjects, 1):
+            try:
+                eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
+                if eps:
+                    subject.episodes_cache = eps
+                    subject.first_air_date = eps[0]["air_date"]
+                    await db.save(subject)
+                    updated_count += 1
+                    logger.info(f"  [{idx}/{len(subjects)}] ✅ {subject.title} S{subject.season} - 已同步 {len(eps)} 集放送信息")
+                else:
+                    failed_count += 1
+                    logger.warning(f"  [{idx}/{len(subjects)}] ⚠️ {subject.title} S{subject.season} - TMDB 无数据")
+            except Exception as e:
+                failed_count += 1
+                logger.error(f"  [{idx}/{len(subjects)}] ❌ {subject.title} S{subject.season} - 刷新失败: {str(e)}")
+        
+        logger.info(f"✨ [日历] 批量刷新完成: 成功 {updated_count} 个，失败 {failed_count} 个")
+        return {
+            "success": True, 
+            "message": f"已刷新 {updated_count} 部剧集" + (f"，{failed_count} 部失败" if failed_count else ""),
+            "updated": updated_count,
+            "failed": failed_count
+        }
+
 @router.delete("/subjects/{subject_id}", summary="删除日历追踪项")
 
 async def delete_subject(subject_id: int):

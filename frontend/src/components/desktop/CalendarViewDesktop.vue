@@ -41,6 +41,7 @@ const {
   saveEdit,
   handleAddSubject,
   refreshSubject,
+  refreshAllSubjects,
   deleteSubject
 } = useCalendar()
 </script>
@@ -108,6 +109,13 @@ const {
     <n-modal v-model:show="showManageModal" preset="card" style="width: 95%; max-width: 1200px" content-style="padding: 0" title="追踪管理">
       <n-tabs type="line" animated style="height: 80vh">
         <n-tab-pane name="list" tab="正在追踪" style="height: 100%; display: flex; flex-direction: column">
+          <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
+            <n-text depth="3" style="font-size: 12px">共 {{ trackingList.length }} 个追踪项</n-text>
+            <n-button type="primary" size="small" @click="refreshAllSubjects">
+              <template #icon><n-icon><RefreshIcon /></n-icon></template>
+              全部刷新
+            </n-button>
+          </div>
           <div class="scroll-container-full">
             <n-list hoverable class="compact-list">
               <n-list-item v-for="sub in trackingList" :key="sub.id">
