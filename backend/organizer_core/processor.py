@@ -3,6 +3,8 @@ import json
 import asyncio
 import logging
 from typing import Dict, Any, List, Tuple, Optional
+from datetime import datetime
+from sqlmodel import select, and_
 
 from recognition.recognizer import MovieRecognizer
 from .renamer import Renamer
@@ -48,9 +50,8 @@ class FileProcessor:
         if not dry_run and not ignore_history:
             from database import db
             from models import OrganizeHistory
-            from sqlmodel import select, and_
             async with db.session_scope():
-                # 只有当此前确实“成功”整理过该文件时，才跳过
+                # 只有当此前确实"成功"整理过该文件时，才跳过
                 stmt = select(OrganizeHistory).where(
                     and_(
                         OrganizeHistory.source_path == v_path,
@@ -305,7 +306,8 @@ class FileProcessor:
                                 
                                 # [New] Save FileHash (按 ED2K 去重)
                                 if hash_result:
-                                    existing = await db.select(FileHash).where(FileHash.ed2k == hash_result.ed2k).first()
+                                    stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
+                                    existing = await db.first(FileHash, stmt)
                                     if existing:
                                         existing.sha1 = hash_result.sha1
                                         existing.ed2k_link = hash_result.ed2k_link
@@ -395,7 +397,8 @@ class FileProcessor:
                         
                         # [New] Save FileHash (按 ED2K 去重)
                         if hash_result and v_res == "success":
-                            existing = await db.select(FileHash).where(FileHash.ed2k == hash_result.ed2k).first()
+                            stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
+                            existing = await db.first(FileHash, stmt)
                             if existing:
                                 existing.sha1 = hash_result.sha1
                                 existing.ed2k_link = hash_result.ed2k_link
