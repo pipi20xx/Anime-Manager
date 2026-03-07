@@ -133,6 +133,12 @@ const {
                 <span style="font-size: 12px; color: #666;">检测 Emby 库是否存在，存在则跳过处理</span>
               </n-space>
             </n-form-item>
+            <n-form-item label="哈希计算" class="mt-2">
+              <n-space align="center">
+                <n-switch v-model:value="form.calculate_hash" />
+                <span style="font-size: 12px; color: #666;">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+              </n-space>
+            </n-form-item>
           </n-space>
         </n-tab-pane>
       </n-tabs>

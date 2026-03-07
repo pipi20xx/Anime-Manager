@@ -1,7 +1,8 @@
 import os
 import json
 import asyncio
-from typing import Dict, Any, List, Tuple
+import logging
+from typing import Dict, Any, List, Tuple, Optional
 
 from recognition.recognizer import MovieRecognizer
 from .renamer import Renamer
@@ -10,6 +11,9 @@ from logger import log_audit
 from clients.manager import ClientManager
 from .executor import FileExecutor
 from notification import NotificationManager
+from utils.hash_calculator import HashCalculator, HashResult
+
+logger = logging.getLogger(__name__)
 
 class FileProcessor:
     SUB_EXTS = ['.ass', '.srt', '.ssa', '.sub', '.idx', '.vtt']
@@ -213,6 +217,17 @@ class FileProcessor:
                 related_abs_new = os.path.join(target_dir, related_rel_path)
                 plan_items.append((related_abs_old, related_abs_new))
 
+            # [New] Calculate Hash before move (if enabled)
+            hash_result: Optional[HashResult] = None
+            if task.get("calculate_hash", False) and not dry_run:
+                log_audit("整理", "哈希计算", f"开始计算文件哈希: {v_file}")
+                hash_result = await HashCalculator.calculate_hashes(v_path)
+                if hash_result:
+                    log_audit("整理", "哈希完成", f"SHA1: {hash_result.sha1}")
+                    log_audit("整理", "ED2K链接", hash_result.ed2k_link)
+                else:
+                    log_audit("整理", "哈希失败", f"无法计算哈希: {v_file}", level="WARN")
+
             # Execute
             if not dry_run and action_type in ["cd2_move", "cd2_copy"]:
                 # --- Optimized CD2 Path ---
@@ -269,7 +284,7 @@ class FileProcessor:
 
                         # [Record History]
                         if not dry_run:
-                            from models import OrganizeHistory
+                            from models import OrganizeHistory, FileHash
                             from database import db
                             async with db.session_scope():
                                 history = OrganizeHistory(
@@ -286,7 +301,28 @@ class FileProcessor:
                                     video_encode=final.get("video_encode"),
                                     year=str(final.get("year")) if final.get("year") else None
                                 )
-                                await db.save(history, audit=False)                        
+                                await db.save(history, audit=False)
+                                
+                                # [New] Save FileHash
+                                if hash_result:
+                                    file_hash = FileHash(
+                                        sha1=hash_result.sha1,
+                                        ed2k=hash_result.ed2k,
+                                        ed2k_link=hash_result.ed2k_link,
+                                        original_filename=v_file,
+                                        file_size=hash_result.file_size,
+                                        tmdb_id=str(final.get("tmdb_id")),
+                                        title=final.get("title"),
+                                        season=final.get("season"),
+                                        episode=str(final.get("episode")),
+                                        media_type=final.get("category"),
+                                        resolution=final.get("resolution"),
+                                        team=final.get("team"),
+                                        video_encode=final.get("video_encode"),
+                                        source_path=v_path,
+                                        target_path=new_abs_path
+                                    )
+                                    await db.save(file_hash, audit=False)
                         
                         # [Always Trigger] 使用模拟 Webhook 方式触发 STRM
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
@@ -317,7 +353,7 @@ class FileProcessor:
                 # STRM Linkage for video only
                 if not dry_run and src == v_path:
                     # [Record History]
-                    from models import OrganizeHistory
+                    from models import OrganizeHistory, FileHash
                     from database import db
                     async with db.session_scope():
                         history = OrganizeHistory(
@@ -337,6 +373,27 @@ class FileProcessor:
                             message=None if v_res == "success" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}"
                         )
                         await db.save(history, audit=False)
+                        
+                        # [New] Save FileHash
+                        if hash_result and v_res == "success":
+                            file_hash = FileHash(
+                                sha1=hash_result.sha1,
+                                ed2k=hash_result.ed2k,
+                                ed2k_link=hash_result.ed2k_link,
+                                original_filename=v_file,
+                                file_size=hash_result.file_size,
+                                tmdb_id=str(final.get("tmdb_id")),
+                                title=final.get("title"),
+                                season=final.get("season"),
+                                episode=str(final.get("episode")),
+                                media_type=final.get("category"),
+                                resolution=final.get("resolution"),
+                                team=final.get("team"),
+                                video_encode=final.get("video_encode"),
+                                source_path=v_path,
+                                target_path=new_abs_path
+                            )
+                            await db.save(file_hash, audit=False)
 
                     if v_res == "success":
                         # [New] 清理源空目录 (向上递归)

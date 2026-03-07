@@ -248,6 +248,29 @@ class OrganizeHistory(SQLModel, table=True):
     status: str = Field(default="success") # success, failed, skipped
     message: Optional[str] = None
 
+class FileHash(SQLModel, table=True):
+    __tablename__ = "file_hashes"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "文件哈希"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    sha1: str = Field(index=True)
+    ed2k: str = Field(index=True)
+    ed2k_link: str
+    original_filename: str
+    file_size: Optional[int] = None
+    tmdb_id: Optional[str] = Field(default=None, index=True)
+    title: Optional[str] = None
+    season: Optional[int] = None
+    episode: Optional[str] = None
+    media_type: Optional[str] = None
+    resolution: Optional[str] = None
+    team: Optional[str] = None
+    video_encode: Optional[str] = None
+    source_path: str = Field(index=True)
+    target_path: Optional[str] = None
+    calculated_at: datetime = Field(default_factory=datetime.now)
+
+
 class DiscoverCache(SQLModel, table=True):
     __tablename__ = "discover_cache"
     __table_args__ = {"schema": get_public_schema()}
