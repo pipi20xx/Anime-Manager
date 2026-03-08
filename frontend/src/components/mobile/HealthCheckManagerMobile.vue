@@ -63,7 +63,7 @@ const {
                   {{ getStatusInfo(item.last_status).text }}
                 </n-tag>
               </template>
-              <div style="font-size: 12px; color: #888; margin-top: 4px;">
+              <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
                 最后检查: {{ formatDate(item.last_check) }}
               </div>
             </n-thing>
@@ -89,7 +89,7 @@ const {
           </n-list-item>
         </n-list>
         
-        <div v-else style="padding: 20px; text-align: center; color: #666;">
+        <div v-else style="padding: 20px; text-align: center; color: var(--text-muted);">
           暂无监测项目
         </div>
 

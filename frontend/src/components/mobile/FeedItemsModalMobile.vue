@@ -132,14 +132,14 @@ watch(() => props.show, (newVal) => {
              </template>
           </n-list-item>
         </n-list>
-        <div v-if="loading" style="padding: 10px; text-align: center; color: #666;">加载中...</div>
-        <div v-if="!loading && items.length === 0" style="padding: 20px; text-align: center; color: #666;">暂无数据</div>
+        <div v-if="loading" style="padding: 10px; text-align: center; color: var(--text-muted);">加载中...</div>
+        <div v-if="!loading && items.length === 0" style="padding: 20px; text-align: center; color: var(--text-muted);">暂无数据</div>
       </div>
     </div>
     
     <template #footer>
       <n-space justify="space-between" align="center">
-        <div style="font-size: 12px; color: #666">
+        <div style="font-size: 12px; color: var(--text-muted)">
           已加载 {{ items.length }} 条 <span v-if="loading && offset > 0">...</span>
         </div>
         <n-space>
@@ -163,7 +163,7 @@ watch(() => props.show, (newVal) => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #444;
+  background: var(--text-tertiary);
   margin-top: 10px;
 }
 .status-dot.downloaded {
@@ -181,7 +181,7 @@ watch(() => props.show, (newVal) => {
 
 .item-desc-text {
   font-size: 11px;
-  color: #777;
+  color: var(--text-tertiary);
   margin-top: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -191,7 +191,7 @@ watch(() => props.show, (newVal) => {
 
 .item-pub-date {
   font-size: 10px;
-  color: #555;
+  color: var(--text-muted);
   margin-top: 4px;
   font-family: monospace;
 }

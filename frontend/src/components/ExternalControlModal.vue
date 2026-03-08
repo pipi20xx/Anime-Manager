@@ -257,6 +257,6 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
 .modal-tab-content.small { max-width: 500px; margin: 0 auto; }
 .modal-tab-content.docs { height: 60vh; padding: 0; overflow: hidden; }
 .docs-iframe { width: 100%; height: 100%; border: none; background: white; }
-.detail-box { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; max-height: 400px; overflow-y: auto; }
+.detail-box { background: var(--bg-surface); padding: 12px; border-radius: 8px; max-height: 400px; overflow-y: auto; }
 .detail-box pre { margin: 0; white-space: pre-wrap; font-size: 12px; font-family: monospace; }
 </style>

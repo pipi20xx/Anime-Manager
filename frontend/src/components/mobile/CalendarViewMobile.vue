@@ -214,7 +214,7 @@ const {
   border-bottom: 1px solid var(--app-border-light);
 }
 .day-label { font-size: 16px; font-weight: bold; color: var(--n-primary-color); }
-.day-date { font-size: 12px; color: #888; }
+.day-date { font-size: 12px; color: var(--text-tertiary); }
 
 .day-items { padding: 8px 12px; }
 .agenda-item { 
@@ -235,12 +235,12 @@ const {
 .empty-agenda { padding: 40px 0; text-align: center; }
 
 .no-data-text {
-  color: #ff6b6b;
+  color: var(--color-error);
   font-weight: bold;
 }
 
-.weekday-header { font-size: 12px; font-weight: bold; color: #888; margin: 12px 0 8px; }
+.weekday-header { font-size: 12px; font-weight: bold; color: var(--text-tertiary); margin: 12px 0 8px; }
 .discover-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.discover-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+.discover-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 8px; background: var(--bg-surface); border-radius: 8px; }
 .discover-name { font-size: 11px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; height: 28px; }
 </style>

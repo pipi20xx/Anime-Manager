@@ -252,7 +252,7 @@ const handleRefresh = () => {
 <style scoped>
 .history-view { width: 100%; padding: 0; }
 .page-header { display: flex; justify-content: space-between; align-items: center; }
-.page-header h1 { margin: 0; font-size: 26px; font-weight: bold; color: #fff; }
+.page-header h1 { margin: 0; font-size: 26px; font-weight: bold; color: var(--text-primary); }
 .subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 1px; }
 
 .history-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }

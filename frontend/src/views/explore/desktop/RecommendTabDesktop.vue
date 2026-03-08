@@ -49,7 +49,7 @@ const {
                         {{ item.vote_average?.toFixed(1) }}
                     </n-tag>
                     <span class="c-date">{{ item.release_date || item.first_air_date }}</span>
-                    <n-tag size="small" :bordered="false" style="background: rgba(255,255,255,0.2); color: #fff">{{ item.media_type === 'movie' ? 'MOVIE' : 'TV' }}</n-tag>
+                    <n-tag size="small" :bordered="false" style="background: var(--bg-surface); color: var(--text-primary)">{{ item.media_type === 'movie' ? 'MOVIE' : 'TV' }}</n-tag>
                 </div>
                 <div class="c-title">{{ item.title || item.name }}</div>
                 <div class="c-overview">{{ item.overview }}</div>
@@ -132,7 +132,7 @@ const {
 
 /* Carousel */
 .main-carousel { height: 450px; border-radius: var(--card-border-radius, 12px); margin-bottom: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); overflow: hidden; }
-.carousel-item { position: relative; width: 100%; height: 100%; cursor: pointer; background: #000; }
+.carousel-item { position: relative; width: 100%; height: 100%; cursor: pointer; background: var(--bg-primary); }
 .carousel-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: transform 10s ease; }
 .carousel-item:hover .carousel-img { transform: scale(1.05); opacity: 0.8; }
 .carousel-gradient { 
@@ -143,7 +143,7 @@ const {
 
 .carousel-content { position: absolute; bottom: 50px; left: 50px; right: 50px; z-index: 2; }
 .c-tag-line { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.rating-tag { font-weight: bold; background: rgba(245, 166, 35, 0.2); color: #f5a623; backdrop-filter: blur(4px); }
+.rating-tag { font-weight: bold; background: var(--color-warning-bg); color: var(--color-warning); backdrop-filter: blur(4px); }
 .c-date { color: var(--n-text-color-3); font-size: 14px; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .c-title { font-size: 48px; font-weight: 900; color: var(--n-text-color-1); margin-bottom: 12px; line-height: 1.1; text-shadow: 0 4px 12px rgba(0,0,0,0.8); letter-spacing: -1px; }
 .c-overview { font-size: 16px; color: var(--n-text-color-2); max-width: 800px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }

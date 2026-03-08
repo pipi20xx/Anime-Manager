@@ -117,7 +117,7 @@ const {
             <div class="sort-wrapper">
                 <n-select v-model:value="filters.sort_by" :options="config.sort_options" size="small" style="width: 200px" />
             </div>
-            <n-tag type="primary" :bordered="false" size="small" style="background: rgba(99, 226, 183, 0.15)">
+            <n-tag type="primary" :bordered="false" size="small" style="background: var(--color-primary-bg)">
                 共 {{ data.items.length }} 条结果
             </n-tag>
         </div>
@@ -151,7 +151,7 @@ const {
         
         <div ref="loadTrigger" class="scroll-trigger" style="height: 20px; margin-top: 20px; display: flex; justify-content: center;">
             <n-spin v-if="data.loading && data.items.length > 0" size="small" />
-            <span v-if="!data.hasMore && data.items.length > 0" style="color: #666; font-size: 12px;">已经到底啦 ~</span>
+            <span v-if="!data.hasMore && data.items.length > 0" style="color: var(--text-muted); font-size: 12px;">已经到底啦 ~</span>
         </div>
     </div>
 

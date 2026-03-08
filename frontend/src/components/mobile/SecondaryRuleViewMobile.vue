@@ -122,7 +122,7 @@ const handleMenuSelect = (key: string) => {
 .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .rule-name { font-weight: bold; font-size: 15px; color: var(--n-text-color-1); }
 .criteria-mini { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.c-tag { font-size: 10px; background: var(--app-surface-inner); padding: 2px 6px; border-radius: 4px; color: #888; border: 1px solid var(--app-border-light); }
-.c-tag.target { color: var(--n-primary-color); border-color: rgba(99, 226, 183, 0.2); }
+.c-tag { font-size: 10px; background: var(--app-surface-inner); padding: 2px 6px; border-radius: 4px; color: var(--text-tertiary); border: 1px solid var(--app-border-light); }
+.c-tag.target { color: var(--color-success); border-color: color-mix(in srgb, var(--color-success), transparent 80%); }
 .card-footer { border-top: 1px solid var(--app-border-light); padding-top: 10px; }
 </style>

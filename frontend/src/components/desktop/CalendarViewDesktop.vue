@@ -431,12 +431,12 @@ const {
 }
 
 .no-data-text {
-  color: #ff6b6b;
+  color: var(--color-error);
   font-weight: bold;
 }
 
 .end-mark {
-  color: #ff6b6b !important;
+  color: var(--color-error) !important;
   font-weight: bold;
   margin-left: 2px;
 }

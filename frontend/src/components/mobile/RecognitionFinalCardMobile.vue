@@ -73,7 +73,7 @@ const {
 </template>
 
 <style scoped>
-.final-card-mobile { border-radius: 12px; background: rgba(255,255,255,0.02); }
+.final-card-mobile { border-radius: 12px; background: var(--bg-surface); }
 .header-content { display: flex; align-items: center; gap: 8px; }
 .primary-icon { color: var(--n-primary-color); }
 .header-text { font-weight: bold; font-size: 14px; }
@@ -81,34 +81,34 @@ const {
 .top-row { display: flex; gap: 12px; }
 .poster-side { flex-shrink: 0; }
 .poster-img :deep(img) { border-radius: 6px; }
-.poster-placeholder { width: 100px; height: 140px; background: #111; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #333; }
+.poster-placeholder { width: 100px; height: 140px; background: var(--bg-primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); }
 
 .title-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.title-text { font-size: 18px; font-weight: 900; color: #fff; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.title-text { font-size: 18px; font-weight: 900; color: var(--text-primary); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 .meta-row { display: flex; gap: 4px; flex-wrap: wrap; }
 .p-tag { padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-.tag-green { color: var(--n-primary-color); background: rgba(99, 226, 183, 0.1); border: 1px solid rgba(99, 226, 183, 0.3); }
-.tag-blue { color: var(--n-info-color); background: rgba(112, 192, 232, 0.1); border: 1px solid rgba(112, 192, 232, 0.3); }
+.tag-green { color: var(--color-success); background: var(--color-success-bg); border: 1px solid color-mix(in srgb, var(--color-success), transparent 70%); }
+.tag-blue { color: var(--color-info); background: var(--color-info-bg); border: 1px solid color-mix(in srgb, var(--color-info), transparent 70%); }
 
 .date-id-row { display: flex; flex-direction: column; gap: 2px; }
 .date { font-size: 10px; color: var(--n-primary-color); font-weight: 500; }
-.tmdb-id { font-family: monospace; font-size: 10px; color: #555; }
+.tmdb-id { font-family: monospace; font-size: 10px; color: var(--text-muted); }
 
 .flex-info-grid { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
-.fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: #1a1a1e; padding: 8px 2px; border-right: 1px solid rgba(255,255,255,0.05); }
+.fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--bg-primary); padding: 8px 2px; border-right: 1px solid rgba(255,255,255,0.05); }
 .fig-item:last-child { border-right: none; }
-.fig-l { font-size: 9px; color: #555; text-transform: uppercase; margin-bottom: 2px; }
+.fig-l { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
 .fig-v { font-weight: bold; font-size: 14px; color: var(--n-primary-color); }
 
 .specs-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
-.p-badge { padding: 1px 4px; border-radius: 3px; font-size: 10px; background: rgba(255,255,255,0.05); color: #777; border: 1px solid rgba(255,255,255,0.1); }
+.p-badge { padding: 1px 4px; border-radius: 3px; font-size: 10px; background: var(--bg-surface); color: var(--text-tertiary); border: 1px solid rgba(255,255,255,0.1); }
 .p-badge.blue { color: var(--n-info-color); }
 
 .details-list { display: flex; flex-direction: column; gap: 6px; }
 .d-row { display: flex; gap: 8px; font-size: 12px; }
-.d-l { color: #555; width: 50px; flex-shrink: 0; }
-.d-v { color: #ccc; word-break: break-all; }
+.d-l { color: var(--text-muted); width: 50px; flex-shrink: 0; }
+.d-v { color: var(--text-secondary); word-break: break-all; }
 .d-v.team { color: var(--n-success-color); font-weight: bold; }
 .d-v.mono { font-family: monospace; font-size: 11px; color: var(--n-warning-color); }
 .d-v.filename { opacity: 0.6; }

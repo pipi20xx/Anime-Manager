@@ -149,8 +149,8 @@ useBackClose(toRef(bgmDetail, 'show'))
 .carousel-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%); }
 .carousel-content { position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 2; }
 .c-tag-line { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
-.rating-tag { font-weight: bold; background: rgba(245, 166, 35, 0.8); color: #000; }
-.c-title { font-size: 18px; font-weight: bold; color: #fff; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rating-tag { font-weight: bold; background: var(--color-warning); color: #000; }
+.c-title { font-size: 18px; font-weight: bold; color: var(--text-primary); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Calendar */
 .calendar-box { margin-bottom: 20px; }

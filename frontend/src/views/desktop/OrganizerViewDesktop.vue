@@ -277,7 +277,7 @@ onUnmounted(stopBgTaskPolling)
 
 <style scoped>
 .organizer-view { width: 100%; }
-.header h1 { margin: 0; font-size: 24px; color: #fff; }
+.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .rule-card, .task-card { 

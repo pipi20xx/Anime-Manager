@@ -148,7 +148,7 @@ const runningMonitorsCount = computed(() =>
 }
 
 .service-card {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-surface);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   padding: 12px;
@@ -156,8 +156,8 @@ const runningMonitorsCount = computed(() =>
 }
 
 .service-card.is-running {
-  border-color: rgba(24, 160, 88, 0.3);
-  background: rgba(24, 160, 88, 0.05);
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
 }
 
 .service-card.is-stopped {
@@ -190,22 +190,22 @@ const runningMonitorsCount = computed(() =>
 }
 
 .meta-item .label {
-  color: #888;
+  color: var(--text-tertiary);
 }
 
 .meta-item .value {
-  color: #ccc;
+  color: var(--text-secondary);
   font-family: monospace;
 }
 
 .service-desc {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
 .monitor-card {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-surface);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   padding: 12px;
@@ -213,8 +213,8 @@ const runningMonitorsCount = computed(() =>
 }
 
 .monitor-card.is-running {
-  border-color: rgba(240, 160, 32, 0.3);
-  background: rgba(240, 160, 32, 0.05);
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-bg);
 }
 
 .monitor-header {
@@ -249,13 +249,13 @@ const runningMonitorsCount = computed(() =>
 }
 
 .path-item .label {
-  color: #888;
+  color: var(--text-tertiary);
   width: 48px;
   flex-shrink: 0;
 }
 
 .path-item .value {
-  color: #aaa;
+  color: var(--text-muted);
   font-family: monospace;
   font-size: 11px;
   overflow: hidden;
@@ -268,6 +268,6 @@ const runningMonitorsCount = computed(() =>
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 12px;
-  color: #18a058;
+  color: var(--color-success);
 }
 </style>

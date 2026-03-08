@@ -153,7 +153,7 @@ const runningMonitorsCount = computed(() =>
 
 .service-meta {
   font-size: 11px;
-  color: #888;
+  color: var(--text-tertiary);
 }
 
 .monitor-meta {
@@ -167,13 +167,13 @@ const runningMonitorsCount = computed(() =>
 }
 
 .meta-line .label {
-  color: #888;
+  color: var(--text-tertiary);
 }
 
 .meta-line code {
   font-size: 10px;
-  color: #aaa;
-  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  background: var(--bg-surface);
   padding: 1px 4px;
   border-radius: 3px;
 }
@@ -190,6 +190,6 @@ const runningMonitorsCount = computed(() =>
 
 .stat-label {
   font-size: 11px;
-  color: #888;
+  color: var(--text-tertiary);
 }
 </style>

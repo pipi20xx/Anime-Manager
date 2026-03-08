@@ -92,7 +92,7 @@ const {
 <style scoped>
 .header-box { display: flex; align-items: center; gap: 10px; }
 .title { font-size: 18px; font-weight: bold; }
-.subtitle { font-size: 12px; color: #888; }
+.subtitle { font-size: 12px; color: var(--text-tertiary); }
 .label { font-size: 12px; margin-bottom: 8px; font-weight: bold; }
 .anime-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .anime-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--app-surface-inner); border-radius: 8px; }

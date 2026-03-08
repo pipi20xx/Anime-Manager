@@ -202,6 +202,6 @@ watch(() => props.show, (newVal) => {
 .settings-title { font-weight: bold; font-size: 16px; color: var(--text-primary); }
 
 .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-light); }
-.setting-label { font-weight: bold; color: #ccc; font-size: 14px; }
+.setting-label { font-weight: bold; color: var(--text-secondary); font-size: 14px; }
 .setting-actions { margin-top: 24px; }
 </style>

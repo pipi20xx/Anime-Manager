@@ -58,7 +58,7 @@ const {
                       清空数据
                     </n-button>
                   </template>
-                  确认要清空数据库表 <code style="color: #e88080; font-weight: bold;">[{{ table.name }}]</code> 吗？
+                  确认要清空数据库表 <code style="color: var(--color-error); font-weight: bold;">[{{ table.name }}]</code> 吗？
                 </n-popconfirm>
               </div>
             </n-card>

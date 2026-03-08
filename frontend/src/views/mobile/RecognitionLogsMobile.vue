@@ -68,7 +68,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
 }
 
 .line-num { 
-  color: #666; 
+  color: var(--text-muted); 
   min-width: 20px; 
   text-align: right; 
   font-size: 10px; 

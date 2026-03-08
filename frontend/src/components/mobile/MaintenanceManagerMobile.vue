@@ -96,6 +96,6 @@ const {
 }
 .m-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .table-name { font-weight: bold; font-size: 14px; color: var(--n-text-color-1); font-family: monospace; }
-.table-desc { font-size: 12px; color: #777; line-height: 1.4; margin-bottom: 8px; }
+.table-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.4; margin-bottom: 8px; }
 .table-meta { display: flex; gap: 8px; }
 </style>

@@ -286,7 +286,7 @@ onUnmounted(stopBgTaskPolling)
 
 .rule-details { margin-top: 8px; }
 .detail-row { display: flex; flex-direction: column; margin-bottom: 6px; }
-.detail-row .label { font-size: 10px; color: #888; text-transform: uppercase; }
+.detail-row .label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; }
 .detail-row .pattern { 
   font-family: monospace; 
   background: var(--app-surface-inner); 
@@ -298,7 +298,7 @@ onUnmounted(stopBgTaskPolling)
 
 .task-details { display: flex; flex-direction: column; gap: 8px; }
 .path-box { display: flex; flex-direction: column; min-width: 0; } /* min-width: 0 is crucial for flex child truncation */
-.path-label { font-size: 10px; color: #888; }
+.path-label { font-size: 10px; color: var(--text-tertiary); }
 .path-val { 
   font-family: monospace; 
   background: var(--app-surface-inner); 

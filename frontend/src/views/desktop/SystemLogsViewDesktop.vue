@@ -123,7 +123,7 @@ const columns = [
 <style scoped>
 .system-logs { width: 100%; }
 .page-header { display: flex; justify-content: space-between; align-items: center; }
-.header h1 { margin: 0; font-size: 24px; color: #fff; }
+.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .d-flex { display: flex; }
 .align-center { align-items: center; }

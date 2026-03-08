@@ -41,7 +41,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   flex-direction: column;
 }
 
-.header h1 { margin: 0; font-size: 28px; color: #fff; }
+.header h1 { margin: 0; font-size: 28px; color: var(--text-primary); }
 .subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 
 .log-card { 
@@ -66,7 +66,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
 }
 
 .log-line { display: flex; gap: 12px; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
-.line-num { color: #444; min-width: 24px; text-align: right; font-size: 10px; user-select: none; }
+.line-num { color: var(--text-muted); min-width: 24px; text-align: right; font-size: 10px; user-select: none; }
 .log-header { color: var(--n-primary-color); font-weight: bold; margin: 8px 0; border-bottom: 1px solid var(--app-border-light); }
 .log-debug { color: var(--n-info-color); }
 .log-success { color: var(--n-primary-color); }

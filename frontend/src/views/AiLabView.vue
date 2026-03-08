@@ -247,13 +247,13 @@ onMounted(() => {
   border-radius: var(--button-border-radius, 4px); 
   border: 1px solid var(--n-border-color);
 }
-.field-item .key { color: #555; font-size: 12px; font-weight: bold; }
-.field-item .val { color: #eee; font-size: 13px; font-family: monospace; }
+.field-item .key { color: var(--text-muted); font-size: 12px; font-weight: bold; }
+.field-item .val { color: var(--text-secondary); font-size: 13px; font-family: monospace; }
 
 .mt-2 { margin-top: 8px; }
 
 .mechanism-box {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface);
   padding: 12px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -261,7 +261,7 @@ onMounted(() => {
 .mechanism-list {
   margin: 8px 0 12px 20px;
   padding: 0;
-  color: #ccc;
+  color: var(--text-tertiary);
   font-size: 13px;
   line-height: 1.8;
 }

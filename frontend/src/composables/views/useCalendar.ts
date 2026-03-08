@@ -68,7 +68,7 @@ export function useCalendar() {
             if (epNums.length === 1) {
               const epData = matches.find((m: any) => m.episode === epNums[0])
               const isFinale = epData?.episode_type === 'finale'
-              epDisplay = isFinale ? `E${epNums[0]} <span style="color: #ff6b6b; font-weight: bold; margin-left: 2px;">END</span>` : `E${epNums[0]}`
+              epDisplay = isFinale ? `E${epNums[0]} <span style="color: var(--color-error); font-weight: bold; margin-left: 2px;">END</span>` : `E${epNums[0]}`
             }
             else {
               const isContinuous = epNums.every((num: number, idx: number) => idx === 0 || num === epNums[idx - 1] + 1)

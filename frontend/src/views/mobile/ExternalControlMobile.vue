@@ -167,7 +167,7 @@ onMounted(() => {
                     <span style="margin-left: 8px; font-size: 13px; font-weight: bold">{{ log.message }}</span>
                   </template>
                   <template #description>
-                    <div style="font-size: 12px; color: #888">
+                    <div style="font-size: 12px; color: var(--text-tertiary)">
                       {{ formatTime(log.timestamp) }}
                     </div>
                   </template>
@@ -229,7 +229,7 @@ onMounted(() => {
 }
 .content-body.no-pad { padding: 0; }
 
-.info-text { font-size: 12px; color: #666; margin-bottom: 4px; }
+.info-text { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
 
 .setting-item {
   display: flex;
@@ -245,14 +245,10 @@ onMounted(() => {
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 12px;
-  background: #f5f5f5;
+  background: var(--bg-primary);
   padding: 10px;
   border-radius: 8px;
-  color: #333;
-}
-/* Dark mode adaptation for pre block */
-@media (prefers-color-scheme: dark) {
-  .log-detail-pre { background: #333; color: #eee; }
+  color: var(--text-secondary);
 }
 
 .docs-body { height: calc(100vh - 100px); }

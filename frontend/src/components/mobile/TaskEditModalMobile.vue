@@ -103,7 +103,7 @@ const {
                   </n-input-number>
                 </n-form-item>
                 <n-form-item label="监控状态" v-else-if="form.incremental_enabled">
-                  <div style="color: #666">实时监听文件系统事件 (Inotify)</div>
+                  <div style="color: var(--text-muted)">实时监听文件系统事件 (Inotify)</div>
                 </n-form-item>
               </n-gi>
               <n-gi>
@@ -134,7 +134,7 @@ const {
             <n-form-item label="Emby 检查" class="mt-4">
               <n-space align="center">
                 <n-switch v-model:value="form.check_emby_exists" />
-                <span style="font-size: 12px; color: #666;">检测 Emby 库是否存在，存在则跳过处理</span>
+                <span style="font-size: 12px; color: var(--text-muted);">检测 Emby 库是否存在，存在则跳过处理</span>
               </n-space>
             </n-form-item>
             <n-form-item label="哈希计算" class="mt-2">

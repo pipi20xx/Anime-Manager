@@ -104,7 +104,7 @@ const {
 
               <div v-if="detail.tags?.length" class="tags-section">
                   <n-space>
-                      <n-tag v-for="t in detail.tags" :key="t" size="tiny" :bordered="false" round style="background: rgba(255,255,255,0.05); color: #888">
+                      <n-tag v-for="t in detail.tags" :key="t" size="tiny" :bordered="false" round style="background: var(--bg-surface); color: var(--text-tertiary)">
                           # {{ t }}
                       </n-tag>
                   </n-space>
@@ -148,7 +148,7 @@ const {
   border-radius: var(--card-border-radius, 6px); 
   box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
   border: 1px solid var(--app-border-light); 
-  overflow: hidden; background: #000; 
+  overflow: hidden; background: var(--bg-primary); 
 }
 .main-poster :deep(img) { width: 100%; height: 100%; object-fit: contain; }
 

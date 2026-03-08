@@ -31,13 +31,13 @@ const { tmdb, getImg } = useRecognitionTmdb()
 </template>
 
 <style scoped>
-.sub-card-mobile { background: rgba(255,255,255,0.01); border-radius: 8px; }
+.sub-card-mobile { background: var(--bg-surface); border-radius: 8px; }
 .tmdb-main-layout { display: flex; gap: 12px; }
 .tmdb-poster-side { flex-shrink: 0; }
 .small-poster { border-radius: 4px; }
 
 .tmdb-info-side { flex: 1; min-width: 0; }
 .tmdb-title { font-weight: bold; font-size: 14px; color: var(--n-warning-color); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tmdb-meta { display: flex; gap: 8px; font-size: 10px; color: #555; margin-bottom: 4px; }
-.overview-text { font-size: 11px; color: #777; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; }
+.tmdb-meta { display: flex; gap: 8px; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+.overview-text { font-size: 11px; color: var(--text-tertiary); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; }
 </style>

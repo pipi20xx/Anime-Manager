@@ -88,7 +88,7 @@ useBackClose(toRef(bgmDetail, 'show'))
         
         <div ref="loadTrigger" class="scroll-trigger" style="height: 40px; margin-top: 12px; display: flex; justify-content: center; align-items: center;">
             <n-spin v-if="data.loading && data.items.length > 0" size="small" />
-            <span v-if="!data.hasMore && data.items.length > 0" style="color: #666; font-size: 12px;">到底啦</span>
+            <span v-if="!data.hasMore && data.items.length > 0" style="color: var(--text-muted); font-size: 12px;">到底啦</span>
         </div>
     </div>
 
@@ -185,5 +185,5 @@ useBackClose(toRef(bgmDetail, 'show'))
 .loading-state { padding: 40px; text-align: center; }
 .empty-state { padding: 40px; }
 
-.f-label { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 8px; }
+.f-label { font-size: 12px; font-weight: bold; color: var(--text-tertiary); margin-bottom: 8px; }
 </style>

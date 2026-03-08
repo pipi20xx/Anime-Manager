@@ -134,7 +134,7 @@ const fetchToken = async () => {
             placeholder="自动获取或手动输入"
             @update:value="(val: string) => emit('update:embyUserId', val)"
           />
-          <span style="font-size: 12px; color: #666;">在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值</span>
+          <span style="font-size: 12px; color: var(--text-muted);">在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值</span>
         </n-space>
       </n-form-item>
 
@@ -162,6 +162,6 @@ const fetchToken = async () => {
 .card-title-text {
   font-size: 14px;
   font-weight: 600;
-  color: #eee;
+  color: var(--text-secondary);
 }
 </style>

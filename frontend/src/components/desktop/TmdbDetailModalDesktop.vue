@@ -157,7 +157,7 @@ const {
   border-radius: var(--card-border-radius, 6px); 
   box-shadow: 0 8px 24px rgba(0,0,0,0.5); 
   border: 1px solid var(--app-border-light); 
-  overflow: hidden; background: #000; 
+  overflow: hidden; background: var(--bg-primary); 
 }
 .main-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 
@@ -190,7 +190,7 @@ const {
 .seasons-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; }
 .season-scroller { display: flex; gap: 16px; padding-bottom: 10px; }
 .season-card { width: 100px; }
-.s-poster { aspect-ratio: 2/3; border-radius: var(--button-border-radius, 6px); overflow: hidden; background: #000; margin-bottom: 6px; border: 1px solid var(--app-border-light); }
+.s-poster { aspect-ratio: 2/3; border-radius: var(--button-border-radius, 6px); overflow: hidden; background: var(--bg-primary); margin-bottom: 6px; border: 1px solid var(--app-border-light); }
 .s-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .s-name { font-size: 12px; font-weight: bold; color: var(--n-text-color-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .s-ep { font-size: 11px; color: var(--n-text-color-3); }

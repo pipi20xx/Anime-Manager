@@ -153,7 +153,7 @@ onMounted(fetchTasks)
 
 .path-details { display: flex; flex-direction: column; gap: 8px; }
 .path-row { display: flex; flex-direction: column; min-width: 0; }
-.path-row .label { font-size: 10px; color: #888; }
+.path-row .label { font-size: 10px; color: var(--text-tertiary); }
 .path-row .val { 
   font-family: monospace; 
   background: var(--app-surface-inner); 

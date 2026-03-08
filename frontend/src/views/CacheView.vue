@@ -407,8 +407,8 @@ onUnmounted(() => {
   border-bottom-left-radius: var(--button-border-radius, 6px);
   box-shadow: var(--shadow-sm);
 }
-.tag-movie { background: var(--n-warning-color); color: #000; } /* Yellow/Orange for Movie */
-.tag-tv { background: var(--n-primary-color); color: #000; }    /* Green/Mint for TV */
+.tag-movie { background: var(--color-warning); color: #000; } /* Yellow/Orange for Movie */
+.tag-tv { background: var(--color-success); color: #000; }    /* Green/Mint for TV */
 
 .year-tag {
   position: absolute; top: 0; left: 0; z-index: 10;

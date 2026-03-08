@@ -84,7 +84,7 @@ const loadMore = () => {
         <n-button v-if="data.length < pagination.itemCount" text type="primary" @click="loadMore" :loading="loading">
           加载更多...
         </n-button>
-        <span v-else style="color: #666; font-size: 12px">已加载全部</span>
+        <span v-else style="color: var(--text-muted); font-size: 12px">已加载全部</span>
       </div>
     </div>
 
@@ -99,6 +99,6 @@ const loadMore = () => {
 
 .log-header { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .log-module { font-weight: bold; color: var(--n-text-color-2); }
-.log-time { margin-left: auto; color: #888; font-family: monospace; }
+.log-time { margin-left: auto; color: var(--text-tertiary); font-family: monospace; }
 .log-msg { font-size: 13px; color: var(--n-text-color-1); word-break: break-all; margin-top: 4px; }
 </style>

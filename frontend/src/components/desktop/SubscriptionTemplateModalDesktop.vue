@@ -73,7 +73,7 @@ const columns = [
   >
     <div v-if="!showEdit">
       <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
-          <div style="color: #888; font-size: 13px;">点击星标可将模板设为一键订阅时的默认配置</div>
+          <div style="color: var(--text-tertiary); font-size: 13px;">点击星标可将模板设为一键订阅时的默认配置</div>
           <n-button type="primary" size="small" @click="openAdd">
             创建新预设
           </n-button>

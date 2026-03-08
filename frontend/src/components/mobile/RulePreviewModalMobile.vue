@@ -92,7 +92,7 @@ watch(() => props.show, (newVal) => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ccc;
+  background: var(--text-tertiary);
   margin-top: 6px;
 }
 .status-dot.downloaded {

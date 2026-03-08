@@ -33,13 +33,13 @@ const { raw, tags, safeGet } = useRecognitionRaw()
 </template>
 
 <style scoped>
-.sub-card-mobile { background: rgba(255,255,255,0.01); border-radius: 8px; }
-.raw-main { font-weight: bold; font-size: 14px; color: #eee; }
+.sub-card-mobile { background: var(--bg-surface); border-radius: 8px; }
+.raw-main { font-weight: bold; font-size: 14px; color: var(--text-secondary); }
 
 .raw-specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .rs-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
-.rs-l { color: #555; }
-.rs-v { color: #ccc; font-weight: 600; }
+.rs-l { color: var(--text-muted); }
+.rs-v { color: var(--text-secondary); font-weight: 600; }
 .rs-v.primary { color: var(--n-info-color); }
 .rs-v.warning { color: var(--n-warning-color); }
 .rs-v.success { color: var(--n-primary-color); }

@@ -142,7 +142,7 @@ const {
 .content-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
 .sticky-header { position: absolute; top: 16px; left: 16px; z-index: 10; }
-.back-btn { background: rgba(0,0,0,0.5) !important; color: #fff !important; border: none; backdrop-filter: blur(4px); }
+.back-btn { background: var(--bg-surface) !important; color: var(--text-primary) !important; border: none; backdrop-filter: blur(4px); }
 
 .hero-section { position: relative; height: 320px; display: flex; align-items: flex-end; }
 .backdrop-layer { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.6; }
@@ -153,16 +153,16 @@ const {
 .hero-poster :deep(img) { width: 100%; display: block; aspect-ratio: 2/3; object-fit: cover; }
 
 .hero-info { flex: 1; min-width: 0; margin-bottom: 4px; }
-.hero-title { margin: 0; font-size: 20px; font-weight: 900; color: #fff; line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-title { margin: 0; font-size: 20px; font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .hero-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.meta-date { font-size: 12px; color: rgba(255,255,255,0.8); text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-.rating-tag { background: rgba(245, 166, 35, 0.9); color: #000; font-weight: bold; }
+.meta-date { font-size: 12px; color: var(--text-secondary); text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+.rating-tag { background: var(--color-warning); color: #000; font-weight: bold; }
 
 .actions-bar { padding: 0 20px 20px; }
 
 .detail-body { padding: 0 20px; }
 .genres-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 8px; }
-.genre-tag { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+.genre-tag { background: var(--bg-surface); color: var(--text-secondary); }
 
 .section { margin-bottom: 24px; }
 .section h3 { margin: 0 0 12px; font-size: 16px; font-weight: bold; color: var(--n-text-color-1); }
@@ -170,13 +170,13 @@ const {
 
 .h-scroller { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
 .cast-item { width: 70px; flex-shrink: 0; text-align: center; }
-.cast-item .avatar { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px; background: #333; }
+.cast-item .avatar { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px; background: var(--bg-primary); }
 .cast-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .cast-item .name { font-size: 11px; color: var(--n-text-color-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 .cast-item .char { font-size: 10px; color: var(--n-text-color-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .season-item { width: 90px; flex-shrink: 0; }
-.season-item .poster { width: 100%; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: #333; }
+.season-item .poster { width: 100%; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: var(--bg-primary); }
 .season-item .poster img { width: 100%; height: 100%; object-fit: cover; }
 .season-item .s-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .season-item .s-ep { font-size: 11px; color: var(--n-text-color-3); }

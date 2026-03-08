@@ -190,7 +190,7 @@ const handleTableSelect = (tableName: string) => {
   box-sizing: border-box;
 }
 
-.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px; color: #666; }
+.result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px; color: var(--text-muted); }
 .result-card-list { 
   display: flex; 
   flex-direction: column; 
@@ -210,7 +210,7 @@ const handleTableSelect = (tableName: string) => {
 .row-index { font-family: monospace; color: var(--n-primary-color); font-weight: bold; font-size: 13px; }
 .row-kv { display: flex; flex-direction: column; gap: 4px; }
 .kv-item { display: flex; gap: 6px; font-size: 11px; align-items: flex-start; }
-.k { color: #555; flex-shrink: 0; font-weight: bold; min-width: 40px; }
+.k { color: var(--text-muted); flex-shrink: 0; font-weight: bold; min-width: 40px; }
 .v { color: var(--n-text-color-2); word-break: break-all; line-height: 1.4; }
-.more-indicator { font-size: 10px; color: #444; margin-top: 4px; font-style: italic; }
+.more-indicator { font-size: 10px; color: var(--text-tertiary); margin-top: 4px; font-style: italic; }
 </style>

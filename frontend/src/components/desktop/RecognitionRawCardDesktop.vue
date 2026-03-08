@@ -61,20 +61,20 @@ const { raw, tags, safeGet } = useRecognitionRaw()
 </template>
 
 <style scoped>
-.sub-card { flex: 1; min-width: 0; background: rgba(255,255,255,0.01); border-radius: var(--card-border-radius, 8px); }
-.raw-main { font-weight: bold; font-size: 15px; color: #eee; }
-.raw-sub { font-size: 13px; color: #666; font-style: italic; font-family: monospace; margin-top: 4px; }
+.sub-card { flex: 1; min-width: 0; background: var(--bg-surface); border-radius: var(--card-border-radius, 8px); }
+.raw-main { font-weight: bold; font-size: 15px; color: var(--text-secondary); }
+.raw-sub { font-size: 13px; color: var(--text-tertiary); font-style: italic; font-family: monospace; margin-top: 4px; }
 
 .raw-specs-grid { display: flex; flex-direction: column; gap: 8px; }
 .rs-item { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
-.rs-label { color: #555; }
-.rs-value { font-weight: bold; color: #eee; }
+.rs-label { color: var(--text-muted); }
+.rs-value { font-weight: bold; color: var(--text-secondary); }
 .rs-value.primary { color: var(--n-info-color); }
 .rs-value.warning { color: var(--n-warning-color); }
 .rs-value.success { color: var(--n-primary-color); }
 .rs-value.info { color: var(--n-success-color); }
 
-.section-mini-title { font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; margin-bottom: 8px; }
+.section-mini-title { font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
 .raw-tags-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
-.no-tags { font-size: 11px; color: #333; font-style: italic; }
+.no-tags { font-size: 11px; color: var(--text-tertiary); font-style: italic; }
 </style>

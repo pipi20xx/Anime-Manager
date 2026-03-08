@@ -144,5 +144,5 @@ const {
 
 <style scoped>
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.browser-wrapper { background: rgba(255, 255, 255, 0.01); border-radius: 8px; border: 1px solid var(--app-border-light); padding: 8px; }
+.browser-wrapper { background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--app-border-light); padding: 8px; }
 </style>

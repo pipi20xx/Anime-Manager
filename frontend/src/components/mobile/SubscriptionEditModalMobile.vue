@@ -131,7 +131,7 @@ watch(() => props.show, (newVal) => {
                 <n-image width="100" :src="getImg(formModel.poster_path)" />
                 <div style="margin-left: 12px">
                   <div style="font-weight: bold">{{ formModel.title }}</div>
-                  <div style="color: #888">Year: {{ formModel.year }} | Type: {{ formModel.media_type }}</div>
+                  <div style="color: var(--text-tertiary)">Year: {{ formModel.year }} | Type: {{ formModel.media_type }}</div>
                 </div>
              </div>
           </n-gi>
@@ -205,7 +205,7 @@ watch(() => props.show, (newVal) => {
             <n-form-item label="定时补全">
               <n-space vertical :size="4">
                 <n-switch v-model:value="formModel.auto_fill" />
-                <span style="font-size: 12px; color: #999;">自动从 Jackett 所有源搜索，无法指定源</span>
+                <span style="font-size: 12px; color: var(--text-muted);">自动从 Jackett 所有源搜索，无法指定源</span>
               </n-space>
             </n-form-item>
           </n-gi>

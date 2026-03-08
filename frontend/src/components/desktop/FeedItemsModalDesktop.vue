@@ -71,7 +71,7 @@ const columns = [
     render(row: any) {
       return h('div', { style: 'padding: 4px 0' }, [
         h(NText, { strong: true, style: 'font-size: 14px; line-height: 1.4' }, { default: () => row.title }),
-        row.description ? h('div', { style: 'font-size: 12px; color: #888; margin-top: 2px' }, { default: () => row.description }) : null,
+        row.description ? h('div', { style: 'font-size: 12px; color: var(--text-tertiary); margin-top: 2px' }, { default: () => row.description }) : null,
         row.tmdb_title ? h('div', { style: 'margin-top: 6px; color: var(--n-primary-color); font-size: 12px; display: flex; align-items: center' }, [
           h('span', { style: 'margin-right: 4px' }, { default: () => '🎯' }),
           h(NText, { depth: 3, style: 'color: var(--n-primary-color); font-weight: bold' }, { default: () => row.tmdb_title })
@@ -178,7 +178,7 @@ const columns = [
     </div>
     <template #footer>
       <n-space justify="space-between" align="center">
-        <div style="font-size: 12px; color: #666">
+        <div style="font-size: 12px; color: var(--text-muted)">
           已加载 {{ items.length }} 条记录 <span v-if="loading && offset > 0"> (加载中...)</span>
         </div>
         <n-space>

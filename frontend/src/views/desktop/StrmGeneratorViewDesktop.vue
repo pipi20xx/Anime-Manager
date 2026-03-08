@@ -152,14 +152,14 @@ onMounted(fetchTasks)
 
 <style scoped>
 .strm-view { width: 100%; }
-.header h1 { margin: 0; font-size: 24px; color: #fff; }
+.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .task-card { height: 100%; transition: transform 0.2s; border: 1px solid #333; }
 .clickable-card { cursor: pointer; }
 .task-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); }
 .task-header { display: flex; justify-content: space-between; align-items: center; }
-.task-name { font-weight: bold; font-size: 15px; color: #eee; }
+.task-name { font-weight: bold; font-size: 15px; color: var(--text-secondary); }
 .path-info .l { font-size: 10px; color: var(--n-text-color-3); opacity: 0.6; }
 .path-info .v { 
   font-size: 12px; 

@@ -336,7 +336,7 @@ const logColumns = [
     </n-card>
 
     <n-modal v-model:show="showLogDetail" preset="card" title="请求详情" style="width: 600px">
-      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px">
+      <div style="background: var(--bg-surface); padding: 12px; border-radius: 8px">
         <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 13px">{{ currentLogDetail }}</pre>
       </div>
       <template #footer>
@@ -352,7 +352,7 @@ const logColumns = [
 .external-control-view { width: 100%; height: 100%; display: flex; flex-direction: column; }
 .page-header { margin-bottom: 20px; flex-shrink: 0; }
 .page-header h1 { margin: 0; font-size: 26px; font-weight: 800; }
-.page-header .subtitle { color: #888; font-size: 14px; }
+.page-header .subtitle { color: var(--text-tertiary); font-size: 14px; }
 
 .main-card {
   border-radius: 12px;
@@ -393,7 +393,7 @@ const logColumns = [
 
 .content-header { margin-bottom: 24px; }
 .content-header h3 { margin: 0 0 8px 0; font-size: 18px; }
-.content-header p { margin: 0; color: #888; font-size: 13px; line-height: 1.6; }
+.content-header p { margin: 0; color: var(--text-tertiary); font-size: 13px; line-height: 1.6; }
 
 .webhook-section { margin-top: 20px; }
 .table-actions { margin-bottom: 16px; display: flex; justify-content: flex-end; }
@@ -416,6 +416,6 @@ const logColumns = [
   height: 800px;
   display: block;
   border: none;
-  background: #101014;
+  background: var(--bg-primary);
 }
 </style>

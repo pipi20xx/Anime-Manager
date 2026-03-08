@@ -169,6 +169,6 @@ onMounted(fetchAccountInfo)
 
 <style scoped>
 .setting-item { display: flex; justify-content: space-between; align-items: center; }
-.qr-container { background-color: #fff; padding: 10px; border-radius: 8px; display: flex; justify-content: center; }
+.qr-container { background-color: var(--bg-primary); padding: 10px; border-radius: 8px; display: flex; justify-content: center; }
 .qr-container img { width: 200px; height: 200px; }
 </style>

@@ -118,7 +118,7 @@ const {
 
 /* 卡片核心样式 - 增强对比度 */
 .rect-rule-card { 
-  background-color: rgba(255, 255, 255, 0.06); 
+  background-color: var(--bg-surface); 
   border: 1px solid rgba(255, 255, 255, 0.2); 
   padding: 16px; 
   border-radius: 8px; 
@@ -129,7 +129,7 @@ const {
 }
 .rect-rule-card:hover { 
   border-color: var(--n-primary-color); 
-  background-color: rgba(255, 255, 255, 0.1); 
+  background-color: var(--bg-surface-hover); 
   transform: translateY(-2px); 
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
 }

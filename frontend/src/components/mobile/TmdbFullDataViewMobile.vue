@@ -113,7 +113,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
           </div>
         </div>
       </div>
-      <div v-if="browserData.length === 0 && !browserLoading" style="padding: 40px; text-align: center; color: #666;">暂无数据</div>
+      <div v-if="browserData.length === 0 && !browserLoading" style="padding: 40px; text-align: center; color: var(--text-muted);">暂无数据</div>
     </div>
 
     <div class="mobile-pagination">
@@ -165,7 +165,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
 
 .item-header { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
 .item-title { font-weight: bold; font-size: 15px; color: var(--n-text-color-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-meta { display: flex; gap: 8px; font-size: 11px; color: #777; margin-bottom: 6px; }
-.meta-id { font-family: monospace; color: #555; }
+.item-meta { display: flex; gap: 8px; font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+.meta-id { font-family: monospace; color: var(--text-muted); }
 .item-genres { display: flex; gap: 4px; flex-wrap: wrap; }
 </style>
