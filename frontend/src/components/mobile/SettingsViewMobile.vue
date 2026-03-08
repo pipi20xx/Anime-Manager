@@ -19,6 +19,7 @@ import HealthCheckManager from '../../components/HealthCheckManager.vue'
 import EmbyConfigMobile from '../../components/mobile/EmbyConfigMobile.vue'
 import AiLabView from '../../views/AiLabView.vue'
 import AccountTab from '../../views/settings/AccountTab.vue'
+import ServiceStatusTabMobile from '../../views/settings/ServiceStatusTabMobile.vue'
 import { useSettings } from '../../composables/views/useSettings'
 
 const {
@@ -259,6 +260,11 @@ const {
         <!-- 账号 -->
         <n-tab-pane name="account" tab="账号">
           <AccountTab />
+        </n-tab-pane>
+
+        <!-- 服务状态 -->
+        <n-tab-pane name="services" tab="服务">
+          <ServiceStatusTabMobile />
         </n-tab-pane>
 
         <!-- 掉盘 -->

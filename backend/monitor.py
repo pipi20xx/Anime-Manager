@@ -470,6 +470,202 @@ class MonitorManager:
         return False
 
     @staticmethod
+    def get_services_status() -> Dict[str, Any]:
+        """
+        获取所有后台服务的运行状态
+        返回: { services: [...], monitors: [...] }
+        """
+        from datetime import datetime
+        config = ConfigManager.get_config()
+        services = []
+        monitors = []
+
+        # 1. 获取调度任务状态
+        if MonitorManager._scheduler:
+            jobs = MonitorManager._scheduler.get_jobs()
+            job_map = {job.id: job for job in jobs}
+
+            # RSS 自动刷新
+            rss_job = job_map.get("rss_refresh_job")
+            services.append({
+                "id": "rss_refresh",
+                "name": "RSS 自动刷新",
+                "type": "scheduler",
+                "enabled": config.get("rss_auto_refresh", True),
+                "running": rss_job is not None,
+                "interval": f"{config.get('rss_refresh_interval', 15)} 分钟",
+                "next_run": rss_job.next_run_time.isoformat() if rss_job and rss_job.next_run_time else None,
+                "last_run": None,
+                "description": "定时刷新所有 RSS 订阅源"
+            })
+
+            # 规则自动同步
+            rule_job = job_map.get("rule_auto_sync_job")
+            services.append({
+                "id": "rule_sync",
+                "name": "规则自动同步",
+                "type": "scheduler",
+                "enabled": config.get("rule_auto_update", False),
+                "running": rule_job is not None,
+                "interval": f"{config.get('rule_update_interval', 24)} 小时",
+                "next_run": rule_job.next_run_time.isoformat() if rule_job and rule_job.next_run_time else None,
+                "last_run": None,
+                "description": "从远程仓库同步识别规则"
+            })
+
+            # 订阅自动补全
+            sub_job = job_map.get("sub_auto_fill_job")
+            services.append({
+                "id": "sub_fill",
+                "name": "订阅自动补全",
+                "type": "scheduler",
+                "enabled": config.get("sub_auto_fill", False),
+                "running": sub_job is not None,
+                "interval": f"{config.get('sub_fill_interval', 12)} 小时",
+                "next_run": sub_job.next_run_time.isoformat() if sub_job and sub_job.next_run_time else None,
+                "last_run": None,
+                "description": "自动搜寻补全缺失的订阅集数"
+            })
+
+            # 下载超时熔断
+            stalled_job = job_map.get("stalled_monitor_job")
+            stalled_interval = config.get("stalled_monitor_interval", 30)
+            services.append({
+                "id": "stalled_monitor",
+                "name": "下载超时熔断",
+                "type": "scheduler",
+                "enabled": stalled_interval > 0,
+                "running": stalled_job is not None,
+                "interval": f"{stalled_interval} 分钟" if stalled_interval > 0 else "已禁用",
+                "next_run": stalled_job.next_run_time.isoformat() if stalled_job and stalled_job.next_run_time else None,
+                "last_run": None,
+                "description": "检测并清理超时的下载任务"
+            })
+
+            # 健康检查巡检
+            health_job = job_map.get("auto_health_check_job")
+            health_enabled = config.get("health_check_enabled", True)
+            health_interval = config.get("health_check_interval", 30)
+            services.append({
+                "id": "health_check",
+                "name": "健康检查巡检",
+                "type": "scheduler",
+                "enabled": health_enabled and health_interval > 0,
+                "running": health_job is not None,
+                "interval": f"{health_interval} 分钟" if health_interval > 0 else "已禁用",
+                "next_run": health_job.next_run_time.isoformat() if health_job and health_job.next_run_time else None,
+                "last_run": None,
+                "description": "自动检测磁盘掉盘与服务状态"
+            })
+
+            # 每日日历播报
+            calendar_job = job_map.get("calendar_daily_push_job")
+            services.append({
+                "id": "calendar_push",
+                "name": "每日日历播报",
+                "type": "scheduler",
+                "enabled": config.get("calendar_daily_push", False),
+                "running": calendar_job is not None,
+                "interval": f"每日 {config.get('calendar_push_time', '09:00')}",
+                "next_run": calendar_job.next_run_time.isoformat() if calendar_job and calendar_job.next_run_time else None,
+                "last_run": None,
+                "description": "每日定时推送今日更新的番剧"
+            })
+
+            # 日志清理
+            cleanup_job = job_map.get("daily_cleanup_job")
+            services.append({
+                "id": "daily_cleanup",
+                "name": "日志自动清理",
+                "type": "scheduler",
+                "enabled": True,
+                "running": cleanup_job is not None,
+                "interval": "每日 03:00",
+                "next_run": cleanup_job.next_run_time.isoformat() if cleanup_job and cleanup_job.next_run_time else None,
+                "last_run": None,
+                "description": "自动清理 30 天前的系统日志"
+            })
+
+        # 2. CD2 传输监控
+        cd2_running = CD2TransferMonitor._instance is not None and CD2TransferMonitor._thread is not None and CD2TransferMonitor._thread.is_alive()
+        cd2_config = None
+        clients = config.get("download_clients", [])
+        for c in clients:
+            if c.get("type") == "cd2":
+                cd2_config = c
+                break
+        cd2_monitor_enabled = cd2_config.get("monitor_enabled", None) if cd2_config else None
+        if cd2_monitor_enabled is None:
+            cd2_monitor_enabled = config.get("enable_cd2_monitor", True)
+        services.append({
+            "id": "cd2_monitor",
+            "name": "CD2 传输监控",
+            "type": "thread",
+            "enabled": cd2_config is not None and cd2_monitor_enabled,
+            "running": cd2_running,
+            "interval": f"{cd2_config.get('monitor_interval', 5)} 秒" if cd2_config else "-",
+            "next_run": None,
+            "last_run": None,
+            "description": "监控 CD2 上传/下载任务完成并触发联动"
+        })
+
+        # 3. 文件监控任务 (整理任务)
+        organize_tasks = config.get("organize_tasks", [])
+        for task in organize_tasks:
+            incremental_enabled = task.get("incremental_enabled", False)
+            scheduler_enabled = task.get("scheduler_enabled", False)
+            old_mode = task.get("monitor_mode", "none")
+            if old_mode in ["realtime", "polling"]:
+                incremental_enabled = True
+            elif old_mode == "scheduled":
+                scheduler_enabled = True
+
+            if incremental_enabled or scheduler_enabled:
+                source_dir = task.get("source_dir") or task.get("source_path")
+                monitors.append({
+                    "id": task.get("id"),
+                    "name": task.get("name", "未命名"),
+                    "type": "organize",
+                    "mode": "实时监控" if incremental_enabled else "定时扫描",
+                    "running": task.get("id") in MonitorManager._queues,
+                    "source_dir": source_dir,
+                    "target_dir": task.get("target_dir") or task.get("target_path"),
+                    "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0
+                })
+
+        # 4. STRM 监控任务
+        strm_tasks = config.get("strm_tasks", [])
+        for task in strm_tasks:
+            incremental_enabled = task.get("incremental_enabled", False)
+            scheduler_enabled = task.get("scheduler_enabled", False)
+            old_mode = task.get("monitor_mode", "none")
+            if old_mode in ["realtime", "polling"]:
+                incremental_enabled = True
+            elif old_mode == "scheduled":
+                scheduler_enabled = True
+
+            if incremental_enabled or scheduler_enabled:
+                source_dir = task.get("source_dir") or task.get("source_path")
+                monitors.append({
+                    "id": task.get("id"),
+                    "name": task.get("name", "未命名"),
+                    "type": "strm",
+                    "mode": "实时监控" if incremental_enabled else "定时扫描",
+                    "running": task.get("id") in MonitorManager._queues,
+                    "source_dir": source_dir,
+                    "target_dir": task.get("target_dir") or task.get("target_path"),
+                    "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0
+                })
+
+        return {
+            "services": services,
+            "monitors": monitors,
+            "observers_count": len(MonitorManager._observers),
+            "workers_count": len(MonitorManager._workers),
+            "queues_count": len(MonitorManager._queues)
+        }
+
+    @staticmethod
     async def reload():
         from logger import log_audit
         log_audit("系统", "监控重载", "正在重新加载所有监控任务...")

@@ -17,6 +17,7 @@ import HealthCheckManager from '../../components/HealthCheckManager.vue'
 import EmbyConfig from '../../components/EmbyConfig.vue'
 import AiLabView from '../../views/AiLabView.vue'
 import AccountTab from '../../views/settings/AccountTab.vue'
+import ServiceStatusTab from '../../views/settings/ServiceStatusTab.vue'
 import { useSettings } from '../../composables/views/useSettings'
 
 const {
@@ -453,6 +454,11 @@ const {
         <!-- 账号与安全 -->
         <n-tab-pane name="account" tab="账号与安全">
           <AccountTab />
+        </n-tab-pane>
+
+        <!-- 服务状态 -->
+        <n-tab-pane name="services" tab="服务状态">
+          <ServiceStatusTab />
         </n-tab-pane>
 
         <!-- 掉盘检测 -->

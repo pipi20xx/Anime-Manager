@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
 from typing import Optional, List, Any, Dict
 from metadata.meta_cache import MetaCacheManager
 from config_manager import ConfigManager
+from monitor import MonitorManager
 import os
 import asyncio
 import re
@@ -16,6 +17,18 @@ from notification import NotificationManager
 from rss_core.scheduler import check_stalled_downloads
 
 router = APIRouter(prefix="/api/system", tags=["系统管理"])
+
+@router.get("/services", summary="获取后台服务状态")
+async def get_services_status():
+    """
+    获取所有后台服务和监控任务的运行状态。
+    包括：RSS刷新、规则同步、订阅补全、健康检查、CD2监控、文件监控任务等。
+    """
+    try:
+        status = MonitorManager.get_services_status()
+        return status
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取服务状态失败: {str(e)}")
 
 @router.get("/docs", include_in_schema=False)
 async def get_documentation(request: Request, theme: str = "cyan", token: str = None):
