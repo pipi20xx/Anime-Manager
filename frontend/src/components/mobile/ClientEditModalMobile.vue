@@ -8,6 +8,7 @@ import {
   CloudUploadOutlined as TestIcon,
 } from '@vicons/material'
 import { useClientEdit } from '../../composables/modals/useClientEdit'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -106,8 +107,8 @@ const {
           测试连接
         </n-button>
         <n-space>
-          <n-button @click="emit('update:show', false)" size="small">取消</n-button>
-          <n-button type="primary" @click="handleSave" size="small">
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)" size="small">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="handleSave" size="small">
             保存
           </n-button>
         </n-space>

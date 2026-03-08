@@ -3,7 +3,7 @@ import { ref, computed, h, watch, nextTick } from 'vue'
 import { 
   NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NPopconfirm, NSpin
 } from 'naive-ui'
-import { 
+import {
   AddOutlined as AddIcon, 
   EditOutlined as EditIcon, 
   DeleteOutlined as DeleteIcon,
@@ -17,6 +17,7 @@ import {
   SearchOutlined as SearchIcon
 } from '@vicons/material'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -264,20 +265,16 @@ const countryColumns = [
         <n-space justify="space-between" align="center">
           <span class="card-title">ID 映射管理</span>
           <n-space>
-            <n-button size="small" @click="exportMappings">
-              <template #icon><n-icon><ExportIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="exportMappings">
               导出备份
             </n-button>
-            <n-button size="small" @click="triggerImport" :loading="fileImportLoading">
-              <template #icon><n-icon><ImportIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="triggerImport" :loading="fileImportLoading">
               导入备份
             </n-button>
-            <n-button size="small" @click="handleImport" :loading="importLoading" v-if="['genre', 'company', 'keyword'].includes(activeType)">
-              <template #icon><n-icon><ImportIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="handleImport" :loading="importLoading" v-if="['genre', 'company', 'keyword'].includes(activeType)">
               导入当前分类
             </n-button>
-            <n-button type="primary" size="small" @click="openAddModal">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAddModal">
               添加映射
             </n-button>
           </n-space>
@@ -505,8 +502,8 @@ const countryColumns = [
 
         <template #action>
           <n-space justify="end">
-            <n-button @click="showModal = false">取消</n-button>
-            <n-button type="primary" @click="handleSave">保存</n-button>
+            <n-button v-bind="getButtonStyle('ghost')" @click="showModal = false">取消</n-button>
+            <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
           </n-space>
         </template>
       </n-card>

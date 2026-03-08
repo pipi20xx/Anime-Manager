@@ -18,6 +18,7 @@ import AiLabView from '../../views/AiLabView.vue'
 import AccountTab from '../../views/settings/AccountTab.vue'
 import ServiceStatusTabMobile from '../../views/settings/ServiceStatusTabMobile.vue'
 import { useSettings } from '../../composables/views/useSettings'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -42,8 +43,7 @@ const {
   <div class="settings-view-mobile">
     <div class="mobile-header">
       <div class="header-title">系统设置</div>
-      <n-button type="primary" size="small" :loading="loading" @click="saveAll">
-        <template #icon><n-icon><SaveIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" size="small" :loading="loading" @click="saveAll">
         保存
       </n-button>
     </div>

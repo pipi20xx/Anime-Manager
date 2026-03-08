@@ -4,6 +4,7 @@ import {
   NModal, NDataTable, NTag, NButton, NSpace, NText, NPopselect
 } from 'naive-ui'
 import { useFeedItems } from '../../composables/modals/useFeedItems'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -181,10 +182,10 @@ const columns = [
           已加载 {{ items.length }} 条记录 <span v-if="loading && offset > 0"> (加载中...)</span>
         </div>
         <n-space>
-          <n-button type="warning" secondary @click="handleRetryRecognition" :loading="loading">
+          <n-button v-bind="getButtonStyle('secondary')" @click="handleRetryRecognition" :loading="loading">
             重试识别失败项
           </n-button>
-          <n-button @click="emit('update:show', false)">关闭</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">关闭</n-button>
         </n-space>
       </n-space>
     </template>

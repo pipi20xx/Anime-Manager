@@ -10,6 +10,7 @@ import {
   DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import { useBangumiQuickSub } from '../../composables/components/useBangumiQuickSub'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits(['update:show', 'finish'])
@@ -50,7 +51,7 @@ const {
               <div class="label">手动添加 Bangumi ID</div>
               <n-input-group>
                 <n-input v-model:value="manualId" @keypress.enter="addManualItem" />
-                <n-button type="primary" @click="addManualItem">添加</n-button>
+                <n-button v-bind="getButtonStyle('primary')" @click="addManualItem">添加</n-button>
               </n-input-group>
             </n-gi>
           </n-grid>

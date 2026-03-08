@@ -5,6 +5,7 @@ import {
   NButton, NSelect, NInputNumber, NDivider, NIcon, NTooltip, useMessage
 } from 'naive-ui'
 import { HelpOutlineOutlined as HelpIcon } from '@vicons/material'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -173,8 +174,8 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
           预览匹配
         </n-button>
         <n-space>
-          <n-button @click="emit('update:show', false)">取消</n-button>
-          <n-button type="primary" @click="handleSave">保存规则</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存规则</n-button>
         </n-space>
       </n-space>
     </template>

@@ -16,6 +16,7 @@ import AiLabView from '../../views/AiLabView.vue'
 import AccountTab from '../../views/settings/AccountTab.vue'
 import ServiceStatusTab from '../../views/settings/ServiceStatusTab.vue'
 import { useSettings } from '../../composables/views/useSettings'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -43,8 +44,7 @@ const {
         <h1>系统设置</h1>
         <div class="subtitle">系统配置与选项</div>
       </div>
-      <n-button type="primary" size="large" :loading="loading" @click="saveAll">
-        <template #icon><n-icon><SaveIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" size="large" :loading="loading" @click="saveAll">
         保存全部修改
       </n-button>
     </div>
@@ -184,7 +184,7 @@ const {
                       <template #checked>通知已开启</template>
                       <template #unchecked>通知已关闭</template>
                     </n-switch>
-                    <n-button size="small" secondary type="primary" :loading="testTgLoading" @click="testTelegram" :disabled="!config.telegram.bot_token">
+                    <n-button v-bind="getButtonStyle('secondary')" size="small" :loading="testTgLoading" @click="testTelegram" :disabled="!config.telegram.bot_token">
                       发送测试消息
                     </n-button>
                   </n-space>
@@ -428,8 +428,7 @@ const {
 
             <n-card bordered>
               <n-space justify="center">
-                <n-button secondary type="info" :loading="syncLoading" @click="refreshRemoteRules">
-                  <template #icon><n-icon><SyncIcon /></n-icon></template>
+                <n-button v-bind="getButtonStyle('secondary')" :loading="syncLoading" @click="refreshRemoteRules">
                   立即从所有远程 URL 同步规则
                 </n-button>
               </n-space>

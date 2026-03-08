@@ -22,6 +22,7 @@ import TaskEditModal from '../../components/TaskEditModal.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import { useOrganizerView } from '../../composables/views/useOrganizerView'
 import { useBackClose } from '../../composables/useBackClose'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -88,8 +89,7 @@ onUnmounted(stopBgTaskPolling)
   <div class="organizer-mobile">
     <div class="header-mobile">
       <h1>整理与重命名</h1>
-      <n-button circle secondary type="primary" :loading="loading" @click="saveConfig">
-        <template #icon><n-icon><SaveIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" circle :loading="loading" @click="saveConfig">
       </n-button>
     </div>
 
@@ -131,8 +131,7 @@ onUnmounted(stopBgTaskPolling)
       <!-- 规则管理 Tab -->
       <n-tab-pane name="rules" tab="规则">
         <div class="tab-content">
-          <n-button block dashed type="primary" class="mb-4" @click="openEditRule(-1)">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" block dashed class="mb-4" @click="openEditRule(-1)">
             新建规则
           </n-button>
           
@@ -169,8 +168,7 @@ onUnmounted(stopBgTaskPolling)
       <!-- 整理任务 Tab -->
       <n-tab-pane name="tasks" tab="任务">
         <div class="tab-content">
-          <n-button block dashed type="primary" class="mb-4" @click="openEditTask(-1)">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" block dashed class="mb-4" @click="openEditTask(-1)">
             新建任务
           </n-button>
           
@@ -183,7 +181,7 @@ onUnmounted(stopBgTaskPolling)
                 </div>
                 <div class="action-row">
                    <n-button circle secondary type="primary" size="small" @click.stop="requestRunTask(task)" style="margin-right: 4px">
-                      <template #icon><n-icon><PlayIcon /></n-icon></template>
+                     <template #icon><n-icon><PlayIcon /></n-icon></template>
                    </n-button>
                    <n-dropdown trigger="click" :options="getTaskActions(i, task)" size="large">
                       <n-button circle quaternary size="small" @click.stop>

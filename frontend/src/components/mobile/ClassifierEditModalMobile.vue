@@ -4,6 +4,7 @@ import {
 } from 'naive-ui'
 import { SaveOutlined as SaveIcon } from '@vicons/material'
 import { useClassifierEdit } from '../../composables/modals/useClassifierEdit'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -151,8 +152,8 @@ const {
 
     <template #footer>
       <n-space justify="end">
-        <n-button @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" @click="handleSave">保存</n-button>
+        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+        <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
       </n-space>
     </template>
   </n-modal>

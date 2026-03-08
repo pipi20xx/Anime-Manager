@@ -108,6 +108,33 @@ input, textarea, select, button {
   padding: 10px 16px !important;
 }
 
+/* 按钮统一样式增强 */
+.n-button {
+  transition: all 0.2s ease;
+}
+.n-button--primary-type {
+  font-weight: 500;
+}
+.n-button--secondary-type {
+  font-weight: 400;
+}
+.n-button--error-type {
+  font-weight: 500;
+}
+.n-button--ghost-type {
+  font-weight: 400;
+}
+
+/* 图标按钮统一样式 */
+.n-button--circle {
+  min-width: 28px;
+  height: 28px;
+}
+.n-button--tiny.n-button--circle {
+  min-width: 24px;
+  height: 24px;
+}
+
 /* 通用工具类重构 - 极致紧凑 */
 .mt-4 { margin-top: 12px; }
 .mt-6 { margin-top: 16px; }

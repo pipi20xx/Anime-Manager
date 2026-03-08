@@ -15,6 +15,7 @@ import {
 import StrmTaskModal from '../../components/StrmTaskModal.vue'
 import { useStrmGeneratorView } from '../../composables/views/useStrmGeneratorView'
 import { useBackClose } from '../../composables/useBackClose'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -45,8 +46,7 @@ onMounted(fetchTasks)
   <div class="strm-mobile">
     <div class="header-mobile">
       <h1>虚拟 STRM 库</h1>
-      <n-button circle secondary type="primary" @click="openEdit(-1)">
-        <template #icon><n-icon><AddIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('icon')" @click="openEdit(-1)">
       </n-button>
     </div>
 

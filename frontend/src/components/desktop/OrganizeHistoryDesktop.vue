@@ -17,6 +17,7 @@ import {
   RefreshOutlined as RefreshIcon
 } from '@vicons/material'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -99,15 +100,13 @@ const handleRefresh = () => {
         </n-input>
         <n-popconfirm @positive-click="clearAll" positive-text="确定清空" negative-text="我再想想">
           <template #trigger>
-            <n-button type="error" ghost>
-              <template #icon><n-icon><DeleteIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('danger')">
               清空历史
             </n-button>
           </template>
           确定要彻底删除所有整理记录吗？这不会影响磁盘上的文件。
         </n-popconfirm>
-        <n-button @click="handleRefresh" :loading="loading">
-          <template #icon><n-icon><RefreshIcon /></n-icon></template>
+        <n-button v-bind="getButtonStyle('secondary')" @click="handleRefresh" :loading="loading">
           刷新数据
         </n-button>
       </n-space>

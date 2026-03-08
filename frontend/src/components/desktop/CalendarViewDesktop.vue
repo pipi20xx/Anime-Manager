@@ -18,6 +18,7 @@ import {
   SendOutlined as SendIcon
 } from '@vicons/material'
 import { useCalendar } from '../../composables/views/useCalendar'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -113,7 +114,6 @@ const {
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
             <n-text depth="3" style="font-size: 12px">共 {{ trackingList.length }} 个追踪项</n-text>
             <n-button type="primary" size="small" @click="refreshAllSubjects">
-              <template #icon><n-icon><RefreshIcon /></n-icon></template>
               全部刷新
             </n-button>
           </div>
@@ -133,8 +133,8 @@ const {
                       <n-space :size="4" align="center">
                         <n-input v-model:value="editBuffer.title" placeholder="标题" size="tiny" style="width: 150px" />
                         <n-input-number v-model:value="editBuffer.season" :min="1" size="tiny" style="width: 80px" />
-                        <n-button type="primary" size="tiny" @click="saveEdit(sub.id)">保存</n-button>
-                        <n-button size="tiny" @click="editingId = null">取消</n-button>
+                        <n-button v-bind="getButtonStyle('primary')" @click="saveEdit(sub.id)">保存</n-button>
+                        <n-button v-bind="getButtonStyle('ghost')" @click="editingId = null">取消</n-button>
                       </n-space>
                     </template>
                     <template v-else>
@@ -163,7 +163,6 @@ const {
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
             <n-text depth="3" style="font-size: 12px">点击下方番剧可自动同步至日历</n-text>
             <n-button type="primary" size="small" :loading="importingBatch" @click="handleBatchImport">
-              <template #icon><n-icon><ImportIcon /></n-icon></template>
               导入全周番剧
             </n-button>
           </div>
@@ -184,7 +183,7 @@ const {
             <n-form-item label="TMDB ID"><n-input v-model:value="newSubject.tmdb_id" placeholder="例如: 1399" /></n-form-item>
             <n-form-item label="标题"><n-input v-model:value="newSubject.title" placeholder="日历显示的标题" /></n-form-item>
             <n-form-item label="季号"><n-input-number v-model:value="newSubject.season" :min="1" /></n-form-item>
-            <n-button type="primary" block @click="handleAddSubject">保存追踪</n-button>
+            <n-button v-bind="getButtonStyle('primary')" block @click="handleAddSubject">保存追踪</n-button>
           </n-form>
         </n-tab-pane>
 
@@ -215,8 +214,7 @@ const {
               <n-divider dashed />
               
               <n-form-item label="状态测试">
-                <n-button secondary type="primary" @click="testCalendarPush" :loading="isTestingPush">
-                  <template #icon><n-icon><SendIcon /></n-icon></template>
+                <n-button v-bind="getButtonStyle('secondary')" @click="testCalendarPush" :loading="isTestingPush">
                   发送测试播报
                 </n-button>
               </n-form-item>

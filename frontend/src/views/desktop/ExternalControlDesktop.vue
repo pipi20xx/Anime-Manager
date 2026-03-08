@@ -11,6 +11,7 @@ import {
   DescriptionOutlined as DocIcon
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -177,8 +178,7 @@ const logColumns = [
                   </template>
                 </n-input>
                 
-                <n-button type="primary" secondary size="large" @click="generateToken" style="width: 100%">
-                  <template #icon><n-icon><RefreshIcon /></n-icon></template>
+                <n-button v-bind="getButtonStyle('primary')" size="large" @click="generateToken" style="width: 100%">
                   重新生成访问令牌 (Token)
                 </n-button>
               </n-space>
@@ -300,8 +300,7 @@ const logColumns = [
         <n-tab-pane name="logs" tab="访问日志">
           <div class="tab-content full-width">
             <div class="table-actions">
-              <n-button secondary @click="fetchLogs" :loading="logLoading">
-                <template #icon><n-icon><RefreshIcon /></n-icon></template>
+              <n-button v-bind="getButtonStyle('secondary')" @click="fetchLogs" :loading="logLoading">
                 刷新审计日志
               </n-button>
             </div>

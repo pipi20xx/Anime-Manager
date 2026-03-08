@@ -7,6 +7,7 @@ import {
 } from 'naive-ui'
 import { SearchOutlined as SearchIcon } from '@vicons/material'
 import { useSubscriptionEdit } from '../../composables/modals/useSubscriptionEdit'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -86,7 +87,7 @@ watch(() => props.show, (newVal) => {
                 />
                 <n-input v-model:value="searchQuery" placeholder="输入名称搜索 TMDB..." @keypress.enter="handleSearch" />
                 <n-button type="primary" @click="handleSearch" :loading="loading">
-                  <template #icon><n-icon :component="SearchIcon" /></template>
+                  搜索
                 </n-button>
               </n-input-group>
             </n-form-item>
@@ -213,8 +214,8 @@ watch(() => props.show, (newVal) => {
 
       <template #footer>
         <n-space justify="end">
-          <n-button @click="emit('update:show', false)">取消</n-button>
-          <n-button type="primary" @click="handleSave">保存</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
         </n-space>
       </template>
     </n-card>

@@ -8,6 +8,7 @@ import {
   SaveOutlined as SaveIcon
 } from '@vicons/material'
 import { useDatabaseConfig } from '../../composables/components/useDatabaseConfig'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -70,12 +71,10 @@ const {
           </n-alert>
 
         <div class="d-flex justify-end gap-3 mt-4">
-          <n-button ghost @click="testConnection" :loading="testing">
-            <template #icon><n-icon><ConnectIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('secondary')" @click="testConnection" :loading="testing">
             测试连接
           </n-button>
-          <n-button type="primary" @click="saveConfig" :loading="loading">
-            <template #icon><n-icon><SaveIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" @click="saveConfig" :loading="loading">
             保存并应用
           </n-button>
         </div>

@@ -7,6 +7,7 @@ import {
 import {
   CodeOutlined as VariableIcon
 } from '@vicons/material'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -139,8 +140,8 @@ const handleSave = () => {
     </n-space>
     <template #action>
       <n-space justify="end">
-        <n-button @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" @click="handleSave">保存规则配置</n-button>
+        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+        <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存规则配置</n-button>
       </n-space>
     </template>
   </n-modal>

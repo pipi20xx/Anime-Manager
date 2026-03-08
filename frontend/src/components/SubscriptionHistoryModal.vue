@@ -7,6 +7,7 @@ import {
   HistoryOutlined as HistoryIcon,
   DeleteSweepOutlined as ClearIcon 
 } from '@vicons/material'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -108,11 +109,10 @@ const columns = [
     />
     <template #footer>
       <n-space justify="space-between">
-        <n-button type="error" quaternary size="small" @click="handleClearHistory" :disabled="history.length === 0">
-          <template #icon><n-icon><ClearIcon /></n-icon></template>
+        <n-button v-bind="getButtonStyle('danger')" size="small" @click="handleClearHistory" :disabled="history.length === 0">
           清空所有推送历史
         </n-button>
-        <n-button @click="emit('update:show', false)">关闭窗口</n-button>
+        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">关闭窗口</n-button>
       </n-space>
     </template>
   </n-modal>

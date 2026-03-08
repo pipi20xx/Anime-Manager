@@ -24,6 +24,7 @@ import RulePreviewModal from '../../components/RulePreviewModal.vue'
 import RuleHistoryModal from '../../components/RuleHistoryModal.vue'
 import SubscriptionManager from '../../components/SubscriptionManager.vue'
 import { useSubscriptionView } from '../../composables/views/useSubscriptionView'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   feeds,
@@ -74,8 +75,7 @@ onMounted(fetchData)
       <n-space>
         <n-popconfirm @positive-click="clearBlacklist" positive-text="确定清空" negative-text="取消">
           <template #trigger>
-            <n-button type="warning" ghost>
-              <template #icon><n-icon><ResetIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('warning')">
               清空黑名单
             </n-button>
           </template>
@@ -83,19 +83,16 @@ onMounted(fetchData)
         </n-popconfirm>
         <n-popconfirm @positive-click="clearCache" positive-text="确定重置" negative-text="取消">
           <template #trigger>
-            <n-button type="warning" ghost>
-              <template #icon><n-icon><ResetIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('warning')">
               清空识别缓存
             </n-button>
           </template>
           确定清空所有已识别的元数据吗？这会导致所有条目在下次刷新时重新执行 AI/TMDB 识别。
         </n-popconfirm>
-        <n-button @click="retryRecognition" type="warning" ghost>
-          <template #icon><n-icon><RefreshIcon/></n-icon></template>
+        <n-button v-bind="getButtonStyle('warning')" @click="retryRecognition">
           重试识别失败项
         </n-button>
-        <n-button :loading="syncing" @click="runNow" type="primary" ghost>
-          <template #icon><n-icon><RefreshIcon/></n-icon></template>
+        <n-button v-bind="getButtonStyle('primary')" :loading="syncing" @click="runNow">
           立即触发全量刷新
         </n-button>
       </n-space>
@@ -118,12 +115,10 @@ onMounted(fetchData)
           </template>
           <template #header-extra>
             <n-space :size="8">
-              <n-button type="info" size="small" @click="syncJackettFeeds">
-                <template #icon><n-icon><SyncIcon/></n-icon></template>
+              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="syncJackettFeeds">
                 同步 Jackett 源
               </n-button>
-              <n-button type="primary" size="small" @click="openAddFeed">
-                <template #icon><n-icon><AddIcon/></n-icon></template>
+              <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAddFeed">
                 新增订阅源
               </n-button>
             </n-space>
@@ -201,8 +196,7 @@ onMounted(fetchData)
             </div>
           </template>
           <template #header-extra>
-            <n-button type="primary" size="small" @click="openAddRule">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAddRule">
               创建新规则
             </n-button>
           </template>

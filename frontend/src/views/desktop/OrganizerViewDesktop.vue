@@ -20,6 +20,7 @@ import RuleEditModal from '../../components/RuleEditModal.vue'
 import TaskEditModal from '../../components/TaskEditModal.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import { useOrganizerView } from '../../composables/views/useOrganizerView'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -75,8 +76,7 @@ onUnmounted(stopBgTaskPolling)
         <h1>整理与重命名</h1>
         <div class="subtitle">任务管理与执行</div>
       </div>
-      <n-button type="primary" secondary size="large" :loading="loading" @click="saveConfig">
-        <template #icon><n-icon><SaveIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" size="large" :loading="loading" @click="saveConfig">
         强制保存配置
       </n-button>
     </div>
@@ -126,8 +126,7 @@ onUnmounted(stopBgTaskPolling)
       <n-tab-pane name="rules" tab="规则管理">
         <n-space vertical size="large">
           <n-space justify="end">
-            <n-button type="primary" ghost @click="openEditRule(-1)">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" @click="openEditRule(-1)">
               创建重命名规则
             </n-button>
           </n-space>
@@ -175,7 +174,7 @@ onUnmounted(stopBgTaskPolling)
       <!-- 整理任务 Tab -->
       <n-tab-pane name="tasks" tab="整理任务">
         <n-space vertical size="large">
-          <n-space justify="end"><n-button type="primary" ghost @click="openEditTask(-1)"><template #icon><n-icon><AddIcon /></n-icon></template>创建整理任务</n-button></n-space>
+          <n-space justify="end"><n-button v-bind="getButtonStyle('primary')" @click="openEditTask(-1)">创建整理任务</n-button></n-space>
           
           <draggable v-model="tasks" item-key="id" @end="saveConfig" class="card-grid" handle=".drag-handle">
             <template #item="{element: task, index: i}">

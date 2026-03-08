@@ -9,6 +9,7 @@ import {
   KeyboardDoubleArrowDownOutlined as MoreIcon
 } from '@vicons/material'
 import { useTaskHistory } from '../../composables/views/useTaskHistory'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   tasks,
@@ -90,8 +91,7 @@ onUnmounted(() => {
             {{ mod }}
           </n-radio-button>
         </n-radio-group>
-        <n-button secondary @click="startPolling">
-          <template #icon><n-icon><RefreshIcon /></n-icon></template>
+        <n-button v-bind="getButtonStyle('secondary')" @click="startPolling">
           刷新
         </n-button>
         <n-popconfirm 
@@ -100,8 +100,7 @@ onUnmounted(() => {
           negative-text="取消"
         >
           <template #trigger>
-            <n-button type="warning" secondary>
-              <template #icon><n-icon><ClearIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('warning')">
               清理旧记录
             </n-button>
           </template>
@@ -134,11 +133,10 @@ onUnmounted(() => {
             <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
           </div>
           <div class="task-actions">
-            <n-button size="small" secondary @click="fetchTaskDetail(task.task_id)">
-              <template #icon><n-icon><ViewIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
               查看日志
             </n-button>
-            <n-button size="small" quaternary type="error" @click="deleteTask(task.task_id)">
+            <n-button circle quaternary type="error" size="small" @click="deleteTask(task.task_id)">
               <template #icon><n-icon><DeleteIcon /></n-icon></template>
             </n-button>
           </div>

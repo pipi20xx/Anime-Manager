@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { NModal, NSpace, NFormItem, NInput, NSwitch, NButton } from 'naive-ui'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -114,8 +115,8 @@ const handleSave = () => {
     
     <template #action>
       <n-space justify="end">
-        <n-button @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" @click="handleSave">保存</n-button>
+        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+        <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
       </n-space>
     </template>
   </n-modal>

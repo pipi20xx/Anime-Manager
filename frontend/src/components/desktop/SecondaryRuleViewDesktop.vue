@@ -12,6 +12,7 @@ import {
 } from '@vicons/material'
 import ClassifierEditModal from '../../components/ClassifierEditModal.vue'
 import { useSecondaryRule } from '../../composables/views/useSecondaryRule'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   rules,
@@ -44,16 +45,13 @@ const {
           根据元数据标签（流派、国家、标题关键词）自动决定文件整理后的二级目录。
         </n-text>
         <n-space>
-          <n-button secondary size="small" @click="triggerImport" :loading="importLoading">
-            <template #icon><n-icon><ImportIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('secondary')" size="small" @click="triggerImport" :loading="importLoading">
             导入
           </n-button>
-          <n-button secondary size="small" @click="handleExport">
-            <template #icon><n-icon><ExportIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('secondary')" size="small" @click="handleExport">
             导出
           </n-button>
-          <n-button type="primary" secondary size="small" @click="editingRule = null; isNewRule = true; showRuleModal = true">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" size="small" @click="editingRule = null; isNewRule = true; showRuleModal = true">
             添加新分类规则
           </n-button>
         </n-space>

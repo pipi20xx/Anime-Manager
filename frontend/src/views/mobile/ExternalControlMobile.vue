@@ -15,6 +15,7 @@ import {
   InfoOutlined as DetailIcon
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -86,8 +87,7 @@ onMounted(() => {
                  </n-button>
               </template>
             </n-input>
-            <n-button dashed block style="margin-top: 10px" @click="generateToken">
-              <template #icon><n-icon><RefreshIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" dashed block style="margin-top: 10px" @click="generateToken">
               重置令牌
             </n-button>
           </n-card>
@@ -154,7 +154,7 @@ onMounted(() => {
         <template #tab><n-icon size="20"><LogIcon /></n-icon></template>
         <div class="content-body no-pad">
           <div class="refresh-bar">
-             <n-button size="small" dashed block @click="fetchLogs" :loading="logLoading">刷新日志</n-button>
+             <n-button v-bind="getButtonStyle('secondary')" size="small" dashed block @click="fetchLogs" :loading="logLoading">刷新日志</n-button>
           </div>
           <n-spin :show="logLoading">
             <n-list>

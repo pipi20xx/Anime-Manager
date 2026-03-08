@@ -25,6 +25,7 @@ import RecognitionModal from '../../components/RecognitionModal.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import { useFileBrowserView } from '../../composables/views/useFileBrowserView'
 import { useBackClose } from '../../composables/useBackClose'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -184,8 +185,7 @@ const getShortName = (path: string) => {
   <div class="file-browser-mobile">
     <div class="header-mobile">
       <h1>文件浏览</h1>
-      <n-button circle secondary type="primary" @click="showManualModal = true">
-        <template #icon><n-icon><OrganizeIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('icon')" @click="showManualModal = true">
       </n-button>
     </div>
 

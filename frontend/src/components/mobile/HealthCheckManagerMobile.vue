@@ -4,7 +4,7 @@ import {
   NInput, NInputNumber, NSwitch, NPopconfirm, NTag, NIcon,
   NList, NListItem, NThing, NButtonGroup
 } from 'naive-ui'
-import { 
+import {
   CheckCircleOutlined as OkIcon,
   ErrorOutlineOutlined as ErrorIcon,
   HelpOutlineOutlined as UnknownIcon,
@@ -15,6 +15,7 @@ import {
   PlayArrowOutlined as PlayIcon
 } from '@vicons/material'
 import { useHealthCheck } from '../../composables/useHealthCheck'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   config, saveAll, loading, configs, showModal, editingConfig,
@@ -38,7 +39,7 @@ const {
               <span>频率 (分钟)</span>
               <n-input-number v-model:value="config.health_check_interval" :min="1" size="small" style="width: 100px" />
             </n-space>
-            <n-button type="primary" block secondary @click="saveAll" style="margin-top: 8px">保存全局设置</n-button>
+            <n-button v-bind="getButtonStyle('primary')" block @click="saveAll" style="margin-top: 8px">保存全局设置</n-button>
           </n-space>
         </n-form>
       </n-card>
@@ -46,8 +47,7 @@ const {
       <!-- 任务列表卡片 -->
       <n-card title="监测项目" size="small">
         <template #header-extra>
-          <n-button size="tiny" type="primary" @click="openAdd">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" size="tiny" @click="openAdd">
             新增
           </n-button>
         </template>
@@ -94,8 +94,7 @@ const {
         </div>
 
         <template #action>
-          <n-button block secondary @click="checkAll" :loading="loading">
-            <template #icon><n-icon><RefreshIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('secondary')" block @click="checkAll" :loading="loading">
             立即运行全量检测
           </n-button>
         </template>
@@ -119,7 +118,7 @@ const {
         </n-form-item>
       </n-form>
       <template #footer>
-        <n-button type="primary" block @click="saveConfig">保存配置</n-button>
+        <n-button v-bind="getButtonStyle('primary')" block @click="saveConfig">保存配置</n-button>
       </template>
     </n-modal>
   </div>

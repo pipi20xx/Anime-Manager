@@ -15,6 +15,7 @@ import {
 
 import StrmTaskModal from '../../components/StrmTaskModal.vue'
 import { useStrmGeneratorView } from '../../composables/views/useStrmGeneratorView'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -41,8 +42,7 @@ onMounted(fetchTasks)
         <h1>虚拟 STRM 库</h1>
         <div class="subtitle">虚拟 STRM 生成器</div>
       </div>
-      <n-button type="primary" size="large" @click="openEdit(-1)">
-        <template #icon><n-icon><AddIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" size="large" @click="openEdit(-1)">
         新建任务
       </n-button>
     </div>

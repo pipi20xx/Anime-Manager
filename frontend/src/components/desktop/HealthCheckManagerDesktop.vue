@@ -4,7 +4,7 @@ import {
   NCard, NSpace, NButton, NDataTable, NModal, NForm, NFormItem, 
   NInput, NInputNumber, NSwitch, NPopconfirm, NTag, NIcon
 } from 'naive-ui'
-import { 
+import {
   CheckCircleOutlined as OkIcon,
   ErrorOutlineOutlined as ErrorIcon,
   HelpOutlineOutlined as UnknownIcon,
@@ -13,6 +13,7 @@ import {
 } from '@vicons/material'
 import { useHealthCheck } from '../../composables/useHealthCheck'
 import type { HealthCheckConfig } from '../../api/health'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   config, saveAll, loading, configs, showModal, editingConfig,
@@ -74,15 +75,13 @@ const columns = [
     <n-card bordered title="掉盘与 CK 失效检测" size="small">
       <template #header-extra>
         <n-space>
-          <n-button size="small" secondary @click="fetchConfigs">
+          <n-button v-bind="getButtonStyle('icon')" size="small" @click="fetchConfigs">
             <template #icon><n-icon><RefreshIcon /></n-icon></template>
-            刷新状态
           </n-button>
-          <n-button size="small" type="warning" secondary @click="checkAll">
+          <n-button v-bind="getButtonStyle('warning')" size="small" @click="checkAll">
             立即检测全部
           </n-button>
-          <n-button size="small" type="primary" @click="openAdd">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAdd">
             添加配置
           </n-button>
         </n-space>
@@ -99,7 +98,7 @@ const columns = [
         <n-form-item label="巡检频率 (分)" label-placement="left" :show-feedback="false">
           <n-input-number v-model:value="config.health_check_interval" :min="1" size="small" style="width: 120px" />
         </n-form-item>
-        <n-button type="primary" size="small" secondary @click="saveAll">保存设置</n-button>
+        <n-button v-bind="getButtonStyle('primary')" size="small" @click="saveAll">保存设置</n-button>
       </n-space>
 
       <n-data-table 
@@ -128,8 +127,8 @@ const columns = [
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showModal = false">取消</n-button>
-          <n-button type="primary" @click="saveConfig">提交保存</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="showModal = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="saveConfig">提交保存</n-button>
         </n-space>
       </template>
     </n-modal>

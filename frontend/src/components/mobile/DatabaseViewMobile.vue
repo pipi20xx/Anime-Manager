@@ -17,6 +17,7 @@ import {
   TableChartOutlined as TableIcon
 } from '@vicons/material'
 import { useDatabase } from '../../composables/views/useDatabase'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   activeTab,
@@ -95,7 +96,7 @@ const handleTableSelect = (tableName: string) => {
         <!-- Advanced SQL Area -->
         <n-card size="small" :bordered="true" title="自定义 SQL" style="margin-bottom: 12px; background: var(--app-surface-inner); box-sizing: border-box;">
             <template #header-extra>
-               <n-button text type="primary" @click="showSql = !showSql" size="small">
+               <n-button v-bind="getButtonStyle('secondary')" @click="showSql = !showSql" size="small">
                  {{ showSql ? '收起' : '展开编辑器' }}
                </n-button>
             </template>
@@ -108,8 +109,7 @@ const handleTableSelect = (tableName: string) => {
                   :autosize="{ minRows: 3, maxRows: 8 }" 
                   style="font-family: monospace; margin-bottom: 8px;"
                 />
-                <n-button block type="warning" ghost size="small" :loading="queryLoading" @click="handleManualRun">
-                  <template #icon><n-icon><RunIcon /></n-icon></template>
+                <n-button v-bind="getButtonStyle('primary')" block size="small" :loading="queryLoading" @click="handleManualRun">
                   执行 SQL
                 </n-button>
               </div>

@@ -18,6 +18,7 @@ import {
   ArrowForwardOutlined as NextIcon
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 import { useBackClose } from '../../composables/useBackClose'
 
 const {
@@ -74,7 +75,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
       <n-input-group style="flex: 1;">
         <n-input v-model:value="browserSearch" placeholder="搜索..." @keypress.enter="handleBrowserSearch" size="small" />
         <n-button type="primary" size="small" @click="handleBrowserSearch">
-          <template #icon><n-icon><SearchIcon /></n-icon></template>
+          搜索
         </n-button>
       </n-input-group>
       
@@ -131,7 +132,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
         <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #footer>
-        <n-space justify="end"><n-button @click="showEditModal = false">取消</n-button><n-button type="primary" @click="saveMetadata">保存</n-button></n-space>
+        <n-space justify="end"><n-button v-bind="getButtonStyle('ghost')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>
       </template>
     </n-modal>
 

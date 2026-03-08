@@ -8,6 +8,7 @@ import {
   CloudUploadOutlined as TestIcon,
 } from '@vicons/material'
 import { useClientEdit } from '../../composables/modals/useClientEdit'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -109,13 +110,11 @@ const {
     <template #action>
       <n-space justify="space-between">
         <n-button :loading="testLoading" @click="handleTest" ghost type="info">
-          <template #icon><n-icon><TestIcon /></n-icon></template>
           测试连接
         </n-button>
         <n-space>
-          <n-button @click="emit('update:show', false)">取消</n-button>
-          <n-button type="primary" @click="handleSave">
-            <template #icon><n-icon><SaveIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="handleSave">
             保存配置
           </n-button>
         </n-space>

@@ -13,6 +13,7 @@ import {
   DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import { useSubscriptionTemplates } from '../../composables/components/useSubscriptionTemplates'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -74,7 +75,6 @@ const columns = [
       <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
           <div style="color: #888; font-size: 13px;">点击星标可将模板设为一键订阅时的默认配置</div>
           <n-button type="primary" size="small" @click="openAdd">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
             创建新预设
           </n-button>
       </div>
@@ -130,9 +130,9 @@ const columns = [
 
     <template #action>
       <n-space justify="end">
-        <n-button v-if="showEdit" @click="showEdit = false">返回列表</n-button>
-        <n-button v-if="!showEdit" @click="close">关闭</n-button>
-        <n-button v-if="showEdit" type="primary" @click="saveTemplate">保存该预设</n-button>
+        <n-button v-if="showEdit" v-bind="getButtonStyle('ghost')" @click="showEdit = false">返回列表</n-button>
+        <n-button v-if="!showEdit" v-bind="getButtonStyle('ghost')" @click="close">关闭</n-button>
+        <n-button v-if="showEdit" v-bind="getButtonStyle('primary')" @click="saveTemplate">保存该预设</n-button>
       </n-space>
     </template>
   </n-modal>

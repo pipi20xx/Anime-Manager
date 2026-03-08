@@ -24,6 +24,7 @@ import ManualOrganizeModal from '../../components/ManualOrganizeModal.vue'
 import RecognitionModal from '../../components/RecognitionModal.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import { useFileBrowserView } from '../../composables/views/useFileBrowserView'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -171,8 +172,7 @@ onMounted(() => {
         <h1>文件浏览</h1>
         <div class="subtitle">文件资源管理器</div>
       </div>
-      <n-button type="primary" secondary size="large" @click="showManualModal = true">
-        <template #icon><n-icon><OrganizeIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" size="large" @click="showManualModal = true">
         整理当前目录
       </n-button>
     </div>

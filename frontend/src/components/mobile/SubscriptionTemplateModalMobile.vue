@@ -12,6 +12,7 @@ import {
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
 import { useSubscriptionTemplates } from '../../composables/components/useSubscriptionTemplates'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -132,7 +133,7 @@ const {
           </n-form>
         </n-scrollbar>
         <div class="footer-btn">
-          <n-button block type="primary" @click="saveTemplate">保存预设</n-button>
+          <n-button block v-bind="getButtonStyle('primary')" @click="saveTemplate">保存预设</n-button>
         </div>
       </div>
     </div>

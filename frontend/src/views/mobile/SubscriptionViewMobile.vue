@@ -19,6 +19,7 @@ import MobileFeedList from '../../components/mobile/MobileFeedList.vue'
 import MobileRuleList from '../../components/mobile/MobileRuleList.vue'
 import { useSubscriptionView } from '../../composables/views/useSubscriptionView'
 import { useBackClose } from '../../composables/useBackClose'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   feeds,
@@ -106,12 +107,10 @@ onMounted(fetchData)
       <n-tab-pane name="feeds" tab="订阅源">
         <div class="tab-content">
           <n-space vertical :size="12">
-            <n-button block dashed type="info" @click="syncJackettFeeds">
-              <template #icon><n-icon><SyncIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('secondary')" block dashed @click="syncJackettFeeds">
               同步 Jackett 源
             </n-button>
-            <n-button block dashed type="primary" @click="openAddFeed">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" block dashed @click="openAddFeed">
               新增订阅源
             </n-button>
           </n-space>

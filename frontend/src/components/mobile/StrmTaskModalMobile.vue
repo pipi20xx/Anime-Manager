@@ -11,6 +11,7 @@ import {
 } from '@vicons/material'
 import FilePickerModal from '../FilePickerModal.vue'
 import { useStrmTask } from '../../composables/modals/useStrmTask'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -179,8 +180,8 @@ const {
     </n-form>
     <template #footer>
       <n-space justify="end">
-        <n-button @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" @click="handleSave">保存</n-button>
+        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+        <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
       </n-space>
     </template>
 

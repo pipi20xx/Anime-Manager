@@ -8,6 +8,7 @@ import {
   SaveOutlined as SaveIcon
 } from '@vicons/material'
 import { useDatabaseConfig } from '../../composables/components/useDatabaseConfig'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -46,13 +47,11 @@ const {
       </n-form-item>
 
       <n-space vertical class="mt-4">
-        <n-button block ghost @click="testConnection" :loading="testing">
-          <template #icon><n-icon><ConnectIcon /></n-icon></template>
+        <n-button v-bind="getButtonStyle('secondary')" block @click="testConnection" :loading="testing">
           测试连接
         </n-button>
-        <n-button block type="primary" @click="saveConfig" :loading="loading">
-          <template #icon><n-icon><SaveIcon /></n-icon></template>
-          保存并重启服务
+        <n-button v-bind="getButtonStyle('primary')" block @click="saveConfig" :loading="loading">
+          保存并应用
         </n-button>
       </n-space>
     </n-form>

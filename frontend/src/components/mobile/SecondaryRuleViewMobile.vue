@@ -15,6 +15,7 @@ import {
 import ClassifierEditModal from '../../components/ClassifierEditModal.vue'
 import { useSecondaryRule } from '../../composables/views/useSecondaryRule'
 import { useBackClose } from '../../composables/useBackClose'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   rules,
@@ -51,8 +52,7 @@ const handleMenuSelect = (key: string) => {
     <input type="file" ref="fileInput" style="display:none" accept=".json" @change="handleFileChange" />
     
     <div class="mobile-toolbar">
-      <n-button type="primary" size="small" dashed block @click="editingRule = null; isNewRule = true; showRuleModal = true">
-        <template #icon><n-icon><AddIcon /></n-icon></template>
+      <n-button v-bind="getButtonStyle('primary')" size="small" block @click="editingRule = null; isNewRule = true; showRuleModal = true">
         添加新分类规则
       </n-button>
       

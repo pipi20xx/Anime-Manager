@@ -15,6 +15,7 @@ import {
   DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import { useDatabase } from '../../composables/views/useDatabase'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   activeTab,
@@ -140,7 +141,7 @@ const dataTableColumns = computed(() => {
           <n-alert type="warning" title="高级操作提示">此处直接操作生产数据库。如果您不熟悉 SQL 语法，请谨慎执行修改操作。</n-alert>
           <n-card bordered size="small">
             <template #header-extra>
-              <n-button circle quaternary @click="fetchTables" :loading="loading" size="small">
+              <n-button v-bind="getButtonStyle('icon')" @click="fetchTables" :loading="loading" size="small">
                 <template #icon><n-icon><RefreshIcon /></n-icon></template>
               </n-button>
             </template>
@@ -149,8 +150,8 @@ const dataTableColumns = computed(() => {
           <n-card bordered size="small">
             <div class="sql-box">
               <n-input v-model:value="currentSql" type="textarea" placeholder="输入 SQL..." :autosize="{ minRows: 2, maxRows: 5 }" class="sql-input" />
-              <n-button type="primary" ghost class="run-btn" :loading="queryLoading" @click="handleManualRun">
-                <template #icon><n-icon><RunIcon /></n-icon></template>执行
+              <n-button v-bind="getButtonStyle('primary')" class="run-btn" :loading="queryLoading" @click="handleManualRun">
+                执行
               </n-button>
             </div>
           </n-card>

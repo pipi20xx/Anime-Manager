@@ -3,7 +3,7 @@ import { ref, h, watch } from 'vue'
 import { 
   NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NTag, NEmpty, NStatistic, NPopconfirm, NSpin
 } from 'naive-ui'
-import { 
+import {
   AddOutlined as AddIcon, 
   EditOutlined as EditIcon, 
   DeleteOutlined as DeleteIcon,
@@ -12,6 +12,7 @@ import {
   SearchOutlined as SearchIcon
 } from '@vicons/material'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -227,18 +228,16 @@ const countryColumns = [
         <n-space justify="space-between" align="center" style="width: 100%">
           <span>ID 映射管理</span>
           <n-space>
-            <n-button size="tiny" @click="exportMappings">
+            <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="exportMappings">
               <template #icon><n-icon><ExportIcon /></n-icon></template>
             </n-button>
-            <n-button size="tiny" @click="triggerImport" :loading="fileImportLoading">
+            <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="triggerImport" :loading="fileImportLoading">
               <template #icon><n-icon><ImportIcon /></n-icon></template>
             </n-button>
-            <n-button size="tiny" @click="handleImport" :loading="importLoading" v-if="['genre', 'company', 'keyword'].includes(activeType)">
+            <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="handleImport" :loading="importLoading" v-if="['genre', 'company', 'keyword'].includes(activeType)">
               <template #icon><n-icon><ImportIcon /></n-icon></template>
-              导入
             </n-button>
-            <n-button type="primary" size="tiny" @click="openAddModal">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" size="tiny" @click="openAddModal">
               添加
             </n-button>
           </n-space>
@@ -362,8 +361,8 @@ const countryColumns = [
 
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showModal = false">取消</n-button>
-          <n-button type="primary" @click="handleSave">保存</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="showModal = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
         </n-space>
       </template>
     </n-modal>

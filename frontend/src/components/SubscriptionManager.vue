@@ -19,6 +19,7 @@ import {
   LayersOutlined as LayersIcon,
   AutoAwesomeOutlined as UpgradeIcon
 } from '@vicons/material'
+import { getButtonStyle } from '../composables/useButtonStyles'
 import { pendingSubscription } from '../store/navigationStore'
 import SubscriptionEditModal from './SubscriptionEditModal.vue'
 import JackettFillModal from './JackettFillModal.vue'
@@ -216,27 +217,22 @@ onMounted(() => {
       <n-space>
         <n-popconfirm @positive-click="clearAllSubscriptions" positive-text="确定清空" negative-text="取消">
           <template #trigger>
-            <n-button type="error" ghost>
-              <template #icon><n-icon><DeleteIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('danger')">
               清空所有订阅
             </n-button>
           </template>
           该操作将彻底移除所有订阅任务，确定要继续吗？
         </n-popconfirm>
-        <n-button type="warning" ghost @click="showQuickSubModal = true">
-          <template #icon><n-icon><FlashIcon/></n-icon></template>
+        <n-button v-bind="getButtonStyle('warning')" @click="showQuickSubModal = true">
           Bangumi一键订阅
         </n-button>
-        <n-button secondary @click="showPriorityModal = true">
-          <template #icon><n-icon><LayersIcon/></n-icon></template>
+        <n-button v-bind="getButtonStyle('secondary')" @click="showPriorityModal = true">
           优先级规则
         </n-button>
-        <n-button secondary @click="showTemplateModal = true">
-          <template #icon><n-icon><TemplateIcon/></n-icon></template>
+        <n-button v-bind="getButtonStyle('secondary')" @click="showTemplateModal = true">
           订阅预设管理
         </n-button>
-        <n-button type="primary" @click="openAdd">
-          <template #icon><n-icon><AddIcon/></n-icon></template>
+        <n-button v-bind="getButtonStyle('primary')" @click="openAdd">
           添加新订阅
         </n-button>
       </n-space>

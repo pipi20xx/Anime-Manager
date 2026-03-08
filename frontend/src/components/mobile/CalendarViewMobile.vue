@@ -16,6 +16,7 @@ import {
   SendOutlined as SendIcon
 } from '@vicons/material'
 import { useCalendar } from '../../composables/views/useCalendar'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -97,7 +98,6 @@ const {
           <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--app-border-light);">
             <n-text depth="3" style="font-size: 12px">共 {{ trackingList.length }} 个追踪项</n-text>
             <n-button type="primary" size="small" @click="refreshAllSubjects">
-              <template #icon><n-icon><RefreshIcon /></n-icon></template>
               全部刷新
             </n-button>
           </div>
@@ -148,7 +148,7 @@ const {
             <n-form-item label="TMDB ID"><n-input v-model:value="newSubject.tmdb_id" placeholder="ID" /></n-form-item>
             <n-form-item label="标题"><n-input v-model:value="newSubject.title" placeholder="标题" /></n-form-item>
             <n-form-item label="季号"><n-input-number v-model:value="newSubject.season" :min="1" style="width: 100%" /></n-form-item>
-            <n-button type="primary" block @click="handleAddSubject">保存</n-button>
+            <n-button v-bind="getButtonStyle('primary')" block @click="handleAddSubject">保存</n-button>
           </n-form>
         </n-tab-pane>
 
@@ -179,13 +179,11 @@ const {
               <n-divider dashed />
 
               <n-button 
-                secondary 
-                type="primary" 
+                v-bind="getButtonStyle('secondary')" 
                 block 
                 @click="testCalendarPush"
                 :loading="isTestingPush"
               >
-                <template #icon><n-icon><SendIcon /></n-icon></template>
                 发送测试播报
               </n-button>
 

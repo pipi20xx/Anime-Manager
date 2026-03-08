@@ -12,6 +12,7 @@ import {
 } from '@vicons/material'
 import draggable from 'vuedraggable'
 import { usePriorityRules } from '../../composables/components/usePriorityRules'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -176,8 +177,8 @@ const {
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showRuleEdit = false">取消</n-button>
-          <n-button type="primary" @click="saveRule">保存规则</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="showRuleEdit = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="saveRule">保存规则</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -225,8 +226,8 @@ const {
       </div>
       <template #footer>
         <n-space justify="end">
-          <n-button @click="showProfileEdit = false">取消</n-button>
-          <n-button type="primary" @click="saveProfile">保存策略</n-button>
+          <n-button v-bind="getButtonStyle('ghost')" @click="showProfileEdit = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="saveProfile">保存策略</n-button>
         </n-space>
       </template>
     </n-modal>

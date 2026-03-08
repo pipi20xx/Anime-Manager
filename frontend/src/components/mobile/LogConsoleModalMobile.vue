@@ -13,6 +13,7 @@ import {
   SettingsRound as SettingsIcon
 } from '@vicons/material'
 import { useLogConsole } from '../../composables/components/useLogConsole'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps({
   show: Boolean
@@ -139,11 +140,11 @@ watch(() => props.show, (newVal) => {
             </div>
 
             <div class="setting-actions">
-               <n-button secondary block @click="openFullLog" style="margin-bottom: 12px;">
-                  <template #icon><n-icon><OpenIcon /></n-icon></template> 查看导出
+               <n-button v-bind="getButtonStyle('secondary')" block @click="openFullLog" style="margin-bottom: 12px;">
+                  查看导出
                </n-button>
-               <n-button secondary block type="error" @click="clearConsole">
-                  <template #icon><n-icon><ClearIcon /></n-icon></template> 清空
+               <n-button v-bind="getButtonStyle('danger')" block @click="clearConsole">
+                  清空
                </n-button>
             </div>
          </div>

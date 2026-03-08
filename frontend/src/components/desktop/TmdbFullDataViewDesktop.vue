@@ -16,6 +16,7 @@ import {
   DeleteSweepOutlined as ClearIcon
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   browserData,
@@ -51,29 +52,24 @@ const {
           <n-input-group>
             <n-input v-model:value="browserSearch" placeholder="搜索标题或 TMDB ID..." @keypress.enter="handleBrowserSearch" style="width: 300px" />
             <n-button type="primary" @click="handleBrowserSearch">
-              <template #icon><n-icon><SearchIcon /></n-icon></template>
+              搜索
             </n-button>
           </n-input-group>
         </n-space>
         <n-space>
-          <n-button ghost type="info" @click="handleExport">
-            <template #icon><n-icon><ExportIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('secondary')" @click="handleExport">
             导出字典
           </n-button>
-          <n-button ghost type="warning" @click="handleRefreshAll">
-            <template #icon><n-icon><SyncIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('warning')" @click="handleRefreshAll">
             全量刷新
           </n-button>
-          <n-button ghost type="warning" @click="clearFingerprints">
-            <template #icon><n-icon><ClearIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('warning')" @click="clearFingerprints">
             清空智能记忆
           </n-button>
-          <n-button ghost type="info" @click="handleSyncSytmdb">
-            <template #icon><n-icon><SytmdbIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('warning')" @click="handleSytmdbSync">
             同步 SYTMDB
           </n-button>
-          <n-button type="primary" secondary @click="openCreate">
-            <template #icon><n-icon><AddIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('primary')" secondary @click="openCreate">
             手动新增
           </n-button>
           <n-button quaternary circle @click="fetchBrowserData" :loading="browserLoading"><template #icon><n-icon><SyncIcon /></n-icon></template></n-button>
@@ -132,7 +128,7 @@ const {
         <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #action>
-        <n-space justify="end"><n-button @click="showEditModal = false">取消</n-button><n-button type="primary" @click="saveMetadata">保存并固定</n-button></n-space>
+        <n-space justify="end"><n-button v-bind="getButtonStyle('ghost')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>
       </template>
     </n-modal>
 
