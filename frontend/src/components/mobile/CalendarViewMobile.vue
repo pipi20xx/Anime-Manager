@@ -29,6 +29,7 @@ const {
   mobileAgenda,
   calendarConfig,
   isTestingPush,
+  getEpisodeRange,
   fetchData,
   saveCalendarConfig,
   testCalendarPush,
@@ -70,9 +71,14 @@ const {
               <div class="item-content">
                 <div class="item-title">{{ item.title }}</div>
                 <div class="item-eps">
-                  <n-tag v-for="ep in item.episodes" :key="ep.ep" size="small" :bordered="false" type="primary" class="ep-tag">
-                    {{ ep.ep }}
-                  </n-tag>
+                  <span v-for="ep in item.episodes" :key="ep.ep" class="ep-wrapper">
+                    <n-tag size="small" :bordered="false" :type="ep.isFinale ? 'error' : 'primary'" class="ep-tag">
+                      {{ ep.ep }}
+                    </n-tag>
+                    <n-tag v-if="ep.isFinale" size="small" :bordered="false" type="error" class="end-tag">
+                      END
+                    </n-tag>
+                  </span>
                 </div>
               </div>
             </div>
@@ -99,7 +105,7 @@ const {
             <n-list hoverable>
               <n-list-item v-for="sub in trackingList" :key="sub.id">
                 <n-thing :title="sub.title">
-                  <template #description>TMDB: {{ sub.tmdb_id }} | S{{ sub.season }}</template>
+                  <template #description>TMDB: {{ sub.tmdb_id }} | S{{ sub.season }} | <span :class="{ 'no-data-text': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span></template>
                   <template #header-extra>
                     <n-button-group size="tiny">
                       <n-button secondary type="primary" @click="refreshSubject(sub.id)"><template #icon><n-icon><RefreshIcon/></n-icon></template></n-button>
@@ -223,10 +229,17 @@ const {
 .item-content { flex: 1; }
 .item-title { font-weight: bold; font-size: 14px; margin-bottom: 6px; }
 .item-eps { display: flex; gap: 4px; flex-wrap: wrap; }
+.ep-wrapper { display: inline-flex; align-items: center; gap: 2px; }
 .ep-tag { font-family: monospace; font-weight: bold; }
+.end-tag { font-family: monospace; font-weight: bold; font-size: 10px; }
 
 .scroll-container { flex: 1; overflow-y: auto; padding: 0 16px 16px; }
 .empty-agenda { padding: 40px 0; text-align: center; }
+
+.no-data-text {
+  color: #ff6b6b;
+  font-weight: bold;
+}
 
 .weekday-header { font-size: 12px; font-weight: bold; color: #888; margin: 12px 0 8px; }
 .discover-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

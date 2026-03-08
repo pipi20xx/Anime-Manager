@@ -222,7 +222,8 @@ class TMDBProvider:
             results.append({
                 "episode": ep.get("episode_number"),
                 "air_date": ep.get("air_date"), # YYYY-MM-DD
-                "name": ep.get("name")
+                "name": ep.get("name"),
+                "episode_type": ep.get("episode_type")
             })
         return results
 

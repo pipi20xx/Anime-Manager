@@ -665,7 +665,9 @@ class NotificationManager:
                 for ep in episodes:
                     if ep.get("air_date") == today_str:
                         ep_num = ep.get("episode")
-                        ep_info = f" - 第 {ep_num} 集"
+                        is_finale = ep.get("episode_type") == "finale"
+                        finale_tag = " [END]" if is_finale else ""
+                        ep_info = f" - 第 {ep_num} 集{finale_tag}"
                         break
                 
                 char = "└──" if i == len(subjects) - 1 else "├──"

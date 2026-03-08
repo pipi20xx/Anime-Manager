@@ -41,18 +41,30 @@ async def add_subject(subject: CalendarSubject):
 
 @router.post("/subjects/{subject_id}/refresh", summary="刷新条目的放送日期")
 async def refresh_subject(subject_id: int):
+    import logging
+    logger = logging.getLogger(__name__)
+    
     async with db.session_scope():
         subject = await db.get(CalendarSubject, subject_id)
         if not subject or subject.media_type != "tv":
             return {"success": False, "message": "条目不存在或非电视剧"}
         
+        logger.info(f"🔄 [日历刷新] 开始刷新: 《{subject.title}》 S{subject.season} (TMDB ID: {subject.tmdb_id})")
+        
         tmdb = TMDBProvider()
         eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
         if eps:
+            old_count = len(subject.episodes_cache) if subject.episodes_cache else 0
+            new_count = len(eps)
+            
             subject.episodes_cache = eps
             subject.first_air_date = eps[0]["air_date"]
             await db.save(subject)
+            
+            logger.info(f"✅ [日历刷新] 刷新成功: 《{subject.title}》 S{subject.season} - {old_count} → {new_count} 集")
             return {"success": True, "message": "已同步最新放送计划"}
+        else:
+            logger.warning(f"⚠️ [日历刷新] 刷新失败: 《{subject.title}》 S{subject.season} - TMDB 无数据")
     return {"success": False, "message": "无法从 TMDB 获取数据"}
 
 @router.post("/subjects/refresh_all", summary="批量刷新所有条目的放送日期")
@@ -74,19 +86,26 @@ async def refresh_all_subjects():
         
         for idx, subject in enumerate(subjects, 1):
             try:
+                logger.info(f"  [{idx}/{len(subjects)}] 🔄 开始刷新: 《{subject.title}》 S{subject.season} (TMDB ID: {subject.tmdb_id})")
+                
                 eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
                 if eps:
+                    old_count = len(subject.episodes_cache) if subject.episodes_cache else 0
+                    new_count = len(eps)
+                    
                     subject.episodes_cache = eps
                     subject.first_air_date = eps[0]["air_date"]
                     await db.save(subject)
                     updated_count += 1
-                    logger.info(f"  [{idx}/{len(subjects)}] ✅ {subject.title} S{subject.season} - 已同步 {len(eps)} 集放送信息")
+                    
+                    change_info = f"{old_count} → {new_count} 集" if old_count != new_count else f"{new_count} 集"
+                    logger.info(f"  [{idx}/{len(subjects)}] ✅ 刷新成功: 《{subject.title}》 S{subject.season} - {change_info}")
                 else:
                     failed_count += 1
-                    logger.warning(f"  [{idx}/{len(subjects)}] ⚠️ {subject.title} S{subject.season} - TMDB 无数据")
+                    logger.warning(f"  [{idx}/{len(subjects)}] ⚠️ 刷新失败: 《{subject.title}》 S{subject.season} - TMDB 无数据")
             except Exception as e:
                 failed_count += 1
-                logger.error(f"  [{idx}/{len(subjects)}] ❌ {subject.title} S{subject.season} - 刷新失败: {str(e)}")
+                logger.error(f"  [{idx}/{len(subjects)}] ❌ 刷新失败: 《{subject.title}》 S{subject.season} - {str(e)}")
         
         logger.info(f"✨ [日历] 批量刷新完成: 成功 {updated_count} 个，失败 {failed_count} 个")
         return {

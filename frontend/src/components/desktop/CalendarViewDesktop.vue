@@ -32,6 +32,7 @@ const {
   calendarGrid,
   calendarConfig,
   isTestingPush,
+  getEpisodeRange,
   fetchData,
   saveCalendarConfig,
   testCalendarPush,
@@ -95,7 +96,7 @@ const {
                   <div class="anime-entry-line">
                     <div class="status-dot"></div>
                     <span class="anime-name-text">{{ item.title }}</span>
-                    <span class="ep-count-tag">{{ item.episodeDisplay }}</span>
+                    <span class="ep-count-tag" v-html="item.episodeDisplay"></span>
                   </div>
                 </template>
                 <div v-html="item.epDetails"></div>
@@ -123,7 +124,7 @@ const {
                   <div class="item-main">
                     <div class="item-info">
                       <span class="item-title">{{ sub.title }}</span>
-                      <span class="item-desc">TMDB: {{ sub.tmdb_id }} | S{{ sub.season }}</span>
+                      <span class="item-desc">TMDB: {{ sub.tmdb_id }} | S{{ sub.season }} | <span :class="{ 'no-data-text': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span></span>
                     </div>
                   </div>
 
@@ -429,6 +430,17 @@ const {
 .item-desc {
   font-size: 11px;
   color: var(--n-text-color-3);
+}
+
+.no-data-text {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.end-mark {
+  color: #ff6b6b !important;
+  font-weight: bold;
+  margin-left: 2px;
 }
 
 .item-actions {

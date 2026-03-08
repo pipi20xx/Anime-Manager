@@ -7,6 +7,16 @@ export function useCalendar() {
   const bangumiRaw = ref<any[]>([])
   const message = useMessage()
 
+  const getEpisodeRange = (episodes: any[]) => {
+    if (!episodes || !Array.isArray(episodes) || episodes.length === 0) {
+      return '无数据'
+    }
+    const epNumbers = episodes.map(ep => ep.episode).filter(ep => ep !== undefined && ep !== null).sort((a, b) => a - b)
+    if (epNumbers.length === 0) return '无数据'
+    if (epNumbers.length === 1) return `第 ${epNumbers[0]} 集`
+    return `${epNumbers[0]}-${epNumbers[epNumbers.length - 1]} 集`
+  }
+
   // 状态
   const viewDate = ref(new Date())
   const showManageModal = ref(false)
@@ -55,7 +65,11 @@ export function useCalendar() {
           if (matches.length > 0) {
             const epNums = matches.map((m: any) => m.episode).sort((a: number, b: number) => a - b)
             let epDisplay = ''
-            if (epNums.length === 1) epDisplay = `E${epNums[0]}`
+            if (epNums.length === 1) {
+              const epData = matches.find((m: any) => m.episode === epNums[0])
+              const isFinale = epData?.episode_type === 'finale'
+              epDisplay = isFinale ? `E${epNums[0]} <span style="color: #ff6b6b; font-weight: bold; margin-left: 2px;">END</span>` : `E${epNums[0]}`
+            }
             else {
               const isContinuous = epNums.every((num: number, idx: number) => idx === 0 || num === epNums[idx - 1] + 1)
               epDisplay = isContinuous ? `E${epNums[0]}-${epNums[epNums.length - 1]}` : `E${epNums.join(',')}`
@@ -66,7 +80,10 @@ export function useCalendar() {
               title: sub.title,
               season: sub.season,
               episodeDisplay: `S${sub.season}${epDisplay}`,
-              epDetails: matches.map((m: any) => `第 ${m.episode} 集: ${m.name || '未命名'}`).join('<br/>')
+              epDetails: matches.map((m: any) => {
+                const finaleTag = m.episode_type === 'finale' ? ' [END]' : ''
+                return `第 ${m.episode} 集${finaleTag}: ${m.name || '未命名'}`
+              }).join('<br/>')
             })
           }
         }
@@ -98,7 +115,11 @@ export function useCalendar() {
                id: sub.id,
                title: sub.title,
                season: sub.season,
-               episodes: matches.map((m: any) => ({ ep: m.episode, title: m.name }))
+               episodes: matches.map((m: any) => ({ 
+                 ep: m.episode, 
+                 title: m.name,
+                 isFinale: m.episode_type === 'finale'
+               }))
              })
           }
         }
@@ -317,6 +338,7 @@ export function useCalendar() {
     mobileAgenda,
     calendarConfig,
     isTestingPush,
+    getEpisodeRange,
     fetchData,
     saveCalendarConfig,
     testCalendarPush,
