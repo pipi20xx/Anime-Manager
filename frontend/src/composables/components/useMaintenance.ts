@@ -41,7 +41,8 @@ export function useMaintenance() {
     'public.strm_tasks': '虚拟链接 (STRM) 生成任务记录',
     'public.health_check_configs': '系统健康检查监控配置',
     'public.users': '系统用户账户与认证信息',
-    'public.task_records': '任务中心执行记录（整理/STRM/RSS等任务的日志）'
+    'public.task_records': '任务中心执行记录（整理/STRM/RSS等任务的日志）',
+    'public.file_hashes': '文件哈希记录（SHA1、ED2K 及识别信息缓存）'
   }
 
   const fetchTables = async () => {

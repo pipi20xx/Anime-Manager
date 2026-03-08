@@ -9,11 +9,6 @@ import {
   DeleteOutlined as DeleteIcon,
   DownloadOutlined as ImportIcon,
   UploadOutlined as ExportIcon,
-  LabelOutlined as LabelIcon,
-  BusinessOutlined as CompanyIcon,
-  TagOutlined as KeywordIcon,
-  LanguageOutlined as LanguageIcon,
-  PublicOutlined as CountryIcon,
   SearchOutlined as SearchIcon
 } from '@vicons/material'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'
@@ -252,7 +247,6 @@ const countryColumns = [
       
       <n-tabs type="line" v-model:value="activeType" size="small">
         <n-tab-pane name="genre" tab="流派">
-          <template #tab><n-icon><LabelIcon /></n-icon></template>
           <n-input 
             v-model:value="genreSearch" 
             placeholder="搜索 ID 或名称..." 
@@ -266,7 +260,6 @@ const countryColumns = [
         </n-tab-pane>
         
         <n-tab-pane name="company" tab="公司">
-          <template #tab><n-icon><CompanyIcon /></n-icon></template>
           <n-input 
             v-model:value="companySearch" 
             placeholder="搜索 ID、名称或国家..." 
@@ -289,7 +282,6 @@ const countryColumns = [
         </n-tab-pane>
         
         <n-tab-pane name="keyword" tab="关键词">
-          <template #tab><n-icon><KeywordIcon /></n-icon></template>
           <n-input 
             v-model:value="keywordSearch" 
             placeholder="搜索 ID 或名称..." 
@@ -312,7 +304,6 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="language" tab="语言">
-          <template #tab><n-icon><LanguageIcon /></n-icon></template>
           <n-input 
             v-model:value="languageSearch" 
             placeholder="搜索代码或名称..." 
@@ -326,7 +317,6 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="country" tab="国家">
-          <template #tab><n-icon><CountryIcon /></n-icon></template>
           <n-input 
             v-model:value="countrySearch" 
             placeholder="搜索代码或名称..." 

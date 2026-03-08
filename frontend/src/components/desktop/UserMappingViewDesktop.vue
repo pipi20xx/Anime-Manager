@@ -289,7 +289,7 @@ const countryColumns = [
       
       <n-tabs type="line" v-model:value="activeType">
         <n-tab-pane name="genre" tab="流派">
-          <template #tab><n-space :size="4"><n-icon><LabelIcon /></n-icon> 流派</n-space></template>
+          <template #tab>流派</template>
           <n-input 
             v-model:value="genreSearch" 
             placeholder="搜索 ID 或名称..." 
@@ -310,7 +310,7 @@ const countryColumns = [
         </n-tab-pane>
         
         <n-tab-pane name="company" tab="制作公司">
-          <template #tab><n-space :size="4"><n-icon><CompanyIcon /></n-icon> 制作公司</n-space></template>
+          <template #tab>制作公司</template>
           <n-input 
             v-model:value="companySearch" 
             placeholder="搜索 ID、名称或国家..." 
@@ -339,7 +339,7 @@ const countryColumns = [
         </n-tab-pane>
         
         <n-tab-pane name="keyword" tab="关键词">
-          <template #tab><n-space :size="4"><n-icon><KeywordIcon /></n-icon> 关键词</n-space></template>
+          <template #tab>关键词</template>
           <n-input 
             v-model:value="keywordSearch" 
             placeholder="搜索 ID 或名称..." 
@@ -368,7 +368,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="language" tab="原始语言">
-          <template #tab><n-space :size="4"><n-icon><LanguageIcon /></n-icon> 原始语言</n-space></template>
+          <template #tab>原始语言</template>
           <n-input 
             v-model:value="languageSearch" 
             placeholder="搜索代码或名称..." 
@@ -389,7 +389,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="country" tab="原始国家">
-          <template #tab><n-space :size="4"><n-icon><CountryIcon /></n-icon> 原始国家</n-space></template>
+          <template #tab>原始国家</template>
           <n-input 
             v-model:value="countrySearch" 
             placeholder="搜索代码或名称..." 
