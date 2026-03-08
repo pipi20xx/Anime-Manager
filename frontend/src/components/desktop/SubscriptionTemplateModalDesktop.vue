@@ -8,7 +8,9 @@ import {
 import {
   AddOutlined as AddIcon,
   StarOutlined as StarIcon,
-  StarFilled as StarFilledIcon
+  StarFilled as StarFilledIcon,
+  EditOutlined as EditIcon,
+  DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import { useSubscriptionTemplates } from '../../composables/components/useSubscriptionTemplates'
 
@@ -42,11 +44,15 @@ const columns = [
   { 
     title: '操作', key: 'actions', width: 120,
     render(row: any) {
-      return h(NSpace, null, {
+      return h(NSpace, { size: 4 }, {
         default: () => [
-          h(NButton, { size: 'tiny', secondary: true, onClick: () => openEdit(row) }, { default: () => '编辑' }),
-          h(NPopconfirm, { onPositiveClick: () => deleteTemplate(row.id) }, {
-            trigger: () => h(NButton, { size: 'tiny', type: 'error', ghost: true }, { default: () => '删除' }),
+          h(NButton, { size: 'tiny', secondary: true, onClick: () => openEdit(row) }, { 
+            icon: () => h(NIcon, null, { default: () => h(EditIcon) }) 
+          }),
+          h(NPopconfirm, { positiveText: '确定', negativeText: '取消', onPositiveClick: () => deleteTemplate(row.id) }, {
+            trigger: () => h(NButton, { size: 'tiny', secondary: true, type: 'error' }, { 
+              icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) 
+            }),
             default: () => '确定删除此模板吗？'
           })
         ]

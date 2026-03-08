@@ -5,8 +5,6 @@ import {
   NForm, NFormItem, NInputNumber, NScrollbar
 } from 'naive-ui'
 import { 
-  ExtensionOutlined as BrickIcon,
-  LayersOutlined as ProfileIcon,
   AddOutlined as AddIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
@@ -66,7 +64,6 @@ const {
                 <div class="card-body">
                   <div class="card-title-row">
                     <div class="title-box">
-                      <n-icon color="#18a058"><ProfileIcon/></n-icon>
                       <span class="name">{{ profile.name }}</span>
                     </div>
                     <n-tag v-if="profile.upgrade_allowed" type="success" size="tiny" round>可洗版</n-tag>
@@ -76,7 +73,10 @@ const {
                   </div>
                 </div>
                 <div class="card-actions" @click.stop>
-                   <n-popconfirm @positive-click="deleteProfile(profile.id)">
+                   <n-button quaternary circle size="small" @click="openEditProfile(profile)">
+                     <template #icon><n-icon><EditIcon/></n-icon></template>
+                   </n-button>
+                   <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteProfile(profile.id)">
                       <template #trigger>
                         <n-button quaternary circle type="error" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                       </template>
@@ -102,7 +102,6 @@ const {
                   <div class="card-body">
                     <div class="card-title-row">
                       <div class="title-box">
-                        <n-icon color="#2080f0"><BrickIcon/></n-icon>
                         <span class="name">{{ rule.name }}</span>
                       </div>
                     </div>
@@ -113,7 +112,10 @@ const {
                     </div>
                   </div>
                   <div class="card-actions" @click.stop>
-                     <n-popconfirm @positive-click="deleteRule(rule.id)">
+                     <n-button quaternary circle size="small" @click="openEditRule(rule)">
+                       <template #icon><n-icon><EditIcon/></n-icon></template>
+                     </n-button>
+                     <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
                         <template #trigger>
                           <n-button quaternary circle type="error" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                         </template>

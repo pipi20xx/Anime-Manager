@@ -6,8 +6,7 @@ import {
   NSwitch
 } from 'naive-ui'
 import {
-  FolderOpenOutlined as FolderIcon,
-  VisibilityOutlined as PreviewIcon
+  FolderOpenOutlined as FolderIcon
 } from '@vicons/material'
 import FilePickerModal from '../FilePickerModal.vue'
 import { useStrmTask } from '../../composables/modals/useStrmTask'
@@ -156,10 +155,7 @@ const {
               <n-divider dashed />
             
             <n-space align="center" justify="space-between">
-              <n-space align="center">
-                <n-icon size="20" style="color: var(--n-primary-color)"><PreviewIcon /></n-icon>
-                <b style="font-size: 14px">实时 URL 预览</b>
-              </n-space>
+              <b style="font-size: 14px">实时 URL 预览</b>
               <n-checkbox v-model:checked="form.url_encode">路径 URL 编码</n-checkbox>
             </n-space>
             

@@ -5,8 +5,6 @@ import {
   NForm, NFormItem, NInputNumber
 } from 'naive-ui'
 import { 
-  ExtensionOutlined as BrickIcon,
-  LayersOutlined as ProfileIcon,
   AddOutlined as AddIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
@@ -63,7 +61,6 @@ const {
                 <n-card hoverable class="profile-card" @click="openEditProfile(profile)">
                   <template #header>
                     <div class="p-header">
-                      <n-icon size="20" color="#18a058"><ProfileIcon/></n-icon>
                       <span>{{ profile.name }}</span>
                     </div>
                   </template>
@@ -82,14 +79,18 @@ const {
                   </div>
                   
                   <template #action>
-                     <n-space justify="end">
-                       <n-popconfirm @positive-click.stop="deleteProfile(profile.id)">
+                     <n-space justify="end" :size="4">
+                       <n-button size="tiny" secondary @click.stop="openEditProfile(profile)">
+                         <template #icon><n-icon><EditIcon/></n-icon></template>
+                       </n-button>
+                       <n-popconfirm positive-text="确定" negative-text="取消" @positive-click.stop="deleteProfile(profile.id)">
                          <template #trigger>
-                           <n-button size="small" type="error" ghost @click.stop>删除</n-button>
+                           <n-button size="tiny" secondary type="error" @click.stop>
+                             <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                           </n-button>
                          </template>
                          确定删除此策略吗？
                        </n-popconfirm>
-                       <n-button size="small" type="primary" ghost @click.stop="openEditProfile(profile)">编辑</n-button>
                      </n-space>
                   </template>
                 </n-card>
@@ -113,10 +114,9 @@ const {
 
           <n-grid :cols="3" :x-gap="12" :y-gap="12">
             <n-gi v-for="rule in rules" :key="rule.id">
-              <n-card size="small" hoverable class="rule-card">
+              <n-card size="small" hoverable class="rule-card" @click="openEditRule(rule)">
                 <template #header>
                   <div class="r-header">
-                    <n-icon size="18" color="#2080f0"><BrickIcon/></n-icon>
                     {{ rule.name }}
                   </div>
                 </template>
@@ -132,12 +132,12 @@ const {
                 </div>
                 <template #action>
                   <n-space justify="end" :size="4">
-                    <n-button size="tiny" secondary @click="openEditRule(rule)">
+                    <n-button size="tiny" secondary @click.stop="openEditRule(rule)">
                       <template #icon><n-icon><EditIcon/></n-icon></template>
                     </n-button>
-                    <n-popconfirm @positive-click="deleteRule(rule.id)">
+                    <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
                       <template #trigger>
-                        <n-button size="tiny" secondary type="error">
+                        <n-button size="tiny" secondary type="error" @click.stop>
                           <template #icon><n-icon><DeleteIcon/></n-icon></template>
                         </n-button>
                       </template>

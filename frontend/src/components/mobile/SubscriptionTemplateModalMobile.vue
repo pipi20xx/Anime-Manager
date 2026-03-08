@@ -73,7 +73,7 @@ const {
                 </div>
              </div>
              <div class="card-actions" @click.stop>
-                <n-popconfirm @positive-click="deleteTemplate(row.id)">
+                <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteTemplate(row.id)">
                   <template #trigger>
                     <n-button quaternary circle type="error" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                   </template>
