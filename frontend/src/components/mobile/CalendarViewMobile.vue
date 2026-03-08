@@ -108,10 +108,10 @@ const {
                   <template #description>TMDB: {{ sub.tmdb_id }} | S{{ sub.season }} | <span :class="{ 'no-data-text': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span></template>
                   <template #header-extra>
                     <n-button-group size="tiny">
-                      <n-button secondary type="primary" @click="refreshSubject(sub.id)"><template #icon><n-icon><RefreshIcon/></n-icon></template></n-button>
+                      <n-button v-bind="getButtonStyle('iconPrimary')" @click="refreshSubject(sub.id)"><template #icon><n-icon><RefreshIcon/></n-icon></template></n-button>
                       <n-popconfirm @positive-click="deleteSubject(sub.id)" positive-text="删" negative-text="取消">
                         <template #trigger>
-                          <n-button secondary type="error"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                          <n-button v-bind="getButtonStyle('iconDanger')"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                         </template>
                         确定删除?
                       </n-popconfirm>

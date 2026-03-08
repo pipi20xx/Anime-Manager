@@ -12,6 +12,7 @@ import {
 import RecognitionLogsView from '../../views/RecognitionLogsView.vue'
 import RecognitionResult from '../../components/RecognitionResult.vue'
 import { useHome } from '../../composables/views/useHome'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   API_BASE,
@@ -80,7 +81,7 @@ const {
                             <n-form-item label="搜索辅助 (TMDB)" path="sandboxSearch.keyword">
                               <n-input v-model:value="sandboxSearch.keyword" placeholder="输入剧名搜索..." @keypress.enter="searchTmdbForSandbox">
                                 <template #suffix>
-                                  <n-button quaternary circle size="small" @click="searchTmdbForSandbox" :loading="sandboxSearch.loading">
+                                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForSandbox" :loading="sandboxSearch.loading">
                                     <template #icon>
                                       <n-icon :component="SearchIcon" />
                                     </template>

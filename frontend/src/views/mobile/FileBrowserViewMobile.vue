@@ -194,10 +194,10 @@ const getShortName = (path: string) => {
          <span class="path-text">{{ getShortName(currentPath) }}</span>
       </div>
       <n-space>
-        <n-button circle size="small" secondary :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
+        <n-button v-bind="getButtonStyle('icon')" size="small" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
           <template #icon><n-icon><UpIcon /></n-icon></template>
         </n-button>
-        <n-button circle size="small" secondary @click="fetchFiles(currentPath)">
+        <n-button v-bind="getButtonStyle('icon')" size="small" @click="fetchFiles(currentPath)">
           <template #icon><n-icon><RefreshIcon /></n-icon></template>
         </n-button>
       </n-space>
@@ -228,10 +228,10 @@ const getShortName = (path: string) => {
           </div>
           <template #suffix>
              <n-space>
-               <n-button quaternary circle size="small" @click.stop="handleContextMenuMobile($event, item)">
+               <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="handleContextMenuMobile($event, item)">
                  <template #icon><n-icon><MoreIcon /></n-icon></template>
                </n-button>
-               <n-button v-if="!item.is_dir" size="tiny" quaternary type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
+               <n-button v-if="!item.is_dir" v-bind="getButtonStyle('info')" size="tiny" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
                   识别
                 </n-button>
              </n-space>

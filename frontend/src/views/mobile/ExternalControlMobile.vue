@@ -82,7 +82,7 @@ onMounted(() => {
               placeholder="未生成"
             >
               <template #suffix>
-                 <n-button quaternary circle size="small" @click="copyToClipboard(config.external_token)">
+                 <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(config.external_token)">
                    <n-icon><CopyIcon /></n-icon>
                  </n-button>
               </template>
@@ -96,7 +96,7 @@ onMounted(() => {
              <div class="info-text">云盘文件变动通知</div>
              <n-input :value="webhookUrl" readonly size="small">
                 <template #suffix>
-                 <n-button quaternary circle size="small" @click="copyToClipboard(webhookUrl)">
+                 <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(webhookUrl)">
                    <n-icon><CopyIcon /></n-icon>
                  </n-button>
               </template>
@@ -107,7 +107,7 @@ onMounted(() => {
              <div class="info-text">Emby 媒体库通知</div>
              <n-input :value="embyWebhookUrl" readonly size="small">
                 <template #suffix>
-                 <n-button quaternary circle size="small" @click="copyToClipboard(embyWebhookUrl)">
+                 <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(embyWebhookUrl)">
                    <n-icon><CopyIcon /></n-icon>
                  </n-button>
               </template>
@@ -172,7 +172,7 @@ onMounted(() => {
                     </div>
                   </template>
                   <template #suffix>
-                    <n-button quaternary circle size="small" @click.stop="openLogDetail(log)">
+                    <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openLogDetail(log)">
                        <n-icon><DetailIcon /></n-icon>
                     </n-button>
                   </template>

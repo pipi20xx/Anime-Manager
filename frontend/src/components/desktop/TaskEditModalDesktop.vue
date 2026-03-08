@@ -50,14 +50,14 @@ const {
             <n-form-item label="源目录">
               <n-input v-model:value="form.source_dir" placeholder="待整理的文件夹">
                 <template #suffix>
-                  <n-button quaternary circle size="small" @click="openPicker('source')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
+                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('source')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
               </n-input>
             </n-form-item>
             <n-form-item label="目标目录">
               <n-input v-model:value="form.target_dir" placeholder="整理后的根目录">
                 <template #suffix>
-                  <n-button quaternary circle size="small" @click="openPicker('target')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
+                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('target')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
               </n-input>
             </n-form-item>

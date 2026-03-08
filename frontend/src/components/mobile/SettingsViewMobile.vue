@@ -225,7 +225,7 @@ const {
               </n-thing>
               <template #suffix>
                 <n-space vertical>
-                  <n-button circle size="small" @click="openEditClient(client)"><template #icon><n-icon><EditIcon/></n-icon></template></n-button>
+                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditClient(client)"><template #icon><n-icon><EditIcon/></n-icon></template></n-button>
                   <n-popconfirm @positive-click="handleDeleteClient(client.id)">
                     <template #trigger>
                       <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>

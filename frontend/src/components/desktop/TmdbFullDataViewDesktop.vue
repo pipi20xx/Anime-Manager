@@ -66,13 +66,13 @@ const {
           <n-button v-bind="getButtonStyle('warning')" @click="clearFingerprints">
             清空智能记忆
           </n-button>
-          <n-button v-bind="getButtonStyle('warning')" @click="handleSytmdbSync">
+          <n-button v-bind="getButtonStyle('warning')" @click="handleSyncSytmdb">
             同步 SYTMDB
           </n-button>
           <n-button v-bind="getButtonStyle('primary')" secondary @click="openCreate">
             手动新增
           </n-button>
-          <n-button quaternary circle @click="fetchBrowserData" :loading="browserLoading"><template #icon><n-icon><SyncIcon /></n-icon></template></n-button>
+          <n-button v-bind="getButtonStyle('icon')" @click="fetchBrowserData" :loading="browserLoading"><template #icon><n-icon><SyncIcon /></n-icon></template></n-button>
         </n-space>
       </div>
 

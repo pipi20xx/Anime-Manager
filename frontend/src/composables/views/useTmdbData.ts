@@ -83,11 +83,24 @@ export function useTmdbData() {
     dialog.warning({
       title: '确认删除',
       content: `确定要移除 "${item.title}" 吗？`,
-      onPositiveClick: async () => {
-        await fetch(`${API_BASE}/api/cache/${type}/${id}`, { method: 'DELETE' })
-        message.success('已移除')
-        fetchBrowserData()
-      }
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, {
+          onClick: () => dialog.destroyAll()
+        }, { default: () => '取消' }),
+        h(NButton, {
+          type: 'error',
+          onClick: async () => {
+            try {
+              await fetch(`${API_BASE}/api/cache/${type}/${id}`, { method: 'DELETE' })
+              message.success('已移除')
+              dialog.destroyAll()
+              fetchBrowserData()
+            } catch (e) {
+              message.error('删除失败')
+            }
+          }
+        }, { default: () => '确认删除' })
+      ])
     })
   }
 

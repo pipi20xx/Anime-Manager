@@ -42,7 +42,7 @@ const {
   >
     <template #header>
       <div class="mobile-modal-header">
-        <n-button quaternary circle @click="close">
+        <n-button v-bind="getButtonStyle('iconPrimary')" @click="close">
           <template #icon><n-icon><BackIcon/></n-icon></template>
         </n-button>
         <span class="title">优先级规则</span>
@@ -74,7 +74,7 @@ const {
                   </div>
                 </div>
                 <div class="card-actions" @click.stop>
-                   <n-button quaternary circle size="small" @click="openEditProfile(profile)">
+                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditProfile(profile)">
                      <template #icon><n-icon><EditIcon/></n-icon></template>
                    </n-button>
                    <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteProfile(profile.id)">
@@ -113,7 +113,7 @@ const {
                     </div>
                   </div>
                   <div class="card-actions" @click.stop>
-                     <n-button quaternary circle size="small" @click="openEditRule(rule)">
+                     <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditRule(rule)">
                        <template #icon><n-icon><EditIcon/></n-icon></template>
                      </n-button>
                      <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">

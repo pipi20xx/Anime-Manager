@@ -12,6 +12,7 @@ import {
 } from '@vicons/material'
 
 import { useRecognitionModal } from '../../composables/components/useRecognitionModal'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -111,7 +112,7 @@ const {
                    <div class="search-box-mobile">
                       <n-input v-model:value="testSearch.keyword" placeholder="搜剧名找ID..." size="small" @keypress.enter="searchTmdbForTest">
                         <template #suffix>
-                           <n-button quaternary circle size="small" @click="searchTmdbForTest" :loading="testSearch.loading">
+                           <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForTest" :loading="testSearch.loading">
                               <template #icon><n-icon><SearchBtnIcon /></n-icon></template>
                            </n-button>
                         </template>

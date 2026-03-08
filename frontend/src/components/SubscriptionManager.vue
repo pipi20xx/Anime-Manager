@@ -283,7 +283,7 @@ onMounted(() => {
                 <n-space :size="4">
                   <n-tooltip trigger="hover">
                     <template #trigger>
-                      <n-button size="tiny" secondary circle type="info" @click.stop="openFill(sub)">
+                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="openFill(sub)">
                         <template #icon><n-icon size="14"><SearchIcon/></n-icon></template>
                       </n-button>
                     </template>
@@ -292,7 +292,7 @@ onMounted(() => {
                   
                   <n-tooltip trigger="hover">
                     <template #trigger>
-                      <n-button size="tiny" secondary circle type="warning" @click.stop="openHistory(sub)">
+                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="openHistory(sub)">
                         <template #icon><n-icon size="14"><HistoryIcon/></n-icon></template>
                       </n-button>
                     </template>
@@ -303,7 +303,7 @@ onMounted(() => {
 
                   <n-tooltip trigger="hover">
                     <template #trigger>
-                      <n-button size="tiny" tertiary circle @click.stop="goToExternal(sub, 'tmdb')" style="padding: 0; overflow: hidden;">
+                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="goToExternal(sub, 'tmdb')" style="padding: 0; overflow: hidden;">
                         <template #icon>
                           <img src="https://www.themoviedb.org/favicon.ico" style="width: 16px; height: 16px; transform: scale(1.2);" />
                         </template>
@@ -314,7 +314,7 @@ onMounted(() => {
 
                   <n-tooltip trigger="hover" v-if="sub.bangumi_id">
                     <template #trigger>
-                      <n-button size="tiny" tertiary circle @click.stop="goToExternal(sub, 'bgm')" style="padding: 0; overflow: hidden;">
+                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="goToExternal(sub, 'bgm')" style="padding: 0; overflow: hidden;">
                         <template #icon>
                           <img src="https://bgm.tv/img/favicon.ico" style="width: 14px; height: 14px; border-radius: 2px;" />
                         </template>
@@ -325,7 +325,7 @@ onMounted(() => {
                 </n-space>
 
                 <n-space :size="4">
-                  <n-button size="tiny" secondary circle type="primary" @click.stop="openEdit(sub)">
+                  <n-button v-bind="getButtonStyle('iconPrimary')" size="tiny" @click.stop="openEdit(sub)">
                      <template #icon><n-icon size="14"><EditIcon/></n-icon></template>
                   </n-button>
                   <n-popconfirm @positive-click="deleteSubscription(sub.id)" positive-text="确定" negative-text="取消">

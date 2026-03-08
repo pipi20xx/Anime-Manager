@@ -254,7 +254,7 @@ onMounted(() => {
         <n-button v-bind="getButtonStyle('icon')" size="small" @click="showActionDrawer = true">
           <template #icon><n-icon><MenuIcon/></n-icon></template>
         </n-button>
-        <n-button circle type="primary" size="small" @click="openAdd" style="margin-left: 8px;">
+        <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="openAdd" style="margin-left: 8px;">
           <template #icon><n-icon><AddIcon/></n-icon></template>
         </n-button>
       </div>

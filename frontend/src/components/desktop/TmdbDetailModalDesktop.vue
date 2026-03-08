@@ -11,6 +11,7 @@ import {
   SearchOutlined as SearchIcon
 } from '@vicons/material'
 import { useTmdbDetail } from '../../composables/components/useTmdbDetail'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -80,7 +81,7 @@ const {
                               <template #icon><n-icon><SearchIcon /></n-icon></template>
                               搜资源
                           </n-button>
-                          <n-button secondary circle size="small" @click="openExternal">
+                          <n-button v-bind="getButtonStyle('icon')" size="small" @click="openExternal">
                               <template #icon><n-icon><LinkIcon /></n-icon></template>
                           </n-button>
                       </div>

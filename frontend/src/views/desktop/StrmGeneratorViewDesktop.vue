@@ -125,7 +125,7 @@ onMounted(fetchTasks)
 
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <n-button circle type="primary" size="small" @click="runTask(task.id)">
+                    <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="runTask(task.id)">
                       <template #icon><n-icon><RunIcon /></n-icon></template>
                     </n-button>
                   </template>

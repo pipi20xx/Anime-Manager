@@ -38,7 +38,7 @@ const {
   >
     <template #header>
       <div class="mobile-modal-header">
-        <n-button quaternary circle @click="showEdit ? showEdit = false : close()">
+        <n-button v-bind="getButtonStyle('iconPrimary')" @click="showEdit ? showEdit = false : close()">
           <template #icon><n-icon><BackIcon/></n-icon></template>
         </n-button>
         <span class="title">{{ showEdit ? '编辑预设' : '订阅预设管理' }}</span>

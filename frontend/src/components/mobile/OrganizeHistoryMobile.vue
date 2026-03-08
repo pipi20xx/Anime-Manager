@@ -190,7 +190,7 @@ const menuOptions = [
               negative-text="取消"
             >
               <template #trigger>
-                <n-button size="tiny" quaternary type="error" circle><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                <n-button v-bind="getButtonStyle('iconDanger')" size="tiny"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
               </template>
               <div style="max-width: 200px">
                 <p style="margin: 0 0 8px 0">删除此记录?</p>

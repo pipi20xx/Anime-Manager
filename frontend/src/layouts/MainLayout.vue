@@ -249,14 +249,13 @@ const isNavActive = (key: string) => currentViewKey.value === key
               :options="themeOptions" 
               @select="val => currentThemeType = val"
             >
-              <n-button circle secondary size="small" :type="currentThemeType === 'modern' ? 'primary' : 'info'">
+              <n-button v-bind="getButtonStyle('iconPrimary')" size="small" :type="currentThemeType === 'modern' ? 'primary' : 'info'">
                 <template #icon><n-icon><ThemeIcon /></n-icon></template>
               </n-button>
             </n-dropdown>
 
             <n-button 
-              circle 
-              secondary 
+              v-bind="getButtonStyle('iconPrimary')"
               size="small"
               :type="currentViewKey === 'HomeView' ? 'primary' : 'default'"
               @click="currentViewKey = 'HomeView'"
@@ -266,8 +265,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
             </n-button>
 
             <n-button 
-              circle 
-              secondary 
+              v-bind="getButtonStyle('iconPrimary')"
               size="small"
               :type="currentViewKey === 'SettingsView' ? 'primary' : 'default'"
               @click="currentViewKey = 'SettingsView'"
@@ -277,8 +275,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
             </n-button>
 
             <n-button 
-              circle 
-              secondary 
+              v-bind="getButtonStyle('iconPrimary')"
               size="small"
               type="info" 
               @click="showLogConsole = true"
@@ -353,24 +350,23 @@ const isNavActive = (key: string) => currentViewKey.value === key
                 :options="themeOptions" 
                 @select="val => currentThemeType = val"
               >
-                <n-button circle secondary :type="currentThemeType === 'modern' ? 'primary' : 'info'">
+                <n-button v-bind="getButtonStyle('iconPrimary')" :type="currentThemeType === 'modern' ? 'primary' : 'info'">
                   <template #icon><n-icon><ThemeIcon /></n-icon></template>
                 </n-button>
               </n-dropdown>
 
               <n-button 
-                circle 
-                secondary 
+                v-bind="getButtonStyle('iconPrimary')"
                 :type="currentViewKey === 'HomeView' ? 'primary' : 'default'"
                 @click="{ currentViewKey = 'HomeView'; showMobileMenu = false; }"
               >
                 <template #icon><n-icon><MovieIcon /></n-icon></template>
               </n-button>
 
-              <n-button circle secondary @click="{ currentViewKey = 'SettingsView'; showMobileMenu = false; }">
+              <n-button v-bind="getButtonStyle('iconPrimary')" @click="{ currentViewKey = 'SettingsView'; showMobileMenu = false; }">
                 <template #icon><n-icon><SettingIcon /></n-icon></template>
               </n-button>
-              <n-button circle secondary type="info" @click="{ showLogConsole = true; showMobileMenu = false; }">
+              <n-button v-bind="getButtonStyle('iconPrimary')" type="info" @click="{ showLogConsole = true; showMobileMenu = false; }">
                 <template #icon><n-icon><ConsoleIcon /></n-icon></template>
               </n-button>
           </n-space>

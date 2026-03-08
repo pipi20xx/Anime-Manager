@@ -70,10 +70,10 @@ const {
             
             <template #suffix>
               <n-space vertical size="small">
-                <n-button circle size="small" @click="startCheck(item.id!)">
+                <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="startCheck(item.id!)">
                   <template #icon><n-icon><PlayIcon /></n-icon></template>
                 </n-button>
-                <n-button circle size="small" @click="openEdit(item)">
+                <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEdit(item)">
                   <template #icon><n-icon><EditIcon /></n-icon></template>
                 </n-button>
                 <n-popconfirm @positive-click="deleteConfig(item.id!)" positive-text="确定" negative-text="取消">

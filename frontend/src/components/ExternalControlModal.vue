@@ -17,6 +17,7 @@ import {
   VpnKeyOutlined as KeyIcon,
   CloseOutlined as CloseIcon
 } from '@vicons/material'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -159,7 +160,7 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
     class="external-modal"
   >
     <template #header-extra>
-      <n-button quaternary circle @click="emit('update:show', false)">
+      <n-button v-bind="getButtonStyle('iconPrimary')" @click="emit('update:show', false)">
         <template #icon><n-icon><CloseIcon /></n-icon></template>
       </n-button>
     </template>
@@ -173,14 +174,14 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
               <n-input-group>
                 <n-input v-model:value="config.external_token" type="password" show-password-on="click" readonly placeholder="尚未生成密钥" />
                 <n-button type="primary" @click="generateToken">重新生成</n-button>
-                <n-button @click="copyToClipboard(config.external_token)"><template #icon><n-icon><CopyIcon /></n-icon></template></n-button>
+                <n-button v-bind="getButtonStyle('icon')" @click="copyToClipboard(config.external_token)"><template #icon><n-icon><CopyIcon /></n-icon></template></n-button>
               </n-input-group>
             </n-form-item>
             <n-divider title-placement="left">Webhook</n-divider>
             <n-form-item label="CloudDrive2 通知地址" label-placement="left">
               <n-input-group>
                 <n-input :value="webhookUrl" readonly size="small" />
-                <n-button size="small" @click="copyToClipboard(webhookUrl)">复制</n-button>
+                <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(webhookUrl)">复制</n-button>
               </n-input-group>
             </n-form-item>
 
@@ -196,7 +197,7 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
             <n-form-item label="Emby 通知地址" label-placement="left">
               <n-input-group>
                 <n-input :value="embyWebhookUrl" readonly size="small" />
-                <n-button size="small" @click="copyToClipboard(embyWebhookUrl)">复制</n-button>
+                <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(embyWebhookUrl)">复制</n-button>
               </n-input-group>
             </n-form-item>
           </div>

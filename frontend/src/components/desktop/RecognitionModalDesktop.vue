@@ -15,6 +15,7 @@ import {
 } from '@vicons/material' // Direct import for simplicity in this file
 
 import { useRecognitionModal } from '../../composables/components/useRecognitionModal'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -117,7 +118,7 @@ const {
             </n-grid>
 
             <n-input v-model:value="testSearch.keyword" placeholder="快捷搜索剧名找 ID..." size="small" class="mt-4" @keypress.enter="searchTmdbForTest">
-              <template #suffix><n-button quaternary circle size="small" @click="searchTmdbForTest" :loading="testSearch.loading"><template #icon><n-icon><SearchBtnIcon /></n-icon></template></n-button></template>
+              <template #suffix><n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForTest" :loading="testSearch.loading"><template #icon><n-icon><SearchBtnIcon /></n-icon></template></n-button></template>
             </n-input>
             <n-scrollbar v-if="testSearch.results.length > 0" style="max-height: 120px" class="search-res-list mt-2">
               <n-list hoverable clickable>

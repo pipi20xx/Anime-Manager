@@ -141,7 +141,7 @@ onMounted(fetchData)
                   <n-space :size="4">
                     <n-tooltip trigger="hover">
                       <template #trigger>
-                        <n-button size="small" secondary circle type="info" @click="openViewItems(feed)">
+                        <n-button v-bind="getButtonStyle('icon')" size="small" @click="openViewItems(feed)">
                           <template #icon><n-icon><ListIcon/></n-icon></template>
                         </n-button>
                       </template>
@@ -152,7 +152,7 @@ onMounted(fetchData)
                       <template #trigger>
                         <n-tooltip trigger="hover">
                           <template #trigger>
-                            <n-button size="small" secondary circle type="warning">
+                            <n-button v-bind="getButtonStyle('icon')" size="small">
                               <template #icon><n-icon><ResetIcon/></n-icon></template>
                             </n-button>
                           </template>

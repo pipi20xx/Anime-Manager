@@ -5,6 +5,7 @@ import {
 } from 'naive-ui'
 import { DownloadOutlined as DownloadIcon, HistoryOutlined as HistoryIcon } from '@vicons/material'
 import { useFeedItems } from '../../composables/modals/useFeedItems'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -117,13 +118,12 @@ watch(() => props.show, (newVal) => {
              <template #suffix>
                 <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 8px;">
                    <n-popselect :options="clientOptions" @update:value="val => handleDownload(item, val)" trigger="click">
-                     <n-button size="small" circle type="primary" secondary><template #icon><n-icon><DownloadIcon/></n-icon></template></n-button>
+                     <n-button v-bind="getButtonStyle('iconPrimary')" size="small"><template #icon><n-icon><DownloadIcon/></n-icon></template></n-button>
                    </n-popselect>
                    <n-button 
-                     size="small" 
-                     circle 
-                     :type="item.is_downloaded ? 'warning' : 'info'" 
-                     secondary 
+                     v-bind="getButtonStyle('icon')"
+                     size="small"
+                     :type="item.is_downloaded ? 'warning' : 'info'"
                      @click="handleToggleHistory(item, !item.is_downloaded)"
                    >
                      <template #icon><n-icon><HistoryIcon/></n-icon></template>

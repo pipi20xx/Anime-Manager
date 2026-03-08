@@ -57,20 +57,20 @@ const {
           <n-icon size="22" color="#63e2b7" style="margin-top: 4px"><CalendarIcon /></n-icon>
           <span class="header-title-text">追剧日历</span>
         </div>
-        <n-button quaternary circle size="small" @click="showManageModal = true" title="管理追踪">
+        <n-button v-bind="getButtonStyle('icon')" size="small" @click="showManageModal = true" title="管理追踪">
           <template #icon><n-icon><ManageIcon /></n-icon></template>
         </n-button>
       </n-space>
       
       <!-- 右侧：导航控件 -->
       <n-space align="center" :size="8">
-        <n-button quaternary circle size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() - 1))">
+        <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() - 1))">
           <template #icon><n-icon><PrevIcon /></n-icon></template>
         </n-button>
         <div class="current-month-display">
           {{ viewDate.getFullYear() }}年{{ viewDate.getMonth() + 1 }}月
         </div>
-        <n-button quaternary circle size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() + 1))">
+        <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() + 1))">
           <template #icon><n-icon><NextIcon /></n-icon></template>
         </n-button>
         <n-divider vertical style="margin: 0 8px" />
@@ -139,14 +139,14 @@ const {
                     </template>
                     <template v-else>
                       <n-button-group>
-                        <n-button secondary size="small" type="info" @click="startEdit(sub)" title="编辑"><template #icon><n-icon><EditIcon /></n-icon></template></n-button>
-                        <n-button secondary size="small" type="primary" @click="refreshSubject(sub.id)" title="同步"><template #icon><n-icon><RefreshIcon /></n-icon></template></n-button>
+                        <n-button v-bind="getButtonStyle('icon')" size="small" @click="startEdit(sub)" title="编辑"><template #icon><n-icon><EditIcon /></n-icon></template></n-button>
+                        <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="refreshSubject(sub.id)" title="同步"><template #icon><n-icon><RefreshIcon /></n-icon></template></n-button>
                         <n-popconfirm 
                           positive-text="确认"
                           negative-text="取消"
                           @positive-click="deleteSubject(sub.id)"
                         >
-                          <template #trigger><n-button secondary size="small" type="error" title="删除"><template #icon><n-icon><DeleteIcon /></n-icon></template></n-button></template>
+                          <template #trigger><n-button v-bind="getButtonStyle('iconDanger')" size="small" title="删除"><template #icon><n-icon><DeleteIcon /></n-icon></template></n-button></template>
                           确定要从日历中移除此追踪项吗？
                         </n-popconfirm>
                       </n-button-group>

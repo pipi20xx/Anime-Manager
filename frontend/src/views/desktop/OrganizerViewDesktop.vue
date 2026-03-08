@@ -252,7 +252,7 @@ onUnmounted(stopBgTaskPolling)
                       </n-tooltip>
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <n-button circle type="primary" size="small" @click="requestRunTask(task)">
+                          <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="requestRunTask(task)">
                             <template #icon><n-icon><PlayIcon /></n-icon></template>
                           </n-button>
                         </template>

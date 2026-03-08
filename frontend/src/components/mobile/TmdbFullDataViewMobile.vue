@@ -117,9 +117,9 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
     </div>
 
     <div class="mobile-pagination">
-      <n-button size="small" :disabled="browserPage <= 1" @click="prevPage"><template #icon><n-icon><PrevIcon/></n-icon></template></n-button>
+      <n-button v-bind="getButtonStyle('icon')" size="small" :disabled="browserPage <= 1" @click="prevPage"><template #icon><n-icon><PrevIcon/></n-icon></template></n-button>
       <span class="page-info">第 {{ browserPage }} 页</span>
-      <n-button size="small" :disabled="browserData.length < 20" @click="nextPage"><template #icon><n-icon><NextIcon/></n-icon></template></n-button>
+      <n-button v-bind="getButtonStyle('icon')" size="small" :disabled="browserData.length < 20" @click="nextPage"><template #icon><n-icon><NextIcon/></n-icon></template></n-button>
     </div>
 
     <!-- 编辑/新增元数据弹窗 -->

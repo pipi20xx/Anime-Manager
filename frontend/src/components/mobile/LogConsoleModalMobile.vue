@@ -58,7 +58,7 @@ watch(() => props.show, (newVal) => {
     <div class="mobile-console">
       <!-- Header -->
       <div class="console-header">
-        <n-button quaternary circle @click="close">
+        <n-button v-bind="getButtonStyle('iconPrimary')" @click="close">
           <template #icon><n-icon><CloseIcon /></n-icon></template>
         </n-button>
         <div class="header-title">
@@ -69,10 +69,10 @@ watch(() => props.show, (newVal) => {
           </div>
         </div>
         <n-space>
-           <n-button quaternary circle @click="autoScroll = !autoScroll" :type="autoScroll ? 'primary' : 'default'">
+           <n-button v-bind="getButtonStyle('icon')" @click="autoScroll = !autoScroll" :type="autoScroll ? 'primary' : 'default'">
              <template #icon><n-icon><ScrollIcon /></n-icon></template>
            </n-button>
-           <n-button quaternary circle @click="showSettings = !showSettings" :type="showSettings ? 'primary' : 'default'">
+           <n-button v-bind="getButtonStyle('icon')" @click="showSettings = !showSettings" :type="showSettings ? 'primary' : 'default'">
              <template #icon><n-icon><SettingsIcon /></n-icon></template>
            </n-button>
         </n-space>
@@ -102,7 +102,7 @@ watch(() => props.show, (newVal) => {
       <div class="settings-overlay" v-if="showSettings">
          <div class="settings-header-row">
             <span class="settings-title">控制台设置</span>
-            <n-button size="small" quaternary circle @click="showSettings = false"><template #icon><n-icon><CloseIcon/></n-icon></template></n-button>
+            <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="showSettings = false"><template #icon><n-icon><CloseIcon/></n-icon></template></n-button>
          </div>
          
          <div class="settings-list">

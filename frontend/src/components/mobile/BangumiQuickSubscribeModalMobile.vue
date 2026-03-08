@@ -10,6 +10,7 @@ import {
   SearchOutlined as SearchIcon
 } from '@vicons/material'
 import { useBangumiQuickSub } from '../../composables/components/useBangumiQuickSub'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits(['update:show', 'finish'])
@@ -29,7 +30,7 @@ const {
   >
     <template #header>
       <div class="mobile-modal-header">
-        <n-button quaternary circle @click="emit('update:show', false)">
+        <n-button v-bind="getButtonStyle('iconPrimary')" @click="emit('update:show', false)">
           <template #icon><n-icon><BackIcon/></n-icon></template>
         </n-button>
         <span class="title">Bangumi 一键订阅</span>

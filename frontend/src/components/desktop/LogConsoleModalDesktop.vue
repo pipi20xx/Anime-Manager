@@ -13,6 +13,7 @@ import {
   OpenInNewRound as OpenIcon
 } from '@vicons/material'
 import { useLogConsole } from '../../composables/components/useLogConsole'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps({
   show: Boolean
@@ -113,7 +114,7 @@ watch(() => props.show, (newVal) => {
                 <template #icon><n-icon><ClearIcon /></n-icon></template>
                 清空
               </n-button>
-              <n-button size="tiny" @click="close" quaternary circle>
+              <n-button v-bind="getButtonStyle('iconPrimary')" size="tiny" @click="close">
                 <template #icon><n-icon><CloseIcon /></n-icon></template>
               </n-button>
             </n-space>

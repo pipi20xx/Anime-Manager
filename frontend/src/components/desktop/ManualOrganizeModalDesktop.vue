@@ -10,6 +10,7 @@ import {
   TuneOutlined as TuneIcon
 } from '@vicons/material'
 import { useManualOrganizeModal } from '../../composables/components/useManualOrganizeModal'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -73,7 +74,7 @@ const {
 
               <n-input v-model:value="manualSearch.keyword" placeholder="搜索剧名自动填入 ID 和类型..." size="small" class="mt-2" @keypress.enter="searchTmdb">
                 <template #suffix>
-                  <n-button quaternary circle size="small" @click="searchTmdb" :loading="manualSearch.loading">
+                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdb" :loading="manualSearch.loading">
                     <template #icon><n-icon><SearchIcon /></n-icon></template>
                   </n-button>
                 </template>
