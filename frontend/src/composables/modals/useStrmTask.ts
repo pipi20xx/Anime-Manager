@@ -99,8 +99,8 @@ export function useStrmTask(props: any, emit: any) {
   }
 
   const syncModeOptions = [
-    { label: '📁 本地文件扫描', value: 'local' },
-    { label: '📄 目录树文件', value: 'tree_file' }
+    { label: '本地文件扫描', value: 'local' },
+    { label: '目录树文件', value: 'tree_file' }
   ]
 
   return {

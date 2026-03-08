@@ -118,7 +118,6 @@ onUnmounted(() => {
       <n-card v-for="task in tasks" :key="task.task_id" class="task-item" embedded>
         <div class="task-header">
           <div class="task-main">
-            <span class="module-icon">{{ getModuleIcon(task.module) }}</span>
             <span class="task-name">{{ task.name || task.module }}</span>
           </div>
           <n-tag :type="getStatusTag(task.status).type" size="small">

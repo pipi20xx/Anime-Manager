@@ -6,10 +6,7 @@ import {
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
-  CloudQueueOutlined as ApiIcon,
   SyncOutlined as SyncIcon,
-  CloudDownloadOutlined as ClientIcon,
-  NotificationsOutlined as NotifyIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon
 } from '@vicons/material'

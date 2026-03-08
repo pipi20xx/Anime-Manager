@@ -10,7 +10,6 @@ import {
   RefreshOutlined as RefreshIcon,
   ChevronRightOutlined as NextIcon,
   DriveFileMoveOutlined as OrganizeIcon,
-  ScienceOutlined as TestIcon,
   DescriptionOutlined as FileIcon,
   ContentCopyOutlined as CopyIcon,
   ContentPasteOutlined as PasteIcon,
@@ -232,8 +231,8 @@ const getShortName = (path: string) => {
                <n-button quaternary circle size="small" @click.stop="handleContextMenuMobile($event, item)">
                  <template #icon><n-icon><MoreIcon /></n-icon></template>
                </n-button>
-               <n-button v-if="!item.is_dir" size="small" circle quaternary type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
-                  <template #icon><n-icon><TestIcon /></n-icon></template>
+               <n-button v-if="!item.is_dir" size="tiny" quaternary type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
+                  识别
                 </n-button>
              </n-space>
           </template>

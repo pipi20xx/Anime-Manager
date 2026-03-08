@@ -83,6 +83,7 @@ async def api_audit_middleware(request: Request, call_next):
         "/api/system/logs", 
         "/api/system/docs",
         "/api/system/openapi.json",
+        "/api/system/services",
         "/api/organize/execute", 
         "/api/organize/stream",
         "/api/organize/background_tasks",

@@ -121,17 +121,7 @@ export function useTaskHistory() {
   }
 
   const getModuleIcon = (module: string) => {
-    const map: Record<string, string> = {
-      '整理': '📁',
-      'STRM': '🎬',
-      'RSS': '📡',
-      '元数据': '🗄️',
-      '规则同步': '🔄',
-      '订阅补全': '🔍',
-      '死种清理': '💀',
-      'Webhook联动': '🔗'
-    }
-    return map[module] || '📋'
+    return ''
   }
 
   const formatTime = (iso: string | null) => {

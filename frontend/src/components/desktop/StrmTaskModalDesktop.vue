@@ -51,8 +51,8 @@ const {
             <n-form-item label="同步模式">
               <n-space>
                 <n-radio-group v-model:value="form.sync_mode">
-                  <n-radio-button value="local">📁 本地文件扫描</n-radio-button>
-                  <n-radio-button value="tree_file">📄 目录树文件</n-radio-button>
+                  <n-radio-button value="local">本地文件扫描</n-radio-button>
+                  <n-radio-button value="tree_file">目录树文件</n-radio-button>
                 </n-radio-group>
               </n-space>
             </n-form-item>

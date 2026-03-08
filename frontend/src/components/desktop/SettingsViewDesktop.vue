@@ -6,10 +6,7 @@ import {
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
-  CloudQueueOutlined as ApiIcon,
-  SyncOutlined as SyncIcon,
-  CloudDownloadOutlined as ClientIcon,
-  NotificationsOutlined as NotifyIcon
+  SyncOutlined as SyncIcon
 } from '@vicons/material'
 import ConfigSection from '../../components/ConfigSection.vue'
 import ClientEditModal from '../../components/ClientEditModal.vue'
@@ -60,7 +57,6 @@ const {
             <n-card bordered>
               <template #header>
                 <div class="card-title-box">
-                  <n-icon size="20" style="color: var(--n-primary-color)"><ApiIcon /></n-icon>
                   <span class="card-title-text">TMDB 设置</span>
                 </div>
               </template>
@@ -113,7 +109,6 @@ const {
             <n-card bordered>
               <template #header>
                 <div class="card-title-box">
-                  <n-icon size="20" style="color: var(--n-primary-color)"><SyncIcon /></n-icon>
                   <span class="card-title-text">Jackett 设置</span>
                 </div>
               </template>
@@ -154,7 +149,6 @@ const {
             <n-card bordered>
               <template #header>
                 <div class="card-title-box">
-                  <n-icon size="20" style="color: var(--n-primary-color)"><NotifyIcon /></n-icon>
                   <span class="card-title-text">通知设置 (Telegram)</span>
                 </div>
               </template>
@@ -202,7 +196,6 @@ const {
             <n-card bordered>
               <template #header>
                 <div class="card-title-box">
-                  <n-icon size="20" style="color: var(--n-primary-color)"><SyncIcon /></n-icon>
                   <span class="card-title-text">网络代理设置</span>
                 </div>
               </template>
@@ -227,7 +220,6 @@ const {
             <n-card bordered>
               <template #header>
                 <div class="card-title-box">
-                  <n-icon size="20" style="color: var(--n-primary-color)"><SyncIcon /></n-icon>
                   <span class="card-title-text">自动化设置</span>
                 </div>
               </template>
@@ -358,7 +350,6 @@ const {
           <n-card bordered>
             <template #header>
               <div class="card-title-box">
-                <n-icon size="20" style="color: var(--n-primary-color)"><ClientIcon /></n-icon>
                 <span class="card-title-text">下载客户端配置</span>
               </div>
             </template>

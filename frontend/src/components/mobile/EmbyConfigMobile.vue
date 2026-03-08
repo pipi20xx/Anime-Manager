@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NCard, NIcon, NForm, NFormItem, NInput, NSwitch, NSpace, NButton, useMessage } from 'naive-ui'
-import { MovieOutlined as EmbyIcon } from '@vicons/material'
+import { NCard, NForm, NFormItem, NInput, NSwitch, NSpace, NButton, useMessage } from 'naive-ui'
 
 interface Props {
   embyUrl: string
@@ -85,7 +84,6 @@ const fetchToken = async () => {
   <n-card bordered size="small">
     <template #header>
       <div class="card-title-box">
-        <n-icon size="18" style="color: var(--n-primary-color)"><EmbyIcon /></n-icon>
         <span class="card-title-text">Emby 设置</span>
       </div>
     </template>
