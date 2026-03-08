@@ -192,9 +192,9 @@ const activeTab = ref('dashboard')
 .debug-card { border-radius: 8px; border: 1px solid var(--n-border-color); }
 
 .pref-list { display: flex; flex-direction: column; gap: 12px; }
-.pref-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
+.pref-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--border-light); }
 .pref-label { font-weight: bold; font-size: 14px; }
-.pref-desc { font-size: 11px; color: #888; }
+.pref-desc { font-size: 11px; color: var(--text-muted); }
 
 .result-container {
   overflow-x: hidden; /* Prevent horizontal scroll */

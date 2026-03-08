@@ -43,6 +43,39 @@ const updateCssVariables = () => {
     root.style.setProperty('--card-border-radius', '24px')
     root.style.setProperty('--button-border-radius', '20px')
     root.style.setProperty('--font-family-base', '"Quicksand", "Nunito", sans-serif')
+    
+    // 更新主题相关的颜色变量
+    root.style.setProperty('--text-primary', common.textColor1 || '#ffffff')
+    root.style.setProperty('--text-secondary', common.textColor2 || 'rgba(255, 255, 255, 0.9)')
+    root.style.setProperty('--text-tertiary', common.textColor3 || 'rgba(255, 255, 255, 0.7)')
+    root.style.setProperty('--text-muted', 'rgba(255, 255, 255, 0.5)')
+    root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
+    root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
+    
+    root.style.setProperty('--bg-primary', common.bodyColor || '#101014')
+    root.style.setProperty('--bg-secondary', common.cardColor || '#2b262d')
+    root.style.setProperty('--bg-tertiary', common.modalColor || '#322c35')
+    root.style.setProperty('--bg-elevated', 'rgba(255, 255, 255, 0.08)')
+    root.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.08)')
+    root.style.setProperty('--bg-surface-hover', 'rgba(255, 255, 255, 0.12)')
+    root.style.setProperty('--bg-surface-active', 'rgba(255, 255, 255, 0.16)')
+    root.style.setProperty('--bg-overlay', 'rgba(0, 0, 0, 0.6)')
+    
+    root.style.setProperty('--border-light', 'rgba(255, 156, 179, 0.2)')
+    root.style.setProperty('--border-medium', 'rgba(255, 156, 179, 0.3)')
+    root.style.setProperty('--border-heavy', 'rgba(255, 156, 179, 0.4)')
+    root.style.setProperty('--border-dashed', 'rgba(255, 156, 179, 0.25)')
+    
+    root.style.setProperty('--color-success', common.successColor || '#a0d911')
+    root.style.setProperty('--color-warning', common.warningColor || '#f2c97d')
+    root.style.setProperty('--color-error', common.errorColor || '#e88080')
+    root.style.setProperty('--color-info', common.infoColor || '#70c0e8')
+    
+    root.style.setProperty('--color-success-bg', 'rgba(160, 217, 17, 0.1)')
+    root.style.setProperty('--color-warning-bg', 'rgba(242, 201, 125, 0.1)')
+    root.style.setProperty('--color-error-bg', 'rgba(232, 128, 128, 0.1)')
+    root.style.setProperty('--color-info-bg', 'rgba(112, 192, 232, 0.1)')
+    
   } else if (current === 'purple') {
     root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.06)')
     root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.4)')
@@ -50,6 +83,39 @@ const updateCssVariables = () => {
     root.style.setProperty('--card-border-radius', '14px')
     root.style.setProperty('--button-border-radius', '10px')
     root.style.setProperty('--font-family-base', 'Inter, sans-serif')
+    
+    // 更新主题相关的颜色变量
+    root.style.setProperty('--text-primary', common.textColor1 || '#ffffff')
+    root.style.setProperty('--text-secondary', common.textColor2 || 'rgba(255, 255, 255, 0.9)')
+    root.style.setProperty('--text-tertiary', common.textColor3 || 'rgba(255, 255, 255, 0.7)')
+    root.style.setProperty('--text-muted', 'rgba(255, 255, 255, 0.5)')
+    root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
+    root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
+    
+    root.style.setProperty('--bg-primary', common.bodyColor || '#0b040f')
+    root.style.setProperty('--bg-secondary', common.cardColor || '#120818')
+    root.style.setProperty('--bg-tertiary', common.modalColor || '#180a20')
+    root.style.setProperty('--bg-elevated', 'rgba(187, 134, 252, 0.06)')
+    root.style.setProperty('--bg-surface', 'rgba(187, 134, 252, 0.06)')
+    root.style.setProperty('--bg-surface-hover', 'rgba(187, 134, 252, 0.1)')
+    root.style.setProperty('--bg-surface-active', 'rgba(187, 134, 252, 0.15)')
+    root.style.setProperty('--bg-overlay', 'rgba(0, 0, 0, 0.6)')
+    
+    root.style.setProperty('--border-light', 'rgba(187, 134, 252, 0.25)')
+    root.style.setProperty('--border-medium', 'rgba(187, 134, 252, 0.35)')
+    root.style.setProperty('--border-heavy', 'rgba(187, 134, 252, 0.45)')
+    root.style.setProperty('--border-dashed', 'rgba(187, 134, 252, 0.3)')
+    
+    root.style.setProperty('--color-success', common.successColor || '#81c784')
+    root.style.setProperty('--color-warning', common.warningColor || '#ffb74d')
+    root.style.setProperty('--color-error', common.errorColor || '#cf6679')
+    root.style.setProperty('--color-info', common.infoColor || '#03dac6')
+    
+    root.style.setProperty('--color-success-bg', 'rgba(129, 199, 132, 0.1)')
+    root.style.setProperty('--color-warning-bg', 'rgba(255, 183, 77, 0.1)')
+    root.style.setProperty('--color-error-bg', 'rgba(207, 102, 121, 0.1)')
+    root.style.setProperty('--color-info-bg', 'rgba(3, 218, 198, 0.1)')
+    
   } else {
     root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.06)')
     root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.3)')
@@ -57,6 +123,38 @@ const updateCssVariables = () => {
     root.style.setProperty('--card-border-radius', '10px')
     root.style.setProperty('--button-border-radius', '6px')
     root.style.setProperty('--font-family-base', 'Inter, sans-serif')
+    
+    // 更新主题相关的颜色变量
+    root.style.setProperty('--text-primary', common.textColor1 || '#ffffff')
+    root.style.setProperty('--text-secondary', common.textColor2 || 'rgba(255, 255, 255, 0.9)')
+    root.style.setProperty('--text-tertiary', common.textColor3 || 'rgba(255, 255, 255, 0.7)')
+    root.style.setProperty('--text-muted', 'rgba(255, 255, 255, 0.5)')
+    root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
+    root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
+    
+    root.style.setProperty('--bg-primary', common.bodyColor || '#101014')
+    root.style.setProperty('--bg-secondary', common.cardColor || '#1e1e24')
+    root.style.setProperty('--bg-tertiary', common.modalColor || '#25252b')
+    root.style.setProperty('--bg-elevated', 'rgba(255, 255, 255, 0.06)')
+    root.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.06)')
+    root.style.setProperty('--bg-surface-hover', 'rgba(255, 255, 255, 0.1)')
+    root.style.setProperty('--bg-surface-active', 'rgba(255, 255, 255, 0.15)')
+    root.style.setProperty('--bg-overlay', 'rgba(0, 0, 0, 0.6)')
+    
+    root.style.setProperty('--border-light', 'rgba(255, 255, 255, 0.12)')
+    root.style.setProperty('--border-medium', 'rgba(255, 255, 255, 0.2)')
+    root.style.setProperty('--border-heavy', 'rgba(255, 255, 255, 0.3)')
+    root.style.setProperty('--border-dashed', 'rgba(255, 255, 255, 0.15)')
+    
+    root.style.setProperty('--color-success', common.successColor || '#a0d911')
+    root.style.setProperty('--color-warning', common.warningColor || '#f2c97d')
+    root.style.setProperty('--color-error', common.errorColor || '#e88080')
+    root.style.setProperty('--color-info', common.infoColor || '#70c0e8')
+    
+    root.style.setProperty('--color-success-bg', 'rgba(160, 217, 17, 0.1)')
+    root.style.setProperty('--color-warning-bg', 'rgba(242, 201, 125, 0.1)')
+    root.style.setProperty('--color-error-bg', 'rgba(232, 128, 128, 0.1)')
+    root.style.setProperty('--color-info-bg', 'rgba(112, 192, 232, 0.1)')
   }
 }
 

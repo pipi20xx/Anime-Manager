@@ -391,12 +391,12 @@ const countryColumns = [
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  color: #666;
+  color: var(--text-muted);
 }
 .no-more {
   text-align: center;
   padding: 12px;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 </style>

@@ -281,7 +281,7 @@ const {
   border-radius: var(--card-border-radius);
   overflow: hidden;
   background: var(--app-surface-card);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .mp-calendar-head {
@@ -320,15 +320,15 @@ const {
 }
 
 .grid-cell:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-surface);
 }
 
 .grid-cell.is-today {
-  background: rgba(99, 226, 183, 0.06);
+  background: color-mix(in srgb, var(--n-primary-color), transparent 94%);
 }
 
 .grid-cell.off-month {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--app-surface-inner);
   opacity: 0.4;
 }
 
@@ -361,15 +361,15 @@ const {
   padding: 2px 4px;
   border-radius: 4px;
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface);
   border: 1px solid transparent;
   transition: all 0.2s;
   min-width: 0;
 }
 
 .anime-entry-line:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(99, 226, 183, 0.3);
+  background: var(--bg-surface-hover);
+  border-color: color-mix(in srgb, var(--n-primary-color), transparent 70%);
 }
 
 .status-dot {
@@ -381,7 +381,7 @@ const {
   flex-shrink: 0;
 }
 .anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--n-text-color-2); }
-.ep-count-tag { font-size: 9px; background: rgba(99, 226, 183, 0.15); color: #63e2b7; padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
+.ep-count-tag { font-size: 9px; background: color-mix(in srgb, var(--n-primary-color), transparent 85%); color: var(--n-primary-color); padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
 .discover-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -456,8 +456,8 @@ const {
   padding: 0 16px 16px;
 }
 
-.discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.03); cursor: pointer; transition: background 0.2s; min-width: 0; }
-.discover-item:hover { background: rgba(99, 226, 183, 0.1); }
+.discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background 0.2s; min-width: 0; }
+.discover-item:hover { background: color-mix(in srgb, var(--n-primary-color), transparent 90%); }
 .discover-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .calendar-spin { height: 100%; }
 </style>

@@ -44,7 +44,7 @@ onMounted(() => {
 .md-content :deep(p) { margin-bottom: 1rem; }
 .md-content :deep(ul) { padding-left: 1.5rem; margin-bottom: 1rem; }
 .md-content :deep(li) { margin-bottom: 0.5rem; }
-.md-content :deep(blockquote) { border-left: 4px solid var(--n-info-color); background: rgba(32, 128, 240, 0.1); padding: 12px; border-radius: 4px; margin: 1rem 0; }
+.md-content :deep(blockquote) { border-left: 4px solid var(--n-info-color); background: var(--color-info-bg); padding: 12px; border-radius: 4px; margin: 1rem 0; }
 .md-content :deep(code) { background: var(--n-code-color); padding: 2px 5px; border-radius: 4px; font-family: monospace; }
 .md-content :deep(table) { width: 100%; border-collapse: collapse; margin: 1rem 0; }
 .md-content :deep(th), .md-content :deep(td) { border: 1px solid var(--n-border-color); padding: 8px; font-size: 0.9rem; }

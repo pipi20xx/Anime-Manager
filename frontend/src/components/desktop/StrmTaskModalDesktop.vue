@@ -202,5 +202,5 @@ const {
 }
 .p-wrap { word-break: break-all; }
 .p-line { color: var(--n-info-color); font-family: monospace; font-size: 13px; margin-bottom: 8px; }
-.p-sub { color: #555; font-size: 11px; }
+.p-sub { color: var(--text-muted); font-size: 11px; }
 </style>

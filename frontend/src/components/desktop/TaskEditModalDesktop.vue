@@ -138,9 +138,9 @@ const {
               <n-space vertical :size="8">
                 <n-space align="center">
                   <n-switch v-model:value="form.calculate_hash" />
-                  <span style="font-size: 12px; color: #666;">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                  <span style="font-size: 12px; color: var(--text-muted);">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
                 </n-space>
-                <div style="font-size: 11px; color: #e57373; padding: 4px 8px; background: #ffebee; border-radius: 4px;">
+                <div style="font-size: 11px; color: var(--color-error); padding: 4px 8px; background: var(--color-error-bg); border-radius: 4px;">
                   ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
                 </div>
               </n-space>

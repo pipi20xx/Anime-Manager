@@ -158,6 +158,10 @@ const formatSize = (bytes: number | null) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
+const textMutedColor = computed(() => {
+  return 'var(--text-muted)'
+})
+
 onMounted(() => {
   fetchFiles('/')
   loadConfig()
@@ -230,7 +234,7 @@ onMounted(() => {
               <n-button v-if="!item.is_dir" size="small" secondary round type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
                 识别测试
               </n-button>
-              <n-icon v-else color="#444" size="20"><NextIcon /></n-icon>
+              <n-icon v-else :color="textMutedColor" size="20"><NextIcon /></n-icon>
             </template>
           </n-list-item>
         </n-list>

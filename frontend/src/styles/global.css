@@ -10,6 +10,46 @@
   --app-border-light: rgba(255, 255, 255, 0.06);
   --app-border-medium: rgba(255, 255, 255, 0.12);
   
+  /* 文本颜色变量 */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-tertiary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-disabled: rgba(255, 255, 255, 0.3);
+  --text-hint: rgba(255, 255, 255, 0.4);
+  
+  /* 背景颜色变量 */
+  --bg-primary: #101014;
+  --bg-secondary: #18181c;
+  --bg-tertiary: #25252b;
+  --bg-elevated: #2b262d;
+  --bg-surface: rgba(255, 255, 255, 0.03);
+  --bg-surface-hover: rgba(255, 255, 255, 0.06);
+  --bg-surface-active: rgba(255, 255, 255, 0.1);
+  --bg-overlay: rgba(0, 0, 0, 0.6);
+  
+  /* 边框颜色变量 */
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-heavy: rgba(255, 255, 255, 0.2);
+  --border-dashed: rgba(255, 255, 255, 0.15);
+  
+  /* 状态颜色变量 */
+  --color-success: #a0d911;
+  --color-warning: #f2c97d;
+  --color-error: #e88080;
+  --color-info: #70c0e8;
+  --color-success-bg: rgba(160, 217, 17, 0.1);
+  --color-warning-bg: rgba(242, 201, 125, 0.1);
+  --color-error-bg: rgba(232, 128, 128, 0.1);
+  --color-info-bg: rgba(112, 192, 232, 0.1);
+  
+  /* 阴影变量 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 12px 28px rgba(0, 0, 0, 0.5);
+  
   /* 代码块与底框文字专用变量 */
   --code-radius: 6px;
   --code-bg: rgba(0, 0, 0, 0.3);

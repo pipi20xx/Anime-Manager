@@ -64,10 +64,10 @@ const dataTableColumns = computed(() => {
         }
 
         const popoverContent = () => {
-            if (rawVal === null) return h('span', { style: 'color: #666' }, '(NULL)')
+            if (rawVal === null) return h('span', { style: 'color: var(--text-muted)' }, '(NULL)')
             if (typeof rawVal === 'object') {
                 return h('pre', { 
-                    style: 'font-size: 12px; max-height: 400px; overflow: auto; margin: 0; color: #63e2b7;' 
+                    style: 'font-size: 12px; max-height: 400px; overflow: auto; margin: 0; color: var(--n-primary-color);' 
                 }, JSON.stringify(rawVal, null, 2))
             }
             return h('div', { style: 'max-width: 400px; word-break: break-all;' }, String(rawVal))
@@ -83,7 +83,7 @@ const dataTableColumns = computed(() => {
         return h(NPopover, { 
             trigger: 'hover', 
             placement: 'top', 
-            style: 'max-width: 600px; background: #18181c; border: 1px solid #333;',
+            style: 'max-width: 600px; background: var(--bg-secondary); border: 1px solid var(--border-medium);',
             showArrow: true,
             scrollable: true
         }, {

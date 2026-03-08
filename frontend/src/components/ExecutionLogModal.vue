@@ -122,7 +122,7 @@ watch(() => props.logs.length, () => {
   text-align: left; padding: 12px; 
   color: var(--n-text-color-3); 
   border-bottom: 1px solid var(--app-border-medium); 
-  background: rgba(255, 255, 255, 0.02); 
+  background: var(--app-surface-subtle); 
 }
 .stream-table td { padding: 10px 12px; border-bottom: 1px solid var(--app-border-light); color: var(--n-text-color-2); }
 .mf { font-family: monospace; color: var(--n-text-color-1); }

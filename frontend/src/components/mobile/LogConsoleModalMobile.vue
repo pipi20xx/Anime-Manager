@@ -154,29 +154,29 @@ watch(() => props.show, (newVal) => {
 </template>
 
 <style scoped>
-.mobile-console { background: #101014; height: 100%; display: flex; flex-direction: column; position: relative; }
+.mobile-console { background: var(--bg-primary); height: 100%; display: flex; flex-direction: column; position: relative; }
 .console-header { 
   display: flex; justify-content: space-between; align-items: center; 
-  padding: 8px 12px; background: #18181c; border-bottom: 1px solid rgba(255,255,255,0.1); 
+  padding: 8px 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-medium); 
   z-index: 20;
 }
 .header-title { display: flex; flex-direction: column; align-items: center; }
 .title-text { font-weight: bold; font-size: 14px; }
-.status-indicator { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #666; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #666; }
+.status-indicator { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-muted); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 .dot.active { background: var(--n-primary-color); box-shadow: 0 0 4px var(--n-primary-color); }
 
-.console-body { flex: 1; overflow: hidden; background: #000; padding: 4px; position: relative; z-index: 10; display: flex; flex-direction: column; }
+.console-body { flex: 1; overflow: hidden; background: var(--bg-primary); padding: 4px; position: relative; z-index: 10; display: flex; flex-direction: column; }
 .log-spin { flex: 1; display: flex; flex-direction: column; height: 100%; }
 :deep(.n-spin-content) { flex: 1; display: flex; flex-direction: column; height: 100%; }
 .log-list { flex: 1; height: 100% !important; }
 .log-line { 
-  font-family: monospace; font-size: 11px; line-height: 1.4; color: #ccc; 
+  font-family: monospace; font-size: 11px; line-height: 1.4; color: var(--text-tertiary); 
   padding: 2px 4px; word-break: break-all; white-space: pre-wrap; 
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid var(--border-light);
 }
 
-.empty-tip { color: #666; text-align: center; margin-top: 40px; }
+.empty-tip { color: var(--text-muted); text-align: center; margin-top: 40px; }
 
 /* Settings Overlay */
 .settings-overlay {
@@ -184,11 +184,11 @@ watch(() => props.show, (newVal) => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #18181c; /* Match dark theme modal bg */
-  border-top: 1px solid rgba(255,255,255,0.15);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-medium);
   border-radius: 16px 16px 0 0;
-  z-index: 50; /* Higher than content */
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+  z-index: 50;
+  box-shadow: var(--shadow-lg);
   padding: 16px;
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -199,9 +199,9 @@ watch(() => props.show, (newVal) => {
 }
 
 .settings-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.settings-title { font-weight: bold; font-size: 16px; color: #fff; }
+.settings-title { font-weight: bold; font-size: 16px; color: var(--text-primary); }
 
-.setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border-light); }
 .setting-label { font-weight: bold; color: #ccc; font-size: 14px; }
 .setting-actions { margin-top: 24px; }
 </style>

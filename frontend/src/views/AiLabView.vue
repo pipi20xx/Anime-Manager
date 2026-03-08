@@ -224,15 +224,15 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.header h1 { margin: 0; font-size: 24px; color: #fff; }
+.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 
-.tip { font-size: 13px; color: #666; margin-bottom: 8px; }
+.tip { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
 .json-code { 
   font-family: 'JetBrains Mono', monospace; 
   font-size: 12px; 
   color: var(--n-primary-color); 
-  background: rgba(0, 0, 0, 0.3); 
+  background: var(--app-surface-inner); 
   padding: 12px; 
   border-radius: var(--card-border-radius, 8px); 
   border: 1px solid var(--n-border-color);
@@ -243,7 +243,7 @@ onMounted(() => {
   display: flex; 
   justify-content: space-between; 
   padding: 8px; 
-  background: rgba(255, 255, 255, 0.03); 
+  background: var(--app-surface-card); 
   border-radius: var(--button-border-radius, 4px); 
   border: 1px solid var(--n-border-color);
 }

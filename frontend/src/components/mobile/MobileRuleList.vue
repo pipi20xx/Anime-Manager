@@ -126,8 +126,8 @@ const handleSelect = (key: string, rule: any) => {
   max-width: 150px;
 }
 .rule-regex {
-  background: rgba(242, 201, 125, 0.2);
-  color: #f2c97d;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
   padding: 1px 4px;
   border-radius: 2px;
   font-size: 10px;

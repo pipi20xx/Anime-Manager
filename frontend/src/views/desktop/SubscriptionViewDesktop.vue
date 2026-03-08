@@ -299,7 +299,7 @@ onMounted(fetchData)
 <style scoped>
 .sub-view { width: 100%; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.page-header h1 { margin: 0; font-size: 24px; color: #fff; }
+.page-header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 
 .card-title-box {
@@ -310,7 +310,7 @@ onMounted(fetchData)
 .card-title-text {
   font-size: 15px;
   font-weight: 600;
-  color: #eee;
+  color: var(--text-secondary);
 }
 
 .feed-card { 
@@ -324,7 +324,7 @@ onMounted(fetchData)
 .feed-card:hover {
   border-color: color-mix(in srgb, var(--n-primary-color), transparent 50%) !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .f-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
@@ -333,5 +333,5 @@ onMounted(fetchData)
 .f-url { font-size: 11px; color: var(--n-text-color-3); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
 .f-act { display: flex; justify-content: flex-end; }
 
-.empty-tip { padding: 40px; text-align: center; color: #555; }
+.empty-tip { padding: 40px; text-align: center; color: var(--text-muted); }
 </style>

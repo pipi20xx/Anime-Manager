@@ -204,7 +204,7 @@ const {
             </div>
           </n-scrollbar>
           <template #footer>
-             <div style="font-size: 11px; color: #555; text-align: center;">
+             <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
                 偏好设置会自动保存至本地浏览器
              </div>
           </template>
@@ -221,8 +221,8 @@ const {
 .search-res-box { border: 1px solid var(--app-border-light); border-radius: 6px; background: var(--app-surface-inner); margin-top: 8px; }
 .preference-card { height: 100%; }
 .pref-list { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
-.pref-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; }
-.pref-item:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--n-primary-color); }
+.pref-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--border-light); transition: all 0.3s ease; }
+.pref-item:hover { background: var(--bg-surface-hover); border-color: var(--n-primary-color); }
 .pref-info { flex: 1; margin-right: 12px; }
 .pref-label { font-size: 13px; font-weight: 600; color: var(--n-text-color-1); }
 .pref-desc { font-size: 11px; color: var(--n-text-color-3); margin-top: 2px; line-height: 1.2; }

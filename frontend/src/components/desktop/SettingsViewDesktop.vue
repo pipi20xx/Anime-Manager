@@ -116,7 +116,7 @@ const {
                 <n-form-item label="Jackett URL">
                   <n-space vertical :size="2" style="width: 100%">
                     <n-input v-model:value="config.jackett_url" placeholder="http://192.168.1.10:9117" />
-                    <span style="font-size: 12px; color: #666;">示例: http://192.168.50.12:9117/ (请确保包含端口号)</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">示例: http://192.168.50.12:9117/ (请确保包含端口号)</span>
                   </n-space>
                 </n-form-item>
                 <n-form-item label="API Key">
@@ -125,7 +125,7 @@ const {
                 <n-form-item label="管理密码">
                   <n-space vertical :size="2" style="width: 100%">
                     <n-input v-model:value="config.jackett_password" type="password" show-password-on="click" placeholder="Jackett 管理密码 (可选)" />
-                    <span style="font-size: 12px; color: #666;">如果你的 Jackett 设置了访问密码，请在此填写以获取完整站点列表。</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">如果你的 Jackett 设置了访问密码，请在此填写以获取完整站点列表。</span>
                   </n-space>
                 </n-form-item>
               </n-form>
@@ -335,7 +335,7 @@ const {
                     </n-form-item>
                   </n-gi>
                   <n-gi :span="2">
-                    <div style="font-size: 12px; color: #666; margin-bottom: 12px; margin-top: -8px;">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; margin-top: -8px;">
                       系统每 <b>{{ config.stalled_monitor_interval }}</b> 分钟巡检一次，若发现存活超过 <b>{{ config.stalled_timeout_minutes }}</b> 分钟的下载任务（且进度未完成），将自动将其作为死种清除，并回滚订阅状态以尝试重新下载。
                     </div>
                   </n-gi>
@@ -472,6 +472,6 @@ const {
 .settings-view { width: 100%; }
 
 .client-card .client-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
-.client-card .client-meta { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.empty-clients { padding: 40px; text-align: center; color: #666; border: 1px dashed #444; border-radius: 8px; }
+.client-card .client-meta { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empty-clients { padding: 40px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-medium); border-radius: 8px; }
 </style>

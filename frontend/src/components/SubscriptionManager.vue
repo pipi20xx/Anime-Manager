@@ -388,18 +388,18 @@ onMounted(() => {
 <style scoped>
 .action-bar { margin-bottom: 24px; display: flex; justify-content: flex-end; }
 .sub-card { overflow: hidden; border: 1px solid var(--app-border-light) !important; background: var(--app-surface-card) !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); border-radius: var(--card-border-radius, 8px) !important; }
-.sub-card:hover { transform: translateY(-6px); box-shadow: 0 12px 28px rgba(0,0,0,0.5); border-color: var(--n-primary-color) !important; }
+.sub-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-xl); border-color: var(--n-primary-color) !important; }
 .card-content { display: flex; flex-direction: column; }
 .poster-box { position: relative; width: 100%; aspect-ratio: 2 / 3; background: var(--app-surface-inner); overflow: hidden; border-radius: var(--card-border-radius, 8px); cursor: pointer; }
 .poster-box :deep(img) { width: 100%; height: 100%; border-radius: var(--card-border-radius, 8px); transition: transform 0.5s ease; }
 .sub-card:hover .poster-box :deep(img) { transform: scale(1.1); }
-.card-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; color: #fff; gap: 8px; }
+.card-overlay { position: absolute; inset: 0; background: var(--bg-overlay); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; color: var(--text-primary); gap: 8px; }
 .card-overlay span { font-size: 12px; font-weight: bold; }
 .sub-card:hover .card-overlay { opacity: 1; }
-.media-type-tag { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); color: #fff; padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
-.upgrade-tag { position: absolute; top: 8px; right: 40px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
-.status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: 0 0 8px rgba(232, 128, 128, 0.5); z-index: 2; }
-.status-indicator.is-enabled { background: var(--n-primary-color); box-shadow: 0 0 8px rgba(99, 226, 183, 0.5); }
+.media-type-tag { position: absolute; top: 8px; right: 8px; background: var(--bg-overlay); backdrop-filter: blur(8px); color: var(--text-primary); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
+.upgrade-tag { position: absolute; top: 8px; right: 40px; background: var(--bg-overlay); backdrop-filter: blur(8px); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
+.status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: 0 0 8px color-mix(in srgb, var(--n-error-color), transparent 50%); z-index: 2; }
+.status-indicator.is-enabled { background: var(--n-primary-color); box-shadow: 0 0 8px color-mix(in srgb, var(--n-primary-color), transparent 50%); }
 .info-box { padding: 12px; }
 .sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--n-text-color-1); cursor: pointer; }
 .sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--n-text-color-3); margin-bottom: 8px; }

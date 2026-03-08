@@ -180,7 +180,7 @@ watch(() => props.show, (newVal) => {
 
 .console-body {
   flex: 1;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--app-surface-inner);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -225,7 +225,7 @@ watch(() => props.show, (newVal) => {
 }
 
 .log-line:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--bg-surface);
 }
 
 .empty-tip { color: var(--n-text-color-3); text-align: center; position: absolute; width: 100%; top: 100px; z-index: 10; font-style: italic; }

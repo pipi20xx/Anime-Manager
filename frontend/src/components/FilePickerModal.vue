@@ -86,10 +86,10 @@ const handleConfirm = () => {
             v-for="item in items" 
             :key="item.path" 
             @click="handleItemClick(item)"
-            :style="selectedFile === item.path ? 'background: rgba(32, 128, 240, 0.15)' : ''"
+            :style="selectedFile === item.path ? 'background: var(--color-info-bg)' : ''"
           >
             <template #prefix>
-              <n-icon :color="item.is_dir ? '#2080f0' : '#888'">
+              <n-icon :color="item.is_dir ? 'var(--n-primary-color)' : 'var(--text-muted)'">
                 <component :is="item.is_dir ? FolderIcon : FileIcon" />
               </n-icon>
             </template>

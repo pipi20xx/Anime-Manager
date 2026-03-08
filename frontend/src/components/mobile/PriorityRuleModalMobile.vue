@@ -180,7 +180,7 @@ const {
                 <div class="drag-info">
                    <div class="name">{{ element.name }}</div>
                    <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px">
-                     <span style="font-size: 11px; color: #888">分值:</span>
+                     <span style="font-size: 11px; color: var(--text-muted)">分值:</span>
                      <n-input-number v-model:value="element.score" size="tiny" :show-button="false" style="width: 50px" />
                    </div>
                 </div>

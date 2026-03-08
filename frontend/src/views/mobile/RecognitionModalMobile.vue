@@ -121,7 +121,7 @@ const {
                         <n-list hoverable clickable>
                           <n-list-item v-for="res in testSearch.results" :key="res.id" @click="forcedParams.tmdb_id = String(res.id); forcedParams.type = res.media_type || forcedParams.type; testSearch.results = []">
                             <template #prefix><n-avatar :src="getImg(res.poster_path)" size="small" /></template>
-                            <div style="font-size:11px; color: #eee; line-height: 1.2"><b>{{ res.title }}</b> ({{ res.year }})<br>ID: {{ res.id }}</div>
+                            <div style="font-size:11px; color: var(--text-secondary); line-height: 1.2"><b>{{ res.title }}</b> ({{ res.year }})<br>ID: {{ res.id }}</div>
                           </n-list-item>
                         </n-list>
                       </n-scrollbar>
@@ -172,30 +172,30 @@ const {
 }
 
 .poster-img :deep(img) { border-radius: var(--button-border-radius, 6px); }
-.poster-placeholder-mobile { width: 80px; height: 120px; background: var(--app-surface-inner); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #666; border-radius: var(--button-border-radius, 6px); border: 1px solid var(--app-border-light); }
+.poster-placeholder-mobile { width: 80px; height: 120px; background: var(--app-surface-inner); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); border-radius: var(--button-border-radius, 6px); border: 1px solid var(--app-border-light); }
 
 .info-box-mobile { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .title-mobile { font-weight: bold; font-size: 15px; line-height: 1.3; }
 .tags-mobile { display: flex; gap: 4px; flex-wrap: wrap; }
-.meta-row { font-size: 11px; color: #888; display: flex; flex-direction: column; gap: 2px; }
+.meta-row { font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; }
 .date-text { color: var(--n-primary-color); }
-.tmdb-id-text { font-family: monospace; color: #555; }
+.tmdb-id-text { font-family: monospace; color: var(--text-hint); }
 
 .specs-mobile { display: flex; gap: 4px; margin-top: 4px; }
-.p-badge { padding: 0 4px; border-radius: 3px; font-size: 9px; background: rgba(255,255,255,0.05); color: #666; border: 1px solid rgba(255,255,255,0.1); }
-.p-badge.blue { color: var(--n-info-color); border-color: rgba(112, 192, 232, 0.2); }
+.p-badge { padding: 0 4px; border-radius: 3px; font-size: 9px; background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-light); }
+.p-badge.blue { color: var(--n-info-color); border-color: var(--color-info-bg); }
 
 .mobile-details-list { margin-top: 8px; }
-.fig-grid-mobile { display: flex; background: rgba(0,0,0,0.2); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
-.fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 2px; border-right: 1px solid rgba(255,255,255,0.05); }
+.fig-grid-mobile { display: flex; background: var(--app-surface-inner); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-light); margin-bottom: 10px; }
+.fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 2px; border-right: 1px solid var(--border-light); }
 .fig-item:last-child { border-right: none; }
-.fig-l { font-size: 9px; color: #555; text-transform: uppercase; margin-bottom: 2px; }
+.fig-l { font-size: 9px; color: var(--text-hint); text-transform: uppercase; margin-bottom: 2px; }
 .fig-v { font-weight: bold; font-size: 13px; color: var(--n-primary-color); }
 
 .text-rows-mobile { display: flex; flex-direction: column; gap: 6px; }
 .tr { display: flex; gap: 8px; font-size: 11px; }
-.tl { color: #555; width: 60px; flex-shrink: 0; }
-.tv { color: #aaa; word-break: break-all; }
+.tl { color: var(--text-hint); width: 60px; flex-shrink: 0; }
+.tv { color: var(--text-tertiary); word-break: break-all; }
 .tv.team { color: var(--n-success-color); font-weight: bold; }
 .tv.mono { font-family: monospace; color: var(--n-warning-color); }
 
@@ -214,7 +214,7 @@ const {
 .mt-3 { margin-top: 12px; }
 
 .audit-log-mobile { 
-  background: #000; 
+  background: var(--bg-primary); 
   padding: 8px; 
   border-radius: var(--button-border-radius, 6px); 
   border: 1px solid var(--app-border-light);
@@ -224,10 +224,10 @@ const {
   overflow-y: auto; 
 }
 .log-line { display: flex; gap: 6px; margin-bottom: 2px; }
-.idx { color: #555; min-width: 16px; text-align: right; }
+.idx { color: var(--text-hint); min-width: 16px; text-align: right; }
 .txt { word-break: break-all; flex: 1; }
 
-.log-line.p { color: var(--n-primary-color); font-weight: bold; border-top: 1px solid #333; margin-top: 4px; padding-top: 4px; }
+.log-line.p { color: var(--n-primary-color); font-weight: bold; border-top: 1px solid var(--border-medium); margin-top: 4px; padding-top: 4px; }
 .log-line.d { color: var(--n-info-color); }
 .log-line.s { color: var(--n-primary-color); }
 .log-line.w { color: var(--n-warning-color); }

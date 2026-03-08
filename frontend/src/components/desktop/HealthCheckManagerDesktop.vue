@@ -87,11 +87,11 @@ const columns = [
         </n-space>
       </template>
 
-      <div class="description" style="margin-bottom: 16px; font-size: 13px; color: #888;">
+      <div class="description" style="margin-bottom: 16px; font-size: 13px; color: var(--text-tertiary);">
         通过定时下载指定文件并与本地路径进行比对，用于监测硬盘是否掉线或下载源的 Cookie 是否失效。
       </div>
 
-      <n-space align="center" style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+      <n-space align="center" style="background: var(--bg-surface); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
         <n-form-item label="自动巡检" label-placement="left" :show-feedback="false">
           <n-switch v-model:value="config.health_check_enabled" />
         </n-form-item>

@@ -127,7 +127,7 @@ const {
 <style scoped>
 .path-text {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   word-break: break-all;
   max-width: 200px;
 }

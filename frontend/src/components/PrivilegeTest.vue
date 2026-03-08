@@ -157,7 +157,7 @@ onMounted(fetchRules)
                 </div>
                 <div class="hit-logs">
                   <div v-if="result.match_detail">
-                    <div style="color: #bbb; margin-bottom: 4px;">捕获组细节:</div>
+                    <div style="color: var(--text-secondary); margin-bottom: 4px;">捕获组细节:</div>
                     <div v-for="(g, i) in result.match_detail.groups" :key="i" class="log-line">
                       Group[{{ i+1 }}]: <span style="color: var(--n-primary-color)">{{ g }}</span>
                     </div>
@@ -166,8 +166,8 @@ onMounted(fetchRules)
                 </div>
               </div>
 
-              <div v-else class="miss-card" :style="result.error ? 'border-color: #ff4d4f; background: rgba(255,0,0,0.05)' : ''">
-                <div class="miss-header" :style="result.error ? 'color: #ff4d4f' : ''">
+              <div v-else class="miss-card" :style="result.error ? 'border-color: var(--color-error); background: var(--color-error-bg)' : ''">
+                <div class="miss-header" :style="result.error ? 'color: var(--color-error)' : ''">
                   {{ result.error ? '正则语法错误' : '未匹配 (MISS)' }}
                 </div>
                 <div class="miss-desc">
@@ -231,7 +231,7 @@ onMounted(fetchRules)
   display: block;
   margin-top: 4px;
   padding: 4px 8px;
-  background: rgba(0,0,0,0.3);
+  background: var(--app-surface-inner);
   color: var(--n-primary-color);
   font-size: 12px;
   word-break: break-all;
@@ -245,8 +245,8 @@ onMounted(fetchRules)
 .hit-card {
   padding: 12px;
   border-radius: 8px;
-  background: rgba(24, 160, 88, 0.1);
-  border: 1px solid rgba(24, 160, 88, 0.2);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success);
 }
 .hit-header {
   display: flex;
@@ -257,20 +257,20 @@ onMounted(fetchRules)
 .hit-val {
   font-size: 28px;
   font-weight: 900;
-  color: #18a058;
+  color: var(--color-success);
   line-height: 1;
 }
 .hit-status {
   font-size: 11px;
   font-weight: bold;
-  color: #18a058;
+  color: var(--color-success);
   opacity: 0.7;
 }
 .hit-logs {
   font-family: monospace;
   font-size: 12px;
-  color: #888;
-  background: rgba(0,0,0,0.2);
+  color: var(--text-muted);
+  background: var(--app-surface-inner);
   padding: 8px;
   border-radius: 4px;
 }
@@ -281,8 +281,8 @@ onMounted(fetchRules)
 .miss-card {
   padding: 12px;
   border-radius: 8px;
-  background: rgba(209, 209, 209, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
 }
 .miss-header {
   font-size: 16px;

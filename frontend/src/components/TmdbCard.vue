@@ -72,8 +72,8 @@ const getImg = (path: string) => {
   border-radius: 12px; 
   overflow: hidden; 
   position: relative; 
-  background: #222; 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+  background: var(--bg-tertiary); 
+  box-shadow: var(--shadow-md); 
   margin-bottom: 8px; 
 }
 .poster-wrapper :deep(.n-image) { width: 100%; height: 100%; display: flex; }
@@ -87,8 +87,8 @@ const getImg = (path: string) => {
   position: absolute; 
   top: 6px; 
   right: 6px; 
-  background: rgba(0, 0, 0, 0.7); 
-  color: #f5a623; 
+  background: var(--bg-overlay); 
+  color: var(--color-warning); 
   padding: 2px 6px; 
   border-radius: 4px; 
   font-size: 11px; 
@@ -101,7 +101,7 @@ const getImg = (path: string) => {
   top: 6px; 
   left: 6px; 
   background: var(--n-primary-color); 
-  color: #000; 
+  color: var(--text-primary); 
   padding: 2px 6px; 
   border-radius: 4px; 
   font-size: 10px; 
@@ -115,7 +115,7 @@ const getImg = (path: string) => {
   overflow: hidden; 
   white-space: nowrap; 
   text-overflow: ellipsis; 
-  color: #eee;
+  color: var(--text-secondary);
 }
 .media-date { font-size: 12px; color: var(--n-text-color-3); }
 </style>

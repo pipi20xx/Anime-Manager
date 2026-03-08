@@ -153,7 +153,7 @@ const handleLogin = async () => {
 .bottom-right {
   bottom: -100px;
   right: -100px;
-  background-color: #03dac6;
+  background-color: var(--n-primary-color);
 }
 
 .login-card {

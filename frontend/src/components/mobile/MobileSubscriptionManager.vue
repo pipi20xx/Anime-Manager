@@ -401,11 +401,11 @@ onMounted(() => {
   font-size: 8px;
   padding: 2px 4px;
   border-radius: 4px;
-  color: #fff;
-  background: rgba(0,0,0,0.6);
+  color: var(--text-primary);
+  background: var(--bg-overlay);
 }
-.media-badge.movie { background: rgba(232, 128, 128, 0.8); }
-.media-badge.tv { background: rgba(99, 226, 183, 0.8); }
+.media-badge.movie { background: var(--color-error); }
+.media-badge.tv { background: var(--n-primary-color); }
 
 .sub-info {
   flex: 1;
@@ -432,7 +432,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-left: 1px solid rgba(255,255,255,0.05);
+  border-left: 1px solid var(--border-light);
 }
 .empty-state {
   text-align: center;

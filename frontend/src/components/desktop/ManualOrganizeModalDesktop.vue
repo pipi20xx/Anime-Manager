@@ -83,7 +83,7 @@ const {
                 <n-list hoverable clickable>
                   <n-list-item v-for="res in manualSearch.results" :key="res.id" @click="manualTask.forced_tmdb_id = String(res.id); manualTask.forced_type = res.media_type || manualTask.forced_type; manualSearch.results = []">
                     <template #prefix><n-avatar :src="getImg(res.poster_path)" size="small" /></template>
-                    <div style="font-size:12px; color: #eee"><b>{{ res.title }}</b> ({{ res.year }}) - ID: {{ res.id }}</div>
+                    <div style="font-size:12px; color: var(--text-secondary)"><b>{{ res.title }}</b> ({{ res.year }}) - ID: {{ res.id }}</div>
                   </n-list-item>
                 </n-list>
               </n-scrollbar>

@@ -181,7 +181,7 @@ const { activeTab } = useUsageGuide()
   right: 10px;
   top: 90px;
   background: var(--n-primary-color);
-  color: white;
+  color: var(--text-primary);
   padding: 8px 14px;
   border-radius: 20px;
   font-size: 13px;
@@ -190,7 +190,7 @@ const { activeTab } = useUsageGuide()
   transition: opacity 0.3s;
   pointer-events: none;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 :deep(.n-tabs-nav:hover)::after {

@@ -106,7 +106,7 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
       <n-divider title-placement="left" style="margin: 0">匹配条件配置</n-divider>
 
       <n-space align="center">
-        <span style="font-weight: bold; color: #888">匹配模式:</span>
+        <span style="font-weight: bold; color: var(--text-tertiary)">匹配模式:</span>
         <n-switch v-model:value="form.use_regex">
           <template #checked>正则表达式</template>
           <template #unchecked>普通关键词</template>

@@ -77,15 +77,15 @@ const remoteText = computed({
 </template>
 
 <style scoped>
-.config-section { background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
+.config-section { background: var(--app-surface-subtle); border-radius: 8px; border: 1px solid var(--border-light); }
 .section-header { display: flex; align-items: center; gap: 12px; }
 .icon-box { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: color-mix(in srgb, var(--n-primary-color), transparent 90%); border-radius: 8px; flex-shrink: 0; }
 .title-group { display: flex; flex-direction: column; gap: 2px; }
-.section-header .title { font-size: 15px; font-weight: bold; color: #eee; line-height: 1.2; }
-.section-header .description { font-size: 12px; color: #888; font-weight: normal; }
+.section-header .title { font-size: 15px; font-weight: bold; color: var(--text-secondary); line-height: 1.2; }
+.section-header .description { font-size: 12px; color: var(--text-tertiary); font-weight: normal; }
 .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px; }
-.col-header .label { font-size: 12px; color: #888; font-weight: 500; }
-.input-wrapper { background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: var(--button-border-radius, 4px); border: 1px solid var(--n-border-color); }
-.mono-input :deep(textarea) { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: transparent; color: #a6accd; border: none; padding: 8px; }
+.col-header .label { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+.input-wrapper { background: var(--app-surface-inner); padding: 4px; border-radius: var(--button-border-radius, 4px); border: 1px solid var(--n-border-color); }
+.mono-input :deep(textarea) { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: transparent; color: var(--text-secondary); border: none; padding: 8px; }
 .mono-input :deep(.n-input__border), .mono-input :deep(.n-input__state-border) { display: none; }
 </style>

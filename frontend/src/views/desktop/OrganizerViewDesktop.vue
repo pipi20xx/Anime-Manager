@@ -226,7 +226,7 @@ onUnmounted(stopBgTaskPolling)
                   <div :title="task.target_dir"><span>目标</span><code>{{ task.target_dir }}</code></div>
                   <div>
                     <span>重命名规则</span>
-                    <n-tag size="tiny" :bordered="false" type="info" style="margin-top: 4px; background: rgba(32, 128, 240, 0.1)">
+                    <n-tag size="tiny" :bordered="false" type="info" style="margin-top: 4px; background: var(--color-info-bg)">
                       {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
                     </n-tag>
                   </div>
@@ -293,7 +293,7 @@ onUnmounted(stopBgTaskPolling)
 .rule-card:hover, .task-card:hover {
   border-color: var(--n-primary-color) !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .drag-handle { cursor: grab; opacity: 0.6; transition: opacity 0.2s; }

@@ -50,7 +50,7 @@ const columns = [
     render(row: any) {
       return h('div', { style: 'padding: 4px 0' }, [
         h('div', { style: 'font-weight: bold; font-size: 14px; line-height: 1.4' }, { default: () => row.title }),
-        row.description ? h('div', { style: 'font-size: 12px; color: #888; margin-top: 2px' }, { default: () => row.description }) : null
+        row.description ? h('div', { style: 'font-size: 12px; color: var(--text-tertiary); margin-top: 2px' }, { default: () => row.description }) : null
       ])
     }
   },

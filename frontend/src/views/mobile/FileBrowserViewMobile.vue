@@ -412,13 +412,13 @@ const getShortName = (path: string) => {
   bottom: 100px;
   right: 20px;
   background-color: var(--n-primary-color);
-  color: white;
+  color: var(--text-primary);
   padding: 12px 24px;
   border-radius: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-md);
   z-index: 100;
   font-weight: 600;
   cursor: pointer;

@@ -387,53 +387,53 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.header h1 { margin: 0; font-size: 24px; color: #fff; }
+.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; }
 
 .cache-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-.cache-card { height: 100%; transition: all 0.2s ease; overflow: hidden; border: 1px solid #222; }
+.cache-card { height: 100%; transition: all 0.2s ease; overflow: hidden; border: 1px solid var(--border-medium); }
 .clickable-card { cursor: pointer; }
-.cache-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.cache-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); box-shadow: var(--shadow-md); }
 
-.poster-container { position: relative; width: 100%; aspect-ratio: 2/3; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.poster-container { position: relative; width: 100%; aspect-ratio: 2/3; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .poster-img { width: 100%; height: 100%; transition: opacity 0.3s; }
-.no-poster { color: #333; font-weight: bold; font-size: 14px; }
+.no-poster { color: var(--text-muted); font-weight: bold; font-size: 14px; }
 .type-tag { 
   position: absolute; top: 0; right: 0; z-index: 10; 
   padding: 2px 6px; 
-  font-size: 10px; font-weight: bold; color: #fff; 
+  font-size: 10px; font-weight: bold; color: var(--text-primary); 
   border-bottom-left-radius: var(--button-border-radius, 6px);
-  box-shadow: -1px 1px 4px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-sm);
 }
 .tag-movie { background: var(--n-warning-color); color: #000; } /* Yellow/Orange for Movie */
 .tag-tv { background: var(--n-primary-color); color: #000; }    /* Green/Mint for TV */
 
 .year-tag {
   position: absolute; top: 0; left: 0; z-index: 10;
-  padding: 2px 6px; font-size: 10px; font-weight: bold; color: #fff;
-  background: #444;
+  padding: 2px 6px; font-size: 10px; font-weight: bold; color: var(--text-primary);
+  background: var(--bg-surface-active);
   border-bottom-right-radius: 6px;
-  box-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-sm);
 }
 .id-tag {
   position: absolute; bottom: 0; right: 0; z-index: 10;
-  padding: 2px 6px; font-size: 10px; font-weight: bold; color: #fff;
-  background: #444;
+  padding: 2px 6px; font-size: 10px; font-weight: bold; color: var(--text-primary);
+  background: var(--bg-surface-active);
   border-top-left-radius: 6px;
-  box-shadow: -1px -1px 4px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .card-content { padding: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.card-content .title { font-size: 13px; font-weight: bold; color: #eee; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
+.card-content .title { font-size: 13px; font-weight: bold; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
 .action-row { display: flex; align-items: flex-start; flex-shrink: 0; }
 .del-btn { opacity: 0.2; transition: opacity 0.2s; }
 .cache-card:hover .del-btn { opacity: 1; }
 
 .sentinel { height: 40px; display: flex; justify-content: center; align-items: center; margin-top: 24px; width: 100%; }
-.end-text { font-size: 12px; color: #666; font-style: italic; }
+.end-text { font-size: 12px; color: var(--text-muted); font-style: italic; }
 
-.tip { font-size: 12px; color: #666; font-style: italic; }
+.tip { font-size: 12px; color: var(--text-muted); font-style: italic; }
 .mt-12 { margin-top: 48px; }
 </style>

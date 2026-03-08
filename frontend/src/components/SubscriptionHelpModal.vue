@@ -38,8 +38,8 @@ const data = [
       </div>
       <n-data-table :columns="columns" :data="data" :pagination="false" />
       
-      <div style="margin-top: 24px; background: #2c2c2c; padding: 16px; border-radius: 8px;">
-        <div style="font-weight: bold; margin-bottom: 8px; color: #63e2b7">💡 如何知道应该填什么？</div>
+      <div style="margin-top: 24px; background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+        <div style="font-weight: bold; margin-bottom: 8px; color: var(--n-primary-color)">💡 如何知道应该填什么？</div>
         <n-text depth="3" style="font-size: 13px">
           1. 先通过<strong>“查看内容”</strong>查看现有的 RSS 条目。<br/>
           2. 观察条目下方的彩色标签（如：S1 E05, 1080p, H265）。<br/>

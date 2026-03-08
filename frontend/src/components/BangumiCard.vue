@@ -71,13 +71,13 @@ const getImg = (path: string) => {
   border-radius: 12px; 
   overflow: hidden; 
   margin-bottom: 8px; 
-  background: #000; 
+  background: var(--bg-primary); 
   position: relative; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
 }
 .bgm-cover :deep(.n-image) { width: 100%; height: 100%; display: flex; }
 .bgm-cover :deep(img) { 
@@ -91,7 +91,7 @@ const getImg = (path: string) => {
 .bgm-title { 
   font-size: 14px; 
   font-weight: 600; 
-  color: #eee; 
+  color: var(--text-secondary); 
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
@@ -114,11 +114,11 @@ const getImg = (path: string) => {
     padding-top: 6px; 
     height: 24px;
 }
-.bgm-score { font-size: 11px; color: #f5a623; font-weight: bold; }
+.bgm-score { font-size: 11px; color: var(--color-warning); font-weight: bold; }
 .bgm-sub-label {
-    background: #000; color: var(--n-primary-color); 
+    background: var(--bg-primary); color: var(--n-primary-color); 
     padding: 1px 6px; border-radius: 4px; 
     font-size: 10px; font-weight: bold;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid var(--border-medium);
 }
 </style>

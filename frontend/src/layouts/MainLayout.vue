@@ -383,7 +383,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
 <style scoped>
 .main-sider {
   background-color: var(--sidebar-bg-color);
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-right: 1px solid var(--border-light) !important;
 }
 .logo-container {
   display: flex;
@@ -401,7 +401,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
 }
 .sidebar-footer {
   padding: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-light);
 }
 .user-status-container {
   padding: 0 4px;
@@ -415,19 +415,19 @@ const isNavActive = (key: string) => currentViewKey.value === key
   border-radius: 8px;
   transition: all 0.3s ease;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-surface);
 }
 .user-status-trigger:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--bg-surface-hover);
   border-color: var(--n-primary-color);
 }
 .user-status-trigger.is-disabled {
   cursor: default;
 }
 .user-status-trigger.is-disabled:hover {
-  background-color: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--bg-surface);
+  border-color: var(--border-light);
 }
 .user-status-trigger.is-collapsed {
   padding: 6px 0; 
@@ -440,7 +440,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 80px;
-  color: #ccc;
+  color: var(--text-tertiary);
 }
 .view-wrapper {
   flex: 1;
@@ -453,7 +453,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
 .mobile-header {
   padding: 0 0 12px 0;
   margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .mobile-bottom-nav {
@@ -466,7 +466,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
   /* Use sidebar color for bottom nav background */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-medium);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -481,20 +481,13 @@ const isNavActive = (key: string) => currentViewKey.value === key
   justify-content: center;
   flex: 1;
   height: 100%;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .nav-item.active {
-  color: var(--n-color-target); /* Will be replaced by dynamic color if needed, or use primary */
-  color: #63e2b7; /* Fallback/Default Primary */
-}
-
-/* Dynamic color binding via style is tricky in scoped css without v-bind, 
-   but we can use the variable usually provided by naive-ui or just hardcode/use theme var */
-.nav-item.active {
-  color: v-bind('logoColor');
+  color: var(--n-primary-color);
 }
 
 .nav-item .label {
