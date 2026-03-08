@@ -98,20 +98,16 @@ watch(() => props.show, (newVal) => {
                 ]"
                 @update:value="handleDateChange"
               />
-              <n-button size="tiny" @click="autoScroll = !autoScroll" :type="autoScroll ? 'primary' : 'default'" secondary title="自动置顶">
-                <template #icon><n-icon><ScrollIcon /></n-icon></template>
+              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="autoScroll = !autoScroll" :type="autoScroll ? 'primary' : 'default'" title="自动置顶">
                 {{ autoScroll ? '跟随' : '自由' }}
               </n-button>
-              <n-button v-if="!selectedDate" size="tiny" @click="isPaused = !isPaused" :type="isPaused ? 'warning' : 'default'" secondary>
-                <template #icon><n-icon><component :is="isPaused ? PlayIcon : PauseIcon" /></n-icon></template>
+              <n-button v-if="!selectedDate" v-bind="getButtonStyle('secondary')" size="tiny" @click="isPaused = !isPaused" :type="isPaused ? 'warning' : 'default'">
                 {{ isPaused ? '恢复' : '暂停' }}
               </n-button>
-              <n-button size="tiny" @click="openFullLog" secondary>
-                <template #icon><n-icon><OpenIcon /></n-icon></template>
+              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="openFullLog">
                 查看导出
               </n-button>
-              <n-button size="tiny" @click="clearConsole" secondary>
-                <template #icon><n-icon><ClearIcon /></n-icon></template>
+              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="clearConsole">
                 清空
               </n-button>
               <n-button v-bind="getButtonStyle('iconPrimary')" size="tiny" @click="close">

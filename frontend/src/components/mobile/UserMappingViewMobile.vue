@@ -147,8 +147,8 @@ const genreColumns = [
   { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
     return h(NSpace, { size: 2 }, {
       default: () => [
-        h(NButton, { size: 'tiny', quaternary: true, onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { size: 'tiny', quaternary: true, type: 'error', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
+        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
+        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
       ]
     })
   }}
@@ -161,8 +161,8 @@ const companyColumns = [
   { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
     return h(NSpace, { size: 2 }, {
       default: () => [
-        h(NButton, { size: 'tiny', quaternary: true, onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { size: 'tiny', quaternary: true, type: 'error', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
+        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
+        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
       ]
     })
   }}
@@ -175,8 +175,8 @@ const keywordColumns = [
   { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
     return h(NSpace, { size: 2 }, {
       default: () => [
-        h(NButton, { size: 'tiny', quaternary: true, onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { size: 'tiny', quaternary: true, type: 'error', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
+        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
+        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
       ]
     })
   }}
@@ -189,8 +189,8 @@ const languageColumns = [
   { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
     return h(NSpace, { size: 2 }, {
       default: () => [
-        h(NButton, { size: 'tiny', quaternary: true, onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { size: 'tiny', quaternary: true, type: 'error', onClick: () => handleDelete(row.code || row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
+        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
+        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.code || row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
       ]
     })
   }}
@@ -203,8 +203,8 @@ const countryColumns = [
   { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
     return h(NSpace, { size: 2 }, {
       default: () => [
-        h(NButton, { size: 'tiny', quaternary: true, onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { size: 'tiny', quaternary: true, type: 'error', onClick: () => handleDelete(row.code || row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
+        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
+        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.code || row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
       ]
     })
   }}

@@ -102,7 +102,7 @@ const dataTableColumns = computed(() => {
                   positiveText: '确认删除',
                   negativeText: '取消'
               }, {
-                  trigger: () => h(NButton, { size: 'small', type: 'error', quaternary: true, circle: true }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) }),
+                  trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) }),
                   default: () => `确认删除行?`
               })
           }

@@ -215,21 +215,21 @@ onMounted(fetchData)
                   return h(NSpace, { size: 'small' }, { default: () => [
                     // 复制
                     h(NTooltip, { trigger: 'hover' }, {
-                      trigger: () => h(NButton, { size: 'small', secondary: true, circle: true, onClick: ()=>duplicateRule(r) }, { 
+                      trigger: () => h(NButton, { ...getButtonStyle('icon'), onClick: ()=>duplicateRule(r) }, { 
                         icon: () => h(NIcon, null, { default: () => h(CopyIcon) }) 
                       }),
                       default: () => '复制规则'
                     }),
                     // 编辑
                     h(NTooltip, { trigger: 'hover' }, {
-                      trigger: () => h(NButton, { size: 'small', secondary: true, circle: true, onClick: ()=>openEditRule(r) }, { 
+                      trigger: () => h(NButton, { ...getButtonStyle('icon'), onClick: ()=>openEditRule(r) }, { 
                         icon: () => h(NIcon, null, { default: () => h(EditIcon) }) 
                       }),
                       default: () => '编辑规则'
                     }),
                     // 记录
                     h(NTooltip, { trigger: 'hover' }, {
-                      trigger: () => h(NButton, { size: 'small', secondary: true, circle: true, type: 'info', onClick: ()=>openViewHistory(r) }, { 
+                      trigger: () => h(NButton, { ...getButtonStyle('iconPrimary'), onClick: ()=>openViewHistory(r) }, { 
                         icon: () => h(NIcon, null, { default: () => h(ResetIcon) })
                       }),
                       default: () => '执行记录'
