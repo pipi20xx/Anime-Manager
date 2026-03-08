@@ -14,6 +14,8 @@ import {
   AddOutlined as AddIcon
 } from '@vicons/material'
 
+import { getButtonStyle } from '../composables/useButtonStyles'
+
 const message = useMessage()
 const dialog = useDialog()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -269,7 +271,7 @@ onUnmounted(() => {
              <n-button ghost type="warning" @click="clearFingerprints">清空智能记忆</n-button>
           </div>
           <n-button ghost type="error" @click="clearAll">清空全部</n-button>
-          <n-button circle quaternary @click="handleSearch" :loading="loading">
+          <n-button v-bind="getButtonStyle('icon')" @click="handleSearch" :loading="loading">
             <template #icon><n-icon><RefreshIcon /></n-icon></template>
           </n-button>
         </n-space>
@@ -306,7 +308,7 @@ onUnmounted(() => {
           <div class="card-content">
             <n-text strong class="title">{{ item.title }}</n-text>
             <div class="action-row">
-              <n-button size="tiny" quaternary circle type="error" @click.stop="deleteCache(item)" class="del-btn">
+              <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" @click.stop="deleteCache(item)" class="del-btn">
                 <template #icon><n-icon><DeleteIcon /></n-icon></template>
               </n-button>
             </div>

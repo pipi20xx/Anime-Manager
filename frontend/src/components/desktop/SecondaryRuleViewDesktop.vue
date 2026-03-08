@@ -95,7 +95,7 @@ const {
               <div class="card-footer">
                 <n-popconfirm @positive-click.stop="deleteRule(index)" positive-text="确定" negative-text="取消">
                   <template #trigger>
-                    <n-button quaternary circle size="small" type="error" @click.stop>
+                    <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click.stop>
                       <template #icon><n-icon><DeleteIcon /></n-icon></template>
                     </n-button>
                   </template>

@@ -59,11 +59,11 @@ onMounted(fetchTasks)
                <span class="task-title">{{ task.name }}</span>
              </div>
              <div class="action-row">
-                <n-button circle secondary type="primary" size="small" @click.stop="runTask(task.id)" style="margin-right: 4px">
+                <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click.stop="runTask(task.id)" style="margin-right: 4px">
                    <template #icon><n-icon><RunIcon /></n-icon></template>
                 </n-button>
                 <n-dropdown trigger="click" :options="getTaskActions(index, task)" size="large">
-                   <n-button circle quaternary size="small" @click.stop>
+                   <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop>
                      <template #icon><n-icon><MoreIcon /></n-icon></template>
                    </n-button>
                 </n-dropdown>

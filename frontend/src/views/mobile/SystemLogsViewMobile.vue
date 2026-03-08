@@ -12,6 +12,7 @@ import {
 } from '@vicons/material'
 import LogConsoleModal from '../../components/LogConsoleModal.vue'
 import { useSystemLogs } from '../../composables/views/useSystemLogs'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -37,10 +38,10 @@ const loadMore = () => {
     <div class="mobile-header">
       <div class="header-title">系统日志</div>
       <n-space>
-        <n-button circle secondary @click="showConsole = true">
+        <n-button v-bind="getButtonStyle('icon')" @click="showConsole = true">
           <template #icon><n-icon><TerminalIcon /></n-icon></template>
         </n-button>
-        <n-button circle secondary @click="exportLogs">
+        <n-button v-bind="getButtonStyle('icon')" @click="exportLogs">
           <template #icon><n-icon><ExportIcon /></n-icon></template>
         </n-button>
       </n-space>

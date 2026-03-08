@@ -182,7 +182,7 @@ onMounted(() => {
       <div class="browser-toolbar">
         <n-space align="center" justify="space-between" class="w-100">
           <n-space align="center" size="large">
-            <n-button circle quaternary :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
+            <n-button v-bind="getButtonStyle('icon')" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
               <template #icon><n-icon><UpIcon /></n-icon></template>
             </n-button>
             <n-breadcrumb>
@@ -198,7 +198,7 @@ onMounted(() => {
             </n-breadcrumb>
           </n-space>
           <n-space>
-            <n-button circle quaternary @click="fetchFiles(currentPath)">
+            <n-button v-bind="getButtonStyle('icon')" @click="fetchFiles(currentPath)">
               <template #icon><n-icon><RefreshIcon /></n-icon></template>
             </n-button>
           </n-space>

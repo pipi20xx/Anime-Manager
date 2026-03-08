@@ -330,7 +330,7 @@ onMounted(() => {
                   </n-button>
                   <n-popconfirm @positive-click="deleteSubscription(sub.id)" positive-text="确定" negative-text="取消">
                     <template #trigger>
-                      <n-button size="tiny" secondary circle type="error" @click.stop>
+                      <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" @click.stop>
                         <template #icon><n-icon size="14"><DeleteIcon/></n-icon></template>
                       </n-button>
                     </template>

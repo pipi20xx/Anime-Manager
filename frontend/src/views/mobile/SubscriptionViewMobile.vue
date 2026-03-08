@@ -91,7 +91,7 @@ onMounted(fetchData)
       </div>
       
       <n-dropdown trigger="click" :options="mobileGlobalActions" @select="handleMobileGlobalAction">
-        <n-button circle secondary>
+        <n-button v-bind="getButtonStyle('icon')">
           <template #icon><n-icon><MoreIcon/></n-icon></template>
         </n-button>
       </n-dropdown>

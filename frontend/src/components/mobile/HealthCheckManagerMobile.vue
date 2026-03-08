@@ -78,7 +78,7 @@ const {
                 </n-button>
                 <n-popconfirm @positive-click="deleteConfig(item.id!)" positive-text="确定" negative-text="取消">
                   <template #trigger>
-                    <n-button circle size="small" type="error" ghost>
+                    <n-button v-bind="getButtonStyle('iconDanger')" size="small">
                       <template #icon><n-icon><DeleteIcon /></n-icon></template>
                     </n-button>
                   </template>

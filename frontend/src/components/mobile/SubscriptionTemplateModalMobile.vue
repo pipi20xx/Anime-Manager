@@ -76,7 +76,7 @@ const {
              <div class="card-actions" @click.stop>
                 <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteTemplate(row.id)">
                   <template #trigger>
-                    <n-button quaternary circle type="error" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                    <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                   </template>
                   删除？
                 </n-popconfirm>

@@ -100,8 +100,8 @@ const {
             { 
               title: '操作', key: 'actions', width: 100, fixed: 'right',
               render: (row) => h(NSpace, null, () => [
-                h(NButton, { size: 'tiny', quaternary: true, circle: true, onClick: () => openEdit(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-                h(NButton, { size: 'tiny', quaternary: true, circle: true, type: 'error', onClick: () => deleteMetadata(row) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
+                h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEdit(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
+                h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => deleteMetadata(row) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
               ])
             }
           ]"

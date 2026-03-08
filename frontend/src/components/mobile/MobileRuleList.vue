@@ -9,6 +9,8 @@ import {
   HistoryOutlined as HistoryIcon
 } from '@vicons/material'
 
+import { getButtonStyle } from '../../composables/useButtonStyles'
+
 defineProps<{
   rules: any[]
 }>()
@@ -64,7 +66,7 @@ const handleSelect = (key: string, rule: any) => {
         </div>
         <div class="rule-action" @click.stop>
           <n-dropdown trigger="click" :options="createOptions(rule)" @select="(k) => handleSelect(k, rule)" placement="bottom-end">
-            <n-button circle quaternary size="small">
+            <n-button v-bind="getButtonStyle('icon')" size="small">
               <template #icon><n-icon><MoreIcon/></n-icon></template>
             </n-button>
           </n-dropdown>

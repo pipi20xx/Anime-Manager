@@ -59,6 +59,7 @@ import LogConsoleModal from '../components/LogConsoleModal.vue'
 import ReloadPrompt from '../components/ReloadPrompt.vue'
 import { systemApi } from '../api/system'
 import { APP_VERSION } from '../version'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 import { 
   currentViewKey, isSearchOpen, isLogConsoleOpen, 
@@ -303,7 +304,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
               <span style="font-size: 10px; opacity: 0.6; margin-top: -2px;">v{{ APP_VERSION }}</span>
             </div>
           </div>
-          <n-button circle quaternary size="small" @click="isSearchOpen = true">
+          <n-button v-bind="getButtonStyle('icon')" size="small" @click="isSearchOpen = true">
             <template #icon><n-icon size="20"><SearchIcon /></n-icon></template>
           </n-button>
         </n-space>

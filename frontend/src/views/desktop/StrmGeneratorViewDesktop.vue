@@ -107,7 +107,7 @@ onMounted(fetchTasks)
               <n-space justify="end" @click.stop>
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <n-button circle secondary size="small" @click="duplicateTask(index)">
+                    <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateTask(index)">
                       <template #icon><n-icon><CopyIcon /></n-icon></template>
                     </n-button>
                   </template>
@@ -116,7 +116,7 @@ onMounted(fetchTasks)
 
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <n-button circle secondary size="small" type="error" @click="deleteTask(index)">
+                    <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(index)">
                       <template #icon><n-icon><DeleteIcon /></n-icon></template>
                     </n-button>
                   </template>

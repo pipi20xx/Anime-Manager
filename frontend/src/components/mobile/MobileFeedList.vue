@@ -9,6 +9,8 @@ import {
   HistoryOutlined as ResetIcon
 } from '@vicons/material'
 
+import { getButtonStyle } from '../../composables/useButtonStyles'
+
 defineProps<{
   feeds: any[]
 }>()
@@ -69,7 +71,7 @@ const handleSelect = (key: string, feed: any) => {
         </div>
         <div class="feed-action" @click.stop>
           <n-dropdown trigger="click" :options="createOptions(feed)" @select="(k) => handleSelect(k, feed)" placement="bottom-end">
-            <n-button circle quaternary size="small">
+            <n-button v-bind="getButtonStyle('icon')" size="small">
               <template #icon><n-icon><MoreIcon/></n-icon></template>
             </n-button>
           </n-dropdown>

@@ -13,6 +13,7 @@ import {
 } from '@vicons/material'
 import LogConsoleModal from '../../components/LogConsoleModal.vue'
 import { useSystemLogs } from '../../composables/views/useSystemLogs'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -70,7 +71,7 @@ const columns = [
         </div>
       </template>
       <template #header-extra>
-        <n-button circle quaternary @click="fetchLogs" :loading="loading">
+        <n-button v-bind="getButtonStyle('icon')" @click="fetchLogs" :loading="loading">
           <template #icon><n-icon><RefreshIcon /></n-icon></template>
         </n-button>
       </template>

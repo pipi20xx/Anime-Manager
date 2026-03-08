@@ -57,7 +57,7 @@ const handleMenuSelect = (key: string) => {
       </n-button>
       
       <n-dropdown trigger="click" :options="menuOptions" @select="handleMenuSelect">
-        <n-button circle quaternary size="small" style="margin-left: 8px;">
+        <n-button v-bind="getButtonStyle('icon')" size="small" style="margin-left: 8px;">
           <template #icon><n-icon><MoreIcon /></n-icon></template>
         </n-button>
       </n-dropdown>
@@ -90,7 +90,7 @@ const handleMenuSelect = (key: string) => {
             <n-space justify="end">
               <n-popconfirm @positive-click="deleteRule(index)">
                 <template #trigger>
-                  <n-button size="small" quaternary circle type="error">
+                  <n-button v-bind="getButtonStyle('iconDanger')" size="small">
                     <template #icon><n-icon><DeleteIcon /></n-icon></template>
                   </n-button>
                 </template>

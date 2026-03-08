@@ -144,7 +144,7 @@ onUnmounted(stopBgTaskPolling)
                   <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
                 </div>
                 <n-dropdown trigger="click" :options="getRuleActions(i)" size="large">
-                   <n-button circle quaternary size="small" @click.stop>
+                   <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop>
                      <template #icon><n-icon><MoreIcon /></n-icon></template>
                    </n-button>
                 </n-dropdown>
@@ -180,11 +180,11 @@ onUnmounted(stopBgTaskPolling)
                   <span class="item-title">{{ task.name }}</span>
                 </div>
                 <div class="action-row">
-                   <n-button circle secondary type="primary" size="small" @click.stop="requestRunTask(task)" style="margin-right: 4px">
+                   <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click.stop="requestRunTask(task)" style="margin-right: 4px">
                      <template #icon><n-icon><PlayIcon /></n-icon></template>
                    </n-button>
                    <n-dropdown trigger="click" :options="getTaskActions(i, task)" size="large">
-                      <n-button circle quaternary size="small" @click.stop>
+                      <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop>
                         <template #icon><n-icon><MoreIcon /></n-icon></template>
                       </n-button>
                    </n-dropdown>

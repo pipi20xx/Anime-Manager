@@ -136,7 +136,7 @@ onUnmounted(() => {
             <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
               查看日志
             </n-button>
-            <n-button circle quaternary type="error" size="small" @click="deleteTask(task.task_id)">
+            <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
               <template #icon><n-icon><DeleteIcon /></n-icon></template>
             </n-button>
           </div>

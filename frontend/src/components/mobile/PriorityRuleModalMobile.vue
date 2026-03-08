@@ -79,7 +79,7 @@ const {
                    </n-button>
                    <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteProfile(profile.id)">
                       <template #trigger>
-                        <n-button quaternary circle type="error" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                        <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                       </template>
                       确定删除？
                    </n-popconfirm>
@@ -118,7 +118,7 @@ const {
                      </n-button>
                      <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
                         <template #trigger>
-                          <n-button quaternary circle type="error" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                          <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                         </template>
                         确定删除？
                      </n-popconfirm>
@@ -186,7 +186,7 @@ const {
                      <n-input-number v-model:value="element.score" size="tiny" :show-button="false" style="width: 50px" />
                    </div>
                 </div>
-                <n-button quaternary circle type="error" size="small" @click="removeRuleFromProfile(index)">
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="removeRuleFromProfile(index)">
                    <template #icon><n-icon><DeleteIcon/></n-icon></template>
                 </n-button>
               </div>

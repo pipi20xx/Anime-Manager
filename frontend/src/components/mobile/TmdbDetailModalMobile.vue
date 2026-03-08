@@ -12,6 +12,7 @@ import {
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
 import { useTmdbDetail } from '../../composables/components/useTmdbDetail'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -46,7 +47,7 @@ const {
       <div v-else-if="detail" class="content-wrapper">
         <!-- Sticky Header for Back Button -->
         <div class="sticky-header">
-           <n-button circle secondary type="primary" size="small" @click="handleClose" class="back-btn">
+           <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="handleClose" class="back-btn">
              <template #icon><n-icon><BackIcon /></n-icon></template>
            </n-button>
         </div>

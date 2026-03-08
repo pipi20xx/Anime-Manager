@@ -216,7 +216,7 @@ const {
                     <n-input-number v-model:value="element.score" size="tiny" :show-button="false" style="width: 60px" />
                   </div>
                 </div>
-                <n-button size="tiny" circle type="error" @click="removeRuleFromProfile(index)">
+                <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" @click="removeRuleFromProfile(index)">
                    <template #icon><n-icon><DeleteIcon/></n-icon></template>
                 </n-button>
               </div>

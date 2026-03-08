@@ -53,7 +53,7 @@ const {
         <n-icon size="24" color="#63e2b7"><CalendarIcon /></n-icon>
         <span class="header-title">追剧日历</span>
       </div>
-      <n-button circle quaternary @click="showManageModal = true">
+      <n-button v-bind="getButtonStyle('icon')" @click="showManageModal = true">
         <template #icon><n-icon><ManageIcon /></n-icon></template>
       </n-button>
     </div>

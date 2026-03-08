@@ -44,6 +44,12 @@ export const ButtonStyles = {
     type: 'error' as const,
     size: 'small' as const
   },
+  iconPrimary: {
+    quaternary: true,
+    circle: true,
+    type: 'primary' as const,
+    size: 'small' as const
+  },
   text: {
     quaternary: true,
     size: 'small' as const

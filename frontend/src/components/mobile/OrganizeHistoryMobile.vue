@@ -20,6 +20,7 @@ import {
   KeyboardDoubleArrowDownOutlined as MoreArrowIcon
 } from '@vicons/material'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
@@ -103,11 +104,11 @@ const menuOptions = [
         <span class="header-title">整理历史</span>
       </div>
       <div class="header-right">
-        <n-button circle quaternary @click="showSearch = !showSearch">
+        <n-button v-bind="getButtonStyle('icon')" @click="showSearch = !showSearch">
           <template #icon><n-icon><SearchIcon /></n-icon></template>
         </n-button>
         <n-dropdown trigger="click" :options="menuOptions" @select="handleMenuSelect">
-          <n-button circle quaternary>
+          <n-button v-bind="getButtonStyle('icon')">
             <template #icon><n-icon><MoreIcon /></n-icon></template>
           </n-button>
         </n-dropdown>

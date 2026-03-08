@@ -13,6 +13,7 @@ import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useDiscovery } from '../../../composables/explore/useDiscovery'
 import { useBackClose } from '../../../composables/useBackClose'
+import { getButtonStyle } from '../../../composables/useButtonStyles'
 
 const {
   config,
@@ -43,7 +44,7 @@ useBackClose(toRef(bgmDetail, 'show'))
                 size="medium" 
                 style="flex: 1" 
             />
-            <n-button circle secondary @click="showFilterDrawer = true" size="medium" style="margin-left: 12px">
+            <n-button v-bind="getButtonStyle('icon')" @click="showFilterDrawer = true" size="medium" style="margin-left: 12px">
                 <template #icon><n-icon><FilterIcon /></n-icon></template>
             </n-button>
         </div>

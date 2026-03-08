@@ -166,7 +166,7 @@ onMounted(fetchData)
                       <template #trigger>
                         <n-tooltip trigger="hover">
                           <template #trigger>
-                            <n-button size="small" secondary circle type="error">
+                            <n-button v-bind="getButtonStyle('iconDanger')" size="small">
                               <template #icon><n-icon><DeleteIcon/></n-icon></template>
                             </n-button>
                           </template>
@@ -241,7 +241,7 @@ onMounted(fetchData)
                       negativeText: '取消'
                     }, {
                        trigger: () => h(NTooltip, { trigger: 'hover' }, {
-                         trigger: () => h(NButton, { size: 'small', secondary: true, circle: true, type: 'error' }, { 
+                         trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { 
                            icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) 
                          }),
                          default: () => '删除规则'

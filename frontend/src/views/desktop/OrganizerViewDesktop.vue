@@ -149,7 +149,7 @@ onUnmounted(stopBgTaskPolling)
                   <n-space justify="end" @click.stop>
                     <n-tooltip trigger="hover">
                       <template #trigger>
-                        <n-button circle secondary size="small" @click="duplicateRule(i)">
+                        <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateRule(i)">
                           <template #icon><n-icon><CopyIcon /></n-icon></template>
                         </n-button>
                       </template>
@@ -157,7 +157,7 @@ onUnmounted(stopBgTaskPolling)
                     </n-tooltip>
                     <n-tooltip trigger="hover">
                       <template #trigger>
-                        <n-button circle secondary size="small" type="error" @click="deleteRule(i)">
+                        <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteRule(i)">
                           <template #icon><n-icon><DeleteIcon /></n-icon></template>
                         </n-button>
                       </template>
@@ -236,7 +236,7 @@ onUnmounted(stopBgTaskPolling)
                     <n-space>
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <n-button circle secondary size="small" @click="duplicateTask(i)">
+                          <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateTask(i)">
                             <template #icon><n-icon><CopyIcon /></n-icon></template>
                           </n-button>
                         </template>
@@ -244,7 +244,7 @@ onUnmounted(stopBgTaskPolling)
                       </n-tooltip>
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <n-button circle secondary size="small" type="error" @click="deleteTask(i)">
+                          <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(i)">
                             <template #icon><n-icon><DeleteIcon /></n-icon></template>
                           </n-button>
                         </template>

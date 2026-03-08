@@ -80,7 +80,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
       </n-input-group>
       
       <n-dropdown trigger="click" :options="menuOptions" @select="handleMenuSelect">
-        <n-button circle quaternary size="small" style="margin-left: 8px;">
+        <n-button v-bind="getButtonStyle('icon')" size="small" style="margin-left: 8px;">
           <template #icon><n-icon><MoreIcon /></n-icon></template>
         </n-button>
       </n-dropdown>
@@ -106,7 +106,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
           <div class="card-actions" @click.stop>
             <n-popconfirm @positive-click="deleteMetadata(item)">
               <template #trigger>
-                <n-button size="small" quaternary circle type="error"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
               </template>
               确认删除?
             </n-popconfirm>

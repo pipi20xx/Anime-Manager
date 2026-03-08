@@ -152,7 +152,7 @@ const handleRefresh = () => {
               negative-text="取消"
             >
               <template #trigger>
-                <n-button quaternary circle size="small" type="error" class="ml-2">
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small" class="ml-2">
                   <template #icon><n-icon><DeleteIcon /></n-icon></template>
                 </n-button>
               </template>

@@ -27,6 +27,7 @@ import SubscriptionTemplateModal from '../SubscriptionTemplateModal.vue'
 import BangumiQuickSubscribeModal from '../BangumiQuickSubscribeModal.vue'
 import PriorityRuleModal from '../PriorityRuleModal.vue'
 import { useBackClose } from '../../composables/useBackClose'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{
   clients: any[]
@@ -250,7 +251,7 @@ onMounted(() => {
         <n-text strong>我的订阅 ({{ subscriptions.length }})</n-text>
       </div>
       <div class="toolbar-right">
-        <n-button circle secondary size="small" @click="showActionDrawer = true">
+        <n-button v-bind="getButtonStyle('icon')" size="small" @click="showActionDrawer = true">
           <template #icon><n-icon><MenuIcon/></n-icon></template>
         </n-button>
         <n-button circle type="primary" size="small" @click="openAdd" style="margin-left: 8px;">
@@ -300,7 +301,7 @@ onMounted(() => {
             @select="(key) => handleItemAction(key, sub)"
             placement="bottom-end"
           >
-            <n-button circle quaternary size="small">
+            <n-button v-bind="getButtonStyle('icon')" size="small">
               <template #icon><n-icon><MoreIcon/></n-icon></template>
             </n-button>
           </n-dropdown>
