@@ -28,6 +28,7 @@ NOISE_WORDS = [
     r"(?i)PTS|JADE|AOD|CHC|(?!LINETV)[A-Z]{1,4}TV[-0-9UVHDK]*",
     r"(?i)[0-9]{1,2}bit|IMAX|BBC|XXX|DC$",
     r"(?i)Ma10p|Hi10p|Hi10|Ma10|10bit|8bit",
+    r"(?i)Full-?HD",
     r"年龄限制版|年齡限制版|修正版|无修正|未删减|无修正版|無修正版",
     r"连载|新番|合集|招募翻译|版本|出品|台版|港版|搬运|搬運|[a-zA-Z0-9]+字幕组|[a-zA-Z0-9]+字幕社|[★☆]*[0-9]{1,2}月新番[★☆]*",
     r"(?i)UNCUT|UNRATE|WITH EXTRAS|RERIP|SUBBED|PROPER|REPACK|Complete|Extended|Version|10bit",
