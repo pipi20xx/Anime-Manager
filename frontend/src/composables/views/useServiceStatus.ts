@@ -17,11 +17,15 @@ interface MonitorStatus {
   id: string
   name: string
   type: 'organize' | 'strm'
+  enabled: boolean
   mode: string
   running: boolean
   source_dir: string
   target_dir: string
   queue_size: number
+  webhook_enabled?: boolean
+  check_emby_exists?: boolean
+  calculate_hash?: boolean
 }
 
 interface ServicesData {
@@ -86,7 +90,7 @@ export function useServiceStatus() {
   }
 
   const getStatusTag = (service: ServiceStatus | MonitorStatus): { type: 'success' | 'warning' | 'error' | 'default', text: string } => {
-    if (!service.enabled) {
+    if ('enabled' in service && !service.enabled) {
       return { type: 'default', text: '已禁用' }
     }
     if (service.running) {

@@ -42,7 +42,7 @@
         </template>
         <n-grid :cols="1" :x-gap="16" :y-gap="12">
           <n-gi v-for="monitor in data.monitors" :key="monitor.id">
-            <div class="monitor-card" :class="{ 'is-running': monitor.running }">
+            <div class="monitor-card" :class="{ 'is-running': monitor.running, 'is-stopped': !monitor.enabled }">
               <div class="monitor-header">
                 <div class="monitor-info">
                   <n-tag :type="monitor.type === 'organize' ? 'info' : 'success'" size="small" :bordered="false">
@@ -51,6 +51,15 @@
                   <span class="monitor-name">{{ monitor.name }}</span>
                   <n-tag :type="monitor.running ? 'success' : 'default'" size="tiny" round>
                     {{ monitor.mode }}
+                  </n-tag>
+                  <n-tag v-if="monitor.type === 'strm' && monitor.webhook_enabled" type="warning" size="tiny" round>
+                    接受联动
+                  </n-tag>
+                  <n-tag v-if="monitor.type === 'organize' && monitor.check_emby_exists" type="info" size="tiny" round>
+                    Emby检查
+                  </n-tag>
+                  <n-tag v-if="monitor.type === 'organize' && monitor.calculate_hash" type="error" size="tiny" round>
+                    哈希计算
                   </n-tag>
                 </div>
                 <n-tag :type="getStatusTag(monitor).type" size="small" round>

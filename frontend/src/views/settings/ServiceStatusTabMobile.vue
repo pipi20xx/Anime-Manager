@@ -47,6 +47,15 @@
                       {{ monitor.type === 'organize' ? '整理' : 'STRM' }}
                     </n-tag>
                     <span class="monitor-name">{{ monitor.name }}</span>
+                    <n-tag v-if="monitor.type === 'strm' && monitor.webhook_enabled" type="warning" size="tiny" round>
+                      接受联动
+                    </n-tag>
+                    <n-tag v-if="monitor.type === 'organize' && monitor.check_emby_exists" type="info" size="tiny" round>
+                      Emby检查
+                    </n-tag>
+                    <n-tag v-if="monitor.type === 'organize' && monitor.calculate_hash" type="error" size="tiny" round>
+                      哈希计算
+                    </n-tag>
                   </n-space>
                   <n-tag :type="getStatusTag(monitor).type" size="tiny" round>
                     {{ getStatusTag(monitor).text }}

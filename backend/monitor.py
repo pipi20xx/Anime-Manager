@@ -620,18 +620,27 @@ class MonitorManager:
             elif old_mode == "scheduled":
                 scheduler_enabled = True
 
-            if incremental_enabled or scheduler_enabled:
-                source_dir = task.get("source_dir") or task.get("source_path")
-                monitors.append({
-                    "id": task.get("id"),
-                    "name": task.get("name", "未命名"),
-                    "type": "organize",
-                    "mode": "实时监控" if incremental_enabled else "定时扫描",
-                    "running": task.get("id") in MonitorManager._queues,
-                    "source_dir": source_dir,
-                    "target_dir": task.get("target_dir") or task.get("target_path"),
-                    "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0
-                })
+            source_dir = task.get("source_dir") or task.get("source_path")
+            modes = []
+            if incremental_enabled:
+                modes.append("实时监控")
+            if scheduler_enabled:
+                modes.append("定时扫描")
+            mode_str = " + ".join(modes) if modes else "未启用"
+
+            monitors.append({
+                "id": task.get("id"),
+                "name": task.get("name", "未命名"),
+                "type": "organize",
+                "enabled": incremental_enabled or scheduler_enabled,
+                "mode": mode_str,
+                "running": task.get("id") in MonitorManager._queues,
+                "source_dir": source_dir,
+                "target_dir": task.get("target_dir") or task.get("target_path"),
+                "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0,
+                "check_emby_exists": task.get("check_emby_exists", False),
+                "calculate_hash": task.get("calculate_hash", False)
+            })
 
         # 4. STRM 监控任务
         strm_tasks = config.get("strm_tasks", [])
@@ -644,18 +653,26 @@ class MonitorManager:
             elif old_mode == "scheduled":
                 scheduler_enabled = True
 
-            if incremental_enabled or scheduler_enabled:
-                source_dir = task.get("source_dir") or task.get("source_path")
-                monitors.append({
-                    "id": task.get("id"),
-                    "name": task.get("name", "未命名"),
-                    "type": "strm",
-                    "mode": "实时监控" if incremental_enabled else "定时扫描",
-                    "running": task.get("id") in MonitorManager._queues,
-                    "source_dir": source_dir,
-                    "target_dir": task.get("target_dir") or task.get("target_path"),
-                    "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0
-                })
+            source_dir = task.get("source_dir") or task.get("source_path")
+            modes = []
+            if incremental_enabled:
+                modes.append("实时监控")
+            if scheduler_enabled:
+                modes.append("定时扫描")
+            mode_str = " + ".join(modes) if modes else "未启用"
+
+            monitors.append({
+                "id": task.get("id"),
+                "name": task.get("name", "未命名"),
+                "type": "strm",
+                "enabled": incremental_enabled or scheduler_enabled,
+                "mode": mode_str,
+                "running": task.get("id") in MonitorManager._queues,
+                "source_dir": source_dir,
+                "target_dir": task.get("target_dir") or task.get("target_path"),
+                "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0,
+                "webhook_enabled": task.get("webhook_enabled", False)
+            })
 
         return {
             "services": services,
