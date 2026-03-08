@@ -53,6 +53,18 @@ export const ButtonStyles = {
   text: {
     quaternary: true,
     size: 'small' as const
+  },
+  dialogCancel: {
+    quaternary: true,
+    size: 'medium' as const
+  },
+  dialogConfirm: {
+    type: 'primary' as const,
+    size: 'medium' as const
+  },
+  dialogDanger: {
+    type: 'error' as const,
+    size: 'medium' as const
   }
 } as const
 

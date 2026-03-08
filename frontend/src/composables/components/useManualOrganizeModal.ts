@@ -1,5 +1,6 @@
-import { reactive, watch } from 'vue'
-import { useDialog } from 'naive-ui'
+import { reactive, watch, h } from 'vue'
+import { useDialog, NButton } from 'naive-ui'
+import { getButtonStyle } from '../useButtonStyles'
 
 export function useManualOrganizeModal(props: any, emit: any) {
   const dialog = useDialog()
@@ -73,14 +74,10 @@ export function useManualOrganizeModal(props: any, emit: any) {
     dialog.info({
       title: '启动整理任务',
       content: '您希望如何运行此临时整理任务？',
-      positiveText: '预览并手动执行',
-      negativeText: '后台静默执行',
-      onPositiveClick: () => {
-        handleRun()
-      },
-      onNegativeClick: () => {
-        handleRunBackground()
-      }
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => { handleRunBackground(); dialog.destroyAll() } }, { default: () => '后台静默执行' }),
+        h(NButton, { ...getButtonStyle('dialogConfirm'), onClick: () => { handleRun(); dialog.destroyAll() } }, { default: () => '预览并手动执行' })
+      ])
     })
   }
 

@@ -50,8 +50,7 @@ const {
             <div class="desc">
               策略决定了下载的优先顺序。您可以将多个"基础规则"组合，越靠上的规则优先级越高。
             </div>
-            <n-button type="primary" @click="openAddProfile">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" @click="openAddProfile">
               新建策略
             </n-button>
           </div>
@@ -107,8 +106,7 @@ const {
             <div class="desc">
               "基础规则"是最小的规则单位。您可以创建多个规则（如：4K限定、字幕组限定），然后在策略中组合使用。
             </div>
-            <n-button type="primary" dashed @click="openAddRule">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" @click="openAddRule">
               新建规则
             </n-button>
           </div>

@@ -151,9 +151,10 @@ const handleMenuSelect = (key: string) => {
       dialog.warning({
         title: '确认删除',
         content: `确定永久删除 "${item.name}" 吗？`,
-        positiveText: '确定',
-        negativeText: '取消',
-        onPositiveClick: () => deleteItem(item.path)
+        action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+          h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+          h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { deleteItem(item.path); dialog.destroyAll() } }, { default: () => '确定' })
+        ])
       })
       break
     case 'info': getFileInfo(item.path); break

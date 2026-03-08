@@ -1,6 +1,7 @@
 import { ref, watch, onMounted, onUnmounted, h } from 'vue'
 import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
 import { DeleteOutlined, PreviewOutlined, PlayArrowOutlined, CloseOutlined } from '@vicons/material'
+import { getButtonStyle } from '../useButtonStyles'
 
 export function useOrganizerView() {
   const message = useMessage()
@@ -114,13 +115,8 @@ export function useOrganizerView() {
       title: '确认删除规则', 
       content: '确定要删除这条规则吗？',
       action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, {
-          onClick: () => dialog.destroyAll()
-        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
-        h(NButton, {
-          type: 'warning',
-          onClick: () => { rules.value.splice(index, 1); saveConfig(); dialog.destroyAll() }
-        }, { icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) }), default: () => '确认' })
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { rules.value.splice(index, 1); saveConfig(); dialog.destroyAll() } }, { default: () => '确认' })
       ])
     })
   }
@@ -161,13 +157,8 @@ export function useOrganizerView() {
       title: '确认删除任务', 
       content: `确定要删除任务 "${tasks.value[index].name}" 吗？`,
       action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, {
-          onClick: () => dialog.destroyAll()
-        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
-        h(NButton, {
-          type: 'warning',
-          onClick: () => { tasks.value.splice(index, 1); saveConfig(); dialog.destroyAll() }
-        }, { icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) }), default: () => '确认' })
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { tasks.value.splice(index, 1); saveConfig(); dialog.destroyAll() } }, { default: () => '确认' })
       ])
     })
   }
@@ -281,25 +272,20 @@ export function useOrganizerView() {
       title: '启动整理任务',
       content: `您希望如何运行任务 "${task.name}"？`,
       action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, {
-          onClick: () => { runTask(task, true); dialog.destroyAll() }
-        }, { icon: () => h(NIcon, null, { default: () => h(PreviewOutlined) }), default: () => '预览并手动执行' }),
-        h(NButton, {
-          type: 'primary',
-          onClick: async () => {
-            try {
-              const res = await fetch(`${API_BASE}/api/organize/start_background?dry_run=false`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(task)
-              })
-              const data = await res.json()
-              if (data.status === 'success') message.success('任务已在后台启动')
-              else message.error('启动失败: ' + data.message)
-            } catch (e) { message.error('网络错误') }
-            dialog.destroyAll()
-          }
-        }, { icon: () => h(NIcon, null, { default: () => h(PlayArrowOutlined) }), default: () => '后台静默执行' })
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => { runTask(task, true); dialog.destroyAll() } }, { default: () => '预览并手动执行' }),
+        h(NButton, { ...getButtonStyle('dialogConfirm'), onClick: async () => {
+          try {
+            const res = await fetch(`${API_BASE}/api/organize/start_background?dry_run=false`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(task)
+            })
+            const data = await res.json()
+            if (data.status === 'success') message.success('任务已在后台启动')
+            else message.error('启动失败: ' + data.message)
+          } catch (e) { message.error('网络错误') }
+          dialog.destroyAll()
+        } }, { default: () => '后台静默执行' })
       ])
     })
   }

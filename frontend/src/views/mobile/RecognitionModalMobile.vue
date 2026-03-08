@@ -150,9 +150,8 @@ const {
     </n-spin>
     <template #action>
       <n-space justify="space-between" style="width: 100%">
-          <n-button @click="emit('update:show', false)" size="small">取消</n-button>
-          <n-button type="primary" :loading="isRenaming" @click="emit('rename')" size="small">
-            <template #icon><n-icon><CheckIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)" size="small">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')" size="small">
             确认重命名
           </n-button>
       </n-space>

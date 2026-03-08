@@ -136,9 +136,8 @@ const {
     <template #action>
       <n-space justify="end" style="width: 100%">
         <n-space>
-          <n-button @click="emit('update:show', false)">取消</n-button>
-          <n-button type="primary" :loading="isRenaming" @click="emit('rename')">
-            <template #icon><n-icon><CheckIcon /></n-icon></template>
+          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')">
             确认重命名
           </n-button>
         </n-space>

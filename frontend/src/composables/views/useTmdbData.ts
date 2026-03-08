@@ -1,6 +1,7 @@
 import { ref, reactive, onMounted, h } from 'vue'
 import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
 import { DeleteSweepOutlined, CloseOutlined } from '@vicons/material'
+import { getButtonStyle } from '../useButtonStyles'
 
 export function useTmdbData() {
   const message = useMessage()
@@ -84,22 +85,17 @@ export function useTmdbData() {
       title: '确认删除',
       content: `确定要移除 "${item.title}" 吗？`,
       action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, {
-          onClick: () => dialog.destroyAll()
-        }, { default: () => '取消' }),
-        h(NButton, {
-          type: 'error',
-          onClick: async () => {
-            try {
-              await fetch(`${API_BASE}/api/cache/${type}/${id}`, { method: 'DELETE' })
-              message.success('已移除')
-              dialog.destroyAll()
-              fetchBrowserData()
-            } catch (e) {
-              message.error('删除失败')
-            }
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+          try {
+            await fetch(`${API_BASE}/api/cache/${type}/${id}`, { method: 'DELETE' })
+            message.success('已移除')
+            dialog.destroyAll()
+            fetchBrowserData()
+          } catch (e) {
+            message.error('删除失败')
           }
-        }, { default: () => '确认删除' })
+        } }, { default: () => '确认删除' })
       ])
     })
   }
@@ -151,21 +147,16 @@ export function useTmdbData() {
       title: '确认清空智能记忆',
       content: '这将删除所有智能记忆。',
       action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, {
-          onClick: () => dialog.destroyAll()
-        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
-        h(NButton, {
-          type: 'warning',
-          onClick: async () => {
-            try {
-              const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
-              message.success("智能记忆已清空")
-              dialog.destroyAll()
-            } catch (e) {
-              message.error("操作失败")
-            }
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+          try {
+            const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
+            message.success("智能记忆已清空")
+            dialog.destroyAll()
+          } catch (e) {
+            message.error("操作失败")
           }
-        }, { icon: () => h(NIcon, null, { default: () => h(DeleteSweepOutlined) }), default: () => '清空记忆' })
+        } }, { default: () => '清空记忆' })
       ])
     })
   }

@@ -55,8 +55,7 @@ const {
         <!-- Tab 1: Profiles -->
         <n-tab-pane name="profiles" tab="优先级策略">
           <div class="tab-content">
-            <n-button block type="primary" @click="openAddProfile" style="margin-bottom: 16px;">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" block @click="openAddProfile" style="margin-bottom: 16px;">
               新建优先级策略
             </n-button>
 
@@ -93,8 +92,7 @@ const {
         <!-- Tab 2: Rules -->
         <n-tab-pane name="rules" tab="基础规则">
           <div class="tab-content">
-            <n-button block type="primary" dashed @click="openAddRule" style="margin-bottom: 16px;">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
+            <n-button v-bind="getButtonStyle('primary')" block @click="openAddRule" style="margin-bottom: 16px;">
               新建规则
             </n-button>
 

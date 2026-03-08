@@ -118,9 +118,8 @@ const {
 
     <template #action>
       <n-space justify="space-between">
-        <n-button @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" @click="handleConfirm">
-          <template #icon><n-icon><PlayIcon /></n-icon></template>
+        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+        <n-button v-bind="getButtonStyle('primary')" @click="handleConfirm">
           开始
         </n-button>
       </n-space>

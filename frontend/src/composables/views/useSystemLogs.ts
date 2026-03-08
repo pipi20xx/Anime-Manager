@@ -1,6 +1,7 @@
 import { ref, reactive, watch, onMounted, h } from 'vue'
 import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
 import { DeleteSweepOutlined, CloseOutlined } from '@vicons/material'
+import { getButtonStyle } from '../useButtonStyles'
 
 export function useSystemLogs() {
   const message = useMessage()
@@ -52,18 +53,13 @@ export function useSystemLogs() {
       title: '清空审计日志',
       content: '这将彻底清空数据库中存储的所有历史操作记录，确定吗？',
       action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, {
-          onClick: () => dialog.destroyAll()
-        }, { icon: () => h(NIcon, null, { default: () => h(CloseOutlined) }), default: () => '取消' }),
-        h(NButton, {
-          type: 'warning',
-          onClick: async () => {
-            await fetch(`${API_BASE}/api/system/logs`, { method: 'DELETE' })
-            message.success('审计历史已清空')
-            fetchLogs()
-            dialog.destroyAll()
-          }
-        }, { icon: () => h(NIcon, null, { default: () => h(DeleteSweepOutlined) }), default: () => '确认清空' })
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+          await fetch(`${API_BASE}/api/system/logs`, { method: 'DELETE' })
+          message.success('审计历史已清空')
+          fetchLogs()
+          dialog.destroyAll()
+        } }, { default: () => '确认清空' })
       ])
     })
   }

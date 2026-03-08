@@ -43,19 +43,21 @@ const handleClearHistory = () => {
   dialog.warning({
     title: '确认清空历史？',
     content: '清空后，系统将不再认为这些集数已下载，下次刷新或补全时可能会重复下载。确定吗？',
-    positiveText: '确定清空',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      try {
-        await fetch(`${props.apiBase}/api/subscriptions/${props.sub.id}/episodes`, {
-          method: 'DELETE'
-        })
-        message.success('历史记录已重置')
-        fetchHistory()
-      } catch (e) {
-        message.error('操作失败')
-      }
-    }
+    action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+      h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+      h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+        try {
+          await fetch(`${props.apiBase}/api/subscriptions/${props.sub.id}/episodes`, {
+            method: 'DELETE'
+          })
+          message.success('历史记录已重置')
+          fetchHistory()
+          dialog.destroyAll()
+        } catch (e) {
+          message.error('操作失败')
+        }
+      } }, { default: () => '确定清空' })
+    ])
   })
 }
 

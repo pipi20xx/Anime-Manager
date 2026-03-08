@@ -126,9 +126,9 @@ const {
     </n-form>
     <template #action>
       <n-space justify="end">
-        <n-button size="large" @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" size="large" @click="handleConfirm">
-          <template #icon><n-icon><PlayIcon /></n-icon></template>启动整理任务
+        <n-button v-bind="getButtonStyle('ghost')" size="large" @click="emit('update:show', false)">取消</n-button>
+        <n-button v-bind="getButtonStyle('primary')" size="large" @click="handleConfirm">
+          启动整理任务
         </n-button>
       </n-space>
     </template>

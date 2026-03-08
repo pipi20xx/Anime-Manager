@@ -39,18 +39,20 @@ const handleSelect = (key: string, feed: any) => {
     dialog.warning({
       title: '清除历史',
       content: `确定要清除「${feed.title || '未命名'}」的下载历史吗？`,
-      positiveText: '确定',
-      negativeText: '取消',
-      onPositiveClick: () => emit('reset', feed.id)
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { emit('reset', feed.id); dialog.destroyAll() } }, { default: () => '确定' })
+      ])
     })
   }
   else if (key === 'delete') {
     dialog.warning({
       title: '删除确认',
       content: `确定要删除订阅源「${feed.title || '未命名'}」吗？`,
-      positiveText: '删除',
-      negativeText: '取消',
-      onPositiveClick: () => emit('delete', feed.id)
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { emit('delete', feed.id); dialog.destroyAll() } }, { default: () => '删除' })
+      ])
     })
   }
 }

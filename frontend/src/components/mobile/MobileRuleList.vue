@@ -40,9 +40,10 @@ const handleSelect = (key: string, rule: any) => {
     dialog.warning({
       title: '删除确认',
       content: `确定要删除规则「${rule.name}」吗？`,
-      positiveText: '删除',
-      negativeText: '取消',
-      onPositiveClick: () => emit('delete', rule.id)
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { emit('delete', rule.id); dialog.destroyAll() } }, { default: () => '删除' })
+      ])
     })
   }
 }

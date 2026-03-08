@@ -154,14 +154,16 @@ const deleteCache = (item: any) => {
   dialog.warning({
     title: '确认删除',
     content: `确定要从缓存中移除 "${item.title}" 吗？`,
-    positiveText: '确定',
-    onPositiveClick: async () => {
-      await fetch(`${API_BASE}/api/cache/${encodeURIComponent(key)}`, { method: 'DELETE' })
-      message.success('已移除')
-      // Remove item locally to avoid full reload flicker
-      const idx = data.value.findIndex(i => i.type === item.type && i.id === item.id)
-      if (idx !== -1) data.value.splice(idx, 1)
-    }
+    action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+      h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+      h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+        await fetch(`${API_BASE}/api/cache/${encodeURIComponent(key)}`, { method: 'DELETE' })
+        message.success('已移除')
+        const idx = data.value.findIndex(i => i.type === item.type && i.id === item.id)
+        if (idx !== -1) data.value.splice(idx, 1)
+        dialog.destroyAll()
+      } }, { default: () => '确定' })
+    ])
   })
 }
 
@@ -191,12 +193,15 @@ const clearAll = () => {
   dialog.error({
     title: '极其危险',
     content: '这将永久删除所有本地匹配缓存记录，确定吗？',
-    positiveText: '清空全部',
-    onPositiveClick: async () => {
-      await fetch(`${API_BASE}/api/cache/clear`, { method: 'POST' })
-      message.success('已清空')
-      fetchCache(true)
-    }
+    action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+      h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+      h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+        await fetch(`${API_BASE}/api/cache/clear`, { method: 'POST' })
+        message.success('已清空')
+        fetchCache(true)
+        dialog.destroyAll()
+      } }, { default: () => '清空全部' })
+    ])
   })
 }
 
@@ -204,19 +209,21 @@ const clearFingerprints = async () => {
   dialog.warning({
     title: '确认清空智能记忆',
     content: '这将删除所有智能记忆缓存。识别速度可能会暂时变慢，但不会影响已刮削的数据。',
-    positiveText: '清空记忆',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      loading.value = true
-      try {
-        const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
-        const data = await res.json()
-        message.success(data.message)
-        fetchStats()
-      } finally {
-        loading.value = false
-      }
-    }
+    action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+      h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+      h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
+        loading.value = true
+        try {
+          const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
+          const data = await res.json()
+          message.success(data.message)
+          fetchStats()
+          dialog.destroyAll()
+        } finally {
+          loading.value = false
+        }
+      } }, { default: () => '清空记忆' })
+    ])
   })
 }
 

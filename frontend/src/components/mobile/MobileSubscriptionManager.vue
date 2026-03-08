@@ -198,9 +198,10 @@ const handleItemAction = (key: string, sub: any) => {
     dialog.warning({
       title: '删除确认',
       content: `确定要删除订阅「${sub.title}」吗？`,
-      positiveText: '删除',
-      negativeText: '取消',
-      onPositiveClick: () => deleteSubscription(sub.id)
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { deleteSubscription(sub.id); dialog.destroyAll() } }, { default: () => '删除' })
+      ])
     })
   }
   else if (key === 'tmdb') goToExternal(sub, 'tmdb')
