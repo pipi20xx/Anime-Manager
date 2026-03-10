@@ -105,6 +105,52 @@
           </n-gi>
         </n-grid>
       </n-card>
+
+      <n-card size="small" :bordered="false">
+        <template #header>
+          <div class="section-title">
+            <span>规则统计</span>
+          </div>
+        </template>
+        <n-list size="small">
+          <n-list-item>
+            <div class="rule-row">
+              <span class="rule-name">自定义识别词</span>
+              <n-space :size="4">
+                <n-tag type="info" size="tiny">本地 {{ data.rules.custom_noise.local }}</n-tag>
+                <n-tag type="success" size="tiny">远程 {{ data.rules.custom_noise.remote }}</n-tag>
+              </n-space>
+            </div>
+          </n-list-item>
+          <n-list-item>
+            <div class="rule-row">
+              <span class="rule-name">自定义制作组</span>
+              <n-space :size="4">
+                <n-tag type="info" size="tiny">本地 {{ data.rules.custom_groups.local }}</n-tag>
+                <n-tag type="success" size="tiny">远程 {{ data.rules.custom_groups.remote }}</n-tag>
+              </n-space>
+            </div>
+          </n-list-item>
+          <n-list-item>
+            <div class="rule-row">
+              <span class="rule-name">自定义渲染词</span>
+              <n-space :size="4">
+                <n-tag type="info" size="tiny">本地 {{ data.rules.custom_render.local }}</n-tag>
+                <n-tag type="success" size="tiny">远程 {{ data.rules.custom_render.remote }}</n-tag>
+              </n-space>
+            </div>
+          </n-list-item>
+          <n-list-item>
+            <div class="rule-row">
+              <span class="rule-name">特权规则</span>
+              <n-space :size="4">
+                <n-tag type="info" size="tiny">本地 {{ data.rules.privileged.local }}</n-tag>
+                <n-tag type="success" size="tiny">远程 {{ data.rules.privileged.remote }}</n-tag>
+              </n-space>
+            </div>
+          </n-list-item>
+        </n-list>
+      </n-card>
     </n-space>
   </div>
 </template>
@@ -191,5 +237,17 @@ const runningMonitorsCount = computed(() =>
 .stat-label {
   font-size: 11px;
   color: var(--text-tertiary);
+}
+
+.rule-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.rule-name {
+  font-size: 13px;
+  font-weight: 500;
 }
 </style>

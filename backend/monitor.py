@@ -674,12 +674,34 @@ class MonitorManager:
                 "webhook_enabled": task.get("webhook_enabled", False)
             })
 
+        # 获取规则统计
+        cached_rules = ConfigManager.get_cached_rules()
+        rules_stats = {
+            "custom_noise": {
+                "local": len([r for r in config.get("custom_noise_words", []) if r]),
+                "remote": len([r for r in cached_rules.get("noise", []) if r])
+            },
+            "custom_groups": {
+                "local": len([r for r in config.get("custom_release_groups", []) if r]),
+                "remote": len([r for r in cached_rules.get("groups", []) if r])
+            },
+            "custom_render": {
+                "local": len([r for r in config.get("custom_render_words", []) if r]),
+                "remote": len([r for r in cached_rules.get("render", []) if r])
+            },
+            "privileged": {
+                "local": len([r for r in config.get("custom_privileged_rules", []) if r]),
+                "remote": len([r for r in cached_rules.get("privileged", []) if r])
+            }
+        }
+
         return {
             "services": services,
             "monitors": monitors,
             "observers_count": len(MonitorManager._observers),
             "workers_count": len(MonitorManager._workers),
-            "queues_count": len(MonitorManager._queues)
+            "queues_count": len(MonitorManager._queues),
+            "rules": rules_stats
         }
 
     @staticmethod

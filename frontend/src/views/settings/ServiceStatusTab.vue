@@ -114,6 +114,84 @@
           </n-gi>
         </n-grid>
       </n-card>
+
+      <n-card size="small" embedded>
+        <template #header>
+          <div class="section-header">
+            <span>规则统计</span>
+          </div>
+        </template>
+        <n-grid :cols="2" :x-gap="16" :y-gap="12">
+          <n-gi>
+            <div class="rule-card">
+              <div class="rule-header">
+                <span class="rule-name">自定义识别词</span>
+              </div>
+              <div class="rule-stats">
+                <div class="rule-stat">
+                  <span class="stat-label">本地规则</span>
+                  <n-tag type="info" size="small">{{ data.rules.custom_noise.local }} 条</n-tag>
+                </div>
+                <div class="rule-stat">
+                  <span class="stat-label">远程规则</span>
+                  <n-tag type="success" size="small">{{ data.rules.custom_noise.remote }} 条</n-tag>
+                </div>
+              </div>
+            </div>
+          </n-gi>
+          <n-gi>
+            <div class="rule-card">
+              <div class="rule-header">
+                <span class="rule-name">自定义制作组</span>
+              </div>
+              <div class="rule-stats">
+                <div class="rule-stat">
+                  <span class="stat-label">本地规则</span>
+                  <n-tag type="info" size="small">{{ data.rules.custom_groups.local }} 条</n-tag>
+                </div>
+                <div class="rule-stat">
+                  <span class="stat-label">远程规则</span>
+                  <n-tag type="success" size="small">{{ data.rules.custom_groups.remote }} 条</n-tag>
+                </div>
+              </div>
+            </div>
+          </n-gi>
+          <n-gi>
+            <div class="rule-card">
+              <div class="rule-header">
+                <span class="rule-name">自定义渲染词</span>
+              </div>
+              <div class="rule-stats">
+                <div class="rule-stat">
+                  <span class="stat-label">本地规则</span>
+                  <n-tag type="info" size="small">{{ data.rules.custom_render.local }} 条</n-tag>
+                </div>
+                <div class="rule-stat">
+                  <span class="stat-label">远程规则</span>
+                  <n-tag type="success" size="small">{{ data.rules.custom_render.remote }} 条</n-tag>
+                </div>
+              </div>
+            </div>
+          </n-gi>
+          <n-gi>
+            <div class="rule-card">
+              <div class="rule-header">
+                <span class="rule-name">特权规则</span>
+              </div>
+              <div class="rule-stats">
+                <div class="rule-stat">
+                  <span class="stat-label">本地规则</span>
+                  <n-tag type="info" size="small">{{ data.rules.privileged.local }} 条</n-tag>
+                </div>
+                <div class="rule-stat">
+                  <span class="stat-label">远程规则</span>
+                  <n-tag type="success" size="small">{{ data.rules.privileged.remote }} 条</n-tag>
+                </div>
+              </div>
+            </div>
+          </n-gi>
+        </n-grid>
+      </n-card>
     </n-space>
   </div>
 </template>
@@ -269,5 +347,38 @@ const runningMonitorsCount = computed(() =>
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   font-size: 12px;
   color: var(--color-success);
+}
+
+.rule-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.rule-header {
+  margin-bottom: 8px;
+}
+
+.rule-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.rule-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rule-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 </style>

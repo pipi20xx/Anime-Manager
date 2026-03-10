@@ -28,12 +28,25 @@ interface MonitorStatus {
   calculate_hash?: boolean
 }
 
+interface RuleStats {
+  local: number
+  remote: number
+}
+
+interface RulesData {
+  custom_noise: RuleStats
+  custom_groups: RuleStats
+  custom_render: RuleStats
+  privileged: RuleStats
+}
+
 interface ServicesData {
   services: ServiceStatus[]
   monitors: MonitorStatus[]
   observers_count: number
   workers_count: number
   queues_count: number
+  rules: RulesData
 }
 
 export function useServiceStatus() {
@@ -46,7 +59,13 @@ export function useServiceStatus() {
     monitors: [],
     observers_count: 0,
     workers_count: 0,
-    queues_count: 0
+    queues_count: 0,
+    rules: {
+      custom_noise: { local: 0, remote: 0 },
+      custom_groups: { local: 0, remote: 0 },
+      custom_render: { local: 0, remote: 0 },
+      privileged: { local: 0, remote: 0 }
+    }
   })
   
   let refreshTimer: ReturnType<typeof setInterval> | null = null

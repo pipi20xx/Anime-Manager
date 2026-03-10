@@ -362,8 +362,11 @@ class ConfigManager:
             "remote_privileged_urls" in new_config):
             # 清除缓存
             ConfigManager.clear_cached_rules()
-            # 重新获取远程规则
+            # 重新获取远程规则（后台任务）
             import asyncio
-            loop = asyncio.get_event_loop()
-            if loop and not loop.is_closed():
-                loop.run_until_complete(ConfigManager.refresh_remote_rules())
+            try:
+                loop = asyncio.get_event_loop()
+                if loop and not loop.is_closed():
+                    asyncio.create_task(ConfigManager.refresh_remote_rules())
+            except RuntimeError:
+                pass
