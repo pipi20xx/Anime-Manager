@@ -83,9 +83,18 @@ class TMDBMatcher:
         return q_list[:3]
 
     @staticmethod
-    def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool) -> Tuple[float, List[str]]:
+    def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool, is_from_segment: bool = False) -> Tuple[float, List[str]]:
         """
         核心对撞算法：计算候选人分值，并记录详细的对撞轨迹
+        
+        Args:
+            item: 候选条目
+            targets: 目标标题列表（清洗后）
+            cn_name: 中文名
+            en_name: 英文名
+            idx: 排名索引
+            anime_priority: 是否优先动画
+            is_from_segment: 是否来自分词搜索（用于惩罚机制）
         """
         c_name = item.get("title") or item.get("name")
         c_oname = item.get("original_title") or item.get("original_name")
@@ -143,6 +152,18 @@ class TMDBMatcher:
         if final_score > 0: 
             final_score += rank_bonus
             if rank_bonus > 0: bonus_log.append(f"排名红利(+{rank_bonus})")
+        
+        # 全名搜索加分：如果不是来自分词搜索，给予加分
+        if not is_from_segment and final_score > 0:
+            full_name_bonus = 10
+            final_score += full_name_bonus
+            bonus_log.append(f"全名搜索(+{full_name_bonus})")
+        
+        # 分词惩罚机制：如果是通过分词搜索找到的，进行惩罚
+        if is_from_segment and final_score > 0:
+            penalty = 15
+            final_score = max(0, final_score - penalty)
+            bonus_log.append(f"分词惩罚(-{penalty})")
         
         summary = f"最终分: {final_score:.1f} | {', '.join(bonus_log)}"
         return final_score, trace, best_match_info, summary
