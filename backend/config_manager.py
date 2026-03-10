@@ -317,6 +317,15 @@ class ConfigManager:
         return rules
 
     @staticmethod
+    def clear_cached_rules():
+        """清除远程规则缓存，强制下次从数据库重新加载"""
+        if hasattr(ConfigManager, "_rule_memory_cache"):
+            delattr(ConfigManager, "_rule_memory_cache")
+        if hasattr(ConfigManager, "get_cached_rules"):
+            if hasattr(ConfigManager.get_cached_rules, "__cache__"):
+                delattr(ConfigManager.get_cached_rules, "__cache__")
+
+    @staticmethod
     def load_privileged_rules():
         """加载特权规则 (启动时调用)"""
         try:
@@ -341,3 +350,14 @@ class ConfigManager:
         current.update(new_config)
         ConfigManager._save_atomic(CONFIG_PATH, current)
         log_audit("系统", "配置更新", "系统全局配置已更新")
+        
+        # 重新加载特权规则（如果配置中有更新）
+        if "custom_privileged_rules" in new_config or "remote_privileged_urls" in new_config:
+            ConfigManager.load_privileged_rules()
+        
+        # 清除远程规则缓存（如果远程URL有更新）
+        if ("remote_noise_urls" in new_config or 
+            "remote_group_urls" in new_config or 
+            "remote_render_urls" in new_config or
+            "remote_privileged_urls" in new_config):
+            ConfigManager.clear_cached_rules()
