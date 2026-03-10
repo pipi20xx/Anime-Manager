@@ -355,9 +355,15 @@ class ConfigManager:
         if "custom_privileged_rules" in new_config or "remote_privileged_urls" in new_config:
             ConfigManager.load_privileged_rules()
         
-        # 清除远程规则缓存（如果远程URL有更新）
+        # 重新获取远程规则（如果远程URL有更新）
         if ("remote_noise_urls" in new_config or 
             "remote_group_urls" in new_config or 
             "remote_render_urls" in new_config or
             "remote_privileged_urls" in new_config):
+            # 清除缓存
             ConfigManager.clear_cached_rules()
+            # 重新获取远程规则
+            import asyncio
+            loop = asyncio.get_event_loop()
+            if loop and not loop.is_closed():
+                loop.run_until_complete(ConfigManager.refresh_remote_rules())
