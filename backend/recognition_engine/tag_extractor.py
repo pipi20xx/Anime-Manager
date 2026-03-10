@@ -147,6 +147,16 @@ class TagExtractor:
                 if has_title_feature:
                     return False
             
+            # [New] 包含空格的内容必须严格验证
+            # 真正的制作组通常不会用空格分隔，而标题经常会用空格连接单词
+            if " " in g:
+                # 包含空格的内容必须包含制作组特征词
+                has_group_keyword = bool(re.search(GROUP_KEYWORDS, g, re.I))
+                # 或者是已知的特殊格式（如 VCB-Studio）
+                has_special_format = bool(re.search(r"-", g))
+                if not has_group_keyword and not has_special_format:
+                    return False
+            
             # 对于纯英文/数字组名 (如 ANi, VCB-Studio)，只要长度 >= 2 即可通过
             digit_count = sum(c.isdigit() for c in g)
             if digit_count / len(g) > 0.8: return False
