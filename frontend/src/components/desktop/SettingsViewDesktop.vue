@@ -421,7 +421,7 @@ const {
             <ConfigSection 
               title="自定义特权规则" 
               description="优先级极高的提取规则，命中后集数直接锁定，标题作为优先搜索候选。"
-              placeholder="格式: 正则|||字幕组索引|||标题索引|||集数索引|||描述&#10;例如: ^\[(LoliHouse)\]\s+(.+?)\s+-\s+(\d{1,4})|||1|||2|||3|||LoliHouse 定向"
+              placeholder="格式: 正则表达式 => {[字段=值;字段=值]}&#10;例如: ^\[([^\]]+)\]\s+(.+?)\s+-\s+(\d{1,4}) => {[group=\1;title=\2;e=\3]}&#10;例如: Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}"
               v-model:local="config.custom_privileged_rules" 
               v-model:remote="config.remote_privileged_urls" 
             />

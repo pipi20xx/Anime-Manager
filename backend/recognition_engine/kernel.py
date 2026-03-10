@@ -57,14 +57,25 @@ def core_recognize(
 
     # --- [NEW] STEP 1.5: 特权提取 (标题 + 集数) ---
     from .special_episode_handler import SpecialEpisodeHandler
-    sp_group, sp_title, sp_ep, sp_raw, sp_logs = SpecialEpisodeHandler.extract(input_name)
+    current_logs.append(f"┃")
+    sp_group, sp_title, sp_ep, sp_raw, sp_logs, sp_meta = SpecialEpisodeHandler.extract(input_name)
     if sp_title is not None:
         meta_obj.privileged_title = sp_title  # 存储特权标题，用于优先搜索
         if sp_ep is not None:
             meta_obj.begin_episode = sp_ep
         if sp_group and not meta_obj.resource_team:
             meta_obj.resource_team = sp_group  # 也提取字幕组
-        current_logs.append(f"┃")
+        
+        # 应用特权规则中的额外元数据
+        if "s" in sp_meta:
+            meta_obj.begin_season = sp_meta["s"]
+        if "tmdbid" in sp_meta:
+            meta_obj.forced_tmdbid = sp_meta["tmdbid"]
+        if "type" in sp_meta:
+            meta_obj.type = MediaType.TV if sp_meta["type"] == "tv" else MediaType.MOVIE
+        if "year" in sp_meta:
+            meta_obj.year = sp_meta["year"]
+        
         if sp_raw:
             pattern = rf"(?<!\d){re.escape(sp_raw)}(?!\d)"
             if re.search(pattern, processed_title):
@@ -79,6 +90,8 @@ def core_recognize(
         
         sp_logs.append(f"清洗后结果: {processed_title}")
         logger_stub.debug_out("STEP 1.5: 特权提取 (标题 + 集数)", sp_logs)
+    else:
+        logger_stub.debug_out("STEP 1.5: 特权提取 (标题 + 集数)", ["未命中任何特权规则"])
 
     # --- STEP 2: 元数据独立探测 ---
     current_logs.append(f"┃")

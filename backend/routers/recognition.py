@@ -208,7 +208,7 @@ async def test_privilege_lock(request: AiTestRequest):
             return {"hit": False, "logs": [f"正则语法错误: {str(e)}"], "episode": None, "error": True}
 
     # 2. 否则走系统内置规则
-    spec_ep, spec_logs = SpecialEpisodeHandler.extract(filename)
+    spec_group, spec_title, spec_ep, spec_raw, spec_logs, _ = SpecialEpisodeHandler.extract(filename)
     return {
         "hit": spec_ep is not None,
         "episode": spec_ep,
