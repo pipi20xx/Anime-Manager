@@ -34,6 +34,26 @@ def _split_title(title: str) -> list:
     
     return result if result else parts
 
+def _clean_privileged_title(title: str) -> str:
+    """
+    清洗特权标题，去掉点号、特殊符号等，使其更适合搜索
+    """
+    if not title:
+        return title
+    
+    import re
+    
+    # 1. 将点号替换为空格
+    cleaned = re.sub(r'\.', ' ', title)
+    
+    # 2. 合并多个空格
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    
+    # 3. 去掉首尾空格
+    cleaned = cleaned.strip()
+    
+    return cleaned
+
 class MatcherStage:
     @staticmethod
     async def run(ctx: RecognitionContext):
@@ -77,7 +97,7 @@ class MatcherStage:
                     logs=ctx
                 )
 
-            async def search_cloud(use_privileged: bool = False, title_index: int = 0):
+            async def search_cloud(use_privileged: bool = False, title_index: int = 0, clean_privileged: bool = False):
                 if ctx.tmdb_data: return
                 bgm_prio = ctx.bangumi_priority
                 bgm_failover = ctx.bangumi_failover
@@ -93,6 +113,10 @@ class MatcherStage:
                 # 根据是否使用特权标题决定搜索词
                 if use_privileged and privileged_titles:
                     title = privileged_titles[title_index] if title_index < len(privileged_titles) else privileged_titles[0]
+                    # 如果需要清洗特权标题
+                    if clean_privileged:
+                        title = _clean_privileged_title(title)
+                        ctx.log(f"[匹配] 🧹 使用清洗后的特权标题: {title}")
                     cn = title if _is_chinese(title) else None
                     en = title if not _is_chinese(title) else None
                     original_cn = None
@@ -136,15 +160,29 @@ class MatcherStage:
                 # 云端搜索 (特权标题逐个尝试)
                 for i in range(len(privileged_titles)):
                     if ctx.tmdb_data: break
-                    await search_cloud(use_privileged=True, title_index=i)
+                    await search_cloud(use_privileged=True, title_index=i, clean_privileged=False)
+                # 特权标题清洗后搜索
+                for i in range(len(privileged_titles)):
+                    if ctx.tmdb_data: break
+                    await search_cloud(use_privileged=True, title_index=i, clean_privileged=True)
+                # 最后用正常标题搜索
                 if not ctx.tmdb_data:
+                    if privileged_titles:
+                        ctx.log(f"[匹配] 🔄 特权标题搜索失败，使用清洗后的标题继续搜索: {meta.cn_name or meta.en_name}")
                     await search_cloud(use_privileged=False)
             else:
                 ctx.log(f"[匹配] ☁️ 本地数据中心已关闭，直接启动云端深度搜索")
                 for i in range(len(privileged_titles)):
                     if ctx.tmdb_data: break
-                    await search_cloud(use_privileged=True, title_index=i)
+                    await search_cloud(use_privileged=True, title_index=i, clean_privileged=False)
+                # 特权标题清洗后搜索
+                for i in range(len(privileged_titles)):
+                    if ctx.tmdb_data: break
+                    await search_cloud(use_privileged=True, title_index=i, clean_privileged=True)
+                # 最后用正常标题搜索
                 if not ctx.tmdb_data:
+                    if privileged_titles:
+                        ctx.log(f"[匹配] 🔄 特权标题搜索失败，使用清洗后的标题继续搜索: {meta.cn_name or meta.en_name}")
                     await search_cloud(use_privileged=False)
         
         ctx.add_perf("元数据匹配", start)

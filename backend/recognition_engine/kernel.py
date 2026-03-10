@@ -58,9 +58,10 @@ def core_recognize(
     # --- [NEW] STEP 1.5: 特权提取 (标题 + 集数) ---
     from .special_episode_handler import SpecialEpisodeHandler
     sp_group, sp_title, sp_ep, sp_raw, sp_logs = SpecialEpisodeHandler.extract(input_name)
-    if sp_ep is not None:
-        meta_obj.begin_episode = sp_ep
+    if sp_title is not None:
         meta_obj.privileged_title = sp_title  # 存储特权标题，用于优先搜索
+        if sp_ep is not None:
+            meta_obj.begin_episode = sp_ep
         if sp_group and not meta_obj.resource_team:
             meta_obj.resource_team = sp_group  # 也提取字幕组
         current_logs.append(f"┃")
