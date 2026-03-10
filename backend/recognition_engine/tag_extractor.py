@@ -153,8 +153,22 @@ class TagExtractor:
                 # 包含空格的内容必须包含制作组特征词
                 has_group_keyword = bool(re.search(GROUP_KEYWORDS, g, re.I))
                 # 或者是已知的特殊格式（如 VCB-Studio）
-                has_special_format = bool(re.search(r"-", g))
-                if not has_group_keyword and not has_special_format:
+                # 但要排除日文罗马音格式（如 Watanuki-san Chi no）
+                has_valid_dash_format = False
+                if "-" in g:
+                    # 检查连字符格式：真正的制作组连字符前后通常是字母/数字，且无空格
+                    # 例如：VCB-Studio, ANi-Hi10P
+                    # 而日文罗马音通常是：Watanuki-san Chi no（连字符在单词内，后面还有空格）
+                    dash_parts = g.split("-")
+                    # 如果连字符分割后有多部分，且每部分都是字母/数字开头，可能是制作组
+                    if len(dash_parts) >= 2:
+                        # 检查是否所有部分都符合制作组命名规范
+                        all_valid = all(re.match(r"^[A-Za-z0-9]+", part.strip()) for part in dash_parts)
+                        # 并且没有空格分隔多个单词（如 VCB-Studio 可以，但 Watanuki-san Chi no 不行）
+                        no_space_after_dash = all(" " not in part for part in dash_parts[1:])
+                        has_valid_dash_format = all_valid and no_space_after_dash
+                
+                if not has_group_keyword and not has_valid_dash_format:
                     return False
             
             # 对于纯英文/数字组名 (如 ANi, VCB-Studio)，只要长度 >= 2 即可通过
