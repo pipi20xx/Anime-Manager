@@ -101,9 +101,12 @@ const columns = [
       }
 
       if (row.team) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'info' }, { default: () => row.team }))
-      if (row.resolution) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'warning' }, { default: () => row.resolution }))
-      if (row.video_effect) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'success' }, { default: () => row.video_effect }))
+      if (row.source) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'default' }, { default: () => row.source }))
+      if (row.platform) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'warning' }, { default: () => row.platform }))
+      if (row.resolution) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'success' }, { default: () => row.resolution }))
+      if (row.video_effect) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'info' }, { default: () => row.video_effect }))
       if (row.video_encode) tags.push(h(NTag, { size: 'small', quaternary: true }, { default: () => row.video_encode }))
+      if (row.audio_encode) tags.push(h(NTag, { size: 'small', quaternary: true }, { default: () => row.audio_encode }))
       if (row.subtitle) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'error' }, { default: () => row.subtitle }))
       
       return h(NSpace, { size: 4, itemStyle: 'display: flex' }, { default: () => tags })

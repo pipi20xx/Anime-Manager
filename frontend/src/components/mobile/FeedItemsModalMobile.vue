@@ -108,9 +108,12 @@ watch(() => props.show, (newVal) => {
 
                     <!-- Spec Tags -->
                     <n-tag v-if="item.team" size="tiny" quaternary type="info">{{ item.team }}</n-tag>
-                    <n-tag v-if="item.resolution" size="tiny" quaternary type="warning">{{ item.resolution }}</n-tag>
-                    <n-tag v-if="item.video_effect" size="tiny" quaternary type="success">{{ item.video_effect }}</n-tag>
+                    <n-tag v-if="item.source" size="tiny" quaternary type="default">{{ item.source }}</n-tag>
+                    <n-tag v-if="item.platform" size="tiny" quaternary type="warning">{{ item.platform }}</n-tag>
+                    <n-tag v-if="item.resolution" size="tiny" quaternary type="success">{{ item.resolution }}</n-tag>
+                    <n-tag v-if="item.video_effect" size="tiny" quaternary type="info">{{ item.video_effect }}</n-tag>
                     <n-tag v-if="item.video_encode" size="tiny" quaternary>{{ item.video_encode }}</n-tag>
+                    <n-tag v-if="item.audio_encode" size="tiny" quaternary>{{ item.audio_encode }}</n-tag>
                     <n-tag v-if="item.subtitle" size="tiny" quaternary type="error">{{ item.subtitle }}</n-tag>
                  </n-space>
                </div>
