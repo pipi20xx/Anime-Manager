@@ -231,11 +231,8 @@ class PostProcessor:
         current_logs.append(f"┃")
         debug6 = []
         
-        # [Strategy] 优先策略：如果预处理 (Step 2.5) 已经锁定了制作组（特别是联合发布情况），则直接继承
+        # [Strategy] 优先策略：匹配自定义制作组库
         matched_from_lib = False
-        if meta_obj.resource_team:
-            debug6.append(f"┣ [制作组] 继承自预处理 (包含联合发布检测): {meta_obj.resource_team}")
-            matched_from_lib = True
         
         from .constants import NOT_GROUPS
         if not matched_from_lib and custom_groups:

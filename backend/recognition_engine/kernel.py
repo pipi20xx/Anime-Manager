@@ -242,30 +242,6 @@ def core_recognize(
             processed_title = processed_title[len(noise_text):].strip()
             s_logs.append(f"┣ [Shield] 自动剔除首部噪声块: {noise_text}")
 
-    # 制作组先行锁定：探测通用括号
-    if not meta_obj.resource_team:
-        for _ in range(3):
-            first_bracket = re.match(r"^\[([^\]]+)\]|^【([^】]+)】", processed_title)
-            if not first_bracket: break
-            candidate = first_bracket.group(1) or first_bracket.group(2)
-            if candidate.strip() and not candidate.isdigit() and not re.search(PIX_RE, candidate):
-                 is_noise = False
-                 for nw in NOISE_WORDS:
-                     if re.search(nw, candidate, flags=re.I):
-                         is_noise = True; break
-                 if not is_noise:
-                     team, t_logs = TagExtractor.extract_release_group(processed_title)
-                     if team:
-                         meta_obj.resource_team = team
-                         s_logs.extend(t_logs)
-                         processed_title = re.sub(r"^\[[^\]]+\]|^【[^】]+】", "", processed_title, count=1).strip()
-                         s_logs.append(f"┣ [Shield] 提前屏蔽首部制作组: {team}")
-                         break
-                     else: break
-            raw_bracket = first_bracket.group(0)
-            processed_title = processed_title[len(raw_bracket):].strip()
-            s_logs.append(f"┣ [Shield] 自动剔除首部噪声块: {raw_bracket}")
-
     # 提取并抹除技术规格
     from .constants import SUBTITLE_RE, ALIAS_RE
     shield_patterns = [

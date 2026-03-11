@@ -183,12 +183,6 @@ class TagExtractor:
         if info_group and info_group.upper() not in NOT_GROUPS and is_valid_group(info_group):
             return info_group, [f"[规则][内置] 制作组: {info_group}"]
         
-        gm = re.match(r"^\[([^\]]+)\]|^【([^】]+)】", filename)
-        if gm:
-            g_candidate = gm.group(1) or gm.group(2)
-            if not re.search(PLATFORM_RE, g_candidate) and is_valid_group(g_candidate):
-                return g_candidate, [f"[规则][内置] 首部制作组: {g_candidate}"]
-            
         base_name = re.sub(r"\.[a-zA-Z0-9]+$", "", filename)
         # 修复正则语法：匹配末尾由横杠引导的、不含空格和各类括号的连续字符
         # 正确闭合字符集 [^ ... ]
@@ -200,6 +194,12 @@ class TagExtractor:
             if g_candidate.upper() not in NOT_GROUPS and is_valid_group(g_candidate):
                  msg = f"[规则][内置] 尾部制作组: {g_candidate}"
                  return g_candidate, [msg]
+        
+        gm = re.match(r"^\[([^\]]+)\]|^【([^】]+)】", filename)
+        if gm:
+            g_candidate = gm.group(1) or gm.group(2)
+            if not re.search(PLATFORM_RE, g_candidate) and is_valid_group(g_candidate):
+                return g_candidate, [f"[规则][内置] 首部制作组: {g_candidate}"]
         return None, []
 
     @staticmethod
