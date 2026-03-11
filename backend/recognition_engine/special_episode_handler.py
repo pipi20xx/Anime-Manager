@@ -60,16 +60,12 @@ class SpecialEpisodeHandler:
                                 meta_dict[k.strip().lower()] = v.strip()
                     
                     parsed.append((pattern, meta_dict, desc))
-                    import logging
-                    logging.info(f"[PrivilegedRules] 加载规则: {pattern[:50]}... => {meta_dict} # {desc}")
             except Exception as e:
                 import logging
                 logging.warning(f"[PrivilegedRules] 解析规则失败: {line} -> {e}")
                 continue
         
         cls._external_rules = parsed
-        import logging
-        logging.info(f"[PrivilegedRules] 共加载 {len(parsed)} 条特权规则")
 
     @classmethod
     def get_all_rules(cls) -> List[tuple]:

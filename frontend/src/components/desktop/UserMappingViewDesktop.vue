@@ -225,23 +225,17 @@ const countryColumns = [
     <n-grid :cols="5" :x-gap="16" style="margin-bottom: 16px;">
       <n-gi>
         <n-card size="small" bordered>
-          <n-statistic label="流派 (TMDB / 已导入)" :value="`${refCounts.ref.genres} / ${refCounts.user.genres}`">
-            <template #prefix><n-icon><LabelIcon /></n-icon></template>
-          </n-statistic>
+          <n-statistic label="流派 (TMDB / 已导入)" :value="`${refCounts.ref.genres} / ${refCounts.user.genres}`" />
         </n-card>
       </n-gi>
       <n-gi>
         <n-card size="small" bordered>
-          <n-statistic label="制作公司 (TMDB / 已导入)" :value="`${refCounts.ref.companies} / ${refCounts.user.companies}`">
-            <template #prefix><n-icon><CompanyIcon /></n-icon></template>
-          </n-statistic>
+          <n-statistic label="制作公司 (TMDB / 已导入)" :value="`${refCounts.ref.companies} / ${refCounts.user.companies}`" />
         </n-card>
       </n-gi>
       <n-gi>
         <n-card size="small" bordered>
-          <n-statistic label="关键词 (TMDB / 已导入)" :value="`${refCounts.ref.keywords} / ${refCounts.user.keywords}`">
-            <template #prefix><n-icon><KeywordIcon /></n-icon></template>
-          </n-statistic>
+          <n-statistic label="关键词 (TMDB / 已导入)" :value="`${refCounts.ref.keywords} / ${refCounts.user.keywords}`" />
         </n-card>
       </n-gi>
       <n-gi>
