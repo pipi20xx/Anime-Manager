@@ -334,6 +334,15 @@ class PostProcessor:
             meta_obj.subtitle_lang, d6_sub = TagExtractor.extract_subtitle_lang(input_name)
             if d6_sub: debug6.extend(d6_sub)
         
+        # [Sync] 发布平台同步
+        if meta_obj.resource_platform:
+            debug6.append(f"┣ [平台] 继承自预处理: {meta_obj.resource_platform}")
+        else:
+            platform_val, d6_plat = TagExtractor.extract_platform(input_name)
+            if platform_val:
+                meta_obj.resource_platform = platform_val
+                debug6.extend(d6_plat)
+        
         # [Final Check] 制作组黑名单强制核验 (最终关卡：防止 Remux 等技术词从任何渠道溜进组名)
         from .constants import NOT_GROUPS
         if meta_obj.resource_team:

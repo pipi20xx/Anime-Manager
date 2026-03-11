@@ -15,7 +15,7 @@ DYNAMIC_RANGE_RE = r"(?i)(?<![a-zA-Z0-9])(HDR10\+|HDR10|HDR|HLG|Dolby\s*Vision|D
 EFFECT_RE = r"(?i)(?<![a-zA-Z0-9])(3D|REPACK|HQ|Remastered|Extended|Uncut|Internal|Pro|Proper)(?![a-zA-Z0-9])"
 
 # 2. 流媒体平台
-PLATFORM_RE = r"(?i)(?:-)?(?<![a-zA-Z0-9])(Baha|Bilibili|Netflix|NF|Amazon|AMZN|DSNP|Crunchyroll|CR|Hulu|HBO|YouTube|YT|playWEB|B-Global|friDay|LINETV|KKTV|ATVP|IQ|IQIYI|CRAMZN|iT|ABEMA|HIDIVE)(?![a-zA-Z0-9])|(?:-)?(?<![a-zA-Z0-9])(Disney\+|AppleTV\+)"
+PLATFORM_RE = r"(?i)(?:-)?(?<![a-zA-Z0-9])(Baha|Bilibili|Netflix|NF|Amazon|AMZN|DSNP|Crunchyroll|CR|Hulu|HBO|YouTube|YT|playWEB|B-Global|friDay|LINETV|KKTV|ATVP|IQ|IQIYI|CRAMZN|iT|ABEMA|HIDIVE|Viu)(?![a-zA-Z0-9])|(?:-)?(?<![a-zA-Z0-9])(Disney\+|AppleTV\+)"
 
 # 2.5 字幕标签正则 (用于标题屏蔽)
 # [Optimize] 采用“关键词探测法”：只要括号内包含语言+样式特征，即判定为字幕块并整块切除
