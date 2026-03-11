@@ -8,7 +8,7 @@ class MediaType(Enum):
 # 1. 影音规格
 PIX_RE = r"(?i)(?<![a-zA-Z0-9])((\d{3,4}[Pp])|([248][Kk])|(\d{3,4}[xX]\d{3,4}))(?![a-zA-Z0-9])"
 VIDEO_RE = r"(?i)(?<![a-zA-Z0-9])(H\.?26[45]|[Xx]26[45]|AVC|HEVC|VC[0-9]?|MPEG[0-9]?|Xvid|DivX|AV1)(?![a-zA-Z0-9])"
-AUDIO_RE = r"(?i)(?<![a-zA-Z0-9])(DTS-?HD(?:\.MA|[-\s]MA)?|DTS(?:\.MA|[-\s]MA)?|Atmos|TrueHD|AC-?3|DDP|DD\+|DD|AAC|FLAC|Vorbis|Opus|E-?AC-?3|LPCM|PCM)(?:(?:(?:\s*|\.|_|-)(?=[0-9]))?([0-9]\.[0-9](?:\+[0-9]\.[0-9])?|[0-9]ch))?(?![a-zA-Z0-9])"
+AUDIO_RE = r"(?i)(?<![a-zA-Z0-9])(DTS-?HD(?:\.MA|[-\s]MA|MA)?|DTS(?:\.MA|[-\s]MA|MA)?|DTS|Atmos|TrueHD|THD|AC-?3|DDP|DD\+|DD|AAC|FLAC|Vorbis|Opus|E-?AC-?3|LPCM|PCM)(?:(?:(?:\s*|\.|_|-|x)(?=[0-9]))?([0-9]\.[0-9](?:\+[0-9]\.[0-9])?|[0-9]ch|[0-9]))?(?![a-zA-Z0-9])"
 SOURCE_RE = r"(?i)(?<![a-zA-Z0-9])(WEB-DL|WEBRIP|WEB-RIP|BDRIP|DVDRIP|HDRip|BLURAY|UHDTV|HDTV|HDDVD|REMUX|UHD|Pdtv|Dvdscr|BLU|WEB|BD)(?![a-zA-Z0-9])"
 DYNAMIC_RANGE_RE = r"(?i)(?<![a-zA-Z0-9])(HDR10\+|HDR10|HDR|HLG|Dolby\s*Vision|DoVi|DV|SDR|IMAX)(?![a-zA-Z0-9])"
 EFFECT_RE = r"(?i)(?<![a-zA-Z0-9])(3D|REPACK|HQ|Remastered|Extended|Uncut|Internal|Pro|Proper)(?![a-zA-Z0-9])"
@@ -37,7 +37,8 @@ NOISE_WORDS = [
     r"CD[ ]*[1-9]|DVD[ ]*[1-9]|DISK[ ]*[1-9]|DISC[ ]*[1-9]|[ ]+GB",
     r"(?i)YYeTs|人人影视|弯弯字幕组",
     r"(?i)[简繁中日英双雙多]+[体文语語]+[ ]*(MP4|MKV|AVC|HEVC|AAC|ASS|SRT)*",
-    r"(?:繁体|繁體|简体|简体|简日|繁日|简中|繁中|简繁|双语|双语|内嵌|內嵌|内封|內封|外挂|外掛)"
+    r"(?:繁体|繁體|简体|简体|简日|繁日|简中|繁中|简繁|双语|双语|内嵌|內嵌|内封|內封|外挂|外掛)",
+    r"(?i)\[(?:JPN|CHS|CHT|ENG|JP|CN|EN|TC|SC)\]"
 ]
 
 # 4. 发布组排除词

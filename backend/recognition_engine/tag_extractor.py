@@ -275,7 +275,7 @@ class TagExtractor:
                 elif "DTSHD" in codec_raw: codec = "DTS-HD"
                 elif "EAC3" in codec_raw or "DDP" in codec_raw or "DD+" in codec_raw: codec = "E-AC-3"
                 elif "AC3" in codec_raw or "DD" == codec_raw: codec = "AC-3"
-                elif "TRUEHD" in codec_raw: codec = "TrueHD"
+                elif "TRUEHD" in codec_raw or "THD" in codec_raw: codec = "TrueHD"
                 elif "LPCM" in codec_raw or "PCM" in codec_raw: codec = "LPCM"
                 elif "DTS" == codec_raw: codec = "DTS"
                 elif "AAC" in codec_raw: codec = "AAC"
@@ -283,7 +283,20 @@ class TagExtractor:
                 elif "OPUS" in codec_raw: codec = "Opus"
                 elif "VORBIS" in codec_raw: codec = "Vorbis"
                 channel_raw = m.group(2).lower().replace("_", "") if m.group(2) else ""
-                channel = "2.0" if "2ch" in channel_raw else ("5.1" if "6ch" in channel_raw else ("7.1" if "8ch" in channel_raw else channel_raw))
+                channel = ""
+                if "2ch" in channel_raw: channel = "2.0"
+                elif "6ch" in channel_raw: channel = "5.1"
+                elif "8ch" in channel_raw: channel = "7.1"
+                elif channel_raw.isdigit():
+                    ch_num = int(channel_raw)
+                    if ch_num == 1: channel = "1.0"
+                    elif ch_num == 2: channel = "2.0"
+                    elif ch_num == 3: channel = "3.0"
+                    elif ch_num == 4: channel = "4.0"
+                    elif ch_num == 5: channel = "5.0"
+                    elif ch_num == 6: channel = "5.1"
+                    elif ch_num == 7: channel = "6.1"
+                    elif ch_num == 8: channel = "7.1"
                 full_tag = f"{codec} {channel}".strip() if channel else codec
                 if full_tag not in seen_combos:
                     final_tags.append(full_tag); seen_combos.add(full_tag); raw_log_parts.append(m.group(0))
