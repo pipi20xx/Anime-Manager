@@ -4,6 +4,7 @@ class MediaType(Enum):
     MOVIE = "movie"
     TV = "tv"
     UNKNOWN = "unknown"
+    AUTO = "auto"
 
 # 1. 影音规格
 PIX_RE = r"(?i)(?<![a-zA-Z0-9])((\d{3,4}[Pp])|([248][Kk])|(\d{3,4}[xX]\d{3,4}))(?![a-zA-Z0-9])"

@@ -136,7 +136,7 @@ class SpecialEpisodeHandler:
                     # 处理媒体类型
                     if "type" in meta_dict:
                         type_val = SpecialEpisodeHandler._resolve_capture_group(match, meta_dict["type"]).lower()
-                        if type_val in ("tv", "movie"):
+                        if type_val in ("tv", "movie", "auto"):
                             extra_meta["type"] = type_val
                     
                     # 处理年份

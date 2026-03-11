@@ -71,10 +71,19 @@ class MatcherStage:
         if not ctx.tmdb_data:
             # 2.1 强制 TMDB ID 锁定模式
             if meta.forced_tmdbid:
-                m_type_str = "movie" if meta.type == MediaType.MOVIE else "tv"
-                ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid}，正在联网获取...")
-                details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, m_type_str, ctx.logs)
-                if details: ctx.tmdb_data = details
+                if meta.type == MediaType.AUTO:
+                    ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid} (类型: AUTO)，尝试 TV 和 Movie...")
+                    for try_type in ["tv", "movie"]:
+                        details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, try_type, ctx.logs)
+                        if details:
+                            ctx.tmdb_data = details
+                            ctx.log(f"[匹配] ✅ 类型自动判定为: {try_type.upper()}")
+                            break
+                else:
+                    m_type_str = "movie" if meta.type == MediaType.MOVIE else "tv"
+                    ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid}，正在联网获取...")
+                    details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, m_type_str, ctx.logs)
+                    if details: ctx.tmdb_data = details
 
             # 2.2 定义搜索策略
             async def search_offline(use_privileged: bool = False, title_index: int = 0):
@@ -108,12 +117,16 @@ class MatcherStage:
                     search_order = ["tmdb", "bangumi"] if bgm_failover else ["tmdb"]
                 
                 ctx.log(f"[匹配] ☁️ 云端搜索顺序: {search_order} (优先级: {bgm_prio}, 故障转移: {bgm_failover})")
-                m_type_str = "movie" if meta.type == MediaType.MOVIE else "tv"
                 
-                # 根据是否使用特权标题决定搜索词
+                is_auto_type = meta.type == MediaType.AUTO
+                if is_auto_type:
+                    ctx.log(f"[匹配] 🔍 类型为 AUTO，将同时搜索 TV 和 Movie")
+                    m_type_str = None
+                else:
+                    m_type_str = "movie" if meta.type == MediaType.MOVIE else "tv"
+                
                 if use_privileged and privileged_titles:
                     title = privileged_titles[title_index] if title_index < len(privileged_titles) else privileged_titles[0]
-                    # 如果需要清洗特权标题
                     if clean_privileged:
                         title = _clean_privileged_title(title)
                         ctx.log(f"[匹配] 🧹 使用清洗后的特权标题: {title}")
@@ -128,10 +141,16 @@ class MatcherStage:
                 for source in search_order:
                     if ctx.tmdb_data: break
                     if source == "tmdb":
-                        ctx.tmdb_data = await ctx.tmdb_client.smart_search(
-                            cn, en, meta.year, m_type_str, ctx, ctx.anime_priority,
-                            original_cn_name=original_cn
-                        )
+                        if is_auto_type:
+                            ctx.tmdb_data = await ctx.tmdb_client.smart_search_multi(
+                                cn, en, meta.year, ctx, ctx.anime_priority,
+                                original_cn_name=original_cn
+                            )
+                        else:
+                            ctx.tmdb_data = await ctx.tmdb_client.smart_search(
+                                cn, en, meta.year, m_type_str, ctx, ctx.anime_priority,
+                                original_cn_name=original_cn
+                            )
                     elif source == "bangumi":
                         queries = [q for q in [en, cn] if q]
                         if not queries and meta.processed_name:
@@ -184,5 +203,14 @@ class MatcherStage:
                     if privileged_titles:
                         ctx.log(f"[匹配] 🔄 特权标题搜索失败，使用清洗后的标题继续搜索: {meta.cn_name or meta.en_name}")
                     await search_cloud(use_privileged=False)
+        
+        if ctx.tmdb_data and meta.type == MediaType.AUTO:
+            matched_type = ctx.tmdb_data.get("type", "tv")
+            if matched_type == "movie":
+                meta.type = MediaType.MOVIE
+                ctx.log(f"[匹配] 🎬 AUTO 类型已自动判定为: MOVIE")
+            else:
+                meta.type = MediaType.TV
+                ctx.log(f"[匹配] 📺 AUTO 类型已自动判定为: TV")
         
         ctx.add_perf("元数据匹配", start)

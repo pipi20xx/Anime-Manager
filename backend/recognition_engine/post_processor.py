@@ -355,6 +355,8 @@ class PostProcessor:
         
         if meta_obj.forced_tmdbid: 
             current_logs.append(f"┣ [类型判定] 已锁定 TMDB ID，跳过自动类型判断")
+        elif meta_obj.type == MediaType.AUTO:
+            current_logs.append(f"┣ [类型判定] 类型为 AUTO，将由匹配结果自动确定")
         else:
             # [Enhancement] 检查原始文件名是否包含电影关键词
             movie_keywords = [

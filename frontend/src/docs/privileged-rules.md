@@ -23,8 +23,13 @@
 | **e** | 集数 | `e=\3` |
 | **s** | 季数 | `s=\1` |
 | **tmdbid** | TMDB ID | `tmdbid=56559` |
-| **type** | 媒体类型 | `type=tv` 或 `type=movie` |
+| **type** | 媒体类型 | `type=tv` / `type=movie` / `type=auto` |
 | **year** | 年份 | `year=2023` |
+
+**type 字段说明：**
+- `type=tv` - 强制使用 TV 接口搜索
+- `type=movie` - 强制使用 Movie 接口搜索
+- `type=auto` - 同时搜索 TV 和 Movie，根据 TMDB 返回结果自动判断类型
 
 **示例：**
 ```
@@ -36,6 +41,9 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 
 # 电影格式：只提取标题
 ^\[([^\]]+)\]\s+(.+?)\s+\[BD\] => {[group=\1;title=\2]}
+
+# 自动类型判断：同时搜索 TV 和 Movie
+^\[([^\]]+)\]\s+(.+?)\s+-\s+(\d{1,4}) => {[group=\1;title=\2;e=\3;type=auto]}
 ```
 
 ---

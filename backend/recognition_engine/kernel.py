@@ -51,7 +51,14 @@ def core_recognize(
     if forced:
         for k, v in forced.items(): current_logs.append(f"┣ [DEBUG][Forced] 应用强制元数据: {k} = {v}")
         if "tmdbid" in forced: meta_obj.forced_tmdbid = forced["tmdbid"]
-        if "type" in forced: meta_obj.type = MediaType.TV if forced["type"] == "tv" else MediaType.MOVIE
+        if "type" in forced:
+            type_val = forced["type"].lower()
+            if type_val == "tv":
+                meta_obj.type = MediaType.TV
+            elif type_val == "movie":
+                meta_obj.type = MediaType.MOVIE
+            elif type_val == "auto":
+                meta_obj.type = MediaType.AUTO
         if "s" in forced: meta_obj.begin_season = int(forced["s"])
         if "e" in forced: meta_obj.begin_episode = int(forced["e"])
 
@@ -72,7 +79,13 @@ def core_recognize(
         if "tmdbid" in sp_meta:
             meta_obj.forced_tmdbid = sp_meta["tmdbid"]
         if "type" in sp_meta:
-            meta_obj.type = MediaType.TV if sp_meta["type"] == "tv" else MediaType.MOVIE
+            type_val = sp_meta["type"].lower()
+            if type_val == "tv":
+                meta_obj.type = MediaType.TV
+            elif type_val == "movie":
+                meta_obj.type = MediaType.MOVIE
+            elif type_val == "auto":
+                meta_obj.type = MediaType.AUTO
         if "year" in sp_meta:
             meta_obj.year = sp_meta["year"]
         

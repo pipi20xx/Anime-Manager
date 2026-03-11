@@ -228,32 +228,42 @@ class TMDBProvider:
         return results
 
     async def search(self, query: str, year: Optional[str], media_type: str, logs: Any = None, lang: str = "zh-CN") -> List[Dict]:
-        # 生成缓存 Key
         cache_key = f"tmdb:search:{media_type}:{lang}:{query}:{year or ''}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached
 
         params = {"query": query, "include_adult": "false", "language": lang}
         
-        # 只有电影才在第一次搜索时带年份，TV 第一次不带年份
         if year and media_type == "movie":
             params["year"] = year
         
         data = await self._fetch(f"/search/{media_type}", params, logs=logs)
         results = (data or {}).get("results", [])
         
-        # 如果没有结果，进行第二次搜索
         if not results and year:
             if media_type == "tv":
-                # TV 第一次没带年份，第二次尝试带年份
                 params["first_air_date_year"] = year
             else:
-                # 电影第一次带了年份，第二次尝试不带年份
                 params.pop("year")
             
             data_retry = await self._fetch(f"/search/{media_type}", params, logs=logs)
             if data_retry: results = data_retry.get("results", [])
             
+        await MetaCacheManager.set_discover_cache(cache_key, results, expire_hours=6)
+        return results
+
+    async def search_multi(self, query: str, year: Optional[str] = None, logs: Any = None, lang: str = "zh-CN") -> List[Dict]:
+        cache_key = f"tmdb:search:multi:{lang}:{query}:{year or ''}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached: return cached
+
+        params = {"query": query, "include_adult": "false", "language": lang}
+        
+        data = await self._fetch("/search/multi", params, logs=logs)
+        results = (data or {}).get("results", [])
+        
+        results = [r for r in results if r.get("media_type") in ["movie", "tv"]]
+        
         await MetaCacheManager.set_discover_cache(cache_key, results, expire_hours=6)
         return results
 
@@ -295,7 +305,6 @@ class TMDBProvider:
 
                 res_list = await self.search(q, year, media_type, logs=logs, lang=lang)
                 
-                # 全名唯一命中保护：如果第一次搜索（通常是全名）只返回一个结果，直接确认为目标
                 if idx == 0 and len(res_list) == 1:
                     _log(f"┃   🪄 全名搜索唯一命中，确认为高置信度目标")
                     for item in res_list:
@@ -304,7 +313,6 @@ class TMDBProvider:
                             merged_candidates.append(item)
                     return await self._process_candidates(merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=original_cn_name)
 
-                # 标记是否来自分词搜索（idx > 0 表示是分词搜索）
                 is_from_segment = idx > 0
                 for item in res_list:
                     if item.get("id") not in seen_ids:
@@ -313,6 +321,113 @@ class TMDBProvider:
                         merged_candidates.append(item)
 
         return await self._process_candidates(merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=original_cn_name)
+
+    async def smart_search_multi(self, cn_name: Optional[str], en_name: Optional[str], year: Optional[str], logs: Any, anime_priority: bool = True, original_cn_name: Optional[str] = None) -> Optional[Dict]:
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        cn_queries = TMDBMatcher.prepare_queries(cn_name)
+        en_queries = TMDBMatcher.prepare_queries(en_name)
+        orig_queries = TMDBMatcher.prepare_queries(original_cn_name) if original_cn_name and original_cn_name != cn_name else []
+
+        _log(f"┃ [TMDB-Multi] 🚀 启动多类型搜索策略 (TV + Movie)...")
+        
+        merged_candidates = []
+        seen_ids = set()
+
+        all_query_groups = []
+        if orig_queries: all_query_groups.append({"queries": orig_queries, "lang": "zh-CN", "label": "原始中文"})
+        if cn_queries: all_query_groups.append({"queries": cn_queries, "lang": "zh-CN", "label": "简体中文"})
+        if en_queries: all_query_groups.append({"queries": en_queries, "lang": "en-US", "label": "英文"})
+
+        for group in all_query_groups:
+            lang = group["lang"]
+            for idx, q in enumerate(group["queries"]):
+                if len(merged_candidates) > 0:
+                    targets = self._build_match_targets(cn_name, en_name, cn_queries, original_cn_name=original_cn_name)
+                    temp_scored = []
+                    for c_idx, item in enumerate(merged_candidates[:5]):
+                        is_from_segment = item.get("_is_from_segment", False)
+                        score, _, _, _ = TMDBMatcher.calculate_match_score(item, targets, cn_name or "", en_name or "", c_idx, anime_priority, is_from_segment)
+                        temp_scored.append(score)
+                    
+                    if temp_scored and max(temp_scored) >= 95:
+                        _log(f"┃   ℹ️ 已命中高置信度候选 ({max(temp_scored):.0f}分)，跳过后续查询")
+                        break
+
+                res_list = await self.search_multi(q, year, logs=logs, lang=lang)
+                
+                if idx == 0 and len(res_list) == 1:
+                    _log(f"┃   🪄 全名搜索唯一命中，确认为高置信度目标")
+                    for item in res_list:
+                        if item.get("id") not in seen_ids:
+                            seen_ids.add(item.get("id"))
+                            merged_candidates.append(item)
+                    return await self._process_candidates_multi(merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=original_cn_name)
+
+                is_from_segment = idx > 0
+                for item in res_list:
+                    if item.get("id") not in seen_ids:
+                        seen_ids.add(item.get("id"))
+                        item["_is_from_segment"] = is_from_segment
+                        merged_candidates.append(item)
+
+        return await self._process_candidates_multi(merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=original_cn_name)
+
+    async def _process_candidates_multi(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=None):
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        if not merged_candidates:
+            _log(f"┃ ❌ TMDB 多类型搜索均无结果")
+            return None
+        
+        _log(f"┃ [TMDB-Match] ⚖️ 正在对合并后的 {len(merged_candidates[:10])} 个候选进行交叉对撞...")
+        
+        targets = self._build_match_targets(cn_name, en_name, cn_queries, original_cn_name=original_cn_name)
+        scored_pool = []
+        for idx, item in enumerate(merged_candidates[:10]):
+            is_from_segment = item.get("_is_from_segment", False)
+            score, trace, best_match_info, summary = TMDBMatcher.calculate_match_score(
+                item, targets, cn_name or "", en_name or "", idx, anime_priority, is_from_segment
+            )
+            c_name = item.get("title") or item.get("name")
+            c_year = (item.get("release_date") or item.get("first_air_date") or "")[:4]
+            c_type = item.get("media_type", "unknown")
+            
+            _log(f"┣ [#{idx+1}] ID:{item.get('id')} | {c_name} ({c_year}) [{c_type.upper()}]")
+            for t_line in trace: _log(t_line)
+            _log(f"┃   ├─ 最佳匹配: {best_match_info}")
+            _log(f"┃   └─ {summary}")
+            
+            scored_pool.append({"item": item, "score": score})
+        
+        scored_pool.sort(key=lambda x: x["score"], reverse=True)
+        best = scored_pool[0]
+        
+        _log(f"┃")
+        if best["score"] >= 80 or len(seen_ids) == 1:
+             if len(seen_ids) == 1 and best["score"] < 80:
+                 _log(f"┃ 🪄 触发[孤独命中]策略 (唯一 ID)")
+             
+             final_name = best["item"].get("title") or best["item"].get("name")
+             final_type = best["item"].get("media_type", "tv")
+             _log(f"┗ ✅ 最终采信: {final_name} (ID: {best['item']['id']}, 类型: {final_type.upper()})")
+             
+             details = await self.get_details(str(best["item"]["id"]), final_type, logs=logs)
+             if details:
+                 details["_score"] = best["score"]
+                 return details
+             else:
+                 _log(f"┃   ⚠️ 详情获取失败(网络波动)，已启用元数据自动补全兜底")
+                 fallback_norm = TMDBMatcher.normalize(best["item"], media_type_hint=final_type)
+                 fallback_norm["_score"] = best["score"]
+                 return fallback_norm
+        
+        _log(f"┗ ❌ 置信度不足 ({best['score']:.1f} < 80)")
+        return None
 
     async def _process_candidates(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=None):
         def _log(msg):
