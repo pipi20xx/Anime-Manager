@@ -106,7 +106,7 @@ class PostProcessor:
         else:
             raw_name = info_dict.get("anime_title") or processed_title.split('.')[0]
             
-            clean_check = re.sub(r"[^a-zA-Z0-9\u4e00-\u9fa5]", "", raw_name)
+            clean_check = re.sub(r"[^a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]", "", raw_name)
             is_invalid_title = len(clean_check) < 2
             
             if meta_obj.resource_team and meta_obj.resource_team in raw_name:
@@ -180,6 +180,9 @@ class PostProcessor:
                     if re.search(r"\d{3,4}p|H26|AVC|AAC|CHS|CHT|MP4|MKV|新番|BD|DVD", b_strip, re.I): continue
                     if b_strip.upper() in ["OVA", "ONA", "SP", "SPECIAL", "MOVIE"]: continue
                     if b_strip.isdigit(): continue
+                    
+                    # [New] 排除文件校验码（8位十六进制，如 FEA67121）
+                    if re.match(r"^[0-9A-Fa-f]{8}$", b_strip): continue
 
                     # [Fix] 排除集数范围模式
                     if re.match(r"^(?:第|Vol\.?)?\s*\d+(?:[-\s~]+\d+)?(?:话|集|話)?$", b_strip, re.I):
@@ -234,44 +237,48 @@ class PostProcessor:
         # [Strategy] 优先策略：匹配自定义制作组库
         matched_from_lib = False
         
-        from .constants import NOT_GROUPS
-        if not matched_from_lib and custom_groups:
-            import zhconv
-            # 排序：长词优先匹配，防止短词拦截长词
-            sorted_groups = sorted([g for g in custom_groups if g and len(g.strip()) >= 2], key=len, reverse=True)
-            for g in sorted_groups:
-                # [Fix] 剥离元数据前缀标签
-                g_clean = re.sub(r"^\[(?:REMOTE|私有|社区|内置)\]", "", g).strip()
-                if not g_clean: continue
+        # [Fix] 如果 STEP 2.5 已经识别到制作组（包括联合制作组），跳过此步骤
+        if meta_obj.resource_team:
+            debug6.append(f"┣ [制作组] 继承自预处理: {meta_obj.resource_team}")
+        else:
+            from .constants import NOT_GROUPS
+            if not matched_from_lib and custom_groups:
+                import zhconv
+                # 排序：长词优先匹配，防止短词拦截长词
+                sorted_groups = sorted([g for g in custom_groups if g and len(g.strip()) >= 2], key=len, reverse=True)
+                for g in sorted_groups:
+                    # [Fix] 剥离元数据前缀标签
+                    g_clean = re.sub(r"^\[(?:REMOTE|私有|社区|内置)\]", "", g).strip()
+                    if not g_clean: continue
 
-                g_simp = zhconv.convert(g_clean, "zh-hans")
-                g_trad = zhconv.convert(g_clean, "zh-hant")
-                
-                if re.search(PLATFORM_RE, g_clean): continue
-                
-                # [Upgrade] 严格边界匹配逻辑：
-                # 同时支持原始、简体、繁体三个版本的匹配，并应用 CJK 边界保护
-                p_esc, s_esc, t_esc = re.escape(g_clean), re.escape(g_simp), re.escape(g_trad)
-                boundary_chars = r"a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff"
-                group_pattern = rf"(?i)(?<![{boundary_chars}])({p_esc}|{s_esc}|{t_esc})(?![{boundary_chars}])"
-                
-                # [Fix] 同时匹配原始名和预处理名
-                if re.search(group_pattern, input_name) or re.search(group_pattern, processed_title):
-                    # [Check] 即使匹配到自定义库，也要核验是否属于非法技术词
-                    if re.search(f"(?i)^({NOT_GROUPS})$", g_clean):
-                        debug6.append(f"┣ [制作组校验] 自定义库命中非法词({g_clean})，已忽略并继续搜索")
-                        continue
+                    g_simp = zhconv.convert(g_clean, "zh-hans")
+                    g_trad = zhconv.convert(g_clean, "zh-hant")
                     
-                    meta_obj.resource_team = g_clean
-                    debug6.append(f"┣ [制作组] 优先匹配自定义库: {g_clean}")
-                    matched_from_lib = True
-                    break
+                    if re.search(PLATFORM_RE, g_clean): continue
+                    
+                    # [Upgrade] 严格边界匹配逻辑：
+                    # 同时支持原始、简体、繁体三个版本的匹配，并应用 CJK 边界保护
+                    p_esc, s_esc, t_esc = re.escape(g_clean), re.escape(g_simp), re.escape(g_trad)
+                    boundary_chars = r"a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff"
+                    group_pattern = rf"(?i)(?<![{boundary_chars}])({p_esc}|{s_esc}|{t_esc})(?![{boundary_chars}])"
+                    
+                    # [Fix] 同时匹配原始名和预处理名
+                    if re.search(group_pattern, input_name) or re.search(group_pattern, processed_title):
+                        # [Check] 即使匹配到自定义库，也要核验是否属于非法技术词
+                        if re.search(f"(?i)^({NOT_GROUPS})$", g_clean):
+                            debug6.append(f"┣ [制作组校验] 自定义库命中非法词({g_clean})，已忽略并继续搜索")
+                            continue
+                        
+                        meta_obj.resource_team = g_clean
+                        debug6.append(f"┣ [制作组] 优先匹配自定义库: {g_clean}")
+                        matched_from_lib = True
+                        break
 
-        if not matched_from_lib:
-            # 只有前面都没匹配到，才尝试普通的标签提取
-            team, d6 = TagExtractor.extract_release_group(input_name, info_dict.get("release_group"))
-            meta_obj.resource_team = team
-            if d6: debug6.extend(d6)
+            if not matched_from_lib:
+                # 只有前面都没匹配到，才尝试普通的标签提取
+                team, d6 = TagExtractor.extract_release_group(input_name, info_dict.get("release_group"))
+                meta_obj.resource_team = team
+                if d6: debug6.extend(d6)
         
         # [Sync] 来源同步
         if meta_obj.resource_type:
