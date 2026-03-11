@@ -74,6 +74,19 @@ class Renamer:
             else:
                 replacements[f"{{raw_{key}}}"] = str(value) if value is not None else ""
 
+        # === Group 3: TMDB Match ===
+        for key, value in tmdb.items():
+            if key == "release_date":
+                replacements["{tmdb_date}"] = str(value) if value is not None else ""
+            elif key == "title":
+                replacements["{tmdb_title}"] = str(value) if value is not None else ""
+            elif key == "original_title":
+                replacements["{tmdb_original_title}"] = str(value) if value is not None else ""
+            elif key == "year":
+                replacements["{tmdb_year}"] = str(value) if value is not None else ""
+            elif key == "overview":
+                replacements["{tmdb_overview}"] = str(value) if value is not None else ""
+
         # === Group 4: 强制变量 ===
         replacements["{ext}"] = ext
         # 严格遵循用户要求：原始文件名也不含后缀
