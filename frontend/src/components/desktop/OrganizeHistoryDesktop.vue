@@ -254,6 +254,10 @@ const handleRefresh = () => {
 .page-header { display: flex; justify-content: space-between; align-items: center; }
 .page-header h1 { margin: 0; font-size: 26px; font-weight: bold; color: var(--text-primary); }
 .subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 1px; }
+.page-header :deep(.n-space) { align-items: stretch; }
+.page-header :deep(.n-radio-group) { height: 34px; }
+.page-header :deep(.n-input) { height: 34px; }
+.page-header :deep(.n-button) { height: 34px; }
 
 .history-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
 

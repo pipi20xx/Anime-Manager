@@ -26,9 +26,10 @@ const updateCssVariables = () => {
   const theme = purpleOverrides
   const common = theme.common!
   
-  // 同步底层视觉底座
-  root.style.setProperty('--app-bg-color', '#2a1a3a')
-  root.style.setProperty('--sidebar-bg-color', '#3a2a4a')
+  // 同步底层视觉底座 - 统一背景色变量
+  root.style.setProperty('--app-unified-bg', '#2a1a3a')
+  root.style.setProperty('--app-bg-color', 'var(--app-unified-bg)')
+  root.style.setProperty('--sidebar-bg-color', 'var(--app-unified-bg)')
   
   // 统一质感变量
   root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.22)')

@@ -106,6 +106,9 @@ const handleSave = () => {
               <template #checked>Emby 检查：启用</template>
               <template #unchecked>Emby 检查：禁用</template>
             </n-switch>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+              检测 Emby 库是否存在，存在则跳过处理
+            </div>
           </n-space>
         </n-space>
       </n-form-item>

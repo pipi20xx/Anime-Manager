@@ -396,6 +396,17 @@ const isNavActive = (key: string) => currentViewKey.value === key
   background: var(--bg-surface-hover) !important;
   color: var(--n-text-color-1) !important;
 }
+
+:deep(.n-layout-toggle-button) {
+  background: var(--app-surface-card) !important;
+  color: var(--n-text-color-2) !important;
+  border-color: var(--app-border-light) !important;
+}
+
+:deep(.n-layout-toggle-button:hover) {
+  background: var(--bg-surface-hover) !important;
+  color: var(--n-text-color-1) !important;
+}
 .logo-container {
   display: flex;
   align-items: center;

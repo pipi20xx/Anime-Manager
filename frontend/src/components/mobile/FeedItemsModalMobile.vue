@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { 
   NModal, NButton, NSpace, NList, NListItem, NThing, NIcon, NTag, NPopselect
 } from 'naive-ui'
@@ -28,6 +28,18 @@ const {
 } = useFeedItems(props)
 
 const mobileListRef = ref<any>(null)
+
+const getTagStyle = (type: string) => {
+  const styles: Record<string, any> = {
+    info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
+    success: { color: 'var(--color-success)', borderColor: 'var(--color-success-bg)', backgroundColor: 'var(--color-success-bg)' },
+    warning: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
+    error: { color: 'var(--color-error)', borderColor: 'var(--color-error-bg)', backgroundColor: 'var(--color-error-bg)' },
+    primary: { color: 'var(--n-primary-color)', borderColor: 'var(--app-code-primary)', backgroundColor: 'var(--app-code-primary)' },
+    default: { color: 'var(--text-tertiary)', borderColor: 'var(--app-border-light)', backgroundColor: 'var(--bg-surface)' }
+  }
+  return styles[type] || styles.default
+}
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement
@@ -91,42 +103,51 @@ watch(() => props.show, (newVal) => {
 
                  <n-space size="small" :inline="true" style="margin-top: 6px; flex-wrap: wrap;">
                     <!-- Status Tags -->
-                    <n-tag v-if="item.in_subscription" type="info" size="tiny" secondary>已订阅</n-tag>
-                    <n-tag v-if="item.episode_collected" type="success" size="tiny" secondary>已下载</n-tag>
+                    <n-tag v-if="item.in_subscription" size="tiny" secondary :style="getTagStyle('info')">已订阅</n-tag>
+                    <n-tag v-if="item.episode_collected" size="tiny" secondary :style="getTagStyle('success')">已下载</n-tag>
 
                     <!-- Recognition Tags -->
                     <template v-if="item.recognition_done && item.tmdb_id">
-                      <n-tag type="primary" size="tiny" round>ID: {{ item.tmdb_id }}</n-tag>
-                      <n-tag type="info" size="tiny" quaternary>
+                      <n-tag size="tiny" round :style="getTagStyle('primary')">ID: {{ item.tmdb_id }}</n-tag>
+                      <n-tag size="tiny" quaternary :style="getTagStyle('info')">
                         {{ item.media_type === 'movie' ? '🎬 电影' : '📺 剧集' }}
                       </n-tag>
-                      <n-tag v-if="item.media_type === 'tv'" type="info" size="tiny" round>
+                      <n-tag v-if="item.media_type === 'tv'" size="tiny" round :style="getTagStyle('info')">
                         S{{ item.season || 1 }} E{{ item.episode || '-' }}
                       </n-tag>
                     </template>
-                    <n-tag v-else-if="item.recognition_done" type="warning" size="tiny" quaternary>未命中</n-tag>
+                    <n-tag v-else-if="item.recognition_done" size="tiny" quaternary :style="getTagStyle('warning')">未命中</n-tag>
 
                     <!-- Spec Tags -->
-                    <n-tag v-if="item.team" size="tiny" quaternary type="info">{{ item.team }}</n-tag>
-                    <n-tag v-if="item.source" size="tiny" quaternary type="default">{{ item.source }}</n-tag>
-                    <n-tag v-if="item.platform" size="tiny" quaternary type="warning">{{ item.platform }}</n-tag>
-                    <n-tag v-if="item.resolution" size="tiny" quaternary type="success">{{ item.resolution }}</n-tag>
-                    <n-tag v-if="item.video_effect" size="tiny" quaternary type="info">{{ item.video_effect }}</n-tag>
-                    <n-tag v-if="item.video_encode" size="tiny" quaternary>{{ item.video_encode }}</n-tag>
-                    <n-tag v-if="item.audio_encode" size="tiny" quaternary>{{ item.audio_encode }}</n-tag>
-                    <n-tag v-if="item.subtitle" size="tiny" quaternary type="error">{{ item.subtitle }}</n-tag>
+                    <n-tag v-if="item.team" size="tiny" quaternary :style="getTagStyle('info')">{{ item.team }}</n-tag>
+                    <n-tag v-if="item.source" size="tiny" quaternary :style="getTagStyle('default')">{{ item.source }}</n-tag>
+                    <n-tag v-if="item.platform" size="tiny" quaternary :style="getTagStyle('warning')">{{ item.platform }}</n-tag>
+                    <n-tag v-if="item.resolution" size="tiny" quaternary :style="getTagStyle('success')">{{ item.resolution }}</n-tag>
+                    <n-tag v-if="item.video_effect" size="tiny" quaternary :style="getTagStyle('info')">{{ item.video_effect }}</n-tag>
+                    <n-tag v-if="item.video_encode" size="tiny" quaternary :style="getTagStyle('default')">{{ item.video_encode }}</n-tag>
+                    <n-tag v-if="item.audio_encode" size="tiny" quaternary :style="getTagStyle('default')">{{ item.audio_encode }}</n-tag>
+                    <n-tag v-if="item.subtitle" size="tiny" quaternary :style="getTagStyle('error')">{{ item.subtitle }}</n-tag>
                  </n-space>
                </div>
              </n-thing>
              <template #suffix>
                 <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 8px;">
                    <n-popselect :options="clientOptions" @update:value="val => handleDownload(item, val)" trigger="click">
-                     <n-button v-bind="getButtonStyle('iconPrimary')" size="small"><template #icon><n-icon><DownloadIcon/></n-icon></template></n-button>
+                     <n-button 
+                       v-bind="getButtonStyle('iconPrimary')" 
+                       size="small"
+                       :style="{ color: 'var(--n-primary-color)', borderColor: 'var(--app-code-primary)', backgroundColor: 'var(--app-code-primary)' }"
+                     >
+                       <template #icon><n-icon><DownloadIcon/></n-icon></template>
+                     </n-button>
                    </n-popselect>
                    <n-button 
                      v-bind="getButtonStyle('icon')"
                      size="small"
-                     :type="item.is_downloaded ? 'warning' : 'info'"
+                     :style="item.is_downloaded 
+                       ? { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' }
+                       : { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' }
+                     "
                      @click="handleToggleHistory(item, !item.is_downloaded)"
                    >
                      <template #icon><n-icon><HistoryIcon/></n-icon></template>
@@ -146,7 +167,13 @@ watch(() => props.show, (newVal) => {
           已加载 {{ items.length }} 条 <span v-if="loading && offset > 0">...</span>
         </div>
         <n-space>
-          <n-button type="warning" secondary @click="handleRetryRecognition" :loading="loading" size="small">
+          <n-button 
+            secondary 
+            @click="handleRetryRecognition" 
+            :loading="loading" 
+            size="small"
+            :style="{ color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' }"
+          >
              重试识别
           </n-button>
           <n-button @click="emit('update:show', false)" size="small">关闭</n-button>

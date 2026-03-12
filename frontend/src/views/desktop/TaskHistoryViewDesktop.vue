@@ -186,6 +186,9 @@ onUnmounted(() => {
 }
 .page-header h1 { margin: 0; font-size: 24px; }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.page-header :deep(.n-space) { align-items: stretch; }
+.page-header :deep(.n-radio-group) { height: 34px; }
+.page-header :deep(.n-button) { height: 34px; }
 
 .task-list { display: flex; flex-direction: column; gap: 8px; }
 .task-item { border-radius: 8px; }

@@ -28,6 +28,18 @@ const {
 
 const tableRef = ref<any>(null)
 
+const getTagStyle = (type: string) => {
+  const styles: Record<string, any> = {
+    info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
+    success: { color: 'var(--color-success)', borderColor: 'var(--color-success-bg)', backgroundColor: 'var(--color-success-bg)' },
+    warning: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
+    error: { color: 'var(--color-error)', borderColor: 'var(--color-error-bg)', backgroundColor: 'var(--color-error-bg)' },
+    primary: { color: 'var(--n-primary-color)', borderColor: 'var(--app-code-primary)', backgroundColor: 'var(--app-code-primary)' },
+    default: { color: 'var(--text-tertiary)', borderColor: 'var(--app-border-light)', backgroundColor: 'var(--bg-surface)' }
+  }
+  return styles[type] || styles.default
+}
+
 // Desktop specific scroll logic
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement
@@ -85,29 +97,29 @@ const columns = [
     width: 320,
     render(row: any) {
       const tags = []
-      if (row.in_subscription) tags.push(h(NTag, { type: 'info', size: 'small', secondary: true, bordered: false }, { default: () => '已订阅' }))
-      if (row.episode_collected) tags.push(h(NTag, { type: 'success', size: 'small', secondary: true, bordered: false }, { default: () => '订阅已下载' }))
+      if (row.in_subscription) tags.push(h(NTag, { size: 'small', secondary: true, bordered: false, style: getTagStyle('info') }, { default: () => '已订阅' }))
+      if (row.episode_collected) tags.push(h(NTag, { size: 'small', secondary: true, bordered: false, style: getTagStyle('success') }, { default: () => '订阅已下载' }))
 
       if (row.recognition_done && row.tmdb_id) {
-        tags.push(h(NTag, { type: 'primary', size: 'small', round: true }, { default: () => `ID: ${row.tmdb_id}` }))
-        tags.push(h(NTag, { type: 'info', size: 'small', quaternary: true }, { 
+        tags.push(h(NTag, { size: 'small', round: true, style: getTagStyle('primary') }, { default: () => `ID: ${row.tmdb_id}` }))
+        tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('info') }, { 
           default: () => row.media_type === 'movie' ? '🎬 电影' : '📺 剧集' 
         }))
         if (row.media_type === 'tv') {
-          tags.push(h(NTag, { type: 'info', size: 'small', round: true }, { default: () => `S${row.season || 1} E${row.episode || '-'}` }))
+          tags.push(h(NTag, { size: 'small', round: true, style: getTagStyle('info') }, { default: () => `S${row.season || 1} E${row.episode || '-'}` }))
         }
       } else if (row.recognition_done) {
-        tags.push(h(NTag, { type: 'warning', size: 'small', quaternary: true }, { default: () => '未命中' }))
+        tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('warning') }, { default: () => '未命中' }))
       }
 
-      if (row.team) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'info' }, { default: () => row.team }))
-      if (row.source) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'default' }, { default: () => row.source }))
-      if (row.platform) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'warning' }, { default: () => row.platform }))
-      if (row.resolution) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'success' }, { default: () => row.resolution }))
-      if (row.video_effect) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'info' }, { default: () => row.video_effect }))
-      if (row.video_encode) tags.push(h(NTag, { size: 'small', quaternary: true }, { default: () => row.video_encode }))
-      if (row.audio_encode) tags.push(h(NTag, { size: 'small', quaternary: true }, { default: () => row.audio_encode }))
-      if (row.subtitle) tags.push(h(NTag, { size: 'small', quaternary: true, type: 'error' }, { default: () => row.subtitle }))
+      if (row.team) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('info') }, { default: () => row.team }))
+      if (row.source) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('default') }, { default: () => row.source }))
+      if (row.platform) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('warning') }, { default: () => row.platform }))
+      if (row.resolution) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('success') }, { default: () => row.resolution }))
+      if (row.video_effect) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('info') }, { default: () => row.video_effect }))
+      if (row.video_encode) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('default') }, { default: () => row.video_encode }))
+      if (row.audio_encode) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('default') }, { default: () => row.audio_encode }))
+      if (row.subtitle) tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('error') }, { default: () => row.subtitle }))
       
       return h(NSpace, { size: 4, itemStyle: 'display: flex' }, { default: () => tags })
     }
@@ -130,9 +142,19 @@ const columns = [
     render(row: any) {
       const btns = []      
       if (row.is_downloaded) {
-        btns.push(h(NButton, { size: 'tiny', secondary: true, type: 'warning', onClick: () => handleToggleHistory(row, false) }, { default: () => '清除下载记录' }))
+        btns.push(h(NButton, { 
+          size: 'tiny', 
+          secondary: true, 
+          style: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
+          onClick: () => handleToggleHistory(row, false) 
+        }, { default: () => '清除下载记录' }))
       } else {
-        btns.push(h(NButton, { size: 'tiny', secondary: true, type: 'info', onClick: () => handleToggleHistory(row, true) }, { default: () => '设为已下载' }))
+        btns.push(h(NButton, { 
+          size: 'tiny', 
+          secondary: true, 
+          style: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
+          onClick: () => handleToggleHistory(row, true) 
+        }, { default: () => '设为已下载' }))
       }
 
       btns.push(
@@ -143,9 +165,13 @@ const columns = [
         }, {
           default: () => h(NButton, { 
             size: 'tiny', 
-            type: 'primary', 
-            secondary: true, 
-            style: 'margin-left: 6px',
+            bordered: true,
+            style: { 
+              marginLeft: '6px',
+              color: 'var(--n-primary-color)', 
+              borderColor: 'var(--n-primary-color)', 
+              backgroundColor: 'var(--app-code-primary)' 
+            },
             disabled: clientOptions.value.length === 0
           }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '下载' })
         })
