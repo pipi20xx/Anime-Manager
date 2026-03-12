@@ -94,21 +94,21 @@
           <n-gi>
             <n-statistic label="文件观察器" :value="data.observers_count">
               <template #suffix>
-                <n-text depth="3" style="font-size: 14px"> 个</n-text>
+                <span style="font-size: 14px; color: var(--text-tertiary)"> 个</span>
               </template>
             </n-statistic>
           </n-gi>
           <n-gi>
             <n-statistic label="工作线程" :value="data.workers_count">
               <template #suffix>
-                <n-text depth="3" style="font-size: 14px"> 个</n-text>
+                <span style="font-size: 14px; color: var(--text-tertiary)"> 个</span>
               </template>
             </n-statistic>
           </n-gi>
           <n-gi>
             <n-statistic label="任务队列" :value="data.queues_count">
               <template #suffix>
-                <n-text depth="3" style="font-size: 14px"> 个</n-text>
+                <span style="font-size: 14px; color: var(--text-tertiary)"> 个</span>
               </template>
             </n-statistic>
           </n-gi>

@@ -99,7 +99,7 @@ const getImg = (path: string) => {
 }
 .bgm-orig {
   font-size: var(--text-sm);
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -216,7 +216,7 @@ const {
 
 <style scoped>
 .search-hero { margin-bottom: 20px; }
-.label-text { font-size: var(--text-md); color: var(--n-text-color-3); font-weight: 500; }
+.label-text { font-size: var(--text-md); color: var(--text-tertiary); font-weight: 500; }
 .sandbox-label { font-size: var(--text-base); font-weight: 700; color: var(--n-primary-color); margin-bottom: 0; }
 .search-res-box { border: 1px solid var(--app-border-light); border-radius: var(--radius-md); background: var(--app-surface-inner); margin-top: var(--space-2); }
 .preference-card { height: 100%; }
@@ -224,6 +224,6 @@ const {
 .pref-item { display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) var(--space-3); background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); transition: all var(--transition-normal); }
 .pref-item:hover { background: var(--bg-surface-hover); border-color: var(--n-primary-color); }
 .pref-info { flex: 1; margin-right: 12px; }
-.pref-label { font-size: var(--text-md); font-weight: 600; color: var(--n-text-color-1); }
-.pref-desc { font-size: var(--text-sm); color: var(--n-text-color-3); margin-top: 2px; line-height: 1.2; }
+.pref-label { font-size: var(--text-md); font-weight: 600; color: var(--text-primary); }
+.pref-desc { font-size: var(--text-sm); color: var(--text-tertiary); margin-top: 2px; line-height: 1.2; }
 </style>

@@ -162,8 +162,8 @@ const {
 .main-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 
 .info-col { flex-grow: 1; text-shadow: 0 2px 4px var(--shadow-xheavy); }
-.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--n-text-color-1); line-height: 1.2; }
-.original-title { font-size: 13px; color: var(--n-text-color-3); margin-bottom: 4px; }
+.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--text-primary); line-height: 1.2; }
+.original-title { font-size: 13px; color: var(--text-tertiary); margin-bottom: 4px; }
 .tagline { font-size: 14px; font-style: italic; color: var(--n-primary-color); margin-bottom: 12px; opacity: var(--opacity-primary); }
 .meta-tags { margin-bottom: 15px; }
 .actions { display: flex; gap: 10px; }
@@ -172,7 +172,7 @@ const {
 .genres-row { margin-bottom: 16px; }
 .overview-section { margin-bottom: 20px; }
 .overview-section h3 { margin: 0 0 8px 0; color: var(--n-primary-color); font-size: 15px; }
-.overview-text { color: var(--n-text-color-2); line-height: 1.6; font-size: 13px; text-align: justify; }
+.overview-text { color: var(--text-secondary); line-height: 1.6; font-size: 13px; text-align: justify; }
 
 .cast-section { margin-bottom: 24px; }
 .cast-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; display: flex; align-items: center; gap: 6px; }
@@ -185,13 +185,13 @@ const {
   margin-bottom: 6px; background: var(--app-surface-inner); 
 }
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.actor-name { font-size: 10px; color: var(--n-text-color-3); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actor-name { font-size: 10px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .seasons-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; }
 .season-scroller { display: flex; gap: 16px; padding-bottom: 10px; }
 .season-card { width: 100px; }
 .s-poster { aspect-ratio: 2/3; border-radius: var(--button-border-radius, 6px); overflow: hidden; background: var(--bg-primary); margin-bottom: 6px; border: 1px solid var(--app-border-light); }
 .s-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.s-name { font-size: 12px; font-weight: bold; color: var(--n-text-color-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.s-ep { font-size: 11px; color: var(--n-text-color-3); }
+.s-name { font-size: 12px; font-weight: bold; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-ep { font-size: 11px; color: var(--text-tertiary); }
 </style>

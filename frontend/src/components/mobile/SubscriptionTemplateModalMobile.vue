@@ -166,7 +166,7 @@ const {
 .card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .title-box { display: flex; align-items: center; gap: 8px; }
 .title-box .name { font-weight: bold; font-size: 14px; }
-.preview-text { font-size: 11px; color: var(--n-text-color-3); }
+.preview-text { font-size: 11px; color: var(--text-tertiary); }
 
 .full-edit { display: flex; flex-direction: column; height: 100%; }
 .footer-btn { margin-top: auto; padding-top: 16px; }

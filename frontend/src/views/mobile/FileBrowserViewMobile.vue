@@ -401,7 +401,7 @@ const getShortName = (path: string) => {
 }
 .file-meta {
   font-size: 11px;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   gap: 4px;

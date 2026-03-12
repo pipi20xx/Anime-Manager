@@ -161,7 +161,7 @@ const handleRefresh = () => {
                 <n-checkbox v-model:checked="shouldDeleteFile">
                   <span style="color: var(--n-error-color)">同时物理删除源文件</span>
                 </n-checkbox>
-                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--n-text-color-3); margin-top: 4px; line-height: 1.2;">
+                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
                    警告：这将尝试永久删除原始源路径下的文件。
                 </div>
               </div>
@@ -222,7 +222,7 @@ const handleRefresh = () => {
               <span>{{ formatTime(item.processed_at) }}</span>
             </div>
             <div class="detail-item" v-if="item.tmdb_id">
-              <n-text depth="3" code>TMDB: {{ item.tmdb_id }}</n-text>
+              <span style="color: var(--text-tertiary); font-family: var(--code-font)">TMDB: {{ item.tmdb_id }}</span>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ const handleRefresh = () => {
         <n-spin v-if="loading" size="small" description="正在加载更多..." />
         <div v-else-if="!hasMore" class="end-of-list">
           <n-divider dashed>
-            <n-text depth="3" style="font-size: 12px">到底了，共 {{ filteredHistory.length }} 条记录</n-text>
+            <span style="font-size: 12px; color: var(--text-tertiary)">到底了，共 {{ filteredHistory.length }} 条记录</span>
           </n-divider>
         </div>
         <div v-else class="can-load-more">
@@ -278,8 +278,8 @@ const handleRefresh = () => {
 
 /* Header Row */
 .title-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.item-title { font-size: 17px; font-weight: bold; color: var(--n-text-color-1); }
-.item-year { font-size: 13px; color: var(--n-text-color-3); }
+.item-title { font-size: 17px; font-weight: bold; color: var(--text-primary); }
+.item-year { font-size: 13px; color: var(--text-tertiary); }
 .item-se {
   color: var(--n-primary-color);
   font-family: var(--code-font);
@@ -349,8 +349,8 @@ const handleRefresh = () => {
   text-overflow: ellipsis;
 }
 
-.source .path-text { color: var(--n-text-color-3); }
-.target .path-text { color: var(--n-text-color-2); }
+.source .path-text { color: var(--text-tertiary); }
+.target .path-text { color: var(--text-secondary); }
 
 .path-divider {
   height: 1px;
@@ -365,10 +365,10 @@ const handleRefresh = () => {
 .path-divider .n-icon { margin: 0 auto; }
 
 /* Footer Row */
-.footer-row { color: var(--n-text-color-3); font-size: 13px; }
+.footer-row { color: var(--text-tertiary); font-size: 13px; }
 .detail-group { display: flex; align-items: center; gap: 24px; }
 .detail-item { display: flex; align-items: center; gap: 6px; }
-.label { color: var(--n-text-color-3); }
+.label { color: var(--text-tertiary); }
 
 .ml-2 { margin-left: 8px; }
 .mt-3 { margin-top: 12px; }
@@ -396,7 +396,7 @@ const handleRefresh = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   font-size: 13px;
   opacity: var(--opacity-primary);
 }

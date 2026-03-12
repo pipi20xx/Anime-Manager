@@ -356,12 +356,12 @@ onMounted(() => {
   color: var(--n-info-color);
 }
 
-.file-info .file-name { font-weight: 600; font-size: var(--text-xl); color: var(--n-text-color-1); margin-bottom: 4px; }
-.file-meta { font-size: var(--text-base); color: var(--n-text-color-3); display: flex; align-items: center; gap: 8px; }
+.file-info .file-name { font-weight: 600; font-size: var(--text-xl); color: var(--text-primary); margin-bottom: 4px; }
+.file-meta { font-size: var(--text-base); color: var(--text-tertiary); display: flex; align-items: center; gap: 8px; }
 
 /* 底部页脚 */
 .browser-footer { padding: 16px 4px; border-top: 1px solid var(--app-border-light); margin-top: 8px; }
-.count-info { display: flex; align-items: center; gap: 8px; font-size: var(--text-md); color: var(--n-text-color-3); }
+.count-info { display: flex; align-items: center; gap: 8px; font-size: var(--text-md); color: var(--text-tertiary); }
 .count-info b { color: var(--n-primary-color); }
 
 .w-100 { width: 100%; }

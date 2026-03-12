@@ -98,7 +98,7 @@ onUnmounted(stopBgTaskPolling)
               <n-tag size="tiny" :bordered="false">{{ task.dry_run ? '预览' : '正式' }}</n-tag>
             </n-space>
             <n-space align="center">
-              <span style="font-size: var(--text-sm); color: var(--n-text-color-3)">已处理: {{ task.processed }}</span>
+              <span style="font-size: var(--text-sm); color: var(--text-tertiary)">已处理: {{ task.processed }}</span>
               <n-button size="tiny" type="error" secondary @click="stopBackgroundTask(task.task_id)">
                 <template #icon><n-icon><StopIcon /></n-icon></template>
                 停止
@@ -113,7 +113,7 @@ onUnmounted(stopBgTaskPolling)
                 {{ task.status === 'completed' ? '已完成' : task.status === 'stopped' ? '已停止' : '错误' }}
               </n-tag>
               <span>{{ task.name }}</span>
-              <span style="font-size: var(--text-sm); color: var(--n-text-color-3)">处理: {{ task.processed }}</span>
+              <span style="font-size: var(--text-sm); color: var(--text-tertiary)">处理: {{ task.processed }}</span>
             </n-space>
             <n-button size="tiny" quaternary @click="deleteBackgroundTask(task.task_id)">清除</n-button>
           </n-space>
@@ -300,7 +300,7 @@ onUnmounted(stopBgTaskPolling)
 .drag-handle:hover { opacity: var(--opacity-100); }
 .rule-preview-mini { flex-grow: 1; padding: var(--space-3) 0; }
 .rule-preview-mini .p-item { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
-.rule-preview-mini span { font-size: var(--text-2xs); color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }
+.rule-preview-mini span { font-size: var(--text-2xs); color: var(--text-tertiary); font-weight: bold; text-transform: uppercase; }
 .rule-preview-mini code { 
   font-size: var(--text-xs); 
   font-family: var(--code-font);
@@ -313,14 +313,14 @@ onUnmounted(stopBgTaskPolling)
 }
 .p-disp { flex-grow: 1; padding: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .p-disp div { display: flex; flex-direction: column; gap: var(--space-0); }
-.p-disp span { font-size: var(--text-3xs); color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }
+.p-disp span { font-size: var(--text-3xs); color: var(--text-tertiary); font-weight: bold; text-transform: uppercase; }
 .p-disp code { 
   font-size: var(--text-xs); 
   font-family: var(--code-font);
   background: var(--app-surface-inner); 
   padding: var(--space-1) var(--space-2); 
   border-radius: var(--button-border-radius, 4px); 
-  color: var(--n-text-color-2); 
+  color: var(--text-secondary); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
   border: 1px solid var(--app-border-light);
 }

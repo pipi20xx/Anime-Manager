@@ -107,7 +107,7 @@ const {
 }
 .table-desc {
   font-size: 12px;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   line-height: 1.4;
 }
 .actions { margin-top: auto; }

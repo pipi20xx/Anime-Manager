@@ -165,19 +165,19 @@ const {
 .genre-tag { background: var(--bg-surface); color: var(--text-secondary); }
 
 .section { margin-bottom: 24px; }
-.section h3 { margin: 0 0 12px; font-size: 16px; font-weight: bold; color: var(--n-text-color-1); }
-.overview { font-size: 14px; line-height: 1.6; color: var(--n-text-color-2); text-align: justify; }
+.section h3 { margin: 0 0 12px; font-size: 16px; font-weight: bold; color: var(--text-primary); }
+.overview { font-size: 14px; line-height: 1.6; color: var(--text-secondary); text-align: justify; }
 
 .h-scroller { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
 .cast-item { width: 70px; flex-shrink: 0; text-align: center; }
 .cast-item .avatar { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px; background: var(--bg-primary); }
 .cast-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.cast-item .name { font-size: 11px; color: var(--n-text-color-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-.cast-item .char { font-size: 10px; color: var(--n-text-color-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cast-item .name { font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.cast-item .char { font-size: 10px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .season-item { width: 90px; flex-shrink: 0; }
 .season-item .poster { width: 100%; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: var(--bg-primary); }
 .season-item .poster img { width: 100%; height: 100%; object-fit: cover; }
 .season-item .s-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.season-item .s-ep { font-size: 11px; color: var(--n-text-color-3); }
+.season-item .s-ep { font-size: 11px; color: var(--text-tertiary); }
 </style>

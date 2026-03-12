@@ -124,7 +124,7 @@ onMounted(() => {
               <div class="mechanism-box">
                 <n-p>
                   <n-text type="info" strong>本实验室是一个独立的语义解析沙箱，用于验证大语言模型 (LLM) 在极端复杂场景下的提取表现。</n-text><br/>
-                  <n-text depth="3">当前系统的核心识别流水线已完全回归高性能正则内核，AI 不再自动介入实际整理流程。您可以在此处测试以下极端情况：</n-text>
+                  <span style="color: var(--text-tertiary)">当前系统的核心识别流水线已完全回归高性能正则内核，AI 不再自动介入实际整理流程。您可以在此处测试以下极端情况：</span>
                 </n-p>
                 <ul class="mechanism-list">
                   <li>
@@ -140,9 +140,9 @@ onMounted(() => {
                     <b>📝 Prompt 提示词工程</b>：通过观察返回的 JSON 结构，评估当前选用的模型是否适合处理此类垂直领域的语义任务。
                   </li>
                 </ul>
-                <n-text depth="3" style="font-size: 12px">
+                <span style="font-size: 12px; color: var(--text-tertiary)">
                   * 实验室调用不消耗系统资源，仅依赖您配置的外部模型接口。
-                </n-text>
+                </span>
               </div>
             </n-collapse-item>
 

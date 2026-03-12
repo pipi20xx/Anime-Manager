@@ -206,7 +206,7 @@ watch(() => props.show, (newVal) => {
   font-weight: bold;
   line-height: 1.4;
   word-break: break-all;
-  color: var(--n-text-color-1);
+  color: var(--text-primary);
 }
 
 .item-desc-text {

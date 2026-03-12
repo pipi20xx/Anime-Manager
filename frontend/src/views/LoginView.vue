@@ -8,7 +8,7 @@
       <div class="login-header">
         <n-icon size="48" color="var(--n-primary-color)"><LockIcon /></n-icon>
         <n-h2>番剧管家</n-h2>
-        <n-text depth="3">请输入管理员凭据以访问系统</n-text>
+        <span style="color: var(--text-tertiary)">请输入管理员凭据以访问系统</span>
       </div>
 
       <n-form ref="formInst" :model="formValue" :rules="rules" size="large">
@@ -59,7 +59,7 @@
       </n-form>
 
       <div class="login-footer">
-        <n-text depth="3">默认账号密码：admin / admin123</n-text>
+        <span style="color: var(--text-tertiary)">默认账号密码：admin / admin123</span>
       </div>
     </n-card>
   </div>

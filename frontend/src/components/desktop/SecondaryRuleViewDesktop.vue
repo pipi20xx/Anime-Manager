@@ -41,9 +41,9 @@ const {
     <input type="file" ref="fileInput" style="display:none" accept=".json" @change="handleFileChange" />
     <n-space vertical size="large">
       <div class="toolbar-row">
-        <n-text depth="3">
+        <span style="color: var(--text-tertiary)">
           根据元数据标签（流派、国家、标题关键词）自动决定文件整理后的二级目录。
-        </n-text>
+        </span>
         <n-space>
           <n-button v-bind="getButtonStyle('secondary')" size="small" @click="triggerImport" :loading="importLoading">
             导入
@@ -101,7 +101,7 @@ const {
                   </template>
                   确定删除该规则吗？
                 </n-popconfirm>
-                <n-text depth="3" style="font-size: 10px">按住左上角可排序</n-text>
+                <span style="font-size: 10px; color: var(--text-tertiary)">按住左上角可排序</span>
               </div>
             </div>
           </n-gi>
@@ -139,11 +139,11 @@ const {
 
 .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 10px; }
 .header-left { display: flex; align-items: center; gap: 8px; }
-.drag-handle { color: var(--n-text-color-3); cursor: grab; }
+.drag-handle { color: var(--text-tertiary); cursor: grab; }
 .index-badge { font-family: monospace; font-size: var(--text-xs); background: var(--n-action-color); padding: 1px 4px; border-radius: var(--radius-sm); color: var(--n-primary-color); }
-.rule-name { font-size: 15px; color: var(--n-text-color-1); }
+.rule-name { font-size: 15px; color: var(--text-primary); }
 
-.criteria-list { font-size: 11px; color: var(--n-text-color-3); display: grid; gap: 4px; margin-bottom: 12px; }
+.criteria-list { font-size: 11px; color: var(--text-tertiary); display: grid; gap: 4px; margin-bottom: 12px; }
 .c-val { color: var(--n-info-color); margin-left: 4px; font-weight: 500; }
 
 .card-footer { 

@@ -144,9 +144,9 @@ const {
 .carousel-content { position: absolute; bottom: var(--space-12); left: var(--space-12); right: var(--space-12); z-index: 2; }
 .c-tag-line { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--m-3); }
 .rating-tag { font-weight: bold; background: var(--color-warning-bg); color: var(--color-warning); backdrop-filter: blur(4px); }
-.c-date { color: var(--n-text-color-3); font-size: var(--text-md); font-family: monospace; text-shadow: var(--shadow-text-md); }
-.c-title { font-size: var(--text-5xl); font-weight: 900; color: var(--n-text-color-1); margin-bottom: var(--m-3); line-height: var(--leading-tight); text-shadow: var(--shadow-text-xl); letter-spacing: var(--tracking-tight); }
-.c-overview { font-size: var(--text-lg); color: var(--n-text-color-2); max-width: 800px; line-height: var(--leading-relaxed); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: var(--shadow-text-lg); }
+.c-date { color: var(--text-tertiary); font-size: var(--text-md); font-family: monospace; text-shadow: var(--shadow-text-md); }
+.c-title { font-size: var(--text-5xl); font-weight: 900; color: var(--text-primary); margin-bottom: var(--m-3); line-height: var(--leading-tight); text-shadow: var(--shadow-text-xl); letter-spacing: var(--tracking-tight); }
+.c-overview { font-size: var(--text-lg); color: var(--text-secondary); max-width: 800px; line-height: var(--leading-relaxed); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: var(--shadow-text-lg); }
 
 /* Calendar */
 .calendar-box {
@@ -157,8 +157,8 @@ const {
 
 /* Section Common */
 .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--m-4); padding: 0 var(--m-1); }
-.section-title { font-size: var(--text-2xl); font-weight: 800; color: var(--n-text-color-1); display: flex; align-items: center; gap: var(--space-2); }
-.section-more { font-size: var(--text-base); color: var(--n-text-color-3); cursor: pointer; transition: color var(--transition-fast); }
+.section-title { font-size: var(--text-2xl); font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: var(--space-2); }
+.section-more { font-size: var(--text-base); color: var(--text-tertiary); cursor: pointer; transition: color var(--transition-fast); }
 .section-more:hover { color: var(--n-primary-color); }
 
 .media-scroller { display: flex; gap: var(--space-5); padding: var(--m-1); }

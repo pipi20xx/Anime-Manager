@@ -147,13 +147,13 @@ const {
 </template>
 
 <style scoped>
-.res-detail { color: var(--n-text-color-2); }
+.res-detail { color: var(--text-secondary); }
 .main-layout { display: flex; gap: 20px; padding: 4px 0; align-items: flex-start; }
 .poster-box { flex-shrink: 0; }
 .poster-img :deep(img) { border-radius: var(--card-border-radius, 8px); box-shadow: var(--shadow-md); }
 .poster-placeholder { width: 120px; height: 180px; background: var(--bg-secondary); border: 1px dashed var(--border-dashed); border-radius: var(--card-border-radius, 8px); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px; }
 .details-box { flex-grow: 1; min-width: 0; }
-.title-line { font-size: 20px; font-weight: bold; color: var(--n-text-color-1); line-height: 1.3; margin-bottom: 8px; }
+.title-line { font-size: 20px; font-weight: bold; color: var(--text-primary); line-height: 1.3; margin-bottom: 8px; }
 .pure-tags-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .p-tag { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; border: 1px solid transparent; }
 .tag-green { color: var(--n-primary-color); background: var(--primary-light); border-color: var(--primary-medium); }
@@ -192,7 +192,7 @@ const {
 .preview-box .pv { 
   font-family: var(--code-font); 
   font-size: 13px; 
-  color: var(--n-text-color-1); 
+  color: var(--text-primary); 
   word-break: break-all; 
   background: var(--app-surface-inner);
   padding: 10px;
@@ -209,7 +209,7 @@ const {
 }
 .forced-box .pl { font-size: 12px; font-weight: bold; color: var(--n-warning-color); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
 .preference-group { background: var(--app-surface-inner); padding: 10px; border-radius: 6px; border: 1px solid var(--app-border-light); margin-bottom: 16px; }
-.check-label { font-size: 12px; color: var(--n-text-color-2); }
+.check-label { font-size: 12px; color: var(--text-secondary); }
 .search-res-list { background: var(--app-surface-inner); border: 1px solid var(--app-border-light); border-radius: 6px; }
 .audit-log-box { background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px solid var(--app-border-light); font-family: var(--code-font); font-size: 12px; line-height: 1.6; }
 .log-line { display: flex; gap: 8px; border-bottom: 1px solid var(--border-light); padding: 2px 0; }

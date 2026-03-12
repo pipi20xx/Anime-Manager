@@ -167,7 +167,7 @@ watch(() => props.show, (newVal) => {
           <!-- 站点选择区 -->
           <n-space align="center" justify="space-between">
             <n-space align="center">
-              <n-text depth="3">搜寻范围:</n-text>
+              <span style="color: var(--text-tertiary)">搜寻范围:</span>
               <n-select 
                 v-model:value="selectedIndexerId" 
                 :options="indexers.map(i => ({ label: i.name, value: i.id }))" 

@@ -247,11 +247,11 @@ watch(() => props.show, (newVal) => {
 }
 .res-title {
   font-weight: bold;
-  color: var(--n-text-color-1);
+  color: var(--text-primary);
 }
 .res-sub {
   font-size: 12px;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
 }
 .poster-preview {
   display: flex;

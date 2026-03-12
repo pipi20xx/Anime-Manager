@@ -31,20 +31,20 @@ const data = [
   <n-modal :show="show" @update:show="v => emit('update:show', v)" preset="card" style="width: 800px" title="订阅过滤项填写指南">
     <n-card :bordered="false">
       <div style="margin-bottom: 20px">
-        <n-text depth="3">
+        <span style="color: var(--text-tertiary)">
           订阅系统会先对 RSS 标题进行 AI/元数据识别，然后根据下表的对应关系进行筛选。<br/>
           <strong>填写技巧：</strong>支持模糊匹配，且多个关键词请用<strong>英文逗号</strong>分隔。
-        </n-text>
+        </span>
       </div>
       <n-data-table :columns="columns" :data="data" :pagination="false" />
       
       <div style="margin-top: 24px; background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
         <div style="font-weight: bold; margin-bottom: 8px; color: var(--n-primary-color)">💡 如何知道应该填什么？</div>
-        <n-text depth="3" style="font-size: 13px">
-          1. 先通过<strong>“查看内容”</strong>查看现有的 RSS 条目。<br/>
+        <span style="font-size: 13px; color: var(--text-tertiary)">
+          1. 先通过<strong>"查看内容"</strong>查看现有的 RSS 条目。<br/>
           2. 观察条目下方的彩色标签（如：S1 E05, 1080p, H265）。<br/>
           3. 如果你想只下这一类，就把标签里的文字填入订阅设置对应的格子中。
-        </n-text>
+        </span>
       </div>
     </n-card>
   </n-modal>

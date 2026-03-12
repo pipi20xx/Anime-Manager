@@ -149,7 +149,7 @@ onUnmounted(() => {
         <n-spin v-if="loading" size="small" description="正在加载..." />
         <div v-else-if="!hasMore" class="end-of-list">
           <n-divider dashed>
-            <n-text depth="3" style="font-size: 11px">到底了 (共{{ tasks.length }}条)</n-text>
+            <span style="font-size: 11px; color: var(--text-tertiary)">到底了 (共{{ tasks.length }}条)</span>
           </n-divider>
         </div>
         <div v-else class="can-load-more">

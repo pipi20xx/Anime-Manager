@@ -153,8 +153,8 @@ const {
 .main-poster :deep(img) { width: 100%; height: 100%; object-fit: contain; }
 
 .info-col { flex-grow: 1; text-shadow: 0 2px 4px var(--shadow-xheavy); }
-.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--n-text-color-1); line-height: 1.2; }
-.original-title { font-size: 13px; color: var(--n-text-color-3); margin-bottom: 10px; }
+.title { margin: 0; font-size: 26px; font-weight: 900; color: var(--text-primary); line-height: 1.2; }
+.original-title { font-size: 13px; color: var(--text-tertiary); margin-bottom: 10px; }
 .meta-tags { margin-bottom: 15px; }
 .actions { display: flex; gap: 10px; }
 
@@ -162,7 +162,7 @@ const {
 .genres-row { margin-bottom: 16px; }
 .overview-section { margin-bottom: 20px; }
 .overview-section h3 { margin: 0 0 8px 0; color: var(--n-primary-color); font-size: 15px; }
-.overview-text { color: var(--n-text-color-2); line-height: 1.6; font-size: 13px; text-align: justify; }
+.overview-text { color: var(--text-secondary); line-height: 1.6; font-size: 13px; text-align: justify; }
 
 .tags-section { margin-bottom: 24px; }
 
@@ -176,6 +176,6 @@ const {
   margin-bottom: 6px; background: var(--app-surface-inner); 
 }
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.char-name { font-size: 11px; font-weight: bold; color: var(--n-text-color-1); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.actor-name { font-size: 10px; color: var(--n-text-color-3); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.char-name { font-size: 11px; font-weight: bold; color: var(--text-primary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actor-name { font-size: 10px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

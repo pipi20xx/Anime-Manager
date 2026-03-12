@@ -158,7 +158,7 @@ watch(() => props.show, (newVal) => {
   border-bottom: 1px solid var(--app-border-light);
   flex-shrink: 0;
 }
-.title { font-weight: bold; color: var(--n-text-color-1); font-size: 14px; }
+.title { font-weight: bold; color: var(--text-primary); font-size: 14px; }
 .d-flex { display: flex; }
 .align-center { align-items: center; }
 .gap-2 { gap: 8px; }
@@ -229,7 +229,7 @@ watch(() => props.show, (newVal) => {
   background-color: var(--bg-surface);
 }
 
-.empty-tip { color: var(--n-text-color-3); text-align: center; position: absolute; width: 100%; top: 100px; z-index: 10; font-style: italic; }
+.empty-tip { color: var(--text-tertiary); text-align: center; position: absolute; width: 100%; top: 100px; z-index: 10; font-style: italic; }
 
 .loading-more, .end-tip {
   display: flex;
@@ -237,7 +237,7 @@ watch(() => props.show, (newVal) => {
   justify-content: center;
   gap: 12px;
   padding: 10px 0;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 </style>

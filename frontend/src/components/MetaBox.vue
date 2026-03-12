@@ -32,7 +32,7 @@ defineProps<Props>()
 
 .label {
   font-size: var(--text-sm);
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 2px;
@@ -41,7 +41,7 @@ defineProps<Props>()
 .value {
   font-size: var(--text-lg);
   font-weight: 700;
-  color: var(--n-text-color-1);
+  color: var(--text-primary);
 }
 
 .text-success { color: var(--n-primary-color); }

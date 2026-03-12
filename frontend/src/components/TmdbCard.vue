@@ -117,5 +117,5 @@ const getImg = (path: string) => {
   text-overflow: ellipsis;
   color: var(--text-secondary);
 }
-.media-date { font-size: var(--text-base); color: var(--n-text-color-3); }
+.media-date { font-size: var(--text-base); color: var(--text-tertiary); }
 </style>

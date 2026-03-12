@@ -112,7 +112,7 @@ const {
       <n-tabs type="line" animated style="height: 80vh">
         <n-tab-pane name="list" tab="正在追踪" style="height: 100%; display: flex; flex-direction: column">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
-            <n-text depth="3" style="font-size: 12px">共 {{ trackingList.length }} 个追踪项</n-text>
+            <span style="font-size: 12px; color: var(--text-tertiary)">共 {{ trackingList.length }} 个追踪项</span>
             <n-button type="primary" size="small" @click="refreshAllSubjects">
               全部刷新
             </n-button>
@@ -161,7 +161,7 @@ const {
 
         <n-tab-pane name="discover" tab="从放送表导入" style="height: 100%; display: flex; flex-direction: column">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
-            <n-text depth="3" style="font-size: 12px">点击下方番剧可自动同步至日历</n-text>
+            <span style="font-size: 12px; color: var(--text-tertiary)">点击下方番剧可自动同步至日历</span>
             <n-button type="primary" size="small" :loading="importingBatch" @click="handleBatchImport">
               导入全周番剧
             </n-button>
@@ -261,7 +261,7 @@ const {
   font-size: var(--text-xl);
   font-weight: 800;
   letter-spacing: 0.5px;
-  color: var(--n-text-color-1);
+  color: var(--text-primary);
 }
 
 .current-month-display {
@@ -270,7 +270,7 @@ const {
   min-width: 90px;
   text-align: center;
   font-family: var(--font-family-base);
-  color: var(--n-text-color-2);
+  color: var(--text-secondary);
 }
 
 .mp-calendar-wrapper {
@@ -296,7 +296,7 @@ const {
   text-align: center;
   font-weight: 800;
   font-size: var(--text-md);
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   text-transform: uppercase;
 }
 
@@ -336,7 +336,7 @@ const {
   font-size: var(--text-lg);
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
-  color: var(--n-text-color-2);
+  color: var(--text-secondary);
 }
 
 .today-dot {
@@ -380,7 +380,7 @@ const {
   box-shadow: 0 0 4px var(--n-primary-color);
   flex-shrink: 0;
 }
-.anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--n-text-color-2); }
+.anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--text-secondary); }
 .ep-count-tag { font-size: var(--text-xs); background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: var(--radius-xs); font-weight: bold; flex-shrink: 0; }
 .discover-grid {
   display: grid;
@@ -427,7 +427,7 @@ const {
 
 .item-desc {
   font-size: var(--text-sm);
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
 }
 
 .no-data-text {

@@ -120,13 +120,13 @@ watch(() => props.logs.length, () => {
 .stream-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .stream-table th { 
   text-align: left; padding: 12px; 
-  color: var(--n-text-color-3); 
+  color: var(--text-tertiary); 
   border-bottom: 1px solid var(--app-border-medium); 
   background: var(--app-surface-subtle); 
 }
-.stream-table td { padding: 10px 12px; border-bottom: 1px solid var(--app-border-light); color: var(--n-text-color-2); }
-.mf { font-family: monospace; color: var(--n-text-color-1); }
-.mt { font-family: monospace; color: var(--n-text-color-3); }
+.stream-table td { padding: 10px 12px; border-bottom: 1px solid var(--app-border-light); color: var(--text-secondary); }
+.mf { font-family: monospace; color: var(--text-primary); }
+.mt { font-family: monospace; color: var(--text-tertiary); }
 .start-row { background: var(--primary-subtle); }
 .info-row { background: var(--info-subtle); }
 .start-msg { color: var(--n-primary-color); font-weight: bold; margin-left: 8px; }

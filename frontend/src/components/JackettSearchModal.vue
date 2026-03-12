@@ -258,12 +258,12 @@ const close = () => {
 }
 .label {
   font-size: 13px;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   font-weight: bold;
 }
 .result-description {
   font-size: 12px;
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   margin-top: 2px;
   line-height: 1.4;
   word-break: break-all;

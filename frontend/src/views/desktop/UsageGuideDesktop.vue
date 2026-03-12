@@ -74,7 +74,7 @@ const { activeTab } = useUsageGuide()
 
 <style scoped>
 .guide-view { width: 100%; margin: 0 auto; padding: 0; }
-.header h1 { margin: 0; font-size: var(--text-2xl); color: var(--n-text-color-1); }
+.header h1 { margin: 0; font-size: var(--text-2xl); color: var(--text-primary); }
 .subtitle { font-size: var(--text-base); color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .mb-8 { margin-bottom: 32px; }
 

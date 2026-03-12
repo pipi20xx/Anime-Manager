@@ -401,8 +401,8 @@ onMounted(() => {
 .status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: var(--shadow-glow-error); z-index: 2; }
 .status-indicator.is-enabled { background: var(--n-primary-color); box-shadow: var(--shadow-glow-primary); }
 .info-box { padding: 12px; }
-.sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--n-text-color-1); cursor: pointer; }
-.sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--n-text-color-3); margin-bottom: 8px; }
+.sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--text-primary); cursor: pointer; }
+.sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
 .meta-range { color: var(--n-primary-color); font-weight: 600; }
 .sub-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--app-border-light); }
 .empty-state { padding: 80px 0; }

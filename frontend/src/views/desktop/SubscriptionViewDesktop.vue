@@ -330,7 +330,7 @@ onMounted(fetchData)
 .f-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
 .f-title { font-weight: bold; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; margin-right: 8px; }
 .f-status { flex-shrink: 0; }
-.f-url { font-size: 11px; color: var(--n-text-color-3); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
+.f-url { font-size: 11px; color: var(--text-tertiary); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
 .f-act { display: flex; justify-content: flex-end; }
 
 .empty-tip { padding: 40px; text-align: center; color: var(--text-muted); }

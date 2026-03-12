@@ -96,7 +96,7 @@ const {
       <n-tabs type="line" animated style="flex: 1; display: flex; flex-direction: column;">
         <n-tab-pane name="list" tab="正在追踪" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
           <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--app-border-light);">
-            <n-text depth="3" style="font-size: 12px">共 {{ trackingList.length }} 个追踪项</n-text>
+            <span style="font-size: 12px; color: var(--text-tertiary)">共 {{ trackingList.length }} 个追踪项</span>
             <n-button type="primary" size="small" @click="refreshAllSubjects">
               全部刷新
             </n-button>

@@ -147,7 +147,7 @@ onUnmounted(() => {
         <n-spin v-if="loading" size="small" description="正在加载更多..." />
         <div v-else-if="!hasMore" class="end-of-list">
           <n-divider dashed>
-            <n-text depth="3" style="font-size: var(--text-sm)">到底了，共 {{ tasks.length }} 条记录</n-text>
+            <span style="font-size: var(--text-sm); color: var(--text-tertiary)">到底了，共 {{ tasks.length }} 条记录</span>
           </n-divider>
         </div>
         <div v-else class="can-load-more">
@@ -205,11 +205,11 @@ onUnmounted(() => {
 }
 .module-icon { font-size: var(--text-xl); }
 .task-name { font-weight: 500; }
-.task-time { color: var(--n-text-color-3); font-size: var(--text-sm); }
+.task-time { color: var(--text-tertiary); font-size: var(--text-sm); }
 .task-meta {
   display: flex;
   gap: var(--space-4);
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   font-size: var(--text-sm);
 }
 .task-actions { display: flex; gap: var(--space-1); }
@@ -228,7 +228,7 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--n-border-color);
 }
 .log-line:last-child { border-bottom: none; }
-.log-time { color: var(--n-text-color-3); min-width: 60px; }
+.log-time { color: var(--text-tertiary); min-width: 60px; }
 .log-level {
   min-width: 40px;
   font-weight: bold;
@@ -254,7 +254,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   font-size: var(--text-md);
   opacity: var(--opacity-80);
 }

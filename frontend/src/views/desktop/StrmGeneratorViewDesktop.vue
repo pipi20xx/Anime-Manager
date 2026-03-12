@@ -160,11 +160,11 @@ onMounted(fetchTasks)
 .task-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); }
 .task-header { display: flex; justify-content: space-between; align-items: center; }
 .task-name { font-weight: bold; font-size: var(--text-xl); color: var(--text-secondary); }
-.path-info .l { font-size: var(--text-xs); color: var(--n-text-color-3); opacity: var(--opacity-60); }
+.path-info .l { font-size: var(--text-xs); color: var(--text-tertiary); opacity: var(--opacity-60); }
 .path-info .v {
   font-size: var(--text-base);
   font-family: monospace;
-  color: var(--n-text-color-2);
+  color: var(--text-secondary);
   background: var(--app-surface-inner);
   padding: 4px 8px;
   border-radius: var(--button-border-radius, 4px);

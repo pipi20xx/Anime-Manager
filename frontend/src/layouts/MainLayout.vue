@@ -388,24 +388,24 @@ const isNavActive = (key: string) => currentViewKey.value === key
 
 :deep(.n-layout-sider-trigger) {
   background: var(--app-surface-card) !important;
-  color: var(--n-text-color-2) !important;
+  color: var(--text-secondary) !important;
   border-color: var(--app-border-light) !important;
 }
 
 :deep(.n-layout-sider-trigger:hover) {
   background: var(--bg-surface-hover) !important;
-  color: var(--n-text-color-1) !important;
+  color: var(--text-primary) !important;
 }
 
 :deep(.n-layout-toggle-button) {
   background: var(--app-surface-card) !important;
-  color: var(--n-text-color-2) !important;
+  color: var(--text-secondary) !important;
   border-color: var(--app-border-light) !important;
 }
 
 :deep(.n-layout-toggle-button:hover) {
   background: var(--bg-surface-hover) !important;
-  color: var(--n-text-color-1) !important;
+  color: var(--text-primary) !important;
 }
 .logo-container {
   display: flex;

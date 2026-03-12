@@ -19,5 +19,5 @@ import GuideContent from '@/docs/data-center-guide.md'
 .md-content :deep(ul) { padding-left: 1.5rem; margin-bottom: 1rem; }
 .md-content :deep(li) { margin-bottom: 0.5rem; }
 .md-content :deep(code) { background: var(--n-code-color); padding: 2px 5px; border-radius: 4px; font-family: monospace; }
-.md-content :deep(strong) { color: var(--n-text-color-1); font-weight: bold; }
+.md-content :deep(strong) { color: var(--text-primary); font-weight: bold; }
 </style>

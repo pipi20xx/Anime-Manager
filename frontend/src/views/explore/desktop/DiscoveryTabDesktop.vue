@@ -165,7 +165,7 @@ const {
 .discovery-tab { width: 100%; min-height: 80vh; display: flex; flex-direction: column; }
 .filter-bar { background: var(--app-surface-card); border-radius: var(--radius-xl); padding: var(--space-4); margin-bottom: var(--space-6); border: 1px solid var(--border-light); }
 .filter-row { display: flex; align-items: flex-start; margin-bottom: 12px; }
-.filter-label { width: 60px; font-weight: bold; color: var(--n-text-color-3); padding-top: 4px; flex-shrink: 0; }
+.filter-label { width: 60px; font-weight: bold; color: var(--text-tertiary); padding-top: 4px; flex-shrink: 0; }
 .filter-container { display: flex; gap: 8px; flex-wrap: wrap; }
 .filter-tag { cursor: pointer; transition: all var(--transition-fast); }
 .filter-tag:hover { color: var(--n-primary-color); }
