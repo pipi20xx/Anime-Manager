@@ -29,6 +29,24 @@ export const purpleOverrides: GlobalThemeOverrides = {
   Input: { borderRadius: '10px' },
   Select: { borderRadius: '10px' },
   Tag: { borderRadius: '6px' },
+  Popconfirm: {
+    color: 'var(--app-modal-bg)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+    arrowColor: 'var(--app-modal-bg)'
+  },
+  Popover: {
+    color: 'var(--app-modal-bg)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+    arrowColor: 'var(--app-modal-bg)'
+  },
+  LayoutSider: {
+    color: 'var(--app-surface-card)',
+    borderColor: 'var(--app-border-light)',
+    toggleBarColor: 'var(--app-surface-card)',
+    toggleBarColorHover: 'var(--bg-surface-hover)',
+    toggleIconColor: 'var(--n-text-color-2)',
+    toggleIconColorHover: 'var(--n-text-color-1)'
+  },
   DataTable: {
     thColor: 'transparent',
     tdColor: 'transparent',

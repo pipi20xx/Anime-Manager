@@ -180,7 +180,7 @@ watch(() => props.show, (newVal) => {
 
 .console-body {
   flex: 1;
-  background-color: var(--app-surface-inner);
+  background-color: var(--app-surface-card);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -210,6 +210,7 @@ watch(() => props.show, (newVal) => {
   border-radius: var(--card-border-radius, 12px) !important;
   overflow: hidden;
   border: 1px solid var(--app-border-light) !important;
+  background: var(--app-surface-card) !important;
 }
 
 .log-line {
@@ -217,8 +218,8 @@ watch(() => props.show, (newVal) => {
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 12px;
   line-height: 20px;
-  color: var(--n-text-color);
-  opacity: var(--opacity-primary);
+  color: #e0e0e0;
+  opacity: 1;
   white-space: pre-wrap;
   word-break: break-all;
   transition: background 0.2s ease;

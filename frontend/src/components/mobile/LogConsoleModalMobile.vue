@@ -166,12 +166,12 @@ watch(() => props.show, (newVal) => {
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 .dot.active { background: var(--n-primary-color); box-shadow: 0 0 4px var(--n-primary-color); }
 
-.console-body { flex: 1; overflow: hidden; background: var(--bg-primary); padding: 4px; position: relative; z-index: 10; display: flex; flex-direction: column; }
+.console-body { flex: 1; overflow: hidden; background: var(--app-surface-card); padding: 4px; position: relative; z-index: 10; display: flex; flex-direction: column; }
 .log-spin { flex: 1; display: flex; flex-direction: column; height: 100%; }
 :deep(.n-spin-content) { flex: 1; display: flex; flex-direction: column; height: 100%; }
 .log-list { flex: 1; height: 100% !important; }
 .log-line { 
-  font-family: monospace; font-size: 11px; line-height: 1.4; color: var(--text-tertiary); 
+  font-family: monospace; font-size: 11px; line-height: 1.4; color: #e0e0e0; 
   padding: 2px 4px; word-break: break-all; white-space: pre-wrap; 
   border-bottom: 1px solid var(--border-light);
 }

@@ -140,6 +140,7 @@ input, textarea, select, button {
 /* Naive UI 统一覆盖增强 - 降低 Padding */
 .n-card {
   border-radius: var(--card-border-radius, 8px) !important;
+  background: var(--app-surface-card) !important;
 }
 .n-card > .n-card__content {
   padding: 12px 16px !important;
@@ -167,6 +168,20 @@ input, textarea, select, button {
   background: var(--bg-surface-hover) !important;
 }
 
+/* Tabs 主题化 */
+.n-tabs {
+  background: transparent !important;
+}
+.n-tabs-nav {
+  background: transparent !important;
+}
+.n-tabs-pane-wrapper {
+  background: transparent !important;
+}
+.n-tab-pane {
+  background: transparent !important;
+}
+
 /* Modal 主题化 */
 .n-modal-container .n-modal {
   background: var(--app-modal-bg) !important;
@@ -191,6 +206,21 @@ input, textarea, select, button {
 .n-popconfirm__action {
   background: transparent !important;
 }
+:deep(.n-popconfirm__arrow) {
+  background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+:deep(.n-popconfirm__arrow::before) {
+  background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+:deep(.n-popconfirm__arrow::after) {
+  background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
 
 /* Popover 主题化 */
 .n-popover {
@@ -200,6 +230,20 @@ input, textarea, select, button {
 }
 .n-popover__content {
   background: transparent !important;
+}
+
+/* Sider Trigger 主题化 */
+:deep(.n-layout-sider__border) {
+  border-color: var(--app-border-light) !important;
+}
+:deep(.n-layout-sider-trigger) {
+  background: var(--app-surface-card) !important;
+  color: var(--n-text-color-2) !important;
+  border-color: var(--app-border-light) !important;
+}
+:deep(.n-layout-sider-trigger:hover) {
+  background: var(--bg-surface-hover) !important;
+  color: var(--n-text-color-1) !important;
 }
 
 /* 按钮统一样式增强 */
