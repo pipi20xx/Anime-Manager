@@ -274,7 +274,7 @@ onUnmounted(() => {
   display: flex;
   gap: 6px;
   padding: 2px 0;
-  border-bottom: 1px solid var(--n-border-color);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .log-line:last-child {

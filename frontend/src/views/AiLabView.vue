@@ -235,7 +235,7 @@ onMounted(() => {
   background: var(--app-surface-inner);
   padding: 12px;
   border-radius: var(--card-border-radius, 8px);
-  border: 1px solid var(--n-border-color);
+  border: 1px solid var(--border-light);
 }
 
 .fields-list { display: flex; flex-direction: column; gap: 8px; }
@@ -245,7 +245,7 @@ onMounted(() => {
   padding: 8px;
   background: var(--app-surface-card);
   border-radius: var(--button-border-radius, 4px);
-  border: 1px solid var(--n-border-color);
+  border: 1px solid var(--border-light);
 }
 .field-item .key { color: var(--text-muted); font-size: var(--text-sm); font-weight: bold; }
 .field-item .val { color: var(--text-secondary); font-size: var(--text-base); font-family: monospace; }

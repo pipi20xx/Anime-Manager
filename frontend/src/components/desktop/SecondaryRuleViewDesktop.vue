@@ -140,7 +140,7 @@ const {
 .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 10px; }
 .header-left { display: flex; align-items: center; gap: 8px; }
 .drag-handle { color: var(--text-tertiary); cursor: grab; }
-.index-badge { font-family: monospace; font-size: var(--text-xs); background: var(--n-action-color); padding: 1px 4px; border-radius: var(--radius-sm); color: var(--n-primary-color); }
+.index-badge { font-family: monospace; font-size: var(--text-xs); background: var(--bg-tertiary); padding: 1px 4px; border-radius: var(--radius-sm); color: var(--n-primary-color); }
 .rule-name { font-size: 15px; color: var(--text-primary); }
 
 .criteria-list { font-size: 11px; color: var(--text-tertiary); display: grid; gap: 4px; margin-bottom: 12px; }
@@ -150,7 +150,7 @@ const {
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  border-top: 1px solid var(--n-divider-color); 
+  border-top: 1px solid var(--border-light); 
   padding-top: 12px; 
 }
 </style>

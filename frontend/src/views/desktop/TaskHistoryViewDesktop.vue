@@ -225,7 +225,7 @@ onUnmounted(() => {
   display: flex;
   gap: var(--space-2);
   padding: var(--space-0) 0;
-  border-bottom: 1px solid var(--n-border-color);
+  border-bottom: 1px solid var(--border-light);
 }
 .log-line:last-child { border-bottom: none; }
 .log-time { color: var(--text-tertiary); min-width: 60px; }

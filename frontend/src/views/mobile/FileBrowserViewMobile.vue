@@ -374,7 +374,7 @@ const getShortName = (path: string) => {
   margin-bottom: 8px;
   border-radius: 12px;
   background-color: var(--app-surface-card);
-  border: 1px solid var(--n-border-color);
+  border: 1px solid var(--border-light);
 }
 
 .file-icon-box {
@@ -384,7 +384,7 @@ const getShortName = (path: string) => {
   background: var(--app-surface-inner);
   color: var(--n-primary-color);
   margin-right: 12px;
-  border: 1px solid var(--n-border-color);
+  border: 1px solid var(--border-light);
 }
 .file-icon-box.is-dir {
   background: var(--warning-light);

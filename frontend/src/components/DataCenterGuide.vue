@@ -13,7 +13,7 @@ import GuideContent from '@/docs/data-center-guide.md'
 
 <style scoped>
 .md-content { line-height: 1.6; }
-.md-content :deep(h3) { font-size: 1.4rem; margin-bottom: 1rem; border-bottom: 1px solid var(--n-border-color); padding-bottom: 0.5rem; }
+.md-content :deep(h3) { font-size: 1.4rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; }
 .md-content :deep(h4) { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.8rem; color: var(--n-primary-color); }
 .md-content :deep(blockquote) { border-left: 4px solid var(--n-success-color); background: var(--color-success-bg); padding: 12px; border-radius: 4px; margin: 1rem 0; }
 .md-content :deep(ul) { padding-left: 1.5rem; margin-bottom: 1rem; }

@@ -243,6 +243,10 @@ const updateCssVariables = () => {
   root.style.setProperty('--z-tooltip', '700')
   root.style.setProperty('--z-toast', '800')
   root.style.setProperty('--z-max', '9999')
+
+  // Table and code colors
+  root.style.setProperty('--table-header-bg', `rgba(${config.surfaceColor}, 0.15)`)
+  root.style.setProperty('--code-bg', `rgba(${config.surfaceColor}, 0.12)`)
 }
 
 // Initial call and watch

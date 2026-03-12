@@ -189,7 +189,7 @@ const activeTab = ref('dashboard')
 
 .row-inputs { display: flex; gap: var(--space-2); }
 
-.debug-card { border-radius: var(--radius-lg); border: 1px solid var(--n-border-color); }
+.debug-card { border-radius: var(--radius-lg); border: 1px solid var(--border-light); }
 
 .pref-list { display: flex; flex-direction: column; gap: var(--space-3); }
 .pref-item { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); }

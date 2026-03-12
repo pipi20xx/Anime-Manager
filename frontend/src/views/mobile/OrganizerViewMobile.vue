@@ -312,7 +312,7 @@ onUnmounted(stopBgTaskPolling)
 .card-footer { 
   margin-top: 12px; 
   padding-top: 8px; 
-  border-top: 1px solid var(--n-border-color); 
+  border-top: 1px solid var(--border-light); 
   display: flex; 
   justify-content: flex-end; 
   gap: 8px; 
@@ -320,7 +320,7 @@ onUnmounted(stopBgTaskPolling)
 
 .bg-task-item {
   padding: 8px 0;
-  border-bottom: 1px solid var(--n-border-color);
+  border-bottom: 1px solid var(--border-light);
 }
 .bg-task-item:last-child {
   border-bottom: none;

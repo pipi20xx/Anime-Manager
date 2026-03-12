@@ -19,9 +19,9 @@ import GuideContent from '@/docs/subscription-guide.md'
 .md-content :deep(p) { margin-bottom: 1rem; color: var(--text-secondary); }
 .md-content :deep(ul) { padding-left: 1.5rem; margin-bottom: 1rem; }
 .md-content :deep(li) { margin-bottom: 0.5rem; }
-.md-content :deep(blockquote) { border-left: 4px solid var(--n-primary-color); padding-left: 1rem; margin: 1rem 0; color: var(--text-tertiary); background: var(--n-action-color); padding: 8px 12px; border-radius: 4px; }
+.md-content :deep(blockquote) { border-left: 4px solid var(--n-primary-color); padding-left: 1rem; margin: 1rem 0; color: var(--text-tertiary); background: var(--bg-tertiary); padding: 8px 12px; border-radius: 4px; }
 .md-content :deep(table) { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-.md-content :deep(th), .md-content :deep(td) { border: 1px solid var(--n-border-color); padding: 8px; font-size: 0.9rem; }
+.md-content :deep(th), .md-content :deep(td) { border: 1px solid var(--border-light); padding: 8px; font-size: 0.9rem; }
 .md-content :deep(th) { background: var(--n-table-header-color); }
 .md-content :deep(code) { background: var(--n-code-color); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
 </style>

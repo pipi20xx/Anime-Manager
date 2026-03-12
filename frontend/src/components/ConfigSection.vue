@@ -85,7 +85,7 @@ const remoteText = computed({
 .section-header .description { font-size: 12px; color: var(--text-tertiary); font-weight: normal; }
 .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px; }
 .col-header .label { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
-.input-wrapper { background: var(--app-surface-inner); padding: 4px; border-radius: var(--button-border-radius, 4px); border: 1px solid var(--n-border-color); }
+.input-wrapper { background: var(--app-surface-inner); padding: 4px; border-radius: var(--button-border-radius, 4px); border: 1px solid var(--border-light); }
 .mono-input :deep(textarea) { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: transparent; color: var(--text-secondary); border: none; padding: 8px; }
 .mono-input :deep(.n-input__border), .mono-input :deep(.n-input__state-border) { display: none; }
 </style>

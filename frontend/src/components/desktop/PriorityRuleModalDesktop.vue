@@ -235,17 +235,17 @@ const {
 <style scoped>
 .main-container { height: 100%; display: flex; flex-direction: column; }
 .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.desc { color: var(--n-text-color-3); font-size: 13px; max-width: 70%; }
+.desc { color: var(--text-tertiary); font-size: 13px; max-width: 70%; }
 .profile-card { cursor: pointer; border-radius: 8px; }
 .p-header { display: flex; align-items: center; gap: 8px; font-weight: bold; }
-.p-preview { margin: 12px 0; background: var(--n-action-color); padding: 8px; border-radius: 6px; font-size: 12px; }
+.p-preview { margin: 12px 0; background: var(--bg-tertiary); padding: 8px; border-radius: 6px; font-size: 12px; }
 .p-rule-item { display: flex; gap: 8px; margin-bottom: 4px; }
 .p-rule-item .idx { color: var(--n-primary-color); font-weight: bold; }
 .rule-card { border-radius: 8px; }
 .r-header { display: flex; align-items: center; gap: 6px; font-weight: bold; }
 .r-content { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 4px; }
-.drag-area { background: var(--n-action-color); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
-.drag-item { background: var(--n-card-color); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.drag-area { background: var(--bg-tertiary); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+.drag-item { background: var(--bg-surface); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
 .drag-handle { cursor: move; opacity: var(--opacity-secondary); }
 .drag-content { flex: 1; font-weight: 500; }
 .mt-4 { margin-top: 16px; }

@@ -42,7 +42,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--n-border-color);
+  border-bottom: 1px solid var(--border-light);
   background-color: var(--app-surface-color);
 }
 .header-mobile h1 { margin: 0; font-size: 18px; font-weight: 800; }

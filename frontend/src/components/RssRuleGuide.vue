@@ -18,7 +18,7 @@ import GuideContent from '@/docs/rss-rule-guide.md'
 .rss-rule-guide :deep(h1) {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid var(--n-border-color);
+  border-bottom: 1px solid var(--border-light);
   padding-bottom: 0.3em;
 }
 
@@ -52,9 +52,9 @@ import GuideContent from '@/docs/rss-rule-guide.md'
 .rss-rule-guide :deep(blockquote) {
   margin: 1rem 0;
   padding: 0.5rem 1rem;
-  color: var(--n-text-color-2);
+  color: var(--text-secondary);
   border-left: 4px solid var(--n-primary-color);
-  background-color: var(--n-action-color);
+  background-color: var(--bg-tertiary);
   border-radius: 4px;
 }
 
@@ -67,12 +67,12 @@ import GuideContent from '@/docs/rss-rule-guide.md'
 }
 
 .rss-rule-guide :deep(th), .rss-rule-guide :deep(td) {
-  border: 1px solid var(--n-border-color);
+  border: 1px solid var(--border-light);
   padding: 0.5rem;
 }
 
 .rss-rule-guide :deep(th) {
-  background-color: var(--n-table-header-color);
+  background-color: var(--table-header-bg);
   font-weight: 600;
 }
 
@@ -80,7 +80,7 @@ import GuideContent from '@/docs/rss-rule-guide.md'
   padding: 0.2em 0.4em;
   margin: 0;
   font-size: 85%;
-  background-color: var(--n-code-color);
+  background-color: var(--code-bg);
   border-radius: 3px;
   font-family: var(--code-font, monospace);
 }
@@ -89,7 +89,7 @@ import GuideContent from '@/docs/rss-rule-guide.md'
   padding: 1rem;
   overflow: auto;
   line-height: 1.45;
-  background-color: var(--n-code-color);
+  background-color: var(--code-bg);
   border-radius: 6px;
   margin-bottom: 1rem;
 }
@@ -112,7 +112,7 @@ import GuideContent from '@/docs/rss-rule-guide.md'
   height: 0.25em;
   padding: 0;
   margin: 2rem 0;
-  background-color: var(--n-border-color);
+  background-color: var(--border-light);
   border: 0;
 }
 </style>
