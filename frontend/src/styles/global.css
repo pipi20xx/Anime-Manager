@@ -148,6 +148,14 @@ input, textarea, select, button {
   padding: 10px 16px !important;
 }
 
+/* Modal 主题化 */
+.n-modal-container .n-modal {
+  background: var(--app-modal-bg) !important;
+}
+.n-modal-container .n-modal-body-wrapper {
+  background: var(--app-modal-bg) !important;
+}
+
 /* 按钮统一样式增强 */
 .n-button {
   transition: all 0.2s ease;

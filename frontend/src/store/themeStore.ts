@@ -32,14 +32,15 @@ const updateCssVariables = () => {
   const common = theme.common!
   
   // 同步底层视觉底座
-  root.style.setProperty('--app-bg-color', current === 'round' ? '#2a0f18' : (current === 'purple' ? '#1a0528' : '#0a1a14'))
-  root.style.setProperty('--sidebar-bg-color', current === 'round' ? '#3a1e28' : (current === 'purple' ? '#280a38' : '#0e2a1e'))
+  root.style.setProperty('--app-bg-color', current === 'round' ? '#2a0f18' : (current === 'purple' ? '#2a1a3a' : '#0a1a14'))
+  root.style.setProperty('--sidebar-bg-color', current === 'round' ? '#3a1e28' : (current === 'purple' ? '#3a2a4a' : '#0e2a1e'))
   
   // 统一质感变量
   if (current === 'round') {
-    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.12)')
-    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.25)') 
+    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.18)')
+    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.35)') 
     root.style.setProperty('--app-border-light', 'rgba(255, 156, 179, 0.2)') 
+    root.style.setProperty('--app-modal-bg', 'rgba(42, 15, 24, 0.95)') 
     root.style.setProperty('--card-border-radius', '24px')
     root.style.setProperty('--button-border-radius', '20px')
     root.style.setProperty('--font-family-base', '"Quicksand", "Nunito", sans-serif')
@@ -93,9 +94,10 @@ const updateCssVariables = () => {
     root.style.setProperty('--border-heavy-alpha', '0.2')
     
   } else if (current === 'purple') {
-    root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.1)')
-    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.45)')
+    root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.22)')
+    root.style.setProperty('--app-surface-inner', 'rgba(187, 134, 252, 0.12)')
     root.style.setProperty('--app-border-light', 'rgba(187, 134, 252, 0.25)')
+    root.style.setProperty('--app-modal-bg', 'rgba(42, 26, 58, 0.95)')
     root.style.setProperty('--card-border-radius', '14px')
     root.style.setProperty('--button-border-radius', '10px')
     root.style.setProperty('--font-family-base', 'Inter, sans-serif')
@@ -108,13 +110,13 @@ const updateCssVariables = () => {
     root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
     root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
     
-    root.style.setProperty('--bg-primary', '#1a0528')
-    root.style.setProperty('--bg-secondary', '#280a38')
-    root.style.setProperty('--bg-tertiary', '#380f48')
-    root.style.setProperty('--bg-elevated', 'rgba(187, 134, 252, 0.06)')
-    root.style.setProperty('--bg-surface', 'rgba(187, 134, 252, 0.06)')
-    root.style.setProperty('--bg-surface-hover', 'rgba(187, 134, 252, 0.1)')
-    root.style.setProperty('--bg-surface-active', 'rgba(187, 134, 252, 0.15)')
+    root.style.setProperty('--bg-primary', '#2a1a3a')
+    root.style.setProperty('--bg-secondary', '#3a2a4a')
+    root.style.setProperty('--bg-tertiary', '#4a3a5a')
+    root.style.setProperty('--bg-elevated', 'rgba(187, 134, 252, 0.12)')
+    root.style.setProperty('--bg-surface', 'rgba(187, 134, 252, 0.12)')
+    root.style.setProperty('--bg-surface-hover', 'rgba(187, 134, 252, 0.18)')
+    root.style.setProperty('--bg-surface-active', 'rgba(187, 134, 252, 0.25)')
     root.style.setProperty('--bg-overlay', 'rgba(0, 0, 0, 0.6)')
     
     root.style.setProperty('--border-light', 'rgba(187, 134, 252, 0.25)')
@@ -149,9 +151,10 @@ const updateCssVariables = () => {
     root.style.setProperty('--border-heavy-alpha', '0.2')
     
   } else {
-    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.1)')
-    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.35)')
+    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.18)')
+    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.45)')
     root.style.setProperty('--app-border-light', 'rgba(255, 255, 255, 0.12)')
+    root.style.setProperty('--app-modal-bg', 'rgba(10, 26, 20, 0.95)')
     root.style.setProperty('--card-border-radius', '10px')
     root.style.setProperty('--button-border-radius', '6px')
     root.style.setProperty('--font-family-base', 'Inter, sans-serif')
