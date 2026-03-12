@@ -173,9 +173,9 @@ watch(() => props.show, (newVal) => {
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.9); opacity: 0.6; }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.6; }
+  0% { transform: scale(0.9); opacity: var(--opacity-secondary); }
+  50% { transform: scale(1.1); opacity: var(--opacity-full); }
+  100% { transform: scale(0.9); opacity: var(--opacity-secondary); }
 }
 
 .console-body {
@@ -218,7 +218,7 @@ watch(() => props.show, (newVal) => {
   font-size: 12px;
   line-height: 20px;
   color: var(--n-text-color);
-  opacity: 0.8;
+  opacity: var(--opacity-primary);
   white-space: pre-wrap;
   word-break: break-all;
   transition: background 0.2s ease;

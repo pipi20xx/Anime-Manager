@@ -96,7 +96,7 @@ const {
 .label { font-size: 12px; margin-bottom: 8px; font-weight: bold; }
 .anime-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .anime-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--app-surface-inner); border-radius: 8px; }
-.anime-item.is-subbed { opacity: 0.5; }
+.anime-item.is-subbed { opacity: var(--opacity-secondary); }
 .anime-card { flex: 1; display: flex; gap: 8px; align-items: center; }
 .poster { width: 40px; height: 55px; border-radius: 4px; object-fit: cover; }
 .info { flex: 1; overflow: hidden; }

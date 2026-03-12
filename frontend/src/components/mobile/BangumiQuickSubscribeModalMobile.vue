@@ -94,7 +94,7 @@ const {
   background: var(--app-surface-card); border-radius: 8px;
   border: 1px solid var(--app-border-light);
 }
-.mobile-anime-card.is-subbed { opacity: 0.5; }
+.mobile-anime-card.is-subbed { opacity: var(--opacity-secondary); }
 .anime-content { flex: 1; display: flex; gap: 12px; align-items: center; }
 .mobile-poster { width: 45px; height: 60px; border-radius: 4px; object-fit: cover; }
 .anime-info .name { font-weight: bold; font-size: 13px; line-height: 1.3; margin-bottom: 4px; }

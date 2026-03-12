@@ -27,7 +27,7 @@ export const modernOverrides: GlobalThemeOverrides = {
     textColor1: '#ffffff',
     textColor2: 'rgba(255, 255, 255, 0.9)',
     textColor3: 'rgba(255, 255, 255, 0.7)',
-    bodyColor: '#101014',
+    bodyColor: '#0a1a14',
     fontSize: '14px'
   },
   Card: { borderRadius: '10px' },
@@ -52,7 +52,7 @@ export const roundOverrides: GlobalThemeOverrides = {
     cardColor: '#2b262d',
     modalColor: '#322c35',
     popoverColor: '#322c35',
-    bodyColor: '#1a1618',
+    bodyColor: '#2a0f18',
     fontFamily: '"Quicksand", "Varela Round", "Nunito", system-ui, sans-serif',
     fontSize: '14px'
   },
@@ -80,7 +80,7 @@ export const purpleOverrides: GlobalThemeOverrides = {
     cardColor: '#120818',
     modalColor: '#180a20',
     popoverColor: '#180a20',
-    bodyColor: '#0b040f',
+    bodyColor: '#1a0528',
     textColorBase: '#e0e0e0'
   },
   Card: { borderRadius: '14px', borderColor: 'rgba(187, 134, 252, 0.15)' },

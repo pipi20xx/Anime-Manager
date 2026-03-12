@@ -393,9 +393,9 @@ onMounted(() => {
 .poster-box { position: relative; width: 100%; aspect-ratio: 2 / 3; background: var(--app-surface-inner); overflow: hidden; border-radius: var(--card-border-radius, 8px); cursor: pointer; }
 .poster-box :deep(img) { width: 100%; height: 100%; border-radius: var(--card-border-radius, 8px); transition: transform 0.5s ease; }
 .sub-card:hover .poster-box :deep(img) { transform: scale(1.1); }
-.card-overlay { position: absolute; inset: 0; background: var(--bg-overlay); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; color: var(--text-primary); gap: 8px; }
+.card-overlay { position: absolute; inset: 0; background: var(--bg-overlay); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: var(--opacity-disabled); transition: opacity 0.3s ease; color: var(--text-primary); gap: 8px; }
 .card-overlay span { font-size: 12px; font-weight: bold; }
-.sub-card:hover .card-overlay { opacity: 1; }
+.sub-card:hover .card-overlay { opacity: var(--opacity-full); }
 .media-type-tag { position: absolute; top: 8px; right: 8px; background: var(--bg-overlay); backdrop-filter: blur(8px); color: var(--text-primary); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
 .upgrade-tag { position: absolute; top: 8px; right: 40px; background: var(--bg-overlay); backdrop-filter: blur(8px); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
 .status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: 0 0 8px color-mix(in srgb, var(--n-error-color), transparent 50%); z-index: 2; }

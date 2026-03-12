@@ -199,7 +199,7 @@ onMounted(fetchRules)
                       载入调试
                     </n-button>
                   </template>
-                  <div style="font-size: 11px; opacity: 0.6; margin-top: 4px;">
+                  <div style="font-size: 11px; opacity: var(--opacity-secondary); margin-top: 4px;">
                     目标捕获组: Group[{{ rule.group_index }}]
                   </div>
                 </n-thing>
@@ -264,7 +264,7 @@ onMounted(fetchRules)
   font-size: 11px;
   font-weight: bold;
   color: var(--color-success);
-  opacity: 0.7;
+  opacity: var(--opacity-tertiary);
 }
 .hit-logs {
   font-family: monospace;
@@ -292,11 +292,11 @@ onMounted(fetchRules)
 .miss-desc {
   font-size: 12px;
   margin-top: 4px;
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: var(--opacity-disabled); transform: translateY(10px); }
+  to { opacity: var(--opacity-full); transform: translateY(0); }
 }
 </style>

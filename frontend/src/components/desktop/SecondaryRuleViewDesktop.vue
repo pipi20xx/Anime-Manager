@@ -119,23 +119,23 @@ const {
 /* 卡片核心样式 - 增强对比度 */
 .rect-rule-card { 
   background-color: var(--bg-surface); 
-  border: 1px solid rgba(255, 255, 255, 0.2); 
+  border: 1px solid rgba(255, 255, 255, var(--border-heavy-alpha)); 
   padding: 16px; 
   border-radius: 8px; 
   cursor: pointer; 
   transition: all 0.2s ease; 
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px 0 var(--shadow-light);
   height: auto; 
 }
 .rect-rule-card:hover { 
   border-color: var(--n-primary-color); 
   background-color: var(--bg-surface-hover); 
   transform: translateY(-2px); 
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+  box-shadow: 0 4px 12px var(--shadow-medium); 
 }
 
-.is-dragging { opacity: 0.4; border: 2px dashed var(--n-primary-color); }
-.is-disabled { opacity: 0.5; filter: grayscale(0.8); }
+.is-dragging { opacity: var(--opacity-muted); border: 2px dashed var(--n-primary-color); }
+.is-disabled { opacity: var(--opacity-secondary); filter: grayscale(0.8); }
 
 .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 10px; }
 .header-left { display: flex; align-items: center; gap: 8px; }

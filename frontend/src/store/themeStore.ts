@@ -32,8 +32,8 @@ const updateCssVariables = () => {
   const common = theme.common!
   
   // 同步底层视觉底座
-  root.style.setProperty('--app-bg-color', common.bodyColor!)
-  root.style.setProperty('--sidebar-bg-color', common.cardColor!)
+  root.style.setProperty('--app-bg-color', current === 'round' ? '#2a0f18' : (current === 'purple' ? '#1a0528' : '#0a1a14'))
+  root.style.setProperty('--sidebar-bg-color', current === 'round' ? '#3a1e28' : (current === 'purple' ? '#280a38' : '#0e2a1e'))
   
   // 统一质感变量
   if (current === 'round') {
@@ -52,10 +52,10 @@ const updateCssVariables = () => {
     root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
     root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
     
-    root.style.setProperty('--bg-primary', common.bodyColor || '#101014')
-    root.style.setProperty('--bg-secondary', common.cardColor || '#2b262d')
-    root.style.setProperty('--bg-tertiary', common.modalColor || '#322c35')
-    root.style.setProperty('--bg-elevated', 'rgba(255, 255, 255, 0.08)')
+    root.style.setProperty('--bg-primary', '#2a0f18')
+    root.style.setProperty('--bg-secondary', '#3a1e28')
+    root.style.setProperty('--bg-tertiary', '#4a2e38')
+    root.style.setProperty('--bg-elevated', 'rgba(255, 156, 179, 0.08)')
     root.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.08)')
     root.style.setProperty('--bg-surface-hover', 'rgba(255, 255, 255, 0.12)')
     root.style.setProperty('--bg-surface-active', 'rgba(255, 255, 255, 0.16)')
@@ -76,6 +76,22 @@ const updateCssVariables = () => {
     root.style.setProperty('--color-error-bg', 'rgba(232, 128, 128, 0.1)')
     root.style.setProperty('--color-info-bg', 'rgba(112, 192, 232, 0.1)')
     
+    root.style.setProperty('--opacity-disabled', '0.3')
+    root.style.setProperty('--opacity-muted', '0.5')
+    root.style.setProperty('--opacity-secondary', '0.7')
+    root.style.setProperty('--opacity-tertiary', '0.85')
+    root.style.setProperty('--opacity-primary', '0.95')
+    root.style.setProperty('--opacity-full', '1')
+    
+    root.style.setProperty('--shadow-light', 'rgba(0, 0, 0, 0.1)')
+    root.style.setProperty('--shadow-medium', 'rgba(0, 0, 0, 0.3)')
+    root.style.setProperty('--shadow-heavy', 'rgba(0, 0, 0, 0.5)')
+    root.style.setProperty('--shadow-xheavy', 'rgba(0, 0, 0, 0.6)')
+    
+    root.style.setProperty('--border-light-alpha', '0.05')
+    root.style.setProperty('--border-medium-alpha', '0.1')
+    root.style.setProperty('--border-heavy-alpha', '0.2')
+    
   } else if (current === 'purple') {
     root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.06)')
     root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.4)')
@@ -92,9 +108,9 @@ const updateCssVariables = () => {
     root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
     root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
     
-    root.style.setProperty('--bg-primary', common.bodyColor || '#0b040f')
-    root.style.setProperty('--bg-secondary', common.cardColor || '#120818')
-    root.style.setProperty('--bg-tertiary', common.modalColor || '#180a20')
+    root.style.setProperty('--bg-primary', '#1a0528')
+    root.style.setProperty('--bg-secondary', '#280a38')
+    root.style.setProperty('--bg-tertiary', '#380f48')
     root.style.setProperty('--bg-elevated', 'rgba(187, 134, 252, 0.06)')
     root.style.setProperty('--bg-surface', 'rgba(187, 134, 252, 0.06)')
     root.style.setProperty('--bg-surface-hover', 'rgba(187, 134, 252, 0.1)')
@@ -116,6 +132,22 @@ const updateCssVariables = () => {
     root.style.setProperty('--color-error-bg', 'rgba(207, 102, 121, 0.1)')
     root.style.setProperty('--color-info-bg', 'rgba(3, 218, 198, 0.1)')
     
+    root.style.setProperty('--opacity-disabled', '0.3')
+    root.style.setProperty('--opacity-muted', '0.5')
+    root.style.setProperty('--opacity-secondary', '0.7')
+    root.style.setProperty('--opacity-tertiary', '0.85')
+    root.style.setProperty('--opacity-primary', '0.95')
+    root.style.setProperty('--opacity-full', '1')
+    
+    root.style.setProperty('--shadow-light', 'rgba(0, 0, 0, 0.1)')
+    root.style.setProperty('--shadow-medium', 'rgba(0, 0, 0, 0.3)')
+    root.style.setProperty('--shadow-heavy', 'rgba(0, 0, 0, 0.5)')
+    root.style.setProperty('--shadow-xheavy', 'rgba(0, 0, 0, 0.6)')
+    
+    root.style.setProperty('--border-light-alpha', '0.05')
+    root.style.setProperty('--border-medium-alpha', '0.1')
+    root.style.setProperty('--border-heavy-alpha', '0.2')
+    
   } else {
     root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.06)')
     root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.3)')
@@ -132,10 +164,10 @@ const updateCssVariables = () => {
     root.style.setProperty('--text-disabled', 'rgba(255, 255, 255, 0.3)')
     root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
     
-    root.style.setProperty('--bg-primary', common.bodyColor || '#101014')
-    root.style.setProperty('--bg-secondary', common.cardColor || '#1e1e24')
-    root.style.setProperty('--bg-tertiary', common.modalColor || '#25252b')
-    root.style.setProperty('--bg-elevated', 'rgba(255, 255, 255, 0.06)')
+    root.style.setProperty('--bg-primary', '#0a1a14')
+    root.style.setProperty('--bg-secondary', '#0e2a1e')
+    root.style.setProperty('--bg-tertiary', '#1e3a2e')
+    root.style.setProperty('--bg-elevated', 'rgba(99, 226, 183, 0.06)')
     root.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.06)')
     root.style.setProperty('--bg-surface-hover', 'rgba(255, 255, 255, 0.1)')
     root.style.setProperty('--bg-surface-active', 'rgba(255, 255, 255, 0.15)')
@@ -155,6 +187,22 @@ const updateCssVariables = () => {
     root.style.setProperty('--color-warning-bg', 'rgba(242, 201, 125, 0.1)')
     root.style.setProperty('--color-error-bg', 'rgba(232, 128, 128, 0.1)')
     root.style.setProperty('--color-info-bg', 'rgba(112, 192, 232, 0.1)')
+    
+    root.style.setProperty('--opacity-disabled', '0.3')
+    root.style.setProperty('--opacity-muted', '0.5')
+    root.style.setProperty('--opacity-secondary', '0.7')
+    root.style.setProperty('--opacity-tertiary', '0.85')
+    root.style.setProperty('--opacity-primary', '0.95')
+    root.style.setProperty('--opacity-full', '1')
+    
+    root.style.setProperty('--shadow-light', 'rgba(0, 0, 0, 0.1)')
+    root.style.setProperty('--shadow-medium', 'rgba(0, 0, 0, 0.3)')
+    root.style.setProperty('--shadow-heavy', 'rgba(0, 0, 0, 0.5)')
+    root.style.setProperty('--shadow-xheavy', 'rgba(0, 0, 0, 0.6)')
+    
+    root.style.setProperty('--border-light-alpha', '0.05')
+    root.style.setProperty('--border-medium-alpha', '0.1')
+    root.style.setProperty('--border-heavy-alpha', '0.2')
   }
 }
 

@@ -329,7 +329,7 @@ const {
 
 .grid-cell.off-month {
   background: var(--app-surface-inner);
-  opacity: 0.4;
+  opacity: var(--opacity-muted);
 }
 
 .day-num {

@@ -215,7 +215,7 @@ watch(() => props.show, (newVal) => {
               <template #prefix>
                 <n-icon v-if="log.type === 'hit'" color="#63e2b7"><DownloadIcon /></n-icon>
                 <n-icon v-else-if="log.type === 'error'" style="color: var(--n-error-color)"><ErrorIcon /></n-icon>
-                <n-icon v-else-if="log.type === 'process'" depth="3" style="opacity: 0.5"><SearchIcon /></n-icon>
+                <n-icon v-else-if="log.type === 'process'" depth="3" style="opacity: var(--opacity-secondary)"><SearchIcon /></n-icon>
                 <n-icon v-else style="color: var(--n-info-color)"><SearchIcon /></n-icon>
               </template>
               <n-text 

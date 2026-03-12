@@ -309,7 +309,7 @@ const menuOptions = [
 
 .end-of-list {
   width: 100%;
-  opacity: 0.5;
+  opacity: var(--opacity-secondary);
 }
 
 .can-load-more {

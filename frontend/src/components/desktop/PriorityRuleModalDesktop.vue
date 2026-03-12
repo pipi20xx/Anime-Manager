@@ -246,7 +246,7 @@ const {
 .r-content { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 4px; }
 .drag-area { background: var(--n-action-color); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
 .drag-item { background: var(--n-card-color); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
-.drag-handle { cursor: move; opacity: 0.5; }
+.drag-handle { cursor: move; opacity: var(--opacity-secondary); }
 .drag-content { flex: 1; font-weight: 500; }
 .mt-4 { margin-top: 16px; }
 </style>

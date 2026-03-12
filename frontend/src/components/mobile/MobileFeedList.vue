@@ -124,7 +124,7 @@ const handleSelect = (key: string, feed: any) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  opacity: 0.7;
+  opacity: var(--opacity-tertiary);
 }
 .feed-action {
   margin-left: 8px;

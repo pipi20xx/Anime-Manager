@@ -353,7 +353,7 @@ const handleRefresh = () => {
   display: flex;
   align-items: center;
   padding: 0 14px;
-  opacity: 0.15;
+  opacity: var(--opacity-disabled);
   color: var(--app-border-light);
   background: var(--app-border-light);
 }
@@ -385,7 +385,7 @@ const handleRefresh = () => {
 
 .end-of-list {
   width: 100%;
-  opacity: 0.6;
+  opacity: var(--opacity-secondary);
 }
 
 .can-load-more {
@@ -394,6 +394,6 @@ const handleRefresh = () => {
   gap: 8px;
   color: var(--n-text-color-3);
   font-size: 13px;
-  opacity: 0.8;
+  opacity: var(--opacity-primary);
 }
 </style>

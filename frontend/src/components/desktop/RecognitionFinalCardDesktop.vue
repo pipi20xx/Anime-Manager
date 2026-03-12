@@ -78,7 +78,7 @@ const {
 
 .main-layout { display: flex; gap: 24px; padding: 4px 0; }
 .poster-box { flex-shrink: 0; }
-.poster-img :deep(img) { border-radius: var(--card-border-radius, 8px); box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+.poster-img :deep(img) { border-radius: var(--card-border-radius, 8px); box-shadow: 0 8px 24px var(--shadow-heavy); }
 .poster-placeholder { width: 140px; height: 200px; background: var(--bg-primary); border: 1px dashed var(--app-border-light); border-radius: var(--card-border-radius, 8px); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: bold; }
 
 .details-box { flex-grow: 1; min-width: 0; }
@@ -92,10 +92,10 @@ const {
 .date-text { color: var(--n-primary-color); font-size: 13px; margin-left: 4px; }
 
 .pure-specs-row { display: flex; gap: 6px; margin-bottom: 16px; }
-.p-badge { padding: 1px 6px; border-radius: var(--button-border-radius, 4px); font-size: 10px; background: var(--bg-surface); color: var(--text-tertiary); border: 1px solid rgba(255,255,255,0.1); }
+.p-badge { padding: 1px 6px; border-radius: var(--button-border-radius, 4px); font-size: 10px; background: var(--bg-surface); color: var(--text-tertiary); border: 1px solid rgba(255,255,255, var(--border-medium-alpha)); }
 .p-badge.blue { color: var(--n-info-color); border-color: color-mix(in srgb, var(--n-info-color), transparent 80%); }
 
-.flex-info-grid { display: flex; gap: 1px; background: var(--app-border-light); border-radius: var(--card-border-radius, 8px); margin-bottom: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+.flex-info-grid { display: flex; gap: 1px; background: var(--app-border-light); border-radius: var(--card-border-radius, 8px); margin-bottom: 20px; overflow: hidden; border: 1px solid rgba(255,255,255, var(--border-light-alpha)); }
 .fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--bg-primary); padding: 12px 4px; }
 .fig-l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
 .fig-v { font-weight: bold; font-size: 16px; color: var(--n-primary-color); }
@@ -106,5 +106,5 @@ const {
 .rv { color: var(--text-secondary); word-break: break-all; }
 .rv.team { color: var(--n-success-color); font-weight: bold; }
 .rv.mono { font-family: monospace; color: var(--n-warning-color); background: color-mix(in srgb, var(--n-warning-color), transparent 95%); padding: 0 4px; border-radius: var(--button-border-radius, 2px); }
-.filename-text { font-size: 11px; opacity: 0.7; }
+.filename-text { font-size: 11px; opacity: var(--opacity-tertiary); }
 </style>

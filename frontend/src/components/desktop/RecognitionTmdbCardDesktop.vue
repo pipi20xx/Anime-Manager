@@ -39,13 +39,13 @@ const { tmdb, getImg } = useRecognitionTmdb()
 .sub-card { flex: 1; min-width: 0; background: var(--bg-surface); border-radius: var(--card-border-radius, 8px); }
 .tmdb-main-layout { display: flex; gap: 16px; }
 .tmdb-poster-side { flex-shrink: 0; }
-.small-poster { border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.small-poster { border-radius: 4px; box-shadow: 0 4px 12px var(--shadow-medium); }
 .small-no-poster { width: 80px; height: 120px; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); border-radius: 4px; border: 1px dashed var(--app-border-light); }
 .tmdb-info-side { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
 .tmdb-info-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
 .tmdb-title { font-weight: bold; font-size: 16px; color: var(--n-warning-color); line-height: 1.2; }
 .tmdb-meta-line { font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; margin-bottom: 8px; }
-.tmdb-id-badge { font-family: monospace; opacity: 0.8; }
+.tmdb-id-badge { font-family: monospace; opacity: var(--opacity-primary); }
 .tmdb-overview-box { background: var(--bg-primary); padding: 8px; border-radius: 4px; flex-grow: 1; }
 .overview-text { font-size: 12px; color: var(--text-tertiary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; }
 </style>

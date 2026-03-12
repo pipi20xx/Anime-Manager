@@ -145,17 +145,17 @@ const {
 .back-btn { background: var(--bg-surface) !important; color: var(--text-primary) !important; border: none; backdrop-filter: blur(4px); }
 
 .hero-section { position: relative; height: 320px; display: flex; align-items: flex-end; }
-.backdrop-layer { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.6; }
+.backdrop-layer { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: var(--opacity-tertiary); }
 .gradient-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, var(--app-bg-color) 100%); }
 
 .hero-content { position: relative; z-index: 2; padding: 0 20px 20px; display: flex; gap: 16px; align-items: flex-end; width: 100%; }
-.poster-wrapper { width: 100px; flex-shrink: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+.poster-wrapper { width: 100px; flex-shrink: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 16px var(--shadow-heavy); border: 1px solid rgba(255,255,255, var(--border-medium-alpha)); }
 .hero-poster :deep(img) { width: 100%; display: block; aspect-ratio: 2/3; object-fit: cover; }
 
 .hero-info { flex: 1; min-width: 0; margin-bottom: 4px; }
-.hero-title { margin: 0; font-size: 20px; font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-title { margin: 0; font-size: 20px; font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px var(--shadow-xheavy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .hero-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.meta-date { font-size: 12px; color: var(--text-secondary); text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+.meta-date { font-size: 12px; color: var(--text-secondary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
 .rating-tag { background: var(--color-warning); color: #000; font-weight: bold; }
 
 .actions-bar { padding: 0 20px 20px; }
