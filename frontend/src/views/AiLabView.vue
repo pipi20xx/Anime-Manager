@@ -107,7 +107,7 @@ onMounted(() => {
         当前系统已移除自动化流程中的 AI 介入逻辑。AI 引擎目前仅供本实验室<b>手动测试</b>使用，不会参与实际的文件整理或扫描。
       </n-alert>
 
-      <n-card bordered>
+      <n-card bordered style="background: var(--app-surface-card)">
         <template #header>
           <div class="card-title-box">
             <n-icon style="color: var(--n-primary-color)"><RunIcon /></n-icon>

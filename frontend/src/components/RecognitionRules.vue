@@ -4,7 +4,7 @@ import GuideContent from '@/docs/recognition-rules.md'
 </script>
 
 <template>
-  <n-card bordered>
+  <n-card bordered style="background: var(--app-surface-card)">
     <div class="md-content">
       <GuideContent />
     </div>

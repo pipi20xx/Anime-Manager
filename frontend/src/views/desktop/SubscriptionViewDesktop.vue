@@ -106,7 +106,7 @@ onMounted(fetchData)
 
       <!-- 订阅源管理 -->
       <n-tab-pane name="feeds" tab="订阅源">
-        <n-card bordered>
+        <n-card bordered style="background: var(--app-surface-card)">
           <template #header>
             <div class="card-title-box">
               <n-icon size="20" style="color: var(--n-primary-color)"><FeedIcon /></n-icon>
@@ -188,7 +188,7 @@ onMounted(fetchData)
 
       <!-- 自动下载规则 -->
       <n-tab-pane name="rules" tab="下载规则">
-        <n-card bordered>
+        <n-card bordered style="background: var(--app-surface-card)">
           <template #header>
             <div class="card-title-box">
               <n-icon size="20" style="color: var(--n-warning-color)"><AutoIcon /></n-icon>

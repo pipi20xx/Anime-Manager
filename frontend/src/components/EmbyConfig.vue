@@ -81,7 +81,7 @@ const fetchToken = async () => {
 </script>
 
 <template>
-  <n-card bordered>
+  <n-card bordered style="background: var(--app-surface-card)">
     <template #header>
       <div class="card-title-box">
         <span class="card-title-text">Emby 设置</span>
