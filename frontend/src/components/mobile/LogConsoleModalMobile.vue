@@ -154,10 +154,10 @@ watch(() => props.show, (newVal) => {
 </template>
 
 <style scoped>
-.mobile-console { background: var(--bg-primary); height: 100%; display: flex; flex-direction: column; position: relative; }
+.mobile-console { background: var(--app-modal-bg); height: 100%; display: flex; flex-direction: column; position: relative; }
 .console-header { 
   display: flex; justify-content: space-between; align-items: center; 
-  padding: 8px 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-medium); 
+  padding: 8px 12px; background: transparent; border-bottom: 1px solid var(--app-border-light); 
   z-index: 20;
 }
 .header-title { display: flex; flex-direction: column; align-items: center; }
@@ -166,7 +166,7 @@ watch(() => props.show, (newVal) => {
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 .dot.active { background: var(--n-primary-color); box-shadow: 0 0 4px var(--n-primary-color); }
 
-.console-body { flex: 1; overflow: hidden; background: var(--app-surface-card); padding: 4px; position: relative; z-index: 10; display: flex; flex-direction: column; }
+.console-body { flex: 1; overflow: hidden; background: transparent; padding: 4px; position: relative; z-index: 10; display: flex; flex-direction: column; }
 .log-spin { flex: 1; display: flex; flex-direction: column; height: 100%; }
 :deep(.n-spin-content) { flex: 1; display: flex; flex-direction: column; height: 100%; }
 .log-list { flex: 1; height: 100% !important; }
@@ -184,8 +184,8 @@ watch(() => props.show, (newVal) => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-medium);
+  background: var(--app-modal-bg);
+  border-top: 1px solid var(--app-border-light);
   border-radius: 16px 16px 0 0;
   z-index: 50;
   box-shadow: var(--shadow-lg);

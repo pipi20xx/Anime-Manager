@@ -154,7 +154,7 @@ watch(() => props.show, (newVal) => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: var(--app-surface-card);
+  background: transparent;
   border-bottom: 1px solid var(--app-border-light);
   flex-shrink: 0;
 }
@@ -180,7 +180,7 @@ watch(() => props.show, (newVal) => {
 
 .console-body {
   flex: 1;
-  background-color: var(--app-surface-card);
+  background-color: transparent;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -210,7 +210,7 @@ watch(() => props.show, (newVal) => {
   border-radius: var(--card-border-radius, 12px) !important;
   overflow: hidden;
   border: 1px solid var(--app-border-light) !important;
-  background: var(--app-surface-card) !important;
+  background: var(--app-modal-bg) !important;
 }
 
 .log-line {
