@@ -328,7 +328,7 @@ onMounted(() => {
 
 /* 顶部工具栏 */
 .browser-toolbar { 
-  background: var(--app-surface-subtle); 
+  background: var(--app-surface-card); 
   padding: 12px 20px; 
   border-radius: var(--card-border-radius, 12px); 
   border: 1px solid var(--app-border-light); 

@@ -37,8 +37,8 @@ const updateCssVariables = () => {
   
   // 统一质感变量
   if (current === 'round') {
-    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.08)')
-    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.2)') 
+    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.12)')
+    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.25)') 
     root.style.setProperty('--app-border-light', 'rgba(255, 156, 179, 0.2)') 
     root.style.setProperty('--card-border-radius', '24px')
     root.style.setProperty('--button-border-radius', '20px')
@@ -93,8 +93,8 @@ const updateCssVariables = () => {
     root.style.setProperty('--border-heavy-alpha', '0.2')
     
   } else if (current === 'purple') {
-    root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.06)')
-    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.4)')
+    root.style.setProperty('--app-surface-card', 'rgba(187, 134, 252, 0.1)')
+    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.45)')
     root.style.setProperty('--app-border-light', 'rgba(187, 134, 252, 0.25)')
     root.style.setProperty('--card-border-radius', '14px')
     root.style.setProperty('--button-border-radius', '10px')
@@ -149,8 +149,8 @@ const updateCssVariables = () => {
     root.style.setProperty('--border-heavy-alpha', '0.2')
     
   } else {
-    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.06)')
-    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.3)')
+    root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.1)')
+    root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.35)')
     root.style.setProperty('--app-border-light', 'rgba(255, 255, 255, 0.12)')
     root.style.setProperty('--card-border-radius', '10px')
     root.style.setProperty('--button-border-radius', '6px')
