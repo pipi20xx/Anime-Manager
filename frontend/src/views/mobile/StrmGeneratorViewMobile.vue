@@ -55,7 +55,7 @@ onMounted(fetchTasks)
          <n-card v-for="(task, index) in tasks" :key="task.id" class="mobile-card" size="small" @click="openEdit(index)">
            <div class="card-header">
              <div class="title-row">
-               <n-icon color="#2080f0" size="20"><LinkIcon /></n-icon>
+               <n-icon size="20" class="link-icon"><LinkIcon /></n-icon>
                <span class="task-title">{{ task.name }}</span>
              </div>
              <div class="action-row">
@@ -172,4 +172,5 @@ onMounted(fetchTasks)
   justify-content: flex-end; 
   gap: 8px; 
 }
+.link-icon { color: var(--n-primary-color); }
 </style>

@@ -145,9 +145,9 @@ const menuOptions = [
             </div>
           </div>
           <div class="card-status">
-             <n-icon v-if="item.status === 'failed'" color="#e88080" size="20"><ErrorIcon/></n-icon>
-             <n-icon v-else-if="item.status === 'skipped'" color="#f0a020" size="20"><ArrowIcon/></n-icon>
-             <n-icon v-else color="#63e2b7" size="20"><SuccessIcon/></n-icon>
+             <n-icon v-if="item.status === 'failed'" style="color: var(--n-error-color)" size="20"><ErrorIcon/></n-icon>
+             <n-icon v-else-if="item.status === 'skipped'" style="color: var(--n-warning-color)" size="20"><ArrowIcon/></n-icon>
+             <n-icon v-else style="color: var(--n-primary-color)" size="20"><SuccessIcon/></n-icon>
           </div>
         </div>
         
@@ -156,7 +156,7 @@ const menuOptions = [
            <n-tag v-if="item.video_encode" size="tiny" type="warning" bordered>{{ item.video_encode }}</n-tag>
            <n-tag v-if="item.team" size="tiny" type="default" bordered>{{ item.team }}</n-tag>
            <n-tag size="tiny" quaternary>{{ getActionLabel(item.action_type) }}</n-tag>
-           <n-tag v-if="item.file_size" size="tiny" quaternary color="#888">{{ item.file_size }}</n-tag>
+           <n-tag v-if="item.file_size" size="tiny" quaternary style="color: var(--text-muted)">{{ item.file_size }}</n-tag>
         </div>
 
         <div v-if="item.status === 'failed' && item.message" class="error-box">

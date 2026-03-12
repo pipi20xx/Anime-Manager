@@ -156,7 +156,7 @@ const {
 .hero-title { margin: 0; font-size: 20px; font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px var(--shadow-xheavy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .hero-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .meta-date { font-size: 12px; color: var(--text-secondary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
-.rating-tag { background: var(--color-warning); color: #000; font-weight: bold; }
+.rating-tag { background: var(--color-warning); color: var(--text-primary); font-weight: bold; }
 
 .actions-bar { padding: 0 20px 20px; }
 

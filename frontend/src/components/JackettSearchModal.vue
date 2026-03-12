@@ -125,7 +125,7 @@ const close = () => {
   >
     <template #header>
       <div class="search-header">
-        <n-icon size="24" color="#63e2b7"><SearchIcon /></n-icon>
+        <n-icon size="24" class="search-icon"><SearchIcon /></n-icon>
         <span style="font-weight: bold; font-size: 18px">全网资源搜索 (Jackett)</span>
       </div>
     </template>
@@ -268,4 +268,5 @@ const close = () => {
   line-height: 1.4;
   word-break: break-all;
 }
+.search-icon { color: var(--n-primary-color); }
 </style>

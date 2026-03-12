@@ -50,7 +50,7 @@ const columns = [
         <div class="subtitle">AUDIT LOGS & CONSOLE</div>
       </div>
       <n-space>
-        <n-button type="primary" @click="showConsole = true" color="#2080f0">
+        <n-button type="primary" @click="showConsole = true">
           <template #icon><n-icon><TerminalIcon /></n-icon></template>
           打开实时控制台
         </n-button>

@@ -59,7 +59,7 @@ const {
                 <div class="card-title-row">
                    <div class="title-box">
                       <n-icon 
-                        :color="row.is_default ? '#fbb308' : '#ccc'" 
+                        :color="row.is_default ? 'var(--n-warning-color)' : 'var(--text-muted)'" 
                         size="20"
                         @click.stop="setDefault(row)"
                       >

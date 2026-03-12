@@ -108,6 +108,6 @@ const handleConfirm = () => {
 
 <style scoped>
 .path-text { font-size: 12px; font-family: monospace; color: var(--n-primary-color); word-break: break-all; max-width: 300px; text-align: right; }
-.border-box { border: 1px solid #333; border-radius: 4px; margin-top: 8px; }
+.border-box { border: 1px solid var(--app-border-light); border-radius: 4px; margin-top: 8px; }
 .mb-2 { margin-bottom: 8px; }
 </style>

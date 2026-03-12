@@ -35,7 +35,7 @@
         <n-gi span="2 m:1">
           <n-card title="多重身份验证 (2FA)" size="small">
             <template #header-extra>
-              <n-icon size="20" color="#03dac6"><ShieldIcon /></n-icon>
+              <n-icon size="20" class="shield-icon"><ShieldIcon /></n-icon>
             </template>
             <n-space vertical size="large">
               <div class="setting-item">
@@ -171,4 +171,5 @@ onMounted(fetchAccountInfo)
 .setting-item { display: flex; justify-content: space-between; align-items: center; }
 .qr-container { background-color: var(--bg-primary); padding: 10px; border-radius: 8px; display: flex; justify-content: center; }
 .qr-container img { width: 200px; height: 200px; }
+.shield-icon { color: var(--n-primary-color); }
 </style>

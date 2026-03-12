@@ -33,9 +33,9 @@ const columns = [
     title: '默认', key: 'is_default', width: 60, align: 'center',
     render(row: any) {
       return row.is_default 
-        ? h(NIcon, { color: '#fbb308', size: 20 }, { default: () => h(StarFilledIcon) })
+        ? h(NIcon, { color: 'var(--n-warning-color)', size: 20 }, { default: () => h(StarFilledIcon) })
         : h(NButton, { quaternary: true, circle: true, onClick: () => setDefault(row) }, { 
-            icon: () => h(NIcon, { color: '#555' }, { default: () => h(StarIcon) }) 
+            icon: () => h(NIcon, { color: 'var(--text-muted)' }, { default: () => h(StarIcon) }) 
           })
     }
   },

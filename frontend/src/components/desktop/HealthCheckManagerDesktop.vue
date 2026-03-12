@@ -34,7 +34,7 @@ const columns = [
       
       return h(NSpace, { align: 'center', size: 4 }, {
         default: () => [
-          h(NIcon, { component: icon, color: info.type === 'success' ? '#18a058' : (info.type === 'error' ? '#d03050' : '#888') }),
+          h(NIcon, { component: icon, color: info.type === 'success' ? 'var(--n-success-color)' : (info.type === 'error' ? 'var(--n-error-color)' : 'var(--text-muted)') }),
           h(NTag, { type: info.type, size: 'small', bordered: false }, { default: () => info.text })
         ]
       })

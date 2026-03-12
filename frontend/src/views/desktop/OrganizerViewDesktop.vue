@@ -136,7 +136,7 @@ onUnmounted(stopBgTaskPolling)
               <n-card bordered :class="['rule-card', 'clickable-card', { 'default-rule': i === 0 }]" @click="openEditRule(i)">
                 <template #header>
                   <div class="card-title-box">
-                    <n-icon class="drag-handle" @click.stop :color="i === 0 ? 'var(--n-primary-color)' : '#888'"><DragIcon /></n-icon>
+                    <n-icon class="drag-handle" @click.stop :color="i === 0 ? 'var(--n-primary-color)' : 'var(--text-muted)'"><DragIcon /></n-icon>
                     <span class="card-title-text">{{ rule.name }}</span>
                     <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
                   </div>

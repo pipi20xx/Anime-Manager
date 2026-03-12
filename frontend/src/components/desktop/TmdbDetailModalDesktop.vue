@@ -63,7 +63,7 @@ const {
                               <template #icon><n-icon><StarIcon /></n-icon></template>
                               {{ detail.vote_average?.toFixed(1) }}
                           </n-tag>
-                          <n-tag :bordered="false" color="#333" size="small">
+                          <n-tag :bordered="false" size="small" style="background: var(--app-surface-inner)">
                               <template #icon><n-icon><DateIcon /></n-icon></template>
                               {{ detail.release_date || detail.first_air_date }}
                           </n-tag>

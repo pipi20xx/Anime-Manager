@@ -8,7 +8,7 @@ const { raw, tags, safeGet } = useRecognitionRaw()
 
 <template>
   <n-card bordered title="本地解析" size="small" class="sub-card-mobile">
-    <template #header-extra><n-icon color="#2080f0" size="18"><LocalIcon /></n-icon></template>
+    <template #header-extra><n-icon class="local-icon" size="18"><LocalIcon /></n-icon></template>
     
     <div class="raw-data-content">
       <div class="raw-title-box">
@@ -46,4 +46,5 @@ const { raw, tags, safeGet } = useRecognitionRaw()
 
 .raw-tags-cloud { display: flex; flex-wrap: wrap; gap: 4px; }
 .mt-3 { margin-top: 12px; }
+.local-icon { color: var(--n-primary-color); }
 </style>

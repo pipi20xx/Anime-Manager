@@ -50,7 +50,7 @@ const {
     <!-- Header -->
     <div class="mobile-header">
       <div class="header-left">
-        <n-icon size="24" color="#63e2b7"><CalendarIcon /></n-icon>
+        <n-icon size="24" class="calendar-icon"><CalendarIcon /></n-icon>
         <span class="header-title">追剧日历</span>
       </div>
       <n-button v-bind="getButtonStyle('icon')" @click="showManageModal = true">
@@ -156,7 +156,7 @@ const {
           <div style="padding: 16px">
             <n-form label-placement="top">
               <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
-                <n-icon size="18" color="#63e2b7"><NotifyIcon /></n-icon>
+                <n-icon size="18" class="notify-icon"><NotifyIcon /></n-icon>
                 <n-text strong>每日番剧播报</n-text>
               </div>
 
@@ -243,4 +243,6 @@ const {
 .discover-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .discover-item { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 8px; background: var(--bg-surface); border-radius: 8px; }
 .discover-name { font-size: 11px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; height: 28px; }
+.calendar-icon { color: var(--n-primary-color); }
+.notify-icon { color: var(--n-primary-color); }
 </style>

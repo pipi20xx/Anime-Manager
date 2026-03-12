@@ -31,7 +31,7 @@ const {
   >
     <template #header>
       <div class="header-box">
-        <n-icon size="24" color="#f06292"><FlashIcon /></n-icon>
+        <n-icon size="24" class="flash-icon"><FlashIcon /></n-icon>
         <div>
           <div class="title">Bangumi 一键订阅</div>
           <div class="subtitle">快速同步全周放送列表</div>
@@ -101,4 +101,5 @@ const {
 .poster { width: 40px; height: 55px; border-radius: 4px; object-fit: cover; }
 .info { flex: 1; overflow: hidden; }
 .name { font-weight: bold; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flash-icon { color: var(--n-primary-color); }
 </style>

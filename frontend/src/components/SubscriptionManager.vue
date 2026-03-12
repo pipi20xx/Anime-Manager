@@ -257,7 +257,7 @@ onMounted(() => {
               <div class="upgrade-tag" v-if="getUpgradeStatus(sub)">
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                     <n-icon size="14" :color="getUpgradeStatus(sub)?.allowed ? '#63e2b7' : '#999'">
+                     <n-icon size="14" :color="getUpgradeStatus(sub)?.allowed ? 'var(--n-primary-color)' : 'var(--text-muted)'">
                        <UpgradeIcon/>
                      </n-icon>
                   </template>

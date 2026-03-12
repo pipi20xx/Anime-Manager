@@ -139,7 +139,7 @@ onUnmounted(stopBgTaskPolling)
             <n-card v-for="(rule, i) in rules" :key="rule.id" class="mobile-card" size="small" @click="openEditRule(i)">
               <div class="card-header">
                 <div class="title-row">
-                  <n-icon :color="i === 0 ? 'var(--n-primary-color)' : '#888'" size="20"><RuleIcon /></n-icon>
+                  <n-icon :color="i === 0 ? 'var(--n-primary-color)' : 'var(--text-muted)'" size="20"><RuleIcon /></n-icon>
                   <span class="item-title">{{ rule.name }}</span>
                   <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
                 </div>

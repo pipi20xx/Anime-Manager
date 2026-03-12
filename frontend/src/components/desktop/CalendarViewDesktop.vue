@@ -54,7 +54,7 @@ const {
       <!-- 左侧：标题与管理 -->
       <n-space align="center" :size="12">
         <div class="title-section-new">
-          <n-icon size="22" color="#63e2b7" style="margin-top: 4px"><CalendarIcon /></n-icon>
+          <n-icon size="22" class="calendar-icon" style="margin-top: 4px"><CalendarIcon /></n-icon>
           <span class="header-title-text">追剧日历</span>
         </div>
         <n-button v-bind="getButtonStyle('icon')" size="small" @click="showManageModal = true" title="管理追踪">
@@ -191,7 +191,7 @@ const {
           <div style="padding: 24px 40px">
             <n-form label-placement="left" label-width="120">
               <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
-                <n-icon size="20" color="#63e2b7"><NotifyIcon /></n-icon>
+                <n-icon size="20" class="notify-icon"><NotifyIcon /></n-icon>
                 <n-text strong style="font-size: 16px">每日播报设置</n-text>
               </div>
               
@@ -460,4 +460,6 @@ const {
 .discover-item:hover { background: color-mix(in srgb, var(--n-primary-color), transparent 90%); }
 .discover-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .calendar-spin { height: 100%; }
+.calendar-icon { color: var(--n-primary-color); }
+.notify-icon { color: var(--n-primary-color); }
 </style>
