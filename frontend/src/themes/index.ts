@@ -27,7 +27,21 @@ export const purpleOverrides: GlobalThemeOverrides = {
   Card: { borderRadius: '14px', borderColor: 'rgba(187, 134, 252, 0.15)' },
   Button: { borderRadiusMedium: '10px', fontWeight: '600' },
   Input: { borderRadius: '10px' },
-  Select: { borderRadius: '10px' },
+  Select: { 
+    borderRadius: '10px',
+    peers: {
+      InternalSelectMenu: {
+        color: 'var(--app-dropdown-bg)'
+      }
+    }
+  },
+  Dropdown: {
+    peers: {
+      InternalDropdownMenu: {
+        color: 'var(--app-dropdown-bg)'
+      }
+    }
+  },
   Tag: { borderRadius: '6px' },
   Popconfirm: {
     color: 'var(--app-modal-bg)',
@@ -56,6 +70,9 @@ export const purpleOverrides: GlobalThemeOverrides = {
     tdColorHoverModal: 'rgba(187, 134, 252, 0.1)',
     thColorPopover: 'transparent',
     tdColorPopover: 'transparent',
-    tdColorHoverPopover: 'rgba(187, 134, 252, 0.1)'
+    tdColorHoverPopover: 'rgba(187, 134, 252, 0.1)',
+    borderColor: 'rgba(187, 134, 252, 0.35)',
+    borderColorModal: 'rgba(187, 134, 252, 0.35)',
+    borderColorPopover: 'rgba(187, 134, 252, 0.35)'
   }
 }

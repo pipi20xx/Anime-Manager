@@ -49,18 +49,27 @@ watch(() => props.show, (newVal) => {
                  </template>
                  <n-thing :title="item.title" content-style="margin-top: 4px">
                    <template #description>
-                      <n-tag size="small" type="info" bordered={false} style="margin-top: 4px;">{{ item.feed_name }}</n-tag>
+                      <n-tag size="small" bordered={false} style="margin-top: 4px; color: var(--color-info); borderColor: var(--color-info-bg); backgroundColor: var(--color-info-bg);">{{ item.feed_name }}</n-tag>
                    </template>
                  </n-thing>
                  <template #suffix>
                     <div style="display: flex; flex-direction: column; gap: 8px; justify-content: center;">
                        <n-popselect :options="clientOptions" @update:value="val => handleDownload(item, val)" trigger="click">
-                         <n-button v-bind="getButtonStyle('iconPrimary')" size="small"><template #icon><n-icon><DownloadIcon/></n-icon></template></n-button>
+                         <n-button 
+                           v-bind="getButtonStyle('iconPrimary')" 
+                           size="small"
+                           :style="{ color: 'var(--n-primary-color)', borderColor: 'var(--n-primary-color)', backgroundColor: 'var(--app-code-primary)' }"
+                         >
+                           <template #icon><n-icon><DownloadIcon/></n-icon></template>
+                         </n-button>
                        </n-popselect>
                        <n-button 
                          v-bind="getButtonStyle('icon')"
                          size="small"
-                         :type="item.is_downloaded ? 'warning' : 'info'"
+                         :style="item.is_downloaded 
+                           ? { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' }
+                           : { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' }
+                         "
                          @click="handleToggleHistory(item, !item.is_downloaded)"
                        >
                          <template #icon><n-icon><HistoryIcon/></n-icon></template>

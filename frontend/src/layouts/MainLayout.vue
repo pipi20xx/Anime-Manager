@@ -464,6 +464,15 @@ const isNavActive = (key: string) => currentViewKey.value === key
   max-width: 80px;
   color: var(--text-tertiary);
 }
+
+.sidebar-footer :deep(.n-button .n-icon) {
+  color: var(--text-secondary) !important;
+}
+
+.sidebar-footer :deep(.n-button:hover .n-icon) {
+  color: var(--text-primary) !important;
+}
+
 .view-wrapper {
   flex: 1;
   width: 100%;

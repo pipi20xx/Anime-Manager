@@ -22,6 +22,18 @@ const {
   handleToggleHistory
 } = useRulePreview(props)
 
+const getTagStyle = (type: string) => {
+  const styles: Record<string, any> = {
+    info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
+    success: { color: 'var(--color-success)', borderColor: 'var(--color-success-bg)', backgroundColor: 'var(--color-success-bg)' },
+    warning: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
+    error: { color: 'var(--color-error)', borderColor: 'var(--color-error-bg)', backgroundColor: 'var(--color-error-bg)' },
+    primary: { color: 'var(--n-primary-color)', borderColor: 'var(--app-code-primary)', backgroundColor: 'var(--app-code-primary)' },
+    default: { color: 'var(--text-tertiary)', borderColor: 'var(--app-border-light)', backgroundColor: 'var(--bg-surface)' }
+  }
+  return styles[type] || styles.default
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal) fetchPreview()
 })
@@ -42,7 +54,7 @@ const columns = [
     key: 'feed_name',
     width: 180,
     render(row: any) {
-      return h(NTag, { size: 'small', quaternary: true, type: 'info' }, { default: () => row.feed_name })
+      return h(NTag, { size: 'small', quaternary: true, style: getTagStyle('info') }, { default: () => row.feed_name })
     }
   },
   {
@@ -52,9 +64,19 @@ const columns = [
     render(row: any) {
       const btns = []
       if (row.is_downloaded) {
-        btns.push(h(NButton, { size: 'tiny', secondary: true, type: 'warning', onClick: () => handleToggleHistory(row, false) }, { default: () => '清除下载记录' }))
+        btns.push(h(NButton, { 
+          size: 'tiny', 
+          secondary: true, 
+          style: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
+          onClick: () => handleToggleHistory(row, false) 
+        }, { default: () => '清除下载记录' }))
       } else {
-        btns.push(h(NButton, { size: 'tiny', secondary: true, type: 'info', onClick: () => handleToggleHistory(row, true) }, { default: () => '设为已下载' }))
+        btns.push(h(NButton, { 
+          size: 'tiny', 
+          secondary: true, 
+          style: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
+          onClick: () => handleToggleHistory(row, true) 
+        }, { default: () => '设为已下载' }))
       }
       btns.push(
         h(NPopselect, {
@@ -62,7 +84,17 @@ const columns = [
           onUpdateValue: (val: string) => handleDownload(row, val),
           trigger: 'click'
         }, {
-          default: () => h(NButton, { size: 'tiny', type: 'primary', secondary: true, style: 'margin-left: 6px', disabled: clientOptions.value.length === 0 }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '下载' })
+          default: () => h(NButton, { 
+            size: 'tiny', 
+            bordered: true,
+            style: { 
+              marginLeft: '6px',
+              color: 'var(--n-primary-color)', 
+              borderColor: 'var(--n-primary-color)', 
+              backgroundColor: 'var(--app-code-primary)' 
+            },
+            disabled: clientOptions.value.length === 0
+          }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '下载' })
         })
       )
       return h(NSpace, { size: 4 }, { default: () => btns })

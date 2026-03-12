@@ -36,6 +36,7 @@ const updateCssVariables = () => {
   root.style.setProperty('--app-surface-inner', 'rgba(187, 134, 252, 0.12)')
   root.style.setProperty('--app-border-light', 'rgba(187, 134, 252, 0.25)')
   root.style.setProperty('--app-modal-bg', 'rgba(187, 134, 252, 0.35)')
+  root.style.setProperty('--app-dropdown-bg', 'rgba(42, 26, 58, 0.95)')
   root.style.setProperty('--card-border-radius', '14px')
   root.style.setProperty('--button-border-radius', '10px')
   root.style.setProperty('--font-family-base', 'Inter, sans-serif')
@@ -71,6 +72,8 @@ const updateCssVariables = () => {
   root.style.setProperty('--color-warning-bg', 'rgba(255, 183, 77, 0.1)')
   root.style.setProperty('--color-error-bg', 'rgba(207, 102, 121, 0.1)')
   root.style.setProperty('--color-info-bg', 'rgba(3, 218, 198, 0.1)')
+  
+  root.style.setProperty('--code-bg', 'rgba(187, 134, 252, 0.12)')
   
   root.style.setProperty('--opacity-disabled', '0.3')
   root.style.setProperty('--opacity-muted', '0.5')
