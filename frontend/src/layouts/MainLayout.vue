@@ -407,6 +407,26 @@ const isNavActive = (key: string) => currentViewKey.value === key
   background: var(--bg-surface-hover) !important;
   color: var(--text-primary) !important;
 }
+
+/* 菜单项动画 */
+:deep(.n-menu-item) {
+  transition: all var(--transition-fast) !important;
+}
+
+:deep(.n-menu-item:hover) {
+  transform: translateX(4px);
+}
+
+:deep(.n-menu-item.n-menu-item--selected) {
+  animation: menuPulse 0.3s ease;
+}
+
+@keyframes menuPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
 .logo-container {
   display: flex;
   align-items: center;
@@ -515,14 +535,75 @@ const isNavActive = (key: string) => currentViewKey.value === key
   color: var(--text-muted);
   transition: all var(--transition-normal);
   cursor: pointer;
+  position: relative;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 40px;
+  height: 40px;
+  background: var(--primary-subtle);
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-normal) var(--ease-spring);
+  z-index: -1;
 }
 
 .nav-item.active {
   color: var(--n-primary-color);
 }
 
+.nav-item.active::before {
+  transform: translateX(-50%) scale(1);
+}
+
+.nav-item:active {
+  transform: scale(0.92);
+}
+
 .nav-item .label {
   font-size: var(--text-2xs);
   margin-top: 2px;
+  transition: all var(--transition-fast);
+}
+
+.nav-item.active .label {
+  font-weight: 600;
+  transform: scale(1.05);
+}
+
+/* 页面过渡动画 - 淡入上浮 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 页面内容进入动画 */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.view-wrapper > * {
+  animation: pageEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
