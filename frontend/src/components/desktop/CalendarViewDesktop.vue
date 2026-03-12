@@ -324,7 +324,7 @@ const {
 }
 
 .grid-cell.is-today {
-  background: color-mix(in srgb, var(--n-primary-color), transparent 94%);
+  background: var(--primary-subtle);
 }
 
 .grid-cell.off-month {
@@ -369,7 +369,7 @@ const {
 
 .anime-entry-line:hover {
   background: var(--bg-surface-hover);
-  border-color: color-mix(in srgb, var(--n-primary-color), transparent 70%);
+  border-color: var(--primary-strong);
 }
 
 .status-dot {
@@ -381,7 +381,7 @@ const {
   flex-shrink: 0;
 }
 .anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--n-text-color-2); }
-.ep-count-tag { font-size: 9px; background: color-mix(in srgb, var(--n-primary-color), transparent 85%); color: var(--n-primary-color); padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
+.ep-count-tag { font-size: 9px; background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
 .discover-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -457,7 +457,7 @@ const {
 }
 
 .discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background 0.2s; min-width: 0; }
-.discover-item:hover { background: color-mix(in srgb, var(--n-primary-color), transparent 90%); }
+.discover-item:hover { background: var(--primary-light); }
 .discover-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .calendar-spin { height: 100%; }
 .calendar-icon { color: var(--n-primary-color); }

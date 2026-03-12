@@ -88,8 +88,8 @@ const {
 
 .meta-row { display: flex; gap: 4px; flex-wrap: wrap; }
 .p-tag { padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-.tag-green { color: var(--color-success); background: var(--color-success-bg); border: 1px solid color-mix(in srgb, var(--color-success), transparent 70%); }
-.tag-blue { color: var(--color-info); background: var(--color-info-bg); border: 1px solid color-mix(in srgb, var(--color-info), transparent 70%); }
+.tag-green { color: var(--color-success); background: var(--color-success-bg); border: 1px solid var(--success-strong); }
+.tag-blue { color: var(--color-info); background: var(--color-info-bg); border: 1px solid var(--info-strong); }
 
 .date-id-row { display: flex; flex-direction: column; gap: 2px; }
 .date { font-size: 10px; color: var(--n-primary-color); font-weight: 500; }

@@ -344,16 +344,16 @@ onMounted(() => {
 .modern-list :deep(.n-list-item) { padding: 12px 20px !important; transition: background 0.2s; border-bottom: 1px solid var(--app-border-light); }
 .modern-list :deep(.n-list-item:last-child) { border-bottom: none; }
 
-.file-icon-box { 
-  width: 40px; height: 40px; 
-  border-radius: var(--button-border-radius, 10px); 
-  display: flex; align-items: center; justify-content: center; 
-  background: color-mix(in srgb, var(--n-primary-color), transparent 90%); 
-  color: var(--n-primary-color); 
+.file-icon-box {
+  width: 40px; height: 40px;
+  border-radius: var(--button-border-radius, 10px);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary-light);
+  color: var(--n-primary-color);
 }
-.file-icon-box.is-dir { 
-  background: color-mix(in srgb, var(--n-info-color), transparent 90%); 
-  color: var(--n-info-color); 
+.file-icon-box.is-dir {
+  background: var(--info-light);
+  color: var(--n-info-color);
 }
 
 .file-info .file-name { font-weight: 600; font-size: 15px; color: var(--n-text-color-1); margin-bottom: 4px; }

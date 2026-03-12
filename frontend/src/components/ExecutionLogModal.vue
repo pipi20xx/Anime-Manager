@@ -127,8 +127,8 @@ watch(() => props.logs.length, () => {
 .stream-table td { padding: 10px 12px; border-bottom: 1px solid var(--app-border-light); color: var(--n-text-color-2); }
 .mf { font-family: monospace; color: var(--n-text-color-1); }
 .mt { font-family: monospace; color: var(--n-text-color-3); }
-.start-row { background: color-mix(in srgb, var(--n-primary-color), transparent 95%); }
-.info-row { background: color-mix(in srgb, var(--n-info-color), transparent 95%); }
+.start-row { background: var(--primary-subtle); }
+.info-row { background: var(--info-subtle); }
 .start-msg { color: var(--n-primary-color); font-weight: bold; margin-left: 8px; }
 .info-msg { color: var(--n-info-color); font-style: italic; margin-left: 8px; }
 .lb-pulse { padding: 16px; }

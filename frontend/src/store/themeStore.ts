@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import { themeConfigs, themeOverridesMap, ThemeType } from '../themes'
+import { themeConfigs, themeOverridesMap, ThemeType, generateColorMix, colorMixOpacity } from '../themes'
 
 export const currentThemeType = ref<ThemeType>((localStorage.getItem('apm_theme_type') as ThemeType) || 'purple')
 
@@ -94,6 +94,85 @@ const updateCssVariables = () => {
   root.style.setProperty('--border-light-alpha', '0.05')
   root.style.setProperty('--border-medium-alpha', '0.1')
   root.style.setProperty('--border-heavy-alpha', '0.2')
+
+  // Color-mix variables for consistent theming
+  const primary = config.primaryColor
+  const info = common.infoColor || '#03dac6'
+  const warning = common.warningColor || '#ffb74d'
+  const error = common.errorColor || '#cf6679'
+  const success = common.successColor || '#81c784'
+
+  // Primary color mix variants
+  root.style.setProperty('--primary-subtle', generateColorMix(primary, colorMixOpacity.subtle))
+  root.style.setProperty('--primary-light', generateColorMix(primary, colorMixOpacity.light))
+  root.style.setProperty('--primary-medium', generateColorMix(primary, colorMixOpacity.medium))
+  root.style.setProperty('--primary-strong', generateColorMix(primary, colorMixOpacity.strong))
+  root.style.setProperty('--primary-half', generateColorMix(primary, colorMixOpacity.half))
+
+  // Info color mix variants
+  root.style.setProperty('--info-subtle', generateColorMix(info, colorMixOpacity.subtle))
+  root.style.setProperty('--info-light', generateColorMix(info, colorMixOpacity.light))
+  root.style.setProperty('--info-medium', generateColorMix(info, colorMixOpacity.medium))
+  root.style.setProperty('--info-strong', generateColorMix(info, colorMixOpacity.strong))
+
+  // Warning color mix variants
+  root.style.setProperty('--warning-subtle', generateColorMix(warning, colorMixOpacity.subtle))
+  root.style.setProperty('--warning-light', generateColorMix(warning, colorMixOpacity.light))
+  root.style.setProperty('--warning-medium', generateColorMix(warning, colorMixOpacity.medium))
+  root.style.setProperty('--warning-strong', generateColorMix(warning, colorMixOpacity.strong))
+
+  // Error color mix variants
+  root.style.setProperty('--error-subtle', generateColorMix(error, colorMixOpacity.subtle))
+  root.style.setProperty('--error-light', generateColorMix(error, colorMixOpacity.light))
+  root.style.setProperty('--error-medium', generateColorMix(error, colorMixOpacity.medium))
+  root.style.setProperty('--error-strong', generateColorMix(error, colorMixOpacity.strong))
+
+  // Success color mix variants
+  root.style.setProperty('--success-subtle', generateColorMix(success, colorMixOpacity.subtle))
+  root.style.setProperty('--success-light', generateColorMix(success, colorMixOpacity.light))
+  root.style.setProperty('--success-medium', generateColorMix(success, colorMixOpacity.medium))
+  root.style.setProperty('--success-strong', generateColorMix(success, colorMixOpacity.strong))
+
+  // Shadow variables with consistent naming
+  root.style.setProperty('--shadow-xs', '0 1px 2px var(--shadow-light)')
+  root.style.setProperty('--shadow-sm', '0 2px 4px var(--shadow-medium)')
+  root.style.setProperty('--shadow-md', '0 4px 12px var(--shadow-medium)')
+  root.style.setProperty('--shadow-lg', '0 8px 24px var(--shadow-heavy)')
+  root.style.setProperty('--shadow-xl', '0 12px 32px var(--shadow-xheavy)')
+  root.style.setProperty('--shadow-glow-primary', `0 0 8px ${generateColorMix(primary, colorMixOpacity.half)}`)
+  root.style.setProperty('--shadow-glow-error', `0 0 8px ${generateColorMix(error, colorMixOpacity.half)}`)
+
+  // Text shadow variables
+  root.style.setProperty('--text-shadow-sm', '0 1px 2px var(--shadow-heavy)')
+  root.style.setProperty('--text-shadow-md', '0 2px 4px var(--shadow-heavy)')
+  root.style.setProperty('--text-shadow-lg', '0 4px 8px var(--shadow-xheavy)')
+
+  // Transition variables
+  root.style.setProperty('--transition-fast', '150ms ease')
+  root.style.setProperty('--transition-normal', '250ms ease')
+  root.style.setProperty('--transition-slow', '350ms ease')
+  root.style.setProperty('--transition-bounce', '300ms cubic-bezier(0.68, -0.55, 0.265, 1.55)')
+
+  // Font size scale
+  root.style.setProperty('--text-xs', '10px')
+  root.style.setProperty('--text-sm', '11px')
+  root.style.setProperty('--text-base', '12px')
+  root.style.setProperty('--text-md', '13px')
+  root.style.setProperty('--text-lg', '14px')
+  root.style.setProperty('--text-xl', '16px')
+  root.style.setProperty('--text-2xl', '20px')
+
+  // Z-index scale
+  root.style.setProperty('--z-base', '0')
+  root.style.setProperty('--z-dropdown', '100')
+  root.style.setProperty('--z-sticky', '200')
+  root.style.setProperty('--z-fixed', '300')
+  root.style.setProperty('--z-modal-backdrop', '400')
+  root.style.setProperty('--z-modal', '500')
+  root.style.setProperty('--z-popover', '600')
+  root.style.setProperty('--z-tooltip', '700')
+  root.style.setProperty('--z-toast', '800')
+  root.style.setProperty('--z-max', '9999')
 }
 
 // Initial call and watch

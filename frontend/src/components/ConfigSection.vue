@@ -79,7 +79,7 @@ const remoteText = computed({
 <style scoped>
 .config-section { background: var(--app-surface-subtle); border-radius: 8px; border: 1px solid var(--border-light); }
 .section-header { display: flex; align-items: center; gap: 12px; }
-.icon-box { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: color-mix(in srgb, var(--n-primary-color), transparent 90%); border-radius: 8px; flex-shrink: 0; }
+.icon-box { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--primary-light); border-radius: 8px; flex-shrink: 0; }
 .title-group { display: flex; flex-direction: column; gap: 2px; }
 .section-header .title { font-size: 15px; font-weight: bold; color: var(--text-secondary); line-height: 1.2; }
 .section-header .description { font-size: 12px; color: var(--text-tertiary); font-weight: normal; }

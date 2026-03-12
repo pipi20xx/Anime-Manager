@@ -71,5 +71,5 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
 .log-debug { color: var(--n-info-color); }
 .log-success { color: var(--n-primary-color); }
 .log-warning { color: var(--n-warning-color); }
-.log-result { background: color-mix(in srgb, var(--n-warning-color), transparent 90%); border-left: 3px solid var(--n-warning-color); padding-left: 12px; font-weight: bold; margin: 8px 0; }
+.log-result { background: var(--warning-light); border-left: 3px solid var(--n-warning-color); padding-left: 12px; font-weight: bold; margin: 8px 0; }
 </style>

@@ -70,7 +70,7 @@ const {
 </template>
 
 <style scoped>
-.final-card-container { border-radius: var(--card-border-radius, 12px); border: 1px solid color-mix(in srgb, var(--n-primary-color), transparent 75%); background: var(--bg-surface); }
+.final-card-container { border-radius: var(--card-border-radius, 12px); border: 1px solid var(--primary-medium); background: var(--bg-surface); }
 .header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .title-wrap { display: flex; align-items: center; gap: 8px; }
 .primary-icon { color: var(--n-primary-color); }
@@ -86,14 +86,14 @@ const {
 
 .pure-tags-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .p-tag { padding: 2px 8px; border-radius: var(--button-border-radius, 10px); font-size: 12px; font-weight: 500; border: 1px solid transparent; }
-.tag-green { color: var(--n-primary-color); border-color: color-mix(in srgb, var(--n-primary-color), transparent 70%); background: color-mix(in srgb, var(--n-primary-color), transparent 90%); }
-.tag-blue { color: var(--n-info-color); border-color: color-mix(in srgb, var(--n-info-color), transparent 70%); background: color-mix(in srgb, var(--n-info-color), transparent 90%); }
+.tag-green { color: var(--n-primary-color); border-color: var(--primary-strong); background: var(--primary-light); }
+.tag-blue { color: var(--n-info-color); border-color: var(--info-strong); background: var(--info-light); }
 .id-text { font-family: monospace; color: var(--text-muted); font-size: 12px; margin-left: 4px; }
 .date-text { color: var(--n-primary-color); font-size: 13px; margin-left: 4px; }
 
 .pure-specs-row { display: flex; gap: 6px; margin-bottom: 16px; }
 .p-badge { padding: 1px 6px; border-radius: var(--button-border-radius, 4px); font-size: 10px; background: var(--bg-surface); color: var(--text-tertiary); border: 1px solid rgba(255,255,255, var(--border-medium-alpha)); }
-.p-badge.blue { color: var(--n-info-color); border-color: color-mix(in srgb, var(--n-info-color), transparent 80%); }
+.p-badge.blue { color: var(--n-info-color); border-color: var(--info-medium); }
 
 .flex-info-grid { display: flex; gap: 1px; background: var(--app-border-light); border-radius: var(--card-border-radius, 8px); margin-bottom: 20px; overflow: hidden; border: 1px solid rgba(255,255,255, var(--border-light-alpha)); }
 .fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--bg-primary); padding: 12px 4px; }
@@ -105,6 +105,6 @@ const {
 .rl { color: var(--text-muted); width: 160px; flex-shrink: 0; }
 .rv { color: var(--text-secondary); word-break: break-all; }
 .rv.team { color: var(--n-success-color); font-weight: bold; }
-.rv.mono { font-family: monospace; color: var(--n-warning-color); background: color-mix(in srgb, var(--n-warning-color), transparent 95%); padding: 0 4px; border-radius: var(--button-border-radius, 2px); }
+.rv.mono { font-family: monospace; color: var(--n-warning-color); background: var(--warning-subtle); padding: 0 4px; border-radius: var(--button-border-radius, 2px); }
 .filename-text { font-size: 11px; opacity: var(--opacity-tertiary); }
 </style>

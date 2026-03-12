@@ -25,6 +25,20 @@ export interface ThemeConfig {
   docsTheme: string
 }
 
+// Color mix opacity levels
+export const colorMixOpacity = {
+  subtle: '96%',    // Very light tint
+  light: '90%',     // Light tint
+  medium: '85%',    // Medium tint
+  strong: '70%',    // Strong tint
+  half: '50%'       // Half transparent
+} as const
+
+// Generate color-mix CSS variable value
+export function generateColorMix(color: string, opacity: string): string {
+  return `color-mix(in srgb, ${color}, transparent ${opacity})`
+}
+
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
   purple: {
     name: '暗夜紫韵',

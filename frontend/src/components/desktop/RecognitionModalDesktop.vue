@@ -156,13 +156,13 @@ const {
 .title-line { font-size: 20px; font-weight: bold; color: var(--n-text-color-1); line-height: 1.3; margin-bottom: 8px; }
 .pure-tags-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .p-tag { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; border: 1px solid transparent; }
-.tag-green { color: var(--n-primary-color); background: color-mix(in srgb, var(--n-primary-color), transparent 90%); border-color: color-mix(in srgb, var(--n-primary-color), transparent 75%); }
-.tag-blue { color: var(--n-info-color); background: color-mix(in srgb, var(--n-info-color), transparent 90%); border-color: color-mix(in srgb, var(--n-info-color), transparent 75%); }
+.tag-green { color: var(--n-primary-color); background: var(--primary-light); border-color: var(--primary-medium); }
+.tag-blue { color: var(--n-info-color); background: var(--info-light); border-color: var(--info-medium); }
 .id-text { font-family: monospace; color: var(--text-muted); font-size: 11px; margin-left: 4px; }
 .date-text { color: var(--n-primary-color); font-size: 12px; margin-left: 4px; }
 .pure-specs-row { display: flex; gap: 6px; margin-bottom: 12px; }
 .p-badge { padding: 1px 6px; border-radius: 4px; font-size: 10px; background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-light); }
-.p-badge.blue { color: var(--n-info-color); border-color: color-mix(in srgb, var(--n-info-color), transparent 80%); }
+.p-badge.blue { color: var(--n-info-color); border-color: var(--info-medium); }
 .flex-info-grid { display: flex; gap: 1px; background: var(--border-medium); border-radius: 6px; margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border-light); }
 .fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--bg-secondary); padding: 8px 4px; }
 .fig-l { font-size: 10px; color: var(--text-hint); text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
@@ -218,5 +218,5 @@ const {
 .log-line.d { color: var(--n-info-color); }
 .log-line.s { color: var(--n-primary-color); }
 .log-line.w { color: var(--n-warning-color); }
-.log-line.i { color: var(--n-warning-color); font-weight: bold; background: color-mix(in srgb, var(--n-warning-color), transparent 92%); }
+.log-line.i { color: var(--n-warning-color); font-weight: bold; background: var(--warning-subtle); }
 </style>

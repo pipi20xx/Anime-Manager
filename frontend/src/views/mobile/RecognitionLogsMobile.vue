@@ -88,12 +88,12 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
 :deep(.log-debug) { color: var(--n-info-color); }
 :deep(.log-success) { color: var(--n-primary-color); }
 :deep(.log-warning) { color: var(--n-warning-color); }
-:deep(.log-result) { 
-  background: color-mix(in srgb, var(--n-warning-color), transparent 90%); 
-  border-left: 2px solid var(--n-warning-color); 
-  padding: 8px; 
-  font-weight: bold; 
-  margin: 8px 0; 
+:deep(.log-result) {
+  background: var(--warning-light);
+  border-left: 2px solid var(--n-warning-color);
+  padding: 8px;
+  font-weight: bold;
+  margin: 8px 0;
   border-radius: 4px;
 }
 </style>

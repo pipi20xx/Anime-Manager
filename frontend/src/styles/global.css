@@ -54,8 +54,76 @@
   --code-radius: 6px;
   --code-bg: rgba(0, 0, 0, 0.3);
   --code-font: 'JetBrains Mono', 'Fira Code', monospace;
-  --app-code-primary: color-mix(in srgb, var(--n-primary-color), transparent 92%);
-  --app-code-border: color-mix(in srgb, var(--n-primary-color), transparent 85%);
+  --app-code-primary: var(--primary-subtle, color-mix(in srgb, var(--n-primary-color), transparent 92%));
+  --app-code-border: var(--primary-medium, color-mix(in srgb, var(--n-primary-color), transparent 85%));
+
+  /* Color-mix 变量默认值（会被 themeStore 覆盖） */
+  --primary-subtle: rgba(187, 134, 252, 0.04);
+  --primary-light: rgba(187, 134, 252, 0.1);
+  --primary-medium: rgba(187, 134, 252, 0.15);
+  --primary-strong: rgba(187, 134, 252, 0.3);
+  --primary-half: rgba(187, 134, 252, 0.5);
+
+  --info-subtle: rgba(3, 218, 198, 0.04);
+  --info-light: rgba(3, 218, 198, 0.1);
+  --info-medium: rgba(3, 218, 198, 0.15);
+  --info-strong: rgba(3, 218, 198, 0.3);
+
+  --warning-subtle: rgba(255, 183, 77, 0.04);
+  --warning-light: rgba(255, 183, 77, 0.1);
+  --warning-medium: rgba(255, 183, 77, 0.15);
+  --warning-strong: rgba(255, 183, 77, 0.3);
+
+  --error-subtle: rgba(207, 102, 121, 0.04);
+  --error-light: rgba(207, 102, 121, 0.1);
+  --error-medium: rgba(207, 102, 121, 0.15);
+  --error-strong: rgba(207, 102, 121, 0.3);
+
+  --success-subtle: rgba(129, 199, 132, 0.04);
+  --success-light: rgba(129, 199, 132, 0.1);
+  --success-medium: rgba(129, 199, 132, 0.15);
+  --success-strong: rgba(129, 199, 132, 0.3);
+
+  /* 阴影变量（带层级） */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow-primary: 0 0 8px rgba(187, 134, 252, 0.5);
+  --shadow-glow-error: 0 0 8px rgba(207, 102, 121, 0.5);
+
+  /* 文字阴影 */
+  --text-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --text-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --text-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.6);
+
+  /* 过渡动画 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+  --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* 字体大小层级 */
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-base: 12px;
+  --text-md: 13px;
+  --text-lg: 14px;
+  --text-xl: 16px;
+  --text-2xl: 20px;
+
+  /* Z-index 层级 */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+  --z-max: 9999;
 }
 
 /* 1. 基础 code 标签：所有组件通用继承 */
@@ -130,11 +198,11 @@ input, textarea, select, button {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--n-primary-color), transparent 85%);
+  background: var(--primary-medium);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--n-primary-color), transparent 60%);
+  background: var(--primary-strong);
 }
 
 /* Naive UI 统一覆盖增强 - 降低 Padding */

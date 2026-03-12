@@ -398,8 +398,8 @@ onMounted(() => {
 .sub-card:hover .card-overlay { opacity: var(--opacity-full); }
 .media-type-tag { position: absolute; top: 8px; right: 8px; background: var(--bg-overlay); backdrop-filter: blur(8px); color: var(--text-primary); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
 .upgrade-tag { position: absolute; top: 8px; right: 40px; background: var(--bg-overlay); backdrop-filter: blur(8px); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
-.status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: 0 0 8px color-mix(in srgb, var(--n-error-color), transparent 50%); z-index: 2; }
-.status-indicator.is-enabled { background: var(--n-primary-color); box-shadow: 0 0 8px color-mix(in srgb, var(--n-primary-color), transparent 50%); }
+.status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: var(--shadow-glow-error); z-index: 2; }
+.status-indicator.is-enabled { background: var(--n-primary-color); box-shadow: var(--shadow-glow-primary); }
 .info-box { padding: 12px; }
 .sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--n-text-color-1); cursor: pointer; }
 .sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--n-text-color-3); margin-bottom: 8px; }

@@ -138,10 +138,10 @@ const {
 <style scoped>
 .mt-4 { margin-top: 16px; }
 .mt-2 { margin-top: 8px; }
-.forced-box { 
-  background: color-mix(in srgb, var(--n-warning-color), transparent 95%); 
-  padding: 16px; 
-  border-radius: var(--card-border-radius, 8px); 
+.forced-box {
+  background: var(--warning-subtle);
+  padding: 16px;
+  border-radius: var(--card-border-radius, 8px);
   border: 1px solid var(--app-border-light);
 }
 .forced-box .pl { font-size: 12px; font-weight: bold; color: var(--n-warning-color); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }

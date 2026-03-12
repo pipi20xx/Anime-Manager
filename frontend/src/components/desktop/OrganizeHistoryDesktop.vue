@@ -280,13 +280,13 @@ const handleRefresh = () => {
 .title-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .item-title { font-size: 17px; font-weight: bold; color: var(--n-text-color-1); }
 .item-year { font-size: 13px; color: var(--n-text-color-3); }
-.item-se { 
-  color: var(--n-primary-color); 
-  font-family: var(--code-font); 
-  font-weight: bold; 
-  background: color-mix(in srgb, var(--n-primary-color), transparent 90%); 
-  padding: 2px 6px; 
-  border-radius: var(--code-radius, 4px); 
+.item-se {
+  color: var(--n-primary-color);
+  font-family: var(--code-font);
+  font-weight: bold;
+  background: var(--primary-light);
+  padding: 2px 6px;
+  border-radius: var(--code-radius, 4px);
 }
 
 /* Path Container (Vertical) */
@@ -307,11 +307,11 @@ const handleRefresh = () => {
 }
 
 .path-item.source {
-  background: color-mix(in srgb, var(--n-warning-color), transparent 96%);
+  background: var(--warning-subtle);
 }
 
 .path-item.target {
-  background: color-mix(in srgb, var(--n-primary-color), transparent 96%);
+  background: var(--primary-subtle);
 }
 
 .path-label {
@@ -324,13 +324,13 @@ const handleRefresh = () => {
   flex-shrink: 0;
 }
 
-.source .path-label { 
-  background: color-mix(in srgb, var(--n-warning-color), transparent 90%); 
+.source .path-label {
+  background: var(--warning-light);
   color: var(--n-warning-color); 
 }
-.target .path-label { 
-  background: color-mix(in srgb, var(--n-primary-color), transparent 90%); 
-  color: var(--n-primary-color); 
+.target .path-label {
+  background: var(--primary-light);
+  color: var(--n-primary-color);
 }
 
 .path-content {
