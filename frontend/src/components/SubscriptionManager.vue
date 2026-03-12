@@ -305,7 +305,7 @@ onMounted(() => {
                     <template #trigger>
                       <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="goToExternal(sub, 'tmdb')" style="padding: 0; overflow: hidden;">
                         <template #icon>
-                          <img src="https://www.themoviedb.org/favicon.ico" style="width: 16px; height: 16px; transform: scale(1.2);" />
+                          <img src="/TMDB.SVG" style="width: 16px; height: 16px; transform: scale(1.2);" />
                         </template>
                       </n-button>
                     </template>
