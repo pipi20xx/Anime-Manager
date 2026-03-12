@@ -12,6 +12,7 @@ import {
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { docsTheme } from '../../store/themeStore'
 
 const {
   API_BASE,
@@ -323,7 +324,7 @@ const logColumns = [
               <iframe 
                 ref="docsIframe"
                 :key="config.external_token"
-                :src="`${API_BASE}/api/system/docs?theme=cyan&token=${config.external_token}`" 
+                :src="`${API_BASE}/api/system/docs?theme=${docsTheme}&token=${config.external_token}`" 
                 class="docs-iframe"
                 frameborder="0"
                 scrolling="no"

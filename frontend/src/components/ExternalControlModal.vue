@@ -18,6 +18,7 @@ import {
   CloseOutlined as CloseIcon
 } from '@vicons/material'
 import { getButtonStyle } from '../composables/useButtonStyles'
+import { docsTheme } from '../store/themeStore'
 
 const props = defineProps<{
   show: boolean
@@ -238,7 +239,7 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
           <div class="modal-tab-content docs">
             <iframe 
               :key="config.external_token"
-              :src="`${API_BASE}/api/system/docs?theme=cyan&token=${config.external_token}`" 
+              :src="`${API_BASE}/api/system/docs?theme=${docsTheme}&token=${config.external_token}`" 
               class="docs-iframe"
             ></iframe>
           </div>

@@ -16,6 +16,7 @@ import {
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { docsTheme } from '../../store/themeStore'
 
 const {
   API_BASE,
@@ -189,7 +190,7 @@ onMounted(() => {
          <div class="content-body no-pad docs-body">
             <iframe 
               :key="config.external_token"
-              :src="`${API_BASE}/api/system/docs?theme=cyan&token=${config.external_token}`" 
+              :src="`${API_BASE}/api/system/docs?theme=${docsTheme}&token=${config.external_token}`" 
               class="mobile-iframe"
             ></iframe>
          </div>

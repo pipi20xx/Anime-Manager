@@ -249,7 +249,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
               :options="themeOptions" 
               @select="val => currentThemeType = val"
             >
-              <n-button v-bind="getButtonStyle('iconPrimary')" size="small" :type="currentThemeType === 'modern' ? 'primary' : 'info'">
+              <n-button v-bind="getButtonStyle('iconPrimary')" size="small" type="primary">
                 <template #icon><n-icon><ThemeIcon /></n-icon></template>
               </n-button>
             </n-dropdown>
@@ -350,7 +350,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
                 :options="themeOptions" 
                 @select="val => currentThemeType = val"
               >
-                <n-button v-bind="getButtonStyle('iconPrimary')" :type="currentThemeType === 'modern' ? 'primary' : 'info'">
+                <n-button v-bind="getButtonStyle('iconPrimary')" type="primary">
                   <template #icon><n-icon><ThemeIcon /></n-icon></template>
                 </n-button>
               </n-dropdown>
