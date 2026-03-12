@@ -31,6 +31,7 @@ interface MonitorStatus {
 interface RuleStats {
   local: number
   remote: number
+  builtin?: number
 }
 
 interface RulesData {

@@ -128,6 +128,7 @@
               <n-space :size="4">
                 <n-tag type="info" size="tiny">本地 {{ data.rules.custom_groups.local }}</n-tag>
                 <n-tag type="success" size="tiny">远程 {{ data.rules.custom_groups.remote }}</n-tag>
+                <n-tag type="warning" size="tiny">内置 {{ data.rules.custom_groups.builtin || 0 }}</n-tag>
               </n-space>
             </div>
           </n-list-item>

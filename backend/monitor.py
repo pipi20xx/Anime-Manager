@@ -676,6 +676,11 @@ class MonitorManager:
 
         # 获取规则统计
         cached_rules = ConfigManager.get_cached_rules()
+        
+        # 获取内置制作组数量
+        from recognition_engine.builtin_group_loader import BuiltinGroupLoader
+        builtin_groups = BuiltinGroupLoader.get_builtin_groups()
+        
         rules_stats = {
             "custom_noise": {
                 "local": len([r for r in config.get("custom_noise_words", []) if r]),
@@ -683,7 +688,8 @@ class MonitorManager:
             },
             "custom_groups": {
                 "local": len([r for r in config.get("custom_release_groups", []) if r]),
-                "remote": len([r for r in cached_rules.get("groups", []) if r])
+                "remote": len([r for r in cached_rules.get("groups", []) if r]),
+                "builtin": len(builtin_groups)
             },
             "custom_render": {
                 "local": len([r for r in config.get("custom_render_words", []) if r]),

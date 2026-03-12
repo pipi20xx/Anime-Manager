@@ -153,6 +153,10 @@
                   <span class="stat-label">远程规则</span>
                   <n-tag type="success" size="small">{{ data.rules.custom_groups.remote }} 条</n-tag>
                 </div>
+                <div class="rule-stat">
+                  <span class="stat-label">内置规则</span>
+                  <n-tag type="warning" size="small">{{ data.rules.custom_groups.builtin || 0 }} 条</n-tag>
+                </div>
               </div>
             </div>
           </n-gi>
