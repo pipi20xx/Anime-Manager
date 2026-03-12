@@ -155,7 +155,7 @@ onMounted(fetchTasks)
 .header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
 .subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.task-card { height: 100%; transition: transform 0.2s; border: 1px solid var(--app-border-light); }
+.task-card { height: 100%; transition: transform 0.2s; border: 1px solid var(--app-border-light); background: var(--app-surface-card); }
 .clickable-card { cursor: pointer; }
 .task-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); }
 .task-header { display: flex; justify-content: space-between; align-items: center; }

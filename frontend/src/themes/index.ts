@@ -34,7 +34,18 @@ export const modernOverrides: GlobalThemeOverrides = {
   Button: { borderRadiusMedium: '6px', fontWeight: '600' },
   Input: { borderRadius: '6px' },
   Select: { borderRadius: '6px' },
-  Tag: { borderRadius: '4px' }
+  Tag: { borderRadius: '4px' },
+  DataTable: {
+    thColor: 'rgba(255, 255, 255, 0.06)',
+    tdColor: 'transparent',
+    tdColorHover: 'rgba(255, 255, 255, 0.08)',
+    thColorModal: 'rgba(255, 255, 255, 0.06)',
+    tdColorModal: 'transparent',
+    tdColorHoverModal: 'rgba(255, 255, 255, 0.08)',
+    thColorPopover: 'rgba(255, 255, 255, 0.06)',
+    tdColorPopover: 'transparent',
+    tdColorHoverPopover: 'rgba(255, 255, 255, 0.08)'
+  }
 }
 
 // 2. 圆润糖果 (Soft) - 可爱/动漫风
@@ -62,7 +73,18 @@ export const roundOverrides: GlobalThemeOverrides = {
   Select: { borderRadius: '20px' },
   Tag: { borderRadius: '50px' },
   Message: { borderRadius: '16px' },
-  Dialog: { borderRadius: '24px' }
+  Dialog: { borderRadius: '24px' },
+  DataTable: {
+    thColor: 'rgba(255, 255, 255, 0.08)',
+    tdColor: 'transparent',
+    tdColorHover: 'rgba(255, 255, 255, 0.12)',
+    thColorModal: 'rgba(255, 255, 255, 0.08)',
+    tdColorModal: 'transparent',
+    tdColorHoverModal: 'rgba(255, 255, 255, 0.12)',
+    thColorPopover: 'rgba(255, 255, 255, 0.08)',
+    tdColorPopover: 'transparent',
+    tdColorHoverPopover: 'rgba(255, 255, 255, 0.12)'
+  }
 }
 
 // 3. 暗夜紫韵 (Purple) - 霓虹/深邃
@@ -87,5 +109,16 @@ export const purpleOverrides: GlobalThemeOverrides = {
   Button: { borderRadiusMedium: '10px', fontWeight: '600' },
   Input: { borderRadius: '10px' },
   Select: { borderRadius: '10px' },
-  Tag: { borderRadius: '6px' }
+  Tag: { borderRadius: '6px' },
+  DataTable: {
+    thColor: 'rgba(187, 134, 252, 0.06)',
+    tdColor: 'transparent',
+    tdColorHover: 'rgba(187, 134, 252, 0.1)',
+    thColorModal: 'rgba(187, 134, 252, 0.06)',
+    tdColorModal: 'transparent',
+    tdColorHoverModal: 'rgba(187, 134, 252, 0.1)',
+    thColorPopover: 'rgba(187, 134, 252, 0.06)',
+    tdColorPopover: 'transparent',
+    tdColorHoverPopover: 'rgba(187, 134, 252, 0.1)'
+  }
 }

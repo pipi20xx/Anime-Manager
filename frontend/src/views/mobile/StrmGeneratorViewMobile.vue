@@ -144,7 +144,7 @@ onMounted(fetchTasks)
 }
 
 .card-list { display: flex; flex-direction: column; gap: 12px; }
-.mobile-card { border-radius: 12px; }
+.mobile-card { border-radius: 12px; background: var(--app-surface-card); }
 
 .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
 .title-row { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
