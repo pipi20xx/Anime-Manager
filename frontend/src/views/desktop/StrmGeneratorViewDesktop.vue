@@ -153,7 +153,7 @@ onMounted(fetchTasks)
 <style scoped>
 .strm-view { width: 100%; }
 .header h1 { margin: 0; font-size: var(--text-2xl); color: var(--text-primary); }
-.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .task-card { height: 100%; transition: transform var(--transition-fast); border: 1px solid var(--app-border-light); background: var(--app-surface-card); }
 .clickable-card { cursor: pointer; }

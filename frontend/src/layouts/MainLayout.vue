@@ -190,13 +190,13 @@ const isNavActive = (key: string) => currentViewKey.value === key
       :collapsed-width="56"
       :width="170"
       show-trigger="arrow-circle"
-      content-style="padding: 8px 0; display: flex; flex-direction: column; height: 100%;"
+      content-style="padding: var(--space-2) 0; display: flex; flex-direction: column; height: 100%;"
       v-model:collapsed="collapsed"
       class="main-sider"
     >
       <div class="logo-container">
         <n-space align="center" :size="10" :wrap="false">
-          <div @click="currentViewKey = 'ExploreView'" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
+          <div @click="currentViewKey = 'ExploreView'" style="cursor: pointer; display: flex; align-items: center; gap: var(--space-2);">
             <n-icon size="24" :color="logoColor"><MovieIcon /></n-icon>
             <div v-if="!collapsed" class="logo-text">
               <span class="title" :style="{ color: logoColor }">番剧管家</span>
@@ -209,7 +209,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
             quaternary 
             size="small" 
             @click="isSearchOpen = true"
-            style="margin-left: 4px"
+            style="margin-left: var(--m-1)"
           >
             <template #icon><n-icon><SearchIcon /></n-icon></template>
           </n-button>
@@ -289,16 +289,16 @@ const isNavActive = (key: string) => currentViewKey.value === key
     </n-layout-sider>
 
     <n-layout-content 
-      :content-style="`padding: 16px; padding-bottom: ${isMobile ? '80px' : '16px'}; min-height: 100vh; display: flex; flex-direction: column; background-color: var(--app-bg-color);`"
+      :content-style="`padding: var(--space-4); padding-bottom: ${isMobile ? '80px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column; background-color: var(--app-bg-color);`"
     >
       <!-- Mobile Top Bar (Optional, for Logo/Search if needed, or keep clean) -->
       <div v-if="isMobile" class="mobile-header">
         <n-space align="center" justify="space-between" style="width: 100%">
-          <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: var(--space-2);">
             <n-icon size="22" :color="logoColor"><MovieIcon /></n-icon>
             <div style="display: flex; flex-direction: column;">
               <span class="title" :style="{ color: logoColor, fontWeight: '800', lineHeight: '1.2' }">番剧管家</span>
-              <span style="font-size: 10px; opacity: 0.6; margin-top: -2px;">v{{ APP_VERSION }}</span>
+              <span style="font-size: var(--text-2xs); opacity: var(--opacity-60); margin-top: -2px;">v{{ APP_VERSION }}</span>
             </div>
           </div>
           <n-button v-bind="getButtonStyle('icon')" size="small" @click="isSearchOpen = true">
@@ -344,7 +344,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
           @update:value="showMobileMenu = false"
         />
         <template #footer>
-          <n-space justify="space-around" style="width: 100%; padding-bottom: 20px;">
+          <n-space justify="space-around" style="width: 100%; padding-bottom: var(--space-5);">
              <n-dropdown 
                 trigger="click" 
                 :options="themeOptions" 
@@ -411,23 +411,23 @@ const isNavActive = (key: string) => currentViewKey.value === key
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   height: 50px;
   box-sizing: border-box;
 }
 .logo-text .title {
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-wide);
 }
 .sidebar-footer {
-  padding: 8px;
+  padding: var(--space-2);
   border-top: 1px solid var(--border-light);
 }
 .user-status-container {
-  padding: 0 4px;
-  margin-bottom: 4px;
+  padding: 0 var(--m-1);
+  margin-bottom: var(--m-1);
 }
 .user-status-trigger {
   display: flex;
@@ -452,11 +452,11 @@ const isNavActive = (key: string) => currentViewKey.value === key
   border-color: var(--border-light);
 }
 .user-status-trigger.is-collapsed {
-  padding: 6px 0; 
+  padding: var(--space-1) 0; 
   justify-content: center; 
 }
 .username-text {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -477,13 +477,13 @@ const isNavActive = (key: string) => currentViewKey.value === key
   flex: 1;
   width: 100%;
   max-width: 100%;
-  padding: 0 4px;
+  padding: 0 var(--m-1);
 }
 
 /* Mobile Specific Styles */
 .mobile-header {
-  padding: 0 0 12px 0;
-  margin-bottom: 8px;
+  padding: 0 0 var(--space-3) 0;
+  margin-bottom: var(--space-2);
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -522,7 +522,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
 }
 
 .nav-item .label {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   margin-top: 2px;
 }
 </style>

@@ -99,8 +99,8 @@ const {
                                   <template #prefix>
                                     <n-avatar :src="getImg(res.poster_path)" size="small" shape="square" />
                                   </template>
-                                  <div style="font-size:12px;">
-                                    <b>{{ res.title }}</b> ({{ res.year }}) <span style="opacity: 0.5">ID: {{ res.id }}</span>
+                                  <div style="font-size: var(--text-sm);">
+                                    <b>{{ res.title }}</b> ({{ res.year }}) <span style="opacity: var(--opacity-50)">ID: {{ res.id }}</span>
                                   </div>
                                 </n-list-item>
                               </n-list>

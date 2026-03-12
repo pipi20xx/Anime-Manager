@@ -154,13 +154,18 @@ const updateCssVariables = () => {
   root.style.setProperty('--transition-bounce', '300ms cubic-bezier(0.68, -0.55, 0.265, 1.55)')
 
   // Font size scale
-  root.style.setProperty('--text-xs', '10px')
-  root.style.setProperty('--text-sm', '11px')
-  root.style.setProperty('--text-base', '12px')
-  root.style.setProperty('--text-md', '13px')
-  root.style.setProperty('--text-lg', '14px')
-  root.style.setProperty('--text-xl', '16px')
+  root.style.setProperty('--text-3xs', '9px')
+  root.style.setProperty('--text-2xs', '10px')
+  root.style.setProperty('--text-xs', '11px')
+  root.style.setProperty('--text-sm', '12px')
+  root.style.setProperty('--text-base', '13px')
+  root.style.setProperty('--text-md', '14px')
+  root.style.setProperty('--text-lg', '16px')
+  root.style.setProperty('--text-xl', '18px')
   root.style.setProperty('--text-2xl', '20px')
+  root.style.setProperty('--text-3xl', '24px')
+  root.style.setProperty('--text-4xl', '32px')
+  root.style.setProperty('--text-5xl', '48px')
 
   // Border radius scale
   root.style.setProperty('--radius-xs', '2px')
@@ -195,6 +200,37 @@ const updateCssVariables = () => {
   root.style.setProperty('--opacity-80', '0.8')
   root.style.setProperty('--opacity-90', '0.9')
   root.style.setProperty('--opacity-100', '1')
+
+  // Line height scale
+  root.style.setProperty('--leading-none', '1')
+  root.style.setProperty('--leading-tight', '1.2')
+  root.style.setProperty('--leading-snug', '1.3')
+  root.style.setProperty('--leading-normal', '1.4')
+  root.style.setProperty('--leading-relaxed', '1.6')
+  root.style.setProperty('--leading-loose', '1.8')
+
+  // Letter spacing scale
+  root.style.setProperty('--tracking-tight', '-0.5px')
+  root.style.setProperty('--tracking-normal', '0')
+  root.style.setProperty('--tracking-wide', '0.5px')
+  root.style.setProperty('--tracking-wider', '1px')
+  root.style.setProperty('--tracking-widest', '2px')
+
+  // Text shadow scale
+  root.style.setProperty('--shadow-text-sm', '0 1px 2px rgba(0,0,0,0.3)')
+  root.style.setProperty('--shadow-text-md', '0 2px 4px rgba(0,0,0,0.5)')
+  root.style.setProperty('--shadow-text-lg', '0 4px 8px rgba(0,0,0,0.6)')
+  root.style.setProperty('--shadow-text-xl', '0 4px 12px rgba(0,0,0,0.8)')
+
+  // Margin scale (using spacing values)
+  root.style.setProperty('--m-1', '4px')
+  root.style.setProperty('--m-2', '8px')
+  root.style.setProperty('--m-3', '12px')
+  root.style.setProperty('--m-4', '16px')
+  root.style.setProperty('--m-5', '20px')
+  root.style.setProperty('--m-6', '24px')
+  root.style.setProperty('--m-8', '32px')
+  root.style.setProperty('--m-10', '40px')
 
   // Z-index scale
   root.style.setProperty('--z-base', '0')

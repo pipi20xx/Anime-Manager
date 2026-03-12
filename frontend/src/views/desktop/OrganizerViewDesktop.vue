@@ -82,7 +82,7 @@ onUnmounted(stopBgTaskPolling)
     </div>
 
     <!-- 后台任务状态 -->
-    <n-card v-if="backgroundTasks.length > 0" bordered embedded style="margin-bottom: 16px">
+    <n-card v-if="backgroundTasks.length > 0" bordered embedded style="margin-bottom: var(--m-4)">
       <template #header>
         <n-space align="center">
           <span>后台任务</span>
@@ -98,7 +98,7 @@ onUnmounted(stopBgTaskPolling)
               <n-tag size="tiny" :bordered="false">{{ task.dry_run ? '预览' : '正式' }}</n-tag>
             </n-space>
             <n-space align="center">
-              <span style="font-size: 12px; color: var(--n-text-color-3)">已处理: {{ task.processed }}</span>
+              <span style="font-size: var(--text-sm); color: var(--n-text-color-3)">已处理: {{ task.processed }}</span>
               <n-button size="tiny" type="error" secondary @click="stopBackgroundTask(task.task_id)">
                 <template #icon><n-icon><StopIcon /></n-icon></template>
                 停止
@@ -113,7 +113,7 @@ onUnmounted(stopBgTaskPolling)
                 {{ task.status === 'completed' ? '已完成' : task.status === 'stopped' ? '已停止' : '错误' }}
               </n-tag>
               <span>{{ task.name }}</span>
-              <span style="font-size: 12px; color: var(--n-text-color-3)">处理: {{ task.processed }}</span>
+              <span style="font-size: var(--text-sm); color: var(--n-text-color-3)">处理: {{ task.processed }}</span>
             </n-space>
             <n-button size="tiny" quaternary @click="deleteBackgroundTask(task.task_id)">清除</n-button>
           </n-space>
@@ -226,7 +226,7 @@ onUnmounted(stopBgTaskPolling)
                   <div :title="task.target_dir"><span>目标</span><code>{{ task.target_dir }}</code></div>
                   <div>
                     <span>重命名规则</span>
-                    <n-tag size="tiny" :bordered="false" type="info" style="margin-top: 4px; background: var(--color-info-bg)">
+                    <n-tag size="tiny" :bordered="false" type="info" style="margin-top: var(--m-1); background: var(--color-info-bg)">
                       {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
                     </n-tag>
                   </div>
@@ -277,9 +277,9 @@ onUnmounted(stopBgTaskPolling)
 
 <style scoped>
 .organizer-view { width: 100%; }
-.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
-.subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.header h1 { margin: 0; font-size: var(--text-3xl); color: var(--text-primary); }
+.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
 .rule-card, .task-card { 
   height: 100%; 
   display: flex; 
@@ -298,31 +298,31 @@ onUnmounted(stopBgTaskPolling)
 
 .drag-handle { cursor: grab; opacity: var(--opacity-60); transition: opacity var(--transition-fast); }
 .drag-handle:hover { opacity: var(--opacity-100); }
-.rule-preview-mini { flex-grow: 1; padding: 12px 0; }
-.rule-preview-mini .p-item { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.rule-preview-mini span { font-size: 10px; color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }
+.rule-preview-mini { flex-grow: 1; padding: var(--space-3) 0; }
+.rule-preview-mini .p-item { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
+.rule-preview-mini span { font-size: var(--text-2xs); color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }
 .rule-preview-mini code { 
-  font-size: 11px; 
+  font-size: var(--text-xs); 
   font-family: var(--code-font);
   color: var(--n-info-color); 
   background: var(--app-surface-inner); 
-  padding: 4px 8px; 
+  padding: var(--space-1) var(--space-2); 
   border-radius: var(--button-border-radius, 4px); 
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
   border: 1px solid var(--app-border-light);
 }
-.p-disp { flex-grow: 1; padding: 12px 0; display: flex; flex-direction: column; gap: 8px; }
-.p-disp div { display: flex; flex-direction: column; gap: 2px; }
-.p-disp span { font-size: 9px; color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }
+.p-disp { flex-grow: 1; padding: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.p-disp div { display: flex; flex-direction: column; gap: var(--space-0); }
+.p-disp span { font-size: var(--text-3xs); color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }
 .p-disp code { 
-  font-size: 11px; 
+  font-size: var(--text-xs); 
   font-family: var(--code-font);
   background: var(--app-surface-inner); 
-  padding: 4px 8px; 
+  padding: var(--space-1) var(--space-2); 
   border-radius: var(--button-border-radius, 4px); 
   color: var(--n-text-color-2); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
   border: 1px solid var(--app-border-light);
 }
-.mb-4 { margin-bottom: 16px; }
+.mb-4 { margin-bottom: var(--m-4); }
 </style>

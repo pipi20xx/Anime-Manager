@@ -224,31 +224,31 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
-.subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.header h1 { margin: 0; font-size: var(--text-3xl); color: var(--text-primary); }
+.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 
-.tip { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-.json-code { 
-  font-family: 'JetBrains Mono', monospace; 
-  font-size: 12px; 
-  color: var(--n-primary-color); 
-  background: var(--app-surface-inner); 
-  padding: 12px; 
-  border-radius: var(--card-border-radius, 8px); 
+.tip { font-size: var(--text-base); color: var(--text-muted); margin-bottom: 8px; }
+.json-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  color: var(--n-primary-color);
+  background: var(--app-surface-inner);
+  padding: 12px;
+  border-radius: var(--card-border-radius, 8px);
   border: 1px solid var(--n-border-color);
 }
 
 .fields-list { display: flex; flex-direction: column; gap: 8px; }
-.field-item { 
-  display: flex; 
-  justify-content: space-between; 
-  padding: 8px; 
-  background: var(--app-surface-card); 
-  border-radius: var(--button-border-radius, 4px); 
+.field-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--app-surface-card);
+  border-radius: var(--button-border-radius, 4px);
   border: 1px solid var(--n-border-color);
 }
-.field-item .key { color: var(--text-muted); font-size: 12px; font-weight: bold; }
-.field-item .val { color: var(--text-secondary); font-size: 13px; font-family: monospace; }
+.field-item .key { color: var(--text-muted); font-size: var(--text-sm); font-weight: bold; }
+.field-item .val { color: var(--text-secondary); font-size: var(--text-base); font-family: monospace; }
 
 .mt-2 { margin-top: 8px; }
 

@@ -27,8 +27,8 @@ const {
 
 <template>
   <div class="recommend-tab">
-      <div v-if="exploreData.loading && exploreData.trending.length === 0" style="padding: 20px">
-         <n-skeleton height="400px" style="border-radius: 12px; margin-bottom: 24px" />
+      <div v-if="exploreData.loading && exploreData.trending.length === 0" style="padding: var(--space-5)">
+         <n-skeleton height="400px" style="border-radius: var(--radius-xl); margin-bottom: var(--m-6)" />
          <n-skeleton text :repeat="2" />
       </div>
 
@@ -40,7 +40,7 @@ const {
             <div class="carousel-gradient"></div>
             <div class="carousel-content">
                 <div class="c-tag-line">
-                    <n-tag v-if="isSubscribed(item)" type="primary" size="small" round :bordered="false" class="subbed-badge" style="margin-right: 4px">
+                    <n-tag v-if="isSubscribed(item)" type="primary" size="small" round :bordered="false" class="subbed-badge" style="margin-right: var(--m-1)">
                         <template #icon><n-icon><StarIcon/></n-icon></template>
                         已订阅
                     </n-tag>
@@ -58,7 +58,7 @@ const {
         </n-carousel>
 
         <!-- Bangumi Calendar -->
-        <div class="section-header" style="margin-top: 32px">
+        <div class="section-header" style="margin-top: var(--m-8)">
             <div class="section-title"><n-icon><CalendarIcon /></n-icon> 每日放送 (Bangumi)</div>
         </div>
         <div class="calendar-box">
@@ -78,10 +78,10 @@ const {
         </div>
 
         <!-- Popular Movies -->
-        <div class="section-header" style="margin-top: 32px">
+        <div class="section-header" style="margin-top: var(--m-8)">
             <div class="section-title">热门动画电影</div>
         </div>
-        <n-scrollbar x-scrollable style="padding-bottom: 20px;">
+        <n-scrollbar x-scrollable style="padding-bottom: var(--space-5);">
             <div class="media-scroller">
                 <TmdbCard 
                     v-for="m in exploreData.movies" 
@@ -95,10 +95,10 @@ const {
         </n-scrollbar>
 
         <!-- Popular TV -->
-        <div class="section-header" style="margin-top: 12px">
+        <div class="section-header" style="margin-top: var(--space-3)">
             <div class="section-title">热门番剧</div>
         </div>
-        <n-scrollbar x-scrollable style="padding-bottom: 20px;">
+        <n-scrollbar x-scrollable style="padding-bottom: var(--space-5);">
             <div class="media-scroller">
                 <TmdbCard 
                     v-for="t in exploreData.tv" 
@@ -128,10 +128,10 @@ const {
 </template>
 
 <style scoped>
-.recommend-tab { width: 100%; padding-bottom: 40px; }
+.recommend-tab { width: 100%; padding-bottom: var(--space-10); }
 
 /* Carousel */
-.main-carousel { height: 450px; border-radius: var(--card-border-radius, 12px); margin-bottom: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); overflow: hidden; }
+.main-carousel { height: 450px; border-radius: var(--card-border-radius, 12px); margin-bottom: var(--m-8); box-shadow: var(--shadow-xl); overflow: hidden; }
 .carousel-item { position: relative; width: 100%; height: 100%; cursor: pointer; background: var(--bg-primary); }
 .carousel-img { width: 100%; height: 100%; object-fit: cover; opacity: var(--opacity-70); transition: transform 10s ease; }
 .carousel-item:hover .carousel-img { transform: scale(1.05); opacity: var(--opacity-80); }
@@ -141,27 +141,27 @@ const {
   pointer-events: none; 
 }
 
-.carousel-content { position: absolute; bottom: 50px; left: 50px; right: 50px; z-index: 2; }
-.c-tag-line { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.carousel-content { position: absolute; bottom: var(--space-12); left: var(--space-12); right: var(--space-12); z-index: 2; }
+.c-tag-line { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--m-3); }
 .rating-tag { font-weight: bold; background: var(--color-warning-bg); color: var(--color-warning); backdrop-filter: blur(4px); }
-.c-date { color: var(--n-text-color-3); font-size: 14px; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-.c-title { font-size: 48px; font-weight: 900; color: var(--n-text-color-1); margin-bottom: 12px; line-height: 1.1; text-shadow: 0 4px 12px rgba(0,0,0,0.8); letter-spacing: -1px; }
-.c-overview { font-size: 16px; color: var(--n-text-color-2); max-width: 800px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.c-date { color: var(--n-text-color-3); font-size: var(--text-md); font-family: monospace; text-shadow: var(--shadow-text-md); }
+.c-title { font-size: var(--text-5xl); font-weight: 900; color: var(--n-text-color-1); margin-bottom: var(--m-3); line-height: var(--leading-tight); text-shadow: var(--shadow-text-xl); letter-spacing: var(--tracking-tight); }
+.c-overview { font-size: var(--text-lg); color: var(--n-text-color-2); max-width: 800px; line-height: var(--leading-relaxed); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: var(--shadow-text-lg); }
 
 /* Calendar */
-.calendar-box { 
-  background: transparent; 
-  padding: 0; margin-bottom: 24px; 
+.calendar-box {
+  background: transparent;
+  padding: 0; margin-bottom: var(--m-6);
 }
-.calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; margin-top: 16px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-5); margin-top: var(--space-4); }
 
 /* Section Common */
-.section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; padding: 0 4px; }
-.section-title { font-size: 22px; font-weight: 800; color: var(--n-text-color-1); display: flex; align-items: center; gap: 10px; }
-.section-more { font-size: 13px; color: var(--n-text-color-3); cursor: pointer; transition: color var(--transition-fast); }
+.section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--m-4); padding: 0 var(--m-1); }
+.section-title { font-size: var(--text-2xl); font-weight: 800; color: var(--n-text-color-1); display: flex; align-items: center; gap: var(--space-2); }
+.section-more { font-size: var(--text-base); color: var(--n-text-color-3); cursor: pointer; transition: color var(--transition-fast); }
 .section-more:hover { color: var(--n-primary-color); }
 
-.media-scroller { display: flex; gap: 20px; padding: 4px; }
+.media-scroller { display: flex; gap: var(--space-5); padding: var(--m-1); }
 .media-card { min-width: 150px; width: 150px; cursor: pointer; transition: transform var(--transition-fast); display: flex; flex-direction: column; }
 .media-card:hover { transform: translateY(-6px); }
 </style>

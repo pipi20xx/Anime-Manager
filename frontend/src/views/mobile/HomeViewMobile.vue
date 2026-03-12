@@ -39,7 +39,7 @@ const activeTab = ref('dashboard')
                 type="textarea" 
                 placeholder="输入文件名/路径..." 
                 :autosize="{ minRows: 2, maxRows: 4 }" 
-                style="font-family: monospace; margin-bottom: 8px;"
+                style="font-family: monospace; margin-bottom: var(--space-2);"
               />
               <n-button block type="primary" size="large" :loading="recognitionState.loading" @click="handleRecognize">
                 <template #icon><n-icon :component="PlayIcon" /></template>
@@ -47,7 +47,7 @@ const activeTab = ref('dashboard')
               </n-button>
           </div>
 
-          <n-collapse style="margin-bottom: 16px;">
+          <n-collapse style="margin-bottom: var(--m-4);">
             <n-collapse-item name="1">
               <template #header>
                 <span style="font-weight: bold; color: var(--n-primary-color)">高级参数 & 调试</span>
@@ -60,11 +60,11 @@ const activeTab = ref('dashboard')
                     </n-input-group>
                  </n-form-item>
                  
-                 <n-list v-if="(sandboxSearch.results || []).length > 0" clickable hoverable style="margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                 <n-list v-if="(sandboxSearch.results || []).length > 0" clickable hoverable style="margin-bottom: var(--space-3); border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
                     <n-list-item v-for="res in sandboxSearch.results" :key="res.id" @click="selectSandboxResult(res)">
-                       <div style="display: flex; gap: 8px; align-items: center;">
+                       <div style="display: flex; gap: var(--space-2); align-items: center;">
                           <n-avatar :src="getImg(res.poster_path)" size="small" shape="square" />
-                          <div style="font-size: 12px;">{{ res.title }} ({{ res.id }})</div>
+                          <div style="font-size: var(--text-sm);">{{ res.title }} ({{ res.id }})</div>
                        </div>
                     </n-list-item>
                  </n-list>
@@ -167,7 +167,7 @@ const activeTab = ref('dashboard')
 }
 
 :deep(.n-tabs-nav) {
-  padding: 0 16px;
+  padding: 0 var(--space-4);
 }
 
 :deep(.n-tabs-pane-wrapper) {
@@ -182,19 +182,19 @@ const activeTab = ref('dashboard')
 }
 
 .tab-content {
-  padding: 16px;
+  padding: var(--space-4);
 }
 
-.mobile-hero { margin-bottom: 16px; }
+.mobile-hero { margin-bottom: var(--m-4); }
 
-.row-inputs { display: flex; gap: 8px; }
+.row-inputs { display: flex; gap: var(--space-2); }
 
-.debug-card { border-radius: 8px; border: 1px solid var(--n-border-color); }
+.debug-card { border-radius: var(--radius-lg); border: 1px solid var(--n-border-color); }
 
-.pref-list { display: flex; flex-direction: column; gap: 12px; }
-.pref-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--border-light); }
-.pref-label { font-weight: bold; font-size: 14px; }
-.pref-desc { font-size: 11px; color: var(--text-muted); }
+.pref-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.pref-item { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); }
+.pref-label { font-weight: bold; font-size: var(--text-md); }
+.pref-desc { font-size: var(--text-xs); color: var(--text-muted); }
 
 .result-container {
   overflow-x: hidden; /* Prevent horizontal scroll */

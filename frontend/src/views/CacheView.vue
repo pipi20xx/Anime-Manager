@@ -388,7 +388,7 @@ onUnmounted(() => {
 
 <style scoped>
 .header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
-.subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; }
 
@@ -399,11 +399,11 @@ onUnmounted(() => {
 
 .poster-container { position: relative; width: 100%; aspect-ratio: 2/3; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .poster-img { width: 100%; height: 100%; transition: opacity var(--transition-normal); }
-.no-poster { color: var(--text-muted); font-weight: bold; font-size: 14px; }
-.type-tag { 
-  position: absolute; top: 0; right: 0; z-index: 10; 
-  padding: 2px 6px; 
-  font-size: 10px; font-weight: bold; color: var(--text-primary); 
+.no-poster { color: var(--text-muted); font-weight: bold; font-size: var(--text-md); }
+.type-tag {
+  position: absolute; top: 0; right: 0; z-index: 10;
+  padding: 2px 6px;
+  font-size: var(--text-2xs); font-weight: bold; color: var(--text-primary);
   border-bottom-left-radius: var(--button-border-radius, 6px);
   box-shadow: var(--shadow-sm);
 }
@@ -412,7 +412,7 @@ onUnmounted(() => {
 
 .year-tag {
   position: absolute; top: 0; left: 0; z-index: 10;
-  padding: 2px 6px; font-size: 10px; font-weight: bold; color: var(--text-primary);
+  padding: 2px 6px; font-size: var(--text-2xs); font-weight: bold; color: var(--text-primary);
   background: var(--bg-surface-active);
   border-bottom-right-radius: 6px;
   box-shadow: var(--shadow-sm);

@@ -169,7 +169,7 @@ const handleLogin = async () => {
 
 .login-header h2 {
   margin: 12px 0 8px 0;
-  letter-spacing: 4px;
+  letter-spacing: var(--tracking-widest);
   font-weight: 700;
 }
 

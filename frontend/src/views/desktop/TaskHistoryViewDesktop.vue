@@ -109,7 +109,7 @@ onUnmounted(() => {
       </n-space>
     </div>
 
-    <n-card v-if="tasks.length === 0" embedded style="margin-top: 16px">
+    <n-card v-if="tasks.length === 0" embedded style="margin-top: var(--m-4)">
       <n-empty description="暂无任务记录" />
     </n-card>
 
@@ -147,7 +147,7 @@ onUnmounted(() => {
         <n-spin v-if="loading" size="small" description="正在加载更多..." />
         <div v-else-if="!hasMore" class="end-of-list">
           <n-divider dashed>
-            <n-text depth="3" style="font-size: 12px">到底了，共 {{ tasks.length }} 条记录</n-text>
+            <n-text depth="3" style="font-size: var(--text-sm)">到底了，共 {{ tasks.length }} 条记录</n-text>
           </n-divider>
         </div>
         <div v-else class="can-load-more">
@@ -182,49 +182,49 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--m-4);
 }
-.page-header h1 { margin: 0; font-size: 24px; }
-.subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.page-header h1 { margin: 0; font-size: var(--text-3xl); }
+.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 .page-header :deep(.n-space) { align-items: stretch; }
-.page-header :deep(.n-radio-group) { height: 34px; }
-.page-header :deep(.n-button) { height: 34px; }
+.page-header :deep(.n-radio-group) { height: var(--space-8); }
+.page-header :deep(.n-button) { height: var(--space-8); }
 
-.task-list { display: flex; flex-direction: column; gap: 8px; }
-.task-item { border-radius: 8px; }
+.task-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.task-item { border-radius: var(--radius-lg); }
 .task-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .task-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex: 1;
 }
-.module-icon { font-size: 18px; }
+.module-icon { font-size: var(--text-xl); }
 .task-name { font-weight: 500; }
-.task-time { color: var(--n-text-color-3); font-size: 12px; }
+.task-time { color: var(--n-text-color-3); font-size: var(--text-sm); }
 .task-meta {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   color: var(--n-text-color-3);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
-.task-actions { display: flex; gap: 4px; }
+.task-actions { display: flex; gap: var(--space-1); }
 
 .log-container {
   font-family: var(--code-font);
-  font-size: 12px;
+  font-size: var(--text-sm);
   background: var(--app-surface-inner);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
 }
 .log-line {
   display: flex;
-  gap: 8px;
-  padding: 2px 0;
+  gap: var(--space-2);
+  padding: var(--space-0) 0;
   border-bottom: 1px solid var(--n-border-color);
 }
 .log-line:last-child { border-bottom: none; }
@@ -239,7 +239,7 @@ onUnmounted(() => {
 .log-msg { flex: 1; word-break: break-all; }
 
 .load-more-sentinel {
-  padding: 24px 0 48px;
+  padding: var(--space-6) 0 var(--space-12);
   display: flex;
   justify-content: center;
   align-items: center;

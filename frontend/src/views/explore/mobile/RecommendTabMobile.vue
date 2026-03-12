@@ -32,8 +32,8 @@ useBackClose(toRef(bgmDetail, 'show'))
 
 <template>
   <div class="recommend-tab-mobile">
-      <div v-if="exploreData.loading && exploreData.trending.length === 0" style="padding: 12px">
-         <n-skeleton height="200px" style="border-radius: 8px; margin-bottom: 16px" />
+      <div v-if="exploreData.loading && exploreData.trending.length === 0" style="padding: var(--space-3)">
+         <n-skeleton height="200px" style="border-radius: var(--radius-lg); margin-bottom: var(--m-4)" />
          <n-skeleton text :repeat="2" />
       </div>
 
@@ -45,7 +45,7 @@ useBackClose(toRef(bgmDetail, 'show'))
             <div class="carousel-gradient"></div>
             <div class="carousel-content">
                 <div class="c-tag-line">
-                    <n-tag v-if="isSubscribed(item)" type="primary" size="tiny" round :bordered="false" class="subbed-badge" style="margin-right: 4px">
+                    <n-tag v-if="isSubscribed(item)" type="primary" size="tiny" round :bordered="false" class="subbed-badge" style="margin-right: var(--m-1)">
                         已订
                     </n-tag>
                     <n-tag type="warning" size="tiny" round :bordered="false" class="rating-tag">
@@ -81,7 +81,7 @@ useBackClose(toRef(bgmDetail, 'show'))
         <div class="section-header">
             <div class="section-title">热门电影</div>
         </div>
-        <n-scrollbar x-scrollable style="padding-bottom: 12px;">
+        <n-scrollbar x-scrollable style="padding-bottom: var(--space-3);">
             <div class="media-scroller">
                 <TmdbCard 
                     v-for="m in exploreData.movies" 
@@ -98,7 +98,7 @@ useBackClose(toRef(bgmDetail, 'show'))
         <div class="section-header">
             <div class="section-title">热门番剧</div>
         </div>
-        <n-scrollbar x-scrollable style="padding-bottom: 12px;">
+        <n-scrollbar x-scrollable style="padding-bottom: var(--space-3);">
             <div class="media-scroller">
                 <TmdbCard 
                     v-for="t in exploreData.tv" 
@@ -130,36 +130,36 @@ useBackClose(toRef(bgmDetail, 'show'))
 <style scoped>
 .recommend-tab-mobile { 
   width: 100%; 
-  padding: 12px; 
-  padding-bottom: 40px; 
+  padding: var(--space-3); 
+  padding-bottom: var(--space-10); 
   box-sizing: border-box;
 }
 
 /* Carousel */
 .mobile-carousel { 
-  height: 200px; 
-  border-radius: 8px; 
-  margin-bottom: 20px; 
-  overflow: hidden; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+  height: 200px;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--m-5);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
   width: 100%;
 }
 .carousel-item { position: relative; width: 100%; height: 100%; }
 .carousel-img { width: 100%; height: 100%; object-fit: cover; }
-.carousel-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%); }
-.carousel-content { position: absolute; bottom: 12px; left: 12px; right: 12px; z-index: 2; }
-.c-tag-line { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.carousel-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,var(--opacity-80)) 0%, transparent 60%); }
+.carousel-content { position: absolute; bottom: var(--space-3); left: var(--space-3); right: var(--space-3); z-index: 2; }
+.c-tag-line { display: flex; align-items: center; gap: var(--space-1); margin-bottom: var(--m-1); }
 .rating-tag { font-weight: bold; background: var(--color-warning); color: var(--text-primary); }
-.c-title { font-size: 18px; font-weight: bold; color: var(--text-primary); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-title { font-size: var(--text-lg); font-weight: bold; color: var(--text-primary); line-height: var(--leading-snug); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Calendar */
-.calendar-box { margin-bottom: 20px; }
-.mobile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.calendar-box { margin-bottom: var(--m-5); }
+.mobile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
 
 /* Section */
-.section-header { margin-bottom: 12px; margin-top: 12px; }
-.section-title { font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+.section-header { margin-bottom: var(--space-3); margin-top: var(--space-3); }
+.section-title { font-size: var(--text-md); font-weight: bold; display: flex; align-items: center; gap: var(--space-1); }
 
-.media-scroller { display: flex; gap: 12px; width: max-content; }
+.media-scroller { display: flex; gap: var(--space-3); width: max-content; }
 .media-card { width: 110px; min-width: 110px; }
 </style>
