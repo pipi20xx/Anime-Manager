@@ -1,5 +1,6 @@
 import regex as re
 from typing import List, Optional, Tuple, Any, Dict, Callable
+import zhconv
 
 from .constants import MediaType, PIX_RE, VIDEO_RE, AUDIO_RE, SOURCE_RE, DYNAMIC_RANGE_RE, PLATFORM_RE, NOISE_WORDS
 from .data_models import MetaBase
@@ -125,130 +126,139 @@ def core_recognize(
     current_logs.append(f"┃")
     s_logs = []
     
-    # [Strategy] 顶级优先级：全局自定义制作组扫描
+    # [Strategy] 顶级优先级：全局制作组扫描（内置 + 自定义）
+    from .builtin_group_loader import BuiltinGroupLoader
+    from .constants import GROUP_KEYWORDS
+    
+    # 合并内置制作组和自定义制作组
+    builtin_groups = BuiltinGroupLoader.get_builtin_groups()
+    all_groups = set(builtin_groups)
+    
+    # 预处理：提取所有清洗后的自定义制作组名称
+    cleaned_custom_groups = []
     if custom_groups:
-        import zhconv
-        from .constants import GROUP_KEYWORDS
-        # 预处理：提取所有清洗后的制作组名称
-        cleaned_groups = []
         for g in custom_groups:
             g_clean = re.sub(r"^\[(?:REMOTE|私有|社区|内置)\]", "", g).strip()
             if g_clean and len(g_clean) >= 2:
-                cleaned_groups.append(g_clean)
-        
-        # [New Strategy] 优先扫描所有括号内容，检查是否是联合制作组
-        bracket_matches = re.findall(r'\[([^\]]+)\]', processed_title)
-        for bracket_content in bracket_matches:
-            bracket_content = bracket_content.strip()
-            if "&" in bracket_content:
-                # 按 & 分割，检查每个部分
-                parts = [p.strip() for p in bracket_content.split("&")]
-                
-                # 验证每个部分是否都是有效的制作组
-                all_valid = True
-                for part in parts:
-                    if len(part) < 2:
-                        all_valid = False
-                        break
-                    # 检查是否在自定义库中（精确匹配），或者符合制作组特征
-                    in_custom = any(g.lower() == part.lower() for g in cleaned_groups)
-                    has_keyword = re.search(GROUP_KEYWORDS, part)
-                    if not in_custom and not has_keyword:
-                        all_valid = False
-                        break
-                
-                if all_valid and len(parts) >= 2:
-                    # 确认是联合制作组，直接使用整个括号内容
-                    meta_obj.resource_team = bracket_content
-                    s_logs.append(f"┣ [Shield] 全局匹配命中制作组(含联合扩张): {bracket_content}")
-                    processed_title = re.sub(rf'\[{re.escape(bracket_content)}\]', " ", processed_title)
-                    processed_title = re.sub(r"\s+", " ", processed_title).strip()
+                cleaned_custom_groups.append(g_clean)
+                all_groups.add(g_clean)
+    
+    # [New Strategy] 优先扫描所有括号内容，检查是否是联合制作组
+    bracket_matches = re.findall(r'\[([^\]]+)\]', processed_title)
+    for bracket_content in bracket_matches:
+        bracket_content = bracket_content.strip()
+        if "&" in bracket_content:
+            # 按 & 分割，检查每个部分
+            parts = [p.strip() for p in bracket_content.split("&")]
+            
+            # 验证每个部分是否都是有效的制作组
+            all_valid = True
+            for part in parts:
+                if len(part) < 2:
+                    all_valid = False
                     break
-        
-        # [Fallback] 如果没有匹配到联合制作组，使用原有的遍历逻辑
-        if not meta_obj.resource_team:
-            from .constants import NOT_GROUPS
-            sorted_groups = sorted(cleaned_groups, key=len, reverse=True)
-            for g in sorted_groups:
-                # [Crucial] 平台词与技术规格排他性检查
-                if re.search(PLATFORM_RE, g) or re.search(rf"(?i)^({NOT_GROUPS})$", g):
-                    continue
-                
-                g_simp, g_trad = zhconv.convert(g, "zh-hans"), zhconv.convert(g, "zh-hant")
-                p_esc, s_esc, t_esc = re.escape(g), re.escape(g_simp), re.escape(g_trad)
-                boundary_chars = r"a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\-"
-                pattern = rf"(?i)(?<![{boundary_chars}])({p_esc}|{s_esc}|{t_esc})(?![{boundary_chars}])"
-                
-                match = re.search(pattern, processed_title)
-                if match:
-                    start, end = match.start(), match.end()
-                    l_pos, r_pos = start, end
-                    
-                    # 定义扩张阻断正则 (去除边界符以适配 fullmatch)
-                    def _c(r): return r.replace(r"(?<![a-zA-Z0-9])", "").replace(r"(?![a-zA-Z0-9])", "").replace(r"\b", "")
-                    STOP_PATTERN = rf"(?i)^({_c(PIX_RE)}|{_c(VIDEO_RE)}|{_c(AUDIO_RE)}|{_c(SOURCE_RE)}|{_c(DYNAMIC_RANGE_RE)}|{_c(PLATFORM_RE)}|S\d+|E\d+|EP\d+|\d{{4}}|MKV|MP4|AVI|TS|7Z|ZIP)$"
-
-                    # 向左扩张
-                    safety_count = 0
-                    while l_pos > 0 and safety_count < 100:
-                        safety_count += 1
-                        prev = processed_title[l_pos-1]
-                        if prev in "★☆[]【】(){}": break
-                        
-                        if prev in " ._-/":
-                            # 检查分隔符左侧的一个单词
-                            left_text = processed_title[:l_pos-1]
-                            word_match = re.search(r'([^.\s\-_/]+)$', left_text)
-                            if word_match:
-                                word = word_match.group(1)
-                                # 如果左侧词是核心元数据，停止扩张
-                                if re.fullmatch(STOP_PATTERN, word): break
-                                # 如果左侧词不是 '&' 且分隔符不是空格，通常也应停止
-                                if prev != " " and word != "&":
-                                    break
-                            
-                            if prev == " ":
-                                # 空格只有在 '&' 存在时才继续
-                                if l_pos > 1 and processed_title[l_pos-2] == "&":
-                                    l_pos -= 1; continue
-                                else: break
-                        
-                        if prev == "&": l_pos -= 1; continue
-                        l_pos -= 1
-                    
-                    # 向右扩张
-                    safety_count = 0
-                    while r_pos < len(processed_title) and safety_count < 100:
-                        safety_count += 1
-                        nxt = processed_title[r_pos]
-                        if nxt in "★☆[]【】(){}": break
-                        
-                        if nxt in " ._-/":
-                            # 检查分隔符右侧的一个单词
-                            right_text = processed_title[r_pos+1:]
-                            word_match = re.match(r'([^.\s\-_/]+)', right_text)
-                            if word_match:
-                                word = word_match.group(1)
-                                if re.fullmatch(STOP_PATTERN, word): break
-                                # 向右扩张支持 '&' 和 '@' (站点标记)
-                                if nxt != " " and word not in ["&", "@"]:
-                                    break
-
-                            if nxt == " ":
-                                 if r_pos < len(processed_title)-1 and processed_title[r_pos+1] == "&":
-                                     r_pos += 1; continue
-                                 else: break
-
-                        if nxt in ["&", "@"]: r_pos += 1; continue
-                        r_pos += 1
-                    
-                    print(f"[DEBUG] Expansion Done. Block: {processed_title[l_pos:r_pos]}", flush=True)
-                    full_block = processed_title[l_pos:r_pos].strip(" &+x")
-                    meta_obj.resource_team = full_block
-                    s_logs.append(f"┣ [Shield] 全局匹配命中制作组(含联合扩张): {full_block}")
-                    processed_title = (processed_title[:l_pos] + " " + processed_title[r_pos:]).strip()
-                    processed_title = re.sub(r"\s+", " ", processed_title)
+                # 检查是否在制作组库中（精确匹配），或者符合制作组特征
+                in_lib = any(g.lower() == part.lower() for g in all_groups)
+                has_keyword = re.search(GROUP_KEYWORDS, part)
+                if not in_lib and not has_keyword:
+                    all_valid = False
                     break
+            
+            if all_valid and len(parts) >= 2:
+                # 确认是联合制作组，直接使用整个括号内容
+                meta_obj.resource_team = bracket_content
+                s_logs.append(f"┣ [Shield] 全局匹配命中制作组(含联合扩张): {bracket_content}")
+                processed_title = re.sub(rf'\[{re.escape(bracket_content)}\]', " ", processed_title)
+                processed_title = re.sub(r"\s+", " ", processed_title).strip()
+                break
+    
+    # [Fallback] 如果没有匹配到联合制作组，使用原有的遍历逻辑
+    if not meta_obj.resource_team:
+        from .constants import NOT_GROUPS
+        sorted_groups = sorted(all_groups, key=len, reverse=True)
+        for g in sorted_groups:
+            # [Crucial] 平台词与技术规格排他性检查
+            if re.search(PLATFORM_RE, g) or re.search(rf"(?i)^({NOT_GROUPS})$", g):
+                continue
+            
+            g_simp, g_trad = zhconv.convert(g, "zh-hans"), zhconv.convert(g, "zh-hant")
+            p_esc, s_esc, t_esc = re.escape(g), re.escape(g_simp), re.escape(g_trad)
+            boundary_chars = r"a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\-"
+            pattern = rf"(?i)(?<![{boundary_chars}])({p_esc}|{s_esc}|{t_esc})(?![{boundary_chars}])"
+            
+            match = re.search(pattern, processed_title)
+            if match:
+                start, end = match.start(), match.end()
+                l_pos, r_pos = start, end
+                
+                # 定义扩张阻断正则 (去除边界符以适配 fullmatch)
+                def _c(r): return r.replace(r"(?<![a-zA-Z0-9])", "").replace(r"(?![a-zA-Z0-9])", "").replace(r"\b", "")
+                STOP_PATTERN = rf"(?i)^({_c(PIX_RE)}|{_c(VIDEO_RE)}|{_c(AUDIO_RE)}|{_c(SOURCE_RE)}|{_c(DYNAMIC_RANGE_RE)}|{_c(PLATFORM_RE)}|S\d+|E\d+|EP\d+|\d{{4}}|MKV|MP4|AVI|TS|7Z|ZIP)$"
+
+                # 向左扩张
+                safety_count = 0
+                while l_pos > 0 and safety_count < 100:
+                    safety_count += 1
+                    prev = processed_title[l_pos-1]
+                    if prev in "★☆[]【】(){}": break
+                    
+                    if prev in " ._-/":
+                        # 检查分隔符左侧的一个单词
+                        left_text = processed_title[:l_pos-1]
+                        word_match = re.search(r'([^.\s\-_/]+)$', left_text)
+                        if word_match:
+                            word = word_match.group(1)
+                            # 如果左侧词是核心元数据，停止扩张
+                            if re.fullmatch(STOP_PATTERN, word): break
+                            # 如果左侧词不是 '&' 且分隔符不是空格，通常也应停止
+                            if prev != " " and word != "&":
+                                break
+                        
+                        if prev == " ":
+                            # 空格只有在 '&' 存在时才继续
+                            if l_pos > 1 and processed_title[l_pos-2] == "&":
+                                l_pos -= 1; continue
+                            else: break
+                    
+                    if prev == "&": l_pos -= 1; continue
+                    l_pos -= 1
+                
+                # 向右扩张
+                safety_count = 0
+                while r_pos < len(processed_title) and safety_count < 100:
+                    safety_count += 1
+                    nxt = processed_title[r_pos]
+                    if nxt in "★☆[]【】(){}": break
+                    
+                    if nxt in " ._-/":
+                        # 检查分隔符右侧的一个单词
+                        right_text = processed_title[r_pos+1:]
+                        word_match = re.match(r'([^.\s\-_/]+)', right_text)
+                        if word_match:
+                            word = word_match.group(1)
+                            if re.fullmatch(STOP_PATTERN, word): break
+                            # 向右扩张支持 '&' 和 '@' (站点标记)
+                            if nxt != " " and word not in ["&", "@"]:
+                                break
+
+                        if nxt == " ":
+                             if r_pos < len(processed_title)-1 and processed_title[r_pos+1] == "&":
+                                 r_pos += 1; continue
+                             else: break
+
+                    if nxt in ["&", "@"]: r_pos += 1; continue
+                    r_pos += 1
+                
+                print(f"[DEBUG] Expansion Done. Block: {processed_title[l_pos:r_pos]}", flush=True)
+                full_block = processed_title[l_pos:r_pos].strip(" &+x")
+                meta_obj.resource_team = full_block
+                
+                # 判断来源
+                source = "内置库" if g in builtin_groups else "自定义库"
+                s_logs.append(f"┣ [Shield] 全局匹配命中制作组({source}): {full_block}")
+                processed_title = (processed_title[:l_pos] + " " + processed_title[r_pos:]).strip()
+                processed_title = re.sub(r"\s+", " ", processed_title)
+                break
 
     # [New] 非括号首部制作组检测 (支持 Group★Title 或 Group Title 这种风格)
     if not meta_obj.resource_team:
@@ -257,13 +267,19 @@ def core_recognize(
         first_block_match = re.search(r"^([^\s★☆\[【]+)", processed_title)
         if first_block_match:
             candidate = first_block_match.group(1).strip()
-            from .constants import GROUP_KEYWORDS
-            # 语义校验：块内必须包含制作组特征词 (如 字幕组, 制作, 社)
-            if re.search(GROUP_KEYWORDS, candidate):
+            # 检查是否在制作组库中
+            in_lib = any(g.lower() == candidate.lower() for g in all_groups)
+            has_keyword = re.search(GROUP_KEYWORDS, candidate)
+            
+            # 语义校验：在库中或包含制作组特征词
+            if in_lib or has_keyword:
                 # 排除明显的剧名特征 (如 [第01话])
                 if not re.search(r"第?\d+[集话話回季]|[上下]卷", candidate):
                     meta_obj.resource_team = candidate
-                    s_logs.append(f"┣ [Shield] 探测到首部特征制作组: {candidate}")
+                    
+                    # 判断来源
+                    source = "内置库" if in_lib else "特征词"
+                    s_logs.append(f"┣ [Shield] 探测到首部制作组({source}): {candidate}")
                     # 从标题中切除该块
                     processed_title = processed_title[first_block_match.end():].strip()
                     # 清理可能残留在开头的空格或星号碎屑

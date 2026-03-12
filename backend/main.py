@@ -281,6 +281,13 @@ async def startup_event():
 
     ConfigManager.init_config()
     
+    # [NEW] 加载内置制作组
+    try:
+        from recognition_engine.builtin_group_loader import BuiltinGroupLoader
+        BuiltinGroupLoader.load()
+    except Exception as e:
+        logger.warning(f"加载内置制作组失败: {e}")
+    
     # [NEW] 自动初始化默认用户
     from auth_utils import ensure_default_user
     await ensure_default_user()
