@@ -90,6 +90,7 @@ class ConfigManager:
         "health_check_interval": 30, # 健康检查巡检间隔（分钟）
         "calendar_daily_push": False, # 追剧日历每日播报
         "calendar_push_time": "09:00", # 每日播报时间
+        "ui_auth_enabled": None,  # UI登录验证开关，None表示自动（有密码则启用）
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",
