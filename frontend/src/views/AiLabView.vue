@@ -254,8 +254,8 @@ onMounted(() => {
 
 .mechanism-box {
   background: var(--bg-surface);
-  padding: 12px;
-  border-radius: 4px;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
 }
 .mechanism-list {

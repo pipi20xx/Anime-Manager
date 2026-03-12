@@ -247,15 +247,15 @@ onUnmounted(() => {
 
 .end-of-list {
   width: 100%;
-  opacity: 0.6;
+  opacity: var(--opacity-60);
 }
 
 .can-load-more {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--n-text-color-3);
-  font-size: 13px;
-  opacity: 0.8;
+  font-size: var(--text-md);
+  opacity: var(--opacity-80);
 }
 </style>

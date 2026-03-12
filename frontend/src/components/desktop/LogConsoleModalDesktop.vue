@@ -214,11 +214,11 @@ watch(() => props.show, (newVal) => {
 }
 
 .log-line {
-  padding: 0 16px;
+  padding: 0 var(--space-4);
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: var(--text-base);
   line-height: 20px;
-  color: #e0e0e0;
+  color: var(--text-secondary);
   opacity: 1;
   white-space: pre-wrap;
   word-break: break-all;

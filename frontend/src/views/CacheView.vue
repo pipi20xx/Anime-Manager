@@ -428,8 +428,8 @@ onUnmounted(() => {
 .card-content { padding: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .card-content .title { font-size: 13px; font-weight: bold; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
 .action-row { display: flex; align-items: flex-start; flex-shrink: 0; }
-.del-btn { opacity: 0.2; transition: opacity var(--transition-fast); }
-.cache-card:hover .del-btn { opacity: 1; }
+.del-btn { opacity: var(--opacity-20); transition: opacity var(--transition-fast); }
+.cache-card:hover .del-btn { opacity: var(--opacity-100); }
 
 .sentinel { height: 40px; display: flex; justify-content: center; align-items: center; margin-top: 24px; width: 100%; }
 .end-text { font-size: 12px; color: var(--text-muted); font-style: italic; }

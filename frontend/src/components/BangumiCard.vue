@@ -65,17 +65,17 @@ const getImg = (path: string) => {
 .bgm-card:hover { 
   transform: translateY(-6px); 
 }
-.bgm-cover { 
+.bgm-cover {
   width: 100%;
-  aspect-ratio: 2/3; 
-  border-radius: 12px; 
-  overflow: hidden; 
-  margin-bottom: 8px; 
-  background: var(--bg-primary); 
-  position: relative; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
+  aspect-ratio: 2/3;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+  background: var(--bg-primary);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-light);
 }
@@ -117,7 +117,7 @@ const getImg = (path: string) => {
 .bgm-score { font-size: var(--text-sm); color: var(--color-warning); font-weight: bold; }
 .bgm-sub-label {
     background: var(--bg-primary); color: var(--n-primary-color);
-    padding: 1px 6px; border-radius: 4px;
+    padding: 1px 6px; border-radius: var(--radius-sm);
     font-size: var(--text-xs); font-weight: bold;
     border: 1px solid var(--border-medium);
 }

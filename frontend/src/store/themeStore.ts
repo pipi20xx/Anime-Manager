@@ -162,6 +162,40 @@ const updateCssVariables = () => {
   root.style.setProperty('--text-xl', '16px')
   root.style.setProperty('--text-2xl', '20px')
 
+  // Border radius scale
+  root.style.setProperty('--radius-xs', '2px')
+  root.style.setProperty('--radius-sm', '4px')
+  root.style.setProperty('--radius-md', '6px')
+  root.style.setProperty('--radius-lg', '8px')
+  root.style.setProperty('--radius-xl', '12px')
+  root.style.setProperty('--radius-2xl', '16px')
+  root.style.setProperty('--radius-3xl', '20px')
+  root.style.setProperty('--radius-full', '9999px')
+
+  // Spacing scale
+  root.style.setProperty('--space-1', '4px')
+  root.style.setProperty('--space-2', '8px')
+  root.style.setProperty('--space-3', '12px')
+  root.style.setProperty('--space-4', '16px')
+  root.style.setProperty('--space-5', '20px')
+  root.style.setProperty('--space-6', '24px')
+  root.style.setProperty('--space-8', '32px')
+  root.style.setProperty('--space-10', '40px')
+  root.style.setProperty('--space-12', '48px')
+
+  // Opacity scale
+  root.style.setProperty('--opacity-0', '0')
+  root.style.setProperty('--opacity-10', '0.1')
+  root.style.setProperty('--opacity-20', '0.2')
+  root.style.setProperty('--opacity-30', '0.3')
+  root.style.setProperty('--opacity-40', '0.4')
+  root.style.setProperty('--opacity-50', '0.5')
+  root.style.setProperty('--opacity-60', '0.6')
+  root.style.setProperty('--opacity-70', '0.7')
+  root.style.setProperty('--opacity-80', '0.8')
+  root.style.setProperty('--opacity-90', '0.9')
+  root.style.setProperty('--opacity-100', '1')
+
   // Z-index scale
   root.style.setProperty('--z-base', '0')
   root.style.setProperty('--z-dropdown', '100')

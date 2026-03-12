@@ -232,8 +232,8 @@ const runningMonitorsCount = computed(() =>
 .service-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
   transition: all var(--transition-fast);
 }
 
@@ -243,7 +243,7 @@ const runningMonitorsCount = computed(() =>
 }
 
 .service-card.is-stopped {
-  opacity: 0.6;
+  opacity: var(--opacity-60);
 }
 
 .service-header {
@@ -289,8 +289,8 @@ const runningMonitorsCount = computed(() =>
 .monitor-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
   transition: all var(--transition-fast);
 }
 
@@ -356,8 +356,8 @@ const runningMonitorsCount = computed(() =>
 .rule-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
 }
 
 .rule-header {

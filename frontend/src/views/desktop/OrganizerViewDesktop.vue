@@ -296,8 +296,8 @@ onUnmounted(stopBgTaskPolling)
   box-shadow: var(--shadow-md);
 }
 
-.drag-handle { cursor: grab; opacity: 0.6; transition: opacity var(--transition-fast); }
-.drag-handle:hover { opacity: 1; }
+.drag-handle { cursor: grab; opacity: var(--opacity-60); transition: opacity var(--transition-fast); }
+.drag-handle:hover { opacity: var(--opacity-100); }
 .rule-preview-mini { flex-grow: 1; padding: 12px 0; }
 .rule-preview-mini .p-item { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .rule-preview-mini span { font-size: 10px; color: var(--n-text-color-3); font-weight: bold; text-transform: uppercase; }

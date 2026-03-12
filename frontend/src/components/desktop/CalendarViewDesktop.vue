@@ -359,7 +359,7 @@ const {
   align-items: center;
   gap: 6px;
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   background: var(--bg-surface);
   border: 1px solid transparent;
@@ -381,7 +381,7 @@ const {
   flex-shrink: 0;
 }
 .anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--n-text-color-2); }
-.ep-count-tag { font-size: var(--text-xs); background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
+.ep-count-tag { font-size: var(--text-xs); background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: var(--radius-xs); font-weight: bold; flex-shrink: 0; }
 .discover-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

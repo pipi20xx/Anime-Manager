@@ -170,9 +170,9 @@ watch(() => props.show, (newVal) => {
 .log-spin { flex: 1; display: flex; flex-direction: column; height: 100%; }
 :deep(.n-spin-content) { flex: 1; display: flex; flex-direction: column; height: 100%; }
 .log-list { flex: 1; height: 100% !important; }
-.log-line { 
-  font-family: monospace; font-size: 11px; line-height: 1.4; color: #e0e0e0; 
-  padding: 2px 4px; word-break: break-all; white-space: pre-wrap; 
+.log-line {
+  font-family: monospace; font-size: var(--text-sm); line-height: 1.4; color: var(--text-secondary);
+  padding: 2px 4px; word-break: break-all; white-space: pre-wrap;
   border-bottom: 1px solid var(--border-light);
 }
 

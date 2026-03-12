@@ -133,8 +133,8 @@ const {
 /* Carousel */
 .main-carousel { height: 450px; border-radius: var(--card-border-radius, 12px); margin-bottom: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); overflow: hidden; }
 .carousel-item { position: relative; width: 100%; height: 100%; cursor: pointer; background: var(--bg-primary); }
-.carousel-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: transform 10s ease; }
-.carousel-item:hover .carousel-img { transform: scale(1.05); opacity: 0.8; }
+.carousel-img { width: 100%; height: 100%; object-fit: cover; opacity: var(--opacity-70); transition: transform 10s ease; }
+.carousel-item:hover .carousel-img { transform: scale(1.05); opacity: var(--opacity-80); }
 .carousel-gradient { 
   position: absolute; inset: 0; 
   background: linear-gradient(to top, var(--app-bg-color) 0%, transparent 60%); 

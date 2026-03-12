@@ -163,8 +163,8 @@ const handleLogin = async () => {
   backdrop-filter: blur(20px);
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-xl);
-  padding: 32px;
-  border-radius: 24px;
+  padding: var(--space-8);
+  border-radius: var(--radius-3xl);
 }
 
 .login-header h2 {

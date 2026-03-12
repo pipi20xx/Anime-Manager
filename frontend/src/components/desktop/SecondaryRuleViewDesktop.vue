@@ -117,15 +117,15 @@ const {
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 
 /* 卡片核心样式 - 增强对比度 */
-.rect-rule-card { 
-  background-color: var(--bg-surface); 
-  border: 1px solid rgba(255, 255, 255, var(--border-heavy-alpha)); 
-  padding: 16px; 
-  border-radius: 8px; 
-  cursor: pointer; 
+.rect-rule-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 1px 2px 0 var(--shadow-light);
-  height: auto; 
+  height: auto;
 }
 .rect-rule-card:hover { 
   border-color: var(--n-primary-color); 
@@ -140,7 +140,7 @@ const {
 .card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 10px; }
 .header-left { display: flex; align-items: center; gap: 8px; }
 .drag-handle { color: var(--n-text-color-3); cursor: grab; }
-.index-badge { font-family: monospace; font-size: 10px; background: var(--n-action-color); padding: 1px 4px; border-radius: 4px; color: var(--n-primary-color); }
+.index-badge { font-family: monospace; font-size: var(--text-xs); background: var(--n-action-color); padding: 1px 4px; border-radius: var(--radius-sm); color: var(--n-primary-color); }
 .rule-name { font-size: 15px; color: var(--n-text-color-1); }
 
 .criteria-list { font-size: 11px; color: var(--n-text-color-3); display: grid; gap: 4px; margin-bottom: 12px; }

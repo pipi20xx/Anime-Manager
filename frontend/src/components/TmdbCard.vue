@@ -66,15 +66,15 @@ const getImg = (path: string) => {
   transform: translateY(-5px); 
 }
 
-.poster-wrapper { 
+.poster-wrapper {
   width: 100%;
-  aspect-ratio: 2/3; 
-  border-radius: 12px; 
-  overflow: hidden; 
-  position: relative; 
-  background: var(--bg-tertiary); 
-  box-shadow: var(--shadow-md); 
-  margin-bottom: 8px; 
+  aspect-ratio: 2/3;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-tertiary);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-2);
 }
 .poster-wrapper :deep(.n-image) { width: 100%; height: 100%; display: flex; }
 .poster-wrapper :deep(img) { 
@@ -90,7 +90,7 @@ const getImg = (path: string) => {
   background: var(--bg-overlay); 
   color: var(--color-warning); 
   padding: 2px 6px; 
-  border-radius: 4px; 
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   font-weight: bold;
   backdrop-filter: blur(4px);

@@ -432,11 +432,11 @@ const isNavActive = (key: string) => currentViewKey.value === key
 .user-status-trigger {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
+  padding: var(--space-1) var(--space-2);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   transition: all var(--transition-normal);
-  gap: 8px;
+  gap: var(--space-2);
   border: 1px solid var(--border-light);
   background-color: var(--bg-surface);
 }
