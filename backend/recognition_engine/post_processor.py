@@ -40,7 +40,9 @@ class PostProcessor:
                             # 进一步检查：文件名中是否包含合集关键字，或者确实是区间格式
                             batch_keywords = ["合集", "全集", "Batch", "Collection", "Fin", "合訂"]
                             is_explicit_batch = any(k in input_name for k in batch_keywords)
-                            if is_explicit_batch or "-" in str(raw_ep):
+                            # 检查原始文件名中是否包含区间格式 (如 E09-E11, 09-11 等)
+                            has_range_format = bool(re.search(r"E?\d{1,3}\s*[-~]\s*E?\d{1,3}", input_name, re.I))
+                            if is_explicit_batch or has_range_format:
                                 meta_obj.begin_episode = s
                                 meta_obj.end_episode = e
                                 meta_obj.is_batch = True

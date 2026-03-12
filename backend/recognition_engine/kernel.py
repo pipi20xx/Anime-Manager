@@ -183,7 +183,7 @@ def core_recognize(
             
             g_simp, g_trad = zhconv.convert(g, "zh-hans"), zhconv.convert(g, "zh-hant")
             p_esc, s_esc, t_esc = re.escape(g), re.escape(g_simp), re.escape(g_trad)
-            boundary_chars = r"a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\-"
+            boundary_chars = r"a-zA-Z0-9\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff"
             pattern = rf"(?i)(?<![{boundary_chars}])({p_esc}|{s_esc}|{t_esc})(?![{boundary_chars}])"
             
             match = re.search(pattern, processed_title)
