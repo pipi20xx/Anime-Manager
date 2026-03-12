@@ -232,6 +232,54 @@ input, textarea, select, button {
   background: transparent !important;
 }
 
+/* Message 主题化 */
+.n-message-container {
+  z-index: 9999 !important;
+}
+.n-message {
+  background: var(--app-modal-bg) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+.n-message .n-message__icon {
+  color: var(--n-primary-color) !important;
+}
+.n-message--success .n-message__icon {
+  color: var(--color-success) !important;
+}
+.n-message--error .n-message__icon {
+  color: var(--color-error) !important;
+}
+.n-message--warning .n-message__icon {
+  color: var(--color-warning) !important;
+}
+.n-message--info .n-message__icon {
+  color: var(--color-info) !important;
+}
+
+/* Notification 主题化 */
+.n-notification-container {
+  z-index: 9999 !important;
+}
+.n-notification {
+  background: var(--app-modal-bg) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dialog 主题化 */
+.n-dialog {
+  background: var(--app-modal-bg) !important;
+  color: var(--text-primary) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Sider Trigger 主题化 */
 :deep(.n-layout-sider__border) {
   border-color: var(--app-border-light) !important;

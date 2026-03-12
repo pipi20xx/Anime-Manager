@@ -134,6 +134,22 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
     arrowColor: 'var(--app-modal-bg)'
   },
+  Message: {
+    color: 'var(--app-modal-bg)',
+    textColor: 'var(--text-primary)',
+    iconColor: config.primaryColor,
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+  },
+  Notification: {
+    color: 'var(--app-modal-bg)',
+    textColor: 'var(--text-primary)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+  },
+  Dialog: {
+    color: 'var(--app-modal-bg)',
+    textColor: 'var(--text-primary)',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+  },
   LayoutSider: {
     color: 'var(--app-surface-card)',
     borderColor: 'var(--app-border-light)',
