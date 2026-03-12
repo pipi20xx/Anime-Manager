@@ -287,7 +287,7 @@ onUnmounted(stopBgTaskPolling)
   border-radius: var(--card-border-radius, 12px) !important;
   border: 1px solid var(--app-border-light) !important;
   background: var(--app-surface-card) !important;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 .clickable-card { cursor: pointer; }
 .rule-card:hover, .task-card:hover {
@@ -296,7 +296,7 @@ onUnmounted(stopBgTaskPolling)
   box-shadow: var(--shadow-md);
 }
 
-.drag-handle { cursor: grab; opacity: 0.6; transition: opacity 0.2s; }
+.drag-handle { cursor: grab; opacity: 0.6; transition: opacity var(--transition-fast); }
 .drag-handle:hover { opacity: 1; }
 .rule-preview-mini { flex-grow: 1; padding: 12px 0; }
 .rule-preview-mini .p-item { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }

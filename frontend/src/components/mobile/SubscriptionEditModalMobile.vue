@@ -234,7 +234,7 @@ watch(() => props.show, (newVal) => {
   padding: 8px;
   cursor: pointer;
   border-bottom: 1px solid var(--app-border-light);
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
 }
 .result-item:hover {
   background: var(--app-surface-card);

@@ -59,11 +59,11 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   font-size: 11px;
 }
 
-.log-line { 
-  display: flex; 
-  gap: 8px; 
-  padding: 4px 0; 
-  border-bottom: 1px solid rgba(255,255,255,0.02); 
+.log-line {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-light);
   align-items: flex-start; /* 对齐顶部，防止行号错位 */
 }
 

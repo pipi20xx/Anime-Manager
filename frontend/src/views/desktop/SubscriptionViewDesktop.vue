@@ -313,11 +313,11 @@ onMounted(fetchData)
   color: var(--text-secondary);
 }
 
-.feed-card { 
-  border: 1px solid var(--app-border-light) !important; 
-  background: var(--app-surface-card) !important; 
+.feed-card {
+  border: 1px solid var(--app-border-light) !important;
+  background: var(--app-surface-card) !important;
   border-radius: var(--card-border-radius, 12px) !important;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   position: relative;
 }
 .clickable-card { cursor: pointer; }

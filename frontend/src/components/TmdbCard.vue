@@ -53,10 +53,10 @@ const getImg = (path: string) => {
 </template>
 
 <style scoped>
-.tmdb-card { 
-  cursor: pointer; 
-  transition: transform 0.2s; 
-  display: flex; 
+.tmdb-card {
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  display: flex;
   flex-direction: column;
   width: 100%;
   min-width: 0;
@@ -91,31 +91,31 @@ const getImg = (path: string) => {
   color: var(--color-warning); 
   padding: 2px 6px; 
   border-radius: 4px; 
-  font-size: 11px; 
-  font-weight: bold; 
-  backdrop-filter: blur(4px); 
+  font-size: var(--text-sm);
+  font-weight: bold;
+  backdrop-filter: blur(4px);
 }
 
-.sub-badge { 
-  position: absolute; 
-  top: 6px; 
-  left: 6px; 
-  background: var(--n-primary-color); 
-  color: var(--text-primary); 
-  padding: 2px 6px; 
-  border-radius: 4px; 
-  font-size: 10px; 
-  font-weight: bold; 
+.sub-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--n-primary-color);
+  color: var(--text-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: var(--text-xs);
+  font-weight: bold;
 }
 
 .media-info { flex-grow: 1; display: flex; flex-direction: column; padding: 0 2px; }
-.media-title { 
-  font-size: 14px; 
-  font-weight: 600; 
-  overflow: hidden; 
-  white-space: nowrap; 
-  text-overflow: ellipsis; 
+.media-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--text-secondary);
 }
-.media-date { font-size: 12px; color: var(--n-text-color-3); }
+.media-date { font-size: var(--text-base); color: var(--n-text-color-3); }
 </style>

@@ -258,14 +258,14 @@ const {
 }
 
 .header-title-text {
-  font-size: 16px;
+  font-size: var(--text-xl);
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--n-text-color-1);
 }
 
 .current-month-display {
-  font-size: 15px;
+  font-size: var(--text-xl);
   font-weight: 700;
   min-width: 90px;
   text-align: center;
@@ -295,7 +295,7 @@ const {
   padding: 10px;
   text-align: center;
   font-weight: 800;
-  font-size: 13px;
+  font-size: var(--text-md);
   color: var(--n-text-color-3);
   text-transform: uppercase;
 }
@@ -316,7 +316,7 @@ const {
   flex-direction: column;
   min-height: 80px;
   min-width: 0;
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
 }
 
 .grid-cell:hover {
@@ -333,7 +333,7 @@ const {
 }
 
 .day-num {
-  font-size: 14px;
+  font-size: var(--text-lg);
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--n-text-color-2);
@@ -360,10 +360,10 @@ const {
   gap: 6px;
   padding: 2px 4px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: var(--text-sm);
   background: var(--bg-surface);
   border: 1px solid transparent;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
   min-width: 0;
 }
 
@@ -381,7 +381,7 @@ const {
   flex-shrink: 0;
 }
 .anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--n-text-color-2); }
-.ep-count-tag { font-size: 9px; background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
+.ep-count-tag { font-size: var(--text-xs); background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: 3px; font-weight: bold; flex-shrink: 0; }
 .discover-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -417,7 +417,7 @@ const {
 }
 
 .item-title {
-  font-size: 14px;
+  font-size: var(--text-lg);
   font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
@@ -426,7 +426,7 @@ const {
 }
 
 .item-desc {
-  font-size: 11px;
+  font-size: var(--text-sm);
   color: var(--n-text-color-3);
 }
 
@@ -456,9 +456,9 @@ const {
   padding: 0 16px 16px;
 }
 
-.discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background 0.2s; min-width: 0; }
+.discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background var(--transition-fast); min-width: 0; }
 .discover-item:hover { background: var(--primary-light); }
-.discover-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.discover-name { font-size: var(--text-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .calendar-spin { height: 100%; }
 .calendar-icon { color: var(--n-primary-color); }
 .notify-icon { color: var(--n-primary-color); }

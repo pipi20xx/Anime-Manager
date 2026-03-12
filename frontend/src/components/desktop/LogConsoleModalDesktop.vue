@@ -222,7 +222,7 @@ watch(() => props.show, (newVal) => {
   opacity: 1;
   white-space: pre-wrap;
   word-break: break-all;
-  transition: background 0.2s ease;
+  transition: background var(--transition-fast);
 }
 
 .log-line:hover {

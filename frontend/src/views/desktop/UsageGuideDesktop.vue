@@ -74,8 +74,8 @@ const { activeTab } = useUsageGuide()
 
 <style scoped>
 .guide-view { width: 100%; margin: 0 auto; padding: 0; }
-.header h1 { margin: 0; font-size: 28px; color: var(--n-text-color-1); }
-.subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.header h1 { margin: 0; font-size: var(--text-2xl); color: var(--n-text-color-1); }
+.subtitle { font-size: var(--text-base); color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .mb-8 { margin-bottom: 32px; }
 
 /* Tabs 滑动条样式 */
@@ -118,7 +118,7 @@ const { activeTab } = useUsageGuide()
   font-size: 13px;
   font-weight: bold;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity var(--transition-normal);
   pointer-events: none;
   z-index: 100;
   box-shadow: var(--shadow-md);

@@ -266,7 +266,7 @@ const handleRefresh = () => {
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 12px);
   padding: 16px 20px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 .history-item:hover {
   background: var(--app-surface-inner);

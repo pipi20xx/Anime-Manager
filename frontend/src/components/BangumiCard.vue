@@ -52,11 +52,11 @@ const getImg = (path: string) => {
 </template>
 
 <style scoped>
-.bgm-card { 
-  background: transparent; 
-  transition: all 0.3s ease; 
-  cursor: pointer; 
-  display: flex; 
+.bgm-card {
+  background: transparent;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  display: flex;
   flex-direction: column;
   width: 100%;
   min-width: 0;
@@ -88,22 +88,22 @@ const getImg = (path: string) => {
 
 .bgm-info { flex-grow: 1; display: flex; flex-direction: column; padding: 0 2px; }
 
-.bgm-title { 
-  font-size: 14px; 
-  font-weight: 600; 
-  color: var(--text-secondary); 
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  line-height: 1.4; 
+.bgm-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
 }
-.bgm-orig { 
-  font-size: 11px; 
-  color: var(--n-text-color-3); 
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  margin-top: 2px; 
+.bgm-orig {
+  font-size: var(--text-sm);
+  color: var(--n-text-color-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
 .bgm-footer { 
@@ -114,11 +114,11 @@ const getImg = (path: string) => {
     padding-top: 6px; 
     height: 24px;
 }
-.bgm-score { font-size: 11px; color: var(--color-warning); font-weight: bold; }
+.bgm-score { font-size: var(--text-sm); color: var(--color-warning); font-weight: bold; }
 .bgm-sub-label {
-    background: var(--bg-primary); color: var(--n-primary-color); 
-    padding: 1px 6px; border-radius: 4px; 
-    font-size: 10px; font-weight: bold;
+    background: var(--bg-primary); color: var(--n-primary-color);
+    padding: 1px 6px; border-radius: 4px;
+    font-size: var(--text-xs); font-weight: bold;
     border: 1px solid var(--border-medium);
 }
 </style>

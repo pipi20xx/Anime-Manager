@@ -256,7 +256,7 @@ onMounted(() => {
   background: var(--bg-surface);
   padding: 12px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
 }
 .mechanism-list {
   margin: 8px 0 12px 20px;

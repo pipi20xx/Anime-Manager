@@ -158,10 +158,10 @@ const {
 /* Section Common */
 .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; padding: 0 4px; }
 .section-title { font-size: 22px; font-weight: 800; color: var(--n-text-color-1); display: flex; align-items: center; gap: 10px; }
-.section-more { font-size: 13px; color: var(--n-text-color-3); cursor: pointer; transition: color 0.2s; }
+.section-more { font-size: 13px; color: var(--n-text-color-3); cursor: pointer; transition: color var(--transition-fast); }
 .section-more:hover { color: var(--n-primary-color); }
 
 .media-scroller { display: flex; gap: 20px; padding: 4px; }
-.media-card { min-width: 150px; width: 150px; cursor: pointer; transition: transform 0.2s; display: flex; flex-direction: column; }
+.media-card { min-width: 150px; width: 150px; cursor: pointer; transition: transform var(--transition-fast); display: flex; flex-direction: column; }
 .media-card:hover { transform: translateY(-6px); }
 </style>

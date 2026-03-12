@@ -65,7 +65,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   font-size: 12px;
 }
 
-.log-line { display: flex; gap: 12px; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+.log-line { display: flex; gap: 12px; padding: 2px 0; border-bottom: 1px solid var(--border-light); }
 .line-num { color: var(--text-muted); min-width: 24px; text-align: right; font-size: 10px; user-select: none; }
 .log-header { color: var(--n-primary-color); font-weight: bold; margin: 8px 0; border-bottom: 1px solid var(--app-border-light); }
 .log-debug { color: var(--n-info-color); }

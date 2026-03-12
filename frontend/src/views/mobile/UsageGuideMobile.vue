@@ -187,7 +187,7 @@ const { activeTab } = useUsageGuide()
   font-size: 13px;
   font-weight: bold;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity var(--transition-normal);
   pointer-events: none;
   z-index: 100;
   box-shadow: var(--shadow-md);

@@ -435,7 +435,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
   padding: 6px 8px;
   cursor: pointer;
   border-radius: 8px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   gap: 8px;
   border: 1px solid var(--border-light);
   background-color: var(--bg-surface);
@@ -513,7 +513,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
   flex: 1;
   height: 100%;
   color: var(--text-muted);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   cursor: pointer;
 }
 

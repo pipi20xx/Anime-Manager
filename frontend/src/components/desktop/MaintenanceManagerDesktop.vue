@@ -85,7 +85,7 @@ const {
 
 .table-card {
   height: 100%;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   background: var(--app-surface-card);
 }
 .table-card:hover {

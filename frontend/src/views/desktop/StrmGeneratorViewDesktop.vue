@@ -152,24 +152,24 @@ onMounted(fetchTasks)
 
 <style scoped>
 .strm-view { width: 100%; }
-.header h1 { margin: 0; font-size: 24px; color: var(--text-primary); }
-.subtitle { font-size: 11px; color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
+.header h1 { margin: 0; font-size: var(--text-2xl); color: var(--text-primary); }
+.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.task-card { height: 100%; transition: transform 0.2s; border: 1px solid var(--app-border-light); background: var(--app-surface-card); }
+.task-card { height: 100%; transition: transform var(--transition-fast); border: 1px solid var(--app-border-light); background: var(--app-surface-card); }
 .clickable-card { cursor: pointer; }
 .task-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); }
 .task-header { display: flex; justify-content: space-between; align-items: center; }
-.task-name { font-weight: bold; font-size: 15px; color: var(--text-secondary); }
-.path-info .l { font-size: 10px; color: var(--n-text-color-3); opacity: 0.6; }
-.path-info .v { 
-  font-size: 12px; 
-  font-family: monospace; 
-  color: var(--n-text-color-2); 
-  background: var(--app-surface-inner); 
-  padding: 4px 8px; 
-  border-radius: var(--button-border-radius, 4px); 
+.task-name { font-weight: bold; font-size: var(--text-xl); color: var(--text-secondary); }
+.path-info .l { font-size: var(--text-xs); color: var(--n-text-color-3); opacity: 0.6; }
+.path-info .v {
+  font-size: var(--text-base);
+  font-family: monospace;
+  color: var(--n-text-color-2);
+  background: var(--app-surface-inner);
+  padding: 4px 8px;
+  border-radius: var(--button-border-radius, 4px);
   border: 1px solid var(--app-border-light);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .mb-4 { margin-bottom: 16px; }
 </style>

@@ -393,12 +393,12 @@ onUnmounted(() => {
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; }
 
 .cache-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-.cache-card { height: 100%; transition: all 0.2s ease; overflow: hidden; border: 1px solid var(--border-medium); }
+.cache-card { height: 100%; transition: all var(--transition-fast); overflow: hidden; border: 1px solid var(--border-medium); }
 .clickable-card { cursor: pointer; }
 .cache-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); box-shadow: var(--shadow-md); }
 
 .poster-container { position: relative; width: 100%; aspect-ratio: 2/3; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.poster-img { width: 100%; height: 100%; transition: opacity 0.3s; }
+.poster-img { width: 100%; height: 100%; transition: opacity var(--transition-normal); }
 .no-poster { color: var(--text-muted); font-weight: bold; font-size: 14px; }
 .type-tag { 
   position: absolute; top: 0; right: 0; z-index: 10; 
@@ -428,7 +428,7 @@ onUnmounted(() => {
 .card-content { padding: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .card-content .title { font-size: 13px; font-weight: bold; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
 .action-row { display: flex; align-items: flex-start; flex-shrink: 0; }
-.del-btn { opacity: 0.2; transition: opacity 0.2s; }
+.del-btn { opacity: 0.2; transition: opacity var(--transition-fast); }
 .cache-card:hover .del-btn { opacity: 1; }
 
 .sentinel { height: 40px; display: flex; justify-content: center; align-items: center; margin-top: 24px; width: 100%; }

@@ -123,7 +123,7 @@ const {
   padding: 16px; 
   border-radius: 8px; 
   cursor: pointer; 
-  transition: all 0.2s ease; 
+  transition: all var(--transition-fast);
   box-shadow: 0 1px 2px 0 var(--shadow-light);
   height: auto; 
 }

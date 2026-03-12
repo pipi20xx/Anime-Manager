@@ -387,13 +387,13 @@ onMounted(() => {
 
 <style scoped>
 .action-bar { margin-bottom: 24px; display: flex; justify-content: flex-end; }
-.sub-card { overflow: hidden; border: 1px solid var(--app-border-light) !important; background: var(--app-surface-card) !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); border-radius: var(--card-border-radius, 8px) !important; }
+.sub-card { overflow: hidden; border: 1px solid var(--app-border-light) !important; background: var(--app-surface-card) !important; transition: all var(--transition-normal); border-radius: var(--card-border-radius, 8px) !important; }
 .sub-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-xl); border-color: var(--n-primary-color) !important; }
 .card-content { display: flex; flex-direction: column; }
 .poster-box { position: relative; width: 100%; aspect-ratio: 2 / 3; background: var(--app-surface-inner); overflow: hidden; border-radius: var(--card-border-radius, 8px); cursor: pointer; }
-.poster-box :deep(img) { width: 100%; height: 100%; border-radius: var(--card-border-radius, 8px); transition: transform 0.5s ease; }
+.poster-box :deep(img) { width: 100%; height: 100%; border-radius: var(--card-border-radius, 8px); transition: transform var(--transition-slow); }
 .sub-card:hover .poster-box :deep(img) { transform: scale(1.1); }
-.card-overlay { position: absolute; inset: 0; background: var(--bg-overlay); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: var(--opacity-disabled); transition: opacity 0.3s ease; color: var(--text-primary); gap: 8px; }
+.card-overlay { position: absolute; inset: 0; background: var(--bg-overlay); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: var(--opacity-disabled); transition: opacity var(--transition-normal); color: var(--text-primary); gap: 8px; }
 .card-overlay span { font-size: 12px; font-weight: bold; }
 .sub-card:hover .card-overlay { opacity: var(--opacity-full); }
 .media-type-tag { position: absolute; top: 8px; right: 8px; background: var(--bg-overlay); backdrop-filter: blur(8px); color: var(--text-primary); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }

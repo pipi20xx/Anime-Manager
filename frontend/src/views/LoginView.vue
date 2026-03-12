@@ -161,8 +161,8 @@ const handleLogin = async () => {
   z-index: 1;
   background-color: var(--card-bg-color);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-xl);
   padding: 32px;
   border-radius: 24px;
 }

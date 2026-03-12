@@ -55,7 +55,7 @@ onMounted(() => {
   height: auto;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   box-shadow: 0 2px 8px var(--shadow-light);
 }
 

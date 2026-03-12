@@ -425,7 +425,7 @@ const getShortName = (path: string) => {
 }
 
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;

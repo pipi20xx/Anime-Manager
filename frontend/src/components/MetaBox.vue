@@ -22,7 +22,7 @@ defineProps<Props>()
   padding: 12px 16px;
   border-radius: var(--button-border-radius, 8px);
   border: 1px solid var(--app-border-light);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .meta-box:hover {
@@ -31,7 +31,7 @@ defineProps<Props>()
 }
 
 .label {
-  font-size: 11px;
+  font-size: var(--text-sm);
   color: var(--n-text-color-3);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -39,7 +39,7 @@ defineProps<Props>()
 }
 
 .value {
-  font-size: 14px;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--n-text-color-1);
 }

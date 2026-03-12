@@ -231,10 +231,10 @@ const runningMonitorsCount = computed(() =>
 
 .service-card {
   background: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 12px;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .service-card.is-running {
@@ -288,10 +288,10 @@ const runningMonitorsCount = computed(() =>
 
 .monitor-card {
   background: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 12px;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .monitor-card.is-running {
@@ -348,14 +348,14 @@ const runningMonitorsCount = computed(() =>
 .monitor-queue {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 12px;
+  border-top: 1px solid var(--border-light);
+  font-size: var(--text-base);
   color: var(--color-success);
 }
 
 .rule-card {
   background: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   padding: 12px;
 }

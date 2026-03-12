@@ -163,13 +163,13 @@ const {
 
 <style scoped>
 .discovery-tab { width: 100%; min-height: 80vh; display: flex; flex-direction: column; }
-.filter-bar { background: var(--app-surface-card, rgba(255, 255, 255, 0.05)); border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid rgba(255, 255, 255, 0.08); }
+.filter-bar { background: var(--app-surface-card); border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid var(--border-light); }
 .filter-row { display: flex; align-items: flex-start; margin-bottom: 12px; }
 .filter-label { width: 60px; font-weight: bold; color: var(--n-text-color-3); padding-top: 4px; flex-shrink: 0; }
 .filter-container { display: flex; gap: 8px; flex-wrap: wrap; }
-.filter-tag { cursor: pointer; transition: all 0.2s; }
+.filter-tag { cursor: pointer; transition: all var(--transition-fast); }
 .filter-tag:hover { color: var(--n-primary-color); }
-.filter-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+.filter-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-light); }
 
 .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; padding-bottom: 10px; }
 
