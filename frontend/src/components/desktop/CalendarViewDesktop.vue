@@ -244,7 +244,7 @@ const {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card);
   padding: 6px 16px;
   border-radius: var(--card-border-radius);
   border: 1px solid var(--app-border-light);
@@ -287,7 +287,7 @@ const {
 .mp-calendar-head {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card);
   border-bottom: 1px solid var(--app-border-light);
 }
 

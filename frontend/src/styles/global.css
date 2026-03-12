@@ -148,12 +148,58 @@ input, textarea, select, button {
   padding: 10px 16px !important;
 }
 
+/* 移除 Card action 分隔线和色差 */
+.n-card__action {
+  border-top: none !important;
+  background: transparent !important;
+  padding: 12px 16px !important;
+}
+
+/* List 主题化 */
+.n-list {
+  background: transparent !important;
+}
+.n-list-item {
+  background: transparent !important;
+  border-bottom: 1px solid var(--app-border-light) !important;
+}
+.n-list-item:hover {
+  background: var(--bg-surface-hover) !important;
+}
+
 /* Modal 主题化 */
 .n-modal-container .n-modal {
   background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
 }
 .n-modal-container .n-modal-body-wrapper {
   background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Popconfirm 主题化 */
+.n-popconfirm {
+  background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+.n-popconfirm__body {
+  background: transparent !important;
+}
+.n-popconfirm__action {
+  background: transparent !important;
+}
+
+/* Popover 主题化 */
+.n-popover {
+  background: var(--app-modal-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+.n-popover__content {
+  background: transparent !important;
 }
 
 /* 按钮统一样式增强 */
