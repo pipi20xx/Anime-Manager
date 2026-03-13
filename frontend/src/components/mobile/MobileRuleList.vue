@@ -84,15 +84,23 @@ const handleSelect = (key: string, rule: any) => {
 .mobile-rule-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--m-spacing-md);
 }
 .rule-item {
   display: flex;
   align-items: center;
   background: var(--app-surface-card);
   border: 1px solid var(--app-border-light);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-md);
+  min-height: 56px;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rule-item:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
 }
 .rule-content {
   flex: 1;

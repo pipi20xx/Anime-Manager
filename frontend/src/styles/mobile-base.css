@@ -630,3 +630,209 @@
 .m-touchable:active {
   opacity: 0.7;
 }
+
+/* ============================================
+   15. 移动端 Tab 导航优化
+   ============================================ */
+
+/* 紧凑型 Tab - 适用于空间有限的场景 */
+.m-tabs-compact :deep(.n-tabs-nav) {
+  padding: var(--m-spacing-xs) var(--m-spacing-md);
+}
+
+.m-tabs-compact :deep(.n-tabs-tab) {
+  padding: var(--m-spacing-sm) var(--m-spacing-md);
+  font-size: var(--m-text-sm);
+}
+
+/* 底部固定 Tab 导航 */
+.m-tabs-bottom {
+  flex-direction: column-reverse;
+}
+
+.m-tabs-bottom :deep(.n-tabs-nav) {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--app-bg-color);
+  border-top: 1px solid var(--border-light);
+  border-bottom: none;
+  padding-bottom: max(var(--m-spacing-sm), env(safe-area-inset-bottom, 0px));
+  z-index: 100;
+}
+
+.m-tabs-bottom :deep(.n-tabs-tab) {
+  flex: 1;
+  justify-content: center;
+  padding: var(--m-spacing-sm) 0;
+}
+
+/* 分段控制器样式优化 */
+.m-tabs-segment :deep(.n-tabs-nav) {
+  padding: var(--m-spacing-sm) var(--m-spacing-lg);
+}
+
+.m-tabs-segment :deep(.n-tabs-rail) {
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  padding: var(--m-spacing-xs);
+}
+
+.m-tabs-segment :deep(.n-tabs-tab) {
+  border-radius: var(--m-radius-sm);
+  font-size: var(--m-text-sm);
+  font-weight: 500;
+}
+
+/* ============================================
+   16. 移动端列表项触摸区域优化
+   ============================================ */
+
+/* 大触摸区域列表项 */
+.m-list-item-touch {
+  min-height: 56px;
+  padding: var(--m-spacing-md) var(--m-spacing-lg);
+}
+
+/* 带图标的列表项 */
+.m-list-item-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+}
+
+.m-list-item-icon .icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--m-radius-md);
+  background: var(--app-surface-inner);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   17. 移动端卡片优化
+   ============================================ */
+
+/* 可点击卡片 */
+.m-card-touchable {
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.m-card-touchable:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 卡片悬停效果（桌面端） */
+@media (hover: hover) {
+  .m-card-touchable:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* 网格卡片布局 */
+.m-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--m-spacing-md);
+}
+
+/* ============================================
+   18. 移动端按钮优化
+   ============================================ */
+
+/* 底部固定按钮 */
+.m-btn-fixed-bottom {
+  position: fixed;
+  bottom: max(var(--m-spacing-lg), env(safe-area-inset-bottom, 0px));
+  left: var(--m-spacing-lg);
+  right: var(--m-spacing-lg);
+  z-index: 200;
+}
+
+/* FAB 浮动按钮 */
+.m-fab {
+  position: fixed;
+  bottom: calc(var(--m-safe-bottom) + var(--m-spacing-lg));
+  right: var(--m-spacing-lg);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--m-radius-full);
+  background: var(--n-primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.m-fab:active {
+  transform: scale(0.95);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   19. 移动端输入优化
+   ============================================ */
+
+/* 全宽输入组 */
+.m-input-fullwidth {
+  width: 100%;
+}
+
+.m-input-fullwidth :deep(.n-input) {
+  width: 100%;
+}
+
+/* 搜索框样式 */
+.m-search-input :deep(.n-input__input) {
+  font-size: var(--m-text-md);
+}
+
+.m-search-input :deep(.n-input__prefix) {
+  font-size: var(--m-text-lg);
+}
+
+/* ============================================
+   20. 移动端响应式调整
+   ============================================ */
+
+/* 小屏幕优化 */
+@media (max-width: 360px) {
+  :root {
+    --m-spacing-lg: 12px;
+    --m-spacing-xl: 16px;
+  }
+  
+  .m-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .m-header {
+    height: 48px;
+  }
+  
+  .m-header-title {
+    font-size: var(--m-text-lg);
+  }
+  
+  .m-detail-hero {
+    min-height: 200px;
+  }
+}
+
+/* 暗黑模式优化 */
+@media (prefers-color-scheme: dark) {
+  .m-card-touchable:active {
+    background: var(--bg-surface-hover);
+  }
+}

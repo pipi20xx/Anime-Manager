@@ -362,26 +362,33 @@ onMounted(() => {
 
 <style scoped>
 .mobile-sub-manager {
-  padding-bottom: 20px;
+  padding-bottom: var(--m-spacing-lg);
 }
 .mobile-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 4px 12px 4px;
+  padding: 0 var(--m-spacing-xs) var(--m-spacing-md) var(--m-spacing-xs);
 }
 .sub-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--m-spacing-md);
 }
 .sub-item {
   display: flex;
   background: var(--app-surface-card);
-  border-radius: 8px;
+  border-radius: var(--m-radius-lg);
   overflow: hidden;
   border: 1px solid var(--app-border-light);
   height: 100px;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sub-item:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
 }
 .sub-poster {
   width: 70px;

@@ -13,11 +13,11 @@ const { currentTab, activeComponent } = useExploreView()
 <template>
   <div class="m-page m-page-safe-bottom">
     <div class="explore-header">
-       <n-tabs 
-          v-model:value="currentTab" 
-          type="segment" 
+       <n-tabs
+          v-model:value="currentTab"
+          type="segment"
           animated
-          class="m-tabs"
+          class="m-tabs m-tabs-segment"
           style="width: 100%"
        >
           <n-tab-pane name="recommend" tab="推荐">

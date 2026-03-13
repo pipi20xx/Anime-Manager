@@ -355,6 +355,13 @@ const getShortName = (path: string) => {
   border-radius: var(--m-radius-lg);
   background-color: var(--app-surface-card);
   border: 1px solid var(--border-light);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-file-list :deep(.n-list-item):active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
 }
 
 .file-icon-box {

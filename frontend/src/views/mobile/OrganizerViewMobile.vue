@@ -132,10 +132,10 @@ onUnmounted(stopBgTaskPolling)
           </n-button>
           
           <div class="m-card-list">
-            <div 
-              v-for="(rule, i) in rules" 
-              :key="rule.id" 
-              class="m-card-item m-touchable"
+            <div
+              v-for="(rule, i) in rules"
+              :key="rule.id"
+              class="m-card-item m-card-touchable m-touchable"
               @click="openEditRule(i)"
             >
               <div class="card-header">
@@ -174,10 +174,10 @@ onUnmounted(stopBgTaskPolling)
           </n-button>
           
           <div class="m-card-list">
-            <div 
-              v-for="(task, i) in tasks" 
-              :key="task.id" 
-              class="m-card-item m-touchable"
+            <div
+              v-for="(task, i) in tasks"
+              :key="task.id"
+              class="m-card-item m-card-touchable m-touchable"
               @click="openEditTask(i)"
             >
               <div class="card-header">
