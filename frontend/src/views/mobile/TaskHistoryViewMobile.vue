@@ -205,8 +205,18 @@ onUnmounted(() => {
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-bar :deep(.n-radio-group) {
   display: flex;
-  justify-content: center;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.filter-bar :deep(.n-radio-button) {
+  flex-shrink: 0;
 }
 
 .task-list {

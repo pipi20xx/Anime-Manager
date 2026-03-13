@@ -89,7 +89,9 @@ onUnmounted(stopBgTaskPolling)
   <div class="organizer-mobile">
     <div class="header-mobile">
       <h1>整理与重命名</h1>
-      <n-button v-bind="getButtonStyle('primary')" circle :loading="loading" @click="saveConfig">
+      <n-button v-bind="getButtonStyle('primary')" :loading="loading" @click="saveConfig">
+        <template #icon><n-icon><SaveIcon /></n-icon></template>
+        保存
       </n-button>
     </div>
 

@@ -131,6 +131,10 @@ const { activeTab } = useUsageGuide()
   height: 100vh;
   background-color: var(--app-background);
   padding-bottom: 80px; /* Bottom Nav Space */
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .mobile-header {
@@ -200,6 +204,14 @@ const { activeTab } = useUsageGuide()
 :deep(.n-tabs-pane-wrapper) {
   flex: 1;
   overflow: hidden;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+:deep(.n-tab-pane) {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 :deep(.mobile-tab-pane) {

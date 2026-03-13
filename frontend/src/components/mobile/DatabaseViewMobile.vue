@@ -185,9 +185,25 @@ const handleTableSelect = (tableName: string) => {
 
 .horizontal-scroll-wrapper { 
   width: 100%; 
-  overflow-x: auto; 
-  -webkit-overflow-scrolling: touch; 
+  overflow-x: hidden;
   box-sizing: border-box;
+}
+
+/* 防止 n-tabs 导致横向滚动 */
+:deep(.n-tabs) {
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+:deep(.n-tabs-pane-wrapper) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+:deep(.n-tab-pane) {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 12px; color: var(--text-muted); }

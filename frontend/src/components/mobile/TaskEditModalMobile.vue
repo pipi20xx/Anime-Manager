@@ -73,47 +73,37 @@ const {
         
         <n-tab-pane name="automation" tab="自动化与过滤">
           <n-space vertical size="large" class="mt-4">
-            <n-grid :cols="1" :x-gap="12">
-              <n-gi>
-                <n-form-item label="实时监控">
-                  <n-space align="center">
-                    <n-switch v-model:value="form.incremental_enabled" />
-                    <n-select 
-                      v-if="form.incremental_enabled" 
-                      v-model:value="form.incremental_mode" 
-                      size="small" 
-                      style="width: 100px"
-                      :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
-                    />
-                  </n-space>
-                </n-form-item>
-              </n-gi>
-              <n-gi>
-                <n-form-item label="定时扫描">
-                  <n-switch v-model:value="form.scheduler_enabled" />
-                </n-form-item>
-              </n-gi>
-            </n-grid>
+            <n-form-item label="实时监控">
+              <n-space align="center" wrap>
+                <n-switch v-model:value="form.incremental_enabled" />
+                <n-select 
+                  v-if="form.incremental_enabled" 
+                  v-model:value="form.incremental_mode" 
+                  size="small" 
+                  style="width: 100px"
+                  :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
+                />
+              </n-space>
+            </n-form-item>
+            
+            <n-form-item label="定时扫描">
+              <n-switch v-model:value="form.scheduler_enabled" />
+            </n-form-item>
 
-            <n-grid :cols="1" :x-gap="12">
-              <n-gi>
-                <n-form-item label="轮询间隔" v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
-                  <n-input-number v-model:value="form.monitor_interval" :min="1" style="width: 100%">
-                    <template #suffix>秒</template>
-                  </n-input-number>
-                </n-form-item>
-                <n-form-item label="监控状态" v-else-if="form.incremental_enabled">
-                  <div style="color: var(--text-muted)">实时监听文件系统事件 (Inotify)</div>
-                </n-form-item>
-              </n-gi>
-              <n-gi>
-                <n-form-item label="扫描间隔" v-if="form.scheduler_enabled">
-                  <n-input-number v-model:value="form.scheduler_interval" :min="60" style="width: 100%">
-                    <template #suffix>秒</template>
-                  </n-input-number>
-                </n-form-item>
-              </n-gi>
-            </n-grid>
+            <n-form-item label="轮询间隔" v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
+              <n-input-number v-model:value="form.monitor_interval" :min="1" style="width: 100%">
+                <template #suffix>秒</template>
+              </n-input-number>
+            </n-form-item>
+            <n-form-item label="监控状态" v-else-if="form.incremental_enabled">
+              <div style="color: var(--text-muted)">实时监听文件系统事件 (Inotify)</div>
+            </n-form-item>
+            
+            <n-form-item label="扫描间隔" v-if="form.scheduler_enabled">
+              <n-input-number v-model:value="form.scheduler_interval" :min="60" style="width: 100%">
+                <template #suffix>秒</template>
+              </n-input-number>
+            </n-form-item>
 
             <n-form-item label="限流间隔">
               <n-input-number v-model:value="form.process_interval" :min="0" style="width: 100%">
@@ -123,13 +113,13 @@ const {
             <n-form-item label="忽略文件正则"><n-dynamic-tags v-model:value="form.ignore_file_regex" /></n-form-item>
             <n-form-item label="忽略目录正则"><n-dynamic-tags v-model:value="form.ignore_dir_regex" /></n-form-item>
             
-            <n-grid :cols="2" :y-gap="8" class="mt-4">
-              <n-gi><n-checkbox v-model:checked="form.anime_priority">动漫优先</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.overwrite_mode">覆盖模式</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.trigger_strm">联动 STRM</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.clean_empty_dir">清理空目录</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.ignore_history">忽略历史</n-checkbox></n-gi>
-            </n-grid>
+            <n-space vertical :size="12" class="mt-4">
+              <n-checkbox v-model:checked="form.anime_priority">动漫优先</n-checkbox>
+              <n-checkbox v-model:checked="form.overwrite_mode">覆盖模式</n-checkbox>
+              <n-checkbox v-model:checked="form.trigger_strm">联动 STRM</n-checkbox>
+              <n-checkbox v-model:checked="form.clean_empty_dir">清理空目录</n-checkbox>
+              <n-checkbox v-model:checked="form.ignore_history">忽略历史</n-checkbox>
+            </n-space>
             
             <n-form-item label="Emby 检查" class="mt-4">
               <n-space align="center">

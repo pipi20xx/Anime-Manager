@@ -207,14 +207,17 @@ const {
 .agenda-container { padding-bottom: 40px; }
 .day-group { margin-bottom: 20px; }
 .day-header { 
-  display: flex; align-items: baseline; gap: 8px; 
-  padding: 8px 12px; 
-  background: var(--app-surface-inner);
+  display: flex; align-items: center; gap: 8px; 
+  padding: 10px 12px; 
+  background: var(--app-surface-card);
   position: sticky; top: 0; z-index: 10;
-  border-bottom: 1px solid var(--app-border-light);
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+  margin: 0 12px 12px 12px;
+  box-shadow: var(--shadow-sm);
 }
-.day-label { font-size: 16px; font-weight: bold; color: var(--n-primary-color); }
-.day-date { font-size: 12px; color: var(--text-tertiary); }
+.day-label { font-size: 15px; font-weight: bold; color: var(--n-primary-color); }
+.day-date { font-size: 12px; color: var(--text-tertiary); background: var(--app-surface-inner); padding: 2px 8px; border-radius: 12px; }
 
 .day-items { padding: 8px 12px; }
 .agenda-item { 
