@@ -22,7 +22,7 @@ const testConnection = async () => {
     message.warning('请先填写服务地址和 API Key')
     return
   }
-  
+
   testLoading.value = true
   try {
     const url = props.embyUrl.replace(/\/$/, '')
@@ -44,7 +44,7 @@ const fetchToken = async () => {
     message.warning('请先填写服务地址、用户名和密码')
     return
   }
-  
+
   loading.value = true
   try {
     const url = props.embyUrl.replace(/\/$/, '')
@@ -59,7 +59,7 @@ const fetchToken = async () => {
         Pw: props.embyPassword
       })
     })
-    
+
     if (response.ok) {
       const data = await response.json()
       if (data.AccessToken) {
@@ -81,60 +81,58 @@ const fetchToken = async () => {
 </script>
 
 <template>
-  <n-card bordered size="small">
-    <template #header>
-      <div class="card-title-box">
-        <span class="card-title-text">Emby 设置</span>
-      </div>
-    </template>
-    
-    <n-form label-placement="left" label-width="90">
+  <div class="emby-config-mobile">
+    <div class="m-card-header">
+      <h3 class="m-card-title">Emby 设置</h3>
+    </div>
+
+    <n-form label-placement="top">
       <n-form-item label="服务地址">
-        <n-input 
-          :value="embyUrl" 
-          placeholder="http://localhost:8096" 
+        <n-input
+          :value="embyUrl"
+          placeholder="http://localhost:8096"
           @update:value="(val: string) => emit('update:embyUrl', val)"
         />
       </n-form-item>
 
       <n-form-item label="API Key">
-        <n-input 
-          :value="embyApiKey" 
-          type="password" 
-          show-password-on="click" 
+        <n-input
+          :value="embyApiKey"
+          type="password"
+          show-password-on="click"
           placeholder="输入 API Key"
           @update:value="(val: string) => emit('update:embyApiKey', val)"
         />
       </n-form-item>
 
       <n-form-item label="用户名">
-        <n-input 
-          :value="embyUsername" 
+        <n-input
+          :value="embyUsername"
           placeholder="管理员用户名"
           @update:value="(val: string) => emit('update:embyUsername', val)"
         />
       </n-form-item>
 
       <n-form-item label="密码">
-        <n-input 
-          :value="embyPassword" 
-          type="password" 
-          show-password-on="click" 
+        <n-input
+          :value="embyPassword"
+          type="password"
+          show-password-on="click"
           placeholder="管理员密码"
           @update:value="(val: string) => emit('update:embyPassword', val)"
         />
       </n-form-item>
 
       <n-form-item label="用户 ID">
-        <n-space vertical :size="2" style="width: 100%">
-          <n-input 
-            :value="embyUserId" 
-            type="password" 
-            show-password-on="click" 
+        <n-space vertical :size="4" style="width: 100%">
+          <n-input
+            :value="embyUserId"
+            type="password"
+            show-password-on="click"
             placeholder="自动获取或手动输入"
             @update:value="(val: string) => emit('update:embyUserId', val)"
           />
-          <span style="font-size: 12px; color: var(--text-muted);">在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值</span>
+          <span class="hint-text">在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值</span>
         </n-space>
       </n-form-item>
 
@@ -149,19 +147,31 @@ const fetchToken = async () => {
         </n-space>
       </n-form-item>
     </n-form>
-  </n-card>
+  </div>
 </template>
 
 <style scoped>
-.card-title-box {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.emby-config-mobile {
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-md);
 }
 
-.card-title-text {
-  font-size: 14px;
+.m-card-header {
+  margin-bottom: var(--m-spacing-md);
+}
+
+.m-card-title {
+  font-size: var(--m-text-lg);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.hint-text {
+  font-size: var(--m-text-xs);
+  color: var(--text-tertiary);
+  line-height: 1.4;
 }
 </style>

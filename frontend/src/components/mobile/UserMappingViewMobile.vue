@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { ref, h, watch } from 'vue'
-import { 
-  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NTag, NEmpty, NStatistic, NPopconfirm, NSpin
+import { ref, watch, computed } from 'vue'
+import {
+  NCard, NTabs, NTabPane, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NEmpty, NSpin, NDrawer, NDrawerContent, NTag
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon, 
-  EditOutlined as EditIcon, 
+  AddOutlined as AddIcon,
+  EditOutlined as EditIcon,
   DeleteOutlined as DeleteIcon,
   DownloadOutlined as ImportIcon,
   UploadOutlined as ExportIcon,
-  SearchOutlined as SearchIcon
+  SearchOutlined as SearchIcon,
+  MoreVertOutlined as MoreIcon,
+  CloudDownloadOutlined as CloudImportIcon,
+  CleaningServicesOutlined as ClearIcon
 } from '@vicons/material'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { useBackClose } from '../../composables/useBackClose'
 
 const {
   loading,
@@ -136,200 +140,241 @@ const handleDelete = async (id: number | string) => {
   }
 }
 
-const handleImport = async () => {
-  await importFromRef(activeType.value)
+// 操作抽屉状态
+const showActionDrawer = ref(false)
+const currentItem = ref<MappingItem | null>(null)
+useBackClose(showActionDrawer)
+
+// 全局操作抽屉
+const showGlobalActionDrawer = ref(false)
+useBackClose(showGlobalActionDrawer)
+
+const openItemActions = (item: MappingItem, e: Event) => {
+  e.stopPropagation()
+  currentItem.value = item
+  showActionDrawer.value = true
 }
 
-const genreColumns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '中文', key: 'name_zh' },
-  { title: '英文', key: 'name_en' },
-  { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
-    return h(NSpace, { size: 2 }, {
-      default: () => [
-        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
-      ]
-    })
-  }}
-]
+const handleItemAction = async (key: string) => {
+  showActionDrawer.value = false
+  setTimeout(async () => {
+    if (key === 'edit' && currentItem.value) {
+      openEditModal(currentItem.value)
+    } else if (key === 'delete' && currentItem.value) {
+      await handleDelete(currentItem.value.code || currentItem.value.id)
+    }
+  }, 300)
+}
 
-const companyColumns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '名称', key: 'name' },
-  { title: '国家', key: 'country', width: 60 },
-  { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
-    return h(NSpace, { size: 2 }, {
-      default: () => [
-        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
-      ]
-    })
-  }}
-]
+const handleGlobalAction = async (key: string) => {
+  showGlobalActionDrawer.value = false
+  setTimeout(async () => {
+    if (key === 'export') {
+      await exportMappings()
+    } else if (key === 'import') {
+      await triggerImport()
+    } else if (key === 'ref') {
+      await importFromRef(activeType.value)
+    }
+  }, 300)
+}
 
-const keywordColumns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '中文', key: 'name_zh' },
-  { title: '英文', key: 'name_en' },
-  { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
-    return h(NSpace, { size: 2 }, {
-      default: () => [
-        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
-      ]
-    })
-  }}
-]
+const totalCount = computed(() => {
+  return refCounts.value.user.genres + refCounts.value.user.companies + refCounts.value.user.keywords + refCounts.value.user.languages + refCounts.value.user.countries
+})
 
-const languageColumns = [
-  { title: '代码', key: 'code', width: 80 },
-  { title: '中文', key: 'name_zh' },
-  { title: '英文', key: 'name_en' },
-  { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
-    return h(NSpace, { size: 2 }, {
-      default: () => [
-        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.code || row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
-      ]
-    })
-  }}
-]
-
-const countryColumns = [
-  { title: '代码', key: 'code', width: 80 },
-  { title: '中文', key: 'name_zh' },
-  { title: '英文', key: 'name_en' },
-  { title: '操作', key: 'actions', width: 100, render(row: MappingItem) {
-    return h(NSpace, { size: 2 }, {
-      default: () => [
-        h(NButton, { ...getButtonStyle('icon'), size: 'tiny', onClick: () => openEditModal(row) }, { icon: () => h(NIcon, null, { default: () => h(EditIcon) }) }),
-        h(NButton, { ...getButtonStyle('iconDanger'), size: 'tiny', onClick: () => handleDelete(row.code || row.id) }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
-      ]
-    })
-  }}
-]
+const tabCounts = computed(() => ({
+  genre: genreMappings.value.length,
+  company: companyMappings.value.length,
+  keyword: keywordMappings.value.length,
+  language: languageMappings.value.length,
+  country: countryMappings.value.length
+}))
 </script>
 
 <template>
   <div class="mapping-view-mobile">
-    <n-space vertical size="small" style="margin-bottom: 12px;">
-      <n-card size="small" bordered>
-        <n-space justify="space-between" align="center">
-          <n-statistic :value="`${refCounts.user.genres + refCounts.user.companies + refCounts.user.keywords + refCounts.user.languages + refCounts.user.countries}`">
-            <template #label>已定义映射</template>
-          </n-statistic>
-        </n-space>
-      </n-card>
-    </n-space>
+    <!-- 统计卡片 -->
+    <div class="stats-card">
+      <div class="stats-content">
+        <div class="stats-item">
+          <span class="stats-value">{{ totalCount }}</span>
+          <span class="stats-label">已定义映射</span>
+        </div>
+      </div>
+    </div>
 
-    <n-card bordered size="small">
-      <template #header>
-        <n-space justify="space-between" align="center" style="width: 100%">
-          <span>ID 映射管理</span>
-          <n-space>
-            <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="exportMappings">
-              <template #icon><n-icon><ExportIcon /></n-icon></template>
-            </n-button>
-            <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="triggerImport" :loading="fileImportLoading">
-              <template #icon><n-icon><ImportIcon /></n-icon></template>
-            </n-button>
-            <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="handleImport" :loading="importLoading" v-if="['genre', 'company', 'keyword'].includes(activeType)">
-              <template #icon><n-icon><ImportIcon /></n-icon></template>
-            </n-button>
-            <n-button v-bind="getButtonStyle('primary')" size="tiny" @click="openAddModal">
-              添加
-            </n-button>
-          </n-space>
-        </n-space>
-      </template>
-      
-      <n-tabs type="line" v-model:value="activeType" size="small">
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <n-button type="primary" dashed size="small" @click="openAddModal">
+        <template #icon><n-icon><AddIcon /></n-icon></template>
+        添加映射
+      </n-button>
+      <n-button v-bind="getButtonStyle('icon')" size="small" @click="showGlobalActionDrawer = true">
+        <template #icon><n-icon><MoreIcon /></n-icon></template>
+      </n-button>
+    </div>
+
+    <!-- 映射列表 -->
+    <div class="mapping-container">
+      <n-tabs type="segment" v-model:value="activeType" size="small" class="mapping-tabs">
         <n-tab-pane name="genre" tab="流派">
-          <n-input 
-            v-model:value="genreSearch" 
-            placeholder="搜索 ID 或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 8px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
-          <n-data-table :columns="genreColumns" :data="genreMappings" :loading="loading" size="small" />
-        </n-tab-pane>
-        
-        <n-tab-pane name="company" tab="公司">
-          <n-input 
-            v-model:value="companySearch" 
-            placeholder="搜索 ID、名称或国家..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 8px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
-          <div class="scroll-table-wrap" @scroll="handleCompanyScroll">
-            <n-data-table :columns="companyColumns" :data="companyMappings" :loading="companyLoading && companyMappings.length === 0" size="small" />
-            <div class="loading-more" v-if="companyLoading && companyMappings.length > 0">
-              <n-spin size="small" />
-              <span>加载中...</span>
+          <div class="search-box">
+            <n-input
+              v-model:value="genreSearch"
+              placeholder="搜索 ID 或名称..."
+              size="small"
+              clearable
+            >
+              <template #prefix><n-icon><SearchIcon /></n-icon></template>
+            </n-input>
+          </div>
+          <div class="mapping-list">
+            <div v-for="item in genreMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+              <div class="card-content">
+                <div class="card-header">
+                  <n-tag size="small" type="info">{{ item.id }}</n-tag>
+                  <span class="name-zh">{{ item.name_zh }}</span>
+                </div>
+                <div class="name-en">{{ item.name_en }}</div>
+              </div>
+              <div class="card-actions" @click.stop="openItemActions(item, $event)">
+                <n-icon size="20"><MoreIcon /></n-icon>
+              </div>
             </div>
-            <div class="no-more" v-if="!companyLoading && companyMappings.length >= companyTotal && companyTotal > 0">
-              已加载全部 {{ companyTotal }} 条
-            </div>
+            <n-empty v-if="genreMappings.length === 0 && !loading" description="暂无数据" />
           </div>
         </n-tab-pane>
-        
-        <n-tab-pane name="keyword" tab="关键词">
-          <n-input 
-            v-model:value="keywordSearch" 
-            placeholder="搜索 ID 或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 8px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
-          <div class="scroll-table-wrap" @scroll="handleKeywordScroll">
-            <n-data-table :columns="keywordColumns" :data="keywordMappings" :loading="keywordLoading && keywordMappings.length === 0" size="small" />
-            <div class="loading-more" v-if="keywordLoading && keywordMappings.length > 0">
+
+        <n-tab-pane name="company" tab="公司">
+          <div class="search-box">
+            <n-input
+              v-model:value="companySearch"
+              placeholder="搜索 ID、名称或国家..."
+              size="small"
+              clearable
+            >
+              <template #prefix><n-icon><SearchIcon /></n-icon></template>
+            </n-input>
+          </div>
+          <div class="mapping-list scrollable" @scroll="handleCompanyScroll">
+            <div v-for="item in companyMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+              <div class="card-content">
+                <div class="card-header">
+                  <n-tag size="small" type="info">{{ item.id }}</n-tag>
+                  <span class="name-zh">{{ item.name }}</span>
+                  <n-tag v-if="item.country" size="small" type="success">{{ item.country }}</n-tag>
+                </div>
+              </div>
+              <div class="card-actions" @click.stop="openItemActions(item, $event)">
+                <n-icon size="20"><MoreIcon /></n-icon>
+              </div>
+            </div>
+            <div v-if="companyLoading && companyMappings.length > 0" class="loading-more">
               <n-spin size="small" />
               <span>加载中...</span>
             </div>
-            <div class="no-more" v-if="!keywordLoading && keywordMappings.length >= keywordTotal && keywordTotal > 0">
+            <div v-if="!companyLoading && companyMappings.length >= companyTotal && companyTotal > 0" class="no-more">
+              已加载全部 {{ companyTotal }} 条
+            </div>
+            <n-empty v-if="companyMappings.length === 0 && !companyLoading" description="暂无数据" />
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="keyword" tab="关键词">
+          <div class="search-box">
+            <n-input
+              v-model:value="keywordSearch"
+              placeholder="搜索 ID 或名称..."
+              size="small"
+              clearable
+            >
+              <template #prefix><n-icon><SearchIcon /></n-icon></template>
+            </n-input>
+          </div>
+          <div class="mapping-list scrollable" @scroll="handleKeywordScroll">
+            <div v-for="item in keywordMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+              <div class="card-content">
+                <div class="card-header">
+                  <n-tag size="small" type="info">{{ item.id }}</n-tag>
+                  <span class="name-zh">{{ item.name_zh }}</span>
+                </div>
+                <div class="name-en">{{ item.name_en }}</div>
+              </div>
+              <div class="card-actions" @click.stop="openItemActions(item, $event)">
+                <n-icon size="20"><MoreIcon /></n-icon>
+              </div>
+            </div>
+            <div v-if="keywordLoading && keywordMappings.length > 0" class="loading-more">
+              <n-spin size="small" />
+              <span>加载中...</span>
+            </div>
+            <div v-if="!keywordLoading && keywordMappings.length >= keywordTotal && keywordTotal > 0" class="no-more">
               已加载全部 {{ keywordTotal }} 条
             </div>
+            <n-empty v-if="keywordMappings.length === 0 && !keywordLoading" description="暂无数据" />
           </div>
         </n-tab-pane>
 
         <n-tab-pane name="language" tab="语言">
-          <n-input 
-            v-model:value="languageSearch" 
-            placeholder="搜索代码或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 8px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
-          <n-data-table :columns="languageColumns" :data="languageMappings" :loading="loading" size="small" />
+          <div class="search-box">
+            <n-input
+              v-model:value="languageSearch"
+              placeholder="搜索代码或名称..."
+              size="small"
+              clearable
+            >
+              <template #prefix><n-icon><SearchIcon /></n-icon></template>
+            </n-input>
+          </div>
+          <div class="mapping-list">
+            <div v-for="item in languageMappings" :key="item.code" class="mapping-card" @click="openEditModal(item)">
+              <div class="card-content">
+                <div class="card-header">
+                  <n-tag size="small" type="info">{{ item.code }}</n-tag>
+                  <span class="name-zh">{{ item.name_zh }}</span>
+                </div>
+                <div class="name-en">{{ item.name_en }}</div>
+              </div>
+              <div class="card-actions" @click.stop="openItemActions(item, $event)">
+                <n-icon size="20"><MoreIcon /></n-icon>
+              </div>
+            </div>
+            <n-empty v-if="languageMappings.length === 0 && !loading" description="暂无数据" />
+          </div>
         </n-tab-pane>
 
         <n-tab-pane name="country" tab="国家">
-          <n-input 
-            v-model:value="countrySearch" 
-            placeholder="搜索代码或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 8px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
-          <n-data-table :columns="countryColumns" :data="countryMappings" :loading="loading" size="small" />
+          <div class="search-box">
+            <n-input
+              v-model:value="countrySearch"
+              placeholder="搜索代码或名称..."
+              size="small"
+              clearable
+            >
+              <template #prefix><n-icon><SearchIcon /></n-icon></template>
+            </n-input>
+          </div>
+          <div class="mapping-list">
+            <div v-for="item in countryMappings" :key="item.code" class="mapping-card" @click="openEditModal(item)">
+              <div class="card-content">
+                <div class="card-header">
+                  <n-tag size="small" type="info">{{ item.code }}</n-tag>
+                  <span class="name-zh">{{ item.name_zh }}</span>
+                </div>
+                <div class="name-en">{{ item.name_en }}</div>
+              </div>
+              <div class="card-actions" @click.stop="openItemActions(item, $event)">
+                <n-icon size="20"><MoreIcon /></n-icon>
+              </div>
+            </div>
+            <n-empty v-if="countryMappings.length === 0 && !loading" description="暂无数据" />
+          </div>
         </n-tab-pane>
       </n-tabs>
-    </n-card>
+    </div>
 
+    <!-- 编辑弹窗 -->
     <n-modal :show="showModal" @update:show="val => showModal = val" preset="card" style="width: 90%; max-width: 400px" :title="isNewItem ? '添加映射' : '编辑映射'">
       <n-form label-placement="top">
         <template v-if="activeType === 'genre'">
@@ -367,11 +412,57 @@ const countryColumns = [
       </template>
     </n-modal>
 
-    <input 
-      type="file" 
-      ref="fileInput" 
-      accept=".json" 
-      style="display: none" 
+    <!-- 项目操作抽屉 -->
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content :title="currentItem?.name_zh || currentItem?.name || '映射操作'" closable>
+        <div class="action-list">
+          <div class="action-item" @click="handleItemAction('edit')">
+            <div class="action-icon">
+              <n-icon size="22"><EditIcon /></n-icon>
+            </div>
+            <span class="action-label">编辑</span>
+          </div>
+          <div class="action-item danger" @click="handleItemAction('delete')">
+            <div class="action-icon">
+              <n-icon size="22"><DeleteIcon /></n-icon>
+            </div>
+            <span class="action-label">删除</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
+
+    <!-- 全局操作抽屉 -->
+    <n-drawer v-model:show="showGlobalActionDrawer" placement="bottom" :height="280" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable>
+        <div class="action-list">
+          <div class="action-item" @click="handleGlobalAction('export')">
+            <div class="action-icon">
+              <n-icon size="22"><ExportIcon /></n-icon>
+            </div>
+            <span class="action-label">导出映射</span>
+          </div>
+          <div class="action-item" @click="handleGlobalAction('import')">
+            <div class="action-icon">
+              <n-icon size="22"><ImportIcon /></n-icon>
+            </div>
+            <span class="action-label">导入映射</span>
+          </div>
+          <div v-if="['genre', 'company', 'keyword'].includes(activeType)" class="action-item" @click="handleGlobalAction('ref')">
+            <div class="action-icon">
+              <n-icon size="22"><CloudImportIcon /></n-icon>
+            </div>
+            <span class="action-label">从参考库导入</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
+
+    <input
+      type="file"
+      ref="fileInput"
+      accept=".json"
+      style="display: none"
       @change="handleFileImport"
     />
   </div>
@@ -379,12 +470,144 @@ const countryColumns = [
 
 <style scoped>
 .mapping-view-mobile {
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--m-spacing-md);
+  gap: var(--m-spacing-md);
 }
-.scroll-table-wrap {
-  max-height: 300px;
+
+/* 统计卡片 */
+.stats-card {
+  background: var(--app-surface-card);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-lg);
+  border: 1px solid var(--app-border-light);
+}
+.stats-content {
+  display: flex;
+  justify-content: center;
+}
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--m-spacing-xs);
+}
+.stats-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+.stats-label {
+  font-size: var(--m-text-sm);
+  color: var(--text-secondary);
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 映射容器 */
+.mapping-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.mapping-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.mapping-tabs :deep(.n-tabs-nav) {
+  margin-bottom: var(--m-spacing-md);
+}
+.mapping-tabs :deep(.n-tab-pane) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 搜索框 */
+.search-box {
+  margin-bottom: var(--m-spacing-md);
+}
+
+/* 映射列表 */
+.mapping-list {
+  flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-sm);
 }
+.mapping-list.scrollable {
+  max-height: calc(100vh - 280px);
+}
+
+/* 映射卡片 */
+.mapping-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--m-spacing-md);
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mapping-card:active {
+  background: var(--bg-surface-hover);
+  transform: scale(0.995);
+}
+.card-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+  flex-wrap: wrap;
+}
+.name-zh {
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.name-en {
+  font-size: var(--m-text-sm);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-actions {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  border-radius: var(--m-radius-md);
+  transition: all 0.15s ease;
+}
+.card-actions:active {
+  background: var(--app-surface-inner);
+  color: var(--text-primary);
+}
+
+/* 加载更多 */
 .loading-more {
   display: flex;
   align-items: center;
@@ -398,5 +621,48 @@ const countryColumns = [
   padding: 12px;
   color: var(--text-tertiary);
   font-size: 12px;
+}
+
+/* 操作列表样式 */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.action-item:active {
+  background: var(--bg-surface-hover);
+}
+.action-item.danger {
+  color: var(--color-error);
+}
+.action-item.danger .action-icon {
+  color: var(--color-error);
+}
+.action-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  color: var(--text-secondary);
+}
+.action-item.danger .action-icon {
+  background: var(--color-error-bg);
+}
+.action-label {
+  font-size: var(--m-text-md);
+  font-weight: 500;
 }
 </style>

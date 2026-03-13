@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { 
-  NList, NListItem, NThing, NButton, NIcon, NDropdown, NTag, NSpace, NCard
+import { onMounted, ref } from 'vue'
+import {
+  NList, NListItem, NThing, NButton, NIcon, NDrawer, NDrawerContent, NTag, NSpace, NCard
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -9,7 +9,9 @@ import {
   BoltOutlined as BoltIcon,
   AccessTimeOutlined as ScheduleIcon,
   PlayArrowOutlined as RunIcon,
-  LinkOutlined as LinkIcon
+  LinkOutlined as LinkIcon,
+  ContentCopyOutlined as CopyIcon,
+  DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 
 import StrmTaskModal from '../../components/StrmTaskModal.vue'
@@ -34,10 +36,29 @@ const {
 
 useBackClose(showModal)
 
-const getTaskActions = (index: number, task: any) => [
-  { label: '复制任务', key: 'duplicate', props: { onClick: () => duplicateTask(index) } },
-  { label: '删除任务', key: 'delete', props: { onClick: () => deleteTask(index) } }
+// 操作抽屉状态
+const showActionDrawer = ref(false)
+const currentTaskIndex = ref<number>(-1)
+useBackClose(showActionDrawer)
+
+const taskActions = [
+  { key: 'duplicate', label: '复制任务', icon: CopyIcon },
+  { key: 'delete', label: '删除任务', icon: DeleteIcon, danger: true },
 ]
+
+const openTaskActions = (index: number, e: Event) => {
+  e.stopPropagation()
+  currentTaskIndex.value = index
+  showActionDrawer.value = true
+}
+
+const handleAction = (key: string) => {
+  showActionDrawer.value = false
+  setTimeout(() => {
+    if (key === 'duplicate') duplicateTask(currentTaskIndex.value)
+    else if (key === 'delete') deleteTask(currentTaskIndex.value)
+  }, 300)
+}
 
 onMounted(fetchTasks)
 </script>
@@ -47,6 +68,7 @@ onMounted(fetchTasks)
     <div class="header-mobile">
       <h1>虚拟 STRM 库</h1>
       <n-button v-bind="getButtonStyle('icon')" @click="openEdit(-1)">
+        <template #icon><n-icon><AddIcon /></n-icon></template>
       </n-button>
     </div>
 
@@ -62,11 +84,9 @@ onMounted(fetchTasks)
                 <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click.stop="runTask(task.id)" style="margin-right: 4px">
                    <template #icon><n-icon><RunIcon /></n-icon></template>
                 </n-button>
-                <n-dropdown trigger="click" :options="getTaskActions(index, task)" size="large">
-                   <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop>
-                     <template #icon><n-icon><MoreIcon /></n-icon></template>
-                   </n-button>
-                </n-dropdown>
+                <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openTaskActions(index, $event)">
+                  <template #icon><n-icon><MoreIcon /></n-icon></template>
+                </n-button>
              </div>
            </div>
            
@@ -109,13 +129,33 @@ onMounted(fetchTasks)
     </div>
 
     <!-- 配置组件 -->
-    <StrmTaskModal 
+    <StrmTaskModal
       v-model:show="showModal"
       :task-data="editingTask"
       :is-new="editingIndex === -1"
       :api-base="API_BASE"
       @save="handleSaveTask"
     />
+
+    <!-- 操作抽屉 -->
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content :title="tasks[currentTaskIndex]?.name || '任务操作'" closable>
+        <div class="action-list">
+          <div
+            v-for="action in taskActions"
+            :key="action.key"
+            class="action-item"
+            :class="{ danger: action.danger }"
+            @click="handleAction(action.key)"
+          >
+            <div class="action-icon">
+              <n-icon size="22"><component :is="action.icon" /></n-icon>
+            </div>
+            <span class="action-label">{{ action.label }}</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
@@ -164,13 +204,56 @@ onMounted(fetchTasks)
   line-height: 1.4;
 }
 
-.card-footer { 
-  margin-top: 12px; 
-  padding-top: 8px; 
-  border-top: 1px solid var(--border-light); 
-  display: flex; 
-  justify-content: flex-end; 
-  gap: 8px; 
+.card-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 .link-icon { color: var(--n-primary-color); }
+
+/* 操作列表样式 */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.action-item:active {
+  background: var(--bg-surface-hover);
+}
+.action-item.danger {
+  color: var(--color-error);
+}
+.action-item.danger .action-icon {
+  color: var(--color-error);
+}
+.action-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  color: var(--text-secondary);
+}
+.action-item.danger .action-icon {
+  background: var(--color-error-bg);
+}
+.action-label {
+  font-size: var(--m-text-md);
+  font-weight: 500;
+}
 </style>
