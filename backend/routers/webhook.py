@@ -100,12 +100,19 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     if processing_tasks:
         try:
             results = await asyncio.gather(*processing_tasks, return_exceptions=True)
-            valid_results = [r for r in results if isinstance(r, dict)]
-            if valid_results:
-                for r in valid_results:
+            valid_results = []
+            for i, r in enumerate(results):
+                if isinstance(r, Exception):
+                    await log_task(task_id_ref, f"  ❌ 处理异常: {str(r)}", "ERROR")
+                    log_audit("CD2联动", "处理异常", f"执行 STRM 任务时发生错误: {r}", level="ERROR")
+                elif isinstance(r, dict):
+                    valid_results.append(r)
                     status = r.get("status", "unknown")
                     rel_p = r.get("rel_path", "未知")
                     await log_task(task_id_ref, f"  ┗ 处理结果: {status} ({os.path.basename(rel_p)})")
+                else:
+                    await log_task(task_id_ref, f"  ⚠️ 未知返回类型: {type(r)}", "WARN")
+            if valid_results:
                 await NotificationManager.push_webhook_strm_notification(valid_results)
         except Exception as e:
             await log_task(task_id_ref, f"❌ 处理异常: {str(e)}", "ERROR")

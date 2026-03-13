@@ -12,6 +12,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from organizer_core.organizer import Organizer
 from strm.strm_generator import StrmGenerator
+from strm.processor import StrmProcessor
 from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
 from rss_core.scheduler import refresh_all_feeds, check_stalled_downloads
@@ -852,11 +853,22 @@ class MonitorManager:
                     if is_strm:
                         log_audit("监控", "STRM任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
                         res = await StrmProcessor.process_single_file(file_path, current_task)
+                        # 记录处理结果
+                        status = res.get("status", "unknown") if isinstance(res, dict) else "error"
+                        message = res.get("message", "") if isinstance(res, dict) else str(res)
+                        if status == "success":
+                            log_audit("监控", "STRM完成", f"✅ 生成成功: {os.path.basename(file_path)}", details=task_name)
+                        elif status == "skipped":
+                            log_audit("监控", "STRM跳过", f"⏭️ 已存在跳过: {os.path.basename(file_path)} ({message})", details=task_name)
+                        else:
+                            log_audit("监控", "STRM失败", f"❌ 处理失败: {os.path.basename(file_path)} ({message})", level="ERROR", details=task_name)
                     else:
                         log_audit("监控", "整理任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
                         await Organizer.organize_video_file(file_path, current_task, dry_run=False)
                 except Exception as e:
-                    log_audit("监控", "处理错误", f"后台执行失败: {str(e)}", level="ERROR", details=file_path)
+                    import traceback
+                    error_detail = f"{str(e)}\n{traceback.format_exc()}"
+                    log_audit("监控", "处理错误", f"后台执行失败: {str(e)}", level="ERROR", details=error_detail)
                 
                 queue.task_done()
                 
