@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, h, onMounted, onUnmounted } from 'vue'
-import { 
+import {
   NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NRadioGroup, NRadioButton, NAlert, NText,
-  NDropdown, NCollapse, NCollapseItem, NCheckbox, NSpin, NDivider
+  NDrawer, NDrawerContent, NCollapse, NCollapseItem, NCheckbox, NSpin, NDivider
 } from 'naive-ui'
 import {
   HistoryOutlined as HistoryIcon,
@@ -17,9 +17,11 @@ import {
   MoreVertOutlined as MoreIcon,
   FilterListOutlined as FilterIcon,
   RefreshOutlined as RefreshIcon,
-  KeyboardDoubleArrowDownOutlined as MoreArrowIcon
+  KeyboardDoubleArrowDownOutlined as MoreArrowIcon,
+  CleaningServicesOutlined as ClearIcon
 } from '@vicons/material'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
+import { useBackClose } from '../../composables/useBackClose'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
@@ -82,17 +84,24 @@ const handleRefresh = () => {
   fetchData(true)
 }
 
-const handleMenuSelect = (key: string) => {
-  if (key === 'refresh') handleRefresh()
-  else if (key === 'clear') {
-    if(confirm('确定要清空所有历史记录吗？')) clearAll()
-  }
-}
+// 操作抽屉状态
+const showActionDrawer = ref(false)
+useBackClose(showActionDrawer)
 
-const menuOptions = [
-  { label: '刷新列表', key: 'refresh', icon: () => h(NIcon, null, { default: () => h(RefreshIcon) }) },
-  { label: '清空历史', key: 'clear', icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }), style: { color: 'var(--n-error-color)' } }
+const actionItems = [
+  { key: 'refresh', label: '刷新列表', icon: RefreshIcon },
+  { key: 'clear', label: '清空历史', icon: ClearIcon, danger: true },
 ]
+
+const handleAction = (key: string) => {
+  showActionDrawer.value = false
+  setTimeout(() => {
+    if (key === 'refresh') handleRefresh()
+    else if (key === 'clear') {
+      if(confirm('确定要清空所有历史记录吗？')) clearAll()
+    }
+  }, 300)
+}
 </script>
 
 <template>
@@ -107,11 +116,9 @@ const menuOptions = [
         <n-button v-bind="getButtonStyle('icon')" @click="showSearch = !showSearch">
           <template #icon><n-icon><SearchIcon /></n-icon></template>
         </n-button>
-        <n-dropdown trigger="click" :options="menuOptions" @select="handleMenuSelect">
-          <n-button v-bind="getButtonStyle('icon')">
-            <template #icon><n-icon><MoreIcon /></n-icon></template>
-          </n-button>
-        </n-dropdown>
+        <n-button v-bind="getButtonStyle('icon')" @click="showActionDrawer = true">
+          <template #icon><n-icon><MoreIcon /></n-icon></template>
+        </n-button>
       </div>
     </div>
 
@@ -220,6 +227,26 @@ const menuOptions = [
     <div v-else-if="!loading" class="empty-state">
       <n-empty description="没有找到记录" />
     </div>
+
+    <!-- 操作抽屉 -->
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="240" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable>
+        <div class="action-list">
+          <div
+            v-for="item in actionItems"
+            :key="item.key"
+            class="action-item"
+            :class="{ danger: item.danger }"
+            @click="handleAction(item.key)"
+          >
+            <div class="action-icon">
+              <n-icon size="22"><component :is="item.icon" /></n-icon>
+            </div>
+            <span class="action-label">{{ item.label }}</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
@@ -318,5 +345,48 @@ const menuOptions = [
   gap: 6px;
   color: var(--n-text-color-3);
   font-size: 11px;
+}
+
+/* 操作列表样式 */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.action-item:active {
+  background: var(--bg-surface-hover);
+}
+.action-item.danger {
+  color: var(--color-error);
+}
+.action-item.danger .action-icon {
+  color: var(--color-error);
+}
+.action-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  color: var(--text-secondary);
+}
+.action-item.danger .action-icon {
+  background: var(--color-error-bg);
+}
+.action-label {
+  font-size: var(--m-text-md);
+  font-weight: 500;
 }
 </style>

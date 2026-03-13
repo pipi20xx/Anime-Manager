@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { h } from 'vue'
-import { 
-  NSpace, NButton, NIcon, NText, NInput, NInputGroup, 
+import { ref, h } from 'vue'
+import {
+  NSpace, NButton, NIcon, NText, NInput, NInputGroup,
   NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
-  NList, NListItem, NThing, NDropdown, NPopconfirm
+  NList, NListItem, NThing, NDrawer, NDrawerContent, NPopconfirm
 } from 'naive-ui'
 import {
   EditOutlined as EditIcon,
@@ -15,7 +15,10 @@ import {
   CheckCircleOutlined as CustomIcon,
   MoreVertOutlined as MoreIcon,
   ArrowBackOutlined as PrevIcon,
-  ArrowForwardOutlined as NextIcon
+  ArrowForwardOutlined as NextIcon,
+  AddOutlined as AddIcon,
+  CloudDownloadOutlined as DownloadIcon,
+  CleaningServicesOutlined as ClearIcon
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -49,20 +52,27 @@ const {
 useBackClose(showEditModal)
 useBackClose(showSyncModal)
 
-const menuOptions = [
-  { label: '手动新增', key: 'create' },
-  { label: '同步 SYTMDB', key: 'sync' },
-  { label: '全量刷新', key: 'refresh_all' },
-  { label: '导出字典', key: 'export' },
-  { label: '清空记忆', key: 'clear_fp' }
+// 操作抽屉状态
+const showActionDrawer = ref(false)
+useBackClose(showActionDrawer)
+
+const actionItems = [
+  { key: 'create', label: '手动新增', icon: AddIcon },
+  { key: 'sync', label: '同步 SYTMDB', icon: SytmdbIcon },
+  { key: 'refresh_all', label: '全量刷新', icon: SyncIcon },
+  { key: 'export', label: '导出字典', icon: ExportIcon },
+  { key: 'clear_fp', label: '清空记忆', icon: ClearIcon, danger: true },
 ]
 
-const handleMenuSelect = (key: string) => {
-  if (key === 'create') openCreate()
-  else if (key === 'sync') handleSyncSytmdb()
-  else if (key === 'refresh_all') handleRefreshAll()
-  else if (key === 'export') handleExport()
-  else if (key === 'clear_fp') clearFingerprints()
+const handleAction = (key: string) => {
+  showActionDrawer.value = false
+  setTimeout(() => {
+    if (key === 'create') openCreate()
+    else if (key === 'sync') handleSyncSytmdb()
+    else if (key === 'refresh_all') handleRefreshAll()
+    else if (key === 'export') handleExport()
+    else if (key === 'clear_fp') clearFingerprints()
+  }, 300)
 }
 
 const prevPage = () => { if (browserPage.value > 1) { browserPage.value--; fetchBrowserData() } }
@@ -78,12 +88,10 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
           搜索
         </n-button>
       </n-input-group>
-      
-      <n-dropdown trigger="click" :options="menuOptions" @select="handleMenuSelect">
-        <n-button v-bind="getButtonStyle('icon')" size="small" style="margin-left: 8px;">
-          <template #icon><n-icon><MoreIcon /></n-icon></template>
-        </n-button>
-      </n-dropdown>
+
+      <n-button v-bind="getButtonStyle('icon')" size="small" style="margin-left: 8px;" @click="showActionDrawer = true">
+        <template #icon><n-icon><MoreIcon /></n-icon></template>
+      </n-button>
     </div>
 
     <div class="list-container">
@@ -143,6 +151,26 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
       </n-form>
       <template #footer><n-button type="primary" block :loading="syncLoading" @click="runSyncSytmdb">开始同步</n-button></template>
     </n-modal>
+
+    <!-- 操作抽屉 -->
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="400" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable>
+        <div class="action-list">
+          <div
+            v-for="item in actionItems"
+            :key="item.key"
+            class="action-item"
+            :class="{ danger: item.danger }"
+            @click="handleAction(item.key)"
+          >
+            <div class="action-icon">
+              <n-icon size="22"><component :is="item.icon" /></n-icon>
+            </div>
+            <span class="action-label">{{ item.label }}</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
@@ -168,4 +196,47 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
 .item-meta { display: flex; gap: 8px; font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
 .meta-id { font-family: monospace; color: var(--text-muted); }
 .item-genres { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* 操作列表样式 */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.action-item:active {
+  background: var(--bg-surface-hover);
+}
+.action-item.danger {
+  color: var(--color-error);
+}
+.action-item.danger .action-icon {
+  color: var(--color-error);
+}
+.action-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  color: var(--text-secondary);
+}
+.action-item.danger .action-icon {
+  background: var(--color-error-bg);
+}
+.action-label {
+  font-size: var(--m-text-md);
+  font-weight: 500;
+}
 </style>

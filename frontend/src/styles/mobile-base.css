@@ -836,3 +836,338 @@
     background: var(--bg-surface-hover);
   }
 }
+
+/* ============================================
+   21. 移动端操作菜单优化
+   ============================================ */
+
+/* 底部操作抽屉 - 替代 Dropdown */
+.m-action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--app-bg-color);
+  border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.m-action-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--m-spacing-sm);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.m-action-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-medium);
+  border-radius: var(--m-radius-full);
+}
+
+.m-action-sheet-title {
+  position: absolute;
+  left: var(--m-spacing-lg);
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.m-action-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--m-spacing-md) 0;
+}
+
+.m-action-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md) var(--m-spacing-lg);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-action-sheet-item:active {
+  background: var(--bg-surface-hover);
+}
+
+.m-action-sheet-item.danger {
+  color: var(--color-error);
+}
+
+.m-action-sheet-item.danger :deep(.n-icon) {
+  color: var(--color-error);
+}
+
+.m-action-sheet-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.m-action-sheet-label {
+  flex: 1;
+  font-size: var(--m-text-md);
+  color: var(--text-primary);
+}
+
+.m-action-sheet-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: var(--m-spacing-sm) 0;
+}
+
+.m-action-sheet-cancel {
+  padding: var(--m-spacing-md) var(--m-spacing-lg);
+  text-align: center;
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-top: 8px solid var(--border-light);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-action-sheet-cancel:active {
+  background: var(--bg-surface-hover);
+}
+
+/* 列表项滑动操作 */
+.m-swipe-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.m-swipe-content {
+  position: relative;
+  z-index: 2;
+  background: var(--app-surface-card);
+  transition: transform 0.2s ease;
+}
+
+.m-swipe-actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.m-swipe-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 100%;
+  color: white;
+  font-size: var(--m-text-xs);
+  gap: var(--m-spacing-xs);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-swipe-action.edit {
+  background: var(--n-primary-color);
+}
+
+.m-swipe-action.delete {
+  background: var(--color-error);
+}
+
+.m-swipe-action.more {
+  background: var(--text-tertiary);
+}
+
+/* 长按菜单 */
+.m-context-menu {
+  position: fixed;
+  background: var(--app-surface-card);
+  border-radius: var(--m-radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--m-spacing-sm) 0;
+  min-width: 160px;
+  z-index: 1000;
+}
+
+.m-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+  padding: var(--m-spacing-sm) var(--m-spacing-md);
+  cursor: pointer;
+  font-size: var(--m-text-sm);
+  transition: background 0.15s ease;
+}
+
+.m-context-menu-item:hover,
+.m-context-menu-item:active {
+  background: var(--bg-surface-hover);
+}
+
+.m-context-menu-item.danger {
+  color: var(--color-error);
+}
+
+/* ============================================
+   22. 移动端头部优化
+   ============================================ */
+
+/* 带返回按钮的头部 */
+.m-header-with-back {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+}
+
+.m-header-back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--m-radius-full);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.m-header-back-btn:active {
+  background: var(--bg-surface-hover);
+}
+
+/* 头部操作按钮组 */
+.m-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-xs);
+}
+
+.m-header-action-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+}
+
+.m-header-action-btn:active {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.m-header-action-btn.primary {
+  background: var(--n-primary-color);
+  color: white;
+}
+
+.m-header-action-btn.primary:active {
+  opacity: 0.8;
+}
+
+/* ============================================
+   23. 移动端底部操作栏优化
+   ============================================ */
+
+/* 底部操作栏 */
+.m-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--app-bg-color);
+  border-top: 1px solid var(--border-light);
+  padding: var(--m-spacing-md) var(--m-spacing-lg);
+  padding-bottom: max(var(--m-spacing-md), env(safe-area-inset-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  z-index: 200;
+}
+
+.m-bottom-bar.transparent {
+  background: transparent;
+  border-top: none;
+}
+
+/* 底部操作栏按钮 */
+.m-bottom-bar-btn {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--m-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.m-bottom-bar-btn.primary {
+  background: var(--n-primary-color);
+  color: white;
+}
+
+.m-bottom-bar-btn.primary:active {
+  opacity: 0.8;
+}
+
+.m-bottom-bar-btn.secondary {
+  background: var(--app-surface-inner);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+.m-bottom-bar-btn.secondary:active {
+  background: var(--bg-surface-hover);
+}
+
+.m-bottom-bar-btn.danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.m-bottom-bar-btn.danger:active {
+  opacity: 0.8;
+}
+
+/* 底部操作栏 - 图标按钮 */
+.m-bottom-bar-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--m-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.m-bottom-bar-icon-btn:active {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}

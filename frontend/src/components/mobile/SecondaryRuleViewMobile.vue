@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { h } from 'vue'
-import { 
-  NSpace, NButton, NIcon, NPopconfirm, NEmpty, 
-  NSwitch, NList, NListItem, NThing, NDropdown
+import { ref, h } from 'vue'
+import {
+  NSpace, NButton, NIcon, NPopconfirm, NEmpty,
+  NSwitch, NList, NListItem, NThing, NDrawer, NDrawerContent
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -36,14 +36,21 @@ const {
 
 useBackClose(showRuleModal)
 
-const menuOptions = [
-  { label: '导入规则', key: 'import', icon: () => h(NIcon, null, { default: () => h(ImportIcon) }) },
-  { label: '导出规则', key: 'export', icon: () => h(NIcon, null, { default: () => h(ExportIcon) }) }
+// 操作抽屉状态
+const showActionDrawer = ref(false)
+useBackClose(showActionDrawer)
+
+const actionItems = [
+  { key: 'import', label: '导入规则', icon: ImportIcon },
+  { key: 'export', label: '导出规则', icon: ExportIcon },
 ]
 
-const handleMenuSelect = (key: string) => {
-  if (key === 'import') triggerImport()
-  else if (key === 'export') handleExport()
+const handleAction = (key: string) => {
+  showActionDrawer.value = false
+  setTimeout(() => {
+    if (key === 'import') triggerImport()
+    else if (key === 'export') handleExport()
+  }, 300)
 }
 </script>
 
@@ -52,15 +59,14 @@ const handleMenuSelect = (key: string) => {
     <input type="file" ref="fileInput" style="display:none" accept=".json" @change="handleFileChange" />
     
     <div class="mobile-toolbar">
-      <n-button v-bind="getButtonStyle('primary')" size="small" block @click="editingRule = null; isNewRule = true; showRuleModal = true">
+      <n-button type="primary" dashed size="small" @click="editingRule = null; isNewRule = true; showRuleModal = true">
+        <template #icon><n-icon><AddIcon /></n-icon></template>
         添加新分类规则
       </n-button>
-      
-      <n-dropdown trigger="click" :options="menuOptions" @select="handleMenuSelect">
-        <n-button v-bind="getButtonStyle('icon')" size="small" style="margin-left: 8px;">
-          <template #icon><n-icon><MoreIcon /></n-icon></template>
-        </n-button>
-      </n-dropdown>
+
+      <n-button v-bind="getButtonStyle('icon')" size="small" style="margin-left: 8px;" @click="showActionDrawer = true">
+        <template #icon><n-icon><MoreIcon /></n-icon></template>
+      </n-button>
     </div>
 
     <div class="rules-list">
@@ -103,6 +109,25 @@ const handleMenuSelect = (key: string) => {
     </div>
 
     <ClassifierEditModal v-model:show="showRuleModal" :rule-data="editingRule" :is-new="isNewRule" @save="handleSaveRule" />
+
+    <!-- 操作抽屉 -->
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable>
+        <div class="action-list">
+          <div
+            v-for="item in actionItems"
+            :key="item.key"
+            class="action-item"
+            @click="handleAction(item.key)"
+          >
+            <div class="action-icon">
+              <n-icon size="22"><component :is="item.icon" /></n-icon>
+            </div>
+            <span class="action-label">{{ item.label }}</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
@@ -125,4 +150,38 @@ const handleMenuSelect = (key: string) => {
 .c-tag { font-size: 10px; background: var(--app-surface-inner); padding: 2px 6px; border-radius: 4px; color: var(--text-tertiary); border: 1px solid var(--app-border-light); }
 .c-tag.target { color: var(--color-success); border-color: var(--success-medium); }
 .card-footer { border-top: 1px solid var(--app-border-light); padding-top: 10px; }
+
+/* 操作列表样式 */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.action-item:active {
+  background: var(--bg-surface-hover);
+}
+.action-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  color: var(--text-secondary);
+}
+.action-label {
+  font-size: var(--m-text-md);
+  font-weight: 500;
+}
 </style>

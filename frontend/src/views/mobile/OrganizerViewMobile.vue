@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed } from 'vue'
-import { 
-  NButton, NIcon, NTabs, NTabPane, NTag, NDropdown, NCard, NSpace
+import { onMounted, onUnmounted, computed, ref } from 'vue'
+import {
+  NButton, NIcon, NTabs, NTabPane, NTag, NDrawer, NDrawerContent, NSpace
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
@@ -11,7 +11,10 @@ import {
   MoreVertOutlined as MoreIcon,
   FolderCopyOutlined as TaskIcon,
   TextFormatOutlined as RuleIcon,
-  StopOutlined as StopIcon
+  StopOutlined as StopIcon,
+  ContentCopyOutlined as CopyIcon,
+  DeleteOutlined as DeleteIcon,
+  AddOutlined as AddIcon
 } from '@vicons/material'
 
 import RuleEditModal from '../../components/RuleEditModal.vue'
@@ -65,15 +68,42 @@ useBackClose(showExecModal)
 const runningTasks = computed(() => backgroundTasks.value.filter(t => t.status === 'running'))
 const finishedTasks = computed(() => backgroundTasks.value.filter(t => t.status !== 'running'))
 
-const getRuleActions = (index: number) => [
-  { label: '复制规则', key: 'duplicate', props: { onClick: () => duplicateRule(index) } },
-  { label: '删除规则', key: 'delete', props: { onClick: () => deleteRule(index) } }
-]
+// 操作抽屉状态
+const showRuleActionDrawer = ref(false)
+const showTaskActionDrawer = ref(false)
+const currentRuleIndex = ref<number>(-1)
+const currentTaskIndex = ref<number>(-1)
 
-const getTaskActions = (index: number, task: any) => [
-  { label: '复制任务', key: 'duplicate', props: { onClick: () => duplicateTask(index) } },
-  { label: '删除任务', key: 'delete', props: { onClick: () => deleteTask(index) } }
-]
+useBackClose(showRuleActionDrawer)
+useBackClose(showTaskActionDrawer)
+
+const openRuleActions = (index: number, e: Event) => {
+  e.stopPropagation()
+  currentRuleIndex.value = index
+  showRuleActionDrawer.value = true
+}
+
+const openTaskActions = (index: number, e: Event) => {
+  e.stopPropagation()
+  currentTaskIndex.value = index
+  showTaskActionDrawer.value = true
+}
+
+const handleRuleAction = (action: string) => {
+  showRuleActionDrawer.value = false
+  setTimeout(() => {
+    if (action === 'duplicate') duplicateRule(currentRuleIndex.value)
+    else if (action === 'delete') deleteRule(currentRuleIndex.value)
+  }, 300)
+}
+
+const handleTaskAction = (action: string) => {
+  showTaskActionDrawer.value = false
+  setTimeout(() => {
+    if (action === 'duplicate') duplicateTask(currentTaskIndex.value)
+    else if (action === 'delete') deleteTask(currentTaskIndex.value)
+  }, 300)
+}
 
 onMounted(() => {
   fetchConfig()
@@ -127,9 +157,12 @@ onUnmounted(stopBgTaskPolling)
       <!-- 规则管理 Tab -->
       <n-tab-pane name="rules" tab="规则">
         <div class="m-tab-content">
-          <n-button v-bind="getButtonStyle('primary')" block dashed class="m-mb-lg" @click="openEditRule(-1)">
-            新建规则
-          </n-button>
+          <div class="m-action-bar m-mb-lg">
+            <n-button type="primary" dashed size="small" @click="openEditRule(-1)">
+              <template #icon><n-icon><AddIcon /></n-icon></template>
+              新建规则
+            </n-button>
+          </div>
           
           <div class="m-card-list">
             <div
@@ -144,11 +177,9 @@ onUnmounted(stopBgTaskPolling)
                   <span class="item-title m-truncate">{{ rule.name }}</span>
                   <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
                 </div>
-                <n-dropdown trigger="click" :options="getRuleActions(i)" size="large">
-                   <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop>
-                     <template #icon><n-icon><MoreIcon /></n-icon></template>
-                   </n-button>
-                </n-dropdown>
+                <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openRuleActions(i, $event)">
+                  <template #icon><n-icon><MoreIcon /></n-icon></template>
+                </n-button>
               </div>
               
               <div class="rule-details">
@@ -169,9 +200,12 @@ onUnmounted(stopBgTaskPolling)
       <!-- 整理任务 Tab -->
       <n-tab-pane name="tasks" tab="任务">
         <div class="m-tab-content">
-          <n-button v-bind="getButtonStyle('primary')" block dashed class="m-mb-lg" @click="openEditTask(-1)">
-            新建任务
-          </n-button>
+          <div class="m-action-bar m-mb-lg">
+            <n-button type="primary" dashed size="small" @click="openEditTask(-1)">
+              <template #icon><n-icon><AddIcon /></n-icon></template>
+              新建任务
+            </n-button>
+          </div>
           
           <div class="m-card-list">
             <div
@@ -189,11 +223,9 @@ onUnmounted(stopBgTaskPolling)
                    <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click.stop="requestRunTask(task)">
                      <template #icon><n-icon><PlayIcon /></n-icon></template>
                    </n-button>
-                   <n-dropdown trigger="click" :options="getTaskActions(i, task)" size="large">
-                      <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop>
-                        <template #icon><n-icon><MoreIcon /></n-icon></template>
-                      </n-button>
-                   </n-dropdown>
+                   <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openTaskActions(i, $event)">
+                     <template #icon><n-icon><MoreIcon /></n-icon></template>
+                   </n-button>
                 </div>
               </div>
               
@@ -246,6 +278,46 @@ onUnmounted(stopBgTaskPolling)
     <RuleEditModal v-model:show="showRuleModal" :rule-data="editingRule" :is-new="editingRuleIndex===-1" @save="handleSaveRule" />
     <TaskEditModal v-model:show="showTaskModal" :task-data="editingTask" :is-new="editingTaskIndex===-1" :available-rules="rules" :api-base="API_BASE" @save="handleSaveTask" />
     <ExecutionLogModal v-model:show="showExecModal" :is-dry-run="isDryRun" :is-running="isRunning" :logs="execLogs" :scanning-status="scanningStatus" :target-dir="editingTask?.target_dir || ''" @commit="requestCommitBatch" />
+
+    <!-- 规则操作抽屉 -->
+    <n-drawer v-model:show="showRuleActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content closable title="规则操作">
+        <div class="action-list">
+          <div class="action-item" @click="handleRuleAction('duplicate')">
+            <div class="action-icon">
+              <n-icon size="22"><CopyIcon /></n-icon>
+            </div>
+            <span class="action-label">复制规则</span>
+          </div>
+          <div class="action-item danger" @click="handleRuleAction('delete')">
+            <div class="action-icon">
+              <n-icon size="22"><DeleteIcon /></n-icon>
+            </div>
+            <span class="action-label">删除规则</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
+
+    <!-- 任务操作抽屉 -->
+    <n-drawer v-model:show="showTaskActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content closable title="任务操作">
+        <div class="action-list">
+          <div class="action-item" @click="handleTaskAction('duplicate')">
+            <div class="action-icon">
+              <n-icon size="22"><CopyIcon /></n-icon>
+            </div>
+            <span class="action-label">复制任务</span>
+          </div>
+          <div class="action-item danger" @click="handleTaskAction('delete')">
+            <div class="action-icon">
+              <n-icon size="22"><DeleteIcon /></n-icon>
+            </div>
+            <span class="action-label">删除任务</span>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
@@ -373,5 +445,67 @@ onUnmounted(stopBgTaskPolling)
   display: flex;
   justify-content: flex-end;
   gap: var(--m-spacing-sm);
+}
+
+/* 操作列表样式 */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-item:active {
+  background: var(--bg-surface-hover);
+}
+
+.action-item.danger {
+  color: var(--color-error);
+}
+
+.action-item.danger .action-icon {
+  color: var(--color-error);
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-surface-inner);
+  border-radius: var(--m-radius-md);
+  color: var(--text-secondary);
+}
+
+.action-item.danger .action-icon {
+  background: var(--color-error-bg);
+}
+
+.action-label {
+  font-size: var(--m-text-md);
+  font-weight: 500;
+}
+
+/* 操作按钮栏 */
+.m-action-bar {
+  display: flex;
+  gap: var(--m-spacing-md);
+  flex-wrap: wrap;
+}
+
+.m-action-bar .n-button {
+  flex: 1;
+  min-width: 120px;
 }
 </style>
