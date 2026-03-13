@@ -4,11 +4,8 @@ import {
   NButton, NIcon, NTabs, NTabPane, NTag, NDropdown, NCard, NSpace
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  DeleteOutlined as DeleteIcon,
   SaveOutlined as SaveIcon,
   PlayArrowOutlined as PlayIcon,
-  ContentCopyOutlined as CopyIcon,
   BoltOutlined as BoltIcon,
   AccessTimeOutlined as ScheduleIcon,
   MoreVertOutlined as MoreIcon,
@@ -86,9 +83,10 @@ onUnmounted(stopBgTaskPolling)
 </script>
 
 <template>
-  <div class="organizer-mobile">
-    <div class="header-mobile">
-      <h1>整理与重命名</h1>
+  <div class="m-page m-page-safe-bottom">
+    <!-- 页面头部 -->
+    <div class="m-header m-header-plain">
+      <h1 class="m-header-title">整理与重命名</h1>
       <n-button v-bind="getButtonStyle('primary')" :loading="loading" @click="saveConfig">
         <template #icon><n-icon><SaveIcon /></n-icon></template>
         保存
@@ -96,53 +94,54 @@ onUnmounted(stopBgTaskPolling)
     </div>
 
     <!-- 后台任务状态 -->
-    <n-card v-if="backgroundTasks.length > 0" size="small" style="margin: 8px 12px">
-      <template #header>
-        <n-space align="center" :size="8">
-          <span style="font-size: 14px">后台任务</span>
+    <div v-if="backgroundTasks.length > 0" class="m-card m-card-compact m-mb-md" style="margin: var(--m-spacing-md);">
+      <div class="m-card-header">
+        <div class="m-flex m-items-center m-gap-sm">
+          <span class="m-card-title">后台任务</span>
           <n-tag size="small" :bordered="false">{{ runningTasks.length }} 运行中</n-tag>
-        </n-space>
-      </template>
-      <n-space vertical size="small">
-        <div v-for="task in runningTasks" :key="task.task_id" class="bg-task-item">
-          <n-space align="center" justify="space-between">
-            <n-space align="center" :size="8">
-              <n-tag type="info" size="small">运行中</n-tag>
-              <span style="font-size: 13px">{{ task.name }}</span>
-            </n-space>
-            <n-button size="tiny" type="error" secondary @click="stopBackgroundTask(task.task_id)">
-              <template #icon><n-icon><StopIcon /></n-icon></template>
-            </n-button>
-          </n-space>
         </div>
-        <div v-for="task in finishedTasks" :key="task.task_id" class="bg-task-item">
-          <n-space align="center" justify="space-between">
-            <n-space align="center" :size="8">
-              <n-tag :type="task.status === 'completed' ? 'success' : task.status === 'stopped' ? 'warning' : 'error'" size="small">
-                {{ task.status === 'completed' ? '完成' : task.status === 'stopped' ? '停止' : '错误' }}
-              </n-tag>
-              <span style="font-size: 13px">{{ task.name }}</span>
-            </n-space>
-            <n-button size="tiny" quaternary @click="deleteBackgroundTask(task.task_id)">清除</n-button>
-          </n-space>
+      </div>
+      <div class="m-list">
+        <div v-for="task in runningTasks" :key="task.task_id" class="m-list-item">
+          <div class="m-flex m-items-center m-gap-sm">
+            <n-tag type="info" size="small">运行中</n-tag>
+            <span class="m-list-item-title">{{ task.name }}</span>
+          </div>
+          <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="stopBackgroundTask(task.task_id)">
+            <template #icon><n-icon><StopIcon /></n-icon></template>
+          </n-button>
         </div>
-      </n-space>
-    </n-card>
+        <div v-for="task in finishedTasks" :key="task.task_id" class="m-list-item">
+          <div class="m-flex m-items-center m-gap-sm">
+            <n-tag :type="task.status === 'completed' ? 'success' : task.status === 'stopped' ? 'warning' : 'error'" size="small">
+              {{ task.status === 'completed' ? '完成' : task.status === 'stopped' ? '停止' : '错误' }}
+            </n-tag>
+            <span class="m-list-item-title">{{ task.name }}</span>
+          </div>
+          <n-button v-bind="getButtonStyle('text')" size="small" @click="deleteBackgroundTask(task.task_id)">清除</n-button>
+        </div>
+      </div>
+    </div>
 
-    <n-tabs type="line" animated class="mobile-tabs" pane-class="mobile-tab-pane">
+    <n-tabs type="line" animated class="m-tabs" pane-class="m-tab-content">
       <!-- 规则管理 Tab -->
       <n-tab-pane name="rules" tab="规则">
-        <div class="tab-content">
-          <n-button v-bind="getButtonStyle('primary')" block dashed class="mb-4" @click="openEditRule(-1)">
+        <div class="m-tab-content">
+          <n-button v-bind="getButtonStyle('primary')" block dashed class="m-mb-lg" @click="openEditRule(-1)">
             新建规则
           </n-button>
           
-          <div class="card-list">
-            <n-card v-for="(rule, i) in rules" :key="rule.id" class="mobile-card" size="small" @click="openEditRule(i)">
+          <div class="m-card-list">
+            <div 
+              v-for="(rule, i) in rules" 
+              :key="rule.id" 
+              class="m-card-item m-touchable"
+              @click="openEditRule(i)"
+            >
               <div class="card-header">
                 <div class="title-row">
                   <n-icon :color="i === 0 ? 'var(--n-primary-color)' : 'var(--text-muted)'" size="20"><RuleIcon /></n-icon>
-                  <span class="item-title">{{ rule.name }}</span>
+                  <span class="item-title m-truncate">{{ rule.name }}</span>
                   <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
                 </div>
                 <n-dropdown trigger="click" :options="getRuleActions(i)" size="large">
@@ -162,27 +161,32 @@ onUnmounted(stopBgTaskPolling)
                   <code class="pattern">{{ rule.tv_pattern || '未设置' }}</code>
                 </div>
               </div>
-            </n-card>
+            </div>
           </div>
         </div>
       </n-tab-pane>
 
       <!-- 整理任务 Tab -->
       <n-tab-pane name="tasks" tab="任务">
-        <div class="tab-content">
-          <n-button v-bind="getButtonStyle('primary')" block dashed class="mb-4" @click="openEditTask(-1)">
+        <div class="m-tab-content">
+          <n-button v-bind="getButtonStyle('primary')" block dashed class="m-mb-lg" @click="openEditTask(-1)">
             新建任务
           </n-button>
           
-          <div class="card-list">
-            <n-card v-for="(task, i) in tasks" :key="task.id" class="mobile-card" size="small" @click="openEditTask(i)">
+          <div class="m-card-list">
+            <div 
+              v-for="(task, i) in tasks" 
+              :key="task.id" 
+              class="m-card-item m-touchable"
+              @click="openEditTask(i)"
+            >
               <div class="card-header">
                 <div class="title-row">
                   <n-icon style="color: var(--n-primary-color)" size="20"><TaskIcon /></n-icon>
-                  <span class="item-title">{{ task.name }}</span>
+                  <span class="item-title m-truncate">{{ task.name }}</span>
                 </div>
                 <div class="action-row">
-                   <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click.stop="requestRunTask(task)" style="margin-right: 4px">
+                   <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click.stop="requestRunTask(task)">
                      <template #icon><n-icon><PlayIcon /></n-icon></template>
                    </n-button>
                    <n-dropdown trigger="click" :options="getTaskActions(i, task)" size="large">
@@ -210,7 +214,6 @@ onUnmounted(stopBgTaskPolling)
               </div>
 
               <div class="card-footer">
-                  <!-- 实时监控快速切换 -->
                   <n-button 
                     size="tiny" 
                     secondary
@@ -222,7 +225,6 @@ onUnmounted(stopBgTaskPolling)
                     实时监控
                   </n-button>
 
-                  <!-- 定时扫描快速切换 -->
                   <n-button 
                     size="tiny" 
                     secondary
@@ -234,7 +236,7 @@ onUnmounted(stopBgTaskPolling)
                     定时扫描
                   </n-button>
               </div>
-            </n-card>
+            </div>
           </div>
         </div>
       </n-tab-pane>
@@ -248,83 +250,128 @@ onUnmounted(stopBgTaskPolling)
 </template>
 
 <style scoped>
-.organizer-mobile {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background-color: var(--app-background);
-  padding-bottom: 80px;
-}
-
-.header-mobile {
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-.header-mobile h1 { margin: 0; font-size: 20px; font-weight: 800; }
-
-.mobile-tabs {
+.m-tabs {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-:deep(.n-tabs-nav) { padding: 0 16px; }
-:deep(.n-tabs-pane-wrapper) { flex: 1; overflow: hidden; }
-:deep(.mobile-tab-pane) { height: 100%; overflow-y: auto; }
-
-.tab-content { padding: 16px; }
-.mb-4 { margin-bottom: 16px; }
-
-.card-list { display: flex; flex-direction: column; gap: 12px; }
-.mobile-card { border-radius: 12px; }
-
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.title-row { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
-.item-title { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.action-row { display: flex; align-items: center; flex-shrink: 0; }
-
-.rule-details { margin-top: 8px; }
-.detail-row { display: flex; flex-direction: column; margin-bottom: 6px; }
-.detail-row .label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; }
-.detail-row .pattern { 
-  font-family: monospace; 
-  background: var(--app-surface-inner); 
-  padding: 4px 6px; 
-  border-radius: 4px; 
-  font-size: 12px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.m-tabs :deep(.n-tabs-nav) {
+  padding: var(--m-spacing-sm) var(--m-spacing-lg);
+  border-bottom: 1px solid var(--border-light);
 }
 
-.task-details { display: flex; flex-direction: column; gap: 8px; }
-.path-box { display: flex; flex-direction: column; min-width: 0; } /* min-width: 0 is crucial for flex child truncation */
-.path-label { font-size: 10px; color: var(--text-tertiary); }
-.path-val { 
-  font-family: monospace; 
-  background: var(--app-surface-inner); 
-  padding: 6px 8px; 
-  border-radius: 6px; 
-  font-size: 12px;
-  word-break: break-all; /* Allow path to wrap */
+.m-tabs :deep(.n-tabs-pane-wrapper) {
+  flex: 1;
+  overflow: hidden;
+}
+
+.m-tabs :deep(.n-tab-pane) {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.m-tab-content {
+  padding: var(--m-spacing-lg);
+}
+
+/* 卡片头部 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--m-spacing-md);
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
+  font-weight: 600;
+  font-size: var(--m-text-md);
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-xs);
+  flex-shrink: 0;
+}
+
+/* 规则详情 */
+.rule-details {
+  margin-top: var(--m-spacing-sm);
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--m-spacing-sm);
+}
+
+.detail-row .label {
+  font-size: var(--m-text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  margin-bottom: var(--m-spacing-xs);
+}
+
+.detail-row .pattern {
+  font-family: monospace;
+  background: var(--app-surface-inner);
+  padding: var(--m-spacing-sm);
+  border-radius: var(--m-radius-sm);
+  font-size: var(--m-text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 任务详情 */
+.task-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-md);
+}
+
+.path-box {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.path-label {
+  font-size: var(--m-text-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--m-spacing-xs);
+}
+
+.path-val {
+  font-family: monospace;
+  background: var(--app-surface-inner);
+  padding: var(--m-spacing-sm);
+  border-radius: var(--m-radius-sm);
+  font-size: var(--m-text-sm);
+  word-break: break-all;
   line-height: 1.4;
 }
 
-.card-footer { 
-  margin-top: 12px; 
-  padding-top: 8px; 
-  border-top: 1px solid var(--border-light); 
-  display: flex; 
-  justify-content: flex-end; 
-  gap: 8px; 
+.rule-tag {
+  margin-top: var(--m-spacing-xs);
 }
 
-.bg-task-item {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-light);
-}
-.bg-task-item:last-child {
-  border-bottom: none;
+.card-footer {
+  margin-top: var(--m-spacing-md);
+  padding-top: var(--m-spacing-md);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--m-spacing-sm);
 }
 </style>

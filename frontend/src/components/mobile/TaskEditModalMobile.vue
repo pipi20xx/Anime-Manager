@@ -41,10 +41,10 @@ const {
     content-style="padding: 0; display: flex; flex-direction: column;"
     :title="isNew ? '创建新整理任务' : '编辑任务配置'"
   >
-    <n-form label-placement="top" label-width="100" size="small" style="flex: 1; overflow-y: auto; padding: 16px;">
+    <n-form label-placement="top" label-width="100" size="small" style="flex: 1; overflow-y: auto; padding: var(--m-spacing-lg);">
       <n-tabs type="line" animated>
         <n-tab-pane name="basic" tab="核心配置">
-          <n-space vertical size="large" class="mt-4">
+          <n-space vertical size="large" class="m-mt-md">
             <n-form-item label="任务名称"><n-input v-model:value="form.name" placeholder="起个名字" /></n-form-item>
             <n-form-item label="重命名规则">
               <n-select v-model:value="form.rule_id" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择规则" />
@@ -72,7 +72,7 @@ const {
         </n-tab-pane>
         
         <n-tab-pane name="automation" tab="自动化与过滤">
-          <n-space vertical size="large" class="mt-4">
+          <n-space vertical size="large" class="m-mt-md">
             <n-form-item label="实时监控">
               <n-space align="center" wrap>
                 <n-switch v-model:value="form.incremental_enabled" />
@@ -113,7 +113,7 @@ const {
             <n-form-item label="忽略文件正则"><n-dynamic-tags v-model:value="form.ignore_file_regex" /></n-form-item>
             <n-form-item label="忽略目录正则"><n-dynamic-tags v-model:value="form.ignore_dir_regex" /></n-form-item>
             
-            <n-space vertical :size="12" class="mt-4">
+            <n-space vertical size="medium" class="m-mt-md">
               <n-checkbox v-model:checked="form.anime_priority">动漫优先</n-checkbox>
               <n-checkbox v-model:checked="form.overwrite_mode">覆盖模式</n-checkbox>
               <n-checkbox v-model:checked="form.trigger_strm">联动 STRM</n-checkbox>
@@ -121,19 +121,19 @@ const {
               <n-checkbox v-model:checked="form.ignore_history">忽略历史</n-checkbox>
             </n-space>
             
-            <n-form-item label="Emby 检查" class="mt-4">
+            <n-form-item label="Emby 检查" class="m-mt-md">
               <n-space align="center">
                 <n-switch v-model:value="form.check_emby_exists" />
-                <span style="font-size: 12px; color: var(--text-muted);">检测 Emby 库是否存在，存在则跳过处理</span>
+                <span style="font-size: var(--m-text-xs); color: var(--text-muted);">检测 Emby 库是否存在，存在则跳过处理</span>
               </n-space>
             </n-form-item>
-            <n-form-item label="哈希计算" class="mt-2">
-              <n-space vertical :size="8">
+            <n-form-item label="哈希计算" class="m-mt-sm">
+              <n-space vertical size="small">
                 <n-space align="center">
                   <n-switch v-model:value="form.calculate_hash" />
-                  <span style="font-size: 12px; color: var(--text-muted);">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                  <span style="font-size: var(--m-text-xs); color: var(--text-muted);">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
                 </n-space>
-                <div style="font-size: 11px; color: var(--color-error); padding: 4px 8px; background: var(--color-error-bg); border-radius: 4px;">
+                <div style="font-size: var(--m-text-xs); color: var(--color-error); padding: var(--m-spacing-xs) var(--m-spacing-sm); background: var(--color-error-bg); border-radius: var(--m-radius-sm);">
                   ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
                 </div>
               </n-space>
@@ -159,6 +159,6 @@ const {
 </template>
 
 <style scoped>
-.mt-2 { margin-top: 8px; }
-.mt-4 { margin-top: 16px; }
+.m-mt-sm { margin-top: var(--m-spacing-sm); }
+.m-mt-md { margin-top: var(--m-spacing-md); }
 </style>

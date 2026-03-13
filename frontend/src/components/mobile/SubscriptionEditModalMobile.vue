@@ -51,10 +51,10 @@ watch(() => props.show, (newVal) => {
       size="huge"
       role="dialog"
       aria-modal="true"
-      content-style="padding: 16px; overflow-y: auto;"
+      content-style="padding: var(--m-spacing-lg); overflow-y: auto;"
     >
       <n-form label-placement="top" label-width="100">
-        <n-grid :cols="1" :x-gap="12">
+        <n-grid :cols="1" x-gap="12">
           <n-gi v-if="isNew && templates.length > 0">
             <n-form-item label="套用预设">
               <n-select 
@@ -87,7 +87,7 @@ watch(() => props.show, (newVal) => {
                 />
                 <n-input v-model:value="searchQuery" placeholder="输入名称搜索 TMDB..." @keypress.enter="handleSearch" />
                 <n-button type="primary" @click="handleSearch" :loading="loading">
-                  搜索
+                  <template #icon><n-icon><SearchIcon /></n-icon></template>
                 </n-button>
               </n-input-group>
             </n-form-item>
@@ -114,7 +114,7 @@ watch(() => props.show, (newVal) => {
             <n-form-item label="Bangumi ID">
               <n-input v-model:value="formModel.bangumi_id" placeholder="可选: 关联 Bangumi" />
               <template #feedback>
-                <div v-if="bangumiName" style="color: var(--n-primary-color); font-size: 12px; font-weight: bold;">
+                <div v-if="bangumiName" style="color: var(--n-primary-color); font-size: var(--m-text-sm); font-weight: bold;">
                   📺 {{ bangumiName }}
                 </div>
               </template>
@@ -129,7 +129,7 @@ watch(() => props.show, (newVal) => {
           <n-gi>
              <div class="poster-preview" v-if="formModel.poster_path">
                 <n-image width="100" :src="getImg(formModel.poster_path)" />
-                <div style="margin-left: 12px">
+                <div style="margin-left: var(--m-spacing-md)">
                   <div style="font-weight: bold">{{ formModel.title }}</div>
                   <div style="color: var(--text-tertiary)">Year: {{ formModel.year }} | Type: {{ formModel.media_type }}</div>
                 </div>
@@ -203,9 +203,9 @@ watch(() => props.show, (newVal) => {
           </n-gi>
           <n-gi>
             <n-form-item label="定时补全">
-              <n-space vertical :size="4">
+              <n-space vertical size="small">
                 <n-switch v-model:value="formModel.auto_fill" />
-                <span style="font-size: 12px; color: var(--text-muted);">自动从 Jackett 所有源搜索，无法指定源</span>
+                <span style="font-size: var(--m-text-xs); color: var(--text-muted);">自动从 Jackett 所有源搜索，无法指定源</span>
               </n-space>
             </n-form-item>
           </n-gi>
@@ -225,13 +225,13 @@ watch(() => props.show, (newVal) => {
 <style scoped>
 .search-results {
   border: 1px solid var(--app-border-light);
-  border-radius: var(--code-radius, 6px);
-  margin-bottom: 12px;
+  border-radius: var(--m-radius-md);
+  margin-bottom: var(--m-spacing-md);
   background: var(--app-surface-inner);
 }
 .result-item {
   display: flex;
-  padding: 8px;
+  padding: var(--m-spacing-sm);
   cursor: pointer;
   border-bottom: 1px solid var(--app-border-light);
   transition: background var(--transition-fast);
@@ -240,29 +240,30 @@ watch(() => props.show, (newVal) => {
   background: var(--app-surface-card);
 }
 .result-item :deep(img) {
-  border-radius: var(--button-border-radius, 4px);
+  border-radius: var(--m-radius-sm);
 }
 .result-info {
-  margin-left: 12px;
+  margin-left: var(--m-spacing-md);
 }
 .res-title {
   font-weight: bold;
   color: var(--text-primary);
+  font-size: var(--m-text-sm);
 }
 .res-sub {
-  font-size: 12px;
+  font-size: var(--m-text-xs);
   color: var(--text-tertiary);
 }
 .poster-preview {
   display: flex;
   align-items: center;
   background: var(--app-surface-card);
-  padding: 12px;
-  border-radius: var(--card-border-radius, 12px);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-lg);
   border: 1px solid var(--app-border-light);
-  margin-bottom: 16px;
+  margin-bottom: var(--m-spacing-lg);
 }
 .poster-preview :deep(img) {
-  border-radius: var(--button-border-radius, 6px);
+  border-radius: var(--m-radius-sm);
 }
 </style>

@@ -11,13 +11,13 @@ const { currentTab, activeComponent } = useExploreView()
 </script>
 
 <template>
-  <div class="explore-view-mobile">
-    <div class="explore-header-mobile">
+  <div class="m-page m-page-safe-bottom">
+    <div class="explore-header">
        <n-tabs 
           v-model:value="currentTab" 
           type="segment" 
           animated
-          class="custom-tabs"
+          class="m-tabs"
           style="width: 100%"
        >
           <n-tab-pane name="recommend" tab="推荐">
@@ -47,7 +47,7 @@ const { currentTab, activeComponent } = useExploreView()
        </n-tabs>
     </div>
 
-    <div class="explore-content-mobile">
+    <div class="m-page-scrollable">
        <keep-alive>
           <component :is="activeComponent" />
        </keep-alive>
@@ -56,35 +56,28 @@ const { currentTab, activeComponent } = useExploreView()
 </template>
 
 <style scoped>
-.explore-view-mobile {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.explore-header-mobile {
+.explore-header {
   display: flex;
   justify-content: center;
-  padding: 8px 12px 16px 12px;
+  padding: var(--m-spacing-md) var(--m-spacing-lg) var(--m-spacing-lg);
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .tab-label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--m-spacing-xs);
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--m-text-sm);
 }
 
-.explore-content-mobile {
-  flex: 1;
-  width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+.m-tabs :deep(.n-tabs-nav) {
+  padding: 0;
+}
+
+.m-tabs :deep(.n-tabs-pane-wrapper) {
+  display: none;
 }
 </style>

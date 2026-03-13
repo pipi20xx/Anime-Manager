@@ -1,0 +1,632 @@
+/**
+ * 移动端基础样式规范
+ * 统一所有移动端组件的样式系统
+ */
+
+/* ============================================
+   1. 移动端间距系统
+   ============================================ */
+:root {
+  /* 移动端专用间距变量 */
+  --m-spacing-xs: 4px;
+  --m-spacing-sm: 8px;
+  --m-spacing-md: 12px;
+  --m-spacing-lg: 16px;
+  --m-spacing-xl: 20px;
+  --m-spacing-2xl: 24px;
+  --m-spacing-3xl: 32px;
+
+  /* 底部安全区域 */
+  --m-safe-bottom: max(80px, env(safe-area-inset-bottom, 80px));
+  --m-safe-top: env(safe-area-inset-top, 0px);
+  --m-safe-left: env(safe-area-inset-left, 0px);
+  --m-safe-right: env(safe-area-inset-right, 0px);
+
+  /* 移动端圆角 */
+  --m-radius-sm: 6px;
+  --m-radius-md: 8px;
+  --m-radius-lg: 12px;
+  --m-radius-xl: 16px;
+  --m-radius-full: 9999px;
+
+  /* 移动端字体大小 */
+  --m-text-xs: 10px;
+  --m-text-sm: 12px;
+  --m-text-base: 13px;
+  --m-text-md: 14px;
+  --m-text-lg: 16px;
+  --m-text-xl: 18px;
+  --m-text-2xl: 20px;
+  --m-text-3xl: 24px;
+
+  /* 移动端头部高度 */
+  --m-header-height: 56px;
+  --m-bottom-nav-height: 64px;
+}
+
+/* ============================================
+   2. 移动端页面容器
+   ============================================ */
+.m-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* 动态视口高度 */
+  background-color: var(--app-bg-color);
+  overflow: hidden;
+  position: relative;
+}
+
+.m-page-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 带底部导航的页面 */
+.m-page-with-nav {
+  padding-bottom: var(--m-bottom-nav-height);
+}
+
+/* 带底部安全区的页面 */
+.m-page-safe-bottom {
+  padding-bottom: var(--m-safe-bottom);
+}
+
+/* ============================================
+   3. 移动端页面头部
+   ============================================ */
+.m-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: var(--m-header-height);
+  padding: 0 var(--m-spacing-lg);
+  flex-shrink: 0;
+  background-color: var(--app-bg-color);
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.m-header-title {
+  margin: 0;
+  font-size: var(--m-text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.m-header-left,
+.m-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+  min-width: 60px;
+}
+
+.m-header-right {
+  justify-content: flex-end;
+}
+
+/* 简洁头部（无边框） */
+.m-header-plain {
+  border-bottom: none;
+}
+
+/* ============================================
+   4. 移动端内容区域
+   ============================================ */
+.m-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--m-spacing-lg);
+}
+
+.m-content-compact {
+  padding: var(--m-spacing-md);
+}
+
+/* Tab 内容区 */
+.m-tab-content {
+  padding: var(--m-spacing-lg);
+}
+
+/* ============================================
+   5. 移动端卡片样式
+   ============================================ */
+.m-card {
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-lg);
+  margin-bottom: var(--m-spacing-md);
+}
+
+.m-card-compact {
+  padding: var(--m-spacing-md);
+}
+
+.m-card-plain {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.m-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--m-spacing-md);
+}
+
+.m-card-title {
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.m-card-subtitle {
+  font-size: var(--m-text-sm);
+  color: var(--text-muted);
+  margin-top: var(--m-spacing-xs);
+}
+
+/* 列表卡片 */
+.m-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-md);
+}
+
+.m-card-item {
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-md);
+}
+
+.m-card-item:active {
+  background: var(--bg-surface-hover);
+}
+
+/* ============================================
+   6. 移动端列表样式
+   ============================================ */
+.m-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-sm);
+}
+
+.m-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--m-spacing-md);
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-md);
+}
+
+.m-list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.m-list-item-title {
+  font-size: var(--m-text-md);
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-list-item-desc {
+  font-size: var(--m-text-sm);
+  color: var(--text-muted);
+  margin-top: var(--m-spacing-xs);
+}
+
+/* ============================================
+   7. 移动端表单样式
+   ============================================ */
+.m-form-group {
+  margin-bottom: var(--m-spacing-lg);
+}
+
+.m-form-label {
+  display: block;
+  font-size: var(--m-text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--m-spacing-sm);
+}
+
+.m-form-hint {
+  font-size: var(--m-text-xs);
+  color: var(--text-muted);
+  margin-top: var(--m-spacing-xs);
+}
+
+/* 输入框组 */
+.m-input-group {
+  display: flex;
+  gap: var(--m-spacing-sm);
+}
+
+.m-input-group > * {
+  flex: 1;
+}
+
+/* ============================================
+   8. 移动端按钮区域
+   ============================================ */
+.m-actions {
+  display: flex;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-lg);
+  background: var(--app-bg-color);
+  border-top: 1px solid var(--border-light);
+}
+
+.m-actions-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: max(var(--m-spacing-lg), env(safe-area-inset-bottom, 0px));
+  z-index: 200;
+}
+
+.m-actions-sticky {
+  position: sticky;
+  bottom: 0;
+}
+
+.m-actions-vertical {
+  flex-direction: column;
+}
+
+/* ============================================
+   9. 移动端 Tab 样式
+   ============================================ */
+.m-tabs-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.m-tabs-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 覆盖 Naive UI Tab 样式 */
+.m-tabs :deep(.n-tabs-nav) {
+  padding: var(--m-spacing-sm) var(--m-spacing-lg);
+}
+
+.m-tabs :deep(.n-tabs-pane-wrapper) {
+  flex: 1;
+}
+
+.m-tabs :deep(.n-tab-pane) {
+  padding: var(--m-spacing-lg);
+}
+
+/* ============================================
+   10. 移动端模态框/弹窗
+   ============================================ */
+.m-modal-fullscreen {
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.m-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--m-spacing-md) var(--m-spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.m-modal-title {
+  font-size: var(--m-text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.m-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--m-spacing-lg);
+}
+
+.m-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md) var(--m-spacing-lg);
+  border-top: 1px solid var(--border-light);
+}
+
+/* 底部弹出面板 */
+.m-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--app-bg-color);
+  border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+}
+
+.m-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--m-spacing-md);
+  position: relative;
+}
+
+.m-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border-medium);
+  border-radius: var(--m-radius-full);
+}
+
+.m-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--m-spacing-lg);
+}
+
+/* ============================================
+   11. 移动端详情页样式
+   ============================================ */
+.m-detail-hero {
+  position: relative;
+  min-height: 280px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.m-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+}
+
+.m-detail-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, var(--app-bg-color) 100%);
+}
+
+.m-detail-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: var(--m-spacing-xl);
+  display: flex;
+  gap: var(--m-spacing-lg);
+  align-items: flex-end;
+  width: 100%;
+}
+
+.m-detail-poster {
+  width: 100px;
+  flex-shrink: 0;
+  border-radius: var(--m-radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light);
+}
+
+.m-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.m-detail-title {
+  margin: 0;
+  font-size: var(--m-text-xl);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.m-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+  margin-top: var(--m-spacing-sm);
+}
+
+.m-detail-actions {
+  padding: var(--m-spacing-lg);
+}
+
+.m-detail-body {
+  padding: var(--m-spacing-lg);
+}
+
+.m-detail-section {
+  margin-bottom: var(--m-spacing-xl);
+}
+
+.m-detail-section-title {
+  margin: 0 0 var(--m-spacing-md);
+  font-size: var(--m-text-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 横向滚动区域 */
+.m-h-scroll {
+  display: flex;
+  gap: var(--m-spacing-md);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--m-spacing-sm);
+  margin: 0 calc(-1 * var(--m-spacing-lg));
+  padding-left: var(--m-spacing-lg);
+  padding-right: var(--m-spacing-lg);
+}
+
+.m-h-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   12. 移动端空状态
+   ============================================ */
+.m-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--m-spacing-3xl) var(--m-spacing-lg);
+  text-align: center;
+}
+
+.m-empty-icon {
+  font-size: 48px;
+  color: var(--text-muted);
+  margin-bottom: var(--m-spacing-md);
+}
+
+.m-empty-title {
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 var(--m-spacing-sm);
+}
+
+.m-empty-desc {
+  font-size: var(--m-text-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ============================================
+   13. 移动端加载状态
+   ============================================ */
+.m-skeleton {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-surface-hover) 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: m-skeleton-loading 1.5s infinite;
+  border-radius: var(--m-radius-sm);
+}
+
+@keyframes m-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================
+   14. 移动端工具类
+   ============================================ */
+.m-flex {
+  display: flex;
+}
+
+.m-flex-col {
+  flex-direction: column;
+}
+
+.m-flex-1 {
+  flex: 1;
+}
+
+.m-items-center {
+  align-items: center;
+}
+
+.m-justify-between {
+  justify-content: space-between;
+}
+
+.m-gap-sm {
+  gap: var(--m-spacing-sm);
+}
+
+.m-gap-md {
+  gap: var(--m-spacing-md);
+}
+
+.m-gap-lg {
+  gap: var(--m-spacing-lg);
+}
+
+.m-text-center {
+  text-align: center;
+}
+
+.m-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-mt-md {
+  margin-top: var(--m-spacing-md);
+}
+
+.m-mt-lg {
+  margin-top: var(--m-spacing-lg);
+}
+
+.m-mb-md {
+  margin-bottom: var(--m-spacing-md);
+}
+
+.m-mb-lg {
+  margin-bottom: var(--m-spacing-lg);
+}
+
+/* 隐藏滚动条但保持滚动功能 */
+.m-no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.m-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 触摸反馈 */
+.m-touchable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m-touchable:active {
+  opacity: 0.7;
+}

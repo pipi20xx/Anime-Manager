@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import './styles/global.css'
+import './styles/mobile-base.css'
 import App from './App.vue'
 import axios from 'axios'
 

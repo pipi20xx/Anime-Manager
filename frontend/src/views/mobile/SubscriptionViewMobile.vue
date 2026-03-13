@@ -84,12 +84,10 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <div class="sub-view-mobile">
-    <div class="page-header-mobile">
-      <div>
-        <h1>订阅与下载</h1>
-      </div>
-      
+  <div class="m-page m-page-safe-bottom">
+    <!-- 页面头部 -->
+    <div class="m-header m-header-plain">
+      <h1 class="m-header-title">订阅与下载</h1>
       <n-dropdown trigger="click" :options="mobileGlobalActions" @select="handleMobileGlobalAction">
         <n-button v-bind="getButtonStyle('icon')">
           <template #icon><n-icon><MoreIcon/></n-icon></template>
@@ -97,7 +95,7 @@ onMounted(fetchData)
       </n-dropdown>
     </div>
 
-    <n-tabs type="line" animated class="mobile-tabs" pane-class="mobile-tab-pane">
+    <n-tabs type="line" animated class="m-tabs" pane-class="m-tab-content">
       <!-- 追剧订阅管理 -->
       <n-tab-pane name="subscriptions" tab="追剧订阅">
         <MobileSubscriptionManager :clients="clients" />
@@ -105,29 +103,33 @@ onMounted(fetchData)
 
       <!-- 订阅源管理 -->
       <n-tab-pane name="feeds" tab="订阅源">
-        <div class="tab-content">
-          <n-space vertical :size="12">
+        <div class="m-tab-content">
+          <n-space vertical size="medium">
             <n-button v-bind="getButtonStyle('secondary')" block dashed @click="syncJackettFeeds">
+              <template #icon><n-icon><SyncIcon /></n-icon></template>
               同步 Jackett 源
             </n-button>
             <n-button v-bind="getButtonStyle('primary')" block dashed @click="openAddFeed">
+              <template #icon><n-icon><AddIcon /></n-icon></template>
               新增订阅源
             </n-button>
           </n-space>
-          <MobileFeedList 
-            :feeds="feeds" 
-            @edit="openEditFeed"
-            @delete="deleteFeed"
-            @reset="resetFeedHistory"
-            @viewItems="openViewItems"
-          />
+          <div class="m-mt-lg">
+            <MobileFeedList 
+              :feeds="feeds" 
+              @edit="openEditFeed"
+              @delete="deleteFeed"
+              @reset="resetFeedHistory"
+              @viewItems="openViewItems"
+            />
+          </div>
         </div>
       </n-tab-pane>
 
       <!-- 自动下载规则 -->
       <n-tab-pane name="rules" tab="下载规则">
-        <div class="tab-content">
-          <n-button block dashed type="warning" @click="openAddRule" style="margin-bottom: 12px">
+        <div class="m-tab-content">
+          <n-button v-bind="getButtonStyle('warning')" block dashed class="m-mb-lg" @click="openAddRule">
             <template #icon><n-icon><AddIcon/></n-icon></template>
             创建新规则
           </n-button>
@@ -182,44 +184,29 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-.sub-view-mobile {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background-color: var(--app-background);
-  padding-bottom: 80px; 
-}
-
-.page-header-mobile {
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-.page-header-mobile h1 { margin: 0; font-size: 20px; font-weight: 800; }
-
-.mobile-tabs {
+.m-tabs {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-:deep(.n-tabs-nav) {
-  padding: 0 16px;
+.m-tabs :deep(.n-tabs-nav) {
+  padding: var(--m-spacing-sm) var(--m-spacing-lg);
+  border-bottom: 1px solid var(--border-light);
 }
 
-:deep(.n-tabs-pane-wrapper) {
+.m-tabs :deep(.n-tabs-pane-wrapper) {
   flex: 1;
   overflow: hidden;
 }
 
-:deep(.mobile-tab-pane) {
+.m-tabs :deep(.n-tab-pane) {
   height: 100%;
   overflow-y: auto;
+  padding: 0;
 }
 
-.tab-content {
-  padding: 16px;
+.m-tab-content {
+  padding: var(--m-spacing-lg);
 }
 </style>

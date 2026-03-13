@@ -81,11 +81,11 @@ const {
                 <template #icon><n-icon><SubIcon/></n-icon></template>
                 {{ isSubscribed ? '已订阅' : '订阅' }}
              </n-button>
-             <n-space justify="space-between" style="width: 100%; margin-top: 12px;">
-                <n-button flex="1" secondary @click="handleSearch">
+             <n-space justify="space-between" style="width: 100%; margin-top: var(--m-spacing-md);">
+                <n-button flex="1" v-bind="getButtonStyle('secondary')" @click="handleSearch">
                    <template #icon><n-icon><SearchIcon/></n-icon></template> 搜资源
                 </n-button>
-                <n-button flex="1" secondary @click="openExternal">
+                <n-button flex="1" v-bind="getButtonStyle('secondary')" @click="openExternal">
                    <template #icon><n-icon><LinkIcon/></n-icon></template> TMDB
                 </n-button>
              </n-space>
@@ -129,7 +129,7 @@ const {
              </div>
           </div>
           
-          <div style="height: 40px;"></div> <!-- Bottom spacer -->
+          <div style="height: var(--m-spacing-2xl);"></div> <!-- Bottom spacer -->
         </n-scrollbar>
       </div>
     </div>
@@ -138,46 +138,46 @@ const {
 
 <style scoped>
 .mobile-detail-page { background: var(--app-bg-color); height: 100%; display: flex; flex-direction: column; position: relative; }
-.loading-box { padding: 40px; }
+.loading-box { padding: var(--m-spacing-3xl); }
 .content-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-.sticky-header { position: absolute; top: 16px; left: 16px; z-index: 10; }
+.sticky-header { position: absolute; top: var(--m-spacing-lg); left: var(--m-spacing-lg); z-index: 10; }
 .back-btn { background: var(--bg-surface) !important; color: var(--text-primary) !important; border: none; backdrop-filter: blur(4px); }
 
 .hero-section { position: relative; height: 320px; display: flex; align-items: flex-end; }
 .backdrop-layer { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: var(--opacity-tertiary); }
 .gradient-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, var(--app-bg-color) 100%); }
 
-.hero-content { position: relative; z-index: 2; padding: 0 20px 20px; display: flex; gap: 16px; align-items: flex-end; width: 100%; }
-.poster-wrapper { width: 100px; flex-shrink: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 16px var(--shadow-heavy); border: 1px solid rgba(255,255,255, var(--border-medium-alpha)); }
+.hero-content { position: relative; z-index: 2; padding: 0 var(--m-spacing-xl) var(--m-spacing-xl); display: flex; gap: var(--m-spacing-md); align-items: flex-end; width: 100%; }
+.poster-wrapper { width: 100px; flex-shrink: 0; border-radius: var(--m-radius-md); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255, var(--border-medium-alpha)); }
 .hero-poster :deep(img) { width: 100%; display: block; aspect-ratio: 2/3; object-fit: cover; }
 
-.hero-info { flex: 1; min-width: 0; margin-bottom: 4px; }
-.hero-title { margin: 0; font-size: 20px; font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px var(--shadow-xheavy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.hero-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.meta-date { font-size: 12px; color: var(--text-secondary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
+.hero-info { flex: 1; min-width: 0; margin-bottom: var(--m-spacing-xs); }
+.hero-title { margin: 0; font-size: var(--m-text-2xl); font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px var(--shadow-xheavy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-meta { display: flex; align-items: center; gap: var(--m-spacing-sm); margin-top: var(--m-spacing-sm); }
+.meta-date { font-size: var(--m-text-sm); color: var(--text-secondary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
 .rating-tag { background: var(--color-warning); color: var(--text-primary); font-weight: bold; }
 
-.actions-bar { padding: 0 20px 20px; }
+.actions-bar { padding: 0 var(--m-spacing-xl) var(--m-spacing-xl); }
 
-.detail-body { padding: 0 20px; }
-.genres-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 16px; margin-bottom: 8px; }
+.detail-body { padding: 0 var(--m-spacing-xl); }
+.genres-scroll { display: flex; gap: var(--m-spacing-sm); overflow-x: auto; padding-bottom: var(--m-spacing-md); margin-bottom: var(--m-spacing-sm); }
 .genre-tag { background: var(--bg-surface); color: var(--text-secondary); }
 
-.section { margin-bottom: 24px; }
-.section h3 { margin: 0 0 12px; font-size: 16px; font-weight: bold; color: var(--text-primary); }
-.overview { font-size: 14px; line-height: 1.6; color: var(--text-secondary); text-align: justify; }
+.section { margin-bottom: var(--m-spacing-2xl); }
+.section h3 { margin: 0 0 var(--m-spacing-sm); font-size: var(--m-text-lg); font-weight: bold; color: var(--text-primary); }
+.overview { font-size: var(--m-text-base); line-height: 1.6; color: var(--text-secondary); text-align: justify; }
 
-.h-scroller { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
+.h-scroller { display: flex; gap: var(--m-spacing-md); overflow-x: auto; padding-bottom: var(--m-spacing-xs); }
 .cast-item { width: 70px; flex-shrink: 0; text-align: center; }
-.cast-item .avatar { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px; background: var(--bg-primary); }
+.cast-item .avatar { width: 60px; height: 60px; border-radius: var(--m-radius-full); overflow: hidden; margin: 0 auto var(--m-spacing-xs); background: var(--bg-primary); }
 .cast-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.cast-item .name { font-size: 11px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-.cast-item .char { font-size: 10px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cast-item .name { font-size: var(--m-text-xs); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.cast-item .char { font-size: var(--m-text-xs); color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .season-item { width: 90px; flex-shrink: 0; }
-.season-item .poster { width: 100%; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; margin-bottom: 6px; background: var(--bg-primary); }
+.season-item .poster { width: 100%; aspect-ratio: 2/3; border-radius: var(--m-radius-sm); overflow: hidden; margin-bottom: var(--m-spacing-xs); background: var(--bg-primary); }
 .season-item .poster img { width: 100%; height: 100%; object-fit: cover; }
-.season-item .s-name { font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.season-item .s-ep { font-size: 11px; color: var(--text-tertiary); }
+.season-item .s-name { font-size: var(--m-text-sm); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.season-item .s-ep { font-size: var(--m-text-xs); color: var(--text-tertiary); }
 </style>

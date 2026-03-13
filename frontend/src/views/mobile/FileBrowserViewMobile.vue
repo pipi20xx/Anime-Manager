@@ -8,7 +8,6 @@ import {
 import {
   ArrowUpwardOutlined as UpIcon,
   RefreshOutlined as RefreshIcon,
-  ChevronRightOutlined as NextIcon,
   DriveFileMoveOutlined as OrganizeIcon,
   DescriptionOutlined as FileIcon,
   ContentCopyOutlined as CopyIcon,
@@ -151,7 +150,7 @@ const handleMenuSelect = (key: string) => {
       dialog.warning({
         title: '确认删除',
         content: `确定永久删除 "${item.name}" 吗？`,
-        action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        action: () => h('div', { style: 'display: flex; gap: var(--m-spacing-md); justify-content: flex-end; margin-top: var(--m-spacing-lg);' }, [
           h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
           h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { deleteItem(item.path); dialog.destroyAll() } }, { default: () => '确定' })
         ])
@@ -183,16 +182,19 @@ const getShortName = (path: string) => {
 </script>
 
 <template>
-  <div class="file-browser-mobile">
-    <div class="header-mobile">
-      <h1>文件浏览</h1>
+  <div class="m-page m-page-safe-bottom">
+    <!-- 页面头部 -->
+    <div class="m-header m-header-plain">
+      <h1 class="m-header-title">文件浏览</h1>
       <n-button v-bind="getButtonStyle('icon')" @click="showManualModal = true">
+        <template #icon><n-icon><OrganizeIcon /></n-icon></template>
       </n-button>
     </div>
 
-    <div class="toolbar-mobile">
+    <!-- 工具栏 -->
+    <div class="toolbar">
       <div class="path-display">
-         <span class="path-text">{{ getShortName(currentPath) }}</span>
+         <span class="path-text m-truncate">{{ getShortName(currentPath) }}</span>
       </div>
       <n-space>
         <n-button v-bind="getButtonStyle('icon')" size="small" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
@@ -204,7 +206,8 @@ const getShortName = (path: string) => {
       </n-space>
     </div>
 
-    <div class="list-container">
+    <!-- 文件列表 -->
+    <div class="m-page-scrollable m-content-compact">
       <n-list hoverable clickable class="mobile-file-list">
         <n-list-item 
           v-for="item in items" 
@@ -213,6 +216,7 @@ const getShortName = (path: string) => {
           @touchstart="handleTouchStart($event, item)"
           @touchend="handleTouchEnd"
           @contextmenu.prevent="handleContextMenuMobile($event, item)"
+          class="m-touchable"
         >
           <template #prefix>
             <div class="file-icon-box" :class="{ 'is-dir': item.is_dir }">
@@ -220,7 +224,7 @@ const getShortName = (path: string) => {
             </div>
           </template>
           <div class="file-info">
-            <div class="file-name">{{ item.name }}</div>
+            <div class="file-name m-truncate">{{ item.name }}</div>
             <div class="file-meta">
               <span>{{ formatSize(item.size) }}</span>
               <n-divider vertical />
@@ -232,7 +236,7 @@ const getShortName = (path: string) => {
                <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="handleContextMenuMobile($event, item)">
                  <template #icon><n-icon><MoreIcon /></n-icon></template>
                </n-button>
-               <n-button v-if="!item.is_dir" v-bind="getButtonStyle('info')" size="tiny" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
+               <n-button v-if="!item.is_dir" v-bind="getButtonStyle('primary')" size="tiny" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
                   识别
                 </n-button>
              </n-space>
@@ -241,9 +245,9 @@ const getShortName = (path: string) => {
       </n-list>
     </div>
 
-    <!-- Floating Action Button for Paste -->
+    <!-- 粘贴按钮 -->
     <transition name="fade">
-      <div v-if="clipboard" class="paste-fab" @click="pasteItem">
+      <div v-if="clipboard" class="paste-fab m-touchable" @click="pasteItem">
         <n-icon size="24"><PasteIcon /></n-icon>
         <span>粘贴</span>
       </div>
@@ -294,6 +298,7 @@ const getShortName = (path: string) => {
       @select="handleMenuSelect"
     />
 
+    <!-- 文件详情弹窗 -->
     <n-modal v-model:show="showInfoModal">
       <n-card
         style="width: 90vw; max-width: 400px"
@@ -311,12 +316,12 @@ const getShortName = (path: string) => {
           <n-descriptions-item label="创建时间">{{ new Date(fileInfo?.ctime * 1000).toLocaleString() }}</n-descriptions-item>
           <n-descriptions-item label="权限">{{ fileInfo?.mode }}</n-descriptions-item>
           <n-descriptions-item label="完整路径">
-            <div style="word-break: break-all; font-size: 12px">{{ fileInfo?.path }}</div>
+            <div style="word-break: break-all; font-size: var(--m-text-sm)">{{ fileInfo?.path }}</div>
           </n-descriptions-item>
         </n-descriptions>
         <template #footer>
           <n-space justify="end">
-            <n-button @click="showInfoModal = false">关闭</n-button>
+            <n-button v-bind="getButtonStyle('secondary')" @click="showInfoModal = false">关闭</n-button>
           </n-space>
         </template>
       </n-card>
@@ -325,44 +330,19 @@ const getShortName = (path: string) => {
 </template>
 
 <style scoped>
-.file-browser-mobile {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background-color: var(--app-background);
-  padding-bottom: 80px;
-}
-
-.header-mobile {
-  padding: 16px;
+.toolbar {
+  padding: var(--m-spacing-sm) var(--m-spacing-lg) var(--m-spacing-md);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-}
-.header-mobile h1 { margin: 0; font-size: 20px; font-weight: 800; }
-
-.toolbar-mobile {
-  padding: 0 16px 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .path-display {
   font-weight: 600;
-  font-size: 16px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--m-text-lg);
   max-width: 60%;
-}
-
-.list-container {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 16px;
 }
 
 .mobile-file-list {
@@ -370,58 +350,68 @@ const getShortName = (path: string) => {
 }
 
 .mobile-file-list :deep(.n-list-item) {
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  border-radius: 12px;
+  padding: var(--m-spacing-md);
+  margin-bottom: var(--m-spacing-sm);
+  border-radius: var(--m-radius-lg);
   background-color: var(--app-surface-card);
   border: 1px solid var(--border-light);
 }
 
 .file-icon-box {
-  width: 42px; height: 42px;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--m-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--app-surface-inner);
   color: var(--n-primary-color);
-  margin-right: 12px;
+  margin-right: var(--m-spacing-md);
   border: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
+
 .file-icon-box.is-dir {
   background: var(--warning-light);
   color: var(--n-warning-color);
   border-color: transparent;
 }
 
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .file-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--m-text-md);
   line-height: 1.4;
-  margin-bottom: 2px;
-  word-break: break-all;
+  margin-bottom: var(--m-spacing-xs);
 }
+
 .file-meta {
-  font-size: 11px;
+  font-size: var(--m-text-xs);
   color: var(--text-tertiary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--m-spacing-xs);
 }
 
 .paste-fab {
   position: fixed;
-  bottom: 100px;
-  right: 20px;
+  bottom: calc(var(--m-safe-bottom) + var(--m-spacing-lg));
+  right: var(--m-spacing-lg);
   background-color: var(--n-primary-color);
   color: var(--text-primary);
-  padding: 12px 24px;
-  border-radius: 30px;
+  padding: var(--m-spacing-md) var(--m-spacing-xl);
+  border-radius: var(--m-radius-full);
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: var(--shadow-md);
+  gap: var(--m-spacing-sm);
+  box-shadow: var(--shadow-lg);
   z-index: 100;
   font-weight: 600;
-  cursor: pointer;
+  font-size: var(--m-text-sm);
 }
 
 .fade-enter-active, .fade-leave-active {
