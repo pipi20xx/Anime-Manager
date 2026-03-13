@@ -161,29 +161,48 @@ useBackClose(toRef(bgmDetail, 'show'))
 </template>
 
 <style scoped>
-.discovery-tab-mobile { 
-  width: 100%; 
-  padding: 12px; 
+.discovery-tab-mobile {
+  width: 100%;
+  padding: var(--m-spacing-md);
   box-sizing: border-box;
 }
-.mobile-filter-bar { 
-  display: flex; 
+.mobile-filter-bar {
+  display: flex;
   flex-direction: column;
-  margin-bottom: 16px; 
-  position: sticky; 
-  top: 0; 
-  z-index: 10; 
-  background: var(--app-bg-color); 
-  padding: 12px 0; 
+  margin-bottom: var(--m-spacing-lg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--app-bg-color);
+  padding: var(--m-spacing-md) 0;
   width: 100%;
   box-sizing: border-box;
 }
 .filter-row-top { display: flex; align-items: center; width: 100%; }
-.filter-row-bottom { margin-top: 10px; width: 100%; }
+.filter-row-bottom { margin-top: var(--m-spacing-sm); width: 100%; }
 
-.mobile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.loading-state { padding: 40px; text-align: center; }
-.empty-state { padding: 40px; }
+.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--m-spacing-sm);
+}
+@media (min-width: 400px) {
+  .mobile-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.loading-state {
+  padding: var(--m-spacing-3xl) 0;
+  text-align: center;
+}
+.empty-state {
+  padding: var(--m-spacing-3xl) 0;
+}
 
-.f-label { font-size: 12px; font-weight: bold; color: var(--text-tertiary); margin-bottom: 8px; }
+.f-label {
+  font-size: var(--m-text-sm);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: var(--m-spacing-sm);
+}
 </style>

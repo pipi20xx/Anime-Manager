@@ -61,9 +61,13 @@ const getImg = (path: string) => {
   width: 100%;
   min-width: 0;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
-.tmdb-card:hover { 
-  transform: translateY(-5px); 
+.tmdb-card:hover {
+  transform: translateY(-5px);
+}
+.tmdb-card:active {
+  transform: scale(0.95);
 }
 
 .poster-wrapper {

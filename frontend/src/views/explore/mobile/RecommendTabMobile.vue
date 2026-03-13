@@ -154,7 +154,17 @@ useBackClose(toRef(bgmDetail, 'show'))
 
 /* Calendar */
 .calendar-box { margin-bottom: var(--m-5); }
-.mobile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-3); }
+.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--m-spacing-sm);
+  margin-top: var(--space-3);
+}
+@media (min-width: 400px) {
+  .mobile-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 
 /* Section */
 .section-header { margin-bottom: var(--space-3); margin-top: var(--space-3); }

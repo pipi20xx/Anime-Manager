@@ -103,25 +103,44 @@ useBackClose(toRef(bgmDetail, 'show'))
 </template>
 
 <style scoped>
-.search-tab-mobile { 
-  width: 100%; 
-  min-height: 80vh; 
-  padding: 12px; 
+.search-tab-mobile {
+  width: 100%;
+  min-height: 80vh;
+  padding: var(--m-spacing-md);
   box-sizing: border-box;
 }
-.mobile-search-bar { 
-  margin-bottom: 16px; 
-  position: sticky; 
-  top: 0; 
-  z-index: 9; 
-  background: var(--app-bg-color); 
-  padding: 8px 0; 
+.mobile-search-bar {
+  margin-bottom: var(--m-spacing-lg);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  background: var(--app-bg-color);
+  padding: var(--m-spacing-sm) 0;
   width: 100%;
   box-sizing: border-box;
 }
-.section { margin-bottom: 24px; }
-.sec-title { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: var(--n-text-color-2); }
-.mobile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.loading-state { padding: 40px; text-align: center; }
-.empty-state { padding: 40px; }
+.section { margin-bottom: var(--m-spacing-xl); }
+.sec-title {
+  font-weight: 600;
+  margin-bottom: var(--m-spacing-md);
+  font-size: var(--m-text-md);
+  color: var(--text-secondary);
+}
+.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--m-spacing-sm);
+}
+@media (min-width: 400px) {
+  .mobile-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.loading-state {
+  padding: var(--m-spacing-3xl) 0;
+  text-align: center;
+}
+.empty-state {
+  padding: var(--m-spacing-3xl) 0;
+}
 </style>

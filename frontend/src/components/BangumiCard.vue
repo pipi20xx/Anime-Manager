@@ -61,9 +61,13 @@ const getImg = (path: string) => {
   width: 100%;
   min-width: 0;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
-.bgm-card:hover { 
-  transform: translateY(-6px); 
+.bgm-card:hover {
+  transform: translateY(-6px);
+}
+.bgm-card:active {
+  transform: scale(0.95);
 }
 .bgm-cover {
   width: 100%;

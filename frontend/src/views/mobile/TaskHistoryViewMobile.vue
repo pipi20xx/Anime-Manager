@@ -180,14 +180,14 @@ onUnmounted(() => {
 
 <style scoped>
 .mobile-task-history-view {
-  padding-bottom: 20px;
+  padding-bottom: var(--m-spacing-lg);
 }
 
 .mobile-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 4px 12px 4px;
+  padding: 0 var(--m-spacing-xs) var(--m-spacing-md) var(--m-spacing-xs);
 }
 
 .header-left {
@@ -196,15 +196,15 @@ onUnmounted(() => {
 }
 
 .header-title {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: var(--m-text-xl);
+  font-weight: 700;
 }
 
 .filter-bar {
   background: var(--app-surface-inner);
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-lg);
+  margin-bottom: var(--m-spacing-lg);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -222,68 +222,75 @@ onUnmounted(() => {
 .task-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--m-spacing-md);
 }
 
 .task-item {
-  border-radius: var(--card-border-radius, 8px);
-  padding: 12px;
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-md);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-item:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
 }
 
 .task-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: var(--m-spacing-sm);
 }
 
 .task-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--m-spacing-sm);
   flex: 1;
 }
 
 .module-icon {
-  font-size: 16px;
+  font-size: var(--m-text-md);
 }
 
 .task-name {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: var(--m-text-md);
 }
 
 .task-time {
-  color: var(--n-text-color-3);
-  font-size: 12px;
-  margin-bottom: 8px;
+  color: var(--text-tertiary);
+  font-size: var(--m-text-xs);
+  margin-bottom: var(--m-spacing-sm);
 }
 
 .task-meta {
   display: flex;
-  gap: 16px;
-  color: var(--n-text-color-3);
-  font-size: 12px;
-  margin-bottom: 12px;
+  gap: var(--m-spacing-lg);
+  color: var(--text-tertiary);
+  font-size: var(--m-text-xs);
+  margin-bottom: var(--m-spacing-md);
 }
 
 .task-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--m-spacing-sm);
 }
 
 .log-container {
-  font-family: var(--code-font);
-  font-size: 11px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: var(--m-text-xs);
   background: var(--app-surface-inner);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: var(--m-radius-md);
+  padding: var(--m-spacing-sm);
 }
 
 .log-line {
   display: flex;
-  gap: 6px;
-  padding: 2px 0;
+  gap: var(--m-spacing-sm);
+  padding: var(--m-spacing-xs) 0;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -292,7 +299,7 @@ onUnmounted(() => {
 }
 
 .log-time {
-  color: var(--n-text-color-3);
+  color: var(--text-tertiary);
   min-width: 50px;
 }
 
@@ -319,7 +326,7 @@ onUnmounted(() => {
 }
 
 .load-more-sentinel {
-  padding: 24px 0 48px;
+  padding: var(--m-spacing-xl) 0 var(--m-spacing-3xl);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -333,9 +340,9 @@ onUnmounted(() => {
 .can-load-more {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--n-text-color-3);
-  font-size: 13px;
+  gap: var(--m-spacing-sm);
+  color: var(--text-tertiary);
+  font-size: var(--m-text-sm);
   opacity: 0.8;
 }
 </style>
