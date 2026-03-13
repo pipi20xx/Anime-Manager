@@ -194,8 +194,8 @@ onMounted(fetchData)
     />
 
     <!-- 全局操作抽屉 -->
-    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="400" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content closable title="更多操作">
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="actionItems.length * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content closable title="更多操作" :native-scrollbar="false">
         <div class="action-list">
           <div
             v-for="item in actionItems"

@@ -413,8 +413,8 @@ const tabCounts = computed(() => ({
     </n-modal>
 
     <!-- 项目操作抽屉 -->
-    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content :title="currentItem?.name_zh || currentItem?.name || '映射操作'" closable>
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="260" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content :title="currentItem?.name_zh || currentItem?.name || '映射操作'" closable :native-scrollbar="false">
         <div class="action-list">
           <div class="action-item" @click="handleItemAction('edit')">
             <div class="action-icon">
@@ -433,8 +433,8 @@ const tabCounts = computed(() => ({
     </n-drawer>
 
     <!-- 全局操作抽屉 -->
-    <n-drawer v-model:show="showGlobalActionDrawer" placement="bottom" :height="280" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content title="更多操作" closable>
+    <n-drawer v-model:show="showGlobalActionDrawer" placement="bottom" :height="activeType === 'genre' || activeType === 'company' || activeType === 'keyword' ? 360 : 260" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable :native-scrollbar="false">
         <div class="action-list">
           <div class="action-item" @click="handleGlobalAction('export')">
             <div class="action-icon">

@@ -111,8 +111,8 @@ const handleAction = (key: string) => {
     <ClassifierEditModal v-model:show="showRuleModal" :rule-data="editingRule" :is-new="isNewRule" @save="handleSaveRule" />
 
     <!-- 操作抽屉 -->
-    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content title="更多操作" closable>
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="actionItems.length * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable :native-scrollbar="false">
         <div class="action-list">
           <div
             v-for="item in actionItems"

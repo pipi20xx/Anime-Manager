@@ -154,8 +154,8 @@ const handleTableSelect = (tableName: string) => {
       </n-tab-pane>
     </n-tabs>
 
-    <n-drawer v-model:show="showTableDrawer" placement="bottom" height="60vh" style="border-radius: 16px 16px 0 0;">
-      <n-drawer-content title="选择数据表" closable>
+    <n-drawer v-model:show="showTableDrawer" placement="bottom" :height="tableOptions.length * 80 + 80" style="border-radius: 16px 16px 0 0;">
+      <n-drawer-content title="选择数据表" closable :native-scrollbar="false">
         <n-list clickable>
           <n-list-item v-for="t in tableOptions" :key="t.value" @click="handleTableSelect(t.value)">
             <div style="display: flex; justify-content: space-between; align-items: center;">

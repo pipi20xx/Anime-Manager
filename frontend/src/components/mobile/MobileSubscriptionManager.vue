@@ -323,8 +323,8 @@ onMounted(() => {
     </div>
 
     <!-- Global Action Drawer -->
-    <n-drawer v-model:show="showActionDrawer" placement="bottom" height="340" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content title="更多操作" closable>
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="4 * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable :native-scrollbar="false">
         <div class="action-list">
           <div class="action-item" @click="openFromDrawer(() => showQuickSubModal = true)">
             <div class="action-icon"><n-icon size="22"><FlashIcon/></n-icon></div>
@@ -347,8 +347,8 @@ onMounted(() => {
     </n-drawer>
 
     <!-- Item Action Drawer -->
-    <n-drawer v-model:show="showItemActionDrawer" placement="bottom" height="380" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content :title="currentActionSub?.title || '订阅操作'" closable>
+    <n-drawer v-model:show="showItemActionDrawer" placement="bottom" :height="(itemActions.length + 1 + (currentActionSub?.bangumi_id ? 1 : 0)) * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content :title="currentActionSub?.title || '订阅操作'" closable :native-scrollbar="false">
         <div class="action-list">
           <div v-for="action in itemActions" :key="action.key" class="action-item" @click="handleItemAction(action.key)">
             <div class="action-icon"><n-icon size="22"><component :is="action.icon" /></n-icon></div>

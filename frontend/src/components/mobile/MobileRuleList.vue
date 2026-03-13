@@ -93,8 +93,8 @@ const handleAction = (key: string) => {
     </div>
 
     <!-- 操作抽屉 -->
-    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="320" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content :title="currentRule?.name || '规则操作'" closable>
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="(ruleActions.length + 1) * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content :title="currentRule?.name || '规则操作'" closable :native-scrollbar="false">
         <div class="action-list">
           <div v-for="action in ruleActions" :key="action.key" class="action-item" @click="handleAction(action.key)">
             <div class="action-icon">

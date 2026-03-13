@@ -280,8 +280,8 @@ onUnmounted(stopBgTaskPolling)
     <ExecutionLogModal v-model:show="showExecModal" :is-dry-run="isDryRun" :is-running="isRunning" :logs="execLogs" :scanning-status="scanningStatus" :target-dir="editingTask?.target_dir || ''" @commit="requestCommitBatch" />
 
     <!-- 规则操作抽屉 -->
-    <n-drawer v-model:show="showRuleActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content closable title="规则操作">
+    <n-drawer v-model:show="showRuleActionDrawer" placement="bottom" :height="2 * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content closable title="规则操作" :native-scrollbar="false">
         <div class="action-list">
           <div class="action-item" @click="handleRuleAction('duplicate')">
             <div class="action-icon">
@@ -300,8 +300,8 @@ onUnmounted(stopBgTaskPolling)
     </n-drawer>
 
     <!-- 任务操作抽屉 -->
-    <n-drawer v-model:show="showTaskActionDrawer" placement="bottom" :height="200" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content closable title="任务操作">
+    <n-drawer v-model:show="showTaskActionDrawer" placement="bottom" :height="2 * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content closable title="任务操作" :native-scrollbar="false">
         <div class="action-list">
           <div class="action-item" @click="handleTaskAction('duplicate')">
             <div class="action-icon">

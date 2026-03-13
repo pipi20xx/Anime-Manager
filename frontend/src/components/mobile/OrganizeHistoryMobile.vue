@@ -229,8 +229,8 @@ const handleAction = (key: string) => {
     </div>
 
     <!-- 操作抽屉 -->
-    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="240" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
-      <n-drawer-content title="更多操作" closable>
+    <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="actionItems.length * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">
+      <n-drawer-content title="更多操作" closable :native-scrollbar="false">
         <div class="action-list">
           <div
             v-for="item in actionItems"
