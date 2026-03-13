@@ -52,7 +52,7 @@ const {
     </div>
 
     <n-spin :show="loading" class="m-tabs-wrapper">
-      <n-tabs type="segment" class="m-tabs" size="small">
+      <n-tabs type="line" class="m-tabs" size="small" :tabs-padding="16">
         <!-- 基础配置 -->
         <n-tab-pane name="basic" tab="基础">
           <div class="m-tab-content">
@@ -365,8 +365,30 @@ const {
 }
 
 .m-tabs :deep(.n-tabs-nav) {
-  padding: var(--m-spacing-sm) var(--m-spacing-md);
+  padding: var(--m-spacing-sm) 0;
   flex-shrink: 0;
+}
+
+.m-tabs :deep(.n-tabs-nav-scroll-wrapper) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.m-tabs :deep(.n-tabs-nav-scroll-wrapper::-webkit-scrollbar) {
+  display: none;
+}
+
+.m-tabs :deep(.n-tabs-nav-scroll-content) {
+  display: flex;
+  gap: var(--m-spacing-xs);
+}
+
+.m-tabs :deep(.n-tab) {
+  padding: var(--m-spacing-xs) var(--m-spacing-md);
+  white-space: nowrap;
 }
 
 .m-tabs :deep(.n-tabs-pane-wrapper) {
