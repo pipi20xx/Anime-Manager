@@ -120,65 +120,31 @@ const handleRefresh = () => {
           <div class="title-group">
             <span class="item-title">{{ item.title || item.filename }}</span>
             <span class="item-year" v-if="item.year">({{ item.year }})</span>
-            <span class="item-se" v-if="item.season || item.episode">
+            <span class="history-tag tag-episode" v-if="item.season || item.episode">
               S{{ item.season?.toString().padStart(2, '0') }}E{{ item.episode }}
             </span>
-            <n-tag v-if="item.media_type" size="small" :type="item.media_type === '电影' ? 'warning' : 'success'" quaternary round class="ml-2">
-              {{ item.media_type }}
-            </n-tag>
-            
-            <n-tag size="tiny" type="info" bordered class="ml-2" v-if="item.resolution">{{ item.resolution }}</n-tag>
-            <n-tag size="tiny" type="warning" bordered class="ml-1" v-if="item.video_encode">{{ item.video_encode }}</n-tag>
-            <n-tag size="tiny" type="default" bordered class="ml-1" v-if="item.team">{{ item.team }}</n-tag>
+            <span v-if="item.media_type" class="history-tag tag-type">{{ item.media_type }}</span>
+            <span v-if="item.resolution" class="history-tag tag-res">{{ item.resolution }}</span>
+            <span v-if="item.video_encode" class="history-tag tag-encode">{{ item.video_encode }}</span>
+            <span v-if="item.team" class="history-tag tag-team">{{ item.team }}</span>
           </div>
           <div class="item-status">
-            <n-tag 
-              :type="item.status === 'failed' ? 'error' : (item.status === 'skipped' ? 'warning' : 'success')" 
-              size="small" 
-              ghost 
-              bordered
-            >
-              <template #icon>
-                <n-icon v-if="item.status === 'failed'"><ErrorIcon /></n-icon>
-                <n-icon v-else-if="item.status === 'skipped'"><ArrowIcon /></n-icon>
-                <n-icon v-else><SuccessIcon /></n-icon>
-              </template>
+            <span class="history-tag" :class="'tag-status-' + item.status">
               {{ item.status === 'failed' ? '失败' : (item.status === 'skipped' ? '跳过' : '成功') }}
-            </n-tag>
-            <n-popconfirm 
-              @positive-click="deleteItem(item.id, shouldDeleteFile)" 
-              @negative-click="shouldDeleteFile = false"
-              positive-text="确定删除"
-              negative-text="取消"
-            >
-              <template #trigger>
-                <n-button v-bind="getButtonStyle('iconDanger')" size="small" class="ml-2">
-                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
-                </n-button>
-              </template>
-              <div style="max-width: 240px">
-                <p class="m-0 mb-2">确定要删除这条整理记录吗？</p>
-                <n-checkbox v-model:checked="shouldDeleteFile">
-                  <span style="color: var(--n-error-color)">同时物理删除源文件</span>
-                </n-checkbox>
-                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
-                   警告：这将尝试永久删除原始源路径下的文件。
-                </div>
-              </div>
-            </n-popconfirm>
+            </span>
           </div>
         </div>
 
         <!-- Error Message Row -->
         <div v-if="item.status === 'failed' && item.message" class="error-msg-row mt-2">
-          <n-alert type="error" :show-icon="false" size="small" class="py-1">
+          <n-alert type="error" :show-icon="false" size="small" class="compact-alert">
             {{ item.message }}
           </n-alert>
         </div>
 
         <!-- Skipped Message Row -->
         <div v-if="item.status === 'skipped' && item.message" class="skipped-msg-row mt-2">
-          <n-alert type="warning" :show-icon="false" size="small" class="py-1">
+          <n-alert type="warning" :show-icon="false" size="small" class="compact-alert">
             {{ item.message }}
           </n-alert>
         </div>
@@ -211,7 +177,7 @@ const handleRefresh = () => {
           <div class="detail-group">
             <div class="detail-item">
               <span class="label">转移方式：</span>
-              <n-tag size="tiny" type="info" secondary>{{ getActionLabel(item.action_type) }}</n-tag>
+              <span class="history-tag tag-action">{{ getActionLabel(item.action_type) }}</span>
             </div>
             <div class="detail-item">
               <n-icon><SizeIcon /></n-icon>
@@ -222,8 +188,31 @@ const handleRefresh = () => {
               <span>{{ formatTime(item.processed_at) }}</span>
             </div>
             <div class="detail-item" v-if="item.tmdb_id">
-              <span style="color: var(--text-tertiary); font-family: var(--code-font)">TMDB: {{ item.tmdb_id }}</span>
+              <span class="history-tag tag-tmdb">TMDB: {{ item.tmdb_id }}</span>
             </div>
+          </div>
+          <div class="delete-btn-wrapper">
+            <n-popconfirm 
+              @positive-click="deleteItem(item.id, shouldDeleteFile)" 
+              @negative-click="shouldDeleteFile = false"
+              positive-text="确定删除"
+              negative-text="取消"
+            >
+              <template #trigger>
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small">
+                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
+                </n-button>
+              </template>
+              <div style="max-width: 240px">
+                <p class="m-0 mb-2">确定要删除这条整理记录吗？</p>
+                <n-checkbox v-model:checked="shouldDeleteFile">
+                  <span style="color: var(--n-error-color)">同时物理删除源文件</span>
+                </n-checkbox>
+                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
+                   警告：这将尝试永久删除原始源路径下的文件。
+                </div>
+              </div>
+            </n-popconfirm>
           </div>
         </div>
       </div>
@@ -280,13 +269,76 @@ const handleRefresh = () => {
 .title-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .item-title { font-size: 17px; font-weight: bold; color: var(--text-primary); }
 .item-year { font-size: 13px; color: var(--text-tertiary); }
-.item-se {
-  color: var(--n-primary-color);
+/* History Tags - New Component */
+.history-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  border-radius: 11px;
   font-family: var(--code-font);
-  font-weight: bold;
-  background: var(--primary-light);
-  padding: 2px 6px;
-  border-radius: var(--code-radius, 4px);
+  border: 1px solid;
+}
+
+/* Episode Tag (S01E12) */
+.history-tag.tag-episode {
+  color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+/* Media Type Tag (剧集) */
+.history-tag.tag-type {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* Resolution Tag (1080P) */
+.history-tag.tag-res {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+/* Encode Tag (H.265) */
+.history-tag.tag-encode {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+/* Team Tag (LoliHouse) */
+.history-tag.tag-team {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Status Tags */
+.history-tag.tag-status-success {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+.history-tag.tag-status-failed {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+.history-tag.tag-status-skipped {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+/* Action Tag (硬链) - Fixed color, not theme */
+.history-tag.tag-action,
+.detail-item .history-tag.tag-action {
+  color: #18a058;
+  border-color: #18a058;
+}
+
+/* TMDB Tag */
+.history-tag.tag-tmdb,
+.detail-item .history-tag.tag-tmdb {
+  color: #2080f0;
+  border-color: #2080f0;
 }
 
 /* Path Container (Vertical) */
@@ -307,11 +359,13 @@ const handleRefresh = () => {
 }
 
 .path-item.source {
-  background: var(--warning-subtle);
+  background: transparent;
+  border: none;
 }
 
 .path-item.target {
-  background: var(--primary-subtle);
+  background: transparent;
+  border: none;
 }
 
 .path-label {
@@ -325,12 +379,14 @@ const handleRefresh = () => {
 }
 
 .source .path-label {
-  background: var(--warning-light);
-  color: var(--n-warning-color); 
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
 }
 .target .path-label {
-  background: var(--primary-light);
-  color: var(--n-primary-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
 }
 
 .path-content {
@@ -365,10 +421,21 @@ const handleRefresh = () => {
 .path-divider .n-icon { margin: 0 auto; }
 
 /* Footer Row */
-.footer-row { color: var(--text-tertiary); font-size: 13px; }
+.footer-row { 
+  color: var(--text-tertiary); 
+  font-size: 13px; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .detail-group { display: flex; align-items: center; gap: 24px; }
 .detail-item { display: flex; align-items: center; gap: 6px; }
-.label { color: var(--text-tertiary); }
+.detail-item .label { color: var(--text-tertiary); }
+.delete-btn-wrapper { margin-left: auto; }
+
+/* Compact Alert */
+.compact-alert { display: inline-block; width: auto; max-width: 100%; }
+.compact-alert :deep(.n-alert-body) { padding: 6px 12px; }
 
 .ml-2 { margin-left: 8px; }
 .mt-3 { margin-top: 12px; }

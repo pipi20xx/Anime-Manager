@@ -69,14 +69,14 @@ onMounted(fetchTasks)
                 <!-- 实时监控 -->
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <n-button 
-                      circle 
-                      quaternary 
-                      size="small" 
-                      :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'default'"
+                    <n-button
+                      circle
+                      ghost
+                      size="small"
+                      :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
                       @click.stop="toggleTaskMonitor(task, 'incremental')"
                     >
-                      <template #icon><n-icon><BoltIcon /></n-icon></template>
+                      <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><BoltIcon /></n-icon></template>
                     </n-button>
                   </template>
                   实时监控: {{ (task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode)) ? '开启 (' + (task.incremental_mode || task.monitor_mode || 'realtime') + ')' : '关闭' }} (点击切换)
@@ -85,14 +85,14 @@ onMounted(fetchTasks)
                 <!-- 定时扫描 -->
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <n-button 
-                      circle 
-                      quaternary 
-                      size="small" 
-                      :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'default'"
+                    <n-button
+                      circle
+                      ghost
+                      size="small"
+                      :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'primary'"
                       @click.stop="toggleTaskMonitor(task, 'scheduler')"
                     >
-                      <template #icon><n-icon><ScheduleIcon /></n-icon></template>
+                      <template #icon><n-icon :color="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? undefined : 'var(--text-primary)'"><ScheduleIcon /></n-icon></template>
                     </n-button>
                   </template>
                   定时扫描: {{ (task.scheduler_enabled || task.monitor_mode === 'scheduled') ? '开启' : '关闭' }} (点击切换)

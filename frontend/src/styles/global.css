@@ -1,14 +1,14 @@
 :root {
-  --app-bg-color: #0a1a14;
-  --sidebar-bg-color: #0e2a1e;
+  --app-bg-color: #1a1a1f;
+  --sidebar-bg-color: #242429;
   --header-height: 60px;
-  
-  /* 视觉统一底座变量 */
-  --app-surface-subtle: rgba(255, 255, 255, 0.01);
-  --app-surface-card: rgba(255, 255, 255, 0.03);
-  --app-surface-inner: rgba(0, 0, 0, 0.25);
-  --app-border-light: rgba(255, 255, 255, 0.06);
-  --app-border-medium: rgba(255, 255, 255, 0.12);
+
+  /* 视觉统一底座变量 - 灰色系，与主题色分离 */
+  --app-surface-subtle: rgba(255, 255, 255, 0.02);
+  --app-surface-card: rgba(255, 255, 255, 0.05);
+  --app-surface-inner: rgba(0, 0, 0, 0.2);
+  --app-border-light: rgba(255, 255, 255, 0.08);
+  --app-border-medium: rgba(255, 255, 255, 0.15);
   
   /* 文本颜色变量 */
   --text-primary: #ffffff;
@@ -18,14 +18,14 @@
   --text-disabled: rgba(255, 255, 255, 0.3);
   --text-hint: rgba(255, 255, 255, 0.4);
   
-  /* 背景颜色变量 */
-  --bg-primary: #101014;
-  --bg-secondary: #18181c;
-  --bg-tertiary: #25252b;
-  --bg-elevated: #2b262d;
-  --bg-surface: rgba(255, 255, 255, 0.03);
-  --bg-surface-hover: rgba(255, 255, 255, 0.06);
-  --bg-surface-active: rgba(255, 255, 255, 0.1);
+  /* 背景颜色变量 - 灰色系 */
+  --bg-primary: #1a1a1f;
+  --bg-secondary: #242429;
+  --bg-tertiary: #2e2e33;
+  --bg-elevated: rgba(255, 255, 255, 0.06);
+  --bg-surface: rgba(255, 255, 255, 0.04);
+  --bg-surface-hover: rgba(255, 255, 255, 0.08);
+  --bg-surface-active: rgba(255, 255, 255, 0.12);
   --bg-overlay: rgba(0, 0, 0, 0.6);
   
   /* 边框颜色变量 */
@@ -452,80 +452,12 @@ input, textarea, select, button {
   text-transform: uppercase;
 }
 
-/* ============================================
-   Switch 开关组件统一样式
-   ============================================ */
-
-/* Switch 基础样式统一 */
-.n-switch {
-  --n-switch-height: 22px !important;
-  --n-switch-width: 44px !important;
-  --n-switch-rail-color: var(--bg-tertiary) !important;
-  --n-switch-rail-color-active: var(--n-primary-color) !important;
-  --n-switch-button-color: var(--text-primary) !important;
-  --n-switch-button-color-active: var(--text-primary) !important;
-  --n-switch-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Switch 轨道样式 */
+/* Switch 边框 */
 .n-switch__rail {
-  border-radius: 11px !important;
-  background-color: var(--bg-tertiary) !important;
-  border: 1px solid var(--app-border-medium) !important;
-  transition: all 0.3s ease !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
-
-/* Switch 激活状态轨道 */
 .n-switch.n-switch--active .n-switch__rail {
-  background-color: var(--n-primary-color) !important;
-  border-color: var(--n-primary-color) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Switch 按钮样式 */
-.n-switch__button {
-  width: 18px !important;
-  height: 18px !important;
-  border-radius: 50% !important;
-  background-color: var(--text-primary) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
 
-/* Switch 激活状态按钮位置 */
-.n-switch.n-switch--active .n-switch__button {
-  transform: translateX(22px) !important;
-}
-
-/* Switch 禁用状态 */
-.n-switch.n-switch--disabled {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-}
-
-.n-switch.n-switch--disabled .n-switch__rail {
-  background-color: var(--bg-tertiary) !important;
-  border-color: var(--app-border-light) !important;
-}
-
-/* Switch 文字标签样式 */
-.n-switch__checked,
-.n-switch__unchecked {
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: var(--text-secondary) !important;
-}
-
-/* Switch 聚焦状态 */
-.n-switch:focus-visible .n-switch__rail {
-  box-shadow: 0 0 0 2px var(--primary-medium) !important;
-}
-
-/* Switch 悬停效果 */
-.n-switch:not(.n-switch--disabled):hover .n-switch__rail {
-  border-color: var(--n-primary-color) !important;
-}
-
-.n-switch.n-switch--active:not(.n-switch--disabled):hover .n-switch__rail {
-  background-color: var(--n-primary-color) !important;
-  opacity: 0.9;
-}

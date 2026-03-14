@@ -39,6 +39,16 @@ export function generateColorMix(color: string, opacity: string): string {
   return `color-mix(in srgb, ${color}, transparent ${opacity})`
 }
 
+// 统一的灰色系背景色 - 与主题色分离
+const grayBgColors = {
+  bgPrimary: '#1a1a1f',      // 最深背景
+  bgSecondary: '#242429',    // 次级背景
+  bgTertiary: '#2e2e33',     // 三级背景
+  surfaceColor: '255, 255, 255',  // 表面色（用于半透明叠加）
+  modalBg: 'rgba(30, 30, 35, 0.95)',     // 弹窗背景
+  dropdownBg: 'rgba(26, 26, 31, 0.98)'   // 下拉菜单背景
+}
+
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
   purple: {
     name: '暗夜紫韵',
@@ -47,12 +57,12 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
     primaryColorPressed: '#995df0',
     primaryColorSuppl: '#7c4dff',
     logoColor: '#bb86fc',
-    bgPrimary: '#2a1a3a',
-    bgSecondary: '#3a2a4a',
-    bgTertiary: '#4a3a5a',
-    surfaceColor: '187, 134, 252',
-    modalBg: 'rgba(187, 134, 252, 0.35)',
-    dropdownBg: 'rgba(42, 26, 58, 0.95)',
+    bgPrimary: grayBgColors.bgPrimary,
+    bgSecondary: grayBgColors.bgSecondary,
+    bgTertiary: grayBgColors.bgTertiary,
+    surfaceColor: grayBgColors.surfaceColor,
+    modalBg: grayBgColors.modalBg,
+    dropdownBg: grayBgColors.dropdownBg,
     docsTheme: 'purple'
   },
   green: {
@@ -62,12 +72,12 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
     primaryColorPressed: '#66bb6a',
     primaryColorSuppl: '#4caf50',
     logoColor: '#81c784',
-    bgPrimary: '#1a2a1a',
-    bgSecondary: '#2a3a2a',
-    bgTertiary: '#3a4a3a',
-    surfaceColor: '129, 199, 132',
-    modalBg: 'rgba(129, 199, 132, 0.35)',
-    dropdownBg: 'rgba(26, 42, 26, 0.95)',
+    bgPrimary: grayBgColors.bgPrimary,
+    bgSecondary: grayBgColors.bgSecondary,
+    bgTertiary: grayBgColors.bgTertiary,
+    surfaceColor: grayBgColors.surfaceColor,
+    modalBg: grayBgColors.modalBg,
+    dropdownBg: grayBgColors.dropdownBg,
     docsTheme: 'green'
   },
   blue: {
@@ -77,12 +87,12 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
     primaryColorPressed: '#42a5f5',
     primaryColorSuppl: '#2196f3',
     logoColor: '#64b5f6',
-    bgPrimary: '#1a1a2a',
-    bgSecondary: '#2a2a3a',
-    bgTertiary: '#3a3a4a',
-    surfaceColor: '100, 181, 246',
-    modalBg: 'rgba(100, 181, 246, 0.35)',
-    dropdownBg: 'rgba(26, 26, 42, 0.95)',
+    bgPrimary: grayBgColors.bgPrimary,
+    bgSecondary: grayBgColors.bgSecondary,
+    bgTertiary: grayBgColors.bgTertiary,
+    surfaceColor: grayBgColors.surfaceColor,
+    modalBg: grayBgColors.modalBg,
+    dropdownBg: grayBgColors.dropdownBg,
     docsTheme: 'blue'
   },
   red: {
@@ -92,12 +102,12 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
     primaryColorPressed: '#ef5350',
     primaryColorSuppl: '#f44336',
     logoColor: '#e57373',
-    bgPrimary: '#2a1a1a',
-    bgSecondary: '#3a2a2a',
-    bgTertiary: '#4a3a3a',
-    surfaceColor: '229, 115, 115',
-    modalBg: 'rgba(229, 115, 115, 0.35)',
-    dropdownBg: 'rgba(42, 26, 26, 0.95)',
+    bgPrimary: grayBgColors.bgPrimary,
+    bgSecondary: grayBgColors.bgSecondary,
+    bgTertiary: grayBgColors.bgTertiary,
+    surfaceColor: grayBgColors.surfaceColor,
+    modalBg: grayBgColors.modalBg,
+    dropdownBg: grayBgColors.dropdownBg,
     docsTheme: 'red'
   }
 }
@@ -112,16 +122,16 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     warningColor: '#ffb74d',
     errorColor: '#cf6679',
     successColor: '#81c784',
-    borderRadius: '10px',
+    borderRadius: '16px',
     cardColor: 'transparent',
     modalColor: config.bgPrimary,
     popoverColor: config.bgPrimary,
     bodyColor: config.bgPrimary,
     textColorBase: '#e0e0e0'
   },
-  Card: { borderRadius: '14px', borderColor: `rgba(${config.surfaceColor}, 0.15)` },
+  Card: { borderRadius: '20px', borderColor: 'rgba(255, 255, 255, 0.08)' },
   Button: {
-    borderRadiusMedium: '10px',
+    borderRadiusMedium: '16px',
     fontWeight: '500',
     fontWeightSmall: '500',
     fontWeightMedium: '500',
@@ -331,16 +341,16 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
   DataTable: {
     thColor: 'transparent',
     tdColor: 'transparent',
-    tdColorHover: `rgba(${config.surfaceColor}, 0.1)`,
+    tdColorHover: 'rgba(255, 255, 255, 0.05)',
     thColorModal: 'transparent',
     tdColorModal: 'transparent',
-    tdColorHoverModal: `rgba(${config.surfaceColor}, 0.1)`,
+    tdColorHoverModal: 'rgba(255, 255, 255, 0.05)',
     thColorPopover: 'transparent',
     tdColorPopover: 'transparent',
-    tdColorHoverPopover: `rgba(${config.surfaceColor}, 0.1)`,
-    borderColor: `rgba(${config.surfaceColor}, 0.35)`,
-    borderColorModal: `rgba(${config.surfaceColor}, 0.35)`,
-    borderColorPopover: `rgba(${config.surfaceColor}, 0.35)`
+    tdColorHoverPopover: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColorModal: 'rgba(255, 255, 255, 0.1)',
+    borderColorPopover: 'rgba(255, 255, 255, 0.1)'
   },
   // Switch 开关组件统一样式配置
   Switch: {
@@ -351,7 +361,7 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     height: '22px',
     heightMedium: '22px',
     heightLarge: '26px',
-    // 轨道颜色
+    // 轨道颜色 - 关闭时灰色背景，打开时主题色
     railColor: 'var(--bg-tertiary)',
     railColorActive: config.primaryColor,
     // 按钮颜色
@@ -359,6 +369,9 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     buttonColorActive: 'var(--text-primary)',
     // 文字颜色
     textColor: 'var(--text-secondary)',
+    // 边框 - 使用白色（关闭和打开状态都可见）
+    railBorderColor: 'rgba(255, 255, 255, 0.3)',
+    railBorderColorActive: 'rgba(255, 255, 255, 0.4)',
     // 边框和阴影
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
     // 圆角

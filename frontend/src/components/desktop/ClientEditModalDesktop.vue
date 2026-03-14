@@ -77,11 +77,10 @@ const {
       </n-form-item>
       
       <n-form-item v-if="form.type === 'cd2'">
-         <n-space align="center">
-            <n-switch v-model:value="form.monitor_enabled">
-                <template #checked>已开启后台传输监控</template>
-                <template #unchecked>开启后台传输监控</template>
-            </n-switch>
+         <n-space align="center" :size="12">
+            <n-switch v-model:value="form.monitor_enabled" />
+            <span class="switch-label">后台传输监控</span>
+            <span class="switch-desc">开启后监控 CD2 传输任务完成状态，自动触发 STRM 文件生成</span>
          </n-space>
       </n-form-item>
 
@@ -93,11 +92,10 @@ const {
       </n-form-item>
 
       <n-form-item label="选项">
-        <n-space>
-            <n-switch v-model:value="form.is_default">
-                <template #checked>设为默认客户端</template>
-                <template #unchecked>非默认</template>
-            </n-switch>
+        <n-space align="center" :size="12">
+            <n-switch v-model:value="form.is_default" />
+            <span class="switch-label">设为默认客户端</span>
+            <span class="switch-desc">开启后作为新增下载任务的默认下载器</span>
         </n-space>
       </n-form-item>
 
@@ -122,3 +120,8 @@ const {
     </template>
   </n-modal>
 </template>
+
+<style scoped>
+.switch-label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-desc { font-size: 12px; color: var(--text-tertiary); }
+</style>

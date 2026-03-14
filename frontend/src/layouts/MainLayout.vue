@@ -276,7 +276,6 @@ const isNavActive = (key: string) => currentViewKey.value === key
             <n-button 
               v-bind="getButtonStyle('iconPrimary')"
               size="small"
-              type="info" 
               @click="showLogConsole = true"
               title="实时日志"
             >
@@ -365,7 +364,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
               <n-button v-bind="getButtonStyle('iconPrimary')" @click="{ currentViewKey = 'SettingsView'; showMobileMenu = false; }">
                 <template #icon><n-icon><SettingIcon /></n-icon></template>
               </n-button>
-              <n-button v-bind="getButtonStyle('iconPrimary')" type="info" @click="{ showLogConsole = true; showMobileMenu = false; }">
+              <n-button v-bind="getButtonStyle('iconPrimary')" @click="{ showLogConsole = true; showMobileMenu = false; }">
                 <template #icon><n-icon><ConsoleIcon /></n-icon></template>
               </n-button>
           </n-space>

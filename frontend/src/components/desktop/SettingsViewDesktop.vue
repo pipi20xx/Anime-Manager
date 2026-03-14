@@ -75,32 +75,37 @@ const {
                   </n-space>
                 </n-form-item>
                 <n-form-item label="搜索策略">
-                  <n-space>
-                    <n-switch v-model:value="config.anime_priority">
-                      <template #checked>动漫识别优化开启</template>
-                      <template #unchecked>动漫识别优化关闭</template>
-                    </n-switch>
-                    <n-switch v-model:value="config.offline_priority">
-                      <template #checked>本地数据中心优先</template>
-                      <template #unchecked>本地数据中心优先关闭</template>
-                    </n-switch>
-                    <div class="tip">开启后将优先从本地数据中心匹配数据，速度极快且节省 API。若本地无数据再联网搜索。</div>
-                    <n-switch v-model:value="config.batch_enhancement">
-                      <template #checked>合集识别增强开启</template>
-                      <template #unchecked>合集识别增强关闭</template>
-                    </n-switch>
-                    <n-switch v-model:value="config.bangumi_priority">
-                      <template #checked>Bangumi 数据源优先</template>
-                      <template #unchecked>TMDB 数据源优先</template>
-                    </n-switch>
-                    <n-switch v-model:value="config.bangumi_failover" :disabled="config.bangumi_priority">
-                      <template #checked>Bangumi 故障转移开启</template>
-                      <template #unchecked>Bangumi 故障转移关闭</template>
-                    </n-switch>
-                    <n-switch v-model:value="config.series_fingerprint">
-                      <template #checked>智能记忆开启</template>
-                      <template #unchecked>智能记忆关闭</template>
-                    </n-switch>
+                  <n-space vertical :size="16" style="width: 100%">
+                    <n-space align="center" :size="12">
+                      <n-switch v-model:value="config.anime_priority" />
+                      <span class="switch-label">动漫识别优化</span>
+                      <span class="switch-desc">优先使用动漫专用搜索策略，提高动漫识别准确率</span>
+                    </n-space>
+                    <n-space align="center" :size="12">
+                      <n-switch v-model:value="config.offline_priority" />
+                      <span class="switch-label">本地数据中心优先</span>
+                      <span class="switch-desc">优先从本地数据中心匹配数据，速度极快且节省 API，无数据时再联网搜索</span>
+                    </n-space>
+                    <n-space align="center" :size="12">
+                      <n-switch v-model:value="config.batch_enhancement" />
+                      <span class="switch-label">合集识别增强</span>
+                      <span class="switch-desc">增强对合集类资源的识别能力，自动解析多剧集合集</span>
+                    </n-space>
+                    <n-space align="center" :size="12">
+                      <n-switch v-model:value="config.bangumi_priority" />
+                      <span class="switch-label">Bangumi 数据源优先</span>
+                      <span class="switch-desc">优先使用 Bangumi 数据源，更适合中文动漫信息</span>
+                    </n-space>
+                    <n-space align="center" :size="12">
+                      <n-switch v-model:value="config.bangumi_failover" :disabled="config.bangumi_priority" />
+                      <span class="switch-label">Bangumi 故障转移</span>
+                      <span class="switch-desc">TMDB 匹配失败时自动使用 Bangumi 进行识别</span>
+                    </n-space>
+                    <n-space align="center" :size="12">
+                      <n-switch v-model:value="config.series_fingerprint" />
+                      <span class="switch-label">智能记忆</span>
+                      <span class="switch-desc">记住已识别剧集的匹配结果，后续自动应用相同匹配</span>
+                    </n-space>
                   </n-space>
                 </n-form-item>
               </n-form>
@@ -181,10 +186,7 @@ const {
                 </n-form-item>
                 <n-form-item label="功能开关">
                   <n-space align="center">
-                    <n-switch v-model:value="config.telegram.enabled">
-                      <template #checked>通知已开启</template>
-                      <template #unchecked>通知已关闭</template>
-                    </n-switch>
+                    <n-switch v-model:value="config.telegram.enabled" />
                     <n-button v-bind="getButtonStyle('secondary')" size="small" :loading="testTgLoading" @click="testTelegram" :disabled="!config.telegram.bot_token">
                       发送测试消息
                     </n-button>
@@ -229,10 +231,7 @@ const {
                   <!-- 第一行: RSS 刷新 -->
                   <n-gi>
                     <n-form-item label="RSS 自动刷新">
-                      <n-switch v-model:value="config.rss_auto_refresh">
-                        <template #checked>服务已开启</template>
-                        <template #unchecked>服务已关闭</template>
-                      </n-switch>
+                      <n-switch v-model:value="config.rss_auto_refresh" />
                     </n-form-item>
                   </n-gi>
                   <n-gi>
@@ -250,10 +249,7 @@ const {
                   <!-- 第二行: 规则同步 -->
                   <n-gi>
                     <n-form-item label="规则自动同步">
-                      <n-switch v-model:value="config.rule_auto_update">
-                        <template #checked>服务已开启</template>
-                        <template #unchecked>服务已关闭</template>
-                      </n-switch>
+                      <n-switch v-model:value="config.rule_auto_update" />
                     </n-form-item>
                   </n-gi>
                   <n-gi>
@@ -271,10 +267,7 @@ const {
                   <!-- 第三行: 自动补全 -->
                   <n-gi>
                     <n-form-item label="自动搜寻补全">
-                      <n-switch v-model:value="config.sub_auto_fill">
-                        <template #checked>服务已开启</template>
-                        <template #unchecked>服务已关闭</template>
-                      </n-switch>
+                      <n-switch v-model:value="config.sub_auto_fill" />
                     </n-form-item>
                   </n-gi>
                   <n-gi>
@@ -292,10 +285,7 @@ const {
                   <!-- 第四行: 定时清理 -->
                   <n-gi>
                     <n-form-item label="定时清理缓存">
-                      <n-switch v-model:value="config.auto_clear_recognition">
-                        <template #checked>服务已开启</template>
-                        <template #unchecked>服务已关闭</template>
-                      </n-switch>
+                      <n-switch v-model:value="config.auto_clear_recognition" />
                     </n-form-item>
                   </n-gi>
                   <n-gi>
@@ -476,4 +466,7 @@ const {
 .client-card .client-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
 .client-card .client-meta { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .empty-clients { padding: 40px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-medium); border-radius: 8px; }
+
+.switch-label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-desc { font-size: 12px; color: var(--text-tertiary); }
 </style>

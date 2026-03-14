@@ -48,4 +48,19 @@ window.fetch = async (...args) => {
     return originalFetch(resource, config);
 };
 
-createApp(App).mount('#app')
+const app = createApp(App)
+
+// --- 全局指令：禁用自动填充 ---
+app.directive('no-autocomplete', {
+  mounted(el) {
+    const inputs = el.querySelectorAll ? el.querySelectorAll('input') : [el]
+    inputs.forEach((input: HTMLInputElement) => {
+      input.setAttribute('autocomplete', 'off')
+      input.setAttribute('autocorrect', 'off')
+      input.setAttribute('autocapitalize', 'off')
+      input.setAttribute('spellcheck', 'false')
+    })
+  }
+})
+
+app.mount('#app')

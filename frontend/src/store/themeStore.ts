@@ -30,15 +30,15 @@ const updateCssVariables = () => {
   const theme = themeOverridesMap[currentThemeType.value]
   const common = theme.common!
   
-  // 同步底层视觉底座 - 统一背景色变量
+  // 同步底层视觉底座 - 统一背景色变量（灰色系，与主题色分离）
   root.style.setProperty('--app-unified-bg', config.bgPrimary)
-  root.style.setProperty('--app-bg-color', 'var(--app-unified-bg)')
-  root.style.setProperty('--sidebar-bg-color', 'var(--app-unified-bg)')
+  root.style.setProperty('--app-bg-color', config.bgPrimary)
+  root.style.setProperty('--sidebar-bg-color', config.bgPrimary)
   
-  // 统一质感变量
-  root.style.setProperty('--app-surface-card', `rgba(${config.surfaceColor}, 0.22)`)
-  root.style.setProperty('--app-surface-inner', `rgba(${config.surfaceColor}, 0.12)`)
-  root.style.setProperty('--app-border-light', `rgba(${config.surfaceColor}, 0.25)`)
+  // 统一质感变量（使用灰色系，降低主题色影响）
+  root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.05)')
+  root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.2)')
+  root.style.setProperty('--app-border-light', 'rgba(255, 255, 255, 0.08)')
   root.style.setProperty('--app-modal-bg', config.modalBg)
   root.style.setProperty('--app-dropdown-bg', config.dropdownBg)
   root.style.setProperty('--card-border-radius', '14px')
@@ -56,16 +56,16 @@ const updateCssVariables = () => {
   root.style.setProperty('--bg-primary', config.bgPrimary)
   root.style.setProperty('--bg-secondary', config.bgSecondary)
   root.style.setProperty('--bg-tertiary', config.bgTertiary)
-  root.style.setProperty('--bg-elevated', `rgba(${config.surfaceColor}, 0.12)`)
-  root.style.setProperty('--bg-surface', `rgba(${config.surfaceColor}, 0.12)`)
-  root.style.setProperty('--bg-surface-hover', `rgba(${config.surfaceColor}, 0.18)`)
-  root.style.setProperty('--bg-surface-active', `rgba(${config.surfaceColor}, 0.25)`)
+  root.style.setProperty('--bg-elevated', 'rgba(255, 255, 255, 0.06)')
+  root.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.04)')
+  root.style.setProperty('--bg-surface-hover', 'rgba(255, 255, 255, 0.08)')
+  root.style.setProperty('--bg-surface-active', 'rgba(255, 255, 255, 0.12)')
   root.style.setProperty('--bg-overlay', 'rgba(0, 0, 0, 0.6)')
   
-  root.style.setProperty('--border-light', `rgba(${config.surfaceColor}, 0.25)`)
-  root.style.setProperty('--border-medium', `rgba(${config.surfaceColor}, 0.35)`)
-  root.style.setProperty('--border-heavy', `rgba(${config.surfaceColor}, 0.45)`)
-  root.style.setProperty('--border-dashed', `rgba(${config.surfaceColor}, 0.3)`)
+  root.style.setProperty('--border-light', 'rgba(255, 255, 255, 0.08)')
+  root.style.setProperty('--border-medium', 'rgba(255, 255, 255, 0.15)')
+  root.style.setProperty('--border-heavy', 'rgba(255, 255, 255, 0.25)')
+  root.style.setProperty('--border-dashed', 'rgba(255, 255, 255, 0.12)')
   
   root.style.setProperty('--color-success', common.successColor || '#81c784')
   root.style.setProperty('--color-warning', common.warningColor || '#ffb74d')
@@ -77,7 +77,7 @@ const updateCssVariables = () => {
   root.style.setProperty('--color-error-bg', 'rgba(207, 102, 121, 0.1)')
   root.style.setProperty('--color-info-bg', 'rgba(3, 218, 198, 0.1)')
   
-  root.style.setProperty('--code-bg', `rgba(${config.surfaceColor}, 0.12)`)
+  root.style.setProperty('--code-bg', 'rgba(255, 255, 255, 0.05)')
   
   root.style.setProperty('--opacity-disabled', '0.3')
   root.style.setProperty('--opacity-muted', '0.5')

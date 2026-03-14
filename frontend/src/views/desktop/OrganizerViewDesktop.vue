@@ -9,7 +9,6 @@ import {
   SaveOutlined as SaveIcon,
   PlayArrowOutlined as PlayIcon,
   ContentCopyOutlined as CopyIcon,
-  DragIndicatorOutlined as DragIcon,
   BoltOutlined as BoltIcon,
   AccessTimeOutlined as ScheduleIcon,
   StopOutlined as StopIcon
@@ -131,19 +130,18 @@ onUnmounted(stopBgTaskPolling)
             </n-button>
           </n-space>
           
-          <draggable v-model="rules" item-key="id" @end="saveConfig" class="card-grid" handle=".drag-handle">
+          <draggable v-model="rules" item-key="id" @end="saveConfig" class="card-grid">
             <template #item="{element: rule, index: i}">
               <n-card bordered :class="['rule-card', 'clickable-card', { 'default-rule': i === 0 }]" @click="openEditRule(i)">
                 <template #header>
                   <div class="card-title-box">
-                    <n-icon class="drag-handle" @click.stop :color="i === 0 ? 'var(--n-primary-color)' : 'var(--text-muted)'"><DragIcon /></n-icon>
                     <span class="card-title-text">{{ rule.name }}</span>
-                    <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
+                    <n-tag v-if="i === 0" size="tiny" type="success" round class="default-tag">默认</n-tag>
                   </div>
                 </template>
                 <div class="rule-preview-mini">
-                  <div class="p-item"><span>电影</span><code>{{ rule.movie_pattern || '未设置' }}</code></div>
-                  <div class="p-item"><span>剧集</span><code>{{ rule.tv_pattern || '未设置' }}</code></div>
+                  <div class="p-item"><span class="p-label">电影</span><code>{{ rule.movie_pattern || '未设置' }}</code></div>
+                  <div class="p-item"><span class="p-label">剧集</span><code>{{ rule.tv_pattern || '未设置' }}</code></div>
                 </div>
                 <template #action>
                   <n-space justify="end" @click.stop>
@@ -176,13 +174,12 @@ onUnmounted(stopBgTaskPolling)
         <n-space vertical size="large">
           <n-space justify="end"><n-button v-bind="getButtonStyle('primary')" @click="openEditTask(-1)">创建整理任务</n-button></n-space>
           
-          <draggable v-model="tasks" item-key="id" @end="saveConfig" class="card-grid" handle=".drag-handle">
+          <draggable v-model="tasks" item-key="id" @end="saveConfig" class="card-grid">
             <template #item="{element: task, index: i}">
               <n-card bordered embedded class="task-card clickable-card" @click="openEditTask(i)">
                 <template #header>
                   <n-space align="center" justify="space-between" style="width: 100%">
                     <n-space align="center">
-                      <n-icon class="drag-handle" @click.stop style="color: var(--n-primary-color)"><DragIcon /></n-icon>
                       <b>{{ task.name }}</b>
                     </n-space>
                     
@@ -190,14 +187,14 @@ onUnmounted(stopBgTaskPolling)
                       <!-- 实时监控快速切换 -->
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <n-button 
-                            circle 
-                            quaternary 
-                            size="small" 
-                            :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'default'"
+                          <n-button
+                            circle
+                            ghost
+                            size="small"
+                            :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
                             @click.stop="toggleTaskMonitor(task, 'incremental')"
                           >
-                            <template #icon><n-icon><BoltIcon /></n-icon></template>
+                            <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><BoltIcon /></n-icon></template>
                           </n-button>
                         </template>
                         实时监控: {{ (task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode)) ? '开启 (' + (task.incremental_mode || task.monitor_mode || 'realtime') + ')' : '关闭' }} (点击切换)
@@ -206,14 +203,14 @@ onUnmounted(stopBgTaskPolling)
                       <!-- 定时扫描快速切换 -->
                       <n-tooltip trigger="hover">
                         <template #trigger>
-                          <n-button 
-                            circle 
-                            quaternary 
-                            size="small" 
-                            :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'default'"
+                          <n-button
+                            circle
+                            ghost
+                            size="small"
+                            :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'primary'"
                             @click.stop="toggleTaskMonitor(task, 'scheduler')"
                           >
-                            <template #icon><n-icon><ScheduleIcon /></n-icon></template>
+                            <template #icon><n-icon :color="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? undefined : 'var(--text-primary)'"><ScheduleIcon /></n-icon></template>
                           </n-button>
                         </template>
                         定时扫描: {{ (task.scheduler_enabled || task.monitor_mode === 'scheduled') ? '开启' : '关闭' }} (点击切换)
@@ -222,11 +219,11 @@ onUnmounted(stopBgTaskPolling)
                   </n-space>
                 </template>
                 <div class="p-disp">
-                  <div :title="task.source_dir"><span>源目录</span><code>{{ task.source_dir }}</code></div>
-                  <div :title="task.target_dir"><span>目标</span><code>{{ task.target_dir }}</code></div>
-                  <div>
-                    <span>重命名规则</span>
-                    <n-tag size="tiny" :bordered="false" type="info" style="margin-top: var(--m-1); background: var(--color-info-bg)">
+                  <div class="p-row" :title="task.source_dir"><span class="p-label">源目录</span><code>{{ task.source_dir }}</code></div>
+                  <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><code>{{ task.target_dir }}</code></div>
+                  <div class="p-row">
+                    <span class="p-label">重命名规则</span>
+                    <n-tag size="tiny" :bordered="false" type="info" style="background: var(--color-info-bg)">
                       {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
                     </n-tag>
                   </div>
@@ -296,12 +293,21 @@ onUnmounted(stopBgTaskPolling)
   box-shadow: var(--shadow-md);
 }
 
-.drag-handle { cursor: grab; opacity: var(--opacity-60); transition: opacity var(--transition-fast); }
-.drag-handle:hover { opacity: var(--opacity-100); }
+.card-title-box { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.card-title-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.default-tag { margin-left: auto; }
+
 .rule-preview-mini { flex-grow: 1; padding: var(--space-3) 0; }
-.rule-preview-mini .p-item { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
-.rule-preview-mini span { font-size: var(--text-2xs); color: var(--text-tertiary); font-weight: bold; text-transform: uppercase; }
+.rule-preview-mini .p-item { display: flex; align-items: center; gap: 4px; margin-bottom: var(--space-3); }
+.rule-preview-mini .p-label { 
+  font-size: var(--text-2xs); 
+  color: var(--text-tertiary); 
+  font-weight: bold; 
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
 .rule-preview-mini code { 
+  flex: 1;
   font-size: var(--text-xs); 
   font-family: var(--code-font);
   color: var(--n-info-color); 
@@ -311,10 +317,18 @@ onUnmounted(stopBgTaskPolling)
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
   border: 1px solid var(--app-border-light);
 }
-.p-disp { flex-grow: 1; padding: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.p-disp div { display: flex; flex-direction: column; gap: var(--space-0); }
-.p-disp span { font-size: var(--text-3xs); color: var(--text-tertiary); font-weight: bold; text-transform: uppercase; }
+.p-disp { flex-grow: 1; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.p-disp .p-row { display: flex; align-items: center; gap: 4px; }
+.p-disp .p-label { 
+  font-size: var(--text-3xs); 
+  color: var(--text-tertiary); 
+  font-weight: bold; 
+  text-transform: uppercase;
+  min-width: 60px;
+  flex-shrink: 0;
+}
 .p-disp code { 
+  flex: 1;
   font-size: var(--text-xs); 
   font-family: var(--code-font);
   background: var(--app-surface-inner); 
