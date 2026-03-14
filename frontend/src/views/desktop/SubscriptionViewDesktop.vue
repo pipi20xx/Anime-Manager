@@ -322,7 +322,7 @@ onMounted(fetchData)
 }
 .clickable-card { cursor: pointer; }
 .feed-card:hover {
-  border-color: var(--primary-half) !important;
+  border-color: var(--n-primary-color) !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }

@@ -285,62 +285,72 @@ const handleRefresh = () => {
   border: 1px solid;
 }
 
-/* Episode Tag (S01E12) - 紫色 */
+/* Episode Tag (S01E12) - 紫色底色+白色文字 */
 .history-tag.tag-episode {
-  color: #bb86fc;
-  border-color: #bb86fc;
+  background: #7c4dff;
+  color: #fff;
+  border-color: #7c4dff;
 }
 
-/* Media Type Tag (剧集/电影) - 蓝色 */
+/* Media Type Tag (剧集/电影) - 蓝色底色+白色文字 */
 .history-tag.tag-type {
-  color: #2196f3;
-  border-color: #2196f3;
+  background: #1565c0;
+  color: #fff;
+  border-color: #1565c0;
 }
 
-/* Resolution Tag (1080P) - 橙色 */
+/* Resolution Tag (1080P) - 深橙色底色+白色文字 */
 .history-tag.tag-res {
-  color: #ff9800;
-  border-color: #ff9800;
+  background: #e65100;
+  color: #fff;
+  border-color: #e65100;
 }
 
-/* Encode Tag (H.265) - 橙色 */
+/* Encode Tag (H.265) - 深橙色底色+白色文字 */
 .history-tag.tag-encode {
-  color: #ff9800;
-  border-color: #ff9800;
+  background: #e65100;
+  color: #fff;
+  border-color: #e65100;
 }
 
-/* Team Tag (LoliHouse) - 浅蓝 */
+/* Team Tag (LoliHouse) - 深蓝色底色+白色文字 */
 .history-tag.tag-team {
-  color: #03dac6;
-  border-color: #03dac6;
+  background: #1565c0;
+  color: #fff;
+  border-color: #1565c0;
 }
 
-/* TMDB Tag - 草绿色 */
+/* TMDB Tag - 深绿色底色+白色文字 */
 .history-tag.tag-tmdb,
 .detail-item .history-tag.tag-tmdb {
-  color: #a0d911;
-  border-color: #a0d911;
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
 }
 
-/* Action Tag (硬链/来源) - 红色 */
+/* Action Tag (硬链/来源) - 红色底色+白色文字 */
 .history-tag.tag-action,
 .detail-item .history-tag.tag-action {
-  color: #e88080;
-  border-color: #e88080;
+  background: #c62828;
+  color: #fff;
+  border-color: #c62828;
 }
 
-/* Status Tags */
+/* Status Tags - 底色+白色文字 */
 .history-tag.tag-status-success {
-  color: var(--color-success);
-  border-color: var(--color-success);
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
 }
 .history-tag.tag-status-failed {
-  color: var(--color-error);
-  border-color: var(--color-error);
+  background: #c62828;
+  color: #fff;
+  border-color: #c62828;
 }
 .history-tag.tag-status-skipped {
-  color: var(--color-warning);
-  border-color: var(--color-warning);
+  background: #f57c00;
+  color: #fff;
+  border-color: #f57c00;
 }
 
 
@@ -437,9 +447,33 @@ const handleRefresh = () => {
 .detail-item .label { color: var(--text-tertiary); }
 .delete-btn-wrapper { margin-left: auto; }
 
-/* Compact Alert */
+/* Compact Alert - 改成标签样式 */
 .compact-alert { display: inline-block; width: auto; max-width: 100%; }
 .compact-alert :deep(.n-alert-body) { padding: 6px 12px; }
+
+/* 错误消息标签样式 - 红色底色+白色文字 */
+.error-msg-row .compact-alert :deep(.n-alert-body) {
+  background: #c62828 !important;
+  border-radius: 11px;
+  font-family: var(--code-font);
+  font-size: 12px;
+  font-weight: 500;
+}
+.error-msg-row .compact-alert :deep(.n-alert-body__content) {
+  color: #fff !important;
+}
+
+/* 跳过消息标签样式 - 橙色底色+白色文字 */
+.skipped-msg-row .compact-alert :deep(.n-alert-body) {
+  background: #f57c00 !important;
+  border-radius: 11px;
+  font-family: var(--code-font);
+  font-size: 12px;
+  font-weight: 500;
+}
+.skipped-msg-row .compact-alert :deep(.n-alert-body__content) {
+  color: #fff !important;
+}
 
 .ml-2 { margin-left: 8px; }
 .mt-3 { margin-top: 12px; }

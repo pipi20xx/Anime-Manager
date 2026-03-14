@@ -71,9 +71,13 @@ const updateCssVariables = () => {
   root.style.setProperty('--app-bg-color', config.bgPrimary)
   root.style.setProperty('--sidebar-bg-color', config.bgPrimary)
   
+  // 设置 naive-ui 主色变量，确保白天/夜间模式都使用紫色
+  root.style.setProperty('--n-primary-color', config.primaryColor)
+  
   // 统一质感变量
   root.style.setProperty('--app-surface-card', config.bgPrimary)
   root.style.setProperty('--app-surface-inner', config.bgSecondary)
+  root.style.setProperty('--app-surface-subtle', config.bgTertiary)
   root.style.setProperty('--app-border-light', borderLight)
   root.style.setProperty('--app-modal-bg', config.modalBg)
   root.style.setProperty('--app-dropdown-bg', config.dropdownBg)

@@ -89,7 +89,7 @@ const {
   background: var(--app-surface-card);
 }
 .table-card:hover {
-  border-color: var(--n-error-color-suppl) !important;
+  border-color: var(--n-primary-color) !important;
   transform: translateY(-2px);
 }
 

@@ -61,7 +61,9 @@ const columns = [
     key: 'state',
     width: 90,
     render(row: any) {
-      return h(NTag, { size: 'small', round: true, type: row.state === 'Success' ? 'success' : 'error' }, { default: () => row.state === 'Success' ? '成功' : '失败' })
+      return row.state === 'Success'
+        ? h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #2e7d32', backgroundColor: '#2e7d32', borderRadius: '12px', '--n-border-color': '#2e7d32' } }, { default: () => '成功' })
+        : h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #c62828', backgroundColor: '#c62828', borderRadius: '12px', '--n-border-color': '#c62828' } }, { default: () => '失败' })
     }
   },
   {

@@ -104,14 +104,14 @@
   --transition-slow: 350ms ease;
   --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-  /* 字体大小层级 */
-  --text-xs: 10px;
-  --text-sm: 11px;
-  --text-base: 12px;
-  --text-md: 13px;
-  --text-lg: 14px;
-  --text-xl: 16px;
-  --text-2xl: 20px;
+  /* 字体大小层级 - 参考现代 Web 应用标准 */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
 
   /* Z-index 层级 */
   --z-base: 0;
@@ -184,14 +184,14 @@ body {
   font-weight: 400;
   overflow: hidden;
   line-height: 1.4; /* 更紧凑的行高 */
-  font-size: 13px;  /* PC 端更标准的字体大小 */
+  font-size: 15px;  /* PC 端更标准的字体大小 */
 }
 
 /* 所有的输入框、按钮文字强制跟随主题 */
 input, textarea, select, button {
   color: inherit;
   font-family: inherit;
-  font-size: 12px; /* 控件字体更小 */
+  font-size: 14px; /* 控件字体 */
 }
 
 /* 全局滚动条主题化 - PC 端更纤细 */
