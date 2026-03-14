@@ -83,13 +83,7 @@ const {
           :columns="[
             { 
               title: '标题', key: 'title', width: 250, fixed: 'left',
-              render: (row) => h(NSpace, { align: 'center', size: 8 }, () => [
-                row.manual ? h(NTooltip, null, { 
-                  trigger: () => h(NIcon, { color: 'var(--n-primary-color)', size: 18 }, { default: () => h(CustomIcon) }),
-                  default: () => '手动修正记录'
-                }) : null,
-                h('span', { style: 'font-weight: bold' }, row.title)
-              ])
+              render: (row) => h('span', { style: 'font-weight: bold' }, row.title)
             },
             { title: '类型', key: 'media_type', width: 80, render: (row) => row.media_type === 'movie' ? '电影' : '剧集' },
             { title: '年份', key: 'first_air_date', width: 90, render: (row) => row.first_air_date?.slice(0,4) },

@@ -72,7 +72,6 @@ const {
             >
               <div class="card-header">
                 <div class="header-left">
-                  <n-icon class="drag-handle" size="18"><DragIcon /></n-icon>
                   <span class="index-badge">#{{ index + 1 }}</span>
                   <span class="rule-name">{{ rule.name }}</span>
                 </div>
@@ -93,6 +92,7 @@ const {
               </div>
 
               <div class="card-footer">
+                <div></div>
                 <n-popconfirm @positive-click.stop="deleteRule(index)" positive-text="确定" negative-text="取消">
                   <template #trigger>
                     <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click.stop>
@@ -101,7 +101,6 @@ const {
                   </template>
                   确定删除该规则吗？
                 </n-popconfirm>
-                <span style="font-size: 10px; color: var(--text-tertiary)">按住左上角可排序</span>
               </div>
             </div>
           </n-gi>
@@ -150,7 +149,7 @@ const {
   display: flex; 
   justify-content: space-between; 
   align-items: center; 
-  border-top: 1px solid var(--border-light); 
+  border-top: none; 
   padding-top: 12px; 
 }
 </style>

@@ -36,8 +36,8 @@ const updateCssVariables = () => {
   root.style.setProperty('--sidebar-bg-color', config.bgPrimary)
   
   // 统一质感变量（使用灰色系，降低主题色影响）
-  root.style.setProperty('--app-surface-card', 'rgba(255, 255, 255, 0.05)')
-  root.style.setProperty('--app-surface-inner', 'rgba(0, 0, 0, 0.2)')
+  root.style.setProperty('--app-surface-card', '#1e1e2e')
+  root.style.setProperty('--app-surface-inner', '#1e1e2e')
   root.style.setProperty('--app-border-light', 'rgba(255, 255, 255, 0.08)')
   root.style.setProperty('--app-modal-bg', config.modalBg)
   root.style.setProperty('--app-dropdown-bg', config.dropdownBg)
@@ -54,10 +54,10 @@ const updateCssVariables = () => {
   root.style.setProperty('--text-hint', 'rgba(255, 255, 255, 0.4)')
   
   root.style.setProperty('--bg-primary', config.bgPrimary)
-  root.style.setProperty('--bg-secondary', config.bgSecondary)
-  root.style.setProperty('--bg-tertiary', config.bgTertiary)
-  root.style.setProperty('--bg-elevated', 'rgba(255, 255, 255, 0.06)')
-  root.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.04)')
+  root.style.setProperty('--bg-secondary', '#1e1e2e')
+  root.style.setProperty('--bg-tertiary', '#1e1e2e')
+  root.style.setProperty('--bg-elevated', '#1e1e2e')
+  root.style.setProperty('--bg-surface', '#1e1e2e')
   root.style.setProperty('--bg-surface-hover', 'rgba(255, 255, 255, 0.08)')
   root.style.setProperty('--bg-surface-active', 'rgba(255, 255, 255, 0.12)')
   root.style.setProperty('--bg-overlay', 'rgba(0, 0, 0, 0.6)')
@@ -77,7 +77,7 @@ const updateCssVariables = () => {
   root.style.setProperty('--color-error-bg', 'rgba(207, 102, 121, 0.1)')
   root.style.setProperty('--color-info-bg', 'rgba(3, 218, 198, 0.1)')
   
-  root.style.setProperty('--code-bg', 'rgba(255, 255, 255, 0.05)')
+  root.style.setProperty('--code-bg', '#1e1e2e')
   
   root.style.setProperty('--opacity-disabled', '0.3')
   root.style.setProperty('--opacity-muted', '0.5')

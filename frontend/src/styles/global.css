@@ -1,12 +1,12 @@
 :root {
-  --app-bg-color: #1a1a1f;
-  --sidebar-bg-color: #242429;
+  --app-bg-color: #1e1e2e;
+  --sidebar-bg-color: #1e1e2e;
   --header-height: 60px;
 
   /* 视觉统一底座变量 - 灰色系，与主题色分离 */
-  --app-surface-subtle: rgba(255, 255, 255, 0.02);
-  --app-surface-card: rgba(255, 255, 255, 0.05);
-  --app-surface-inner: rgba(0, 0, 0, 0.2);
+  --app-surface-subtle: #1e1e2e;
+  --app-surface-card: #1e1e2e;
+  --app-surface-inner: #1e1e2e;
   --app-border-light: rgba(255, 255, 255, 0.08);
   --app-border-medium: rgba(255, 255, 255, 0.15);
   
@@ -19,11 +19,11 @@
   --text-hint: rgba(255, 255, 255, 0.4);
   
   /* 背景颜色变量 - 灰色系 */
-  --bg-primary: #1a1a1f;
-  --bg-secondary: #242429;
-  --bg-tertiary: #2e2e33;
-  --bg-elevated: rgba(255, 255, 255, 0.06);
-  --bg-surface: rgba(255, 255, 255, 0.04);
+  --bg-primary: #1e1e2e;
+  --bg-secondary: #1e1e2e;
+  --bg-tertiary: #1e1e2e;
+  --bg-elevated: #1e1e2e;
+  --bg-surface: #1e1e2e;
   --bg-surface-hover: rgba(255, 255, 255, 0.08);
   --bg-surface-active: rgba(255, 255, 255, 0.12);
   --bg-overlay: rgba(0, 0, 0, 0.6);

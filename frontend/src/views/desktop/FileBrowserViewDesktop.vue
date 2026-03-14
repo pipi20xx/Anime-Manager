@@ -350,12 +350,12 @@ onMounted(() => {
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-surface);
   color: var(--text-secondary);
-  border: 1px solid var(--border-light);
+  border: none;
 }
 .file-icon-box.is-dir {
   background: var(--bg-surface);
   color: var(--text-secondary);
-  border: 1px solid var(--border-light);
+  border: none;
 }
 
 .file-info .file-name { font-weight: 600; font-size: var(--text-xl); color: var(--text-primary); margin-bottom: 4px; }

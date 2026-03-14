@@ -41,12 +41,12 @@ export function generateColorMix(color: string, opacity: string): string {
 
 // 统一的灰色系背景色 - 与主题色分离
 const grayBgColors = {
-  bgPrimary: '#1a1a1f',      // 最深背景
+  bgPrimary: '#1e1e2e',      // 最深背景
   bgSecondary: '#242429',    // 次级背景
   bgTertiary: '#2e2e33',     // 三级背景
   surfaceColor: '255, 255, 255',  // 表面色（用于半透明叠加）
-  modalBg: 'rgba(30, 30, 35, 0.95)',     // 弹窗背景
-  dropdownBg: 'rgba(26, 26, 31, 0.98)'   // 下拉菜单背景
+  modalBg: 'rgba(30, 30, 46, 0.95)',     // 弹窗背景
+  dropdownBg: 'rgba(30, 30, 46, 0.98)'   // 下拉菜单背景
 }
 
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
@@ -129,7 +129,7 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     bodyColor: config.bgPrimary,
     textColorBase: '#e0e0e0'
   },
-  Card: { borderRadius: '20px', borderColor: 'rgba(255, 255, 255, 0.08)' },
+  Card: { borderRadius: '20px', borderColor: 'rgba(255, 255, 255, 0.08)', color: '#1e1e2e' },
   Button: {
     borderRadiusMedium: '16px',
     fontWeight: '500',
@@ -339,15 +339,15 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     toggleIconColorHover: 'var(--n-text-color-1)'
   },
   DataTable: {
-    thColor: 'transparent',
-    tdColor: 'transparent',
-    tdColorHover: 'rgba(255, 255, 255, 0.05)',
-    thColorModal: 'transparent',
-    tdColorModal: 'transparent',
-    tdColorHoverModal: 'rgba(255, 255, 255, 0.05)',
-    thColorPopover: 'transparent',
-    tdColorPopover: 'transparent',
-    tdColorHoverPopover: 'rgba(255, 255, 255, 0.05)',
+    thColor: '#1e1e2e',
+    tdColor: '#1e1e2e',
+    tdColorHover: '#1e1e2e',
+    thColorModal: '#1e1e2e',
+    tdColorModal: '#1e1e2e',
+    tdColorHoverModal: '#1e1e2e',
+    thColorPopover: '#1e1e2e',
+    tdColorPopover: '#1e1e2e',
+    tdColorHoverPopover: '#1e1e2e',
     borderColor: 'rgba(255, 255, 255, 0.1)',
     borderColorModal: 'rgba(255, 255, 255, 0.1)',
     borderColorPopover: 'rgba(255, 255, 255, 0.1)'
@@ -377,6 +377,33 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     // 圆角
     railBorderRadius: '11px',
     buttonBorderRadius: '50%'
+  },
+  // 菜单组件样式
+  Menu: {
+    // 选中项 - 主题色底色 + 黑色文字
+    itemColorActive: config.primaryColor,
+    itemColorActiveHover: config.primaryColorHover,
+    itemColorActiveCollapsed: config.primaryColor,
+    itemTextColorActive: '#000000',
+    itemTextColorActiveHover: '#000000',
+    itemIconColorActive: '#000000',
+    itemIconColorActiveHover: '#000000',
+    // 未选中项 - 透明底色 + 白色文字
+    itemColor: 'transparent',
+    itemColorHover: 'rgba(255, 255, 255, 0.05)',
+    itemTextColor: 'var(--text-secondary)',
+    itemTextColorHover: 'var(--text-primary)',
+    itemIconColor: 'var(--text-tertiary)',
+    itemIconColorHover: 'var(--text-secondary)',
+    // 子菜单样式
+    itemColorActiveSub: config.primaryColor,
+    itemColorActiveSubHover: config.primaryColorHover,
+    itemTextColorActiveSub: '#000000',
+    itemTextColorActiveSubHover: '#000000',
+    // 边框和圆角
+    borderRadius: '8px',
+    borderColor: 'transparent',
+    borderColorHorizontal: 'transparent'
   }
 })
 

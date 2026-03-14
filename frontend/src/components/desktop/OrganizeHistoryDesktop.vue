@@ -34,6 +34,7 @@ const {
 } = useOrganizeHistory()
 
 const shouldDeleteFile = ref(false)
+const deletePopconfirmShow = ref<Record<string, boolean>>({})
 
 const scrollTarget = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
@@ -193,13 +194,14 @@ const handleRefresh = () => {
           </div>
           <div class="delete-btn-wrapper">
             <n-popconfirm 
-              @positive-click="deleteItem(item.id, shouldDeleteFile)" 
-              @negative-click="shouldDeleteFile = false"
+              v-model:show="deletePopconfirmShow[item.id]"
+              @positive-click="deleteItem(item.id, shouldDeleteFile); deletePopconfirmShow[item.id] = false" 
+              @negative-click="shouldDeleteFile = false; deletePopconfirmShow[item.id] = false"
               positive-text="确定删除"
               negative-text="取消"
             >
               <template #trigger>
-                <n-button v-bind="getButtonStyle('iconDanger')" size="small">
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deletePopconfirmShow[item.id] = true">
                   <template #icon><n-icon><DeleteIcon /></n-icon></template>
                 </n-button>
               </template>
@@ -283,34 +285,48 @@ const handleRefresh = () => {
   border: 1px solid;
 }
 
-/* Episode Tag (S01E12) */
+/* Episode Tag (S01E12) - 紫色 */
 .history-tag.tag-episode {
-  color: var(--color-info);
-  border-color: var(--color-info);
+  color: #bb86fc;
+  border-color: #bb86fc;
 }
 
-/* Media Type Tag (剧集) */
+/* Media Type Tag (剧集/电影) - 蓝色 */
 .history-tag.tag-type {
-  color: var(--color-success);
-  border-color: var(--color-success);
+  color: #2196f3;
+  border-color: #2196f3;
 }
 
-/* Resolution Tag (1080P) */
+/* Resolution Tag (1080P) - 橙色 */
 .history-tag.tag-res {
-  color: var(--color-warning);
-  border-color: var(--color-warning);
+  color: #ff9800;
+  border-color: #ff9800;
 }
 
-/* Encode Tag (H.265) */
+/* Encode Tag (H.265) - 橙色 */
 .history-tag.tag-encode {
-  color: var(--color-error);
-  border-color: var(--color-error);
+  color: #ff9800;
+  border-color: #ff9800;
 }
 
-/* Team Tag (LoliHouse) */
+/* Team Tag (LoliHouse) - 浅蓝 */
 .history-tag.tag-team {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: #03dac6;
+  border-color: #03dac6;
+}
+
+/* TMDB Tag - 草绿色 */
+.history-tag.tag-tmdb,
+.detail-item .history-tag.tag-tmdb {
+  color: #a0d911;
+  border-color: #a0d911;
+}
+
+/* Action Tag (硬链/来源) - 红色 */
+.history-tag.tag-action,
+.detail-item .history-tag.tag-action {
+  color: #e88080;
+  border-color: #e88080;
 }
 
 /* Status Tags */
@@ -327,19 +343,7 @@ const handleRefresh = () => {
   border-color: var(--color-warning);
 }
 
-/* Action Tag (硬链) - Fixed color, not theme */
-.history-tag.tag-action,
-.detail-item .history-tag.tag-action {
-  color: #18a058;
-  border-color: #18a058;
-}
 
-/* TMDB Tag */
-.history-tag.tag-tmdb,
-.detail-item .history-tag.tag-tmdb {
-  color: #2080f0;
-  border-color: #2080f0;
-}
 
 /* Path Container (Vertical) */
 .path-container {

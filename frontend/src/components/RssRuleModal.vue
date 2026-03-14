@@ -158,10 +158,12 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
       </n-grid>
 
       <n-form-item label="添加任务后的初始状态">
-        <n-switch v-model:value="form.paused">
-          <template #checked>手动确认 (任务将处于暂停状态)</template>
-          <template #unchecked>自动开始 (任务直接进入下载队列)</template>
-        </n-switch>
+        <n-space align="center" :size="8">
+          <n-switch v-model:value="form.paused" />
+          <span style="font-size: 12px; color: var(--text-secondary);">
+            {{ form.paused ? '手动确认 (任务将处于暂停状态)' : '自动开始 (任务直接进入下载队列)' }}
+          </span>
+        </n-space>
       </n-form-item>
 
       <n-form-item label="启用状态">

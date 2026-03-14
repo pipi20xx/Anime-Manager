@@ -84,28 +84,28 @@ const handleSave = () => {
       
       <n-form-item label="自动监控设置">
         <n-space vertical :size="12">
-          <n-switch v-model:value="form.enabled">
-            <template #checked>全局监控：启用</template>
-            <template #unchecked>全局监控：暂停</template>
-          </n-switch>
+          <n-space align="center" :size="8">
+            <n-switch v-model:value="form.enabled" />
+            <span style="font-size: 12px; color: var(--text-secondary);">全局监控</span>
+          </n-space>
           
           <n-space vertical :size="8" v-if="form.enabled">
-            <n-switch v-model:value="form.for_subscription">
-              <template #checked>追剧订阅：启用</template>
-              <template #unchecked>追剧订阅：禁用</template>
-            </n-switch>
-            <n-switch v-model:value="form.for_rules">
-              <template #checked>下载规则：启用</template>
-              <template #unchecked>下载规则：禁用</template>
-            </n-switch>
-            <n-switch v-model:value="form.anime_priority">
-              <template #checked>动漫优先：启用</template>
-              <template #unchecked>动漫优先：禁用</template>
-            </n-switch>
-            <n-switch v-model:value="form.check_emby_exists">
-              <template #checked>Emby 检查：启用</template>
-              <template #unchecked>Emby 检查：禁用</template>
-            </n-switch>
+            <n-space align="center" :size="8">
+              <n-switch v-model:value="form.for_subscription" />
+              <span style="font-size: 12px; color: var(--text-secondary);">追剧订阅</span>
+            </n-space>
+            <n-space align="center" :size="8">
+              <n-switch v-model:value="form.for_rules" />
+              <span style="font-size: 12px; color: var(--text-secondary);">下载规则</span>
+            </n-space>
+            <n-space align="center" :size="8">
+              <n-switch v-model:value="form.anime_priority" />
+              <span style="font-size: 12px; color: var(--text-secondary);">动漫优先</span>
+            </n-space>
+            <n-space align="center" :size="8">
+              <n-switch v-model:value="form.check_emby_exists" />
+              <span style="font-size: 12px; color: var(--text-secondary);">Emby 检查</span>
+            </n-space>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
               检测 Emby 库是否存在，存在则跳过处理
             </div>
