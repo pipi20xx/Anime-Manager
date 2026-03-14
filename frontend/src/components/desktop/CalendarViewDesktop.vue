@@ -247,7 +247,7 @@ const {
   background: var(--app-surface-card);
   padding: 6px 16px;
   border-radius: var(--card-border-radius);
-  border: 1px solid var(--app-border-light);
+  border: none;
   min-height: 48px;
 }
 

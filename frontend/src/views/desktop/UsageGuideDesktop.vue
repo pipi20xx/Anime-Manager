@@ -23,7 +23,7 @@ const { activeTab } = useUsageGuide()
       <div class="subtitle">规则与正则指南</div>
     </div>
 
-    <n-tabs v-model:value="activeTab" type="line" animated class="guide-tabs">
+    <n-tabs v-model:value="activeTab" type="segment" animated class="guide-tabs custom-tabs">
       <!-- TAB 0: 设置说明 -->
       <n-tab-pane name="settings" tab="设置说明">
         <SettingsGuide />
@@ -126,5 +126,22 @@ const { activeTab } = useUsageGuide()
 
 .guide-tabs :deep(.n-tabs-nav:hover)::after {
   opacity: 1;
+}
+
+/* Tabs 硬编码样式 */
+:deep(.custom-tabs .n-tabs-nav) {
+  background: transparent !important;
+  padding: 4px !important;
+}
+:deep(.custom-tabs .n-tabs-tab) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 20px !important;
+}
+:deep(.custom-tabs .n-tabs-tab.n-tabs-tab--active) {
+  background: #a855f7 !important;
+  color: #000 !important;
 }
 </style>

@@ -134,11 +134,10 @@ const logColumns = [
     </div>
 
     <n-card :bordered="false" class="main-card">
-      <n-tabs 
-        v-model:value="activeTab" 
-        type="line" 
-        animated 
-        size="large"
+      <n-tabs
+        v-model:value="activeTab"
+        type="segment"
+        animated
         class="custom-tabs"
       >
         <!-- 板块 1: API 密钥 -->
@@ -377,7 +376,23 @@ const logColumns = [
 }
 
 :deep(.n-tabs-nav) {
-  padding: 0 20px;
+  padding: 4px;
+  background: transparent !important;
+  border-radius: var(--button-border-radius, 8px);
+  margin: 16px 20px 0;
+}
+
+/* Tabs 硬编码样式 */
+:deep(.custom-tabs .n-tabs-tab) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 20px !important;
+}
+:deep(.custom-tabs .n-tabs-tab.n-tabs-tab--active) {
+  background: #a855f7 !important;
+  color: #000 !important;
 }
 
 :deep(.n-tabs-pane-wrapper) {

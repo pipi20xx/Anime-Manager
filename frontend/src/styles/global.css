@@ -429,7 +429,6 @@ input, textarea, select, button {
 
 .page-header {
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--app-border-light);
   margin-bottom: 16px;
   display: flex;
   justify-content: space-between;

@@ -123,7 +123,7 @@ const dataTableColumns = computed(() => {
       </div>
     </div>
 
-    <n-tabs type="card" animated v-model:value="activeTab" class="main-tabs">
+    <n-tabs type="segment" animated v-model:value="activeTab" class="main-tabs custom-tabs">
       <n-tab-pane name="metadata" tab="元数据资产">
         <div class="pane-content"><TmdbFullDataView /></div>
       </n-tab-pane>
@@ -188,6 +188,23 @@ const dataTableColumns = computed(() => {
 .run-btn { height: auto; border-radius: 4px; }
 .result-card { background: var(--app-surface-card) !important; border: 1px solid var(--app-border-light) !important; min-height: 400px; border-radius: 12px !important; }
 .footer-info { font-size: 12px; color: var(--text-tertiary); text-align: right; }
-:deep(.n-tabs-nav) { background: transparent; }
+:deep(.n-tabs-nav) { background: transparent !important; }
 :deep(.n-tabs-pane-wrapper) { padding: 0; }
+
+/* Tabs 硬编码样式 */
+:deep(.custom-tabs .n-tabs-nav) {
+  background: transparent !important;
+  padding: 4px !important;
+}
+:deep(.custom-tabs .n-tabs-tab) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 20px !important;
+}
+:deep(.custom-tabs .n-tabs-tab.n-tabs-tab--active) {
+  background: #a855f7 !important;
+  color: #000 !important;
+}
 </style>

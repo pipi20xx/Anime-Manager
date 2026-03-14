@@ -51,7 +51,7 @@ const {
     </div>
 
     <n-spin :show="loading">
-      <n-tabs type="card" animated>
+      <n-tabs type="segment" animated class="custom-tabs">
         <!-- 基础配置 -->
         <n-tab-pane name="basic" tab="基础配置">
           <n-space vertical size="large">
@@ -469,4 +469,21 @@ const {
 
 .switch-label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
 .switch-desc { font-size: 12px; color: var(--text-tertiary); }
+
+/* Tabs 硬编码样式 */
+:deep(.custom-tabs .n-tabs-nav) {
+  background: transparent !important;
+  padding: 4px !important;
+}
+:deep(.custom-tabs .n-tabs-tab) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 20px !important;
+}
+:deep(.custom-tabs .n-tabs-tab.n-tabs-tab--active) {
+  background: #a855f7 !important;
+  color: #000 !important;
+}
 </style>

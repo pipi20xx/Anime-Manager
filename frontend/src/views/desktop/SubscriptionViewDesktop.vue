@@ -98,7 +98,7 @@ onMounted(fetchData)
       </n-space>
     </div>
 
-    <n-tabs type="card" animated>
+    <n-tabs type="segment" animated class="custom-tabs">
       <!-- 追剧订阅管理 -->
       <n-tab-pane name="subscriptions" tab="追剧订阅">
         <SubscriptionManager :clients="clients" />
@@ -334,4 +334,21 @@ onMounted(fetchData)
 .f-act { display: flex; justify-content: flex-end; }
 
 .empty-tip { padding: 40px; text-align: center; color: var(--text-muted); }
+
+/* Tabs 硬编码样式 */
+:deep(.custom-tabs .n-tabs-nav) {
+  background: transparent !important;
+  padding: 4px !important;
+}
+:deep(.custom-tabs .n-tabs-tab) {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 20px !important;
+}
+:deep(.custom-tabs .n-tabs-tab.n-tabs-tab--active) {
+  background: #a855f7 !important;
+  color: #000 !important;
+}
 </style>
