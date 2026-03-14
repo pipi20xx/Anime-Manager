@@ -3,6 +3,7 @@ import { ref, watch, h, computed } from 'vue'
 import { 
   NModal, NDataTable, NTag, NButton, NSpace, NSpin, NEmpty, NPopselect, useMessage
 } from 'naive-ui'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -66,14 +67,13 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 230,
+    width: 200,
     render(row: any) {
       const btns = []
       // 1. Delete Button
       btns.push(h(NButton, {
-        size: 'tiny',
-        quaternary: true,
-        type: 'error',
+        ...getButtonStyle('primary'),
+        size: 'small',
         onClick: () => handleDelete(row.guid)
       }, { default: () => '清除下载记录' }))
 
@@ -86,16 +86,18 @@ const columns = [
             trigger: 'click'
           }, {
             default: () => h(NButton, { 
-              size: 'tiny', 
-              type: 'primary', 
-              secondary: true, 
-              style: 'margin-left: 6px',
+              ...getButtonStyle('primary'),
+              size: 'small',
               disabled: clientOptions.value.length === 0
             }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '再下载' })
           })
         )
       } else {
-         btns.push(h(NButton, { size: 'tiny', disabled: true, style: 'margin-left: 6px' }, { default: () => '无链接' }))
+         btns.push(h(NButton, { 
+           ...getButtonStyle('primary'),
+           size: 'small',
+           disabled: true 
+         }, { default: () => '无链接' }))
       }
       
       return h(NSpace, { size: 4 }, { default: () => btns })

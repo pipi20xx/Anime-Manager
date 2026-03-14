@@ -205,8 +205,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
           </div>
           <n-button 
             v-if="!collapsed"
-            circle 
-            quaternary 
+            v-bind="getButtonStyle('icon')"
             size="small" 
             @click="isSearchOpen = true"
             style="margin-left: var(--m-1)"

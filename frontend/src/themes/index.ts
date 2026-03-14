@@ -341,6 +341,29 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     borderColor: `rgba(${config.surfaceColor}, 0.35)`,
     borderColorModal: `rgba(${config.surfaceColor}, 0.35)`,
     borderColorPopover: `rgba(${config.surfaceColor}, 0.35)`
+  },
+  // Switch 开关组件统一样式配置
+  Switch: {
+    // 基础尺寸
+    width: '44px',
+    widthMedium: '44px',
+    widthLarge: '52px',
+    height: '22px',
+    heightMedium: '22px',
+    heightLarge: '26px',
+    // 轨道颜色
+    railColor: 'var(--bg-tertiary)',
+    railColorActive: config.primaryColor,
+    // 按钮颜色
+    buttonColor: 'var(--text-primary)',
+    buttonColorActive: 'var(--text-primary)',
+    // 文字颜色
+    textColor: 'var(--text-secondary)',
+    // 边框和阴影
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+    // 圆角
+    railBorderRadius: '11px',
+    buttonBorderRadius: '50%'
   }
 })
 

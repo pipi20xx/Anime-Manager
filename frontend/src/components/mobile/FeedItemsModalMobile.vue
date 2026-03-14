@@ -134,9 +134,8 @@ watch(() => props.show, (newVal) => {
                 <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 8px;">
                    <n-popselect :options="clientOptions" @update:value="val => handleDownload(item, val)" trigger="click">
                      <n-button 
-                       v-bind="getButtonStyle('iconPrimary')" 
+                       v-bind="getButtonStyle('icon')" 
                        size="small"
-                       :style="{ color: 'var(--n-primary-color)', borderColor: 'var(--app-code-primary)', backgroundColor: 'var(--app-code-primary)' }"
                      >
                        <template #icon><n-icon><DownloadIcon/></n-icon></template>
                      </n-button>
@@ -144,11 +143,7 @@ watch(() => props.show, (newVal) => {
                    <n-button 
                      v-bind="getButtonStyle('icon')"
                      size="small"
-                     :style="item.is_downloaded 
-                       ? { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' }
-                       : { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' }
-                     "
-                     @click="handleToggleHistory(item, !item.is_downloaded)"
+                     @click="handleToggleHistory(item)"
                    >
                      <template #icon><n-icon><HistoryIcon/></n-icon></template>
                    </n-button>
@@ -168,15 +163,13 @@ watch(() => props.show, (newVal) => {
         </div>
         <n-space>
           <n-button 
-            secondary 
+            v-bind="getButtonStyle('primary')"
             @click="handleRetryRecognition" 
-            :loading="loading" 
-            size="small"
-            :style="{ color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' }"
+            :loading="loading"
           >
              重试识别
           </n-button>
-          <n-button @click="emit('update:show', false)" size="small">关闭</n-button>
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">关闭</n-button>
         </n-space>
       </n-space>
     </template>

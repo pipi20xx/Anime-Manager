@@ -451,3 +451,81 @@ input, textarea, select, button {
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
+
+/* ============================================
+   Switch 开关组件统一样式
+   ============================================ */
+
+/* Switch 基础样式统一 */
+.n-switch {
+  --n-switch-height: 22px !important;
+  --n-switch-width: 44px !important;
+  --n-switch-rail-color: var(--bg-tertiary) !important;
+  --n-switch-rail-color-active: var(--n-primary-color) !important;
+  --n-switch-button-color: var(--text-primary) !important;
+  --n-switch-button-color-active: var(--text-primary) !important;
+  --n-switch-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Switch 轨道样式 */
+.n-switch__rail {
+  border-radius: 11px !important;
+  background-color: var(--bg-tertiary) !important;
+  border: 1px solid var(--app-border-medium) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Switch 激活状态轨道 */
+.n-switch.n-switch--active .n-switch__rail {
+  background-color: var(--n-primary-color) !important;
+  border-color: var(--n-primary-color) !important;
+}
+
+/* Switch 按钮样式 */
+.n-switch__button {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background-color: var(--text-primary) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Switch 激活状态按钮位置 */
+.n-switch.n-switch--active .n-switch__button {
+  transform: translateX(22px) !important;
+}
+
+/* Switch 禁用状态 */
+.n-switch.n-switch--disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.n-switch.n-switch--disabled .n-switch__rail {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--app-border-light) !important;
+}
+
+/* Switch 文字标签样式 */
+.n-switch__checked,
+.n-switch__unchecked {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Switch 聚焦状态 */
+.n-switch:focus-visible .n-switch__rail {
+  box-shadow: 0 0 0 2px var(--primary-medium) !important;
+}
+
+/* Switch 悬停效果 */
+.n-switch:not(.n-switch--disabled):hover .n-switch__rail {
+  border-color: var(--n-primary-color) !important;
+}
+
+.n-switch.n-switch--active:not(.n-switch--disabled):hover .n-switch__rail {
+  background-color: var(--n-primary-color) !important;
+  opacity: 0.9;
+}

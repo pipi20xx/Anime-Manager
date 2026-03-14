@@ -138,21 +138,19 @@ const columns = [
   {
     title: '操作',
     key: 'actions',
-    width: 230,
+    width: 200,
     render(row: any) {
       const btns = []      
       if (row.is_downloaded) {
         btns.push(h(NButton, { 
-          size: 'tiny',
-          ghost: true,
-          type: 'warning',
+          ...getButtonStyle('primary'),
+          size: 'small',
           onClick: () => handleToggleHistory(row, false) 
         }, { default: () => '清除下载记录' }))
       } else {
         btns.push(h(NButton, { 
-          size: 'tiny',
-          ghost: true,
-          type: 'primary',
+          ...getButtonStyle('primary'),
+          size: 'small',
           onClick: () => handleToggleHistory(row, true) 
         }, { default: () => '设为已下载' }))
       }
@@ -164,10 +162,8 @@ const columns = [
           trigger: 'click'
         }, {
           default: () => h(NButton, { 
-            size: 'tiny',
-            ghost: true,
-            type: 'primary',
-            style: { marginLeft: '6px' },
+            ...getButtonStyle('primary'),
+            size: 'small',
             disabled: clientOptions.value.length === 0
           }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '下载' })
         })
