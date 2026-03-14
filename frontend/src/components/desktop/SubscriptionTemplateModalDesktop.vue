@@ -43,15 +43,15 @@ const columns = [
   { title: '分类', key: 'category', width: 100 },
   { title: '包含关键词', key: 'include_keywords', ellipsis: { tooltip: true } },
   { 
-    title: '操作', key: 'actions', width: 120,
+    title: '操作', key: 'actions', width: 100,
     render(row: any) {
       return h(NSpace, { size: 4 }, {
         default: () => [
-          h(NButton, { size: 'tiny', secondary: true, onClick: () => openEdit(row) }, { 
+          h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => openEdit(row) }, { 
             icon: () => h(NIcon, null, { default: () => h(EditIcon) }) 
           }),
           h(NPopconfirm, { positiveText: '确定', negativeText: '取消', onPositiveClick: () => deleteTemplate(row.id) }, {
-            trigger: () => h(NButton, { size: 'tiny', secondary: true, type: 'error' }, { 
+            trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { 
               icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) 
             }),
             default: () => '确定删除此模板吗？'
@@ -130,8 +130,8 @@ const columns = [
 
     <template #action>
       <n-space justify="end">
-        <n-button v-if="showEdit" v-bind="getButtonStyle('ghost')" @click="showEdit = false">返回列表</n-button>
-        <n-button v-if="!showEdit" v-bind="getButtonStyle('ghost')" @click="close">关闭</n-button>
+        <n-button v-if="showEdit" v-bind="getButtonStyle('dialogCancel')" @click="showEdit = false">返回列表</n-button>
+        <n-button v-if="!showEdit" v-bind="getButtonStyle('dialogCancel')" @click="close">关闭</n-button>
         <n-button v-if="showEdit" v-bind="getButtonStyle('primary')" @click="saveTemplate">保存该预设</n-button>
       </n-space>
     </template>

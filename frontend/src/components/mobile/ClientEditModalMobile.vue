@@ -103,11 +103,11 @@ const {
     
     <template #footer>
       <n-space justify="space-between">
-        <n-button :loading="testLoading" @click="handleTest" ghost type="info" size="small">
+        <n-button v-bind="getButtonStyle('primary')" :loading="testLoading" @click="handleTest">
           测试连接
         </n-button>
         <n-space>
-          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)" size="small">取消</n-button>
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
           <n-button v-bind="getButtonStyle('primary')" @click="handleSave" size="small">
             保存
           </n-button>

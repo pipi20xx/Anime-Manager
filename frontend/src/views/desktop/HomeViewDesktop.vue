@@ -56,7 +56,7 @@ const {
                             <n-icon :component="SearchIcon" />
                           </template>
                         </n-input>
-                        <n-button type="primary" size="large" :loading="recognitionState.loading" @click="handleRecognize" style="padding: 0 24px; font-weight: bold;">
+                        <n-button type="primary" size="large" :loading="recognitionState.loading" @click="handleRecognize" style="padding: 0 24px;">
                           <template #icon>
                             <n-icon :component="PlayIcon" />
                           </template>

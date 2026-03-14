@@ -379,8 +379,8 @@ const getShortName = (path: string) => {
 }
 
 .file-icon-box.is-dir {
-  background: var(--warning-light);
-  color: var(--n-warning-color);
+  background: var(--primary-light);
+  color: var(--n-primary-color);
   border-color: transparent;
 }
 

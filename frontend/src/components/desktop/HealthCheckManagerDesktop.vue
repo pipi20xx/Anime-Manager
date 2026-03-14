@@ -9,7 +9,10 @@ import {
   ErrorOutlineOutlined as ErrorIcon,
   HelpOutlineOutlined as UnknownIcon,
   RefreshOutlined as RefreshIcon,
-  AddOutlined as AddIcon
+  AddOutlined as AddIcon,
+  EditOutlined as EditIcon,
+  DeleteOutlineOutlined as DeleteIcon,
+  PlayCircleOutlined as PlayIcon
 } from '@vicons/material'
 import { useHealthCheck } from '../../composables/useHealthCheck'
 import type { HealthCheckConfig } from '../../api/health'
@@ -51,16 +54,22 @@ const columns = [
     title: '操作',
     key: 'actions',
     render(row: HealthCheckConfig) {
-      return h(NSpace, {}, {
+      return h(NSpace, { size: 4 }, {
         default: () => [
-          h(NButton, { size: 'tiny', onClick: () => startCheck(row.id!) }, { default: () => '检测' }),
-          h(NButton, { size: 'tiny', onClick: () => openEdit(row) }, { default: () => '编辑' }),
+          h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => startCheck(row.id!) }, { 
+            icon: () => h(NIcon, null, { default: () => h(PlayIcon) })
+          }),
+          h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => openEdit(row) }, { 
+            icon: () => h(NIcon, null, { default: () => h(EditIcon) })
+          }),
           h(NPopconfirm, { 
             onPositiveClick: () => deleteConfig(row.id!),
             positiveText: '确定',
             negativeText: '取消'
           }, {
-            trigger: () => h(NButton, { size: 'tiny', type: 'error', ghost: true }, { default: () => '删除' }),
+            trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { 
+              icon: () => h(NIcon, null, { default: () => h(DeleteIcon) })
+            }),
             default: () => '确定要删除这条检测配置吗？'
           })
         ]
@@ -127,7 +136,7 @@ const columns = [
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button v-bind="getButtonStyle('ghost')" @click="showModal = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="showModal = false">取消</n-button>
           <n-button v-bind="getButtonStyle('primary')" @click="saveConfig">提交保存</n-button>
         </n-space>
       </template>

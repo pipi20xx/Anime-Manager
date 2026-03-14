@@ -213,7 +213,7 @@ watch(() => props.show, (newVal) => {
 
       <template #footer>
         <n-space justify="end">
-          <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">取消</n-button>
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
           <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存订阅</n-button>
         </n-space>
       </template>

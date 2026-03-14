@@ -67,15 +67,16 @@ const columns = [
         btns.push(h(NButton, { 
           size: 'tiny', 
           secondary: true, 
-          style: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
-          onClick: () => handleToggleHistory(row, false) 
+          ghost: true,
+          type: 'warning',
+          onClick: () => handleToggleHistory(row, false)
         }, { default: () => '清除下载记录' }))
       } else {
-        btns.push(h(NButton, { 
-          size: 'tiny', 
-          secondary: true, 
-          style: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
-          onClick: () => handleToggleHistory(row, true) 
+        btns.push(h(NButton, {
+          size: 'tiny',
+          ghost: true,
+          type: 'primary',
+          onClick: () => handleToggleHistory(row, true)
         }, { default: () => '设为已下载' }))
       }
       btns.push(
@@ -84,15 +85,11 @@ const columns = [
           onUpdateValue: (val: string) => handleDownload(row, val),
           trigger: 'click'
         }, {
-          default: () => h(NButton, { 
-            size: 'tiny', 
-            bordered: true,
-            style: { 
-              marginLeft: '6px',
-              color: 'var(--n-primary-color)', 
-              borderColor: 'var(--n-primary-color)', 
-              backgroundColor: 'var(--app-code-primary)' 
-            },
+          default: () => h(NButton, {
+            size: 'tiny',
+            ghost: true,
+            type: 'primary',
+            style: { marginLeft: '6px' },
             disabled: clientOptions.value.length === 0
           }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '下载' })
         })

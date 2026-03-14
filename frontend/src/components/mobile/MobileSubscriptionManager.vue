@@ -498,6 +498,7 @@ onMounted(() => {
   cursor: pointer;
   transition: background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
+  color: var(--text-primary);
 }
 
 .action-item:active {

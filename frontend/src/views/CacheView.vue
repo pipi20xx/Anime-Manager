@@ -256,10 +256,10 @@ onUnmounted(() => {
         <div class="subtitle">本地元数据缓存管理</div>
       </div>
       <n-space>
-        <n-button ghost type="primary" @click="openCreate">
+        <n-button v-bind="getButtonStyle('primary')" @click="openCreate">
           <template #icon><n-icon><AddIcon /></n-icon></template>手动新增
         </n-button>
-        <n-button ghost type="info" @click="showSyncModal = true">
+        <n-button v-bind="getButtonStyle('primary')" @click="showSyncModal = true">
           <template #icon><n-icon><SyncIcon /></n-icon></template>同步 SYTMDB
         </n-button>
       </n-space>

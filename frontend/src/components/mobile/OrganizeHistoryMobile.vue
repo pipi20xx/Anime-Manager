@@ -38,7 +38,6 @@ const {
   formatTime
 } = useOrganizeHistory()
 
-const shouldDeleteFile = ref(false)
 const showSearch = ref(false)
 
 const scrollTarget = ref<HTMLElement | null>(null)
@@ -191,8 +190,8 @@ const handleAction = (key: string) => {
              <div v-if="item.tmdb_id" class="footer-tmdb">TMDB: {{ item.tmdb_id }}</div>
            </div>
            <n-popconfirm 
-              @positive-click="deleteItem(item.id, shouldDeleteFile)" 
-              @negative-click="shouldDeleteFile = false"
+              @positive-click="deleteItem(item.id, item.shouldDeleteFile)" 
+              @negative-click="item.shouldDeleteFile = false"
               positive-text="确定"
               negative-text="取消"
             >
@@ -201,7 +200,7 @@ const handleAction = (key: string) => {
               </template>
               <div style="max-width: 200px">
                 <p style="margin: 0 0 8px 0">删除此记录?</p>
-                <n-checkbox v-model:checked="shouldDeleteFile">
+                <n-checkbox v-model:checked="item.shouldDeleteFile">
                    <span style="color: var(--n-error-color); font-size: 12px">同时物理删除源文件</span>
                 </n-checkbox>
               </div>
@@ -362,6 +361,7 @@ const handleAction = (key: string) => {
   cursor: pointer;
   transition: background 0.15s ease;
   -webkit-tap-highlight-color: transparent;
+  color: var(--text-primary);
 }
 .action-item:active {
   background: var(--bg-surface-hover);

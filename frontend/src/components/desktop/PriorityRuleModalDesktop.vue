@@ -79,19 +79,16 @@ const {
                   </div>
                   
                   <template #action>
-                     <n-space justify="end" :size="4">
-                       <n-button size="tiny" secondary @click.stop="openEditProfile(profile)">
-                         <template #icon><n-icon><EditIcon/></n-icon></template>
-                       </n-button>
-                       <n-popconfirm positive-text="确定" negative-text="取消" @positive-click.stop="deleteProfile(profile.id)">
-                         <template #trigger>
-                           <n-button size="tiny" secondary type="error" @click.stop>
-                             <template #icon><n-icon><DeleteIcon/></n-icon></template>
-                           </n-button>
-                         </template>
-                         确定删除此策略吗？
-                       </n-popconfirm>
-                     </n-space>
+                    <n-space justify="end" @click.stop>
+                      <n-popconfirm positive-text="确定" negative-text="取消" @positive-click.stop="deleteProfile(profile.id)">
+                        <template #trigger>
+                          <n-button v-bind="getButtonStyle('iconDanger')" size="small">
+                            <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                          </n-button>
+                        </template>
+                        确定删除此策略吗？
+                      </n-popconfirm>
+                    </n-space>
                   </template>
                 </n-card>
               </n-gi>
@@ -130,13 +127,10 @@ const {
                   <n-tag size="small" v-if="rule.conditions.team">{{ rule.conditions.team }}</n-tag>
                 </div>
                 <template #action>
-                  <n-space justify="end" :size="4">
-                    <n-button size="tiny" secondary @click.stop="openEditRule(rule)">
-                      <template #icon><n-icon><EditIcon/></n-icon></template>
-                    </n-button>
+                  <n-space justify="end" @click.stop>
                     <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
                       <template #trigger>
-                        <n-button size="tiny" secondary type="error" @click.stop>
+                        <n-button v-bind="getButtonStyle('iconDanger')" size="small">
                           <template #icon><n-icon><DeleteIcon/></n-icon></template>
                         </n-button>
                       </template>
@@ -175,7 +169,7 @@ const {
       </n-form>
       <template #footer>
         <n-space justify="end">
-          <n-button v-bind="getButtonStyle('ghost')" @click="showRuleEdit = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="showRuleEdit = false">取消</n-button>
           <n-button v-bind="getButtonStyle('primary')" @click="saveRule">保存规则</n-button>
         </n-space>
       </template>
@@ -224,7 +218,7 @@ const {
       </div>
       <template #footer>
         <n-space justify="end">
-          <n-button v-bind="getButtonStyle('ghost')" @click="showProfileEdit = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="showProfileEdit = false">取消</n-button>
           <n-button v-bind="getButtonStyle('primary')" @click="saveProfile">保存策略</n-button>
         </n-space>
       </template>

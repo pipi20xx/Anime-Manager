@@ -496,7 +496,7 @@ const countryColumns = [
 
         <template #action>
           <n-space justify="end">
-            <n-button v-bind="getButtonStyle('ghost')" @click="showModal = false">取消</n-button>
+            <n-button v-bind="getButtonStyle('dialogCancel')" @click="showModal = false">取消</n-button>
             <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
           </n-space>
         </template>

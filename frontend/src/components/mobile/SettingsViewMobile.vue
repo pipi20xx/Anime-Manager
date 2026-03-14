@@ -275,7 +275,11 @@ const {
                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditClient(client)">
                     <template #icon><n-icon><EditIcon/></n-icon></template>
                   </n-button>
-                  <n-popconfirm @positive-click="handleDeleteClient(client.id)">
+                  <n-popconfirm
+                    @positive-click="handleDeleteClient(client.id)"
+                    positive-text="确定"
+                    negative-text="取消"
+                  >
                     <template #trigger>
                       <n-button v-bind="getButtonStyle('iconDanger')" size="small">
                         <template #icon><n-icon><DeleteIcon/></n-icon></template>

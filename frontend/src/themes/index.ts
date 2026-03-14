@@ -120,7 +120,50 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
     textColorBase: '#e0e0e0'
   },
   Card: { borderRadius: '14px', borderColor: `rgba(${config.surfaceColor}, 0.15)` },
-  Button: { borderRadiusMedium: '10px', fontWeight: '600' },
+  Button: {
+    borderRadiusMedium: '10px',
+    fontWeight: '500',
+    fontWeightSmall: '500',
+    fontWeightMedium: '500',
+    fontWeightLarge: '500',
+    // 主要按钮 - 主题色底色 + 黑色文字 + 主题色边框
+    colorPrimary: config.primaryColor,
+    colorPrimaryHover: config.primaryColorHover,
+    colorPrimaryPressed: config.primaryColorPressed,
+    textColorPrimary: '#000000',
+    textColorPrimaryHover: '#000000',
+    textColorPrimaryPressed: '#000000',
+    borderColorPrimary: config.primaryColor,
+    borderColorPrimaryHover: config.primaryColorHover,
+    borderColorPrimaryPressed: config.primaryColorPressed,
+    borderPrimary: `1px solid ${config.primaryColor}`,
+    // 默认按钮 - 主题色底色 + 黑色文字 + 主题色边框
+    color: config.primaryColor,
+    colorHover: config.primaryColorHover,
+    colorPressed: config.primaryColorPressed,
+    textColor: '#000000',
+    textColorHover: '#000000',
+    textColorPressed: '#000000',
+    borderColor: config.primaryColor,
+    borderColorHover: config.primaryColorHover,
+    borderColorPressed: config.primaryColorPressed,
+    border: `1px solid ${config.primaryColor}`,
+    // 文字按钮(text type)颜色配置 - 透明底 + 黑色文字
+    textColorText: '#000000',
+    textColorTextHover: '#000000',
+    textColorTextPressed: '#000000',
+    // 幽灵按钮(ghost)颜色配置 - 透明底 + 黑色文字 + 主题色边框
+    textColorGhost: '#000000',
+    textColorGhostHover: '#000000',
+    textColorGhostPressed: '#000000',
+    // Quaternary 按钮颜色配置 - 透明底 + 黑色文字
+    colorQuaternary: 'transparent',
+    colorQuaternaryHover: generateColorMix(config.primaryColor, '90%'),
+    colorQuaternaryPressed: generateColorMix(config.primaryColor, '85%'),
+    textColorQuaternary: '#000000',
+    textColorQuaternaryHover: '#000000',
+    textColorQuaternaryPressed: '#000000'
+  },
   Input: { borderRadius: '10px' },
   Select: { 
     borderRadius: '10px',
@@ -137,11 +180,84 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
       }
     }
   },
-  Tag: { borderRadius: '6px' },
+  Tag: {
+    borderRadius: '6px',
+    // Success 标签 - 使用更亮的绿色提高对比度
+    colorSuccess: 'rgba(76, 175, 80, 0.15)',
+    colorSuccessHover: 'rgba(76, 175, 80, 0.25)',
+    colorSuccessPressed: 'rgba(76, 175, 80, 0.3)',
+    textColorSuccess: '#69f0ae',
+    borderSuccess: '1px solid rgba(76, 175, 80, 0.5)',
+    // Warning 标签 - 使用更亮的橙色提高对比度
+    colorWarning: 'rgba(255, 152, 0, 0.15)',
+    colorWarningHover: 'rgba(255, 152, 0, 0.25)',
+    colorWarningPressed: 'rgba(255, 152, 0, 0.3)',
+    textColorWarning: '#ffd54f',
+    borderWarning: '1px solid rgba(255, 152, 0, 0.5)',
+    // Error 标签 - 使用更亮的红色提高对比度
+    colorError: 'rgba(244, 67, 54, 0.15)',
+    colorErrorHover: 'rgba(244, 67, 54, 0.25)',
+    colorErrorPressed: 'rgba(244, 67, 54, 0.3)',
+    textColorError: '#ff8a80',
+    borderError: '1px solid rgba(244, 67, 54, 0.5)',
+    // Info 标签 - 使用更亮的蓝色提高对比度
+    colorInfo: 'rgba(33, 150, 243, 0.15)',
+    colorInfoHover: 'rgba(33, 150, 243, 0.25)',
+    colorInfoPressed: 'rgba(33, 150, 243, 0.3)',
+    textColorInfo: '#82b1ff',
+    borderInfo: '1px solid rgba(33, 150, 243, 0.5)'
+  },
   Popconfirm: {
     color: 'var(--app-modal-bg)',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    arrowColor: 'var(--app-modal-bg)'
+    arrowColor: 'var(--app-modal-bg)',
+    peers: {
+      Button: {
+        fontWeight: '500',
+        fontWeightSmall: '500',
+        fontWeightMedium: '500',
+        fontWeightLarge: '500',
+        // 主要按钮 - 主题色底色 + 黑色文字 + 主题色边框
+        colorPrimary: config.primaryColor,
+        colorPrimaryHover: config.primaryColorHover,
+        colorPrimaryPressed: config.primaryColorPressed,
+        textColorPrimary: '#000000',
+        textColorPrimaryHover: '#000000',
+        textColorPrimaryPressed: '#000000',
+        borderColorPrimary: config.primaryColor,
+        borderColorPrimaryHover: config.primaryColorHover,
+        borderColorPrimaryPressed: config.primaryColorPressed,
+        borderPrimary: `1px solid ${config.primaryColor}`,
+        // 默认按钮 - 主题色底色 + 黑色文字 + 主题色边框
+        color: config.primaryColor,
+        colorHover: config.primaryColorHover,
+        colorPressed: config.primaryColorPressed,
+        textColor: '#000000',
+        textColorHover: '#000000',
+        textColorPressed: '#000000',
+        borderColor: config.primaryColor,
+        borderColorHover: config.primaryColorHover,
+        borderColorPressed: config.primaryColorPressed,
+        border: `1px solid ${config.primaryColor}`,
+        // Ghost 按钮 - 透明底色 + 黑色文字 + 主题色边框
+        colorGhost: 'transparent',
+        colorGhostHover: generateColorMix(config.primaryColor, '90%'),
+        colorGhostPressed: generateColorMix(config.primaryColor, '85%'),
+        textColorGhost: '#000000',
+        textColorGhostHover: '#000000',
+        textColorGhostPressed: '#000000',
+        borderColorGhost: config.primaryColor,
+        borderColorGhostHover: config.primaryColorHover,
+        borderColorGhostPressed: config.primaryColorPressed,
+        // Quaternary 按钮 - 透明底色 + 黑色文字
+        colorQuaternary: 'transparent',
+        colorQuaternaryHover: generateColorMix(config.primaryColor, '90%'),
+        colorQuaternaryPressed: generateColorMix(config.primaryColor, '85%'),
+        textColorQuaternary: '#000000',
+        textColorQuaternaryHover: '#000000',
+        textColorQuaternaryPressed: '#000000'
+      }
+    }
   },
   Popover: {
     color: 'var(--app-modal-bg)',
@@ -162,7 +278,47 @@ const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
   Dialog: {
     color: 'var(--app-modal-bg)',
     textColor: 'var(--text-primary)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+    peers: {
+      Button: {
+        fontWeight: '500',
+        fontWeightSmall: '500',
+        fontWeightMedium: '500',
+        fontWeightLarge: '500',
+        // 确认按钮 - 主题色底色 + 黑色文字 + 主题色边框
+        colorPrimary: config.primaryColor,
+        colorPrimaryHover: config.primaryColorHover,
+        colorPrimaryPressed: config.primaryColorPressed,
+        textColorPrimary: '#000000',
+        textColorPrimaryHover: '#000000',
+        textColorPrimaryPressed: '#000000',
+        borderColorPrimary: config.primaryColor,
+        borderColorPrimaryHover: config.primaryColorHover,
+        borderColorPrimaryPressed: config.primaryColorPressed,
+        borderPrimary: `1px solid ${config.primaryColor}`,
+        // 默认按钮 - 主题色底色 + 黑色文字 + 主题色边框
+        color: config.primaryColor,
+        colorHover: config.primaryColorHover,
+        colorPressed: config.primaryColorPressed,
+        textColor: '#000000',
+        textColorHover: '#000000',
+        textColorPressed: '#000000',
+        borderColor: config.primaryColor,
+        borderColorHover: config.primaryColorHover,
+        borderColorPressed: config.primaryColorPressed,
+        border: `1px solid ${config.primaryColor}`,
+        // Ghost 按钮 - 透明底色 + 黑色文字 + 主题色边框
+        colorGhost: 'transparent',
+        colorGhostHover: generateColorMix(config.primaryColor, '90%'),
+        colorGhostPressed: generateColorMix(config.primaryColor, '85%'),
+        textColorGhost: '#000000',
+        textColorGhostHover: '#000000',
+        textColorGhostPressed: '#000000',
+        borderColorGhost: config.primaryColor,
+        borderColorGhostHover: config.primaryColorHover,
+        borderColorGhostPressed: config.primaryColorPressed
+      }
+    }
   },
   LayoutSider: {
     color: 'var(--app-surface-card)',

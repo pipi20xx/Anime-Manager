@@ -6,7 +6,8 @@ import {
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
-  SyncOutlined as SyncIcon
+  SyncOutlined as SyncIcon,
+  DeleteOutlineOutlined as DeleteIcon
 } from '@vicons/material'
 import ConfigSection from '../../components/ConfigSection.vue'
 import ClientEditModal from '../../components/ClientEditModal.vue'
@@ -361,7 +362,7 @@ const {
             
             <n-grid :x-gap="12" :y-gap="12" :cols="3">
               <n-gi v-for="client in clients" :key="client.id">
-                <n-card hoverable class="client-card">
+                <n-card hoverable class="client-card" @click="openEditClient(client)">
                   <div class="client-info">
                     <div class="client-name">
                       <n-icon v-if="client.is_default" style="color: var(--n-warning-color)" title="默认客户端">
@@ -372,11 +373,12 @@ const {
                     <div class="client-meta">{{ client.type }} | {{ client.url }}</div>
                   </div>
                   <template #action>
-                    <n-space justify="end">
-                      <n-button size="tiny" @click.stop="openEditClient(client)">编辑</n-button>
+                    <n-space justify="end" @click.stop>
                       <n-popconfirm @positive-click="handleDeleteClient(client.id)">
                         <template #trigger>
-                          <n-button size="tiny" type="error" ghost @click.stop>删除</n-button>
+                          <n-button v-bind="getButtonStyle('iconDanger')" size="small">
+                            <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                          </n-button>
                         </template>
                         确定要删除该下载客户端配置吗？
                       </n-popconfirm>

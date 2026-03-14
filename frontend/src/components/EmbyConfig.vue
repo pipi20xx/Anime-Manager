@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NCard, NForm, NFormItem, NInput, NSwitch, NSpace, NButton, useMessage } from 'naive-ui'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 interface Props {
   embyUrl: string
@@ -149,7 +150,7 @@ const fetchToken = async () => {
           <n-button type="primary" :loading="loading" @click="fetchToken">
             自动获取 Token
           </n-button>
-          <n-button secondary :loading="testLoading" @click="testConnection">
+          <n-button v-bind="getButtonStyle('primary')" :loading="testLoading" @click="testConnection">
             测试连接
           </n-button>
         </n-space>

@@ -114,7 +114,7 @@ const columns = [
         <n-button v-bind="getButtonStyle('danger')" size="small" @click="handleClearHistory" :disabled="history.length === 0">
           清空所有推送历史
         </n-button>
-        <n-button v-bind="getButtonStyle('ghost')" @click="emit('update:show', false)">关闭窗口</n-button>
+        <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">关闭窗口</n-button>
       </n-space>
     </template>
   </n-modal>

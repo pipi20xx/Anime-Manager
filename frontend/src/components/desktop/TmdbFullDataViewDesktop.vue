@@ -69,7 +69,7 @@ const {
           <n-button v-bind="getButtonStyle('warning')" @click="handleSyncSytmdb">
             同步 SYTMDB
           </n-button>
-          <n-button v-bind="getButtonStyle('primary')" secondary @click="openCreate">
+          <n-button v-bind="getButtonStyle('primary')" @click="openCreate">
             手动新增
           </n-button>
           <n-button v-bind="getButtonStyle('icon')" @click="fetchBrowserData" :loading="browserLoading"><template #icon><n-icon><SyncIcon /></n-icon></template></n-button>
@@ -128,7 +128,7 @@ const {
         <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #action>
-        <n-space justify="end"><n-button v-bind="getButtonStyle('ghost')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>
+        <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>
       </template>
     </n-modal>
 

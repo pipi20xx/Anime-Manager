@@ -140,7 +140,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
         <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #footer>
-        <n-space justify="end"><n-button v-bind="getButtonStyle('ghost')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>
+        <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>
       </template>
     </n-modal>
 

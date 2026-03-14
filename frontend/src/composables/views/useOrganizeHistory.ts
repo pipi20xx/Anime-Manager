@@ -30,10 +30,16 @@ export function useOrganizeHistory() {
       const res = await fetch(`${API_BASE}/api/organize/history?limit=${pageSize.value}&offset=${offset}`)
       const data = await res.json()
       
+      // 为每个 item 添加 shouldDeleteFile 属性
+      const dataWithFlag = data.map((item: any) => ({
+        ...item,
+        shouldDeleteFile: false
+      }))
+      
       if (isRefresh) {
-        history.value = data
+        history.value = dataWithFlag
       } else {
-        history.value.push(...data)
+        history.value.push(...dataWithFlag)
       }
       
       if (data.length < pageSize.value) {

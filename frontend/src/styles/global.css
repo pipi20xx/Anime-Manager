@@ -371,21 +371,35 @@ input, textarea, select, button {
   color: var(--n-text-color-1) !important;
 }
 
-/* 按钮统一样式增强 */
-.n-button {
+/* 按钮统一样式增强 - 强制所有按钮字体粗细一致 */
+.n-button,
+.n-button * {
   transition: all 0.2s ease;
+  font-weight: 500 !important;
 }
-.n-button--primary-type {
-  font-weight: 500;
-}
-.n-button--secondary-type {
-  font-weight: 400;
-}
-.n-button--error-type {
-  font-weight: 500;
-}
-.n-button--ghost-type {
-  font-weight: 400;
+.n-button--primary-type,
+.n-button--secondary-type,
+.n-button--tertiary-type,
+.n-button--default-type,
+.n-button--warning-type,
+.n-button--error-type,
+.n-button--info-type,
+.n-button--success-type,
+.n-button--ghost-type,
+.n-button--text-type,
+.n-button--quaternary-type,
+.n-button--primary-type *,
+.n-button--secondary-type *,
+.n-button--tertiary-type *,
+.n-button--default-type *,
+.n-button--warning-type *,
+.n-button--error-type *,
+.n-button--info-type *,
+.n-button--success-type *,
+.n-button--ghost-type *,
+.n-button--text-type *,
+.n-button--quaternary-type * {
+  font-weight: 500 !important;
 }
 
 /* 图标按钮统一样式 */

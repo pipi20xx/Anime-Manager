@@ -134,7 +134,7 @@ const {
                         <n-input v-model:value="editBuffer.title" placeholder="标题" size="tiny" style="width: 150px" />
                         <n-input-number v-model:value="editBuffer.season" :min="1" size="tiny" style="width: 80px" />
                         <n-button v-bind="getButtonStyle('primary')" @click="saveEdit(sub.id)">保存</n-button>
-                        <n-button v-bind="getButtonStyle('ghost')" @click="editingId = null">取消</n-button>
+                        <n-button v-bind="getButtonStyle('dialogCancel')" @click="editingId = null">取消</n-button>
                       </n-space>
                     </template>
                     <template v-else>
