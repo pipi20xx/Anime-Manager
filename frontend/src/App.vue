@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { 
   NConfigProvider, 
   NDialogProvider, 
   NMessageProvider, 
   NNotificationProvider,
   NGlobalStyle,
-  darkTheme
+  darkTheme,
+  lightTheme
 } from 'naive-ui'
 
 import MainLayout from './layouts/MainLayout.vue'
 
 import LoginView from './views/LoginView.vue'
 
-import { themeOverrides } from './store/themeStore'
+import { themeOverrides, isDarkMode } from './store/themeStore'
 
 import { isLoggedIn, uiAuthEnabled } from './store/navigationStore'
+
+// 根据当前模式选择主题
+const currentNaiveTheme = computed(() => isDarkMode.value ? darkTheme : lightTheme)
 
 
 
@@ -87,7 +91,7 @@ onMounted(() => {
 
 <template>
 
-  <n-config-provider :theme="darkTheme" :theme-overrides="themeOverrides">
+  <n-config-provider :theme="currentNaiveTheme" :theme-overrides="themeOverrides">
 
     <n-global-style />
 

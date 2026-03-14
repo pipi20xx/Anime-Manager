@@ -290,6 +290,38 @@ input, textarea, select, button {
   -webkit-backdrop-filter: blur(20px) !important;
 }
 
+/* Tooltip 主题化 - 固定深色背景 */
+.n-tooltip,
+.n-tooltip.n-popover,
+.n-popover.n-tooltip,
+[data-n-popover].n-tooltip {
+  background: rgba(0, 0, 0, 0.85) !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+.n-tooltip .n-tooltip__content,
+.n-tooltip .n-popover__content,
+.n-popover.n-tooltip .n-popover__content {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+.n-tooltip__arrow,
+.n-tooltip .n-popover-arrow,
+.n-popover.n-tooltip .n-popover-arrow {
+  background: rgba(0, 0, 0, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.85) !important;
+}
+/* 覆盖白天模式下 Tooltip 的白色背景 */
+.n-popover.n-tooltip--light,
+.n-tooltip.n-popover--light,
+.n-popover[data-n-popover][data-theme='light'] {
+  background: rgba(0, 0, 0, 0.85) !important;
+  color: #ffffff !important;
+}
+
 /* Popover 主题化 */
 .n-popover {
   background: var(--app-modal-bg) !important;

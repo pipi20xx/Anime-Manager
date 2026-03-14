@@ -65,8 +65,8 @@ import {
   currentViewKey, isSearchOpen, isLogConsoleOpen, 
   isLoggedIn, logout, username, uiAuthEnabled 
 } from '../store/navigationStore'
-import { currentThemeType, logoColor } from '../store/themeStore'
-import { themeOptions } from '../themes'
+import { currentThemeMode, isDarkMode, logoColor, toggleThemeMode } from '../store/themeStore'
+import { ThemeMode } from '../themes'
 import { useIsMobile } from '../composables/useIsMobile'
 
 const notification = useNotification()
@@ -243,15 +243,24 @@ const isNavActive = (key: string) => currentViewKey.value === key
           </div>
 
           <n-space :vertical="collapsed" justify="space-around" align="center" :size="[4, 8]">
-            <n-dropdown 
-              trigger="click" 
-              :options="themeOptions" 
-              @select="val => currentThemeType = val"
+            <n-button 
+              v-bind="getButtonStyle('iconPrimary')" 
+              size="small" 
+              type="primary"
+              @click="toggleThemeMode"
+              :title="isDarkMode ? '切换白天模式' : '切换黑夜模式'"
             >
-              <n-button v-bind="getButtonStyle('iconPrimary')" size="small" type="primary">
-                <template #icon><n-icon><ThemeIcon /></n-icon></template>
-              </n-button>
-            </n-dropdown>
+              <template #icon>
+                <n-icon>
+                  <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5M2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1m18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1m0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1M5.99 4.58a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41zm12.37 12.37a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0c.39-.39.39-1.03 0-1.41zm1.06-10.96a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0zM7.05 18.36a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0z"/>
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M9 2c-1.05 0-2.05.16-3 .46c1.06.39 1.86 1.27 2.15 2.38A6.01 6.01 0 0 1 9 4c3.31 0 6 2.69 6 6s-2.69 6-6 6s-6-2.69-6-6c0-.6.09-1.18.25-1.73c-.87.33-1.54.99-1.93 1.85C1.16 11.95 1 12.95 1 14c0 4.42 3.58 8 8 8s8-3.58 8-8s-3.58-8-8-8"/>
+                  </svg>
+                </n-icon>
+              </template>
+            </n-button>
 
             <n-button 
               v-bind="getButtonStyle('iconPrimary')"
@@ -343,15 +352,23 @@ const isNavActive = (key: string) => currentViewKey.value === key
         />
         <template #footer>
           <n-space justify="space-around" style="width: 100%; padding-bottom: var(--space-5);">
-             <n-dropdown 
-                trigger="click" 
-                :options="themeOptions" 
-                @select="val => currentThemeType = val"
+             <n-button 
+                v-bind="getButtonStyle('iconPrimary')" 
+                type="primary"
+                @click="toggleThemeMode"
+                :title="isDarkMode ? '切换白天模式' : '切换黑夜模式'"
               >
-                <n-button v-bind="getButtonStyle('iconPrimary')" type="primary">
-                  <template #icon><n-icon><ThemeIcon /></n-icon></template>
-                </n-button>
-              </n-dropdown>
+                <template #icon>
+                  <n-icon>
+                    <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5M2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1m18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1m0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1M5.99 4.58a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41zm12.37 12.37a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0c.39-.39.39-1.03 0-1.41zm1.06-10.96a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0zM7.05 18.36a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0z"/>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M9 2c-1.05 0-2.05.16-3 .46c1.06.39 1.86 1.27 2.15 2.38A6.01 6.01 0 0 1 9 4c3.31 0 6 2.69 6 6s-2.69 6-6 6s-6-2.69-6-6c0-.6.09-1.18.25-1.73c-.87.33-1.54.99-1.93 1.85C1.16 11.95 1 12.95 1 14c0 4.42 3.58 8 8 8s8-3.58 8-8s-3.58-8-8-8"/>
+                    </svg>
+                  </n-icon>
+                </template>
+              </n-button>
 
               <n-button 
                 v-bind="getButtonStyle('iconPrimary')"

@@ -409,8 +409,8 @@ const handleRefresh = () => {
   text-overflow: ellipsis;
 }
 
-.source .path-text { color: var(--text-tertiary); }
-.target .path-text { color: var(--text-secondary); }
+.source .path-text { color: var(--text-secondary); }
+.target .path-text { color: var(--text-primary); }
 
 .path-divider {
   height: 1px;

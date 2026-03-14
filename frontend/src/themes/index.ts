@@ -1,13 +1,7 @@
 import { GlobalThemeOverrides } from 'naive-ui'
 
-export type ThemeType = 'purple' | 'green' | 'blue' | 'red'
-
-export const themeOptions = [
-  { label: '暗夜紫韵 (Purple)', key: 'purple' },
-  { label: '森林绿意 (Green)', key: 'green' },
-  { label: '海洋蓝调 (Blue)', key: 'blue' },
-  { label: '烈焰红妆 (Red)', key: 'red' }
-]
+export type ThemeType = 'purple'
+export type ThemeMode = 'dark' | 'light'
 
 export interface ThemeConfig {
   name: string
@@ -39,379 +33,404 @@ export function generateColorMix(color: string, opacity: string): string {
   return `color-mix(in srgb, ${color}, transparent ${opacity})`
 }
 
-// 统一的灰色系背景色 - 与主题色分离
-const grayBgColors = {
-  bgPrimary: '#1e1e2e',      // 最深背景
-  bgSecondary: '#242429',    // 次级背景
-  bgTertiary: '#2e2e33',     // 三级背景
-  surfaceColor: '255, 255, 255',  // 表面色（用于半透明叠加）
-  modalBg: 'rgba(30, 30, 46, 0.95)',     // 弹窗背景
-  dropdownBg: 'rgba(30, 30, 46, 0.98)'   // 下拉菜单背景
+// 暗色模式背景色
+const darkBgColors = {
+  bgPrimary: '#1e1e2e',
+  bgSecondary: '#242429',
+  bgTertiary: '#2e2e33',
+  surfaceColor: '255, 255, 255',
+  modalBg: 'rgba(30, 30, 46, 0.95)',
+  dropdownBg: 'rgba(30, 30, 46, 0.98)'
 }
 
-export const themeConfigs: Record<ThemeType, ThemeConfig> = {
-  purple: {
-    name: '暗夜紫韵',
-    primaryColor: '#bb86fc',
-    primaryColorHover: '#d1a8ff',
-    primaryColorPressed: '#995df0',
-    primaryColorSuppl: '#7c4dff',
-    logoColor: '#bb86fc',
-    bgPrimary: grayBgColors.bgPrimary,
-    bgSecondary: grayBgColors.bgSecondary,
-    bgTertiary: grayBgColors.bgTertiary,
-    surfaceColor: grayBgColors.surfaceColor,
-    modalBg: grayBgColors.modalBg,
-    dropdownBg: grayBgColors.dropdownBg,
-    docsTheme: 'purple'
-  },
-  green: {
-    name: '森林绿意',
-    primaryColor: '#81c784',
-    primaryColorHover: '#a5d6a7',
-    primaryColorPressed: '#66bb6a',
-    primaryColorSuppl: '#4caf50',
-    logoColor: '#81c784',
-    bgPrimary: grayBgColors.bgPrimary,
-    bgSecondary: grayBgColors.bgSecondary,
-    bgTertiary: grayBgColors.bgTertiary,
-    surfaceColor: grayBgColors.surfaceColor,
-    modalBg: grayBgColors.modalBg,
-    dropdownBg: grayBgColors.dropdownBg,
-    docsTheme: 'green'
-  },
-  blue: {
-    name: '海洋蓝调',
-    primaryColor: '#64b5f6',
-    primaryColorHover: '#90caf9',
-    primaryColorPressed: '#42a5f5',
-    primaryColorSuppl: '#2196f3',
-    logoColor: '#64b5f6',
-    bgPrimary: grayBgColors.bgPrimary,
-    bgSecondary: grayBgColors.bgSecondary,
-    bgTertiary: grayBgColors.bgTertiary,
-    surfaceColor: grayBgColors.surfaceColor,
-    modalBg: grayBgColors.modalBg,
-    dropdownBg: grayBgColors.dropdownBg,
-    docsTheme: 'blue'
-  },
-  red: {
-    name: '烈焰红妆',
-    primaryColor: '#e57373',
-    primaryColorHover: '#ef9a9a',
-    primaryColorPressed: '#ef5350',
-    primaryColorSuppl: '#f44336',
-    logoColor: '#e57373',
-    bgPrimary: grayBgColors.bgPrimary,
-    bgSecondary: grayBgColors.bgSecondary,
-    bgTertiary: grayBgColors.bgTertiary,
-    surfaceColor: grayBgColors.surfaceColor,
-    modalBg: grayBgColors.modalBg,
-    dropdownBg: grayBgColors.dropdownBg,
-    docsTheme: 'red'
+// 亮色模式背景色
+const lightBgColors = {
+  bgPrimary: '#ffffff',
+  bgSecondary: '#f5f5f5',
+  bgTertiary: '#eeeeee',
+  surfaceColor: '0, 0, 0',
+  modalBg: 'rgba(255, 255, 255, 0.98)',
+  dropdownBg: 'rgba(255, 255, 255, 0.98)'
+}
+
+// 紫色主题配置（暗色）
+const purpleDarkConfig: ThemeConfig = {
+  name: '暗夜紫韵',
+  primaryColor: '#bb86fc',
+  primaryColorHover: '#d1a8ff',
+  primaryColorPressed: '#995df0',
+  primaryColorSuppl: '#7c4dff',
+  logoColor: '#bb86fc',
+  bgPrimary: darkBgColors.bgPrimary,
+  bgSecondary: darkBgColors.bgSecondary,
+  bgTertiary: darkBgColors.bgTertiary,
+  surfaceColor: darkBgColors.surfaceColor,
+  modalBg: darkBgColors.modalBg,
+  dropdownBg: darkBgColors.dropdownBg,
+  docsTheme: 'purple'
+}
+
+// 紫色主题配置（亮色）
+const purpleLightConfig: ThemeConfig = {
+  name: '白昼紫韵',
+  primaryColor: '#7c4dff',
+  primaryColorHover: '#9965ff',
+  primaryColorPressed: '#5c3dd4',
+  primaryColorSuppl: '#bb86fc',
+  logoColor: '#7c4dff',
+  bgPrimary: lightBgColors.bgPrimary,
+  bgSecondary: lightBgColors.bgSecondary,
+  bgTertiary: lightBgColors.bgTertiary,
+  surfaceColor: lightBgColors.surfaceColor,
+  modalBg: lightBgColors.modalBg,
+  dropdownBg: lightBgColors.dropdownBg,
+  docsTheme: 'purple'
+}
+
+export const themeConfigs: Record<ThemeMode, ThemeConfig> = {
+  dark: purpleDarkConfig,
+  light: purpleLightConfig
+}
+
+const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalThemeOverrides => {
+  const textColorBase = isDark ? '#e0e0e0' : '#333333'
+  const textColor1 = isDark ? '#ffffff' : '#1a1a1a'
+  const textColor2 = isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.75)'
+  const textColor3 = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.55)'
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+  const menuHoverBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+  const switchBorderColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'
+  const switchBorderColorActive = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
+  const tableColor = isDark ? '#1e1e2e' : '#ffffff'
+  const tagTextSuccess = isDark ? '#69f0ae' : '#2e7d32'
+  const tagTextWarning = isDark ? '#ffd54f' : '#ed6c02'
+  const tagTextError = isDark ? '#ff8a80' : '#d32f2f'
+  const tagTextInfo = isDark ? '#82b1ff' : '#0288d1'
+
+  return {
+    common: {
+      primaryColor: config.primaryColor,
+      primaryColorHover: config.primaryColorHover,
+      primaryColorPressed: config.primaryColorPressed,
+      primaryColorSuppl: config.primaryColorSuppl,
+      infoColor: isDark ? '#03dac6' : '#0288d1',
+      warningColor: isDark ? '#ffb74d' : '#ed6c02',
+      errorColor: isDark ? '#cf6679' : '#d32f2f',
+      successColor: isDark ? '#81c784' : '#2e7d32',
+      borderRadius: '16px',
+      cardColor: 'transparent',
+      modalColor: config.bgPrimary,
+      popoverColor: config.bgPrimary,
+      bodyColor: config.bgPrimary,
+      textColorBase: textColorBase,
+      textColor1: textColor1,
+      textColor2: textColor2,
+      textColor3: textColor3
+    },
+    Card: { 
+      borderRadius: '20px', 
+      borderColor: borderColor, 
+      color: config.bgPrimary 
+    },
+    Button: {
+      borderRadiusMedium: '16px',
+      fontWeight: '500',
+      fontWeightSmall: '500',
+      fontWeightMedium: '500',
+      fontWeightLarge: '500',
+      colorPrimary: config.primaryColor,
+      colorPrimaryHover: config.primaryColorHover,
+      colorPrimaryPressed: config.primaryColorPressed,
+      textColorPrimary: '#ffffff',
+      textColorPrimaryHover: '#ffffff',
+      textColorPrimaryPressed: '#ffffff',
+      borderColorPrimary: config.primaryColor,
+      borderColorPrimaryHover: config.primaryColorHover,
+      borderColorPrimaryPressed: config.primaryColorPressed,
+      borderPrimary: `1px solid ${config.primaryColor}`,
+      color: config.primaryColor,
+      colorHover: config.primaryColorHover,
+      colorPressed: config.primaryColorPressed,
+      textColor: '#ffffff',
+      textColorHover: '#ffffff',
+      textColorPressed: '#ffffff',
+      borderColor: config.primaryColor,
+      borderColorHover: config.primaryColorHover,
+      borderColorPressed: config.primaryColorPressed,
+      border: `1px solid ${config.primaryColor}`,
+      textColorText: config.primaryColor,
+      textColorTextHover: config.primaryColorHover,
+      textColorTextPressed: config.primaryColorPressed,
+      textColorGhost: config.primaryColor,
+      textColorGhostHover: config.primaryColorHover,
+      textColorGhostPressed: config.primaryColorPressed,
+      colorQuaternary: 'transparent',
+      colorQuaternaryHover: generateColorMix(config.primaryColor, '90%'),
+      colorQuaternaryPressed: generateColorMix(config.primaryColor, '85%'),
+      textColorQuaternary: config.primaryColor,
+      textColorQuaternaryHover: config.primaryColorHover,
+      textColorQuaternaryPressed: config.primaryColorPressed
+    },
+    Input: { borderRadius: '10px' },
+    Select: { 
+      borderRadius: '10px',
+      peers: {
+        InternalSelectMenu: {
+          color: config.dropdownBg
+        }
+      }
+    },
+    Dropdown: {
+      peers: {
+        InternalDropdownMenu: {
+          color: config.dropdownBg
+        }
+      }
+    },
+    Tag: {
+      borderRadius: '6px',
+      colorSuccess: isDark ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.1)',
+      colorSuccessHover: isDark ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.2)',
+      colorSuccessPressed: isDark ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)',
+      textColorSuccess: tagTextSuccess,
+      borderSuccess: `1px solid ${isDark ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'}`,
+      colorWarning: isDark ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.1)',
+      colorWarningHover: isDark ? 'rgba(255, 152, 0, 0.25)' : 'rgba(255, 152, 0, 0.2)',
+      colorWarningPressed: isDark ? 'rgba(255, 152, 0, 0.3)' : 'rgba(255, 152, 0, 0.25)',
+      textColorWarning: tagTextWarning,
+      borderWarning: `1px solid ${isDark ? 'rgba(255, 152, 0, 0.5)' : 'rgba(255, 152, 0, 0.4)'}`,
+      colorError: isDark ? 'rgba(244, 67, 54, 0.15)' : 'rgba(244, 67, 54, 0.1)',
+      colorErrorHover: isDark ? 'rgba(244, 67, 54, 0.25)' : 'rgba(244, 67, 54, 0.2)',
+      colorErrorPressed: isDark ? 'rgba(244, 67, 54, 0.3)' : 'rgba(244, 67, 54, 0.25)',
+      textColorError: tagTextError,
+      borderError: `1px solid ${isDark ? 'rgba(244, 67, 54, 0.5)' : 'rgba(244, 67, 54, 0.4)'}`,
+      colorInfo: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
+      colorInfoHover: isDark ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.2)',
+      colorInfoPressed: isDark ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)',
+      textColorInfo: tagTextInfo,
+      borderInfo: `1px solid ${isDark ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'}`
+    },
+    Popconfirm: {
+      color: config.modalBg,
+      boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.15)',
+      arrowColor: config.modalBg,
+      peers: {
+        Button: {
+          fontWeight: '500',
+          fontWeightSmall: '500',
+          fontWeightMedium: '500',
+          fontWeightLarge: '500',
+          colorPrimary: config.primaryColor,
+          colorPrimaryHover: config.primaryColorHover,
+          colorPrimaryPressed: config.primaryColorPressed,
+          textColorPrimary: '#ffffff',
+          textColorPrimaryHover: '#ffffff',
+          textColorPrimaryPressed: '#ffffff',
+          borderColorPrimary: config.primaryColor,
+          borderColorPrimaryHover: config.primaryColorHover,
+          borderColorPrimaryPressed: config.primaryColorPressed,
+          borderPrimary: `1px solid ${config.primaryColor}`,
+          color: config.primaryColor,
+          colorHover: config.primaryColorHover,
+          colorPressed: config.primaryColorPressed,
+          textColor: '#ffffff',
+          textColorHover: '#ffffff',
+          textColorPressed: '#ffffff',
+          borderColor: config.primaryColor,
+          borderColorHover: config.primaryColorHover,
+          borderColorPressed: config.primaryColorPressed,
+          border: `1px solid ${config.primaryColor}`,
+          colorGhost: 'transparent',
+          colorGhostHover: generateColorMix(config.primaryColor, '90%'),
+          colorGhostPressed: generateColorMix(config.primaryColor, '85%'),
+          textColorGhost: config.primaryColor,
+          textColorGhostHover: config.primaryColorHover,
+          textColorGhostPressed: config.primaryColorPressed,
+          borderColorGhost: config.primaryColor,
+          borderColorGhostHover: config.primaryColorHover,
+          borderColorGhostPressed: config.primaryColorPressed,
+          colorQuaternary: 'transparent',
+          colorQuaternaryHover: generateColorMix(config.primaryColor, '90%'),
+          colorQuaternaryPressed: generateColorMix(config.primaryColor, '85%'),
+          textColorQuaternary: config.primaryColor,
+          textColorQuaternaryHover: config.primaryColorHover,
+          textColorQuaternaryPressed: config.primaryColorPressed
+        }
+      }
+    },
+    Popover: {
+      // 气泡背景色 - 使用深色背景确保在白天/夜晚模式下都清晰可见
+      color: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.85)',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+      arrowColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.85)'
+    },
+    Message: {
+      color: config.modalBg,
+      textColor: textColor1,
+      iconColor: config.primaryColor,
+      boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.15)'
+    },
+    Notification: {
+      color: config.modalBg,
+      textColor: textColor1,
+      boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.15)'
+    },
+    Dialog: {
+      color: config.modalBg,
+      textColor: textColor1,
+      boxShadow: isDark ? '0 8px 32px rgba(0, 0, 0, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.15)',
+      peers: {
+        Button: {
+          fontWeight: '500',
+          fontWeightSmall: '500',
+          fontWeightMedium: '500',
+          fontWeightLarge: '500',
+          colorPrimary: config.primaryColor,
+          colorPrimaryHover: config.primaryColorHover,
+          colorPrimaryPressed: config.primaryColorPressed,
+          textColorPrimary: '#ffffff',
+          textColorPrimaryHover: '#ffffff',
+          textColorPrimaryPressed: '#ffffff',
+          borderColorPrimary: config.primaryColor,
+          borderColorPrimaryHover: config.primaryColorHover,
+          borderColorPrimaryPressed: config.primaryColorPressed,
+          borderPrimary: `1px solid ${config.primaryColor}`,
+          color: config.primaryColor,
+          colorHover: config.primaryColorHover,
+          colorPressed: config.primaryColorPressed,
+          textColor: '#ffffff',
+          textColorHover: '#ffffff',
+          textColorPressed: '#ffffff',
+          borderColor: config.primaryColor,
+          borderColorHover: config.primaryColorHover,
+          borderColorPressed: config.primaryColorPressed,
+          border: `1px solid ${config.primaryColor}`,
+          colorGhost: 'transparent',
+          colorGhostHover: generateColorMix(config.primaryColor, '90%'),
+          colorGhostPressed: generateColorMix(config.primaryColor, '85%'),
+          textColorGhost: config.primaryColor,
+          textColorGhostHover: config.primaryColorHover,
+          textColorGhostPressed: config.primaryColorPressed,
+          borderColorGhost: config.primaryColor,
+          borderColorGhostHover: config.primaryColorHover,
+          borderColorGhostPressed: config.primaryColorPressed
+        }
+      }
+    },
+    LayoutSider: {
+      color: config.bgPrimary,
+      borderColor: borderColor,
+      toggleBarColor: config.bgPrimary,
+      toggleBarColorHover: menuHoverBg,
+      toggleIconColor: textColor2,
+      toggleIconColorHover: textColor1
+    },
+    DataTable: {
+      thColor: tableColor,
+      tdColor: tableColor,
+      tdColorHover: tableColor,
+      thColorModal: tableColor,
+      tdColorModal: tableColor,
+      tdColorHoverModal: tableColor,
+      thColorPopover: tableColor,
+      tdColorPopover: tableColor,
+      tdColorHoverPopover: tableColor,
+      borderColor: borderColor,
+      borderColorModal: borderColor,
+      borderColorPopover: borderColor
+    },
+    Switch: {
+      width: '44px',
+      widthMedium: '44px',
+      widthLarge: '52px',
+      height: '22px',
+      heightMedium: '22px',
+      heightLarge: '26px',
+      railColor: config.bgTertiary,
+      railColorActive: config.primaryColor,
+      // 按钮颜色固定为白色，不受白天/夜晚模式影响
+      buttonColor: '#ffffff',
+      buttonColorActive: '#ffffff',
+      textColor: textColor2,
+      railBorderColor: switchBorderColor,
+      railBorderColorActive: switchBorderColorActive,
+      boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.15)',
+      railBorderRadius: '11px',
+      buttonBorderRadius: '50%'
+    },
+    // Radio 组件样式配置
+    Radio: {
+      // 按钮样式 Radio
+      buttonColor: config.bgTertiary,
+      buttonColorActive: config.primaryColor,
+      buttonTextColor: textColor2,
+      buttonTextColorActive: '#ffffff',
+      buttonBorderColor: borderColor,
+      buttonBorderColorActive: config.primaryColor,
+      buttonBorderRadius: '6px'
+    },
+    Menu: {
+      itemColorActive: config.primaryColor,
+      itemColorActiveHover: config.primaryColorHover,
+      itemColorActiveCollapsed: config.primaryColor,
+      itemTextColorActive: '#ffffff',
+      itemTextColorActiveHover: '#ffffff',
+      itemIconColorActive: '#ffffff',
+      itemIconColorActiveHover: '#ffffff',
+      itemColor: 'transparent',
+      itemColorHover: menuHoverBg,
+      itemTextColor: textColor2,
+      itemTextColorHover: textColor1,
+      itemIconColor: textColor3,
+      itemIconColorHover: textColor2,
+      itemColorActiveSub: config.primaryColor,
+      itemColorActiveSubHover: config.primaryColorHover,
+      itemTextColorActiveSub: '#ffffff',
+      itemTextColorActiveSubHover: '#ffffff',
+      borderRadius: '8px',
+      borderColor: 'transparent',
+      borderColorHorizontal: 'transparent'
+    },
+    // Tabs 组件样式配置
+    Tabs: {
+      // Tab 文字颜色
+      tabTextColor: textColor2,
+      tabTextColorActive: '#ffffff',
+      tabTextColorHover: textColor1,
+      // Tab 底部边框颜色
+      tabBorderColor: borderColor,
+      // 激活状态的底部边框
+      tabBorderColorActive: config.primaryColor,
+      // 背景色
+      color: 'transparent',
+      // 分割模式：轨道背景色
+      colorSegment: config.bgTertiary,
+      // 分割模式下激活项的背景（使用紫色主题色）
+      colorSegmentActive: config.primaryColor,
+      // 标签栏背景
+      barColor: config.primaryColor
+    },
+    // Tooltip 组件样式配置
+    Tooltip: {
+      // 气泡背景色 - 使用深色背景确保在白天/夜晚模式下都清晰可见
+      color: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(0, 0, 0, 0.85)',
+      // 文字颜色 - 固定白色
+      textColor: '#ffffff',
+      // 边框颜色
+      borderColor: 'transparent',
+      // 圆角
+      borderRadius: '6px',
+      // 内边距
+      padding: '8px 12px',
+      // 字体大小
+      fontSize: '13px'
+    }
   }
 }
 
-const createThemeOverrides = (config: ThemeConfig): GlobalThemeOverrides => ({
-  common: {
-    primaryColor: config.primaryColor,
-    primaryColorHover: config.primaryColorHover,
-    primaryColorPressed: config.primaryColorPressed,
-    primaryColorSuppl: config.primaryColorSuppl,
-    infoColor: '#03dac6',
-    warningColor: '#ffb74d',
-    errorColor: '#cf6679',
-    successColor: '#81c784',
-    borderRadius: '16px',
-    cardColor: 'transparent',
-    modalColor: config.bgPrimary,
-    popoverColor: config.bgPrimary,
-    bodyColor: config.bgPrimary,
-    textColorBase: '#e0e0e0'
-  },
-  Card: { borderRadius: '20px', borderColor: 'rgba(255, 255, 255, 0.08)', color: '#1e1e2e' },
-  Button: {
-    borderRadiusMedium: '16px',
-    fontWeight: '500',
-    fontWeightSmall: '500',
-    fontWeightMedium: '500',
-    fontWeightLarge: '500',
-    // 主要按钮 - 主题色底色 + 黑色文字 + 主题色边框
-    colorPrimary: config.primaryColor,
-    colorPrimaryHover: config.primaryColorHover,
-    colorPrimaryPressed: config.primaryColorPressed,
-    textColorPrimary: '#000000',
-    textColorPrimaryHover: '#000000',
-    textColorPrimaryPressed: '#000000',
-    borderColorPrimary: config.primaryColor,
-    borderColorPrimaryHover: config.primaryColorHover,
-    borderColorPrimaryPressed: config.primaryColorPressed,
-    borderPrimary: `1px solid ${config.primaryColor}`,
-    // 默认按钮 - 主题色底色 + 黑色文字 + 主题色边框
-    color: config.primaryColor,
-    colorHover: config.primaryColorHover,
-    colorPressed: config.primaryColorPressed,
-    textColor: '#000000',
-    textColorHover: '#000000',
-    textColorPressed: '#000000',
-    borderColor: config.primaryColor,
-    borderColorHover: config.primaryColorHover,
-    borderColorPressed: config.primaryColorPressed,
-    border: `1px solid ${config.primaryColor}`,
-    // 文字按钮(text type)颜色配置 - 透明底 + 黑色文字
-    textColorText: '#000000',
-    textColorTextHover: '#000000',
-    textColorTextPressed: '#000000',
-    // 幽灵按钮(ghost)颜色配置 - 透明底 + 黑色文字 + 主题色边框
-    textColorGhost: '#000000',
-    textColorGhostHover: '#000000',
-    textColorGhostPressed: '#000000',
-    // Quaternary 按钮颜色配置 - 透明底 + 黑色文字
-    colorQuaternary: 'transparent',
-    colorQuaternaryHover: generateColorMix(config.primaryColor, '90%'),
-    colorQuaternaryPressed: generateColorMix(config.primaryColor, '85%'),
-    textColorQuaternary: '#000000',
-    textColorQuaternaryHover: '#000000',
-    textColorQuaternaryPressed: '#000000'
-  },
-  Input: { borderRadius: '10px' },
-  Select: { 
-    borderRadius: '10px',
-    peers: {
-      InternalSelectMenu: {
-        color: 'var(--app-dropdown-bg)'
-      }
-    }
-  },
-  Dropdown: {
-    peers: {
-      InternalDropdownMenu: {
-        color: 'var(--app-dropdown-bg)'
-      }
-    }
-  },
-  Tag: {
-    borderRadius: '6px',
-    // Success 标签 - 使用更亮的绿色提高对比度
-    colorSuccess: 'rgba(76, 175, 80, 0.15)',
-    colorSuccessHover: 'rgba(76, 175, 80, 0.25)',
-    colorSuccessPressed: 'rgba(76, 175, 80, 0.3)',
-    textColorSuccess: '#69f0ae',
-    borderSuccess: '1px solid rgba(76, 175, 80, 0.5)',
-    // Warning 标签 - 使用更亮的橙色提高对比度
-    colorWarning: 'rgba(255, 152, 0, 0.15)',
-    colorWarningHover: 'rgba(255, 152, 0, 0.25)',
-    colorWarningPressed: 'rgba(255, 152, 0, 0.3)',
-    textColorWarning: '#ffd54f',
-    borderWarning: '1px solid rgba(255, 152, 0, 0.5)',
-    // Error 标签 - 使用更亮的红色提高对比度
-    colorError: 'rgba(244, 67, 54, 0.15)',
-    colorErrorHover: 'rgba(244, 67, 54, 0.25)',
-    colorErrorPressed: 'rgba(244, 67, 54, 0.3)',
-    textColorError: '#ff8a80',
-    borderError: '1px solid rgba(244, 67, 54, 0.5)',
-    // Info 标签 - 使用更亮的蓝色提高对比度
-    colorInfo: 'rgba(33, 150, 243, 0.15)',
-    colorInfoHover: 'rgba(33, 150, 243, 0.25)',
-    colorInfoPressed: 'rgba(33, 150, 243, 0.3)',
-    textColorInfo: '#82b1ff',
-    borderInfo: '1px solid rgba(33, 150, 243, 0.5)'
-  },
-  Popconfirm: {
-    color: 'var(--app-modal-bg)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    arrowColor: 'var(--app-modal-bg)',
-    peers: {
-      Button: {
-        fontWeight: '500',
-        fontWeightSmall: '500',
-        fontWeightMedium: '500',
-        fontWeightLarge: '500',
-        // 主要按钮 - 主题色底色 + 黑色文字 + 主题色边框
-        colorPrimary: config.primaryColor,
-        colorPrimaryHover: config.primaryColorHover,
-        colorPrimaryPressed: config.primaryColorPressed,
-        textColorPrimary: '#000000',
-        textColorPrimaryHover: '#000000',
-        textColorPrimaryPressed: '#000000',
-        borderColorPrimary: config.primaryColor,
-        borderColorPrimaryHover: config.primaryColorHover,
-        borderColorPrimaryPressed: config.primaryColorPressed,
-        borderPrimary: `1px solid ${config.primaryColor}`,
-        // 默认按钮 - 主题色底色 + 黑色文字 + 主题色边框
-        color: config.primaryColor,
-        colorHover: config.primaryColorHover,
-        colorPressed: config.primaryColorPressed,
-        textColor: '#000000',
-        textColorHover: '#000000',
-        textColorPressed: '#000000',
-        borderColor: config.primaryColor,
-        borderColorHover: config.primaryColorHover,
-        borderColorPressed: config.primaryColorPressed,
-        border: `1px solid ${config.primaryColor}`,
-        // Ghost 按钮 - 透明底色 + 黑色文字 + 主题色边框
-        colorGhost: 'transparent',
-        colorGhostHover: generateColorMix(config.primaryColor, '90%'),
-        colorGhostPressed: generateColorMix(config.primaryColor, '85%'),
-        textColorGhost: '#000000',
-        textColorGhostHover: '#000000',
-        textColorGhostPressed: '#000000',
-        borderColorGhost: config.primaryColor,
-        borderColorGhostHover: config.primaryColorHover,
-        borderColorGhostPressed: config.primaryColorPressed,
-        // Quaternary 按钮 - 透明底色 + 黑色文字
-        colorQuaternary: 'transparent',
-        colorQuaternaryHover: generateColorMix(config.primaryColor, '90%'),
-        colorQuaternaryPressed: generateColorMix(config.primaryColor, '85%'),
-        textColorQuaternary: '#000000',
-        textColorQuaternaryHover: '#000000',
-        textColorQuaternaryPressed: '#000000'
-      }
-    }
-  },
-  Popover: {
-    color: 'var(--app-modal-bg)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    arrowColor: 'var(--app-modal-bg)'
-  },
-  Message: {
-    color: 'var(--app-modal-bg)',
-    textColor: 'var(--text-primary)',
-    iconColor: config.primaryColor,
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-  },
-  Notification: {
-    color: 'var(--app-modal-bg)',
-    textColor: 'var(--text-primary)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-  },
-  Dialog: {
-    color: 'var(--app-modal-bg)',
-    textColor: 'var(--text-primary)',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-    peers: {
-      Button: {
-        fontWeight: '500',
-        fontWeightSmall: '500',
-        fontWeightMedium: '500',
-        fontWeightLarge: '500',
-        // 确认按钮 - 主题色底色 + 黑色文字 + 主题色边框
-        colorPrimary: config.primaryColor,
-        colorPrimaryHover: config.primaryColorHover,
-        colorPrimaryPressed: config.primaryColorPressed,
-        textColorPrimary: '#000000',
-        textColorPrimaryHover: '#000000',
-        textColorPrimaryPressed: '#000000',
-        borderColorPrimary: config.primaryColor,
-        borderColorPrimaryHover: config.primaryColorHover,
-        borderColorPrimaryPressed: config.primaryColorPressed,
-        borderPrimary: `1px solid ${config.primaryColor}`,
-        // 默认按钮 - 主题色底色 + 黑色文字 + 主题色边框
-        color: config.primaryColor,
-        colorHover: config.primaryColorHover,
-        colorPressed: config.primaryColorPressed,
-        textColor: '#000000',
-        textColorHover: '#000000',
-        textColorPressed: '#000000',
-        borderColor: config.primaryColor,
-        borderColorHover: config.primaryColorHover,
-        borderColorPressed: config.primaryColorPressed,
-        border: `1px solid ${config.primaryColor}`,
-        // Ghost 按钮 - 透明底色 + 黑色文字 + 主题色边框
-        colorGhost: 'transparent',
-        colorGhostHover: generateColorMix(config.primaryColor, '90%'),
-        colorGhostPressed: generateColorMix(config.primaryColor, '85%'),
-        textColorGhost: '#000000',
-        textColorGhostHover: '#000000',
-        textColorGhostPressed: '#000000',
-        borderColorGhost: config.primaryColor,
-        borderColorGhostHover: config.primaryColorHover,
-        borderColorGhostPressed: config.primaryColorPressed
-      }
-    }
-  },
-  LayoutSider: {
-    color: 'var(--app-surface-card)',
-    borderColor: 'var(--app-border-light)',
-    toggleBarColor: 'var(--app-surface-card)',
-    toggleBarColorHover: 'var(--bg-surface-hover)',
-    toggleIconColor: 'var(--n-text-color-2)',
-    toggleIconColorHover: 'var(--n-text-color-1)'
-  },
-  DataTable: {
-    thColor: '#1e1e2e',
-    tdColor: '#1e1e2e',
-    tdColorHover: '#1e1e2e',
-    thColorModal: '#1e1e2e',
-    tdColorModal: '#1e1e2e',
-    tdColorHoverModal: '#1e1e2e',
-    thColorPopover: '#1e1e2e',
-    tdColorPopover: '#1e1e2e',
-    tdColorHoverPopover: '#1e1e2e',
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderColorModal: 'rgba(255, 255, 255, 0.1)',
-    borderColorPopover: 'rgba(255, 255, 255, 0.1)'
-  },
-  // Switch 开关组件统一样式配置
-  Switch: {
-    // 基础尺寸
-    width: '44px',
-    widthMedium: '44px',
-    widthLarge: '52px',
-    height: '22px',
-    heightMedium: '22px',
-    heightLarge: '26px',
-    // 轨道颜色 - 关闭时灰色背景，打开时主题色
-    railColor: 'var(--bg-tertiary)',
-    railColorActive: config.primaryColor,
-    // 按钮颜色
-    buttonColor: 'var(--text-primary)',
-    buttonColorActive: 'var(--text-primary)',
-    // 文字颜色
-    textColor: 'var(--text-secondary)',
-    // 边框 - 使用白色（关闭和打开状态都可见）
-    railBorderColor: 'rgba(255, 255, 255, 0.3)',
-    railBorderColorActive: 'rgba(255, 255, 255, 0.4)',
-    // 边框和阴影
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-    // 圆角
-    railBorderRadius: '11px',
-    buttonBorderRadius: '50%'
-  },
-  // 菜单组件样式
-  Menu: {
-    // 选中项 - 主题色底色 + 黑色文字
-    itemColorActive: config.primaryColor,
-    itemColorActiveHover: config.primaryColorHover,
-    itemColorActiveCollapsed: config.primaryColor,
-    itemTextColorActive: '#000000',
-    itemTextColorActiveHover: '#000000',
-    itemIconColorActive: '#000000',
-    itemIconColorActiveHover: '#000000',
-    // 未选中项 - 透明底色 + 白色文字
-    itemColor: 'transparent',
-    itemColorHover: 'rgba(255, 255, 255, 0.05)',
-    itemTextColor: 'var(--text-secondary)',
-    itemTextColorHover: 'var(--text-primary)',
-    itemIconColor: 'var(--text-tertiary)',
-    itemIconColorHover: 'var(--text-secondary)',
-    // 子菜单样式
-    itemColorActiveSub: config.primaryColor,
-    itemColorActiveSubHover: config.primaryColorHover,
-    itemTextColorActiveSub: '#000000',
-    itemTextColorActiveSubHover: '#000000',
-    // 边框和圆角
-    borderRadius: '8px',
-    borderColor: 'transparent',
-    borderColorHorizontal: 'transparent'
-  }
-})
-
-export const themeOverridesMap: Record<ThemeType, GlobalThemeOverrides> = {
-  purple: createThemeOverrides(themeConfigs.purple),
-  green: createThemeOverrides(themeConfigs.green),
-  blue: createThemeOverrides(themeConfigs.blue),
-  red: createThemeOverrides(themeConfigs.red)
+export const themeOverridesMap: Record<ThemeMode, GlobalThemeOverrides> = {
+  dark: createThemeOverrides(themeConfigs.dark, true),
+  light: createThemeOverrides(themeConfigs.light, false)
 }
 
-export const purpleOverrides = themeOverridesMap.purple
+export const purpleOverrides = themeOverridesMap.dark
