@@ -80,17 +80,15 @@ class ConfigManager:
         "rule_auto_update": False,
         "rule_update_interval": 24,
         "external_token": "", 
-        "web_password": "",
         "enable_api": True,
-        "api_auth_required": False,
         "api_logging": True,
+        "jwt_never_expire": False, # JWT 令牌永不过期
         "stalled_timeout_minutes": 0, # 下载超时自动熔断阈值（分钟），0为禁用
         "stalled_monitor_interval": 30, # 下载超时巡检间隔（分钟）
         "health_check_enabled": True, # 是否开启健康检查自动巡检
         "health_check_interval": 30, # 健康检查巡检间隔（分钟）
         "calendar_daily_push": False, # 追剧日历每日播报
         "calendar_push_time": "09:00", # 每日播报时间
-        "ui_auth_enabled": None,  # UI登录验证开关，None表示自动（有密码则启用）
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",

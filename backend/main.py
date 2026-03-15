@@ -2,6 +2,7 @@ import asyncio
 import os
 import logging
 import json
+from datetime import datetime
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -72,12 +73,10 @@ app.include_router(task_history.router)
 # --- API Audit & Security Middleware ---
 @app.middleware("http")
 async def api_audit_middleware(request: Request, call_next):
-    # 只针对 /api 开头的请求进行审计
     path = request.url.path
     if not path.startswith("/api"):
         return await call_next(request)
     
-    # 豁免列表：排除配置、日志、流式处理及 API 文档等不需要审计或认证的路径
     skip_paths = [
         "/api/config", 
         "/api/system/logs", 
@@ -94,92 +93,88 @@ async def api_audit_middleware(request: Request, call_next):
 
     config = ConfigManager.get_config()
     
-    # 1. 安全检查
     if not config.get("enable_api", True):
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=403, content={"detail": "API access is disabled in settings."})
 
-    # 2. 身份认证校验
     expected_api_token = config.get("external_token")
-    web_password = config.get("web_password")
-    client_host = request.client.host if request.client else ""
     
-    # 获取 Token (支持 Header 和 Query Parameter)
     auth_header = request.headers.get("Authorization")
     provided_token = auth_header.replace("Bearer ", "").strip() if auth_header and auth_header.startswith("Bearer ") else None
     if not provided_token:
         provided_token = request.query_params.get("token") or request.query_params.get("apikey")
 
-    # 认证豁免逻辑
     is_authenticated = False
     
-    # 情况 A: 请求来源是服务器本地，直接放行
-    if client_host in ["127.0.0.1", "::1", "localhost"]:
+    if path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth"):
         is_authenticated = True
     
-    # 情况 B: 访问的是登录接口或 Webhook 接口，放行
-    elif path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth/login"):
-        is_authenticated = True
-        
-    # 情况 C: 提供了正确的 Token (Web 密码 或 API Token 或 JWT)
-    elif provided_token:
-        # 首先尝试解析为 JWT
-        payload = decode_access_token(provided_token)
-        if payload and payload.get("sub") and payload.get("type") != "2fa_pending":
-            is_authenticated = True
-        # 兼容旧版本的 Web 密码和 API Token
-        elif (web_password and provided_token == web_password) or \
-           (expected_api_token and provided_token == expected_api_token):
-            is_authenticated = True
-            
-    # 情况 D: 核心放行逻辑 (解耦 UI 登录与 API 认证)
-    if not is_authenticated:
-        # 1. 判定是否为“开放模式”：
-        # 如果用户主动关闭了【UI登录验证】，则对于 Web 访问默认放行
-        ui_auth_enabled = config.get("ui_auth_enabled", bool(web_password))
-        
-        # 2. 判定是否为“强制 API 认证”：
-        # 只有在开启了 api_auth_required 的情况下，才无视所有豁免，必须提供 Token
-        api_auth_required = config.get("api_auth_required", False)
-
-        if not api_auth_required:
-            # 如果没有开启强制 API 认证，则在以下情况放行：
-            # A: 用户关闭了登录验证
-            if not ui_auth_enabled:
-                is_authenticated = True
-            # B: 请求来自本地 (localhost/127.0.0.1)
-            elif client_host in ["127.0.0.1", "::1", "localhost"]:
-                is_authenticated = True
-            # C: 系统既没有设置 Web 密码，也没有开启 UI 验证 (处于未初始化状态)
-            elif not web_password and not config.get("ui_auth_enabled"):
-                is_authenticated = True
-
-    # 情况 E: 特殊放行 - 图片代理接口
-    if not is_authenticated and ("/api/system/img" in path or "/api/system/bgm_img" in path):
+    elif "/api/system/img" in path or "/api/system/bgm_img" in path:
         referer = request.headers.get("referer", "")
         host = request.headers.get("host", "")
         if host and host in referer:
+            is_authenticated = True
+
+    elif provided_token:
+        payload = decode_access_token(provided_token)
+        if payload and payload.get("sub") and payload.get("type") != "2fa_pending":
+            from database import db
+            from models import User, Session
+            from sqlmodel import select
+            try:
+                jwt_never_expire = config.get("jwt_never_expire", False)
+                
+                async with db.session_scope() as session:
+                    result = await session.execute(select(User).where(User.username == payload.get("sub")))
+                    user = result.scalars().first()
+                    if user:
+                        validated = decode_access_token(provided_token, user.hashed_password)
+                        if validated:
+                            token_id = payload.get("jti")
+                            if token_id:
+                                if jwt_never_expire:
+                                    session_result = await session.execute(
+                                        select(Session).where(
+                                            Session.user_id == user.id,
+                                            Session.token_id == token_id
+                                        )
+                                    )
+                                else:
+                                    session_result = await session.execute(
+                                        select(Session).where(
+                                            Session.user_id == user.id,
+                                            Session.token_id == token_id,
+                                            Session.expires_at > datetime.utcnow()
+                                        )
+                                    )
+                                db_session = session_result.scalars().first()
+                                if db_session:
+                                    db_session.last_activity = datetime.utcnow()
+                                    session.add(db_session)
+                                    await session.commit()
+                                    is_authenticated = True
+                                else:
+                                    from logger import log_audit
+                                    log_audit("AUTH", "会话失效", f"用户: {user.username}, Token ID: {token_id}", level="WARN")
+            except:
+                pass
+        elif expected_api_token and provided_token == expected_api_token:
             is_authenticated = True
 
     if not is_authenticated:
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=401, content={"detail": "Authentication required."})
 
-    # --- 捕获请求参数 ---
     query_params = dict(request.query_params)
     request_body = None
     
-    # 仅针对 JSON 请求尝试读取 Body
     content_type = request.headers.get("Content-Type", "")
     if "application/json" in content_type and request.method != "GET":
         try:
-            # 这种方式读取后必须重新包装 request，否则后面的路由读不到 body
             body_bytes = await request.body()
             if body_bytes:
                 request_body = json.loads(body_bytes)
             
-            # 重新包装 request 以供后续路由使用
-            # 修正：确保 receive 只在第一次调用时返回 body，后续调用返回原始 receive (处理断开连接等)
             receive_ = request.receive
             body_sent = False
             async def receive():
@@ -192,27 +187,22 @@ async def api_audit_middleware(request: Request, call_next):
         except:
             pass
 
-    # 3. 执行请求
     response = await call_next(request)
 
-    # 4. 记录日志
     if config.get("api_logging") is not False:
         from logger import log_audit
         status_code = response.status_code
         level = "INFO" if status_code < 400 else "ERROR"
         
-        # 组装详细信息
         audit_details = {
             "ip": request.client.host if request.client else "unknown",
             "params": query_params,
         }
         if request_body:
-            # 脱敏处理：不记录包含 password 或 token 关键字的值
             if isinstance(request_body, dict):
                 safe_body = {k: (v if "password" not in k.lower() and "token" not in k.lower() else "******") 
                              for k, v in request_body.items()}
             elif isinstance(request_body, list):
-                # 简单处理列表中的字典项
                 safe_body = []
                 for item in request_body:
                     if isinstance(item, dict):
@@ -230,7 +220,7 @@ async def api_audit_middleware(request: Request, call_next):
             message=f"{request.method} {path} ({status_code})",
             level=level,
             details=json.dumps(audit_details, ensure_ascii=False),
-            to_root=(request.method != "GET" or level == "ERROR") # GET 请求且成功时不显示在控制台
+            to_root=(request.method != "GET" or level == "ERROR")
         )
         
     return response
@@ -242,13 +232,11 @@ async def websocket_logs(websocket: WebSocket):
     await LogBroadcaster.register(websocket)
     try:
         while True:
-            # Keep connection open, wait for client close
             await websocket.receive_text()
     except (WebSocketDisconnect, RuntimeError):
         await LogBroadcaster.unregister(websocket)
 
 # 2. Static Files & SPA Routing
-# 假设前端编译后的文件放在 backend/dist 目录下
 DIST_DIR = os.path.join(os.path.dirname(__file__), "dist")
 
 @app.on_event("startup")
@@ -258,10 +246,8 @@ async def startup_event():
         time.tzset()
     init_logging()
     
-    # Start Log Broadcast Loop
     asyncio.create_task(LogBroadcaster.broadcast_loop())
     
-    # 1. 初始化主数据库 (创建表、执行自动迁移)
     try:
         from database import init_db
         await init_db()
@@ -271,7 +257,6 @@ async def startup_event():
 
     await MetaCacheManager.init_db()
     
-    # 2. 初始化离线满血数据库
     try:
         from tmdbmatefull.database import TmdbFullDB
         await TmdbFullDB.init_db()
@@ -281,14 +266,12 @@ async def startup_event():
 
     ConfigManager.init_config()
     
-    # [NEW] 加载内置制作组
     try:
         from recognition_engine.builtin_group_loader import BuiltinGroupLoader
         BuiltinGroupLoader.load()
     except Exception as e:
         logger.warning(f"加载内置制作组失败: {e}")
     
-    # [NEW] 自动初始化默认用户
     from auth_utils import ensure_default_user
     await ensure_default_user()
 
@@ -355,7 +338,6 @@ async def startup_event():
     MonitorManager.init(asyncio.get_running_loop())
     asyncio.create_task(async_init_tasks())
 
-    # [NEW] 预热元数据缓存 (日历/热门)
     async def warm_up_meta():
         try:
             from recognition.data_provider.bangumi.client import BangumiProvider
@@ -403,11 +385,9 @@ async def shutdown_event():
     MonitorManager.stop_all()
     log_audit("系统", "停止", "服务已安全关闭。")
 
-# 静态文件挂载逻辑需放在 API 路由之后，以防冲突
 if os.path.exists(DIST_DIR):
     app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="static")
 
-    # 处理 SPA 路由回退：如果路径不是 API 且文件不存在，返回 index.html
     @app.exception_handler(404)
     async def spa_fallback(request, exc):
         if not request.url.path.startswith("/api"):

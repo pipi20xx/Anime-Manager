@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 from jose import jwt
 import bcrypt
 import os
+import uuid
 
 # 加密配置
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "anime_manager_secret_key_change_me_in_production")
@@ -25,21 +26,34 @@ def get_password_hash(password: str):
     hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
     return hashed.decode('utf-8')
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """创建 JWT 访问令牌"""
+def create_access_token(data: dict, password_hash: str = None, expires_delta: Optional[timedelta] = None) -> Tuple[str, str]:
+    """创建 JWT 访问令牌，包含密码指纹使密码修改后旧token失效
+    
+    返回: (token, token_id)
+    """
     to_encode = data.copy()
-    if expires_delta:
+    token_id = str(uuid.uuid4())
+    to_encode.update({"jti": token_id})
+    
+    if expires_delta is None:
+        expire = datetime.utcnow() + timedelta(days=365*10)
+    elif expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
+    if password_hash:
+        to_encode.update({"pwd_fp": password_hash[:8]})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt, token_id
 
-def decode_access_token(token: str) -> Optional[dict]:
-    """解析并验证 JWT 令牌"""
+def decode_access_token(token: str, password_hash: str = None) -> Optional[dict]:
+    """解析并验证 JWT 令牌，可选验证密码指纹"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if password_hash and payload.get("pwd_fp"):
+            if payload.get("pwd_fp") != password_hash[:8]:
+                return None
         return payload
     except:
         return None

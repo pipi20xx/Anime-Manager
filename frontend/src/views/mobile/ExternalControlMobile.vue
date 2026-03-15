@@ -130,12 +130,6 @@ onMounted(() => {
             </n-list-item>
             <n-list-item>
               <div class="setting-item">
-                <div class="setting-label">强制身份认证</div>
-                <n-switch v-model:value="config.api_auth_required" @update:value="saveConfig" />
-              </div>
-            </n-list-item>
-            <n-list-item>
-              <div class="setting-item">
                 <div class="setting-label">开启审计日志</div>
                 <n-switch v-model:value="config.api_logging" @update:value="saveConfig" />
               </div>

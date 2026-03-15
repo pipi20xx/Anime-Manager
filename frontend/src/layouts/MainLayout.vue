@@ -63,7 +63,7 @@ import { getButtonStyle } from '../composables/useButtonStyles'
 
 import { 
   currentViewKey, isSearchOpen, isLogConsoleOpen, 
-  isLoggedIn, logout, username, uiAuthEnabled 
+  isLoggedIn, logout, username
 } from '../store/navigationStore'
 import { currentThemeMode, isDarkMode, logoColor, toggleThemeMode } from '../store/themeStore'
 import { ThemeMode } from '../themes'
@@ -120,7 +120,6 @@ const handleUserSelect = (key: string) => {
 
 // 动态显示用户名：处理免密模式下的空名字问题
 const displayUsername = computed(() => {
-  if (!uiAuthEnabled.value) return '管理员 (免密)'
   return username.value || '管理员'
 })
 
@@ -231,11 +230,10 @@ const isNavActive = (key: string) => currentViewKey.value === key
           <div class="user-status-container">
             <n-dropdown 
               trigger="click" 
-              :options="uiAuthEnabled ? userOptions : []" 
+              :options="userOptions" 
               @select="handleUserSelect"
-              :disabled="!uiAuthEnabled"
             >
-              <div class="user-status-trigger" :class="{ 'is-collapsed': collapsed, 'is-disabled': !uiAuthEnabled }">
+              <div class="user-status-trigger" :class="{ 'is-collapsed': collapsed }">
                 <n-icon size="20" color="var(--n-primary-color)"><ProfileIcon /></n-icon>
                 <div v-if="!collapsed" class="username-text">{{ displayUsername }}</div>
               </div>
@@ -478,13 +476,6 @@ const isNavActive = (key: string) => currentViewKey.value === key
 .user-status-trigger:hover {
   background-color: var(--bg-surface-hover);
   border-color: var(--n-primary-color);
-}
-.user-status-trigger.is-disabled {
-  cursor: default;
-}
-.user-status-trigger.is-disabled:hover {
-  background-color: var(--bg-surface);
-  border-color: var(--border-light);
 }
 .user-status-trigger.is-collapsed {
   padding: var(--space-1) 0; 

@@ -16,7 +16,6 @@ export function useExternalControl() {
   const config = ref<any>({
     external_token: '',
     enable_api: true,
-    api_auth_required: false,
     api_logging: true
   })
 
@@ -36,7 +35,6 @@ export function useExternalControl() {
       config.value = {
         external_token: data.external_token || '',
         enable_api: data.enable_api !== undefined ? data.enable_api : true,
-        api_auth_required: data.api_auth_required !== undefined ? data.api_auth_required : false,
         api_logging: data.api_logging !== undefined ? data.api_logging : true
       }
       if (config.value.external_token) {

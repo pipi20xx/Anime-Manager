@@ -418,20 +418,29 @@ class User(SQLModel, table=True):
 
 
     username: str = Field(unique=True, index=True)
-
-
-
     hashed_password: str
-
     is_active: bool = Field(default=True)
-
     otp_secret: Optional[str] = Field(default=None)
-
     is_otp_enabled: bool = Field(default=False)
-
     last_login: Optional[datetime] = Field(default=None)
-
     created_at: datetime = Field(default_factory=datetime.now)
+
+class Session(SQLModel, table=True):
+    __tablename__ = "sessions"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "登录会话"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="public.users.id", index=True)
+    token_id: str = Field(index=True, unique=True)
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    device_name: Optional[str] = None
+    browser_name: Optional[str] = None
+    os_name: Optional[str] = None
+    is_current: bool = Field(default=False)
+    expires_at: datetime = Field(index=True)
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
+    last_activity: datetime = Field(default_factory=datetime.now)
 
 class TaskRecord(SQLModel, table=True):
     __tablename__ = "task_records"

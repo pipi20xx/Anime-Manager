@@ -36,7 +36,6 @@ const fullApiBase = computed(() => API_BASE.replace(/\/$/, '') + '/api')
 const config = ref<any>({
   external_token: '',
   enable_api: true,
-  api_auth_required: false,
   api_logging: true
 })
 
@@ -55,7 +54,6 @@ const fetchConfig = async () => {
     config.value = {
       external_token: data.external_token || '',
       enable_api: data.enable_api !== undefined ? data.enable_api : true,
-      api_auth_required: data.api_auth_required !== undefined ? data.api_auth_required : false,
       api_logging: data.api_logging !== undefined ? data.api_logging : true
     }
   } catch (e) {
@@ -211,10 +209,6 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
               <n-list-item>
                 <n-thing title="开放 API 访问" description="允许第三方客户端连接。关闭后所有外部接口失效。" />
                 <template #suffix><n-switch v-model:value="config.enable_api" @update:value="saveConfig" /></template>
-              </n-list-item>
-              <n-list-item>
-                <n-thing title="强制身份认证" description="请求必须携带 Authorization: Bearer Token。" />
-                <template #suffix><n-switch v-model:value="config.api_auth_required" @update:value="saveConfig" /></template>
               </n-list-item>
               <n-list-item>
                 <n-thing title="访问审计日志" description="记录每一次外部 API 的请求详细信息。" />

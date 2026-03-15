@@ -273,12 +273,6 @@ const logColumns = [
                 </template>
               </n-list-item>
               <n-list-item>
-                <n-thing title="强制 API 身份认证" description="开启后，所有外部 API 请求必须在 Header 中携带有效的 Bearer Token。" />
-                <template #suffix>
-                  <n-switch v-model:value="config.api_auth_required" @update:value="saveConfig" />
-                </template>
-              </n-list-item>
-              <n-list-item>
                 <n-thing title="开启访问审计" description="在系统日志中详细记录每一次外部 API 的请求信息。" />
                 <template #suffix>
                   <n-switch v-model:value="config.api_logging" @update:value="saveConfig" />

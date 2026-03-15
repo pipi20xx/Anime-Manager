@@ -16,116 +16,37 @@ import LoginView from './views/LoginView.vue'
 
 import { themeOverrides, isDarkMode } from './store/themeStore'
 
-import { isLoggedIn, uiAuthEnabled } from './store/navigationStore'
+import { isLoggedIn } from './store/navigationStore'
 
-// 根据当前模式选择主题
 const currentNaiveTheme = computed(() => isDarkMode.value ? darkTheme : lightTheme)
 
-
-
-// --- 全局 Token 同步 ---
-
-const syncToken = async () => {
-
-  try {
-
-    const API_BASE = (import.meta.env.VITE_API_BASE as string) || (window.location.origin)
-
-    
-
-    // 检查 Auth 状态
-
-    const authStatusRes = await fetch(`${API_BASE}/api/auth/status`)
-
-    if (authStatusRes.ok) {
-
-        const authStatus = await authStatusRes.json()
-
-        uiAuthEnabled.value = authStatus.ui_auth_enabled
-
-        localStorage.setItem('apm_ui_auth_enabled', String(authStatus.ui_auth_enabled))
-
-    }
-
-
-
-    // 兼容性同步：如果没开启新版 Auth，或者已经有了 external_token，尝试同步
-
-    if (!uiAuthEnabled.value) {
-
-        const res = await fetch(`${API_BASE}/api/config`)
-
-        if (res.ok) {
-
-          const data = await res.json()
-
-          if (data.external_token) {
-
-            localStorage.setItem('apm_external_token', data.external_token)
-
-          }
-
-        }
-
-    }
-
-  } catch (e) {
-
-    console.error('Failed to sync token:', e)
-
-  }
-
-}
-
-
-
 onMounted(() => {
-
-  syncToken()
-
+  localStorage.setItem('apm_ui_auth_enabled', 'true')
 })
-
 </script>
 
-
-
 <template>
-
   <n-config-provider :theme="currentNaiveTheme" :theme-overrides="themeOverrides">
-
     <n-global-style />
-
     <n-notification-provider>
-
       <n-dialog-provider>
-
         <n-message-provider>
-
-          <LoginView v-if="uiAuthEnabled && !isLoggedIn" />
-
+          <LoginView v-if="!isLoggedIn" />
           <MainLayout v-else />
-
         </n-message-provider>
-
       </n-dialog-provider>
-
     </n-notification-provider>
-
   </n-config-provider>
-
 </template>
 
 <style>
-/* 全局动画变量 */
 :root {
-  /* 动画时长 */
   --duration-instant: 100ms;
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 350ms;
   --duration-slower: 500ms;
 
-  /* 动画缓动函数 */
   --ease-linear: linear;
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
@@ -134,7 +55,6 @@ onMounted(() => {
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* 全局滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -154,20 +74,17 @@ onMounted(() => {
   background: var(--border-heavy);
 }
 
-/* 文本选中样式 */
 ::selection {
   background: var(--primary-medium, rgba(187, 134, 252, 0.4));
   color: var(--text-primary);
 }
 
-/* 焦点样式 */
 :focus-visible {
   outline: 2px solid var(--n-primary-color);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* 脉冲动画 */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -177,7 +94,6 @@ onMounted(() => {
   }
 }
 
-/* 闪烁动画 */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -187,7 +103,6 @@ onMounted(() => {
   }
 }
 
-/* 弹跳动画 */
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);
@@ -197,7 +112,6 @@ onMounted(() => {
   }
 }
 
-/* 旋转动画 */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -207,7 +121,6 @@ onMounted(() => {
   }
 }
 
-/* 缩放脉冲 */
 @keyframes scale-pulse {
   0%, 100% {
     transform: scale(1);
@@ -217,7 +130,6 @@ onMounted(() => {
   }
 }
 
-/* 骨架屏闪烁效果 */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -229,7 +141,6 @@ onMounted(() => {
   animation: shimmer 1.5s infinite;
 }
 
-/* 悬停上浮效果 */
 .hover-lift {
   transition: transform var(--duration-normal) var(--ease-out),
               box-shadow var(--duration-normal) var(--ease-out);
@@ -240,12 +151,10 @@ onMounted(() => {
   box-shadow: var(--shadow-lg);
 }
 
-/* 按钮点击效果 */
 .btn-press:active {
   transform: scale(0.96);
 }
 
-/* 图标悬停旋转 */
 .icon-spin-hover {
   transition: transform var(--duration-normal) var(--ease-bounce);
 }
@@ -254,7 +163,6 @@ onMounted(() => {
   transform: rotate(15deg);
 }
 
-/* 渐变边框动画 */
 .gradient-border {
   position: relative;
   background: var(--bg-surface);
@@ -295,7 +203,6 @@ onMounted(() => {
   }
 }
 
-/* 发光效果 */
 .glow {
   transition: box-shadow var(--duration-normal);
 }
@@ -304,12 +211,10 @@ onMounted(() => {
   box-shadow: 0 0 20px var(--primary-medium, rgba(187, 134, 252, 0.5));
 }
 
-/* 平滑滚动 */
 html {
   scroll-behavior: smooth;
 }
 
-/* 减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

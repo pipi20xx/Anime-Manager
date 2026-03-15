@@ -17,12 +17,16 @@ axios.interceptors.request.use(config => {
 
 axios.interceptors.response.use(response => response, error => {
     if (error.response?.status === 401) {
-        // Token 过期或无效
-        // 可以考虑在这里跳转到登录页，但在我们的非路由架构下，
-        // 我们可以通过修改 navigationStore 的状态来触发 App.vue 重新渲染
-        import('./store/navigationStore').then(m => {
-            m.logout()
-        })
+        // Token 过期或无效，强制退出登录
+        console.warn('认证失败 (401)，正在退出登录...')
+        
+        // 清除所有认证相关的存储
+        localStorage.removeItem('apm_access_token')
+        localStorage.removeItem('apm_username')
+        localStorage.removeItem('apm_external_token')
+        
+        // 重新加载页面以触发登录界面
+        window.location.reload()
     }
     return Promise.reject(error)
 })
@@ -45,7 +49,18 @@ window.fetch = async (...args) => {
         }
     }
     
-    return originalFetch(resource, config);
+    const response = await originalFetch(resource, config);
+    
+    // 处理 401 错误
+    if (response.status === 401) {
+        console.warn('认证失败 (401)，正在退出登录...')
+        localStorage.removeItem('apm_access_token')
+        localStorage.removeItem('apm_username')
+        localStorage.removeItem('apm_external_token')
+        window.location.reload()
+    }
+    
+    return response;
 };
 
 const app = createApp(App)
