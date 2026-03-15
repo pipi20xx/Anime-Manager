@@ -86,21 +86,6 @@ class BatchExecuteRequest(BaseModel):
     items: List[Dict[str, Any]]
     conflict_mode: str = "skip"
 
-@router.post("/api/files/list", summary="列出目录文件")
-async def list_files(request: FileListRequest):
-    """
-    浏览服务器目录，返回文件和文件夹列表。
-    """
-    try:
-        data = FileExplorer.list_directory(request.path)
-        return {"status": "success", "data": data}
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="路径不存在")
-    except PermissionError:
-        raise HTTPException(status_code=403, detail="权限不足")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @router.post("/api/rename/preview", summary="重命名预览")
 async def preview_rename(request: RenamePreviewRequest):
     """

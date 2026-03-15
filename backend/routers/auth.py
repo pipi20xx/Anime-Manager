@@ -153,10 +153,10 @@ async def login(req: LoginRequest, request: Request, session: AsyncSession = Dep
     access_token, token_id = create_access_token(
         data={"sub": user.username}, 
         password_hash=user.hashed_password,
-        expires_delta=None if jwt_never_expire else None
+        expires_delta=None if jwt_never_expire else timedelta(hours=24)
     )
     
-    expires_at = datetime.utcnow() + timedelta(minutes=24*60) if not jwt_never_expire else datetime.utcnow() + timedelta(days=365*10)
+    expires_at = datetime.utcnow() + timedelta(hours=24) if not jwt_never_expire else datetime.utcnow() + timedelta(days=365*10)
     await create_session(user.id, token_id, request, expires_at)
     
     from logger import log_audit

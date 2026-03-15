@@ -179,7 +179,15 @@ const handleJwtNeverExpireChange = async (value: boolean) => {
     config.jwt_never_expire = value
     await axios.post('/api/config', config)
     jwtNeverExpire.value = value
-    message.success('配置已更新')
+    
+    // 后端会自动更新所有会话的过期时间，刷新会话列表
+    await fetchSessions()
+    
+    message.success(
+      value 
+        ? '配置已更新，所有会话已设置为永不过期（10年）'
+        : '配置已更新，所有会话已设置为24小时自动过期'
+    )
   } catch (err: any) {
     message.error(err.response?.data?.detail || '保存失败')
   } finally {

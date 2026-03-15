@@ -77,17 +77,7 @@ async def api_audit_middleware(request: Request, call_next):
     if not path.startswith("/api"):
         return await call_next(request)
     
-    skip_paths = [
-        "/api/config", 
-        "/api/system/logs", 
-        "/api/system/docs",
-        "/api/system/openapi.json",
-        "/api/system/services",
-        "/api/organize/execute", 
-        "/api/organize/stream",
-        "/api/organize/background_tasks",
-        "/api/strm/execute"
-    ]
+    skip_paths = []
     if any(p in path for p in skip_paths):
         return await call_next(request)
 
