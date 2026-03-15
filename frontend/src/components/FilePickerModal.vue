@@ -8,6 +8,7 @@ import {
   InsertDriveFileOutlined as FileIcon,
   ArrowUpwardOutlined as UpIcon
 } from '@vicons/material'
+import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
   show: boolean
@@ -74,7 +75,7 @@ const handleConfirm = () => {
   >
     <div class="picker-container">
       <n-space justify="space-between" align="center" class="mb-2">
-        <n-button size="small" quaternary @click="goUp">
+        <n-button v-bind="getButtonStyle('primary')" size="small" @click="goUp">
           <template #icon><n-icon><UpIcon /></n-icon></template>上级目录
         </n-button>
         <span class="path-text">{{ selectedFile || currentPath }}</span>

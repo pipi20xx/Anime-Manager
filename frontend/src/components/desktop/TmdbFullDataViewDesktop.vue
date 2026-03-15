@@ -112,12 +112,12 @@ const {
     <n-modal v-model:show="showEditModal" preset="card" style="width: 700px" :title="isEditing ? '修正元数据' : '手动新增元数据'">
       <n-form label-placement="left" label-width="90">
         <n-grid :cols="2" :x-gap="12">
-          <n-gi><n-form-item label="TMDB ID"><n-input v-model:value="editForm.id" :disabled="isEditing" /></n-form-item></n-gi>
+          <n-gi><n-form-item label="TMDB ID"><n-input v-model:value="editForm.id" :disabled="isEditing" placeholder="请输入 TMDB ID" /></n-form-item></n-gi>
           <n-gi><n-form-item label="媒体类型"><n-select v-model:value="editForm.type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" /></n-form-item></n-gi>
         </n-grid>
-        <n-form-item label="显示标题"><n-input v-model:value="editForm.title" /></n-form-item>
-        <n-form-item label="海报链接"><n-input v-model:value="editForm.poster_path" /></n-form-item>
-        <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
+        <n-form-item label="显示标题"><n-input v-model:value="editForm.title" placeholder="请输入显示标题" /></n-form-item>
+        <n-form-item label="海报链接"><n-input v-model:value="editForm.poster_path" placeholder="请输入海报链接" /></n-form-item>
+        <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" placeholder="请输入内容简介" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #action>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>

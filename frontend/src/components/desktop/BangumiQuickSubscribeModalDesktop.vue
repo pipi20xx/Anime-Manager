@@ -50,7 +50,7 @@ const {
             <n-gi>
               <div class="label">手动添加 Bangumi ID</div>
               <n-input-group>
-                <n-input v-model:value="manualId" @keypress.enter="addManualItem" />
+                <n-input v-model:value="manualId" placeholder="请输入 Bangumi ID" @keypress.enter="addManualItem" />
                 <n-button v-bind="getButtonStyle('primary')" @click="addManualItem">添加</n-button>
               </n-input-group>
             </n-gi>
