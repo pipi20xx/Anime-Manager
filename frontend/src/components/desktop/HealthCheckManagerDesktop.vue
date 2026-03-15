@@ -8,7 +8,6 @@ import {
   CheckCircleOutlined as OkIcon,
   ErrorOutlineOutlined as ErrorIcon,
   HelpOutlineOutlined as UnknownIcon,
-  RefreshOutlined as RefreshIcon,
   AddOutlined as AddIcon,
   EditOutlined as EditIcon,
   DeleteOutlineOutlined as DeleteIcon,
@@ -84,9 +83,6 @@ const columns = [
     <n-card bordered title="掉盘与 CK 失效检测" size="small">
       <template #header-extra>
         <n-space>
-          <n-button v-bind="getButtonStyle('icon')" size="small" @click="fetchConfigs">
-            <template #icon><n-icon><RefreshIcon /></n-icon></template>
-          </n-button>
           <n-button v-bind="getButtonStyle('warning')" size="small" @click="checkAll">
             立即检测全部
           </n-button>

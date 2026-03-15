@@ -278,9 +278,8 @@ const countryColumns = [
         <n-tag type="info" size="small">自定义中文名称，优先于 TMDB 官方数据</n-tag>
       </template>
       
-      <n-tabs type="line" v-model:value="activeType">
-        <n-tab-pane name="genre" tab="流派">
-          <template #tab>流派</template>
+      <n-tabs type="segment" animated v-model:value="activeType" style="height: 60vh">
+        <n-tab-pane name="genre" tab="流派" style="height: 100%; display: flex; flex-direction: column">
           <n-input 
             v-model:value="genreSearch" 
             placeholder="搜索 ID 或名称..." 
@@ -299,9 +298,8 @@ const countryColumns = [
           />
           <n-empty v-if="!loading && genreMappings.length === 0" description="暂无流派映射，点击「导入当前分类」从 TMDB 导入" style="padding: 40px 0" />
         </n-tab-pane>
-        
-        <n-tab-pane name="company" tab="制作公司">
-          <template #tab>制作公司</template>
+
+        <n-tab-pane name="company" tab="制作公司" style="height: 100%; display: flex; flex-direction: column">
           <n-input 
             v-model:value="companySearch" 
             placeholder="搜索 ID、名称或国家..." 
@@ -328,9 +326,8 @@ const countryColumns = [
           </div>
           <n-empty v-if="!companyLoading && companyMappings.length === 0" description="暂无制作公司映射，点击「导入当前分类」从 TMDB 导入" style="padding: 40px 0" />
         </n-tab-pane>
-        
-        <n-tab-pane name="keyword" tab="关键词">
-          <template #tab>关键词</template>
+
+        <n-tab-pane name="keyword" tab="关键词" style="height: 100%; display: flex; flex-direction: column">
           <n-input 
             v-model:value="keywordSearch" 
             placeholder="搜索 ID 或名称..." 
@@ -358,8 +355,7 @@ const countryColumns = [
           <n-empty v-if="!keywordLoading && keywordMappings.length === 0" description="暂无关键词映射，点击「导入当前分类」从 TMDB 导入" style="padding: 40px 0" />
         </n-tab-pane>
 
-        <n-tab-pane name="language" tab="原始语言">
-          <template #tab>原始语言</template>
+        <n-tab-pane name="language" tab="原始语言" style="height: 100%; display: flex; flex-direction: column">
           <n-input 
             v-model:value="languageSearch" 
             placeholder="搜索代码或名称..." 
@@ -379,8 +375,7 @@ const countryColumns = [
           <n-empty v-if="!loading && languageMappings.length === 0" description="暂无语言映射，点击「添加映射」手动添加" style="padding: 40px 0" />
         </n-tab-pane>
 
-        <n-tab-pane name="country" tab="原始国家">
-          <template #tab>原始国家</template>
+        <n-tab-pane name="country" tab="原始国家" style="height: 100%; display: flex; flex-direction: column">
           <n-input 
             v-model:value="countrySearch" 
             placeholder="搜索代码或名称..." 

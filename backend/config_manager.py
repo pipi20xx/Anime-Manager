@@ -208,6 +208,11 @@ class ConfigManager:
         if env_name: db_conf["database"] = env_name.strip()
         
         config["database"] = db_conf
+        
+        # 确保 download_clients 始终是数组
+        if not isinstance(config.get("download_clients"), list):
+            config["download_clients"] = []
+        
         return config
 
     @staticmethod

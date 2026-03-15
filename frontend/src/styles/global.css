@@ -271,45 +271,40 @@ input, textarea, select, button {
  * Tabs segment 类型样式统一
  * ============================================ */
 
-/* 轨道背景 - 使用主题背景色 */
+/* 轨道背景 - 白天白色，夜间跟随主题 */
 .n-tabs.n-tabs--segment-type .n-tabs-nav,
 .n-tabs.n-tabs--segment-type .n-tabs-nav--segment-type,
-.custom-tabs .n-tabs-nav,
-.custom-tabs.n-tabs .n-tabs-nav,
+.custom-tabs.n-tabs--segment-type .n-tabs-nav,
+.custom-tabs.n-tabs--segment-type .n-tabs-nav--segment-type,
 [class*="n-tabs"][class*="--segment"] .n-tabs-nav,
 div.n-tabs.n-tabs--segment-type > div.n-tabs-nav,
 div.n-tabs.n-tabs--segment-type div.n-tabs-nav--segment-type,
 div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
-  background: var(--bg-tertiary) !important;
+  background: var(--app-surface-card) !important;
   border-radius: 8px !important;
   padding: 0 !important;
 }
 
-/* n-tabs-rail 样式 */
-.n-tabs-rail,
-div.n-tabs-rail,
-.n-tabs--segment-type .n-tabs-rail,
-.n-tabs-nav .n-tabs-rail,
-[class*="n-tabs-rail"] {
-  background: var(--bg-tertiary) !important;
+/* n-tabs-rail 样式 - segment 类型，白天白色，夜间跟随主题 */
+.n-tabs.n-tabs--segment-type .n-tabs-rail,
+.n-tabs.n-tabs--segment-type div.n-tabs-rail,
+.n-tabs.n-tabs--segment-type [class*="n-tabs-rail"] {
+  background: var(--app-surface-card) !important;
   border-radius: 8px !important;
   padding: 0 !important;
   gap: 0 !important;
 }
 
-/* 未选中 tab 项 - 使用主题文字颜色 */
-.n-tabs.n-tabs--segment-type .n-tabs-tab,
-[class*="n-tabs-rail"] [class*="n-tabs-tab"] {
+/* 未选中 tab 项 - segment 类型 */
+.n-tabs.n-tabs--segment-type .n-tabs-tab {
   background: transparent !important;
   color: var(--n-text-color-1) !important;
   border-radius: 0 !important;
   margin: 0 !important;
 }
 
-/* 选中 tab 项 - 填满无间隔，白色文字 */
-.n-tabs.n-tabs--segment-type .n-tabs-tab.n-tabs-tab--active,
-.n-tabs-rail .n-tabs-tab--active,
-[class*="n-tabs-rail"] [class*="n-tabs-tab--active"] {
+/* 选中 tab 项 - segment 类型，填满无间隔，白色文字 */
+.n-tabs.n-tabs--segment-type .n-tabs-tab.n-tabs-tab--active {
   background: #3b82f6 !important;
   color: #ffffff !important;
   border-radius: 8px !important;
@@ -317,22 +312,22 @@ div.n-tabs-rail,
   box-shadow: none !important;
 }
 
-/* 移除 tab wrapper 间隔 */
-.n-tabs-tab-wrapper,
-[class*="n-tabs-tab-wrapper"] {
+/* 移除 segment 类型 tab wrapper 间隔 */
+.n-tabs.n-tabs--segment-type .n-tabs-tab-wrapper,
+.n-tabs.n-tabs--segment-type [class*="n-tabs-tab-wrapper"] {
   padding: 0 !important;
   margin: 0 !important;
 }
 
-/* 移除 tab pad */
-.n-tabs-tab-pad,
-[class*="n-tabs-tab-pad"] {
+/* 移除 segment 类型 tab pad */
+.n-tabs.n-tabs--segment-type .n-tabs-tab-pad,
+.n-tabs.n-tabs--segment-type [class*="n-tabs-tab-pad"] {
   display: none !important;
 }
 
-/* 隐藏 capsule */
-.n-tabs-capsule,
-[class*="n-tabs-capsule"] {
+/* 隐藏 segment 类型 capsule */
+.n-tabs.n-tabs--segment-type .n-tabs-capsule,
+.n-tabs.n-tabs--segment-type [class*="n-tabs-capsule"] {
   display: none !important;
 }
 
@@ -497,34 +492,111 @@ div.n-tabs-rail,
   color: var(--n-text-color-1) !important;
 }
 
+/* ============================================
+ * 按钮颜色统一管理 - 不受白天/黑夜模式影响
+ * ============================================ */
+
+/* 主要按钮 - 紫色（排除 ghost 按钮） */
+.n-button--primary-type:not(.n-button--ghost) {
+  background: #7c4dff !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.n-button--primary-type:not(.n-button--ghost):hover {
+  background: #9965ff !important;
+  border: none !important;
+}
+.n-button--primary-type:not(.n-button--ghost):active {
+  background: #5c3dd4 !important;
+  border: none !important;
+}
+
+/* 成功按钮 - 绿色（排除 ghost 按钮） */
+.n-button--success-type:not(.n-button--ghost) {
+  background: #2e7d32 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.n-button--success-type:not(.n-button--ghost):hover {
+  background: #4caf50 !important;
+  border: none !important;
+}
+.n-button--success-type:not(.n-button--ghost):active {
+  background: #1b5e20 !important;
+  border: none !important;
+}
+
+/* 警告按钮 - 橙色（排除 ghost 按钮） */
+.n-button--warning-type:not(.n-button--ghost) {
+  background: #ed6c02 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.n-button--warning-type:not(.n-button--ghost):hover {
+  background: #ff9800 !important;
+  border: none !important;
+}
+.n-button--warning-type:not(.n-button--ghost):active {
+  background: #e65100 !important;
+  border: none !important;
+}
+
+/* 错误/危险按钮 - 红色（排除 ghost 按钮） */
+.n-button--error-type:not(.n-button--ghost) {
+  background: #d32f2f !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.n-button--error-type:not(.n-button--ghost):hover {
+  background: #f44336 !important;
+  border: none !important;
+}
+.n-button--error-type:not(.n-button--ghost):active {
+  background: #b71c1c !important;
+  border: none !important;
+}
+
+/* 信息按钮 - 蓝色（排除 ghost 按钮） */
+.n-button--info-type:not(.n-button--ghost) {
+  background: #0288d1 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.n-button--info-type:not(.n-button--ghost):hover {
+  background: #03a9f4 !important;
+  border: none !important;
+}
+.n-button--info-type:not(.n-button--ghost):active {
+  background: #01579b !important;
+  border: none !important;
+}
+
+/* 按钮文字统一白色（排除 ghost 按钮） */
+.n-button--primary-type:not(.n-button--ghost) *,
+.n-button--success-type:not(.n-button--ghost) *,
+.n-button--warning-type:not(.n-button--ghost) *,
+.n-button--error-type:not(.n-button--ghost) *,
+.n-button--info-type:not(.n-button--ghost) * {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+/* 强制移除所有按钮边框 - 包括夜晚模式下的边框 */
+.n-button,
+.n-button::before,
+.n-button::after,
+.n-button .n-button__border,
+.n-button .n-button__state-border {
+  border: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* 按钮统一样式增强 - 强制所有按钮字体粗细一致 */
 .n-button,
 .n-button * {
   transition: all 0.2s ease;
-  font-weight: 500 !important;
-}
-.n-button--primary-type,
-.n-button--secondary-type,
-.n-button--tertiary-type,
-.n-button--default-type,
-.n-button--warning-type,
-.n-button--error-type,
-.n-button--info-type,
-.n-button--success-type,
-.n-button--ghost-type,
-.n-button--text-type,
-.n-button--quaternary-type,
-.n-button--primary-type *,
-.n-button--secondary-type *,
-.n-button--tertiary-type *,
-.n-button--default-type *,
-.n-button--warning-type *,
-.n-button--error-type *,
-.n-button--info-type *,
-.n-button--success-type *,
-.n-button--ghost-type *,
-.n-button--text-type *,
-.n-button--quaternary-type * {
   font-weight: 500 !important;
 }
 
@@ -577,12 +649,24 @@ div.n-tabs-rail,
   text-transform: uppercase;
 }
 
-/* Switch 边框 */
-.n-switch__rail {
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+/* Switch 样式 - 使用 !important 覆盖主题配置 */
+/* 关闭状态：透明背景 + 紫色边框 */
+.n-switch .n-switch__rail {
+  border: 2px solid #7c4dff !important;
+  background-color: transparent !important;
 }
+/* 开启状态：紫色背景 + 紫色边框 */
 .n-switch.n-switch--active .n-switch__rail {
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: #7c4dff !important;
+  background-color: #7c4dff !important;
+}
+
+/* Switch 按钮（圆圈）- 使用主题文字颜色，白天黑夜都能看清楚 */
+.n-switch .n-switch__button {
+  background-color: var(--text-primary) !important;
+}
+.n-switch.n-switch--active .n-switch__button {
+  background-color: #ffffff !important;
 }
 
 /* ============================================
@@ -590,9 +674,9 @@ div.n-tabs-rail,
  * 用于筛选器等场景下的单选按钮组
  * ============================================ */
 
-/* RadioButton 组轨道背景 - 使用主题背景色 */
+/* RadioButton 组轨道背景 - 白天白色，夜间跟随主题 */
 .n-radio-group {
-  background: var(--bg-tertiary) !important;
+  background: var(--app-surface-card) !important;
   border-radius: 8px !important;
   padding: 0 !important;
 }

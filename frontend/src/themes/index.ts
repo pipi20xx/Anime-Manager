@@ -347,13 +347,15 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       heightMedium: '22px',
       heightLarge: '26px',
       railColor: config.bgTertiary,
-      railColorActive: config.primaryColor,
+      // 开启状态轨道颜色固定为深紫色，不随白天/夜晚模式变化
+      railColorActive: '#7c4dff',
       // 按钮颜色固定为白色，不受白天/夜晚模式影响
       buttonColor: '#ffffff',
       buttonColorActive: '#ffffff',
       textColor: textColor2,
-      railBorderColor: switchBorderColor,
-      railBorderColorActive: switchBorderColorActive,
+      // 边框颜色固定为紫色，不随白天/夜晚模式变化
+      railBorderColor: '#7c4dff',
+      railBorderColorActive: '#7c4dff',
       boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.15)',
       railBorderRadius: '11px',
       buttonBorderRadius: '50%'
@@ -370,9 +372,9 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       buttonBorderRadius: '6px'
     },
     Menu: {
-      itemColorActive: config.primaryColor,
-      itemColorActiveHover: config.primaryColorHover,
-      itemColorActiveCollapsed: config.primaryColor,
+      itemColorActive: '#7c4dff',
+      itemColorActiveHover: '#9965ff',
+      itemColorActiveCollapsed: '#7c4dff',
       itemTextColorActive: '#ffffff',
       itemTextColorActiveHover: '#ffffff',
       itemIconColorActive: '#ffffff',
@@ -383,8 +385,8 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       itemTextColorHover: textColor1,
       itemIconColor: textColor3,
       itemIconColorHover: textColor2,
-      itemColorActiveSub: config.primaryColor,
-      itemColorActiveSubHover: config.primaryColorHover,
+      itemColorActiveSub: '#7c4dff',
+      itemColorActiveSubHover: '#9965ff',
       itemTextColorActiveSub: '#ffffff',
       itemTextColorActiveSubHover: '#ffffff',
       borderRadius: '8px',

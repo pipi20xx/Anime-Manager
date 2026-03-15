@@ -364,7 +364,11 @@ const {
                   </div>
                   <template #action>
                     <n-space justify="end" @click.stop>
-                      <n-popconfirm @positive-click="handleDeleteClient(client.id)">
+                      <n-popconfirm
+                        positive-text="确定"
+                        negative-text="取消"
+                        @positive-click="handleDeleteClient(client.id)"
+                      >
                         <template #trigger>
                           <n-button v-bind="getButtonStyle('iconDanger')" size="small">
                             <template #icon><n-icon><DeleteIcon/></n-icon></template>

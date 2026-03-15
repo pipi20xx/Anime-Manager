@@ -98,36 +98,36 @@ const columns = [
     render(row: any) {
       const tags = []
       // 状态标签 - 颜色底色+白色文字
-      if (row.in_subscription) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #0288d1', backgroundColor: '#0288d1', borderRadius: '12px', '--n-border-color': '#0288d1' } }, { default: () => '已订阅' }))
-      if (row.episode_collected) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #2e7d32', backgroundColor: '#2e7d32', borderRadius: '12px', '--n-border-color': '#2e7d32' } }, { default: () => '订阅已下载' }))
+      if (row.in_subscription) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#0288d1', borderRadius: '12px' } }, { default: () => '已订阅' }))
+      if (row.episode_collected) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '订阅已下载' }))
 
       if (row.recognition_done && row.tmdb_id) {
         // TMDB ID - 深绿色底色+白色文字
-        tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #2e7d32', backgroundColor: '#2e7d32', borderRadius: '12px', '--n-border-color': '#2e7d32' } }, { default: () => `ID: ${row.tmdb_id}` }))
+        tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => `ID: ${row.tmdb_id}` }))
         // 类型 - 蓝色底色+白色文字
-        tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #1565c0', backgroundColor: '#1565c0', borderRadius: '12px', '--n-border-color': '#1565c0' } }, {
+        tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#1565c0', borderRadius: '12px' } }, {
           default: () => row.media_type === 'movie' ? '🎬 电影' : '📺 剧集'
         }))
         // SXXEXX - 紫色底色+白色文字
         if (row.media_type === 'tv') {
-          tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #7c4dff', backgroundColor: '#7c4dff', borderRadius: '12px', '--n-border-color': '#7c4dff' } }, { default: () => `S${row.season || 1} E${row.episode || '-'}` }))
+          tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#7c4dff', borderRadius: '12px' } }, { default: () => `S${row.season || 1} E${row.episode || '-'}` }))
         }
       } else if (row.recognition_done) {
         tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('warning') }, { default: () => '未命中' }))
       }
 
       // 制作组 - 深蓝色底色+白色文字
-      if (row.team) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #0d47a1', backgroundColor: '#0d47a1', borderRadius: '12px', '--n-border-color': '#0d47a1' } }, { default: () => row.team }))
+      if (row.team) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#0d47a1', borderRadius: '12px' } }, { default: () => row.team }))
       // 来源/发布平台 - 红色底色+白色文字
-      if (row.source) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #c62828', backgroundColor: '#c62828', borderRadius: '12px', '--n-border-color': '#c62828' } }, { default: () => row.source }))
-      if (row.platform) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #c62828', backgroundColor: '#c62828', borderRadius: '12px', '--n-border-color': '#c62828' } }, { default: () => row.platform }))
+      if (row.source) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#c62828', borderRadius: '12px' } }, { default: () => row.source }))
+      if (row.platform) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#c62828', borderRadius: '12px' } }, { default: () => row.platform }))
       // 分辨率/视频编码/音频编码/视频特效 - 深橙色底色+白色文字
-      if (row.resolution) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #e65100', backgroundColor: '#e65100', borderRadius: '12px', '--n-border-color': '#e65100' } }, { default: () => row.resolution }))
-      if (row.video_effect) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #e65100', backgroundColor: '#e65100', borderRadius: '12px', '--n-border-color': '#e65100' } }, { default: () => row.video_effect }))
-      if (row.video_encode) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #e65100', backgroundColor: '#e65100', borderRadius: '12px', '--n-border-color': '#e65100' } }, { default: () => row.video_encode }))
-      if (row.audio_encode) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #e65100', backgroundColor: '#e65100', borderRadius: '12px', '--n-border-color': '#e65100' } }, { default: () => row.audio_encode }))
-      if (row.subtitle) tags.push(h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #e65100', backgroundColor: '#e65100', borderRadius: '12px', '--n-border-color': '#e65100' } }, { default: () => row.subtitle }))
-      
+      if (row.resolution) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#e65100', borderRadius: '12px' } }, { default: () => row.resolution }))
+      if (row.video_effect) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#e65100', borderRadius: '12px' } }, { default: () => row.video_effect }))
+      if (row.video_encode) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#e65100', borderRadius: '12px' } }, { default: () => row.video_encode }))
+      if (row.audio_encode) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#e65100', borderRadius: '12px' } }, { default: () => row.audio_encode }))
+      if (row.subtitle) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#e65100', borderRadius: '12px' } }, { default: () => row.subtitle }))
+
       return h(NSpace, { size: 4, itemStyle: 'display: flex' }, { default: () => tags })
     }
   },
@@ -138,8 +138,8 @@ const columns = [
     width: 100,
     render(row: any) {
       return row.is_downloaded
-        ? h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #2e7d32', backgroundColor: '#2e7d32', borderRadius: '12px', '--n-border-color': '#2e7d32' } }, { default: () => '已推送' })
-        : h(NTag, { size: 'small', round: true, bordered: true, style: { color: '#fff', border: '1px solid #757575', backgroundColor: '#757575', borderRadius: '12px', '--n-border-color': '#757575' } }, { default: () => '未推送' })
+        ? h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '已推送' })
+        : h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#757575', borderRadius: '12px' } }, { default: () => '未推送' })
     }
   },
   {
