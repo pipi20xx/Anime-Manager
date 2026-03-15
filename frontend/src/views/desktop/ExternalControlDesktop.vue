@@ -12,7 +12,8 @@ import {
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
 import { getButtonStyle } from '../../composables/useButtonStyles'
-import { docsTheme } from '../../store/themeStore'
+import { isDarkMode } from '../../store/themeStore'
+import { computed } from 'vue'
 
 const {
   API_BASE,
@@ -39,6 +40,12 @@ const currentLogDetail = ref('')
 // --- API Docs Iframe Management ---
 const docsIframe = ref<HTMLIFrameElement | null>(null)
 let heightTimer: any = null
+
+// 计算 API 文档 URL，根据当前主题模式传递 light/dark 参数
+const docsUrl = computed(() => {
+  const theme = isDarkMode.value ? 'dark' : 'light'
+  return `${API_BASE}/api/system/docs?theme=${theme}&token=${config.value.external_token || ''}`
+})
 
 const adjustIframeHeight = () => {
   if (docsIframe.value && docsIframe.value.contentWindow) {
@@ -163,10 +170,7 @@ const logColumns = [
                     <n-tooltip trigger="hover">
                       <template #trigger>
                         <n-button 
-                          quaternary 
-                          circle 
-                          type="primary"
-                          size="small"
+                          v-bind="getButtonStyle('icon')"
                           style="margin-right: -4px"
                           @click.stop="copyToClipboard(config.external_token)"
                         >
@@ -202,10 +206,7 @@ const logColumns = [
                     <n-tooltip trigger="hover">
                       <template #trigger>
                         <n-button 
-                          quaternary 
-                          circle 
-                          type="primary"
-                          size="small"
+                          v-bind="getButtonStyle('icon')"
                           style="margin-right: -4px"
                           @click.stop="copyToClipboard(webhookUrl)"
                         >
@@ -240,10 +241,7 @@ const logColumns = [
                     <n-tooltip trigger="hover">
                       <template #trigger>
                         <n-button 
-                          quaternary 
-                          circle 
-                          type="primary"
-                          size="small"
+                          v-bind="getButtonStyle('icon')"
                           style="margin-right: -4px"
                           @click.stop="copyToClipboard(embyWebhookUrl)"
                         >
@@ -320,15 +318,18 @@ const logColumns = [
         <n-tab-pane name="docs" tab="API 文档">
           <div class="tab-content docs-container">
             <div class="docs-wrapper">
-              <iframe 
+              <iframe
+                v-if="config.external_token"
                 ref="docsIframe"
-                :key="config.external_token"
-                :src="`${API_BASE}/api/system/docs?theme=${docsTheme}&token=${config.external_token}`" 
+                :src="docsUrl"
                 class="docs-iframe"
                 frameborder="0"
                 scrolling="no"
                 @load="adjustIframeHeight"
               ></iframe>
+              <div v-else class="docs-loading" style="display: flex; align-items: center; justify-content: center; height: 200px; color: var(--text-tertiary);">
+                <n-spin size="small" /> <span style="margin-left: 8px;">加载 API 文档...</span>
+              </div>
             </div>
           </div>
         </n-tab-pane>

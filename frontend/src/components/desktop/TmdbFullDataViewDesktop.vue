@@ -8,7 +8,6 @@ import {
   EditOutlined as EditIcon,
   DeleteOutlined as DeleteIcon,
   SearchOutlined as SearchIcon,
-  RefreshOutlined as SyncIcon,
   FileDownloadOutlined as ExportIcon,
   CloudSyncOutlined as SytmdbIcon,
   CheckCircleOutlined as CustomIcon,
@@ -72,7 +71,6 @@ const {
           <n-button v-bind="getButtonStyle('primary')" @click="openCreate">
             手动新增
           </n-button>
-          <n-button v-bind="getButtonStyle('icon')" @click="fetchBrowserData" :loading="browserLoading"><template #icon><n-icon><SyncIcon /></n-icon></template></n-button>
         </n-space>
       </div>
 

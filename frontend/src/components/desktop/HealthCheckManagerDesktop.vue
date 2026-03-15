@@ -5,9 +5,6 @@ import {
   NInput, NInputNumber, NSwitch, NPopconfirm, NTag, NIcon
 } from 'naive-ui'
 import {
-  CheckCircleOutlined as OkIcon,
-  ErrorOutlineOutlined as ErrorIcon,
-  HelpOutlineOutlined as UnknownIcon,
   AddOutlined as AddIcon,
   EditOutlined as EditIcon,
   DeleteOutlineOutlined as DeleteIcon,
@@ -27,19 +24,12 @@ const columns = [
   { title: '名称', key: 'name' },
   { title: '文件路径', key: 'file_path', ellipsis: { tooltip: true } },
   { title: '远程 URL', key: 'file_url', ellipsis: { tooltip: true } },
-  { 
-    title: '状态', 
+  {
+    title: '状态',
     key: 'last_status',
     render(row: HealthCheckConfig) {
       const info = getStatusInfo(row.last_status)
-      const icon = info.isOk ? OkIcon : (info.isFailed ? ErrorIcon : UnknownIcon)
-      
-      return h(NSpace, { align: 'center', size: 4 }, {
-        default: () => [
-          h(NIcon, { component: icon, color: info.type === 'success' ? 'var(--n-success-color)' : (info.type === 'error' ? 'var(--n-error-color)' : 'var(--text-muted)') }),
-          h(NTag, { type: info.type, size: 'small', bordered: false }, { default: () => info.text })
-        ]
-      })
+      return h(NTag, { type: info.type, size: 'small', bordered: false }, { default: () => info.text })
     }
   },
   { 

@@ -41,11 +41,14 @@ async def get_documentation(request: Request, theme: str = "cyan", token: str = 
          # raise HTTPException(status_code=403, detail="禁止直接访问 API 文档。请通过系统仪表盘进入。")
          pass
     
-    # 根据主题定义配色 (默认青蓝色)
-    primary_color = "#2080f0" if theme == "cyan" else "#705df2"
-    bg_color = "#101014"
-    card_bg = "#18181c"
-    text_color = "#e0e0e0"
+    # 根据主题定义配色 (支持 light 白天模式)
+    is_light = theme == "light"
+    primary_color = "#2080f0" if theme == "cyan" else "#7c4dff"
+    bg_color = "#ffffff" if is_light else "#101014"
+    card_bg = "#f5f5f5" if is_light else "#18181c"
+    text_color = "#333333" if is_light else "#e0e0e0"
+    border_color = "rgba(0,0,0,0.1)" if is_light else "rgba(255,255,255,0.1)"
+    subtle_text = "rgba(0,0,0,0.6)" if is_light else "rgba(255,255,255,0.6)"
 
     # 自动授权脚本
     auth_js = ""
@@ -73,34 +76,34 @@ async def get_documentation(request: Request, theme: str = "cyan", token: str = 
     /* 基础背景与文字 */
     body {{ background-color: {bg_color} !important; margin: 0; padding: 0; }}
     .swagger-ui {{ background-color: {bg_color} !important; color: {text_color} !important; }}
-    
+
     /* 滚动条美化 */
     ::-webkit-scrollbar {{ width: 4px; height: 4px; }}
     ::-webkit-scrollbar-track {{ background: transparent; }}
-    ::-webkit-scrollbar-thumb {{ background: rgba(255, 255, 255, 0.1); border-radius: 10px; }}
+    ::-webkit-scrollbar-thumb {{ background: {border_color}; border-radius: 10px; }}
     ::-webkit-scrollbar-thumb:hover {{ background: {primary_color}; }}
-    
+
     .swagger-ui .topbar {{ display: none; }}
     .swagger-ui .info .title, .swagger-ui .info li, .swagger-ui .info p, .swagger-ui .info table, .swagger-ui .info h1, .swagger-ui .info h2, .swagger-ui .info h3 {{ color: {text_color} !important; }}
-    
+
     /* 接口区块与标签 */
-    .swagger-ui .opblock-tag {{ color: {text_color} !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }}
-    .swagger-ui .opblock-tag:hover {{ background: rgba(255,255,255,0.05) !important; }}
-    .swagger-ui .opblock {{ background: {card_bg} !important; border: 1px solid rgba(255,255,255,0.05) !important; box-shadow: none !important; }}
+    .swagger-ui .opblock-tag {{ color: {text_color} !important; border-bottom: 1px solid {border_color} !important; }}
+    .swagger-ui .opblock-tag:hover {{ background: {border_color} !important; }}
+    .swagger-ui .opblock {{ background: {card_bg} !important; border: 1px solid {border_color} !important; box-shadow: none !important; }}
     .swagger-ui .opblock .opblock-summary-path {{ color: {text_color} !important; font-family: 'JetBrains Mono', monospace; }}
-    .swagger-ui .opblock .opblock-summary-description {{ color: rgba(255,255,255,0.6) !important; }}
-    
+    .swagger-ui .opblock .opblock-summary-description {{ color: {subtle_text} !important; }}
+
     /* 参数与请求配置区 */
-    .swagger-ui .scheme-container {{ background: {card_bg} !important; box-shadow: none !important; border-top: 1px solid rgba(255,255,255,0.05) !important; }}
-    .swagger-ui select {{ background: {bg_color} !important; color: {text_color} !important; border-color: rgba(255,255,255,0.2) !important; }}
-    .swagger-ui input {{ background: {card_bg} !important; color: {text_color} !important; border: 1px solid rgba(255,255,255,0.1) !important; }}
-    .swagger-ui .btn {{ color: {text_color} !important; border-color: rgba(255,255,255,0.2) !important; background: transparent !important; }}
+    .swagger-ui .scheme-container {{ background: {card_bg} !important; box-shadow: none !important; border-top: 1px solid {border_color} !important; }}
+    .swagger-ui select {{ background: {bg_color} !important; color: {text_color} !important; border-color: {border_color} !important; }}
+    .swagger-ui input {{ background: {card_bg} !important; color: {text_color} !important; border: 1px solid {border_color} !important; }}
+    .swagger-ui .btn {{ color: {text_color} !important; border-color: {border_color} !important; background: transparent !important; }}
     .swagger-ui .btn.execute {{ background-color: {primary_color} !important; border-color: {primary_color} !important; color: #fff !important; font-weight: bold !important; }}
-    
+
     /* 模型 (Models / Schemas) 区块 */
-    .swagger-ui .models {{ background: {card_bg} !important; border: 1px solid rgba(255,255,255,0.05) !important; margin: 20px !important; border-radius: 8px !important; }}
+    .swagger-ui .models {{ background: {card_bg} !important; border: 1px solid {border_color} !important; margin: 20px !important; border-radius: 8px !important; }}
     .swagger-ui .models .model-container {{ background: transparent !important; margin: 0 !important; padding: 10px !important; }}
-    .swagger-ui .models h4 {{ color: {text_color} !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; padding-bottom: 10px !important; }}
+    .swagger-ui .models h4 {{ color: {text_color} !important; border-bottom: 1px solid {border_color} !important; padding-bottom: 10px !important; }}
     .swagger-ui .model-box {{ background: transparent !important; color: {text_color} !important; }}
     .swagger-ui .model-box-control {{ background: transparent !important; color: {text_color} !important; border: none !important; }}
     .swagger-ui .model-box-control:focus {{ outline: none !important; }}
@@ -108,49 +111,49 @@ async def get_documentation(request: Request, theme: str = "cyan", token: str = 
     .swagger-ui .model {{ color: {text_color} !important; background: transparent !important; }}
     .swagger-ui .model-title {{ color: {text_color} !important; }}
     .swagger-ui .prop-type {{ color: {primary_color} !important; }}
-    .swagger-ui .prop-format {{ color: rgba(255,255,255,0.4) !important; }}
+    .swagger-ui .prop-format {{ color: {subtle_text} !important; }}
     .swagger-ui .prop-name {{ color: {text_color} !important; font-weight: bold !important; }}
-    
+
     /* 核心修复：Schemas 内部嵌套表格和列表的白底 */
     .swagger-ui section.models .model-container {{ background-color: transparent !important; }}
-    .swagger-ui section.models .model-box {{ background-color: rgba(255,255,255,0.02) !important; }}
-    .swagger-ui .model-toggle:after {{ filter: invert(1) brightness(2); }}
+    .swagger-ui section.models .model-box {{ background-color: {border_color} !important; }}
+    .swagger-ui .model-toggle:after {{ filter: invert({'0' if is_light else '1'}) brightness(2); }}
 
     /* 适配新版 JSON Schema 2020-12 渲染器 (彻底修复白底) */
     .json-schema-2020-12-accordion {{ background: transparent !important; border: none !important; color: {text_color} !important; }}
     .json-schema-2020-12-accordion__children {{ color: {text_color} !important; }}
     .json-schema-2020-12__title {{ color: {text_color} !important; font-weight: bold !important; }}
     .json-schema-2020-12-accordion__icon svg {{ fill: {text_color} !important; }}
-    .json-schema-2020-12-accordion:hover {{ background: rgba(255,255,255,0.05) !important; }}
-    .json-schema-2020-12-expand-deep-button {{ 
-      color: {primary_color} !important; 
-      background: transparent !important; 
-      border: 1px solid {primary_color} !important; 
+    .json-schema-2020-12-accordion:hover {{ background: {border_color} !important; }}
+    .json-schema-2020-12-expand-deep-button {{
+      color: {primary_color} !important;
+      background: transparent !important;
+      border: 1px solid {primary_color} !important;
       border-radius: 4px !important;
       padding: 2px 8px !important;
       font-size: 12px !important;
     }}
-    
+
     /* 响应与表格 */
-    .swagger-ui table thead tr td, .swagger-ui table thead tr th {{ color: {text_color} !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }}
+    .swagger-ui table thead tr td, .swagger-ui table thead tr th {{ color: {text_color} !important; border-bottom: 1px solid {border_color} !important; }}
     .swagger-ui .response-col_status {{ color: {text_color} !important; }}
-    .swagger-ui section.models h4 {{ color: {text_color} !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }}
+    .swagger-ui section.models h4 {{ color: {text_color} !important; border-bottom: 1px solid {border_color} !important; }}
     .swagger-ui .parameter__name, .swagger-ui .parameter__type, .swagger-ui .parameter__deprecated, .swagger-ui .parameter__in {{ color: {text_color} !important; font-family: monospace !important; }}
-    .swagger-ui .parameter__extension, .swagger-ui .parameter__in {{ font-style: italic !important; color: rgba(255,255,255,0.5) !important; }}
-    
+    .swagger-ui .parameter__extension, .swagger-ui .parameter__in {{ font-style: italic !important; color: {subtle_text} !important; }}
+
     /* Parameters 专属修复 */
-    .swagger-ui .opblock-section-header {{ background: rgba(255,255,255,0.05) !important; border-top: 1px solid rgba(255,255,255,0.1) !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; }}
+    .swagger-ui .opblock-section-header {{ background: {border_color} !important; border-top: 1px solid {border_color} !important; border-bottom: 1px solid {border_color} !important; }}
     .swagger-ui .opblock-section-header h4 {{ color: {text_color} !important; }}
     .swagger-ui .parameters-container, .swagger-ui .responses-container {{ background: transparent !important; }}
     .swagger-ui table.parameters, .swagger-ui table.responses-table {{ background: transparent !important; }}
     .swagger-ui .parameter__name {{ color: {primary_color} !important; font-weight: bold !important; }}
-    .swagger-ui .parameter__type {{ color: #f2a3ff !important; }}
-    
+    .swagger-ui .parameter__type {{ color: {primary_color} !important; }}
+
     /* Markdown 描述 */
-    .swagger-ui .renderedMarkdown p, .swagger-ui .renderedMarkdown li {{ color: rgba(255,255,255,0.8) !important; }}
-    
+    .swagger-ui .renderedMarkdown p, .swagger-ui .renderedMarkdown li {{ color: {text_color} !important; }}
+
     /* 修复白底嵌套 */
-    .swagger-ui .opblock-body pre {{ background: #111 !important; color: #70ff70 !important; border: 1px solid rgba(255,255,255,0.1) !important; }}
+    .swagger-ui .opblock-body pre {{ background: {card_bg} !important; color: {'#22863a' if is_light else '#70ff70'} !important; border: 1px solid {border_color} !important; }}
 
     /* 接口行右侧图标 (锁与箭头) 适配 */
     .swagger-ui .authorization__btn svg {{ fill: {primary_color} !important; }}
@@ -160,50 +163,50 @@ async def get_documentation(request: Request, theme: str = "cyan", token: str = 
 
     /* 强制调整弹窗位置：使其紧贴顶部工具栏，模仿下拉效果 */
     .swagger-ui .scheme-container {{ position: relative !important; }}
-    .swagger-ui .dialog-ux {{ 
-      position: absolute !important; 
-      top: 100% !important; 
-      left: 50% !important; 
-      transform: translateX(-50%) !important; 
+    .swagger-ui .dialog-ux {{
+      position: absolute !important;
+      top: 100% !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
       z-index: 9999 !important;
       width: 600px !important;
     }}
-    .swagger-ui .modal-ux-mask {{ 
-      position: absolute !important; 
-      top: 0 !important; 
-      left: 0 !important; 
-      width: 100% !important; 
-      height: 10000px !important; 
-      z-index: 9998 !important; 
-      background: rgba(0, 0, 0, 0.1) !important; 
+    .swagger-ui .modal-ux-mask {{
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 10000px !important;
+      z-index: 9998 !important;
+      background: rgba(0, 0, 0, 0.1) !important;
     }}
-    .swagger-ui .modal-ux {{ 
-      background-color: {card_bg} !important; 
-      border: 1px solid rgba(255,255,255,0.1) !important;
+    .swagger-ui .modal-ux {{
+      background-color: {card_bg} !important;
+      border: 1px solid {border_color} !important;
       border-radius: 8px !important;
-      max-height: 700px !important; 
-      overflow-y: auto !important; 
+      max-height: 700px !important;
+      overflow-y: auto !important;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
     }}
-    .swagger-ui .modal-ux-header {{ 
-      border-bottom: 1px solid rgba(255,255,255,0.1) !important; 
+    .swagger-ui .modal-ux-header {{
+      border-bottom: 1px solid {border_color} !important;
       padding: 10px 15px !important;
     }}
     .swagger-ui .modal-ux-header h3 {{ color: {text_color} !important; font-size: 16px !important; }}
-    .swagger-ui .modal-ux-content {{ 
-      background-color: {bg_color} !important; 
-      padding: 15px !important; 
+    .swagger-ui .modal-ux-content {{
+      background-color: {bg_color} !important;
+      padding: 15px !important;
     }}
     .swagger-ui .modal-ux-content h4 {{ color: {text_color} !important; font-size: 14px !important; }}
-    .swagger-ui .auth-container {{ 
-      color: {text_color} !important; 
+    .swagger-ui .auth-container {{
+      color: {text_color} !important;
       padding: 10px 0 !important;
-      border-bottom: 1px solid rgba(255,255,255,0.05) !important; 
+      border-bottom: 1px solid {border_color} !important;
     }}
     .swagger-ui .auth-container:last-of-type {{ border-bottom: none !important; }}
     .swagger-ui .auth-container label {{ color: {text_color} !important; margin-bottom: 5px !important; }}
     .swagger-ui .auth-btn-wrapper {{ justify-content: center !important; gap: 10px !important; padding-top: 15px !important; }}
-    .swagger-ui .modal-ux-content p {{ color: rgba(255,255,255,0.5) !important; font-size: 12px !important; }}
+    .swagger-ui .modal-ux-content p {{ color: {subtle_text} !important; font-size: 12px !important; }}
 
     /* 按钮美化 */
     .swagger-ui .btn.modal-btn {{ border-radius: 4px !important; padding: 6px 16px !important; }}

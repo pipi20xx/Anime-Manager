@@ -363,6 +363,35 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 .n-popconfirm__action {
   background: transparent !important;
 }
+
+/* Popconfirm 按钮统一深紫色 - 不受白天/黑夜模式影响 */
+
+/* 取消按钮 - 深紫色背景 + 白色文字 */
+.n-popconfirm .n-popconfirm__action .n-button {
+  background-color: #7c4dff !important;
+  color: #ffffff !important;
+  border-color: #7c4dff !important;
+}
+
+.n-popconfirm .n-popconfirm__action .n-button:hover {
+  background-color: #bb86fc !important;
+  border-color: #bb86fc !important;
+  color: #ffffff !important;
+}
+
+/* 确定按钮 - 深紫色背景 + 白色文字 */
+.n-popconfirm .n-popconfirm__action .n-button--primary {
+  background-color: #7c4dff !important;
+  color: #ffffff !important;
+  border-color: #7c4dff !important;
+}
+
+.n-popconfirm .n-popconfirm__action .n-button--primary:hover {
+  background-color: #bb86fc !important;
+  border-color: #bb86fc !important;
+  color: #ffffff !important;
+}
+
 :deep(.n-popconfirm__arrow) {
   background: var(--app-modal-bg) !important;
   backdrop-filter: blur(20px) !important;
@@ -726,6 +755,32 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
+}
+
+/* ============================================
+ * 密码输入框眼睛图标样式 - 紫色
+ * ============================================ */
+
+/* 密码显示/隐藏图标按钮 - 紫色 */
+.n-input .n-input__eye {
+  color: #bb86fc !important;
+}
+
+.n-input .n-input__eye:hover {
+  color: #7c4dff !important;
+}
+
+/* 密码图标内部 SVG */
+.n-input .n-input__eye svg,
+.n-input .n-input__eye .n-icon {
+  color: #bb86fc !important;
+  fill: #bb86fc !important;
+}
+
+.n-input .n-input__eye:hover svg,
+.n-input .n-input__eye:hover .n-icon {
+  color: #7c4dff !important;
+  fill: #7c4dff !important;
 }
 
 
