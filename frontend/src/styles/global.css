@@ -98,6 +98,23 @@
   --text-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.5);
   --text-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.6);
 
+  /* ============================================
+   * Tabs 和 RadioButton 统一背景色变量
+   * 用于 segment 类型的 Tabs 和 RadioButton 组
+   * ============================================ */
+  /* 轨道背景色 - 未选中项的背景 (淡蓝色) */
+  --segment-track-bg: #dbeafe;
+  /* 激活项背景色 - 选中状态的背景 */
+  --segment-active-bg: #3b82f6;
+  /* 激活项文字颜色 */
+  --segment-active-text: #ffffff;
+  /* 未激活项文字颜色 */
+  --segment-inactive-text: #1e40af;
+  /* 轨道圆角 */
+  --segment-track-radius: 8px;
+  /* 选项圆角 */
+  --segment-item-radius: 6px;
+
   /* 过渡动画 */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
@@ -248,6 +265,83 @@ input, textarea, select, button {
 }
 .n-tab-pane {
   background: transparent !important;
+}
+
+/* ============================================
+ * Tabs segment 类型样式统一
+ * ============================================ */
+
+/* 轨道背景 - 使用主题背景色 */
+.n-tabs.n-tabs--segment-type .n-tabs-nav,
+.n-tabs.n-tabs--segment-type .n-tabs-nav--segment-type,
+.custom-tabs .n-tabs-nav,
+.custom-tabs.n-tabs .n-tabs-nav,
+[class*="n-tabs"][class*="--segment"] .n-tabs-nav,
+div.n-tabs.n-tabs--segment-type > div.n-tabs-nav,
+div.n-tabs.n-tabs--segment-type div.n-tabs-nav--segment-type,
+div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
+  background: var(--bg-tertiary) !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+}
+
+/* n-tabs-rail 样式 */
+.n-tabs-rail,
+div.n-tabs-rail,
+.n-tabs--segment-type .n-tabs-rail,
+.n-tabs-nav .n-tabs-rail,
+[class*="n-tabs-rail"] {
+  background: var(--bg-tertiary) !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* 未选中 tab 项 - 使用主题文字颜色 */
+.n-tabs.n-tabs--segment-type .n-tabs-tab,
+[class*="n-tabs-rail"] [class*="n-tabs-tab"] {
+  background: transparent !important;
+  color: var(--n-text-color-1) !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+/* 选中 tab 项 - 填满无间隔，白色文字 */
+.n-tabs.n-tabs--segment-type .n-tabs-tab.n-tabs-tab--active,
+.n-tabs-rail .n-tabs-tab--active,
+[class*="n-tabs-rail"] [class*="n-tabs-tab--active"] {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 移除 tab wrapper 间隔 */
+.n-tabs-tab-wrapper,
+[class*="n-tabs-tab-wrapper"] {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 移除 tab pad */
+.n-tabs-tab-pad,
+[class*="n-tabs-tab-pad"] {
+  display: none !important;
+}
+
+/* 隐藏 capsule */
+.n-tabs-capsule,
+[class*="n-tabs-capsule"] {
+  display: none !important;
+}
+
+/* RadioButton 组也不留边距 */
+.n-radio-group {
+  padding: 0 !important;
+}
+.n-radio-group .n-radio-button.n-radio-button--checked {
+  border-radius: 8px !important;
 }
 
 /* Modal 主题化 */
@@ -489,6 +583,65 @@ input, textarea, select, button {
 }
 .n-switch.n-switch--active .n-switch__rail {
   border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ============================================
+ * RadioButton 组样式统一
+ * 用于筛选器等场景下的单选按钮组
+ * ============================================ */
+
+/* RadioButton 组轨道背景 - 使用主题背景色 */
+.n-radio-group {
+  background: var(--bg-tertiary) !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+}
+
+/* 未选中按钮 - 使用主题文字颜色 */
+.n-radio-group .n-radio-button {
+  background: transparent !important;
+  color: var(--n-text-color-1) !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+
+/* 选中按钮 - 蓝色填满 */
+.n-radio-group .n-radio-button.n-radio-button--checked {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  border-radius: 8px !important;
+}
+
+/* 移除所有边框和分隔线 */
+.n-radio-group .n-radio-button,
+.n-radio-group .n-radio-button *,
+.n-radio-group .n-radio-button__border,
+.n-radio-group .n-radio-button--checked,
+.n-radio-group .n-radio-button--checked * {
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+/* 强制移除伪元素边框 */
+.n-radio-group .n-radio-button::before,
+.n-radio-group .n-radio-button::after,
+.n-radio-group [class*="radio"]::before,
+.n-radio-group [class*="radio"]::after {
+  display: none !important;
+  border: none !important;
+  content: none !important;
+}
+
+/* 隐藏分隔线元素 */
+.n-radio-group__splitor,
+[class*="n-radio-group__splitor"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 

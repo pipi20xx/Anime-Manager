@@ -43,10 +43,7 @@ const {
       <div v-else-if="detail" class="detail-container" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
         <n-scrollbar style="flex: 1;">
           <!-- Header -->
-          <div class="backdrop-box">
-              <div class="backdrop-img" :style="{ backgroundImage: `url(${getImg(detail.backdrop_path)})` }"></div>
-              <div class="backdrop-gradient"></div>
-              <div class="header-content">
+          <div class="header-content">
                   <div class="poster-col">
                       <n-image :src="getImg(detail.poster_path)" class="main-poster" object-fit="contain" />
                   </div>
@@ -70,12 +67,10 @@ const {
                       </n-space>
 
                       <div class="actions">
-                          <n-button :type="isSubscribed ? 'secondary' : 'primary'" size="small" @click="handleSubscribe" :disabled="isSubscribed">
-                              <template #icon><n-icon><SubIcon /></n-icon></template>
+                          <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSubscribe" :disabled="isSubscribed">
                               {{ isSubscribed ? '已在订阅中' : '订阅此番' }}
                           </n-button>
-                          <n-button secondary size="small" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
-                              <template #icon><n-icon><SearchIcon /></n-icon></template>
+                          <n-button v-bind="getButtonStyle('primary')" size="small" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
                               搜资源
                           </n-button>
                           <n-button v-bind="getButtonStyle('icon')" size="small" @click="openExternal">
@@ -84,7 +79,6 @@ const {
                       </div>
                   </div>
               </div>
-          </div>
 
           <!-- Body -->
           <div class="body-content">
@@ -138,11 +132,11 @@ const {
 .bgm-detail-modal { background: var(--app-bg-color); overflow: hidden; border-radius: var(--card-border-radius, 12px); }
 .loading-box { padding: 40px; }
 
-.backdrop-box { position: relative; height: 220px; }
+.backdrop-box { position: relative; min-height: 220px; }
 .backdrop-img { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: var(--opacity-tertiary); filter: blur(30px); transform: scale(1.2); }
-.backdrop-gradient { position: absolute; inset: 0; background: linear-gradient(to top, var(--app-bg-color) 5%, transparent 100%); }
+.backdrop-gradient { position: absolute; inset: 0; background: linear-gradient(to top, var(--app-bg-color) 0%, transparent 100%); }
 
-.header-content { position: relative; z-index: 2; padding: 30px 32px 0 32px; display: flex; gap: 20px; width: 100%; }
+.header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 20px; width: 100%; }
 .main-poster { 
   width: 110px; aspect-ratio: 3/4; 
   border-radius: var(--card-border-radius, 6px); 

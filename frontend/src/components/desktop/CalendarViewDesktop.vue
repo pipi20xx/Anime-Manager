@@ -118,7 +118,7 @@ const {
             </n-button>
           </div>
           <div class="scroll-container-full">
-            <n-list hoverable class="compact-list">
+            <n-list :show-divider="false" class="compact-list">
               <n-list-item v-for="sub in trackingList" :key="sub.id">
                 <div class="tracking-item-row">
                   <div class="item-main">
@@ -210,8 +210,6 @@ const {
                   @update:formatted-value="saveCalendarConfig" 
                 />
               </n-form-item>
-
-              <n-divider dashed />
               
               <n-form-item label="状态测试">
                 <n-button v-bind="getButtonStyle('secondary')" @click="testCalendarPush" :loading="isTestingPush">
@@ -448,6 +446,33 @@ const {
 
 .compact-list :deep(.n-list-item) {
   padding: 8px 0;
+  border-bottom: none !important;
+}
+
+.compact-list :deep(.n-list-item)::after {
+  display: none !important;
+}
+
+/* 强制隐藏 n-list 分割线 */
+.compact-list :deep(.n-list-item__divider) {
+  display: none !important;
+}
+
+.compact-list :deep(.n-list-item):not(:last-child) {
+  border-bottom: none !important;
+}
+
+.compact-list :deep(.n-list) .n-list-item {
+  border-bottom: 0 !important;
+}
+
+/* 禁用悬停效果 */
+.compact-list :deep(.n-list-item):hover {
+  background-color: transparent !important;
+}
+
+.compact-list :deep(.n-list-item--hover) {
+  background-color: transparent !important;
 }
 
 .discover-scroll {

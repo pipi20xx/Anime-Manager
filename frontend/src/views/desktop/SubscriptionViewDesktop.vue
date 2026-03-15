@@ -335,29 +335,5 @@ onMounted(fetchData)
 
 .empty-tip { padding: 40px; text-align: center; color: var(--text-muted); }
 
-/* Tabs 样式 - 适配白天/黑夜模式 */
-:deep(.custom-tabs .n-tabs-nav) {
-  background: var(--bg-tertiary) !important;
-  padding: 4px !important;
-  border-radius: 8px !important;
-}
-:deep(.custom-tabs .n-tabs-tab) {
-  background: transparent !important;
-  color: var(--text-secondary) !important;
-  border: none !important;
-  border-radius: 6px !important;
-  padding: 8px 20px !important;
-}
-:deep(.custom-tabs .n-tabs-tab.n-tabs-tab--active) {
-  background: #7c4dff !important;
-  color: #fff !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-}
-/* 修复白天模式下 n-tabs-capsule 白色背景问题 */
-:deep(.custom-tabs .n-tabs-capsule) {
-  background: transparent !important;
-}
-:deep(.custom-tabs .n-tabs-wrapper) {
-  background: transparent !important;
-}
+/* Tabs 样式已移至 global.css 统一管理 */
 </style>
