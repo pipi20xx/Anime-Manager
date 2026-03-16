@@ -164,16 +164,6 @@ async def api_audit_middleware(request: Request, call_next):
             body_bytes = await request.body()
             if body_bytes:
                 request_body = json.loads(body_bytes)
-            
-            receive_ = request.receive
-            body_sent = False
-            async def receive():
-                nonlocal body_sent
-                if not body_sent:
-                    body_sent = True
-                    return {"type": "http.request", "body": body_bytes}
-                return await receive_()
-            request._receive = receive
         except:
             pass
 
