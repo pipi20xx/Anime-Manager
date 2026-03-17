@@ -35,14 +35,14 @@
   --border-dashed: rgba(255, 255, 255, 0.15);
   
   /* 状态颜色变量 */
-  --color-success: #a0d911;
-  --color-warning: #f2c97d;
-  --color-error: #e88080;
-  --color-info: #70c0e8;
-  --color-success-bg: rgba(160, 217, 17, 0.1);
-  --color-warning-bg: rgba(242, 201, 125, 0.1);
-  --color-error-bg: rgba(232, 128, 128, 0.1);
-  --color-info-bg: rgba(112, 192, 232, 0.1);
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  --color-success-bg: rgba(16, 185, 129, 0.1);
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-error-bg: rgba(239, 68, 68, 0.1);
+  --color-info-bg: rgba(59, 130, 246, 0.1);
   
   /* 阴影变量 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -364,31 +364,31 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   background: transparent !important;
 }
 
-/* Popconfirm 按钮统一深紫色 - 不受白天/黑夜模式影响 */
+/* Popconfirm 按钮统一颜色 - 不受白天/黑夜模式影响 */
 
-/* 取消按钮 - 深紫色背景 + 白色文字 */
+/* 取消按钮 - 琥珀黄 #F59E0B（警告色）+ 白色文字 */
 .n-popconfirm .n-popconfirm__action .n-button {
-  background-color: #7c4dff !important;
+  background-color: #F59E0B !important;
   color: #ffffff !important;
-  border-color: #7c4dff !important;
+  border-color: #F59E0B !important;
 }
 
 .n-popconfirm .n-popconfirm__action .n-button:hover {
-  background-color: #bb86fc !important;
-  border-color: #bb86fc !important;
+  background-color: #D97706 !important;
+  border-color: #D97706 !important;
   color: #ffffff !important;
 }
 
-/* 确定按钮 - 深紫色背景 + 白色文字 */
+/* 确定按钮 - 电光蓝 #3B82F6（主要色）+ 白色文字 */
 .n-popconfirm .n-popconfirm__action .n-button--primary {
-  background-color: #7c4dff !important;
+  background-color: #3B82F6 !important;
   color: #ffffff !important;
-  border-color: #7c4dff !important;
+  border-color: #3B82F6 !important;
 }
 
 .n-popconfirm .n-popconfirm__action .n-button--primary:hover {
-  background-color: #bb86fc !important;
-  border-color: #bb86fc !important;
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
   color: #ffffff !important;
 }
 
@@ -525,79 +525,124 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
  * 按钮颜色统一管理 - 不受白天/黑夜模式影响
  * ============================================ */
 
-/* 主要按钮 - 紫色（排除 ghost 按钮） */
+/* 默认按钮 - 电光蓝 #3B82F6（排除 ghost 按钮） */
+.n-button--default-type:not(.n-button--ghost) {
+  background: #3B82F6 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+.n-button--default-type:not(.n-button--ghost):hover {
+  background: #2563EB !important;
+  border: none !important;
+}
+.n-button--default-type:not(.n-button--ghost):active {
+  background: #1D4ED8 !important;
+  border: none !important;
+}
+.n-button--default-type:not(.n-button--ghost):focus {
+  background: #3B82F6 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+/* 主要按钮 - 电光蓝 #3B82F6（排除 ghost 按钮） */
 .n-button--primary-type:not(.n-button--ghost) {
-  background: #7c4dff !important;
+  background: #3B82F6 !important;
   border: none !important;
   color: #ffffff !important;
 }
 .n-button--primary-type:not(.n-button--ghost):hover {
-  background: #9965ff !important;
+  background: #2563EB !important;
   border: none !important;
 }
 .n-button--primary-type:not(.n-button--ghost):active {
-  background: #5c3dd4 !important;
+  background: #1D4ED8 !important;
   border: none !important;
 }
+.n-button--primary-type:not(.n-button--ghost):focus {
+  background: #3B82F6 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
 
-/* 成功按钮 - 绿色（排除 ghost 按钮） */
+/* 成功按钮 - 薄荷绿 #10B981（排除 ghost 按钮） */
 .n-button--success-type:not(.n-button--ghost) {
-  background: #2e7d32 !important;
+  background: #10B981 !important;
   border: none !important;
   color: #ffffff !important;
 }
 .n-button--success-type:not(.n-button--ghost):hover {
-  background: #4caf50 !important;
+  background: #059669 !important;
   border: none !important;
 }
 .n-button--success-type:not(.n-button--ghost):active {
-  background: #1b5e20 !important;
+  background: #047857 !important;
   border: none !important;
 }
+.n-button--success-type:not(.n-button--ghost):focus {
+  background: #10B981 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
 
-/* 警告按钮 - 橙色（排除 ghost 按钮） */
+/* 警告按钮 - 琥珀黄 #F59E0B（排除 ghost 按钮） */
 .n-button--warning-type:not(.n-button--ghost) {
-  background: #ed6c02 !important;
+  background: #F59E0B !important;
   border: none !important;
   color: #ffffff !important;
 }
 .n-button--warning-type:not(.n-button--ghost):hover {
-  background: #ff9800 !important;
+  background: #D97706 !important;
   border: none !important;
 }
 .n-button--warning-type:not(.n-button--ghost):active {
-  background: #e65100 !important;
+  background: #B45309 !important;
   border: none !important;
 }
+.n-button--warning-type:not(.n-button--ghost):focus {
+  background: #F59E0B !important;
+  border: none !important;
+  color: #ffffff !important;
+}
 
-/* 错误/危险按钮 - 红色（排除 ghost 按钮） */
+/* 错误/危险按钮 - 珊瑚红 #EF4444（排除 ghost 按钮） */
 .n-button--error-type:not(.n-button--ghost) {
-  background: #d32f2f !important;
+  background: #EF4444 !important;
   border: none !important;
   color: #ffffff !important;
 }
 .n-button--error-type:not(.n-button--ghost):hover {
-  background: #f44336 !important;
+  background: #DC2626 !important;
   border: none !important;
 }
 .n-button--error-type:not(.n-button--ghost):active {
-  background: #b71c1c !important;
+  background: #B91C1C !important;
   border: none !important;
 }
+.n-button--error-type:not(.n-button--ghost):focus {
+  background: #EF4444 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
 
-/* 信息按钮 - 蓝色（排除 ghost 按钮） */
+/* 信息按钮 - 电光蓝 #3B82F6（排除 ghost 按钮） */
 .n-button--info-type:not(.n-button--ghost) {
-  background: #0288d1 !important;
+  background: #3B82F6 !important;
   border: none !important;
   color: #ffffff !important;
 }
 .n-button--info-type:not(.n-button--ghost):hover {
-  background: #03a9f4 !important;
+  background: #2563EB !important;
   border: none !important;
 }
 .n-button--info-type:not(.n-button--ghost):active {
-  background: #01579b !important;
+  background: #1D4ED8 !important;
   border: none !important;
+}
+.n-button--info-type:not(.n-button--ghost):focus {
+  background: #3B82F6 !important;
+  border: none !important;
+  color: #ffffff !important;
 }
 
 /* 按钮文字统一白色（排除 ghost 按钮） */
@@ -679,15 +724,15 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 }
 
 /* Switch 样式 - 使用 !important 覆盖主题配置 */
-/* 关闭状态：透明背景 + 紫色边框 */
+/* 关闭状态：透明背景 + 电光蓝边框 */
 .n-switch .n-switch__rail {
-  border: 2px solid #7c4dff !important;
+  border: 2px solid #3B82F6 !important;
   background-color: transparent !important;
 }
-/* 开启状态：紫色背景 + 紫色边框 */
+/* 开启状态：电光蓝背景 + 电光蓝边框 */
 .n-switch.n-switch--active .n-switch__rail {
-  border-color: #7c4dff !important;
-  background-color: #7c4dff !important;
+  border-color: #3B82F6 !important;
+  background-color: #3B82F6 !important;
 }
 
 /* Switch 按钮（圆圈）- 使用主题文字颜色，白天黑夜都能看清楚 */
@@ -758,29 +803,82 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 }
 
 /* ============================================
- * 密码输入框眼睛图标样式 - 紫色
+ * 密码输入框眼睛图标样式 - 电光蓝
  * ============================================ */
 
-/* 密码显示/隐藏图标按钮 - 紫色 */
+/* 密码显示/隐藏图标按钮 - 电光蓝 */
 .n-input .n-input__eye {
-  color: #bb86fc !important;
+  color: #60A5FA !important;
 }
 
 .n-input .n-input__eye:hover {
-  color: #7c4dff !important;
+  color: #3B82F6 !important;
 }
 
 /* 密码图标内部 SVG */
 .n-input .n-input__eye svg,
 .n-input .n-input__eye .n-icon {
-  color: #bb86fc !important;
-  fill: #bb86fc !important;
+  color: #60A5FA !important;
+  fill: #60A5FA !important;
 }
 
 .n-input .n-input__eye:hover svg,
 .n-input .n-input__eye:hover .n-icon {
-  color: #7c4dff !important;
-  fill: #7c4dff !important;
+  color: #3B82F6 !important;
+  fill: #3B82F6 !important;
+}
+
+/* ============================================
+ * Checkbox 复选框统一样式 - 电光蓝
+ * ============================================ */
+
+/* 复选框边框 - 未选中状态 */
+.n-checkbox-box {
+  border-color: #3B82F6 !important;
+}
+
+.n-checkbox-box:hover {
+  border-color: #60A5FA !important;
+}
+
+/* 复选框边框 - 选中状态 */
+.n-checkbox.n-checkbox--checked .n-checkbox-box {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+.n-checkbox.n-checkbox--checked .n-checkbox-box:hover {
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
+}
+
+/* 复选框勾选标记 */
+.n-checkbox-box__border {
+  border-color: #3B82F6 !important;
+}
+
+.n-checkbox.n-checkbox--checked .n-checkbox-box__border {
+  border-color: #3B82F6 !important;
+}
+
+.n-checkbox.n-checkbox--checked .n-checkbox-box__border:hover {
+  border-color: #2563EB !important;
+}
+
+/* 复选框勾选图标 */
+.n-checkbox-box__check-icon {
+  color: #ffffff !important;
+}
+
+/* 复选框 indeterminate 状态 */
+.n-checkbox.n-checkbox--indeterminate .n-checkbox-box {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+.n-checkbox.n-checkbox--indeterminate .n-checkbox-box:hover {
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
 }
 
 

@@ -285,11 +285,11 @@ const handleRefresh = () => {
   border: 1px solid;
 }
 
-/* Episode Tag (S01E12) - 紫色底色+白色文字 */
+/* Episode Tag (S01E12) - 电光蓝底色+白色文字 */
 .history-tag.tag-episode {
-  background: #7c4dff;
+  background: #3B82F6;
   color: #fff;
-  border-color: #7c4dff;
+  border-color: #3B82F6;
 }
 
 /* Media Type Tag (剧集/电影) - 蓝色底色+白色文字 */

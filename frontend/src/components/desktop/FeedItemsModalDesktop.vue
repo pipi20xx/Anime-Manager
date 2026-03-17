@@ -108,9 +108,9 @@ const columns = [
         tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#1565c0', borderRadius: '12px' } }, {
           default: () => row.media_type === 'movie' ? '🎬 电影' : '📺 剧集'
         }))
-        // SXXEXX - 紫色底色+白色文字
+        // SXXEXX - 电光蓝底色+白色文字
         if (row.media_type === 'tv') {
-          tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#7c4dff', borderRadius: '12px' } }, { default: () => `S${row.season || 1} E${row.episode || '-'}` }))
+          tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#3B82F6', borderRadius: '12px' } }, { default: () => `S${row.season || 1} E${row.episode || '-'}` }))
         }
       } else if (row.recognition_done) {
         tags.push(h(NTag, { size: 'small', quaternary: true, style: getTagStyle('warning') }, { default: () => '未命中' }))

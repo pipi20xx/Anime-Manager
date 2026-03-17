@@ -53,38 +53,38 @@ const lightBgColors = {
   dropdownBg: 'rgba(255, 255, 255, 0.98)'
 }
 
-// 紫色主题配置（暗色）
+// 电光蓝主题配置（暗色）
 const purpleDarkConfig: ThemeConfig = {
-  name: '暗夜紫韵',
-  primaryColor: '#bb86fc',
-  primaryColorHover: '#d1a8ff',
-  primaryColorPressed: '#995df0',
-  primaryColorSuppl: '#7c4dff',
-  logoColor: '#bb86fc',
+  name: '暗夜蓝韵',
+  primaryColor: '#3B82F6',
+  primaryColorHover: '#60A5FA',
+  primaryColorPressed: '#2563EB',
+  primaryColorSuppl: '#1D4ED8',
+  logoColor: '#3B82F6',
   bgPrimary: darkBgColors.bgPrimary,
   bgSecondary: darkBgColors.bgSecondary,
   bgTertiary: darkBgColors.bgTertiary,
   surfaceColor: darkBgColors.surfaceColor,
   modalBg: darkBgColors.modalBg,
   dropdownBg: darkBgColors.dropdownBg,
-  docsTheme: 'purple'
+  docsTheme: 'blue'
 }
 
-// 紫色主题配置（亮色）
+// 电光蓝主题配置（亮色）
 const purpleLightConfig: ThemeConfig = {
-  name: '白昼紫韵',
-  primaryColor: '#7c4dff',
-  primaryColorHover: '#9965ff',
-  primaryColorPressed: '#5c3dd4',
-  primaryColorSuppl: '#bb86fc',
-  logoColor: '#7c4dff',
+  name: '白昼蓝韵',
+  primaryColor: '#3B82F6',
+  primaryColorHover: '#60A5FA',
+  primaryColorPressed: '#2563EB',
+  primaryColorSuppl: '#1D4ED8',
+  logoColor: '#3B82F6',
   bgPrimary: lightBgColors.bgPrimary,
   bgSecondary: lightBgColors.bgSecondary,
   bgTertiary: lightBgColors.bgTertiary,
   surfaceColor: lightBgColors.surfaceColor,
   modalBg: lightBgColors.modalBg,
   dropdownBg: lightBgColors.dropdownBg,
-  docsTheme: 'purple'
+  docsTheme: 'blue'
 }
 
 export const themeConfigs: Record<ThemeMode, ThemeConfig> = {
@@ -113,10 +113,10 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       primaryColorHover: config.primaryColorHover,
       primaryColorPressed: config.primaryColorPressed,
       primaryColorSuppl: config.primaryColorSuppl,
-      infoColor: isDark ? '#03dac6' : '#0288d1',
-      warningColor: isDark ? '#ffb74d' : '#ed6c02',
-      errorColor: isDark ? '#cf6679' : '#d32f2f',
-      successColor: isDark ? '#81c784' : '#2e7d32',
+      infoColor: '#3B82F6',
+      warningColor: '#F59E0B',
+      errorColor: '#EF4444',
+      successColor: '#10B981',
       borderRadius: '16px',
       cardColor: 'transparent',
       modalColor: config.bgPrimary,
@@ -189,26 +189,26 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
     },
     Tag: {
       borderRadius: '6px',
-      colorSuccess: isDark ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.1)',
-      colorSuccessHover: isDark ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.2)',
-      colorSuccessPressed: isDark ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)',
-      textColorSuccess: tagTextSuccess,
-      borderSuccess: `1px solid ${isDark ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'}`,
-      colorWarning: isDark ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.1)',
-      colorWarningHover: isDark ? 'rgba(255, 152, 0, 0.25)' : 'rgba(255, 152, 0, 0.2)',
-      colorWarningPressed: isDark ? 'rgba(255, 152, 0, 0.3)' : 'rgba(255, 152, 0, 0.25)',
-      textColorWarning: tagTextWarning,
-      borderWarning: `1px solid ${isDark ? 'rgba(255, 152, 0, 0.5)' : 'rgba(255, 152, 0, 0.4)'}`,
-      colorError: isDark ? 'rgba(244, 67, 54, 0.15)' : 'rgba(244, 67, 54, 0.1)',
-      colorErrorHover: isDark ? 'rgba(244, 67, 54, 0.25)' : 'rgba(244, 67, 54, 0.2)',
-      colorErrorPressed: isDark ? 'rgba(244, 67, 54, 0.3)' : 'rgba(244, 67, 54, 0.25)',
-      textColorError: tagTextError,
-      borderError: `1px solid ${isDark ? 'rgba(244, 67, 54, 0.5)' : 'rgba(244, 67, 54, 0.4)'}`,
-      colorInfo: isDark ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.1)',
-      colorInfoHover: isDark ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.2)',
-      colorInfoPressed: isDark ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)',
-      textColorInfo: tagTextInfo,
-      borderInfo: `1px solid ${isDark ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'}`
+      colorSuccess: 'rgba(16, 185, 129, 0.15)',
+      colorSuccessHover: 'rgba(16, 185, 129, 0.25)',
+      colorSuccessPressed: 'rgba(16, 185, 129, 0.3)',
+      textColorSuccess: '#10B981',
+      borderSuccess: `1px solid rgba(16, 185, 129, 0.4)`,
+      colorWarning: 'rgba(245, 158, 11, 0.15)',
+      colorWarningHover: 'rgba(245, 158, 11, 0.25)',
+      colorWarningPressed: 'rgba(245, 158, 11, 0.3)',
+      textColorWarning: '#F59E0B',
+      borderWarning: `1px solid rgba(245, 158, 11, 0.4)`,
+      colorError: 'rgba(239, 68, 68, 0.15)',
+      colorErrorHover: 'rgba(239, 68, 68, 0.25)',
+      colorErrorPressed: 'rgba(239, 68, 68, 0.3)',
+      textColorError: '#EF4444',
+      borderError: `1px solid rgba(239, 68, 68, 0.4)`,
+      colorInfo: 'rgba(59, 130, 246, 0.15)',
+      colorInfoHover: 'rgba(59, 130, 246, 0.25)',
+      colorInfoPressed: 'rgba(59, 130, 246, 0.3)',
+      textColorInfo: '#3B82F6',
+      borderInfo: `1px solid rgba(59, 130, 246, 0.4)`
     },
     Popconfirm: {
       color: config.modalBg,
@@ -347,15 +347,12 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       heightMedium: '22px',
       heightLarge: '26px',
       railColor: config.bgTertiary,
-      // 开启状态轨道颜色固定为深紫色，不随白天/夜晚模式变化
-      railColorActive: '#7c4dff',
-      // 按钮颜色固定为白色，不受白天/夜晚模式影响
+      railColorActive: '#3B82F6',
       buttonColor: '#ffffff',
       buttonColorActive: '#ffffff',
       textColor: textColor2,
-      // 边框颜色固定为紫色，不随白天/夜晚模式变化
-      railBorderColor: '#7c4dff',
-      railBorderColorActive: '#7c4dff',
+      railBorderColor: '#3B82F6',
+      railBorderColorActive: '#3B82F6',
       boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.15)',
       railBorderRadius: '11px',
       buttonBorderRadius: '50%'
@@ -372,9 +369,9 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       buttonBorderRadius: '6px'
     },
     Menu: {
-      itemColorActive: '#7c4dff',
-      itemColorActiveHover: '#9965ff',
-      itemColorActiveCollapsed: '#7c4dff',
+      itemColorActive: '#3B82F6',
+      itemColorActiveHover: '#60A5FA',
+      itemColorActiveCollapsed: '#3B82F6',
       itemTextColorActive: '#ffffff',
       itemTextColorActiveHover: '#ffffff',
       itemIconColorActive: '#ffffff',
@@ -385,8 +382,8 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       itemTextColorHover: textColor1,
       itemIconColor: textColor3,
       itemIconColorHover: textColor2,
-      itemColorActiveSub: '#7c4dff',
-      itemColorActiveSubHover: '#9965ff',
+      itemColorActiveSub: '#3B82F6',
+      itemColorActiveSubHover: '#60A5FA',
       itemTextColorActiveSub: '#ffffff',
       itemTextColorActiveSubHover: '#ffffff',
       borderRadius: '8px',

@@ -127,7 +127,7 @@ const {
     <template #action>
       <n-space justify="end">
         <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
-        <n-button v-bind="getButtonStyle('primary')" size="large" @click="handleConfirm">
+        <n-button v-bind="getButtonStyle('primary')" @click="handleConfirm">
           启动整理任务
         </n-button>
       </n-space>

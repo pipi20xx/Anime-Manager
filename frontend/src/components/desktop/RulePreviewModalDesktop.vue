@@ -55,7 +55,7 @@ const columns = [
     key: 'feed_name',
     width: 180,
     render(row: any) {
-      return h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#6a1b9a', borderRadius: '12px' } }, { default: () => row.feed_name })
+      return h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#3B82F6', borderRadius: '12px' } }, { default: () => row.feed_name })
     }
   },
   {
