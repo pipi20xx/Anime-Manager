@@ -155,9 +155,13 @@ class SubscriptionMatcher:
                     recognized_count += 1
                     
                     # [New] Emby 检查 - 识别成功后立即检查 Emby 库
+                    log_audit("RSS", "Emby检查", f"Emby检查状态: {'已启用' if feed_check_emby else '未启用'}")
+                    
                     if feed_check_emby and final_result.get("tmdb_id"):
                         from emby_client import get_emby_client
                         emby_client = get_emby_client()
+                        
+                        log_audit("RSS", "Emby检查", f"开始检查 Emby 库 - 标题: {title}")
                         
                         if emby_client:
                             try:
@@ -166,14 +170,23 @@ class SubscriptionMatcher:
                                 season = final_result.get("season")
                                 episode = final_result.get("episode")
                                 
+                                log_audit("RSS", "Emby检查", f"检查参数 - TMDB ID: {tmdb_id}, 类型: {media_type}, 季: {season}, 集: {episode}")
+                                
                                 exists_in_emby = False
                                 if media_type == "剧集":
                                     if season is not None and episode:
+                                        log_audit("RSS", "Emby检查", f"检查剧集是否存在: TMDB ID {tmdb_id}, S{season}E{episode}")
                                         exists_in_emby = emby_client.check_episode_exists(tmdb_id, season, episode)
+                                    else:
+                                        log_audit("RSS", "Emby检查", f"跳过剧集检查 - 缺少季集信息: 季={season}, 集={episode}")
                                 elif media_type == "电影":
+                                    log_audit("RSS", "Emby检查", f"检查电影是否存在: TMDB ID {tmdb_id}")
                                     exists_in_emby = emby_client.check_movie_exists(tmdb_id)
+                                else:
+                                    log_audit("RSS", "Emby检查", f"跳过检查 - 不支持的媒体类型: {media_type}")
                                 
                                 if exists_in_emby:
+                                    log_audit("RSS", "Emby检查", f"✅ Emby库中已存在: {final_result.get('title')} - S{season}E{episode} (TMDB: {tmdb_id})")
                                     # 标记为已下载，添加到下载历史
                                     from models import DownloadHistory
                                     async with db.session_scope():
@@ -186,10 +199,8 @@ class SubscriptionMatcher:
                                             info_hash=None
                                         )
                                         await RssManager.add_history(history)
-                                    
-                                    log_audit("RSS", "Emby检查", f"Emby库中已存在: {final_result.get('title')} - S{season}E{episode} (TMDB: {tmdb_id})")
                                 else:
-                                    log_audit("RSS", "Emby检查", f"Emby库中未找到: {final_result.get('title')} - S{season}E{episode} (TMDB: {tmdb_id})")
+                                    log_audit("RSS", "Emby检查", f"❌ Emby库中未找到: {final_result.get('title')} - S{season}E{episode} (TMDB: {tmdb_id})")
                                     
                                     # 查找匹配的订阅并标记为已下载
                                     async with db.session_scope():
@@ -231,6 +242,14 @@ class SubscriptionMatcher:
                                 logger.error(f"Emby 检查异常: {e}")
                                 import traceback
                                 logger.error(traceback.format_exc())
+                                log_audit("RSS", "Emby检查失败", f"Emby检查异常: {str(e)}", level="WARN")
+                        else:
+                            log_audit("RSS", "Emby检查", f"⚠️ 跳过 Emby 检查 - Emby 客户端未初始化（请检查 Emby 配置）")
+                    else:
+                        if not feed_check_emby:
+                            log_audit("RSS", "Emby检查", f"⚠️ Emby 检查未启用，跳过检查")
+                        if not final_result.get("tmdb_id"):
+                            log_audit("RSS", "Emby检查", f"⚠️ 跳过 Emby 检查 - 识别结果缺少 TMDB ID")
             except Exception as e:
                 logger.error(f"识别条目 '{title}' 失败: {e}")
         
