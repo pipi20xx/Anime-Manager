@@ -1,4 +1,5 @@
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { isDarkMode } from '../../store/themeStore'
 
 export function useLogConsole() {
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -163,11 +164,65 @@ export function useLogConsole() {
     logCounter = 0
   }
 
-  const openFullLog = () => {
+  const openFullLog = async () => {
+    const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
+    const headers: HeadersInit = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    let url: string
     if (selectedDate.value) {
-      window.open(`${API_BASE}/api/system/logs/date/${selectedDate.value}?download=true`, '_blank')
+      url = `${API_BASE}/api/system/logs/date/${selectedDate.value}?download=true`
     } else {
-      window.open(`${API_BASE}/api/system/logs/raw?type=monitor&download=true`, '_blank')
+      url = `${API_BASE}/api/system/logs/raw?type=monitor&download=true`
+    }
+
+    try {
+      const response = await fetch(url, { headers })
+      if (!response.ok) {
+        throw new Error(`获取日志失败: ${response.statusText}`)
+      }
+      
+      const text = await response.text()
+      const isDark = isDarkMode.value
+      
+      const bgColor = isDark ? '#1e1e2e' : '#ffffff'
+      const textColor = isDark ? '#e0e0e0' : '#1a1a1a'
+      
+      const newWindow = window.open('', '_blank')
+      if (newWindow) {
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>日志查看 - ${selectedDate.value || 'monitor'}</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.4;
+                padding: 20px;
+                margin: 0;
+                background-color: ${bgColor};
+                color: ${textColor};
+              }
+              pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              }
+            </style>
+          </head>
+          <body>
+            <pre>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          </body>
+          </html>
+        `)
+        newWindow.document.close()
+      }
+    } catch (error) {
+      console.error('打开日志失败:', error)
+      alert('打开日志失败，请检查网络连接')
     }
   }
 
