@@ -58,19 +58,23 @@ class TmdbFullIngestor:
             if t: title_dict[iso] = t
             if ov: overview_dict[iso] = ov
         
-        # 优先级：简中 > 新加坡 > 香港 > 台湾 > 默认 > 原始
-        main_title = title_dict.get('CN') or title_dict.get('SG') or \
-                     title_dict.get('HK') or title_dict.get('TW') or \
-                     tmdb_data.get('title') or tmdb_data.get('name')
-                     
-        main_overview = overview_dict.get('CN') or overview_dict.get('SG') or \
-                        overview_dict.get('HK') or overview_dict.get('TW') or \
-                        tmdb_data.get('overview')
-        
         orig_title = tmdb_data.get('original_title') if media_type == 'movie' else tmdb_data.get('original_name')
         countries = tmdb_data.get('origin_country') or [c.get('iso_3166_1') for c in tmdb_data.get('production_countries', [])]
         country_str = ",".join(countries) if countries else ""
         orig_lang = tmdb_data.get('original_language', 'unknown')
+        
+        # [特殊判断] 如果原产地是中国大陆且原始语言是中文，优先使用原始名称（通常是简体中文）
+        if "CN" in countries and orig_lang == "zh" and orig_title:
+            main_title = orig_title
+        else:
+            # 优先级：简中 > 新加坡 > 香港 > 台湾 > 默认 > 原始
+            main_title = title_dict.get('CN') or title_dict.get('SG') or \
+                         title_dict.get('HK') or title_dict.get('TW') or \
+                         tmdb_data.get('title') or tmdb_data.get('name')
+        
+        main_overview = overview_dict.get('CN') or overview_dict.get('SG') or \
+                        overview_dict.get('HK') or overview_dict.get('TW') or \
+                        tmdb_data.get('overview')
         
         first_date = tmdb_data.get('release_date') if media_type == 'movie' else tmdb_data.get('first_air_date')
         last_date = tmdb_data.get('last_air_date') if media_type == 'tv' else None
