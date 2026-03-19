@@ -2,7 +2,8 @@
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, NInputNumber, 
-  NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, NDynamicTags
+  NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, 
+  NSwitch, NCollapse, NCollapseItem, NDynamicTags
 } from 'naive-ui'
 import {
   SearchOutlined as SearchIcon,
@@ -107,7 +108,23 @@ const {
                     <n-checkbox v-model:checked="manualTask.anime_priority">动漫优化</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.overwrite_mode">覆盖模式</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.trigger_strm">联动STRM</n-checkbox>
+                    <n-checkbox v-model:checked="manualTask.clean_empty_dir">清理空目录</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.ignore_history">忽略历史</n-checkbox>
+                 </div>
+                 
+                 <div class="switch-section">
+                    <div class="switch-item">
+                       <span class="switch-label">Emby 检查</span>
+                       <n-switch v-model:value="manualTask.check_emby_exists" size="small" />
+                    </div>
+                    <div class="switch-desc">检测 Emby 库是否存在，存在则跳过处理</div>
+                    
+                    <div class="switch-item">
+                       <span class="switch-label">哈希计算</span>
+                       <n-switch v-model:value="manualTask.calculate_hash" size="small" />
+                    </div>
+                    <div class="switch-desc">整理时计算 SHA1 和 ED2K 哈希值并记录</div>
+                    <div class="switch-warning">⚠️ 需要读取整个文件，云盘环境不建议开启</div>
                  </div>
               </n-space>
            </n-collapse-item>
@@ -173,5 +190,39 @@ const {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.switch-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border-light);
+}
+
+.switch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.switch-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.switch-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.switch-warning {
+  font-size: 10px;
+  color: var(--color-error);
+  padding: 4px 8px;
+  background: var(--color-error-bg);
+  border-radius: 4px;
+  margin-top: 4px;
 }
 </style>

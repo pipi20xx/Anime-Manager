@@ -2,7 +2,8 @@
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, NInputNumber, 
-  NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, NDynamicTags
+  NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, 
+  NSwitch, NDynamicTags
 } from 'naive-ui'
 import {
   SearchOutlined as SearchIcon,
@@ -114,8 +115,28 @@ const {
               <n-checkbox v-model:checked="manualTask.anime_priority">动漫识别优化</n-checkbox>
               <n-checkbox v-model:checked="manualTask.overwrite_mode">覆盖模式</n-checkbox>
               <n-checkbox v-model:checked="manualTask.trigger_strm">联动 STRM</n-checkbox>
+              <n-checkbox v-model:checked="manualTask.clean_empty_dir">清理空目录</n-checkbox>
               <n-checkbox v-model:checked="manualTask.ignore_history">忽略历史</n-checkbox>
             </n-space>
+            
+            <n-form-item label="Emby 检查" class="mt-4">
+              <n-space align="center">
+                <n-switch v-model:value="manualTask.check_emby_exists" />
+                <span style="font-size: 12px; color: var(--text-muted);">检测 Emby 库是否存在，存在则跳过处理</span>
+              </n-space>
+            </n-form-item>
+            
+            <n-form-item label="哈希计算" class="mt-2">
+              <n-space vertical :size="8">
+                <n-space align="center">
+                  <n-switch v-model:value="manualTask.calculate_hash" />
+                  <span style="font-size: 12px; color: var(--text-muted);">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                </n-space>
+                <div style="font-size: 11px; color: var(--color-error); padding: 4px 8px; background: var(--color-error-bg); border-radius: 4px;">
+                  ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
+                </div>
+              </n-space>
+            </n-form-item>
             
             <n-alert type="warning" :bordered="false" size="small">
               提示：模拟预览不会修改任何文件。正式执行将按照上述配置物理处理文件。
