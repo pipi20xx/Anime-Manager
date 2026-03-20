@@ -29,7 +29,21 @@ const columns = [
     key: 'last_status',
     render(row: HealthCheckConfig) {
       const info = getStatusInfo(row.last_status)
-      return h(NTag, { type: info.type, size: 'small', bordered: false }, { default: () => info.text })
+      const colorMap: Record<string, string> = {
+        success: '#2e7d32',
+        error: '#c62828',
+        default: '#616161'
+      }
+      return h(NTag, { 
+        size: 'small', 
+        round: true,
+        bordered: false,
+        style: { 
+          color: '#fff', 
+          backgroundColor: colorMap[info.type] || '#616161', 
+          borderColor: 'transparent' 
+        }
+      }, { default: () => info.text })
     }
   },
   { 

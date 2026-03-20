@@ -45,7 +45,7 @@ const remoteText = computed({
       <div class="config-block">
         <div class="block-header">
           <span class="block-label">本地规则</span>
-          <n-tag type="primary" size="tiny" round ghost>可编辑</n-tag>
+          <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">可编辑</n-tag>
         </div>
         <div class="input-wrapper">
           <n-input
@@ -62,7 +62,7 @@ const remoteText = computed({
       <div class="config-block">
         <div class="block-header">
           <span class="block-label">远程订阅</span>
-          <n-tag type="info" size="tiny" round ghost>仅同步</n-tag>
+          <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">仅同步</n-tag>
         </div>
         <div class="input-wrapper">
           <n-input

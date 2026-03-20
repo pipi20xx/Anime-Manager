@@ -5,7 +5,7 @@
         <template #header>
           <div class="section-header">
             <span>系统服务</span>
-            <n-tag size="small" :bordered="false" type="info">{{ runningServicesCount }} / {{ data.services.length }} 运行中</n-tag>
+            <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ runningServicesCount }} / {{ data.services.length }} 运行中</n-tag>
           </div>
         </template>
         <n-grid :cols="2" :x-gap="16" :y-gap="12" responsive="screen">
@@ -13,7 +13,7 @@
             <div class="service-card" :class="{ 'is-running': service.running && service.enabled, 'is-stopped': !service.enabled }">
               <div class="service-header">
                 <span class="service-name">{{ service.name }}</span>
-                <n-tag :type="getStatusTag(service).type" size="small" round>
+                <n-tag size="small" round :bordered="false" :style="getStatusTagStyle(service)">
                   {{ getStatusTag(service).text }}
                 </n-tag>
               </div>
@@ -37,7 +37,7 @@
         <template #header>
           <div class="section-header">
             <span>文件监控任务</span>
-            <n-tag size="small" :bordered="false" type="warning">{{ runningMonitorsCount }} / {{ data.monitors.length }} 活跃</n-tag>
+            <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }">{{ runningMonitorsCount }} / {{ data.monitors.length }} 活跃</n-tag>
           </div>
         </template>
         <n-grid :cols="1" :x-gap="16" :y-gap="12">
@@ -45,24 +45,24 @@
             <div class="monitor-card" :class="{ 'is-running': monitor.running, 'is-stopped': !monitor.enabled }">
               <div class="monitor-header">
                 <div class="monitor-info">
-                  <n-tag :type="monitor.type === 'organize' ? 'info' : 'success'" size="small" :bordered="false">
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: monitor.type === 'organize' ? '#0288d1' : '#2e7d32', borderColor: 'transparent' }">
                     {{ monitor.type === 'organize' ? '整理' : 'STRM' }}
                   </n-tag>
                   <span class="monitor-name">{{ monitor.name }}</span>
-                  <n-tag :type="monitor.running ? 'success' : 'default'" size="tiny" round>
+                  <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#616161', borderColor: 'transparent' }">
                     {{ monitor.mode }}
                   </n-tag>
-                  <n-tag v-if="monitor.type === 'strm' && monitor.webhook_enabled" type="warning" size="tiny" round>
+                  <n-tag v-if="monitor.type === 'strm' && monitor.webhook_enabled" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }">
                     接受联动
                   </n-tag>
-                  <n-tag v-if="monitor.type === 'organize' && monitor.check_emby_exists" type="info" size="tiny" round>
+                  <n-tag v-if="monitor.type === 'organize' && monitor.check_emby_exists" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">
                     Emby检查
                   </n-tag>
-                  <n-tag v-if="monitor.type === 'organize' && monitor.calculate_hash" type="error" size="tiny" round>
+                  <n-tag v-if="monitor.type === 'organize' && monitor.calculate_hash" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }">
                     哈希计算
                   </n-tag>
                 </div>
-                <n-tag :type="getStatusTag(monitor).type" size="small" round>
+                <n-tag size="small" round :bordered="false" :style="getStatusTagStyle(monitor)">
                   {{ getStatusTag(monitor).text }}
                 </n-tag>
               </div>
@@ -130,11 +130,11 @@
               <div class="rule-stats">
                 <div class="rule-stat">
                   <span class="stat-label">本地规则</span>
-                  <n-tag type="info" size="small">{{ data.rules.custom_noise.local }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ data.rules.custom_noise.local }} 条</n-tag>
                 </div>
                 <div class="rule-stat">
                   <span class="stat-label">远程规则</span>
-                  <n-tag type="success" size="small">{{ data.rules.custom_noise.remote }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">{{ data.rules.custom_noise.remote }} 条</n-tag>
                 </div>
               </div>
             </div>
@@ -147,15 +147,15 @@
               <div class="rule-stats">
                 <div class="rule-stat">
                   <span class="stat-label">本地规则</span>
-                  <n-tag type="info" size="small">{{ data.rules.custom_groups.local }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ data.rules.custom_groups.local }} 条</n-tag>
                 </div>
                 <div class="rule-stat">
                   <span class="stat-label">远程规则</span>
-                  <n-tag type="success" size="small">{{ data.rules.custom_groups.remote }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">{{ data.rules.custom_groups.remote }} 条</n-tag>
                 </div>
                 <div class="rule-stat">
                   <span class="stat-label">内置规则</span>
-                  <n-tag type="warning" size="small">{{ data.rules.custom_groups.builtin || 0 }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }">{{ data.rules.custom_groups.builtin || 0 }} 条</n-tag>
                 </div>
               </div>
             </div>
@@ -168,11 +168,11 @@
               <div class="rule-stats">
                 <div class="rule-stat">
                   <span class="stat-label">本地规则</span>
-                  <n-tag type="info" size="small">{{ data.rules.custom_render.local }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ data.rules.custom_render.local }} 条</n-tag>
                 </div>
                 <div class="rule-stat">
                   <span class="stat-label">远程规则</span>
-                  <n-tag type="success" size="small">{{ data.rules.custom_render.remote }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">{{ data.rules.custom_render.remote }} 条</n-tag>
                 </div>
               </div>
             </div>
@@ -185,11 +185,11 @@
               <div class="rule-stats">
                 <div class="rule-stat">
                   <span class="stat-label">本地规则</span>
-                  <n-tag type="info" size="small">{{ data.rules.privileged.local }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ data.rules.privileged.local }} 条</n-tag>
                 </div>
                 <div class="rule-stat">
                   <span class="stat-label">远程规则</span>
-                  <n-tag type="success" size="small">{{ data.rules.privileged.remote }} 条</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">{{ data.rules.privileged.remote }} 条</n-tag>
                 </div>
               </div>
             </div>
@@ -208,6 +208,21 @@ import {
 import { useServiceStatus } from '../../composables/views/useServiceStatus'
 
 const { data, formatNextRun, getStatusTag } = useServiceStatus()
+
+const getStatusTagStyle = (service: any) => {
+  const status = getStatusTag(service)
+  const colorMap: Record<string, string> = {
+    success: '#2e7d32',
+    warning: '#f57c00',
+    error: '#c62828',
+    default: '#616161'
+  }
+  return {
+    color: '#fff',
+    backgroundColor: colorMap[status.type] || '#616161',
+    borderColor: 'transparent'
+  }
+}
 
 const runningServicesCount = computed(() => 
   data.value.services.filter(s => s.running && s.enabled).length

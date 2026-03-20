@@ -22,6 +22,20 @@ const {
   fetchConfigs, openAdd, openEdit, saveConfig, deleteConfig, 
   startCheck, checkAll, formatDate, getStatusInfo
 } = useHealthCheck()
+
+const getStatusTagStyle = (status: string) => {
+  const info = getStatusInfo(status)
+  const colorMap: Record<string, string> = {
+    success: '#2e7d32',
+    error: '#c62828',
+    default: '#616161'
+  }
+  return {
+    color: '#fff',
+    backgroundColor: colorMap[info.type] || '#616161',
+    borderColor: 'transparent'
+  }
+}
 </script>
 
 <template>
@@ -59,7 +73,12 @@ const {
                 <div class="path-text">{{ item.file_path }}</div>
               </template>
               <template #header-extra>
-                <n-tag :type="getStatusInfo(item.last_status).type" size="small" bordered="false">
+                <n-tag 
+                  size="small" 
+                  round 
+                  bordered="false" 
+                  :style="getStatusTagStyle(item.last_status)"
+                >
                   {{ getStatusInfo(item.last_status).text }}
                 </n-tag>
               </template>
