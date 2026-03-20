@@ -85,15 +85,15 @@ const {
 .title-line { font-size: 26px; font-weight: 900; color: var(--text-primary); line-height: 1.2; margin-bottom: 8px; }
 
 .pure-tags-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.p-tag { padding: 2px 8px; border-radius: var(--button-border-radius, 10px); font-size: 12px; font-weight: 500; border: 1px solid transparent; }
-.tag-green { color: var(--n-primary-color); border-color: var(--primary-strong); background: var(--primary-light); }
-.tag-blue { color: var(--n-info-color); border-color: var(--info-strong); background: var(--info-light); }
+.p-tag { padding: 2px 8px; border-radius: var(--button-border-radius, 10px); font-size: 12px; font-weight: 500; border: 1px solid transparent; color: #fff; }
+.tag-green { background: #2e7d32; border-color: transparent; }
+.tag-blue { background: #0288d1; border-color: transparent; }
 .id-text { font-family: monospace; color: var(--text-muted); font-size: 12px; margin-left: 4px; }
 .date-text { color: var(--n-primary-color); font-size: 13px; margin-left: 4px; }
 
 .pure-specs-row { display: flex; gap: 6px; margin-bottom: 16px; }
-.p-badge { padding: 1px 6px; border-radius: var(--button-border-radius, 4px); font-size: 10px; background: var(--bg-surface); color: var(--text-tertiary); border: 1px solid rgba(255,255,255, var(--border-medium-alpha)); }
-.p-badge.blue { color: var(--n-info-color); border-color: var(--info-medium); }
+.p-badge { padding: 1px 6px; border-radius: var(--button-border-radius, 4px); font-size: 10px; background: #e65100; color: #fff; border: 1px solid transparent; }
+.p-badge.blue { color: #fff; background: #0288d1; border-color: transparent; }
 
 .flex-info-grid { display: flex; gap: 1px; background: var(--app-border-light); border-radius: var(--card-border-radius, 8px); margin-bottom: 20px; overflow: hidden; border: 1px solid rgba(255,255,255, var(--border-light-alpha)); }
 .fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--bg-primary); padding: 12px 4px; }

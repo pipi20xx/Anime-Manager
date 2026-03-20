@@ -57,9 +57,6 @@ const {
                           </template>
                         </n-input>
                         <n-button type="primary" size="large" :loading="recognitionState.loading" @click="handleRecognize" style="padding: 0 24px;">
-                          <template #icon>
-                            <n-icon :component="PlayIcon" />
-                          </template>
                           立即解析
                         </n-button>
                       </n-input-group>

@@ -167,7 +167,7 @@ onMounted(() => {
                     </div>
                   </template>
                   <template #suffix>
-                    <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openLogDetail(log)">
+                    <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openLogDetail(log)" :style="{ color: '#3B82F6 !important', backgroundColor: 'transparent !important', borderColor: 'transparent !important', border: 'none !important' }">
                        <n-icon><DetailIcon /></n-icon>
                     </n-button>
                   </template>

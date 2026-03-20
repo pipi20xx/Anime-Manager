@@ -19,7 +19,7 @@ const { tmdb, getImg } = useRecognitionTmdb()
       <div class="tmdb-info-side">
         <div class="tmdb-info-top">
           <span class="tmdb-title">{{ String(tmdb.title || '无标题') }}</span>
-          <n-tag v-if="tmdb.category" size="tiny" type="primary" round ghost>{{ tmdb.category }}</n-tag>
+          <n-tag v-if="tmdb.category" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ tmdb.category }}</n-tag>
         </div>
         
         <div class="tmdb-meta-line">

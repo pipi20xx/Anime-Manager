@@ -106,6 +106,12 @@ const logColumns = [
         size: 'tiny',
         quaternary: true,
         circle: true,
+        style: { 
+          color: '#3B82F6 !important', 
+          backgroundColor: 'transparent !important', 
+          borderColor: 'transparent !important',
+          border: 'none !important'
+        },
         onClick: () => {
           try {
             const parsed = JSON.parse(row.details)

@@ -50,7 +50,7 @@ const { raw, tags, safeGet } = useRecognitionRaw()
       <div class="raw-tags-section">
         <div class="section-mini-title">解析到的标签</div>
         <div class="raw-tags-cloud">
-          <n-tag v-for="tag in tags" :key="String(tag)" size="tiny" tertiary round class="m-tag">
+          <n-tag v-for="tag in tags" :key="String(tag)" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#616161', borderColor: 'transparent' }" class="m-tag">
             {{ String(tag) }}
           </n-tag>
           <div v-if="tags.length === 0" class="no-tags">未提取到额外标签</div>

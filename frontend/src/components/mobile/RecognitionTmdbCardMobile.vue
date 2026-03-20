@@ -18,7 +18,7 @@ const { tmdb, getImg } = useRecognitionTmdb()
       <div class="tmdb-info-side">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 4px;">
           <div class="tmdb-title">{{ String(tmdb.title || '无标题') }}</div>
-          <n-tag v-if="tmdb.category" size="tiny" type="primary" round ghost>{{ tmdb.category }}</n-tag>
+          <n-tag v-if="tmdb.category" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ tmdb.category }}</n-tag>
         </div>
         <div class="tmdb-meta">
           <span class="tmdb-date">{{ String(tmdb.release_date || '').slice(0,4) }}</span>

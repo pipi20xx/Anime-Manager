@@ -9,7 +9,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   <div class="logs-mobile">
     <div class="header-mobile">
       <h1>审计日志</h1>
-      <n-tag type="info" size="small" round ghost>
+      <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">
         {{ recognitionState.loading ? '执行中...' : '就绪' }} | {{ recognitionState.logs.length }} 行
       </n-tag>
     </div>

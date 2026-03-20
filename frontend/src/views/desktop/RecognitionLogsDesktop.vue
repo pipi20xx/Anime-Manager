@@ -12,14 +12,14 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
         <h1>系统审计日志</h1>
         <div class="subtitle">实时识别流程审计</div>
       </div>
-      <n-tag type="info" size="large" round ghost>
+      <n-tag size="large" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">
         {{ recognitionState.loading ? '正在执行...' : '就绪' }}
       </n-tag>
     </div>
 
     <n-card size="small" bordered class="log-card" title="审计流水线" content-style="padding: 0;">
       <template #header-extra>
-        <n-tag size="small" round :bordered="false" type="info" ghost>{{ recognitionState.logs.length }} 行</n-tag>
+        <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ recognitionState.logs.length }} 行</n-tag>
       </template>
       <div class="log-container-wrapper">
         <n-scrollbar ref="logScrollbar" style="height: 100%" trigger="none">

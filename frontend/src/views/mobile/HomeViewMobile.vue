@@ -47,7 +47,6 @@ const activeTab = ref('dashboard')
                 :loading="recognitionState.loading" 
                 @click="handleRecognize"
               >
-                <template #icon><n-icon :component="PlayIcon" /></template>
                 立即解析
               </n-button>
           </div>
