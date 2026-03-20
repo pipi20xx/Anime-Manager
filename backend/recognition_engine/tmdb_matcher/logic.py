@@ -83,7 +83,7 @@ class TMDBMatcher:
         return q_list[:3]
 
     @staticmethod
-    def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool, is_from_segment: bool = False) -> Tuple[float, List[str]]:
+    def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool, is_from_segment: bool = False, target_year: Optional[str] = None) -> Tuple[float, List[str]]:
         """
         核心对撞算法：计算候选人分值，并记录详细的对撞轨迹
         
@@ -95,6 +95,7 @@ class TMDBMatcher:
             idx: 排名索引
             anime_priority: 是否优先动画
             is_from_segment: 是否来自分词搜索（用于惩罚机制）
+            target_year: 目标年份（用于年份打分）
         """
         c_name = item.get("title") or item.get("name")
         c_oname = item.get("original_title") or item.get("original_name")
@@ -164,6 +165,23 @@ class TMDBMatcher:
             penalty = 15
             final_score = max(0, final_score - penalty)
             bonus_log.append(f"分词惩罚(-{penalty})")
+        
+        # 年份逻辑校验（加分制）
+        if target_year and final_score > 0:
+            tmdb_date = item.get("release_date") or item.get("first_air_date", "")
+            if tmdb_date:
+                try:
+                    tmdb_year = int(tmdb_date[:4])
+                    target_year_int = int(target_year)
+                    diff = abs(target_year_int - tmdb_year)
+                    
+                    if diff == 0:
+                        final_score += 20
+                        bonus_log.append("年份精准(+20)")
+                    elif diff <= 1:
+                        final_score += 10
+                        bonus_log.append("年份微差(+10)")
+                except: pass
         
         summary = f"最终分: {final_score:.1f} | {', '.join(bonus_log)}"
         return final_score, trace, best_match_info, summary

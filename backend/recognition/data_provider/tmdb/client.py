@@ -296,7 +296,7 @@ class TMDBProvider:
                     temp_scored = []
                     for c_idx, item in enumerate(merged_candidates[:5]):
                         is_from_segment = item.get("_is_from_segment", False)
-                        score, _, _, _ = TMDBMatcher.calculate_match_score(item, targets, cn_name or "", en_name or "", c_idx, anime_priority, is_from_segment)
+                        score, _, _, _ = TMDBMatcher.calculate_match_score(item, targets, cn_name or "", en_name or "", c_idx, anime_priority, is_from_segment, target_year=year)
                         temp_scored.append(score)
                     
                     if temp_scored and max(temp_scored) >= 95:
@@ -311,7 +311,7 @@ class TMDBProvider:
                         if item.get("id") not in seen_ids:
                             seen_ids.add(item.get("id"))
                             merged_candidates.append(item)
-                    return await self._process_candidates(merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=original_cn_name)
+                    return await self._process_candidates(merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=original_cn_name, year=year)
 
                 is_from_segment = idx > 0
                 for item in res_list:
@@ -320,7 +320,7 @@ class TMDBProvider:
                         item["_is_from_segment"] = is_from_segment
                         merged_candidates.append(item)
 
-        return await self._process_candidates(merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=original_cn_name)
+        return await self._process_candidates(merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=original_cn_name, year=year)
 
     async def smart_search_multi(self, cn_name: Optional[str], en_name: Optional[str], year: Optional[str], logs: Any, anime_priority: bool = True, original_cn_name: Optional[str] = None) -> Optional[Dict]:
         def _log(msg):
@@ -349,7 +349,7 @@ class TMDBProvider:
                     temp_scored = []
                     for c_idx, item in enumerate(merged_candidates[:5]):
                         is_from_segment = item.get("_is_from_segment", False)
-                        score, _, _, _ = TMDBMatcher.calculate_match_score(item, targets, cn_name or "", en_name or "", c_idx, anime_priority, is_from_segment)
+                        score, _, _, _ = TMDBMatcher.calculate_match_score(item, targets, cn_name or "", en_name or "", c_idx, anime_priority, is_from_segment, target_year=year)
                         temp_scored.append(score)
                     
                     if temp_scored and max(temp_scored) >= 95:
@@ -364,7 +364,7 @@ class TMDBProvider:
                         if item.get("id") not in seen_ids:
                             seen_ids.add(item.get("id"))
                             merged_candidates.append(item)
-                    return await self._process_candidates_multi(merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=original_cn_name)
+                    return await self._process_candidates_multi(merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=original_cn_name, year=year)
 
                 is_from_segment = idx > 0
                 for item in res_list:
@@ -375,7 +375,7 @@ class TMDBProvider:
 
         return await self._process_candidates_multi(merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=original_cn_name)
 
-    async def _process_candidates_multi(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=None):
+    async def _process_candidates_multi(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=None, year=None):
         def _log(msg):
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
@@ -391,7 +391,7 @@ class TMDBProvider:
         for idx, item in enumerate(merged_candidates[:10]):
             is_from_segment = item.get("_is_from_segment", False)
             score, trace, best_match_info, summary = TMDBMatcher.calculate_match_score(
-                item, targets, cn_name or "", en_name or "", idx, anime_priority, is_from_segment
+                item, targets, cn_name or "", en_name or "", idx, anime_priority, is_from_segment, target_year=year
             )
             c_name = item.get("title") or item.get("name")
             c_year = (item.get("release_date") or item.get("first_air_date") or "")[:4]
@@ -429,7 +429,7 @@ class TMDBProvider:
         _log(f"┗ ❌ 置信度不足 ({best['score']:.1f} < 80)")
         return None
 
-    async def _process_candidates(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=None):
+    async def _process_candidates(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=None, year=None):
         def _log(msg):
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
@@ -445,7 +445,7 @@ class TMDBProvider:
         for idx, item in enumerate(merged_candidates[:10]):
             is_from_segment = item.get("_is_from_segment", False)
             score, trace, best_match_info, summary = TMDBMatcher.calculate_match_score(
-                item, targets, cn_name or "", en_name or "", idx, anime_priority, is_from_segment
+                item, targets, cn_name or "", en_name or "", idx, anime_priority, is_from_segment, target_year=year
             )
             c_name = item.get("title") or item.get("name")
             c_year = (item.get("release_date") or item.get("first_air_date") or "")[:4]
