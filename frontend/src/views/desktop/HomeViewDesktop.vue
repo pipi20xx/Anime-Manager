@@ -113,9 +113,9 @@ const {
                               <div class="sandbox-label">临时规则注入 (仅本次生效)</div>
                             </n-divider>
                           </n-gi>
-                          <n-gi :span="13"><n-input v-model:value="recognitionState.temp_noise" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="屏蔽词 (Regex)" /></n-gi>
-                          <n-gi :span="13"><n-input v-model:value="recognitionState.temp_groups" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义制作组" /></n-gi>
-                          <n-gi :span="14"><n-input v-model:value="recognitionState.temp_render" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义渲染词" /></n-gi>
+                          <n-gi :span="40"><n-form-item label="自定义识别词"><n-input v-model:value="recognitionState.temp_noise" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="屏蔽词 (Regex)" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item label="自定义制作组"><n-input v-model:value="recognitionState.temp_groups" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义制作组" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item label="自定义渲染词"><n-input v-model:value="recognitionState.temp_render" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义渲染词" /></n-form-item></n-gi>
                         </n-grid>
                       </n-collapse-item>
                     </n-collapse>

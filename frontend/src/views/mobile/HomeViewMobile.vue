@@ -96,10 +96,16 @@ const activeTab = ref('dashboard')
                        <n-input v-model:value="recognitionState.forced_season" placeholder="季 S" />
                        <n-input v-model:value="recognitionState.forced_episode" placeholder="集 E" />
                     </div>
-                    <n-divider dashed>临时注入</n-divider>
-                    <n-input v-model:value="recognitionState.temp_noise" placeholder="屏蔽词正则" />
-                    <n-input v-model:value="recognitionState.temp_groups" placeholder="自定义制作组" />
-                    <n-input v-model:value="recognitionState.temp_render" placeholder="渲染替换" />
+                    <n-divider dashed>临时注入 (仅本次生效)</n-divider>
+                    <n-form-item label="自定义识别词">
+                       <n-input v-model:value="recognitionState.temp_noise" placeholder="屏蔽词正则" />
+                    </n-form-item>
+                    <n-form-item label="自定义制作组">
+                       <n-input v-model:value="recognitionState.temp_groups" placeholder="自定义制作组" />
+                    </n-form-item>
+                    <n-form-item label="自定义渲染词">
+                       <n-input v-model:value="recognitionState.temp_render" placeholder="渲染替换" />
+                    </n-form-item>
                  </n-space>
               </div>
             </n-collapse-item>
