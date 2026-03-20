@@ -138,14 +138,14 @@ const handleRefresh = () => {
 
         <!-- Error Message Row -->
         <div v-if="item.status === 'failed' && item.message" class="error-msg-row mt-2">
-          <n-alert type="error" :show-icon="false" size="small" class="compact-alert">
+          <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
             {{ item.message }}
           </n-alert>
         </div>
 
         <!-- Skipped Message Row -->
         <div v-if="item.status === 'skipped' && item.message" class="skipped-msg-row mt-2">
-          <n-alert type="warning" :show-icon="false" size="small" class="compact-alert">
+          <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
             {{ item.message }}
           </n-alert>
         </div>

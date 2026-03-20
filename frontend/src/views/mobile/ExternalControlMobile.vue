@@ -137,7 +137,7 @@ onMounted(() => {
             <n-list-item>
               <div class="setting-item">
                 <div class="setting-label">Swagger UI</div>
-                <n-tag type="success" size="small">运行中</n-tag>
+                <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">运行中</n-tag>
               </div>
             </n-list-item>
           </n-list>
@@ -156,7 +156,7 @@ onMounted(() => {
               <n-list-item v-for="log in logs" :key="log.id" @click="openLogDetail(log)">
                 <n-thing>
                   <template #header>
-                    <n-tag size="small" :type="log.level === 'ERROR' ? 'error' : (log.level === 'WARN' ? 'warning' : 'success')" bordered={false}>
+                    <n-tag size="small" round :bordered="false" :style="log.level === 'ERROR' ? { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' } : (log.level === 'WARN' ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' })">
                       {{ log.action }}
                     </n-tag>
                     <span style="margin-left: 8px; font-size: 13px; font-weight: bold">{{ log.message }}</span>

@@ -94,7 +94,7 @@ const logColumns = [
       }
     } 
   },
-  { title: '方法', key: 'action', width: 80, render: (row: any) => h(NTag, { type: 'info', size: 'small', bordered: false }, { default: () => row.action }) },
+  { title: '方法', key: 'action', width: 80, render: (row: any) => h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' } }, { default: () => row.action }) },
   { title: '接口路径', key: 'message', render: (row: any) => h('span', { style: 'font-family: monospace; font-size: 12px' }, row.message) },
   { 
     title: '详情', 
@@ -106,7 +106,6 @@ const logColumns = [
         size: 'tiny',
         quaternary: true,
         circle: true,
-        type: 'primary',
         onClick: () => {
           try {
             const parsed = JSON.parse(row.details)
@@ -124,8 +123,10 @@ const logColumns = [
     key: 'level', 
     width: 90,
     render: (row: any) => {
-      const type = row.level === 'ERROR' ? 'error' : (row.level === 'WARN' ? 'warning' : 'success')
-      return h(NTag, { type, size: 'small', bordered: false, round: true }, { default: () => row.level })
+      const style = row.level === 'ERROR' 
+        ? { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' } 
+        : (row.level === 'WARN' ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' })
+      return h(NTag, { size: 'small', round: true, bordered: false, style }, { default: () => row.level })
     }
   }
 ]
@@ -281,7 +282,7 @@ const logColumns = [
               <n-list-item>
                 <n-thing title="开启 Swagger (OpenAPI)" description="启用基于 Swagger UI 的交互式文档界面。(/docs)" />
                 <template #suffix>
-                  <n-tag type="success" size="small">运行中</n-tag>
+                  <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">运行中</n-tag>
                 </template>
               </n-list-item>
             </n-list>

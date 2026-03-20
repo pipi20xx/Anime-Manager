@@ -289,21 +289,25 @@ const handleAction = (key: string) => {
 .card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
 
 .error-box {
-  background: var(--color-error-bg);
-  color: var(--color-error);
-  font-size: 11px;
-  padding: 6px;
-  border-radius: var(--button-border-radius, 4px);
+  background: #c62828;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 11px;
   margin-bottom: 10px;
+  font-weight: 500;
+  border: 1px solid transparent;
 }
 
 .skipped-box {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-  font-size: 11px;
-  padding: 6px;
-  border-radius: var(--button-border-radius, 4px);
+  background: #f57c00;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 11px;
   margin-bottom: 10px;
+  font-weight: 500;
+  border: 1px solid transparent;
 }
 
 .path-info {

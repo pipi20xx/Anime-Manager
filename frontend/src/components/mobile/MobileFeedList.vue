@@ -81,7 +81,7 @@ const handleAction = (key: string) => {
         <div class="feed-content">
           <div class="feed-header">
             <span class="feed-title">{{ feed.title || '未命名' }}</span>
-            <n-tag size="small" :type="feed.enabled ? 'success' : 'error'" round class="status-tag">
+            <n-tag size="small" round :bordered="false" :style="feed.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }" class="status-tag">
               {{ feed.enabled ? '监控' : '暂停' }}
             </n-tag>
           </div>

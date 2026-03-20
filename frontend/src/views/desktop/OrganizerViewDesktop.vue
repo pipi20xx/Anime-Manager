@@ -136,7 +136,7 @@ onUnmounted(stopBgTaskPolling)
                 <template #header>
                   <div class="card-title-box">
                     <span class="card-title-text">{{ rule.name }}</span>
-                    <n-tag v-if="i === 0" size="tiny" type="success" round class="default-tag">默认</n-tag>
+                    <n-tag v-if="i === 0" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }" class="default-tag">默认</n-tag>
                   </div>
                 </template>
                 <div class="rule-preview-mini">

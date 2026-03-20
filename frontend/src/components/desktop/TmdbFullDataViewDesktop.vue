@@ -87,7 +87,7 @@ const {
             { title: '年份', key: 'first_air_date', width: 90, render: (row) => row.first_air_date?.slice(0,4) },
             { 
               title: '流派', key: 'genres', width: 180, 
-              render: (row) => h(NSpace, { size: 4 }, () => (row.genres || []).map((g: string) => h(NTag, { size: 'tiny', type: 'success', ghost: true, round: true }, () => g))) 
+              render: (row) => h(NSpace, { size: 4 }, () => (row.genres || []).map((g: string) => h(NTag, { size: 'tiny', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } }, () => g))) 
             },
             { 
               title: '操作', key: 'actions', width: 100, fixed: 'right',

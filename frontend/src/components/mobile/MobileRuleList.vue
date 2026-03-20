@@ -72,7 +72,7 @@ const handleAction = (key: string) => {
         <div class="rule-content">
           <div class="rule-header">
             <span class="rule-name">{{ rule.name }}</span>
-            <n-tag size="small" :type="rule.enabled ? 'success' : 'error'" round class="status-tag">
+            <n-tag size="small" round :bordered="false" :style="rule.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }" class="status-tag">
               {{ rule.enabled ? '生效' : '关闭' }}
             </n-tag>
           </div>

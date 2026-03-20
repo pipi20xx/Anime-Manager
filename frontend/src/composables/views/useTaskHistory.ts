@@ -111,13 +111,13 @@ export function useTaskHistory() {
   }
 
   const getStatusTag = (status: string) => {
-    const map: Record<string, { type: 'success' | 'error' | 'warning' | 'info' | 'default', label: string }> = {
-      completed: { type: 'success', label: '完成' },
-      running: { type: 'info', label: '运行中' },
-      error: { type: 'error', label: '错误' },
-      stopped: { type: 'warning', label: '已停止' }
+    const map: Record<string, { style: any, label: string }> = {
+      completed: { style: { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }, label: '完成' },
+      running: { style: { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }, label: '运行中' },
+      error: { style: { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }, label: '错误' },
+      stopped: { style: { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }, label: '已停止' }
     }
-    return map[status] || { type: 'default', label: status }
+    return map[status] || { style: { color: '#fff', backgroundColor: '#616161', borderColor: 'transparent' }, label: status }
   }
 
   const getModuleIcon = (module: string) => {

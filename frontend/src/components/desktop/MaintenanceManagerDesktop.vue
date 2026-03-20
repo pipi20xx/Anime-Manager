@@ -15,6 +15,12 @@ const {
   tableDescriptions,
   handleTruncate
 } = useMaintenance()
+
+const getTagStyle = (count: number) => {
+  return count > 0 
+    ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }
+    : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }
+}
 </script>
 
 <template>
@@ -36,7 +42,7 @@ const {
               <div class="table-info">
                 <div class="table-name" :title="table.name">{{ table.name.split('.')[1] }}</div>
                 <div class="table-desc">{{ tableDescriptions[table.name] || '暂无说明' }}</div>
-                <n-tag :type="table.count > 0 ? 'warning' : 'info'" size="small" round ghost style="align-self: flex-start;">
+                <n-tag size="small" round :bordered="false" :style="getTagStyle(table.count)" style="align-self: flex-start;">
                   {{ table.count }} 行数据
                 </n-tag>
               </div>

@@ -175,7 +175,7 @@ onUnmounted(stopBgTaskPolling)
                 <div class="title-row">
                   <n-icon :color="i === 0 ? 'var(--n-primary-color)' : 'var(--text-muted)'" size="20"><RuleIcon /></n-icon>
                   <span class="item-title m-truncate">{{ rule.name }}</span>
-                  <n-tag v-if="i === 0" size="tiny" type="success" round ghost>默认</n-tag>
+                  <n-tag v-if="i === 0" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">默认</n-tag>
                 </div>
                 <n-button v-bind="getButtonStyle('icon')" size="small" @click.stop="openRuleActions(i, $event)">
                   <template #icon><n-icon><MoreIcon /></n-icon></template>

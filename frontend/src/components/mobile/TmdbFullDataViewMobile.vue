@@ -108,7 +108,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
               <span class="meta-id">ID: {{ item.tmdb_id }}</span>
             </div>
             <div class="item-genres">
-              <n-tag v-for="g in (item.genres || []).slice(0, 3)" :key="g" size="tiny" type="success" ghost round>{{ g }}</n-tag>
+              <n-tag v-for="g in (item.genres || []).slice(0, 3)" :key="g" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">{{ g }}</n-tag>
             </div>
           </div>
           <div class="card-actions" @click.stop>

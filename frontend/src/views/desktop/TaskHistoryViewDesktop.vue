@@ -117,7 +117,7 @@ onUnmounted(() => {
       <n-card v-for="task in tasks" :key="task.task_id" class="task-item" embedded>
         <div class="task-row">
           <div class="task-main">
-            <n-tag :type="getStatusTag(task.status).type" size="small">
+            <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
               {{ getStatusTag(task.status).label }}
             </n-tag>
             <span class="task-name">{{ task.name || task.module }}</span>
@@ -159,7 +159,7 @@ onUnmounted(() => {
 
     <n-modal v-model:show="showLogModal" preset="card" style="width: 800px; max-height: 80vh" title="任务日志">
       <template #header-extra>
-        <n-tag v-if="selectedTask" :type="getStatusTag(selectedTask.status).type" size="small">
+        <n-tag v-if="selectedTask" size="small" round :bordered="false" :style="getStatusTag(selectedTask.status).style">
           {{ getStatusTag(selectedTask.status).label }}
         </n-tag>
       </template>

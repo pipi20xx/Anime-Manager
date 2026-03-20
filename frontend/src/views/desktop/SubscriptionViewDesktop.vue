@@ -130,7 +130,7 @@ onMounted(fetchData)
                 <div class="f-head">
                   <div class="f-title">{{ feed.title || '未命名订阅' }}</div>
                   <div class="f-status">
-                    <n-tag size="small" :type="feed.enabled ? 'success' : 'error'" round>
+                    <n-tag size="small" round :bordered="false" :style="feed.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }">
                       {{ feed.enabled ? '监控中' : '已暂停' }}
                     </n-tag>
                   </div>
@@ -206,10 +206,10 @@ onMounted(fetchData)
               { title: '规则名称', key: 'name', width: 180 },
               { title: '包含关键词', key: 'must_contain', ellipsis: { tooltip: true } },
               { title: '模式', key: 'use_regex', width: 80, render(r: any){ 
-                  return h(NTag, { size: 'small', quaternary: true, type: r.use_regex ? 'warning' : 'info' }, { default: () => r.use_regex ? '正则' : '普通' })
+                  return h(NTag, { size: 'small', round: true, bordered: false, style: r.use_regex ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' } }, { default: () => r.use_regex ? '正则' : '普通' })
               }},
               { title: '状态', key: 'enabled', width: 80, render(r: any){ 
-                  return h(NTag, { size: 'small', round: true, type: r.enabled ? 'success' : 'error' }, { default: () => r.enabled ? '生效中' : '未启用' })
+                  return h(NTag, { size: 'small', round: true, bordered: false, style: r.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' } }, { default: () => r.enabled ? '生效中' : '未启用' })
               }},
               { title: '操作', key: 'actions', width: 180, render(r: any){ 
                   return h(NSpace, { size: 'small' }, { default: () => [

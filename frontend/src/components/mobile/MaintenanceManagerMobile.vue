@@ -15,6 +15,12 @@ const {
   tableDescriptions,
   handleTruncate
 } = useMaintenance()
+
+const getTagStyle = (count: number) => {
+  return count > 0 
+    ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }
+    : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }
+}
 </script>
 
 <template>
@@ -56,7 +62,7 @@ const {
             <div class="m-card-body">
               <div class="table-desc">{{ tableDescriptions[table.name] || '暂无说明' }}</div>
               <div class="table-meta">
-                <n-tag :type="table.count > 0 ? 'warning' : 'info'" size="tiny" round ghost>
+                <n-tag size="tiny" round :bordered="false" :style="getTagStyle(table.count)">
                   {{ table.count }} 行数据
                 </n-tag>
               </div>
