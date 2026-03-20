@@ -69,6 +69,10 @@ class RecognitionContext:
         remote_render = [f"[REMOTE]{r}" for r in cached_rules.get("render", [])]
         self.all_render = kwargs.get("all_render") or (local_render + remote_render)
 
+        local_privilege = self.config.get("custom_privilege_rules", [])
+        remote_privilege = [f"[REMOTE]{r}" for r in cached_rules.get("privilege", [])]
+        self.all_privilege = kwargs.get("all_privilege") or (local_privilege + remote_privilege)
+
     def log(self, message: str, level: str = "INFO"):
         self.logs.append(message)
         # Also output to global system log for real-time console

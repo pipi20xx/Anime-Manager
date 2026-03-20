@@ -37,7 +37,8 @@ export const recognitionState = reactive({
   forced_episode: '',
   temp_noise: '',
   temp_groups: '',
-  temp_render: ''
+  temp_render: '',
+  temp_privilege: ''
 })
 
 export const getLogClass = (log: any) => {
@@ -73,7 +74,8 @@ export const performRecognition = async (apiBase: string, message: any) => {
       forced_episode: recognitionState.forced_episode || undefined,
       temp_noise: (recognitionState.temp_noise || '').split('\n').map(s => s.trim()).filter(s => s),
       temp_groups: (recognitionState.temp_groups || '').split('\n').map(s => s.trim()).filter(s => s),
-      temp_render: (recognitionState.temp_render || '').split('\n').map(s => s.trim()).filter(s => s)
+      temp_render: (recognitionState.temp_render || '').split('\n').map(s => s.trim()).filter(s => s),
+      temp_privilege: (recognitionState.temp_privilege || '').split('\n').map(s => s.trim()).filter(s => s)
     } 
     
     const res = await fetch(`${apiBase}/api/recognize`, { 

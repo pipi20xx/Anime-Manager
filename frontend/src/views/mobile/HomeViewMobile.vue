@@ -106,6 +106,9 @@ const activeTab = ref('dashboard')
                     <n-form-item label="自定义渲染词">
                        <n-input v-model:value="recognitionState.temp_render" placeholder="渲染替换" />
                     </n-form-item>
+                    <n-form-item label="自定义特权规则">
+                       <n-input v-model:value="recognitionState.temp_privilege" placeholder="特权规则 (每行一条)" />
+                    </n-form-item>
                  </n-space>
               </div>
             </n-collapse-item>

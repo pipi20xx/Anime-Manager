@@ -31,6 +31,7 @@ class RecognizeRequest(BaseModel):
     temp_noise: Optional[List[str]] = None
     temp_groups: Optional[List[str]] = None
     temp_render: Optional[List[str]] = None
+    temp_privilege: Optional[List[str]] = None
 
 @router.post("/api/recognize", summary="全链路识别接口")
 async def recognize(req: RecognizeRequest):
@@ -67,6 +68,7 @@ async def recognize(req: RecognizeRequest):
         series_fingerprint=req.series_fingerprint,
         batch_enhancement=req.batch_enhancement,
         all_render=req.temp_render,
+        all_privilege=req.temp_privilege,
         force_filename=req.force_filename,
         forced_tmdb_id=req.forced_tmdb_id,
         forced_type=req.forced_type,

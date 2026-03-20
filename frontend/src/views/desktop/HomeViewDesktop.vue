@@ -116,6 +116,7 @@ const {
                           <n-gi :span="40"><n-form-item label="自定义识别词"><n-input v-model:value="recognitionState.temp_noise" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="屏蔽词 (Regex)" /></n-form-item></n-gi>
                           <n-gi :span="40"><n-form-item label="自定义制作组"><n-input v-model:value="recognitionState.temp_groups" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义制作组" /></n-form-item></n-gi>
                           <n-gi :span="40"><n-form-item label="自定义渲染词"><n-input v-model:value="recognitionState.temp_render" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义渲染词" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item label="自定义特权规则"><n-input v-model:value="recognitionState.temp_privilege" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="特权规则 (每行一条)" /></n-form-item></n-gi>
                         </n-grid>
                       </n-collapse-item>
                     </n-collapse>

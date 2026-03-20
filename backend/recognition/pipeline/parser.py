@@ -97,6 +97,12 @@ class ParserStage:
         p_failover = "ON" if ctx.bangumi_failover else "OFF"
         p_force_file = "ON" if is_force_file else "OFF"
 
+        # 加载临时特权规则
+        from recognition_engine.special_episode_handler import SpecialEpisodeHandler
+        if ctx.all_privilege:
+            SpecialEpisodeHandler.load_external_rules(ctx.all_privilege)
+            ctx.log(f"┣ [临时规则] 已加载 {len(ctx.all_privilege)} 条临时特权规则")
+
         ctx.log(f"🚀 --- [ANIME 深度审计流水线启动] ---")
         ctx.log(f"┃ [待处理条目]: {ctx.filename}")
         ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 记忆[{p_fp}] | 搜索顺序[{p_off}] | BGM优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
