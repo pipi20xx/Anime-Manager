@@ -161,12 +161,12 @@ def init_logging(log_file: str = "data/monitor.log", level=logging.INFO):
     file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
     root.addHandler(file_handler)
 
-    # 4. 同时也保留一个 monitor.log 作为最新运行日志的副本 (增加自动轮转防止无限大)
+    # 4. monitor.log 只保留当天的实时日志，每天自动清空
     try:
         from logging.handlers import TimedRotatingFileHandler
-        # 每1天轮转一次，保留最近7天的备份
+        # 每1天轮转一次，backupCount=0 表示不保留备份（轮转后删除旧文件）
         monitor_handler = TimedRotatingFileHandler(
-            log_file, when='D', interval=1, backupCount=7, encoding='utf-8'
+            log_file, when='D', interval=1, backupCount=0, encoding='utf-8'
         )
         monitor_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
         root.addHandler(monitor_handler)
