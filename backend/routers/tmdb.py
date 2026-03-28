@@ -46,7 +46,7 @@ async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
     直接调用 TMDB API 搜索作品。
     """
     logs = []
-    results = await TMDBProvider().search(query, year, type, logs=logs)
+    results, _ = await TMDBProvider().search(query, year, type, logs=logs)
     from recognition_engine.tmdb_matcher.logic import TMDBMatcher
     formatted = [TMDBMatcher.normalize(i, media_type_hint=type) for i in results]
     log_audit("TMDB", "搜索", f"关键词: {query}", details="\n".join(logs))

@@ -429,12 +429,10 @@ class BangumiProvider:
             if any(x["score"] >= 85 for x in scored_pool): break
             
             for query, year, lang_hint in strategies:
-                # 动态设置搜索语言与标签
                 tmdb_lang = "ja-JP" if lang_hint == "ja" else "zh-CN"
                 q_label = "日文原名" if lang_hint == "ja" else "中文标题"
                 
-                # 使用带日志和语言参数的 tmdb.search
-                results = await tmdb.search(query, year, endpoint, logs=logs, lang=tmdb_lang)
+                results, _ = await tmdb.search(query, year, endpoint, logs=logs, lang=tmdb_lang)
                 _log(f"┃   ├─ 🔍 [{q_label}] '{query}' -> 发现 {len(results)} 个候选人")
                 
                 for cand in results:

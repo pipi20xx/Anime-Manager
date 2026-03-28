@@ -222,19 +222,16 @@ async def manual_search(
     logs = []
     tmdb = TMDBProvider()
     
-    # 1. Bangumi Search (reuse discover)
     bgm_task = BangumiProvider.discover({"keyword": keyword, "sort_by": "match"}, logs=logs)
     
-    # 2. TMDB Search (Movie & TV)
     tmdb_m_task = tmdb.search(keyword, None, "movie", lang="zh-CN", logs=logs)
     tmdb_t_task = tmdb.search(keyword, None, "tv", lang="zh-CN", logs=logs)
     
     import asyncio
-    bgm_res, tmdb_m_res, tmdb_t_res = await asyncio.gather(bgm_task, tmdb_m_task, tmdb_t_task)
+    bgm_res, (tmdb_m_res, _), (tmdb_t_res, _) = await asyncio.gather(bgm_task, tmdb_m_task, tmdb_t_task)
     
     log_audit("搜索", "聚合搜索", f"关键词: {keyword}", details="\n".join(logs))
     
-    # Normalize TMDB results
     from recognition_engine.tmdb_matcher.logic import TMDBMatcher
     tmdb_movies = [TMDBMatcher.normalize(i, "movie") for i in (tmdb_m_res or [])]
     tmdb_tvs = [TMDBMatcher.normalize(i, "tv") for i in (tmdb_t_res or [])]
