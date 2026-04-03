@@ -33,6 +33,7 @@ class RenderReporter:
         if f.get('audio_encode'): specs.append(f"🔊 音频编码: {f['audio_encode']}")
         if f.get('subtitle'): specs.append(f"💬 字幕语言 {{subtitle}}: {f['subtitle']}")
         if f.get('source'): specs.append(f"CD 来源: {f['source']}")
+        if f.get('platform'): specs.append(f"📡 发布平台: {f['platform']}")
         if specs: ctx.log(f"┣ 🛠️ 规格: {' | '.join(specs)}")
         
         ctx.log(f"┗ 📝 渲染后名: {f['processed_name']}")

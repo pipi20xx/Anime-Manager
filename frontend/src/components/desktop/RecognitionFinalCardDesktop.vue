@@ -4,7 +4,7 @@ import { FlagOutlined as FinalIcon } from '@vicons/material'
 import { useRecognitionFinal } from '../../composables/components/useRecognitionFinal'
 
 const {
-  title, poster, category, tmdb_id, release_date, secondary_category, origin_country,
+  title, poster, category, platform, tmdb_id, release_date, secondary_category, origin_country,
   resolution, v_encode, v_effect, a_encode,
   year, season, episode, source,
   subtitle, team, processed_name, filename,
