@@ -43,7 +43,7 @@
               <template #prefix><n-icon><LockIcon /></n-icon></template>
             </n-input>
           </n-form-item>
-          <n-button text block @click="showOtp = false" style="margin-bottom: 10px;">返回账号登录</n-button>
+          <n-button block @click="showOtp = false" style="margin-bottom: 10px; height: 48px;">返回账号登录</n-button>
         </template>
         
         <n-button
