@@ -121,10 +121,20 @@ export function useTmdbData() {
     finally { syncLoading.value = false }
   }
 
-  const handleRefreshAll = async () => {
+  const handleRefreshAll = async (options?: { olderThanDays?: number; year?: number; mediaType?: string }) => {
     try {
-      const res = await fetch(`${API_BASE}/api/tmdb_full/refresh_all`, { method: 'POST' })
-      if (res.ok) message.success('全量同步任务已在后台启动')
+      const body: Record<string, any> = {}
+      if (options?.olderThanDays) body.older_than_days = options.olderThanDays
+      if (options?.year) body.year = options.year
+      if (options?.mediaType) body.media_type = options.mediaType
+      
+      const res = await fetch(`${API_BASE}/api/tmdb_full/refresh_all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (res.ok) message.success(data.message || '全量同步任务已在后台启动')
     } catch (e) { message.error('请求异常') }
   }
 

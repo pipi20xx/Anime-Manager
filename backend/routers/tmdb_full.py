@@ -1,31 +1,67 @@
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from typing import List, Dict, Any
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Body
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
 from tmdbmatefull.manager import TmdbMateFullManager
 from tmdbmatefull.database import TmdbFullDB
 from tmdbmatefull.models import TmdbDeepMeta, RefGenre, RefCompany, RefKeyword
 from sqlmodel import or_, col, select
 from logger import log_audit
 
-router = APIRouter(prefix="/api/tmdb_full", tags=["TMDB满血元数据"])
+router = APIRouter(prefix="/tmdb_full", tags=["数据中心"])
 
-async def task_refresh_all_metadata():
-    """后台执行全量刷新逻辑"""
-    log_audit("离线库", "全量刷新", "开始执行全量元数据同步任务...")
+async def task_refresh_all_metadata(
+    older_than_days: Optional[int] = None,
+    year: Optional[int] = None,
+    media_type: Optional[str] = None
+):
+    """
+    后台执行全量刷新逻辑
+    
+    Args:
+        older_than_days: 只更新 N 天前更新的记录
+        year: 只更新指定年份首播的记录
+        media_type: 只更新指定类型 (movie/tv)
+    """
+    filters = []
+    if older_than_days:
+        filters.append(f"更新时间早于 {older_than_days} 天")
+    if year:
+        filters.append(f"首播年份 {year}")
+    if media_type:
+        filters.append(f"类型 {media_type}")
+    
+    filter_desc = " | ".join(filters) if filters else "全部"
+    log_audit("离线库", "全量刷新", f"开始执行全量元数据同步任务 [{filter_desc}]...")
+    
     async with await TmdbFullDB.get_session() as session:
-        # 获取库中所有 ID 和类型
-        stmt = select(TmdbDeepMeta.tmdb_id, TmdbDeepMeta.media_type)
+        stmt = select(TmdbDeepMeta.tmdb_id, TmdbDeepMeta.media_type, TmdbDeepMeta.title)
+        
+        if older_than_days:
+            cutoff_date = datetime.now() - timedelta(days=older_than_days)
+            stmt = stmt.where(TmdbDeepMeta.updated_at < cutoff_date)
+        
+        if year:
+            stmt = stmt.where(col(TmdbDeepMeta.first_air_date).startswith(str(year)))
+        
+        if media_type:
+            stmt = stmt.where(TmdbDeepMeta.media_type == media_type)
+        
         items = (await session.execute(stmt)).all()
         
+    total = len(items)
+    log_audit("离线库", "筛选完成", f"共筛选出 {total} 条待更新记录")
+    
     count = 0
-    for tid, mtype in items:
+    for idx, (tid, mtype, title) in enumerate(items, 1):
         try:
-            # 调用 fetch_and_ingest 且 force=True (强制云端同步)
             await TmdbMateFullManager.fetch_and_ingest(tid, mtype, force=True)
             count += 1
+            if idx % 10 == 0:
+                log_audit("离线库", "刷新进度", f"[{idx}/{total}] 已处理 {count} 条")
         except Exception as e:
-            print(f"[离线刷新] ID {tid} 失败: {e}")
+            print(f"[离线刷新] ID {tid} ({title}) 失败: {e}")
             
-    log_audit("离线库", "刷新完成", f"已成功强制更新 {count} 条元数据")
+    log_audit("离线库", "刷新完成", f"已成功强制更新 {count}/{total} 条元数据")
 
 @router.get("/rules/export", summary="导出二级分类规则")
 async def export_secondary_rules():
@@ -85,12 +121,39 @@ async def delete_secondary_rule(rule_id: int):
     raise HTTPException(404, "规则未找到")
 
 @router.post("/refresh_all", summary="全量强制刷新离线库")
-async def refresh_all_metadata(background_tasks: BackgroundTasks):
+async def refresh_all_metadata(
+    background_tasks: BackgroundTasks,
+    older_than_days: Optional[int] = Body(None, description="只更新 N 天前更新的记录"),
+    year: Optional[int] = Body(None, description="只更新指定年份首播的记录"),
+    media_type: Optional[str] = Body(None, description="只更新指定类型 (movie/tv)")
+):
     """
-    触发后台异步任务，对库中所有条目强制与 TMDB 云端同步。
+    触发后台异步任务，对库中条目强制与 TMDB 云端同步。
+    
+    支持筛选条件：
+    - older_than_days: 只更新 N 天前更新的记录（如 90 表示更新 3 个月前的数据）
+    - year: 只更新指定年份首播的记录（如 2024）
+    - media_type: 只更新指定类型 (movie/tv)
+    
+    不传任何参数则刷新全部。
     """
-    background_tasks.add_task(task_refresh_all_metadata)
-    return {"status": "success", "message": "全量刷新任务已在后台启动，请关注系统日志"}
+    background_tasks.add_task(
+        task_refresh_all_metadata,
+        older_than_days=older_than_days,
+        year=year,
+        media_type=media_type
+    )
+    
+    filters = []
+    if older_than_days:
+        filters.append(f"更新时间早于 {older_than_days} 天")
+    if year:
+        filters.append(f"首播年份 {year}")
+    if media_type:
+        filters.append(f"类型 {media_type}")
+    
+    filter_desc = " | ".join(filters) if filters else "全部"
+    return {"status": "success", "message": f"全量刷新任务已在后台启动 [{filter_desc}]，请关注系统日志"}
 
 @router.get("/list", summary="浏览离线库元数据")
 async def list_full_meta(

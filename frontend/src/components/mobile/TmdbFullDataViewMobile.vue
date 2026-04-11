@@ -3,7 +3,8 @@ import { ref, h } from 'vue'
 import {
   NSpace, NButton, NIcon, NText, NInput, NInputGroup,
   NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
-  NList, NListItem, NThing, NDrawer, NDrawerContent, NPopconfirm
+  NList, NListItem, NThing, NDrawer, NDrawerContent, NPopconfirm,
+  NInputNumber
 } from 'naive-ui'
 import {
   EditOutlined as EditIcon,
@@ -52,6 +53,25 @@ const {
 useBackClose(showEditModal)
 useBackClose(showSyncModal)
 
+const showRefreshModal = ref(false)
+useBackClose(showRefreshModal)
+
+const refreshForm = ref({
+  olderThanDays: null as number | null,
+  year: null as number | null,
+  mediaType: null as string | null
+})
+
+const executeRefresh = () => {
+  const options: { olderThanDays?: number; year?: number; mediaType?: string } = {}
+  if (refreshForm.value.olderThanDays) options.olderThanDays = refreshForm.value.olderThanDays
+  if (refreshForm.value.year) options.year = refreshForm.value.year
+  if (refreshForm.value.mediaType) options.mediaType = refreshForm.value.mediaType
+  handleRefreshAll(options)
+  showRefreshModal.value = false
+  refreshForm.value = { olderThanDays: null, year: null, mediaType: null }
+}
+
 // 操作抽屉状态
 const showActionDrawer = ref(false)
 useBackClose(showActionDrawer)
@@ -69,7 +89,7 @@ const handleAction = (key: string) => {
   setTimeout(() => {
     if (key === 'create') openCreate()
     else if (key === 'sync') handleSyncSytmdb()
-    else if (key === 'refresh_all') handleRefreshAll()
+    else if (key === 'refresh_all') showRefreshModal.value = true
     else if (key === 'export') handleExport()
     else if (key === 'clear_fp') clearFingerprints()
   }, 300)
@@ -150,6 +170,56 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
         <n-form-item label="SYTMDB 地址 (IP:Port)"><n-input v-model:value="syncForm.address" placeholder="192.168.1.10:8121" /></n-form-item>
       </n-form>
       <template #footer><n-button type="primary" block :loading="syncLoading" @click="runSyncSytmdb">开始同步</n-button></template>
+    </n-modal>
+
+    <!-- 全量刷新弹窗 -->
+    <n-modal v-model:show="showRefreshModal" preset="card" style="width: 100%; top: 20px;" title="全量刷新设置">
+      <n-form label-placement="top">
+        <n-form-item label="更新时间筛选">
+          <n-input-number 
+            v-model:value="refreshForm.olderThanDays" 
+            placeholder="留空表示不限制"
+            :min="1" 
+            style="width: 100%"
+          >
+            <template #suffix>天前的数据</template>
+          </n-input-number>
+        </n-form-item>
+        <n-form-item label="首播年份筛选">
+          <n-input-number 
+            v-model:value="refreshForm.year" 
+            placeholder="留空表示不限制"
+            :min="1900" 
+            :max="2100"
+            style="width: 100%"
+          />
+        </n-form-item>
+        <n-form-item label="媒体类型筛选">
+          <n-select 
+            v-model:value="refreshForm.mediaType"
+            placeholder="留空表示不限制"
+            clearable
+            :options="[
+              { label: '全部类型', value: null },
+              { label: '电影', value: 'movie' },
+              { label: '剧集', value: 'tv' }
+            ]"
+          />
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <n-space vertical style="width: 100%">
+          <n-button block @click="showRefreshModal = false">取消</n-button>
+          <n-popconfirm @positive-click="executeRefresh" positive-text="确认" negative-text="取消" style="width: 100%">
+            <template #trigger>
+              <n-button type="warning" block>
+                开始刷新
+              </n-button>
+            </template>
+            确定要执行全量刷新吗？
+          </n-popconfirm>
+        </n-space>
+      </template>
     </n-modal>
 
     <!-- 操作抽屉 -->

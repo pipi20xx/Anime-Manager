@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { h } from 'vue'
+import { h, ref } from 'vue'
 import { 
   NSpace, NButton, NIcon, NText, NDataTable, NInput, NInputGroup, 
-  NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi
+  NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
+  NInputNumber, NPopconfirm
 } from 'naive-ui'
 import {
   EditOutlined as EditIcon,
@@ -16,6 +17,13 @@ import {
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+
+const showRefreshModal = ref(false)
+const refreshForm = ref({
+  olderThanDays: null as number | null,
+  year: null as number | null,
+  mediaType: null as string | null
+})
 
 const {
   browserData,
@@ -41,6 +49,16 @@ const {
   handleExport,
   clearFingerprints
 } = useTmdbData()
+
+const executeRefresh = () => {
+  const options: { olderThanDays?: number; year?: number; mediaType?: string } = {}
+  if (refreshForm.value.olderThanDays) options.olderThanDays = refreshForm.value.olderThanDays
+  if (refreshForm.value.year) options.year = refreshForm.value.year
+  if (refreshForm.value.mediaType) options.mediaType = refreshForm.value.mediaType
+  handleRefreshAll(options)
+  showRefreshModal.value = false
+  refreshForm.value = { olderThanDays: null, year: null, mediaType: null }
+}
 </script>
 
 <template>
@@ -59,7 +77,7 @@ const {
           <n-button v-bind="getButtonStyle('secondary')" @click="handleExport">
             导出字典
           </n-button>
-          <n-button v-bind="getButtonStyle('warning')" @click="handleRefreshAll">
+          <n-button v-bind="getButtonStyle('warning')" @click="showRefreshModal = true">
             全量刷新
           </n-button>
           <n-button v-bind="getButtonStyle('warning')" @click="clearFingerprints">
@@ -73,6 +91,55 @@ const {
           </n-button>
         </n-space>
       </div>
+
+      <n-modal v-model:show="showRefreshModal" preset="card" title="全量刷新设置" style="width: 450px">
+        <n-form label-placement="left" label-width="120px">
+          <n-form-item label="更新时间筛选">
+            <n-input-number 
+              v-model:value="refreshForm.olderThanDays" 
+              placeholder="留空表示不限制"
+              :min="1" 
+              style="width: 100%"
+            >
+              <template #suffix>天前的数据</template>
+            </n-input-number>
+          </n-form-item>
+          <n-form-item label="首播年份筛选">
+            <n-input-number 
+              v-model:value="refreshForm.year" 
+              placeholder="留空表示不限制"
+              :min="1900" 
+              :max="2100"
+              style="width: 100%"
+            />
+          </n-form-item>
+          <n-form-item label="媒体类型筛选">
+            <n-select 
+              v-model:value="refreshForm.mediaType"
+              placeholder="留空表示不限制"
+              clearable
+              :options="[
+                { label: '全部类型', value: null },
+                { label: '电影', value: 'movie' },
+                { label: '剧集', value: 'tv' }
+              ]"
+            />
+          </n-form-item>
+        </n-form>
+        <template #footer>
+          <n-space justify="end">
+            <n-button @click="showRefreshModal = false">取消</n-button>
+            <n-popconfirm @positive-click="executeRefresh" positive-text="确认" negative-text="取消">
+              <template #trigger>
+                <n-button type="warning">
+                  开始刷新
+                </n-button>
+              </template>
+              确定要执行全量刷新吗？此操作将在后台异步进行。
+            </n-popconfirm>
+          </n-space>
+        </template>
+      </n-modal>
 
       <div class="browser-wrapper">
         <n-data-table
