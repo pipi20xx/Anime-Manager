@@ -146,7 +146,7 @@ export function useDatabase() {
         const data = await res.json()
         if (data.status === 'success' && data.pk) { currentPk.value = data.pk }
     } catch (e) {}
-    runQuery(`SELECT * FROM ${tableName} ORDER BY 1 DESC LIMIT 500`)
+    runQuery(`SELECT * FROM ${tableName} ORDER BY 1 DESC LIMIT 10000`)
   }
 
   const handleManualRun = () => {
