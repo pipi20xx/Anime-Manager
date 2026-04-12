@@ -115,18 +115,57 @@ async def refresh_all_subjects():
             "failed": failed_count
         }
 
-@router.delete("/subjects/{subject_id}", summary="删除日历追踪项")
-
-async def delete_subject(subject_id: int):
-
+@router.delete("/subjects/expired", summary="删除已过期的追踪项")
+async def delete_expired_subjects():
+    """
+    删除所有剧集播出日期都已过期的追踪项。
+    过期定义：最后一集的播出日期 < 今天
+    """
+    today = datetime.now().strftime("%Y-%m-%d")
+    deleted_count = 0
+    deleted_titles = []
+    
     async with db.session_scope():
+        stmt = select(CalendarSubject)
+        subjects = await db.all(CalendarSubject, stmt)
+        
+        for subject in subjects:
+            episodes = subject.episodes_cache or []
+            if not episodes:
+                continue
+            
+            air_dates = [ep.get("air_date", "") for ep in episodes if ep.get("air_date")]
+            if not air_dates:
+                continue
+            
+            last_air_date = max(air_dates)
+            
+            if last_air_date and last_air_date < today:
+                deleted_titles.append(f"《{subject.title}》S{subject.season}")
+                await db.delete(subject)
+                deleted_count += 1
+    
+    if deleted_count > 0:
+        return {
+            "success": True,
+            "message": f"已清理 {deleted_count} 部过期作品",
+            "deleted_count": deleted_count,
+            "deleted_titles": deleted_titles
+        }
+    else:
+        return {
+            "success": True,
+            "message": "没有发现过期作品",
+            "deleted_count": 0,
+            "deleted_titles": []
+        }
 
+@router.delete("/subjects/{subject_id}", summary="删除日历追踪项")
+async def delete_subject(subject_id: int):
+    async with db.session_scope():
         subject = await db.get(CalendarSubject, subject_id)
-
         if subject:
-
             await db.delete(subject)
-
     return {"success": True}
 
 

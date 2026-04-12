@@ -325,6 +325,26 @@ export function useCalendar() {
     } catch (e) { message.error('删除失败') }
   }
 
+  const clearExpiredSubjects = async () => {
+    try {
+      const API_BASE = (import.meta.env.VITE_API_BASE as string) || (window.location.origin)
+      const res = await fetch(`${API_BASE}/api/calendar/subjects/expired`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        if (data.deleted_count > 0) {
+          message.success(data.message)
+        } else {
+          message.info(data.message)
+        }
+        fetchData()
+      }
+      return data
+    } catch (e) {
+      message.error('清理失败')
+      return { success: false, message: '清理失败' }
+    }
+  }
+
   onMounted(fetchData)
 
   return {
@@ -352,6 +372,7 @@ export function useCalendar() {
     handleAddSubject,
     refreshSubject,
     refreshAllSubjects,
-    deleteSubject
+    deleteSubject,
+    clearExpiredSubjects
   }
 }

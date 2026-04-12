@@ -44,7 +44,8 @@ const {
   handleAddSubject,
   refreshSubject,
   refreshAllSubjects,
-  deleteSubject
+  deleteSubject,
+  clearExpiredSubjects
 } = useCalendar()
 </script>
 
@@ -113,9 +114,14 @@ const {
         <n-tab-pane name="list" tab="正在追踪" style="height: 100%; display: flex; flex-direction: column">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
             <span style="font-size: 12px; color: var(--text-tertiary)">共 {{ trackingList.length }} 个追踪项</span>
-            <n-button type="primary" size="small" @click="refreshAllSubjects">
-              全部刷新
-            </n-button>
+            <n-space :size="8">
+              <n-button size="small" @click="clearExpiredSubjects">
+                清理过期
+              </n-button>
+              <n-button type="primary" size="small" @click="refreshAllSubjects">
+                全部刷新
+              </n-button>
+            </n-space>
           </div>
           <div class="scroll-container-full">
             <n-list :show-divider="false" class="compact-list">
