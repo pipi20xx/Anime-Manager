@@ -203,7 +203,7 @@ const {
                 </div>
               </template>
               <n-form label-placement="left" label-width="100">
-                <n-form-item label="HTTP 代理" feedback="支持 http://ip:port">
+                <n-form-item label="HTTP 代理" feedback="支持 http://ip:port 或 http://user:pass@ip:port">
                   <n-input v-model:value="config.http_proxy" placeholder="例如: http://192.168.50.66:7893" />
                 </n-form-item>
                 <n-form-item label="代理服务">

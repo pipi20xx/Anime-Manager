@@ -174,7 +174,7 @@ const {
                 </div>
                 <n-form label-placement="top">
                   <n-form-item label="HTTP 代理">
-                    <n-input v-model:value="config.http_proxy" placeholder="http://ip:port" />
+                    <n-input v-model:value="config.http_proxy" placeholder="http://ip:port 或 http://user:pass@ip:port" />
                   </n-form-item>
 
                   <n-divider dashed>应用范围</n-divider>
