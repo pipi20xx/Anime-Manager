@@ -30,7 +30,7 @@ const {
     <div class="page-header">
       <div>
         <h1>识别控制台</h1>
-        <div class="subtitle">DASHBOARD & RECOGNITION</div>
+        <div class="subtitle">仪表盘与智能识别</div>
       </div>
     </div>
 

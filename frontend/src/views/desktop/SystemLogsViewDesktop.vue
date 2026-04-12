@@ -47,7 +47,7 @@ const columns = [
     <div class="page-header">
       <div>
         <h1>系统审计日志</h1>
-        <div class="subtitle">AUDIT LOGS & CONSOLE</div>
+        <div class="subtitle">审计日志与控制台</div>
       </div>
       <n-space>
         <n-button type="primary" @click="showConsole = true">
