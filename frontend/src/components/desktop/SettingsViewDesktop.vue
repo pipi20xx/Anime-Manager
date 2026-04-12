@@ -233,6 +233,7 @@ const {
                     <n-form-item label="RSS 自动刷新">
                       <n-switch v-model:value="config.rss_auto_refresh" />
                     </n-form-item>
+                    <div class="form-item-desc">定时拉取 RSS 源，检测新发布的资源</div>
                   </n-gi>
                   <n-gi>
                     <n-form-item label="刷新间隔 (分)">
@@ -251,6 +252,7 @@ const {
                     <n-form-item label="规则自动同步">
                       <n-switch v-model:value="config.rule_auto_update" />
                     </n-form-item>
+                    <div class="form-item-desc">定时从远程地址同步社区识别规则</div>
                   </n-gi>
                   <n-gi>
                     <n-form-item label="同步周期 (时)">
@@ -269,6 +271,7 @@ const {
                     <n-form-item label="自动搜寻补全">
                       <n-switch v-model:value="config.sub_auto_fill" />
                     </n-form-item>
+                    <div class="form-item-desc">自动搜寻补全缺失的订阅集数</div>
                   </n-gi>
                   <n-gi>
                     <n-form-item label="补全周期 (时)">
@@ -287,6 +290,7 @@ const {
                     <n-form-item label="定时清理缓存">
                       <n-switch v-model:value="config.auto_clear_recognition" />
                     </n-form-item>
+                    <div class="form-item-desc">定时清空 RSS 订阅项缓存</div>
                   </n-gi>
                   <n-gi>
                     <n-form-item label="清理周期 (时)">
@@ -327,7 +331,7 @@ const {
                   </n-gi>
                   <n-gi :span="2">
                     <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; margin-top: -8px;">
-                      系统每 <b>{{ config.stalled_monitor_interval }}</b> 分钟巡检一次，若发现存活超过 <b>{{ config.stalled_timeout_minutes }}</b> 分钟的下载任务（且进度未完成），将自动将其作为死种清除，并回滚订阅状态以尝试重新下载。
+                      定时检查 qBittorrent 下载器，发现运行超过 <b>{{ config.stalled_timeout_minutes }}</b> 分钟且进度未完成的任务，将自动删除并加入黑名单，同时回滚订阅状态以便重新下载。
                     </div>
                   </n-gi>
                 </n-grid>
@@ -473,6 +477,8 @@ const {
 
 .switch-label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
 .switch-desc { font-size: 12px; color: var(--text-tertiary); }
+
+.form-item-desc { font-size: 12px; color: var(--text-tertiary); margin-top: -8px; margin-bottom: 8px; line-height: 1.4; }
 
 /* Tabs 样式已移至 global.css 统一管理 */
 </style>

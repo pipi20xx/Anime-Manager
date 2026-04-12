@@ -201,6 +201,7 @@ const {
                       <span class="auto-label">RSS 自动刷新</span>
                       <n-switch v-model:value="config.rss_auto_refresh" size="small" />
                     </div>
+                    <div class="auto-desc">定时拉取 RSS 源，检测新发布的资源</div>
                     <n-input-number v-if="config.rss_auto_refresh" v-model:value="config.rss_refresh_interval" :min="1" size="small" style="width: 120px">
                       <template #suffix>分钟</template>
                     </n-input-number>
@@ -211,6 +212,7 @@ const {
                       <span class="auto-label">规则自动同步</span>
                       <n-switch v-model:value="config.rule_auto_update" size="small" />
                     </div>
+                    <div class="auto-desc">定时从远程地址同步社区识别规则</div>
                     <n-input-number v-if="config.rule_auto_update" v-model:value="config.rule_update_interval" :min="1" size="small" style="width: 120px">
                       <template #suffix>小时</template>
                     </n-input-number>
@@ -221,6 +223,7 @@ const {
                       <span class="auto-label">自动搜寻补全</span>
                       <n-switch v-model:value="config.sub_auto_fill" size="small" />
                     </div>
+                    <div class="auto-desc">自动搜寻补全缺失的订阅集数</div>
                     <n-input-number v-if="config.sub_auto_fill" v-model:value="config.sub_fill_interval" :min="1" size="small" style="width: 120px">
                       <template #suffix>小时</template>
                     </n-input-number>
@@ -231,6 +234,7 @@ const {
                       <span class="auto-label">定时清理缓存</span>
                       <n-switch v-model:value="config.auto_clear_recognition" size="small" />
                     </div>
+                    <div class="auto-desc">定时清空 RSS 订阅项缓存</div>
                     <n-input-number v-if="config.auto_clear_recognition" v-model:value="config.auto_clear_interval" :min="1" size="small" style="width: 120px">
                       <template #suffix>小时</template>
                     </n-input-number>
@@ -250,6 +254,7 @@ const {
                       </n-input-number>
                     </n-form-item>
                   </div>
+                  <div class="auto-desc">检查 QB 下载器中超时的任务，自动删除并加入黑名单</div>
                 </n-form>
               </div>
             </n-space>
@@ -481,6 +486,12 @@ const {
 .auto-label {
   font-size: var(--m-text-sm);
   color: var(--text-secondary);
+}
+
+.auto-desc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
 }
 
 /* 数字输入行 */
