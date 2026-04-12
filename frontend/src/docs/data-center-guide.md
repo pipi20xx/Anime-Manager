@@ -18,7 +18,7 @@
 | **subscriptions** | 番剧追剧任务配置 |
 | **subscribed_episodes** | 已执行下载的剧集记录（防重） |
 | **organize_history** | 文件整理重命名的历史记录 |
-| **series_fingerprint** | 剧集指纹数据（用于智能识别和去重） |
+| **series_fingerprint** | 智能记忆（用于加速识别和去重） |
 | **filter_rules** | RSS 包含/排除等过滤规则 |
 | **rules** | 识别引擎正则与自定义规则 |
 | **secondary_rules** | 自动分类与分库逻辑配置 |

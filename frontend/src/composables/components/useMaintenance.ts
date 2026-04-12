@@ -27,7 +27,7 @@ export function useMaintenance() {
     'public.subscriptions': '番剧追剧任务配置',
     'public.subscribed_episodes': '已执行下载的剧集记录（防重）',
     'public.organize_history': '文件整理重命名的历史记录',
-    'public.series_fingerprint': '剧集指纹数据（用于智能识别和去重）',
+    'public.series_fingerprint': '智能记忆（用于加速识别和去重）',
     'public.filter_rules': 'RSS 包含/排除等过滤规则',
     'public.rules': '识别引擎正则与自定义规则',
     'public.secondary_rules': '自动分类与分库逻辑配置',
@@ -41,6 +41,7 @@ export function useMaintenance() {
     'public.strm_tasks': '虚拟链接 (STRM) 生成任务记录',
     'public.health_check_configs': '系统健康检查监控配置',
     'public.users': '系统用户账户与认证信息',
+    'public.sessions': '用户登录会话与设备管理',
     'public.task_records': '任务中心执行记录（整理/STRM/RSS等任务的日志）',
     'public.file_hashes': '文件哈希记录（SHA1、ED2K 及识别信息缓存）'
   }
