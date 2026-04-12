@@ -78,6 +78,7 @@ const updateCssVariables = () => {
   root.style.setProperty('--app-surface-card', config.bgPrimary)
   root.style.setProperty('--app-surface-inner', config.bgSecondary)
   root.style.setProperty('--app-surface-subtle', config.bgTertiary)
+  root.style.setProperty('--app-surface-input', isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff')
   root.style.setProperty('--app-border-light', borderLight)
   root.style.setProperty('--app-modal-bg', config.modalBg)
   root.style.setProperty('--app-dropdown-bg', config.dropdownBg)

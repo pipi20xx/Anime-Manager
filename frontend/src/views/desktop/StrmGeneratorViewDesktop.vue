@@ -165,7 +165,7 @@ onMounted(fetchTasks)
   font-size: var(--text-base);
   font-family: monospace;
   color: var(--text-secondary);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-input);
   padding: 4px 8px;
   border-radius: var(--button-border-radius, 4px);
   border: 1px solid var(--app-border-light);

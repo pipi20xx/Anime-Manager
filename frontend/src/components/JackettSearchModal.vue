@@ -252,9 +252,15 @@ const close = () => {
 }
 .client-selector {
   padding: 8px 12px;
-  background: var(--app-surface-subtle);
+  background: var(--app-surface-input);
   border-radius: var(--button-border-radius, 8px);
   border: 1px solid var(--app-border-light);
+}
+.client-selector :deep(.n-base-selection) {
+  background: var(--app-surface-input);
+}
+.client-selector :deep(.n-base-selection .n-base-selection-label) {
+  background: var(--app-surface-input);
 }
 .label {
   font-size: 13px;

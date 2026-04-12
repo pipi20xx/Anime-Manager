@@ -196,7 +196,7 @@ onMounted(fetchTasks)
 .path-row .label { font-size: 10px; color: var(--text-tertiary); }
 .path-row .val { 
   font-family: monospace; 
-  background: var(--app-surface-inner); 
+  background: var(--app-surface-input); 
   padding: 6px 8px; 
   border-radius: 6px; 
   font-size: 12px;
