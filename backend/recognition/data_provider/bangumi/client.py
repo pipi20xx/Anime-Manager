@@ -246,7 +246,7 @@ class BangumiProvider:
             items = day_item.get('items', [])
             norm_items = []
             for i in items:
-                images = i.get('images', {})
+                images = i.get('images') or {}
                 raw_img = images.get('large') or images.get('common') or images.get('medium') or ''
                 img_url = BangumiProvider._proxy_img(raw_img)
                 
