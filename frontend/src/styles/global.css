@@ -870,6 +870,14 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   color: #ffffff !important;
 }
 
+.n-checkbox.n-checkbox--checked .n-checkbox-box__check-icon {
+  color: #ffffff !important;
+}
+
+.n-checkbox.n-checkbox--indeterminate .n-checkbox-box__check-icon {
+  color: #ffffff !important;
+}
+
 /* 复选框 indeterminate 状态 */
 .n-checkbox.n-checkbox--indeterminate .n-checkbox-box {
   background-color: #3B82F6 !important;

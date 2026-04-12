@@ -423,6 +423,24 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       padding: '8px 12px',
       // 字体大小
       fontSize: '13px'
+    },
+    // Checkbox 组件样式配置
+    Checkbox: {
+      color: config.primaryColor,
+      colorChecked: config.primaryColor,
+      colorCheckedHover: config.primaryColorHover,
+      colorCheckedPressed: config.primaryColorPressed,
+      colorHover: config.primaryColorHover,
+      colorPressed: config.primaryColorPressed,
+      border: `1px solid ${config.primaryColor}`,
+      borderChecked: `1px solid ${config.primaryColor}`,
+      borderHover: `1px solid ${config.primaryColorHover}`,
+      borderCheckedHover: `1px solid ${config.primaryColorHover}`,
+      borderCheckedPressed: `1px solid ${config.primaryColorPressed}`,
+      borderPressed: `1px solid ${config.primaryColorPressed}`,
+      checkMarkColor: '#ffffff',
+      checkMarkColorHover: '#ffffff',
+      checkMarkColorPressed: '#ffffff'
     }
   }
 }
