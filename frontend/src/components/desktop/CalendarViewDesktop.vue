@@ -211,6 +211,15 @@ const {
                 />
               </n-form-item>
               
+              <n-form-item label="消息置顶" :style="{ opacity: calendarConfig.daily_push_enabled ? 1 : 0.5 }">
+                <n-switch 
+                  v-model:value="calendarConfig.pin_message" 
+                  @update:value="saveCalendarConfig"
+                  :disabled="!calendarConfig.daily_push_enabled"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">将播报消息置顶显示</n-text>
+              </n-form-item>
+              
               <n-form-item label="状态测试">
                 <n-button v-bind="getButtonStyle('secondary')" @click="testCalendarPush" :loading="isTestingPush">
                   发送测试播报

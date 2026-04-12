@@ -275,7 +275,10 @@ async def test_push():
     """
     from monitor import MonitorManager
     try:
-        await MonitorManager._calendar_daily_push()
-        return {"success": True, "message": "测试推送已发送，请检查您的 Telegram。"}
+        success, msg = await MonitorManager._calendar_daily_push()
+        if success:
+            return {"success": True, "message": f"测试推送已发送，{msg}。"}
+        else:
+            return {"success": False, "message": f"发送失败: {msg}"}
     except Exception as e:
         return {"success": False, "message": f"发送失败: {str(e)}"}

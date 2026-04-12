@@ -175,6 +175,15 @@ const {
                   @update:formatted-value="saveCalendarConfig" 
                 />
               </n-form-item>
+              
+              <n-form-item label="消息置顶" :style="{ opacity: calendarConfig.daily_push_enabled ? 1 : 0.5 }">
+                <n-switch 
+                  v-model:value="calendarConfig.pin_message" 
+                  @update:value="saveCalendarConfig"
+                  :disabled="!calendarConfig.daily_push_enabled"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">将播报消息置顶显示</n-text>
+              </n-form-item>
 
               <n-divider dashed />
 

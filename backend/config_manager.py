@@ -87,8 +87,9 @@ class ConfigManager:
         "stalled_monitor_interval": 30, # 下载超时巡检间隔（分钟）
         "health_check_enabled": True, # 是否开启健康检查自动巡检
         "health_check_interval": 30, # 健康检查巡检间隔（分钟）
-        "calendar_daily_push": False, # 追剧日历每日播报
-        "calendar_push_time": "09:00", # 每日播报时间
+        "calendar_daily_push": False,
+        "calendar_push_time": "09:00",
+        "calendar_pin_message": False,
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",

@@ -10,23 +10,25 @@ logger = logging.getLogger("Notification")
 
 class NotificationManager:
     @staticmethod
-    async def send_telegram_message(text: str, photo_url: str = None):
+    async def send_telegram_message(text: str, photo_url: str = None, pin: bool = False):
         """
-        发送 Telegram 消息，支持图片。
+        发送 Telegram 消息，支持图片和置顶。
         :param text: 消息文本 (支持 MarkdownV2 或 HTML，这里暂用纯文本或简单Markdown)
         :param photo_url: 图片的 URL（可选）
+        :param pin: 是否置顶消息（可选）
+        :return: (success: bool, message: str, message_id: int|None)
         """
         config = ConfigManager.get_config()
         tg_conf = config.get("telegram", {})
         
         if not tg_conf.get("enabled"):
-            return False, "Telegram notification is disabled"
+            return False, "Telegram notification is disabled", None
 
         bot_token = tg_conf.get("bot_token")
         chat_id = tg_conf.get("chat_id")
 
         if not bot_token or not chat_id:
-            return False, "Missing Bot Token or Chat ID"
+            return False, "Missing Bot Token or Chat ID", None
 
         proxy = ConfigManager.get_proxy("telegram")
         
@@ -34,9 +36,7 @@ class NotificationManager:
         
         try:
             async with httpx.AsyncClient(proxy=proxy, timeout=10.0) as client:
-                # 1. 发送图片 (如果有)
                 if photo_url:
-                    # 使用 sendPhoto 接口
                     url = f"{base_url}/sendPhoto"
                     payload = {
                         "chat_id": chat_id,
@@ -46,7 +46,6 @@ class NotificationManager:
                     }
                     resp = await client.post(url, json=payload)
                 else:
-                    # 2. 仅发送文本
                     url = f"{base_url}/sendMessage"
                     payload = {
                         "chat_id": chat_id,
@@ -56,18 +55,72 @@ class NotificationManager:
                     resp = await client.post(url, json=payload)
 
                 if resp.status_code == 200:
+                    result = resp.json()
+                    message_id = result.get("result", {}).get("message_id")
+                    
+                    if pin and message_id:
+                        await NotificationManager.pin_chat_message(chat_id, message_id, bot_token, client)
+                    
                     log_audit("通知", "发送成功", "Telegram 消息发送成功", level="DEBUG")
-                    return True, "Success"
+                    return True, "Success", message_id
                 else:
                     err_msg = f"Telegram API Error: {resp.status_code} - {resp.text}"
                     logger.error(err_msg)
                     log_audit("通知", "发送失败", f"Telegram 发送失败: {resp.status_code}", level="ERROR")
-                    return False, err_msg
+                    return False, err_msg, None
 
         except Exception as e:
             logger.error(f"Failed to send Telegram message: {e}")
             log_audit("通知", "发送异常", f"Telegram 发送异常: {str(e)}", level="ERROR")
-            return False, str(e)
+            return False, str(e), None
+
+    @staticmethod
+    async def pin_chat_message(chat_id: str, message_id: int, bot_token: str = None, client: httpx.AsyncClient = None):
+        """
+        置顶 Telegram 消息
+        :param chat_id: 聊天 ID
+        :param message_id: 消息 ID
+        :param bot_token: Bot Token（可选，不传则从配置读取）
+        :param client: httpx 客户端（可选，不传则创建新的）
+        """
+        config = ConfigManager.get_config()
+        tg_conf = config.get("telegram", {})
+        
+        if not bot_token:
+            bot_token = tg_conf.get("bot_token")
+        
+        if not bot_token:
+            logger.warning("无法置顶消息：缺少 Bot Token")
+            return False
+        
+        base_url = f"https://api.telegram.org/bot{bot_token}"
+        proxy = ConfigManager.get_proxy("telegram")
+        
+        own_client = client is None
+        if own_client:
+            client = httpx.AsyncClient(proxy=proxy, timeout=10.0)
+        
+        try:
+            url = f"{base_url}/pinChatMessage"
+            payload = {
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "disable_notification": True
+            }
+            resp = await client.post(url, json=payload)
+            
+            if resp.status_code == 200:
+                logger.info(f"消息 {message_id} 已置顶")
+                return True
+            else:
+                logger.warning(f"置顶消息失败: {resp.status_code} - {resp.text}")
+                return False
+        except Exception as e:
+            logger.error(f"置顶消息异常: {e}")
+            return False
+        finally:
+            if own_client:
+                await client.aclose()
 
     @staticmethod
     async def push_sub_add_notification(sub: Any):
@@ -659,7 +712,6 @@ class NotificationManager:
                 title = sub.get("title", "未知")
                 season = sub.get("season", 1)
                 
-                # 尝试从缓存中找出今天的具体剧集号
                 ep_info = ""
                 episodes = sub.get("episodes_cache", [])
                 for ep in episodes:
@@ -676,13 +728,20 @@ class NotificationManager:
         sections.append("\n记得及时检查下载器状态哦~")
         final_msg = "\n".join(sections)
         
-        # 如果只有一部，尝试带上海报
         photo_url = None
         if len(subjects) == 1 and subjects[0].get("poster_path"):
             path = subjects[0]["poster_path"]
-            photo_url = f"https://image.tmdb.org/t/p/original{path}" if not path.startswith("http") else path
+            if path and path.strip():
+                photo_url = f"https://image.tmdb.org/t/p/original{path}" if not path.startswith("http") else path
 
-        await NotificationManager.send_telegram_message(final_msg, photo_url=photo_url)
+        pin_message = config.get("calendar_pin_message", False)
+        success, msg, _ = await NotificationManager.send_telegram_message(final_msg, photo_url=photo_url, pin=pin_message)
+        
+        if not success and photo_url:
+            logger.warning(f"带图片发送失败，尝试仅发送文本: {msg}")
+            success, msg, _ = await NotificationManager.send_telegram_message(final_msg, photo_url=None, pin=pin_message)
+        
+        return success, msg
 
     @staticmethod
     async def push_startup_notification(status_info: dict):

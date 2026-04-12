@@ -28,7 +28,8 @@ export function useCalendar() {
   // 配置项 (每日推送)
   const calendarConfig = ref({
     daily_push_enabled: false,
-    push_time: '09:00'
+    push_time: '09:00',
+    pin_message: false
   })
 
   // 手动添加
@@ -153,7 +154,8 @@ export function useCalendar() {
       const configData = await configRes.json()
       calendarConfig.value = {
         daily_push_enabled: configData.calendar_daily_push || false,
-        push_time: configData.calendar_push_time || '09:00'
+        push_time: configData.calendar_push_time || '09:00',
+        pin_message: configData.calendar_pin_message || false
       }
     } finally {
       loading.value = false
@@ -168,7 +170,8 @@ export function useCalendar() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           calendar_daily_push: calendarConfig.value.daily_push_enabled,
-          calendar_push_time: calendarConfig.value.push_time
+          calendar_push_time: calendarConfig.value.push_time,
+          calendar_pin_message: calendarConfig.value.pin_message
         })
       })
       const data = await res.json()

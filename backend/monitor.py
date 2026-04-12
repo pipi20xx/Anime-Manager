@@ -323,7 +323,7 @@ class MonitorManager:
 
     @staticmethod
     async def _calendar_daily_push():
-        """执行每日日历播报"""
+        """执行每日日历播报，返回: str)"""
         try:
             from database import db
             from models import CalendarSubject
@@ -342,18 +342,22 @@ class MonitorManager:
                 for sub in all_subs:
                     episodes = sub.episodes_cache or []
                     if any(ep.get("air_date") == today_str for ep in episodes):
-                        # 转换成 dict 以便 notification 使用
                         airing_today.append(sub.model_dump())
                 
-                # 无论是否有番剧，都执行推送逻辑（NotificationManager 内部会处理空列表显示）
-                await NotificationManager.push_daily_calendar_summary(airing_today)
+                success, msg = await NotificationManager.push_daily_calendar_summary(airing_today)
                 
-                if airing_today:
-                    logger.info(f"[Calendar] 每日播报发送成功，今日共有 {len(airing_today)} 部作品更新。")
+                if success:
+                    if airing_today:
+                        logger.info(f"[Calendar] 每日播报发送成功，今日共有 {len(airing_today)} 部作品更新。")
+                    else:
+                        logger.info(f"[Calendar] 每日播报已发送（今日无更新）。")
+                    return True, f"今日共有 {len(airing_today)} 部作品更新"
                 else:
-                    logger.info(f"[Calendar] 每日播报已发送（今日无更新）。")
+                    logger.error(f"[Calendar] 每日播报发送失败: {msg}")
+                    return False, msg
         except Exception as e:
             logger.error(f"[Calendar] 每日播报执行失败: {e}")
+            return False, str(e)
 
     @staticmethod
     async def _auto_sync_rules():
