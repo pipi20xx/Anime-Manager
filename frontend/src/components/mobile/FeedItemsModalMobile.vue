@@ -29,6 +29,17 @@ const {
 
 const mobileListRef = ref<any>(null)
 
+const cleanDescription = (desc: string | null | undefined): string | null => {
+  if (!desc) return null
+  if (!desc.includes('<') && !desc.includes('>')) return desc
+  let clean = desc.replace(/<[^>]+>/g, '')
+  clean = clean.replace(/\s+/g, ' ').trim()
+  if (clean.length > 100) {
+    clean = clean.substring(0, 100) + '...'
+  }
+  return clean || null
+}
+
 const getTagStyle = (type: string) => {
   const styles: Record<string, any> = {
     info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
@@ -90,7 +101,7 @@ watch(() => props.show, (newVal) => {
                   <div class="item-title">{{ item.title }}</div>
                </template>
                <template #description>
-                 <div class="item-desc-text" v-if="item.description">{{ item.description }}</div>
+                 <div class="item-desc-text" v-if="cleanDescription(item.description)">{{ cleanDescription(item.description) }}</div>
                  <div class="item-pub-date">{{ item.pub_date }}</div>
                </template>
                

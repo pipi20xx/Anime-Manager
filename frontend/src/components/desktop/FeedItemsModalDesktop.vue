@@ -28,6 +28,17 @@ const {
 
 const tableRef = ref<any>(null)
 
+const cleanDescription = (desc: string | null | undefined): string | null => {
+  if (!desc) return null
+  if (!desc.includes('<') && !desc.includes('>')) return desc
+  let clean = desc.replace(/<[^>]+>/g, '')
+  clean = clean.replace(/\s+/g, ' ').trim()
+  if (clean.length > 100) {
+    clean = clean.substring(0, 100) + '...'
+  }
+  return clean || null
+}
+
 const getTagStyle = (type: string) => {
   const styles: Record<string, any> = {
     info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
@@ -81,9 +92,10 @@ const columns = [
     title: '资源标题',  
     key: 'title', 
     render(row: any) {
+      const cleanDesc = cleanDescription(row.description)
       return h('div', { style: 'padding: 4px 0' }, [
         h(NText, { strong: true, style: 'font-size: 14px; line-height: 1.4' }, { default: () => row.title }),
-        row.description ? h('div', { style: 'font-size: 12px; color: var(--text-tertiary); margin-top: 2px' }, { default: () => row.description }) : null,
+        cleanDesc ? h('div', { style: 'font-size: 12px; color: var(--text-tertiary); margin-top: 2px' }, { default: () => cleanDesc }) : null,
         row.tmdb_title ? h('div', { style: 'margin-top: 6px; color: var(--n-primary-color); font-size: 12px; display: flex; align-items: center' }, [
           h('span', { style: 'margin-right: 4px' }, { default: () => '🎯' }),
           h(NText, { depth: 3, style: 'color: var(--n-primary-color); font-weight: bold' }, { default: () => row.tmdb_title })
