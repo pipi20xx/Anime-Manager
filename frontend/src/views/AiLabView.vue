@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NDivider, NGrid, NGi, 
   NTag, useMessage, NScrollbar, NAlert, NText, NSwitch, NSlider,
   NCollapse, NCollapseItem, NForm, NFormItem, NInputNumber, NEmpty,
   NTabs, NTabPane, NList, NListItem, NThing, NBadge, NAvatar,
-  NSkeleton, NSpin, NRadioGroup, NRadioButton
+  NSkeleton, NSpin, NRadioGroup, NRadioButton, NCode, NTooltip
 } from 'naive-ui'
 import {
   SmartToyOutlined as AiIcon,
   SettingsOutlined as ConfigIcon,
   SaveOutlined as SaveIcon,
   ExtensionOutlined as SkillIcon,
-  SendOutlined as SendIcon
+  SendOutlined as SendIcon,
+  BuildOutlined as ToolIcon,
+  PlayArrowOutlined as PlayIcon,
+  CheckCircleOutlined as SuccessIcon,
+  ErrorOutlined as ErrorIcon,
+  LightbulbOutlined as ThinkingIcon
 } from '@vicons/material'
 
 const message = useMessage()
@@ -27,18 +32,42 @@ const assistantConfig = ref({
   base_url: '',
   api_key: '',
   model: '',
-  provider: 'ollama',
+  provider: 'openai',
   temperature: 0.7,
-  max_tokens: 64
+  max_tokens: 64,
+  max_iterations: 10
 })
 
 const skills = ref<any[]>([])
+const tools = ref<any[]>([])
+const toolsLoading = ref(false)
 const skillsLoading = ref(false)
 
-const chatMessages = ref<Array<{role: string, content: string, loading?: boolean}>>([])
+interface ToolCallEvent {
+  type: string
+  tool_name?: string
+  arguments?: any
+  result?: any
+  success?: boolean
+  message?: string
+  content?: string
+  skill_id?: string
+  skill_name?: string
+}
+
+interface ChatMessage {
+  role: string
+  content: string
+  loading?: boolean
+  events?: ToolCallEvent[]
+  isStreaming?: boolean
+}
+
+const chatMessages = ref<ChatMessage[]>([])
 const chatInput = ref('')
 const chatLoading = ref(false)
 const chatContainer = ref<HTMLElement | null>(null)
+const useTools = ref(true)
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
@@ -102,6 +131,22 @@ const fetchSkills = async () => {
   }
 }
 
+const fetchTools = async () => {
+  toolsLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/tools`, {
+      headers: getAuthHeaders()
+    })
+    if (res.ok) {
+      tools.value = await res.json()
+    }
+  } catch (e) {
+    console.error('加载工具失败', e)
+  } finally {
+    toolsLoading.value = false
+  }
+}
+
 const sendMessage = async () => {
   if (!chatInput.value.trim() || chatLoading.value) return
   
@@ -111,7 +156,7 @@ const sendMessage = async () => {
   chatLoading.value = true
   
   const msgIndex = chatMessages.value.length
-  chatMessages.value.push({ role: 'assistant', content: '', loading: true })
+  chatMessages.value.push({ role: 'assistant', content: '', loading: true, events: [], isStreaming: true })
   
   await nextTick()
   scrollToBottom()
@@ -121,13 +166,19 @@ const sendMessage = async () => {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
-        messages: chatMessages.value.filter(m => !m.loading).map(m => ({ role: m.role, content: m.content })),
-        stream: false
+        messages: chatMessages.value.filter(m => !m.loading && !m.isStreaming).map(m => ({ role: m.role, content: m.content })),
+        stream: false,
+        use_tools: useTools.value
       })
     })
     
     if (res.ok) {
       const data = await res.json()
+      
+      if (data.events && data.events.length > 0) {
+        chatMessages.value[msgIndex].events = data.events
+      }
+      
       chatMessages.value[msgIndex].content = data.choices?.[0]?.message?.content || '无响应'
     } else {
       const errorData = await res.json()
@@ -137,6 +188,7 @@ const sendMessage = async () => {
     chatMessages.value[msgIndex].content = '网络错误，请稍后重试'
   } finally {
     chatMessages.value[msgIndex].loading = false
+    chatMessages.value[msgIndex].isStreaming = false
     chatLoading.value = false
     await nextTick()
     scrollToBottom()
@@ -153,9 +205,40 @@ const clearChat = () => {
   chatMessages.value = []
 }
 
+const getEventIcon = (type: string) => {
+  switch (type) {
+    case 'tool_call': return ToolIcon
+    case 'tool_result': return SuccessIcon
+    case 'thinking': return ThinkingIcon
+    case 'skill': return SkillIcon
+    case 'error': return ErrorIcon
+    default: return PlayIcon
+  }
+}
+
+const getEventColor = (event: ToolCallEvent) => {
+  if (event.type === 'tool_result') {
+    return event.success ? 'success' : 'error'
+  }
+  if (event.type === 'error') return 'error'
+  if (event.type === 'skill') return 'info'
+  return 'default'
+}
+
+const groupedTools = computed(() => {
+  const groups: Record<string, any[]> = {}
+  for (const tool of tools.value) {
+    const cat = tool.category || 'general'
+    if (!groups[cat]) groups[cat] = []
+    groups[cat].push(tool)
+  }
+  return groups
+})
+
 onMounted(() => {
   fetchConfig()
   fetchSkills()
+  fetchTools()
 })
 </script>
 
@@ -164,9 +247,15 @@ onMounted(() => {
     <div class="page-header">
       <div>
         <h1>智能助手</h1>
-        <div class="subtitle">AI 驱动的番剧管理助手</div>
+        <div class="subtitle">AI 驱动的番剧管理助手 - 支持工具调用</div>
       </div>
-      <n-tag type="info" size="large" round ghost>Beta</n-tag>
+      <n-space align="center">
+        <n-switch v-model:value="useTools" size="small">
+          <template #checked>工具模式</template>
+          <template #unchecked>纯对话</template>
+        </n-switch>
+        <n-tag type="info" size="large" round ghost>Beta</n-tag>
+      </n-space>
     </div>
 
     <n-tabs v-model:value="activeTab" type="line" animated class="assistant-tabs">
@@ -177,6 +266,7 @@ onMounted(() => {
               <n-icon size="48" :depth="3"><AiIcon /></n-icon>
               <p>开始与智能助手对话</p>
               <p class="hint">你可以询问关于番剧识别、订阅管理、配置优化等问题</p>
+              <p class="hint" v-if="useTools">工具模式已启用，助手可以执行实际操作</p>
             </div>
             <div v-else class="chat-messages">
               <div 
@@ -188,9 +278,41 @@ onMounted(() => {
                   <n-icon v-if="msg.role === 'user'" size="20"><AiIcon /></n-icon>
                   <n-icon v-else size="20"><AiIcon /></n-icon>
                 </div>
-                <div class="message-content">
-                  <n-spin v-if="msg.loading" size="small" />
-                  <span v-else>{{ msg.content }}</span>
+                <div class="message-content-wrapper">
+                  <div v-if="msg.events && msg.events.length > 0" class="tool-events">
+                    <div 
+                      v-for="(event, eIdx) in msg.events" 
+                      :key="eIdx"
+                      :class="['event-item', event.type]"
+                    >
+                      <div class="event-header">
+                        <n-icon size="16">
+                          <component :is="getEventIcon(event.type)" />
+                        </n-icon>
+                        <span class="event-type">
+                          {{ event.type === 'tool_call' ? '调用工具' : 
+                             event.type === 'tool_result' ? '执行结果' :
+                             event.type === 'skill' ? '触发技能' :
+                             event.type === 'thinking' ? '思考' : event.type }}
+                        </span>
+                        <span v-if="event.tool_name" class="event-name">{{ event.tool_name }}</span>
+                        <span v-if="event.skill_name" class="event-name">{{ event.skill_name }}</span>
+                        <n-tag v-if="event.type === 'tool_result'" :type="getEventColor(event)" size="small">
+                          {{ event.success ? '成功' : '失败' }}
+                        </n-tag>
+                      </div>
+                      <div v-if="event.message" class="event-message">{{ event.message }}</div>
+                      <n-collapse v-if="event.arguments || event.result" class="event-details">
+                        <n-collapse-item title="详情">
+                          <n-code :code="JSON.stringify(event.arguments || event.result, null, 2)" language="json" />
+                        </n-collapse-item>
+                      </n-collapse>
+                    </div>
+                  </div>
+                  <div class="message-content">
+                    <n-spin v-if="msg.loading" size="small" />
+                    <span v-else>{{ msg.content }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -217,12 +339,50 @@ onMounted(() => {
         </n-card>
       </n-tab-pane>
       
+      <n-tab-pane name="tools" tab="工具列表">
+        <n-card bordered>
+          <template #header>
+            <div class="card-title-box">
+              <n-icon style="color: var(--n-primary-color)"><ToolIcon /></n-icon>
+              <span class="card-title-text">可用工具 ({{ tools.length }})</span>
+            </div>
+          </template>
+          
+          <n-spin :show="toolsLoading">
+            <n-collapse v-if="Object.keys(groupedTools).length > 0">
+              <n-collapse-item 
+                v-for="(toolList, category) in groupedTools" 
+                :key="category"
+                :title="`${category} (${toolList.length})`"
+              >
+                <n-list bordered>
+                  <n-list-item v-for="tool in toolList" :key="tool.name">
+                    <n-thing :title="tool.name" :description="tool.description">
+                      <template #header-extra>
+                        <n-tag size="small">{{ tool.parameters?.length || 0 }} 参数</n-tag>
+                      </template>
+                      <div v-if="tool.parameters && tool.parameters.length > 0" class="tool-params">
+                        <n-tag v-for="p in tool.parameters" :key="p.name" size="small" :type="p.required ? 'info' : 'default'">
+                          {{ p.name }}
+                          <span v-if="p.required">*</span>
+                        </n-tag>
+                      </div>
+                    </n-thing>
+                  </n-list-item>
+                </n-list>
+              </n-collapse-item>
+            </n-collapse>
+            <n-empty v-else description="暂无工具" />
+          </n-spin>
+        </n-card>
+      </n-tab-pane>
+      
       <n-tab-pane name="skills" tab="技能管理">
         <n-card bordered>
           <template #header>
             <div class="card-title-box">
               <n-icon style="color: var(--n-primary-color)"><SkillIcon /></n-icon>
-              <span class="card-title-text">可用技能</span>
+              <span class="card-title-text">可用技能 ({{ skills.length }})</span>
             </div>
           </template>
           
@@ -235,6 +395,13 @@ onMounted(() => {
                       <n-icon><SkillIcon /></n-icon>
                     </n-avatar>
                   </template>
+                  <template #header-extra>
+                    <n-tag size="small">v{{ skill.version }}</n-tag>
+                  </template>
+                  <div v-if="skill.triggers && skill.triggers.length > 0" class="skill-triggers">
+                    <span class="trigger-label">触发词：</span>
+                    <n-tag v-for="t in skill.triggers" :key="t" size="small" type="info">{{ t }}</n-tag>
+                  </div>
                 </n-thing>
               </n-list-item>
             </n-list>
@@ -256,15 +423,15 @@ onMounted(() => {
             <n-form label-placement="left" label-width="120" size="medium">
               <n-form-item label="模型提供商">
                 <n-radio-group v-model:value="assistantConfig.provider">
-                  <n-radio-button value="ollama">Ollama (本地)</n-radio-button>
                   <n-radio-button value="openai">OpenAI / 兼容接口</n-radio-button>
+                  <n-radio-button value="ollama">Ollama (本地)</n-radio-button>
                 </n-radio-group>
               </n-form-item>
               
               <n-form-item label="Base URL">
                 <n-input 
                   v-model:value="assistantConfig.base_url" 
-                  placeholder="http://localhost:11434" 
+                  placeholder="http://localhost:11434 或 https://api.openai.com" 
                 />
               </n-form-item>
               
@@ -280,7 +447,7 @@ onMounted(() => {
               <n-form-item label="模型名称">
                 <n-input 
                   v-model:value="assistantConfig.model" 
-                  placeholder="qwen2.5:7b 或 gpt-4" 
+                  placeholder="gpt-4o 或 qwen2.5:7b" 
                 />
               </n-form-item>
               
@@ -302,6 +469,20 @@ onMounted(() => {
                 />
               </n-form-item>
               
+              <n-form-item label="最大迭代次数">
+                <n-input-number 
+                  v-model:value="assistantConfig.max_iterations" 
+                  :min="1" 
+                  :max="20"
+                />
+                <n-tooltip>
+                  <template #trigger>
+                    <n-icon size="18" style="margin-left: 8px; cursor: help;"><ThinkingIcon /></n-icon>
+                  </template>
+                  工具调用的最大循环次数，防止无限循环
+                </n-tooltip>
+              </n-form-item>
+              
               <n-form-item>
                 <n-button type="primary" :loading="saveLoading" @click="saveConfig">
                   <template #icon><n-icon><SaveIcon /></n-icon></template>
@@ -310,22 +491,6 @@ onMounted(() => {
               </n-form-item>
             </n-form>
           </n-spin>
-        </n-card>
-      </n-tab-pane>
-      
-      <n-tab-pane name="lab" tab="AI 实验室">
-        <n-alert type="info" title="AI 实验室" style="margin-bottom: 16px;">
-          大语言模型解析沙箱，用于测试复杂文件名的语义提取能力。
-        </n-alert>
-        
-        <n-card bordered title="功能说明">
-          <p>AI 实验室提供以下测试功能：</p>
-          <ul class="feature-list">
-            <li>极端标题提取 - 从复杂文件名中提取作品名</li>
-            <li>复杂集数推断 - 理解非标准集数描述</li>
-            <li>语义消除歧义 - 处理多义性文件名</li>
-            <li>Prompt 提示词工程 - 评估模型表现</li>
-          </ul>
         </n-card>
       </n-tab-pane>
     </n-tabs>
@@ -405,7 +570,7 @@ onMounted(() => {
 .message {
   display: flex;
   gap: 12px;
-  max-width: 80%;
+  max-width: 90%;
 }
 
 .message.user {
@@ -427,6 +592,64 @@ onMounted(() => {
 
 .message.assistant .message-avatar {
   background: var(--n-success-color);
+}
+
+.message-content-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.tool-events {
+  margin-bottom: 8px;
+}
+
+.event-item {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bg-surface-2);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.event-item.tool_call {
+  border-left: 3px solid var(--n-primary-color);
+}
+
+.event-item.tool_result {
+  border-left: 3px solid var(--n-success-color);
+}
+
+.event-item.tool_result:not(.success) {
+  border-left-color: var(--n-error-color);
+}
+
+.event-item.skill {
+  border-left: 3px solid var(--n-info-color);
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-type {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.event-name {
+  color: var(--n-primary-color);
+  font-family: monospace;
+}
+
+.event-message {
+  margin-top: 4px;
+  color: var(--text-tertiary);
+}
+
+.event-details {
+  margin-top: 8px;
 }
 
 .message-content {
@@ -467,10 +690,23 @@ onMounted(() => {
   font-family: monospace;
 }
 
-.feature-list {
-  margin: 12px 0 0 20px;
-  padding: 0;
-  color: var(--text-secondary);
-  line-height: 2;
+.tool-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.skill-triggers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.trigger-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 </style>
