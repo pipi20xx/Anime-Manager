@@ -3,6 +3,7 @@ import json
 import httpx
 import logging
 import shutil
+import copy
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from organizer_core.renamer import Renamer
@@ -56,6 +57,14 @@ class ConfigManager:
             "openai_base_url": "http://localhost:11434/v1",
             "openai_api_key": "sk-xxx",
             "openai_model": "qwen2.5:1.5b"
+        },
+        "assistant_config": {
+            "base_url": "",
+            "api_key": "",
+            "model": "",
+            "provider": "ollama",
+            "temperature": 0.7,
+            "max_tokens": 64
         },
         "batch_enhancement": False,
         "series_fingerprint": True,
@@ -168,18 +177,15 @@ class ConfigManager:
 
     @staticmethod
     def get_config() -> Dict:
-        # 自动初始化检查
         if not os.path.exists(CONFIG_PATH) and not os.path.exists(CONFIG_BAK_PATH):
             ConfigManager.init_config()
             
-        config = ConfigManager.DEFAULT_CONFIG.copy()
+        config = copy.deepcopy(ConfigManager.DEFAULT_CONFIG)
         try:
-            # 尝试加载物理配置文件
             load_path = CONFIG_PATH if os.path.exists(CONFIG_PATH) else (CONFIG_BAK_PATH if os.path.exists(CONFIG_BAK_PATH) else None)
             if load_path:
                 with open(load_path, "r", encoding="utf-8") as f:
                     existing = json.load(f)
-                    # 深度更新配置，防止丢失 key
                     for k, v in existing.items():
                         if k in config and isinstance(v, dict) and isinstance(config[k], dict):
                             config[k].update(v)

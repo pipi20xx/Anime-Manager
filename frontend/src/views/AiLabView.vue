@@ -1,43 +1,63 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NDivider, NGrid, NGi, 
-  NTag, useMessage, NCode, NLog, NScrollbar, NAlert, NText,
-  NCollapse, NCollapseItem, NForm, NFormItem
+  NTag, useMessage, NScrollbar, NAlert, NText, NSwitch, NSlider,
+  NCollapse, NCollapseItem, NForm, NFormItem, NInputNumber, NEmpty,
+  NTabs, NTabPane, NList, NListItem, NThing, NBadge, NAvatar,
+  NSkeleton, NSpin, NRadioGroup, NRadioButton
 } from 'naive-ui'
 import {
   SmartToyOutlined as AiIcon,
-  ScienceOutlined as LabIcon,
-  PlayArrowOutlined as RunIcon,
-  CodeOutlined as CodeIcon,
   SettingsOutlined as ConfigIcon,
-  SaveOutlined as SaveIcon
+  SaveOutlined as SaveIcon,
+  ExtensionOutlined as SkillIcon,
+  SendOutlined as SendIcon
 } from '@vicons/material'
 
 const message = useMessage()
-const loading = ref(false)
-const configLoading = ref(false)
-const saveLoading = ref(false)
-const inputFilename = ref('')
-const result = ref<any>(null)
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
-// 完整配置对象缓存
-const fullConfig = ref<any>({})
-const aiConfig = ref({
-  openai_base_url: '',
-  openai_api_key: '',
-  openai_model: ''
+const activeTab = ref('chat')
+
+const configLoading = ref(false)
+const saveLoading = ref(false)
+
+const assistantConfig = ref({
+  base_url: '',
+  api_key: '',
+  model: '',
+  provider: 'ollama',
+  temperature: 0.7,
+  max_tokens: 64
 })
+
+const skills = ref<any[]>([])
+const skillsLoading = ref(false)
+
+const chatMessages = ref<Array<{role: string, content: string, loading?: boolean}>>([])
+const chatInput = ref('')
+const chatLoading = ref(false)
+const chatContainer = ref<HTMLElement | null>(null)
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  return headers
+}
 
 const fetchConfig = async () => {
   configLoading.value = true
   try {
-    const res = await fetch(`${API_BASE}/api/config`)
-    const data = await res.json()
-    fullConfig.value = data
-    if (data.ai_config) {
-      aiConfig.value = { ...data.ai_config }
+    const res = await fetch(`${API_BASE}/api/assistant/config`, {
+      headers: getAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      assistantConfig.value = { ...assistantConfig.value, ...data }
     }
   } catch (e) {
     message.error('加载配置失败')
@@ -46,18 +66,19 @@ const fetchConfig = async () => {
   }
 }
 
-const saveAiConfig = async () => {
+const saveConfig = async () => {
   saveLoading.value = true
   try {
-    // 更新 fullConfig 中的 ai_config
-    fullConfig.value.ai_config = { ...aiConfig.value }
-    
-    await fetch(`${API_BASE}/api/config`, {
+    const res = await fetch(`${API_BASE}/api/assistant/config`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fullConfig.value)
+      headers: getAuthHeaders(),
+      body: JSON.stringify(assistantConfig.value)
     })
-    message.success('AI 配置已保存')
+    if (res.ok) {
+      message.success('配置已保存')
+    } else {
+      message.error('保存失败')
+    }
   } catch (e) {
     message.error('保存失败')
   } finally {
@@ -65,30 +86,76 @@ const saveAiConfig = async () => {
   }
 }
 
-const runAiTest = async () => {
-  if (!inputFilename.value) return
-  loading.value = true
+const fetchSkills = async () => {
+  skillsLoading.value = true
   try {
-    const res = await fetch(`${API_BASE}/api/ai/test`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: inputFilename.value })
+    const res = await fetch(`${API_BASE}/api/assistant/skills`, {
+      headers: getAuthHeaders()
     })
-    result.value = await res.json()
-    if (result.value.status === 'success') {
-      message.success('AI 提取完成')
-    } else {
-      message.error(result.value.message || '解析失败')
+    if (res.ok) {
+      skills.value = await res.json()
     }
   } catch (e) {
-    message.error('请求失败')
+    console.error('加载技能失败', e)
   } finally {
-    loading.value = false
+    skillsLoading.value = false
   }
+}
+
+const sendMessage = async () => {
+  if (!chatInput.value.trim() || chatLoading.value) return
+  
+  const userMessage = chatInput.value.trim()
+  chatMessages.value.push({ role: 'user', content: userMessage })
+  chatInput.value = ''
+  chatLoading.value = true
+  
+  const msgIndex = chatMessages.value.length
+  chatMessages.value.push({ role: 'assistant', content: '', loading: true })
+  
+  await nextTick()
+  scrollToBottom()
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/chat`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        messages: chatMessages.value.filter(m => !m.loading).map(m => ({ role: m.role, content: m.content })),
+        stream: false
+      })
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      chatMessages.value[msgIndex].content = data.choices?.[0]?.message?.content || '无响应'
+    } else {
+      const errorData = await res.json()
+      chatMessages.value[msgIndex].content = errorData.detail || '请求失败，请检查模型配置'
+    }
+  } catch (e) {
+    chatMessages.value[msgIndex].content = '网络错误，请稍后重试'
+  } finally {
+    chatMessages.value[msgIndex].loading = false
+    chatLoading.value = false
+    await nextTick()
+    scrollToBottom()
+  }
+}
+
+const scrollToBottom = () => {
+  if (chatContainer.value) {
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
+  }
+}
+
+const clearChat = () => {
+  chatMessages.value = []
 }
 
 onMounted(() => {
   fetchConfig()
+  fetchSkills()
 })
 </script>
 
@@ -96,174 +163,314 @@ onMounted(() => {
   <div class="ai-lab-view">
     <div class="page-header">
       <div>
-        <h1>AI 实验室</h1>
-        <div class="subtitle">大语言模型解析沙箱</div>
+        <h1>智能助手</h1>
+        <div class="subtitle">AI 驱动的番剧管理助手</div>
       </div>
-      <n-tag type="info" size="large" round ghost>OpenAI Compatible</n-tag>
+      <n-tag type="info" size="large" round ghost>Beta</n-tag>
     </div>
 
-    <n-space vertical size="large">
-      <n-alert type="warning" title="全局策略提示" show-icon>
-        当前系统已移除自动化流程中的 AI 介入逻辑。AI 引擎目前仅供本实验室<b>手动测试</b>使用，不会参与实际的文件整理或扫描。
-      </n-alert>
-
-      <n-card bordered style="background: var(--app-surface-card)">
-        <template #header>
-          <div class="card-title-box">
-            <n-icon style="color: var(--n-primary-color)"><RunIcon /></n-icon>
-            <span class="card-title-text">语义提取测试</span>
-          </div>
-        </template>
-        
-        <n-space vertical>
-          <n-collapse default-expanded-names="config">
-            <n-collapse-item title="AI 实验室定位与测试重点" name="mechanism">
-              <template #header-extra>
-                <n-icon><LabIcon /></n-icon>
-              </template>
-              <div class="mechanism-box">
-                <n-p>
-                  <n-text type="info" strong>本实验室是一个独立的语义解析沙箱，用于验证大语言模型 (LLM) 在极端复杂场景下的提取表现。</n-text><br/>
-                  <span style="color: var(--text-tertiary)">当前系统的核心识别流水线已完全回归高性能正则内核，AI 不再自动介入实际整理流程。您可以在此处测试以下极端情况：</span>
-                </n-p>
-                <ul class="mechanism-list">
-                  <li>
-                    <b>🔍 极端标题提取</b>：测试模型是否能从充满无关广告词、乱码的文件名中准确“拎”出真正的作品名。
-                  </li>
-                  <li>
-                    <b>🧠 复杂集数推断</b>：测试模型对“第12话”、“Total 24 Eps”、“Part.II”等非标描述的理解能力。
-                  </li>
-                  <li>
-                    <b>🧩 语义消除歧义</b>：当文件名中包含多个年份、分辨率数字或罗马数字时，观察 LLM 的逻辑推理是否比正则更准确。
-                  </li>
-                  <li>
-                    <b>📝 Prompt 提示词工程</b>：通过观察返回的 JSON 结构，评估当前选用的模型是否适合处理此类垂直领域的语义任务。
-                  </li>
-                </ul>
-                <span style="font-size: 12px; color: var(--text-tertiary)">
-                  * 实验室调用不消耗系统资源，仅依赖您配置的外部模型接口。
-                </span>
-              </div>
-            </n-collapse-item>
-
-            <n-collapse-item title="连接配置 (OpenAI / Ollama)" name="config">
-              <template #header-extra>
-                <n-icon><ConfigIcon /></n-icon>
-              </template>
-              <n-form label-placement="left" label-width="100" size="small">
-                <n-form-item label="Base URL">
-                  <n-input v-model:value="aiConfig.openai_base_url" placeholder="http://localhost:11434/v1" />
-                </n-form-item>
-                <n-form-item label="API Key">
-                  <n-input v-model:value="aiConfig.openai_api_key" type="password" show-password-on="click" placeholder="sk-..." />
-                </n-form-item>
-                <n-form-item label="模型名称">
-                  <n-input v-model:value="aiConfig.openai_model" placeholder="qwen2.5:1.5b" />
-                </n-form-item>
-                <n-form-item>
-                  <n-button type="primary" secondary size="small" :loading="saveLoading" @click="saveAiConfig">
-                    <template #icon><n-icon><SaveIcon /></n-icon></template>
-                    保存配置
-                  </n-button>
-                </n-form-item>
-              </n-form>
-            </n-collapse-item>
-          </n-collapse>
-
-          <div class="tip">在此处测试使用大语言模型直接从文件名提取元数据的效果。</div>
-          
-            <n-p>
-              AI 实验室通过集成大语言模型 (LLM)，对传统正则解析无法处理的复杂、不规范命名进行语义理解和修正。
-              目前支持通过 <b>OpenAI 兼容接口</b> 连接任意大模型（如 ChatGPT, DeepSeek, Ollama 等）。
-            </n-p>
-
-          <div class="input-row">
-            <n-input
-              v-model:value="inputFilename"
-              type="textarea"
-              :autosize="{ minRows: 2 }"
-              placeholder="粘贴一个复杂的文件名进行测试..."
-            />
-            <n-button 
-              type="primary" 
-              size="large" 
-              :loading="loading" 
-              @click="runAiTest"
-              class="mt-2"
-            >
-              <template #icon><n-icon><RunIcon /></n-icon></template>
-              运行语义提取
-            </n-button>
-          </div>
-        </n-space>
-      </n-card>
-
-      <n-grid :cols="12" :x-gap="24">
-        <n-gi :span="8">
-          <n-card bordered title="解析结果">
-            <n-scrollbar style="max-height: 600px">
-              <pre v-if="result" class="json-code">{{ JSON.stringify(result, null, 2) }}</pre>
-              <n-empty v-else description="等待运行测试..." />
-            </n-scrollbar>
-          </n-card>
-        </n-gi>
-        <n-gi :span="4">
-          <n-card bordered title="提取到的字段">
-            <div v-if="result?.result" class="fields-list">
-              <div v-for="(val, key) in result.result" :key="key" class="field-item">
-                <span class="key">{{ key }}</span>
-                <span class="val">{{ val }}</span>
+    <n-tabs v-model:value="activeTab" type="line" animated class="assistant-tabs">
+      <n-tab-pane name="chat" tab="智能对话">
+        <n-card bordered class="chat-card">
+          <div class="chat-container" ref="chatContainer">
+            <div v-if="chatMessages.length === 0" class="chat-empty">
+              <n-icon size="48" :depth="3"><AiIcon /></n-icon>
+              <p>开始与智能助手对话</p>
+              <p class="hint">你可以询问关于番剧识别、订阅管理、配置优化等问题</p>
+            </div>
+            <div v-else class="chat-messages">
+              <div 
+                v-for="(msg, idx) in chatMessages" 
+                :key="idx" 
+                :class="['message', msg.role]"
+              >
+                <div class="message-avatar">
+                  <n-icon v-if="msg.role === 'user'" size="20"><AiIcon /></n-icon>
+                  <n-icon v-else size="20"><AiIcon /></n-icon>
+                </div>
+                <div class="message-content">
+                  <n-spin v-if="msg.loading" size="small" />
+                  <span v-else>{{ msg.content }}</span>
+                </div>
               </div>
             </div>
-            <n-empty v-else description="无数据" />
-          </n-card>
-        </n-gi>
-      </n-grid>
-    </n-space>
+          </div>
+          
+          <div class="chat-input-area">
+            <n-input
+              v-model:value="chatInput"
+              type="textarea"
+              :autosize="{ minRows: 1, maxRows: 4 }"
+              placeholder="输入消息..."
+              @keypress.enter.prevent="sendMessage"
+            />
+            <n-space>
+              <n-button size="small" @click="clearChat" :disabled="chatMessages.length === 0">
+                清空对话
+              </n-button>
+              <n-button type="primary" @click="sendMessage" :loading="chatLoading" :disabled="!chatInput.trim()">
+                <template #icon><n-icon><SendIcon /></n-icon></template>
+                发送
+              </n-button>
+            </n-space>
+          </div>
+        </n-card>
+      </n-tab-pane>
+      
+      <n-tab-pane name="skills" tab="技能管理">
+        <n-card bordered>
+          <template #header>
+            <div class="card-title-box">
+              <n-icon style="color: var(--n-primary-color)"><SkillIcon /></n-icon>
+              <span class="card-title-text">可用技能</span>
+            </div>
+          </template>
+          
+          <n-spin :show="skillsLoading">
+            <n-list v-if="skills.length > 0" bordered>
+              <n-list-item v-for="skill in skills" :key="skill.id">
+                <n-thing :title="skill.name" :description="skill.description">
+                  <template #avatar>
+                    <n-avatar round>
+                      <n-icon><SkillIcon /></n-icon>
+                    </n-avatar>
+                  </template>
+                </n-thing>
+              </n-list-item>
+            </n-list>
+            <n-empty v-else description="暂无技能" />
+          </n-spin>
+        </n-card>
+      </n-tab-pane>
+      
+      <n-tab-pane name="config" tab="模型配置">
+        <n-card bordered>
+          <template #header>
+            <div class="card-title-box">
+              <n-icon style="color: var(--n-primary-color)"><ConfigIcon /></n-icon>
+              <span class="card-title-text">模型配置</span>
+            </div>
+          </template>
+          
+          <n-spin :show="configLoading">
+            <n-form label-placement="left" label-width="120" size="medium">
+              <n-form-item label="模型提供商">
+                <n-radio-group v-model:value="assistantConfig.provider">
+                  <n-radio-button value="ollama">Ollama (本地)</n-radio-button>
+                  <n-radio-button value="openai">OpenAI / 兼容接口</n-radio-button>
+                </n-radio-group>
+              </n-form-item>
+              
+              <n-form-item label="Base URL">
+                <n-input 
+                  v-model:value="assistantConfig.base_url" 
+                  placeholder="http://localhost:11434" 
+                />
+              </n-form-item>
+              
+              <n-form-item v-if="assistantConfig.provider === 'openai'" label="API Key">
+                <n-input 
+                  v-model:value="assistantConfig.api_key" 
+                  type="password" 
+                  show-password-on="click"
+                  placeholder="sk-..." 
+                />
+              </n-form-item>
+              
+              <n-form-item label="模型名称">
+                <n-input 
+                  v-model:value="assistantConfig.model" 
+                  placeholder="qwen2.5:7b 或 gpt-4" 
+                />
+              </n-form-item>
+              
+              <n-form-item label="Temperature">
+                <n-slider 
+                  v-model:value="assistantConfig.temperature" 
+                  :min="0" 
+                  :max="2" 
+                  :step="0.1"
+                />
+                <span class="slider-value">{{ assistantConfig.temperature }}</span>
+              </n-form-item>
+              
+              <n-form-item label="Max Tokens (K)">
+                <n-input-number 
+                  v-model:value="assistantConfig.max_tokens" 
+                  :min="1" 
+                  :max="128"
+                />
+              </n-form-item>
+              
+              <n-form-item>
+                <n-button type="primary" :loading="saveLoading" @click="saveConfig">
+                  <template #icon><n-icon><SaveIcon /></n-icon></template>
+                  保存配置
+                </n-button>
+              </n-form-item>
+            </n-form>
+          </n-spin>
+        </n-card>
+      </n-tab-pane>
+      
+      <n-tab-pane name="lab" tab="AI 实验室">
+        <n-alert type="info" title="AI 实验室" style="margin-bottom: 16px;">
+          大语言模型解析沙箱，用于测试复杂文件名的语义提取能力。
+        </n-alert>
+        
+        <n-card bordered title="功能说明">
+          <p>AI 实验室提供以下测试功能：</p>
+          <ul class="feature-list">
+            <li>极端标题提取 - 从复杂文件名中提取作品名</li>
+            <li>复杂集数推断 - 理解非标准集数描述</li>
+            <li>语义消除歧义 - 处理多义性文件名</li>
+            <li>Prompt 提示词工程 - 评估模型表现</li>
+          </ul>
+        </n-card>
+      </n-tab-pane>
+    </n-tabs>
   </div>
 </template>
 
 <style scoped>
-.header h1 { margin: 0; font-size: var(--text-3xl); color: var(--text-primary); }
-.subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
-
-.tip { font-size: var(--text-base); color: var(--text-muted); margin-bottom: 8px; }
-.json-code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-sm);
-  color: var(--n-primary-color);
-  background: var(--app-surface-inner);
-  padding: 12px;
-  border-radius: var(--card-border-radius, 8px);
-  border: 1px solid var(--border-light);
-}
-
-.fields-list { display: flex; flex-direction: column; gap: 8px; }
-.field-item {
+.page-header {
   display: flex;
   justify-content: space-between;
-  padding: 8px;
-  background: var(--app-surface-card);
-  border-radius: var(--button-border-radius, 4px);
-  border: 1px solid var(--border-light);
+  align-items: center;
+  margin-bottom: 24px;
 }
-.field-item .key { color: var(--text-muted); font-size: var(--text-sm); font-weight: bold; }
-.field-item .val { color: var(--text-secondary); font-size: var(--text-base); font-family: monospace; }
 
-.mt-2 { margin-top: 8px; }
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
 
-.mechanism-box {
+.subtitle {
+  font-size: 14px;
+  color: var(--n-primary-color);
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.assistant-tabs :deep(.n-tabs-tab) {
+  padding: 0 24px;
+}
+
+.chat-card {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 280px);
+  min-height: 400px;
+}
+
+.chat-card :deep(.n-card__content) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
   background: var(--bg-surface);
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  min-height: 0;
 }
-.mechanism-list {
-  margin: 8px 0 12px 20px;
-  padding: 0;
+
+.chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   color: var(--text-tertiary);
-  font-size: 13px;
-  line-height: 1.8;
 }
-.mechanism-list b { color: var(--n-primary-color); }
+
+.chat-empty .hint {
+  font-size: 12px;
+  color: var(--text-quaternary);
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  display: flex;
+  gap: 12px;
+  max-width: 80%;
+}
+
+.message.user {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--n-primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.message.assistant .message-avatar {
+  background: var(--n-success-color);
+}
+
+.message-content {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--app-surface-card);
+  border: 1px solid var(--border-light);
+  line-height: 1.6;
+}
+
+.message.user .message-content {
+  background: var(--n-primary-color);
+  color: white;
+  border: none;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.card-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title-text {
+  font-weight: 600;
+}
+
+.slider-value {
+  margin-left: 12px;
+  min-width: 40px;
+  text-align: center;
+  font-family: monospace;
+}
+
+.feature-list {
+  margin: 12px 0 0 20px;
+  padding: 0;
+  color: var(--text-secondary);
+  line-height: 2;
+}
 </style>

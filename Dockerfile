@@ -26,6 +26,8 @@ RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com
 
 COPY backend/ .
 
+COPY skills/ ./skills/
+
 RUN chmod +x entrypoint.sh
 
 COPY --from=frontend-builder /app/frontend/dist ./dist
