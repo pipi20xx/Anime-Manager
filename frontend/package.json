@@ -12,6 +12,7 @@
     "@vicons/material": "^0.12.0",
     "axios": "^1.4.0",
     "lodash-es": "^4.17.21",
+    "marked": "^12.0.0",
     "naive-ui": "^2.34.4",
     "pinia": "^2.1.4",
     "vuedraggable": "^4.1.0",

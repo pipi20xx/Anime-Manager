@@ -106,15 +106,15 @@ async def chat(request: ChatRequest):
     if not config.get("base_url") or not config.get("model"):
         raise HTTPException(status_code=400, detail="请先配置模型地址和模型名称")
     
-    user_message = request.messages[-1].content if request.messages else ""
-    
     if not request.use_tools:
         return await _simple_chat(request.messages, config)
     
+    messages = [{"role": m.role, "content": m.content} for m in request.messages]
+    
     if request.stream:
-        return await _agent_chat_stream(user_message, config)
+        return await _agent_chat_stream(messages, config)
     else:
-        return await _agent_chat(user_message, config)
+        return await _agent_chat(messages, config)
 
 async def _simple_chat(messages: List[ChatMessage], config: Dict):
     import httpx
@@ -152,7 +152,7 @@ async def _simple_chat(messages: List[ChatMessage], config: Dict):
             raise HTTPException(status_code=response.status_code, detail=response.text)
         return response.json()
 
-async def _agent_chat(user_message: str, config: Dict):
+async def _agent_chat(messages: List[Dict], config: Dict):
     try:
         from assistant.agent import Agent, AgentConfig
     except ImportError as e:
@@ -177,7 +177,9 @@ async def _agent_chat(user_message: str, config: Dict):
         max_iterations=config.get("max_iterations", 10)
     )
     
-    agent = Agent(agent_config)
+    agent = Agent(agent_config, messages=messages[:-1])
+    
+    user_message = messages[-1].get("content", "") if messages else ""
     
     events = []
     final_content = ""
@@ -204,7 +206,7 @@ async def _agent_chat(user_message: str, config: Dict):
         "events": events
     }
 
-async def _agent_chat_stream(user_message: str, config: Dict):
+async def _agent_chat_stream(messages: List[Dict], config: Dict):
     from assistant.agent import Agent, AgentConfig
     
     agent_config = AgentConfig(
@@ -217,7 +219,9 @@ async def _agent_chat_stream(user_message: str, config: Dict):
         max_iterations=config.get("max_iterations", 10)
     )
     
-    agent = Agent(agent_config)
+    agent = Agent(agent_config, messages=messages[:-1])
+    
+    user_message = messages[-1].get("content", "") if messages else ""
     
     async def generate():
         try:

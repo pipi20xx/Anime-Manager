@@ -32,9 +32,9 @@ class AgentConfig:
 
 
 class Agent:
-    def __init__(self, config: AgentConfig):
+    def __init__(self, config: AgentConfig, messages: List[Dict] = None):
         self.config = config
-        self.messages: List[Dict] = []
+        self.messages: List[Dict] = messages if messages else []
         self.tool_results: List[Dict] = []
         self.iteration_count = 0
         self.on_tool_call: Optional[Callable] = None
@@ -65,10 +65,23 @@ class Agent:
 
 ## 重要规则
 
-- 在执行修改操作前，先确认用户意图
+- 工具调用后，你会在 tool 消息中收到真实的执行结果，请根据结果回答用户
+- 不要说"没有实际执行"或"模拟输出"，工具确实执行了，结果就在 tool 消息中
+- **主动完成任务**：如果用户说"帮我订阅"，你应该搜索作品、确认正确条目、然后执行订阅，而不是只返回搜索结果
+- **完整执行流程**：不要在中间步骤停下来等用户确认，直接完成整个操作流程
+- **订阅时优先使用 TMDB**：当用户要订阅番剧时，使用 search_tmdb 搜索，然后用 add_subscription 订阅
+- **智能匹配季度**：当用户指定「第二季」「S2」时，在搜索结果中找到对应的条目
 - 工具调用失败时，向用户解释原因并提供替代方案
 - 保持回复简洁，但包含关键信息
 - 使用中文回复
+
+## 订阅流程
+
+用户：「帮我订阅 XXX」
+1. 调用 `search_tmdb("XXX", "tv")` 搜索作品
+2. 从结果中找到最匹配的条目（注意季度匹配）
+3. 调用 `add_subscription(title, tmdb_id, media_type="tv", season)` 订阅
+4. 返回订阅成功消息
 
 {tools_desc}
 
@@ -80,14 +93,28 @@ class Agent:
 
     def _get_headers(self) -> Dict[str, str]:
         headers = {"Content-Type": "application/json"}
-        if self.config.provider == "openai" and self.config.api_key:
+        if self.config.api_key:
             headers["Authorization"] = f"Bearer {self.config.api_key}"
         return headers
 
     def _get_endpoint(self) -> str:
         base_url = self.config.base_url.strip().rstrip("/").rstrip(",")
-        if "v1" in base_url or "chat/completions" in base_url:
-            return f"{base_url}/chat/completions".replace("//chat", "/chat")
+        
+        if base_url.endswith("/chat/completions"):
+            return base_url
+        
+        if "/v1/chat/completions" in base_url:
+            return base_url
+        
+        if "bigmodel.cn" in base_url or "zhipuai" in base_url:
+            return f"{base_url}/chat/completions"
+        
+        if base_url.endswith("/v1"):
+            return f"{base_url}/chat/completions"
+        
+        if "/v1/" in base_url:
+            return f"{base_url}/chat/completions"
+        
         return f"{base_url}/v1/chat/completions"
 
     async def _call_llm(self, stream: bool = False) -> Dict:
@@ -134,16 +161,72 @@ class Agent:
         except Exception as e:
             logger.error(f"[Agent] 工具执行失败: {tool_name} - {e}", exc_info=True)
             return ToolResult(success=False, error=str(e))
+    
+    def _try_parse_tool_call(self, content: str) -> Optional[Dict]:
+        """
+        尝试从文本中解析工具调用（用于不支持 function calling 的模型）
+        支持格式：
+        - 调用 search_tmdb("xxx")
+        - search_tmdb("xxx")
+        - 调用 `search_tmdb("xxx")`
+        """
+        if not content:
+            return None
+        
+        import re
+        
+        patterns = [
+            r'(?:调用\s*)?`?(\w+)\s*\(\s*(.+?)\s*\)`?',
+            r'(?:调用\s*)?`?(\w+)\s*\(\s*["\'](.+?)["\']\s*\)`?',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, content)
+            if match:
+                tool_name = match.group(1)
+                args_str = match.group(2)
+                
+                if not ToolRegistry.get(tool_name):
+                    continue
+                
+                arguments = {}
+                
+                if args_str:
+                    try:
+                        if args_str.startswith('{') or args_str.startswith('['):
+                            arguments = json.loads(args_str)
+                        else:
+                            args_str_clean = args_str.strip('\'"')
+                            first_param = ToolRegistry.get(tool_name)
+                            if first_param and first_param.parameters:
+                                param_name = first_param.parameters[0].name
+                                arguments[param_name] = args_str_clean
+                            else:
+                                arguments["query"] = args_str_clean
+                    except:
+                        param_name = "query"
+                        if ToolRegistry.get(tool_name) and ToolRegistry.get(tool_name).parameters:
+                            param_name = ToolRegistry.get(tool_name).parameters[0].name
+                        arguments[param_name] = args_str.strip('\'"')
+                
+                logger.info(f"[Agent] 从文本解析到工具调用: {tool_name}({arguments})")
+                return {"name": tool_name, "arguments": arguments}
+        
+        return None
 
     async def run(
         self,
         user_message: str,
         context: Optional[Dict] = None
     ) -> AsyncGenerator[Dict, None]:
-        self.messages = [
-            {"role": "system", "content": self._get_system_prompt()},
-            {"role": "user", "content": user_message}
-        ]
+        if not self.messages:
+            self.messages = [
+                {"role": "system", "content": self._get_system_prompt()}
+            ]
+        elif not any(m.get("role") == "system" for m in self.messages):
+            self.messages.insert(0, {"role": "system", "content": self._get_system_prompt()})
+        
+        self.messages.append({"role": "user", "content": user_message})
         
         matched_skill = SkillEngine.match_skill(user_message)
         if matched_skill:
@@ -191,6 +274,8 @@ class Agent:
                     "tool_calls": []
                 }
                 
+                tool_results_messages = []
+                
                 for tool_call in tool_calls:
                     tool_call_id = tool_call.get("id", "")
                     function = tool_call.get("function", {})
@@ -227,7 +312,7 @@ class Agent:
                         "message": result.message or ("执行成功" if result.success else f"执行失败: {result.error}")
                     }
                     
-                    self.messages.append({
+                    tool_results_messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call_id,
                         "name": tool_name,
@@ -235,6 +320,41 @@ class Agent:
                     })
                 
                 self.messages.append(assistant_message)
+                self.messages.extend(tool_results_messages)
+                continue
+            
+            parsed_tool_call = self._try_parse_tool_call(content)
+            if parsed_tool_call:
+                tool_name = parsed_tool_call.get("name")
+                arguments = parsed_tool_call.get("arguments", {})
+                
+                yield {
+                    "type": "tool_call",
+                    "tool_name": tool_name,
+                    "arguments": arguments,
+                    "message": f"正在调用工具: {tool_name}"
+                }
+                
+                result = await self._execute_tool(tool_name, arguments)
+                
+                yield {
+                    "type": "tool_result",
+                    "tool_name": tool_name,
+                    "result": result.to_dict(),
+                    "success": result.success,
+                    "message": result.message or ("执行成功" if result.success else f"执行失败: {result.error}")
+                }
+                
+                self.messages.append({
+                    "role": "assistant",
+                    "content": content
+                })
+                self.messages.append({
+                    "role": "tool",
+                    "tool_call_id": f"parsed_{tool_name}",
+                    "name": tool_name,
+                    "content": result.to_json()
+                })
                 continue
             
             if content:

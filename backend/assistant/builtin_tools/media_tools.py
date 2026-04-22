@@ -7,37 +7,35 @@ logger = logging.getLogger(__name__)
 
 @tool(
     name="search_tmdb",
-    description="在 TMDB 数据库中搜索电影或电视剧。返回作品的标题、年份、TMDB ID 等信息。",
+    description="在 TMDB 数据库中搜索电影或电视剧。返回作品的标题、年份、TMDB ID 等信息。会同时搜索剧集和电影。",
     category="媒体搜索",
     parameters=[
-        {"name": "query", "type": "string", "description": "搜索关键词，作品名称", "required": True},
-        {"name": "media_type", "type": "string", "description": "媒体类型：tv(剧集) 或 movie(电影)", "required": False, "enum": ["tv", "movie"]},
-        {"name": "year", "type": "string", "description": "发行年份，用于精确匹配", "required": False}
+        {"name": "query", "type": "string", "description": "搜索关键词，作品名称（请保持原样，不要修改用户输入）", "required": True}
     ]
 )
-async def search_tmdb(query: str, media_type: str = "tv", year: Optional[str] = None) -> ToolResult:
+async def search_tmdb(query: str) -> ToolResult:
     try:
         from recognition.data_provider.tmdb.client import TMDBProvider
         from recognition_engine.tmdb_matcher.logic import TMDBMatcher
         
         provider = TMDBProvider()
-        results, _ = await provider.search(query, year, media_type)
+        results, _ = await provider.search_multi(query)
         
         if not results:
             return ToolResult(success=False, error=f"未找到 '{query}' 的搜索结果")
         
-        formatted = [TMDBMatcher.normalize(i, media_type_hint=media_type) for i in results]
-        
         simplified = []
-        for item in formatted[:10]:
+        for item in results[:10]:
+            media_type = item.get("media_type", "tv")
+            normalized = TMDBMatcher.normalize(item, media_type_hint=media_type)
             simplified.append({
-                "tmdb_id": item.get("id"),
-                "title": item.get("title") or item.get("name"),
-                "original_title": item.get("original_title") or item.get("original_name"),
-                "year": (item.get("release_date") or item.get("first_air_date") or "")[:4],
-                "overview": (item.get("overview") or "")[:200],
-                "media_type": item.get("media_type", media_type),
-                "poster_path": item.get("poster_path")
+                "tmdb_id": normalized.get("id"),
+                "title": normalized.get("title") or normalized.get("name"),
+                "original_title": normalized.get("original_title") or normalized.get("original_name"),
+                "year": (normalized.get("release_date") or normalized.get("first_air_date") or "")[:4],
+                "overview": (normalized.get("overview") or "")[:200],
+                "media_type": media_type,
+                "poster_path": normalized.get("poster_path")
             })
         
         return ToolResult(
@@ -134,44 +132,8 @@ async def get_trending(media_type: str = "tv") -> ToolResult:
 
 
 @tool(
-    name="search_bangumi",
-    description="在 Bangumi 数据库中搜索动画作品。返回作品的标题、Bangumi ID 等信息。",
-    category="媒体搜索",
-    parameters=[
-        {"name": "query", "type": "string", "description": "搜索关键词", "required": True}
-    ]
-)
-async def search_bangumi(query: str) -> ToolResult:
-    try:
-        from recognition.data_provider.bangumi.client import BangumiProvider
-        
-        provider = BangumiProvider()
-        results = await provider.search(query)
-        
-        if not results:
-            return ToolResult(success=False, error=f"未找到 '{query}' 的搜索结果")
-        
-        simplified = []
-        for item in results[:10]:
-            simplified.append({
-                "bangumi_id": item.get("id"),
-                "title": item.get("name"),
-                "name_cn": item.get("name_cn"),
-                "type": item.get("type"),
-                "eps": item.get("eps"),
-                "rating": item.get("rating", {}).get("score"),
-                "air_date": item.get("air_date")
-            })
-        
-        return ToolResult(success=True, data=simplified, message=f"找到 {len(simplified)} 个结果")
-    except Exception as e:
-        logger.error(f"[Tool] search_bangumi 失败: {e}")
-        return ToolResult(success=False, error=str(e))
-
-
-@tool(
     name="get_bangumi_calendar",
-    description="获取当季新番日历，返回正在播出的动画列表。",
+    description="获取当季新番日历，返回正在播出的动画列表。包含番剧名称、Bangumi ID、更新星期、评分等信息。",
     category="媒体搜索",
     parameters=[]
 )
@@ -179,8 +141,7 @@ async def get_bangumi_calendar() -> ToolResult:
     try:
         from recognition.data_provider.bangumi.client import BangumiProvider
         
-        provider = BangumiProvider()
-        result = await provider.get_calendar()
+        result = await BangumiProvider.get_calendar()
         
         items = result.get("data", []) if isinstance(result, dict) else []
         
@@ -188,7 +149,8 @@ async def get_bangumi_calendar() -> ToolResult:
         for day_item in items[:7]:
             weekday = day_item.get("weekday", {})
             is_today = day_item.get("is_today", False)
-            for anime in day_item.get("items", [])[:5]:
+            for anime in day_item.get("items", []):
+                rating_info = anime.get("rating") or {}
                 simplified.append({
                     "bangumi_id": anime.get("id"),
                     "title": anime.get("title"),
@@ -196,7 +158,7 @@ async def get_bangumi_calendar() -> ToolResult:
                     "weekday": weekday.get("cn", ""),
                     "weekday_id": weekday.get("id"),
                     "is_today": is_today,
-                    "rating": anime.get("rating"),
+                    "rating": rating_info.get("score") if isinstance(rating_info, dict) else None,
                     "image": anime.get("image")
                 })
         

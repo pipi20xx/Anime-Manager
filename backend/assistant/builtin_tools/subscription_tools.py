@@ -73,9 +73,14 @@ async def add_subscription(
         from models import Subscription
         from rss_core.subscription_manager import SubscriptionManager
         from database import db
+        from sqlmodel import select
         
         async with db.session_scope():
-            existing = await SubscriptionManager.get_by_tmdb_id(tmdb_id, media_type)
+            existing_stmt = select(Subscription).where(
+                Subscription.tmdb_id == tmdb_id,
+                Subscription.media_type == media_type
+            )
+            existing = await db.first(Subscription, existing_stmt)
             if existing:
                 return ToolResult(
                     success=False,
@@ -242,4 +247,123 @@ async def check_subscription_exists(tmdb_id: str, media_type: str) -> ToolResult
         )
     except Exception as e:
         logger.error(f"[Tool] check_subscription_exists 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="subscribe_by_bangumi_id",
+    description="通过 Bangumi ID 一键订阅番剧。系统会自动匹配 TMDB 并创建订阅。这是最简单的订阅方式。",
+    category="订阅管理",
+    parameters=[
+        {"name": "bangumi_id", "type": "integer", "description": "Bangumi 条目 ID", "required": True}
+    ]
+)
+async def subscribe_by_bangumi_id(bangumi_id: int) -> ToolResult:
+    try:
+        from recognition.data_provider.bangumi.client import BangumiProvider
+        from recognition_engine.bgm_matcher.utils import extract_season_from_name
+        from rss_core.subscription_manager import SubscriptionManager
+        from clients.manager import ClientManager
+        from models import Subscription, SubscriptionTemplate
+        from notification import NotificationManager
+        from database import db
+        from config_manager import ConfigManager
+        from sqlmodel import select
+        
+        bgm_item = await BangumiProvider.get_subject_details(bangumi_id)
+        if not bgm_item:
+            return ToolResult(success=False, error=f"Bangumi 条目 {bangumi_id} 未找到")
+        
+        bgm_title = bgm_item.get('title') or bgm_item.get('original_title')
+        
+        async with db.session_scope():
+            existing_stmt = select(Subscription).where(Subscription.bangumi_id == str(bangumi_id))
+            existing = await db.first(Subscription, existing_stmt)
+            if existing:
+                return ToolResult(
+                    success=False,
+                    error=f"已存在相同的订阅: {existing.title}",
+                    data={"existing_id": existing.id}
+                )
+        
+        tmdb_item = None
+        config = ConfigManager.get_config()
+        tmdb_key = config.get("tmdb_api_key")
+        
+        if tmdb_key:
+            tmdb_item = await BangumiProvider.map_to_tmdb(bgm_item, tmdb_key, logs=None)
+        
+        season = extract_season_from_name(bgm_title)
+        total_episodes = bgm_item.get('total_episodes') or 0
+        
+        final_poster = bgm_item.get('poster_path')
+        tmdb_id = None
+        media_type = "tv"
+        year = None
+        
+        if tmdb_item:
+            tmdb_id = str(tmdb_item['id'])
+            media_type = tmdb_item.get('type', 'tv')
+            year = tmdb_item.get('year')
+            if tmdb_item.get('poster_path'):
+                final_poster = tmdb_item['poster_path']
+        
+        target_tmpl = None
+        async with db.session_scope():
+            stmt = select(SubscriptionTemplate).where(SubscriptionTemplate.is_default == True)
+            target_tmpl = await db.first(SubscriptionTemplate, stmt)
+        
+        default_client = ClientManager.get_client()
+        default_client_id = default_client.config.get('id') if default_client else None
+        
+        sub = Subscription(
+            tmdb_id=tmdb_id,
+            media_type=media_type,
+            title=bgm_title,
+            year=year,
+            poster_path=final_poster,
+            season=season,
+            start_episode=1,
+            end_episode=total_episodes,
+            bangumi_id=str(bangumi_id),
+            enabled=True,
+            target_client_id=target_tmpl.target_client_id if target_tmpl else default_client_id,
+            save_path=target_tmpl.save_path if target_tmpl else None,
+            category=target_tmpl.category if target_tmpl else "Anime",
+            auto_fill=target_tmpl.auto_fill if target_tmpl else True,
+            filter_res=target_tmpl.filter_res if target_tmpl else None,
+            filter_team=target_tmpl.filter_team if target_tmpl else None,
+            filter_source=target_tmpl.filter_source if target_tmpl else None,
+            filter_codec=target_tmpl.filter_codec if target_tmpl else None,
+            filter_audio=target_tmpl.filter_audio if target_tmpl else None,
+            filter_sub=target_tmpl.filter_sub if target_tmpl else None,
+            filter_effect=target_tmpl.filter_effect if target_tmpl else None,
+            filter_platform=target_tmpl.filter_platform if target_tmpl else None,
+            include_keywords=target_tmpl.include_keywords if target_tmpl else None,
+            exclude_keywords=target_tmpl.exclude_keywords if target_tmpl else None
+        )
+        
+        result = await SubscriptionManager.save_subscription(sub)
+        
+        try:
+            await NotificationManager.push_sub_add_notification(result)
+        except:
+            pass
+        
+        logger.info(f"[Tool] 一键订阅成功: {result.title}")
+        
+        return ToolResult(
+            success=True,
+            data={
+                "id": result.id,
+                "title": result.title,
+                "tmdb_id": result.tmdb_id,
+                "bangumi_id": result.bangumi_id,
+                "season": result.season,
+                "total_episodes": result.end_episode
+            },
+            message=f"✅ 成功订阅: {result.title} (第{result.season}季，共{result.end_episode}集)"
+        )
+    except Exception as e:
+        logger.error(f"[Tool] subscribe_by_bangumi_id 失败: {e}", exc_info=True)
         return ToolResult(success=False, error=str(e))
