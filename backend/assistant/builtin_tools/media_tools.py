@@ -344,3 +344,190 @@ async def search_jackett(query: str, indexer: str = "") -> ToolResult:
     except Exception as e:
         logger.error(f"[Tool] search_jackett 失败: {e}")
         return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="discover_bangumi",
+    description="按标签/类型发现番剧。支持按标签（如：百合、科幻、日常）、来源（漫画改、轻小说改）、年份等筛选。",
+    category="媒体搜索",
+    parameters=[
+        {"name": "tag", "type": "string", "description": "标签/类型，如：百合、科幻、日常、热血、恋爱、搞笑、奇幻、冒险", "required": False},
+        {"name": "source", "type": "string", "description": "来源类型，如：漫画改、轻小说改、游戏改、原创", "required": False},
+        {"name": "year", "type": "string", "description": "年份，如：2024、2023", "required": False},
+        {"name": "sort_by", "type": "string", "description": "排序方式：popularity.desc(热门)、match(最新)、vote_average.desc(评分)", "required": False},
+        {"name": "page", "type": "integer", "description": "页码，默认1", "required": False}
+    ]
+)
+async def discover_bangumi(
+    tag: str = "",
+    source: str = "",
+    year: str = "",
+    sort_by: str = "popularity.desc",
+    page: int = 1
+) -> ToolResult:
+    try:
+        from recognition.data_provider.bangumi.client import BangumiProvider
+        
+        params = {
+            "sort_by": sort_by,
+            "page": page
+        }
+        
+        if tag:
+            params["with_genres"] = tag
+        if source:
+            params["source"] = source
+        if year:
+            params["year"] = year
+        
+        result = await BangumiProvider.discover(params)
+        
+        items = result.get("results", []) if result else []
+        total = result.get("total_results", 0) if result else 0
+        
+        if not items and tag:
+            params_fallback = {"keyword": tag, "sort_by": sort_by, "page": page}
+            result = await BangumiProvider.discover(params_fallback)
+            items = result.get("results", []) if result else []
+            total = result.get("total_results", 0) if result else 0
+        
+        if not items:
+            return ToolResult(success=True, data=[], message="未找到符合条件的番剧")
+        
+        simplified = []
+        for item in items[:20]:
+            rating = item.get("rating", {})
+            simplified.append({
+                "bangumi_id": item.get("id"),
+                "title": item.get("title"),
+                "summary": (item.get("summary") or "")[:100],
+                "rating": rating.get("score") if isinstance(rating, dict) else None,
+                "episodes": item.get("eps"),
+                "air_date": item.get("date"),
+                "image": item.get("images", {}).get("large") if item.get("images") else None
+            })
+        
+        filter_desc = []
+        if tag: filter_desc.append(f"标签:{tag}")
+        if source: filter_desc.append(f"来源:{source}")
+        if year: filter_desc.append(f"年份:{year}")
+        filter_str = "、".join(filter_desc) if filter_desc else "全部"
+        
+        lines = [f"🔍 **番剧发现** ({filter_str})\n"]
+        lines.append("| 编号 | 番剧名称 | 评分 | 集数 | Bangumi ID |")
+        lines.append("|:----:|:---------|:----:|:----:|:----------:|")
+        
+        for idx, item in enumerate(simplified, 1):
+            rating_str = f"{item['rating']:.1f}" if item.get("rating") else "-"
+            eps = item.get("episodes") or "-"
+            lines.append(f"| {idx} | {item['title']} | {rating_str} | {eps} | {item['bangumi_id']} |")
+        
+        lines.append(f"\n📊 共 {total} 部番剧，当前第 {page} 页")
+        lines.append("\n💡 输入编号可订阅对应番剧")
+        
+        formatted = "\n".join(lines)
+        
+        return ToolResult(
+            success=True,
+            data=simplified,
+            message=f"找到 {total} 部番剧",
+            formatted_message=formatted
+        )
+    except Exception as e:
+        logger.error(f"[Tool] discover_bangumi 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="discover_tmdb",
+    description="按类型发现电影或剧集。支持按类型（如：科幻、动作、喜剧）、年份等筛选。",
+    category="媒体搜索",
+    parameters=[
+        {"name": "media_type", "type": "string", "description": "媒体类型：movie(电影) 或 tv(剧集)", "required": True, "enum": ["movie", "tv"]},
+        {"name": "genre", "type": "string", "description": "类型，如：科幻(878)、动作(28)、喜剧(35)、恐怖(27)、爱情(10749)、动画(16)", "required": False},
+        {"name": "year", "type": "string", "description": "年份，如：2024", "required": False},
+        {"name": "sort_by", "type": "string", "description": "排序：popularity.desc(热门)、vote_average.desc(评分)、release_date.desc(最新)", "required": False},
+        {"name": "page", "type": "integer", "description": "页码，默认1", "required": False}
+    ]
+)
+async def discover_tmdb(
+    media_type: str,
+    genre: str = "",
+    year: str = "",
+    sort_by: str = "popularity.desc",
+    page: int = 1
+) -> ToolResult:
+    try:
+        from recognition.data_provider.tmdb.client import TMDBProvider
+        
+        genre_map = {
+            "科幻": "878", "动作": "28", "喜剧": "35", "恐怖": "27",
+            "爱情": "10749", "动画": "16", "冒险": "12", "奇幻": "14",
+            "剧情": "18", "犯罪": "80", "悬疑": "9648", "战争": "10752",
+            "西部": "37", "音乐": "10402", "家庭": "10751", "历史": "36",
+            "纪录片": "99", "电视电影": "10770", "惊悚": "53"
+        }
+        
+        provider = TMDBProvider()
+        params = {
+            "sort_by": sort_by,
+            "page": page
+        }
+        
+        if genre:
+            genre_id = genre_map.get(genre, genre)
+            params["with_genres"] = genre_id
+        if year:
+            if media_type == "movie":
+                params["primary_release_year"] = year
+            else:
+                params["first_air_date_year"] = year
+        
+        result = await provider.discover(media_type, params)
+        
+        if not result or not result.get("results"):
+            return ToolResult(success=True, data=[], message="未找到符合条件的作品")
+        
+        items = result.get("results", [])
+        total = result.get("total_results", 0)
+        
+        simplified = []
+        for item in items[:20]:
+            simplified.append({
+                "tmdb_id": item.get("id"),
+                "title": item.get("title") or item.get("name"),
+                "year": (item.get("release_date") or item.get("first_air_date") or "")[:4],
+                "overview": (item.get("overview") or "")[:100],
+                "rating": item.get("vote_average"),
+                "poster_path": item.get("poster_path")
+            })
+        
+        type_name = "电影" if media_type == "movie" else "剧集"
+        filter_desc = [type_name]
+        if genre: filter_desc.append(f"类型:{genre}")
+        if year: filter_desc.append(f"年份:{year}")
+        filter_str = "、".join(filter_desc)
+        
+        lines = [f"🎬 **{filter_str}发现**\n"]
+        lines.append("| 编号 | 作品名称 | 年份 | 评分 | TMDB ID |")
+        lines.append("|:----:|:---------|:----:|:----:|:--------:|")
+        
+        for idx, item in enumerate(simplified, 1):
+            rating_str = f"{item['rating']:.1f}" if item.get("rating") else "-"
+            year_str = item.get("year") or "-"
+            lines.append(f"| {idx} | {item['title']} | {year_str} | {rating_str} | {item['tmdb_id']} |")
+        
+        lines.append(f"\n📊 共 {total} 部作品，当前第 {page} 页")
+        lines.append("\n💡 输入编号可订阅对应作品")
+        
+        formatted = "\n".join(lines)
+        
+        return ToolResult(
+            success=True,
+            data=simplified,
+            message=f"找到 {total} 部作品",
+            formatted_message=formatted
+        )
+    except Exception as e:
+        logger.error(f"[Tool] discover_tmdb 失败: {e}")
+        return ToolResult(success=False, error=str(e))
