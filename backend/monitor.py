@@ -320,6 +320,36 @@ class MonitorManager:
                 logger.info(f"[Calendar] 已开启每日播报，推送时间: {push_time}")
             except Exception as e:
                 logger.error(f"[Calendar] 每日播报设置解析失败: {e}")
+        
+        # 8. [Subscription Notifier] 订阅智能提醒
+        sub_notify_enabled = config.get("subscription_notify_enabled", True)
+        if sub_notify_enabled:
+            sub_notify_interval = int(config.get("subscription_notify_interval", 60))
+            MonitorManager._scheduler.add_job(
+                MonitorManager._subscription_notifier_check,
+                'interval',
+                minutes=sub_notify_interval,
+                id="subscription_notifier_job",
+                replace_existing=True
+            )
+            logger.info(f"[订阅提醒] 已启动订阅更新检查，间隔 {sub_notify_interval} 分钟")
+            
+            # 每日摘要
+            if config.get("subscription_daily_summary", False):
+                summary_time = config.get("subscription_summary_time", "08:00")
+                try:
+                    hour, minute = map(int, summary_time.split(':'))
+                    MonitorManager._scheduler.add_job(
+                        MonitorManager._subscription_daily_summary,
+                        'cron',
+                        hour=hour,
+                        minute=minute,
+                        id="subscription_daily_summary_job",
+                        replace_existing=True
+                    )
+                    logger.info(f"[订阅提醒] 已开启每日摘要，推送时间: {summary_time}")
+                except Exception as e:
+                    logger.error(f"[订阅提醒] 每日摘要设置解析失败: {e}")
 
     @staticmethod
     async def _calendar_daily_push():
@@ -401,6 +431,30 @@ class MonitorManager:
                 log_audit("维护", "自动清理", f"已自动清理 {deleted} 条 30 天前的系统日志。")
         except Exception as e:
             logger.error(f"[Maintenance] Log cleanup failed: {e}")
+    
+    @staticmethod
+    async def _subscription_notifier_check():
+        """订阅智能提醒检查"""
+        try:
+            from subscription_notifier import check_subscription_updates
+            result = await check_subscription_updates()
+            
+            new_count = len(result.get("new_episodes", []))
+            notify_count = result.get("notifications_sent", 0)
+            
+            if new_count > 0:
+                logger.info(f"[订阅提醒] 发现 {new_count} 个新集，已发送 {notify_count} 条通知")
+        except Exception as e:
+            logger.error(f"[订阅提醒] 检查失败: {e}")
+    
+    @staticmethod
+    async def _subscription_daily_summary():
+        """订阅每日摘要"""
+        try:
+            from subscription_notifier import send_daily_anime_summary
+            await send_daily_anime_summary()
+        except Exception as e:
+            logger.error(f"[订阅提醒] 每日摘要发送失败: {e}")
 
     @staticmethod
     async def _auto_fill_subscriptions():
@@ -575,6 +629,34 @@ class MonitorManager:
                 "next_run": calendar_job.next_run_time.isoformat() if calendar_job and calendar_job.next_run_time else None,
                 "last_run": None,
                 "description": "每日定时推送今日更新的番剧"
+            })
+            
+            # 订阅智能提醒
+            sub_notify_job = job_map.get("subscription_notifier_job")
+            services.append({
+                "id": "subscription_notifier",
+                "name": "订阅智能提醒",
+                "type": "scheduler",
+                "enabled": config.get("subscription_notify_enabled", True),
+                "running": sub_notify_job is not None,
+                "interval": f"每 {config.get('subscription_notify_interval', 60)} 分钟",
+                "next_run": sub_notify_job.next_run_time.isoformat() if sub_notify_job and sub_notify_job.next_run_time else None,
+                "last_run": None,
+                "description": "检查订阅番剧新集播出并发送通知"
+            })
+            
+            # 订阅每日摘要
+            sub_summary_job = job_map.get("subscription_daily_summary_job")
+            services.append({
+                "id": "subscription_daily_summary",
+                "name": "订阅每日摘要",
+                "type": "scheduler",
+                "enabled": config.get("subscription_daily_summary", False),
+                "running": sub_summary_job is not None,
+                "interval": f"每日 {config.get('subscription_summary_time', '08:00')}",
+                "next_run": sub_summary_job.next_run_time.isoformat() if sub_summary_job and sub_summary_job.next_run_time else None,
+                "last_run": None,
+                "description": "每日推送订阅番剧播出摘要"
             })
 
             # 日志清理

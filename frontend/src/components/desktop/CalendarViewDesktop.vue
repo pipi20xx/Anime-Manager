@@ -32,10 +32,12 @@ const {
   importingBatch,
   calendarGrid,
   calendarConfig,
+  subscriptionNotifyConfig,
   isTestingPush,
   getEpisodeRange,
   fetchData,
   saveCalendarConfig,
+  saveSubscriptionNotifyConfig,
   testCalendarPush,
   handleAutoImport,
   handleBatchImport,
@@ -194,8 +196,9 @@ const {
         </n-tab-pane>
 
         <n-tab-pane name="settings" tab="推送设置">
-          <div style="padding: 24px 40px">
-            <n-form label-placement="left" label-width="120">
+          <div style="padding: 24px 40px; max-height: 70vh; overflow-y: auto;">
+            <n-form label-placement="left" label-width="140">
+              <!-- 每日播报设置 -->
               <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
                 <n-icon size="20" class="notify-icon"><NotifyIcon /></n-icon>
                 <n-text strong style="font-size: 16px">每日播报设置</n-text>
@@ -232,8 +235,67 @@ const {
                 </n-button>
               </n-form-item>
 
-              <n-alert type="info" size="small" :show-icon="false" style="margin-top: 12px">
+              <n-alert type="info" size="small" :show-icon="false" style="margin-top: 12px; margin-bottom: 32px;">
                 系统将在设定时间通过 Telegram 推送今日播出清单。
+              </n-alert>
+              
+              <!-- 订阅智能提醒 -->
+              <n-divider style="margin: 16px 0;" />
+              
+              <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
+                <n-icon size="20" class="notify-icon"><NotifyIcon /></n-icon>
+                <n-text strong style="font-size: 16px">订阅智能提醒</n-text>
+              </div>
+              
+              <n-form-item label="启用订阅提醒">
+                <n-switch v-model:value="subscriptionNotifyConfig.enabled" @update:value="saveSubscriptionNotifyConfig" />
+              </n-form-item>
+              
+              <n-form-item label="检查间隔" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <n-input-number 
+                  v-model:value="subscriptionNotifyConfig.interval"
+                  :min="5"
+                  :max="1440"
+                  size="small"
+                  style="width: 120px"
+                  :disabled="!subscriptionNotifyConfig.enabled"
+                  @update:value="saveSubscriptionNotifyConfig"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">分钟</n-text>
+              </n-form-item>
+              
+              <n-form-item label="新集通知" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <n-switch 
+                  v-model:value="subscriptionNotifyConfig.notify_on_new_episode"
+                  @update:value="saveSubscriptionNotifyConfig"
+                  :disabled="!subscriptionNotifyConfig.enabled"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">检测到新集播出时发送通知</n-text>
+              </n-form-item>
+              
+              <n-form-item label="每日摘要" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <n-switch 
+                  v-model:value="subscriptionNotifyConfig.daily_summary"
+                  @update:value="saveSubscriptionNotifyConfig"
+                  :disabled="!subscriptionNotifyConfig.enabled"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">每天推送订阅番剧播出摘要</n-text>
+              </n-form-item>
+              
+              <n-form-item label="摘要时间" :style="{ opacity: subscriptionNotifyConfig.enabled && subscriptionNotifyConfig.daily_summary ? 1 : 0.5 }">
+                <n-time-picker 
+                  v-model:formatted-value="subscriptionNotifyConfig.summary_time" 
+                  value-format="HH:mm" 
+                  format="HH:mm" 
+                  size="small"
+                  style="width: 140px"
+                  :disabled="!subscriptionNotifyConfig.enabled || !subscriptionNotifyConfig.daily_summary"
+                  @update:formatted-value="saveSubscriptionNotifyConfig" 
+                />
+              </n-form-item>
+
+              <n-alert type="info" size="small" :show-icon="false" style="margin-top: 12px">
+                订阅提醒会检查你订阅的番剧是否有新集播出，并通过 Telegram 发送通知。
               </n-alert>
             </n-form>
           </div>

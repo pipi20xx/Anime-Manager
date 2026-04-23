@@ -29,10 +29,12 @@ const {
   importingBatch,
   mobileAgenda,
   calendarConfig,
+  subscriptionNotifyConfig,
   isTestingPush,
   getEpisodeRange,
   fetchData,
   saveCalendarConfig,
+  saveSubscriptionNotifyConfig,
   testCalendarPush,
   handleAutoImport,
   handleBatchImport,
@@ -159,8 +161,9 @@ const {
         </n-tab-pane>
 
         <n-tab-pane name="push" tab="推送">
-          <div style="padding: 16px">
+          <div style="padding: 16px; max-height: 60vh; overflow-y: auto;">
             <n-form label-placement="top">
+              <!-- 每日番剧播报 -->
               <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
                 <n-icon size="18" class="notify-icon"><NotifyIcon /></n-icon>
                 <n-text strong>每日番剧播报</n-text>
@@ -202,8 +205,66 @@ const {
                 发送测试播报
               </n-button>
 
-              <n-alert type="info" size="small" :show-icon="false" style="margin-top: 24px">
+              <n-alert type="info" size="small" :show-icon="false" style="margin-top: 24px; margin-bottom: 16px;">
                 系统将在设定时间推送今日播出清单。
+              </n-alert>
+              
+              <!-- 订阅智能提醒 -->
+              <n-divider style="margin: 16px 0;" />
+              
+              <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
+                <n-icon size="18" class="notify-icon"><NotifyIcon /></n-icon>
+                <n-text strong>订阅智能提醒</n-text>
+              </div>
+              
+              <n-form-item label="启用订阅提醒">
+                <n-switch v-model:value="subscriptionNotifyConfig.enabled" @update:value="saveSubscriptionNotifyConfig" />
+              </n-form-item>
+              
+              <n-form-item label="检查间隔(分钟)" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <n-input-number 
+                  v-model:value="subscriptionNotifyConfig.interval"
+                  :min="5"
+                  :max="1440"
+                  size="small"
+                  style="width: 100%"
+                  :disabled="!subscriptionNotifyConfig.enabled"
+                  @update:value="saveSubscriptionNotifyConfig"
+                />
+              </n-form-item>
+              
+              <n-form-item label="新集通知" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <n-switch 
+                  v-model:value="subscriptionNotifyConfig.notify_on_new_episode"
+                  @update:value="saveSubscriptionNotifyConfig"
+                  :disabled="!subscriptionNotifyConfig.enabled"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">新集播出时通知</n-text>
+              </n-form-item>
+              
+              <n-form-item label="每日摘要" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <n-switch 
+                  v-model:value="subscriptionNotifyConfig.daily_summary"
+                  @update:value="saveSubscriptionNotifyConfig"
+                  :disabled="!subscriptionNotifyConfig.enabled"
+                />
+                <n-text depth="3" style="margin-left: 8px; font-size: 12px">每天推送播出摘要</n-text>
+              </n-form-item>
+              
+              <n-form-item label="摘要时间" :style="{ opacity: subscriptionNotifyConfig.enabled && subscriptionNotifyConfig.daily_summary ? 1 : 0.5 }">
+                <n-time-picker 
+                  v-model:formatted-value="subscriptionNotifyConfig.summary_time" 
+                  value-format="HH:mm" 
+                  format="HH:mm" 
+                  size="small"
+                  block
+                  :disabled="!subscriptionNotifyConfig.enabled || !subscriptionNotifyConfig.daily_summary"
+                  @update:formatted-value="saveSubscriptionNotifyConfig" 
+                />
+              </n-form-item>
+
+              <n-alert type="info" size="small" :show-icon="false" style="margin-top: 12px">
+                订阅提醒会检查你订阅的番剧是否有新集播出，并发送通知。
               </n-alert>
             </n-form>
           </div>

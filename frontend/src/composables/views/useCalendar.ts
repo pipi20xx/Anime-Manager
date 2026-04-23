@@ -31,6 +31,15 @@ export function useCalendar() {
     push_time: '09:00',
     pin_message: false
   })
+  
+  // 订阅提醒配置
+  const subscriptionNotifyConfig = ref({
+    enabled: true,
+    interval: 60,
+    notify_on_new_episode: true,
+    daily_summary: false,
+    summary_time: '08:00'
+  })
 
   // 手动添加
   const newSubject = ref({ tmdb_id: '', media_type: 'tv', title: '', season: 1 })
@@ -157,6 +166,14 @@ export function useCalendar() {
         push_time: configData.calendar_push_time || '09:00',
         pin_message: configData.calendar_pin_message || false
       }
+      
+      subscriptionNotifyConfig.value = {
+        enabled: configData.subscription_notify_enabled ?? true,
+        interval: configData.subscription_notify_interval || 60,
+        notify_on_new_episode: configData.subscription_notify_on_new_episode ?? true,
+        daily_summary: configData.subscription_daily_summary || false,
+        summary_time: configData.subscription_summary_time || '08:00'
+      }
     } finally {
       loading.value = false
     }
@@ -177,6 +194,29 @@ export function useCalendar() {
       const data = await res.json()
       if (data.status === 'success') {
         message.success('推送设置已更新')
+      }
+    } catch (e) {
+      message.error('保存设置失败')
+    }
+  }
+  
+  const saveSubscriptionNotifyConfig = async () => {
+    try {
+      const API_BASE = (import.meta.env.VITE_API_BASE as string) || (window.location.origin)
+      const res = await fetch(`${API_BASE}/api/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription_notify_enabled: subscriptionNotifyConfig.value.enabled,
+          subscription_notify_interval: subscriptionNotifyConfig.value.interval,
+          subscription_notify_on_new_episode: subscriptionNotifyConfig.value.notify_on_new_episode,
+          subscription_daily_summary: subscriptionNotifyConfig.value.daily_summary,
+          subscription_summary_time: subscriptionNotifyConfig.value.summary_time
+        })
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        message.success('订阅提醒设置已更新')
       }
     } catch (e) {
       message.error('保存设置失败')
@@ -360,10 +400,12 @@ export function useCalendar() {
     calendarGrid,
     mobileAgenda,
     calendarConfig,
+    subscriptionNotifyConfig,
     isTestingPush,
     getEpisodeRange,
     fetchData,
     saveCalendarConfig,
+    saveSubscriptionNotifyConfig,
     testCalendarPush,
     handleAutoImport,
     handleBatchImport,

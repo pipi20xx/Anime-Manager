@@ -99,6 +99,11 @@ class ConfigManager:
         "calendar_daily_push": False,
         "calendar_push_time": "09:00",
         "calendar_pin_message": False,
+        "subscription_notify_enabled": True, # 订阅智能提醒
+        "subscription_notify_interval": 60, # 检查间隔（分钟）
+        "subscription_notify_on_new_episode": True, # 新集播出时发送通知
+        "subscription_daily_summary": False, # 每日摘要
+        "subscription_summary_time": "08:00", # 每日摘要推送时间
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",
