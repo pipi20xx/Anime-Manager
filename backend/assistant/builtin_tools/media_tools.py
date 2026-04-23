@@ -1,5 +1,5 @@
 from ..tools import tool, ToolResult
-from typing import Optional
+from typing import Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -162,7 +162,43 @@ async def get_bangumi_calendar() -> ToolResult:
                     "image": anime.get("image")
                 })
         
-        return ToolResult(success=True, data=simplified, message=f"获取到 {len(simplified)} 部当季新番")
+        formatted_lines = ["📺 **本季番剧列表**\n"]
+        formatted_lines.append("| 编号 | 番剧名称 | 更新日 | 评分 | Bangumi ID |")
+        formatted_lines.append("|:----:|:---------|:------:|:----:|:----------:|")
+        
+        for idx, anime in enumerate(simplified, 1):
+            rating_str = f"{anime['rating']:.1f}" if anime.get("rating") else "-"
+            weekday = anime.get("weekday", "-")
+            title = anime.get("title", "未知")
+            bangumi_id = anime.get("bangumi_id", "-")
+            formatted_lines.append(f"| {idx} | {title} | {weekday} | {rating_str} | {bangumi_id} |")
+        
+        formatted_lines.append("\n📌 **热门推荐：**\n")
+        
+        hot_keywords = ["Re：从零", "史莱姆", "实力至上", "租借女友", "航海王", "柯南", "入间"]
+        hot_anime = []
+        for anime in simplified:
+            title = anime.get("title", "")
+            for kw in hot_keywords:
+                if kw in title:
+                    hot_anime.append(anime)
+                    break
+        
+        for anime in hot_anime[:5]:
+            idx = simplified.index(anime) + 1
+            title = anime.get("title", "")
+            formatted_lines.append(f"- **{title}** (编号{idx})")
+        
+        formatted_lines.append("\n💡 请输入要订阅的番剧编号（多个用空格分隔，输入\"全部\"订阅所有）：")
+        
+        formatted_message = "\n".join(formatted_lines)
+        
+        return ToolResult(
+            success=True,
+            data=simplified,
+            message=f"获取到 {len(simplified)} 部当季新番",
+            formatted_message=formatted_message
+        )
     except Exception as e:
         logger.error(f"[Tool] get_bangumi_calendar 失败: {e}")
         return ToolResult(success=False, error=str(e))
@@ -216,4 +252,95 @@ async def recognize_filename(filename: str) -> ToolResult:
         )
     except Exception as e:
         logger.error(f"[Tool] recognize_filename 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="get_bangumi_subject",
+    description="获取 Bangumi 条目的详细信息，包括评分、集数、简介等。",
+    category="媒体搜索",
+    parameters=[
+        {"name": "bangumi_id", "type": "integer", "description": "Bangumi 条目 ID", "required": True}
+    ]
+)
+async def get_bangumi_subject(bangumi_id: int) -> ToolResult:
+    try:
+        from recognition.data_provider.bangumi.client import BangumiProvider
+        
+        result = await BangumiProvider.get_subject_details(bangumi_id)
+        
+        if not result:
+            return ToolResult(success=False, error=f"未找到 Bangumi ID {bangumi_id} 的条目")
+        
+        rating = result.get("rating", {})
+        
+        return ToolResult(
+            success=True,
+            data={
+                "bangumi_id": result.get("id"),
+                "title": result.get("title"),
+                "original_title": result.get("original_title"),
+                "summary": result.get("summary"),
+                "rating": rating.get("score") if isinstance(rating, dict) else None,
+                "rating_count": rating.get("total") if isinstance(rating, dict) else None,
+                "episodes": result.get("eps"),
+                "status": result.get("status", {}).get("cn") if isinstance(result.get("status"), dict) else None,
+                "air_date": result.get("date"),
+                "image": result.get("images", {}).get("large") if result.get("images") else None
+            }
+        )
+    except Exception as e:
+        logger.error(f"[Tool] get_bangumi_subject 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="search_jackett",
+    description="在 Jackett 中搜索资源种子。返回种子名称、大小、种子数、下载链接等信息。",
+    category="媒体搜索",
+    parameters=[
+        {"name": "query", "type": "string", "description": "搜索关键词", "required": True},
+        {"name": "indexer", "type": "string", "description": "指定站点（可选，不填则搜索所有站点）", "required": False}
+    ]
+)
+async def search_jackett(query: str, indexer: str = "") -> ToolResult:
+    try:
+        from clients.jackett_client import JackettClient
+        from config_manager import ConfigManager
+        
+        config = ConfigManager.get_config()
+        jackett_config = config.get("jackett", {})
+        
+        if not jackett_config.get("host"):
+            return ToolResult(success=False, error="Jackett 未配置，请先在设置中配置 Jackett")
+        
+        client = JackettClient(
+            host=jackett_config.get("host"),
+            api_key=jackett_config.get("api_key")
+        )
+        
+        results = await client.search(query, indexer if indexer else None)
+        
+        if not results:
+            return ToolResult(success=True, data=[], message=f"未找到 '{query}' 的资源")
+        
+        simplified = []
+        for item in results[:20]:
+            simplified.append({
+                "title": item.get("Title"),
+                "size": item.get("Size"),
+                "seeders": item.get("Seeders"),
+                "peers": item.get("Peers"),
+                "link": item.get("Link"),
+                "indexer": item.get("Tracker"),
+                "pub_date": item.get("PublishDate")
+            })
+        
+        return ToolResult(
+            success=True,
+            data=simplified,
+            message=f"找到 {len(simplified)} 个资源"
+        )
+    except Exception as e:
+        logger.error(f"[Tool] search_jackett 失败: {e}")
         return ToolResult(success=False, error=str(e))

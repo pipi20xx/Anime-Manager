@@ -275,6 +275,7 @@ class Agent:
                 }
                 
                 tool_results_messages = []
+                has_formatted_output = False
                 
                 for tool_call in tool_calls:
                     tool_call_id = tool_call.get("id", "")
@@ -312,6 +313,14 @@ class Agent:
                         "message": result.message or ("执行成功" if result.success else f"执行失败: {result.error}")
                     }
                     
+                    if result.formatted_message:
+                        has_formatted_output = True
+                        yield {
+                            "type": "response",
+                            "content": result.formatted_message
+                        }
+                        assistant_message["content"] = result.formatted_message
+                    
                     tool_results_messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call_id,
@@ -321,6 +330,10 @@ class Agent:
                 
                 self.messages.append(assistant_message)
                 self.messages.extend(tool_results_messages)
+                
+                if has_formatted_output:
+                    return
+                
                 continue
             
             parsed_tool_call = self._try_parse_tool_call(content)

@@ -178,23 +178,47 @@ const sendMessage = async () => {
       headers: getAuthHeaders(),
       body: JSON.stringify({
         messages: chatMessages.value.filter(m => !m.loading && !m.isStreaming).map(m => ({ role: m.role, content: m.content })),
-        stream: false,
+        stream: true,
         use_tools: useTools.value
       })
     })
     
-    if (res.ok) {
-      const data = await res.json()
-      
-      if (data.events && data.events.length > 0) {
-        chatMessages.value[msgIndex].events = data.events
-      }
-      
-      chatMessages.value[msgIndex].content = data.choices?.[0]?.message?.content || '无响应'
-    } else {
+    if (!res.ok) {
       const errorData = await res.json()
       chatMessages.value[msgIndex].content = errorData.detail || '请求失败，请检查模型配置'
+      chatMessages.value[msgIndex].loading = false
+      chatMessages.value[msgIndex].isStreaming = false
+      chatLoading.value = false
+      return
     }
+    
+    const reader = res.body?.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    
+    while (reader) {
+      const { done, value } = await reader.read()
+      if (done) break
+      
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const event = JSON.parse(line.slice(6))
+            handleStreamEvent(msgIndex, event)
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+      
+      await nextTick()
+      scrollToBottom()
+    }
+    
   } catch (e) {
     chatMessages.value[msgIndex].content = '网络错误，请稍后重试'
   } finally {
@@ -203,6 +227,61 @@ const sendMessage = async () => {
     chatLoading.value = false
     await nextTick()
     scrollToBottom()
+  }
+}
+
+const handleStreamEvent = (msgIndex: number, event: any) => {
+  const msg = chatMessages.value[msgIndex]
+  if (!msg) return
+  
+  switch (event.type) {
+    case 'skill':
+      msg.events.push({
+        type: 'skill',
+        message: event.message,
+        skill_name: event.skill_name
+      })
+      break
+    
+    case 'thinking':
+      if (event.content) {
+        msg.events.push({
+          type: 'thinking',
+          content: event.content
+        })
+      }
+      break
+    
+    case 'tool_call':
+      msg.events.push({
+        type: 'tool_call',
+        tool_name: event.tool_name,
+        arguments: event.arguments,
+        message: event.message
+      })
+      break
+    
+    case 'tool_result':
+      const lastToolEvent = msg.events.findLast((e: any) => e.type === 'tool_call' && e.tool_name === event.tool_name)
+      if (lastToolEvent) {
+        lastToolEvent.result = event.result
+        lastToolEvent.success = event.success
+      }
+      msg.events.push({
+        type: 'tool_result',
+        tool_name: event.tool_name,
+        success: event.success,
+        message: event.message
+      })
+      break
+    
+    case 'response':
+      msg.content = event.content || ''
+      break
+    
+    case 'error':
+      msg.content = `错误: ${event.message}`
+      break
   }
 }
 

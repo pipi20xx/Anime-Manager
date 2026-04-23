@@ -34,10 +34,24 @@ async def list_subscriptions(enabled_only: bool = False) -> ToolResult:
                 "created_at": str(sub.created_at) if hasattr(sub, "created_at") else None
             })
         
+        if not simplified:
+            formatted = "📭 当前没有订阅任务"
+        else:
+            lines = ["📋 **订阅列表**\n"]
+            lines.append("| ID | 标题 | 类型 | 季 | 集数 | 状态 |")
+            lines.append("|:--:|:-----|:----:|:--:|:----:|:----:|")
+            for sub in simplified:
+                status = "✅" if sub["enabled"] else "⏸️"
+                ep_range = f"{sub['start_episode']}-{sub['end_episode']}" if sub['end_episode'] > 0 else f"{sub['start_episode']}+"
+                media_type = "剧集" if sub["media_type"] == "tv" else "电影"
+                lines.append(f"| {sub['id']} | {sub['title']} | {media_type} | S{sub['season']} | {ep_range} | {status} |")
+            formatted = "\n".join(lines)
+        
         return ToolResult(
             success=True,
             data=simplified,
-            message=f"当前共有 {len(simplified)} 个订阅"
+            message=f"当前共有 {len(simplified)} 个订阅",
+            formatted_message=formatted
         )
     except Exception as e:
         logger.error(f"[Tool] list_subscriptions 失败: {e}")
@@ -366,4 +380,142 @@ async def subscribe_by_bangumi_id(bangumi_id: int) -> ToolResult:
         )
     except Exception as e:
         logger.error(f"[Tool] subscribe_by_bangumi_id 失败: {e}", exc_info=True)
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="update_subscription",
+    description="更新订阅任务的设置，如起始集数、保存路径等。",
+    category="订阅管理",
+    parameters=[
+        {"name": "subscription_id", "type": "integer", "description": "订阅 ID", "required": True},
+        {"name": "season", "type": "integer", "description": "季度号", "required": False},
+        {"name": "start_episode", "type": "integer", "description": "起始集数", "required": False},
+        {"name": "end_episode", "type": "integer", "description": "结束集数", "required": False},
+        {"name": "save_path", "type": "string", "description": "保存路径", "required": False},
+        {"name": "enabled", "type": "boolean", "description": "是否启用", "required": False}
+    ]
+)
+async def update_subscription(
+    subscription_id: int,
+    season: int = None,
+    start_episode: int = None,
+    end_episode: int = None,
+    save_path: str = None,
+    enabled: bool = None
+) -> ToolResult:
+    try:
+        from database import db
+        from models import Subscription
+        
+        async with db.session_scope():
+            sub = await db.get(Subscription, subscription_id)
+            if not sub:
+                return ToolResult(success=False, error=f"订阅 ID {subscription_id} 不存在")
+            
+            if season is not None:
+                sub.season = season
+            if start_episode is not None:
+                sub.start_episode = start_episode
+            if end_episode is not None:
+                sub.end_episode = end_episode
+            if save_path is not None:
+                sub.save_path = save_path
+            if enabled is not None:
+                sub.enabled = enabled
+            
+            await db.save(sub)
+        
+        return ToolResult(
+            success=True,
+            data={
+                "id": sub.id,
+                "title": sub.title,
+                "season": sub.season,
+                "start_episode": sub.start_episode,
+                "end_episode": sub.end_episode,
+                "enabled": sub.enabled
+            },
+            message=f"已更新订阅: {sub.title}"
+        )
+    except Exception as e:
+        logger.error(f"[Tool] update_subscription 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="fill_subscription",
+    description="手动补全订阅任务缺失的集数。系统会搜索并下载缺失的剧集。",
+    category="订阅管理",
+    parameters=[
+        {"name": "subscription_id", "type": "integer", "description": "订阅 ID", "required": True}
+    ]
+)
+async def fill_subscription(subscription_id: int) -> ToolResult:
+    try:
+        from database import db
+        from models import Subscription
+        from rss_core.subscription_manager import SubscriptionManager
+        
+        async with db.session_scope():
+            sub = await db.get(Subscription, subscription_id)
+            if not sub:
+                return ToolResult(success=False, error=f"订阅 ID {subscription_id} 不存在")
+            
+            if not sub.enabled:
+                return ToolResult(success=False, error="订阅已禁用，请先启用")
+            
+            result = await SubscriptionManager.fill_missing_episodes(subscription_id)
+        
+        if result.get("success"):
+            return ToolResult(
+                success=True,
+                data=result,
+                message=f"补全任务已启动: {sub.title}"
+            )
+        else:
+            return ToolResult(
+                success=False,
+                error=result.get("message", "补全失败")
+            )
+    except Exception as e:
+        logger.error(f"[Tool] fill_subscription 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="list_subscription_templates",
+    description="获取订阅模板列表。模板包含预设的保存路径、过滤规则等设置。",
+    category="订阅管理",
+    parameters=[]
+)
+async def list_subscription_templates() -> ToolResult:
+    try:
+        from database import db
+        from models import SubscriptionTemplate
+        from sqlmodel import select
+        
+        async with db.session_scope():
+            stmt = select(SubscriptionTemplate)
+            templates = await db.all(SubscriptionTemplate, stmt)
+        
+        result = []
+        for tmpl in templates:
+            result.append({
+                "id": tmpl.id,
+                "name": tmpl.name,
+                "is_default": tmpl.is_default,
+                "save_path": tmpl.save_path,
+                "category": tmpl.category,
+                "target_client_id": tmpl.target_client_id,
+                "auto_fill": tmpl.auto_fill
+            })
+        
+        return ToolResult(
+            success=True,
+            data=result,
+            message=f"共有 {len(result)} 个订阅模板"
+        )
+    except Exception as e:
+        logger.error(f"[Tool] list_subscription_templates 失败: {e}")
         return ToolResult(success=False, error=str(e))

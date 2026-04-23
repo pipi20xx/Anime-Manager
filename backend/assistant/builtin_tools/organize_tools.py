@@ -216,3 +216,112 @@ async def get_background_tasks() -> ToolResult:
     except Exception as e:
         logger.error(f"[Tool] get_background_tasks 失败: {e}")
         return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="start_organize",
+    description="启动后台文件整理任务。",
+    category="整理管理",
+    parameters=[
+        {"name": "task_id", "type": "string", "description": "整理任务 ID", "required": True}
+    ]
+)
+async def start_organize(task_id: str) -> ToolResult:
+    try:
+        from config_manager import ConfigManager
+        from organizer_core.organizer import Organizer
+        
+        config = ConfigManager.get_config()
+        tasks = config.get("organize_tasks", [])
+        task = next((t for t in tasks if t["id"] == task_id), None)
+        
+        if not task:
+            return ToolResult(success=False, error=f"任务 {task_id} 不存在")
+        
+        organizer = Organizer()
+        result = await organizer.start_background_task(task)
+        
+        return ToolResult(
+            success=True,
+            data={"task_id": result.get("task_id")},
+            message=f"整理任务已启动: {task.get('name')}"
+        )
+    except Exception as e:
+        logger.error(f"[Tool] start_organize 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="stop_organize",
+    description="停止当前正在运行的整理任务。",
+    category="整理管理",
+    parameters=[]
+)
+async def stop_organize() -> ToolResult:
+    try:
+        from organizer_core.organizer import Organizer
+        
+        result = await Organizer.stop_current_task()
+        
+        if result:
+            return ToolResult(success=True, message="整理任务已停止")
+        else:
+            return ToolResult(success=True, message="没有正在运行的整理任务")
+    except Exception as e:
+        logger.error(f"[Tool] stop_organize 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="get_organize_history",
+    description="获取文件整理历史记录。",
+    category="整理管理",
+    parameters=[
+        {"name": "limit", "type": "integer", "description": "返回记录数量，默认 20", "required": False}
+    ]
+)
+async def get_organize_history(limit: int = 20) -> ToolResult:
+    try:
+        from database import db
+        from models import OrganizeHistory
+        from sqlmodel import select, desc
+        
+        async with db.session_scope():
+            stmt = select(OrganizeHistory).order_by(desc(OrganizeHistory.id)).limit(limit)
+            history = await db.all(OrganizeHistory, stmt)
+        
+        result = []
+        for item in history:
+            result.append({
+                "id": item.id,
+                "source_path": item.source_path,
+                "target_path": item.target_path,
+                "filename": item.filename,
+                "title": item.title,
+                "season": item.season,
+                "episode": item.episode,
+                "processed_at": str(item.processed_at) if hasattr(item, "processed_at") else None
+            })
+        
+        if not result:
+            formatted = "📭 暂无整理记录"
+        else:
+            lines = ["📁 **整理历史**\n"]
+            lines.append("| 文件名 | 标题 | 季/集 | 处理时间 |")
+            lines.append("|:-------|:-----|:------|:---------|")
+            for item in result[:15]:
+                time_str = item.get("processed_at", "-")[:19] if item.get("processed_at") else "-"
+                title = item.get("title") or "-"
+                season_ep = f"S{item['season']}E{item['episode']}" if item.get("season") else "-"
+                lines.append(f"| {item['filename'][:25]} | {title[:20]} | {season_ep} | {time_str} |")
+            formatted = "\n".join(lines)
+        
+        return ToolResult(
+            success=True,
+            data=result,
+            message=f"最近 {len(result)} 条整理记录",
+            formatted_message=formatted
+        )
+    except Exception as e:
+        logger.error(f"[Tool] get_organize_history 失败: {e}")
+        return ToolResult(success=False, error=str(e))

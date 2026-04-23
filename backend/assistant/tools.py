@@ -14,6 +14,7 @@ class ToolResult:
     data: Any = None
     error: Optional[str] = None
     message: Optional[str] = None
+    formatted_message: Optional[str] = None
 
     def to_dict(self) -> Dict:
         result = {"success": self.success}
@@ -23,6 +24,8 @@ class ToolResult:
             result["error"] = self.error
         if self.message:
             result["message"] = self.message
+        if self.formatted_message:
+            result["formatted_message"] = self.formatted_message
         return result
 
     def to_json(self) -> str:
