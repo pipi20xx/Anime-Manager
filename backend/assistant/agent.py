@@ -29,19 +29,107 @@ class AgentConfig:
     temperature: float = 0.7
     max_tokens: int = 4096
     max_iterations: int = 10
+    max_history_messages: int = 20
+    enable_dynamic_tools: bool = True
+    compact_tool_results: bool = True
+
+
+class MessageHistoryManager:
+    """
+    消息历史管理器 - 控制上下文长度，节省 token
+    """
+    def __init__(self, max_messages: int = 20):
+        self.max_messages = max_messages
+        self.messages: List[Dict] = []
+    
+    def add(self, message: Dict):
+        self.messages.append(message)
+        self._trim_if_needed()
+    
+    def extend(self, messages: List[Dict]):
+        self.messages.extend(messages)
+        self._trim_if_needed()
+    
+    def _trim_if_needed(self):
+        if len(self.messages) <= self.max_messages:
+            return
+        
+        system_msg = None
+        for msg in self.messages:
+            if msg.get("role") == "system":
+                system_msg = msg
+                break
+        
+        non_system = [m for m in self.messages if m.get("role") != "system"]
+        
+        if len(non_system) > self.max_messages - 1:
+            non_system = non_system[-(self.max_messages - 1):]
+        
+        self.messages = [system_msg] + non_system if system_msg else non_system
+    
+    def get_messages(self) -> List[Dict]:
+        return self.messages.copy()
+    
+    def clear(self):
+        self.messages = []
+    
+    def get_token_estimate(self) -> int:
+        total = 0
+        for msg in self.messages:
+            content = msg.get("content", "")
+            if isinstance(content, str):
+                total += len(content) // 2
+            elif isinstance(content, list):
+                for part in content:
+                    if isinstance(part, dict) and "text" in part:
+                        total += len(part["text"]) // 2
+        return total
 
 
 class Agent:
     def __init__(self, config: AgentConfig, messages: List[Dict] = None):
         self.config = config
-        self.messages: List[Dict] = messages if messages else []
+        self.history_manager = MessageHistoryManager(config.max_history_messages)
+        if messages:
+            self.history_manager.messages = messages
         self.tool_results: List[Dict] = []
         self.iteration_count = 0
         self.on_tool_call: Optional[Callable] = None
         self.on_tool_result: Optional[Callable] = None
         self.on_thinking: Optional[Callable] = None
+        self._selected_tools: List = []
         
-    def _get_system_prompt(self) -> str:
+    def _get_system_prompt(self, tools: List = None) -> str:
+        tools_desc = ToolRegistry.get_compact_tools_description(tools) if tools else ""
+        
+        return f"""你是番剧管家的智能助手，负责动漫资源管理。
+
+## 核心能力
+- 搜索/查询媒体信息（TMDB、Bangumi）
+- 管理订阅任务
+- 执行文件整理
+- 搜索下载资源
+
+## 工作原则
+1. 理解用户意图，选择正确工具执行
+2. 工具调用后根据真实结果回答用户
+3. 主动完成任务，不要中间停顿等待确认
+4. 订阅时优先使用 search_tmdb 搜索，然后用 add_subscription 订阅
+
+## 订阅列表格式
+```
+📋 订阅列表
+1. 日常 (S1, 1-43集) ✅
+2. 孤独摇滚 (S1, 1-12集) ✅
+
+💡 输入「序号+操作」如「1删除」「2禁用」
+```
+
+{tools_desc}
+
+使用中文回复。"""
+
+    def _get_system_prompt_full(self) -> str:
         tools_desc = ToolRegistry.get_tools_description()
         skills_desc = SkillEngine.get_all_skills_description()
         
@@ -149,11 +237,16 @@ class Agent:
         endpoint = self._get_endpoint()
         headers = self._get_headers()
         
-        tools = ToolRegistry.get_openai_tools()
+        if self.config.enable_dynamic_tools and self._selected_tools:
+            tools = [t.to_openai_schema() for t in self._selected_tools]
+        else:
+            tools = ToolRegistry.get_openai_tools()
+        
+        messages = self.history_manager.get_messages()
         
         payload = {
             "model": self.config.model,
-            "messages": self.messages,
+            "messages": messages,
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
         }
@@ -162,8 +255,9 @@ class Agent:
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
         
-        logger.info(f"[Agent] 调用 LLM: {endpoint}, model: {self.config.model}")
-        logger.debug(f"[Agent] Messages: {json.dumps(self.messages[-3:], ensure_ascii=False)[:500]}")
+        token_estimate = self.history_manager.get_token_estimate()
+        logger.info(f"[Agent] 调用 LLM: {endpoint}, model: {self.config.model}, 预估token: {token_estimate}, 工具数: {len(tools)}")
+        logger.debug(f"[Agent] Messages: {json.dumps(messages[-3:], ensure_ascii=False)[:500]}")
         
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(endpoint, headers=headers, json=payload)
@@ -174,6 +268,57 @@ class Agent:
                 raise Exception(f"LLM 调用失败: {error_text}")
             
             return response.json()
+
+    async def _call_llm_stream(self):
+        """
+        流式调用 LLM，支持实时输出和提前中断
+        """
+        endpoint = self._get_endpoint()
+        headers = self._get_headers()
+        
+        if self.config.enable_dynamic_tools and self._selected_tools:
+            tools = [t.to_openai_schema() for t in self._selected_tools]
+        else:
+            tools = ToolRegistry.get_openai_tools()
+        
+        messages = self.history_manager.get_messages()
+        
+        payload = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_tokens,
+            "stream": True,
+        }
+        
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+        
+        token_estimate = self.history_manager.get_token_estimate()
+        logger.info(f"[Agent] 流式调用 LLM: {endpoint}, model: {self.config.model}, 预估token: {token_estimate}")
+        
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream("POST", endpoint, headers=headers, json=payload) as response:
+                if response.status_code != 200:
+                    error_text = await response.aread()
+                    logger.error(f"[Agent] LLM 流式错误: {response.status_code} - {error_text}")
+                    raise Exception(f"LLM 调用失败: {error_text}")
+                
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    
+                    if line.startswith("data: "):
+                        data = line[6:]
+                        if data == "[DONE]":
+                            break
+                        
+                        try:
+                            chunk = json.loads(data)
+                            yield chunk
+                        except json.JSONDecodeError:
+                            continue
 
     async def _execute_tool(self, tool_name: str, arguments: Dict) -> ToolResult:
         tool_def = ToolRegistry.get(tool_name)
@@ -247,25 +392,38 @@ class Agent:
         user_message: str,
         context: Optional[Dict] = None
     ) -> AsyncGenerator[Dict, None]:
-        if not self.messages:
-            self.messages = [
-                {"role": "system", "content": self._get_system_prompt()}
-            ]
-        elif not any(m.get("role") == "system" for m in self.messages):
-            self.messages.insert(0, {"role": "system", "content": self._get_system_prompt()})
-        
-        self.messages.append({"role": "user", "content": user_message})
-        
         matched_skill = SkillEngine.match_skill(user_message)
+        skill_tools = matched_skill.tools_needed if matched_skill else None
+        
+        if self.config.enable_dynamic_tools:
+            self._selected_tools = ToolRegistry.select_tools_by_intent(user_message, skill_tools)
+            system_prompt = self._get_system_prompt(self._selected_tools)
+        else:
+            self._selected_tools = []
+            system_prompt = self._get_system_prompt_full()
+        
         if matched_skill:
             skill_prompt = SkillEngine.get_skill_prompt(matched_skill.id)
-            self.messages[0]["content"] += f"\n\n{skill_prompt}"
+            system_prompt += f"\n\n{skill_prompt}"
             yield {
                 "type": "skill",
                 "skill_id": matched_skill.id,
                 "skill_name": matched_skill.name,
                 "message": f"检测到技能: {matched_skill.name}"
             }
+        
+        messages = self.history_manager.get_messages()
+        if not messages:
+            self.history_manager.add({"role": "system", "content": system_prompt})
+        elif not any(m.get("role") == "system" for m in messages):
+            self.history_manager.messages.insert(0, {"role": "system", "content": system_prompt})
+        else:
+            for i, msg in enumerate(self.history_manager.messages):
+                if msg.get("role") == "system":
+                    self.history_manager.messages[i]["content"] = system_prompt
+                    break
+        
+        self.history_manager.add({"role": "user", "content": user_message})
         
         self.iteration_count = 0
         
@@ -349,15 +507,16 @@ class Agent:
                         }
                         assistant_message["content"] = result.formatted_message
                     
+                    tool_result_content = self._compact_tool_result(result) if self.config.compact_tool_results else result.to_json()
                     tool_results_messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call_id,
                         "name": tool_name,
-                        "content": result.to_json()
+                        "content": tool_result_content
                     })
                 
-                self.messages.append(assistant_message)
-                self.messages.extend(tool_results_messages)
+                self.history_manager.add(assistant_message)
+                self.history_manager.extend(tool_results_messages)
                 
                 if has_formatted_output:
                     return
@@ -386,15 +545,16 @@ class Agent:
                     "message": result.message or ("执行成功" if result.success else f"执行失败: {result.error}")
                 }
                 
-                self.messages.append({
+                self.history_manager.add({
                     "role": "assistant",
                     "content": content
                 })
-                self.messages.append({
+                tool_result_content = self._compact_tool_result(result) if self.config.compact_tool_results else result.to_json()
+                self.history_manager.add({
                     "role": "tool",
                     "tool_call_id": f"parsed_{tool_name}",
                     "name": tool_name,
-                    "content": result.to_json()
+                    "content": tool_result_content
                 })
                 continue
             
@@ -411,7 +571,7 @@ class Agent:
                     "type": "thinking",
                     "content": "让我重新整理一下信息..."
                 }
-                self.messages.append({
+                self.history_manager.add({
                     "role": "user",
                     "content": "请根据之前的工具调用结果，给出你的回答。"
                 })
@@ -424,6 +584,45 @@ class Agent:
                 "type": "warning",
                 "message": "已达到最大迭代次数，请简化请求或分步执行"
             }
+    
+    def _compact_tool_result(self, result: ToolResult) -> str:
+        """
+        压缩工具结果，减少 token 消耗
+        """
+        if result.formatted_message:
+            return result.formatted_message
+        
+        compact = {
+            "success": result.success,
+        }
+        
+        if result.error:
+            compact["error"] = result.error[:200]
+        
+        if result.message:
+            compact["message"] = result.message
+        
+        if result.data:
+            data = result.data
+            
+            if isinstance(data, list):
+                if len(data) > 10:
+                    compact["data"] = data[:10]
+                    compact["truncated"] = f"共{len(data)}条，已截断"
+                else:
+                    compact["data"] = data
+            elif isinstance(data, dict):
+                important_keys = ["id", "title", "name", "tmdb_id", "bangumi_id", "success", "exists", "count"]
+                compact_data = {k: v for k, v in data.items() if k in important_keys}
+                if compact_data:
+                    compact["data"] = compact_data
+                else:
+                    keys = list(data.keys())[:5]
+                    compact["data"] = {k: data[k] for k in keys}
+                    if len(data) > 5:
+                        compact["truncated"] = f"共{len(data)}字段"
+        
+        return json.dumps(compact, ensure_ascii=False, default=str)
 
     async def run_simple(self, user_message: str) -> str:
         final_response = ""
@@ -434,6 +633,180 @@ class Agent:
                 final_response = f"错误: {event.get('message', '未知错误')}"
         
         return final_response
+    
+    async def run_stream(
+        self,
+        user_message: str,
+        context: Optional[Dict] = None
+    ) -> AsyncGenerator[Dict, None]:
+        """
+        流式运行智能体，支持实时输出
+        相比 run() 方法，可以更快地看到响应内容
+        """
+        matched_skill = SkillEngine.match_skill(user_message)
+        skill_tools = matched_skill.tools_needed if matched_skill else None
+        
+        if self.config.enable_dynamic_tools:
+            self._selected_tools = ToolRegistry.select_tools_by_intent(user_message, skill_tools)
+            system_prompt = self._get_system_prompt(self._selected_tools)
+        else:
+            self._selected_tools = []
+            system_prompt = self._get_system_prompt_full()
+        
+        if matched_skill:
+            skill_prompt = SkillEngine.get_skill_prompt(matched_skill.id)
+            system_prompt += f"\n\n{skill_prompt}"
+            yield {
+                "type": "skill",
+                "skill_id": matched_skill.id,
+                "skill_name": matched_skill.name,
+                "message": f"检测到技能: {matched_skill.name}"
+            }
+        
+        messages = self.history_manager.get_messages()
+        if not messages:
+            self.history_manager.add({"role": "system", "content": system_prompt})
+        elif not any(m.get("role") == "system" for m in messages):
+            self.history_manager.messages.insert(0, {"role": "system", "content": system_prompt})
+        else:
+            for i, msg in enumerate(self.history_manager.messages):
+                if msg.get("role") == "system":
+                    self.history_manager.messages[i]["content"] = system_prompt
+                    break
+        
+        self.history_manager.add({"role": "user", "content": user_message})
+        
+        self.iteration_count = 0
+        
+        while self.iteration_count < self.config.max_iterations:
+            self.iteration_count += 1
+            
+            full_content = ""
+            tool_calls_data = []
+            current_tool_call = None
+            
+            try:
+                async for chunk in self._call_llm_stream():
+                    choice = chunk.get("choices", [{}])[0]
+                    delta = choice.get("delta", {})
+                    finish_reason = choice.get("finish_reason", "")
+                    
+                    if "content" in delta and delta["content"]:
+                        content_piece = delta["content"]
+                        full_content += content_piece
+                        yield {
+                            "type": "stream",
+                            "content": content_piece
+                        }
+                    
+                    if "tool_calls" in delta:
+                        for tc_delta in delta["tool_calls"]:
+                            idx = tc_delta.get("index", 0)
+                            
+                            while len(tool_calls_data) <= idx:
+                                tool_calls_data.append({
+                                    "id": "",
+                                    "type": "function",
+                                    "function": {"name": "", "arguments": ""}
+                                })
+                            
+                            if tc_delta.get("id"):
+                                tool_calls_data[idx]["id"] = tc_delta["id"]
+                            if tc_delta.get("function", {}).get("name"):
+                                tool_calls_data[idx]["function"]["name"] = tc_delta["function"]["name"]
+                            if tc_delta.get("function", {}).get("arguments"):
+                                tool_calls_data[idx]["function"]["arguments"] += tc_delta["function"]["arguments"]
+                    
+                    if finish_reason:
+                        logger.info(f"[Agent] 流式完成: {finish_reason}")
+                        
+            except Exception as e:
+                yield {"type": "error", "message": str(e)}
+                return
+            
+            if tool_calls_data:
+                assistant_message = {
+                    "role": "assistant",
+                    "content": full_content,
+                    "tool_calls": tool_calls_data
+                }
+                
+                tool_results_messages = []
+                has_formatted_output = False
+                
+                for tool_call in tool_calls_data:
+                    tool_call_id = tool_call.get("id", "")
+                    function = tool_call.get("function", {})
+                    tool_name = function.get("name", "")
+                    
+                    try:
+                        arguments = json.loads(function.get("arguments", "{}"))
+                    except:
+                        arguments = {}
+                    
+                    yield {
+                        "type": "tool_call",
+                        "tool_name": tool_name,
+                        "arguments": arguments,
+                        "message": f"正在调用工具: {tool_name}"
+                    }
+                    
+                    result = await self._execute_tool(tool_name, arguments)
+                    
+                    yield {
+                        "type": "tool_result",
+                        "tool_name": tool_name,
+                        "result": result.to_dict(),
+                        "success": result.success,
+                        "message": result.message or ("执行成功" if result.success else f"执行失败: {result.error}")
+                    }
+                    
+                    if result.formatted_message:
+                        has_formatted_output = True
+                        yield {
+                            "type": "response",
+                            "content": result.formatted_message
+                        }
+                        assistant_message["content"] = result.formatted_message
+                    
+                    tool_result_content = self._compact_tool_result(result) if self.config.compact_tool_results else result.to_json()
+                    tool_results_messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call_id,
+                        "name": tool_name,
+                        "content": tool_result_content
+                    })
+                
+                self.history_manager.add(assistant_message)
+                self.history_manager.extend(tool_results_messages)
+                
+                if has_formatted_output:
+                    return
+                
+                continue
+            
+            if full_content:
+                self.history_manager.add({"role": "assistant", "content": full_content})
+                yield {
+                    "type": "response",
+                    "content": full_content
+                }
+                break
+            
+            break
+        
+        if self.iteration_count >= self.config.max_iterations:
+            yield {
+                "type": "warning",
+                "message": "已达到最大迭代次数，请简化请求或分步执行"
+            }
+    
+    @property
+    def messages(self) -> List[Dict]:
+        return self.history_manager.get_messages()
+    
+    def clear_history(self):
+        self.history_manager.clear()
 
 
 async def create_agent(config: Optional[Dict] = None) -> Agent:
@@ -449,7 +822,10 @@ async def create_agent(config: Optional[Dict] = None) -> Agent:
         provider=config.get("provider", "openai"),
         temperature=config.get("temperature", 0.7),
         max_tokens=config.get("max_tokens", 64) * 1000,
-        max_iterations=config.get("max_iterations", 10)
+        max_iterations=config.get("max_iterations", 10),
+        max_history_messages=config.get("max_history_messages", 20),
+        enable_dynamic_tools=config.get("enable_dynamic_tools", True),
+        compact_tool_results=config.get("compact_tool_results", True)
     )
     
     return Agent(agent_config)

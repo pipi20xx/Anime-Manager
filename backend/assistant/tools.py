@@ -87,6 +87,7 @@ class ToolRegistry:
     _instance = None
     _tools: Dict[str, ToolDefinition] = {}
     _categories: Dict[str, List[str]] = {}
+    _keywords_map: Dict[str, List[str]] = {}
 
     def __new__(cls):
         if cls._instance is None:
@@ -137,6 +138,53 @@ class ToolRegistry:
                     for param in tool.parameters:
                         req = "必填" if param.required else "可选"
                         lines.append(f"  - `{param.name}` ({param.type}, {req}): {param.description}")
+        return "\n".join(lines)
+
+    @classmethod
+    def select_tools_by_intent(cls, user_message: str, skill_tools: Optional[List[str]] = None) -> List[ToolDefinition]:
+        """
+        根据用户意图动态选择相关工具，减少 token 消耗
+        
+        策略：
+        1. 如果技能指定了需要的工具，优先使用
+        2. 根据关键词匹配工具类别
+        3. 始终包含基础工具
+        """
+        selected_names = set()
+        message_lower = user_message.lower()
+        
+        if skill_tools:
+            selected_names.update(skill_tools)
+        
+        intent_category_map = {
+            "订阅管理": ["订阅", "订阅列表", "添加订阅", "取消订阅", "删除订阅", "禁用", "启用", "订阅任务"],
+            "媒体搜索": ["搜索", "查找", "找", "tmdb", "bangumi", "热门", "新番", "日历", "发现", "推荐"],
+            "下载管理": ["下载", "种子", "jackett", "资源", "搜索资源"],
+            "文件整理": ["整理", "重命名", "移动", "组织", "识别", "文件名"],
+            "系统管理": ["状态", "配置", "设置", "系统", "检查", "健康"],
+        }
+        
+        for category, keywords in intent_category_map.items():
+            if any(kw in message_lower for kw in keywords):
+                tool_names = cls._categories.get(category, [])
+                selected_names.update(tool_names)
+        
+        essential_tools = ["list_subscriptions", "search_tmdb", "get_bangumi_calendar"]
+        selected_names.update(essential_tools)
+        
+        return [cls._tools[name] for name in selected_names if name in cls._tools]
+
+    @classmethod
+    def get_compact_tools_description(cls, tools: List[ToolDefinition]) -> str:
+        """
+        生成精简的工具描述，只包含工具名和简短描述
+        """
+        if not tools:
+            return ""
+        
+        lines = ["# 可用工具\n"]
+        for tool in tools:
+            lines.append(f"- `{tool.name}`: {tool.description.split('。')[0]}")
         return "\n".join(lines)
 
 

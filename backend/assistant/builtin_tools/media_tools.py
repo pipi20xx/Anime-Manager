@@ -1,4 +1,5 @@
 from ..tools import tool, ToolResult
+from ..cache import query_cache, CACHE_TTL
 from typing import Optional, List
 import logging
 
@@ -15,6 +16,15 @@ logger = logging.getLogger(__name__)
 )
 async def search_tmdb(query: str) -> ToolResult:
     try:
+        hit, cached = query_cache.get("tmdb_search", query)
+        if hit:
+            logger.info(f"[Cache] TMDB搜索缓存命中: {query}")
+            return ToolResult(
+                success=True,
+                data=cached,
+                message=f"找到 {len(cached)} 个结果（缓存）"
+            )
+        
         from recognition.data_provider.tmdb.client import TMDBProvider
         from recognition_engine.tmdb_matcher.logic import TMDBMatcher
         
@@ -38,6 +48,8 @@ async def search_tmdb(query: str) -> ToolResult:
                 "poster_path": normalized.get("poster_path")
             })
         
+        query_cache.set("tmdb_search", simplified, CACHE_TTL["tmdb_search"], query)
+        
         return ToolResult(
             success=True,
             data=simplified,
@@ -59,6 +71,11 @@ async def search_tmdb(query: str) -> ToolResult:
 )
 async def get_tmdb_detail(tmdb_id: str, media_type: str) -> ToolResult:
     try:
+        hit, cached = query_cache.get("tmdb_detail", tmdb_id, media_type)
+        if hit:
+            logger.info(f"[Cache] TMDB详情缓存命中: {tmdb_id}")
+            return ToolResult(success=True, data=cached)
+        
         from recognition.data_provider.tmdb.client import TMDBProvider
         
         provider = TMDBProvider()
@@ -92,6 +109,8 @@ async def get_tmdb_detail(tmdb_id: str, media_type: str) -> ToolResult:
                 for s in result.get("seasons", [])
             ]
         
+        query_cache.set("tmdb_detail", simplified, CACHE_TTL["tmdb_detail"], tmdb_id, media_type)
+        
         return ToolResult(success=True, data=simplified)
     except Exception as e:
         logger.error(f"[Tool] get_tmdb_detail 失败: {e}")
@@ -108,6 +127,11 @@ async def get_tmdb_detail(tmdb_id: str, media_type: str) -> ToolResult:
 )
 async def get_trending(media_type: str = "tv") -> ToolResult:
     try:
+        hit, cached = query_cache.get("trending", media_type)
+        if hit:
+            logger.info(f"[Cache] 热门列表缓存命中: {media_type}")
+            return ToolResult(success=True, data=cached, message=f"获取到 {len(cached)} 个热门作品（缓存）")
+        
         from recognition.data_provider.tmdb.client import TMDBProvider
         
         provider = TMDBProvider()
@@ -125,6 +149,8 @@ async def get_trending(media_type: str = "tv") -> ToolResult:
                 "media_type": item.get("media_type", "tv")
             })
         
+        query_cache.set("trending", simplified, CACHE_TTL["trending"], media_type)
+        
         return ToolResult(success=True, data=simplified, message=f"获取到 {len(simplified)} 个热门作品")
     except Exception as e:
         logger.error(f"[Tool] get_trending 失败: {e}")
@@ -139,6 +165,16 @@ async def get_trending(media_type: str = "tv") -> ToolResult:
 )
 async def get_bangumi_calendar() -> ToolResult:
     try:
+        hit, cached = query_cache.get("bangumi_calendar")
+        if hit:
+            logger.info(f"[Cache] 番剧日历缓存命中")
+            return ToolResult(
+                success=True,
+                data=cached["data"],
+                message=f"获取到 {len(cached['data'])} 部当季新番（缓存）",
+                formatted_message=cached["formatted"]
+            )
+        
         from recognition.data_provider.bangumi.client import BangumiProvider
         
         result = await BangumiProvider.get_calendar()
@@ -192,6 +228,11 @@ async def get_bangumi_calendar() -> ToolResult:
         formatted_lines.append("\n💡 请输入要订阅的番剧编号（多个用空格分隔，输入\"全部\"订阅所有）：")
         
         formatted_message = "\n".join(formatted_lines)
+        
+        query_cache.set("bangumi_calendar", {
+            "data": simplified,
+            "formatted": formatted_message
+        }, CACHE_TTL["bangumi_calendar"])
         
         return ToolResult(
             success=True,
@@ -265,6 +306,11 @@ async def recognize_filename(filename: str) -> ToolResult:
 )
 async def get_bangumi_subject(bangumi_id: int) -> ToolResult:
     try:
+        hit, cached = query_cache.get("bangumi_detail", bangumi_id)
+        if hit:
+            logger.info(f"[Cache] Bangumi详情缓存命中: {bangumi_id}")
+            return ToolResult(success=True, data=cached)
+        
         from recognition.data_provider.bangumi.client import BangumiProvider
         
         result = await BangumiProvider.get_subject_details(bangumi_id)
@@ -274,21 +320,22 @@ async def get_bangumi_subject(bangumi_id: int) -> ToolResult:
         
         rating = result.get("rating", {})
         
-        return ToolResult(
-            success=True,
-            data={
-                "bangumi_id": result.get("id"),
-                "title": result.get("title"),
-                "original_title": result.get("original_title"),
-                "summary": result.get("summary"),
-                "rating": rating.get("score") if isinstance(rating, dict) else None,
-                "rating_count": rating.get("total") if isinstance(rating, dict) else None,
-                "episodes": result.get("eps"),
-                "status": result.get("status", {}).get("cn") if isinstance(result.get("status"), dict) else None,
-                "air_date": result.get("date"),
-                "image": result.get("images", {}).get("large") if result.get("images") else None
-            }
-        )
+        simplified = {
+            "bangumi_id": result.get("id"),
+            "title": result.get("title"),
+            "original_title": result.get("original_title"),
+            "summary": result.get("summary"),
+            "rating": rating.get("score") if isinstance(rating, dict) else None,
+            "rating_count": rating.get("total") if isinstance(rating, dict) else None,
+            "episodes": result.get("eps"),
+            "status": result.get("status", {}).get("cn") if isinstance(result.get("status"), dict) else None,
+            "air_date": result.get("date"),
+            "image": result.get("images", {}).get("large") if result.get("images") else None
+        }
+        
+        query_cache.set("bangumi_detail", simplified, CACHE_TTL["bangumi_detail"], bangumi_id)
+        
+        return ToolResult(success=True, data=simplified)
     except Exception as e:
         logger.error(f"[Tool] get_bangumi_subject 失败: {e}")
         return ToolResult(success=False, error=str(e))
@@ -305,6 +352,15 @@ async def get_bangumi_subject(bangumi_id: int) -> ToolResult:
 )
 async def search_jackett(query: str, indexer: str = "") -> ToolResult:
     try:
+        hit, cached = query_cache.get("jackett_search", query, indexer)
+        if hit:
+            logger.info(f"[Cache] Jackett搜索缓存命中: {query}")
+            return ToolResult(
+                success=True,
+                data=cached,
+                message=f"找到 {len(cached)} 个资源（缓存）"
+            )
+        
         from clients.jackett_client import JackettClient
         from config_manager import ConfigManager
         
@@ -335,6 +391,8 @@ async def search_jackett(query: str, indexer: str = "") -> ToolResult:
                 "indexer": item.get("Tracker"),
                 "pub_date": item.get("PublishDate")
             })
+        
+        query_cache.set("jackett_search", simplified, CACHE_TTL["jackett_search"], query, indexer)
         
         return ToolResult(
             success=True,
