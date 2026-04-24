@@ -63,6 +63,7 @@ class ConfigUpdate(BaseModel):
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     max_iterations: Optional[int] = None
+    ai_fallback_enabled: Optional[bool] = None
 
 def get_assistant_config() -> Dict:
     config = ConfigManager.get_config()
@@ -73,7 +74,8 @@ def get_assistant_config() -> Dict:
         "provider": "openai",
         "temperature": 0.7,
         "max_tokens": 64,
-        "max_iterations": 10
+        "max_iterations": 10,
+        "ai_fallback_enabled": False
     })
 
 def save_assistant_config(new_config: Dict):

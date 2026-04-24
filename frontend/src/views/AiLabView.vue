@@ -46,7 +46,8 @@ const assistantConfig = ref({
   provider: 'openai',
   temperature: 0.7,
   max_tokens: 64,
-  max_iterations: 10
+  max_iterations: 10,
+  ai_fallback_enabled: false
 })
 
 const telegramBotConfig = ref({
@@ -618,6 +619,19 @@ onMounted(() => {
                   工具调用的最大循环次数，防止无限循环
                 </n-tooltip>
               </n-form-item>
+              
+              <n-divider style="margin: 16px 0;">识别增强</n-divider>
+              
+              <n-form-item label="AI 智能介入">
+                <n-switch v-model:value="assistantConfig.ai_fallback_enabled" />
+                <n-text depth="3" style="margin-left: 12px; font-size: 12px">
+                  识别失败时，让 AI 猜测标题并重新搜索
+                </n-text>
+              </n-form-item>
+              
+              <n-alert type="info" size="small" :show-icon="false" style="margin-bottom: 16px;">
+                启用后，当常规识别流程无法匹配到 TMDB 数据时，AI 会分析文件名并猜测可能的标题变体，然后重新搜索。
+              </n-alert>
               
               <n-divider style="margin: 16px 0;">Telegram Bot</n-divider>
               

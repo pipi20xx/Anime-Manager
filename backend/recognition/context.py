@@ -48,6 +48,9 @@ class RecognitionContext:
         self.batch_enhance = get_pref("batch_enhancement", "batch_enhancement", False)
         self.use_fingerprint = get_pref("series_fingerprint", "series_fingerprint", True)
         
+        assistant_config = self.config.get("assistant_config", {})
+        self.ai_fallback_enabled = assistant_config.get("ai_fallback_enabled", False)
+        
         # Initialize Providers
         self.tmdb_client = TMDBClient(self.api_key)
         self.bangumi_client = BangumiClient()

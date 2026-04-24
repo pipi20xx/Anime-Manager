@@ -53,18 +53,14 @@ class ConfigManager:
         },
         "anime_priority": True,
         "offline_priority": True,
-        "ai_config": {
-            "openai_base_url": "http://localhost:11434/v1",
-            "openai_api_key": "sk-xxx",
-            "openai_model": "qwen2.5:1.5b"
-        },
         "assistant_config": {
             "base_url": "",
             "api_key": "",
             "model": "",
             "provider": "ollama",
             "temperature": 0.7,
-            "max_tokens": 64
+            "max_tokens": 64,
+            "ai_fallback_enabled": False
         },
         "batch_enhancement": False,
         "series_fingerprint": True,

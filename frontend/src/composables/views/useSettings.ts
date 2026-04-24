@@ -18,10 +18,14 @@ export function useSettings() {
     telegram: { bot_token: '', chat_id: '', enabled: false, notify_on_download: true, notify_on_organize: true },
     anime_priority: true,
     offline_priority: true,
-    ai_config: {
-      openai_base_url: 'http://localhost:11434/v1',
-      openai_api_key: 'sk-xxx',
-      openai_model: 'qwen2.5:1.5b'
+    assistant_config: {
+      base_url: '',
+      api_key: '',
+      model: '',
+      provider: 'ollama',
+      temperature: 0.7,
+      max_tokens: 64,
+      ai_fallback_enabled: false
     },
     batch_enhancement: false,
     custom_noise_words: [],
@@ -96,6 +100,22 @@ export function useSettings() {
       }
       if (!config.value.emby_user_id) {
         config.value.emby_user_id = ''
+      }
+
+      if (!config.value.assistant_config) {
+        config.value.assistant_config = {
+          base_url: '',
+          api_key: '',
+          model: '',
+          provider: 'ollama',
+          temperature: 0.7,
+          max_tokens: 64,
+          ai_fallback_enabled: false
+        }
+      } else {
+        if (config.value.assistant_config.ai_fallback_enabled === undefined) {
+          config.value.assistant_config.ai_fallback_enabled = false
+        }
       }
       
       const clientRes = await fetch(`${API_BASE}/api/clients`)
