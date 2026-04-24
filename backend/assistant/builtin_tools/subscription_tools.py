@@ -38,18 +38,19 @@ async def list_subscriptions(enabled_only: bool = False) -> ToolResult:
             formatted = "📭 当前没有订阅任务"
         else:
             lines = ["📋 **订阅列表**\n"]
-            lines.append("| ID | 标题 | 类型 | 季 | 集数 | 状态 |")
-            lines.append("|:--:|:-----|:----:|:--:|:----:|:----:|")
-            for sub in simplified:
+            for idx, sub in enumerate(simplified, 1):
                 status = "✅" if sub["enabled"] else "⏸️"
                 ep_range = f"{sub['start_episode']}-{sub['end_episode']}" if sub['end_episode'] > 0 else f"{sub['start_episode']}+"
                 media_type = "剧集" if sub["media_type"] == "tv" else "电影"
-                lines.append(f"| {sub['id']} | {sub['title']} | {media_type} | S{sub['season']} | {ep_range} | {status} |")
+                lines.append(f"{idx}. {sub['title']} ({media_type} S{sub['season']} {ep_range}集) {status}")
+            lines.append("")
+            lines.append("💡 输入「序号+操作」如「1删除」「2禁用」")
+            lines.append("   操作：删除/禁用/启用/补全")
             formatted = "\n".join(lines)
         
         return ToolResult(
             success=True,
-            data=simplified,
+            data={"subscriptions": simplified, "count": len(simplified)},
             message=f"当前共有 {len(simplified)} 个订阅",
             formatted_message=formatted
         )
@@ -150,6 +151,218 @@ async def delete_subscription(subscription_id: int) -> ToolResult:
         return ToolResult(success=True, message=f"已删除订阅: {title}")
     except Exception as e:
         logger.error(f"[Tool] delete_subscription 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="operate_subscription",
+    description="对订阅执行操作。当用户输入包含序号和操作时立即调用此工具，如「1删除」「删除1」「2禁用」「3启用」「4补全」等。不要询问确认，直接执行。",
+    category="订阅管理",
+    parameters=[
+        {"name": "index", "type": "integer", "description": "订阅序号（1,2,3...）", "required": True},
+        {"name": "action", "type": "string", "description": "操作：delete(删除)、disable(禁用)、enable(启用)、fill(补全)", "required": True, "enum": ["delete", "disable", "enable", "fill"]}
+    ]
+)
+async def operate_subscription(index: int, action: str) -> ToolResult:
+    try:
+        from rss_core.subscription_manager import SubscriptionManager
+        from database import db
+        from models import Subscription
+        from sqlmodel import select
+        
+        if index < 1:
+            return ToolResult(success=False, error="序号必须大于 0")
+        
+        async with db.session_scope():
+            stmt = select(Subscription)
+            subs = await db.all(Subscription, stmt)
+            
+            if not subs:
+                return ToolResult(success=False, error="当前没有订阅任务")
+            
+            if index > len(subs):
+                return ToolResult(success=False, error=f"序号 {index} 超出范围，当前共有 {len(subs)} 个订阅")
+            
+            sub = subs[index - 1]
+            sub_title = sub.title
+            
+            if action == "delete":
+                await SubscriptionManager.delete_subscription(sub.id)
+                return ToolResult(success=True, message=f"✅ 已删除订阅: {sub_title}")
+            
+            elif action == "disable":
+                sub.enabled = False
+                await db.save(sub)
+                return ToolResult(success=True, message=f"⏸️ 已禁用订阅: {sub_title}")
+            
+            elif action == "enable":
+                sub.enabled = True
+                await db.save(sub)
+                return ToolResult(success=True, message=f"✅ 已启用订阅: {sub_title}")
+            
+            elif action == "fill":
+                result = await SubscriptionManager.fill_missing_episodes(sub.id)
+                if result.get("success"):
+                    return ToolResult(success=True, message=f"🔄 补全任务已启动: {sub_title}")
+                else:
+                    return ToolResult(success=False, error=result.get("message", "补全失败"))
+            
+            else:
+                return ToolResult(success=False, error=f"未知操作: {action}")
+                
+    except Exception as e:
+        logger.error(f"[Tool] operate_subscription 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="delete_subscription_by_index",
+    description="按列表序号删除订阅。当用户查看订阅列表后输入「删除 1」「取消第2个」等时使用此工具。",
+    category="订阅管理",
+    parameters=[
+        {"name": "index", "type": "integer", "description": "订阅在列表中的序号（从1开始）", "required": True}
+    ]
+)
+async def delete_subscription_by_index(index: int) -> ToolResult:
+    try:
+        from rss_core.subscription_manager import SubscriptionManager
+        from database import db
+        from models import Subscription
+        from sqlmodel import select
+        
+        if index < 1:
+            return ToolResult(success=False, error="序号必须大于 0")
+        
+        async with db.session_scope():
+            stmt = select(Subscription)
+            subs = await db.all(Subscription, stmt)
+            
+            if not subs:
+                return ToolResult(success=False, error="当前没有订阅任务")
+            
+            if index > len(subs):
+                return ToolResult(success=False, error=f"序号 {index} 超出范围，当前共有 {len(subs)} 个订阅")
+            
+            sub = subs[index - 1]
+            sub_title = sub.title
+            await SubscriptionManager.delete_subscription(sub.id)
+        
+        return ToolResult(success=True, message=f"已删除订阅: {sub_title}")
+    except Exception as e:
+        logger.error(f"[Tool] delete_subscription_by_index 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="toggle_subscription_by_index",
+    description="按列表序号启用或禁用订阅。当用户查看订阅列表后输入「禁用 1」「启用第2个」等时使用此工具。",
+    category="订阅管理",
+    parameters=[
+        {"name": "index", "type": "integer", "description": "订阅在列表中的序号（从1开始）", "required": True},
+        {"name": "enabled", "type": "boolean", "description": "是否启用", "required": True}
+    ]
+)
+async def toggle_subscription_by_index(index: int, enabled: bool) -> ToolResult:
+    try:
+        from database import db
+        from models import Subscription
+        from sqlmodel import select
+        
+        if index < 1:
+            return ToolResult(success=False, error="序号必须大于 0")
+        
+        async with db.session_scope():
+            stmt = select(Subscription)
+            subs = await db.all(Subscription, stmt)
+            
+            if not subs:
+                return ToolResult(success=False, error="当前没有订阅任务")
+            
+            if index > len(subs):
+                return ToolResult(success=False, error=f"序号 {index} 超出范围，当前共有 {len(subs)} 个订阅")
+            
+            sub = subs[index - 1]
+            sub.enabled = enabled
+            await db.save(sub)
+        
+        status = "启用" if enabled else "禁用"
+        return ToolResult(success=True, message=f"已{status}订阅: {sub.title}")
+    except Exception as e:
+        logger.error(f"[Tool] toggle_subscription_by_index 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="delete_subscription_by_title",
+    description="通过标题删除订阅任务。当用户说「取消订阅 XXX」或「删除 XXX 的订阅」时使用此工具。",
+    category="订阅管理",
+    parameters=[
+        {"name": "title", "type": "string", "description": "订阅标题（支持模糊匹配）", "required": True}
+    ]
+)
+async def delete_subscription_by_title(title: str) -> ToolResult:
+    try:
+        from rss_core.subscription_manager import SubscriptionManager
+        from database import db
+        from models import Subscription
+        from sqlmodel import select
+        
+        async with db.session_scope():
+            stmt = select(Subscription).where(Subscription.title.ilike(f"%{title}%"))
+            subs = await db.all(Subscription, stmt)
+            
+            if not subs:
+                return ToolResult(success=False, error=f"未找到标题包含「{title}」的订阅")
+            
+            if len(subs) > 1:
+                titles = [s.title for s in subs]
+                return ToolResult(
+                    success=False,
+                    error=f"找到多个匹配的订阅，请指定更准确的标题：{', '.join(titles)}"
+                )
+            
+            sub = subs[0]
+            sub_title = sub.title
+            await SubscriptionManager.delete_subscription(sub.id)
+        
+        return ToolResult(success=True, message=f"已删除订阅: {sub_title}")
+    except Exception as e:
+        logger.error(f"[Tool] delete_subscription_by_title 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="clear_all_subscriptions",
+    description="清空所有订阅任务。当用户说「清空所有订阅」或「删除全部订阅」时使用此工具。",
+    category="订阅管理",
+    parameters=[]
+)
+async def clear_all_subscriptions() -> ToolResult:
+    try:
+        from rss_core.subscription_manager import SubscriptionManager
+        from database import db
+        from models import Subscription
+        from sqlmodel import select
+        
+        async with db.session_scope():
+            stmt = select(Subscription)
+            subs = await db.all(Subscription, stmt)
+            
+            if not subs:
+                return ToolResult(success=True, message="当前没有订阅任务")
+            
+            deleted_titles = []
+            for sub in subs:
+                deleted_titles.append(sub.title)
+                await SubscriptionManager.delete_subscription(sub.id)
+        
+        return ToolResult(
+            success=True,
+            message=f"已清空所有订阅，共删除 {len(deleted_titles)} 个",
+            formatted_message=f"✅ **已清空所有订阅**\n\n已删除以下 {len(deleted_titles)} 个订阅：\n" + "\n".join([f"- {t}" for t in deleted_titles]) + "\n\n当前订阅列表已为空。"
+        )
+    except Exception as e:
+        logger.error(f"[Tool] clear_all_subscriptions 失败: {e}")
         return ToolResult(success=False, error=str(e))
 
 

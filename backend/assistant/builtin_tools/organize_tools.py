@@ -274,7 +274,7 @@ async def stop_organize() -> ToolResult:
 
 @tool(
     name="get_organize_history",
-    description="获取文件整理历史记录。",
+    description="查看最近整理历史记录。当用户问「整理历史」「最近整理」「整理记录」时调用此工具。",
     category="整理管理",
     parameters=[
         {"name": "limit", "type": "integer", "description": "返回记录数量，默认 20", "required": False}
@@ -300,21 +300,37 @@ async def get_organize_history(limit: int = 20) -> ToolResult:
                 "title": item.title,
                 "season": item.season,
                 "episode": item.episode,
+                "status": item.status if hasattr(item, "status") else "success",
+                "message": item.message if hasattr(item, "message") else None,
                 "processed_at": str(item.processed_at) if hasattr(item, "processed_at") else None
             })
         
         if not result:
             formatted = "📭 暂无整理记录"
         else:
-            lines = ["📁 **整理历史**\n"]
-            lines.append("| 文件名 | 标题 | 季/集 | 处理时间 |")
-            lines.append("|:-------|:-----|:------|:---------|")
-            for item in result[:15]:
-                time_str = item.get("processed_at", "-")[:19] if item.get("processed_at") else "-"
-                title = item.get("title") or "-"
-                season_ep = f"S{item['season']}E{item['episode']}" if item.get("season") else "-"
-                lines.append(f"| {item['filename'][:25]} | {title[:20]} | {season_ep} | {time_str} |")
-            formatted = "\n".join(lines)
+            lines = ["📁 **最近整理记录**\n"]
+            for idx, item in enumerate(result[:15], 1):
+                time_str = item.get("processed_at", "-")[:16] if item.get("processed_at") else "-"
+                title = item.get("title") or "未知"
+                season_ep = f"S{item['season']}E{item['episode']}" if item.get("season") and item.get("episode") else ""
+                status = item.get("status", "success")
+                message = item.get("message")
+                
+                if status == "failed":
+                    status_icon = "❌"
+                    status_text = f"失败: {message}" if message else "失败"
+                elif status == "skipped":
+                    status_icon = "⏭️"
+                    status_text = f"跳过: {message}" if message else "跳过"
+                else:
+                    status_icon = "✅"
+                    status_text = "成功"
+                
+                lines.append(f"{idx}. {title} {season_ep} {status_icon}")
+                lines.append(f"   📄 {item['filename'][:40]}")
+                lines.append(f"   ⏰ {time_str} | {status_text}")
+                lines.append("")
+            formatted = "\n".join(lines).rstrip()
         
         return ToolResult(
             success=True,
@@ -324,4 +340,70 @@ async def get_organize_history(limit: int = 20) -> ToolResult:
         )
     except Exception as e:
         logger.error(f"[Tool] get_organize_history 失败: {e}")
+        return ToolResult(success=False, error=str(e))
+
+
+@tool(
+    name="get_failed_organize_history",
+    description="查看整理失败的记录。当用户问「整理失败」「失败记录」「哪些整理失败了」时调用此工具。",
+    category="整理管理",
+    parameters=[
+        {"name": "limit", "type": "integer", "description": "返回记录数量，默认 20", "required": False}
+    ]
+)
+async def get_failed_organize_history(limit: int = 20) -> ToolResult:
+    try:
+        from database import db
+        from models import OrganizeHistory
+        from sqlmodel import select, desc
+        
+        async with db.session_scope():
+            stmt = select(OrganizeHistory).where(
+                OrganizeHistory.status.in_(["failed", "skipped"])
+            ).order_by(desc(OrganizeHistory.id)).limit(limit)
+            history = await db.all(OrganizeHistory, stmt)
+        
+        result = []
+        for item in history:
+            result.append({
+                "id": item.id,
+                "source_path": item.source_path,
+                "target_path": item.target_path,
+                "filename": item.filename,
+                "title": item.title,
+                "season": item.season,
+                "episode": item.episode,
+                "status": item.status,
+                "message": item.message,
+                "processed_at": str(item.processed_at) if hasattr(item, "processed_at") else None
+            })
+        
+        if not result:
+            formatted = "✅ 没有失败的整理记录"
+        else:
+            lines = ["❌ **整理失败记录**\n"]
+            for idx, item in enumerate(result, 1):
+                time_str = item.get("processed_at", "-")[:16] if item.get("processed_at") else "-"
+                title = item.get("title") or "未知"
+                season_ep = f"S{item['season']}E{item['episode']}" if item.get("season") and item.get("episode") else ""
+                status = item.get("status", "failed")
+                message = item.get("message") or "未知原因"
+                
+                status_icon = "❌" if status == "failed" else "⏭️"
+                
+                lines.append(f"{idx}. {title} {season_ep} {status_icon}")
+                lines.append(f"   📄 {item['filename'][:45]}")
+                lines.append(f"   💬 {message}")
+                lines.append(f"   ⏰ {time_str}")
+                lines.append("")
+            formatted = "\n".join(lines).rstrip()
+        
+        return ToolResult(
+            success=True,
+            data=result,
+            message=f"共 {len(result)} 条失败记录",
+            formatted_message=formatted
+        )
+    except Exception as e:
+        logger.error(f"[Tool] get_failed_organize_history 失败: {e}")
         return ToolResult(success=False, error=str(e))
