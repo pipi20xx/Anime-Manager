@@ -49,6 +49,11 @@ const assistantConfig = ref({
   max_iterations: 10
 })
 
+const telegramBotConfig = ref({
+  enabled: false,
+  allowedChats: ''
+})
+
 const skills = ref<any[]>([])
 const tools = ref<any[]>([])
 const toolsLoading = ref(false)
@@ -123,6 +128,46 @@ const saveConfig = async () => {
     message.error('保存失败')
   } finally {
     saveLoading.value = false
+  }
+}
+
+const fetchTelegramBotConfig = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/config`, { headers: getAuthHeaders() })
+    if (res.ok) {
+      const data = await res.json()
+      telegramBotConfig.value.enabled = data.telegram_bot_enabled || false
+      const chats = data.telegram_allowed_chats || []
+      telegramBotConfig.value.allowedChats = Array.isArray(chats) ? chats.join(',') : ''
+    }
+  } catch (e) {
+    console.error('获取 Telegram Bot 配置失败', e)
+  }
+}
+
+const saveTelegramBotConfig = async () => {
+  try {
+    const allowedChats = telegramBotConfig.value.allowedChats
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s)
+      .map(s => isNaN(Number(s)) ? s : Number(s))
+    
+    const res = await fetch(`${API_BASE}/api/config`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        telegram_bot_enabled: telegramBotConfig.value.enabled,
+        telegram_allowed_chats: allowedChats
+      })
+    })
+    if (res.ok) {
+      message.success('Telegram Bot 配置已保存，重启服务后生效')
+    } else {
+      message.error('保存失败')
+    }
+  } catch (e) {
+    message.error('保存失败')
   }
 }
 
@@ -327,6 +372,7 @@ const groupedTools = computed(() => {
 
 onMounted(() => {
   fetchConfig()
+  fetchTelegramBotConfig()
   fetchSkills()
   fetchTools()
 })
@@ -572,6 +618,34 @@ onMounted(() => {
                   工具调用的最大循环次数，防止无限循环
                 </n-tooltip>
               </n-form-item>
+              
+              <n-divider style="margin: 16px 0;">Telegram Bot</n-divider>
+              
+              <n-form-item label="启用 Bot 对话">
+                <n-switch v-model:value="telegramBotConfig.enabled" @update:value="saveTelegramBotConfig" />
+                <n-text depth="3" style="margin-left: 12px; font-size: 12px">
+                  通过 Telegram 与智能体对话
+                </n-text>
+              </n-form-item>
+              
+              <n-form-item label="允许的 Chat ID" :style="{ opacity: telegramBotConfig.enabled ? 1 : 0.5 }">
+                <n-input 
+                  v-model:value="telegramBotConfig.allowedChats"
+                  placeholder="多个用逗号分隔，留空则不限制"
+                  :disabled="!telegramBotConfig.enabled"
+                  @blur="saveTelegramBotConfig"
+                />
+                <n-tooltip>
+                  <template #trigger>
+                    <n-icon size="18" style="margin-left: 8px; cursor: help;"><ThinkingIcon /></n-icon>
+                  </template>
+                  只有指定的 Chat ID 才能使用 Bot，留空则允许所有人
+                </n-tooltip>
+              </n-form-item>
+              
+              <n-alert type="info" size="small" :show-icon="false" style="margin-bottom: 16px;">
+                启用后，向你的 Telegram Bot 发送消息即可与智能体对话。需要先在设置中配置 Bot Token。
+              </n-alert>
               
               <n-form-item>
                 <n-button type="primary" :loading="saveLoading" @click="saveConfig">

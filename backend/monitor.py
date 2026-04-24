@@ -350,6 +350,17 @@ class MonitorManager:
                     logger.info(f"[订阅提醒] 已开启每日摘要，推送时间: {summary_time}")
                 except Exception as e:
                     logger.error(f"[订阅提醒] 每日摘要设置解析失败: {e}")
+        
+        # 9. [Telegram Bot] 智能体对话
+        tg_bot_enabled = config.get("telegram_bot_enabled", False)
+        if tg_bot_enabled:
+            try:
+                from telegram_bot import start_telegram_bot
+                if MonitorManager._loop:
+                    asyncio.create_task(start_telegram_bot())
+                    logger.info("[TG Bot] 智能体对话已启动")
+            except Exception as e:
+                logger.error(f"[TG Bot] 启动失败: {e}")
 
     @staticmethod
     async def _calendar_daily_push():
@@ -657,6 +668,26 @@ class MonitorManager:
                 "next_run": sub_summary_job.next_run_time.isoformat() if sub_summary_job and sub_summary_job.next_run_time else None,
                 "last_run": None,
                 "description": "每日推送订阅番剧播出摘要"
+            })
+            
+            # Telegram Bot
+            try:
+                from telegram_bot import TelegramBot
+                tg_bot = TelegramBot.get_instance()
+                tg_running = tg_bot.is_running()
+            except:
+                tg_running = False
+            
+            services.append({
+                "id": "telegram_bot",
+                "name": "Telegram Bot 对话",
+                "type": "thread",
+                "enabled": config.get("telegram_bot_enabled", False),
+                "running": tg_running,
+                "interval": "长轮询",
+                "next_run": None,
+                "last_run": None,
+                "description": "通过 Telegram 与智能体对话"
             })
 
             # 日志清理

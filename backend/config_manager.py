@@ -104,6 +104,8 @@ class ConfigManager:
         "subscription_notify_on_new_episode": True, # 新集播出时发送通知
         "subscription_daily_summary": False, # 每日摘要
         "subscription_summary_time": "08:00", # 每日摘要推送时间
+        "telegram_bot_enabled": False, # Telegram Bot 对话功能
+        "telegram_allowed_chats": [], # 允许的 chat_id 列表（空为不限制）
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",
