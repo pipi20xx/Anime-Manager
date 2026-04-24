@@ -1,6 +1,7 @@
 import json
 import logging
 import asyncio
+import re
 from typing import Dict, List, Optional, Any, AsyncGenerator, Callable
 from dataclasses import dataclass, field
 import httpx
@@ -30,17 +31,21 @@ class AgentConfig:
     max_tokens: int = 4096
     max_iterations: int = 10
     max_history_messages: int = 20
+    summarize_threshold: int = 10
     enable_dynamic_tools: bool = True
     compact_tool_results: bool = True
 
 
 class MessageHistoryManager:
     """
-    消息历史管理器 - 控制上下文长度，节省 token
+    消息历史管理器 - 支持智能摘要压缩，节省 token
     """
-    def __init__(self, max_messages: int = 20):
+    def __init__(self, max_messages: int = 20, summarize_threshold: int = 10):
         self.max_messages = max_messages
+        self.summarize_threshold = summarize_threshold
         self.messages: List[Dict] = []
+        self._summary: str = ""
+        self._summary_tokens: int = 0
     
     def add(self, message: Dict):
         self.messages.append(message)
@@ -51,7 +56,9 @@ class MessageHistoryManager:
         self._trim_if_needed()
     
     def _trim_if_needed(self):
-        if len(self.messages) <= self.max_messages:
+        non_system = [m for m in self.messages if m.get("role") != "system"]
+        
+        if len(non_system) <= self.max_messages:
             return
         
         system_msg = None
@@ -60,18 +67,110 @@ class MessageHistoryManager:
                 system_msg = msg
                 break
         
-        non_system = [m for m in self.messages if m.get("role") != "system"]
+        messages_to_summarize = non_system[:self.summarize_threshold]
+        messages_to_keep = non_system[self.summarize_threshold:]
         
-        if len(non_system) > self.max_messages - 1:
-            non_system = non_system[-(self.max_messages - 1):]
+        new_summary = self._generate_summary(messages_to_summarize)
+        if self._summary:
+            self._summary = self._merge_summaries(self._summary, new_summary)
+        else:
+            self._summary = new_summary
         
-        self.messages = [system_msg] + non_system if system_msg else non_system
+        summary_msg = {
+            "role": "user",
+            "content": f"[历史摘要] {self._summary}",
+            "_is_summary": True
+        }
+        
+        self.messages = [system_msg] + [summary_msg] + messages_to_keep if system_msg else [summary_msg] + messages_to_keep
+        
+        logger.info(f"[HistoryManager] 已压缩 {len(messages_to_summarize)} 条消息为摘要")
+    
+    def _generate_summary(self, messages: List[Dict]) -> str:
+        """
+        从消息中提取关键信息生成摘要
+        """
+        actions = []
+        subscriptions = []
+        searches = []
+        results = {"success": 0, "failed": 0}
+        
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            
+            if role == "tool":
+                try:
+                    data = json.loads(content) if isinstance(content, str) else content
+                    if data.get("success"):
+                        results["success"] += 1
+                    else:
+                        results["failed"] += 1
+                    
+                    if data.get("data"):
+                        d = data["data"]
+                        if isinstance(d, dict):
+                            if d.get("title") and "订阅" in str(msg.get("name", "")):
+                                subscriptions.append(d.get("title"))
+                        elif isinstance(d, list):
+                            for item in d[:3]:
+                                if isinstance(item, dict) and item.get("title"):
+                                    searches.append(item.get("title"))
+                except:
+                    pass
+            
+            elif role == "user" and not msg.get("_is_summary"):
+                content_lower = content.lower()
+                if "订阅" in content:
+                    match = re.search(r"订阅\s*[「\"']?([^「\"'\s]+)[」\"']?", content)
+                    if match:
+                        subscriptions.append(match.group(1))
+                elif any(kw in content_lower for kw in ["搜索", "查找", "找"]):
+                    searches.append(content[:20])
+        
+        parts = []
+        
+        if subscriptions:
+            unique_subs = list(dict.fromkeys(subscriptions))[:5]
+            parts.append(f"订阅了《{'》《'.join(unique_subs)}》")
+        
+        if searches:
+            unique_searches = list(dict.fromkeys(searches))[:3]
+            parts.append(f"搜索了{len(unique_searches)}次")
+        
+        if results["success"] > 0 or results["failed"] > 0:
+            total = results["success"] + results["failed"]
+            if results["failed"] == 0:
+                parts.append(f"{total}个操作成功")
+            else:
+                parts.append(f"{results['success']}成功{results['failed']}失败")
+        
+        if parts:
+            return "，".join(parts) + "。"
+        return ""
+    
+    def _merge_summaries(self, old_summary: str, new_summary: str) -> str:
+        """
+        合并多个摘要
+        """
+        if not new_summary:
+            return old_summary
+        if not old_summary:
+            return new_summary
+        
+        all_subs = re.findall(r'《([^》]+)》', old_summary + new_summary)
+        unique_subs = list(dict.fromkeys(all_subs))[:5]
+        
+        if unique_subs:
+            return f"订阅了《{'》《'.join(unique_subs)}》等。"
+        return old_summary
     
     def get_messages(self) -> List[Dict]:
         return self.messages.copy()
     
     def clear(self):
         self.messages = []
+        self._summary = ""
     
     def get_token_estimate(self) -> int:
         total = 0
@@ -84,12 +183,18 @@ class MessageHistoryManager:
                     if isinstance(part, dict) and "text" in part:
                         total += len(part["text"]) // 2
         return total
+    
+    def get_summary(self) -> str:
+        return self._summary
 
 
 class Agent:
     def __init__(self, config: AgentConfig, messages: List[Dict] = None):
         self.config = config
-        self.history_manager = MessageHistoryManager(config.max_history_messages)
+        self.history_manager = MessageHistoryManager(
+            max_messages=config.max_history_messages,
+            summarize_threshold=config.summarize_threshold
+        )
         if messages:
             self.history_manager.messages = messages
         self.tool_results: List[Dict] = []
@@ -824,6 +929,7 @@ async def create_agent(config: Optional[Dict] = None) -> Agent:
         max_tokens=config.get("max_tokens", 64) * 1000,
         max_iterations=config.get("max_iterations", 10),
         max_history_messages=config.get("max_history_messages", 20),
+        summarize_threshold=config.get("summarize_threshold", 10),
         enable_dynamic_tools=config.get("enable_dynamic_tools", True),
         compact_tool_results=config.get("compact_tool_results", True)
     )
