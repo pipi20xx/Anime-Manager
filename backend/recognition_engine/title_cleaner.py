@@ -268,7 +268,8 @@ class TitleCleaner:
             r"(?i)\b(?:AVC|HEVC|AAC|AC3|DTS|TRUEHD|OPUS)\b",
             r"\b[简簡繁正中日双雙英多][体文语語]\b",
             r"\b(?:繁体|繁體|简体|简体|简日|繁日|简中|繁中|简繁|双语|双语|内嵌|內嵌|内封|內封|外挂|外掛)\b",
-            r"(?i)(?<![\u4e00-\u9fa5])(?:内封|內封|内嵌|內嵌|外挂|外掛|字幕|特效|样式|版本|TC|SC|CHT|CHS)(?![\u4e00-\u9fa5])",
+            r"(?i)(?<![a-zA-Z\u4e00-\u9fa5])(?:TC|SC|CHT|CHS)(?![a-zA-Z\u4e00-\u9fa5])",
+            r"(?i)(?<![\u4e00-\u9fa5])(?:内封|內封|内嵌|內嵌|外挂|外掛|字幕|特效|样式|版本)(?![\u4e00-\u9fa5])",
             r"(?i)\b(?:WebRip|WebDL|BluRay|BD|HDTV)\b",
             r"(?i)\bFull-?HD\b"
         ]
