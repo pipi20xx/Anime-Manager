@@ -101,10 +101,10 @@ class Matcher:
             return False, None, error_msg
 
     @staticmethod
-    async def download(entry: Dict, rule: Rule) -> Tuple[bool, Optional[str]]:
+    async def download(entry: Dict, rule: Rule) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         将匹配的条目推送到下载客户端。
-        返回: (是否成功, InfoHash)
+        返回: (是否成功, InfoHash, 失败原因)
         """
         import requests
         import asyncio
@@ -139,7 +139,7 @@ class Matcher:
         if not client:
             logger.warning(f"无法下载 '{title}': 找不到客户端 ID '{client_id}'")
             log_audit("RSS", "推送失败", f"找不到下载客户端 ID: {client_id}", level="ERROR", details=title)
-            return False, None
+            return False, None, f"找不到下载客户端 ID: {client_id}"
 
         kwargs = {
             'save_path': rule.save_path,
@@ -148,8 +148,8 @@ class Matcher:
             'paused': rule.paused
         }
 
-        async def try_download(link: str, is_fallback: bool = False) -> Tuple[bool, Optional[str]]:
-            """尝试下载并推送到客户端"""
+        async def try_download(link: str, is_fallback: bool = False) -> Tuple[bool, Optional[str], str]:
+            """尝试下载并推送到客户端，返回 (是否成功, InfoHash, 错误信息)"""
             nonlocal info_hash
             
             prefix = "[备用链接] " if is_fallback else ""
@@ -166,15 +166,17 @@ class Matcher:
                 success, msg = client.add_torrent(link, is_file=False, **kwargs)
                 if not success:
                     await NotificationManager.push_client_push_error(title, client.name, msg)
+                    return False, None, msg
             else:
                 success, content, error_msg = await Matcher._download_torrent_file(link, title, guid)
                 if not success:
                     await NotificationManager.push_torrent_download_error(title, link, error_msg, is_fallback)
-                    return False, None
+                    return False, None, error_msg
                 
                 success, msg = client.add_torrent(content, is_file=True, **kwargs)
                 if not success:
                     await NotificationManager.push_client_push_error(title, client.name, msg)
+                    return False, None, msg
             
             if success:
                 if not info_hash:
@@ -191,28 +193,30 @@ class Matcher:
 
                 logger.info(f"✅ {prefix}推送成功: {title} ({display_type}) -> {client.name} (Hash: {info_hash})")
                 log_audit("RSS", "推送成功", f"{prefix}已推送 {display_type}: {title} 到 {client.name}", details=f"规则: {rule.name}")
-                return True, info_hash
+                return True, info_hash, ""
             else:
                 logger.error(f"❌ {prefix}推送失败: {title} -> {msg}")
-                return False, None
+                return False, None, msg or "未知错误"
 
         try:
-            success, result_hash = await try_download(download_link)
+            success, result_hash, error_msg = await try_download(download_link)
             if success:
-                return True, result_hash
+                return True, result_hash, ""
             
+            last_error = error_msg
             if fallback_link and fallback_link != download_link:
                 logger.info(f"🔄 主链接失败，尝试备用链接: {fallback_link}")
                 log_audit("RSS", "重试备用链接", f"主链接失败，尝试备用链接: {title}", details=fallback_link)
-                success, result_hash = await try_download(fallback_link, is_fallback=True)
+                success, result_hash, error_msg = await try_download(fallback_link, is_fallback=True)
                 if success:
-                    return True, result_hash
+                    return True, result_hash, ""
+                last_error = error_msg
             
             log_audit("RSS", "推送失败", f"主链接和备用链接均失败", level="ERROR", details=title)
-            return False, None
+            return False, None, last_error or "主链接和备用链接均失败"
                 
         except Exception as e:
             logger.error(f"推送任务异常: {e}")
             log_audit("RSS", "推送异常", f"执行过程发生程序异常", level="ERROR", details=f"Title: {title}\nError: {str(e)}")
             await NotificationManager.push_client_error_notification(download_link, client.name, str(e))
-            return False, None
+            return False, None, str(e)

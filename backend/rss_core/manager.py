@@ -153,6 +153,18 @@ class RssManager:
             return await db.save(history)
 
     @staticmethod
+    async def get_fail_history(guid: str, rule_id: int) -> Optional[DownloadHistory]:
+        """获取指定 GUID 和规则 ID 的失败记录"""
+        guid = normalize_guid(guid)
+        async with db.session_scope():
+            stmt = select(DownloadHistory).where(
+                DownloadHistory.guid == guid,
+                DownloadHistory.rule_id == rule_id,
+                DownloadHistory.state == "Failed"
+            )
+            return await db.first(DownloadHistory, stmt)
+
+    @staticmethod
     async def remove_history(guid: str):
         guid = normalize_guid(guid)
         async with db.session_scope():

@@ -90,6 +90,7 @@ class ConfigManager:
         "jwt_never_expire": False, # JWT 令牌永不过期
         "stalled_timeout_minutes": 0, # 下载超时自动熔断阈值（分钟），0为禁用
         "stalled_monitor_interval": 30, # 下载超时巡检间隔（分钟）
+        "download_max_fail_count": 3, # 下载失败最大重试次数，超过后自动加入黑名单
         "health_check_enabled": True, # 是否开启健康检查自动巡检
         "health_check_interval": 30, # 健康检查巡检间隔（分钟）
         "calendar_daily_push": False,

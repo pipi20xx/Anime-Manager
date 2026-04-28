@@ -196,27 +196,28 @@ async def init_db():
             SQLModel.metadata.create_all(sync_conn, checkfirst=True)
         await conn.run_sync(create_all_sync)
 
-        # 3. [核心增强] 自动补全缺失的列 (Auto Migration)
-        def migrate_columns_sync(sync_conn):
-            from sqlalchemy import inspect
-            inspector = inspect(sync_conn)
-            
-            # 遍历 SQLModel 注册的所有表
-            for table_full_name, table in SQLModel.metadata.tables.items():
-                schema = table.schema or 'public'
-                # 重要：使用 table.name 获取纯表名，避免与 schema 参数叠加
-                actual_table_name = table.name
-                
-                try:
-                    # 获取数据库中现有的列名
-                    existing_columns = [c['name'] for c in inspector.get_columns(actual_table_name, schema=schema)]
+    # 3. [核心增强] 自动补全缺失的列 (Auto Migration) - 每个列使用独立事务
+    async def migrate_columns():
+        from sqlalchemy import inspect
+        
+        # 先收集所有需要添加的列
+        columns_to_add = []
+        
+        async with engine.connect() as inspect_conn:
+            def collect_columns(sync_conn):
+                inspector = inspect(sync_conn)
+                for table_full_name, table in SQLModel.metadata.tables.items():
+                    schema = table.schema or 'public'
+                    actual_table_name = table.name
                     
-                    # 遍历模型定义中的列
+                    try:
+                        existing_columns = [c['name'] for c in inspector.get_columns(actual_table_name, schema=schema)]
+                    except Exception as e:
+                        print(f"[AutoMigrate] 跳过表 {schema}.{actual_table_name}: {e}")
+                        continue
+                    
                     for column in table.columns:
                         if column.name not in existing_columns:
-                            print(f"[AutoMigrate] 检测到缺失列: {schema}.{actual_table_name}.{column.name}, 正在补全...")
-                            
-                            # 特殊处理布尔默认值
                             default_clause = ""
                             if column.default is not None:
                                 try:
@@ -226,14 +227,34 @@ async def init_db():
                                     elif isinstance(arg, (int, float)): default_clause = f" DEFAULT {arg}"
                                 except: pass
                             
-                            # 执行迁移
-                            sql = f'ALTER TABLE "{schema}"."{actual_table_name}" ADD COLUMN "{column.name}" {column.type}{default_clause};'
-                            sync_conn.execute(text(sql))
-                except Exception as e:
-                    # 如果表还没创建（理论上不会，因为上面执行了 create_all），或者有其他权限问题，打印并跳过
-                    print(f"[AutoMigrate] 跳过表 {schema}.{actual_table_name}: {e}")
+                            col_type = str(column.type)
+                            if col_type.upper() == "DATETIME":
+                                col_type = "TIMESTAMP"
+                            
+                            columns_to_add.append({
+                                'schema': schema,
+                                'table': actual_table_name,
+                                'column': column.name,
+                                'type': col_type,
+                                'default': default_clause
+                            })
+            
+            await inspect_conn.run_sync(collect_columns)
         
-        await conn.run_sync(migrate_columns_sync)
+        # 为每个列使用独立事务执行迁移
+        for col_info in columns_to_add:
+            try:
+                print(f"[AutoMigrate] 检测到缺失列: {col_info['schema']}.{col_info['table']}.{col_info['column']}, 正在补全...")
+                sql = f'ALTER TABLE "{col_info["schema"]}"."{col_info["table"]}" ADD COLUMN "{col_info["column"]}" {col_info["type"]}{col_info["default"]};'
+                async with engine.begin() as alter_conn:
+                    await alter_conn.execute(text(sql))
+                print(f"[AutoMigrate] 成功添加列: {col_info['schema']}.{col_info['table']}.{col_info['column']}")
+            except Exception as e:
+                print(f"[AutoMigrate] 添加列失败 {col_info['schema']}.{col_info['table']}.{col_info['column']}: {e}")
+    
+    await migrate_columns()
+
+    async with engine.begin() as conn:
 
         # 4. 清理已废弃的表
         await conn.execute(text("DROP TABLE IF EXISTS public.task_logs;"))

@@ -5,6 +5,7 @@ import requests
 import httpx
 import time
 import uuid
+from datetime import datetime
 from typing import List, Dict
 from sqlmodel import select, delete
 from database import db
@@ -175,6 +176,10 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
     if not entries:
         return 0
 
+    from config_manager import ConfigManager
+    config = ConfigManager.get_config()
+    max_fail_count = config.get("download_max_fail_count", 3)
+
     async with db.session_scope():
         rules = await RssManager.get_rules()
         enabled_rules = [r for r in rules if r.enabled]
@@ -203,7 +208,7 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                 
                 if Matcher.check_match(entry_title, rule.must_contain, rule.must_not_contain, rule.use_regex):
                     logger.info(f"匹配成功: [{rule.name}] -> {entry_title}")
-                    success, info_hash = await Matcher.download(entry, rule)
+                    success, info_hash, error_msg = await Matcher.download(entry, rule)
                     if success:
                         matched_count += 1
                         from clients.manager import ClientManager
@@ -229,9 +234,45 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                             feed_id=feed_id,
                             rule_id=rule.id,
                             download_client_id=rule.target_client_id,
-                            info_hash=info_hash
+                            info_hash=info_hash,
+                            state="Success"
                         )
                         await RssManager.add_history(history)
+                        break
+                    else:
+                        existing = await RssManager.get_fail_history(guid, rule.id)
+                        if existing:
+                            existing.fail_count += 1
+                            existing.fail_reason = error_msg
+                            existing.updated_at = datetime.now()
+                            await db.save(existing)
+                            
+                            if existing.fail_count >= max_fail_count:
+                                bl_entry = Blacklist(
+                                    guid=guid,
+                                    title=entry_title,
+                                    reason=f"download_failed_{existing.fail_count}_times: {error_msg}"
+                                )
+                                await db.save(bl_entry)
+                                logger.info(f"🚫 资源 {entry_title} 失败 {existing.fail_count} 次，已加入黑名单")
+                                if task_id:
+                                    await log_task(task_id, f"    🚫 [{rule.name}] 失败 {existing.fail_count} 次，已拉黑: {entry_title}")
+                        else:
+                            fail_history = DownloadHistory(
+                                guid=guid,
+                                title=entry_title,
+                                description=entry.get('description'),
+                                feed_id=feed_id,
+                                rule_id=rule.id,
+                                download_client_id=rule.target_client_id,
+                                state="Failed",
+                                fail_count=1,
+                                fail_reason=error_msg
+                            )
+                            await RssManager.add_history(fail_history)
+                            logger.info(f"❌ 下载失败 (1/{max_fail_count}): {entry_title} - {error_msg}")
+                            if task_id:
+                                await log_task(task_id, f"    ❌ [{rule.name}] 下载失败 (1/{max_fail_count}): {entry_title}")
                         break
             
             if not is_new_for_any_rule:

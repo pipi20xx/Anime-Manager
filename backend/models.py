@@ -132,8 +132,11 @@ class DownloadHistory(SQLModel, table=True):
     rule_id: Optional[int] = Field(default=None, index=True)
     download_client_id: Optional[str] = None
     info_hash: Optional[str] = Field(default=None, index=True)
-    state: str = Field(default="Success")
+    state: str = Field(default="Success")  # Success, Failed
+    fail_count: int = Field(default=0)  # 失败次数
+    fail_reason: Optional[str] = None  # 失败原因
     created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
 class Blacklist(SQLModel, table=True):
     __tablename__ = "blacklist"

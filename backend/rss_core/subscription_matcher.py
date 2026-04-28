@@ -412,7 +412,7 @@ class SubscriptionMatcher:
                     action_log = "洗版" if is_upgrade else "命中"
                     logger.info(f"订阅{action_log}: [{sub.title}] (Score: {current_score}) -> {title}")
                     
-                    success, info_hash = await Matcher.download({'title': title, 'link': entry['link'], 'guid': guid, 'fallback_link': entry.get('fallback_link')}, temp_rule)
+                    success, info_hash, error_msg = await Matcher.download({'title': title, 'link': entry['link'], 'guid': guid, 'fallback_link': entry.get('fallback_link')}, temp_rule)
                     
                     if success:
                         matched_count += 1
@@ -454,8 +454,40 @@ class SubscriptionMatcher:
 
                         break
                     else:
-                        logger.error(f"订阅匹配成功但推送失败: {title}")
+                        logger.error(f"订阅匹配成功但推送失败: {title} - {error_msg}")
                         log_audit("订阅", "推送失败", f"订阅 '{sub.title}' 推送至客户端失败: {title}", level="ERROR")
+                        
+                        from datetime import datetime
+                        config = ConfigManager.get_config()
+                        max_fail_count = config.get("download_max_fail_count", 3)
+                        
+                        existing = await RssManager.get_fail_history(guid, None)
+                        if existing:
+                            existing.fail_count += 1
+                            existing.fail_reason = error_msg
+                            existing.updated_at = datetime.now()
+                            await db.save(existing)
+                            
+                            if existing.fail_count >= max_fail_count:
+                                from models import Blacklist
+                                bl_entry = Blacklist(
+                                    guid=guid,
+                                    title=title,
+                                    reason=f"download_failed_{existing.fail_count}_times: {error_msg}"
+                                )
+                                await db.save(bl_entry)
+                                logger.info(f"🚫 资源 {title} 失败 {existing.fail_count} 次，已加入黑名单")
+                        else:
+                            fail_history = DownloadHistory(
+                                guid=guid,
+                                title=title,
+                                feed_id=db_item.feed_id if db_item else None,
+                                state="Failed",
+                                fail_count=1,
+                                fail_reason=error_msg
+                            )
+                            await RssManager.add_history(fail_history)
+                            logger.info(f"❌ 下载失败 (1/{max_fail_count}): {title} - {error_msg}")
         
         if task_id and skipped_count > 0:
             from task_history import log_task
