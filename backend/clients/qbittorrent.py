@@ -16,10 +16,8 @@ class QBClient(BaseClient):
 
     def login(self) -> bool:
         try:
-            # Clear previous session cookies to ensure a fresh login
             self.session.cookies.clear()
             
-            # Set essential headers for CSRF protection
             self.session.headers.update({
                 'Referer': f"{self.url}/",
                 'Origin': self.url
@@ -30,12 +28,29 @@ class QBClient(BaseClient):
                 'password': self.password
             }, timeout=10)
             
-            if resp.status_code == 200 and resp.text != "Fails.":
-                self.logged_in = True
-                return True
-            else:
-                logger.error(f"[{self.name}] QB Login Failed: {resp.text}")
+            if resp.status_code == 403:
+                logger.error(f"[{self.name}] QB Login Failed: IP is banned (too many failed attempts)")
                 return False
+            
+            if resp.status_code == 200:
+                if resp.text == "Fails.":
+                    logger.error(f"[{self.name}] QB Login Failed: Invalid username or password")
+                    return False
+                self.logged_in = True
+                logger.info(f"[{self.name}] QB Login successful (HTTP 200)")
+                return True
+            
+            if resp.status_code == 204:
+                if self.session.cookies:
+                    self.logged_in = True
+                    logger.info(f"[{self.name}] QB Login successful (HTTP 204, QB >= 5.2.0)")
+                    return True
+                else:
+                    logger.error(f"[{self.name}] QB Login Failed: HTTP 204 but no cookie received")
+                    return False
+            
+            logger.error(f"[{self.name}] QB Login Failed: Unexpected status code {resp.status_code}, response: {resp.text}")
+            return False
         except Exception as e:
             logger.error(f"[{self.name}] QB Login Exception: {e}")
             return False
@@ -47,6 +62,10 @@ class QBClient(BaseClient):
             version_response = self.session.get(f"{self.url}/api/v2/app/version", timeout=5)
             if version_response.status_code == 200:
                 return {"success": True, "message": f"Connected. QB Version: {version_response.text}", "version": version_response.text}
+            
+            if version_response.status_code == 403:
+                return {"success": False, "message": "Login succeeded but API access forbidden. Check WebUI permissions."}
+            
             return {"success": False, "message": f"Login OK but failed to get version. Code: {version_response.status_code}"}
         except Exception as e:
             return {"success": False, "message": f"Connection Exception: {e}"}
@@ -84,13 +103,29 @@ class QBClient(BaseClient):
             # If still forbidden, try to re-login once
             if resp.status_code == 403:
                 import time
-                time.sleep(0.5) # Small grace period
+                time.sleep(0.5)
                 logger.warning(f"[{self.name}] QB returned 403, attempting re-login...")
                 if self.login():
                     return self.add_torrent(content, is_file, **kwargs)
 
-            if resp.status_code == 200 and resp.text == "Ok.":
-                return True, "Ok."
+            if resp.status_code == 200:
+                if resp.text == "Ok.":
+                    logger.info(f"[{self.name}] Torrent added successfully (QB < 5.2.0)")
+                    return True, "Ok."
+                
+                try:
+                    result = resp.json()
+                    if isinstance(result, dict) and result.get('success_count', 0) > 0:
+                        torrent_ids = result.get('added_torrent_ids', [])
+                        logger.info(f"[{self.name}] Torrent added successfully (QB >= 5.2.0), IDs: {torrent_ids}")
+                        return True, f"Ok. Added {len(torrent_ids)} torrent(s)"
+                except:
+                    pass
+                
+                logger.warning(f"[{self.name}] Unexpected response format: {resp.text}")
+                return False, f"Unexpected response: {resp.text}"
+            
+            logger.error(f"[{self.name}] Add torrent failed: HTTP {resp.status_code}, {resp.text}")
             return False, f"Failed. Code: {resp.status_code}, Resp: {resp.text}"
         except Exception as e:
             logger.error(f"[{self.name}] add_torrent exception: {e}")
