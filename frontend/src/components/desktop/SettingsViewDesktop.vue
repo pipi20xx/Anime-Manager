@@ -365,6 +365,10 @@ const {
                       {{ client.name }}
                     </div>
                     <div class="client-meta">{{ client.type }} | {{ client.url }}</div>
+                    <div v-if="client.version" class="client-version">
+                      <n-tag size="small" type="success">{{ client.version }}</n-tag>
+                      <span v-if="client.last_test_time" class="test-time">{{ client.last_test_time }}</span>
+                    </div>
                   </div>
                   <template #action>
                     <n-space justify="end" @click.stop>
@@ -473,6 +477,8 @@ const {
 
 .client-card .client-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
 .client-card .client-meta { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.client-card .client-version { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+.client-card .test-time { font-size: 11px; color: var(--text-tertiary); }
 .empty-clients { padding: 40px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-medium); border-radius: 8px; }
 
 .switch-label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }

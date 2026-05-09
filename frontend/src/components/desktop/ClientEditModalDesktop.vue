@@ -103,6 +103,11 @@ const {
         {{ testResult.message }}
       </n-alert>
 
+      <n-alert v-if="!testResult && form.version" type="info" title="上次测试信息">
+        <div>版本: {{ form.version }}</div>
+        <div v-if="form.last_test_time">测试时间: {{ form.last_test_time }}</div>
+      </n-alert>
+
     </n-space>
     
     <template #action>

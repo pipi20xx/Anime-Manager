@@ -17,7 +17,9 @@ export function useClientEdit(props: any, emit: any) {
     mount_path: '',
     monitor_enabled: false,
     monitor_interval: 5,
-    is_default: false
+    is_default: false,
+    version: '',
+    last_test_time: ''
   })
 
   const testLoading = ref(false)
@@ -51,8 +53,12 @@ export function useClientEdit(props: any, emit: any) {
         form.monitor_enabled = true
         form.monitor_interval = 5
         form.is_default = false
+        form.version = ''
+        form.last_test_time = ''
       } else {
         Object.assign(form, JSON.parse(JSON.stringify(props.clientData)))
+        if (!form.version) form.version = ''
+        if (!form.last_test_time) form.last_test_time = ''
       }
     }
   })
@@ -68,8 +74,20 @@ export function useClientEdit(props: any, emit: any) {
       })
       const data = await res.json()
       testResult.value = data
+      
       if (data.success) {
         message.success('连接测试成功')
+        if (data.version) {
+          form.version = data.version
+        }
+        form.last_test_time = new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        })
       } else {
         message.error('连接测试失败')
       }
