@@ -20,6 +20,7 @@ const form = reactive({
   for_rules: true,
   anime_priority: true,
   check_emby_exists: false,
+  batch_enhance: false,
   include_keywords: '',
   exclude_keywords: ''
 })
@@ -35,15 +36,16 @@ watch(() => props.show, (newVal) => {
       form.for_rules = true
       form.anime_priority = true
       form.check_emby_exists = false
+      form.batch_enhance = false
       form.include_keywords = ''
       form.exclude_keywords = ''
     } else {
       const data = JSON.parse(JSON.stringify(props.feedData))
-      // Handle legacy data missing new fields
       if (data.for_subscription === undefined) data.for_subscription = true
       if (data.for_rules === undefined) data.for_rules = true
       if (data.anime_priority === undefined) data.anime_priority = true
       if (data.check_emby_exists === undefined) data.check_emby_exists = false
+      if (data.batch_enhance === undefined) data.batch_enhance = false
       Object.assign(form, data)
     }
   }
@@ -108,6 +110,13 @@ const handleSave = () => {
             </n-space>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
               检测 Emby 库是否存在，存在则跳过处理
+            </div>
+            <n-space align="center" :size="8">
+              <n-switch v-model:value="form.batch_enhance" />
+              <span style="font-size: 12px; color: var(--text-secondary);">副标题合集提取</span>
+            </n-space>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+              从 RSS 副标题中提取合集信息，部分源可能误判
             </div>
           </n-space>
         </n-space>

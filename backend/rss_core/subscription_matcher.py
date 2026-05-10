@@ -108,22 +108,24 @@ class SubscriptionMatcher:
             db_item = None
             feed_anime_prio = global_anime_prio
             feed_check_emby = False
+            feed_batch_enhance = False
             
             async with db.session_scope():
                 stmt = select(FeedItem).where(FeedItem.guid == guid)
                 db_item = await db.first(FeedItem, stmt)
                 
                 if db_item:
-                    # 获取该条目所属订阅源的独立配置
                     if db_item.feed_id:
                         if db_item.feed_id not in feeds_cache:
                             feed = await db.get(Feed, db_item.feed_id)
                             feeds_cache[db_item.feed_id] = {
                                 'anime_priority': feed.anime_priority if feed else global_anime_prio,
-                                'check_emby_exists': feed.check_emby_exists if feed else False
+                                'check_emby_exists': feed.check_emby_exists if feed else False,
+                                'batch_enhance': feed.batch_enhance if feed else False
                             }
                         feed_anime_prio = feeds_cache[db_item.feed_id]['anime_priority']
                         feed_check_emby = feeds_cache[db_item.feed_id]['check_emby_exists']
+                        feed_batch_enhance = feeds_cache[db_item.feed_id]['batch_enhance']
 
             if not db_item: continue
 
@@ -144,8 +146,8 @@ class SubscriptionMatcher:
                     title, force_filename=True,
                     anime_priority=feed_anime_prio, bangumi_priority=bgm_prio,
                     bangumi_failover=bgm_failover,
-                    batch_enhancement=True, # RSS 识别场景默认开启合集增强
-                    description=db_item.description
+                    batch_enhancement=True,
+                    description=db_item.description if feed_batch_enhance else None
                 )
                 
                 # [Fix] 3. 更新阶段：内部自带事务
