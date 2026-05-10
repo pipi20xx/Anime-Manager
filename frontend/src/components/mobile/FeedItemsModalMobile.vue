@@ -40,6 +40,23 @@ const cleanDescription = (desc: string | null | undefined): string | null => {
   return clean || null
 }
 
+const formatPubDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '-'
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return dateStr
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return dateStr
+  }
+}
+
 const getTagStyle = (type: string) => {
   const styles: Record<string, any> = {
     info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
@@ -102,7 +119,7 @@ watch(() => props.show, (newVal) => {
                </template>
                <template #description>
                  <div class="item-desc-text" v-if="cleanDescription(item.description)">{{ cleanDescription(item.description) }}</div>
-                 <div class="item-pub-date">{{ item.pub_date }}</div>
+                 <div class="item-pub-date">{{ formatPubDate(item.pub_date) }}</div>
                </template>
                
                <div class="metadata-container">

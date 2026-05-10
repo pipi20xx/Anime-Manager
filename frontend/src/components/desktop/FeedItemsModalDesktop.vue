@@ -39,6 +39,23 @@ const cleanDescription = (desc: string | null | undefined): string | null => {
   return clean || null
 }
 
+const formatPubDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return '-'
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return dateStr
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return dateStr
+  }
+}
+
 const getTagStyle = (type: string) => {
   const styles: Record<string, any> = {
     info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
@@ -143,7 +160,7 @@ const columns = [
       return h(NSpace, { size: 4, itemStyle: 'display: flex' }, { default: () => tags })
     }
   },
-  { title: '发布时间', key: 'pub_date', width: 140 },
+  { title: '发布时间', key: 'pub_date', width: 140, render(row: any) { return formatPubDate(row.pub_date) } },
   {
     title: 'GUID 状态',
     key: 'is_downloaded',
