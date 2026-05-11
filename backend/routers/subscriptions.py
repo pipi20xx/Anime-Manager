@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from typing import List, Dict, Any, Optional, Tuple
 import json
@@ -218,12 +218,22 @@ async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str =
                 if sub.season != 0 and sub.season != season: 
                     await _log(f"季度不匹配 (S{season}), 跳过: {title}", l_type="info")
                     continue
-                if sub.start_episode > 0 and episode < sub.start_episode and not is_batch: 
-                    await _log(f"早于起始集数 (E{episode}), 跳过: {title}", l_type="info")
-                    continue
-                if sub.end_episode > 0 and episode > sub.end_episode: 
-                    await _log(f"晚于结束集数 (E{episode}), 跳过: {title}", l_type="info")
-                    continue
+                
+                if is_batch and end_ep:
+                    if sub.start_episode > 0 and end_ep < sub.start_episode:
+                        await _log(f"合集范围 [{episode}-{end_ep}] 早于订阅起始集数, 跳过: {title}", l_type="info")
+                        continue
+                    if sub.end_episode > 0 and episode > sub.end_episode:
+                        await _log(f"合集范围 [{episode}-{end_ep}] 晚于订阅结束集数, 跳过: {title}", l_type="info")
+                        continue
+                else:
+                    if sub.start_episode > 0 and episode < sub.start_episode: 
+                        await _log(f"早于起始集数 (E{episode}), 跳过: {title}", l_type="info")
+                        continue
+                    if sub.end_episode > 0 and episode > sub.end_episode: 
+                        await _log(f"晚于结束集数 (E{episode}), 跳过: {title}", l_type="info")
+                        continue
+                
                 if await SubscriptionManager.is_episode_downloaded(sub.tmdb_id, sub.media_type, season, episode):
                     await _log(f"集数已存在 (S{season}E{episode}), 跳过: {title}", l_type="info")
                     continue
@@ -288,12 +298,11 @@ async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str =
     return pushed_count
 
 @router.post("/subscriptions/{sub_id}/fill", summary="执行手动补全")
-async def fill_subscription_gaps(sub_id: int, indexer: Optional[str] = "all"):
+async def fill_subscription_gaps(sub_id: int, indexer: Optional[str] = "all", request: Request = None):
     """
     立即针对该任务启动 Jackett 搜索，自动寻找并补全缺失的集数。
     """
     async def fill_generator():
-        # 获取基础信息时开启短 Session
         async with db.session_scope():
             sub = await db.get(Subscription, sub_id)
         
@@ -305,11 +314,27 @@ async def fill_subscription_gaps(sub_id: int, indexer: Optional[str] = "all"):
         async def _q_logger(data): await queue.put(json.dumps(data) + "\n")
         
         task = asyncio.create_task(run_sub_fill_logic(sub, _q_logger, indexer=indexer))
-        while not task.done() or not queue.empty():
+        try:
+            while not task.done() or not queue.empty():
+                if request and await request.is_disconnected():
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+                    yield json.dumps({"type": "warn", "message": "操作已被用户中断"}) + "\n"
+                    return
+                    
+                try:
+                    line = await asyncio.wait_for(queue.get(), timeout=0.1)
+                    yield line
+                except asyncio.TimeoutError: continue
+        except asyncio.CancelledError:
+            task.cancel()
             try:
-                line = await asyncio.wait_for(queue.get(), timeout=0.1)
-                yield line
-            except asyncio.TimeoutError: continue
+                await task
+            except asyncio.CancelledError:
+                pass
 
     return StreamingResponse(fill_generator(), media_type="application/x-ndjson")
 
