@@ -360,10 +360,21 @@ class ConfigManager:
             logger.warning(f"[Config] 加载特权规则失败: {e}")
 
     @staticmethod
+    def _deep_merge(base: Dict, override: Dict) -> Dict:
+        """递归合并字典，保留基础配置中未覆盖的字段"""
+        result = copy.deepcopy(base)
+        for key, value in override.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = ConfigManager._deep_merge(result[key], value)
+            else:
+                result[key] = copy.deepcopy(value) if isinstance(value, (dict, list)) else value
+        return result
+
+    @staticmethod
     def update_config(new_config: Dict):
         current = ConfigManager.get_config()
-        current.update(new_config)
-        ConfigManager._save_atomic(CONFIG_PATH, current)
+        merged = ConfigManager._deep_merge(current, new_config)
+        ConfigManager._save_atomic(CONFIG_PATH, merged)
         log_audit("系统", "配置更新", "系统全局配置已更新")
         
         # 重新加载特权规则（如果配置中有更新）
