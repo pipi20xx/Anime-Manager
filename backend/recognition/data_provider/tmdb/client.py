@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
 from recognition_engine.tmdb_matcher.logic import TMDBMatcher
+from logger import log_audit
 
 class TMDBProvider:
     """
@@ -42,7 +43,10 @@ class TMDBProvider:
         _log(f"┃ [TMDB] ☁️ GET {full_url}?{query_str}")
         
         if self.proxy:
-            _log(f"┃ [Proxy] 🛡️ 启用代理加速")
+            _log(f"┃ [Proxy] 🛡️ 启用代理加速: {self.proxy}")
+            log_audit("TMDB", "请求", f"GET {endpoint} [代理: {self.proxy}]")
+        else:
+            log_audit("TMDB", "请求", f"GET {endpoint} [直连]")
 
         async with httpx.AsyncClient(timeout=10, proxy=self.proxy) as client:
             try:

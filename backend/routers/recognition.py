@@ -87,6 +87,10 @@ async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
     api_key = config.get("tmdb_api_key")
     if not api_key:
         raise HTTPException(status_code=400, detail="未配置 TMDB API Key")
+    
+    proxy = ConfigManager.get_proxy("tmdb")
+    proxy_info = f" [代理: {proxy}]" if proxy else " [直连]"
+    log_audit("TMDB", "搜索", f"关键词: {query} (类型: {type}){proxy_info}")
         
     logs = []        
     import httpx
@@ -95,12 +99,11 @@ async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
     params = {"api_key": api_key, "query": query, "language": "zh-CN", "include_adult": "false"}
     if year: params["year" if search_type == "movie" else "first_air_date_year"] = year
     
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy, timeout=10) as client:
         try:
-            resp = await client.get(f"{base_url}/search/{search_type}", params=params, timeout=10)
+            resp = await client.get(f"{base_url}/search/{search_type}", params=params)
             data = resp.json()
             results = data.get("results", [])
-            # 简单格式化
             formatted = []
             for item in results:
                 formatted.append({
@@ -125,13 +128,15 @@ async def get_tmdb_tv_details(tmdb_id: str):
     if not api_key:
         raise HTTPException(status_code=400, detail="未配置 TMDB API Key")
     
+    proxy = ConfigManager.get_proxy("tmdb")
+    
     import httpx
     base_url = "https://api.themoviedb.org/3"
     params = {"api_key": api_key, "language": "zh-CN"}
     
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxy=proxy, timeout=10) as client:
         try:
-            resp = await client.get(f"{base_url}/tv/{tmdb_id}", params=params, timeout=10)
+            resp = await client.get(f"{base_url}/tv/{tmdb_id}", params=params)
             if resp.status_code != 200:
                 raise HTTPException(status_code=resp.status_code, detail="TMDB 详情获取失败")
             data = resp.json()
@@ -144,7 +149,7 @@ async def get_tmdb_tv_details(tmdb_id: str):
                         "episode_count": s.get("episode_count"),
                         "name": s.get("name"),
                         "air_date": s.get("air_date")
-                    } for s in data.get("seasons", []) if s.get("season_number") > 0 # 排除第0季(通常是特辑)
+                    } for s in data.get("seasons", []) if s.get("season_number") > 0
                 ]
             }
         except Exception as e:
