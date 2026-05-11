@@ -30,6 +30,17 @@ async def get_services_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取服务状态失败: {str(e)}")
 
+@router.get("/queue/{task_id}", summary="获取任务队列内容")
+async def get_task_queue(task_id: str):
+    """
+    获取指定监控任务队列中的文件列表。
+    """
+    try:
+        items = MonitorManager.get_queue_items(task_id)
+        return {"task_id": task_id, "count": len(items), "items": items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取队列内容失败: {str(e)}")
+
 @router.get("/docs", include_in_schema=False)
 async def get_documentation(request: Request, theme: str = "cyan", token: str = None):
     referer = request.headers.get("referer")

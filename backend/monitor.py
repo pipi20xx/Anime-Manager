@@ -829,6 +829,33 @@ class MonitorManager:
         }
 
     @staticmethod
+    def get_queue_items(task_id: str) -> List[str]:
+        """
+        获取指定任务队列中的文件列表。
+        注意：这会临时从队列中取出所有项目，然后再放回。
+        """
+        queue = MonitorManager._queues.get(task_id)
+        if not queue:
+            return []
+        
+        items = []
+        temp_items = []
+        
+        try:
+            while True:
+                item = queue.get_nowait()
+                temp_items.append(item)
+                items.append(item)
+                queue.task_done()
+        except asyncio.QueueEmpty:
+            pass
+        
+        for item in temp_items:
+            queue.put_nowait(item)
+        
+        return items
+
+    @staticmethod
     async def reload():
         from logger import log_audit
         log_audit("系统", "监控重载", "正在重新加载所有监控任务...")

@@ -78,6 +78,9 @@
               </div>
               <div class="monitor-queue" v-if="monitor.running && monitor.queue_size > 0">
                 <span>队列中: {{ monitor.queue_size }} 个文件待处理</span>
+                <n-button size="tiny" quaternary type="primary" @click="showQueueModal(monitor)">
+                  查看队列
+                </n-button>
               </div>
             </div>
           </n-gi>
@@ -197,17 +200,62 @@
         </n-grid>
       </n-card>
     </n-space>
+    
+    <n-modal v-model:show="queueModalVisible" preset="card" style="width: 800px; max-width: 90vw;" title="队列内容">
+      <template #header>
+        <div class="modal-header">
+          <span>{{ queueModalData?.name }} - 队列内容</span>
+          <n-tag size="small" round :bordered="false" type="info">{{ queueModalData?.count || 0 }} 个文件</n-tag>
+        </div>
+      </template>
+      <n-spin :show="queueLoading">
+        <div class="queue-list" v-if="queueItems.length > 0">
+          <div class="queue-item" v-for="(item, index) in queueItems" :key="index">
+            <span class="queue-index">{{ index + 1 }}</span>
+            <code class="queue-path">{{ item }}</code>
+          </div>
+        </div>
+        <n-empty v-else description="队列为空" />
+      </n-spin>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { 
-  NSpace, NCard, NGrid, NGi, NTag, NStatistic, NText
+  NSpace, NCard, NGrid, NGi, NTag, NStatistic, NText, NButton, NModal, NSpin, NEmpty
 } from 'naive-ui'
 import { useServiceStatus } from '../../composables/views/useServiceStatus'
 
 const { data, formatNextRun, getStatusTag } = useServiceStatus()
+
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
+
+const queueModalVisible = ref(false)
+const queueLoading = ref(false)
+const queueItems = ref<string[]>([])
+const queueModalData = ref<{ id: string; name: string; count: number } | null>(null)
+
+const showQueueModal = async (monitor: any) => {
+  queueModalData.value = { id: monitor.id, name: monitor.name, count: monitor.queue_size }
+  queueItems.value = []
+  queueModalVisible.value = true
+  queueLoading.value = true
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/system/queue/${monitor.id}`)
+    if (res.ok) {
+      const result = await res.json()
+      queueItems.value = result.items || []
+      queueModalData.value = { ...queueModalData.value!, count: result.count }
+    }
+  } catch (e) {
+    console.error('获取队列内容失败', e)
+  } finally {
+    queueLoading.value = false
+  }
+}
 
 const getStatusTagStyle = (service: any) => {
   const status = getStatusTag(service)
@@ -366,6 +414,48 @@ const runningMonitorsCount = computed(() =>
   border-top: 1px solid var(--border-light);
   font-size: var(--text-base);
   color: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.queue-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.queue-item:last-child {
+  border-bottom: none;
+}
+
+.queue-index {
+  min-width: 40px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.queue-path {
+  font-size: 12px;
+  color: var(--text-secondary);
+  word-break: break-all;
+  background: var(--bg-surface);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .rule-card {
