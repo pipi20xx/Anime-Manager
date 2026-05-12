@@ -2,6 +2,7 @@ import os
 import json
 import re
 import asyncio
+import threading
 from typing import Dict, Any, Generator, List
 
 from logger import log_audit
@@ -18,10 +19,11 @@ class Organizer:
 
     @staticmethod
     def _walk_recursive(source_dir: str, ignore_file_regex: List[str], ignore_dir_regex: List[str], 
-                     dir_exists_cache: set, queue: asyncio.Queue, should_stop_func) -> bool:
+                     dir_exists_cache: set, queue: list, lock: threading.Lock, 
+                     event: threading.Event, max_batch: int, should_stop_func) -> bool:
         """
         使用 os.scandir 递归遍历目录
-        性能提升：2-3 倍（相比 os.walk）
+        批量扫描模式：扫描满一批后等待处理
         返回 True 表示应该停止扫描
         """
         try:
@@ -43,7 +45,17 @@ class Organizer:
                         
                         ext = os.path.splitext(name)[1].lower()
                         if ext in Organizer.VIDEO_EXTS:
-                            queue.put_nowait(f_path)
+                            while True:
+                                with lock:
+                                    if len(queue) < max_batch:
+                                        queue.append(f_path)
+                                        break
+                                
+                                if should_stop_func():
+                                    return True
+                                
+                                event.clear()
+                                event.wait()
                             
                             if should_stop_func():
                                 return True
@@ -58,7 +70,8 @@ class Organizer:
                 return True
             
             if Organizer._walk_recursive(os.path.join(source_dir, d), ignore_file_regex, 
-                                       ignore_dir_regex, dir_exists_cache, queue, should_stop_func):
+                                       ignore_dir_regex, dir_exists_cache, queue, 
+                                       lock, event, max_batch, should_stop_func):
                 return True
         
         return False
@@ -67,6 +80,7 @@ class Organizer:
     async def run_task(task: Dict[str, Any], dry_run: bool = True, task_id: str = None) -> Generator[str, None, None]:
         """
         流式执行整理任务。
+        批量扫描模式：扫描满一批后处理，处理完继续扫描
         """
         if task_id and task_id in Organizer._STOPPED_TASKS:
             Organizer._STOPPED_TASKS.remove(task_id)
@@ -91,33 +105,54 @@ class Organizer:
         def should_stop():
             return task_id in Organizer._STOPPED_TASKS
 
-        file_queue = asyncio.Queue(maxsize=100)
-        
+        max_batch = 50
+        file_queue = []
+        queue_lock = threading.Lock()
+        scan_event = threading.Event()
+        scan_event.set()
+        scan_done = False
+
         def scan_wrapper():
-            return Organizer._walk_recursive(
+            nonlocal scan_done
+            Organizer._walk_recursive(
                 source_dir, ignore_file_regex, ignore_dir_regex,
-                dir_exists_cache, file_queue, should_stop
+                dir_exists_cache, file_queue, queue_lock, scan_event, max_batch, should_stop
             )
+            scan_done = True
+            scan_event.set()
 
         scan_task = asyncio.create_task(asyncio.to_thread(scan_wrapper))
         
         try:
             while True:
-                try:
-                    f_path = await asyncio.wait_for(file_queue.get(), timeout=0.1)
-                    
-                    if ignore_file_regex and Organizer._is_regex_match(os.path.basename(f_path), ignore_file_regex):
-                        yield json.dumps({"type": "skip", "source": f_path, "reason": "匹配文件忽略正则"}) + "\n"
-                        continue
-                    
-                    results = await FileProcessor.organize_video_file(f_path, task, context, dry_run)
-                    for res in results:
-                        yield json.dumps(res) + "\n"
-                        if res.get("status") in ["success", "preview"]:
-                            processed_count += 1
-                except asyncio.TimeoutError:
-                    if scan_task.done():
-                        break
+                batch_to_process = []
+                with queue_lock:
+                    if file_queue:
+                        batch_to_process = file_queue[:]
+                        file_queue.clear()
+                    scan_event.set()
+                
+                if batch_to_process:
+                    for f_path in batch_to_process:
+                        if should_stop():
+                            break
+                        
+                        if ignore_file_regex and Organizer._is_regex_match(os.path.basename(f_path), ignore_file_regex):
+                            yield json.dumps({"type": "skip", "source": f_path, "reason": "匹配文件忽略正则"}) + "\n"
+                            continue
+                        
+                        results = await FileProcessor.organize_video_file(f_path, task, context, dry_run)
+                        for res in results:
+                            yield json.dumps(res) + "\n"
+                            if res.get("status") in ["success", "preview"]:
+                                processed_count += 1
+                
+                if scan_done:
+                    with queue_lock:
+                        if not file_queue:
+                            break
+                
+                await asyncio.sleep(0.01)
         finally:
             if not scan_task.done():
                 scan_task.cancel()
@@ -141,7 +176,6 @@ class Organizer:
         dir_cache = set()
         yield json.dumps({"type": "start", "message": "开始执行正式任务"}) + "\n"
         for item in items:
-            # 检查中断
             if task_id and task_id in Organizer._STOPPED_TASKS:
                 yield json.dumps({"type": "error", "message": "批处理任务已手动停止"}) + "\n"
                 Organizer._STOPPED_TASKS.remove(task_id)
@@ -154,7 +188,6 @@ class Organizer:
             
             if res == "success":
                 processed += 1
-                # [Audit] 记录关键文件操作
                 log_audit("整理", "文件操作", f"成功{action}: {os.path.basename(src)} -> {os.path.basename(dst)}", level="INFO")
             else:
                  log_audit("整理", "操作失败", f"{action}失败: {os.path.basename(src)} -> {FileExecutor.get_status_message(res)}", level="ERROR")
@@ -177,7 +210,6 @@ class Organizer:
             except: pass
         return False
 
-    # 保持对外的 organize_video_file 接口兼容性
     @staticmethod
     async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True) -> List[Dict[str, Any]]:
         return await FileProcessor.organize_video_file(v_path, task, context, dry_run)
