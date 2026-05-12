@@ -198,7 +198,9 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
                         await log_task(task_id, f"❌ {filename}: {data.get('msg', '')}", "ERROR")
                 elif data_type == "skip":
                     skipped += 1
-                    # await log_task(task_id, f"⏭️ 跳过: {os.path.basename(data.get('source', ''))} ({data.get('reason', '')})")
+                elif data_type == "error":
+                    errors += 1
+                    await log_task(task_id, f"❌ 错误: {data.get('message', '')}", "ERROR")
                 elif data_type == "finish":
                     _background_tasks[task_id]["total"] = data.get("count", 0)
                     
@@ -233,18 +235,19 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
         if errors > 0: final_summary += f" | 失败 {errors}"
         
         await log_task(task_id, final_summary)
-        _background_tasks[task_id]["status"] = "completed"
-        _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
         
-        # 构建统计信息
-        stats = {
-            "success": processed,
-            "skipped": skipped,
-            "errors": errors
-        }
-        
-        await finish_task(task_id, "completed", processed, stats)
-        log_audit("整理", "后台完成", f"任务后台运行结束: {task_name}", details={"processed": processed, "skipped": skipped, "errors": errors})
+        if task_id in Organizer._STOPPED_TASKS:
+            Organizer._STOPPED_TASKS.discard(task_id)
+            _background_tasks[task_id]["status"] = "stopped"
+            _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
+            await finish_task(task_id, "stopped", processed)
+            log_audit("整理", "后台停止", f"任务已被用户停止: {task_name}", details={"processed": processed})
+        else:
+            _background_tasks[task_id]["status"] = "completed"
+            _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
+            stats = {"success": processed, "skipped": skipped, "errors": errors}
+            await finish_task(task_id, "completed", processed, stats)
+            log_audit("整理", "后台完成", f"任务后台运行结束: {task_name}", details={"processed": processed, "skipped": skipped, "errors": errors})
         
     except Exception as e:
         await log_task(task_id, f"❌ 任务异常终止: {str(e)}", "ERROR")
@@ -290,11 +293,6 @@ async def stop_organize(task_id: str):
     通过任务 ID 强制停止正在运行的整理任务。
     """
     Organizer.stop_task(task_id)
-    if task_id in _background_tasks:
-        _background_tasks[task_id]["status"] = "stopped"
-        _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
-        processed = _background_tasks[task_id].get("processed", 0)
-        await finish_task(task_id, "stopped", processed)
     return {"status": "success", "message": "已发送停止指令"}
 
 @router.get("/api/organize/stream", summary="流式执行任务")

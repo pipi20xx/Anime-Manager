@@ -55,7 +55,9 @@ class Organizer:
                                     return True
                                 
                                 event.clear()
-                                event.wait()
+                                while not event.wait(timeout=0.1):
+                                    if should_stop_func():
+                                        return True
                             
                             if should_stop_func():
                                 return True
@@ -125,6 +127,9 @@ class Organizer:
         
         try:
             while True:
+                if should_stop():
+                    break
+                
                 batch_to_process = []
                 with queue_lock:
                     if file_queue:
