@@ -79,7 +79,7 @@ const {
 
         <!-- Popular Movies -->
         <div class="section-header" style="margin-top: var(--m-8)">
-            <div class="section-title">热门动画电影</div>
+            <div class="section-title">TMDB 热门动画电影</div>
         </div>
         <n-scrollbar x-scrollable style="padding-bottom: var(--space-5);">
             <div class="media-scroller">
@@ -96,7 +96,7 @@ const {
 
         <!-- Popular TV -->
         <div class="section-header" style="margin-top: var(--space-3)">
-            <div class="section-title">热门番剧</div>
+            <div class="section-title">TMDB 热门动画</div>
         </div>
         <n-scrollbar x-scrollable style="padding-bottom: var(--space-5);">
             <div class="media-scroller">

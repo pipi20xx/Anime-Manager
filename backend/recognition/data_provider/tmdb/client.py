@@ -169,11 +169,11 @@ class TMDBProvider:
         return resp_data
 
     async def get_popular(self, media_type: str) -> Dict:
-        cache_key = f"tmdb:popular:v3:{media_type}"
+        cache_key = f"tmdb:popular:v4:{media_type}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached
         
-        data, _ = await self._fetch(f"/discover/{media_type}", {"with_genres": "16", "with_original_language": "ja", "sort_by": "popularity.desc"})
+        data, _ = await self._fetch(f"/discover/{media_type}", {"with_genres": "16", "sort_by": "popularity.desc"})
         results = []
         for i in (data or {}).get("results", []):
             norm = TMDBMatcher.normalize(i, media_type_hint=media_type)

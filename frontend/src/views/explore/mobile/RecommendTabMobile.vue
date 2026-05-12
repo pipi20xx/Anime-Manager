@@ -79,7 +79,7 @@ useBackClose(toRef(bgmDetail, 'show'))
 
         <!-- Popular Movies -->
         <div class="section-header">
-            <div class="section-title">热门电影</div>
+            <div class="section-title">TMDB 热门动画电影</div>
         </div>
         <n-scrollbar x-scrollable style="padding-bottom: var(--space-3);">
             <div class="media-scroller">
@@ -96,7 +96,7 @@ useBackClose(toRef(bgmDetail, 'show'))
 
         <!-- Popular TV -->
         <div class="section-header">
-            <div class="section-title">热门番剧</div>
+            <div class="section-title">TMDB 热门动画</div>
         </div>
         <n-scrollbar x-scrollable style="padding-bottom: var(--space-3);">
             <div class="media-scroller">
