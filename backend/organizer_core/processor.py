@@ -51,17 +51,16 @@ class FileProcessor:
             from database import db
             from models import OrganizeHistory
             async with db.session_scope():
-                # 只有当此前确实"成功"整理过该文件时，才跳过
                 stmt = select(OrganizeHistory).where(
                     and_(
                         OrganizeHistory.source_path == v_path,
-                        OrganizeHistory.status == "success"
+                        OrganizeHistory.status.in_(["success", "skipped"])
                     )
                 )
                 existing = await db.first(OrganizeHistory, stmt)
                 if existing:
-                    log_audit("整理", "跳过历史", f"文件此前已整理成功: {os.path.basename(v_path)}")
-                    return [{"type": "skip", "source": v_path, "reason": "已成功整理过"}]
+                    log_audit("整理", "跳过历史", f"文件此前已整理成功或跳过: {os.path.basename(v_path)}")
+                    return [{"type": "skip", "source": v_path, "reason": "已成功整理过或已跳过"}]
 
         rule = context["rule"]
         if not rule: return [{"type": "error", "source": v_path, "message": "Rule not found"}]
@@ -300,72 +299,73 @@ class FileProcessor:
                         # [Notify]
                         await NotificationManager.push_organize_notification(final)
 
-                        # [Record History]
-                        if not dry_run:
-                            from models import OrganizeHistory, FileHash
-                            from database import db
-                            async with db.session_scope():
-                                history = OrganizeHistory(
-                                    source_path=v_path, target_path=new_abs_path,
-                                    filename=v_file, tmdb_id=str(final.get("tmdb_id")),
-                                    title=final.get("title"), season=final.get("season"),
-                                    episode=str(final.get("episode")),
-                                    media_type=final.get("category"),
-                                    action_type=action_type,
-                                    file_size=final.get("file_size"),
-                                    # Details
-                                    resolution=final.get("resolution"),
-                                    team=final.get("team"),
-                                    video_encode=final.get("video_encode"),
-                                    year=str(final.get("year")) if final.get("year") else None
-                                )
-                                await db.save(history, audit=False)
-                                
-                                # [New] Save FileHash (按 ED2K 去重)
-                                if hash_result:
-                                    stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
-                                    existing = await db.first(FileHash, stmt)
-                                    if existing:
-                                        existing.sha1 = hash_result.sha1
-                                        existing.ed2k_link = hash_result.ed2k_link
-                                        existing.original_filename = v_file
-                                        existing.file_size = hash_result.file_size
-                                        existing.tmdb_id = str(final.get("tmdb_id"))
-                                        existing.title = final.get("title")
-                                        existing.season = final.get("season")
-                                        existing.episode = str(final.get("episode"))
-                                        existing.media_type = final.get("category")
-                                        existing.resolution = final.get("resolution")
-                                        existing.team = final.get("team")
-                                        existing.video_encode = final.get("video_encode")
-                                        existing.source_path = v_path
-                                        existing.target_path = new_abs_path
-                                        existing.calculated_at = datetime.now()
-                                        await db.save(existing, audit=False)
-                                    else:
-                                        file_hash = FileHash(
-                                            sha1=hash_result.sha1,
-                                            ed2k=hash_result.ed2k,
-                                            ed2k_link=hash_result.ed2k_link,
-                                            original_filename=v_file,
-                                            file_size=hash_result.file_size,
-                                            tmdb_id=str(final.get("tmdb_id")),
-                                            title=final.get("title"),
-                                            season=final.get("season"),
-                                            episode=str(final.get("episode")),
-                                            media_type=final.get("category"),
-                                            resolution=final.get("resolution"),
-                                            team=final.get("team"),
-                                            video_encode=final.get("video_encode"),
-                                            source_path=v_path,
-                                            target_path=new_abs_path
-                                        )
-                                        await db.save(file_hash, audit=False)
-                        
                         # [Always Trigger] 使用模拟 Webhook 方式触发 STRM
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
                         cd2_path = cd2_client._to_cd2_path(new_abs_path)
                         asyncio.create_task(FileProcessor._simulate_cd2_webhook(cd2_path))
+                    
+                    # [Record History] - 无论 success 还是 skipped 都保存历史记录
+                    if not dry_run and batch_res in ["success", "skipped"]:
+                        from models import OrganizeHistory, FileHash
+                        from database import db
+                        async with db.session_scope():
+                            history = OrganizeHistory(
+                                source_path=v_path, target_path=new_abs_path,
+                                filename=v_file, tmdb_id=str(final.get("tmdb_id")),
+                                title=final.get("title"), season=final.get("season"),
+                                episode=str(final.get("episode")),
+                                media_type=final.get("category"),
+                                action_type=action_type,
+                                file_size=final.get("file_size"),
+                                resolution=final.get("resolution"),
+                                team=final.get("team"),
+                                video_encode=final.get("video_encode"),
+                                year=str(final.get("year")) if final.get("year") else None,
+                                status="success" if batch_res == "success" else "skipped",
+                                message=None if batch_res == "success" else f"目标已存在 (跳过)"
+                            )
+                            await db.save(history, audit=False)
+                            
+                            # [New] Save FileHash (按 ED2K 去重) - 仅成功时保存
+                            if hash_result and batch_res == "success":
+                                stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
+                                existing = await db.first(FileHash, stmt)
+                                if existing:
+                                    existing.sha1 = hash_result.sha1
+                                    existing.ed2k_link = hash_result.ed2k_link
+                                    existing.original_filename = v_file
+                                    existing.file_size = hash_result.file_size
+                                    existing.tmdb_id = str(final.get("tmdb_id"))
+                                    existing.title = final.get("title")
+                                    existing.season = final.get("season")
+                                    existing.episode = str(final.get("episode"))
+                                    existing.media_type = final.get("category")
+                                    existing.resolution = final.get("resolution")
+                                    existing.team = final.get("team")
+                                    existing.video_encode = final.get("video_encode")
+                                    existing.source_path = v_path
+                                    existing.target_path = new_abs_path
+                                    existing.calculated_at = datetime.now()
+                                    await db.save(existing, audit=False)
+                                else:
+                                    file_hash = FileHash(
+                                        sha1=hash_result.sha1,
+                                        ed2k=hash_result.ed2k,
+                                        ed2k_link=hash_result.ed2k_link,
+                                        original_filename=v_file,
+                                        file_size=hash_result.file_size,
+                                        tmdb_id=str(final.get("tmdb_id")),
+                                        title=final.get("title"),
+                                        season=final.get("season"),
+                                        episode=str(final.get("episode")),
+                                        media_type=final.get("category"),
+                                        resolution=final.get("resolution"),
+                                        team=final.get("team"),
+                                        video_encode=final.get("video_encode"),
+                                        source_path=v_path,
+                                        target_path=new_abs_path
+                                    )
+                                    await db.save(file_hash, audit=False)
                     
                     return results
 
@@ -407,7 +407,7 @@ class FileProcessor:
                             team=final.get("team"),
                             video_encode=final.get("video_encode"),
                             year=str(final.get("year")) if final.get("year") else None,
-                            status="success" if v_res == "success" else "failed",
+                            status="success" if v_res == "success" else ("skipped" if v_res in ["skipped", "skipped_conflict"] else "failed"),
                             message=None if v_res == "success" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}"
                         )
                         await db.save(history, audit=False)
