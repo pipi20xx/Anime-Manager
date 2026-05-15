@@ -146,7 +146,12 @@ const {
         <n-input v-model:value="formModel.criteria.year" placeholder="2024 或 2020-2025" />
       </n-form-item>
       <n-form-item label="名称匹配">
-        <n-input v-model:value="formModel.criteria.title" placeholder="匹配标题关键词，多个用逗号分隔" />
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <n-input v-model:value="formModel.criteria.title" placeholder="匹配标题关键词，多个用逗号分隔" />
+          <span style="font-size: 11px; color: var(--text-tertiary); line-height: 1.4;">
+            匹配数据库字段: custom_title (用户自定义) → title (TMDB官方) → name (备用)
+          </span>
+        </div>
       </n-form-item>
     </n-form>
 
