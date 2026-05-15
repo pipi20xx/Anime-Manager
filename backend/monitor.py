@@ -987,11 +987,34 @@ class MonitorManager:
                 
                 task_name = current_task.get("name", "未命名")
                 
-                is_stable = await StabilityChecker.wait_for_stability(file_path)
-                if not is_stable:
-                    log_audit("监控", "任务跳过", f"文件不稳定或已消失: {os.path.basename(file_path)}", level="WARN")
-                    queue.task_done()
-                    continue
+                skip_stability_check = False
+                
+                ignore_history = current_task.get("ignore_history", False)
+                if not ignore_history:
+                    from database import db
+                    from models import OrganizeHistory
+                    from sqlmodel import select, and_
+                    async with db.session_scope():
+                        stmt = select(OrganizeHistory).where(
+                            and_(
+                                OrganizeHistory.source_path == file_path,
+                                OrganizeHistory.status.in_(["success", "skipped"])
+                            )
+                        )
+                        existing = await db.first(OrganizeHistory, stmt)
+                        if existing:
+                            skip_stability_check = True
+                
+                ignore_file_regex = current_task.get("ignore_file_regex", [])
+                if not skip_stability_check and ignore_file_regex and Organizer._is_regex_match(os.path.basename(file_path), ignore_file_regex):
+                    skip_stability_check = True
+                
+                if not skip_stability_check:
+                    is_stable = await StabilityChecker.wait_for_stability(file_path)
+                    if not is_stable:
+                        log_audit("监控", "任务跳过", f"文件不稳定或已消失: {os.path.basename(file_path)}", level="WARN")
+                        queue.task_done()
+                        continue
 
                 should_rate_limit = True
                 try:
