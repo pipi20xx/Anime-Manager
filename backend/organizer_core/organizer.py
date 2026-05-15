@@ -156,8 +156,10 @@ class Organizer:
                                 skip_type = res.get("skip_type")
                                 skip_rate_limit = task.get("skip_rate_limit", False)
                                 skip_rate_limit_types = task.get("skip_rate_limit_types", [])
+                                log_audit("整理", "跳过限流检查", f"skip_type={skip_type}, enabled={skip_rate_limit}, types={skip_rate_limit_types}")
                                 if skip_rate_limit and skip_type and skip_type in skip_rate_limit_types:
                                     should_rate_limit = False
+                                    log_audit("整理", "跳过限流生效", f"命中规则: {skip_type}，跳过限流等待")
                         
                         if should_rate_limit:
                             interval = float(task.get("process_interval", 0))

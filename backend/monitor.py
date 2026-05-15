@@ -1015,8 +1015,10 @@ class MonitorManager:
                                 skip_type = res.get("skip_type")
                                 skip_rate_limit = current_task.get("skip_rate_limit", False)
                                 skip_rate_limit_types = current_task.get("skip_rate_limit_types", [])
+                                log_audit("监控", "跳过限流检查", f"skip_type={skip_type}, enabled={skip_rate_limit}, types={skip_rate_limit_types}")
                                 if skip_rate_limit and skip_type and skip_type in skip_rate_limit_types:
                                     should_rate_limit = False
+                                    log_audit("监控", "跳过限流生效", f"命中规则: {skip_type}，跳过限流等待")
                 except Exception as e:
                     import traceback
                     error_detail = f"{str(e)}\n{traceback.format_exc()}"
