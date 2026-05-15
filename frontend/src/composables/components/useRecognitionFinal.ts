@@ -12,6 +12,13 @@ export function useRecognitionFinal() {
   const category = computed(() => safeGet(final.value.category, '未知分类'))
   const platform = computed(() => safeGet(final.value.platform, ''))
   const tmdb_id = computed(() => safeGet(final.value.tmdb_id, 'N/A'))
+  const tmdbUrl = computed(() => {
+    const id = final.value.tmdb_id
+    if (!id || id === 'N/A') return ''
+    const cat = final.value.category || ''
+    const mediaType = cat.includes('电影') ? 'movie' : 'tv'
+    return `https://www.themoviedb.org/${mediaType}/${id}`
+  })
   const release_date = computed(() => safeGet(final.value.release_date, '未知日期'))
   const secondary_category = computed(() => safeGet(final.value.secondary_category, ''))
   const origin_country = computed(() => safeGet(final.value.origin_country, ''))
@@ -44,7 +51,7 @@ export function useRecognitionFinal() {
 
   return {
     final,
-    title, poster, category, platform, tmdb_id, release_date, secondary_category, origin_country,
+    title, poster, category, platform, tmdb_id, tmdbUrl, release_date, secondary_category, origin_country,
     resolution, v_encode, v_effect, a_encode,
     year, season, episode, source,
     subtitle, team, processed_name, filename,

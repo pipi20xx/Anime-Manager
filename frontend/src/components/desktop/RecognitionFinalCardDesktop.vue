@@ -4,7 +4,7 @@ import { FlagOutlined as FinalIcon } from '@vicons/material'
 import { useRecognitionFinal } from '../../composables/components/useRecognitionFinal'
 
 const {
-  title, poster, category, platform, tmdb_id, release_date, secondary_category, origin_country,
+  title, poster, category, platform, tmdb_id, tmdbUrl, release_date, secondary_category, origin_country,
   resolution, v_encode, v_effect, a_encode,
   year, season, episode, source,
   subtitle, team, processed_name, filename,
@@ -37,7 +37,8 @@ const {
         <div class="pure-tags-row">
           <span class="p-tag tag-green">{{ category }}</span>
           <span v-if="secondary_category && secondary_category !== '-'" class="p-tag tag-blue">🏷️ {{ secondary_category }}</span>
-          <span class="id-text">TMDB ID: {{ tmdb_id }}</span>
+          <a v-if="tmdbUrl" :href="tmdbUrl" target="_blank" class="id-link">TMDB ID: {{ tmdb_id }}</a>
+          <span v-else class="id-text">TMDB ID: {{ tmdb_id }}</span>
           <span class="date-text">📅 {{ release_date }}</span>
         </div>
 
@@ -89,6 +90,8 @@ const {
 .tag-green { background: #2e7d32; border-color: transparent; }
 .tag-blue { background: #0288d1; border-color: transparent; }
 .id-text { font-family: monospace; color: var(--text-muted); font-size: 12px; margin-left: 4px; }
+.id-link { font-family: monospace; color: var(--n-primary-color); font-size: 12px; margin-left: 4px; text-decoration: none; cursor: pointer; transition: color 0.2s; }
+.id-link:hover { color: var(--n-info-color); text-decoration: underline; }
 .date-text { color: var(--n-primary-color); font-size: 13px; margin-left: 4px; }
 
 .pure-specs-row { display: flex; gap: 6px; margin-bottom: 16px; }

@@ -61,7 +61,10 @@ const {
                 <div class="pure-tags-row">
                    <span class="p-tag tag-green">{{ data.final_result.category }}</span>
                    <span v-if="data.final_result.secondary_category" class="p-tag tag-blue">🏷️ {{ data.final_result.secondary_category }}</span>
-                   <span class="id-text">TMDB: {{ data.final_result.tmdb_id || 'N/A' }}</span>
+                   <a v-if="data.final_result.tmdb_id && data.final_result.tmdb_id !== 'N/A'" 
+                      :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`" 
+                      target="_blank" class="id-link">TMDB: {{ data.final_result.tmdb_id }}</a>
+                   <span v-else class="id-text">TMDB: {{ data.final_result.tmdb_id || 'N/A' }}</span>
                    <span class="date-text" v-if="data.final_result.release_date">📅 {{ data.final_result.release_date }}</span>
                 </div>
                 <div class="pure-specs-row">
@@ -159,6 +162,8 @@ const {
 .tag-green { color: var(--n-primary-color); background: var(--primary-light); border-color: var(--primary-medium); }
 .tag-blue { color: var(--n-info-color); background: var(--info-light); border-color: var(--info-medium); }
 .id-text { font-family: monospace; color: var(--text-muted); font-size: 11px; margin-left: 4px; }
+.id-link { font-family: monospace; color: var(--n-primary-color); font-size: 11px; margin-left: 4px; text-decoration: none; cursor: pointer; transition: color 0.2s; }
+.id-link:hover { color: var(--n-info-color); text-decoration: underline; }
 .date-text { color: var(--n-primary-color); font-size: 12px; margin-left: 4px; }
 .pure-specs-row { display: flex; gap: 6px; margin-bottom: 12px; }
 .p-badge { padding: 1px 6px; border-radius: 4px; font-size: 10px; background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-light); }

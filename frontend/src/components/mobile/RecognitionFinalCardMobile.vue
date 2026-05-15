@@ -4,7 +4,7 @@ import { FlagOutlined as FinalIcon } from '@vicons/material'
 import { useRecognitionFinal } from '../../composables/components/useRecognitionFinal'
 
 const {
-  title, poster, category, platform, tmdb_id, release_date, secondary_category, origin_country,
+  title, poster, category, platform, tmdb_id, tmdbUrl, release_date, secondary_category, origin_country,
   resolution, v_encode, v_effect, a_encode,
   year, season, episode, source,
   subtitle, team, processed_name, filename,
@@ -36,7 +36,8 @@ const {
           </div>
           <div class="date-id-row">
             <span v-if="release_date" class="date">📅 {{ release_date }}</span>
-            <span class="tmdb-id">ID: {{ tmdb_id }}</span>
+            <a v-if="tmdbUrl" :href="tmdbUrl" target="_blank" class="tmdb-id-link">ID: {{ tmdb_id }}</a>
+            <span v-else class="tmdb-id">ID: {{ tmdb_id }}</span>
           </div>
         </div>
       </div>
@@ -94,6 +95,8 @@ const {
 .date-id-row { display: flex; flex-direction: column; gap: 2px; }
 .date { font-size: 10px; color: var(--n-primary-color); font-weight: 500; }
 .tmdb-id { font-family: monospace; font-size: 10px; color: var(--text-muted); }
+.tmdb-id-link { font-family: monospace; font-size: 10px; color: var(--n-primary-color); text-decoration: none; cursor: pointer; transition: color 0.2s; }
+.tmdb-id-link:hover { color: var(--n-info-color); text-decoration: underline; }
 
 .flex-info-grid { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255, var(--border-light-alpha)); margin-bottom: 12px; }
 .fig-item { flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--bg-primary); padding: 8px 2px; border-right: 1px solid rgba(255,255,255, var(--border-light-alpha)); }
