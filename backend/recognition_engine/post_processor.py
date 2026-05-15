@@ -375,11 +375,15 @@ class PostProcessor:
         current_logs.append(f"┃")
         current_logs.append(f"┃ [DEBUG][STEP 7]: 类型判定")
         
+        current_logs.append(f"┣ [类型判定] 当前状态: 季号={meta_obj.begin_season}, 集数={meta_obj.begin_episode}, 类型={meta_obj.type.value.upper()}")
+        
         if meta_obj.forced_tmdbid: 
             current_logs.append(f"┣ [类型判定] 已锁定 TMDB ID，跳过自动类型判断")
         elif meta_obj.type == MediaType.AUTO:
             current_logs.append(f"┣ [类型判定] 类型为 AUTO，将由匹配结果自动确定")
         else:
+            is_forced_movie = False
+            
             # [Enhancement] 检查原始文件名是否包含电影关键词
             movie_keywords = [
                 r"(?i)\bMovie\b",
@@ -399,15 +403,21 @@ class PostProcessor:
             if movie_keyword_found:
                 current_logs.append(f"┣ [类型判定] 原始文件名包含电影关键词 '{movie_keyword_found}'，强制判定为 Movie 模式")
                 meta_obj.type = MediaType.MOVIE
+                is_forced_movie = True
                 # 清除可能误判的集数
                 if meta_obj.begin_episode:
                     current_logs.append(f"┣ [类型判定] 清除误判的集数 E{meta_obj.begin_episode}")
                     meta_obj.begin_episode = None
+                # [Fix] 清除可能误判的季号 (如 X 被误判为罗马数字 10)
+                if meta_obj.begin_season:
+                    current_logs.append(f"┣ [类型判定] 清除误判的季号 S{meta_obj.begin_season} (电影不应有季号)")
+                    meta_obj.begin_season = None
             # [Fix] 如果集数是一个年份 (如 2019)，则判定为 Movie，并清空集数
             elif meta_obj.begin_episode and isinstance(meta_obj.begin_episode, (int, float)) and meta_obj.begin_episode > 1900:
                 current_logs.append(f"┣ [类型判定] 集数 E{meta_obj.begin_episode} 判定为年份，修正为 Movie 模式")
                 meta_obj.begin_episode = None
                 meta_obj.type = MediaType.MOVIE
+                is_forced_movie = True
             elif meta_obj.begin_season is not None or meta_obj.begin_episode is not None:
                 current_logs.append(f"┣ [类型判定] 检测到季号/集数 (S{meta_obj.begin_season}/E{meta_obj.begin_episode})，判定为 TV 类型")
                 meta_obj.type = MediaType.TV
@@ -416,9 +426,11 @@ class PostProcessor:
                 current_logs.append(f"┣ [类型判定] 未检测到季号/集数，判定为 Movie 类型")
                 meta_obj.type = MediaType.MOVIE
             
-            # [Fix] 如果提取到了季号，不管有没有集数，都视为 TV
-            if meta_obj.begin_season:
+            # [Fix] 如果提取到了季号，且未被强制判定为 Movie，则视为 TV
+            if meta_obj.begin_season and not is_forced_movie:
                 current_logs.append(f"┣ [类型判定] 确认季号存在，最终类型: TV")
                 meta_obj.type = MediaType.TV
             else:
+                if is_forced_movie:
+                    current_logs.append(f"┣ [类型判定] 电影关键词优先级更高，保持 Movie 类型")
                 current_logs.append(f"┣ [类型判定] 最终类型: {meta_obj.type.value.upper()}")
