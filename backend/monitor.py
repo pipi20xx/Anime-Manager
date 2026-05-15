@@ -996,15 +996,45 @@ class MonitorManager:
                 try:
                     if is_strm:
                         logger.info(f"✨ [监控] STRM处理: {os.path.basename(file_path)}")
+                        strm_task_id = None
+                        try:
+                            from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
+                            import uuid as _uuid
+                            strm_task_id = f"strm_mon_{_uuid.uuid4().hex[:12]}"
+                            await _start_task(strm_task_id, "STRM", f"[监控] {os.path.basename(file_path)}")
+                            await _log_task(strm_task_id, f"📄 处理文件: {file_path}")
+                        except Exception:
+                            strm_task_id = None
                         res = await StrmProcessor.process_single_file(file_path, current_task)
                         status = res.get("status", "unknown") if isinstance(res, dict) else "error"
                         message = res.get("message", "") if isinstance(res, dict) else str(res)
                         if status == "success":
                             logger.info(f"✨ [监控] STRM完成: {os.path.basename(file_path)}")
+                            if strm_task_id:
+                                try:
+                                    from task_history import log_task as _log_task, finish_task as _finish_task
+                                    await _log_task(strm_task_id, f"✅ 处理成功: {os.path.basename(file_path)} ({message})")
+                                    await _finish_task(strm_task_id, "completed")
+                                except Exception:
+                                    pass
                         elif status == "skipped":
                             logger.info(f"✨ [监控] STRM跳过: {os.path.basename(file_path)}")
+                            if strm_task_id:
+                                try:
+                                    from task_history import log_task as _log_task, finish_task as _finish_task
+                                    await _log_task(strm_task_id, f"⏭️ 跳过: {os.path.basename(file_path)} ({message})")
+                                    await _finish_task(strm_task_id, "completed")
+                                except Exception:
+                                    pass
                         else:
                             logger.error(f"✨ [监控] STRM失败: {os.path.basename(file_path)} ({message})")
+                            if strm_task_id:
+                                try:
+                                    from task_history import log_task as _log_task, finish_task as _finish_task
+                                    await _log_task(strm_task_id, f"❌ 失败: {os.path.basename(file_path)} ({message})", "ERROR")
+                                    await _finish_task(strm_task_id, "error")
+                                except Exception:
+                                    pass
                     else:
                         logger.info(f"✨ [监控] 整理: {os.path.basename(file_path)}")
                         try:
