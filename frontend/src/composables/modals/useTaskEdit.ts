@@ -51,6 +51,8 @@ export function useTaskEdit(props: any, emit: any) {
       if (rawData.scheduler_enabled === undefined) rawData.scheduler_enabled = false
       if (rawData.scheduler_interval === undefined) rawData.scheduler_interval = 3600
       if (rawData.monitor_interval === undefined) rawData.monitor_interval = 10
+      if (rawData.skip_rate_limit === undefined) rawData.skip_rate_limit = false
+      if (rawData.skip_rate_limit_types === undefined) rawData.skip_rate_limit_types = []
 
       Object.assign(form, rawData)
     }
