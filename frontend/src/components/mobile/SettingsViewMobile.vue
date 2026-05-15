@@ -243,7 +243,7 @@ const {
                   <n-divider dashed />
 
                   <div class="number-row">
-                    <n-form-item label="死种超时" style="flex: 1">
+                    <n-form-item label="死种超时清理" style="flex: 1">
                       <n-input-number v-model:value="config.stalled_timeout_minutes" :min="0" size="small" style="width: 100%">
                         <template #suffix>分钟</template>
                       </n-input-number>

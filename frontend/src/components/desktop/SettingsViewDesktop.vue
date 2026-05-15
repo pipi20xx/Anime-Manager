@@ -304,9 +304,9 @@ const {
                     </n-form-item>
                   </n-gi>
 
-                  <!-- 第五行: 下载超时熔断 -->
+                  <!-- 第五行: 死种清理 -->
                   <n-gi>
-                    <n-form-item label="死种超时删除" feedback="0 为禁用">
+                    <n-form-item label="死种超时清理" feedback="0 为禁用">
                       <n-input-number 
                         v-model:value="config.stalled_timeout_minutes" 
                         :min="0" :max="43200"

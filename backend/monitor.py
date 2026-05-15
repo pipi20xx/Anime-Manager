@@ -259,9 +259,9 @@ class MonitorManager:
                 id="stalled_monitor_job",
                 replace_existing=True
             )
-            logger.info(f"[Monitor] 已启动下载超时熔断监控，巡检间隔 {stalled_interval} 分钟。")
+            logger.info(f"[Monitor] 已启动死种清理监控，巡检间隔 {stalled_interval} 分钟。")
         else:
-            logger.info("[Monitor] 下载超时巡检已禁用 (间隔设为 0)。")
+            logger.info("[Monitor] 死种清理已禁用 (间隔设为 0)。")
 
         # 6. [Health Check] 掉盘与失效自动检测
         health_enabled = config.get("health_check_enabled", True)
@@ -573,12 +573,12 @@ class MonitorManager:
                 "description": "自动搜寻补全缺失的订阅集数"
             })
 
-            # 下载超时熔断
+            # 死种清理
             stalled_job = job_map.get("stalled_monitor_job")
             stalled_interval = config.get("stalled_monitor_interval", 30)
             services.append({
                 "id": "stalled_monitor",
-                "name": "下载超时熔断",
+                "name": "死种清理",
                 "type": "scheduler",
                 "enabled": stalled_interval > 0,
                 "running": stalled_job is not None,
