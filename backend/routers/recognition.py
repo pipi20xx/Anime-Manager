@@ -5,6 +5,8 @@ from recognition.recognizer import MovieRecognizer
 from recognition.ai_helper import AIHelper
 from config_manager import ConfigManager
 from logger import log_audit
+from task_history import start_task, log_task, finish_task
+import uuid
 
 router = APIRouter(tags=["媒体识别"], prefix="")
 
@@ -43,40 +45,83 @@ async def recognize(req: RecognizeRequest):
     4. 字段补全与本地覆盖
     5. 规则渲染
     """
-    # 基础审计记录
     display_name = req.filename if req.force_filename else req.filename.split('/')[-1]
-    log_audit("识别", "识别请求", f"开始识别文件: {display_name}")
+    
+    log_audit("识别", "识别标题", display_name)
+    
+    task_id = f"recog_{uuid.uuid4().hex[:12]}"
+    try:
+        await start_task(task_id, "识别", display_name)
+    except Exception:
+        task_id = None
 
     config = ConfigManager.get_config()
     
-    # 优先使用请求参数，否则使用全局配置
     anime_priority = req.anime_priority if req.anime_priority is not None else config.get("anime_priority", True)
     offline_priority = req.offline_priority if req.offline_priority is not None else config.get("offline_priority", True)
     bangumi_priority = req.bangumi_priority if req.bangumi_priority is not None else config.get("bangumi_priority", False)
     bangumi_failover = req.bangumi_failover if req.bangumi_failover is not None else config.get("bangumi_failover", True)
 
-    # 调用重构后的 Orchestrator 引擎
-    result_data, logs = await MovieRecognizer.recognize_full(
-        req.filename, 
-        all_noise=req.temp_noise, 
-        all_groups=req.temp_groups, 
-        api_key=None, 
-        anime_priority=anime_priority,
-        offline_priority=offline_priority,
-        bangumi_priority=bangumi_priority,
-        bangumi_failover=bangumi_failover,
-        series_fingerprint=req.series_fingerprint,
-        batch_enhancement=req.batch_enhancement,
-        all_render=req.temp_render,
-        all_privilege=req.temp_privilege,
-        force_filename=req.force_filename,
-        forced_tmdb_id=req.forced_tmdb_id,
-        forced_type=req.forced_type,
-        forced_season=req.forced_season,
-        forced_episode=req.forced_episode
-    )
+    try:
+        result_data, logs = await MovieRecognizer.recognize_full(
+            req.filename, 
+            all_noise=req.temp_noise, 
+            all_groups=req.temp_groups, 
+            api_key=None, 
+            anime_priority=anime_priority,
+            offline_priority=offline_priority,
+            bangumi_priority=bangumi_priority,
+            bangumi_failover=bangumi_failover,
+            series_fingerprint=req.series_fingerprint,
+            batch_enhancement=req.batch_enhancement,
+            all_render=req.temp_render,
+            all_privilege=req.temp_privilege,
+            force_filename=req.force_filename,
+            forced_tmdb_id=req.forced_tmdb_id,
+            forced_type=req.forced_type,
+            forced_season=req.forced_season,
+            forced_episode=req.forced_episode
+        )
 
-    return result_data
+        if task_id:
+            for log_msg in logs:
+                level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
+                await log_task(task_id, log_msg, level)
+
+        final = result_data.get("final_result", {})
+        success = result_data.get("success", False)
+        
+        stats = {}
+        if final.get("title"):
+            stats["title"] = final["title"]
+        if final.get("tmdb_id"):
+            stats["tmdb_id"] = final["tmdb_id"]
+        if final.get("category"):
+            stats["category"] = final["category"]
+        if final.get("season"):
+            stats["season"] = final["season"]
+        if final.get("episode"):
+            stats["episode"] = final["episode"]
+
+        status = "completed" if success else "error"
+        if task_id:
+            try:
+                await finish_task(task_id, status, stats=stats if stats else None)
+            except Exception:
+                pass
+        
+        if success:
+            log_audit("识别", "识别完成", f"{final.get('title', display_name)} (ID: {final.get('tmdb_id', '-')}) S{final.get('season', '?')}E{final.get('episode', '?')}")
+
+        return result_data
+    except Exception as e:
+        if task_id:
+            try:
+                await log_task(task_id, f"❌ 识别异常: {str(e)}", "ERROR")
+                await finish_task(task_id, "error")
+            except Exception:
+                pass
+        raise
 
 @router.get("/api/tmdb/search", summary="TMDB 关键词搜索", operation_id="tmdb_search_recognition")
 async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):

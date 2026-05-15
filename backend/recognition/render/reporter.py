@@ -1,5 +1,3 @@
-import time
-from logger import log_audit
 from ..context import RecognitionContext
 
 class RenderReporter:
@@ -38,9 +36,5 @@ class RenderReporter:
         
         ctx.log(f"┗ 📝 渲染后名: {f['processed_name']}")
         
-        # 3. 写入系统审计日志
-        log_audit("识别", "识别成功", f"{f['title']} (ID: {f['tmdb_id']}) S{f.get('season')}E{f.get('episode')}", details=f)
-        
-        # 4. 补充 logs 字段供前端显示
         data_packet["logs"] = ctx.logs
         return data_packet

@@ -174,12 +174,18 @@ export function useTaskHistory() {
       return parts.join(' | ')
     } else if (module === '订阅补全') {
       if (stats.total_pushed) return `推送${stats.total_pushed}项`
+    } else if (module === '识别') {
+      const parts = []
+      if (stats.title) parts.push(stats.title)
+      if (stats.tmdb_id) parts.push(`ID:${stats.tmdb_id}`)
+      if (stats.category) parts.push(stats.category)
+      return parts.join(' | ') || null
     }
     return null
   }
 
   const moduleOptions = computed(() => {
-    return ['all', '整理', 'STRM', 'RSS', '元数据', '规则同步', '订阅补全', '死种清理', 'Webhook联动']
+    return ['all', '整理', 'STRM', 'RSS', '识别', '元数据', '规则同步', '订阅补全', '死种清理', 'Webhook联动']
   })
 
   return {

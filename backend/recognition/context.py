@@ -1,5 +1,4 @@
 import time
-import logging
 from typing import List, Dict, Any, Optional
 from recognition_engine.data_models import MetaBase
 from recognition_engine.constants import MediaType
@@ -9,8 +8,6 @@ from .data_provider.bangumi.client import BangumiProvider as BangumiClient
 from .data_provider.tmdb.client import TMDBProvider as TMDBClient
 from .data_provider.local_cache import LocalCacheDAO
 from .data_provider.offline import OfflineDAO
-
-logger = logging.getLogger("Recognition")
 
 class RecognitionContext:
     """
@@ -78,10 +75,6 @@ class RecognitionContext:
 
     def log(self, message: str, level: str = "INFO"):
         self.logs.append(message)
-        # Also output to global system log for real-time console
-        lvl = getattr(logging, level.upper(), logging.INFO)
-        # [Upgrade] 使用 stacklevel=2 穿透包装，显示真实的调用文件名 (如 parser.py)
-        logger.log(lvl, message, stacklevel=2)
 
     def add_perf(self, stage: str, start_ts: float):
         duration_ms = int((time.time() - start_ts) * 1000)
