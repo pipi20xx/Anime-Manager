@@ -130,7 +130,7 @@ class OrganizerEventHandler(FileSystemEventHandler):
 
             queue = self.queues.get(task.get("id"))
             if queue:
-                self.loop.call_soon_threadsafe(queue.put_nowait, file_path)
+                self.loop.call_soon_threadsafe(queue.put_nowait, (file_path, None))
                 matched_any = True
 
         if matched_any:
@@ -511,7 +511,7 @@ class MonitorManager:
         queue = MonitorManager._queues.get(task_id)
         if queue and MonitorManager._loop:
             # 使用 threadsafe 以防万一从非 asyncio 线程调用
-            MonitorManager._loop.call_soon_threadsafe(queue.put_nowait, file_path)
+            MonitorManager._loop.call_soon_threadsafe(queue.put_nowait, (file_path, None))
             return True
         return False
 
@@ -829,7 +829,7 @@ class MonitorManager:
         for item in temp_items:
             queue.put_nowait(item)
         
-        return items
+        return [i[0] if isinstance(i, tuple) else i for i in items]
 
     @staticmethod
     async def reload():
@@ -952,7 +952,11 @@ class MonitorManager:
 
         while True:
             try:
-                file_path = await queue.get()
+                item = await queue.get()
+                if isinstance(item, tuple):
+                    file_path, batch_task_id = item
+                else:
+                    file_path, batch_task_id = item, None
                 
                 current_task = MonitorManager._get_task_config(task_id, is_strm)
                 if not current_task:
@@ -992,58 +996,68 @@ class MonitorManager:
                         continue
 
                 should_rate_limit = True
-                mon_task_id = None
+                mon_task_id = batch_task_id
                 try:
                     if is_strm:
                         logger.info(f"✨ [监控] STRM处理: {os.path.basename(file_path)}")
-                        strm_task_id = None
-                        try:
-                            from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
-                            import uuid as _uuid
-                            strm_task_id = f"strm_mon_{_uuid.uuid4().hex[:12]}"
-                            await _start_task(strm_task_id, "STRM", f"[监控] {os.path.basename(file_path)}")
-                            await _log_task(strm_task_id, f"📄 处理文件: {file_path}")
-                        except Exception:
-                            strm_task_id = None
+                        if not mon_task_id:
+                            try:
+                                from task_history import start_task as _start_task, log_task as _log_task
+                                import uuid as _uuid
+                                mon_task_id = f"strm_mon_{_uuid.uuid4().hex[:12]}"
+                                await _start_task(mon_task_id, "STRM", f"[监控] {os.path.basename(file_path)}")
+                                await _log_task(mon_task_id, f"📄 处理文件: {file_path}")
+                            except Exception:
+                                mon_task_id = None
+                        else:
+                            try:
+                                from task_history import log_task as _log_task
+                                await _log_task(mon_task_id, f"📄 处理: {os.path.basename(file_path)}")
+                            except Exception:
+                                pass
                         res = await StrmProcessor.process_single_file(file_path, current_task)
                         status = res.get("status", "unknown") if isinstance(res, dict) else "error"
                         message = res.get("message", "") if isinstance(res, dict) else str(res)
                         if status == "success":
                             logger.info(f"✨ [监控] STRM完成: {os.path.basename(file_path)}")
-                            if strm_task_id:
+                            if mon_task_id:
                                 try:
-                                    from task_history import log_task as _log_task, finish_task as _finish_task
-                                    await _log_task(strm_task_id, f"✅ 处理成功: {os.path.basename(file_path)} ({message})")
-                                    await _finish_task(strm_task_id, "completed")
+                                    from task_history import log_task as _log_task
+                                    await _log_task(mon_task_id, f"✅ 成功: {os.path.basename(file_path)} ({message})")
                                 except Exception:
                                     pass
                         elif status == "skipped":
                             logger.info(f"✨ [监控] STRM跳过: {os.path.basename(file_path)}")
-                            if strm_task_id:
+                            if mon_task_id:
                                 try:
-                                    from task_history import log_task as _log_task, finish_task as _finish_task
-                                    await _log_task(strm_task_id, f"⏭️ 跳过: {os.path.basename(file_path)} ({message})")
-                                    await _finish_task(strm_task_id, "completed")
+                                    from task_history import log_task as _log_task
+                                    await _log_task(mon_task_id, f"⏭️ 跳过: {os.path.basename(file_path)} ({message})")
                                 except Exception:
                                     pass
                         else:
                             logger.error(f"✨ [监控] STRM失败: {os.path.basename(file_path)} ({message})")
-                            if strm_task_id:
+                            if mon_task_id:
                                 try:
-                                    from task_history import log_task as _log_task, finish_task as _finish_task
-                                    await _log_task(strm_task_id, f"❌ 失败: {os.path.basename(file_path)} ({message})", "ERROR")
-                                    await _finish_task(strm_task_id, "error")
+                                    from task_history import log_task as _log_task
+                                    await _log_task(mon_task_id, f"❌ 失败: {os.path.basename(file_path)} ({message})", "ERROR")
                                 except Exception:
                                     pass
+                        if not batch_task_id and mon_task_id:
+                            try:
+                                from task_history import finish_task as _finish_task
+                                await _finish_task(mon_task_id, "error" if status == "error" else "completed")
+                            except Exception:
+                                pass
                     else:
                         logger.info(f"✨ [监控] 整理: {os.path.basename(file_path)}")
-                        try:
-                            from task_history import start_task as _start_task, finish_task as _finish_task
-                            import uuid as _uuid
-                            mon_task_id = f"mon_{_uuid.uuid4().hex[:12]}"
-                            await _start_task(mon_task_id, "整理", f"[监控] {os.path.basename(file_path)}")
-                        except Exception:
-                            mon_task_id = None
+                        if not mon_task_id:
+                            try:
+                                from task_history import start_task as _start_task
+                                import uuid as _uuid
+                                mon_task_id = f"mon_{_uuid.uuid4().hex[:12]}"
+                                await _start_task(mon_task_id, "整理", f"[监控] {os.path.basename(file_path)}")
+                            except Exception:
+                                mon_task_id = None
                         results = await Organizer.organize_video_file(file_path, current_task, dry_run=False, task_id=mon_task_id)
                         has_error = False
                         for res in results:
@@ -1057,7 +1071,7 @@ class MonitorManager:
                                     logger.debug(f"命中规则: {skip_type}，跳过限流等待")
                             elif res.get("type") == "item" and res.get("status") == "error":
                                 has_error = True
-                        if mon_task_id:
+                        if not batch_task_id and mon_task_id:
                             try:
                                 from task_history import finish_task as _finish_task
                                 await _finish_task(mon_task_id, "error" if has_error else "completed")
@@ -1067,7 +1081,7 @@ class MonitorManager:
                     import traceback
                     logger.error(f"✨ [监控] 处理错误: {str(e)}")
                     logger.debug(traceback.format_exc())
-                    if mon_task_id:
+                    if mon_task_id and not batch_task_id:
                         try:
                             from task_history import log_task as _log_task, finish_task as _finish_task
                             await _log_task(mon_task_id, f"❌ 处理错误: {str(e)}", "ERROR")
@@ -1156,8 +1170,42 @@ class MonitorManager:
         
         if files_to_process:
             logger.info(f"✨ [定时扫描] {task_name}: 发现 {len(files_to_process)} 个文件")
+            scan_task_id = None
+            try:
+                from task_history import start_task as _start_task, log_task as _log_task
+                import uuid as _uuid
+                scan_task_id = f"scan_{_uuid.uuid4().hex[:12]}"
+                module = "STRM" if is_strm else "整理"
+                await _start_task(scan_task_id, module, f"[定时扫描] {task_name}")
+                await _log_task(scan_task_id, f"🚀 开始定时扫描: {task_name}")
+                await _log_task(scan_task_id, f"📁 源: {source_dir}")
+                target_dir = current_task.get("target_dir") or current_task.get("target_path")
+                if target_dir:
+                    await _log_task(scan_task_id, f"📁 目标: {target_dir}")
+                if not is_strm:
+                    action_type = current_task.get("action_type", "move")
+                    action_label = {"move": "移动", "copy": "复制", "cd2_move": "CD2移动", "cd2_copy": "CD2复制"}.get(action_type, action_type)
+                    await _log_task(scan_task_id, f"🔧 模式: 正式执行 ({action_label})")
+                else:
+                    sync_mode = current_task.get("sync_mode", "local")
+                    sync_label = {"local": "本地", "cd2_api": "CD2 API", "webdav": "WebDAV"}.get(sync_mode, sync_mode)
+                    await _log_task(scan_task_id, f"🔧 模式: {sync_label}")
+                await _log_task(scan_task_id, f"📋 发现 {len(files_to_process)} 个文件")
+                await _log_task(scan_task_id, "──────────────────")
+            except Exception:
+                scan_task_id = None
+            
+            for f_path in files_to_process:
+                await queue.put((f_path, scan_task_id))
+            
+            if scan_task_id:
+                await queue.join()
+                try:
+                    from task_history import log_task as _log_task, finish_task as _finish_task
+                    await _log_task(scan_task_id, "──────────────────")
+                    await _log_task(scan_task_id, f"🏁 定时扫描完成，共处理 {len(files_to_process)} 个文件")
+                    await _finish_task(scan_task_id, "completed", len(files_to_process))
+                except Exception:
+                    pass
         else:
             logger.debug(f"[定时扫描] {task_name}: 无新文件")
-        
-        for f_path in files_to_process:
-            await queue.put(f_path)
