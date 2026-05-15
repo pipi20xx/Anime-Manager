@@ -2,7 +2,10 @@ import os
 import asyncio
 import threading
 import unicodedata
+import logging
 from typing import List, Dict, Any, Optional, Callable
+
+logger = logging.getLogger(__name__)
 
 class LocalScanner:
     """
@@ -70,10 +73,7 @@ class LocalScanner:
                 walk_recursive_wrapper(self.source_dir)
                 
                 # 输出 API 调用统计
-                from logger import log_audit
-                log_audit("STRM", "扫描统计", 
-                         f"扫描完成，共调用 {self.api_calls} 次 API (os.scandir)", 
-                         level="INFO")
+                logger.debug(f"[STRM] 扫描完成，共调用 {self.api_calls} 次 API")
                 
                 asyncio.run_coroutine_threadsafe(queue.put(None), loop).result()
             except Exception as e:

@@ -2,11 +2,14 @@ import os
 import json
 import asyncio
 import time
+import logging
 from typing import AsyncGenerator, Dict, Any, List, Set, Optional, Callable, Awaitable
 from logger import log_audit
 from notification import NotificationManager
 from .processor import StrmProcessor
 from .constants import META_EXTENSIONS
+
+logger = logging.getLogger(__name__)
 
 class StrmTaskEngine:
     """
@@ -81,7 +84,7 @@ class StrmTaskEngine:
             
             if use_interval and interval > 0 and status == "success" and ("Meta" in msg or "Downloaded" in msg):
                 info_msg = f"限流保护: 为文件 {os.path.basename(item)} 等待 {interval}s..."
-                log_audit("STRM", "限流", info_msg)
+                logger.debug(f"[STRM] 限流: {info_msg}")
                 yield json.dumps({"type": "info", "message": info_msg}) + "\n"
                 await asyncio.sleep(interval)
             else:
@@ -116,10 +119,10 @@ class StrmTaskEngine:
         if status == "success":
             if msg == "Created STRM":
                 self.stats["strm_created"] += 1
-                log_audit("STRM", "生成", f"成功: {os.path.basename(item)}")
+                logger.debug(f"[STRM] 生成成功: {os.path.basename(item)}")
             elif "Meta" in msg:
                 self.stats["meta_copied"] += 1
-                log_audit("STRM", "同步", f"成功: {os.path.basename(item)} ({msg})")
+                logger.debug(f"[STRM] 同步成功: {os.path.basename(item)} ({msg})")
             
             if rel_path:
                 self.all_valid_rel_paths.add(os.path.normpath(rel_path))
@@ -137,7 +140,7 @@ class StrmTaskEngine:
             elif msg == "Exists":
                 self.stats["strm_skipped"] += 1
             
-            log_audit("STRM", "跳过", f"已存在: {os.path.basename(item)}")
+            logger.debug(f"[STRM] 跳过: {os.path.basename(item)}")
             
             if rel_path:
                 self.all_valid_rel_paths.add(os.path.normpath(rel_path))
@@ -184,7 +187,7 @@ class StrmTaskEngine:
                             try:
                                 os.remove(full_p)
                                 deleted += 1
-                                log_audit("STRM", "清理", f"删除冗余文件: {f}")
+                                logger.debug(f"[STRM] 清理冗余: {f}")
                             except: pass
             return deleted
         
@@ -203,4 +206,4 @@ class StrmTaskEngine:
                 self.stats
             )
         )
-        log_audit("STRM", "任务完成", f"总耗时: {self.stats['duration']}")
+        logger.debug(f"[STRM] 任务完成，总耗时: {self.stats['duration']}")

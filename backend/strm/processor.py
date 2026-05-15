@@ -9,8 +9,9 @@ from .constants import VIDEO_EXTENSIONS, META_EXTENSIONS
 
 import logging
 
-# Silence httpx info logs
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 class StrmProcessor:
     @staticmethod
@@ -82,10 +83,10 @@ class StrmProcessor:
                     with open(abs_target_strm, 'w', encoding='utf-8') as f:
                         f.write(content)
                 await asyncio.to_thread(_write)
-                log_audit("STRM", "生成", f"生成成功: {strm_filename}")
+                logger.debug(f"[STRM] 生成成功: {strm_filename}")
                 return {"status": "success", "message": "Created STRM", "rel_path": os.path.join(os.path.dirname(rel_path), strm_filename)}
             except Exception as e:
-                log_audit("STRM", "错误", f"生成失败: {strm_filename}", level="ERROR", details=str(e))
+                logger.error(f"[STRM] 生成失败: {strm_filename} - {e}")
                 return {"status": "error", "message": str(e)}
 
         # B. 元数据复制逻辑
@@ -98,7 +99,7 @@ class StrmProcessor:
             try:
                 # 使用 copyfile 仅复制内容
                 await asyncio.to_thread(shutil.copyfile, file_path, target_file)
-                log_audit("STRM", "同步", f"本地复制元数据成功: {os.path.basename(file_path)}")
+                logger.debug(f"[STRM] 本地复制元数据: {os.path.basename(file_path)}")
                 return {"status": "success", "message": "Copied Meta (Local)", "rel_path": rel_path}
             except Exception as e:
                  # 尝试 WebDAV 下载回退模式
@@ -217,7 +218,7 @@ class StrmProcessor:
                             raise Exception("Downloaded file is empty (0KB)")
                         
                         download_success = True
-                        log_audit("STRM", "同步", f"WebDAV下载成功: {os.path.basename(file_path)}")
+                        logger.debug(f"[STRM] WebDAV下载元数据: {os.path.basename(file_path)}")
                         return {"status": "success", "message": "Copied Meta (WebDAV Downloaded)", "rel_path": rel_path}
                      except Exception as de:
                         dl_error = de

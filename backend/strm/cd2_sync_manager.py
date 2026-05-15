@@ -48,7 +48,7 @@ class CD2SyncManager:
         
         mapping_root = os.path.normpath(mapping_root_raw.strip()).rstrip(os.sep)
 
-        log_audit("STRM", "API同步启动", f"正在启动快照比对同步: {source_root}")
+        logger.debug(f"[STRM] CD2 API同步启动: {source_root}")
         yield json.dumps({"type": "start", "message": "正在解析路径并建立连接..."}) + "\n"
 
         # --- 自动路径换算 (CD2 内部路径) ---
@@ -95,7 +95,7 @@ class CD2SyncManager:
                 yield json.dumps({"type": "info", "message": f"正在扫描云端目录: {path_progress}"}) + "\n"
                 
                 # 每扫 1 个目录都同步到控制台审计日志 (如果嫌多可以加取模判断)
-                log_audit("STRM", "扫描进度", f"正在扫描第 {scan_count} 个目录: {path_progress}")
+                logger.debug(f"[STRM] CD2扫描进度: 第 {scan_count} 个目录")
                 
             except asyncio.TimeoutError:
                 continue
@@ -166,7 +166,7 @@ class CD2SyncManager:
                     else:
                         stats["strm_skipped"] += 1
                         # 逐行打印跳过日志，满足用户对“完整详细”日志的需求
-                        log_audit("STRM", "跳过", f"STRM 已存在: {file_name}")
+                        logger.debug(f"[STRM] 跳过STRM已存在: {file_name}")
                         yield json.dumps({"type": "log", "action": "SKIP_STRM", "status": "info", "path": rel_strm_path}) + "\n"
 
                 elif copy_meta and ext in meta_exts:
@@ -178,7 +178,7 @@ class CD2SyncManager:
                     else:
                         # 成功跳过
                         stats["meta_skipped"] += 1
-                        log_audit("STRM", "跳过", f"元数据已存在: {file_name}")
+                        logger.debug(f"[STRM] 跳过元数据已存在: {file_name}")
                         yield json.dumps({"type": "log", "action": "SKIP_COPY", "status": "info", "path": rel_meta_path}) + "\n"
 
         strm_tasks_paths = [t[0] for t in strm_tasks]
@@ -189,7 +189,7 @@ class CD2SyncManager:
         
         if strm_tasks_paths:
             msg = f"第一阶段：开始生成 {len(strm_tasks_paths)} 个 STRM 文件..."
-            log_audit("STRM", "阶段开始", msg)
+            logger.debug(f"[STRM] {msg}")
             yield json.dumps({"type": "info", "message": msg}) + "\n"
             
             # 使用 ListScanner 喂入需要处理的文件
@@ -200,7 +200,7 @@ class CD2SyncManager:
         # 6. 执行阶段二：同步元数据
         if meta_tasks_paths:
             msg = f"第二阶段：开始同步 {len(meta_tasks_paths)} 个元数据文件..."
-            log_audit("STRM", "阶段开始", msg)
+            logger.debug(f"[STRM] {msg}")
             yield json.dumps({"type": "info", "message": msg}) + "\n"
             
             # 最后一个阶段 is_last_stage=True (默认值)，引擎会负责清理冗余文件和发送完成通知

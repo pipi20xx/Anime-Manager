@@ -6,11 +6,14 @@ import os
 import asyncio
 import uuid
 import json
+import logging
 
 from strm.strm_generator import StrmGenerator
 from config_manager import ConfigManager
 from logger import log_audit
 from task_history import start_task, log_task, finish_task
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/strm", tags=["虚拟库 (STRM)"])
 
@@ -137,19 +140,14 @@ async def run_specific_task(task_id: str):
     task_name = task.get("name", "STRM 同步")
     gen_config["task_id"] = task_id
     
-    log_audit("STRM", "触发", f"后台启动任务: {task_name} (模式: {gen_config['sync_mode']})")
+    logger.info(f"✨ [STRM] 后台启动: {task_name} (模式: {gen_config['sync_mode']})")
     asyncio.create_task(_strm_background_runner(gen_config, task_id, task_name))
     return {"status": "success", "task_id": task_id, "message": "任务已在后台启动"}
 
 async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_name: str):
     """STRM 后台任务包装器，集成任务历史记录"""
-    processed = 0
-    skipped = 0
-    errors = 0
-    meta_copied = 0
-    meta_skipped = 0
-    deleted = 0
     start_time = None
+    final_stats = {"strm_created": 0, "strm_skipped": 0, "meta_copied": 0, "meta_skipped": 0, "deleted": 0, "errors": 0}
     
     try:
         import time
@@ -158,7 +156,13 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
         await start_task(task_id, "STRM", task_name)
         await log_task(task_id, f"🚀 开始执行 STRM 同步: {task_name}")
         await log_task(task_id, f"📁 源: {config.get('source_dir') or config.get('source_path')}")
-        await log_task(task_id, f"🔧 模式: {config.get('sync_mode', 'local')} | 覆盖: {config.get('overwrite_strm', True)}")
+        await log_task(task_id, f"� 目标: {config.get('target_dir') or config.get('target_path')}")
+        sync_mode = config.get('sync_mode', 'local')
+        mode_label = {'local': '本地', 'cd2_api': 'CD2 API', 'webdav': 'WebDAV'}.get(sync_mode, sync_mode)
+        await log_task(task_id, f"🔧 模式: {mode_label} | 覆盖: {config.get('overwrite_strm', True)}")
+        await log_task(task_id, "──────────────────")
+        
+        logger.info(f"✨ [STRM] 开始: {task_name}")
         
         async for msg in StrmGenerator.generate(config):
             try:
@@ -168,25 +172,33 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                     status = data.get("status")
                     source = data.get("source", "")
                     message = data.get("message", "")
-                    
                     if status == "success":
                         if "STRM" in message:
-                            processed += 1
+                            await log_task(task_id, f"📄 生成: {os.path.basename(source)}")
                         elif "Meta" in message:
-                            meta_copied += 1
-                        await log_task(task_id, f"✅ {os.path.basename(source)}")
+                            await log_task(task_id, f"🖼️ 同步: {os.path.basename(source)} ({message})")
                     elif status == "skip":
-                        if "STRM" in message:
-                            skipped += 1
-                        elif "Meta" in message:
-                            meta_skipped += 1
+                        await log_task(task_id, f"⏭️ 跳过: {os.path.basename(source)}")
                     elif status == "error":
-                        errors += 1
-                        await log_task(task_id, f"❌ {os.path.basename(source)}: {data.get('msg', '')}", "ERROR")
+                        await log_task(task_id, f"❌ 失败: {os.path.basename(source)} - {data.get('msg', '')}", "ERROR")
                     elif status == "deleted":
-                        deleted += 1
+                        await log_task(task_id, f"🧹 清理冗余: {os.path.basename(source)}")
+                elif msg_type == "log":
+                    log_status = data.get("status")
+                    log_path = data.get("path", "")
+                    log_msg = data.get("message", "")
+                    if log_status == "success":
+                        if "STRM" in log_msg:
+                            await log_task(task_id, f"📄 生成: {log_path}")
+                        elif "Meta" in log_msg:
+                            await log_task(task_id, f"🖼️ 同步: {log_path} ({log_msg})")
+                    elif log_status == "skipped":
+                        await log_task(task_id, f"⏭️ 跳过: {log_path}")
+                    elif log_status == "error":
+                        await log_task(task_id, f"❌ 失败: {log_path} - {log_msg}", "ERROR")
                 elif msg_type == "finish":
                     stats = data.get("stats", {})
+                    final_stats.update(stats)
                     strm_created = stats.get("strm_created", 0)
                     strm_skipped = stats.get("strm_skipped", 0)
                     meta_copied = stats.get("meta_copied", 0)
@@ -196,15 +208,14 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                     
                     total_files = strm_created + strm_skipped
                     
-                    # 详细统计输出
                     await log_task(task_id, "──────────────────")
                     await log_task(task_id, f"📄 STRM 文件：")
-                    await log_task(task_id, f"   ├ ✅ 新增：{strm_created}")
-                    await log_task(task_id, f"   └ ⏭️ 跳过：{strm_skipped}")
+                    await log_task(task_id, f"├ ✅ 新增：{strm_created}")
+                    await log_task(task_id, f"└ ⏭️ 跳过：{strm_skipped}")
                     await log_task(task_id, "")
                     await log_task(task_id, f"🖼️ 元数据文件：")
-                    await log_task(task_id, f"   ├ ✅ 同步：{meta_copied}")
-                    await log_task(task_id, f"   └ ⏭️ 跳过：{meta_skipped}")
+                    await log_task(task_id, f"├ ✅ 同步：{meta_copied}")
+                    await log_task(task_id, f"└ ⏭️ 跳过：{meta_skipped}")
                     if deleted > 0:
                         await log_task(task_id, "")
                         await log_task(task_id, f"🧹 清理冗余：{deleted}")
@@ -214,7 +225,6 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                     await log_task(task_id, f"🏁 扫描完成，共处理 {total_files} 个文件")
             except: pass
         
-        # 计算耗时
         duration = "未知"
         if start_time:
             elapsed = time.time() - start_time
@@ -225,28 +235,36 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                 seconds = int(elapsed % 60)
                 duration = f"{minutes}分{seconds}秒"
         
-        final_summary = f"🏁 任务结束: 成功 {processed}"
-        if skipped > 0: final_summary += f" | 跳过 {skipped}"
-        if errors > 0: final_summary += f" | 失败 {errors}"
+        sc = final_stats.get("strm_created", 0)
+        ss = final_stats.get("strm_skipped", 0)
+        mc = final_stats.get("meta_copied", 0)
+        ms = final_stats.get("meta_skipped", 0)
+        err = final_stats.get("errors", 0)
+        dl = final_stats.get("deleted", 0)
+        
+        final_summary = f"🏁 任务结束: 生成 {sc} | 同步 {mc}"
+        if ss > 0 or ms > 0: final_summary += f" | 跳过 {ss + ms}"
+        if err > 0: final_summary += f" | 失败 {err}"
+        if dl > 0: final_summary += f" | 清理 {dl}"
         
         await log_task(task_id, final_summary)
         
-        # 构建统计信息
+        logger.info(f"✨ [STRM] 完成: {task_name} - 生成 {sc} | 同步 {mc} | 跳过 {ss + ms} | 失败 {err}")
+        
         stats = {
-            "strm_created": processed,
-            "strm_skipped": skipped,
-            "meta_copied": meta_copied,
-            "meta_skipped": meta_skipped,
-            "deleted": deleted,
+            "strm_created": sc,
+            "strm_skipped": ss,
+            "meta_copied": mc,
+            "meta_skipped": ms,
+            "deleted": dl,
             "duration": duration,
-            "success": processed,
-            "skipped": skipped,
-            "errors": errors
+            "success": sc,
+            "skipped": ss + ms,
+            "errors": err
         }
         
-        await finish_task(task_id, "completed", processed, stats)
-        log_audit("STRM", "完成", f"任务执行完成: {task_name}", details={"processed": processed, "skipped": skipped, "errors": errors, "meta_copied": meta_copied, "deleted": deleted})
+        await finish_task(task_id, "completed", sc + mc, stats)
     except Exception as e:
         await log_task(task_id, f"❌ 任务异常终止: {str(e)}", "ERROR")
-        await finish_task(task_id, "error", processed)
-        log_audit("STRM", "异常", f"任务执行失败: {str(e)}", level="ERROR")
+        await finish_task(task_id, "error", 0)
+        logger.error(f"✨ [STRM] 异常: {task_name} - {str(e)}")
