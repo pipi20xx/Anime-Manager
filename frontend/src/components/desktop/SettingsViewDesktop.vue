@@ -51,7 +51,7 @@ const {
     </div>
 
     <n-spin :show="loading">
-      <n-tabs type="segment" animated class="custom-tabs">
+      <n-tabs type="line" animated class="custom-tabs">
         <!-- 基础配置 -->
         <n-tab-pane name="basic" tab="基础配置">
           <n-space vertical size="large">

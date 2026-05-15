@@ -1,24 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { 
-  NCard, NSpace, NButton, NIcon, NInput, NDivider, NGrid, NGi, 
-  NTag, useMessage, NScrollbar, NAlert, NText, NSwitch, NSlider,
+  NCard, NSpace, NButton, NInput, NDivider, 
+  NTag, useMessage, NAlert, NText, NSwitch, NSlider,
   NCollapse, NCollapseItem, NForm, NFormItem, NInputNumber, NEmpty,
-  NTabs, NTabPane, NList, NListItem, NThing, NBadge, NAvatar,
-  NSkeleton, NSpin, NRadioGroup, NRadioButton, NCode, NTooltip
+  NTabs, NTabPane, NList, NListItem, NThing,
+  NSpin, NRadioGroup, NRadioButton, NCode
 } from 'naive-ui'
-import {
-  SmartToyOutlined as AiIcon,
-  SettingsOutlined as ConfigIcon,
-  SaveOutlined as SaveIcon,
-  ExtensionOutlined as SkillIcon,
-  SendOutlined as SendIcon,
-  BuildOutlined as ToolIcon,
-  PlayArrowOutlined as PlayIcon,
-  CheckCircleOutlined as SuccessIcon,
-  ErrorOutlined as ErrorIcon,
-  LightbulbOutlined as ThinkingIcon
-} from '@vicons/material'
 import { marked } from 'marked'
 
 marked.setOptions({
@@ -341,17 +329,6 @@ const clearChat = () => {
   chatMessages.value = []
 }
 
-const getEventIcon = (type: string) => {
-  switch (type) {
-    case 'tool_call': return ToolIcon
-    case 'tool_result': return SuccessIcon
-    case 'thinking': return ThinkingIcon
-    case 'skill': return SkillIcon
-    case 'error': return ErrorIcon
-    default: return PlayIcon
-  }
-}
-
 const getEventColor = (event: ToolCallEvent) => {
   if (event.type === 'tool_result') {
     return event.success ? 'success' : 'error'
@@ -400,7 +377,6 @@ onMounted(() => {
         <n-card bordered class="chat-card">
           <div class="chat-container" ref="chatContainer">
             <div v-if="chatMessages.length === 0" class="chat-empty">
-              <n-icon size="48" :depth="3"><AiIcon /></n-icon>
               <p>开始与智能助手对话</p>
               <p class="hint">你可以询问关于番剧识别、订阅管理、配置优化等问题</p>
               <p class="hint" v-if="useTools">工具模式已启用，助手可以执行实际操作</p>
@@ -411,10 +387,7 @@ onMounted(() => {
                 :key="idx" 
                 :class="['message', msg.role]"
               >
-                <div class="message-avatar">
-                  <n-icon v-if="msg.role === 'user'" size="20"><AiIcon /></n-icon>
-                  <n-icon v-else size="20"><AiIcon /></n-icon>
-                </div>
+                <div class="message-avatar"></div>
                 <div class="message-content-wrapper">
                   <div v-if="msg.events && msg.events.length > 0" class="tool-events">
                     <div 
@@ -423,9 +396,6 @@ onMounted(() => {
                       :class="['event-item', event.type]"
                     >
                       <div class="event-header">
-                        <n-icon size="16">
-                          <component :is="getEventIcon(event.type)" />
-                        </n-icon>
                         <span class="event-type">
                           {{ event.type === 'tool_call' ? '调用工具' : 
                              event.type === 'tool_result' ? '执行结果' :
@@ -468,7 +438,6 @@ onMounted(() => {
                 清空对话
               </n-button>
               <n-button type="primary" @click="sendMessage" :loading="chatLoading" :disabled="!chatInput.trim()">
-                <template #icon><n-icon><SendIcon /></n-icon></template>
                 发送
               </n-button>
             </n-space>
@@ -480,7 +449,6 @@ onMounted(() => {
         <n-card bordered>
           <template #header>
             <div class="card-title-box">
-              <n-icon style="color: var(--n-primary-color)"><ToolIcon /></n-icon>
               <span class="card-title-text">可用工具 ({{ tools.length }})</span>
             </div>
           </template>
@@ -518,7 +486,6 @@ onMounted(() => {
         <n-card bordered>
           <template #header>
             <div class="card-title-box">
-              <n-icon style="color: var(--n-primary-color)"><SkillIcon /></n-icon>
               <span class="card-title-text">可用技能 ({{ skills.length }})</span>
             </div>
           </template>
@@ -527,11 +494,6 @@ onMounted(() => {
             <n-list v-if="skills.length > 0" bordered>
               <n-list-item v-for="skill in skills" :key="skill.id">
                 <n-thing :title="skill.name" :description="skill.description">
-                  <template #avatar>
-                    <n-avatar round>
-                      <n-icon><SkillIcon /></n-icon>
-                    </n-avatar>
-                  </template>
                   <template #header-extra>
                     <n-tag size="small">v{{ skill.version }}</n-tag>
                   </template>
@@ -551,7 +513,6 @@ onMounted(() => {
         <n-card bordered>
           <template #header>
             <div class="card-title-box">
-              <n-icon style="color: var(--n-primary-color)"><ConfigIcon /></n-icon>
               <span class="card-title-text">模型配置</span>
             </div>
           </template>
@@ -612,12 +573,6 @@ onMounted(() => {
                   :min="1" 
                   :max="20"
                 />
-                <n-tooltip>
-                  <template #trigger>
-                    <n-icon size="18" style="margin-left: 8px; cursor: help;"><ThinkingIcon /></n-icon>
-                  </template>
-                  工具调用的最大循环次数，防止无限循环
-                </n-tooltip>
               </n-form-item>
               
               <n-divider style="margin: 16px 0;">识别增强</n-divider>
@@ -649,12 +604,6 @@ onMounted(() => {
                   :disabled="!telegramBotConfig.enabled"
                   @blur="saveTelegramBotConfig"
                 />
-                <n-tooltip>
-                  <template #trigger>
-                    <n-icon size="18" style="margin-left: 8px; cursor: help;"><ThinkingIcon /></n-icon>
-                  </template>
-                  只有指定的 Chat ID 才能使用 Bot，留空则允许所有人
-                </n-tooltip>
               </n-form-item>
               
               <n-alert type="info" size="small" :show-icon="false" style="margin-bottom: 16px;">
@@ -663,7 +612,6 @@ onMounted(() => {
               
               <n-form-item>
                 <n-button type="primary" :loading="saveLoading" @click="saveConfig">
-                  <template #icon><n-icon><SaveIcon /></n-icon></template>
                   保存配置
                 </n-button>
               </n-form-item>
