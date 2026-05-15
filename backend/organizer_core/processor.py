@@ -60,7 +60,7 @@ class FileProcessor:
                 existing = await db.first(OrganizeHistory, stmt)
                 if existing:
                     log_audit("整理", "跳过历史", f"文件此前已整理成功或跳过: {os.path.basename(v_path)}")
-                    return [{"type": "skip", "source": v_path, "reason": "已成功整理过或已跳过"}]
+                    return [{"type": "skip", "skip_type": "history", "source": v_path, "reason": "已成功整理过或已跳过"}]
 
         rule = context["rule"]
         if not rule: return [{"type": "error", "source": v_path, "message": "Rule not found"}]
@@ -138,7 +138,7 @@ class FileProcessor:
                     # [Notify] Add failure notification
                     await NotificationManager.push_organize_error_notification(v_path, "识别失败 (无法获取 TMDB ID)")
                     
-                return [{"type": "skip", "source": v_path, "reason": "识别失败 (无 TMDB ID)"}]
+                return [{"type": "skip", "skip_type": "recognition_failed", "source": v_path, "reason": "识别失败 (无 TMDB ID)"}]
 
             # 补全控制台识别结果日志
             log_audit("整理", "识别成功", f"识别结论: {final['title']} - S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
@@ -185,7 +185,7 @@ class FileProcessor:
                                         status="skipped", message="Emby库中已存在"
                                     )
                                     await db.save(history, audit=False)
-                            return [{"type": "skip", "source": v_path, "reason": "Emby库中已存在"}]
+                            return [{"type": "skip", "skip_type": "emby_exists", "source": v_path, "reason": "Emby库中已存在"}]
                         else:
                             log_audit("整理", "Emby检查", f"❌ Emby库中不存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})，继续处理")
                     except Exception as e:

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NInput, NSelect, 
-  NInputNumber, NCheckbox, NButton, NIcon, NGrid, NGi, NDynamicTags,
+  NInputNumber, NCheckbox, NCheckboxGroup, NButton, NIcon, NGrid, NGi, NDynamicTags,
   NRadioGroup, NRadioButton, NSwitch, NCard
 } from 'naive-ui'
 import {
@@ -109,6 +109,19 @@ const {
               <n-input-number v-model:value="form.process_interval" :min="0" style="width: 100%">
                 <template #suffix>秒</template>
               </n-input-number>
+            </n-form-item>
+            <n-form-item label="跳过限流">
+              <n-space vertical :size="8">
+                <n-switch v-model:value="form.skip_rate_limit" />
+                <n-checkbox-group v-if="form.skip_rate_limit" v-model:value="form.skip_rate_limit_types">
+                  <n-space vertical>
+                    <n-checkbox value="history">历史记录跳过</n-checkbox>
+                    <n-checkbox value="recognition_failed">识别失败跳过</n-checkbox>
+                    <n-checkbox value="emby_exists">Emby已存在跳过</n-checkbox>
+                    <n-checkbox value="regex_match">正则匹配跳过</n-checkbox>
+                  </n-space>
+                </n-checkbox-group>
+              </n-space>
             </n-form-item>
             <n-form-item label="忽略文件正则"><n-dynamic-tags v-model:value="form.ignore_file_regex" /></n-form-item>
             <n-form-item label="忽略目录正则"><n-dynamic-tags v-model:value="form.ignore_dir_regex" /></n-form-item>

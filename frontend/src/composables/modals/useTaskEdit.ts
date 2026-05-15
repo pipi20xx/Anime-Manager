@@ -16,6 +16,8 @@ export function useTaskEdit(props: any, emit: any) {
     scheduler_enabled: false,
     scheduler_interval: 3600,
     process_interval: 0,
+    skip_rate_limit: false,
+    skip_rate_limit_types: [] as string[],
     ignore_file_regex: [],
     ignore_dir_regex: [],
     trigger_strm: false,

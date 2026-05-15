@@ -143,14 +143,26 @@ class Organizer:
                             break
                         
                         if ignore_file_regex and Organizer._is_regex_match(os.path.basename(f_path), ignore_file_regex):
-                            yield json.dumps({"type": "skip", "source": f_path, "reason": "匹配文件忽略正则"}) + "\n"
+                            yield json.dumps({"type": "skip", "skip_type": "regex_match", "source": f_path, "reason": "匹配文件忽略正则"}) + "\n"
                             continue
                         
                         results = await FileProcessor.organize_video_file(f_path, task, context, dry_run)
+                        should_rate_limit = True
                         for res in results:
                             yield json.dumps(res) + "\n"
                             if res.get("status") in ["success", "preview"]:
                                 processed_count += 1
+                            if res.get("type") == "skip":
+                                skip_type = res.get("skip_type")
+                                skip_rate_limit = task.get("skip_rate_limit", False)
+                                skip_rate_limit_types = task.get("skip_rate_limit_types", [])
+                                if skip_rate_limit and skip_type and skip_type in skip_rate_limit_types:
+                                    should_rate_limit = False
+                        
+                        if should_rate_limit:
+                            interval = float(task.get("process_interval", 0))
+                            if interval > 0:
+                                await asyncio.sleep(interval)
                 
                 if scan_done:
                     with queue_lock:

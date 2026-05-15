@@ -993,6 +993,7 @@ class MonitorManager:
                     queue.task_done()
                     continue
 
+                should_rate_limit = True
                 try:
                     if is_strm:
                         log_audit("监控", "STRM任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
@@ -1008,7 +1009,14 @@ class MonitorManager:
                             log_audit("监控", "STRM失败", f"❌ 处理失败: {os.path.basename(file_path)} ({message})", level="ERROR", details=task_name)
                     else:
                         log_audit("监控", "整理任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
-                        await Organizer.organize_video_file(file_path, current_task, dry_run=False)
+                        results = await Organizer.organize_video_file(file_path, current_task, dry_run=False)
+                        for res in results:
+                            if res.get("type") == "skip":
+                                skip_type = res.get("skip_type")
+                                skip_rate_limit = current_task.get("skip_rate_limit", False)
+                                skip_rate_limit_types = current_task.get("skip_rate_limit_types", [])
+                                if skip_rate_limit and skip_type and skip_type in skip_rate_limit_types:
+                                    should_rate_limit = False
                 except Exception as e:
                     import traceback
                     error_detail = f"{str(e)}\n{traceback.format_exc()}"
@@ -1016,9 +1024,10 @@ class MonitorManager:
                 
                 queue.task_done()
                 
-                interval = float(current_task.get("process_interval", 0))
-                if interval > 0:
-                    await asyncio.sleep(interval)
+                if should_rate_limit:
+                    interval = float(current_task.get("process_interval", 0))
+                    if interval > 0:
+                        await asyncio.sleep(interval)
                 
             except asyncio.CancelledError:
                 break
