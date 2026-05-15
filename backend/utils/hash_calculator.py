@@ -87,14 +87,14 @@ class PureMD4:
 def _get_md4():
     try:
         test = hashlib.new('md4', b'test')
-        logger.info("[HashCalculator] 使用 OpenSSL MD4 加速")
+        logger.debug("[HashCalculator] 使用 OpenSSL MD4 加速")
         return lambda data: hashlib.new('md4', data)
     except ValueError:
         pass
     
     try:
         from Crypto.Hash import MD4
-        logger.info("[HashCalculator] 使用 pycryptodome MD4 加速")
+        logger.debug("[HashCalculator] 使用 pycryptodome MD4 加速")
         def pycrypto_md4(data: bytes):
             h = MD4.new()
             h.update(data)
@@ -103,7 +103,7 @@ def _get_md4():
     except ImportError:
         pass
     
-    logger.info("[HashCalculator] OpenSSL/pycryptodome MD4 不可用，使用纯 Python 实现（较慢）")
+    logger.debug("[HashCalculator] OpenSSL/pycryptodome MD4 不可用，使用纯 Python 实现（较慢）")
     return PureMD4
 
 
@@ -148,7 +148,7 @@ class HashCalculator:
         try:
             file_size = os.path.getsize(file_path)
             filename = os.path.basename(file_path)
-            logger.info(f"[HashCalculator] 开始计算: {filename} ({file_size / 1024 / 1024:.2f} MB)")
+            logger.debug(f"[HashCalculator] 开始计算: {filename} ({file_size / 1024 / 1024:.2f} MB)")
             
             sha1_hash = hashlib.sha1()
             ed2k_block_hashes = []
@@ -166,9 +166,9 @@ class HashCalculator:
             ed2k = HashCalculator._calculate_ed2k_final(ed2k_block_hashes)
             ed2k_link = HashCalculator._build_ed2k_link(filename, file_size, ed2k)
             
-            logger.info(f"[HashCalculator] 计算完成: {filename}")
-            logger.info(f"[HashCalculator] SHA1: {sha1}")
-            logger.info(f"[HashCalculator] ED2K: {ed2k_link}")
+            logger.debug(f"[HashCalculator] 计算完成: {filename}")
+            logger.debug(f"[HashCalculator] SHA1: {sha1}")
+            logger.debug(f"[HashCalculator] ED2K: {ed2k_link}")
             
             return HashResult(
                 sha1=sha1,

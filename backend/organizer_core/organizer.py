@@ -3,9 +3,11 @@ import json
 import re
 import asyncio
 import threading
+import logging
 from typing import Dict, Any, Generator, List
 
-from logger import log_audit
+logger = logging.getLogger(__name__)
+
 from .executor import FileExecutor
 from .processor import FileProcessor
 
@@ -101,7 +103,7 @@ class Organizer:
         
         processed_count = 0
         start_msg = f"开始任务: {task.get('name', '手动整理')}"
-        log_audit("整理", "流式处理", start_msg, details=f"Source: {source_dir}")
+        logger.info(f"✨ [整理] {start_msg}")
         yield json.dumps({"type": "start", "message": start_msg}) + "\n"
 
         def should_stop():
@@ -146,7 +148,7 @@ class Organizer:
                             yield json.dumps({"type": "skip", "skip_type": "regex_match", "source": f_path, "reason": "匹配文件忽略正则"}) + "\n"
                             continue
                         
-                        results = await FileProcessor.organize_video_file(f_path, task, context, dry_run)
+                        results = await FileProcessor.organize_video_file(f_path, task, context, dry_run, task_id=task_id)
                         should_rate_limit = True
                         for res in results:
                             yield json.dumps(res) + "\n"
@@ -156,10 +158,10 @@ class Organizer:
                                 skip_type = res.get("skip_type")
                                 skip_rate_limit = task.get("skip_rate_limit", False)
                                 skip_rate_limit_types = task.get("skip_rate_limit_types", [])
-                                log_audit("整理", "跳过限流检查", f"skip_type={skip_type}, enabled={skip_rate_limit}, types={skip_rate_limit_types}")
+                                logger.debug(f"skip_type={skip_type}, enabled={skip_rate_limit}, types={skip_rate_limit_types}")
                                 if skip_rate_limit and skip_type and skip_type in skip_rate_limit_types:
                                     should_rate_limit = False
-                                    log_audit("整理", "跳过限流生效", f"命中规则: {skip_type}，跳过限流等待")
+                                    logger.debug(f"命中规则: {skip_type}，跳过限流等待")
                         
                         if should_rate_limit:
                             interval = float(task.get("process_interval", 0))
@@ -181,12 +183,12 @@ class Organizer:
                     pass
 
         if should_stop():
-            log_audit("整理", "任务取消", f"任务 {task_id} 已由用户停止")
+            logger.info(f"✨ [整理] 任务已停止")
             yield json.dumps({"type": "error", "message": "任务已手动停止"}) + "\n"
             Organizer._STOPPED_TASKS.remove(task_id)
             return
 
-        log_audit("整理", "任务完成", f"任务流执行结束，共处理 {processed_count} 个项目")
+        logger.info(f"✨ [整理] 完成，共处理 {processed_count} 个项目")
         yield json.dumps({"type": "finish", "count": processed_count}) + "\n"
 
     @staticmethod
@@ -207,16 +209,16 @@ class Organizer:
             
             if res == "success":
                 processed += 1
-                log_audit("整理", "文件操作", f"成功{action}: {os.path.basename(src)} -> {os.path.basename(dst)}", level="INFO")
+                logger.debug(f"成功{action}: {os.path.basename(src)} -> {os.path.basename(dst)}")
             else:
-                 log_audit("整理", "操作失败", f"{action}失败: {os.path.basename(src)} -> {FileExecutor.get_status_message(res)}", level="ERROR")
+                 logger.error(f"{action}失败: {os.path.basename(src)} -> {FileExecutor.get_status_message(res)}")
 
             yield json.dumps({
                 "type": "item", "status": "success" if res == "success" else "error", 
                 "source": src, "target": dst, "msg": FileExecutor.get_status_message(res)
             }) + "\n"
         
-        log_audit("整理", "批量执行结束", f"物理操作执行完毕，共成功处理 {processed} 个文件")
+        logger.debug(f"物理操作执行完毕，共成功处理 {processed} 个文件")
         yield json.dumps({"type": "finish", "count": processed}) + "\n"
 
     @staticmethod
@@ -230,5 +232,5 @@ class Organizer:
         return False
 
     @staticmethod
-    async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True) -> List[Dict[str, Any]]:
-        return await FileProcessor.organize_video_file(v_path, task, context, dry_run)
+    async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True, task_id: str = None) -> List[Dict[str, Any]]:
+        return await FileProcessor.organize_video_file(v_path, task, context, dry_run, task_id=task_id)

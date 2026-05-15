@@ -9,7 +9,6 @@ from sqlmodel import select, and_
 from recognition.recognizer import MovieRecognizer
 from .renamer import Renamer
 from config_manager import ConfigManager
-from logger import log_audit
 from clients.manager import ClientManager
 from .executor import FileExecutor
 from notification import NotificationManager
@@ -38,7 +37,16 @@ class FileProcessor:
         }
 
     @staticmethod
-    async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True) -> List[Dict[str, Any]]:
+    async def _log_detail(task_id: str, msg: str, level: str = "INFO"):
+        if task_id:
+            try:
+                from task_history import log_task as _log_task
+                await _log_task(task_id, msg, level)
+            except Exception:
+                pass
+
+    @staticmethod
+    async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True, task_id: str = None) -> List[Dict[str, Any]]:
         """
         处理单个视频文件及其关联字幕
         """
@@ -59,7 +67,7 @@ class FileProcessor:
                 )
                 existing = await db.first(OrganizeHistory, stmt)
                 if existing:
-                    log_audit("整理", "跳过历史", f"文件此前已整理成功或跳过: {os.path.basename(v_path)}")
+                    await FileProcessor._log_detail(task_id, f"⏭️ 跳过（已整理过）: {os.path.basename(v_path)}")
                     return [{"type": "skip", "skip_type": "history", "source": v_path, "reason": "已成功整理过或已跳过"}]
 
         rule = context["rule"]
@@ -68,6 +76,7 @@ class FileProcessor:
         source_dir = task.get("source_dir")
         target_dir = task.get("target_dir")
         action_type = task.get("action_type", "move")
+        action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制'}.get(action_type, action_type)
         conflict_mode = "overwrite" if task.get("overwrite_mode") else "skip"
         
         root = os.path.dirname(v_path)
@@ -105,9 +114,9 @@ class FileProcessor:
             f_season = task.get("forced_season")
 
             # 补全控制台日志 - 打印完整路径
-            log_audit("整理", "文件识别", f"正在处理文件: {v_path}")
+            logger.debug(f"正在处理文件: {v_path}")
 
-            result_data, _ = await MovieRecognizer.recognize_full(
+            result_data, recog_logs = await MovieRecognizer.recognize_full(
                 rel_input_path, 
                 all_noise=all_noise, 
                 all_groups=all_groups, 
@@ -119,11 +128,31 @@ class FileProcessor:
                 forced_season=f_season
             )
             
+            await FileProcessor._log_detail(task_id, f"📄 处理文件: {v_path}")
+            
+            recog_task_id = None
+            try:
+                from task_history import start_task as _start_task, log_task as _rt_log_task, finish_task as _finish_task
+                import uuid as _uuid
+                recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
+                await _start_task(recog_task_id, "识别", v_file)
+                for log_msg in recog_logs:
+                    level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
+                    await _rt_log_task(recog_task_id, log_msg, level)
+            except Exception:
+                recog_task_id = None
+            
             final = result_data.get("final_result", {})
             
-            # --- [New] Handle Recognition Failure ---
             if not final.get("tmdb_id"):
-                log_audit("整理", "识别失败", f"文件识别失败: {v_file}", level="WARN")
+                logger.info(f"✨ [整理] 识别失败: {v_file}")
+                await FileProcessor._log_detail(task_id, f"❌ 识别失败: 无 TMDB ID", "ERROR")
+                if recog_task_id:
+                    try:
+                        await _rt_log_task(recog_task_id, f"❌ 识别失败: 无 TMDB ID", "ERROR")
+                        await _finish_task(recog_task_id, "error")
+                    except Exception:
+                        pass
                 if not dry_run:
                     from models import OrganizeHistory
                     from database import db
@@ -135,13 +164,19 @@ class FileProcessor:
                         )
                         await db.save(history, audit=False)
                     
-                    # [Notify] Add failure notification
                     await NotificationManager.push_organize_error_notification(v_path, "识别失败 (无法获取 TMDB ID)")
                     
                 return [{"type": "skip", "skip_type": "recognition_failed", "source": v_path, "reason": "识别失败 (无 TMDB ID)"}]
 
-            # 补全控制台识别结果日志
-            log_audit("整理", "识别成功", f"识别结论: {final['title']} - S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
+            logger.info(f"✨ [整理] 识别: {v_file} → {final['title']} S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
+            await FileProcessor._log_detail(task_id, f"✅ 识别成功: {final['title']} - S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
+            
+            if recog_task_id:
+                try:
+                    stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+                    await _finish_task(recog_task_id, "completed", stats=stats)
+                except Exception:
+                    pass
 
             # --- [New] Emby Check ---
             check_emby_exists = task.get("check_emby_exists", False)
@@ -164,7 +199,8 @@ class FileProcessor:
                             exists = emby_client.check_episode_exists(tmdb_id, season, episode)
                         
                         if exists:
-                            log_audit("整理", "Emby检查", f"✅ Emby库中已存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})")
+                            logger.info(f"✨ [整理] Emby已存在: {final['title']} - S{season}E{episode}")
+                            await FileProcessor._log_detail(task_id, f"✅ Emby库中已存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})")
                             if not dry_run:
                                 from models import OrganizeHistory
                                 from database import db
@@ -180,14 +216,15 @@ class FileProcessor:
                                     await db.save(history, audit=False)
                             return [{"type": "skip", "skip_type": "emby_exists", "source": v_path, "reason": "Emby库中已存在"}]
                         else:
-                            log_audit("整理", "Emby检查", f"❌ Emby库中不存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})，继续处理")
+                            await FileProcessor._log_detail(task_id, f"❌ Emby库中不存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})，继续处理")
                     except Exception as e:
-                        log_audit("整理", "Emby检查失败", f"Emby检查异常: {str(e)}", level="WARN")
+                        logger.warning(f"Emby检查异常: {str(e)}")
+                        await FileProcessor._log_detail(task_id, f"⚠️ Emby检查异常: {str(e)}", "WARN")
                         import traceback
-                        log_audit("整理", "Emby检查失败", f"异常堆栈: {traceback.format_exc()}", level="WARN")
+                        await FileProcessor._log_detail(task_id, f"异常堆栈: {traceback.format_exc()}", "WARN")
                 else:
                     if not emby_client:
-                        log_audit("整理", "Emby检查", f"⚠️ 跳过 Emby 检查 - Emby 客户端未初始化（请检查 Emby 配置）")
+                        await FileProcessor._log_detail(task_id, f"⚠️ 跳过 Emby 检查 - Emby 客户端未初始化")
 
             final["filename"] = v_file
             final["path"] = v_path
@@ -228,13 +265,13 @@ class FileProcessor:
             # [New] Calculate Hash before move (if enabled)
             hash_result: Optional[HashResult] = None
             if task.get("calculate_hash", False) and not dry_run:
-                log_audit("整理", "哈希计算", f"开始计算文件哈希: {v_file}")
+                await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
                 hash_result = await HashCalculator.calculate_hashes(v_path)
                 if hash_result:
-                    log_audit("整理", "哈希完成", f"SHA1: {hash_result.sha1}")
-                    log_audit("整理", "ED2K链接", hash_result.ed2k_link)
+                    await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
+                    await FileProcessor._log_detail(task_id, f"🔢 ED2K: {hash_result.ed2k_link}")
                 else:
-                    log_audit("整理", "哈希失败", f"无法计算哈希: {v_file}", level="WARN")
+                    await FileProcessor._log_detail(task_id, f"❌ 无法计算哈希: {v_file}", "WARN")
 
             # Execute
             if not dry_run and action_type in ["cd2_move", "cd2_copy"]:
@@ -261,6 +298,12 @@ class FileProcessor:
 
                     # 3. Batch Call
                     batch_res = await FileExecutor._execute_cd2_batch(cd2_client, plan_items, action_type)
+                    if batch_res == "success":
+                        await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {v_file} → {new_abs_path}")
+                    elif batch_res == "skipped":
+                        await FileProcessor._log_detail(task_id, f"⏭️ CD2 {action_label}跳过（目标已存在）: {v_file}")
+                    else:
+                        await FileProcessor._log_detail(task_id, f"❌ CD2 {action_label}失败: {v_file} → {FileExecutor.get_status_message(batch_res)}", "ERROR")
                     for src, dst in plan_items:
                         # 如果整个批次跳过，则单个项标记为 skip
                         item_status = "error"
@@ -366,6 +409,14 @@ class FileProcessor:
                 if not dry_run:
                     v_res = await FileExecutor.execute_action(src, dst, action_type, conflict_mode, context.get("dir_cache"))
                 
+                if v_res in ["success", "preview"]:
+                    if src == v_path:
+                        await FileProcessor._log_detail(task_id, f"📦 {action_label}成功: {v_file} → {dst}")
+                elif v_res in ["skipped", "skipped_conflict"]:
+                    await FileProcessor._log_detail(task_id, f"⏭️ {action_label}跳过（目标已存在）: {os.path.basename(src)}")
+                else:
+                    await FileProcessor._log_detail(task_id, f"❌ {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(v_res)}", "ERROR")
+                
                 # 添加识别信息到结果中
                 result_item = {
                     "type": "item", "status": "success" if v_res in ["success", "preview"] else "error",
@@ -461,7 +512,8 @@ class FileProcessor:
 
         except Exception as e:
             err_msg = f"处理异常: {str(e)}"
-            log_audit("整理", "处理错误", err_msg, level="ERROR", details={"file": v_path})
+            logger.error(err_msg)
+            await FileProcessor._log_detail(task_id, f"❌ {err_msg}", "ERROR")
             
             # [Notify] Add failure notification for exceptions
             if not dry_run:
@@ -491,12 +543,12 @@ class FileProcessor:
             # 直接调用内部处理函数，不再走 HTTP
             triggered = await process_cd2_notification(payload_data)
             if triggered > 0:
-                log_audit("整理", "联动", f"成功触发 CD2 联动: {os.path.basename(cd2_path)}")
+                logger.debug(f"成功触发 CD2 联动: {os.path.basename(cd2_path)}")
             else:
                 # 如果没有触发任务（可能没开启 webhook 响应或路径不匹配），也算联动逻辑走通了
                 logger.debug(f"[Simulate] CD2 Webhook simulated for {cd2_path}, but no task triggered.")
         except Exception as e:
-            log_audit("整理", "联动异常", f"模拟 CD2 联动失败: {e}", level="ERROR")
+            logger.error(f"模拟 CD2 联动失败: {e}")
 
     @staticmethod
     def _trigger_strm_hook(new_abs_path: str, context: Dict[str, Any]):
@@ -530,12 +582,12 @@ class FileProcessor:
                     # 匹配成功，触发单文件处理
                     # 注意：处理时需要将正确的映射配置传给 StrmGenerator
                     asyncio.create_task(FileProcessor._process_strm_and_notify(new_abs_path, strm_task))
-                    log_audit("主动联动STRM", "联动STRM", f"主动触发: {os.path.basename(new_abs_path)}", details=strm_task.get("name"))
+                    logger.debug(f"主动触发: {os.path.basename(new_abs_path)}")
                     return
             
             # log_audit("整理", "联动", "未找到匹配的 STRM 任务", level="WARN", details=new_abs_path)
         except Exception as e:
-            log_audit("整理", "联动错误", f"触发 STRM 失败: {str(e)}", level="ERROR")
+            logger.error(f"触发 STRM 失败: {str(e)}")
 
     @staticmethod
     async def _process_strm_and_notify(file_path: str, task_config: Dict[str, Any]):
@@ -567,9 +619,9 @@ class FileProcessor:
                             sub_path = os.path.join(video_dir, f)
                             sub_res = await StrmGenerator.process_single_file(sub_path, task_config)
                             if sub_res.get("status") == "success":
-                                log_audit("STRM", "联动", f"同步字幕: {f}", details=task_config.get("name"))
+                                logger.debug(f"同步字幕: {f}")
                 except Exception as scan_e:
-                    log_audit("STRM", "联动", f"扫描字幕失败: {scan_e}", level="WARN")
+                    logger.warning(f"扫描字幕失败: {scan_e}")
                     
         except Exception as e:
-            log_audit("STRM", "联动异常", str(e), level="ERROR")
+            logger.error(str(e))

@@ -180,19 +180,43 @@ async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str =
         await _log(title, l_type="process", extra={"index": idx, "total": total, "title": title})
         
         try:
-            result, _ = await MovieRecognizer.recognize_full(
+            result, recog_logs = await MovieRecognizer.recognize_full(
                 title, force_filename=True,
                 anime_priority=anime_prio, bangumi_priority=bgm_prio,
                 bangumi_failover=bgm_failover,
-                batch_enhancement=True, # [Force] 补全模式下强制开启合集增强，提高打包资源命中率
-                description=item.get('description') # [New] Pass subtitle for better matching
+                batch_enhancement=True,
+                description=item.get('description')
             )
+            
+            recog_task_id = None
+            try:
+                from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
+                import uuid as _uuid
+                recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
+                await _start_task(recog_task_id, "识别", title)
+                for log_msg in recog_logs:
+                    level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
+                    await _log_task(recog_task_id, log_msg, level)
+            except Exception:
+                recog_task_id = None
             
             if not result.get("success") or not result.get("final_result"):
                 await _log(f"识别失败，跳过: {title}", l_type="info")
+                if recog_task_id:
+                    try:
+                        await _log_task(recog_task_id, "❌ 识别失败", "ERROR")
+                        await _finish_task(recog_task_id, "error")
+                    except Exception:
+                        pass
                 continue
                 
             final = result["final_result"]
+            if recog_task_id:
+                try:
+                    stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+                    await _finish_task(recog_task_id, "completed", stats=stats)
+                except Exception:
+                    pass
             if str(final.get("tmdb_id")) != str(sub.tmdb_id):
                 # 仅记录同名但 ID 不匹配的情况，或者完全不匹配
                 await _log(f"ID 不匹配 ({final.get('tmdb_id') or '未知'}), 跳过: {title}", l_type="info")

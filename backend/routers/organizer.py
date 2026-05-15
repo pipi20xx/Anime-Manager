@@ -5,13 +5,15 @@ from typing import Dict, Any, List
 import asyncio
 import json
 import uuid
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from organizer_core.file_explorer import FileExplorer
 from organizer_core.renamer import Renamer
 from organizer_core.organizer import Organizer
 from config_manager import ConfigManager
-from logger import log_audit
 from task_history import start_task, log_task, finish_task
 
 router = APIRouter(tags=["整理重命名"])
@@ -47,7 +49,7 @@ async def list_files(request: FileListRequest):
 async def delete_file(request: FilePathRequest):
     try:
         FileExplorer.delete_item(request.path)
-        log_audit("文件管理", "删除", f"删除了: {request.path}")
+        logger.debug(f"删除了: {request.path}")
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -56,7 +58,7 @@ async def delete_file(request: FilePathRequest):
 async def copy_file(request: FileOperationRequest):
     try:
         FileExplorer.copy_item(request.src, request.dst)
-        log_audit("文件管理", "复制", f"从 {request.src} 复制到 {request.dst}")
+        logger.debug(f"从 {request.src} 复制到 {request.dst}")
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -65,7 +67,7 @@ async def copy_file(request: FileOperationRequest):
 async def move_file(request: FileOperationRequest):
     try:
         FileExplorer.move_item(request.src, request.dst)
-        log_audit("文件管理", "移动", f"从 {request.src} 移动到 {request.dst}")
+        logger.debug(f"从 {request.src} 移动到 {request.dst}")
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -129,9 +131,6 @@ async def preview_rename(request: RenamePreviewRequest):
         return {"status": "error", "message": str(e)}
 
 async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: str):
-    """
-    后台任务运行器：静默消耗生成器，更新任务状态。
-    """
     task_name = task.get("name", "未命名")
     processed = 0
     skipped = 0
@@ -153,58 +152,33 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
         await start_task(task_id, "整理", task_name)
         await log_task(task_id, f"🚀 开始执行整理任务: {task_name}")
         await log_task(task_id, f"📁 源: {task.get('source_dir')}")
-        await log_task(task_id, f"🔧 模式: {'预览 (Dry Run)' if dry_run else '正式执行 (Move/Copy)'}")
+        await log_task(task_id, f"📁 目标: {task.get('target_dir')}")
+        action_type = task.get('action_type', 'move')
+        action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制'}.get(action_type, action_type)
+        mode_label = f"预览 ({action_label})" if dry_run else f"正式执行 ({action_label})"
+        await log_task(task_id, f"🔧 模式: {mode_label}")
+        await log_task(task_id, "──────────────────")
         
-        log_audit("整理", "后台启动", f"任务已转入后台运行: {task_name}", details={"task_id": task_id})
+        logger.info(f"✨ [整理] 后台启动: {task_name}")
         
         async for msg in Organizer.run_task(task, dry_run, task_id):
             try:
                 data = json.loads(msg) if isinstance(msg, str) else msg
                 data_type = data.get("type")
-                if data_type == "scan":
-                    # 扫描目录较多时，仅在日志显示顶层路径，避免刷屏
-                    pass
-                elif data_type == "item":
+                if data_type == "item":
                     status = data.get("status")
-                    source = data.get("source", "")
-                    filename = os.path.basename(source)
-                    target = data.get("target", "")
-                    title = data.get("title", "")
-                    season = data.get("season", "")
-                    episode = data.get("episode", "")
-                    
                     if status in ["success", "preview"]:
                         processed += 1
                         _background_tasks[task_id]["processed"] = processed
-                        
-                        # 构建日志信息
-                        if title and (season or episode):
-                            # 有识别信息
-                            episode_info = f"S{season}E{episode}" if season and episode else (f"S{season}" if season else f"E{episode}")
-                            if target:
-                                target_name = os.path.basename(target)
-                                await log_task(task_id, f"✅ {title} {episode_info}\n   {filename} → {target_name}")
-                            else:
-                                await log_task(task_id, f"✅ {title} {episode_info}\n   {filename}")
-                        else:
-                            # 无识别信息，显示文件名
-                            if target:
-                                target_name = os.path.basename(target)
-                                await log_task(task_id, f"✅ {filename} → {target_name}")
-                            else:
-                                await log_task(task_id, f"✅ {filename}")
                     elif status == "error":
                         errors += 1
-                        await log_task(task_id, f"❌ {filename}: {data.get('msg', '')}", "ERROR")
                 elif data_type == "skip":
                     skipped += 1
                 elif data_type == "error":
                     errors += 1
-                    await log_task(task_id, f"❌ 错误: {data.get('message', '')}", "ERROR")
                 elif data_type == "finish":
                     _background_tasks[task_id]["total"] = data.get("count", 0)
                     
-                    # 计算耗时
                     duration = "未知"
                     if start_time:
                         elapsed = time.time() - start_time
@@ -215,25 +189,18 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
                             seconds = int(elapsed % 60)
                             duration = f"{minutes}分{seconds}秒"
                     
-                    # 详细统计输出
                     await log_task(task_id, "──────────────────")
                     await log_task(task_id, f"📊 整理统计：")
                     await log_task(task_id, f"   ├ ✅ 成功：{processed}")
                     await log_task(task_id, f"   ├ ⏭️ 跳过：{skipped}")
-                    if errors > 0:
-                        await log_task(task_id, f"   └ ❌ 失败：{errors}")
-                    else:
-                        await log_task(task_id, f"   └ ❌ 失败：{errors}")
-                    await log_task(task_id, "")
+                    await log_task(task_id, f"   └ ❌ 失败：{errors}")
                     await log_task(task_id, f"⏱️ 总计耗时：{duration}")
                     await log_task(task_id, "──────────────────")
-                    await log_task(task_id, f"🏁 扫描完成，共发现 {data.get('count', 0)} 个可整理项目")
             except: pass
         
         final_summary = f"🏁 整理结束: 成功 {processed}"
         if skipped > 0: final_summary += f" | 跳过 {skipped}"
         if errors > 0: final_summary += f" | 失败 {errors}"
-        
         await log_task(task_id, final_summary)
         
         if task_id in Organizer._STOPPED_TASKS:
@@ -241,13 +208,13 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             _background_tasks[task_id]["status"] = "stopped"
             _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
             await finish_task(task_id, "stopped", processed)
-            log_audit("整理", "后台停止", f"任务已被用户停止: {task_name}", details={"processed": processed})
+            logger.info(f"✨ [整理] 任务已停止: {task_name}")
         else:
             _background_tasks[task_id]["status"] = "completed"
             _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
             stats = {"success": processed, "skipped": skipped, "errors": errors}
             await finish_task(task_id, "completed", processed, stats)
-            log_audit("整理", "后台完成", f"任务后台运行结束: {task_name}", details={"processed": processed, "skipped": skipped, "errors": errors})
+            logger.info(f"✨ [整理] 后台完成: {task_name} - 成功 {processed} | 跳过 {skipped} | 失败 {errors}")
         
     except Exception as e:
         await log_task(task_id, f"❌ 任务异常终止: {str(e)}", "ERROR")
@@ -256,7 +223,7 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             _background_tasks[task_id]["error"] = str(e)
             _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
         await finish_task(task_id, "error", processed)
-        log_audit("整理", "后台异常", f"任务后台运行中断: {str(e)}", level="ERROR", details={"task_id": task_id})
+        logger.error(f"✨ [整理] 后台异常: {str(e)}")
 
 @router.post("/api/organize/start_background", summary="启动后台整理任务")
 async def start_background_organize(request: Request, task: Dict[str, Any] = Body(...), dry_run: bool = Query(True)):
@@ -313,15 +280,15 @@ async def stream_organize(request: Request, task_id: str, dry_run: str = "true")
         try:
             async for data in Organizer.run_task(task, is_dry, task_id):
                 if await request.is_disconnected():
-                    log_audit("整理", "任务中断", f"检测到客户端连接断开，正在停止任务: {task_id}")
+                    logger.debug(f"检测到客户端连接断开，正在停止任务: {task_id}")
                     Organizer.stop_task(task_id)
                     break
                 yield data
         except asyncio.CancelledError:
-            log_audit("整理", "任务中断", f"任务流已被系统取消 (task_id: {task_id})")
+            logger.debug(f"任务流已被系统取消 (task_id: {task_id})")
             Organizer.stop_task(task_id)
         except Exception as e:
-            log_audit("整理", "执行异常", f"任务流中断: {str(e)}", level="ERROR")
+            logger.error(f"任务流中断: {str(e)}")
             yield json.dumps({"type": "error", "message": str(e)}) + "\n"
 
     return StreamingResponse(event_generator(), media_type="application/x-ndjson")
@@ -338,12 +305,12 @@ async def stream_organize_adhoc(request: Request, task: Dict[str, Any] = Body(..
         try:
             async for data in Organizer.run_task(task, dry_run, task_id):
                 if await request.is_disconnected():
-                    log_audit("整理", "任务中断", f"临时任务客户端已断开: {task_id}")
+                    logger.debug(f"临时任务客户端已断开: {task_id}")
                     Organizer.stop_task(task_id)
                     break
                 yield data
         except asyncio.CancelledError:
-            log_audit("整理", "任务中断", f"临时任务已被取消 (task_id: {task_id})")
+            logger.debug(f"临时任务已被取消 (task_id: {task_id})")
             Organizer.stop_task(task_id)
         except Exception as e:
              yield json.dumps({"type": "error", "message": str(e)}) + "\n"
@@ -371,19 +338,43 @@ async def recalculate_item(request: dict):
     all_render = config.get("custom_render_words", []) + all_cached.get("render", [])
     
     from recognition.recognizer import MovieRecognizer
-    # 2. 执行识别
-    result_data, _ = await MovieRecognizer.recognize_full(
+    result_data, recog_logs = await MovieRecognizer.recognize_full(
         filename, 
         all_noise=all_noise, 
         all_groups=all_groups, 
         api_key=config.get("tmdb_api_key", ""),
         anime_priority=task_config.get("anime_priority", True),
         all_render=all_render,
-        force_filename=True # 修正时通常针对单个文件名
+        force_filename=True
     )
     
+    recog_task_id = None
+    try:
+        import uuid as _uuid
+        recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
+        await start_task(recog_task_id, "识别", filename)
+        for log_msg in recog_logs:
+            level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
+            await log_task(recog_task_id, log_msg, level)
+    except Exception:
+        recog_task_id = None
+    
     if not result_data.get("success"):
+        if recog_task_id:
+            try:
+                await log_task(recog_task_id, "❌ 识别失败", "ERROR")
+                await finish_task(recog_task_id, "error")
+            except Exception:
+                pass
         return {"type": "error", "source": filename, "status": "error", "reason": "识别失败"}
+    
+    final = result_data.get("final_result", {})
+    if recog_task_id and final.get("tmdb_id"):
+        try:
+            stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+            await finish_task(recog_task_id, "completed", stats=stats)
+        except Exception:
+            pass
 
     # 3. 计算路径
     # 找到对应的重命名规则
@@ -418,12 +409,12 @@ async def _background_batch_runner(items: List[Dict[str, Any]], conflict_mode: s
     后台批处理运行器
     """
     try:
-        log_audit("整理", "批处理后台启动", f"正式执行任务已转入后台，共 {len(items)} 项")
+        logger.debug(f"正式执行任务已转入后台，共 {len(items)} 项")
         async for _ in Organizer.execute_batch(items, conflict_mode, task_id):
             pass
-        log_audit("整理", "批处理后台完成", "正式执行任务后台运行结束")
+        logger.debug("正式执行任务后台运行结束")
     except Exception as e:
-        log_audit("整理", "批处理后台异常", f"正式执行中断: {str(e)}", level="ERROR")
+        logger.error(f"正式执行中断: {str(e)}")
 
 @router.post("/api/organize/execute_background", summary="后台正式执行批处理")
 async def batch_execute_background(body: BatchExecuteRequest, task_id: str = Query(None)):
@@ -444,18 +435,18 @@ async def batch_execute(request: Request, body: BatchExecuteRequest, task_id: st
     if not task_id:
         task_id = str(uuid.uuid4())
 
-    log_audit("整理", "批处理", f"开始执行批处理任务，共 {len(body.items)} 项", details=f"Conflict Mode: {body.conflict_mode}")
+    logger.debug(f"开始执行批处理任务，共 {len(body.items)} 项")
     
     async def event_generator():
         try:
             async for data in Organizer.execute_batch(body.items, body.conflict_mode, task_id):
                 if await request.is_disconnected():
-                    log_audit("整理", "任务中断", f"批处理连接断开，停止执行: {task_id}")
+                    logger.debug(f"批处理连接断开，停止执行: {task_id}")
                     Organizer.stop_task(task_id)
                     break
                 yield data
         except asyncio.CancelledError:
-            log_audit("整理", "任务中断", f"批处理任务已被取消 (task_id: {task_id})")
+            logger.debug(f"批处理任务已被取消 (task_id: {task_id})")
             Organizer.stop_task(task_id)
         except Exception as e:
             yield json.dumps({"type": "error", "message": str(e)}) + "\n"
@@ -490,7 +481,7 @@ async def clear_organize_history():
         async with db.session_scope() as session:
             await session.execute(delete(OrganizeHistory))
             await session.commit()
-        log_audit("整理", "历史清理", "用户清空了全部整理历史记录")
+        logger.debug("用户清空了全部整理历史记录")
         return {"success": True, "message": "历史记录已清空"}
     except Exception as e:
         return {"success": False, "message": str(e)}
@@ -518,9 +509,9 @@ async def delete_organize_history(history_id: int, delete_file: bool = Query(Fal
                     try:
                         if os.path.exists(history.source_path):
                             FileExplorer.delete_item(history.source_path)
-                            log_audit("整理", "文件删除", f"通过历史记录删除了原始源文件: {history.source_path}")
+                            logger.debug(f"通过历史记录删除了原始源文件: {history.source_path}")
                     except Exception as e:
-                        log_audit("整理", "文件删除失败", f"尝试删除源文件 {history.source_path} 时出错: {str(e)}", level="ERROR")
+                        logger.error(f"尝试删除源文件 {history.source_path} 时出错: {str(e)}")
 
             await db.delete(history)
             return {"success": True}

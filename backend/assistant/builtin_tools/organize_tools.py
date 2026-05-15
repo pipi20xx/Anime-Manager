@@ -140,13 +140,31 @@ async def preview_rename(filename: str, rule_id: str, target_dir: str = "") -> T
         config = ConfigManager.get_config()
         anime_prio = config.get("anime_priority", True)
         
-        result_data, _ = await MovieRecognizer.recognize_full(
+        result_data, recog_logs = await MovieRecognizer.recognize_full(
             filename,
             force_filename=True,
             anime_priority=anime_prio
         )
         
+        recog_task_id = None
+        try:
+            from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
+            import uuid as _uuid
+            recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
+            await _start_task(recog_task_id, "识别", filename)
+            for log_msg in recog_logs:
+                level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
+                await _log_task(recog_task_id, log_msg, level)
+        except Exception:
+            recog_task_id = None
+        
         if not result_data.get("success"):
+            if recog_task_id:
+                try:
+                    await _log_task(recog_task_id, "❌ 识别失败", "ERROR")
+                    await _finish_task(recog_task_id, "error")
+                except Exception:
+                    pass
             return ToolResult(success=False, error="识别失败", data=result_data)
         
         rules = config.get("rename_rules", Renamer.get_default_rules())
@@ -156,6 +174,12 @@ async def preview_rename(filename: str, rule_id: str, target_dir: str = "") -> T
             return ToolResult(success=False, error=f"规则 {rule_id} 不存在")
         
         final = result_data.get("final_result", {})
+        if recog_task_id:
+            try:
+                stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+                await _finish_task(recog_task_id, "completed", stats=stats)
+            except Exception:
+                pass
         is_movie = final.get("category") == "电影"
         pattern = rule.get("movie_pattern" if is_movie else "tv_pattern")
         
