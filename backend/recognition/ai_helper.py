@@ -96,7 +96,7 @@ class AIHelper:
             "max_tokens": 256
         }
 
-        logger.info(f"[AI-Fallback] 📤 请求模型: {model}")
+        logger.debug(f"[AI-Fallback] 📤 请求模型: {model}")
         logger.debug(f"[AI-Fallback] 📤 URL: {target_url}")
         logger.debug(f"[AI-Fallback] 📤 文件名: {filename}")
 
@@ -112,7 +112,7 @@ class AIHelper:
                 )
                 
                 elapsed = time.time() - start_time
-                logger.info(f"[AI-Fallback] ⏱️ 响应时间: {elapsed:.2f}s, 状态码: {resp.status_code}")
+                logger.debug(f"[AI-Fallback] ⏱️ 响应时间: {elapsed:.2f}s, 状态码: {resp.status_code}")
                 
                 if resp.status_code != 200:
                     logger.error(f"[AI-Fallback] ❌ API 错误 [{resp.status_code}]: {resp.text[:500]}")
@@ -131,14 +131,14 @@ class AIHelper:
                     logger.error(f"[AI-Fallback] 💡 智谱AI常用模型: glm-4, glm-4-flash, glm-4-plus")
                     return None
                 
-                logger.info(f"[AI-Fallback] 📥 原始响应: {content}")
+                logger.debug(f"[AI-Fallback] 📥 原始响应: {content}")
                 
                 result = self._extract_json(content)
                 if result:
-                    logger.info(f"[AI-Fallback] ✅ 真实标题: {result.get('real_title')}")
-                    logger.info(f"[AI-Fallback] 📝 原名: {result.get('original_name')}")
-                    logger.info(f"[AI-Fallback] 🇨🇳 中文名: {result.get('chinese_name')}")
-                    logger.info(f"[AI-Fallback] � 置信度: {result.get('confidence', 0)}")
+                    logger.debug(f"[AI-Fallback] ✅ 真实标题: {result.get('real_title')}")
+                    logger.debug(f"[AI-Fallback] 📝 原名: {result.get('original_name')}")
+                    logger.debug(f"[AI-Fallback] 🇨🇳 中文名: {result.get('chinese_name')}")
+                    logger.debug(f"[AI-Fallback] 🔢 置信度: {result.get('confidence', 0)}")
                 else:
                     logger.error(f"[AI-Fallback] ❌ JSON 解析失败")
                 return result

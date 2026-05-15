@@ -465,7 +465,7 @@ class MonitorManager:
             total_pushed = 0
             for sub in active_subs:
                 try:
-                    pushed = await run_sub_fill_logic(sub, logger_func=None)
+                    pushed = await run_sub_fill_logic(sub, logger_func=None, task_id=task_id)
                     if pushed > 0:
                         await log_task(task_id, f"  ✅ [{sub.title}]: 成功补全 {pushed} 集")
                     total_pushed += pushed

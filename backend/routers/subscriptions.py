@@ -13,6 +13,8 @@ from recognition.recognizer import MovieRecognizer
 from config_manager import ConfigManager
 from logger import log_audit
 from database import db
+import logging
+logger = logging.getLogger(__name__)
 from notification import NotificationManager
 from sqlmodel import select, delete, and_, or_, update
 
@@ -137,10 +139,17 @@ async def clear_subscribed_episodes(sub_id: int):
         await SubscriptionManager.clear_downloaded_episodes(sub.tmdb_id, sub.media_type, title=sub.title)
         return {"success": True, "message": f"已彻底清空作品 {sub.title} 的所有相关下载记录"}
 
-async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str = "all"):
+async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str = "all", task_id: str = None):
     async def _log(msg: str, l_type="info", extra=None):
         if logger_func:
             await logger_func({"type": l_type, "message": msg, **(extra or {})})
+        if task_id:
+            try:
+                from task_history import log_task as _log_task
+                level = "ERROR" if l_type == "error" else "WARN" if l_type == "warn" else "INFO"
+                await _log_task(task_id, msg, level)
+            except Exception:
+                pass
 
     # [优化] 不再在整个函数外层包裹 session_scope，避免长时网络 IO 占用 DB 连接
     await _log(f"开始搜寻补全: {sub.title} (范围: {indexer})", l_type="start")
@@ -258,9 +267,20 @@ async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str =
                         await _log(f"晚于结束集数 (E{episode}), 跳过: {title}", l_type="info")
                         continue
                 
-                if await SubscriptionManager.is_episode_downloaded(sub.tmdb_id, sub.media_type, season, episode):
-                    await _log(f"集数已存在 (S{season}E{episode}), 跳过: {title}", l_type="info")
-                    continue
+                if is_batch and end_ep:
+                    all_exist = True
+                    missing_eps = []
+                    for ep_num in range(episode, end_ep + 1):
+                        if not await SubscriptionManager.is_episode_downloaded(sub.tmdb_id, sub.media_type, season, ep_num):
+                            all_exist = False
+                            missing_eps.append(ep_num)
+                    if all_exist:
+                        await _log(f"合集集数已全部存在 (S{season}E{episode}-{end_ep}), 跳过: {title}", l_type="info")
+                        continue
+                else:
+                    if await SubscriptionManager.is_episode_downloaded(sub.tmdb_id, sub.media_type, season, episode):
+                        await _log(f"集数已存在 (S{season}E{episode}), 跳过: {title}", l_type="info")
+                        continue
             else:
                 if await SubscriptionManager.is_episode_downloaded(sub.tmdb_id, sub.media_type, 0, 0):
                     await _log(f"电影已存在, 跳过: {title}", l_type="info")
@@ -333,11 +353,26 @@ async def fill_subscription_gaps(sub_id: int, indexer: Optional[str] = "all", re
         if not sub:
             yield json.dumps({"type": "error", "message": "订阅不存在"}) + "\n"
             return
-            
+        
+        fill_task_id = None
+        try:
+            from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
+            import uuid as _uuid
+            fill_task_id = f"fill_{_uuid.uuid4().hex[:12]}"
+            await _start_task(fill_task_id, "订阅补全", f"[手动] {sub.title}")
+            await _log_task(fill_task_id, f"🚀 开始手动补全: {sub.title}")
+            await _log_task(fill_task_id, f"🔍 搜索范围: {indexer}")
+            await _log_task(fill_task_id, "──────────────────")
+        except Exception:
+            fill_task_id = None
+        
+        logger.info(f"✨ [订阅补全] 手动: {sub.title}")
+        
         queue = asyncio.Queue()
         async def _q_logger(data): await queue.put(json.dumps(data) + "\n")
         
-        task = asyncio.create_task(run_sub_fill_logic(sub, _q_logger, indexer=indexer))
+        task = asyncio.create_task(run_sub_fill_logic(sub, _q_logger, indexer=indexer, task_id=fill_task_id))
+        pushed_count = 0
         try:
             while not task.done() or not queue.empty():
                 if request and await request.is_disconnected():
@@ -351,6 +386,9 @@ async def fill_subscription_gaps(sub_id: int, indexer: Optional[str] = "all", re
                     
                 try:
                     line = await asyncio.wait_for(queue.get(), timeout=0.1)
+                    data = json.loads(line.strip())
+                    if data.get("type") == "hit":
+                        pushed_count += 1
                     yield line
                 except asyncio.TimeoutError: continue
         except asyncio.CancelledError:
@@ -359,22 +397,61 @@ async def fill_subscription_gaps(sub_id: int, indexer: Optional[str] = "all", re
                 await task
             except asyncio.CancelledError:
                 pass
+        
+        if fill_task_id:
+            try:
+                from task_history import log_task as _log_task, finish_task as _finish_task
+                await _log_task(fill_task_id, "──────────────────")
+                await _log_task(fill_task_id, f"🏁 补全完成，共推送 {pushed_count} 个集数")
+                await _finish_task(fill_task_id, "completed", pushed_count)
+            except Exception:
+                pass
+        
+        logger.info(f"✨ [订阅补全] 完成: {sub.title} - 推送 {pushed_count} 个")
 
     return StreamingResponse(fill_generator(), media_type="application/x-ndjson")
 
 async def auto_fill_all_subscriptions():
-    # 外部不再包裹 session_scope，让内部根据需要开关
     subs = await SubscriptionManager.get_subscriptions(enabled_only=True)
     active_subs = [s for s in subs if getattr(s, 'auto_fill', True)]
     if not active_subs: return
     
-    log_audit("订阅", "自动补全", f"开始全量补全任务，共 {len(active_subs)} 个项目")
+    auto_task_id = None
+    try:
+        from task_history import start_task as _start_task, log_task as _log_task
+        import uuid as _uuid
+        auto_task_id = f"autofill_{_uuid.uuid4().hex[:12]}"
+        await _start_task(auto_task_id, "订阅补全", "自动搜寻补全")
+        await _log_task(auto_task_id, f"🚀 开始自动补全，共 {len(active_subs)} 个订阅项目")
+        await _log_task(auto_task_id, "──────────────────")
+    except Exception:
+        auto_task_id = None
+    
+    logger.info(f"✨ [订阅补全] 自动: 开始，共 {len(active_subs)} 个项目")
+    
     total_pushed = 0
     for sub in active_subs:
         try:
-            pushed = await run_sub_fill_logic(sub, logger_func=None)
-            total_pushed += pushed
+            pushed = await run_sub_fill_logic(sub, logger_func=None, task_id=auto_task_id)
+            if pushed > 0:
+                total_pushed += pushed
+                logger.info(f"✨ [订阅补全] {sub.title}: 补全 {pushed} 集")
         except Exception as e:
-            log_audit("订阅", "补全异常", f"处理 '{sub.title}' 时出错: {str(e)}", level="ERROR")
+            if auto_task_id:
+                try:
+                    from task_history import log_task as _log_task
+                    await _log_task(auto_task_id, f"❌ [{sub.title}]: 处理失败 - {str(e)}", "ERROR")
+                except Exception:
+                    pass
+            logger.error(f"✨ [订阅补全] {sub.title}: 失败 - {str(e)}")
     
-    log_audit("订阅", "全量补全完成", f"任务结束，共推送 {total_pushed} 个条目")
+    if auto_task_id:
+        try:
+            from task_history import log_task as _log_task, finish_task as _finish_task
+            await _log_task(auto_task_id, "──────────────────")
+            await _log_task(auto_task_id, f"🏁 自动补全完成，累计推送 {total_pushed} 个项目")
+            await _finish_task(auto_task_id, "completed", total_pushed)
+        except Exception:
+            pass
+    
+    logger.info(f"✨ [订阅补全] 自动完成: 累计推送 {total_pushed} 个")
