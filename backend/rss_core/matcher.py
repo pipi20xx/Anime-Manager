@@ -101,7 +101,7 @@ class Matcher:
             return False, None, error_msg
 
     @staticmethod
-    async def download(entry: Dict, rule: Rule) -> Tuple[bool, Optional[str], Optional[str]]:
+    async def download(entry: Dict, rule: Rule, task_id: str = None) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         将匹配的条目推送到下载客户端。
         返回: (是否成功, InfoHash, 失败原因)
@@ -138,7 +138,9 @@ class Matcher:
         client = ClientManager.get_client(client_id)
         if not client:
             logger.warning(f"无法下载 '{title}': 找不到客户端 ID '{client_id}'")
-            log_audit("RSS", "推送失败", f"找不到下载客户端 ID: {client_id}", level="ERROR", details=title)
+            if task_id:
+                from task_history import log_task as _log_task
+                await _log_task(task_id, f"❌ 推送失败: 找不到下载客户端 ID: {client_id}", "ERROR")
             return False, None, f"找不到下载客户端 ID: {client_id}"
 
         kwargs = {
@@ -192,7 +194,9 @@ class Matcher:
                     except: pass
 
                 logger.info(f"✅ {prefix}推送成功: {title} ({display_type}) -> {client.name} (Hash: {info_hash})")
-                log_audit("RSS", "推送成功", f"{prefix}已推送 {display_type}: {title} 到 {client.name}", details=f"规则: {rule.name}")
+                if task_id:
+                    from task_history import log_task as _log_task
+                    await _log_task(task_id, f"✅ {prefix}推送成功: {title} ({display_type}) -> {client.name}")
                 return True, info_hash, ""
             else:
                 logger.error(f"❌ {prefix}推送失败: {title} -> {msg}")
@@ -206,17 +210,23 @@ class Matcher:
             last_error = error_msg
             if fallback_link and fallback_link != download_link:
                 logger.info(f"🔄 主链接失败，尝试备用链接: {fallback_link}")
-                log_audit("RSS", "重试备用链接", f"主链接失败，尝试备用链接: {title}", details=fallback_link)
+                if task_id:
+                    from task_history import log_task as _log_task
+                    await _log_task(task_id, f"🔄 主链接失败，尝试备用链接: {title}")
                 success, result_hash, error_msg = await try_download(fallback_link, is_fallback=True)
                 if success:
                     return True, result_hash, ""
                 last_error = error_msg
             
-            log_audit("RSS", "推送失败", f"主链接和备用链接均失败", level="ERROR", details=title)
+            if task_id:
+                from task_history import log_task as _log_task
+                await _log_task(task_id, f"❌ 推送失败: 主链接和备用链接均失败 - {title}", "ERROR")
             return False, None, last_error or "主链接和备用链接均失败"
                 
         except Exception as e:
             logger.error(f"推送任务异常: {e}")
-            log_audit("RSS", "推送异常", f"执行过程发生程序异常", level="ERROR", details=f"Title: {title}\nError: {str(e)}")
+            if task_id:
+                from task_history import log_task as _log_task
+                await _log_task(task_id, f"❌ 推送异常: {title} - {str(e)}", "ERROR")
             await NotificationManager.push_client_error_notification(download_link, client.name, str(e))
             return False, None, str(e)

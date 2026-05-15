@@ -1,10 +1,13 @@
 import os
 import contextvars
 import contextlib
+import logging
 from typing import Type, TypeVar, List, Optional, Any, Generic, Union, Sequence, Dict
 from sqlmodel import SQLModel, text, select, Session
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=SQLModel)
 
@@ -133,10 +136,9 @@ class DBService:
             pass
         
         if audit:
-            from logger import log_audit
             model_name = getattr(instance, "__admin_name__", instance.__class__.__name__)
             display_name = getattr(instance, "name", getattr(instance, "title", "ID:" + str(getattr(instance, "id", ""))))
-            log_audit("数据库", "保存", f"已保存{model_name}: {display_name}")
+            logger.debug(f"已保存{model_name}: {display_name}")
             
         return instance
 

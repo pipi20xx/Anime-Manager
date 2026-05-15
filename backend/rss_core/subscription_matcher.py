@@ -84,7 +84,7 @@ class SubscriptionMatcher:
         return 0
 
     @staticmethod
-    async def recognize_items(entries: List[Dict], retry_failed: bool = False) -> int:
+    async def recognize_items(entries: List[Dict], retry_failed: bool = False, task_id: str = None) -> int:
         """
         对条目进行识别。
         返回本次成功新识别的条目数量。
@@ -141,8 +141,7 @@ class SubscriptionMatcher:
             if not should_process: continue
 
             try:
-                # [Fix] 2. 识别阶段：无数据库事务，允许耗时操作
-                result, _ = await MovieRecognizer.recognize_full(
+                result, recog_logs = await MovieRecognizer.recognize_full(
                     title, force_filename=True,
                     anime_priority=feed_anime_prio, bangumi_priority=bgm_prio,
                     bangumi_failover=bgm_failover,
@@ -150,20 +149,50 @@ class SubscriptionMatcher:
                     description=db_item.description if feed_batch_enhance else None
                 )
                 
-                # [Fix] 3. 更新阶段：内部自带事务
+                recog_task_id = None
+                try:
+                    from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
+                    import uuid as _uuid
+                    recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
+                    await _start_task(recog_task_id, "识别", title)
+                    for log_msg in recog_logs:
+                        level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
+                        await _log_task(recog_task_id, log_msg, level)
+                except Exception:
+                    recog_task_id = None
+                
                 if result.get("success") and result.get("final_result"):
                     final_result = result["final_result"]
                     await RssManager.update_item_recognition(db_item.id, final_result)
                     recognized_count += 1
                     
-                    # [New] Emby 检查 - 识别成功后立即检查 Emby 库
-                    log_audit("RSS", "Emby检查", f"Emby检查状态: {'已启用' if feed_check_emby else '未启用'}")
+                    _title = final_result.get('title', '')
+                    _season = final_result.get('season', '')
+                    _episode = final_result.get('episode', '')
+                    _tmdb = final_result.get('tmdb_id', '')
+                    ep_info = f"S{_season}E{_episode}" if _season and _episode else ""
+                    
+                    if task_id:
+                        from task_history import log_task as _log_task
+                        await _log_task(task_id, f"🧠 识别: {title}")
+                        await _log_task(task_id, f"   → {_title} {ep_info} (TMDB: {_tmdb})")
+                    
+                    if recog_task_id:
+                        try:
+                            stats = {"title": _title, "tmdb_id": _tmdb, "season": _season, "episode": _episode}
+                            await _finish_task(recog_task_id, "completed", stats=stats)
+                        except Exception:
+                            pass
+                else:
+                    if recog_task_id:
+                        try:
+                            await _finish_task(recog_task_id, "error")
+                        except Exception:
+                            pass
                     
                     if feed_check_emby and final_result.get("tmdb_id"):
                         from emby_client import get_emby_client
                         emby_client = get_emby_client()
-                        
-                        log_audit("RSS", "Emby检查", f"开始检查 Emby 库 - 标题: {title}")
                         
                         if emby_client:
                             try:
@@ -172,24 +201,18 @@ class SubscriptionMatcher:
                                 season = final_result.get("season")
                                 episode = final_result.get("episode")
                                 
-                                log_audit("RSS", "Emby检查", f"检查参数 - TMDB ID: {tmdb_id}, 类型: {media_type}, 季: {season}, 集: {episode}")
-                                
                                 exists_in_emby = False
                                 if media_type == "剧集":
                                     if season is not None and episode:
-                                        log_audit("RSS", "Emby检查", f"检查剧集是否存在: TMDB ID {tmdb_id}, S{season}E{episode}")
                                         exists_in_emby = emby_client.check_episode_exists(tmdb_id, season, episode)
-                                    else:
-                                        log_audit("RSS", "Emby检查", f"跳过剧集检查 - 缺少季集信息: 季={season}, 集={episode}")
                                 elif media_type == "电影":
-                                    log_audit("RSS", "Emby检查", f"检查电影是否存在: TMDB ID {tmdb_id}")
                                     exists_in_emby = emby_client.check_movie_exists(tmdb_id)
-                                else:
-                                    log_audit("RSS", "Emby检查", f"跳过检查 - 不支持的媒体类型: {media_type}")
                                 
                                 if exists_in_emby:
-                                    log_audit("RSS", "Emby检查", f"✅ Emby库中已存在: {final_result.get('title')} - S{season}E{episode} (TMDB: {tmdb_id})")
-                                    # 标记为已下载，添加到下载历史
+                                    logger.debug(f"Emby 已存在: {final_result.get('title')} S{season}E{episode}")
+                                    if task_id:
+                                        from task_history import log_task as _log_task
+                                        await _log_task(task_id, f"✅ Emby已存在: {final_result.get('title')} S{season}E{episode}")
                                     from models import DownloadHistory
                                     async with db.session_scope():
                                         history = DownloadHistory(
@@ -202,9 +225,11 @@ class SubscriptionMatcher:
                                         )
                                         await RssManager.add_history(history)
                                 else:
-                                    log_audit("RSS", "Emby检查", f"❌ Emby库中未找到: {final_result.get('title')} - S{season}E{episode} (TMDB: {tmdb_id})")
+                                    logger.debug(f"Emby 未找到: {final_result.get('title')} S{season}E{episode}")
+                                    if task_id:
+                                        from task_history import log_task as _log_task
+                                        await _log_task(task_id, f"❌ Emby未找到: {final_result.get('title')} S{season}E{episode}")
                                     
-                                    # 查找匹配的订阅并标记为已下载
                                     async with db.session_scope():
                                         from models import Subscription
                                         stmt = select(Subscription).where(
@@ -215,7 +240,6 @@ class SubscriptionMatcher:
                                         subs = await db.all(Subscription, stmt)
                                         
                                         for sub in subs:
-                                            # 检查是否在订阅范围内
                                             if media_type == "剧集":
                                                 if sub.season != 0 and sub.season != season:
                                                     continue
@@ -228,32 +252,46 @@ class SubscriptionMatcher:
                                                 except:
                                                     continue
                                                 
-                                                # 标记为已下载
                                                 await SubscriptionManager.add_subscribed_episode(
                                                     sub.tmdb_id, sub.media_type, season, ep_num,
                                                     title=f"Emby库已存在: {title}"
                                                 )
-                                                log_audit("订阅", "Emby检查", f"订阅 '{sub.title}' Emby库中已存在，自动标记为已下载: {title}")
+                                                logger.debug(f"订阅 '{sub.title}' 已存在，标记已下载: {title}")
+                                                if task_id:
+                                                    from task_history import log_task as _log_task
+                                                    await _log_task(task_id, f"📌 订阅 '{sub.title}' 已存在，标记已下载: {title}")
                                             elif media_type == "电影":
                                                 await SubscriptionManager.add_subscribed_episode(
                                                     sub.tmdb_id, sub.media_type, 0, 0,
                                                     title=f"Emby库已存在: {title}"
                                                 )
-                                                log_audit("订阅", "Emby检查", f"订阅 '{sub.title}' Emby库中电影已存在，自动标记为已下载: {title}")
+                                                logger.debug(f"订阅 '{sub.title}' 电影已存在，标记已下载: {title}")
+                                                if task_id:
+                                                    from task_history import log_task as _log_task
+                                                    await _log_task(task_id, f"📌 订阅 '{sub.title}' 电影已存在，标记已下载: {title}")
                             except Exception as e:
                                 logger.error(f"Emby 检查异常: {e}")
                                 import traceback
                                 logger.error(traceback.format_exc())
-                                log_audit("RSS", "Emby检查失败", f"Emby检查异常: {str(e)}", level="WARN")
+                                if task_id:
+                                    from task_history import log_task as _log_task
+                                    await _log_task(task_id, f"⚠️ Emby检查异常: {final_result.get('title')} - {str(e)}", "WARN")
                         else:
-                            log_audit("RSS", "Emby检查", f"⚠️ 跳过 Emby 检查 - Emby 客户端未初始化（请检查 Emby 配置）")
-                    else:
-                        if not feed_check_emby:
-                            log_audit("RSS", "Emby检查", f"⚠️ Emby 检查未启用，跳过检查")
-                        if not final_result.get("tmdb_id"):
-                            log_audit("RSS", "Emby检查", f"⚠️ 跳过 Emby 检查 - 识别结果缺少 TMDB ID")
+                            logger.warning(f"⚠️ Emby 客户端未初始化")
+                            if task_id:
+                                from task_history import log_task as _log_task
+                                await _log_task(task_id, f"⚠️ Emby 客户端未初始化，跳过检查", "WARN")
             except Exception as e:
                 logger.error(f"识别条目 '{title}' 失败: {e}")
+                if task_id:
+                    from task_history import log_task as _log_task
+                    await _log_task(task_id, f"⚠️ 识别失败: {title}", "WARN")
+                if recog_task_id:
+                    try:
+                        await _log_task(recog_task_id, f"❌ 识别异常: {str(e)}", "ERROR")
+                        await _finish_task(recog_task_id, "error")
+                    except Exception:
+                        pass
         
         return recognized_count
 

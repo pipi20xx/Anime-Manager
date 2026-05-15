@@ -81,11 +81,11 @@ class EmbyClient:
     def check_episode_exists(self, tmdb_id: str, season_number: int, episode_number: int) -> bool:
         series_result = self.search_series_by_tmdb_id(tmdb_id)
         if not series_result or not series_result.get('matched_items'):
-            logger.info(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的剧集")
+            logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的剧集")
             return False
         
         matched_items = series_result['matched_items']
-        logger.info(f"Emby 检查: TMDB ID {tmdb_id} 找到 {len(matched_items)} 个匹配项，正在检查 S{season_number}E{episode_number}")
+        logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 找到 {len(matched_items)} 个匹配项，正在检查 S{season_number}E{episode_number}")
         
         for series_item in matched_items:
             series_id = series_item.get('Id')
@@ -114,20 +114,20 @@ class EmbyClient:
             
             for episode in episodes:
                 if episode.get('IndexNumber') == episode_number:
-                    logger.info(f"Emby 检查: ✅ 在剧集 '{series_name}' 中找到 S{season_number}E{episode_number}")
+                    logger.debug(f"Emby 检查: ✅ 在剧集 '{series_name}' 中找到 S{season_number}E{episode_number}")
                     return True
         
-        logger.info(f"Emby 检查: ❌ 在所有匹配的 {len(matched_items)} 个剧集中都未找到 S{season_number}E{episode_number}")
+        logger.debug(f"Emby 检查: ❌ 在所有匹配的 {len(matched_items)} 个剧集中都未找到 S{season_number}E{episode_number}")
         return False
 
     def check_movie_exists(self, tmdb_id: str) -> bool:
         movie_result = self.search_movie_by_tmdb_id(tmdb_id)
         if movie_result and movie_result.get('matched_items'):
             matched_count = len(movie_result['matched_items'])
-            logger.info(f"Emby 检查: TMDB ID {tmdb_id} 找到 {matched_count} 个匹配的电影")
+            logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 找到 {matched_count} 个匹配的电影")
             return True
         else:
-            logger.info(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的电影")
+            logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的电影")
             return False
 
     def check_item_exists(self, tmdb_id: str, media_type: str, season_number: Optional[int] = None, episode_number: Optional[int] = None) -> bool:

@@ -68,7 +68,6 @@ async def refresh_all_feeds():
     await log_task(task_id, f"📋 共 {len(active_feeds)} 个活跃订阅源")
 
     subscriptions = await SubscriptionManager.get_subscriptions(enabled_only=True)
-    log_audit("RSS", "刷新", f"开始执行 RSS 自动刷新任务，共 {len(active_feeds)} 个源")
 
     total_new_items = 0
     total_matched = 0
@@ -76,7 +75,7 @@ async def refresh_all_feeds():
     for feed in active_feeds:
         try:
             feed_name = feed.title or feed.url
-            logger.info(f"正在刷新: {feed_name}")
+            logger.debug(f"正在刷新: {feed_name}")
             
             proxy = ConfigManager.get_proxy("rss")
             proxy_log = f" (使用代理: {proxy})" if proxy else ""
@@ -133,7 +132,7 @@ async def refresh_all_feeds():
                 info_msg += f" (过滤了 {filtered_count} 条)"
             await log_task(task_id, info_msg)
             
-            recog_count = await SubscriptionMatcher.recognize_items(entries)
+            recog_count = await SubscriptionMatcher.recognize_items(entries, task_id=task_id)
             if recog_count > 0:
                 await log_task(task_id, f"  🧠 智能识别: 成功识别 {recog_count} 个新项目")
             
@@ -155,7 +154,7 @@ async def refresh_all_feeds():
             
         except Exception as e:
             logger.error(f"刷新源 {feed.url} 失败: {e}")
-            log_audit("RSS", "刷新失败", f"源 '{feed.title or feed.url}' 刷新出错", level="ERROR", details=str(e))
+            log_audit("RSS", "刷新失败", f"源 '{feed.title or feed.url}' 刷新出错", level="ERROR")
             await log_task(task_id, f"❌ 刷新失败: {feed.title or feed.url}", "ERROR")
 
     await log_task(task_id, f"🏁 完成，共处理 {total_new_items} 个条目")
@@ -168,7 +167,7 @@ async def refresh_all_feeds():
     }
     
     await finish_task(task_id, "completed", total_new_items, stats)
-    log_audit("RSS", "完成", f"RSS 刷新任务结束，本次共处理 {total_new_items} 个条目")
+    log_audit("RSS", "完成", f"共处理 {total_new_items} 个条目")
     logger.info("Scheduler: RSS 刷新任务结束。")
 
 async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: str = None):
@@ -208,18 +207,16 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                 
                 if Matcher.check_match(entry_title, rule.must_contain, rule.must_not_contain, rule.use_regex):
                     logger.info(f"匹配成功: [{rule.name}] -> {entry_title}")
-                    success, info_hash, error_msg = await Matcher.download(entry, rule)
+                    success, info_hash, error_msg = await Matcher.download(entry, rule, task_id=task_id)
                     if success:
                         matched_count += 1
                         from clients.manager import ClientManager
                         client = ClientManager.get_client(rule.target_client_id)
                         client_name = client.name if client else "未知下载器"
                         
-                        log_audit("RSS", "规则匹配", f"规则 [{rule.name}] 命中并推送: {entry_title}", details={"client": client_name})
-                        
                         if task_id:
                             from task_history import log_task
-                            await log_task(task_id, f"    📌 [{rule.name}] → {entry_title}")
+                            await log_task(task_id, f"📌 [{rule.name}] → {entry_title} -> {client_name}")
 
                         await NotificationManager.push_rule_push_notification(
                             title=entry_title,

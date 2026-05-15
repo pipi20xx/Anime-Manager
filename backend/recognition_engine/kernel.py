@@ -249,7 +249,6 @@ def core_recognize(
                     if nxt in ["&", "@"]: r_pos += 1; continue
                     r_pos += 1
                 
-                print(f"[DEBUG] Expansion Done. Block: {processed_title[l_pos:r_pos]}", flush=True)
                 full_block = processed_title[l_pos:r_pos].strip(" &+x")
                 meta_obj.resource_team = full_block
                 
