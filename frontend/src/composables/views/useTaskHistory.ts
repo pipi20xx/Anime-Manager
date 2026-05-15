@@ -185,7 +185,7 @@ export function useTaskHistory() {
   }
 
   const moduleOptions = computed(() => {
-    return ['all', '整理', 'STRM', 'RSS', '识别', '元数据', '规则同步', '订阅补全', '死种清理', 'Webhook联动']
+    return ['all', '整理', 'STRM', 'RSS', '识别', '规则同步', '订阅补全', '死种清理', 'Webhook联动']
   })
 
   return {
