@@ -294,9 +294,12 @@ async def check_stalled_downloads():
 
     task_id = f"stalled_{uuid.uuid4().hex[:8]}"
     await start_task(task_id, "死种清理", "死种超时检查")
-    await log_task(task_id, f"🚀 开始检查死种下载 (超时阈值: {timeout_minutes}m)")
-
-    logger.info(f"Scheduler: 开始检查死种下载 (超时阈值: {timeout_minutes}m)...")
+    await log_task(task_id, f"🚀 开始检查死种下载")
+    await log_task(task_id, f"⏱️ 超时阈值: {timeout_minutes} 分钟")
+    await log_task(task_id, "──────────────────")
+    
+    logger.info(f"✨ [死种清理] 开始: 超时阈值 {timeout_minutes}m")
+    
     client_configs = ClientManager.get_all_clients()
     now = time.time()
     total_stalled = 0
@@ -324,14 +327,15 @@ async def check_stalled_downloads():
                 added_on = t.get('added_on', now)
                 elapsed_minutes = (now - added_on) / 60
                 
-                logger.info(f"  → 任务: {name} | 进度: {progress*100:.1f}% | 状态: {state} | 已运行: {elapsed_minutes:.2f}m")
+                if progress >= 1.0:
+                    await log_task(task_id, f"  ✅ {name} (已完成 {progress*100:.0f}%)")
+                    continue
                 
-                if progress >= 1.0: continue
+                await log_task(task_id, f"  ⏳ {name} | 进度 {progress*100:.0f}% | 状态 {state} | 已运行 {elapsed_minutes:.0f}m")
                 
                 if elapsed_minutes > timeout_minutes:
                     hash_str = str(t.get('hash', '')).lower()
                     await log_task(task_id, f"💀 发现死种: {name} (已运行 {elapsed_minutes:.0f}m, 进度 {progress*100:.0f}%)")
-                    log_audit("监控", "死种清理", f"发现超时死种任务: {name}", details=f"已挂机 {elapsed_minutes:.1f} 分钟, 进度 {progress*100:.1f}%, 状态 {state}")
                     
                     async with db.session_scope() as session:
                         stmt_sub_find = select(SubscribedEpisode).where(SubscribedEpisode.info_hash == hash_str)
@@ -350,34 +354,39 @@ async def check_stalled_downloads():
                         
                         await session.execute(delete(SubscribedEpisode).where(SubscribedEpisode.info_hash == hash_str))
                         
-                        logger.info(f"已将死种 '{final_title}' 移至黑名单并重置订阅状态 (Hash: {hash_str})")
+                        logger.debug(f"已将死种 '{final_title}' 移至黑名单并重置订阅状态 (Hash: {hash_str})")
+                        await log_task(task_id, f"🚫 加入黑名单: {final_title} (Hash: {hash_str[:8]}...)")
+                        await log_task(task_id, f"🔄 重置订阅状态: {final_title}")
                         await session.commit()
 
                     try:
                         client.delete_torrent(hash_str, delete_files=True)
                         stalled_count += 1
                         total_stalled += 1
+                        await log_task(task_id, f"🗑️ 已删除: {name}")
                     except Exception as e:
                         logger.error(f"删除死种失败: {e}")
-                        await log_task(task_id, f"❌ 删除失败: {name}", "ERROR")
+                        await log_task(task_id, f"❌ 删除失败: {name} - {str(e)}", "ERROR")
                     
                     await NotificationManager.push_client_error_notification(name, client.name, f"该资源被判定为死种 (超时 {elapsed_minutes:.1f}m 未完成)，已自动清理并重置订阅。")
 
             if stalled_count == 0:
-                logger.info(f"客户端 {client.name} 巡检完毕，未发现死种。")
+                await log_task(task_id, f"✅ {client.name}: 未发现死种")
             else:
-                logger.info(f"客户端 {client.name} 巡检完毕，共清理 {stalled_count} 个死种任务。")
+                await log_task(task_id, f"🗑️ {client.name}: 清理 {stalled_count} 个死种")
 
         except Exception as e:
-            logger.error(f"检查客户端 {client.name} 失败: {e}")
-            await log_task(task_id, f"❌ 检查 {client.name} 失败: {str(e)}", "ERROR")
+            logger.error(f"检查客户端 {conf.get('name', '未知')} 失败: {e}")
+            await log_task(task_id, f"❌ 检查 {conf.get('name', '未知')} 失败: {str(e)}", "ERROR")
 
-    await log_task(task_id, f"🏁 完成，共清理 {total_stalled} 个死种")
+    await log_task(task_id, "──────────────────")
+    await log_task(task_id, f"🏁 死种清理完成，共清理 {total_stalled} 个")
     
-    # 构建统计信息
     stats = {
         "total_stalled": total_stalled,
         "total_clients": len(client_configs)
     }
     
     await finish_task(task_id, "completed", total_stalled, stats)
+    
+    logger.info(f"✨ [死种清理] 完成: 共清理 {total_stalled} 个死种")
