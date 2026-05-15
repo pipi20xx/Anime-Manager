@@ -71,56 +71,42 @@ class OrganizerEventHandler(FileSystemEventHandler):
 
     def _process(self, file_path: str, event_type: str = "created"):
         if os.path.isdir(file_path): return
-        from logger import log_audit
 
-        # 获取基础信息
         abs_path = os.path.abspath(file_path)
         filename = os.path.basename(file_path)
         now = time.time()
         
-        # 1. 防抖逻辑校验
         if abs_path in self.recent_events:
             if now - self.recent_events[abs_path] < 5:
-                # 静默跳过极短时间内的重复事件，不记录审计以免刷屏
                 return
         self.recent_events[abs_path] = now
 
-        # 清理过期的记录 (保留 60 秒以上的)
         if len(self.recent_events) > 100:
             self.recent_events = {p: t for p, t in self.recent_events.items() if now - t < 60}
         
-        # 决策审计日志启动
-        audit_logs = [f"🔍 监控触发 ({event_type}): {filename}"]
-        
-        # 2. 扩展名校验 (快速过滤)
         ext = os.path.splitext(file_path)[1].lower()
         from strm.constants import VIDEO_EXTENSIONS
         if ext not in Organizer.VIDEO_EXTS and ext not in VIDEO_EXTENSIONS:
-            # 只有当非临时文件且非视频时，才完全忽略
             if not StabilityChecker.is_temp_file(file_path):
                 return
             else:
-                log_audit("监控", "忽略", f"跳过临时文件: {filename} (等待下载完成)", level="INFO", details=file_path)
+                logger.debug(f"[监控] 跳过临时文件: {filename}")
                 return
 
-        # 3. 临时文件校验 (详细日志)
         if StabilityChecker.is_temp_file(file_path):
-            log_audit("监控", "忽略", f"检测到下载中临时文件: {filename}，稍后待其更名后再处理。", level="INFO", details=file_path)
+            logger.debug(f"[监控] 临时文件等待: {filename}")
             return
             
         matched_any = False
         
-        # 预加载客户端配置
         config = ConfigManager.get_config()
         all_clients = {c.get('id'): c for c in config.get("download_clients", [])}
 
-        # 遍历所有任务
         for task in self.tasks:
             task_name = task.get("name", "未命名")
             source_dir = task.get("source_dir") or task.get("source_path")
             if not source_dir: continue
             
-            # --- 智能路径匹配逻辑 ---
             local_match_root = source_dir
             if task.get("is_strm") and task.get("sync_mode") == "cd2_api":
                 client_id = task.get("cd2_client_id")
@@ -130,38 +116,28 @@ class OrganizerEventHandler(FileSystemEventHandler):
                 source_dir_clean = '/' + source_dir.lstrip('/')
                 local_match_root = mapping_root + source_dir_clean
 
-            # 1. 路径前缀校验 (必须在任务源目录下)
             abs_source = os.path.abspath(local_match_root)
             if not abs_path.startswith(abs_source):
                 continue
             
-            # 2. 排除词校验
             exclude_keywords = task.get("exclude_keywords", [])
             is_excluded = False
             for kw in exclude_keywords:
                 if kw and kw in file_path:
-                    audit_logs.append(f"┣ 任务 [{task_name}]: 命中排除词 '{kw}' ❌")
                     is_excluded = True
                     break
             if is_excluded: continue
 
-            # 3. 判定成功
             queue = self.queues.get(task.get("id"))
             if queue:
-                audit_logs.append(f"┣ 任务 [{task_name}]: 判定通过，加入处理队列 ✅")
                 self.loop.call_soon_threadsafe(queue.put_nowait, file_path)
                 matched_any = True
-            else:
-                audit_logs.append(f"┣ 任务 [{task_name}]: 内部队列异常 ❌")
 
         if matched_any:
-            audit_logs.append(f"┗ 结论: 文件已分发至后台 Worker。")
-            log_audit("监控", "命中", "\n".join(audit_logs), details=file_path)
+            logger.info(f"✨ [监控] 检测到新文件: {filename}")
         else:
-            # 只有当文件确实是视频且没有任何任务匹配时才记录日志
             if ext in Organizer.VIDEO_EXTS or ext in VIDEO_EXTENSIONS:
-                audit_logs.append(f"┗ 结论: ⚠️ 路径不在任何监控任务的覆盖范围内。")
-                log_audit("监控", "忽略", "\n".join(audit_logs), level="WARN", details=file_path)
+                logger.debug(f"[监控] 文件未匹配任何任务: {filename}")
 
     def _process_dir(self, dir_path: str, event_type: str):
         if not os.path.exists(dir_path): return
@@ -977,11 +953,10 @@ class MonitorManager:
         while True:
             try:
                 file_path = await queue.get()
-                from logger import log_audit
                 
                 current_task = MonitorManager._get_task_config(task_id, is_strm)
                 if not current_task:
-                    log_audit("监控", "配置丢失", f"任务配置已删除: {task_id}", level="WARN")
+                    logger.warning(f"[监控] 任务配置已删除: {task_id}")
                     queue.task_done()
                     continue
                 
@@ -1012,40 +987,63 @@ class MonitorManager:
                 if not skip_stability_check:
                     is_stable = await StabilityChecker.wait_for_stability(file_path)
                     if not is_stable:
-                        log_audit("监控", "任务跳过", f"文件不稳定或已消失: {os.path.basename(file_path)}", level="WARN")
+                        logger.debug(f"[监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
                         queue.task_done()
                         continue
 
                 should_rate_limit = True
+                mon_task_id = None
                 try:
                     if is_strm:
-                        log_audit("监控", "STRM任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
+                        logger.info(f"✨ [监控] STRM处理: {os.path.basename(file_path)}")
                         res = await StrmProcessor.process_single_file(file_path, current_task)
-                        # 记录处理结果
                         status = res.get("status", "unknown") if isinstance(res, dict) else "error"
                         message = res.get("message", "") if isinstance(res, dict) else str(res)
                         if status == "success":
-                            log_audit("监控", "STRM完成", f"✅ 生成成功: {os.path.basename(file_path)}", details=task_name)
+                            logger.info(f"✨ [监控] STRM完成: {os.path.basename(file_path)}")
                         elif status == "skipped":
-                            log_audit("监控", "STRM跳过", f"⏭️ 已存在跳过: {os.path.basename(file_path)} ({message})", details=task_name)
+                            logger.info(f"✨ [监控] STRM跳过: {os.path.basename(file_path)}")
                         else:
-                            log_audit("监控", "STRM失败", f"❌ 处理失败: {os.path.basename(file_path)} ({message})", level="ERROR", details=task_name)
+                            logger.error(f"✨ [监控] STRM失败: {os.path.basename(file_path)} ({message})")
                     else:
-                        log_audit("监控", "整理任务", f"正在后台处理: {os.path.basename(file_path)}", details=task_name)
-                        results = await Organizer.organize_video_file(file_path, current_task, dry_run=False)
+                        logger.info(f"✨ [监控] 整理: {os.path.basename(file_path)}")
+                        try:
+                            from task_history import start_task as _start_task, finish_task as _finish_task
+                            import uuid as _uuid
+                            mon_task_id = f"mon_{_uuid.uuid4().hex[:12]}"
+                            await _start_task(mon_task_id, "整理", f"[监控] {os.path.basename(file_path)}")
+                        except Exception:
+                            mon_task_id = None
+                        results = await Organizer.organize_video_file(file_path, current_task, dry_run=False, task_id=mon_task_id)
+                        has_error = False
                         for res in results:
                             if res.get("type") == "skip":
                                 skip_type = res.get("skip_type")
                                 skip_rate_limit = current_task.get("skip_rate_limit", False)
                                 skip_rate_limit_types = current_task.get("skip_rate_limit_types", [])
-                                log_audit("监控", "跳过限流检查", f"skip_type={skip_type}, enabled={skip_rate_limit}, types={skip_rate_limit_types}")
+                                logger.debug(f"skip_type={skip_type}, enabled={skip_rate_limit}, types={skip_rate_limit_types}")
                                 if skip_rate_limit and skip_type and skip_type in skip_rate_limit_types:
                                     should_rate_limit = False
-                                    log_audit("监控", "跳过限流生效", f"命中规则: {skip_type}，跳过限流等待")
+                                    logger.debug(f"命中规则: {skip_type}，跳过限流等待")
+                            elif res.get("type") == "item" and res.get("status") == "error":
+                                has_error = True
+                        if mon_task_id:
+                            try:
+                                from task_history import finish_task as _finish_task
+                                await _finish_task(mon_task_id, "error" if has_error else "completed")
+                            except Exception:
+                                pass
                 except Exception as e:
                     import traceback
-                    error_detail = f"{str(e)}\n{traceback.format_exc()}"
-                    log_audit("监控", "处理错误", f"后台执行失败: {str(e)}", level="ERROR", details=error_detail)
+                    logger.error(f"✨ [监控] 处理错误: {str(e)}")
+                    logger.debug(traceback.format_exc())
+                    if mon_task_id:
+                        try:
+                            from task_history import log_task as _log_task, finish_task as _finish_task
+                            await _log_task(mon_task_id, f"❌ 处理错误: {str(e)}", "ERROR")
+                            await _finish_task(mon_task_id, "error")
+                        except Exception:
+                            pass
                 
                 queue.task_done()
                 
@@ -1097,11 +1095,10 @@ class MonitorManager:
     async def _scheduled_scan_job(task_id: str, is_strm: bool = False):
         current_task = MonitorManager._get_task_config(task_id, is_strm)
         if not current_task:
-            logger.warning(f"[Scheduled] 任务配置已删除: {task_id}")
+            logger.warning(f"[定时扫描] 任务配置已删除: {task_id}")
             return
             
         task_name = current_task.get("name", "未命名")
-        logger.info(f"[Scheduled] Starting scan for {task_name}")
         source_dir = current_task.get("source_dir") or current_task.get("source_path")
         if not source_dir or not os.path.exists(source_dir): return
         
@@ -1127,7 +1124,10 @@ class MonitorManager:
 
         files_to_process = await MonitorManager._loop.run_in_executor(None, _scan)
         
+        if files_to_process:
+            logger.info(f"✨ [定时扫描] {task_name}: 发现 {len(files_to_process)} 个文件")
+        else:
+            logger.debug(f"[定时扫描] {task_name}: 无新文件")
+        
         for f_path in files_to_process:
             await queue.put(f_path)
-        
-        logger.info(f"[Scheduled] Found {len(files_to_process)} files pushed to queue for {task_name}")
