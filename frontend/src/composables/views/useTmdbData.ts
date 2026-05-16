@@ -109,21 +109,17 @@ export function useTmdbData() {
 
   const runSyncSytmdb = async () => {
     if (!syncForm.address) return
-    syncLoading.value = true
+    localStorage.setItem('sytmdb_address', syncForm.address)
+    localStorage.setItem('sytmdb_token', syncForm.token)
+    showSyncModal.value = false
+    message.info('同步任务已启动，请查看实时日志了解进度')
     try {
-      const res = await fetch(`${API_BASE}/api/cache/sytmdb_sync`, {
+      await fetch(`${API_BASE}/api/cache/sytmdb_sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(syncForm)
       })
-      const result = await res.json()
-      localStorage.setItem('sytmdb_address', syncForm.address)
-      localStorage.setItem('sytmdb_token', syncForm.token)
-      message.success(`同步完成: ${result.message}`)
-      showSyncModal.value = false
-      fetchBrowserData()
-    } catch (e) { message.error('同步失败') }
-    finally { syncLoading.value = false }
+    } catch (e) { message.error('启动同步失败') }
   }
 
   const handleRefreshAll = async (options?: { olderThanDays?: number; year?: number; mediaType?: string }) => {
