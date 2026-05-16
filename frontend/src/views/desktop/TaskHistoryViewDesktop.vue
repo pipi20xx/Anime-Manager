@@ -157,13 +157,13 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <n-modal v-model:show="showLogModal" preset="card" style="width: 800px; max-height: 80vh" title="任务日志">
+    <n-modal v-model:show="showLogModal" preset="card" style="width: 960px; height: 96vh" title="任务日志">
       <template #header-extra>
         <n-tag v-if="selectedTask" size="small" round :bordered="false" :style="getStatusTag(selectedTask.status).style">
           {{ getStatusTag(selectedTask.status).label }}
         </n-tag>
       </template>
-      <n-scrollbar v-if="selectedTask" style="max-height: 60vh">
+      <n-scrollbar v-if="selectedTask" style="max-height: calc(96vh - 120px)">
         <div class="log-container">
           <div v-for="(log, i) in selectedTask.logs" :key="i" class="log-line">
             <span class="log-time">{{ log.time }}</span>
