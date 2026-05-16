@@ -442,7 +442,7 @@ const {
 
         <!-- AI 实验室 -->
         <n-tab-pane name="ai_lab" tab="AI 实验室">
-          <AiLabView />
+          <AiLabView :external-config="config" />
         </n-tab-pane>
 
         <!-- 账号与安全 -->

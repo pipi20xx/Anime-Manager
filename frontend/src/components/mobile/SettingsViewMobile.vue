@@ -317,7 +317,7 @@ const {
         <!-- AI -->
         <n-tab-pane name="ai" tab="AI">
           <div class="m-tab-content">
-            <AiLabView />
+            <AiLabView :external-config="config" />
           </div>
         </n-tab-pane>
 

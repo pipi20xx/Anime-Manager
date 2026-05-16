@@ -64,6 +64,7 @@ class ConfigUpdate(BaseModel):
     max_tokens: Optional[int] = None
     max_iterations: Optional[int] = None
     ai_fallback_enabled: Optional[bool] = None
+    use_tools: Optional[bool] = None
 
 def get_assistant_config() -> Dict:
     config = ConfigManager.get_config()
@@ -71,11 +72,12 @@ def get_assistant_config() -> Dict:
         "base_url": "",
         "api_key": "",
         "model": "",
-        "provider": "openai",
+        "provider": "ollama",
         "temperature": 0.7,
         "max_tokens": 64,
         "max_iterations": 10,
-        "ai_fallback_enabled": False
+        "ai_fallback_enabled": False,
+        "use_tools": True
     })
 
 def save_assistant_config(new_config: Dict):

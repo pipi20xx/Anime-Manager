@@ -25,7 +25,9 @@ export function useSettings() {
       provider: 'ollama',
       temperature: 0.7,
       max_tokens: 64,
-      ai_fallback_enabled: false
+      max_iterations: 10,
+      ai_fallback_enabled: false,
+      use_tools: true
     },
     batch_enhancement: false,
     custom_noise_words: [],
@@ -110,11 +112,19 @@ export function useSettings() {
           provider: 'ollama',
           temperature: 0.7,
           max_tokens: 64,
-          ai_fallback_enabled: false
+          max_iterations: 10,
+          ai_fallback_enabled: false,
+          use_tools: true
         }
       } else {
         if (config.value.assistant_config.ai_fallback_enabled === undefined) {
           config.value.assistant_config.ai_fallback_enabled = false
+        }
+        if (config.value.assistant_config.max_iterations === undefined) {
+          config.value.assistant_config.max_iterations = 10
+        }
+        if (config.value.assistant_config.use_tools === undefined) {
+          config.value.assistant_config.use_tools = true
         }
       }
       

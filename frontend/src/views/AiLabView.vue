@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NInput, NDivider, 
   NTag, useMessage, NAlert, NText, NSwitch, NSlider,
@@ -19,6 +19,10 @@ const renderMarkdown = (text: string) => {
   return marked.parse(text) as string
 }
 
+const props = defineProps<{
+  externalConfig?: any
+}>()
+
 const message = useMessage()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
@@ -27,15 +31,41 @@ const activeTab = ref('chat')
 const configLoading = ref(false)
 const saveLoading = ref(false)
 
-const assistantConfig = ref({
+const internalConfig = ref({
   base_url: '',
   api_key: '',
   model: '',
-  provider: 'openai',
+  provider: 'ollama',
   temperature: 0.7,
   max_tokens: 64,
   max_iterations: 10,
-  ai_fallback_enabled: false
+  ai_fallback_enabled: false,
+  use_tools: true
+})
+
+const assistantConfig = computed(() => {
+  if (props.externalConfig?.assistant_config) {
+    return props.externalConfig.assistant_config
+  }
+  return internalConfig.value
+})
+
+const internalUseTools = ref(true)
+
+const useTools = computed({
+  get: () => {
+    if (props.externalConfig?.assistant_config?.use_tools !== undefined) {
+      return props.externalConfig.assistant_config.use_tools
+    }
+    return internalUseTools.value
+  },
+  set: (val) => {
+    if (props.externalConfig?.assistant_config) {
+      props.externalConfig.assistant_config.use_tools = val
+    } else {
+      internalUseTools.value = val
+    }
+  }
 })
 
 const telegramBotConfig = ref({
@@ -72,7 +102,6 @@ const chatMessages = ref<ChatMessage[]>([])
 const chatInput = ref('')
 const chatLoading = ref(false)
 const chatContainer = ref<HTMLElement | null>(null)
-const useTools = ref(true)
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
@@ -84,6 +113,8 @@ const getAuthHeaders = () => {
 }
 
 const fetchConfig = async () => {
+  if (props.externalConfig) return
+  
   configLoading.value = true
   try {
     const res = await fetch(`${API_BASE}/api/assistant/config`, {
@@ -91,7 +122,8 @@ const fetchConfig = async () => {
     })
     if (res.ok) {
       const data = await res.json()
-      assistantConfig.value = { ...assistantConfig.value, ...data }
+      internalConfig.value = { ...internalConfig.value, ...data }
+      internalUseTools.value = data.use_tools !== undefined ? data.use_tools : true
     }
   } catch (e) {
     message.error('加载配置失败')
@@ -100,7 +132,29 @@ const fetchConfig = async () => {
   }
 }
 
+const saveUseTools = async () => {
+  if (props.externalConfig) return
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/config`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ use_tools: useTools.value })
+    })
+    if (res.ok) {
+      message.success(useTools.value ? '已启用工具模式' : '已切换为纯对话模式')
+    }
+  } catch (e) {
+    console.error('保存工具模式失败', e)
+  }
+}
+
 const saveConfig = async () => {
+  if (props.externalConfig) {
+    message.success('配置已保存，请点击页面右上角的"保存全部修改"按钮')
+    return
+  }
+  
   saveLoading.value = true
   try {
     const res = await fetch(`${API_BASE}/api/assistant/config`, {
@@ -364,7 +418,7 @@ onMounted(() => {
         <div class="subtitle">AI 驱动的番剧管理助手 - 支持工具调用</div>
       </div>
       <n-space align="center">
-        <n-switch v-model:value="useTools" size="small">
+        <n-switch v-model:value="useTools" size="small" @update:value="saveUseTools">
           <template #checked>工具模式</template>
           <template #unchecked>纯对话</template>
         </n-switch>

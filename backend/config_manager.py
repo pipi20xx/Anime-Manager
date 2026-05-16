@@ -60,7 +60,9 @@ class ConfigManager:
             "provider": "ollama",
             "temperature": 0.7,
             "max_tokens": 64,
-            "ai_fallback_enabled": False
+            "max_iterations": 10,
+            "ai_fallback_enabled": False,
+            "use_tools": True
         },
         "batch_enhancement": False,
         "series_fingerprint": True,
@@ -151,13 +153,11 @@ class ConfigManager:
                         if not content: continue # 跳过空文件
                         
                         existing = json.loads(content)
-                        # Deep merge for dictionary fields like proxy_services
                         for k, v in existing.items():
-                            # Auto-clear redundant keys not in DEFAULT_CONFIG
                             if k not in config:
                                 continue
-                                
-                            if k == "proxy_services" and isinstance(v, dict) and isinstance(config.get(k), dict):
+                            
+                            if isinstance(v, dict) and isinstance(config.get(k), dict):
                                 config[k].update(v)
                             else:
                                 config[k] = v
