@@ -72,6 +72,8 @@ async def sync_sytmdb(payload: Dict[str, Any]):
     从 SYTMDB (另一款元数据服务) 拉取并同步手动修正过的元数据快照。
     """
     addr = payload.get("address") or payload.get("ip")
+    token = payload.get("token")
+    
     if not addr:
         raise HTTPException(status_code=400, detail="需要提供地址 (IP:Port)")
     
@@ -83,9 +85,13 @@ async def sync_sytmdb(payload: Dict[str, Any]):
             base = f"http://{base}"
         url = f"{base}/api/items/override/metadata"
     
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(url, timeout=10)
+            resp = await client.get(url, headers=headers, timeout=10)
             resp.raise_for_status()
             items = resp.json()
         except Exception as e:

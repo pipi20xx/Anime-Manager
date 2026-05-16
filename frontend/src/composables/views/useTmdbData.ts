@@ -22,7 +22,10 @@ export function useTmdbData() {
 
   const showSyncModal = ref(false)
   const syncLoading = ref(false)
-  const syncForm = reactive({ address: '' })
+  const syncForm = reactive({ 
+    address: localStorage.getItem('sytmdb_address') || '', 
+    token: localStorage.getItem('sytmdb_token') || '' 
+  })
 
   const fetchBrowserData = async () => {
     browserLoading.value = true
@@ -114,6 +117,8 @@ export function useTmdbData() {
         body: JSON.stringify(syncForm)
       })
       const result = await res.json()
+      localStorage.setItem('sytmdb_address', syncForm.address)
+      localStorage.setItem('sytmdb_token', syncForm.token)
       message.success(`同步完成: ${result.message}`)
       showSyncModal.value = false
       fetchBrowserData()

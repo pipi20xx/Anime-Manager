@@ -170,7 +170,7 @@ const deleteCache = (item: any) => {
 // SYTMDB Sync Modal
 const showSyncModal = ref(false)
 const syncLoading = ref(false)
-const syncForm = reactive({ address: '' })
+const syncForm = reactive({ address: '', token: '' })
 
 const handleSyncSytmdb = async () => {
   if (!syncForm.address) return
@@ -373,6 +373,9 @@ onUnmounted(() => {
       <n-form label-placement="top">
         <n-form-item label="SYTMDB 地址 (IP:Port)">
           <n-input v-model:value="syncForm.address" placeholder="例如 192.168.1.10:8121" />
+        </n-form-item>
+        <n-form-item label="API Token (可选)">
+          <n-input v-model:value="syncForm.token" type="password" show-password-on="click" placeholder="如果远程需要认证请填写" />
         </n-form-item>
         <div class="tip">同步将拉取远程 SYTMDB 实例中已修正的元数据并覆盖本地缓存。</div>
       </n-form>
