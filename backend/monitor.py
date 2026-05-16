@@ -90,11 +90,11 @@ class OrganizerEventHandler(FileSystemEventHandler):
             if not StabilityChecker.is_temp_file(file_path):
                 return
             else:
-                logger.debug(f"[监控] 跳过临时文件: {filename}")
+                logger.debug(f"[实时监控] 跳过临时文件: {filename}")
                 return
 
         if StabilityChecker.is_temp_file(file_path):
-            logger.debug(f"[监控] 临时文件等待: {filename}")
+            logger.debug(f"[实时监控] 临时文件等待: {filename}")
             return
             
         matched_any = False
@@ -134,10 +134,10 @@ class OrganizerEventHandler(FileSystemEventHandler):
                 matched_any = True
 
         if matched_any:
-            logger.info(f"✨ [监控] 检测到新文件: {filename}")
+            logger.info(f"✨ [实时监控] 检测到新文件: {filename}")
         else:
             if ext in Organizer.VIDEO_EXTS or ext in VIDEO_EXTENSIONS:
-                logger.debug(f"[监控] 文件未匹配任何任务: {filename}")
+                logger.debug(f"[实时监控] 文件未匹配任何任务: {filename}")
 
     def _process_dir(self, dir_path: str, event_type: str):
         if not os.path.exists(dir_path): return
@@ -953,14 +953,18 @@ class MonitorManager:
         while True:
             try:
                 item = await queue.get()
+                batch_stats = None
                 if isinstance(item, tuple):
-                    file_path, batch_task_id = item
+                    if len(item) == 3:
+                        file_path, batch_task_id, batch_stats = item
+                    else:
+                        file_path, batch_task_id = item
                 else:
                     file_path, batch_task_id = item, None
                 
                 current_task = MonitorManager._get_task_config(task_id, is_strm)
                 if not current_task:
-                    logger.warning(f"[监控] 任务配置已删除: {task_id}")
+                    logger.warning(f"[实时监控] 任务配置已删除: {task_id}")
                     queue.task_done()
                     continue
                 
@@ -991,7 +995,7 @@ class MonitorManager:
                 if not skip_stability_check:
                     is_stable = await StabilityChecker.wait_for_stability(file_path)
                     if not is_stable:
-                        logger.debug(f"[监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
+                        logger.debug(f"[实时监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
                         queue.task_done()
                         continue
 
@@ -999,13 +1003,13 @@ class MonitorManager:
                 mon_task_id = batch_task_id
                 try:
                     if is_strm:
-                        logger.info(f"✨ [监控] STRM处理: {os.path.basename(file_path)}")
+                        logger.info(f"✨ [实时监控] STRM处理: {os.path.basename(file_path)}")
                         if not mon_task_id:
                             try:
                                 from task_history import start_task as _start_task, log_task as _log_task
                                 import uuid as _uuid
                                 mon_task_id = f"strm_mon_{_uuid.uuid4().hex[:12]}"
-                                await _start_task(mon_task_id, "STRM", f"[监控] {os.path.basename(file_path)}")
+                                await _start_task(mon_task_id, "STRM", f"[实时监控] {os.path.basename(file_path)}")
                                 await _log_task(mon_task_id, f"📄 处理文件: {file_path}")
                             except Exception:
                                 mon_task_id = None
@@ -1019,7 +1023,7 @@ class MonitorManager:
                         status = res.get("status", "unknown") if isinstance(res, dict) else "error"
                         message = res.get("message", "") if isinstance(res, dict) else str(res)
                         if status == "success":
-                            logger.info(f"✨ [监控] STRM完成: {os.path.basename(file_path)}")
+                            logger.info(f"✨ [实时监控] STRM完成: {os.path.basename(file_path)}")
                             if mon_task_id:
                                 try:
                                     from task_history import log_task as _log_task
@@ -1027,7 +1031,7 @@ class MonitorManager:
                                 except Exception:
                                     pass
                         elif status == "skipped":
-                            logger.info(f"✨ [监控] STRM跳过: {os.path.basename(file_path)}")
+                            logger.info(f"✨ [实时监控] STRM跳过: {os.path.basename(file_path)}")
                             if mon_task_id:
                                 try:
                                     from task_history import log_task as _log_task
@@ -1035,7 +1039,7 @@ class MonitorManager:
                                 except Exception:
                                     pass
                         else:
-                            logger.error(f"✨ [监控] STRM失败: {os.path.basename(file_path)} ({message})")
+                            logger.error(f"✨ [实时监控] STRM失败: {os.path.basename(file_path)} ({message})")
                             if mon_task_id:
                                 try:
                                     from task_history import log_task as _log_task
@@ -1048,14 +1052,21 @@ class MonitorManager:
                                 await _finish_task(mon_task_id, "error" if status == "error" else "completed")
                             except Exception:
                                 pass
+                        if batch_stats:
+                            if status == "success":
+                                batch_stats["success"] += 1
+                            elif status == "skipped":
+                                batch_stats["skipped"] += 1
+                            else:
+                                batch_stats["error"] += 1
                     else:
-                        logger.info(f"✨ [监控] 整理: {os.path.basename(file_path)}")
+                        logger.debug(f"[实时监控] 整理: {os.path.basename(file_path)}")
                         if not mon_task_id:
                             try:
                                 from task_history import start_task as _start_task
                                 import uuid as _uuid
                                 mon_task_id = f"mon_{_uuid.uuid4().hex[:12]}"
-                                await _start_task(mon_task_id, "整理", f"[监控] {os.path.basename(file_path)}")
+                                await _start_task(mon_task_id, "整理", f"[实时监控] {os.path.basename(file_path)}")
                             except Exception:
                                 mon_task_id = None
                         results = await Organizer.organize_video_file(file_path, current_task, dry_run=False, task_id=mon_task_id)
@@ -1077,9 +1088,18 @@ class MonitorManager:
                                 await _finish_task(mon_task_id, "error" if has_error else "completed")
                             except Exception:
                                 pass
+                        if batch_stats:
+                            for res in results:
+                                if res.get("type") == "skip":
+                                    batch_stats["skipped"] += 1
+                                elif res.get("type") == "item":
+                                    if res.get("status") == "error":
+                                        batch_stats["error"] += 1
+                                    else:
+                                        batch_stats["success"] += 1
                 except Exception as e:
                     import traceback
-                    logger.error(f"✨ [监控] 处理错误: {str(e)}")
+                    logger.error(f"✨ [实时监控] 处理错误: {str(e)}")
                     logger.debug(traceback.format_exc())
                     if mon_task_id and not batch_task_id:
                         try:
@@ -1088,6 +1108,8 @@ class MonitorManager:
                             await _finish_task(mon_task_id, "error")
                         except Exception:
                             pass
+                    if batch_stats:
+                        batch_stats["error"] += 1
                 
                 queue.task_done()
                 
@@ -1169,8 +1191,9 @@ class MonitorManager:
         files_to_process = await MonitorManager._loop.run_in_executor(None, _scan)
         
         if files_to_process:
-            logger.info(f"✨ [定时扫描] {task_name}: 发现 {len(files_to_process)} 个文件")
+            logger.info(f"✨ [定时扫描] 开始任务: {task_name}")
             scan_task_id = None
+            stats = {"success": 0, "skipped": 0, "error": 0}
             try:
                 from task_history import start_task as _start_task, log_task as _log_task
                 import uuid as _uuid
@@ -1196,16 +1219,17 @@ class MonitorManager:
                 scan_task_id = None
             
             for f_path in files_to_process:
-                await queue.put((f_path, scan_task_id))
+                await queue.put((f_path, scan_task_id, stats))
             
             if scan_task_id:
                 await queue.join()
                 try:
                     from task_history import log_task as _log_task, finish_task as _finish_task
                     await _log_task(scan_task_id, "──────────────────")
-                    await _log_task(scan_task_id, f"🏁 定时扫描完成，共处理 {len(files_to_process)} 个文件")
-                    await _finish_task(scan_task_id, "completed", len(files_to_process))
+                    await _log_task(scan_task_id, f"🏁 定时扫描完成 - 成功 {stats['success']} | 跳过 {stats['skipped']} | 失败 {stats['error']}")
+                    await _finish_task(scan_task_id, "completed", stats['success'], stats)
                 except Exception:
                     pass
+                logger.info(f"✨ [定时扫描] 完成: {task_name} - 成功 {stats['success']} | 跳过 {stats['skipped']} | 失败 {stats['error']}")
         else:
             logger.debug(f"[定时扫描] {task_name}: 无新文件")
