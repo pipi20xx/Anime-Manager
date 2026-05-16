@@ -35,6 +35,22 @@ const getTagStyle = (type: string) => {
   return styles[type] || styles.default
 }
 
+const cleanDescription = (desc: string | null | undefined): string | null => {
+  if (!desc) return null
+  if (!desc.includes('<') && !desc.includes('>')) {
+    if (desc.length > 100) {
+      return desc.substring(0, 100) + '...'
+    }
+    return desc
+  }
+  let clean = desc.replace(/<[^>]+>/g, '')
+  clean = clean.replace(/\s+/g, ' ').trim()
+  if (clean.length > 100) {
+    clean = clean.substring(0, 100) + '...'
+  }
+  return clean || null
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal) fetchPreview()
 })
@@ -44,9 +60,10 @@ const columns = [
     title: '预计匹配到的资源标题', 
     key: 'title',
     render(row: any) {
+      const cleanDesc = cleanDescription(row.description)
       return h('div', { style: 'padding: 4px 0' }, [
         h('div', { style: 'font-weight: bold; font-size: 14px; line-height: 1.4' }, { default: () => row.title }),
-        row.description ? h('div', { style: 'font-size: 12px; color: var(--text-tertiary); margin-top: 2px' }, { default: () => row.description }) : null
+        cleanDesc ? h('div', { style: 'font-size: 12px; color: var(--text-tertiary); margin-top: 2px' }, { default: () => cleanDesc }) : null
       ])
     }
   },

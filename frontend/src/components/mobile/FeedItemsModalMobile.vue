@@ -136,7 +136,11 @@ watch(() => props.show, (newVal) => {
 
                     <!-- Recognition Tags -->
                     <template v-if="item.recognition_done && item.tmdb_id">
-                      <n-tag size="tiny" round :style="getTagStyle('primary')">ID: {{ item.tmdb_id }}</n-tag>
+                      <a 
+                        :href="`https://www.themoviedb.org/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.tmdb_id}`"
+                        target="_blank"
+                        class="tmdb-link-tag"
+                      >ID: {{ item.tmdb_id }}</a>
                       <n-tag size="tiny" quaternary :style="getTagStyle('info')">
                         {{ item.media_type === 'movie' ? '🎬 电影' : '📺 剧集' }}
                       </n-tag>
@@ -263,5 +267,24 @@ watch(() => props.show, (newVal) => {
 .metadata-container {
   display: flex;
   flex-direction: column;
+}
+
+.tmdb-link-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--n-primary-color);
+  border-radius: 9px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tmdb-link-tag:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
 }
 </style>

@@ -131,8 +131,26 @@ const columns = [
       if (row.episode_collected) tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '订阅已下载' }))
 
       if (row.recognition_done && row.tmdb_id) {
-        // TMDB ID - 深绿色底色+白色文字
-        tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => `ID: ${row.tmdb_id}` }))
+        // TMDB ID - 深绿色底色+白色文字，可点击跳转
+        const tmdbUrl = `https://www.themoviedb.org/${row.media_type === 'movie' ? 'movie' : 'tv'}/${row.tmdb_id}`
+        tags.push(h('a', { 
+          href: tmdbUrl, 
+          target: '_blank',
+          style: { 
+            color: '#fff', 
+            backgroundColor: '#2e7d32', 
+            borderRadius: '12px',
+            padding: '2px 10px',
+            fontSize: '12px',
+            fontWeight: '500',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            height: '22px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }
+        }, { default: () => `ID: ${row.tmdb_id}` }))
         // 类型 - 蓝色底色+白色文字
         tags.push(h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#1565c0', borderRadius: '12px' } }, {
           default: () => row.media_type === 'movie' ? '🎬 电影' : '📺 剧集'

@@ -181,15 +181,17 @@ const handleRefresh = () => {
               <span class="history-tag tag-action">{{ getActionLabel(item.action_type) }}</span>
             </div>
             <div class="detail-item">
-              <n-icon><SizeIcon /></n-icon>
-              <span>{{ item.file_size || '未知大小' }}</span>
+              <span class="history-tag tag-size">{{ item.file_size || '未知大小' }}</span>
             </div>
             <div class="detail-item">
-              <n-icon><TimeIcon /></n-icon>
-              <span>{{ formatTime(item.processed_at) }}</span>
+              <span class="history-tag tag-time">{{ formatTime(item.processed_at) }}</span>
             </div>
             <div class="detail-item" v-if="item.tmdb_id">
-              <span class="history-tag tag-tmdb">TMDB: {{ item.tmdb_id }}</span>
+              <a 
+                :href="`https://www.themoviedb.org/${item.media_type === '电影' ? 'movie' : 'tv'}/${item.tmdb_id}`" 
+                target="_blank"
+                class="history-tag tag-tmdb tag-link"
+              >TMDB: {{ item.tmdb_id }}</a>
             </div>
           </div>
           <div class="delete-btn-wrapper">
@@ -328,12 +330,39 @@ const handleRefresh = () => {
   border-color: #2e7d32;
 }
 
+.history-tag.tag-link {
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.history-tag.tag-link:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Action Tag (硬链/来源) - 红色底色+白色文字 */
 .history-tag.tag-action,
 .detail-item .history-tag.tag-action {
   background: #c62828;
   color: #fff;
   border-color: #c62828;
+}
+
+/* Size Tag - 紫色底色+白色文字 */
+.history-tag.tag-size,
+.detail-item .history-tag.tag-size {
+  background: #7b1fa2;
+  color: #fff;
+  border-color: #7b1fa2;
+}
+
+/* Time Tag - 青色底色+白色文字 */
+.history-tag.tag-time,
+.detail-item .history-tag.tag-time {
+  background: #00838f;
+  color: #fff;
+  border-color: #00838f;
 }
 
 /* Status Tags - 底色+白色文字 */
