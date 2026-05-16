@@ -49,17 +49,20 @@ class AIHelper:
         return """你是影视剧数据库专家。根据文件名推断TMDB真实标题。
 
 输出JSON格式:
-{"real_title":"TMDB真实标题(简洁)","original_name":"日文/英文原名","chinese_name":"中文译名","alternative_titles":["其他可能标题"],"season":null,"episode":null,"confidence":0.9}
+{"real_title":"TMDB真实标题(简洁)","original_name":"日文/英文原名","chinese_name":"中文译名","alternative_titles":["其他可能标题"],"media_type":"tv","season":null,"episode":null,"confidence":0.9}
 
 字段说明:
 - real_title: TMDB上的真实标题，简洁准确
 - original_name: 作品原始名称(日文/英文)
 - chinese_name: 中文官方译名
+- media_type: 作品类型，"tv"(剧集/番剧) 或 "movie"(电影/剧场版)
 
 分析技巧:
 - 文件名中的标题可能是错误/不完整的，需要推断真实标题
-- "小鲨鱼去郊游剧场版" → real_title: "Odekake Kozame", original_name: "おでかけ子ザメ"
-- 剧场版是电影，不是剧集
+- "小鲨鱼去郊游剧场版" → real_title: "Odekake Kozame", original_name: "おでかけ子ザメ", media_type: "movie"
+- "章鱼噼的原罪" 是网剧/短篇动画，media_type: "tv"
+- 剧场版、电影版 → media_type: "movie"
+- 番剧、连续剧、有集数的 → media_type: "tv"
 - 只输出JSON"""
 
     def _guess_title_variants_openai(self, filename: str, current_title: str = None, current_episode: int = None) -> Optional[Dict[str, Any]]:
@@ -83,9 +86,9 @@ class AIHelper:
         messages = [
             {"role": "system", "content": self._get_fallback_system_prompt()},
             {"role": "user", "content": "[mirufans] 小鲨鱼去郊游剧场版 都市的朋友 [1080p].mkv"},
-            {"role": "assistant", "content": '{"real_title":"Odekake Kozame","original_name":"おでかけ子ザメ","chinese_name":"小鲨鱼去郊游","alternative_titles":["Eiga Odekake Kozame"],"season":null,"episode":null,"confidence":0.85}'},
+            {"role": "assistant", "content": '{"real_title":"Odekake Kozame","original_name":"おでかけ子ザメ","chinese_name":"小鲨鱼去郊游","alternative_titles":["Eiga Odekake Kozame"],"media_type":"movie","season":null,"episode":null,"confidence":0.85}'},
             {"role": "user", "content": "[SubGroup] 葬送的芙莉蓮 - 12 [1080p].mkv"},
-            {"role": "assistant", "content": '{"real_title":"Frieren: Beyond Journey\'s End","original_name":"Sousou no Frieren","chinese_name":"葬送的芙莉莲","alternative_titles":["Frieren"],"season":1,"episode":12,"confidence":0.95}'},
+            {"role": "assistant", "content": '{"real_title":"Frieren: Beyond Journey\'s End","original_name":"Sousou no Frieren","chinese_name":"葬送的芙莉莲","alternative_titles":["Frieren"],"media_type":"tv","season":1,"episode":12,"confidence":0.95}'},
             {"role": "user", "content": context}
         ]
 

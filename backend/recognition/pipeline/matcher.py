@@ -68,11 +68,20 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
     chinese_name = ai_result.get("chinese_name")
     alternatives = ai_result.get("alternative_titles", [])
     confidence = ai_result.get("confidence", 0)
+    media_type = ai_result.get("media_type")
     
     ctx.log(f"┣ [AI 智能体] 🎯 真实标题: {real_title}")
     ctx.log(f"┣ [AI 智能体] 📝 原名: {original_name}")
     ctx.log(f"┣ [AI 智能体] 🇨🇳 中文名: {chinese_name}")
     ctx.log(f"┣ [AI 智能体] 📊 置信度: {confidence:.0%}")
+    
+    if media_type:
+        if media_type == "movie":
+            meta.type = MediaType.MOVIE
+            ctx.log(f"┣ [AI 智能体] 🎬 类型修正: MOVIE")
+        elif media_type == "tv":
+            meta.type = MediaType.TV
+            ctx.log(f"┣ [AI 智能体] 📺 类型修正: TV")
     
     if ai_result.get("season") is not None:
         meta.begin_season = ai_result["season"]
@@ -83,15 +92,18 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
         ctx.log(f"┣ [AI 智能体] 📺 集数补充: E{ai_result['episode']}")
     
     search_titles = []
-    if real_title:
-        search_titles.append(real_title)
-    if original_name and original_name not in search_titles:
+    if original_name:
         search_titles.append(original_name)
     if chinese_name and chinese_name not in search_titles:
         search_titles.append(chinese_name)
+    if real_title and real_title not in search_titles:
+        search_titles.append(real_title)
     search_titles.extend([t for t in alternatives if t not in search_titles])
     
     ctx.log(f"┣ [AI 智能体] 🔍 尝试搜索变体: {search_titles[:3]}...")
+    
+    is_auto_type = meta.type == MediaType.AUTO
+    m_type_str = None if is_auto_type else ("movie" if meta.type == MediaType.MOVIE else "tv")
     
     for title in search_titles:
         if ctx.tmdb_data:
@@ -100,17 +112,17 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
         cn = title if _is_chinese(title) else None
         en = title if not _is_chinese(title) else None
         
-        ctx.tmdb_data = await ctx.full_db.resolve(
-            cn_name=cn,
-            en_name=en,
-            year=meta.year,
-            media_type=meta.type.value if hasattr(meta.type, "value") else None,
-            anime_priority=ctx.anime_priority,
-            logs=ctx
-        )
+        if is_auto_type:
+            ctx.tmdb_data = await ctx.tmdb_client.smart_search_multi(
+                cn, en, meta.year, ctx, ctx.anime_priority
+            )
+        else:
+            ctx.tmdb_data = await ctx.tmdb_client.smart_search(
+                cn, en, meta.year, m_type_str, ctx, ctx.anime_priority
+            )
         
         if ctx.tmdb_data:
-            ctx.log(f"┣ [AI 智能体] ✅ 本地数据中心命中!")
+            ctx.log(f"┣ [AI 智能体] ✅ 云端搜索命中!")
             break
     
     if not ctx.tmdb_data:
@@ -121,20 +133,17 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
             cn = title if _is_chinese(title) else None
             en = title if not _is_chinese(title) else None
             
-            is_auto_type = meta.type == MediaType.AUTO
-            m_type_str = None if is_auto_type else ("movie" if meta.type == MediaType.MOVIE else "tv")
-            
-            if is_auto_type:
-                ctx.tmdb_data = await ctx.tmdb_client.smart_search_multi(
-                    cn, en, meta.year, ctx, ctx.anime_priority
-                )
-            else:
-                ctx.tmdb_data = await ctx.tmdb_client.smart_search(
-                    cn, en, meta.year, m_type_str, ctx, ctx.anime_priority
-                )
+            ctx.tmdb_data = await ctx.full_db.resolve(
+                cn_name=cn,
+                en_name=en,
+                year=meta.year,
+                media_type=meta.type.value if hasattr(meta.type, "value") else None,
+                anime_priority=ctx.anime_priority,
+                logs=ctx
+            )
             
             if ctx.tmdb_data:
-                ctx.log(f"┣ [AI 智能体] ✅ 云端搜索命中!")
+                ctx.log(f"┣ [AI 智能体] ✅ 本地数据中心命中!")
                 break
     
     if ctx.tmdb_data:
