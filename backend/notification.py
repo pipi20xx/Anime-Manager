@@ -366,20 +366,26 @@ class NotificationManager:
         if not config.get("telegram", {}).get("notify_on_strm_link", True): 
             return
 
-        # 过滤成功的结果
         success_results = [r for r in results if r and r.get("status") == "success"]
         if not success_results:
             return
 
-        strm_files = {} # {folder: [filenames]}
-        meta_files = {} # {folder: [filenames]}
+        strm_files = {}
+        meta_files = {}
+        task_names = set()
 
         for res in success_results:
             rel_path = res.get("rel_path")
+            target_root = res.get("target_root", "")
+            task_name = res.get("task_name")
+            
+            if task_name:
+                task_names.add(task_name)
             if not rel_path: continue
             
-            folder = os.path.dirname(rel_path) or "/"
-            filename = os.path.basename(rel_path)
+            full_path = os.path.join(target_root, rel_path) if target_root else rel_path
+            folder = os.path.dirname(full_path) or "/"
+            filename = os.path.basename(full_path)
             
             msg_type = res.get("message", "")
             if "STRM" in msg_type:
@@ -393,6 +399,10 @@ class NotificationManager:
             return
 
         sections = ["<b>Webhook 联动:</b>\n"]
+        
+        if task_names:
+            task_str = ", ".join(task_names)
+            sections.append(f"📌 <b>涉及任务:</b> {task_str}\n")
 
         if strm_files:
             sections.append("🔗 <b>成功创建Strm文件</b>\n")
@@ -401,7 +411,7 @@ class NotificationManager:
                 for i, f in enumerate(files):
                     char = "└──" if i == len(files) - 1 else "├──"
                     sections.append(f"     {char} {f}")
-            sections.append("") # 换行
+            sections.append("")
 
         if meta_files:
             sections.append("📋 <b>成功复制元数据</b>\n")

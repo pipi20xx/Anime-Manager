@@ -21,9 +21,31 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     if not data:
         return 0
     
+    valid_items = []
+    for item in data:
+        action = item.get("action")
+        file_path = item.get("source_file", "").split(':')[0]
+        
+        if not file_path:
+            continue
+        if action != "create":
+            continue
+        if str(item.get("is_dir", "")).lower() == "true":
+            continue
+        
+        valid_items.append(item)
+    
+    if not valid_items:
+        return 0
+    
+    first_filename = os.path.basename(valid_items[0].get("source_file", "").split(':')[0])
+    
+    module_name = source if source.startswith("CD2") else f"CD2{source}"
+    task_desc = f"[{module_name}] {first_filename}" if len(valid_items) == 1 else f"[{module_name}] 共 {len(valid_items)} 个事件"
+    
     task_id = f"webhook_{uuid.uuid4().hex[:8]}"
-    await start_task(task_id, "Webhook联动", f"CD2 {source}")
-    await log_task(task_id, f"🚀 收到 CD2 联动请求，共 {len(data)} 个事件")
+    await start_task(task_id, "Webhook联动", task_desc)
+    await log_task(task_id, f"🚀 收到 CD2 联动请求，共 {len(valid_items)} 个事件")
 
     config = ConfigManager.get_config()
     strm_tasks = config.get("strm_tasks", [])
@@ -33,23 +55,15 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     processed_count = 0
     processing_tasks = []
     task_id_ref = task_id
-    task_stats = {} # task_name -> count
+    task_stats = {}
 
-    for item in data:
-        action = item.get("action")
+    for item in valid_items:
         file_path = item.get("source_file", "").split(':')[0]
+        action = item.get("action")
         
-        if not file_path:
-            continue
-
-        if action != "create":
-            continue
-            
-        if str(item.get("is_dir", "")).lower() == "true":
-            continue
-
         filename = os.path.basename(file_path)
         await log_task(task_id_ref, f"📥 事件: {filename}")
+        await log_task(task_id_ref, f"   源路径: {file_path}")
         log_audit("CD2联动", "收到事件", f"收到 CD2 文件变动通知", details=f"动作: {action} | 路径: {file_path}")
 
         matched = False
@@ -84,11 +98,14 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
                 enqueued = MonitorManager.enqueue_file(task.get("id"), local_file_path)
                 
                 if enqueued:
-                    await log_task(task_id_ref, f"✅ 匹配 [{task_name}] -> 已加入后台队列")
+                    await log_task(task_id_ref, f"✅ 匹配任务: [{task_name}] -> 已加入后台队列")
+                    await log_task(task_id_ref, f"   本地路径: {local_file_path}")
                     processed_count += 1
                 else:
-                    await log_task(task_id_ref, f"⚡ 匹配 [{task_name}] -> 正在实时处理...")
-                    processing_tasks.append(StrmGenerator.process_single_file(local_file_path, task))
+                    await log_task(task_id_ref, f"🎯 匹配任务: [{task_name}]")
+                    await log_task(task_id_ref, f"   本地路径: {local_file_path}")
+                    await log_task(task_id_ref, f"⏳ 开始处理...")
+                    processing_tasks.append((task_name, local_file_path, task, StrmGenerator.process_single_file(local_file_path, task)))
                     processed_count += 1
 
                 matched = True
@@ -99,17 +116,36 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     
     if processing_tasks:
         try:
-            results = await asyncio.gather(*processing_tasks, return_exceptions=True)
+            results = await asyncio.gather(*[t[3] for t in processing_tasks], return_exceptions=True)
             valid_results = []
             for i, r in enumerate(results):
+                task_name, local_file_path, task_config = processing_tasks[i][0], processing_tasks[i][1], processing_tasks[i][2]
                 if isinstance(r, Exception):
                     await log_task(task_id_ref, f"  ❌ 处理异常: {str(r)}", "ERROR")
                     log_audit("CD2联动", "处理异常", f"执行 STRM 任务时发生错误: {r}", level="ERROR")
                 elif isinstance(r, dict):
+                    target_root = task_config.get("target_dir") or task_config.get("target_path")
+                    r["task_name"] = task_name
+                    r["target_root"] = target_root
                     valid_results.append(r)
                     status = r.get("status", "unknown")
                     rel_p = r.get("rel_path", "未知")
-                    await log_task(task_id_ref, f"  ┗ 处理结果: {status} ({os.path.basename(rel_p)})")
+                    
+                    status_icon = {"success": "✅", "skipped": "⏭️", "error": "❌"}.get(status, "❓")
+                    status_text = {"success": "成功", "skipped": "跳过", "error": "失败"}.get(status, status)
+                    
+                    full_strm_path = os.path.join(target_root, rel_p) if target_root else rel_p
+                    
+                    rel_dir = os.path.dirname(full_strm_path)
+                    filename = os.path.basename(full_strm_path)
+                    
+                    if rel_dir:
+                        await log_task(task_id_ref, f"  {rel_dir}")
+                        await log_task(task_id_ref, f"       └── {filename}")
+                    else:
+                        await log_task(task_id_ref, f"  {filename}")
+                    
+                    await log_task(task_id_ref, f"  {status_icon} 处理结果: {status_text}")
                 else:
                     await log_task(task_id_ref, f"  ⚠️ 未知返回类型: {type(r)}", "WARN")
             if valid_results:
