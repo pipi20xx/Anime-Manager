@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch } from '../../store/navigationStore'
 
@@ -17,6 +17,7 @@ export function useTmdbDetail(props: any, emit: any) {
   const recommendations = ref<any[]>([])
   const currentTmdbId = ref<string | number>('')
   const currentMediaType = ref<string>('')
+  const renderReady = ref(false)
 
   const fetchSubscriptions = async () => {
     try {
@@ -91,6 +92,7 @@ export function useTmdbDetail(props: any, emit: any) {
 
   watch(() => props.show, (val) => {
     if (val) {
+        renderReady.value = false
         currentTmdbId.value = props.tmdbId
         currentMediaType.value = props.mediaType
         detail.value = props.initialData || null
@@ -99,6 +101,7 @@ export function useTmdbDetail(props: any, emit: any) {
         seasonEmbyInfo.value = new Map()
         recommendations.value = []
         embyStatus.value = null
+        nextTick(() => { renderReady.value = true })
         fetchDetail()
     }
   })
@@ -262,6 +265,7 @@ export function useTmdbDetail(props: any, emit: any) {
     isInLibrary,
     getSeasonLibraryStatus,
     recommendations,
-    handleRecClick
+    handleRecClick,
+    renderReady
   }
 }

@@ -1,4 +1,4 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail } from '../../store/navigationStore'
 
@@ -10,6 +10,7 @@ export function useBangumiDetail(props: any, emit: any) {
   const detail = ref<any>(null)
   const subscriptions = ref<any[]>([])
   const matchingTmdb = ref(false)
+  const renderReady = ref(false)
 
   const getImg = (path: string) => {
     if (!path) return ''
@@ -61,7 +62,9 @@ export function useBangumiDetail(props: any, emit: any) {
 
   watch(() => props.show, (val) => {
     if (val) {
+        renderReady.value = false
         detail.value = props.initialData || null
+        nextTick(() => { renderReady.value = true })
         fetchDetail()
     }
   })
@@ -161,6 +164,7 @@ export function useBangumiDetail(props: any, emit: any) {
     openExternal,
     handleSubscribe,
     matchTmdb,
-    triggerGlobalSearch
+    triggerGlobalSearch,
+    renderReady
   }
 }

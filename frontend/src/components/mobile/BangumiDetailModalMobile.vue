@@ -38,7 +38,7 @@ const {
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="handleClose" style="width: 100%; height: 100vh; margin: 0; border-radius: 0;">
+  <n-modal :show="show" @update:show="handleClose" style="width: 100%; height: 100vh; margin: 0; border-radius: 0;" display-directive="show">
     <div class="mobile-detail-page">
       <div v-if="loading && !detail" class="loading-box">
           <n-skeleton height="300px" width="100%" />

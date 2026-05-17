@@ -32,12 +32,13 @@ const {
   openExternal,
   handleSubscribe,
   matchTmdb,
-  triggerGlobalSearch
+  triggerGlobalSearch,
+  renderReady
 } = useBangumiDetail(props, emit)
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="handleClose" style="max-width: 1000px; width: 95%; height: 96vh;">
+  <n-modal :show="show" @update:show="handleClose" style="max-width: 1000px; width: 95%; height: 96vh;" display-directive="show">
     <n-card class="bgm-detail-modal" content-style="padding: 0; display: flex; flex-direction: column; height: 100%;" :bordered="false" size="huge" role="dialog">
       <div v-if="loading && !detail" class="loading-box">
           <n-skeleton height="300px" width="100%" />
@@ -69,18 +70,18 @@ const {
                           <n-tag type="error" size="small" :bordered="false">Bangumi</n-tag>
                       </n-space>
 
-                      <div class="actions">
-                          <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSubscribe" :disabled="isSubscribed">
+                      <div class="actions" v-if="renderReady">
+                          <n-button type="primary" size="small" @click="handleSubscribe" :disabled="isSubscribed">
                               {{ isSubscribed ? '已在订阅中' : '订阅此番' }}
                           </n-button>
-                          <n-button v-bind="getButtonStyle('primary')" size="small" :loading="matchingTmdb" @click="matchTmdb">
+                          <n-button type="primary" size="small" :loading="matchingTmdb" @click="matchTmdb">
                               <template #icon><n-icon><MatchIcon /></n-icon></template>
                               查看 TMDB
                           </n-button>
-                          <n-button v-bind="getButtonStyle('primary')" size="small" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
+                          <n-button type="primary" size="small" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
                               搜资源
                           </n-button>
-                          <n-button v-bind="getButtonStyle('icon')" size="small" @click="openExternal">
+                          <n-button type="primary" ghost circle size="small" @click="openExternal">
                               <template #icon><n-icon><LinkIcon /></n-icon></template>
                           </n-button>
                       </div>
@@ -145,7 +146,7 @@ const {
 
 .header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 20px; width: 100%; }
 .main-poster { 
-  width: 110px; aspect-ratio: 3/4; 
+  width: 130px; aspect-ratio: 3/4; 
   border-radius: var(--card-border-radius, 6px); 
   box-shadow: 0 8px 24px var(--shadow-heavy); 
   border: 1px solid var(--app-border-light); 
@@ -163,20 +164,20 @@ const {
 .genres-row { margin-bottom: 16px; }
 .overview-section { margin-bottom: 20px; }
 .overview-section h3 { margin: 0 0 8px 0; color: var(--n-primary-color); font-size: 15px; }
-.overview-text { color: var(--text-secondary); line-height: 1.6; font-size: 13px; text-align: justify; }
+.overview-text { color: var(--text-secondary); line-height: 1.6; font-size: 14px; text-align: justify; }
 
 .tags-section { margin-bottom: 24px; }
 
 .cast-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; display: flex; align-items: center; gap: 6px; }
 .cast-scroller { display: flex; gap: 16px; padding-bottom: 8px; }
-.cast-card { min-width: 80px; width: 80px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.cast-card { min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .cast-avatar { 
-  width: 56px; height: 56px; 
+  width: 64px; height: 64px; 
   border-radius: 50%; overflow: hidden; 
   border: 1px solid var(--app-border-light); 
   margin-bottom: 6px; background: var(--app-surface-inner); 
 }
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.char-name { font-size: 11px; font-weight: bold; color: var(--text-primary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.actor-name { font-size: 10px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.char-name { font-size: 12px; font-weight: bold; color: var(--text-primary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actor-name { font-size: 12px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

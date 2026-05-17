@@ -48,12 +48,13 @@ const {
   isInLibrary,
   getSeasonLibraryStatus,
   recommendations,
-  handleRecClick
+  handleRecClick,
+  renderReady
 } = useTmdbDetail(props, emit)
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="handleClose" style="max-width: 1000px; width: 95%; height: 96vh;">
+  <n-modal :show="show" @update:show="handleClose" style="max-width: 1000px; width: 95%; height: 96vh;" display-directive="show">
     <n-card class="tmdb-detail-modal" content-style="padding: 0; display: flex; flex-direction: column; height: 100%;" :bordered="false" size="huge" role="dialog">
       <div v-if="loading && !detail" class="loading-box">
           <n-skeleton height="400px" width="100%" />
@@ -117,11 +118,11 @@ const {
                           </div>
                       </div>
 
-                      <div class="actions">
-                          <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSubscribe" :disabled="isSubscribed">
+                      <div class="actions" v-if="renderReady">
+                          <n-button type="primary" size="small" @click="handleSubscribe" :disabled="isSubscribed">
                               {{ isSubscribed ? '已在订阅中' : '订阅/追番' }}
                           </n-button>
-                          <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSearch">
+                          <n-button type="primary" size="small" @click="handleSearch">
                               搜资源
                           </n-button>
                       </div>
@@ -270,7 +271,7 @@ const {
 
 .header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 20px; width: 100%; }
 .main-poster { 
-  width: 110px; aspect-ratio: 3/4; 
+  width: 130px; aspect-ratio: 3/4; 
   border-radius: var(--card-border-radius, 6px); 
   box-shadow: 0 8px 24px var(--shadow-heavy); 
   border: 1px solid var(--app-border-light); 
@@ -286,8 +287,8 @@ const {
 .meta-tags { margin-bottom: 15px; }
 .info-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 15px; }
 .info-item { display: flex; align-items: center; gap: 6px; }
-.info-label { font-size: 11px; color: var(--text-tertiary); }
-.info-value { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+.info-label { font-size: 12px; color: var(--text-tertiary); }
+.info-value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
 .info-value.link { color: var(--n-primary-color); cursor: pointer; }
 .info-value.link:hover { text-decoration: underline; }
 .actions { display: flex; gap: 10px; }
@@ -296,20 +297,20 @@ const {
 .genres-row { margin-bottom: 16px; }
 .overview-section { margin-bottom: 20px; }
 .overview-section h3 { margin: 0 0 8px 0; color: var(--n-primary-color); font-size: 15px; }
-.overview-text { color: var(--text-secondary); line-height: 1.6; font-size: 13px; text-align: justify; }
+.overview-text { color: var(--text-secondary); line-height: 1.6; font-size: 14px; text-align: justify; }
 
 .cast-section { margin-bottom: 24px; }
 .cast-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; display: flex; align-items: center; gap: 6px; }
 .cast-scroller { display: flex; gap: 16px; padding-bottom: 8px; }
-.cast-card { min-width: 80px; width: 80px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.cast-card { min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .cast-avatar { 
-  width: 56px; height: 56px; 
+  width: 64px; height: 64px; 
   border-radius: 50%; overflow: hidden; 
   border: 1px solid var(--app-border-light); 
   margin-bottom: 6px; background: var(--app-surface-inner); 
 }
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.actor-name { font-size: 10px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actor-name { font-size: 12px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .seasons-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; }
 .seasons-list { display: flex; flex-direction: column; gap: 12px; }
@@ -319,12 +320,12 @@ const {
   cursor: pointer; transition: background 0.2s;
 }
 .season-card:hover { background: var(--app-surface-inner); }
-.s-poster { width: 50px; aspect-ratio: 2/3; border-radius: var(--button-border-radius, 4px); overflow: hidden; background: var(--bg-primary); flex-shrink: 0; }
+.s-poster { width: 60px; aspect-ratio: 2/3; border-radius: var(--button-border-radius, 4px); overflow: hidden; background: var(--bg-primary); flex-shrink: 0; }
 .s-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .s-info { flex: 1; min-width: 0; }
 .s-name-row { display: flex; align-items: center; gap: 8px; }
 .s-name { font-size: 13px; font-weight: bold; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.s-ep { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.s-ep { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 .s-expand-icon { color: var(--text-tertiary); transition: transform 0.3s; }
 .s-expand-icon .expanded { transform: rotate(180deg); }
 .loading-spin { animation: spin 1s linear infinite; }
@@ -338,7 +339,7 @@ const {
   overflow-y: auto; 
 }
 .season-overview { 
-  font-size: 12px; color: var(--text-secondary); line-height: 1.6; 
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6; 
   padding: 10px 12px; margin-bottom: 12px; 
   background: var(--app-bg-color); border-radius: 6px; 
   border-left: 3px solid var(--n-primary-color);
@@ -352,7 +353,7 @@ const {
 .episode-item:last-child { margin-bottom: 0; }
 .episode-item:hover { background: var(--app-bg-color); }
 .ep-still { 
-  width: 160px; aspect-ratio: 16/9; 
+  width: 200px; aspect-ratio: 16/9; 
   border-radius: 4px; overflow: hidden; 
   flex-shrink: 0; background: var(--bg-primary); 
 }
@@ -366,7 +367,7 @@ const {
 .ep-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .ep-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ep-num-badge { 
-  font-size: 10px; font-weight: bold; color: var(--n-primary-color); 
+  font-size: 11px; font-weight: bold; color: var(--n-primary-color); 
   padding: 2px 6px; background: var(--n-primary-color-supply); 
   border-radius: 4px; flex-shrink: 0; 
 }
@@ -376,12 +377,10 @@ const {
 .ep-type-mid { background: linear-gradient(135deg, #ffa94d, #ff922b); color: #fff; }
 .ep-type-emby { background: linear-gradient(135deg, #51cf66, #40c057); color: #fff; }
 .ep-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.ep-rating { display: flex; align-items: center; gap: 2px; font-size: 11px; color: var(--color-warning); }
-.ep-runtime { font-size: 11px; color: var(--text-tertiary); }
-.ep-date { font-size: 11px; color: var(--text-tertiary); }
-.ep-overview { 
-  font-size: 12px; color: var(--text-secondary); line-height: 1.5; 
-}
+.ep-rating { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--color-warning); }
+.ep-runtime { font-size: 12px; color: var(--text-tertiary); }
+.ep-date { font-size: 12px; color: var(--text-tertiary); }
+.ep-overview { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
 .ep-emby-info { 
   font-size: 11px; color: var(--text-tertiary); 
   padding: 6px 8px; margin-top: 4px; 
