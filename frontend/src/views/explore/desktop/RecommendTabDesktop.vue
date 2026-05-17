@@ -35,7 +35,7 @@ const {
       <template v-else>
         <!-- Trending Carousel -->
         <n-carousel show-arrow autoplay draggable class="main-carousel">
-            <div v-for="item in exploreData.trending.slice(0, 8)" :key="item.id" class="carousel-item" @click="openDetail(item, item.media_type || (item.title ? 'movie' : 'tv'))">
+            <div v-for="item in exploreData.trending.slice(0, 8)" :key="item.id" class="carousel-item" @click="openDetail(item, item.media_type || item.type || 'tv')">
             <img :src="getBackdrop(item.backdrop_path) || getPoster(item.poster_path)" class="carousel-img" />
             <div class="carousel-gradient"></div>
             <div class="carousel-content">

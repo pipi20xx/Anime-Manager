@@ -40,7 +40,7 @@ useBackClose(toRef(bgmDetail, 'show'))
       <template v-else>
         <!-- Trending Carousel -->
         <n-carousel show-arrow autoplay draggable class="mobile-carousel">
-            <div v-for="item in exploreData.trending.slice(0, 5)" :key="item.id" class="carousel-item" @click="openDetail(item, item.media_type || (item.title ? 'movie' : 'tv'))">
+            <div v-for="item in exploreData.trending.slice(0, 5)" :key="item.id" class="carousel-item" @click="openDetail(item, item.media_type || item.type || 'tv')">
             <img :src="getBackdrop(item.backdrop_path) || getPoster(item.poster_path)" class="carousel-img" />
             <div class="carousel-gradient"></div>
             <div class="carousel-content">
