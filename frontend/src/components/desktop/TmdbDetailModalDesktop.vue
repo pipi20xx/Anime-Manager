@@ -10,7 +10,8 @@ import {
   PersonOutlined as CastIcon,
   SearchOutlined as SearchIcon,
   ExpandMoreOutlined as ExpandIcon,
-  RefreshOutlined as LoadingIcon
+  RefreshOutlined as LoadingIcon,
+  CheckCircleOutlined
 } from '@vicons/material'
 import { useTmdbDetail } from '../../composables/components/useTmdbDetail'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -39,7 +40,12 @@ const {
   getSeasonInfo,
   getSeasonEpisodes,
   isSeasonLoading,
-  isSeasonExpanded
+  isSeasonExpanded,
+  getEpisodeEmbyInfo,
+  formatFileSize,
+  embyStatus,
+  isInLibrary,
+  getSeasonLibraryStatus
 } = useTmdbDetail(props, emit)
 </script>
 
@@ -58,7 +64,13 @@ const {
                       <n-image :src="getPoster(detail.poster_path)" class="main-poster" object-fit="cover" />
                   </div>
                   <div class="info-col">
-                      <h1 class="title">{{ detail.title || detail.name }}</h1>
+                      <div class="title-row">
+                          <h1 class="title">{{ detail.title || detail.name }}</h1>
+                          <n-tag v-if="isInLibrary" type="success" size="small" round>
+                              <template #icon><n-icon><CheckCircleOutlined /></n-icon></template>
+                              已入库
+                          </n-tag>
+                      </div>
                       <div class="original-title">{{ detail.original_title || detail.original_name }}</div>
                       <div v-if="detail.tagline" class="tagline">"{{ detail.tagline }}"</div>
                       
@@ -130,7 +142,12 @@ const {
                                   <n-image :src="getPoster(s.poster_path)" object-fit="cover" preview-disabled />
                               </div>
                               <div class="s-info">
-                                  <div class="s-name">{{ s.name }}</div>
+                                  <div class="s-name-row">
+                                      <span class="s-name">{{ s.name }}</span>
+                                      <n-tag v-if="getSeasonLibraryStatus(s.season_number)?.exists" type="success" size="tiny" round>
+                                          已入库
+                                      </n-tag>
+                                  </div>
                                   <div class="s-ep">{{ s.episode_count }} 集</div>
                               </div>
                               <div class="s-expand-icon">
@@ -160,6 +177,7 @@ const {
                                               <span class="ep-name">{{ ep.name || '未命名' }}</span>
                                               <span v-if="ep.episode_type === 'finale'" class="ep-type ep-type-finale">本季大结局</span>
                                               <span v-else-if="ep.episode_type === 'mid_season'" class="ep-type ep-type-mid">季中结局</span>
+                                              <span v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.exists" class="ep-type ep-type-emby">已入库</span>
                                           </div>
                                           <div class="ep-meta">
                                               <span v-if="ep.vote_average" class="ep-rating">
@@ -171,6 +189,10 @@ const {
                                           </div>
                                       </div>
                                       <div v-if="ep.overview" class="ep-overview">{{ ep.overview }}</div>
+                                      <div v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.file" class="ep-emby-info">
+                                          <span class="emby-filename">{{ getEpisodeEmbyInfo(s.season_number, ep.episode).file.name }}</span>
+                                          <span v-if="getEpisodeEmbyInfo(s.season_number, ep.episode).file.size" class="emby-size"> · {{ formatFileSize(getEpisodeEmbyInfo(s.season_number, ep.episode).file.size) }}</span>
+                                      </div>
                                   </div>
                               </div>
                               <div v-if="getSeasonEpisodes(s.season_number).length === 0 && !isSeasonLoading(s.season_number)" class="no-episodes">
@@ -206,6 +228,7 @@ const {
 .main-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 
 .info-col { flex-grow: 1; text-shadow: 0 2px 4px var(--shadow-xheavy); }
+.title-row { display: flex; align-items: center; gap: 12px; }
 .title { margin: 0; font-size: 26px; font-weight: 900; color: var(--text-primary); line-height: 1.2; }
 .original-title { font-size: 13px; color: var(--text-tertiary); margin-bottom: 4px; }
 .tagline { font-size: 14px; font-style: italic; color: var(--n-primary-color); margin-bottom: 12px; opacity: var(--opacity-primary); }
@@ -242,6 +265,7 @@ const {
 .s-poster { width: 50px; aspect-ratio: 2/3; border-radius: var(--button-border-radius, 4px); overflow: hidden; background: var(--bg-primary); flex-shrink: 0; }
 .s-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .s-info { flex: 1; min-width: 0; }
+.s-name-row { display: flex; align-items: center; gap: 8px; }
 .s-name { font-size: 13px; font-weight: bold; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .s-ep { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
 .s-expand-icon { color: var(--text-tertiary); transition: transform 0.3s; }
@@ -293,6 +317,7 @@ const {
 .ep-type { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
 .ep-type-finale { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: #fff; }
 .ep-type-mid { background: linear-gradient(135deg, #ffa94d, #ff922b); color: #fff; }
+.ep-type-emby { background: linear-gradient(135deg, #51cf66, #40c057); color: #fff; }
 .ep-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .ep-rating { display: flex; align-items: center; gap: 2px; font-size: 11px; color: var(--color-warning); }
 .ep-runtime { font-size: 11px; color: var(--text-tertiary); }
@@ -302,5 +327,13 @@ const {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
   overflow: hidden; 
 }
+.ep-emby-info { 
+  font-size: 11px; color: var(--text-tertiary); 
+  padding: 6px 8px; margin-top: 4px; 
+  background: var(--app-surface-inner); border-radius: 4px; 
+  border-left: 2px solid #51cf66;
+}
+.emby-filename { word-break: break-all; }
+.emby-size { color: var(--text-secondary); font-weight: 500; }
 .no-episodes { text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 20px; }
 </style>

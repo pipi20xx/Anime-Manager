@@ -40,6 +40,21 @@ async def get_detail(media_type: str, tmdb_id: str):
     log_audit("TMDB", "详情", f"获取成功: {result.get('title')}", details="\n".join(logs))
     return result
 
+@router.get("/detail/{media_type}/{tmdb_id}/emby", summary="获取作品在Emby库中的状态")
+async def get_detail_emby_status(media_type: str, tmdb_id: str):
+    """
+    获取指定作品在 Emby 库中的入库状态。
+    """
+    from emby_client import get_emby_client
+    emby = get_emby_client()
+    
+    if media_type == 'movie':
+        result = emby.get_movie_info(tmdb_id)
+    else:
+        result = emby.get_series_library_status(tmdb_id)
+    
+    return result
+
 @router.get("/season/{tmdb_id}/{season_number}", summary="获取季度集信息")
 async def get_season_episodes(tmdb_id: str, season_number: int):
     """
@@ -50,6 +65,16 @@ async def get_season_episodes(tmdb_id: str, season_number: int):
         raise HTTPException(status_code=404, detail="季度信息未找到")
     log_audit("TMDB", "季度", f"获取集信息: {tmdb_id} S{season_number}")
     return result
+
+@router.get("/season/{tmdb_id}/{season_number}/emby", summary="获取季度集的Emby库信息")
+async def get_season_episodes_emby(tmdb_id: str, season_number: int):
+    """
+    获取指定季度在 Emby 库中的集信息。
+    """
+    from emby_client import get_emby_client
+    emby = get_emby_client()
+    episodes_info = emby.get_season_episodes_info(tmdb_id, season_number)
+    return {"episodes": episodes_info}
 
 @router.get("/search", summary="搜索 TMDB 条目", operation_id="tmdb_search_global")
 async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):

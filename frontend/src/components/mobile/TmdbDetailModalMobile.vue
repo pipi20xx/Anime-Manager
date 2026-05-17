@@ -40,7 +40,12 @@ const {
   getSeasonInfo,
   getSeasonEpisodes,
   isSeasonLoading,
-  isSeasonExpanded
+  isSeasonExpanded,
+  getEpisodeEmbyInfo,
+  formatFileSize,
+  embyStatus,
+  isInLibrary,
+  getSeasonLibraryStatus
 } = useTmdbDetail(props, emit)
 </script>
 
@@ -70,7 +75,12 @@ const {
                    <n-image :src="getPoster(detail.poster_path)" object-fit="cover" class="hero-poster" />
                 </div>
                 <div class="hero-info">
-                   <h1 class="hero-title">{{ detail.title || detail.name }}</h1>
+                   <div class="hero-title-row">
+                      <h1 class="hero-title">{{ detail.title || detail.name }}</h1>
+                      <n-tag v-if="isInLibrary" type="success" size="tiny" round>
+                         已入库
+                      </n-tag>
+                   </div>
                    <div class="hero-meta">
                       <n-tag type="warning" size="tiny" round :bordered="false" class="rating-tag">
                          <template #icon><n-icon><StarIcon/></n-icon></template>
@@ -131,7 +141,12 @@ const {
                             <img :src="getPoster(s.poster_path)" loading="lazy" />
                          </div>
                          <div class="season-info">
-                            <div class="s-name">{{ s.name }}</div>
+                            <div class="s-name-row">
+                               <span class="s-name">{{ s.name }}</span>
+                               <n-tag v-if="getSeasonLibraryStatus(s.season_number)?.exists" type="success" size="tiny" round>
+                                  已入库
+                               </n-tag>
+                            </div>
                             <div class="s-ep">{{ s.episode_count }} 集</div>
                          </div>
                          <div class="expand-icon">
@@ -160,6 +175,7 @@ const {
                                   <span class="ep-name">{{ ep.name || '未命名' }}</span>
                                   <span v-if="ep.episode_type === 'finale'" class="ep-type ep-type-finale">大结局</span>
                                   <span v-else-if="ep.episode_type === 'mid_season'" class="ep-type ep-type-mid">季中</span>
+                                  <span v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.exists" class="ep-type ep-type-emby">已入库</span>
                                </div>
                                <div class="ep-meta">
                                   <span v-if="ep.vote_average" class="ep-rating">
@@ -170,6 +186,10 @@ const {
                                   <span v-if="ep.air_date">{{ ep.air_date }}</span>
                                </div>
                                <div v-if="ep.overview" class="ep-overview">{{ ep.overview }}</div>
+                               <div v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.file" class="ep-emby-info">
+                                  <span class="emby-filename">{{ getEpisodeEmbyInfo(s.season_number, ep.episode).file.name }}</span>
+                                  <span v-if="getEpisodeEmbyInfo(s.season_number, ep.episode).file.size" class="emby-size"> · {{ formatFileSize(getEpisodeEmbyInfo(s.season_number, ep.episode).file.size) }}</span>
+                               </div>
                             </div>
                          </div>
                          <div v-if="getSeasonEpisodes(s.season_number).length === 0 && !isSeasonLoading(s.season_number)" class="no-eps">
@@ -205,6 +225,7 @@ const {
 .hero-poster :deep(img) { width: 100%; display: block; aspect-ratio: 2/3; object-fit: cover; }
 
 .hero-info { flex: 1; min-width: 0; margin-bottom: var(--m-spacing-xs); }
+.hero-title-row { display: flex; align-items: center; gap: var(--m-spacing-sm); flex-wrap: wrap; }
 .hero-title { margin: 0; font-size: var(--m-text-2xl); font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px var(--shadow-xheavy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .hero-meta { display: flex; align-items: center; gap: var(--m-spacing-sm); margin-top: var(--m-spacing-sm); }
 .meta-date { font-size: var(--m-text-sm); color: var(--text-secondary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
@@ -233,6 +254,7 @@ const {
 .season-poster { width: 45px; aspect-ratio: 2/3; border-radius: var(--m-radius-sm); overflow: hidden; flex-shrink: 0; background: var(--bg-primary); }
 .season-poster img { width: 100%; height: 100%; object-fit: cover; }
 .season-info { flex: 1; min-width: 0; }
+.season-info .s-name-row { display: flex; align-items: center; gap: var(--m-spacing-sm); }
 .season-info .s-name { font-size: var(--m-text-sm); font-weight: bold; color: var(--text-primary); }
 .season-info .s-ep { font-size: var(--m-text-xs); color: var(--text-tertiary); }
 .expand-icon { color: var(--text-tertiary); transition: transform 0.3s; }
@@ -260,8 +282,17 @@ const {
 .ep-type { font-size: 8px; font-weight: bold; padding: 1px 4px; border-radius: 2px; flex-shrink: 0; }
 .ep-type-finale { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: #fff; }
 .ep-type-mid { background: linear-gradient(135deg, #ffa94d, #ff922b); color: #fff; }
+.ep-type-emby { background: linear-gradient(135deg, #51cf66, #40c057); color: #fff; }
 .ep-meta { display: flex; align-items: center; gap: 6px; font-size: var(--m-text-xs); color: var(--text-tertiary); }
 .ep-rating { display: flex; align-items: center; gap: 2px; color: var(--color-warning); }
 .ep-overview { font-size: var(--m-text-xs); color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ep-emby-info { 
+  font-size: var(--m-text-xs); color: var(--text-tertiary); 
+  padding: var(--m-spacing-xs); margin-top: 4px; 
+  background: var(--bg-surface); border-radius: var(--m-radius-xs); 
+  border-left: 2px solid #51cf66;
+}
+.emby-filename { word-break: break-all; }
+.emby-size { color: var(--text-secondary); font-weight: 500; }
 .no-eps { text-align: center; color: var(--text-tertiary); font-size: var(--m-text-sm); padding: var(--m-spacing-xl); }
 </style>

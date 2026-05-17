@@ -11,7 +11,9 @@ export function useTmdbDetail(props: any, emit: any) {
   const subscriptions = ref<any[]>([])
   const expandedSeasons = ref<Set<number>>(new Set())
   const seasonEpisodes = ref<Map<string, any[]>>(new Map())
+  const seasonEmbyInfo = ref<Map<string, any>>(new Map())
   const loadingSeasons = ref<Set<string>>(new Set())
+  const embyStatus = ref<any>(null)
 
   const fetchSubscriptions = async () => {
     try {
@@ -51,11 +53,19 @@ export function useTmdbDetail(props: any, emit: any) {
     fetchSubscriptions()
     try {
       const type = props.mediaType === '电影' ? 'movie' : (props.mediaType === 'movie' ? 'movie' : 'tv')
-      const res = await fetch(`${API_BASE}/api/tmdb/detail/${type}/${props.tmdbId}`)
-      if (res.ok) {
-          detail.value = await res.json()
+      const [detailRes, embyRes] = await Promise.all([
+        fetch(`${API_BASE}/api/tmdb/detail/${type}/${props.tmdbId}`),
+        fetch(`${API_BASE}/api/tmdb/detail/${type}/${props.tmdbId}/emby`)
+      ])
+      
+      if (detailRes.ok) {
+          detail.value = await detailRes.json()
       } else {
           message.error('获取 TMDB 详情失败')
+      }
+      
+      if (embyRes.ok) {
+        embyStatus.value = await embyRes.json()
       }
     } catch (e) {
       console.error(e)
@@ -113,11 +123,21 @@ export function useTmdbDetail(props: any, emit: any) {
       loadingSeasons.value = new Set(loadingSeasons.value)
       
       try {
-        const res = await fetch(`${API_BASE}/api/tmdb/season/${props.tmdbId}/${seasonNumber}`)
-        if (res.ok) {
-          const data = await res.json()
+        const [tmdbRes, embyRes] = await Promise.all([
+          fetch(`${API_BASE}/api/tmdb/season/${props.tmdbId}/${seasonNumber}`),
+          fetch(`${API_BASE}/api/tmdb/season/${props.tmdbId}/${seasonNumber}/emby`)
+        ])
+        
+        if (tmdbRes.ok) {
+          const data = await tmdbRes.json()
           seasonEpisodes.value.set(key, data)
           seasonEpisodes.value = new Map(seasonEpisodes.value)
+        }
+        
+        if (embyRes.ok) {
+          const embyData = await embyRes.json()
+          seasonEmbyInfo.value.set(key, embyData.episodes || {})
+          seasonEmbyInfo.value = new Map(seasonEmbyInfo.value)
         }
       } catch (e) {
         console.error('Failed to fetch season episodes', e)
@@ -149,6 +169,32 @@ export function useTmdbDetail(props: any, emit: any) {
     return expandedSeasons.value.has(seasonNumber)
   }
 
+  const getEpisodeEmbyInfo = (seasonNumber: number, episodeNumber: number) => {
+    const key = `${props.tmdbId}-${seasonNumber}`
+    const embyData = seasonEmbyInfo.value.get(key)
+    return embyData?.[episodeNumber] || null
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (!bytes || bytes === 0) return ''
+    const units = ['B', 'KB', 'MB', 'GB', 'TB']
+    let i = 0
+    let size = bytes
+    while (size >= 1024 && i < units.length - 1) {
+      size /= 1024
+      i++
+    }
+    return `${size.toFixed(2)} ${units[i]}`
+  }
+
+  const isInLibrary = computed(() => {
+    return embyStatus.value?.exists || false
+  })
+
+  const getSeasonLibraryStatus = (seasonNumber: number) => {
+    return embyStatus.value?.seasons?.[seasonNumber] || null
+  }
+
   return {
     loading,
     detail,
@@ -164,6 +210,11 @@ export function useTmdbDetail(props: any, emit: any) {
     getSeasonInfo,
     getSeasonEpisodes,
     isSeasonLoading,
-    isSeasonExpanded
+    isSeasonExpanded,
+    getEpisodeEmbyInfo,
+    formatFileSize,
+    embyStatus,
+    isInLibrary,
+    getSeasonLibraryStatus
   }
 }

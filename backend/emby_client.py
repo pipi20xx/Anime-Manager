@@ -120,6 +120,108 @@ class EmbyClient:
         logger.debug(f"Emby 检查: ❌ 在所有匹配的 {len(matched_items)} 个剧集中都未找到 S{season_number}E{episode_number}")
         return False
 
+    def get_episode_info(self, tmdb_id: str, season_number: int, episode_number: int) -> Optional[Dict]:
+        series_result = self.search_series_by_tmdb_id(tmdb_id)
+        if not series_result or not series_result.get('matched_items'):
+            return None
+        
+        for series_item in series_result['matched_items']:
+            series_id = series_item.get('Id')
+            
+            seasons = self.get_seasons(series_id)
+            if not seasons:
+                continue
+            
+            target_season = None
+            for season in seasons:
+                if season.get('IndexNumber') == season_number:
+                    target_season = season
+                    break
+            
+            if not target_season:
+                continue
+            
+            episodes = self.get_episodes(series_id, target_season['Id'])
+            if not episodes:
+                continue
+            
+            for episode in episodes:
+                if episode.get('IndexNumber') == episode_number:
+                    media_sources = episode.get('MediaSources', [])
+                    file_info = None
+                    
+                    if media_sources:
+                        source = media_sources[0]
+                        file_info = {
+                            'path': source.get('Path', ''),
+                            'name': source.get('Name', ''),
+                            'size': source.get('Size', 0),
+                            'container': source.get('Container', ''),
+                        }
+                    
+                    return {
+                        'exists': True,
+                        'episode_id': episode.get('Id'),
+                        'series_name': series_item.get('Name', ''),
+                        'file': file_info
+                    }
+        
+        return {'exists': False}
+
+    def get_season_episodes_info(self, tmdb_id: str, season_number: int) -> Dict[int, Dict]:
+        series_result = self.search_series_by_tmdb_id(tmdb_id)
+        if not series_result or not series_result.get('matched_items'):
+            return {}
+        
+        episodes_info = {}
+        
+        for series_item in series_result['matched_items']:
+            series_id = series_item.get('Id')
+            
+            seasons = self.get_seasons(series_id)
+            if not seasons:
+                continue
+            
+            target_season = None
+            for season in seasons:
+                if season.get('IndexNumber') == season_number:
+                    target_season = season
+                    break
+            
+            if not target_season:
+                continue
+            
+            episodes = self.get_episodes(series_id, target_season['Id'])
+            if not episodes:
+                continue
+            
+            for episode in episodes:
+                ep_num = episode.get('IndexNumber')
+                if ep_num is None:
+                    continue
+                
+                if ep_num not in episodes_info:
+                    media_sources = episode.get('MediaSources', [])
+                    file_info = None
+                    
+                    if media_sources:
+                        source = media_sources[0]
+                        file_info = {
+                            'path': source.get('Path', ''),
+                            'name': source.get('Name', ''),
+                            'size': source.get('Size', 0),
+                            'container': source.get('Container', ''),
+                        }
+                    
+                    episodes_info[ep_num] = {
+                        'exists': True,
+                        'episode_id': episode.get('Id'),
+                        'series_name': series_item.get('Name', ''),
+                        'file': file_info
+                    }
+        
+        return episodes_info
+
     def check_movie_exists(self, tmdb_id: str) -> bool:
         movie_result = self.search_movie_by_tmdb_id(tmdb_id)
         if movie_result and movie_result.get('matched_items'):
@@ -129,6 +231,68 @@ class EmbyClient:
         else:
             logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的电影")
             return False
+
+    def get_movie_info(self, tmdb_id: str) -> Optional[Dict]:
+        movie_result = self.search_movie_by_tmdb_id(tmdb_id)
+        if not movie_result or not movie_result.get('matched_items'):
+            return {'exists': False}
+        
+        movie_item = movie_result['matched_items'][0]
+        media_sources = movie_item.get('MediaSources', [])
+        file_info = None
+        
+        if media_sources:
+            source = media_sources[0]
+            file_info = {
+                'path': source.get('Path', ''),
+                'name': source.get('Name', ''),
+                'size': source.get('Size', 0),
+                'container': source.get('Container', ''),
+            }
+        
+        return {
+            'exists': True,
+            'item_id': movie_item.get('Id'),
+            'name': movie_item.get('Name', ''),
+            'file': file_info
+        }
+
+    def get_series_library_status(self, tmdb_id: str, seasons_info: List[Dict] = None) -> Dict:
+        series_result = self.search_series_by_tmdb_id(tmdb_id)
+        if not series_result or not series_result.get('matched_items'):
+            return {'exists': False, 'seasons': {}}
+        
+        seasons_status = {}
+        
+        for series_item in series_result['matched_items']:
+            series_id = series_item.get('Id')
+            series_name = series_item.get('Name', '')
+            
+            seasons = self.get_seasons(series_id)
+            if not seasons:
+                continue
+            
+            for season in seasons:
+                season_number = season.get('IndexNumber')
+                if season_number is None:
+                    continue
+                
+                episodes = self.get_episodes(series_id, season['Id'])
+                if not episodes:
+                    continue
+                
+                if season_number not in seasons_status:
+                    seasons_status[season_number] = {
+                        'exists': True,
+                        'total_episodes': len(episodes),
+                        'series_name': series_name
+                    }
+        
+        return {
+            'exists': True,
+            'series_name': series_result['matched_items'][0].get('Name', '') if series_result['matched_items'] else '',
+            'seasons': seasons_status
+        }
 
     def check_item_exists(self, tmdb_id: str, media_type: str, season_number: Optional[int] = None, episode_number: Optional[int] = None) -> bool:
         if media_type == 'movie':
