@@ -66,6 +66,18 @@ const {
                   <n-form-item label="TMDB API Key">
                     <n-input v-model:value="config.tmdb_api_key" type="password" show-password-on="click" placeholder="输入 Key" />
                   </n-form-item>
+                  <n-form-item label="图片域名">
+                    <n-space vertical :size="2" style="width: 100%">
+                      <n-input v-model:value="config.tmdb_image_domain" placeholder="默认: image.tmdb.org" />
+                      <span style="font-size: 12px; color: var(--n-text-color-3);">可替换为国内镜像站加速图片加载</span>
+                    </n-space>
+                  </n-form-item>
+                  <n-form-item label="图片代理">
+                    <n-space align="center" :size="8">
+                      <n-switch v-model:value="config.tmdb_image_proxy" />
+                      <span style="font-size: 13px;">启用图片代理（镜像站建议关闭）</span>
+                    </n-space>
+                  </n-form-item>
                   <n-form-item label="Bangumi Token">
                     <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选 Token" />
                   </n-form-item>

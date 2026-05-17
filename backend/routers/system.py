@@ -321,9 +321,12 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
         return FileResponse(local_file)
     
     os.makedirs(os.path.dirname(local_file), exist_ok=True)
-    tmdb_url = f"https://image.tmdb.org/t/p/{size}{clean_path}"
+    image_domain = ConfigManager.get_tmdb_image_domain()
+    tmdb_url = f"https://{image_domain}/t/p/{size}{clean_path}"
     
-    proxy = ConfigManager.get_proxy("tmdb")
+    config = ConfigManager.get_config()
+    use_proxy = config.get("tmdb_image_proxy", True)
+    proxy = ConfigManager.get_proxy("tmdb") if use_proxy else None
     
     async with httpx.AsyncClient(timeout=30, proxy=proxy) as client:
         try:

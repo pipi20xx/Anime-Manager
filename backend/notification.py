@@ -10,6 +10,29 @@ logger = logging.getLogger("Notification")
 
 class NotificationManager:
     @staticmethod
+    def _get_tmdb_image_url(poster_path: str) -> str:
+        """
+        将本地代理路径转换为 TMDB 完整 URL（用于 Telegram 等外部服务）
+        :param poster_path: 可能是本地代理路径如 /w500/abc.jpg 或完整 URL
+        :return: TMDB 完整 URL，使用 original 尺寸
+        """
+        if not poster_path:
+            return None
+        if poster_path.startswith("http"):
+            return poster_path
+        
+        clean_path = poster_path
+        size_match = re.match(r"^/(w\d+|original)(/.*)$", poster_path)
+        if size_match:
+            clean_path = size_match.group(2)
+        
+        if not clean_path.startswith("/"):
+            clean_path = "/" + clean_path
+        
+        image_domain = ConfigManager.get_tmdb_image_domain()
+        return f"https://{image_domain}/t/p/original{clean_path}"
+    
+    @staticmethod
     async def send_telegram_message(text: str, photo_url: str = None, pin: bool = False):
         """
         发送 Telegram 消息，支持图片和置顶。
@@ -159,11 +182,7 @@ class NotificationManager:
             f"🆔 <b>影号：</b>{get_val(sub, 'tmdb_id')}\n"
         )
 
-        photo_url = poster_path
-        if photo_url and not photo_url.startswith("http"):
-             # 修复 Telegram 无法加载本地相对路径图片的问题
-             # 默认将其视为 TMDB 路径并还原为完整 URL，使用 original 规格以获得最高清晰度
-             photo_url = f"https://image.tmdb.org/t/p/original{photo_url}"
+        photo_url = NotificationManager._get_tmdb_image_url(poster_path)
 
         await NotificationManager.send_telegram_message(msg, photo_url=photo_url)
 
@@ -216,11 +235,7 @@ class NotificationManager:
             f"🆔 <b>影号：</b>{get_val(sub, 'tmdb_id')}\n"
         )
 
-        photo_url = poster_path
-        if photo_url and not photo_url.startswith("http"):
-             # 修复 Telegram 无法加载本地相对路径图片的问题
-             # 默认将其视为 TMDB 路径并还原为完整 URL，使用 original 规格以获得最高清晰度
-             photo_url = f"https://image.tmdb.org/t/p/original{photo_url}"
+        photo_url = NotificationManager._get_tmdb_image_url(poster_path)
 
         await NotificationManager.send_telegram_message(msg, photo_url=photo_url)
 
@@ -247,11 +262,7 @@ class NotificationManager:
             f"✅ <b>状态：</b>所有指定集数已补全，任务已自动清理。\n"
         )
 
-        photo_url = poster_path
-        if photo_url and not photo_url.startswith("http"):
-             # 修复 Telegram 无法加载本地相对路径图片的问题
-             # 默认将其视为 TMDB 路径并还原为完整 URL，使用 original 规格以获得最高清晰度
-             photo_url = f"https://image.tmdb.org/t/p/original{photo_url}"
+        photo_url = NotificationManager._get_tmdb_image_url(poster_path)
 
         await NotificationManager.send_telegram_message(msg, photo_url=photo_url)
 
@@ -292,11 +303,7 @@ class NotificationManager:
             f"📦 <b>资源：</b><code>{raw_title}</code>\n"
         )
 
-        photo_url = poster_path
-        if photo_url and not photo_url.startswith("http"):
-             # 修复 Telegram 无法加载本地相对路径图片的问题
-             # 默认将其视为 TMDB 路径并还原为完整 URL，使用 original 规格以获得最高清晰度
-             photo_url = f"https://image.tmdb.org/t/p/original{photo_url}"
+        photo_url = NotificationManager._get_tmdb_image_url(poster_path)
 
         await NotificationManager.send_telegram_message(msg, photo_url=photo_url)
 
@@ -465,11 +472,7 @@ class NotificationManager:
             f"📄 <b>原始：</b><code>{file_name}</code>\n"
         )
 
-        photo_url = poster_path
-        if photo_url and not photo_url.startswith("http"):
-             # 修复 Telegram 无法加载本地相对路径图片的问题
-             # 默认将其视为 TMDB 路径并还原为完整 URL，使用 original 规格以获得最高清晰度
-             photo_url = f"https://image.tmdb.org/t/p/original{photo_url}"
+        photo_url = NotificationManager._get_tmdb_image_url(poster_path)
 
         await NotificationManager.send_telegram_message(msg, photo_url=photo_url)
 
@@ -581,8 +584,7 @@ class NotificationManager:
                             from urllib.parse import parse_qs, urlparse
                             qs = parse_qs(urlparse(photo_url).query)
                             if "path" in qs: photo_url = qs["path"][0]
-                        if photo_url and not photo_url.startswith("http"):
-                            photo_url = f"https://image.tmdb.org/t/p/original{photo_url}"
+                        photo_url = NotificationManager._get_tmdb_image_url(photo_url)
                 except: pass
 
         await NotificationManager.send_telegram_message(msg, photo_url=photo_url)
@@ -742,7 +744,7 @@ class NotificationManager:
         if len(subjects) == 1 and subjects[0].get("poster_path"):
             path = subjects[0]["poster_path"]
             if path and path.strip():
-                photo_url = f"https://image.tmdb.org/t/p/original{path}" if not path.startswith("http") else path
+                photo_url = NotificationManager._get_tmdb_image_url(path)
 
         pin_message = config.get("calendar_pin_message", False)
         success, msg, _ = await NotificationManager.send_telegram_message(final_msg, photo_url=photo_url, pin=pin_message)

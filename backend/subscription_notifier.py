@@ -186,7 +186,7 @@ class SubscriptionNotifier:
             )
             
             if sub.poster_path:
-                poster_url = f"https://image.tmdb.org/t/p/w500{sub.poster_path}"
+                poster_url = NotificationManager._get_tmdb_image_url(sub.poster_path)
                 success, _, _ = await NotificationManager.send_telegram_message(msg, photo_url=poster_url)
             else:
                 success, _, _ = await NotificationManager.send_telegram_message(msg)

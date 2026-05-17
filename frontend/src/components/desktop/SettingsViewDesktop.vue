@@ -68,6 +68,19 @@ const {
                     <a href="https://www.themoviedb.org/settings/api" target="_blank" style="font-size: 12px; color: var(--n-primary-color); text-decoration: none;">这是 TMDB API KEY https://www.themoviedb.org/settings/api 申请。</a>
                   </n-space>
                 </n-form-item>
+                <n-form-item label="图片域名">
+                  <n-space vertical :size="2" style="width: 100%">
+                    <n-input v-model:value="config.tmdb_image_domain" placeholder="默认: image.tmdb.org" />
+                    <span style="font-size: 12px; color: var(--n-text-color-3);">可替换为国内镜像站加速图片加载</span>
+                  </n-space>
+                </n-form-item>
+                <n-form-item label="图片代理">
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.tmdb_image_proxy" />
+                    <span class="switch-label">启用图片代理</span>
+                    <span class="switch-desc">使用国内镜像站时建议关闭，直连更快</span>
+                  </n-space>
+                </n-form-item>
                 <n-form-item label="BGM Token">
                   <n-space vertical :size="2" style="width: 100%">
                     <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选: 输入 Bangumi Access Token" />

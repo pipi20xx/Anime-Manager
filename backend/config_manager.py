@@ -17,6 +17,8 @@ logger = logging.getLogger("ConfigManager")
 class ConfigManager:
     DEFAULT_CONFIG = {
         "tmdb_api_key": "",
+        "tmdb_image_domain": "image.tmdb.org",
+        "tmdb_image_proxy": True,
         "bangumi_token": "",
         "bangumi_priority": False,
         "bangumi_failover": True,
@@ -233,6 +235,12 @@ class ConfigManager:
         if proxy_url and services.get(service_name, False):
             return proxy_url
         return None
+
+    @staticmethod
+    def get_tmdb_image_domain() -> str:
+        config = ConfigManager.get_config()
+        domain = config.get("tmdb_image_domain", "image.tmdb.org")
+        return domain if domain else "image.tmdb.org"
 
     @staticmethod
     async def fetch_urls(urls: List[str]) -> List[str]:
