@@ -223,7 +223,7 @@ export function useTmdbDetail(props: any, emit: any) {
   }
 
   const handleRecClick = (rec: any) => {
-    const type = rec.media_type === 'movie' ? 'movie' : 'tv'
+    const type = rec.media_type || rec.type || 'tv'
     
     detail.value = rec
     expandedSeasons.value = new Set()

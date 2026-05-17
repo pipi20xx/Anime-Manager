@@ -268,7 +268,8 @@ class TMDBProvider:
         
         formatted = []
         for item in results:
-            normalized = TMDBMatcher.normalize(item, media_type_hint=endpoint_type)
+            item_media_type = item.get("media_type") or endpoint_type
+            normalized = TMDBMatcher.normalize(item, media_type_hint=item_media_type)
             if normalized:
                 formatted.append(normalized)
         

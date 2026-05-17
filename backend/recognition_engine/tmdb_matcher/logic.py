@@ -49,7 +49,7 @@ class TMDBMatcher:
             return "/" + p
 
         return {
-            "id": m_id, "type": m_type, "category": category,
+            "id": m_id, "type": m_type, "media_type": m_type, "category": category,
             "title": item.get("title") or item.get("name"),
             "original_title": item.get("original_title") or item.get("original_name"),
             "year": year, "release_date": date_str,
