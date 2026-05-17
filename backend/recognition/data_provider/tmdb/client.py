@@ -143,8 +143,8 @@ class TMDBProvider:
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached
 
-        m_task = self._fetch("/discover/movie", {"with_genres": "16", "with_original_language": "ja", "sort_by": "popularity.desc", "vote_count.gte": 20})
-        t_task = self._fetch("/discover/tv", {"with_genres": "16", "with_original_language": "ja", "sort_by": "popularity.desc"})
+        m_task = self._fetch("/discover/movie", {"with_genres": "16", "sort_by": "popularity.desc"})
+        t_task = self._fetch("/discover/tv", {"with_genres": "16", "sort_by": "popularity.desc"})
         
         (m_data, _), (t_data, _) = await asyncio.gather(m_task, t_task)
         
