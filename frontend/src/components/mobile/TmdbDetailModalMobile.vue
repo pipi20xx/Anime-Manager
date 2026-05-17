@@ -186,9 +186,11 @@ const {
                                   <span v-if="ep.air_date">{{ ep.air_date }}</span>
                                </div>
                                <div v-if="ep.overview" class="ep-overview">{{ ep.overview }}</div>
-                               <div v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.file" class="ep-emby-info">
-                                  <span class="emby-filename">{{ getEpisodeEmbyInfo(s.season_number, ep.episode).file.name }}</span>
-                                  <span v-if="getEpisodeEmbyInfo(s.season_number, ep.episode).file.size" class="emby-size"> · {{ formatFileSize(getEpisodeEmbyInfo(s.season_number, ep.episode).file.size) }}</span>
+                               <div v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.files?.length" class="ep-emby-info">
+                                  <div v-for="(file, idx) in getEpisodeEmbyInfo(s.season_number, ep.episode).files" :key="idx" class="emby-file-item">
+                                     <span class="emby-filename">{{ file.name }}</span>
+                                     <span v-if="file.size" class="emby-size"> · {{ formatFileSize(file.size) }}</span>
+                                  </div>
                                </div>
                             </div>
                          </div>
@@ -285,13 +287,16 @@ const {
 .ep-type-emby { background: linear-gradient(135deg, #51cf66, #40c057); color: #fff; }
 .ep-meta { display: flex; align-items: center; gap: 6px; font-size: var(--m-text-xs); color: var(--text-tertiary); }
 .ep-rating { display: flex; align-items: center; gap: 2px; color: var(--color-warning); }
-.ep-overview { font-size: var(--m-text-xs); color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ep-overview { font-size: var(--m-text-xs); color: var(--text-secondary); line-height: 1.4; }
 .ep-emby-info { 
   font-size: var(--m-text-xs); color: var(--text-tertiary); 
   padding: var(--m-spacing-xs); margin-top: 4px; 
   background: var(--bg-surface); border-radius: var(--m-radius-xs); 
   border-left: 2px solid #51cf66;
 }
+.emby-file-item { padding: 3px 0; border-bottom: 1px dashed var(--app-border-light); }
+.emby-file-item:last-child { border-bottom: none; padding-bottom: 0; }
+.emby-file-item:first-child { padding-top: 0; }
 .emby-filename { word-break: break-all; }
 .emby-size { color: var(--text-secondary); font-weight: 500; }
 .no-eps { text-align: center; color: var(--text-tertiary); font-size: var(--m-text-sm); padding: var(--m-spacing-xl); }

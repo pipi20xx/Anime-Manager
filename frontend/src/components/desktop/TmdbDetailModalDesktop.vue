@@ -189,9 +189,11 @@ const {
                                           </div>
                                       </div>
                                       <div v-if="ep.overview" class="ep-overview">{{ ep.overview }}</div>
-                                      <div v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.file" class="ep-emby-info">
-                                          <span class="emby-filename">{{ getEpisodeEmbyInfo(s.season_number, ep.episode).file.name }}</span>
-                                          <span v-if="getEpisodeEmbyInfo(s.season_number, ep.episode).file.size" class="emby-size"> · {{ formatFileSize(getEpisodeEmbyInfo(s.season_number, ep.episode).file.size) }}</span>
+                                      <div v-if="getEpisodeEmbyInfo(s.season_number, ep.episode)?.files?.length" class="ep-emby-info">
+                                          <div v-for="(file, idx) in getEpisodeEmbyInfo(s.season_number, ep.episode).files" :key="idx" class="emby-file-item">
+                                              <span class="emby-filename">{{ file.name }}</span>
+                                              <span v-if="file.size" class="emby-size"> · {{ formatFileSize(file.size) }}</span>
+                                          </div>
                                       </div>
                                   </div>
                               </div>
@@ -324,8 +326,6 @@ const {
 .ep-date { font-size: 11px; color: var(--text-tertiary); }
 .ep-overview { 
   font-size: 12px; color: var(--text-secondary); line-height: 1.5; 
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
-  overflow: hidden; 
 }
 .ep-emby-info { 
   font-size: 11px; color: var(--text-tertiary); 
@@ -333,6 +333,9 @@ const {
   background: var(--app-surface-inner); border-radius: 4px; 
   border-left: 2px solid #51cf66;
 }
+.emby-file-item { padding: 4px 0; border-bottom: 1px dashed var(--app-border-light); }
+.emby-file-item:last-child { border-bottom: none; padding-bottom: 0; }
+.emby-file-item:first-child { padding-top: 0; }
 .emby-filename { word-break: break-all; }
 .emby-size { color: var(--text-secondary); font-weight: 500; }
 .no-episodes { text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 20px; }

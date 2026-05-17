@@ -148,22 +148,21 @@ class EmbyClient:
             for episode in episodes:
                 if episode.get('IndexNumber') == episode_number:
                     media_sources = episode.get('MediaSources', [])
-                    file_info = None
+                    files = []
                     
-                    if media_sources:
-                        source = media_sources[0]
-                        file_info = {
+                    for source in media_sources:
+                        files.append({
                             'path': source.get('Path', ''),
                             'name': source.get('Name', ''),
                             'size': source.get('Size', 0),
                             'container': source.get('Container', ''),
-                        }
+                        })
                     
                     return {
                         'exists': True,
                         'episode_id': episode.get('Id'),
                         'series_name': series_item.get('Name', ''),
-                        'file': file_info
+                        'files': files
                     }
         
         return {'exists': False}
@@ -200,25 +199,23 @@ class EmbyClient:
                 if ep_num is None:
                     continue
                 
+                media_sources = episode.get('MediaSources', [])
+                
                 if ep_num not in episodes_info:
-                    media_sources = episode.get('MediaSources', [])
-                    file_info = None
-                    
-                    if media_sources:
-                        source = media_sources[0]
-                        file_info = {
-                            'path': source.get('Path', ''),
-                            'name': source.get('Name', ''),
-                            'size': source.get('Size', 0),
-                            'container': source.get('Container', ''),
-                        }
-                    
                     episodes_info[ep_num] = {
                         'exists': True,
                         'episode_id': episode.get('Id'),
                         'series_name': series_item.get('Name', ''),
-                        'file': file_info
+                        'files': []
                     }
+                
+                for source in media_sources:
+                    episodes_info[ep_num]['files'].append({
+                        'path': source.get('Path', ''),
+                        'name': source.get('Name', ''),
+                        'size': source.get('Size', 0),
+                        'container': source.get('Container', ''),
+                    })
         
         return episodes_info
 
@@ -239,22 +236,21 @@ class EmbyClient:
         
         movie_item = movie_result['matched_items'][0]
         media_sources = movie_item.get('MediaSources', [])
-        file_info = None
+        files = []
         
-        if media_sources:
-            source = media_sources[0]
-            file_info = {
+        for source in media_sources:
+            files.append({
                 'path': source.get('Path', ''),
                 'name': source.get('Name', ''),
                 'size': source.get('Size', 0),
                 'container': source.get('Container', ''),
-            }
+            })
         
         return {
             'exists': True,
             'item_id': movie_item.get('Id'),
             'name': movie_item.get('Name', ''),
-            'file': file_info
+            'files': files
         }
 
     def get_series_library_status(self, tmdb_id: str, seasons_info: List[Dict] = None) -> Dict:
