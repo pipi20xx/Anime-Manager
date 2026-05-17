@@ -18,7 +18,8 @@ const emit = defineEmits(['update:show', 'finish'])
 const {
   loading, submitting, weeklyData, templates, selectedTemplate, selectedIds,
   manualId, manualItems,
-  fetchData, addManualItem, handleBatchSubscribe
+  fetchData, addManualItem, handleBatchSubscribe,
+  renderReady, activeTab
 } = useBangumiQuickSub(props, emit)
 </script>
 
@@ -56,8 +57,8 @@ const {
             </n-gi>
           </n-grid>
 
-          <n-checkbox-group v-model:value="selectedIds">
-            <n-tabs type="line" animated>
+          <n-checkbox-group v-model:value="selectedIds" v-if="renderReady && weeklyData.length > 0">
+            <n-tabs type="line" animated v-model:value="activeTab">
               <n-tab-pane v-for="day in weeklyData" :key="day.weekday.id" :name="day.weekday.id" :tab="day.weekday.cn">
                 <div class="anime-grid">
                   <div v-for="item in day.items" :key="item.id" class="anime-item" :class="{ 'is-subbed': item.isSubscribed }">

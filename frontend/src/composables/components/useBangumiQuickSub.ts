@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useMessage } from 'naive-ui'
 
 export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
@@ -15,6 +15,8 @@ export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
 
   const manualId = ref('')
   const manualItems = ref<any[]>([])
+  const renderReady = ref(false)
+  const activeTab = ref<string | number>('')
 
   const fetchData = async () => {
     loading.value = true
@@ -49,6 +51,10 @@ export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
         }
       }
       selectedIds.value = allUnsubbed
+      if (weeklyData.value.length > 0) {
+        activeTab.value = weeklyData.value[0].weekday.id
+      }
+      renderReady.value = true
     } catch (e) { message.error('加载放送数据失败') }
     finally { loading.value = false }
   }
@@ -83,12 +89,18 @@ export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
   }
 
   watch(() => props.show, (val) => {
-    if (val) { manualItems.value = []; fetchData() }
+    if (val) { 
+      renderReady.value = false
+      activeTab.value = ''
+      manualItems.value = []; 
+      fetchData() 
+    }
   })
 
   return {
     loading, submitting, weeklyData, templates, selectedTemplate, selectedIds,
     manualId, manualItems,
-    fetchData, addManualItem, handleBatchSubscribe
+    fetchData, addManualItem, handleBatchSubscribe,
+    renderReady, activeTab
   }
 }
