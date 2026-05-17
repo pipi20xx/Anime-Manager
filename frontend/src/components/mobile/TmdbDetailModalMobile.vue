@@ -45,7 +45,9 @@ const {
   formatFileSize,
   embyStatus,
   isInLibrary,
-  getSeasonLibraryStatus
+  getSeasonLibraryStatus,
+  recommendations,
+  handleRecClick
 } = useTmdbDetail(props, emit)
 </script>
 
@@ -201,6 +203,22 @@ const {
                    </div>
                 </div>
              </div>
+
+             <div v-if="recommendations.length" class="section">
+                <h3>相关推荐</h3>
+                <div class="rec-scroll">
+                   <div v-for="rec in recommendations" :key="rec.id" class="rec-card" @click="handleRecClick(rec)">
+                      <div class="rec-poster">
+                         <img :src="getPoster(rec.poster_path)" loading="lazy" />
+                      </div>
+                      <div class="rec-title">{{ rec.title || rec.name }}</div>
+                      <div class="rec-meta">
+                         <span v-if="rec.vote_average" class="rec-rating">⭐ {{ rec.vote_average.toFixed(1) }}</span>
+                         <span class="rec-year">{{ (rec.release_date || rec.first_air_date || '').slice(0, 4) }}</span>
+                      </div>
+                   </div>
+                </div>
+             </div>
           </div>
           
           <div style="height: var(--m-spacing-2xl);"></div> <!-- Bottom spacer -->
@@ -300,4 +318,13 @@ const {
 .emby-filename { word-break: break-all; }
 .emby-size { color: var(--text-secondary); font-weight: 500; }
 .no-eps { text-align: center; color: var(--text-tertiary); font-size: var(--m-text-sm); padding: var(--m-spacing-xl); }
+
+.rec-scroll { display: flex; gap: var(--m-spacing-md); overflow-x: auto; padding-bottom: var(--m-spacing-xs); }
+.rec-card { width: 100px; flex-shrink: 0; }
+.rec-poster { width: 100px; aspect-ratio: 2/3; border-radius: var(--m-radius-sm); overflow: hidden; background: var(--bg-primary); }
+.rec-poster img { width: 100%; height: 100%; object-fit: cover; }
+.rec-title { font-size: var(--m-text-xs); font-weight: 600; color: var(--text-primary); margin-top: var(--m-spacing-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-meta { display: flex; align-items: center; gap: var(--m-spacing-xs); margin-top: 2px; }
+.rec-rating { font-size: 10px; color: var(--color-warning); }
+.rec-year { font-size: 10px; color: var(--text-tertiary); }
 </style>

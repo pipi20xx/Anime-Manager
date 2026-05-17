@@ -55,6 +55,15 @@ async def get_detail_emby_status(media_type: str, tmdb_id: str):
     
     return result
 
+@router.get("/recommendations/{media_type}/{tmdb_id}", summary="获取推荐内容")
+async def get_recommendations(media_type: str, tmdb_id: str):
+    """
+    获取指定作品的推荐内容。
+    """
+    result = await TMDBProvider().get_recommendations(tmdb_id, media_type)
+    log_audit("TMDB", "推荐", f"获取推荐: {media_type}/{tmdb_id}")
+    return result
+
 @router.get("/season/{tmdb_id}/{season_number}", summary="获取季度集信息")
 async def get_season_episodes(tmdb_id: str, season_number: int):
     """

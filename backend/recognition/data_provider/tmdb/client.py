@@ -250,6 +250,31 @@ class TMDBProvider:
         
         return {"season_info": season_info, "episodes": episodes}
 
+    async def get_recommendations(self, tmdb_id: str, media_type: str, logs: Any = None) -> List[Dict]:
+        """
+        获取推荐内容
+        """
+        cache_key = f"tmdb:recommendations:{media_type}:{tmdb_id}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached: return cached
+
+        endpoint_type = "tv" if media_type in ["tv", "series", "剧集"] else "movie"
+        data, success = await self._fetch(f"/{endpoint_type}/{tmdb_id}/recommendations", logs=logs)
+        
+        if not success or not data:
+            return []
+        
+        results = data.get("results", [])[:10]
+        
+        formatted = []
+        for item in results:
+            normalized = TMDBMatcher.normalize(item, media_type_hint=endpoint_type)
+            if normalized:
+                formatted.append(normalized)
+        
+        await MetaCacheManager.set_discover_cache(cache_key, formatted, expire_hours=24)
+        return formatted
+
     async def search(self, query: str, year: Optional[str], media_type: str, logs: Any = None, lang: str = "zh-CN") -> Tuple[List[Dict], bool]:
         """
         TMDB 搜索接口

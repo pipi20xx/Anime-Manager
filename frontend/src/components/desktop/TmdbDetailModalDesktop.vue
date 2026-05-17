@@ -45,7 +45,9 @@ const {
   formatFileSize,
   embyStatus,
   isInLibrary,
-  getSeasonLibraryStatus
+  getSeasonLibraryStatus,
+  recommendations,
+  handleRecClick
 } = useTmdbDetail(props, emit)
 </script>
 
@@ -204,6 +206,29 @@ const {
                       </div>
                   </div>
               </div>
+
+              <div v-if="recommendations.length" class="recommendations-section">
+                  <h3>相关推荐</h3>
+                  <n-scrollbar x-scrollable>
+                      <div class="rec-list">
+                          <div v-for="rec in recommendations" :key="rec.id" class="rec-item" @click="handleRecClick(rec)">
+                              <div class="rec-poster">
+                                  <n-image :src="getPoster(rec.poster_path)" object-fit="cover" preview-disabled />
+                              </div>
+                              <div class="rec-info">
+                                  <div class="rec-title">{{ rec.title || rec.name }}</div>
+                                  <div class="rec-meta">
+                                      <span v-if="rec.vote_average" class="rec-rating">
+                                          <n-icon size="10"><StarIcon /></n-icon>
+                                          {{ rec.vote_average.toFixed(1) }}
+                                      </span>
+                                      <span class="rec-year">{{ (rec.release_date || rec.first_air_date || '').slice(0, 4) }}</span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </n-scrollbar>
+              </div>
           </div>
         </n-scrollbar>
       </div>
@@ -339,4 +364,17 @@ const {
 .emby-filename { word-break: break-all; }
 .emby-size { color: var(--text-secondary); font-weight: 500; }
 .no-episodes { text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 20px; }
+
+.recommendations-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--app-border-light); }
+.recommendations-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; }
+.rec-list { display: flex; gap: 12px; padding-bottom: 8px; }
+.rec-item { width: 120px; flex-shrink: 0; cursor: pointer; transition: transform 0.2s; }
+.rec-item:hover { transform: translateY(-4px); }
+.rec-poster { width: 120px; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; background: var(--bg-primary); box-shadow: 0 4px 12px var(--shadow-medium); }
+.rec-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
+.rec-info { padding: 8px 4px; }
+.rec-title { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.rec-rating { display: flex; align-items: center; gap: 2px; font-size: 10px; color: var(--color-warning); }
+.rec-year { font-size: 10px; color: var(--text-tertiary); }
 </style>

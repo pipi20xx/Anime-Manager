@@ -14,6 +14,9 @@ export function useTmdbDetail(props: any, emit: any) {
   const seasonEmbyInfo = ref<Map<string, any>>(new Map())
   const loadingSeasons = ref<Set<string>>(new Set())
   const embyStatus = ref<any>(null)
+  const recommendations = ref<any[]>([])
+  const currentTmdbId = ref<string | number>('')
+  const currentMediaType = ref<string>('')
 
   const fetchSubscriptions = async () => {
     try {
@@ -47,15 +50,23 @@ export function useTmdbDetail(props: any, emit: any) {
   const getPoster = (path: string) => getImg(path)
   const getBackdrop = (path: string) => getImg(path)
 
-  const fetchDetail = async () => {
-    if (!props.tmdbId) return
+  const fetchDetail = async (tmdbId?: string | number, mediaType?: string) => {
+    const id = tmdbId || currentTmdbId.value || props.tmdbId
+    const type = mediaType || currentMediaType.value || props.mediaType
+    
+    if (!id) return
+    
+    currentTmdbId.value = id
+    currentMediaType.value = type
+    
     loading.value = true
     fetchSubscriptions()
     try {
-      const type = props.mediaType === '电影' ? 'movie' : (props.mediaType === 'movie' ? 'movie' : 'tv')
-      const [detailRes, embyRes] = await Promise.all([
-        fetch(`${API_BASE}/api/tmdb/detail/${type}/${props.tmdbId}`),
-        fetch(`${API_BASE}/api/tmdb/detail/${type}/${props.tmdbId}/emby`)
+      const apiType = type === '电影' || type === 'movie' ? 'movie' : 'tv'
+      const [detailRes, embyRes, recRes] = await Promise.all([
+        fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}`),
+        fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}/emby`),
+        fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`)
       ])
       
       if (detailRes.ok) {
@@ -67,6 +78,10 @@ export function useTmdbDetail(props: any, emit: any) {
       if (embyRes.ok) {
         embyStatus.value = await embyRes.json()
       }
+      
+      if (recRes.ok) {
+        recommendations.value = await recRes.json()
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -76,7 +91,14 @@ export function useTmdbDetail(props: any, emit: any) {
 
   watch(() => props.show, (val) => {
     if (val) {
+        currentTmdbId.value = props.tmdbId
+        currentMediaType.value = props.mediaType
         detail.value = props.initialData || null
+        expandedSeasons.value = new Set()
+        seasonEpisodes.value = new Map()
+        seasonEmbyInfo.value = new Map()
+        recommendations.value = []
+        embyStatus.value = null
         fetchDetail()
     }
   })
@@ -86,16 +108,16 @@ export function useTmdbDetail(props: any, emit: any) {
   }
 
   const openExternal = () => {
-      const type = props.mediaType === 'movie' || props.mediaType === '电影' ? 'movie' : 'tv'
-      window.open(`https://www.themoviedb.org/${type}/${props.tmdbId}`, '_blank')
+      const type = currentMediaType.value === 'movie' || currentMediaType.value === '电影' ? 'movie' : 'tv'
+      window.open(`https://www.themoviedb.org/${type}/${currentTmdbId.value}`, '_blank')
   }
 
   const handleSubscribe = () => {
       if (!detail.value) return
-      const type = props.mediaType === '电影' ? 'movie' : (props.mediaType === 'movie' ? 'movie' : 'tv')
+      const type = currentMediaType.value === '电影' || currentMediaType.value === 'movie' ? 'movie' : 'tv'
       navigateToSubscription({
           type: 'tmdb',
-          tmdbId: props.tmdbId,
+          tmdbId: currentTmdbId.value,
           mediaType: type as 'movie' | 'tv',
           title: detail.value.title || detail.value.name
       })
@@ -107,7 +129,8 @@ export function useTmdbDetail(props: any, emit: any) {
   }
 
   const toggleSeason = async (seasonNumber: number) => {
-    const key = `${props.tmdbId}-${seasonNumber}`
+    const tmdbId = currentTmdbId.value || props.tmdbId
+    const key = `${tmdbId}-${seasonNumber}`
     
     if (expandedSeasons.value.has(seasonNumber)) {
       expandedSeasons.value.delete(seasonNumber)
@@ -124,8 +147,8 @@ export function useTmdbDetail(props: any, emit: any) {
       
       try {
         const [tmdbRes, embyRes] = await Promise.all([
-          fetch(`${API_BASE}/api/tmdb/season/${props.tmdbId}/${seasonNumber}`),
-          fetch(`${API_BASE}/api/tmdb/season/${props.tmdbId}/${seasonNumber}/emby`)
+          fetch(`${API_BASE}/api/tmdb/season/${tmdbId}/${seasonNumber}`),
+          fetch(`${API_BASE}/api/tmdb/season/${tmdbId}/${seasonNumber}/emby`)
         ])
         
         if (tmdbRes.ok) {
@@ -149,19 +172,22 @@ export function useTmdbDetail(props: any, emit: any) {
   }
 
   const getSeasonInfo = (seasonNumber: number) => {
-    const key = `${props.tmdbId}-${seasonNumber}`
+    const tmdbId = currentTmdbId.value || props.tmdbId
+    const key = `${tmdbId}-${seasonNumber}`
     const data = seasonEpisodes.value.get(key)
     return data?.season_info || null
   }
 
   const getSeasonEpisodes = (seasonNumber: number) => {
-    const key = `${props.tmdbId}-${seasonNumber}`
+    const tmdbId = currentTmdbId.value || props.tmdbId
+    const key = `${tmdbId}-${seasonNumber}`
     const data = seasonEpisodes.value.get(key)
     return data?.episodes || []
   }
 
   const isSeasonLoading = (seasonNumber: number) => {
-    const key = `${props.tmdbId}-${seasonNumber}`
+    const tmdbId = currentTmdbId.value || props.tmdbId
+    const key = `${tmdbId}-${seasonNumber}`
     return loadingSeasons.value.has(key)
   }
 
@@ -170,7 +196,8 @@ export function useTmdbDetail(props: any, emit: any) {
   }
 
   const getEpisodeEmbyInfo = (seasonNumber: number, episodeNumber: number) => {
-    const key = `${props.tmdbId}-${seasonNumber}`
+    const tmdbId = currentTmdbId.value || props.tmdbId
+    const key = `${tmdbId}-${seasonNumber}`
     const embyData = seasonEmbyInfo.value.get(key)
     return embyData?.[episodeNumber] || null
   }
@@ -195,6 +222,19 @@ export function useTmdbDetail(props: any, emit: any) {
     return embyStatus.value?.seasons?.[seasonNumber] || null
   }
 
+  const handleRecClick = (rec: any) => {
+    const type = rec.media_type === 'movie' ? 'movie' : 'tv'
+    
+    detail.value = rec
+    expandedSeasons.value = new Set()
+    seasonEpisodes.value = new Map()
+    seasonEmbyInfo.value = new Map()
+    recommendations.value = []
+    embyStatus.value = null
+    
+    fetchDetail(rec.id, type)
+  }
+
   return {
     loading,
     detail,
@@ -215,6 +255,8 @@ export function useTmdbDetail(props: any, emit: any) {
     formatFileSize,
     embyStatus,
     isInLibrary,
-    getSeasonLibraryStatus
+    getSeasonLibraryStatus,
+    recommendations,
+    handleRecClick
   }
 }
