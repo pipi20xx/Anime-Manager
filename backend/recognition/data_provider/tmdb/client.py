@@ -67,12 +67,25 @@ class TMDBProvider:
                 return None, False
 
     @staticmethod
-    def _proxy_img(path: Optional[str]) -> Optional[str]:
+    def _proxy_img(path: Optional[str], size: str = "w500") -> Optional[str]:
+        """
+        将 TMDB 图片路径转换为本地代理路径，并指定尺寸
+        
+        :param path: 原始图片路径，如 /abc.jpg
+        :param size: 图片尺寸，可选值: w185/w300/w500/w780/w1280/original
+                     - w185: 演员头像
+                     - w300: 剧集截图、小卡片
+                     - w500: 海报卡片 (默认)
+                     - w780: 详情页海报
+                     - w1280: 背景图
+                     - original: 原始尺寸
+        """
         if not path: return None
-        # 如果已经是代理路径（无论是 img 还是 bgm_img），或者已经是完整 URL，保持原样
         if "/api/system/" in path or path.startswith("http"): return path
         from urllib.parse import quote
-        return f"/api/system/img?path={quote(path)}"
+        if path.startswith("/w") or path.startswith("/original"):
+            return f"/api/system/img?path={quote(path)}"
+        return f"/api/system/img?path={quote(f'/{size}{path}')}"
 
     async def discover(self, media_type: str, params: Dict[str, Any], logs: Any = None) -> Dict:
         """
@@ -119,7 +132,7 @@ class TMDBProvider:
             for i in data.get("results", []):
                 norm = TMDBMatcher.normalize(i, media_type_hint=media_type)
                 norm["poster_path"] = self._proxy_img(norm["poster_path"])
-                norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"])
+                norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"], "w1280")
                 all_results.append(norm)
             
             # 更新统计信息 (取最大的那个响应的 total_pages)
@@ -156,12 +169,12 @@ class TMDBProvider:
             if i < len(movies): 
                 norm = TMDBMatcher.normalize(movies[i], "movie")
                 norm["poster_path"] = self._proxy_img(norm["poster_path"])
-                norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"])
+                norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"], "w1280")
                 results.append(norm)
             if i < len(tvs): 
                 norm = TMDBMatcher.normalize(tvs[i], "tv")
                 norm["poster_path"] = self._proxy_img(norm["poster_path"])
-                norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"])
+                norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"], "w1280")
                 results.append(norm)
             
         resp_data = {"results": results[:20]}
@@ -178,7 +191,7 @@ class TMDBProvider:
         for i in (data or {}).get("results", []):
             norm = TMDBMatcher.normalize(i, media_type_hint=media_type)
             norm["poster_path"] = self._proxy_img(norm["poster_path"])
-            norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"])
+            norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"], "w1280")
             results.append(norm)
         
         resp_data = {"results": results}
@@ -198,15 +211,15 @@ class TMDBProvider:
             cast_list.append({
                 "character": c.get("character"),
                 "actor": c.get("name"),
-                "image": self._proxy_img(c.get("profile_path"))
+                "image": self._proxy_img(c.get("profile_path"), "w185")
             })
         
         external_ids = data.get("external_ids", {})
         imdb_id = external_ids.get("imdb_id") or data.get("imdb_id")
         
         norm = TMDBMatcher.normalize(data, media_type_hint=media_type)
-        norm["poster_path"] = self._proxy_img(norm["poster_path"])
-        norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"])
+        norm["poster_path"] = self._proxy_img(norm["poster_path"], "w780")
+        norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"], "w1280")
         norm["genres"] = [g.get("name") for g in data.get("genres", [])]
         norm["tagline"] = data.get("tagline")
         norm["cast"] = cast_list
@@ -237,7 +250,7 @@ class TMDBProvider:
                 "name": ep.get("name"),
                 "overview": ep.get("overview"),
                 "air_date": ep.get("air_date"),
-                "still_path": self._proxy_img(ep.get("still_path")),
+                "still_path": self._proxy_img(ep.get("still_path"), "w300"),
                 "vote_average": ep.get("vote_average"),
                 "vote_count": ep.get("vote_count"),
                 "runtime": ep.get("runtime"),
@@ -248,7 +261,7 @@ class TMDBProvider:
             "name": data.get("name"),
             "overview": data.get("overview"),
             "air_date": data.get("air_date"),
-            "poster_path": self._proxy_img(data.get("poster_path")),
+            "poster_path": self._proxy_img(data.get("poster_path"), "w500"),
             "season_number": data.get("season_number"),
             "vote_average": data.get("vote_average")
         }
@@ -276,6 +289,8 @@ class TMDBProvider:
             item_media_type = item.get("media_type") or endpoint_type
             normalized = TMDBMatcher.normalize(item, media_type_hint=item_media_type)
             if normalized:
+                normalized["poster_path"] = self._proxy_img(normalized.get("poster_path"))
+                normalized["backdrop_path"] = self._proxy_img(normalized.get("backdrop_path"), "w1280")
                 formatted.append(normalized)
         
         await MetaCacheManager.set_discover_cache(cache_key, formatted, expire_hours=24)

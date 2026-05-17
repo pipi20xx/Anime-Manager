@@ -283,47 +283,45 @@ async def trigger_stalled_check():
         raise HTTPException(500, detail=str(e))
 
 @router.get("/img", summary="TMDB 图片本地代理")
-async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (例如 /abc.jpg)")):
+async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (例如 /w500/abc.jpg 或 /abc.jpg)")):
     """
     代理下载 TMDB 图片，并缓存至本地 data/tmp/tmdbimg。
+    支持尺寸参数：/w185/abc.jpg, /w300/abc.jpg, /w500/abc.jpg, /w780/abc.jpg, /w1280/abc.jpg, /original/abc.jpg
     """
-    # 鲁棒性处理：防止套娃 (Nested Proxy Calls)
-    # 如果 path 已经是一个完整的代理 URL 或包含 Bangumi 域名，说明传参错了
     if "/api/system/" in path or "http" in path or "lain.bgm.tv" in path:
-        # 如果是套娃请求，尝试提取最深层的原始路径，或者干脆报错防止文件系统混乱
         if "path=" in path:
              path = path.split("path=")[-1]
         elif "url=" in path:
-             # 如果误传了 BGM 的代理链接进来，直接报错拒绝，以免在 tmdbimg 目录下创建乱七八糟的文件夹
              raise HTTPException(status_code=400, detail="Invalid TMDB path (BGM link detected)")
         else:
-             # 这种可能是非法的或者格式错误的路径
              raise HTTPException(status_code=400, detail=f"Invalid TMDB path format: {path}")
 
-    # 清洗路径：去掉可能存在的尺寸前缀
+    size = "original"
     clean_path = path
+    
     size_match = re.match(r"^/(w\d+|original)(/.*)$", path)
     if size_match:
+        size = size_match.group(1)
         clean_path = size_match.group(2)
     
     if not clean_path.startswith("/"):
         clean_path = "/" + clean_path
     
-    # 防止路径穿越
     if ".." in clean_path:
         raise HTTPException(status_code=400, detail="Invalid path")
     
-    # 定义本地存储路径
     cache_dir = "data/tmp/tmdbimg"
-    local_file = os.path.join(cache_dir, clean_path.lstrip("/"))
+    if size != "original":
+        cache_subdir = os.path.join(cache_dir, size)
+    else:
+        cache_subdir = cache_dir
+    local_file = os.path.join(cache_subdir, clean_path.lstrip("/"))
     
-    # 1. 命中缓存直接返回
     if os.path.exists(local_file):
         return FileResponse(local_file)
     
-    # 2. 未命中缓存，从 TMDB 下载原图
     os.makedirs(os.path.dirname(local_file), exist_ok=True)
-    tmdb_url = f"https://image.tmdb.org/t/p/original{clean_path}"
+    tmdb_url = f"https://image.tmdb.org/t/p/{size}{clean_path}"
     
     proxy = ConfigManager.get_proxy("tmdb")
     
@@ -335,7 +333,6 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
                     f.write(resp.content)
                 return Response(content=resp.content, media_type="image/jpeg")
             else:
-                # 记录错误但不崩溃
                 print(f"[IMG PROXY ERROR] Failed to download {tmdb_url}: {resp.status_code}")
                 raise HTTPException(status_code=404, detail="TMDB 图片未找到")
         except Exception as e:
