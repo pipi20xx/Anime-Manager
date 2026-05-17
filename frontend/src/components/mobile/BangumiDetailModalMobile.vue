@@ -9,7 +9,8 @@ import {
   AddCircleOutlined as SubIcon,
   PersonOutlined as CastIcon,
   SearchOutlined as SearchIcon,
-  ArrowBackOutlined as BackIcon
+  ArrowBackOutlined as BackIcon,
+  CompareArrowsOutlined as MatchIcon
 } from '@vicons/material'
 import { useBangumiDetail } from '../../composables/components/useBangumiDetail'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -26,10 +27,12 @@ const {
   loading,
   detail,
   isSubscribed,
+  matchingTmdb,
   getImg,
   handleClose,
   openExternal,
   handleSubscribe,
+  matchTmdb,
   triggerGlobalSearch
 } = useBangumiDetail(props, emit)
 </script>
@@ -76,10 +79,15 @@ const {
                 {{ isSubscribed ? '已订阅' : '订阅此番' }}
              </n-button>
              <n-space justify="space-between" style="width: 100%; margin-top: var(--m-spacing-md);">
+                <n-button flex="1" v-bind="getButtonStyle('secondary')" :loading="matchingTmdb" @click="matchTmdb">
+                   <template #icon><n-icon><MatchIcon/></n-icon></template> 查看 TMDB
+                </n-button>
                 <n-button flex="1" v-bind="getButtonStyle('secondary')" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
                    <template #icon><n-icon><SearchIcon/></n-icon></template> 搜资源
                 </n-button>
-                <n-button flex="1" v-bind="getButtonStyle('secondary')" @click="openExternal">
+             </n-space>
+             <n-space justify="center" style="width: 100%; margin-top: var(--m-spacing-sm);">
+                <n-button v-bind="getButtonStyle('secondary')" @click="openExternal">
                    <template #icon><n-icon><LinkIcon/></n-icon></template> Bangumi
                 </n-button>
              </n-space>

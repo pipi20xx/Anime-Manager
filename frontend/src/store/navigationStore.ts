@@ -51,3 +51,26 @@ export const logout = () => {
   isLoggedIn.value = false
   username.value = ''
 }
+
+export interface TmdbDetailState {
+  show: boolean
+  id: string | number
+  type: string
+  initial: any
+}
+
+export const tmdbDetailState = ref<TmdbDetailState>({
+  show: false,
+  id: '',
+  type: 'tv',
+  initial: null
+})
+
+export const openTmdbDetail = (id: string | number, type: string = 'tv', initial: any = null) => {
+  tmdbDetailState.value = {
+    show: true,
+    id,
+    type,
+    initial
+  }
+}

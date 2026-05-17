@@ -1,4 +1,5 @@
 import { ref, reactive } from 'vue'
+import { tmdbDetailState } from '../../store/navigationStore'
 
 export function useSearch() {
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -13,12 +14,7 @@ export function useSearch() {
       tmdb_tv: [] as any[]
   })
 
-  const tmdbDetail = reactive({
-      show: false,
-      id: '' as string | number,
-      type: 'tv',
-      initial: null as any
-  })
+  const tmdbDetail = tmdbDetailState
 
   const bgmDetail = reactive({
       show: false,

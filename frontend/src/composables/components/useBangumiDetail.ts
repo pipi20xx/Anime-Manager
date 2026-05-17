@@ -1,6 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { useMessage } from 'naive-ui'
-import { navigateToSubscription, triggerGlobalSearch } from '../../store/navigationStore'
+import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail } from '../../store/navigationStore'
 
 export function useBangumiDetail(props: any, emit: any) {
   const message = useMessage()
@@ -9,6 +9,7 @@ export function useBangumiDetail(props: any, emit: any) {
   const loading = ref(false)
   const detail = ref<any>(null)
   const subscriptions = ref<any[]>([])
+  const matchingTmdb = ref(false)
 
   const getImg = (path: string) => {
     if (!path) return ''
@@ -119,15 +120,47 @@ export function useBangumiDetail(props: any, emit: any) {
       }
   }
 
+  const matchTmdb = async () => {
+      if (!props.subjectId) return
+      matchingTmdb.value = true
+      
+      try {
+          const res = await fetch(`${API_BASE}/api/bangumi/match_tmdb/${props.subjectId}`)
+          const data = await res.json()
+          
+          if (data.success && data.tmdb_id) {
+              message.success(`已匹配到 TMDB: ${data.title}`)
+              emit('update:show', false)
+              setTimeout(() => {
+                  openTmdbDetail(data.tmdb_id, data.media_type || 'tv', {
+                      title: data.title,
+                      poster_path: data.poster_path,
+                      vote_average: null,
+                      year: data.year
+                  })
+              }, 200)
+          } else {
+              message.warning('未能找到匹配的 TMDB 条目')
+          }
+      } catch (e) {
+          console.error(e)
+          message.error('匹配 TMDB 失败')
+      } finally {
+          matchingTmdb.value = false
+      }
+  }
+
   return {
     loading,
     detail,
     isSubscribed,
+    matchingTmdb,
     getImg,
     fetchDetail,
     handleClose,
     openExternal,
     handleSubscribe,
+    matchTmdb,
     triggerGlobalSearch
   }
 }

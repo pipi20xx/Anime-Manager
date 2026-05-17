@@ -1,5 +1,6 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { tmdbDetailState } from '../../store/navigationStore'
 
 export function useRecommend() {
   const message = useMessage()
@@ -14,12 +15,7 @@ export function useRecommend() {
     loading: false
   })
 
-  const tmdbDetail = reactive({
-      show: false,
-      id: '' as string | number,
-      type: 'tv',
-      initial: null as any
-  })
+  const tmdbDetail = tmdbDetailState
 
   const bgmDetail = reactive({
       show: false,

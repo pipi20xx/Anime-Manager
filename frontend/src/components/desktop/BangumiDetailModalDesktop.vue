@@ -8,7 +8,8 @@ import {
   LinkOutlined as LinkIcon,
   AddCircleOutlined as SubIcon,
   PersonOutlined as CastIcon,
-  SearchOutlined as SearchIcon
+  SearchOutlined as SearchIcon,
+  CompareArrowsOutlined as MatchIcon
 } from '@vicons/material'
 import { useBangumiDetail } from '../../composables/components/useBangumiDetail'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -25,10 +26,12 @@ const {
   loading,
   detail,
   isSubscribed,
+  matchingTmdb,
   getImg,
   handleClose,
   openExternal,
   handleSubscribe,
+  matchTmdb,
   triggerGlobalSearch
 } = useBangumiDetail(props, emit)
 </script>
@@ -69,6 +72,10 @@ const {
                       <div class="actions">
                           <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSubscribe" :disabled="isSubscribed">
                               {{ isSubscribed ? '已在订阅中' : '订阅此番' }}
+                          </n-button>
+                          <n-button v-bind="getButtonStyle('primary')" size="small" :loading="matchingTmdb" @click="matchTmdb">
+                              <template #icon><n-icon><MatchIcon /></n-icon></template>
+                              查看 TMDB
                           </n-button>
                           <n-button v-bind="getButtonStyle('primary')" size="small" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
                               搜资源

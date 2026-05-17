@@ -1,4 +1,5 @@
 import { reactive, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { tmdbDetailState } from '../../store/navigationStore'
 
 export function useDiscovery() {
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -36,12 +37,7 @@ export function useDiscovery() {
       hasMore: true
   })
 
-  const tmdbDetail = reactive({
-      show: false,
-      id: '' as string | number,
-      type: 'tv',
-      initial: null as any
-  })
+  const tmdbDetail = tmdbDetailState
 
   const bgmDetail = reactive({
       show: false,
