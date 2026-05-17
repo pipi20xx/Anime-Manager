@@ -34,6 +34,7 @@ const {
   getBackdrop,
   handleClose,
   openExternal,
+  openImdb,
   handleSubscribe,
   handleSearch,
   toggleSeason,
@@ -89,6 +90,30 @@ const {
                          {{ detail.vote_average?.toFixed(1) }}
                       </n-tag>
                       <span class="meta-date">{{ detail.release_date || detail.first_air_date }}</span>
+                      <span v-if="detail.number_of_seasons" class="meta-seasons">{{ detail.number_of_seasons }}季</span>
+                      <span v-if="detail.number_of_episodes" class="meta-episodes">{{ detail.number_of_episodes }}集</span>
+                   </div>
+                   <div class="hero-info-grid">
+                      <div class="info-row" @click="openExternal">
+                         <span class="info-label">TMDB ID</span>
+                         <span class="info-val link">{{ detail.id }}</span>
+                      </div>
+                      <div v-if="detail.imdb_id" class="info-row" @click="openImdb(detail.imdb_id)">
+                         <span class="info-label">IMDb ID</span>
+                         <span class="info-val link">{{ detail.imdb_id }}</span>
+                      </div>
+                      <div v-if="detail.status" class="info-row">
+                         <span class="info-label">状态</span>
+                         <span class="info-val">{{ detail.status }}</span>
+                      </div>
+                      <div v-if="detail.origin_country?.length" class="info-row">
+                         <span class="info-label">地区</span>
+                         <span class="info-val">{{ detail.origin_country.join(', ') }}</span>
+                      </div>
+                      <div v-if="detail.original_language" class="info-row">
+                         <span class="info-label">语言</span>
+                         <span class="info-val">{{ detail.original_language.toUpperCase() }}</span>
+                      </div>
                    </div>
                 </div>
              </div>
@@ -100,14 +125,9 @@ const {
                 <template #icon><n-icon><SubIcon/></n-icon></template>
                 {{ isSubscribed ? '已订阅' : '订阅' }}
              </n-button>
-             <n-space justify="space-between" style="width: 100%; margin-top: var(--m-spacing-md);">
-                <n-button flex="1" v-bind="getButtonStyle('secondary')" @click="handleSearch">
-                   <template #icon><n-icon><SearchIcon/></n-icon></template> 搜资源
-                </n-button>
-                <n-button flex="1" v-bind="getButtonStyle('secondary')" @click="openExternal">
-                   <template #icon><n-icon><LinkIcon/></n-icon></template> TMDB
-                </n-button>
-             </n-space>
+             <n-button block style="margin-top: var(--m-spacing-md);" v-bind="getButtonStyle('secondary')" @click="handleSearch">
+                <template #icon><n-icon><SearchIcon/></n-icon></template> 搜资源
+             </n-button>
           </div>
 
           <!-- Body Content -->
@@ -247,9 +267,16 @@ const {
 .hero-info { flex: 1; min-width: 0; margin-bottom: var(--m-spacing-xs); }
 .hero-title-row { display: flex; align-items: center; gap: var(--m-spacing-sm); flex-wrap: wrap; }
 .hero-title { margin: 0; font-size: var(--m-text-2xl); font-weight: 900; color: var(--text-primary); line-height: 1.2; text-shadow: 0 2px 4px var(--shadow-xheavy); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.hero-meta { display: flex; align-items: center; gap: var(--m-spacing-sm); margin-top: var(--m-spacing-sm); }
+.hero-meta { display: flex; align-items: center; gap: var(--m-spacing-sm); margin-top: var(--m-spacing-sm); flex-wrap: wrap; }
 .meta-date { font-size: var(--m-text-sm); color: var(--text-secondary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
+.meta-seasons, .meta-episodes { font-size: var(--m-text-xs); color: var(--text-tertiary); text-shadow: 0 1px 2px var(--shadow-xheavy); }
 .rating-tag { background: var(--color-warning); color: var(--text-primary); font-weight: bold; }
+
+.hero-info-grid { display: flex; flex-wrap: wrap; gap: var(--m-spacing-sm) var(--m-spacing-md); margin-top: var(--m-spacing-md); }
+.info-row { display: flex; align-items: center; gap: var(--m-spacing-xs); }
+.info-label { font-size: var(--m-text-xs); color: var(--text-tertiary); }
+.info-val { font-size: var(--m-text-xs); color: var(--text-primary); font-weight: 500; }
+.info-val.link { color: var(--n-primary-color); }
 
 .actions-bar { padding: 0 var(--m-spacing-xl) var(--m-spacing-xl); }
 

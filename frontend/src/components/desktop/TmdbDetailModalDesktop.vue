@@ -34,6 +34,7 @@ const {
   getBackdrop,
   handleClose,
   openExternal,
+  openImdb,
   handleSubscribe,
   handleSearch,
   toggleSeason,
@@ -88,7 +89,33 @@ const {
                           <n-tag v-if="detail.number_of_seasons" type="info" size="small" round>
                               {{ detail.number_of_seasons }} 季
                           </n-tag>
+                          <n-tag v-if="detail.number_of_episodes" type="info" size="small" round>
+                              {{ detail.number_of_episodes }} 集
+                          </n-tag>
                       </n-space>
+
+                      <div class="info-grid">
+                          <div class="info-item">
+                              <span class="info-label">TMDB ID</span>
+                              <span class="info-value link" @click="openExternal">{{ detail.id }}</span>
+                          </div>
+                          <div v-if="detail.imdb_id" class="info-item">
+                              <span class="info-label">IMDb ID</span>
+                              <span class="info-value link" @click="openImdb(detail.imdb_id)">{{ detail.imdb_id }}</span>
+                          </div>
+                          <div v-if="detail.status" class="info-item">
+                              <span class="info-label">状态</span>
+                              <span class="info-value">{{ detail.status }}</span>
+                          </div>
+                          <div v-if="detail.origin_country?.length" class="info-item">
+                              <span class="info-label">地区</span>
+                              <span class="info-value">{{ detail.origin_country.join(', ') }}</span>
+                          </div>
+                          <div v-if="detail.original_language" class="info-item">
+                              <span class="info-label">语言</span>
+                              <span class="info-value">{{ detail.original_language.toUpperCase() }}</span>
+                          </div>
+                      </div>
 
                       <div class="actions">
                           <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSubscribe" :disabled="isSubscribed">
@@ -96,9 +123,6 @@ const {
                           </n-button>
                           <n-button v-bind="getButtonStyle('primary')" size="small" @click="handleSearch">
                               搜资源
-                          </n-button>
-                          <n-button v-bind="getButtonStyle('icon')" size="small" @click="openExternal">
-                              <template #icon><n-icon><LinkIcon /></n-icon></template>
                           </n-button>
                       </div>
                   </div>
@@ -260,6 +284,12 @@ const {
 .original-title { font-size: 13px; color: var(--text-tertiary); margin-bottom: 4px; }
 .tagline { font-size: 14px; font-style: italic; color: var(--n-primary-color); margin-bottom: 12px; opacity: var(--opacity-primary); }
 .meta-tags { margin-bottom: 15px; }
+.info-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 15px; }
+.info-item { display: flex; align-items: center; gap: 6px; }
+.info-label { font-size: 11px; color: var(--text-tertiary); }
+.info-value { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+.info-value.link { color: var(--n-primary-color); cursor: pointer; }
+.info-value.link:hover { text-decoration: underline; }
 .actions { display: flex; gap: 10px; }
 
 .body-content { padding: 30px 32px 32px 32px; }

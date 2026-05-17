@@ -112,6 +112,10 @@ export function useTmdbDetail(props: any, emit: any) {
       window.open(`https://www.themoviedb.org/${type}/${currentTmdbId.value}`, '_blank')
   }
 
+  const openImdb = (imdbId: string) => {
+      window.open(`https://www.imdb.com/title/${imdbId}`, '_blank')
+  }
+
   const handleSubscribe = () => {
       if (!detail.value) return
       const type = currentMediaType.value === '电影' || currentMediaType.value === 'movie' ? 'movie' : 'tv'
@@ -244,6 +248,7 @@ export function useTmdbDetail(props: any, emit: any) {
     getBackdrop,
     handleClose,
     openExternal,
+    openImdb,
     handleSubscribe,
     handleSearch,
     toggleSeason,

@@ -190,7 +190,7 @@ class TMDBProvider:
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached
 
-        data, _ = await self._fetch(f"/{media_type}/{tmdb_id}", {"append_to_response": "credits"}, logs=logs)
+        data, _ = await self._fetch(f"/{media_type}/{tmdb_id}", {"append_to_response": "credits,external_ids"}, logs=logs)
         if not data: return None
         
         cast_list = []
@@ -201,12 +201,17 @@ class TMDBProvider:
                 "image": self._proxy_img(c.get("profile_path"))
             })
         
+        external_ids = data.get("external_ids", {})
+        imdb_id = external_ids.get("imdb_id") or data.get("imdb_id")
+        
         norm = TMDBMatcher.normalize(data, media_type_hint=media_type)
         norm["poster_path"] = self._proxy_img(norm["poster_path"])
         norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"])
         norm["genres"] = [g.get("name") for g in data.get("genres", [])]
         norm["tagline"] = data.get("tagline")
         norm["cast"] = cast_list
+        if imdb_id:
+            norm["imdb_id"] = imdb_id
         
         result = {**data, **norm}
         
