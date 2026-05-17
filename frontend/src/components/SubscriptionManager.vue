@@ -27,6 +27,7 @@ import SubscriptionHistoryModal from './SubscriptionHistoryModal.vue'
 import SubscriptionTemplateModal from './SubscriptionTemplateModal.vue'
 import BangumiQuickSubscribeModal from './BangumiQuickSubscribeModal.vue'
 import PriorityRuleModal from './PriorityRuleModal.vue'
+import RssDetectManagerDesktop from './desktop/RssDetectManagerDesktop.vue'
 
 const props = defineProps<{
   clients: any[]
@@ -43,6 +44,7 @@ const showHistoryModal = ref(false)
 const showTemplateModal = ref(false)
 const showPriorityModal = ref(false)
 const showQuickSubModal = ref(false)
+const showRssDetectManager = ref(false)
 const currentSub = ref<any>(null)
 const isNew = ref(false)
 const profileMap = ref<Record<number, any>>({})
@@ -226,6 +228,9 @@ onMounted(() => {
         <n-button v-bind="getButtonStyle('warning')" @click="showQuickSubModal = true">
           Bangumi一键订阅
         </n-button>
+        <n-button v-bind="getButtonStyle('primary')" @click="showRssDetectManager = true">
+          自动RSS订阅管理
+        </n-button>
         <n-button v-bind="getButtonStyle('secondary')" @click="showPriorityModal = true">
           优先级规则
         </n-button>
@@ -358,6 +363,11 @@ onMounted(() => {
 
     <BangumiQuickSubscribeModal
       v-model:show="showQuickSubModal"
+      @finish="fetchSubscriptions"
+    />
+
+    <RssDetectManagerDesktop
+      v-model:show="showRssDetectManager"
       @finish="fetchSubscriptions"
     />
 

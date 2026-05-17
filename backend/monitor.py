@@ -225,6 +225,19 @@ class MonitorManager:
             )
             logger.info(f"[RSS] 已调度自动刷新，间隔 {interval} 分钟。")
         
+        # 2.5 [RSS Detect] 探测自动订阅任务
+        from rss_core.detector import RssDetector
+        detect_interval = int(config.get("rss_detect_interval", 30))
+        if detect_interval > 0:
+            MonitorManager._scheduler.add_job(
+                RssDetector.run_scheduled_tasks,
+                'interval',
+                minutes=detect_interval,
+                id="rss_detect_job",
+                replace_existing=True
+            )
+            logger.info(f"[RSS探测] 已调度自动探测订阅，间隔 {detect_interval} 分钟。")
+        
         # 3. [Subscription] 自动搜寻补全任务
         if config.get("sub_auto_fill", False):
             fill_interval = int(config.get("sub_fill_interval", 12))

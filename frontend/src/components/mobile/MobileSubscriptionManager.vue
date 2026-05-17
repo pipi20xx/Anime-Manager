@@ -26,6 +26,7 @@ import SubscriptionHistoryModal from '../SubscriptionHistoryModal.vue'
 import SubscriptionTemplateModal from '../SubscriptionTemplateModal.vue'
 import BangumiQuickSubscribeModal from '../BangumiQuickSubscribeModal.vue'
 import PriorityRuleModal from '../PriorityRuleModal.vue'
+import RssDetectManagerMobile from './RssDetectManagerMobile.vue'
 import { useBackClose } from '../../composables/useBackClose'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -45,6 +46,7 @@ const showHistoryModal = ref(false)
 const showTemplateModal = ref(false)
 const showPriorityModal = ref(false)
 const showQuickSubModal = ref(false)
+const showRssDetectManager = ref(false)
 const showActionDrawer = ref(false) // Mobile specific: Drawer for global actions
 const currentSub = ref<any>(null)
 
@@ -67,6 +69,7 @@ useBackClose(showHistoryModal)
 useBackClose(showTemplateModal)
 useBackClose(showPriorityModal)
 useBackClose(showQuickSubModal)
+useBackClose(showRssDetectManager)
 useBackClose(showActionDrawer)
 
 const fetchProfiles = async () => {
@@ -330,6 +333,10 @@ onMounted(() => {
             <div class="action-icon"><n-icon size="22"><FlashIcon/></n-icon></div>
             <span class="action-label">Bangumi 一键订阅</span>
           </div>
+          <div class="action-item" @click="openFromDrawer(() => showRssDetectManager = true)">
+            <div class="action-icon"><n-icon size="22"><FlashIcon/></n-icon></div>
+            <span class="action-label">自动 RSS 订阅管理</span>
+          </div>
           <div class="action-item" @click="openFromDrawer(() => showPriorityModal = true)">
             <div class="action-icon"><n-icon size="22"><LayersIcon/></n-icon></div>
             <span class="action-label">优先级规则</span>
@@ -370,6 +377,7 @@ onMounted(() => {
     <SubscriptionTemplateModal v-model:show="showTemplateModal" :clients="clients" />
     <PriorityRuleModal v-model:show="showPriorityModal" />
     <BangumiQuickSubscribeModal v-model:show="showQuickSubModal" @finish="fetchSubscriptions" />
+    <RssDetectManagerMobile v-model:show="showRssDetectManager" @finish="fetchSubscriptions" />
     <SubscriptionEditModal v-model:show="showEditModal" :sub-data="currentSub" :is-new="isNew" :clients="clients" @save="saveSubscription" />
     <JackettFillModal v-model:show="showFillModal" :sub-id="currentSub?.id" :sub-title="currentSub?.title" :api-base="API_BASE" @finish="fetchSubscriptions" />
     <SubscriptionHistoryModal v-model:show="showHistoryModal" :sub="currentSub" :api-base="API_BASE" />

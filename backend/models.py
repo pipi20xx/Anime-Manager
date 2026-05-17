@@ -459,7 +459,38 @@ class TaskRecord(SQLModel, table=True):
     finished_at: Optional[datetime] = Field(default=None)
     processed: int = Field(default=0)
     logs: List[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default_factory=list)
-    # 扩展统计字段
     stats: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
+
+class RssDetectTask(SQLModel, table=True):
+    __tablename__ = "rss_detect_tasks"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "RSS探测任务"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(default="")
+    rss_url: str = Field(index=True)
+    enabled: bool = Field(default=True)
+    
+    template_id: Optional[int] = Field(default=None)
+    filter_res: Optional[str] = None
+    filter_team: Optional[str] = None
+    filter_source: Optional[str] = None
+    filter_codec: Optional[str] = None
+    filter_audio: Optional[str] = None
+    filter_sub: Optional[str] = None
+    filter_effect: Optional[str] = None
+    filter_platform: Optional[str] = None
+    include_keywords: Optional[str] = None
+    exclude_keywords: Optional[str] = None
+    target_feeds: Optional[str] = None
+    target_client_id: Optional[str] = None
+    save_path: Optional[str] = None
+    category: Optional[str] = Field(default="Anime")
+    auto_fill: bool = Field(default=True)
+    
+    interval_minutes: int = Field(default=360)
+    last_run_at: Optional[datetime] = Field(default=None)
+    last_result: Optional[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default=None)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
 

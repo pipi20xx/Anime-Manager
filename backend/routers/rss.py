@@ -1,15 +1,50 @@
 from fastapi import APIRouter, HTTPException
 import asyncio
-from typing import List, Dict, Any
-from models import Feed, Rule, DownloadHistory, FeedItem, Subscription, SubscribedEpisode
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+from models import Feed, Rule, DownloadHistory, FeedItem, Subscription, SubscribedEpisode, RssDetectTask
 from rss_core.manager import RssManager
 from rss_core.scheduler import refresh_all_feeds
+from rss_core.detector import RssDetector
 from clients.jackett import JackettClient
 from logger import log_audit
 from database import db
 from sqlmodel import select, delete, text, or_
 
 router = APIRouter(tags=["RSS 下载管理"])
+
+class DetectPreviewRequest(BaseModel):
+    rss_url: str
+    template_id: Optional[int] = None
+    filter_res: Optional[str] = None
+    filter_team: Optional[str] = None
+    filter_source: Optional[str] = None
+    filter_codec: Optional[str] = None
+    filter_audio: Optional[str] = None
+    filter_sub: Optional[str] = None
+    filter_effect: Optional[str] = None
+    filter_platform: Optional[str] = None
+
+class DetectSubscribeRequest(BaseModel):
+    rss_url: str
+    template_id: Optional[int] = None
+    save_task: bool = False
+    task_name: Optional[str] = None
+    interval_minutes: int = 360
+    filter_res: Optional[str] = None
+    filter_team: Optional[str] = None
+    filter_source: Optional[str] = None
+    filter_codec: Optional[str] = None
+    filter_audio: Optional[str] = None
+    filter_sub: Optional[str] = None
+    filter_effect: Optional[str] = None
+    filter_platform: Optional[str] = None
+    include_keywords: Optional[str] = None
+    exclude_keywords: Optional[str] = None
+    target_client_id: Optional[str] = None
+    save_path: Optional[str] = None
+    category: str = "Anime"
+    auto_fill: bool = True
 
 # --- Feeds ---
 @router.get("/feeds", response_model=List[Feed], summary="获取订阅源列表")
@@ -384,3 +419,139 @@ async def preview_rule(rule_config: dict):
                 })
         
         return matches
+
+# --- RSS 探测自动订阅 ---
+@router.get("/detect/tasks", response_model=List[RssDetectTask], summary="获取探测任务列表")
+async def get_detect_tasks():
+    """返回所有 RSS 探测自动订阅任务"""
+    return await RssDetector.get_tasks()
+
+@router.post("/detect/tasks", summary="保存/更新探测任务")
+async def save_detect_task(task: RssDetectTask):
+    """新增或修改 RSS 探测任务（支持定时自动执行）"""
+    return await RssDetector.save_task(task)
+
+@router.post("/detect/preview", summary="预览RSS探测结果")
+async def preview_rss_detect(req: DetectPreviewRequest):
+    """
+    解析 RSS 链接并识别番剧，返回预览结果（不创建订阅）。
+    
+    请求体:
+    {
+        "rss_url": "https://...",
+        "template_id": 123 (可选),
+        "filter_res": "1080p" (可选),
+        "filter_team": "某字幕组" (可选)
+    }
+    """
+    rss_url = req.rss_url
+    if not rss_url:
+        raise HTTPException(status_code=400, detail="请提供 RSS 链接")
+    
+    result = await RssDetector.detect_and_preview(
+        rss_url=rss_url,
+        template_id=req.template_id,
+        filter_res=req.filter_res,
+        filter_team=req.filter_team,
+        filter_source=req.filter_source,
+        filter_codec=req.filter_codec,
+        filter_audio=req.filter_audio,
+        filter_sub=req.filter_sub,
+        filter_effect=req.filter_effect,
+        filter_platform=req.filter_platform
+    )
+    
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    return result
+
+@router.post("/detect/subscribe", summary="一键探测并订阅")
+async def detect_and_subscribe(req: DetectSubscribeRequest):
+    """
+    解析 RSS 链接、识别番剧并自动创建订阅。
+    
+    请求体:
+    {
+        "rss_url": "https://...",
+        "template_id": 123 (可选，使用订阅预设),
+        "save_task": true (可选，是否保存为定时任务),
+        "task_name": "我的RSS源" (可选，定时任务名称),
+        "interval_minutes": 360 (可选，定时间隔，默认6小时),
+        ...其他过滤条件
+    }
+    """
+    rss_url = req.rss_url
+    if not rss_url:
+        raise HTTPException(status_code=400, detail="请提供 RSS 链接")
+    
+    task_config = None
+    
+    if req.save_task:
+        task_config = RssDetectTask(
+            name=req.task_name or "",
+            rss_url=rss_url,
+            enabled=True,
+            template_id=req.template_id,
+            filter_res=req.filter_res,
+            filter_team=req.filter_team,
+            filter_source=req.filter_source,
+            filter_codec=req.filter_codec,
+            filter_audio=req.filter_audio,
+            filter_sub=req.filter_sub,
+            filter_effect=req.filter_effect,
+            filter_platform=req.filter_platform,
+            include_keywords=req.include_keywords,
+            exclude_keywords=req.exclude_keywords,
+            target_client_id=req.target_client_id,
+            save_path=req.save_path,
+            category=req.category,
+            auto_fill=req.auto_fill,
+            interval_minutes=req.interval_minutes
+        )
+        
+        saved = await RssDetector.save_task(task_config)
+        task_config = saved
+    
+    result = await RssDetector.detect_and_subscribe(
+        rss_url=rss_url,
+        task_config=task_config,
+        template_id=req.template_id,
+        filter_res=req.filter_res,
+        filter_team=req.filter_team,
+        filter_source=req.filter_source,
+        filter_codec=req.filter_codec,
+        filter_audio=req.filter_audio,
+        filter_sub=req.filter_sub,
+        filter_effect=req.filter_effect,
+        filter_platform=req.filter_platform,
+        include_keywords=req.include_keywords,
+        exclude_keywords=req.exclude_keywords,
+        target_client_id=req.target_client_id,
+        save_path=req.save_path,
+        category=req.category,
+        auto_fill=req.auto_fill
+    )
+    
+    if not result.get("success") and "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    if req.save_task:
+        result["task_saved"] = True
+        result["task_id"] = task_config.id if task_config else None
+    
+    return result
+
+@router.delete("/detect/tasks/{task_id}", summary="删除探测任务")
+async def delete_detect_task(task_id: int):
+    """删除指定的 RSS 探测任务"""
+    await RssDetector.delete_task(task_id)
+    return {"success": True}
+
+@router.post("/detect/tasks/{task_id}/run", summary="手动触发探测任务")
+async def run_detect_task(task_id: int):
+    """手动触发指定任务的 RSS 探测与自动订阅"""
+    result = await RssDetector.run_task_once(task_id)
+    if not result.get("success") and "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
