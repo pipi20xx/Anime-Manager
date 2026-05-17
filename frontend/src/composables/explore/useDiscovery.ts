@@ -137,10 +137,10 @@ export function useDiscovery() {
           bgmDetail.initial = item
           bgmDetail.show = true
       } else {
-          tmdbDetail.id = item.id
-          tmdbDetail.type = filters.media_type
-          tmdbDetail.initial = item
-          tmdbDetail.show = true
+          tmdbDetail.value.id = item.id
+          tmdbDetail.value.type = filters.media_type
+          tmdbDetail.value.initial = item
+          tmdbDetail.value.show = true
       }
   }
 

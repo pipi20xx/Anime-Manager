@@ -63,10 +63,10 @@ export function useSearch() {
   }
 
   const openTmdb = (item: any, type: string) => {
-      tmdbDetail.id = item.id
-      tmdbDetail.type = type
-      tmdbDetail.initial = item
-      tmdbDetail.show = true
+      tmdbDetail.value.id = item.id
+      tmdbDetail.value.type = type
+      tmdbDetail.value.initial = item
+      tmdbDetail.value.show = true
   }
 
   const openBangumi = (item: any) => {

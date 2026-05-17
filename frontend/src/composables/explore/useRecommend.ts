@@ -98,10 +98,10 @@ export function useRecommend() {
   const getBackdrop = (path: string) => getImg(path)
 
   const openDetail = (item: any, type: string) => {
-      tmdbDetail.id = item.id
-      tmdbDetail.type = type === 'movie' ? 'movie' : 'tv'
-      tmdbDetail.initial = item
-      tmdbDetail.show = true
+      tmdbDetail.value.id = item.id
+      tmdbDetail.value.type = type === 'movie' ? 'movie' : 'tv'
+      tmdbDetail.value.initial = item
+      tmdbDetail.value.show = true
   }
 
   const openBangumi = (bgmItem: any) => {
