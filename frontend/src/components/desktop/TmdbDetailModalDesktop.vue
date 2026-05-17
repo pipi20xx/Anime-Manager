@@ -8,7 +8,9 @@ import {
   LinkOutlined as LinkIcon,
   AddCircleOutlined as SubIcon,
   PersonOutlined as CastIcon,
-  SearchOutlined as SearchIcon
+  SearchOutlined as SearchIcon,
+  ExpandMoreOutlined as ExpandIcon,
+  RefreshOutlined as LoadingIcon
 } from '@vicons/material'
 import { useTmdbDetail } from '../../composables/components/useTmdbDetail'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -32,7 +34,12 @@ const {
   handleClose,
   openExternal,
   handleSubscribe,
-  handleSearch
+  handleSearch,
+  toggleSeason,
+  getSeasonInfo,
+  getSeasonEpisodes,
+  isSeasonLoading,
+  isSeasonExpanded
 } = useTmdbDetail(props, emit)
 </script>
 
@@ -116,9 +123,9 @@ const {
 
               <div v-if="detail.seasons?.length" class="seasons-section">
                   <h3>季度信息</h3>
-                  <n-scrollbar x-scrollable>
-                      <div class="season-scroller">
-                          <div v-for="s in detail.seasons" :key="s.id" class="season-card">
+                  <div class="seasons-list">
+                      <div v-for="s in detail.seasons" :key="s.id" class="season-item">
+                          <div class="season-card" @click="toggleSeason(s.season_number)">
                               <div class="s-poster">
                                   <n-image :src="getPoster(s.poster_path)" object-fit="cover" preview-disabled />
                               </div>
@@ -126,9 +133,52 @@ const {
                                   <div class="s-name">{{ s.name }}</div>
                                   <div class="s-ep">{{ s.episode_count }} 集</div>
                               </div>
+                              <div class="s-expand-icon">
+                                  <n-icon v-if="isSeasonLoading(s.season_number)" class="loading-spin">
+                                      <LoadingIcon />
+                                  </n-icon>
+                                  <n-icon v-else :class="{ 'expanded': isSeasonExpanded(s.season_number) }">
+                                      <ExpandIcon />
+                                  </n-icon>
+                              </div>
+                          </div>
+                          <div v-if="isSeasonExpanded(s.season_number)" class="episodes-panel">
+                              <div v-if="getSeasonInfo(s.season_number)?.overview" class="season-overview">
+                                  {{ getSeasonInfo(s.season_number).overview }}
+                              </div>
+                              <div v-for="ep in getSeasonEpisodes(s.season_number)" :key="ep.episode" class="episode-item">
+                                  <div class="ep-still" v-if="ep.still_path">
+                                      <n-image :src="getPoster(ep.still_path)" object-fit="cover" preview-disabled />
+                                  </div>
+                                  <div class="ep-still ep-still-placeholder" v-else>
+                                      <span>E{{ ep.episode }}</span>
+                                  </div>
+                                  <div class="ep-content">
+                                      <div class="ep-header">
+                                          <div class="ep-title">
+                                              <span class="ep-num-badge">E{{ ep.episode }}</span>
+                                              <span class="ep-name">{{ ep.name || '未命名' }}</span>
+                                              <span v-if="ep.episode_type === 'finale'" class="ep-type ep-type-finale">本季大结局</span>
+                                              <span v-else-if="ep.episode_type === 'mid_season'" class="ep-type ep-type-mid">季中结局</span>
+                                          </div>
+                                          <div class="ep-meta">
+                                              <span v-if="ep.vote_average" class="ep-rating">
+                                                  <n-icon size="12"><StarIcon /></n-icon>
+                                                  {{ ep.vote_average.toFixed(1) }}
+                                              </span>
+                                              <span v-if="ep.runtime" class="ep-runtime">{{ ep.runtime }}分钟</span>
+                                              <span v-if="ep.air_date" class="ep-date">{{ ep.air_date }}</span>
+                                          </div>
+                                      </div>
+                                      <div v-if="ep.overview" class="ep-overview">{{ ep.overview }}</div>
+                                  </div>
+                              </div>
+                              <div v-if="getSeasonEpisodes(s.season_number).length === 0 && !isSeasonLoading(s.season_number)" class="no-episodes">
+                                  暂无集信息
+                              </div>
                           </div>
                       </div>
-                  </n-scrollbar>
+                  </div>
               </div>
           </div>
         </n-scrollbar>
@@ -182,10 +232,75 @@ const {
 .actor-name { font-size: 10px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .seasons-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; }
-.season-scroller { display: flex; gap: 16px; padding-bottom: 10px; }
-.season-card { width: 100px; }
-.s-poster { aspect-ratio: 2/3; border-radius: var(--button-border-radius, 6px); overflow: hidden; background: var(--bg-primary); margin-bottom: 6px; border: 1px solid var(--app-border-light); }
+.seasons-list { display: flex; flex-direction: column; gap: 12px; }
+.season-item { border: 1px solid var(--app-border-light); border-radius: var(--card-border-radius, 8px); overflow: hidden; }
+.season-card { 
+  display: flex; align-items: center; gap: 12px; padding: 12px; 
+  cursor: pointer; transition: background 0.2s;
+}
+.season-card:hover { background: var(--app-surface-inner); }
+.s-poster { width: 50px; aspect-ratio: 2/3; border-radius: var(--button-border-radius, 4px); overflow: hidden; background: var(--bg-primary); flex-shrink: 0; }
 .s-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.s-name { font-size: 12px; font-weight: bold; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.s-ep { font-size: 11px; color: var(--text-tertiary); }
+.s-info { flex: 1; min-width: 0; }
+.s-name { font-size: 13px; font-weight: bold; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-ep { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.s-expand-icon { color: var(--text-tertiary); transition: transform 0.3s; }
+.s-expand-icon .expanded { transform: rotate(180deg); }
+.loading-spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.episodes-panel { 
+  background: var(--app-surface-inner); 
+  border-top: 1px solid var(--app-border-light); 
+  padding: 12px; 
+  max-height: 400px; 
+  overflow-y: auto; 
+}
+.season-overview { 
+  font-size: 12px; color: var(--text-secondary); line-height: 1.6; 
+  padding: 10px 12px; margin-bottom: 12px; 
+  background: var(--app-bg-color); border-radius: 6px; 
+  border-left: 3px solid var(--n-primary-color);
+}
+.episode-item { 
+  display: flex; gap: 12px; 
+  padding: 10px; border-radius: 6px; 
+  transition: background 0.2s; 
+  margin-bottom: 8px;
+}
+.episode-item:last-child { margin-bottom: 0; }
+.episode-item:hover { background: var(--app-bg-color); }
+.ep-still { 
+  width: 160px; aspect-ratio: 16/9; 
+  border-radius: 4px; overflow: hidden; 
+  flex-shrink: 0; background: var(--bg-primary); 
+}
+.ep-still :deep(img) { width: 100%; height: 100%; object-fit: cover; }
+.ep-still-placeholder { 
+  display: flex; align-items: center; justify-content: center; 
+  color: var(--text-tertiary); font-size: 18px; font-weight: bold; 
+  background: var(--app-surface-inner); 
+}
+.ep-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ep-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.ep-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ep-num-badge { 
+  font-size: 10px; font-weight: bold; color: var(--n-primary-color); 
+  padding: 2px 6px; background: var(--n-primary-color-supply); 
+  border-radius: 4px; flex-shrink: 0; 
+}
+.ep-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-type { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
+.ep-type-finale { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: #fff; }
+.ep-type-mid { background: linear-gradient(135deg, #ffa94d, #ff922b); color: #fff; }
+.ep-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.ep-rating { display: flex; align-items: center; gap: 2px; font-size: 11px; color: var(--color-warning); }
+.ep-runtime { font-size: 11px; color: var(--text-tertiary); }
+.ep-date { font-size: 11px; color: var(--text-tertiary); }
+.ep-overview { 
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5; 
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
+  overflow: hidden; 
+}
+.no-episodes { text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 20px; }
 </style>

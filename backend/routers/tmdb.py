@@ -40,6 +40,17 @@ async def get_detail(media_type: str, tmdb_id: str):
     log_audit("TMDB", "详情", f"获取成功: {result.get('title')}", details="\n".join(logs))
     return result
 
+@router.get("/season/{tmdb_id}/{season_number}", summary="获取季度集信息")
+async def get_season_episodes(tmdb_id: str, season_number: int):
+    """
+    获取指定作品指定季度的集信息。
+    """
+    result = await TMDBProvider().get_season_episodes(tmdb_id, season_number)
+    if not result:
+        raise HTTPException(status_code=404, detail="季度信息未找到")
+    log_audit("TMDB", "季度", f"获取集信息: {tmdb_id} S{season_number}")
+    return result
+
 @router.get("/search", summary="搜索 TMDB 条目", operation_id="tmdb_search_global")
 async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
     """

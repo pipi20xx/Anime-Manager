@@ -9,6 +9,9 @@ export function useTmdbDetail(props: any, emit: any) {
   const loading = ref(false)
   const detail = ref<any>(null)
   const subscriptions = ref<any[]>([])
+  const expandedSeasons = ref<Set<number>>(new Set())
+  const seasonEpisodes = ref<Map<string, any[]>>(new Map())
+  const loadingSeasons = ref<Set<string>>(new Set())
 
   const fetchSubscriptions = async () => {
     try {
@@ -93,6 +96,59 @@ export function useTmdbDetail(props: any, emit: any) {
       triggerGlobalSearch(detail.value.original_title || detail.value.original_name || detail.value.title || detail.value.name)
   }
 
+  const toggleSeason = async (seasonNumber: number) => {
+    const key = `${props.tmdbId}-${seasonNumber}`
+    
+    if (expandedSeasons.value.has(seasonNumber)) {
+      expandedSeasons.value.delete(seasonNumber)
+      expandedSeasons.value = new Set(expandedSeasons.value)
+      return
+    }
+    
+    expandedSeasons.value.add(seasonNumber)
+    expandedSeasons.value = new Set(expandedSeasons.value)
+    
+    if (!seasonEpisodes.value.has(key)) {
+      loadingSeasons.value.add(key)
+      loadingSeasons.value = new Set(loadingSeasons.value)
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/tmdb/season/${props.tmdbId}/${seasonNumber}`)
+        if (res.ok) {
+          const data = await res.json()
+          seasonEpisodes.value.set(key, data)
+          seasonEpisodes.value = new Map(seasonEpisodes.value)
+        }
+      } catch (e) {
+        console.error('Failed to fetch season episodes', e)
+      } finally {
+        loadingSeasons.value.delete(key)
+        loadingSeasons.value = new Set(loadingSeasons.value)
+      }
+    }
+  }
+
+  const getSeasonInfo = (seasonNumber: number) => {
+    const key = `${props.tmdbId}-${seasonNumber}`
+    const data = seasonEpisodes.value.get(key)
+    return data?.season_info || null
+  }
+
+  const getSeasonEpisodes = (seasonNumber: number) => {
+    const key = `${props.tmdbId}-${seasonNumber}`
+    const data = seasonEpisodes.value.get(key)
+    return data?.episodes || []
+  }
+
+  const isSeasonLoading = (seasonNumber: number) => {
+    const key = `${props.tmdbId}-${seasonNumber}`
+    return loadingSeasons.value.has(key)
+  }
+
+  const isSeasonExpanded = (seasonNumber: number) => {
+    return expandedSeasons.value.has(seasonNumber)
+  }
+
   return {
     loading,
     detail,
@@ -103,6 +159,11 @@ export function useTmdbDetail(props: any, emit: any) {
     handleClose,
     openExternal,
     handleSubscribe,
-    handleSearch
+    handleSearch,
+    toggleSeason,
+    getSeasonInfo,
+    getSeasonEpisodes,
+    isSeasonLoading,
+    isSeasonExpanded
   }
 }

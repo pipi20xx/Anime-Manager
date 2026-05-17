@@ -208,30 +208,47 @@ class TMDBProvider:
         norm["tagline"] = data.get("tagline")
         norm["cast"] = cast_list
         
-        await MetaCacheManager.set_discover_cache(cache_key, norm, expire_hours=24 * 7)
-        return norm
+        result = {**data, **norm}
+        
+        await MetaCacheManager.set_discover_cache(cache_key, result, expire_hours=24 * 7)
+        return result
 
     async def get_details(self, tmdb_id: str, media_type: str, logs: Any = None) -> Optional[Dict]:
         return await self.get_subject_details(tmdb_id, media_type, logs=logs)
 
-    async def get_season_episodes(self, tmdb_id: str, season_number: int, logs: Any = None) -> List[Dict]:
+    async def get_season_episodes(self, tmdb_id: str, season_number: int, logs: Any = None) -> Dict:
         """
-        获取指定季度的所有剧集及其放送日期
+        获取指定季度的详细信息和剧集列表
         """
         endpoint = f"/tv/{tmdb_id}/season/{season_number}"
         data, _ = await self._fetch(endpoint, logs=logs)
         if not data or "episodes" not in data:
-            return []
+            return {"season_info": None, "episodes": []}
         
-        results = []
+        episodes = []
         for ep in data["episodes"]:
-            results.append({
+            episodes.append({
                 "episode": ep.get("episode_number"),
-                "air_date": ep.get("air_date"), # YYYY-MM-DD
                 "name": ep.get("name"),
+                "overview": ep.get("overview"),
+                "air_date": ep.get("air_date"),
+                "still_path": self._proxy_img(ep.get("still_path")),
+                "vote_average": ep.get("vote_average"),
+                "vote_count": ep.get("vote_count"),
+                "runtime": ep.get("runtime"),
                 "episode_type": ep.get("episode_type")
             })
-        return results
+        
+        season_info = {
+            "name": data.get("name"),
+            "overview": data.get("overview"),
+            "air_date": data.get("air_date"),
+            "poster_path": self._proxy_img(data.get("poster_path")),
+            "season_number": data.get("season_number"),
+            "vote_average": data.get("vote_average")
+        }
+        
+        return {"season_info": season_info, "episodes": episodes}
 
     async def search(self, query: str, year: Optional[str], media_type: str, logs: Any = None, lang: str = "zh-CN") -> Tuple[List[Dict], bool]:
         """
