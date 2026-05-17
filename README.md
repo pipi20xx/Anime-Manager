@@ -7,6 +7,8 @@
 
 **番剧管家** 是一款专为二次元资源管理设计的自动化工具。集成了 AI 增强识别、RSS 订阅下载、自动化文件整理、STRM 生成、Webhook 回调等全链路功能。
 
+> ⚠️ **安全提示**: 本项目由 AI 辅助编写，虽然具备用户认证功能，但未经专业安全审计，**不建议直接暴露在公网环境使用**。建议在局域网或通过 VPN 访问。
+
 ---
 
 ## 🚀 核心特性
@@ -58,6 +60,45 @@
 - **日志控制台**: 实时查看系统日志
 - **数据库管理**: 支持表结构查看、SQL 查询、数据清理
 - **通知推送**: Telegram 通知集成
+
+### 🤖 AI 智能助手
+- **多模型支持**: 支持 OpenAI、Ollama 等 AI 模型接入
+- **工具调用**: 内置订阅管理、文件整理、媒体搜索等工具
+- **技能系统**: 支持自定义技能扩展
+- **Telegram Bot**: 通过 Telegram 与 AI 助手交互
+- **流式输出**: 支持流式响应，实时显示回复
+
+### 🔐 认证与安全
+- **用户登录**: 支持用户名密码登录
+- **双因素认证**: 支持 TOTP 二步验证 (2FA)
+- **会话管理**: 多设备登录管理，支持强制下线
+- **API Token**: 支持外部 API 访问控制
+
+### 💓 健康检查
+- **文件监控**: 监控本地文件是否存在、可读
+- **URL 检测**: 检测远程 URL 可用性
+- **定时检查**: 支持自定义检查间隔
+- **异常告警**: 检查失败时发送 Telegram 通知
+
+### 📈 任务历史
+- **执行记录**: 完整的任务执行历史
+- **状态追踪**: 查看任务执行状态和结果
+- **重试机制**: 支持失败任务重试
+
+### 🎯 优先级规则
+- **质量配置**: 自定义视频质量优先级
+- **规则组合**: 支持多规则组合匹配
+- **订阅关联**: 与订阅系统深度集成
+
+### 🔍 探索发现
+- **TMDB 发现**: 按 genre、年份、语言等维度发现新番
+- **Bangumi 推荐**: 基于 Bangumi 标签推荐
+- **多源搜索**: 同时搜索 TMDB 和 Bangumi
+
+### 🌐 外部控制
+- **API 接口**: 完整的 RESTful API
+- **Token 认证**: 支持 Bearer Token 认证
+- **Webhook**: 支持外部系统回调
 
 ---
 
@@ -218,23 +259,43 @@
 ├── backend/                # FastAPI 后端核心
 │   ├── routers/           # API 路由
 │   │   ├── rss.py         # RSS 订阅与规则
-│   │   ├── organizer.py    # 文件整理
+│   │   ├── organizer.py   # 文件整理
 │   │   ├── strm.py        # STRM 生成
 │   │   ├── webhook.py     # Webhook 回调
 │   │   ├── tmdb_full.py   # 离线元数据
 │   │   ├── user_mapping.py # 用户映射
 │   │   ├── calendar.py    # 日历追踪
+│   │   ├── assistant.py   # AI 智能助手
+│   │   ├── auth.py        # 认证与安全
+│   │   ├── health.py      # 健康检查
+│   │   ├── priority.py    # 优先级规则
+│   │   ├── explore.py     # 探索发现
 │   │   └── system.py      # 系统管理
 │   ├── rss_core/          # RSS 核心逻辑
-│   ├── recognition/        # 识别流编排
-│   ├── organizer_core/     # 文件整理逻辑
-│   ├── strm/               # STRM 生成引擎
-│   └── models/            # 数据模型
-├── frontend/               # Vue 3 前端工程
-│   ├── src/views/          # 视图页面
-│   ├── src/components/     # 可复用组件
-│   └── src/composables/    # 组合式函数
-└── docker-compose.yml      # 一键部署配置
+│   ├── recognition/       # 识别流编排
+│   ├── recognition_engine/ # 识别引擎内核
+│   ├── organizer_core/    # 文件整理逻辑
+│   ├── strm/              # STRM 生成引擎
+│   ├── assistant/         # AI 助手模块
+│   │   ├── agent.py       # Agent 核心
+│   │   ├── tools.py       # 工具注册
+│   │   ├── skill_engine.py # 技能引擎
+│   │   └── builtin_tools/ # 内置工具集
+│   ├── clients/           # 下载客户端
+│   │   ├── qbittorrent.py # qBittorrent
+│   │   ├── cd2.py         # CloudDrive2
+│   │   └── jackett.py     # Jackett
+│   ├── tmdbmatefull/      # TMDB 元数据中心
+│   ├── metadata/          # 元数据缓存
+│   └── models.py          # 数据模型
+├── frontend/              # Vue 3 前端工程
+│   ├── src/views/         # 视图页面
+│   │   ├── desktop/       # 桌面端视图
+│   │   └── mobile/        # 移动端视图
+│   ├── src/components/    # 可复用组件
+│   └── src/composables/   # 组合式函数
+├── skills/                # AI 技能定义
+└── docker-compose.yml     # 一键部署配置
 ```
 
 ---
