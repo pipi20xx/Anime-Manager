@@ -50,7 +50,7 @@ export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
           if (!item.isSubscribed) allUnsubbed.push(item.id)
         }
       }
-      selectedIds.value = allUnsubbed
+      selectedIds.value = []
       if (weeklyData.value.length > 0) {
         activeTab.value = weeklyData.value[0].weekday.id
       }
@@ -88,6 +88,20 @@ export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
     } catch (e) {}
   }
 
+  const selectAll = () => {
+    const allUnsubbed: number[] = []
+    for (const day of weeklyData.value) {
+      for (const item of day.items) {
+        if (!item.isSubscribed) allUnsubbed.push(item.id)
+      }
+    }
+    selectedIds.value = allUnsubbed
+  }
+
+  const deselectAll = () => {
+    selectedIds.value = []
+  }
+
   watch(() => props.show, (val) => {
     if (val) { 
       renderReady.value = false
@@ -101,6 +115,7 @@ export function useBangumiQuickSub(props: { show: boolean }, emit: any) {
     loading, submitting, weeklyData, templates, selectedTemplate, selectedIds,
     manualId, manualItems,
     fetchData, addManualItem, handleBatchSubscribe,
-    renderReady, activeTab
+    renderReady, activeTab,
+    selectAll, deselectAll
   }
 }

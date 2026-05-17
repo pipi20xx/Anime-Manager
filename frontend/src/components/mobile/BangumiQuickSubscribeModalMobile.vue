@@ -18,7 +18,8 @@ const emit = defineEmits(['update:show', 'finish'])
 const {
   loading, weeklyData, templates, selectedTemplate, selectedIds,
   manualId, fetchData, addManualItem, handleBatchSubscribe,
-  renderReady, activeTab
+  renderReady, activeTab,
+  selectAll, deselectAll
 } = useBangumiQuickSub(props, emit)
 </script>
 
@@ -70,9 +71,13 @@ const {
     </div>
 
     <template #footer>
-       <n-button block type="primary" :disabled="selectedIds.length === 0" @click="handleBatchSubscribe">
+      <n-space>
+        <n-button @click="selectAll">全选</n-button>
+        <n-button @click="deselectAll">取消全选</n-button>
+        <n-button block type="primary" :disabled="selectedIds.length === 0" @click="handleBatchSubscribe">
           批量订阅 ({{ selectedIds.length }} 个)
         </n-button>
+      </n-space>
     </template>
   </n-modal>
 </template>

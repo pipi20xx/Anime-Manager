@@ -19,7 +19,8 @@ const {
   loading, submitting, weeklyData, templates, selectedTemplate, selectedIds,
   manualId, manualItems,
   fetchData, addManualItem, handleBatchSubscribe,
-  renderReady, activeTab
+  renderReady, activeTab,
+  selectAll, deselectAll
 } = useBangumiQuickSub(props, emit)
 </script>
 
@@ -80,7 +81,9 @@ const {
     </n-scrollbar>
 
     <template #action>
-      <n-space justify="end">
+      <n-space justify="end" align="center">
+        <n-button @click="selectAll">全选</n-button>
+        <n-button @click="deselectAll">取消全选</n-button>
         <n-button @click="emit('update:show', false)">取消</n-button>
         <n-button type="primary" :disabled="selectedIds.length === 0" @click="handleBatchSubscribe">
           确认批量订阅 ({{ selectedIds.length }})
