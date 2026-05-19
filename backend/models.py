@@ -493,4 +493,16 @@ class RssDetectTask(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
+class BgmTmdbMapping(SQLModel, table=True):
+    __tablename__ = "bgm_tmdb_mapping"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "BGM-TMDB映射表"
+    bgm_id: int = Field(primary_key=True, index=True)
+    tmdb_id: int = Field(index=True)
+    media_type: str = Field(default="tv")
+    title: Optional[str] = None
+    title_cn: Optional[str] = None
+    source: str = Field(default="bangumi-data")
+    updated_at: datetime = Field(default_factory=datetime.now)
+
 

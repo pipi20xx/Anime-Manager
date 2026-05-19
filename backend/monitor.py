@@ -350,6 +350,69 @@ class MonitorManager:
                     logger.info("[TG Bot] 智能体对话已启动")
             except Exception as e:
                 logger.error(f"[TG Bot] 启动失败: {e}")
+        
+        # 10. [BGM-TMDB Mapping] 每7天自动同步映射表
+        bgm_mapping_enabled = config.get("bgm_mapping_auto_sync", True)
+        if bgm_mapping_enabled:
+            MonitorManager._scheduler.add_job(
+                MonitorManager._auto_sync_bgm_mapping,
+                'interval',
+                days=7,
+                id="bgm_mapping_sync_job",
+                replace_existing=True
+            )
+            logger.info("[BGM映射] 已启动自动同步任务，间隔 7 天")
+            
+            asyncio.create_task(MonitorManager._auto_sync_bgm_mapping())
+
+    @staticmethod
+    async def _auto_sync_bgm_mapping():
+        """自动同步 BGM-TMDB 映射表"""
+        task_id = f"bgm_mapping_{uuid.uuid4().hex[:8]}"
+        try:
+            await start_task(task_id, "BGM映射同步", "BGM-TMDB映射表自动同步")
+            
+            from recognition_engine.bgm_mapping_service import bgm_mapping_service
+            
+            should, reason = await bgm_mapping_service.should_sync()
+            if not should:
+                await log_task(task_id, f"⏭️ 跳过同步: {reason}")
+                stats = await bgm_mapping_service.get_stats()
+                await log_task(task_id, f"� 当前映射表: {stats.get('total', 0)} 条记录")
+                await finish_task(task_id, "completed", 0, {"skipped": True})
+                logger.info(f"[BGM映射] {reason}")
+                return
+            
+            await log_task(task_id, "�🚀 开始执行 BGM-TMDB 映射表自动同步")
+            await log_task(task_id, f"📝 原因: {reason}")
+            await log_task(task_id, "📡 数据源: https://unpkg.com/bangumi-data@0.3/dist/data.json")
+            
+            result = await bgm_mapping_service.sync_from_remote(force=True)
+            
+            if result.get("success"):
+                count = result.get("count", 0)
+                await log_task(task_id, f"✅ 同步成功: 共更新 {count} 条映射记录")
+                
+                stats = await bgm_mapping_service.get_stats()
+                await log_task(task_id, f"📊 映射表统计:")
+                await log_task(task_id, f"   ┗ 总记录数: {stats.get('total', 0)}")
+                for source, cnt in stats.get("by_source", {}).items():
+                    await log_task(task_id, f"   ┗ {source}: {cnt} 条")
+                
+                await log_task(task_id, "🏁 BGM映射同步完成")
+                await finish_task(task_id, "completed", count, stats)
+                
+                from logger import log_audit
+                log_audit("BGM映射", "自动同步", f"成功更新 {count} 条映射记录")
+            else:
+                msg = result.get("message", "未知错误")
+                await log_task(task_id, f"❌ 同步失败: {msg}", "ERROR")
+                await finish_task(task_id, "error", 0)
+                logger.error(f"[BGM映射] 自动同步失败: {msg}")
+        except Exception as e:
+            await log_task(task_id, f"❌ 同步异常: {str(e)}", "ERROR")
+            await finish_task(task_id, "error", 0)
+            logger.error(f"[BGM映射] 自动同步异常: {e}")
 
     @staticmethod
     async def _calendar_daily_push():

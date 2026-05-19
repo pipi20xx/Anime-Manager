@@ -231,3 +231,54 @@ async def batch_subscribe(req: BatchSubRequest):
             results["details"].append({"id": sid, "success": False, "message": str(e)})
     
     return results
+
+@router.get("/mapping/stats", summary="获取映射表统计")
+async def get_mapping_stats():
+    """
+    获取 BGM-TMDB 映射表的统计信息。
+    """
+    from recognition_engine.bgm_mapping_service import bgm_mapping_service
+    return await bgm_mapping_service.get_stats()
+
+@router.post("/mapping/sync", summary="从 bangumi-data 同步映射")
+async def sync_mapping(force: bool = False):
+    """
+    从 bangumi-data 项目同步 BGM-TMDB 映射数据。
+    数据源: https://github.com/bangumi-data/bangumi-data
+    
+    :param force: 是否强制同步（忽略7天间隔检查）
+    """
+    from recognition_engine.bgm_mapping_service import bgm_mapping_service
+    result = await bgm_mapping_service.sync_from_remote(force=force)
+    log_audit("映射表", "同步", result.get("message", ""))
+    return result
+
+class ManualMappingRequest(BaseModel):
+    bgm_id: int
+    tmdb_id: int
+    media_type: str = "tv"
+    title: Optional[str] = None
+    title_cn: Optional[str] = None
+
+@router.post("/mapping/add", summary="手动添加映射")
+async def add_manual_mapping(req: ManualMappingRequest):
+    """
+    手动添加一条 BGM-TMDB 映射记录。
+    """
+    from recognition_engine.bgm_mapping_service import bgm_mapping_service
+    result = await bgm_mapping_service.add_manual_mapping(
+        req.bgm_id, req.tmdb_id, req.media_type, req.title, req.title_cn
+    )
+    log_audit("映射表", "添加", f"BGM:{req.bgm_id} -> TMDB:{req.tmdb_id}")
+    return result
+
+@router.get("/mapping/lookup/{bgm_id}", summary="查询映射")
+async def lookup_mapping(bgm_id: int):
+    """
+    查询指定 Bangumi ID 的 TMDB 映射。
+    """
+    from recognition_engine.bgm_mapping_service import bgm_mapping_service
+    mapping = await bgm_mapping_service.lookup(bgm_id)
+    if mapping:
+        return {"success": True, "mapping": mapping}
+    return {"success": False, "message": "未找到映射"}
