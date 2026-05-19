@@ -81,46 +81,64 @@ const {
                     <span class="switch-desc">使用国内镜像站时建议关闭，直连更快</span>
                   </n-space>
                 </n-form-item>
+              </n-form>
+            </n-card>
+
+            <n-card bordered style="background: var(--app-surface-card)">
+              <template #header>
+                <div class="card-title-box">
+                  <span class="card-title-text">Bangumi 设置</span>
+                </div>
+              </template>
+              <n-form label-placement="left" label-width="100">
                 <n-form-item label="BGM Token">
                   <n-space vertical :size="2" style="width: 100%">
                     <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选: 输入 Bangumi Access Token" />
                     <a href="https://next.bgm.tv/demo/access-token" target="_blank" style="font-size: 12px; color: var(--n-primary-color); text-decoration: none;">从 https://next.bgm.tv/demo/access-token 获取。</a>
                   </n-space>
                 </n-form-item>
-                <n-form-item label="搜索策略">
-                  <n-space vertical :size="16" style="width: 100%">
-                    <n-space align="center" :size="12">
-                      <n-switch v-model:value="config.anime_priority" />
-                      <span class="switch-label">动漫识别优化</span>
-                      <span class="switch-desc">优先使用动漫专用搜索策略，提高动漫识别准确率</span>
-                    </n-space>
-                    <n-space align="center" :size="12">
-                      <n-switch v-model:value="config.offline_priority" />
-                      <span class="switch-label">本地数据中心优先</span>
-                      <span class="switch-desc">优先从本地数据中心匹配数据，速度极快且节省 API，无数据时再联网搜索</span>
-                    </n-space>
-                    <n-space align="center" :size="12">
-                      <n-switch v-model:value="config.batch_enhancement" />
-                      <span class="switch-label">合集识别增强</span>
-                      <span class="switch-desc">增强对合集类资源的识别能力，自动解析多剧集合集</span>
-                    </n-space>
-                    <n-space align="center" :size="12">
-                      <n-switch v-model:value="config.bangumi_priority" />
-                      <span class="switch-label">Bangumi 数据源优先</span>
-                      <span class="switch-desc">优先使用 Bangumi 数据源，更适合中文动漫信息</span>
-                    </n-space>
-                    <n-space align="center" :size="12">
-                      <n-switch v-model:value="config.bangumi_failover" :disabled="config.bangumi_priority" />
-                      <span class="switch-label">Bangumi 故障转移</span>
-                      <span class="switch-desc">TMDB 匹配失败时自动使用 Bangumi 进行识别</span>
-                    </n-space>
-                    <n-space align="center" :size="12">
-                      <n-switch v-model:value="config.series_fingerprint" />
-                      <span class="switch-label">智能记忆</span>
-                      <span class="switch-desc">记住已识别剧集的匹配结果，后续自动应用相同匹配</span>
-                    </n-space>
+              </n-form>
+            </n-card>
+
+            <n-card bordered style="background: var(--app-surface-card)">
+              <template #header>
+                <div class="card-title-box">
+                  <span class="card-title-text">识别偏好设置</span>
+                </div>
+              </template>
+              <n-form label-placement="left" label-width="100">
+                <n-space vertical :size="16" style="width: 100%">
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.anime_priority" />
+                    <span class="switch-label">动漫识别优化</span>
+                    <span class="switch-desc">优先使用动漫专用搜索策略，提高动漫识别准确率</span>
                   </n-space>
-                </n-form-item>
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.offline_priority" />
+                    <span class="switch-label">本地数据中心优先</span>
+                    <span class="switch-desc">优先从本地数据中心匹配数据，速度极快且节省 API，无数据时再联网搜索</span>
+                  </n-space>
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.batch_enhancement" />
+                    <span class="switch-label">合集识别增强</span>
+                    <span class="switch-desc">增强对合集类资源的识别能力，自动解析多剧集合集</span>
+                  </n-space>
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.bangumi_priority" />
+                    <span class="switch-label">Bangumi 数据源优先</span>
+                    <span class="switch-desc">优先使用 Bangumi 数据源，更适合中文动漫信息</span>
+                  </n-space>
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.bangumi_failover" :disabled="config.bangumi_priority" />
+                    <span class="switch-label">Bangumi 故障转移</span>
+                    <span class="switch-desc">TMDB 匹配失败时自动使用 Bangumi 进行识别</span>
+                  </n-space>
+                  <n-space align="center" :size="12">
+                    <n-switch v-model:value="config.series_fingerprint" />
+                    <span class="switch-label">智能记忆</span>
+                    <span class="switch-desc">记住已识别剧集的匹配结果，后续自动应用相同匹配</span>
+                  </n-space>
+                </n-space>
               </n-form>
             </n-card>
 

@@ -78,11 +78,27 @@ const {
                       <span style="font-size: 13px;">启用图片代理（镜像站建议关闭）</span>
                     </n-space>
                   </n-form-item>
+                </n-form>
+              </div>
+
+              <!-- Bangumi 设置 -->
+              <div class="m-card">
+                <div class="m-card-header">
+                  <h3 class="m-card-title">Bangumi 设置</h3>
+                </div>
+                <n-form label-placement="top">
                   <n-form-item label="Bangumi Token">
                     <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选 Token" />
                   </n-form-item>
+                </n-form>
+              </div>
 
-                  <n-divider dashed>策略开关</n-divider>
+              <!-- 识别偏好设置 -->
+              <div class="m-card">
+                <div class="m-card-header">
+                  <h3 class="m-card-title">识别偏好设置</h3>
+                </div>
+                <n-form label-placement="top">
                   <div class="switch-list">
                     <div class="switch-item">
                       <span class="switch-label">动漫识别优化</span>
