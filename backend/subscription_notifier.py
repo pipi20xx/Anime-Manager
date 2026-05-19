@@ -87,7 +87,8 @@ class SubscriptionNotifier:
         
         try:
             tmdb = TMDBProvider()
-            episodes = await tmdb.get_season_episodes(sub.tmdb_id, sub.season)
+            result = await tmdb.get_season_episodes(sub.tmdb_id, sub.season)
+            episodes = result.get("episodes", [])
             
             if not episodes:
                 return []
@@ -215,7 +216,8 @@ class SubscriptionNotifier:
             for sub in subscriptions:
                 try:
                     tmdb = TMDBProvider()
-                    episodes = await tmdb.get_season_episodes(sub.tmdb_id, sub.season)
+                    result = await tmdb.get_season_episodes(sub.tmdb_id, sub.season)
+                    episodes = result.get("episodes", [])
                     
                     today_str = date.today().isoformat()
                     
