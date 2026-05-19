@@ -464,7 +464,7 @@ class TaskRecord(SQLModel, table=True):
 class RssDetectTask(SQLModel, table=True):
     __tablename__ = "rss_detect_tasks"
     __table_args__ = {"schema": get_public_schema()}
-    __admin_name__ = "RSS探测任务"
+    __admin_name__ = "RSS探测订阅任务"
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(default="")
     rss_url: str = Field(index=True)
@@ -496,7 +496,7 @@ class RssDetectTask(SQLModel, table=True):
 class BgmTmdbMapping(SQLModel, table=True):
     __tablename__ = "bgm_tmdb_mapping"
     __table_args__ = {"schema": get_public_schema()}
-    __admin_name__ = "BGM-TMDB映射表"
+    __admin_name__ = "BGM-TMDB映射表 (Bangumi ID 到 TMDB ID 的预制映射，用于加速匹配)"
     bgm_id: int = Field(primary_key=True, index=True)
     tmdb_id: int = Field(index=True)
     media_type: str = Field(default="tv")

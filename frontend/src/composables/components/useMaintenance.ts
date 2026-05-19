@@ -43,7 +43,9 @@ export function useMaintenance() {
     'public.users': '系统用户账户与认证信息',
     'public.sessions': '用户登录会话与设备管理',
     'public.task_records': '任务中心执行记录（整理/STRM/RSS等任务的日志）',
-    'public.file_hashes': '文件哈希记录（SHA1、ED2K 及识别信息缓存）'
+    'public.file_hashes': '文件哈希记录（SHA1、ED2K 及识别信息缓存）',
+    'public.rss_detect_tasks': 'RSS探测订阅任务（自动发现并订阅新番）',
+    'public.bgm_tmdb_mapping': 'BGM-TMDB映射表（Bangumi ID 到 TMDB ID 的预制映射，用于加速匹配）'
   }
 
   const fetchTables = async () => {
