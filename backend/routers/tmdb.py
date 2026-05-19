@@ -100,3 +100,23 @@ async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
     from recognition_engine.tmdb_matcher.logic import TMDBMatcher
     formatted = [TMDBMatcher.normalize(i, media_type_hint=type) for i in results]
     return {"results": formatted}
+
+@router.get("/person/{person_id}", summary="获取人物详情")
+async def get_person_detail(person_id: str):
+    """
+    获取指定人物的详细信息。
+    """
+    result = await TMDBProvider().get_person_details(person_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="人物信息未找到")
+    log_audit("TMDB", "人物详情", f"获取成功: {result.get('name')}")
+    return result
+
+@router.get("/person/{person_id}/credits", summary="获取人物参演作品")
+async def get_person_credits(person_id: str):
+    """
+    获取指定人物的参演作品列表。
+    """
+    result = await TMDBProvider().get_person_credits(person_id)
+    log_audit("TMDB", "人物作品", f"获取作品列表: {person_id}")
+    return result

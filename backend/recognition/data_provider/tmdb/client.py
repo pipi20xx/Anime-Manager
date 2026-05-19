@@ -199,7 +199,7 @@ class TMDBProvider:
         return resp_data
 
     async def get_subject_details(self, tmdb_id: str, media_type: str, logs: Any = None) -> Optional[Dict]:
-        cache_key = f"tmdb:detail:v3:{media_type}:{tmdb_id}"
+        cache_key = f"tmdb:detail:v4:{media_type}:{tmdb_id}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached
 
@@ -209,6 +209,7 @@ class TMDBProvider:
         cast_list = []
         for c in data.get("credits", {}).get("cast", [])[:15]:
             cast_list.append({
+                "id": c.get("id"),
                 "character": c.get("character"),
                 "actor": c.get("name"),
                 "image": self._proxy_img(c.get("profile_path"), "w185")
@@ -621,3 +622,95 @@ class TMDBProvider:
         if en_name: targets.append(re.sub(r"[^\w]", "", en_name).upper())
         if cn_queries and len(cn_queries) > 1: targets.append(re.sub(r"[^\w]", "", cn_queries[1]).upper())
         return targets
+
+    async def get_person_details(self, person_id: str, logs: Any = None) -> Optional[Dict]:
+        """
+        获取人物详情
+        """
+        cache_key = f"tmdb:person:detail:v6:{person_id}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached: return cached
+
+        data, _ = await self._fetch(f"/person/{person_id}", logs=logs)
+        if not data: return None
+        
+        known_for = []
+        search_data, _ = await self._fetch("/search/person", {"query": data.get("name", "")}, logs=logs)
+        if search_data and search_data.get("results"):
+            for person in search_data.get("results", []):
+                if str(person.get("id")) == str(person_id):
+                    for item in person.get("known_for", []):
+                        media_type = item.get("media_type", "tv")
+                        norm = TMDBMatcher.normalize(item, media_type_hint=media_type)
+                        known_for.append({
+                            **norm,
+                            "poster_path": self._proxy_img(item.get("poster_path")),
+                            "backdrop_path": self._proxy_img(item.get("backdrop_path"), "w1280"),
+                            "media_type": media_type
+                        })
+                    break
+        
+        result = {
+            "id": data.get("id"),
+            "name": data.get("name"),
+            "original_name": data.get("original_name"),
+            "profile_path": self._proxy_img(data.get("profile_path"), "w500"),
+            "biography": data.get("biography"),
+            "birthday": data.get("birthday"),
+            "deathday": data.get("deathday"),
+            "place_of_birth": data.get("place_of_birth"),
+            "popularity": data.get("popularity"),
+            "known_for_department": data.get("known_for_department"),
+            "gender": data.get("gender"),
+            "imdb_id": data.get("imdb_id"),
+            "homepage": data.get("homepage"),
+            "also_known_as": data.get("also_known_as", []),
+            "known_for": known_for
+        }
+        
+        await MetaCacheManager.set_discover_cache(cache_key, result, expire_hours=24 * 7)
+        return result
+
+    async def get_person_credits(self, person_id: str, logs: Any = None) -> Dict:
+        """
+        获取人物参演作品列表
+        """
+        cache_key = f"tmdb:person:credits:v4:{person_id}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached: return cached
+
+        data, _ = await self._fetch(f"/person/{person_id}/combined_credits", logs=logs)
+        if not data: return {"cast": [], "crew": []}
+        
+        cast_list = []
+        for item in data.get("cast", []):
+            media_type = item.get("media_type", "tv")
+            norm = TMDBMatcher.normalize(item, media_type_hint=media_type)
+            cast_list.append({
+                **norm,
+                "poster_path": self._proxy_img(item.get("poster_path")),
+                "backdrop_path": self._proxy_img(item.get("backdrop_path"), "w1280"),
+                "character": item.get("character"),
+                "media_type": media_type
+            })
+        
+        cast_list.sort(key=lambda x: (x.get("release_date") or x.get("first_air_date") or ""), reverse=True)
+        
+        crew_list = []
+        for item in data.get("crew", []):
+            media_type = item.get("media_type", "tv")
+            norm = TMDBMatcher.normalize(item, media_type_hint=media_type)
+            crew_list.append({
+                **norm,
+                "poster_path": self._proxy_img(item.get("poster_path")),
+                "backdrop_path": self._proxy_img(item.get("backdrop_path"), "w1280"),
+                "job": item.get("job"),
+                "department": item.get("department"),
+                "media_type": media_type
+            })
+        
+        crew_list.sort(key=lambda x: (x.get("release_date") or x.get("first_air_date") or ""), reverse=True)
+        
+        result = {"cast": cast_list, "crew": crew_list}
+        await MetaCacheManager.set_discover_cache(cache_key, result, expire_hours=24 * 7)
+        return result

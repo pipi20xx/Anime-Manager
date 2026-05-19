@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { 
   NModal, NCard, NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton
 } from 'naive-ui'
@@ -15,6 +16,7 @@ import {
 } from '@vicons/material'
 import { useTmdbDetail } from '../../composables/components/useTmdbDetail'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import TmdbPersonDetailModalMobile from './TmdbPersonDetailModalMobile.vue'
 
 const props = defineProps<{
   show: boolean
@@ -50,6 +52,15 @@ const {
   recommendations,
   handleRecClick
 } = useTmdbDetail(props, emit)
+
+const personDetailShow = ref(false)
+const selectedPersonId = ref<string | number | null>(null)
+
+const openPersonDetail = (personId: string | number) => {
+  if (!personId) return
+  selectedPersonId.value = personId
+  personDetailShow.value = true
+}
 </script>
 
 <template>
@@ -144,12 +155,11 @@ const {
              <div class="section" v-if="detail.cast?.length">
                 <h3>演职员</h3>
                 <div class="h-scroller">
-                   <div v-for="c in detail.cast" :key="c.actor + c.character" class="cast-item">
+                   <div v-for="c in detail.cast" :key="c.actor + c.character" class="cast-item" @click="openPersonDetail(c.id)">
                       <div class="avatar">
                          <img :src="getPoster(c.image)" loading="lazy" />
                       </div>
                       <div class="name">{{ c.actor }}</div>
-                      <div class="char">{{ c.character }}</div>
                    </div>
                 </div>
              </div>
@@ -246,6 +256,11 @@ const {
       </div>
     </div>
   </n-modal>
+
+  <TmdbPersonDetailModalMobile 
+    v-model:show="personDetailShow" 
+    :person-id="selectedPersonId || 0" 
+  />
 </template>
 
 <style scoped>
@@ -289,11 +304,11 @@ const {
 .overview { font-size: var(--m-text-base); line-height: 1.6; color: var(--text-secondary); text-align: justify; }
 
 .h-scroller { display: flex; gap: var(--m-spacing-md); overflow-x: auto; padding-bottom: var(--m-spacing-xs); }
-.cast-item { width: 70px; flex-shrink: 0; text-align: center; }
+.cast-item { width: 70px; flex-shrink: 0; text-align: center; cursor: pointer; }
+.cast-item:active { opacity: 0.7; }
 .cast-item .avatar { width: 60px; height: 60px; border-radius: var(--m-radius-full); overflow: hidden; margin: 0 auto var(--m-spacing-xs); background: var(--bg-primary); }
 .cast-item .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .cast-item .name { font-size: var(--m-text-xs); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-.cast-item .char { font-size: var(--m-text-xs); color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .seasons-list { display: flex; flex-direction: column; gap: var(--m-spacing-md); }
 .season-block { border: 1px solid var(--app-border-light); border-radius: var(--m-radius-md); overflow: hidden; }
