@@ -1,5 +1,5 @@
 import { ref, reactive } from 'vue'
-import { tmdbDetailState, openTmdbDetail, openBangumiDetail, bangumiDetailState, currentViewKey } from '../../store/navigationStore'
+import { openTmdbDetail, openBangumiDetail } from '../../store/navigationStore'
 
 export function useSearch() {
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -13,10 +13,6 @@ export function useSearch() {
       tmdb_movie: [] as any[],
       tmdb_tv: [] as any[]
   })
-
-  const tmdbDetail = tmdbDetailState
-
-  const bgmDetail = bangumiDetailState
 
   const subscriptions = ref<any[]>([])
 
@@ -60,12 +56,10 @@ export function useSearch() {
 
   const openTmdb = (item: any, type: string) => {
       openTmdbDetail(item.id, type, item)
-      currentViewKey.value = 'TmdbDetailView'
   }
 
   const openBangumi = (item: any) => {
       openBangumiDetail(item.id, item)
-      currentViewKey.value = 'BangumiDetailView'
   }
 
   return {
@@ -73,8 +67,6 @@ export function useSearch() {
     loading,
     hasSearched,
     results,
-    tmdbDetail,
-    bgmDetail,
     doSearch,
     openTmdb,
     openBangumi,

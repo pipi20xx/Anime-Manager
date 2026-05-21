@@ -1,10 +1,5 @@
-import { ref, watch } from 'vue'
-
-export const currentViewKey = ref(localStorage.getItem('apm_view_key') || 'ExploreView')
-
-watch(currentViewKey, (val) => {
-  localStorage.setItem('apm_view_key', val)
-})
+import { ref } from 'vue'
+import router from '../router'
 
 export interface PendingSubscription {
   type: 'tmdb' | 'bangumi'
@@ -22,7 +17,7 @@ export const pendingSubscription = ref<PendingSubscription | null>(null)
 
 export const navigateToSubscription = (data: PendingSubscription) => {
   pendingSubscription.value = data
-  currentViewKey.value = 'SubscriptionView'
+  router.push({ name: 'Subscription' })
 }
 
 export const searchKeyword = ref('')
@@ -52,27 +47,8 @@ export const logout = () => {
   username.value = ''
 }
 
-export interface TmdbDetailState {
-  show: boolean
-  id: string | number
-  type: string
-  initial: any
-}
-
-export const tmdbDetailState = ref<TmdbDetailState>({
-  show: false,
-  id: '',
-  type: 'tv',
-  initial: null
-})
-
 export const openTmdbDetail = (id: string | number, type: string = 'tv', initial: any = null) => {
-  tmdbDetailState.value = {
-    show: true,
-    id,
-    type,
-    initial
-  }
+  router.push({ name: 'TmdbDetail', params: { id } })
 }
 
 export interface BangumiDetailState {
@@ -88,11 +64,7 @@ export const bangumiDetailState = ref<BangumiDetailState>({
 })
 
 export const openBangumiDetail = (id: string | number, initial: any = null) => {
-  bangumiDetailState.value = {
-    show: true,
-    id,
-    initial
-  }
+  router.push({ name: 'BangumiDetail', params: { id } })
 }
 
 export interface TmdbPersonDetailState {
@@ -108,9 +80,5 @@ export const tmdbPersonDetailState = ref<TmdbPersonDetailState>({
 })
 
 export const openTmdbPersonDetail = (id: string | number, initial: any = null) => {
-  tmdbPersonDetailState.value = {
-    show: true,
-    id,
-    initial
-  }
+  router.push({ name: 'TmdbPersonDetail', params: { id } })
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { 
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton
 } from 'naive-ui'
@@ -12,10 +13,14 @@ import {
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
-import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail, bangumiDetailState, currentViewKey } from '../store/navigationStore'
+import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail } from '../store/navigationStore'
 
+const route = useRoute()
+const router = useRouter()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 const message = useMessage()
+
+const bangumiId = computed(() => route.params.id as string)
 
 const loading = ref(false)
 const detail = ref<any>(null)
@@ -44,7 +49,7 @@ const fetchSubscriptions = async () => {
 
 const isSubscribed = computed(() => {
     if (!detail.value) return false
-    if (subscriptions.value.some((sub: any) => sub.bangumi_id && String(sub.bangumi_id) === String(bangumiDetailState.value.id))) {
+    if (subscriptions.value.some((sub: any) => sub.bangumi_id && String(sub.bangumi_id) === String(bangumiId.value))) {
         return true
     }
     const title = detail.value.title || detail.value.name
@@ -53,11 +58,11 @@ const isSubscribed = computed(() => {
 })
 
 const fetchDetail = async () => {
-  if (!bangumiDetailState.value.id) return
+  if (!bangumiId.value) return
   loading.value = true
   fetchSubscriptions() 
   try {
-    const res = await fetch(`${API_BASE}/api/bangumi/subject/${bangumiDetailState.value.id}`)
+    const res = await fetch(`${API_BASE}/api/bangumi/subject/${bangumiId.value}`)
     if (res.ok) {
         detail.value = await res.json()
     } else {
@@ -71,11 +76,11 @@ const fetchDetail = async () => {
 }
 
 const goBack = () => {
-  currentViewKey.value = 'ExploreView'
+  router.back()
 }
 
 const openExternal = () => {
-    window.open(`https://bgm.tv/subject/${bangumiDetailState.value.id}`, '_blank')
+    window.open(`https://bgm.tv/subject/${bangumiId.value}`, '_blank')
 }
 
 const handleSubscribe = async () => {
@@ -85,7 +90,7 @@ const handleSubscribe = async () => {
     message.loading('正在尝试自动匹配并订阅...', { duration: 2000 })
     
     try {
-        const res = await fetch(`${API_BASE}/api/bangumi/one_click_subscribe/${bangumiDetailState.value.id}`, {
+        const res = await fetch(`${API_BASE}/api/bangumi/one_click_subscribe/${bangumiId.value}`, {
             method: 'POST'
         })
         const data = await res.json()
@@ -96,7 +101,7 @@ const handleSubscribe = async () => {
         } else {
             message.info('匹配置信度不足，正在跳转至手动配置...')
             
-            const mRes = await fetch(`${API_BASE}/api/bangumi/match_tmdb/${bangumiDetailState.value.id}`)
+            const mRes = await fetch(`${API_BASE}/api/bangumi/match_tmdb/${bangumiId.value}`)
             const mData = await mRes.json()
             
             setTimeout(() => {
@@ -106,7 +111,7 @@ const handleSubscribe = async () => {
                     mediaType: mData.media_type,
                     title: mData.title || detail.value.title || detail.value.name,
                     year: mData.year,
-                    bangumiId: bangumiDetailState.value.id,
+                    bangumiId: bangumiId.value,
                     season: mData.season,
                     totalEpisodes: mData.total_episodes || (mData.bgm_info?.total_episodes),
                     poster_path: mData.poster_path || (mData.bgm_info?.poster_path)
@@ -122,23 +127,17 @@ const handleSubscribe = async () => {
 }
 
 const matchTmdb = async () => {
-    if (!bangumiDetailState.value.id) return
+    if (!bangumiId.value) return
     matchingTmdb.value = true
     
     try {
-        const res = await fetch(`${API_BASE}/api/bangumi/match_tmdb/${bangumiDetailState.value.id}`)
+        const res = await fetch(`${API_BASE}/api/bangumi/match_tmdb/${bangumiId.value}`)
         const data = await res.json()
         
         if (data.success && data.tmdb_id) {
             message.success(`已匹配到 TMDB: ${data.title}`)
             setTimeout(() => {
-                openTmdbDetail(data.tmdb_id, data.media_type || 'tv', {
-                    title: data.title,
-                    poster_path: data.poster_path,
-                    vote_average: null,
-                    year: data.year
-                })
-                currentViewKey.value = 'TmdbDetailView'
+                router.push({ name: 'TmdbDetail', params: { id: data.tmdb_id } })
             }, 200)
         } else {
             message.warning('未能找到匹配的 TMDB 条目')
@@ -152,14 +151,6 @@ const matchTmdb = async () => {
 }
 
 onMounted(() => {
-  if (bangumiDetailState.value.initial) {
-    detail.value = bangumiDetailState.value.initial
-  }
-  fetchDetail()
-})
-
-watch(() => bangumiDetailState.value.id, () => {
-  detail.value = bangumiDetailState.value.initial || null
   fetchDetail()
 })
 </script>

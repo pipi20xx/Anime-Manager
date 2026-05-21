@@ -1,9 +1,11 @@
 import { ref, computed, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMessage } from 'naive-ui'
-import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail, currentViewKey } from '../../store/navigationStore'
+import { navigateToSubscription, triggerGlobalSearch } from '../../store/navigationStore'
 
 export function useBangumiDetail(props: any, emit: any) {
   const message = useMessage()
+  const router = useRouter()
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
   const loading = ref(false)
@@ -135,13 +137,7 @@ export function useBangumiDetail(props: any, emit: any) {
               message.success(`已匹配到 TMDB: ${data.title}`)
               emit('update:show', false)
               setTimeout(() => {
-                  openTmdbDetail(data.tmdb_id, data.media_type || 'tv', {
-                      title: data.title,
-                      poster_path: data.poster_path,
-                      vote_average: null,
-                      year: data.year
-                  })
-                  currentViewKey.value = 'TmdbDetailView'
+                  router.push({ name: 'TmdbDetail', params: { id: data.tmdb_id } })
               }, 200)
           } else {
               message.warning('未能找到匹配的 TMDB 条目')

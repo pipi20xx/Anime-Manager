@@ -3,6 +3,7 @@ import './styles/global.css'
 import './styles/mobile-base.css'
 import App from './App.vue'
 import axios from 'axios'
+import router from './router'
 
 // --- 全局 Axios 拦截器 ---
 axios.interceptors.request.use(config => {
@@ -64,6 +65,8 @@ window.fetch = async (...args) => {
 };
 
 const app = createApp(App)
+
+app.use(router)
 
 // --- 全局指令：禁用自动填充 ---
 app.directive('no-autocomplete', {

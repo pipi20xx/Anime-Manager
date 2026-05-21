@@ -37,25 +37,8 @@ import {
   ExitToAppOutlined as LogoutIcon
 } from '@vicons/material'
 
-// Views
-import ExploreView from '../views/ExploreView.vue'
-import HomeView from '../views/HomeView.vue'
-import CacheView from '../views/CacheView.vue'
-import SettingsView from '../views/SettingsView.vue'
-import UsageGuideView from '../views/UsageGuideView.vue'
-import FileBrowserView from '../views/FileBrowserView.vue'
-import OrganizerView from '../views/OrganizerView.vue'
-import OrganizeHistoryView from '../views/OrganizeHistoryView.vue'
-import SubscriptionView from '../views/SubscriptionView.vue'
-import StrmGeneratorView from '../views/StrmGeneratorView.vue'
-import CalendarView from '../views/CalendarView.vue'
-import DatabaseView from '../views/DatabaseView.vue'
-import TmdbFullDataView from '../views/TmdbFullDataView.vue'
-import TaskHistoryView from '../views/TaskHistoryView.vue'
-import ExternalControlView from '../views/ExternalControlView.vue'
-import TmdbDetailView from '../views/TmdbDetailView.vue'
-import BangumiDetailView from '../views/BangumiDetailView.vue'
-import TmdbPersonDetailView from '../views/TmdbPersonDetailView.vue'
+// Views - 不再需要导入，使用路由
+import { useRouter, useRoute } from 'vue-router'
 
 import JackettSearchModal from '../components/JackettSearchModal.vue'
 import LogConsoleModal from '../components/LogConsoleModal.vue'
@@ -65,7 +48,7 @@ import { APP_VERSION } from '../version'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 import { 
-  currentViewKey, isSearchOpen, isLogConsoleOpen, 
+  isSearchOpen, isLogConsoleOpen, 
   isLoggedIn, logout, username
 } from '../store/navigationStore'
 import { currentThemeMode, isDarkMode, logoColor, toggleThemeMode } from '../store/themeStore'
@@ -73,6 +56,8 @@ import { ThemeMode } from '../themes'
 import { useIsMobile } from '../composables/useIsMobile'
 
 const notification = useNotification()
+const router = useRouter()
+const route = useRoute()
 
 const checkVersionUpdate = async () => {
   try {
@@ -149,38 +134,34 @@ const showSearchModal = isSearchOpen
 const showLogConsole = isLogConsoleOpen
 
 const menuOptions: MenuOption[] = [
-  { label: '追剧日历', key: 'CalendarView', icon: renderIcon(CalendarIcon) },
-  { label: '文件浏览', key: 'FileBrowserView', icon: renderIcon(FileIcon) },
-  { label: '整理重命名', key: 'OrganizerView', icon: renderIcon(OrganizeIcon) },
-  { label: '整理历史', key: 'OrganizeHistoryView', icon: renderIcon(LogIcon) },
-  { label: '订阅与下载', key: 'SubscriptionView', icon: renderIcon(RssIcon) },
-  { label: '虚拟库 (STRM)', key: 'StrmGeneratorView', icon: renderIcon(LinkIcon) },
-  { label: '任务中心', key: 'TaskHistoryView', icon: renderIcon(TaskIcon) },
-  { label: '外部控制 (API)', key: 'ExternalControlView', icon: renderIcon(ApiIcon) },
-  { label: '系统数据中心', key: 'DatabaseView', icon: renderIcon(DbIcon) },
-  { label: '规则说明', key: 'UsageGuideView', icon: renderIcon(GuideIcon) },
+  { label: '追剧日历', key: 'Calendar', icon: renderIcon(CalendarIcon) },
+  { label: '文件浏览', key: 'FileBrowser', icon: renderIcon(FileIcon) },
+  { label: '整理重命名', key: 'Organizer', icon: renderIcon(OrganizeIcon) },
+  { label: '整理历史', key: 'OrganizeHistory', icon: renderIcon(LogIcon) },
+  { label: '订阅与下载', key: 'Subscription', icon: renderIcon(RssIcon) },
+  { label: '虚拟库 (STRM)', key: 'StrmGenerator', icon: renderIcon(LinkIcon) },
+  { label: '任务中心', key: 'TaskHistory', icon: renderIcon(TaskIcon) },
+  { label: '外部控制 (API)', key: 'ExternalControl', icon: renderIcon(ApiIcon) },
+  { label: '系统数据中心', key: 'Database', icon: renderIcon(DbIcon) },
+  { label: '规则说明', key: 'UsageGuide', icon: renderIcon(GuideIcon) },
 ]
 
-const currentView = computed(() => {
-  const views: Record<string, any> = {
-    ExploreView, HomeView, CacheView, SettingsView, UsageGuideView,
-    FileBrowserView, OrganizerView, OrganizeHistoryView, SubscriptionView, StrmGeneratorView, DatabaseView, 
-    TmdbFullDataView, ExternalControlView, CalendarView, TaskHistoryView,
-    TmdbDetailView, BangumiDetailView, TmdbPersonDetailView
-  }
-  return views[currentViewKey.value] || ExploreView
-})
+const currentMenuKey = computed(() => route.name as string)
+
+const handleMenuSelect = (key: string) => {
+  router.push({ name: key })
+}
 
 // Mobile Bottom Nav Helpers
 const handleMobileNav = (key: string) => {
   if (key === 'MORE') {
     showMobileMenu.value = true
   } else {
-    currentViewKey.value = key
+    router.push({ name: key })
   }
 }
 
-const isNavActive = (key: string) => currentViewKey.value === key
+const isNavActive = (key: string) => route.name === key
 </script>
 
 <template>
@@ -199,7 +180,7 @@ const isNavActive = (key: string) => currentViewKey.value === key
     >
       <div class="logo-container">
         <n-space align="center" :size="10" :wrap="false">
-          <div @click="currentViewKey = 'ExploreView'" style="cursor: pointer; display: flex; align-items: center; gap: var(--space-2);">
+          <div @click="router.push({ name: 'Explore' })" style="cursor: pointer; display: flex; align-items: center; gap: var(--space-2);">
             <n-icon size="24" :color="logoColor"><MovieIcon /></n-icon>
             <div v-if="!collapsed" class="logo-text">
               <span class="title" :style="{ color: logoColor }">番剧管家</span>
@@ -220,11 +201,12 @@ const isNavActive = (key: string) => currentViewKey.value === key
       
       <n-scrollbar style="flex-grow: 1;">
         <n-menu
-          v-model:value="currentViewKey"
+          :value="currentMenuKey"
           :collapsed-width="56"
           :collapsed-icon-size="18"
           :options="menuOptions"
           :indent="14"
+          @update:value="handleMenuSelect"
         />
       </n-scrollbar>
 
@@ -267,8 +249,8 @@ const isNavActive = (key: string) => currentViewKey.value === key
             <n-button 
               v-bind="getButtonStyle('iconPrimary')"
               size="small"
-              :type="currentViewKey === 'HomeView' ? 'primary' : 'default'"
-              @click="currentViewKey = 'HomeView'"
+              :type="route.name === 'Home' ? 'primary' : 'default'"
+              @click="router.push({ name: 'Home' })"
               title="识别控制台"
             >
               <template #icon><n-icon><MovieIcon /></n-icon></template>
@@ -277,8 +259,8 @@ const isNavActive = (key: string) => currentViewKey.value === key
             <n-button 
               v-bind="getButtonStyle('iconPrimary')"
               size="small"
-              :type="currentViewKey === 'SettingsView' ? 'primary' : 'default'"
-              @click="currentViewKey = 'SettingsView'"
+              :type="route.name === 'Settings' ? 'primary' : 'default'"
+              @click="router.push({ name: 'Settings' })"
               title="系统设置"
             >
               <template #icon><n-icon><SettingIcon /></n-icon></template>
@@ -317,23 +299,25 @@ const isNavActive = (key: string) => currentViewKey.value === key
       </div>
 
       <div class="view-wrapper">
-        <transition name="fade" mode="out-in">
-          <component :is="currentView" />
-        </transition>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </n-layout-content>
 
     <!-- Mobile Bottom Navigation -->
     <div v-if="isMobile" class="mobile-bottom-nav">
-      <div class="nav-item" :class="{ active: isNavActive('ExploreView') }" @click="handleMobileNav('ExploreView')">
+      <div class="nav-item" :class="{ active: isNavActive('Explore') }" @click="handleMobileNav('Explore')">
         <n-icon size="24"><MovieIcon /></n-icon>
         <span class="label">首页</span>
       </div>
-      <div class="nav-item" :class="{ active: isNavActive('CalendarView') }" @click="handleMobileNav('CalendarView')">
+      <div class="nav-item" :class="{ active: isNavActive('Calendar') }" @click="handleMobileNav('Calendar')">
         <n-icon size="24"><CalendarIcon /></n-icon>
         <span class="label">日历</span>
       </div>
-      <div class="nav-item" :class="{ active: isNavActive('SubscriptionView') }" @click="handleMobileNav('SubscriptionView')">
+      <div class="nav-item" :class="{ active: isNavActive('Subscription') }" @click="handleMobileNav('Subscription')">
         <n-icon size="24"><RssIcon /></n-icon>
         <span class="label">订阅</span>
       </div>
@@ -347,10 +331,10 @@ const isNavActive = (key: string) => currentViewKey.value === key
     <n-drawer v-model:show="showMobileMenu" placement="right" :width="260">
       <n-drawer-content title="功能菜单" :native-scrollbar="false">
          <n-menu
-          v-model:value="currentViewKey"
+          :value="currentMenuKey"
           :options="menuOptions"
           :indent="18"
-          @update:value="showMobileMenu = false"
+          @update:value="(key) => { handleMenuSelect(key); showMobileMenu = false; }"
         />
         <template #footer>
           <n-space justify="space-around" style="width: 100%; padding-bottom: var(--space-5);">
@@ -374,13 +358,13 @@ const isNavActive = (key: string) => currentViewKey.value === key
 
               <n-button 
                 v-bind="getButtonStyle('iconPrimary')"
-                :type="currentViewKey === 'HomeView' ? 'primary' : 'default'"
-                @click="{ currentViewKey = 'HomeView'; showMobileMenu = false; }"
+                :type="route.name === 'Home' ? 'primary' : 'default'"
+                @click="router.push({ name: 'Home' }); showMobileMenu = false;"
               >
                 <template #icon><n-icon><MovieIcon /></n-icon></template>
               </n-button>
 
-              <n-button v-bind="getButtonStyle('iconPrimary')" @click="{ currentViewKey = 'SettingsView'; showMobileMenu = false; }">
+              <n-button v-bind="getButtonStyle('iconPrimary')" @click="router.push({ name: 'Settings' }); showMobileMenu = false;">
                 <template #icon><n-icon><SettingIcon /></n-icon></template>
               </n-button>
               <n-button v-bind="getButtonStyle('iconPrimary')" @click="{ showLogConsole = true; showMobileMenu = false; }">

@@ -1,6 +1,6 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
-import { tmdbDetailState, openTmdbDetail, openBangumiDetail, bangumiDetailState, currentViewKey } from '../../store/navigationStore'
+import { openTmdbDetail, openBangumiDetail } from '../../store/navigationStore'
 
 export function useRecommend() {
   const message = useMessage()
@@ -14,10 +14,6 @@ export function useRecommend() {
     subscriptions: [] as any[],
     loading: false
   })
-
-  const tmdbDetail = tmdbDetailState
-
-  const bgmDetail = bangumiDetailState
 
   const currentDayTab = ref("today")
 
@@ -95,12 +91,10 @@ export function useRecommend() {
 
   const openDetail = (item: any, type: string) => {
       openTmdbDetail(item.id, type === 'movie' ? 'movie' : 'tv', item)
-      currentViewKey.value = 'TmdbDetailView'
   }
 
   const openBangumi = (bgmItem: any) => {
       openBangumiDetail(bgmItem.id, bgmItem)
-      currentViewKey.value = 'BangumiDetailView'
   }
 
   onMounted(() => {
@@ -109,8 +103,6 @@ export function useRecommend() {
 
   return {
     exploreData,
-    tmdbDetail,
-    bgmDetail,
     currentDayTab,
     fetchSubscriptions,
     isSubscribed,

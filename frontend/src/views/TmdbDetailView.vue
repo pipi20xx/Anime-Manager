@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { 
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton, NSpin
 } from 'naive-ui'
@@ -14,11 +15,14 @@ import {
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
-import { navigateToSubscription, triggerGlobalSearch, tmdbDetailState, openTmdbDetail, openTmdbPersonDetail } from '../store/navigationStore'
-import { currentViewKey } from '../store/navigationStore'
+import { navigateToSubscription, triggerGlobalSearch, openTmdbPersonDetail } from '../store/navigationStore'
 
+const route = useRoute()
+const router = useRouter()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 const message = useMessage()
+
+const tmdbId = computed(() => route.params.id as string)
 
 const loading = ref(false)
 const detail = ref<any>(null)
@@ -38,7 +42,7 @@ const fetchSubscriptions = async () => {
 }
 
 const isSubscribed = computed(() => {
-  return subscriptions.value.some((sub: any) => String(sub.tmdb_id) === String(tmdbDetailState.value.id))
+  return subscriptions.value.some((sub: any) => String(sub.tmdb_id) === String(tmdbId.value))
 })
 
 const displayGenres = computed(() => {
@@ -62,8 +66,8 @@ const getImg = (path: string) => {
 const getPoster = (path: string) => getImg(path)
 
 const fetchDetail = async () => {
-  const id = tmdbDetailState.value.id
-  const type = tmdbDetailState.value.type
+  const id = tmdbId.value
+  const type = 'tv'
   
   if (!id) return
   
@@ -98,12 +102,12 @@ const fetchDetail = async () => {
 }
 
 const goBack = () => {
-  currentViewKey.value = 'ExploreView'
+  router.back()
 }
 
 const openExternal = () => {
-    const type = tmdbDetailState.value.type === 'movie' || tmdbDetailState.value.type === '电影' ? 'movie' : 'tv'
-    window.open(`https://www.themoviedb.org/${type}/${tmdbDetailState.value.id}`, '_blank')
+    const type = 'tv'
+    window.open(`https://www.themoviedb.org/${type}/${tmdbId.value}`, '_blank')
 }
 
 const openImdb = (imdbId: string) => {
@@ -112,10 +116,10 @@ const openImdb = (imdbId: string) => {
 
 const handleSubscribe = () => {
     if (!detail.value) return
-    const type = tmdbDetailState.value.type === '电影' || tmdbDetailState.value.type === 'movie' ? 'movie' : 'tv'
+    const type = 'tv'
     navigateToSubscription({
         type: 'tmdb',
-        tmdbId: tmdbDetailState.value.id,
+        tmdbId: tmdbId.value,
         mediaType: type as 'movie' | 'tv',
         title: detail.value.title || detail.value.name
     })
@@ -126,8 +130,7 @@ const handleSearch = () => {
 }
 
 const toggleSeason = async (seasonNumber: number) => {
-  const tmdbId = tmdbDetailState.value.id
-  const key = `${tmdbId}-${seasonNumber}`
+  const key = `${tmdbId.value}-${seasonNumber}`
   
   if (expandedSeasons.value.has(seasonNumber)) {
     expandedSeasons.value.delete(seasonNumber)
@@ -169,22 +172,19 @@ const toggleSeason = async (seasonNumber: number) => {
 }
 
 const getSeasonInfo = (seasonNumber: number) => {
-  const tmdbId = tmdbDetailState.value.id
-  const key = `${tmdbId}-${seasonNumber}`
+  const key = `${tmdbId.value}-${seasonNumber}`
   const data = seasonEpisodes.value.get(key)
   return data?.season_info || null
 }
 
 const getSeasonEpisodes = (seasonNumber: number) => {
-  const tmdbId = tmdbDetailState.value.id
-  const key = `${tmdbId}-${seasonNumber}`
+  const key = `${tmdbId.value}-${seasonNumber}`
   const data = seasonEpisodes.value.get(key)
   return data?.episodes || []
 }
 
 const isSeasonLoading = (seasonNumber: number) => {
-  const tmdbId = tmdbDetailState.value.id
-  const key = `${tmdbId}-${seasonNumber}`
+  const key = `${tmdbId.value}-${seasonNumber}`
   return loadingSeasons.value.has(key)
 }
 
@@ -193,8 +193,7 @@ const isSeasonExpanded = (seasonNumber: number) => {
 }
 
 const getEpisodeEmbyInfo = (seasonNumber: number, episodeNumber: number) => {
-  const tmdbId = tmdbDetailState.value.id
-  const key = `${tmdbId}-${seasonNumber}`
+  const key = `${tmdbId.value}-${seasonNumber}`
   const embyData = seasonEmbyInfo.value.get(key)
   return embyData?.[episodeNumber] || null
 }
@@ -229,20 +228,15 @@ const handleRecClick = (rec: any) => {
   recommendations.value = []
   embyStatus.value = null
   
-  openTmdbDetail(rec.id, type, rec)
-  currentViewKey.value = 'TmdbDetailView'
+  router.push({ name: 'TmdbDetail', params: { id: rec.id } })
 }
 
 const openPersonDetail = (personId: string | number) => {
   if (!personId) return
-  openTmdbPersonDetail(personId)
-  currentViewKey.value = 'TmdbPersonDetailView'
+  router.push({ name: 'TmdbPersonDetail', params: { id: personId } })
 }
 
 onMounted(() => {
-  if (tmdbDetailState.value.initial) {
-    detail.value = tmdbDetailState.value.initial
-  }
   fetchDetail()
 })
 </script>

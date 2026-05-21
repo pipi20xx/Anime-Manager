@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { 
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton
 } from 'naive-ui'
@@ -12,10 +13,13 @@ import {
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
-import { openTmdbDetail, currentViewKey, tmdbPersonDetailState } from '../store/navigationStore'
 
+const route = useRoute()
+const router = useRouter()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 const message = useMessage()
+
+const personId = computed(() => route.params.id as string)
 
 const loading = ref(false)
 const detail = ref<any>(null)
@@ -38,7 +42,7 @@ const getProfile = (path: string) => getImg(path)
 const getPoster = (path: string) => getImg(path)
 
 const fetchDetail = async () => {
-  const id = tmdbPersonDetailState.value.id
+  const id = personId.value
   if (!id) return
   
   loading.value = true
@@ -65,11 +69,11 @@ const fetchDetail = async () => {
 }
 
 const goBack = () => {
-  currentViewKey.value = 'TmdbDetailView'
+  router.back()
 }
 
 const openExternal = () => {
-  window.open(`https://www.themoviedb.org/person/${tmdbPersonDetailState.value.id}`, '_blank')
+  window.open(`https://www.themoviedb.org/person/${personId.value}`, '_blank')
 }
 
 const openImdb = (imdbId: string) => {
@@ -96,14 +100,10 @@ const calculateAge = (birthday: string, deathday?: string) => {
 
 const handleTmdbClick = (item: any) => {
   if (!item?.id) return
-  openTmdbDetail(item.id, item.media_type || 'tv', item)
-  currentViewKey.value = 'TmdbDetailView'
+  router.push({ name: 'TmdbDetail', params: { id: item.id } })
 }
 
 onMounted(() => {
-  if (tmdbPersonDetailState.value.initial) {
-    detail.value = tmdbPersonDetailState.value.initial
-  }
   fetchDetail()
 })
 </script>
