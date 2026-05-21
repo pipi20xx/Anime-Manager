@@ -96,6 +96,8 @@ async def match_tmdb(subject_id: int):
                 logger.info(msg)
 
         tmdb_item = await BangumiProvider.map_to_tmdb(bgm_item, tmdb_key, logs=RemoteLogger())
+    else:
+        logger.warning("TMDB API Key 未配置，无法进行匹配")
     
     # 3. 提取季号 (使用指定的 utils.py)
     from recognition_engine.bgm_matcher.utils import extract_season_from_name

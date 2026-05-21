@@ -94,3 +94,23 @@ export const openBangumiDetail = (id: string | number, initial: any = null) => {
     initial
   }
 }
+
+export interface TmdbPersonDetailState {
+  show: boolean
+  id: string | number
+  initial: any
+}
+
+export const tmdbPersonDetailState = ref<TmdbPersonDetailState>({
+  show: false,
+  id: '',
+  initial: null
+})
+
+export const openTmdbPersonDetail = (id: string | number, initial: any = null) => {
+  tmdbPersonDetailState.value = {
+    show: true,
+    id,
+    initial
+  }
+}

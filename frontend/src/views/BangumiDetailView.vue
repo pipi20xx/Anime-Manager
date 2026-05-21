@@ -130,19 +130,19 @@ const matchTmdb = async () => {
         const data = await res.json()
         
         if (data.success && data.tmdb_id) {
-              message.success(`已匹配到 TMDB: ${data.title}`)
-              setTimeout(() => {
-                  openTmdbDetail(data.tmdb_id, data.media_type || 'tv', {
-                      title: data.title,
-                      poster_path: data.poster_path,
-                      vote_average: null,
-                      year: data.year
-                  })
-                  currentViewKey.value = 'TmdbDetailView'
-              }, 200)
-          } else {
-              message.warning('未能找到匹配的 TMDB 条目')
-          }
+            message.success(`已匹配到 TMDB: ${data.title}`)
+            setTimeout(() => {
+                openTmdbDetail(data.tmdb_id, data.media_type || 'tv', {
+                    title: data.title,
+                    poster_path: data.poster_path,
+                    vote_average: null,
+                    year: data.year
+                })
+                currentViewKey.value = 'TmdbDetailView'
+            }, 200)
+        } else {
+            message.warning('未能找到匹配的 TMDB 条目')
+        }
     } catch (e) {
         console.error(e)
         message.error('匹配 TMDB 失败')

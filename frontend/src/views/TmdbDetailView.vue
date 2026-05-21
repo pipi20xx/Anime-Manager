@@ -14,9 +14,8 @@ import {
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
-import { navigateToSubscription, triggerGlobalSearch, tmdbDetailState, openTmdbDetail } from '../store/navigationStore'
+import { navigateToSubscription, triggerGlobalSearch, tmdbDetailState, openTmdbDetail, openTmdbPersonDetail } from '../store/navigationStore'
 import { currentViewKey } from '../store/navigationStore'
-import TmdbPersonDetailModalDesktop from '../components/desktop/TmdbPersonDetailModalDesktop.vue'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 const message = useMessage()
@@ -30,9 +29,6 @@ const seasonEmbyInfo = ref<Map<string, any>>(new Map())
 const loadingSeasons = ref<Set<string>>(new Set())
 const embyStatus = ref<any>(null)
 const recommendations = ref<any[]>([])
-
-const personDetailShow = ref(false)
-const selectedPersonId = ref<string | number | null>(null)
 
 const fetchSubscriptions = async () => {
   try {
@@ -239,8 +235,8 @@ const handleRecClick = (rec: any) => {
 
 const openPersonDetail = (personId: string | number) => {
   if (!personId) return
-  selectedPersonId.value = personId
-  personDetailShow.value = true
+  openTmdbPersonDetail(personId)
+  currentViewKey.value = 'TmdbPersonDetailView'
 }
 
 onMounted(() => {
@@ -459,11 +455,6 @@ onMounted(() => {
         </div>
       </n-scrollbar>
     </div>
-
-    <TmdbPersonDetailModalDesktop 
-      v-model:show="personDetailShow" 
-      :person-id="selectedPersonId || 0" 
-    />
   </div>
 </template>
 
