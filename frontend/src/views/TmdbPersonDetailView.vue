@@ -122,7 +122,6 @@ onMounted(() => {
     </div>
 
     <div v-else-if="detail" class="detail-container">
-      <n-scrollbar style="flex: 1;">
         <div class="header-content">
           <div class="profile-col">
             <n-image :src="getProfile(detail.profile_path)" class="main-profile" object-fit="cover" />
@@ -242,7 +241,6 @@ onMounted(() => {
             </n-scrollbar>
           </div>
         </div>
-      </n-scrollbar>
     </div>
   </div>
 </template>

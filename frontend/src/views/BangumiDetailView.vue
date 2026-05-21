@@ -178,7 +178,6 @@ watch(() => bangumiDetailState.value.id, () => {
     </div>
 
     <div v-else-if="detail" class="detail-container">
-      <n-scrollbar style="flex: 1;">
         <div class="header-content">
           <div class="poster-col">
             <n-image :src="getImg(detail.poster_path)" class="main-poster" object-fit="contain" />
@@ -259,7 +258,6 @@ watch(() => bangumiDetailState.value.id, () => {
             </n-scrollbar>
           </div>
         </div>
-      </n-scrollbar>
     </div>
   </div>
 </template>

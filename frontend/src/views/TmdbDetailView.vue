@@ -261,7 +261,6 @@ onMounted(() => {
     </div>
 
     <div v-else-if="detail" class="detail-container">
-      <n-scrollbar style="flex: 1;">
         <div class="header-content">
           <div class="poster-col">
             <n-image :src="getPoster(detail.poster_path)" class="main-poster" object-fit="cover" />
@@ -453,7 +452,6 @@ onMounted(() => {
             </n-scrollbar>
           </div>
         </div>
-      </n-scrollbar>
     </div>
   </div>
 </template>
@@ -544,8 +542,6 @@ onMounted(() => {
   background: var(--app-surface-inner); 
   border-top: 1px solid var(--app-border-light); 
   padding: 12px; 
-  max-height: 400px; 
-  overflow-y: auto; 
 }
 .season-overview { 
   font-size: 13px; color: var(--text-secondary); line-height: 1.6; 
