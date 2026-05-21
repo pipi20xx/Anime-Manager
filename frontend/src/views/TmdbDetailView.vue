@@ -221,7 +221,7 @@ const getSeasonLibraryStatus = (seasonNumber: number) => {
 const handleRecClick = (rec: any) => {
   const type = rec.media_type || rec.type || 'tv'
   
-  detail.value = rec
+  detail.value = null
   expandedSeasons.value = new Set()
   seasonEpisodes.value = new Map()
   seasonEmbyInfo.value = new Map()
@@ -238,6 +238,12 @@ const openPersonDetail = (personId: string | number) => {
 
 onMounted(() => {
   fetchDetail()
+})
+
+watch(tmdbId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    fetchDetail()
+  }
 })
 </script>
 
