@@ -53,6 +53,8 @@ import DatabaseView from '../views/DatabaseView.vue'
 import TmdbFullDataView from '../views/TmdbFullDataView.vue'
 import TaskHistoryView from '../views/TaskHistoryView.vue'
 import ExternalControlView from '../views/ExternalControlView.vue'
+import TmdbDetailView from '../views/TmdbDetailView.vue'
+import BangumiDetailView from '../views/BangumiDetailView.vue'
 
 import JackettSearchModal from '../components/JackettSearchModal.vue'
 import LogConsoleModal from '../components/LogConsoleModal.vue'
@@ -162,7 +164,8 @@ const currentView = computed(() => {
   const views: Record<string, any> = {
     ExploreView, HomeView, CacheView, SettingsView, UsageGuideView,
     FileBrowserView, OrganizerView, OrganizeHistoryView, SubscriptionView, StrmGeneratorView, DatabaseView, 
-    TmdbFullDataView, ExternalControlView, CalendarView, TaskHistoryView
+    TmdbFullDataView, ExternalControlView, CalendarView, TaskHistoryView,
+    TmdbDetailView, BangumiDetailView
   }
   return views[currentViewKey.value] || ExploreView
 })

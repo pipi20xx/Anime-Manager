@@ -6,16 +6,12 @@ import {
   StarOutlined as StarIcon,
   CalendarMonthOutlined as CalendarIcon
 } from '@vicons/material'
-import TmdbDetailModal from '../../../components/TmdbDetailModal.vue'
-import BangumiDetailModal from '../../../components/BangumiDetailModal.vue'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useRecommend } from '../../../composables/explore/useRecommend'
 
 const {
   exploreData,
-  tmdbDetail,
-  bgmDetail,
   currentDayTab,
   isSubscribed,
   getPoster,
@@ -111,19 +107,6 @@ const {
             </div>
         </n-scrollbar>
       </template>
-
-    <TmdbDetailModal 
-        v-model:show="tmdbDetail.show"
-        :tmdb-id="tmdbDetail.id"
-        :media-type="tmdbDetail.type"
-        :initial-data="tmdbDetail.initial"
-    />
-
-    <BangumiDetailModal 
-        v-model:show="bgmDetail.show"
-        :subject-id="bgmDetail.id"
-        :initial-data="bgmDetail.initial"
-    />
   </div>
 </template>
 

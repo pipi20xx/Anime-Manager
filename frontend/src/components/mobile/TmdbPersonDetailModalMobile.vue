@@ -13,7 +13,7 @@ import {
 } from '@vicons/material'
 import { useTmdbPersonDetail } from '../../composables/components/useTmdbPersonDetail'
 import { getButtonStyle } from '../../composables/useButtonStyles'
-import TmdbDetailModalMobile from './TmdbDetailModalMobile.vue'
+import { openTmdbDetail, currentViewKey } from '../../store/navigationStore'
 
 const props = defineProps<{
   show: boolean
@@ -37,17 +37,13 @@ const {
   renderReady
 } = useTmdbPersonDetail(props, emit)
 
-const tmdbDetailShow = ref(false)
-const selectedTmdbId = ref<string | number | null>(null)
-const selectedMediaType = ref<'movie' | 'tv'>('tv')
-const selectedInitialData = ref<any>(null)
-
-const openTmdbDetail = (item: any) => {
+const handleTmdbClick = (item: any) => {
   if (!item?.id) return
-  selectedTmdbId.value = item.id
-  selectedMediaType.value = item.media_type || 'tv'
-  selectedInitialData.value = item
-  tmdbDetailShow.value = true
+  emit('update:show', false)
+  setTimeout(() => {
+    openTmdbDetail(item.id, item.media_type || 'tv', item)
+    currentViewKey.value = 'TmdbDetailView'
+  }, 200)
 }
 </script>
 
@@ -131,7 +127,7 @@ const openTmdbDetail = (item: any) => {
              <div class="section" v-if="detail.known_for?.length">
                 <h3>知名作品</h3>
                 <div class="h-scroller">
-                   <div v-for="c in detail.known_for" :key="c.id" class="credit-item" @click="openTmdbDetail(c)">
+                   <div v-for="c in detail.known_for" :key="c.id" class="credit-item" @click="handleTmdbClick(c)">
                       <div class="poster">
                          <img :src="getPoster(c.poster_path)" loading="lazy" />
                       </div>
@@ -146,7 +142,7 @@ const openTmdbDetail = (item: any) => {
              <div class="section" v-if="credits.cast?.length">
                 <h3>参演作品</h3>
                 <div class="h-scroller">
-                   <div v-for="c in credits.cast" :key="c.id" class="credit-item" @click="openTmdbDetail(c)">
+                   <div v-for="c in credits.cast" :key="c.id" class="credit-item" @click="handleTmdbClick(c)">
                       <div class="poster">
                          <img :src="getPoster(c.poster_path)" loading="lazy" />
                       </div>
@@ -162,7 +158,7 @@ const openTmdbDetail = (item: any) => {
              <div class="section" v-if="credits.crew?.length">
                 <h3>制作作品</h3>
                 <div class="h-scroller">
-                   <div v-for="c in credits.crew" :key="c.id + c.job" class="credit-item" @click="openTmdbDetail(c)">
+                   <div v-for="c in credits.crew" :key="c.id + c.job" class="credit-item" @click="handleTmdbClick(c)">
                       <div class="poster">
                          <img :src="getPoster(c.poster_path)" loading="lazy" />
                       </div>
@@ -181,13 +177,6 @@ const openTmdbDetail = (item: any) => {
       </div>
     </div>
   </n-modal>
-
-  <TmdbDetailModalMobile 
-    v-model:show="tmdbDetailShow" 
-    :tmdb-id="selectedTmdbId || 0" 
-    :media-type="selectedMediaType"
-    :initial-data="selectedInitialData"
-  />
 </template>
 
 <style scoped>

@@ -1,31 +1,22 @@
 <script setup lang="ts">
-import { toRef } from 'vue'
 import { 
   NInput, NButton, NIcon, NSpin, NEmpty, NDivider, NInputGroup
 } from 'naive-ui'
 import { SearchOutlined } from '@vicons/material'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
-import TmdbDetailModal from '../../../components/TmdbDetailModal.vue'
-import BangumiDetailModal from '../../../components/BangumiDetailModal.vue'
 import { useSearch } from '../../../composables/explore/useSearch'
-import { useBackClose } from '../../../composables/useBackClose'
 
 const {
   keyword,
   loading,
   hasSearched,
   results,
-  tmdbDetail,
-  bgmDetail,
   doSearch,
   openTmdb,
   openBangumi,
   isSubscribed
 } = useSearch()
-
-useBackClose(toRef(tmdbDetail, 'show'))
-useBackClose(toRef(bgmDetail, 'show'))
 </script>
 
 <template>
@@ -96,9 +87,6 @@ useBackClose(toRef(bgmDetail, 'show'))
             </div>
         </div>
     </div>
-
-    <TmdbDetailModal v-model:show="tmdbDetail.show" :tmdb-id="tmdbDetail.id" :media-type="tmdbDetail.type" :initial-data="tmdbDetail.initial" />
-    <BangumiDetailModal v-model:show="bgmDetail.show" :subject-id="bgmDetail.id" :initial-data="bgmDetail.initial" />
   </div>
 </template>
 

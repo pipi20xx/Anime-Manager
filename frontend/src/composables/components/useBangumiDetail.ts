@@ -1,6 +1,6 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useMessage } from 'naive-ui'
-import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail } from '../../store/navigationStore'
+import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail, currentViewKey } from '../../store/navigationStore'
 
 export function useBangumiDetail(props: any, emit: any) {
   const message = useMessage()
@@ -141,6 +141,7 @@ export function useBangumiDetail(props: any, emit: any) {
                       vote_average: null,
                       year: data.year
                   })
+                  currentViewKey.value = 'TmdbDetailView'
               }, 200)
           } else {
               message.warning('未能找到匹配的 TMDB 条目')

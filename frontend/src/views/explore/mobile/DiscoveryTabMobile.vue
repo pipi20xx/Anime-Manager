@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, toRef } from 'vue'
+import { ref } from 'vue'
 import { 
   NTag, NSpace, NIcon, NSpin, NSelect, NButton, NSkeleton, NEmpty, NBackTop, NDrawer, NDrawerContent, NDivider
 } from 'naive-ui'
@@ -7,8 +7,6 @@ import {
   FilterAltOutlined as FilterIcon,
   StarOutlined as StarIcon
 } from '@vicons/material'
-import TmdbDetailModal from '../../../components/TmdbDetailModal.vue'
-import BangumiDetailModal from '../../../components/BangumiDetailModal.vue'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useDiscovery } from '../../../composables/explore/useDiscovery'
@@ -19,8 +17,6 @@ const {
   config,
   filters,
   data,
-  tmdbDetail,
-  bgmDetail,
   loadTrigger,
   isSubscribed,
   openDetail
@@ -29,8 +25,6 @@ const {
 const showFilterDrawer = ref(false)
 
 useBackClose(showFilterDrawer)
-useBackClose(toRef(tmdbDetail, 'show'))
-useBackClose(toRef(bgmDetail, 'show'))
 </script>
 
 <template>
@@ -154,8 +148,6 @@ useBackClose(toRef(bgmDetail, 'show'))
         </n-drawer-content>
     </n-drawer>
 
-    <TmdbDetailModal v-model:show="tmdbDetail.show" :tmdb-id="tmdbDetail.id" :media-type="tmdbDetail.type" :initial-data="tmdbDetail.initial" />
-    <BangumiDetailModal v-model:show="bgmDetail.show" :subject-id="bgmDetail.id" :initial-data="bgmDetail.initial" />
     <n-back-top :right="20" :bottom="80" />
   </div>
 </template>

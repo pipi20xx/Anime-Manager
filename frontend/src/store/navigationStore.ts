@@ -74,3 +74,23 @@ export const openTmdbDetail = (id: string | number, type: string = 'tv', initial
     initial
   }
 }
+
+export interface BangumiDetailState {
+  show: boolean
+  id: string | number
+  initial: any
+}
+
+export const bangumiDetailState = ref<BangumiDetailState>({
+  show: false,
+  id: '',
+  initial: null
+})
+
+export const openBangumiDetail = (id: string | number, initial: any = null) => {
+  bangumiDetailState.value = {
+    show: true,
+    id,
+    initial
+  }
+}

@@ -6,8 +6,6 @@ import {
   FilterAltOutlined as FilterIcon,
   StarOutlined as StarIcon
 } from '@vicons/material'
-import TmdbDetailModal from '../../../components/TmdbDetailModal.vue'
-import BangumiDetailModal from '../../../components/BangumiDetailModal.vue'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useDiscovery } from '../../../composables/explore/useDiscovery'
@@ -16,8 +14,6 @@ const {
   config,
   filters,
   data,
-  tmdbDetail,
-  bgmDetail,
   loadTrigger,
   isSubscribed,
   openDetail
@@ -155,8 +151,6 @@ const {
         </div>
     </div>
 
-    <TmdbDetailModal v-model:show="tmdbDetail.show" :tmdb-id="tmdbDetail.id" :media-type="tmdbDetail.type" :initial-data="tmdbDetail.initial" />
-    <BangumiDetailModal v-model:show="bgmDetail.show" :subject-id="bgmDetail.id" :initial-data="bgmDetail.initial" />
     <n-back-top :right="40" :bottom="40" />
   </div>
 </template>

@@ -1,5 +1,5 @@
 import { reactive, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { tmdbDetailState } from '../../store/navigationStore'
+import { tmdbDetailState, openTmdbDetail, openBangumiDetail, bangumiDetailState, currentViewKey } from '../../store/navigationStore'
 
 export function useDiscovery() {
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -39,11 +39,7 @@ export function useDiscovery() {
 
   const tmdbDetail = tmdbDetailState
 
-  const bgmDetail = reactive({
-      show: false,
-      id: '' as string | number,
-      initial: null as any
-  })
+  const bgmDetail = bangumiDetailState
 
   const loadTrigger = ref<HTMLElement | null>(null)
   let observer: IntersectionObserver | null = null
@@ -133,14 +129,11 @@ export function useDiscovery() {
 
   const openDetail = (item: any) => {
       if (filters.source === 'bangumi') {
-          bgmDetail.id = item.id
-          bgmDetail.initial = item
-          bgmDetail.show = true
+          openBangumiDetail(item.id, item)
+          currentViewKey.value = 'BangumiDetailView'
       } else {
-          tmdbDetail.value.id = item.id
-          tmdbDetail.value.type = filters.media_type
-          tmdbDetail.value.initial = item
-          tmdbDetail.value.show = true
+          openTmdbDetail(item.id, filters.media_type, item)
+          currentViewKey.value = 'TmdbDetailView'
       }
   }
 
