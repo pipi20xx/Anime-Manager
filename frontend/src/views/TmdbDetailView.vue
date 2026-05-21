@@ -147,8 +147,8 @@ const toggleSeason = async (seasonNumber: number) => {
     
     try {
       const [tmdbRes, embyRes] = await Promise.all([
-        fetch(`${API_BASE}/api/tmdb/season/${tmdbId}/${seasonNumber}`),
-        fetch(`${API_BASE}/api/tmdb/season/${tmdbId}/${seasonNumber}/emby`)
+        fetch(`${API_BASE}/api/tmdb/season/${tmdbId.value}/${seasonNumber}`),
+        fetch(`${API_BASE}/api/tmdb/season/${tmdbId.value}/${seasonNumber}/emby`)
       ])
       
       if (tmdbRes.ok) {
