@@ -81,20 +81,20 @@ class EmbyClient:
     def check_episode_exists(self, tmdb_id: str, season_number: int, episode_number: int) -> bool:
         series_result = self.search_series_by_tmdb_id(tmdb_id)
         if not series_result or not series_result.get('matched_items'):
-            logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的剧集")
+            logger.info(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的剧集")
             return False
         
         matched_items = series_result['matched_items']
-        logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 找到 {len(matched_items)} 个匹配项，正在检查 S{season_number}E{episode_number}")
+        logger.info(f"Emby 检查: TMDB ID {tmdb_id} 找到 {len(matched_items)} 个匹配项，正在检查 S{season_number}E{episode_number}")
         
         for series_item in matched_items:
             series_id = series_item.get('Id')
             series_name = series_item.get('Name', 'Unknown')
-            logger.debug(f"Emby 检查: 正在检查剧集 '{series_name}' (ID: {series_id})")
+            logger.info(f"Emby 检查: 正在检查剧集 '{series_name}' (ID: {series_id})")
             
             seasons = self.get_seasons(series_id)
             if not seasons:
-                logger.debug(f"Emby 检查: 剧集 '{series_name}' 没有找到季信息")
+                logger.info(f"Emby 检查: 剧集 '{series_name}' 没有找到季信息")
                 continue
             
             target_season = None
@@ -104,29 +104,33 @@ class EmbyClient:
                     break
             
             if not target_season:
-                logger.debug(f"Emby 检查: 剧集 '{series_name}' 没有找到第 {season_number} 季")
+                logger.info(f"Emby 检查: 剧集 '{series_name}' 没有找到第 {season_number} 季")
                 continue
             
             episodes = self.get_episodes(series_id, target_season['Id'])
             if not episodes:
-                logger.debug(f"Emby 检查: 剧集 '{series_name}' 第 {season_number} 季没有找到集数")
+                logger.info(f"Emby 检查: 剧集 '{series_name}' 第 {season_number} 季没有找到集数")
                 continue
             
             for episode in episodes:
                 if episode.get('IndexNumber') == episode_number:
-                    logger.debug(f"Emby 检查: ✅ 在剧集 '{series_name}' 中找到 S{season_number}E{episode_number}")
+                    logger.info(f"Emby 检查: ✅ 在剧集 '{series_name}' 中找到 S{season_number}E{episode_number}")
                     return True
         
-        logger.debug(f"Emby 检查: ❌ 在所有匹配的 {len(matched_items)} 个剧集中都未找到 S{season_number}E{episode_number}")
+        logger.info(f"Emby 检查: ❌ 在所有匹配的 {len(matched_items)} 个剧集中都未找到 S{season_number}E{episode_number}")
         return False
 
     def get_episode_info(self, tmdb_id: str, season_number: int, episode_number: int) -> Optional[Dict]:
         series_result = self.search_series_by_tmdb_id(tmdb_id)
         if not series_result or not series_result.get('matched_items'):
+            logger.info(f"Emby 查询集信息: TMDB ID {tmdb_id} 未找到匹配的剧集")
             return None
+        
+        logger.info(f"Emby 查询集信息: TMDB ID {tmdb_id} 正在查询 S{season_number}E{episode_number}")
         
         for series_item in series_result['matched_items']:
             series_id = series_item.get('Id')
+            series_name = series_item.get('Name', 'Unknown')
             
             seasons = self.get_seasons(series_id)
             if not seasons:
@@ -158,27 +162,36 @@ class EmbyClient:
                             'container': source.get('Container', ''),
                         })
                     
+                    logger.info(f"Emby 查询集信息: ✅ 在剧集 '{series_name}' 中找到 S{season_number}E{episode_number}，共 {len(files)} 个文件")
                     return {
                         'exists': True,
                         'episode_id': episode.get('Id'),
-                        'series_name': series_item.get('Name', ''),
+                        'series_name': series_name,
                         'files': files
                     }
         
+        logger.info(f"Emby 查询集信息: ❌ 未找到 S{season_number}E{episode_number}")
         return {'exists': False}
 
     def get_season_episodes_info(self, tmdb_id: str, season_number: int) -> Dict[int, Dict]:
         series_result = self.search_series_by_tmdb_id(tmdb_id)
         if not series_result or not series_result.get('matched_items'):
+            logger.info(f"Emby 查询季度集信息: TMDB ID {tmdb_id} 未找到匹配的剧集")
             return {}
+        
+        matched_items = series_result['matched_items']
+        logger.info(f"Emby 查询季度集信息: TMDB ID {tmdb_id} 找到 {len(matched_items)} 个匹配项，正在查询第 {season_number} 季")
         
         episodes_info = {}
         
-        for series_item in series_result['matched_items']:
+        for series_item in matched_items:
             series_id = series_item.get('Id')
+            series_name = series_item.get('Name', 'Unknown')
+            logger.info(f"Emby 查询季度集信息: 正在查询剧集 '{series_name}' (ID: {series_id})")
             
             seasons = self.get_seasons(series_id)
             if not seasons:
+                logger.info(f"Emby 查询季度集信息: 剧集 '{series_name}' 没有找到季信息")
                 continue
             
             target_season = None
@@ -188,11 +201,15 @@ class EmbyClient:
                     break
             
             if not target_season:
+                logger.info(f"Emby 查询季度集信息: 剧集 '{series_name}' 没有找到第 {season_number} 季")
                 continue
             
             episodes = self.get_episodes(series_id, target_season['Id'])
             if not episodes:
+                logger.info(f"Emby 查询季度集信息: 剧集 '{series_name}' 第 {season_number} 季没有找到集数")
                 continue
+            
+            logger.info(f"Emby 查询季度集信息: 剧集 '{series_name}' 第 {season_number} 季找到 {len(episodes)} 集")
             
             for episode in episodes:
                 ep_num = episode.get('IndexNumber')
@@ -205,17 +222,26 @@ class EmbyClient:
                     episodes_info[ep_num] = {
                         'exists': True,
                         'episode_id': episode.get('Id'),
-                        'series_name': series_item.get('Name', ''),
+                        'series_name': series_name,
                         'files': []
                     }
                 
                 for source in media_sources:
-                    episodes_info[ep_num]['files'].append({
-                        'path': source.get('Path', ''),
-                        'name': source.get('Name', ''),
-                        'size': source.get('Size', 0),
-                        'container': source.get('Container', ''),
-                    })
+                    file_path = source.get('Path', '')
+                    file_name = source.get('Name', '')
+                    
+                    existing_paths = {f.get('path') for f in episodes_info[ep_num]['files']}
+                    if file_path and file_path not in existing_paths:
+                        episodes_info[ep_num]['files'].append({
+                            'path': file_path,
+                            'name': file_name,
+                            'size': source.get('Size', 0),
+                            'container': source.get('Container', ''),
+                        })
+        
+        total_episodes = len(episodes_info)
+        total_files = sum(len(ep['files']) for ep in episodes_info.values())
+        logger.info(f"Emby 查询季度集信息: 完成，共 {total_episodes} 集，{total_files} 个文件")
         
         return episodes_info
 
@@ -223,18 +249,22 @@ class EmbyClient:
         movie_result = self.search_movie_by_tmdb_id(tmdb_id)
         if movie_result and movie_result.get('matched_items'):
             matched_count = len(movie_result['matched_items'])
-            logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 找到 {matched_count} 个匹配的电影")
+            logger.info(f"Emby 检查: TMDB ID {tmdb_id} 找到 {matched_count} 个匹配的电影")
             return True
         else:
-            logger.debug(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的电影")
+            logger.info(f"Emby 检查: TMDB ID {tmdb_id} 未找到匹配的电影")
             return False
 
     def get_movie_info(self, tmdb_id: str) -> Optional[Dict]:
         movie_result = self.search_movie_by_tmdb_id(tmdb_id)
         if not movie_result or not movie_result.get('matched_items'):
+            logger.info(f"Emby 查询电影信息: TMDB ID {tmdb_id} 未找到匹配的电影")
             return {'exists': False}
         
         movie_item = movie_result['matched_items'][0]
+        movie_name = movie_item.get('Name', 'Unknown')
+        logger.info(f"Emby 查询电影信息: ✅ 找到电影 '{movie_name}'")
+        
         media_sources = movie_item.get('MediaSources', [])
         files = []
         
@@ -246,26 +276,34 @@ class EmbyClient:
                 'container': source.get('Container', ''),
             })
         
+        logger.info(f"Emby 查询电影信息: 电影 '{movie_name}' 共 {len(files)} 个文件")
+        
         return {
             'exists': True,
             'item_id': movie_item.get('Id'),
-            'name': movie_item.get('Name', ''),
+            'name': movie_name,
             'files': files
         }
 
     def get_series_library_status(self, tmdb_id: str, seasons_info: List[Dict] = None) -> Dict:
         series_result = self.search_series_by_tmdb_id(tmdb_id)
         if not series_result or not series_result.get('matched_items'):
+            logger.info(f"Emby 查询剧集状态: TMDB ID {tmdb_id} 未找到匹配的剧集")
             return {'exists': False, 'seasons': {}}
+        
+        matched_items = series_result['matched_items']
+        logger.info(f"Emby 查询剧集状态: TMDB ID {tmdb_id} 找到 {len(matched_items)} 个匹配项")
         
         seasons_status = {}
         
-        for series_item in series_result['matched_items']:
+        for series_item in matched_items:
             series_id = series_item.get('Id')
             series_name = series_item.get('Name', '')
+            logger.info(f"Emby 查询剧集状态: 正在查询剧集 '{series_name}' (ID: {series_id})")
             
             seasons = self.get_seasons(series_id)
             if not seasons:
+                logger.info(f"Emby 查询剧集状态: 剧集 '{series_name}' 没有找到季信息")
                 continue
             
             for season in seasons:
@@ -283,12 +321,16 @@ class EmbyClient:
                         'total_episodes': len(episodes),
                         'series_name': series_name
                     }
+                    logger.info(f"Emby 查询剧集状态: 剧集 '{series_name}' 第 {season_number} 季有 {len(episodes)} 集")
         
-        return {
+        result = {
             'exists': True,
             'series_name': series_result['matched_items'][0].get('Name', '') if series_result['matched_items'] else '',
             'seasons': seasons_status
         }
+        
+        logger.info(f"Emby 查询剧集状态: 完成，共 {len(seasons_status)} 季")
+        return result
 
     def check_item_exists(self, tmdb_id: str, media_type: str, season_number: Optional[int] = None, episode_number: Optional[int] = None) -> bool:
         if media_type == 'movie':
