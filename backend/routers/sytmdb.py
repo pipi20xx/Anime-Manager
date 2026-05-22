@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import httpx
 import asyncio
 from metadata.meta_cache import MetaCacheManager
@@ -14,6 +14,16 @@ def _build_url(addr: str) -> str:
     if addr and not addr.startswith("http"):
         return f"http://{addr}:8121/api/items/override/metadata"
     return f"{addr}/api/items/override/metadata"
+
+def _build_episode_group_url(addr: str, series_id: str) -> str:
+    addr = addr.rstrip("/")
+    if addr and not addr.startswith("http"):
+        return f"http://{addr}:8121/api/tv/{series_id}/episodegroup"
+    return f"{addr}/api/tv/{series_id}/episodegroup"
+
+def _get_sytmdb_config() -> tuple[str, str]:
+    config = ConfigManager.get_config()
+    return config.get("sytmdb_host", ""), config.get("sytmdb_token", "")
 
 async def _do_sytmdb_sync(addr: str, token: str):
     """后台执行 SYTMDB 同步"""
@@ -125,3 +135,58 @@ async def sync_sytmdb(payload: Dict[str, Any] = None):
         "status": "started", 
         "message": f"同步任务已在后台启动，共 {len(items)} 条元数据待同步，请查看实时日志了解进度"
     }
+
+
+@router.get("/episodegroup/{series_id}", summary="获取剧集组信息")
+async def get_episode_group(series_id: str):
+    """
+    从 SYTMDB 获取指定剧集的剧集组信息。
+    剧集组用于将 TMDB 的单季拆分为多季显示。
+    
+    返回格式:
+    {
+        "id": "216272",
+        "description": "",
+        "groups": [
+            {
+                "name": "第 1 季",
+                "order": 1,
+                "episodes": [
+                    {"episode_number": 1, "season_number": 1, "order": 0},
+                    ...
+                ]
+            }
+        ]
+    }
+    """
+    addr, token = _get_sytmdb_config()
+    
+    if not addr:
+        log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 未配置SYTMDB地址，跳过剧集组查询")
+        return {"id": series_id, "description": "", "groups": []}
+    
+    url = _build_episode_group_url(addr, series_id)
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(url, headers=headers, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            groups_count = len(data.get("groups", []))
+            if groups_count > 0:
+                log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询成功，共 {groups_count} 个剧集组")
+            else:
+                log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询成功，无剧集组定义")
+            return data
+        except httpx.ConnectError:
+            log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 无法连接到SYTMDB服务", level="WARNING")
+            return {"id": series_id, "description": "", "groups": []}
+        except httpx.TimeoutException:
+            log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 连接SYTMDB超时", level="WARNING")
+            return {"id": series_id, "description": "", "groups": []}
+        except Exception as e:
+            log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询失败 - {str(e)[:50]}", level="WARNING")
+            return {"id": series_id, "description": "", "groups": []}

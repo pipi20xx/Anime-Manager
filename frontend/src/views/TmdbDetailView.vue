@@ -33,6 +33,7 @@ const seasonEmbyInfo = ref<Map<string, any>>(new Map())
 const loadingSeasons = ref<Set<string>>(new Set())
 const embyStatus = ref<any>(null)
 const recommendations = ref<any[]>([])
+const episodeGroup = ref<any>(null)
 
 const fetchSubscriptions = async () => {
   try {
@@ -75,10 +76,11 @@ const fetchDetail = async () => {
   fetchSubscriptions()
   try {
     const apiType = type === '电影' || type === 'movie' ? 'movie' : 'tv'
-    const [detailRes, embyRes, recRes] = await Promise.all([
+    const [detailRes, embyRes, recRes, episodeGroupRes] = await Promise.all([
       fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}`),
       fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}/emby`),
-      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`)
+      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`),
+      fetch(`${API_BASE}/api/sytmdb/episodegroup/${id}`)
     ])
     
     if (detailRes.ok) {
@@ -93,6 +95,18 @@ const fetchDetail = async () => {
     
     if (recRes.ok) {
       recommendations.value = await recRes.json()
+    }
+    
+    if (episodeGroupRes.ok) {
+      episodeGroup.value = await episodeGroupRes.json()
+      const groupsCount = episodeGroup.value?.groups?.length || 0
+      if (groupsCount > 0) {
+        console.log(`[剧集组] TMDB ID ${id}: 使用剧集组，共 ${groupsCount} 个组`)
+      } else {
+        console.log(`[剧集组] TMDB ID ${id}: 无剧集组定义，使用TMDB原始季集`)
+      }
+    } else {
+      console.log(`[剧集组] TMDB ID ${id}: 查询失败，使用TMDB原始季集`)
     }
   } catch (e) {
     console.error(e)
@@ -129,6 +143,31 @@ const handleSearch = () => {
     triggerGlobalSearch(detail.value.original_title || detail.value.original_name || detail.value.title || detail.value.name)
 }
 
+const hasEpisodeGroup = computed(() => {
+  return episodeGroup.value && episodeGroup.value.groups && episodeGroup.value.groups.length > 0
+})
+
+const getMappedEpisodeInfo = (tmdbSeason: number, tmdbEpisode: number) => {
+  if (!hasEpisodeGroup.value) {
+    return { localSeason: tmdbSeason, localEpisode: tmdbEpisode }
+  }
+  
+  for (let groupIdx = 0; groupIdx < episodeGroup.value.groups.length; groupIdx++) {
+    const group = episodeGroup.value.groups[groupIdx]
+    for (let epIdx = 0; epIdx < group.episodes.length; epIdx++) {
+      const ep = group.episodes[epIdx]
+      if (ep.season_number === tmdbSeason && ep.episode_number === tmdbEpisode) {
+        return {
+          localSeason: groupIdx + 1,
+          localEpisode: epIdx + 1
+        }
+      }
+    }
+  }
+  
+  return { localSeason: tmdbSeason, localEpisode: tmdbEpisode }
+}
+
 const toggleSeason = async (seasonNumber: number) => {
   const key = `${tmdbId.value}-${seasonNumber}`
   
@@ -162,6 +201,34 @@ const toggleSeason = async (seasonNumber: number) => {
         seasonEmbyInfo.value.set(key, embyData.episodes || {})
         seasonEmbyInfo.value = new Map(seasonEmbyInfo.value)
       }
+      
+      if (hasEpisodeGroup.value) {
+        const localSeasonsToFetch = new Set<number>()
+        
+        for (let groupIdx = 0; groupIdx < episodeGroup.value.groups.length; groupIdx++) {
+          const group = episodeGroup.value.groups[groupIdx]
+          const hasCurrentSeason = group.episodes.some((ep: any) => ep.season_number === seasonNumber)
+          if (hasCurrentSeason) {
+            localSeasonsToFetch.add(groupIdx + 1)
+          }
+        }
+        
+        for (const localSeason of localSeasonsToFetch) {
+          const localKey = `local-${tmdbId.value}-${localSeason}`
+          if (!seasonEmbyInfo.value.has(localKey)) {
+            try {
+              const localEmbyRes = await fetch(`${API_BASE}/api/tmdb/season/${tmdbId.value}/${localSeason}/emby`)
+              if (localEmbyRes.ok) {
+                const localEmbyData = await localEmbyRes.json()
+                seasonEmbyInfo.value.set(localKey, localEmbyData.episodes || {})
+                seasonEmbyInfo.value = new Map(seasonEmbyInfo.value)
+              }
+            } catch (e) {
+              console.error('Failed to fetch local season emby info', e)
+            }
+          }
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch season episodes', e)
     } finally {
@@ -193,6 +260,13 @@ const isSeasonExpanded = (seasonNumber: number) => {
 }
 
 const getEpisodeEmbyInfo = (seasonNumber: number, episodeNumber: number) => {
+  if (hasEpisodeGroup.value) {
+    const { localSeason, localEpisode } = getMappedEpisodeInfo(seasonNumber, episodeNumber)
+    const localKey = `local-${tmdbId.value}-${localSeason}`
+    const embyData = seasonEmbyInfo.value.get(localKey)
+    return embyData?.[localEpisode] || null
+  }
+  
   const key = `${tmdbId.value}-${seasonNumber}`
   const embyData = seasonEmbyInfo.value.get(key)
   return embyData?.[episodeNumber] || null
