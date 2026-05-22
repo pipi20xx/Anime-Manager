@@ -180,14 +180,14 @@ async def get_episode_group(series_id: str):
             if groups_count > 0:
                 log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询成功，共 {groups_count} 个剧集组")
                 
-                for idx, group in enumerate(data.get("groups", [])):
-                    group_name = group.get("name", f"Group {idx}")
+                for group in data.get("groups", []):
+                    group_name = group.get("name", "Unknown")
+                    local_season = group.get("order", 0)
                     episodes = group.get("episodes", [])
                     episode_count = len(episodes)
                     
                     if episodes:
                         tmdb_seasons = set(ep.get("season_number", 0) for ep in episodes)
-                        tmdb_seasons_str = ", ".join(f"S{s}" for s in sorted(tmdb_seasons))
                         
                         ep_ranges = []
                         for tmdb_season in sorted(tmdb_seasons):
@@ -201,7 +201,7 @@ async def get_episode_group(series_id: str):
                                     ep_ranges.append(f"S{tmdb_season}E{min_ep}-E{max_ep}")
                         
                         ep_ranges_str = ", ".join(ep_ranges)
-                        log_audit("SYTMDB", "剧集组", f"  ┣ 本地 S{idx} ({group_name}): {episode_count} 集 = TMDB {ep_ranges_str}")
+                        log_audit("SYTMDB", "剧集组", f"  ┣ 本地 S{local_season} ({group_name}): {episode_count} 集 = TMDB {ep_ranges_str}")
             else:
                 log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询成功，无剧集组定义")
             

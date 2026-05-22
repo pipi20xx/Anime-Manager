@@ -144,14 +144,13 @@ const getMappedEpisodeInfo = (tmdbSeason: number, tmdbEpisode: number) => {
     return { localSeason: tmdbSeason, localEpisode: tmdbEpisode }
   }
   
-  for (let groupIdx = 0; groupIdx < episodeGroup.value.groups.length; groupIdx++) {
-    const group = episodeGroup.value.groups[groupIdx]
-    for (let epIdx = 0; epIdx < group.episodes.length; epIdx++) {
-      const ep = group.episodes[epIdx]
+  for (const group of episodeGroup.value.groups) {
+    const localSeason = group.order
+    for (const ep of group.episodes) {
       if (ep.season_number === tmdbSeason && ep.episode_number === tmdbEpisode) {
         return {
-          localSeason: groupIdx,
-          localEpisode: epIdx + 1
+          localSeason: localSeason,
+          localEpisode: ep.order + 1
         }
       }
     }
@@ -188,11 +187,10 @@ const toggleSeason = async (seasonNumber: number) => {
       if (hasEpisodeGroup.value) {
         const localSeasonsToFetch = new Set<number>()
         
-        for (let groupIdx = 0; groupIdx < episodeGroup.value.groups.length; groupIdx++) {
-          const group = episodeGroup.value.groups[groupIdx]
+        for (const group of episodeGroup.value.groups) {
           const hasCurrentSeason = group.episodes.some((ep: any) => ep.season_number === seasonNumber)
           if (hasCurrentSeason) {
-            localSeasonsToFetch.add(groupIdx)
+            localSeasonsToFetch.add(group.order)
           }
         }
         
