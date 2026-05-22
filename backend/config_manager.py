@@ -22,6 +22,8 @@ class ConfigManager:
         "bangumi_token": "",
         "bangumi_priority": False,
         "bangumi_failover": True,
+        "sytmdb_host": "",
+        "sytmdb_token": "",
         "http_proxy": "",
         "proxy_services": {
             "tmdb": False,

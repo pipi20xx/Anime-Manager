@@ -13,6 +13,8 @@ export function useSettings() {
     bangumi_token: '',
     bangumi_priority: false,
     bangumi_failover: true,
+    sytmdb_host: '',
+    sytmdb_token: '',
     http_proxy: '',
     proxy_services: { tmdb: false, bangumi: false, remote_rules: false, docker_hub: false, jackett: false, telegram: false, rss: false },
     telegram: { bot_token: '', chat_id: '', enabled: false, notify_on_download: true, notify_on_organize: true },

@@ -190,15 +190,6 @@ const executeRefresh = () => {
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>
       </template>
     </n-modal>
-
-    <!-- SYTMDB 同步弹窗 -->
-    <n-modal v-model:show="showSyncModal" preset="card" style="width: 400px" title="同步 SYTMDB 修正数据">
-      <n-form label-placement="top">
-        <n-form-item label="SYTMDB 地址 (IP:Port)"><n-input v-model:value="syncForm.address" placeholder="192.168.1.10:8121" /></n-form-item>
-        <n-form-item label="API Token (可选)"><n-input v-model:value="syncForm.token" type="password" show-password-on="click" placeholder="如果远程需要认证请填写" /></n-form-item>
-      </n-form>
-      <template #action><n-button type="primary" block :loading="syncLoading" @click="runSyncSytmdb">开始同步</n-button></template>
-    </n-modal>
   </div>
 </template>
 

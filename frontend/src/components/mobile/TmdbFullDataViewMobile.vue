@@ -164,15 +164,6 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
       </template>
     </n-modal>
 
-    <!-- SYTMDB 同步弹窗 -->
-    <n-modal v-model:show="showSyncModal" preset="card" style="width: 100%; top: 20px;" title="同步 SYTMDB">
-      <n-form label-placement="top">
-        <n-form-item label="SYTMDB 地址 (IP:Port)"><n-input v-model:value="syncForm.address" placeholder="192.168.1.10:8121" /></n-form-item>
-        <n-form-item label="API Token (可选)"><n-input v-model:value="syncForm.token" type="password" show-password-on="click" placeholder="如果远程需要认证请填写" /></n-form-item>
-      </n-form>
-      <template #footer><n-button type="primary" block :loading="syncLoading" @click="runSyncSytmdb">开始同步</n-button></template>
-    </n-modal>
-
     <!-- 全量刷新弹窗 -->
     <n-modal v-model:show="showRefreshModal" preset="card" style="width: 100%; top: 20px;" title="全量刷新设置">
       <n-form label-placement="top">

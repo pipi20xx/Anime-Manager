@@ -104,7 +104,18 @@ export function useTmdbData() {
   }
 
   const handleSyncSytmdb = async () => {
-    showSyncModal.value = true
+    message.info('同步任务已启动，请查看实时日志了解进度')
+    try {
+      const res = await fetch(`${API_BASE}/api/sytmdb/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        message.error(data.detail || '启动同步失败')
+      }
+    } catch (e) { message.error('启动同步失败') }
   }
 
   const runSyncSytmdb = async () => {
@@ -114,7 +125,7 @@ export function useTmdbData() {
     showSyncModal.value = false
     message.info('同步任务已启动，请查看实时日志了解进度')
     try {
-      await fetch(`${API_BASE}/api/cache/sytmdb_sync`, {
+      await fetch(`${API_BASE}/api/sytmdb/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(syncForm)

@@ -103,6 +103,31 @@ const {
             <n-card bordered style="background: var(--app-surface-card)">
               <template #header>
                 <div class="card-title-box">
+                  <span class="card-title-text">SYTMDB 设置</span>
+                </div>
+              </template>
+              <n-form label-placement="left" label-width="100">
+                <div style="margin-bottom: 12px; padding: 8px 12px; background: var(--n-color); border-radius: 4px; border-left: 3px solid var(--n-warning-color);">
+                  <span style="font-size: 13px; color: var(--n-text-color-2);">作者的另一个项目，用于同步修正后的元数据，非必要无需填写。</span>
+                </div>
+                <n-form-item label="服务地址">
+                  <n-space vertical :size="2" style="width: 100%">
+                    <n-input v-model:value="config.sytmdb_host" placeholder="IP:Port (例如: 192.168.1.10:8121)" />
+                    <span style="font-size: 12px; color: var(--n-text-color-3);">SYTMDB 服务地址，用于同步修正后的元数据</span>
+                  </n-space>
+                </n-form-item>
+                <n-form-item label="API Token">
+                  <n-space vertical :size="2" style="width: 100%">
+                    <n-input v-model:value="config.sytmdb_token" type="password" show-password-on="click" placeholder="可选: SYTMDB API Token" />
+                    <span style="font-size: 12px; color: var(--n-text-color-3);">如果 SYTMDB 服务配置了认证，请填写 Token</span>
+                  </n-space>
+                </n-form-item>
+              </n-form>
+            </n-card>
+
+            <n-card bordered style="background: var(--app-surface-card)">
+              <template #header>
+                <div class="card-title-box">
                   <span class="card-title-text">识别偏好设置</span>
                 </div>
               </template>

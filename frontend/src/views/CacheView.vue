@@ -167,24 +167,23 @@ const deleteCache = (item: any) => {
   })
 }
 
-// SYTMDB Sync Modal
-const showSyncModal = ref(false)
+// SYTMDB Sync
 const syncLoading = ref(false)
-const syncForm = reactive({ address: '', token: '' })
 
 const handleSyncSytmdb = async () => {
-  if (!syncForm.address) return
   syncLoading.value = true
   try {
-    const res = await fetch(`${API_BASE}/api/cache/sytmdb_sync`, {
+    const res = await fetch(`${API_BASE}/api/sytmdb/sync`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(syncForm)
+      body: JSON.stringify({})
     })
     const result = await res.json()
-    message.success(`同步完成: ${result.message}`)
-    showSyncModal.value = false
-    fetchCache(true)
+    if (res.ok) {
+      message.success(result.message || '同步任务已启动')
+    } else {
+      message.error(result.detail || '同步失败')
+    }
   } catch (e) { message.error('同步失败') }
   finally { syncLoading.value = false }
 }
@@ -259,7 +258,7 @@ onUnmounted(() => {
         <n-button v-bind="getButtonStyle('primary')" @click="openCreate">
           <template #icon><n-icon><AddIcon /></n-icon></template>手动新增
         </n-button>
-        <n-button v-bind="getButtonStyle('primary')" @click="showSyncModal = true">
+        <n-button v-bind="getButtonStyle('primary')" :loading="syncLoading" @click="handleSyncSytmdb">
           <template #icon><n-icon><SyncIcon /></n-icon></template>同步 SYTMDB
         </n-button>
       </n-space>
@@ -364,25 +363,6 @@ onUnmounted(() => {
         <n-space justify="end">
           <n-button @click="showEditModal = false">取消</n-button>
           <n-button type="primary" @click="saveCache">保存记录</n-button>
-        </n-space>
-      </template>
-    </n-modal>
-
-    <!-- SYTMDB Sync Modal -->
-    <n-modal v-model:show="showSyncModal" preset="card" style="width: 450px" title="从 SYTMDB 同步缓存">
-      <n-form label-placement="top">
-        <n-form-item label="SYTMDB 地址 (IP:Port)">
-          <n-input v-model:value="syncForm.address" placeholder="例如 192.168.1.10:8121" />
-        </n-form-item>
-        <n-form-item label="API Token (可选)">
-          <n-input v-model:value="syncForm.token" type="password" show-password-on="click" placeholder="如果远程需要认证请填写" />
-        </n-form-item>
-        <div class="tip">同步将拉取远程 SYTMDB 实例中已修正的元数据并覆盖本地缓存。</div>
-      </n-form>
-      <template #action>
-        <n-space justify="end">
-          <n-button @click="showSyncModal = false">取消</n-button>
-          <n-button type="primary" :loading="syncLoading" @click="handleSyncSytmdb">开始同步</n-button>
         </n-space>
       </template>
     </n-modal>
