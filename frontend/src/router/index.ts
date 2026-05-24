@@ -5,7 +5,25 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Explore',
-    component: () => import('../views/ExploreView.vue')
+    component: () => import('../views/ExploreView.vue'),
+    redirect: '/explore/recommend',
+    children: [
+      {
+        path: '/explore/recommend',
+        name: 'ExploreRecommend',
+        component: () => import('../views/explore/RecommendTab.vue')
+      },
+      {
+        path: '/explore/discover',
+        name: 'ExploreDiscover',
+        component: () => import('../views/explore/DiscoveryTab.vue')
+      },
+      {
+        path: '/explore/search',
+        name: 'ExploreSearch',
+        component: () => import('../views/explore/SearchTab.vue')
+      }
+    ]
   },
   {
     path: '/home',

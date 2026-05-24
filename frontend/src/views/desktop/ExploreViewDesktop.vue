@@ -1,13 +1,33 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter, useRoute, RouterView } from 'vue-router'
 import { NTabs, NTabPane, NIcon } from 'naive-ui'
 import {
   RecommendOutlined as RecommendIcon,
   ExploreOutlined as ExploreIcon,
   SearchOutlined as SearchIcon
 } from '@vicons/material'
-import { useExploreView } from '../../composables/views/useExploreView'
 
-const { currentTab, activeComponent } = useExploreView()
+const router = useRouter()
+const route = useRoute()
+
+const currentTab = computed({
+  get: () => {
+    const name = route.name as string
+    if (name?.includes('Recommend')) return 'recommend'
+    if (name?.includes('Discover')) return 'discover'
+    if (name?.includes('Search')) return 'search'
+    return 'recommend'
+  },
+  set: (value: string) => {
+    const routeMap: Record<string, string> = {
+      recommend: 'ExploreRecommend',
+      discover: 'ExploreDiscover',
+      search: 'ExploreSearch'
+    }
+    router.push({ name: routeMap[value] })
+  }
+})
 </script>
 
 <template>
@@ -48,9 +68,11 @@ const { currentTab, activeComponent } = useExploreView()
     </div>
 
     <div class="explore-content">
-       <keep-alive>
-          <component :is="activeComponent" />
-       </keep-alive>
+       <router-view v-slot="{ Component, route: r }">
+         <transition name="fade" mode="out-in">
+           <component :is="Component" :key="r.fullPath" />
+         </transition>
+       </router-view>
     </div>
   </div>
 </template>
@@ -79,5 +101,20 @@ const { currentTab, activeComponent } = useExploreView()
 .explore-content {
   flex: 1;
   width: 100%;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>
