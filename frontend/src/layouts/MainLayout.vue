@@ -40,7 +40,6 @@ import {
 // Views - 不再需要导入，使用路由
 import { useRouter, useRoute } from 'vue-router'
 
-import JackettSearchModal from '../components/JackettSearchModal.vue'
 import LogConsoleModal from '../components/LogConsoleModal.vue'
 import ReloadPrompt from '../components/ReloadPrompt.vue'
 import { systemApi } from '../api/system'
@@ -48,7 +47,7 @@ import { APP_VERSION } from '../version'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 import { 
-  isSearchOpen, isLogConsoleOpen, 
+  isLogConsoleOpen, 
   isLoggedIn, logout, username
 } from '../store/navigationStore'
 import { currentThemeMode, isDarkMode, logoColor, toggleThemeMode } from '../store/themeStore'
@@ -122,7 +121,6 @@ const { isMobile } = useIsMobile()
 // ----------------------------------------------------
 
 // Apply Back Button support to Global Modals
-useBackClose(isSearchOpen)
 useBackClose(isLogConsoleOpen)
 
 const showMobileMenu = ref(false)
@@ -130,10 +128,10 @@ const showMobileMenu = ref(false)
 const collapsed = ref(localStorage.getItem('apm_sidebar_collapsed') === 'true')
 watch(collapsed, (val) => localStorage.setItem('apm_sidebar_collapsed', String(val)))
 
-const showSearchModal = isSearchOpen
 const showLogConsole = isLogConsoleOpen
 
 const menuOptions: MenuOption[] = [
+  { label: 'Jackett 搜索', key: 'JackettSearch', icon: renderIcon(SearchIcon) },
   { label: '追剧日历', key: 'Calendar', icon: renderIcon(CalendarIcon) },
   { label: '文件浏览', key: 'FileBrowser', icon: renderIcon(FileIcon) },
   { label: '整理重命名', key: 'Organizer', icon: renderIcon(OrganizeIcon) },
@@ -187,15 +185,6 @@ const isNavActive = (key: string) => route.name === key
               <div class="version">v{{ APP_VERSION }}</div>
             </div>
           </div>
-          <n-button 
-            v-if="!collapsed"
-            v-bind="getButtonStyle('icon')"
-            size="small" 
-            @click="isSearchOpen = true"
-            style="margin-left: var(--m-1)"
-          >
-            <template #icon><n-icon><SearchIcon /></n-icon></template>
-          </n-button>
         </n-space>
       </div>
       
@@ -292,7 +281,7 @@ const isNavActive = (key: string) => route.name === key
               <span style="font-size: var(--text-2xs); opacity: var(--opacity-60); margin-top: -2px;">v{{ APP_VERSION }}</span>
             </div>
           </div>
-          <n-button v-bind="getButtonStyle('icon')" size="small" @click="isSearchOpen = true">
+          <n-button v-bind="getButtonStyle('icon')" size="small" @click="router.push({ name: 'JackettSearch' })">
             <template #icon><n-icon size="20"><SearchIcon /></n-icon></template>
           </n-button>
         </n-space>
@@ -376,7 +365,6 @@ const isNavActive = (key: string) => route.name === key
     </n-drawer>
 
   </n-layout>
-  <JackettSearchModal v-model:show="showSearchModal" />
   <LogConsoleModal v-model:show="showLogConsole" />
   <ReloadPrompt />
 </template>

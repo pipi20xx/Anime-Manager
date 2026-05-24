@@ -21,13 +21,12 @@ export const navigateToSubscription = (data: PendingSubscription) => {
 }
 
 export const searchKeyword = ref('')
-export const isSearchOpen = ref(false)
 export const isLogConsoleOpen = ref(false)
 export const isExternalControlOpen = ref(false)
 
 export const triggerGlobalSearch = (keyword: string) => {
   searchKeyword.value = keyword
-  isSearchOpen.value = true
+  router.push({ name: 'JackettSearch' })
 }
 
 export const isLoggedIn = ref(!!localStorage.getItem('apm_access_token'))
