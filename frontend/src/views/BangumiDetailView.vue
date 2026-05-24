@@ -137,7 +137,7 @@ const matchTmdb = async () => {
         if (data.success && data.tmdb_id) {
             message.success(`已匹配到 TMDB: ${data.title}`)
             setTimeout(() => {
-                router.push({ name: 'TmdbDetail', params: { id: data.tmdb_id } })
+                router.push({ name: 'TmdbDetail', params: { id: data.tmdb_id, type: data.media_type || 'tv' } })
             }, 200)
         } else {
             message.warning('未能找到匹配的 TMDB 条目')

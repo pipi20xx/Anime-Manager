@@ -47,7 +47,7 @@ export const logout = () => {
 }
 
 export const openTmdbDetail = (id: string | number, type: string = 'tv', initial: any = null) => {
-  router.push({ name: 'TmdbDetail', params: { id } })
+  router.push({ name: 'TmdbDetail', params: { id, type } })
 }
 
 export interface BangumiDetailState {

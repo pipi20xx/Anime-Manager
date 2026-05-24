@@ -101,7 +101,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/JackettSearchView.vue')
   },
   {
-    path: '/tmdb/:id',
+    path: '/tmdb/:type/:id',
     name: 'TmdbDetail',
     component: () => import('../views/TmdbDetailView.vue')
   },

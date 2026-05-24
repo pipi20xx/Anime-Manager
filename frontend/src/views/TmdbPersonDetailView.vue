@@ -100,7 +100,8 @@ const calculateAge = (birthday: string, deathday?: string) => {
 
 const handleTmdbClick = (item: any) => {
   if (!item?.id) return
-  router.push({ name: 'TmdbDetail', params: { id: item.id } })
+  const mediaType = item.media_type || (item.title ? 'movie' : 'tv')
+  router.push({ name: 'TmdbDetail', params: { id: item.id, type: mediaType } })
 }
 
 onMounted(() => {

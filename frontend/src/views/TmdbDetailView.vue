@@ -68,20 +68,25 @@ const getPoster = (path: string) => getImg(path)
 
 const fetchDetail = async () => {
   const id = tmdbId.value
-  const type = 'tv'
-  
+  const type = route.params.type as string || 'tv'
+
   if (!id) return
-  
+
   loading.value = true
   fetchSubscriptions()
   try {
     const apiType = type === '电影' || type === 'movie' ? 'movie' : 'tv'
-    const [detailRes, embyRes, recRes, episodeGroupRes] = await Promise.all([
+    const requests = [
       fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}`),
       fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}/emby`),
-      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`),
-      fetch(`${API_BASE}/api/sytmdb/episodegroup/${id}`)
-    ])
+      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`)
+    ]
+
+    if (apiType === 'tv') {
+      requests.push(fetch(`${API_BASE}/api/sytmdb/episodegroup/${id}`))
+    }
+
+    const [detailRes, embyRes, recRes, episodeGroupRes] = await Promise.all(requests)
     
     if (detailRes.ok) {
         detail.value = await detailRes.json()
@@ -112,8 +117,8 @@ const goBack = () => {
 }
 
 const openExternal = () => {
-    const type = 'tv'
-    window.open(`https://www.themoviedb.org/${type}/${tmdbId.value}`, '_blank')
+    const apiType = (route.params.type as string) === 'movie' ? 'movie' : 'tv'
+    window.open(`https://www.themoviedb.org/${apiType}/${tmdbId.value}`, '_blank')
 }
 
 const openImdb = (imdbId: string) => {
@@ -122,7 +127,7 @@ const openImdb = (imdbId: string) => {
 
 const handleSubscribe = () => {
     if (!detail.value) return
-    const type = 'tv'
+    const type = route.params.type as string || 'tv'
     navigateToSubscription({
         type: 'tmdb',
         tmdbId: tmdbId.value,
@@ -290,7 +295,7 @@ const handleRecClick = (rec: any) => {
   recommendations.value = []
   embyStatus.value = null
   
-  router.push({ name: 'TmdbDetail', params: { id: rec.id } })
+  router.push({ name: 'TmdbDetail', params: { id: rec.id, type: route.params.type } })
 }
 
 const openPersonDetail = (personId: string | number) => {
