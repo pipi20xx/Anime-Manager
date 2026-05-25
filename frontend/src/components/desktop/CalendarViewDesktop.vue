@@ -21,6 +21,21 @@ import {
 import { useCalendar } from '../../composables/views/useCalendar'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
+
+const getImg = (path: string) => {
+  if (!path) return ''
+  if (path.includes('/api/system/img') || path.includes('/api/system/bgm_img')) return path
+  if (path.includes('image.tmdb.org')) {
+    const parts = path.split('/')
+    return `${API_BASE}/api/system/img?path=/${parts[parts.length - 1]}`
+  }
+  if (!path.startsWith('http')) {
+    return `${API_BASE}/api/system/img?path=${path.startsWith('/') ? '' : '/'}${path}`
+  }
+  return path
+}
+
 const {
   loading,
   trackingList,
@@ -88,6 +103,7 @@ const timelineDays = computed(() => {
             id: sub.id,
             title: sub.title,
             season: sub.season,
+            posterPath: sub.poster_path || null,
             episodes: matches.map((m: any) => ({
               ep: m.episode,
               title: m.name,
@@ -159,7 +175,14 @@ const goToToday = () => {
                 <div v-for="(item, idx) in day.items" :key="item.id + '-' + idx" class="anime-item">
                   <div class="anime-entry">
                     <div class="poster-wrapper">
-                      <div class="placeholder-poster">
+                      <img
+                        v-if="item.posterPath"
+                        :src="getImg(item.posterPath)"
+                        :alt="item.title"
+                        class="poster-img"
+                        @error="$event.target.style.display = 'none'"
+                      />
+                      <div v-else class="placeholder-poster">
                         {{ item.title.charAt(0) }}
                       </div>
                     </div>
@@ -169,7 +192,7 @@ const goToToday = () => {
                       <div class="ep-tags">
                         <template v-for="ep in item.episodes" :key="ep.ep">
                           <span class="ep-tag" :class="{ 'ep-finale': ep.isFinale }">
-                            第{{ ep.ep }}话
+                            第{{ item.season }}季 第{{ ep.ep }}话
                           </span>
                           <span v-if="ep.isFinale" class="finale-badge">END</span>
                         </template>
@@ -434,12 +457,11 @@ const goToToday = () => {
   height: 100%;
 }
 
-/* 滚动区域 */
+/* 滚动区域 - 改为自适应网格 */
 .timeline-scroll {
   flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-behavior: smooth;
 }
 
 .timeline-scroll::-webkit-scrollbar {
@@ -457,16 +479,16 @@ const goToToday = () => {
 }
 
 .timeline-content {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   padding: 20px 0;
-  min-width: min-content;
+  width: 100%;
+  min-height: 0;
 }
 
-/* 日期卡片 */
+/* 日期卡片 - 自适应宽度 */
 .day-card {
-  width: 280px;
-  min-width: 280px;
   background: var(--app-surface-card);
   border-radius: var(--card-border-radius);
   border: 1px solid var(--app-border-light);
@@ -475,6 +497,7 @@ const goToToday = () => {
   flex-direction: column;
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
+  min-width: 0; /* 防止内容溢出 */
 }
 
 .day-card:hover {
@@ -586,6 +609,14 @@ const goToToday = () => {
   color: white;
   font-size: 20px;
   font-weight: bold;
+  box-shadow: var(--shadow-sm);
+}
+
+.poster-img {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
 }
 
@@ -795,4 +826,29 @@ const goToToday = () => {
 .discover-name { font-size: var(--text-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .calendar-icon { color: var(--n-primary-color); }
 .notify-icon { color: var(--n-primary-color); }
+
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .timeline-content {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .timeline-content {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .day-card {
+    padding: 12px;
+  }
+
+  .poster-img,
+  .placeholder-poster {
+    width: 40px;
+    height: 54px;
+  }
+}
 </style>
