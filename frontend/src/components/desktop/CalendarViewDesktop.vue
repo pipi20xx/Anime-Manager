@@ -52,20 +52,22 @@ const {
 </script>
 
 <template>
-  <div class="calendar-page">
-    <div class="calendar-header-bar">
-      <!-- 左侧：标题与管理 -->
-      <n-space align="center" :size="12">
-        <div class="title-section-new">
-          <n-icon size="22" class="calendar-icon" style="margin-top: 4px"><CalendarIcon /></n-icon>
-          <span class="header-title-text">追剧日历</span>
-        </div>
-        <n-button v-bind="getButtonStyle('icon')" size="small" @click="showManageModal = true" title="管理追踪">
+  <div class="calendar-view">
+    <div class="page-header">
+      <div>
+        <h1>追剧日历</h1>
+        <div class="subtitle">番剧播出时间追踪与订阅管理</div>
+      </div>
+
+      <n-space align="center">
+        <n-button v-bind="getButtonStyle('secondary')" size="small" @click="showManageModal = true">
           <template #icon><n-icon><ManageIcon /></n-icon></template>
+          管理追踪
         </n-button>
       </n-space>
-      
-      <!-- 右侧：导航控件 -->
+    </div>
+
+    <div class="calendar-toolbar">
       <n-space align="center" :size="8">
         <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() - 1))">
           <template #icon><n-icon><PrevIcon /></n-icon></template>
@@ -306,37 +308,43 @@ const {
 </template>
 
 <style scoped>
-.calendar-page {
+.calendar-view {
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   background-color: var(--app-bg-color);
-  padding: 12px;
 }
 
-.calendar-header-bar {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  background: var(--app-surface-card);
-  padding: 6px 16px;
-  border-radius: var(--card-border-radius);
-  border: none;
-  min-height: 48px;
+  margin-bottom: var(--space-4);
 }
 
-.title-section-new {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.header-title-text {
-  font-size: var(--text-xl);
+.page-header h1 {
+  font-size: var(--text-2xl);
   font-weight: 800;
-  letter-spacing: 0.5px;
+  margin: 0;
   color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.calendar-toolbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--app-surface-card);
+  border-radius: var(--card-border-radius);
+  border: 1px solid var(--app-border-light);
 }
 
 .current-month-display {
