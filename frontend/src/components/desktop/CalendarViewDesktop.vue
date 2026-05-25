@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { 
+import { ref, computed } from 'vue'
+import {
   NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
   NList, NListItem, NAvatar, NPopconfirm, NTabs, NTabPane,
   NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup,
-  NSwitch, NTimePicker
+  NSwitch, NTimePicker, NDatePicker
 } from 'naive-ui'
-import { 
+import {
   CalendarMonthOutlined as CalendarIcon,
   ChevronLeftOutlined as PrevIcon,
   ChevronRightOutlined as NextIcon,
@@ -49,6 +50,69 @@ const {
   deleteSubject,
   clearExpiredSubjects
 } = useCalendar()
+
+const selectedDate = ref<number>(Date.now())
+
+const formatDayNum = (dateStr: string) => {
+  const [year, month, day] = dateStr.split('-')
+  return `${parseInt(month)}-${parseInt(day)}`
+}
+
+const handleDateChange = (timestamp: number) => {
+  if (!timestamp) return
+  selectedDate.value = timestamp
+}
+
+const timelineDays = computed(() => {
+  const list = []
+  const baseDate = new Date(selectedDate.value)
+
+  for (let offset = -1; offset <= 1; offset++) {
+    const d = new Date(baseDate)
+    d.setDate(baseDate.getDate() + offset)
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+    let dayLabel = ''
+    if (offset === -1) dayLabel = '昨天'
+    else if (offset === 0) dayLabel = '今天'
+    else if (offset === 1) dayLabel = '明天'
+    else dayLabel = `周${['日', '一', '二', '三', '四', '五', '六'][d.getDay()]}`
+
+    const items: any[] = []
+
+    trackingList.value.forEach(sub => {
+      if (sub.episodes_cache && Array.isArray(sub.episodes_cache)) {
+        const matches = sub.episodes_cache.filter((ep: any) => ep.air_date === dateStr)
+        if (matches.length > 0) {
+          items.push({
+            id: sub.id,
+            title: sub.title,
+            season: sub.season,
+            episodes: matches.map((m: any) => ({
+              ep: m.episode,
+              title: m.name,
+              isFinale: m.episode_type === 'finale'
+            }))
+          })
+        }
+      }
+    })
+
+    list.push({
+      dateStr,
+      dayLabel,
+      fullDate: `${d.getMonth() + 1}月${d.getDate()}日`,
+      isToday: offset === 0,
+      items
+    })
+  }
+
+  return list
+})
+
+const goToToday = () => {
+  selectedDate.value = Date.now()
+}
 </script>
 
 <template>
@@ -60,6 +124,17 @@ const {
       </div>
 
       <n-space align="center">
+        <n-date-picker
+          v-model:value="selectedDate"
+          type="date"
+          :clearable="false"
+          style="width: 160px"
+          size="small"
+          @update:value="handleDateChange"
+        />
+        <n-button v-bind="getButtonStyle('secondary')" size="small" @click="goToToday">
+          今天
+        </n-button>
         <n-button v-bind="getButtonStyle('secondary')" size="small" @click="showManageModal = true">
           <template #icon><n-icon><ManageIcon /></n-icon></template>
           管理追踪
@@ -67,49 +142,60 @@ const {
       </n-space>
     </div>
 
-    <div class="calendar-toolbar">
-      <n-space align="center" :size="8">
-        <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() - 1))">
-          <template #icon><n-icon><PrevIcon /></n-icon></template>
-        </n-button>
-        <div class="current-month-display">
-          {{ viewDate.getFullYear() }}年{{ viewDate.getMonth() + 1 }}月
-        </div>
-        <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewDate = new Date(viewDate.setMonth(viewDate.getMonth() + 1))">
-          <template #icon><n-icon><NextIcon /></n-icon></template>
-        </n-button>
-        <n-divider vertical style="margin: 0 8px" />
-        <n-button secondary size="tiny" @click="viewDate = new Date()" style="padding: 0 12px; height: 24px">
-          今天
-        </n-button>
-      </n-space>
-    </div>
-
     <n-spin :show="loading" class="calendar-spin">
-      <div class="mp-calendar-wrapper">
-        <div class="mp-calendar-head">
-          <div v-for="w in ['一','二','三','四','五','六','日']" :key="w" class="head-cell">{{ w }}</div>
-        </div>
-        <div class="mp-calendar-grid">
-          <div v-for="cell in calendarGrid" :key="cell.dateStr" class="grid-cell" :class="{ 'is-today': cell.isToday, 'off-month': !cell.isCurrentMonth }">
-            <div class="cell-top">
-              <span class="day-num">{{ cell.day }}</span>
-              <span v-if="cell.isToday" class="today-dot"></span>
-            </div>
-            <div class="cell-content">
-              <n-tooltip v-for="item in cell.items" :key="item.id + '-' + item.episodeDisplay" trigger="hover">
-                <template #trigger>
-                  <div class="anime-entry-line">
-                    <div class="status-dot"></div>
-                    <span class="anime-name-text">{{ item.title }}</span>
-                    <span class="ep-count-tag" v-html="item.episodeDisplay"></span>
+      <div class="timeline-container">
+        <!-- 时间线内容 -->
+          <div class="timeline-scroll">
+            <div class="timeline-content">
+            <div v-for="day in timelineDays" :key="day.dateStr" class="day-card" :class="{ 'is-today-card': day.isToday }">
+              <!-- 日期头部 -->
+              <div class="day-header">
+                <span class="date-num">{{ formatDayNum(day.dateStr) }}</span>
+                <span class="weekday">{{ day.dayLabel }}</span>
+              </div>
+
+              <!-- 番剧列表 -->
+              <div v-if="day.items.length > 0" class="anime-list">
+                <div v-for="(item, idx) in day.items" :key="item.id + '-' + idx" class="anime-item">
+                  <div class="anime-entry">
+                    <div class="poster-wrapper">
+                      <div class="placeholder-poster">
+                        {{ item.title.charAt(0) }}
+                      </div>
+                    </div>
+
+                    <div class="info-wrapper">
+                      <div class="anime-title" :title="item.title">{{ item.title }}</div>
+                      <div class="ep-tags">
+                        <template v-for="ep in item.episodes" :key="ep.ep">
+                          <span class="ep-tag" :class="{ 'ep-finale': ep.isFinale }">
+                            第{{ ep.ep }}话
+                          </span>
+                          <span v-if="ep.isFinale" class="finale-badge">END</span>
+                        </template>
+                      </div>
+                    </div>
                   </div>
-                </template>
-                <div v-html="item.epDetails"></div>
-              </n-tooltip>
+                </div>
+              </div>
+
+              <!-- 空状态 -->
+              <div v-else class="empty-day">
+                <div class="mascot-placeholder">📺</div>
+                <span>今日无更新</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 全局空状态 -->
+      <div v-if="!loading && trackingList.length === 0" class="empty-state">
+        <n-empty description="还没有追踪任何番剧" size="large">
+          <template #extra>
+            <n-button type="primary" @click="showManageModal = true">添加追踪番剧</n-button>
+          </template>
+        </n-empty>
       </div>
     </n-spin>
 
@@ -336,135 +422,273 @@ const {
   margin-top: 4px;
 }
 
-.calendar-toolbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-4);
-  background: var(--app-surface-card);
-  border-radius: var(--card-border-radius);
-  border: 1px solid var(--app-border-light);
-}
-
-.current-month-display {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  min-width: 90px;
-  text-align: center;
-  font-family: var(--font-family-base);
-  color: var(--text-secondary);
-}
-
-.mp-calendar-wrapper {
+.calendar-spin {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--card-border-radius);
   overflow: hidden;
-  background: var(--app-surface-card);
-  box-shadow: var(--shadow-md);
 }
 
-.mp-calendar-head {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  background: var(--app-surface-card);
-  border-bottom: 1px solid var(--app-border-light);
+/* 横向时间线容器 */
+.timeline-container {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
 }
 
-.head-cell {
-  padding: 10px;
-  text-align: center;
-  font-weight: 800;
-  font-size: var(--text-md);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-}
-
-.mp-calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(6, 1fr);
+/* 滚动区域 */
+.timeline-scroll {
   flex: 1;
-  gap: 1px;
-  background: var(--app-border-light);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
 }
 
-.grid-cell {
-  background: var(--app-surface-card);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  min-height: 80px;
-  min-width: 0;
-  transition: background var(--transition-fast);
-}
-
-.grid-cell:hover {
-  background: var(--bg-surface);
-}
-
-.grid-cell.is-today {
-  background: var(--primary-subtle);
-}
-
-.grid-cell.off-month {
-  background: var(--app-surface-inner);
-  opacity: var(--opacity-muted);
-}
-
-.day-num {
-  font-size: var(--text-lg);
-  font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--text-secondary);
-}
-
-.today-dot {
-  width: 6px;
+.timeline-scroll::-webkit-scrollbar {
   height: 6px;
-  background: var(--n-primary-color);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--n-primary-color);
 }
 
-.cell-content {
+.timeline-scroll::-webkit-scrollbar-track {
+  background: var(--app-surface-inner);
+  border-radius: 3px;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background: var(--text-tertiary);
+  border-radius: 3px;
+}
+
+.timeline-content {
+  display: flex;
+  gap: 20px;
+  padding: 20px 0;
+  min-width: min-content;
+}
+
+/* 日期卡片 */
+.day-card {
+  width: 280px;
+  min-width: 280px;
+  background: var(--app-surface-card);
+  border-radius: var(--card-border-radius);
+  border: 1px solid var(--app-border-light);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.day-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* 今天卡片特殊样式 */
+.is-today-card {
+  border-color: var(--n-primary-color);
+  background: linear-gradient(135deg, #ffffff 0%, var(--primary-subtle, #f0f7ff) 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.is-today-card:hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+}
+
+.is-today-card .day-header {
+  border-bottom-color: var(--n-primary-color);
+}
+
+.is-today-card .date-num {
+  color: var(--n-primary-color);
+  font-size: 28px;
+}
+
+.is-today-card .weekday {
+  color: var(--n-primary-color);
+  font-weight: 700;
+}
+
+/* 日期头部 */
+.day-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--primary-light, #e8f4ff);
+}
+
+.date-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--n-primary-color);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.5px;
+}
+
+.weekday {
+  font-size: 14px;
+  color: var(--text-tertiary);
   margin-top: 4px;
+  font-weight: 600;
 }
 
-.anime-entry-line {
+/* 番剧列表 */
+.anime-list {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 4px;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  background: var(--bg-surface);
-  border: 1px solid transparent;
-  transition: all var(--transition-fast);
-  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
 }
 
-.anime-entry-line:hover {
+.anime-item {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 番剧条目 */
+.anime-entry {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.anime-entry:hover {
   background: var(--bg-surface-hover);
   border-color: var(--primary-strong);
+  box-shadow: var(--shadow-sm);
 }
 
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--n-primary-color);
-  box-shadow: 0 0 4px var(--n-primary-color);
+.poster-wrapper {
   flex-shrink: 0;
 }
-.anime-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; color: var(--text-secondary); }
-.ep-count-tag { font-size: var(--text-xs); background: var(--primary-medium); color: var(--n-primary-color); padding: 0 3px; border-radius: var(--radius-xs); font-weight: bold; flex-shrink: 0; }
+
+.placeholder-poster {
+  width: 48px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--n-primary-color), #667eea);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  box-shadow: var(--shadow-sm);
+}
+
+.info-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.anime-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+
+.ep-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ep-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--primary-medium, #e3f2fd);
+  color: var(--n-primary-color);
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.ep-tag:hover {
+  background: var(--n-primary-color);
+  color: white;
+}
+
+.ep-tag.ep-finale {
+  background: linear-gradient(135deg, #ff6b9d, #ffa07a);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.finale-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #ff4757;
+  color: white;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-left: 4px;
+  animation: pulse 2s infinite;
+}
+
+/* 空状态 - 单日无更新 */
+.empty-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0.5;
+  user-select: none;
+}
+
+.empty-day .mascot-placeholder {
+  font-size: 48px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.empty-day span {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 空状态 */
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal 样式 */
 .discover-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -569,7 +793,6 @@ const {
 .discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background var(--transition-fast); min-width: 0; }
 .discover-item:hover { background: var(--primary-light); }
 .discover-name { font-size: var(--text-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.calendar-spin { height: 100%; }
 .calendar-icon { color: var(--n-primary-color); }
 .notify-icon { color: var(--n-primary-color); }
 </style>
