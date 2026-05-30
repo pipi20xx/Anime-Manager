@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
 import { 
-  NModal, NButton, NSpace, NList, NListItem, NThing, NIcon, NTag, NPopselect
+  NModal, NButton, NSpace, NIcon, NTag, NDrawer, NDrawerContent
 } from 'naive-ui'
-import { DownloadOutlined as DownloadIcon, HistoryOutlined as HistoryIcon } from '@vicons/material'
+import { 
+  DownloadOutlined as DownloadIcon, 
+  HistoryOutlined as HistoryIcon,
+  CloseOutlined as CloseIcon,
+  RefreshOutlined as RefreshIcon
+} from '@vicons/material'
 import { useFeedItems } from '../../composables/modals/useFeedItems'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -28,6 +33,8 @@ const {
 } = useFeedItems(props)
 
 const mobileListRef = ref<any>(null)
+const showClientDrawer = ref(false)
+const currentItem = ref<any>(null)
 
 const cleanDescription = (desc: string | null | undefined): string | null => {
   if (!desc) return null
@@ -46,7 +53,6 @@ const formatPubDate = (dateStr: string | null | undefined): string => {
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) return dateStr
     return date.toLocaleString('zh-CN', {
-      year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
@@ -57,16 +63,23 @@ const formatPubDate = (dateStr: string | null | undefined): string => {
   }
 }
 
-const getTagStyle = (type: string) => {
-  const styles: Record<string, any> = {
-    info: { color: 'var(--color-info)', borderColor: 'var(--color-info-bg)', backgroundColor: 'var(--color-info-bg)' },
-    success: { color: 'var(--color-success)', borderColor: 'var(--color-success-bg)', backgroundColor: 'var(--color-success-bg)' },
-    warning: { color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)', backgroundColor: 'var(--color-warning-bg)' },
-    error: { color: 'var(--color-error)', borderColor: 'var(--color-error-bg)', backgroundColor: 'var(--color-error-bg)' },
-    primary: { color: 'var(--n-primary-color)', borderColor: 'var(--app-code-primary)', backgroundColor: 'var(--app-code-primary)' },
-    default: { color: 'var(--text-tertiary)', borderColor: 'var(--app-border-light)', backgroundColor: 'var(--bg-surface)' }
+const openDownloadDrawer = (item: any) => {
+  if (clientOptions.value.length === 0) return
+  
+  if (clientOptions.value.length === 1) {
+    handleDownload(item, clientOptions.value[0].value)
+  } else {
+    currentItem.value = item
+    showClientDrawer.value = true
   }
-  return styles[type] || styles.default
+}
+
+const selectClient = (clientId: string) => {
+  if (currentItem.value) {
+    handleDownload(currentItem.value, clientId)
+  }
+  showClientDrawer.value = false
+  currentItem.value = null
 }
 
 const handleScroll = (e: Event) => {
@@ -79,7 +92,6 @@ const handleScroll = (e: Event) => {
 
 const setupScrollListener = () => {
   nextTick(() => {
-    // Mobile list container scroll
     const el = mobileListRef.value
     if (el) {
       el.removeEventListener('scroll', handleScroll)
@@ -99,192 +111,407 @@ watch(() => props.show, (newVal) => {
 <template>
   <n-modal 
     :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    preset="card" 
-    style="width: 100%; height: 100vh; margin: 0;"
-    content-style="padding: 0; display: flex; flex-direction: column;"
-    :segmented="{ content: true, footer: 'soft' }"
-    :title="`订阅源详情`"
+    @update:show="val => emit('update:show', val)"
+    :mask-closable="true"
+    transform-origin="center"
   >
-    <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-      <div class="mobile-list-container" ref="mobileListRef">
-        <n-list hoverable>
-          <n-list-item v-for="item in items" :key="item.guid">
-             <template #prefix>
-                <div class="status-dot" :class="{ downloaded: item.is_downloaded }"></div>
-             </template>
-             <n-thing content-style="margin-top: 6px;">
-               <template #header>
-                  <div class="item-title">{{ item.title }}</div>
-               </template>
-               <template #description>
-                 <div class="item-desc-text" v-if="cleanDescription(item.description)">{{ cleanDescription(item.description) }}</div>
-                 <div class="item-pub-date">{{ formatPubDate(item.pub_date) }}</div>
-               </template>
-               
-               <div class="metadata-container">
-                 <!-- Recognition Info -->
-                 <div v-if="item.tmdb_title" class="tmdb-preview">
-                    <span class="icon">🎯</span>
-                    <span class="text">{{ item.tmdb_title }}</span>
-                 </div>
-
-                 <n-space size="small" :inline="true" style="margin-top: 6px; flex-wrap: wrap;">
-                    <!-- Status Tags -->
-                    <n-tag v-if="item.in_subscription" size="tiny" secondary :style="getTagStyle('info')">已订阅</n-tag>
-                    <n-tag v-if="item.episode_collected" size="tiny" secondary :style="getTagStyle('success')">已下载</n-tag>
-
-                    <!-- Recognition Tags -->
-                    <template v-if="item.recognition_done && item.tmdb_id">
-                      <a 
-                        :href="`https://www.themoviedb.org/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.tmdb_id}`"
-                        target="_blank"
-                        class="tmdb-link-tag"
-                      >ID: {{ item.tmdb_id }}</a>
-                      <n-tag size="tiny" quaternary :style="getTagStyle('info')">
-                        {{ item.media_type === 'movie' ? '🎬 电影' : '📺 剧集' }}
-                      </n-tag>
-                      <n-tag v-if="item.media_type === 'tv'" size="tiny" round :style="getTagStyle('info')">
-                        S{{ item.season || 1 }} E{{ item.episode || '-' }}
-                      </n-tag>
-                    </template>
-                    <n-tag v-else-if="item.recognition_done" size="tiny" quaternary :style="getTagStyle('warning')">未命中</n-tag>
-
-                    <!-- Spec Tags -->
-                    <n-tag v-if="item.team" size="tiny" quaternary :style="getTagStyle('info')">{{ item.team }}</n-tag>
-                    <n-tag v-if="item.source" size="tiny" quaternary :style="getTagStyle('default')">{{ item.source }}</n-tag>
-                    <n-tag v-if="item.platform" size="tiny" quaternary :style="getTagStyle('warning')">{{ item.platform }}</n-tag>
-                    <n-tag v-if="item.resolution" size="tiny" quaternary :style="getTagStyle('success')">{{ item.resolution }}</n-tag>
-                    <n-tag v-if="item.video_effect" size="tiny" quaternary :style="getTagStyle('info')">{{ item.video_effect }}</n-tag>
-                    <n-tag v-if="item.video_encode" size="tiny" quaternary :style="getTagStyle('default')">{{ item.video_encode }}</n-tag>
-                    <n-tag v-if="item.audio_encode" size="tiny" quaternary :style="getTagStyle('default')">{{ item.audio_encode }}</n-tag>
-                    <n-tag v-if="item.subtitle" size="tiny" quaternary :style="getTagStyle('error')">{{ item.subtitle }}</n-tag>
-                 </n-space>
-               </div>
-             </n-thing>
-             <template #suffix>
-                <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 8px;">
-                   <n-popselect :options="clientOptions" @update:value="val => handleDownload(item, val)" trigger="click">
-                     <n-button 
-                       v-bind="getButtonStyle('icon')" 
-                       size="small"
-                     >
-                       <template #icon><n-icon><DownloadIcon/></n-icon></template>
-                     </n-button>
-                   </n-popselect>
-                   <n-button 
-                     v-bind="getButtonStyle('icon')"
-                     size="small"
-                     @click="handleToggleHistory(item)"
-                   >
-                     <template #icon><n-icon><HistoryIcon/></n-icon></template>
-                   </n-button>
-                </div>
-             </template>
-          </n-list-item>
-        </n-list>
-        <div v-if="loading" style="padding: 10px; text-align: center; color: var(--text-muted);">加载中...</div>
-        <div v-if="!loading && items.length === 0" style="padding: 20px; text-align: center; color: var(--text-muted);">暂无数据</div>
+    <div class="mobile-feed-modal">
+      <div class="mobile-header">
+        <div class="header-title">
+          <span>订阅源详情</span>
+        </div>
+        <n-button 
+          v-bind="getButtonStyle('icon')" 
+          size="small" 
+          @click="emit('update:show', false)"
+        >
+          <template #icon><n-icon><CloseIcon /></n-icon></template>
+        </n-button>
       </div>
-    </div>
-    
-    <template #footer>
-      <n-space justify="space-between" align="center">
-        <div style="font-size: 12px; color: var(--text-muted)">
-          已加载 {{ items.length }} 条 <span v-if="loading && offset > 0">...</span>
+
+      <div class="mobile-subtitle" v-if="feed?.title || feed?.url">
+        {{ feed.title || feed.url }}
+      </div>
+
+      <div class="mobile-content" ref="mobileListRef">
+        <div v-if="items.length > 0" class="items-list">
+          <div v-for="item in items" :key="item.guid" class="feed-item">
+            <div class="item-header">
+              <div class="status-indicator" :class="{ downloaded: item.is_downloaded }"></div>
+              <div class="item-title">{{ item.title }}</div>
+            </div>
+            
+            <div class="item-desc" v-if="cleanDescription(item.description)">
+              {{ cleanDescription(item.description) }}
+            </div>
+            
+            <div class="item-time">{{ formatPubDate(item.pub_date) }}</div>
+
+            <div v-if="item.tmdb_title" class="tmdb-info">
+              <span class="tmdb-icon">🎯</span>
+              <span class="tmdb-title">{{ item.tmdb_title }}</span>
+            </div>
+
+            <div class="item-tags">
+              <n-tag v-if="item.in_subscription" size="tiny" round :bordered="false" 
+                style="color: #fff; background: #0288d1;">
+                已订阅
+              </n-tag>
+              <n-tag v-if="item.episode_collected" size="tiny" round :bordered="false"
+                style="color: #fff; background: #2e7d32;">
+                已下载
+              </n-tag>
+
+              <template v-if="item.recognition_done && item.tmdb_id">
+                <a 
+                  :href="`https://www.themoviedb.org/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.tmdb_id}`"
+                  target="_blank"
+                  class="tmdb-link"
+                >ID: {{ item.tmdb_id }}</a>
+                <n-tag size="tiny" round :bordered="false" style="color: #fff; background: #1565c0;">
+                  {{ item.media_type === 'movie' ? '🎬' : '📺' }}
+                </n-tag>
+                <n-tag v-if="item.media_type === 'tv'" size="tiny" round :bordered="false"
+                  style="color: #fff; background: #3B82F6;">
+                  S{{ item.season || 1 }} E{{ item.episode || '-' }}
+                </n-tag>
+              </template>
+              <n-tag v-else-if="item.recognition_done" size="tiny" round :bordered="false"
+                style="color: #fff; background: #f57c00;">
+                未命中
+              </n-tag>
+
+              <n-tag v-if="item.team" size="tiny" round :bordered="false"
+                style="color: #fff; background: #0d47a1;">
+                {{ item.team }}
+              </n-tag>
+              <n-tag v-if="item.resolution" size="tiny" round :bordered="false"
+                style="color: #fff; background: #e65100;">
+                {{ item.resolution }}
+              </n-tag>
+              <n-tag v-if="item.source" size="tiny" round :bordered="false"
+                style="color: #fff; background: #c62828;">
+                {{ item.source }}
+              </n-tag>
+            </div>
+
+            <div class="item-actions">
+              <n-button 
+                v-bind="getButtonStyle('primary')" 
+                size="small"
+                @click="openDownloadDrawer(item)"
+                :disabled="clientOptions.length === 0"
+              >
+                <template #icon><n-icon><DownloadIcon/></n-icon></template>
+                {{ clientOptions.length === 0 ? '无下载器' : '下载' }}
+              </n-button>
+              <n-button 
+                v-bind="getButtonStyle('secondary')"
+                size="small"
+                @click="handleToggleHistory(item)"
+              >
+                <template #icon><n-icon><HistoryIcon/></n-icon></template>
+                {{ item.is_downloaded ? '清除' : '标记' }}
+              </n-button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="loading" class="loading-state">
+          <n-icon size="24" class="spin-icon"><RefreshIcon /></n-icon>
+          <span>加载中...</span>
+        </div>
+
+        <div v-if="!loading && items.length === 0" class="empty-state">
+          <span>暂无数据</span>
+        </div>
+      </div>
+
+      <div class="mobile-footer">
+        <div class="footer-info">
+          已加载 {{ items.length }} 条
+          <span v-if="loading && offset > 0">...</span>
         </div>
         <n-space>
           <n-button 
-            v-bind="getButtonStyle('primary')"
+            v-bind="getButtonStyle('secondary')"
+            size="small"
             @click="handleRetryRecognition" 
             :loading="loading"
           >
-             重试识别
+            重试识别
           </n-button>
-          <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">关闭</n-button>
         </n-space>
-      </n-space>
-    </template>
+      </div>
+    </div>
   </n-modal>
+
+  <n-drawer 
+    v-model:show="showClientDrawer" 
+    placement="bottom" 
+    :height="clientOptions.length * 60 + 100"
+    style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;"
+  >
+    <n-drawer-content title="选择下载客户端" closable :native-scrollbar="false">
+      <div class="client-list">
+        <div 
+          v-for="client in clientOptions" 
+          :key="client.value"
+          class="client-item"
+          @click="selectClient(client.value)"
+        >
+          <div class="client-icon">
+            <n-icon size="20"><DownloadIcon /></n-icon>
+          </div>
+          <span class="client-name">{{ client.label }}</span>
+        </div>
+      </div>
+    </n-drawer-content>
+  </n-drawer>
 </template>
 
 <style scoped>
-.mobile-list-container {
+.mobile-feed-modal {
+  width: 100vw;
+  height: 100vh;
+  background: var(--app-surface-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--m-spacing-md);
+  border-bottom: 1px solid var(--app-border-light);
+  background: var(--app-surface-inner);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
+  font-size: var(--m-text-lg);
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.mobile-subtitle {
+  padding: var(--m-spacing-sm) var(--m-spacing-md);
+  font-size: var(--m-text-sm);
+  color: var(--text-secondary);
+  background: var(--app-surface-inner);
+  border-bottom: 1px solid var(--app-border-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
+  padding: var(--m-spacing-md);
 }
-.status-dot {
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-md);
+}
+
+.feed-item {
+  background: var(--app-surface-inner);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-sm);
+}
+
+.item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--m-spacing-sm);
+}
+
+.status-indicator {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--text-tertiary);
-  margin-top: 10px;
+  flex-shrink: 0;
+  margin-top: 6px;
 }
-.status-dot.downloaded {
+
+.status-indicator.downloaded {
   background: var(--n-success-color);
   box-shadow: 0 0 6px var(--n-success-color);
 }
 
 .item-title {
-  font-size: 14px;
+  font-size: var(--m-text-sm);
   font-weight: bold;
   line-height: 1.4;
   word-break: break-all;
   color: var(--text-primary);
+  flex: 1;
 }
 
-.item-desc-text {
-  font-size: 11px;
+.item-desc {
+  font-size: var(--m-text-xs);
   color: var(--text-tertiary);
-  margin-top: 4px;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.item-pub-date {
-  font-size: 10px;
+.item-time {
+  font-size: var(--m-text-xs);
   color: var(--text-muted);
-  margin-top: 4px;
   font-family: monospace;
 }
 
-.tmdb-preview {
-  margin-top: 8px;
-  background: var(--app-surface-inner);
-  border: 1px solid var(--app-border-light);
-  padding: 4px 8px;
-  border-radius: var(--button-border-radius, 4px);
+.tmdb-info {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 10px;
+  background: var(--app-surface-card);
+  border-radius: var(--m-radius-sm);
+  border: 1px solid var(--app-border-light);
 }
-.tmdb-preview .icon { font-size: 12px; }
-.tmdb-preview .text { font-size: 12px; font-weight: bold; color: var(--n-primary-color); }
 
-.metadata-container {
+.tmdb-icon {
+  font-size: 14px;
+}
+
+.tmdb-title {
+  font-size: var(--m-text-xs);
+  font-weight: bold;
+  color: var(--n-primary-color);
+}
+
+.item-tags {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-.tmdb-link-tag {
+.tmdb-link {
   display: inline-flex;
   align-items: center;
-  height: 18px;
+  height: 20px;
   padding: 0 8px;
   font-size: 11px;
   font-weight: 500;
   color: #fff;
-  background: var(--n-primary-color);
-  border-radius: 9px;
+  background: #2e7d32;
+  border-radius: 10px;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.tmdb-link-tag:hover {
-  opacity: 0.85;
-  transform: translateY(-1px);
+
+.tmdb-link:active {
+  opacity: 0.8;
+  transform: scale(0.95);
+}
+
+.item-actions {
+  display: flex;
+  gap: var(--m-spacing-sm);
+  margin-top: var(--m-spacing-sm);
+  padding-top: var(--m-spacing-sm);
+  border-top: 1px solid var(--app-border-light);
+}
+
+.item-actions .n-button {
+  flex: 1;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-spacing-sm);
+  padding: var(--m-spacing-xl);
+  color: var(--text-muted);
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px var(--m-spacing-lg);
+  color: var(--text-muted);
+  font-size: var(--m-text-md);
+}
+
+.mobile-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--m-spacing-md);
+  border-top: 1px solid var(--app-border-light);
+  background: var(--app-surface-inner);
+}
+
+.footer-info {
+  font-size: var(--m-text-xs);
+  color: var(--text-muted);
+}
+
+.client-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-xs);
+}
+
+.client-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-md);
+  padding: var(--m-spacing-md);
+  border-radius: var(--m-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--app-surface-inner);
+}
+
+.client-item:active {
+  background: var(--bg-surface-hover);
+}
+
+.client-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--n-primary-color);
+  border-radius: var(--m-radius-md);
+  color: #fff;
+}
+
+.client-name {
+  font-size: var(--m-text-md);
+  font-weight: 500;
+  color: var(--text-primary);
 }
 </style>
