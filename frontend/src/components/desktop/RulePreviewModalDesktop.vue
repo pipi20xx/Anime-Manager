@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { watch, h } from 'vue'
+import { watch, h, ref, onMounted, onUnmounted } from 'vue'
 import { 
-  NModal, NDataTable, NTag, NButton, NSpace, NSpin, NEmpty, NPopselect
+  NModal, NDataTable, NTag, NButton, NSpace, NSpin, NEmpty
 } from 'naive-ui'
 import { useRulePreview } from '../../composables/modals/useRulePreview'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -22,6 +22,40 @@ const {
   handleDownload,
   handleToggleHistory
 } = useRulePreview(props)
+
+const activeDropdownKey = ref<string | null>(null)
+
+const toggleDropdown = (key: string) => {
+  if (activeDropdownKey.value === key) {
+    activeDropdownKey.value = null
+  } else {
+    activeDropdownKey.value = key
+  }
+}
+
+const closeDropdown = () => {
+  activeDropdownKey.value = null
+}
+
+const selectClient = (item: any, clientId: string) => {
+  handleDownload(item, clientId)
+  closeDropdown()
+}
+
+const handleClickOutside = (e: Event) => {
+  const target = e.target as HTMLElement
+  if (!target.closest('.custom-dropdown')) {
+    closeDropdown()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 const getTagStyle = (type: string) => {
   const styles: Record<string, any> = {
@@ -94,19 +128,94 @@ const columns = [
           onClick: () => handleToggleHistory(row, true)
         }, { default: () => '设为已下载' }))
       }
+
+      const dropdownKey = `download-${row.guid}`
+      
       btns.push(
-        h(NPopselect, {
-          options: clientOptions.value,
-          onUpdateValue: (val: string) => handleDownload(row, val),
-          trigger: 'click'
-        }, {
-          default: () => h(NButton, {
+        h('div', {
+          class: 'custom-dropdown',
+          style: { position: 'relative', display: 'inline-block' }
+        }, [
+          h(NButton, {
             ...getButtonStyle('primary'),
             size: 'small',
-            disabled: clientOptions.value.length === 0
-          }, { default: () => clientOptions.value.length === 0 ? '无下载器' : '下载' })
-        })
+            disabled: clientOptions.value.length === 0,
+            onClick: (e: Event) => {
+              e.stopPropagation()
+              toggleDropdown(dropdownKey)
+            }
+          }, { 
+            default: () => clientOptions.value.length === 0 ? '无下载器' : '下载'
+          }),
+          activeDropdownKey.value === dropdownKey ? h('div', {
+            class: 'custom-dropdown-menu',
+            style: {
+              position: 'absolute',
+              top: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              marginTop: '6px',
+              zIndex: 2000,
+              minWidth: '140px',
+              background: 'linear-gradient(135deg, rgba(187, 134, 252, 0.15) 0%, rgba(156, 100, 217, 0.1) 100%)',
+              borderRadius: 'var(--code-radius, 8px)',
+              boxShadow: 'var(--shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.5)), 0 0 20px rgba(187, 134, 252, 0.15)',
+              padding: '6px',
+              border: '1px solid var(--primary-medium, rgba(187, 134, 252, 0.3))',
+              backdropFilter: 'blur(12px)'
+            }
+          }, 
+            clientOptions.value.map(client => 
+              h('div', {
+                class: 'custom-dropdown-item',
+                style: {
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  borderRadius: '12px',
+                  marginBottom: '4px',
+                  background: 'var(--n-primary-color, #bb86fc)',
+                  color: '#fff',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  userSelect: 'none',
+                  letterSpacing: '0.3px',
+                  boxShadow: 'var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.3))'
+                },
+                onMouseenter: (e: Event) => {
+                  const el = e.target as HTMLElement
+                  el.style.background = 'linear-gradient(135deg, var(--n-primary-color, #bb86fc) 0%, #9c64d9 100%)'
+                  el.style.boxShadow = 'var(--shadow-md, 0 4px 12px rgba(187, 134, 252, 0.4))'
+                  el.style.transform = 'scale(1.02)'
+                },
+                onMouseleave: (e: Event) => {
+                  const el = e.target as HTMLElement
+                  el.style.background = 'var(--n-primary-color, #bb86fc)'
+                  el.style.boxShadow = 'var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.3))'
+                  el.style.transform = 'scale(1)'
+                },
+                onMousedown: (e: Event) => {
+                  const el = e.target as HTMLElement
+                  el.style.background = 'linear-gradient(135deg, #8b5fbf 0%, #7a4db8 100%)'
+                  el.style.transform = 'scale(0.98)'
+                  el.style.boxShadow = 'var(--shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.5))'
+                },
+                onMouseup: (e: Event) => {
+                  const el = e.target as HTMLElement
+                  el.style.background = 'linear-gradient(135deg, var(--n-primary-color, #bb86fc) 0%, #9c64d9 100%)'
+                  el.style.transform = 'scale(1.02)'
+                  el.style.boxShadow = 'var(--shadow-md, 0 4px 12px rgba(187, 134, 252, 0.4))'
+                },
+                onClick: (e: Event) => {
+                  e.stopPropagation()
+                  selectClient(row, client.value)
+                }
+              }, { default: () => client.label })
+            )
+          ) : null
+        ])
       )
+
       return h(NSpace, { size: 4 }, { default: () => btns })
     }
   }
