@@ -145,7 +145,7 @@ onMounted(fetchData)
                           <template #icon><n-icon><ListIcon/></n-icon></template>
                         </n-button>
                       </template>
-                      查看抓取内容
+                      查看订阅源详情
                     </n-tooltip>
 
                     <n-popconfirm @positive-click="resetFeedHistory(feed.id)" positive-text="重置" negative-text="取消">
@@ -232,7 +232,7 @@ onMounted(fetchData)
                       trigger: () => h(NButton, { ...getButtonStyle('iconPrimary'), onClick: ()=>openViewHistory(r) }, { 
                         icon: () => h(NIcon, null, { default: () => h(ResetIcon) })
                       }),
-                      default: () => '执行记录'
+                      default: () => '推送历史'
                     }),
                     // 删除
                     h(NPopconfirm, { 

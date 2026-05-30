@@ -33,7 +33,7 @@ useBackClose(showActionDrawer)
 const ruleActions = [
   { key: 'edit', label: '编辑规则', icon: EditIcon },
   { key: 'copy', label: '复制规则', icon: CopyIcon },
-  { key: 'history', label: '执行记录', icon: HistoryIcon },
+  { key: 'history', label: '推送历史', icon: HistoryIcon },
 ]
 
 const openActions = (rule: any, e: Event) => {
