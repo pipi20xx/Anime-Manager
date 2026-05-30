@@ -21,7 +21,7 @@ import {
 } from '@vicons/material'
 import { pendingSubscription } from '../../store/navigationStore'
 import SubscriptionEditModal from './SubscriptionEditModalMobile.vue'
-import JackettFillModal from './FeedItemsModalMobile.vue' // Reuse FeedItemsModalMobile for Jackett results if possible or keep original
+import JackettFillModal from './JackettFillModalMobile.vue'
 import SubscriptionHistoryModal from '../SubscriptionHistoryModal.vue'
 import SubscriptionTemplateModal from '../SubscriptionTemplateModal.vue'
 import BangumiQuickSubscribeModal from '../BangumiQuickSubscribeModal.vue'
