@@ -76,7 +76,7 @@ class FileProcessor:
         source_dir = task.get("source_dir")
         target_dir = task.get("target_dir")
         action_type = task.get("action_type", "move")
-        action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制'}.get(action_type, action_type)
+        action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制', 'hash_only': '仅记录哈希'}.get(action_type, action_type)
         conflict_mode = "overwrite" if task.get("overwrite_mode") else "skip"
         
         root = os.path.dirname(v_path)
@@ -272,6 +272,77 @@ class FileProcessor:
                     await FileProcessor._log_detail(task_id, f"🔢 ED2K: {hash_result.ed2k_link}")
                 else:
                     await FileProcessor._log_detail(task_id, f"❌ 无法计算哈希: {v_file}", "WARN")
+
+            # --- hash_only: 仅识别+记录哈希，不执行文件操作 ---
+            if action_type == "hash_only":
+                if not dry_run:
+                    # hash_only 模式下始终计算哈希（不受 calculate_hash 开关限制）
+                    if not hash_result:
+                        await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
+                        hash_result = await HashCalculator.calculate_hashes(v_path)
+                        if hash_result:
+                            await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
+                            await FileProcessor._log_detail(task_id, f"🔢 ED2K: {hash_result.ed2k_link}")
+                        else:
+                            await FileProcessor._log_detail(task_id, f"❌ 无法计算哈希: {v_file}", "WARN")
+
+                    if hash_result:
+                        from models import FileHash
+                        from database import db
+                        async with db.session_scope():
+                            stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
+                            existing = await db.first(FileHash, stmt)
+                            if existing:
+                                existing.sha1 = hash_result.sha1
+                                existing.ed2k_link = hash_result.ed2k_link
+                                existing.original_filename = v_file
+                                existing.file_size = hash_result.file_size
+                                existing.tmdb_id = str(final.get("tmdb_id")) if final.get("tmdb_id") else None
+                                existing.title = final.get("title")
+                                existing.season = final.get("season")
+                                existing.episode = str(final.get("episode")) if final.get("episode") else None
+                                existing.media_type = final.get("category")
+                                existing.resolution = final.get("resolution")
+                                existing.team = final.get("team")
+                                existing.video_encode = final.get("video_encode")
+                                existing.source_path = v_path
+                                existing.target_path = None
+                                existing.calculated_at = datetime.now()
+                                await db.save(existing, audit=False)
+                                await FileProcessor._log_detail(task_id, f"📝 哈希记录已更新: {v_file}")
+                            else:
+                                file_hash = FileHash(
+                                    sha1=hash_result.sha1,
+                                    ed2k=hash_result.ed2k,
+                                    ed2k_link=hash_result.ed2k_link,
+                                    original_filename=v_file,
+                                    file_size=hash_result.file_size,
+                                    tmdb_id=str(final.get("tmdb_id")) if final.get("tmdb_id") else None,
+                                    title=final.get("title"),
+                                    season=final.get("season"),
+                                    episode=str(final.get("episode")) if final.get("episode") else None,
+                                    media_type=final.get("category"),
+                                    resolution=final.get("resolution"),
+                                    team=final.get("team"),
+                                    video_encode=final.get("video_encode"),
+                                    source_path=v_path,
+                                    target_path=None
+                                )
+                                await db.save(file_hash, audit=False)
+                                await FileProcessor._log_detail(task_id, f"📝 哈希记录已保存: {v_file}")
+                    else:
+                        await FileProcessor._log_detail(task_id, f"⚠️ 跳过哈希记录（无法计算）: {v_file}", "WARN")
+                else:
+                    await FileProcessor._log_detail(task_id, f"🔍 [预览] 仅记录哈希: {v_file} → {final.get('title', '未知')}")
+
+                results.append({
+                    "type": "item", "status": "success",
+                    "source": v_path, "target": None, "action": "hash_only",
+                    "title": final.get("title"), "season": final.get("season"),
+                    "episode": final.get("episode"), "tmdb_id": final.get("tmdb_id"),
+                    "msg": "仅记录哈希"
+                })
+                return results
 
             # Execute
             if not dry_run and action_type in ["cd2_move", "cd2_copy"]:

@@ -1283,7 +1283,7 @@ class MonitorManager:
                     await _log_task(scan_task_id, f"📁 目标: {target_dir}")
                 if not is_strm:
                     action_type = current_task.get("action_type", "move")
-                    action_label = {"move": "移动", "copy": "复制", "cd2_move": "CD2移动", "cd2_copy": "CD2复制"}.get(action_type, action_type)
+                    action_label = {"move": "移动", "copy": "复制", "cd2_move": "CD2移动", "cd2_copy": "CD2复制", "hash_only": "仅记录哈希"}.get(action_type, action_type)
                     await _log_task(scan_task_id, f"🔧 模式: 正式执行 ({action_label})")
                 else:
                     sync_mode = current_task.get("sync_mode", "local")

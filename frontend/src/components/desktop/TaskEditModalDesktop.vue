@@ -68,6 +68,7 @@ const {
                 <n-radio-button value="link">建立硬链</n-radio-button>
                 <n-radio-button value="cd2_move">CD2 移动</n-radio-button>
                 <n-radio-button value="cd2_copy">CD2 复制</n-radio-button>
+                <n-radio-button value="hash_only">仅记录哈希</n-radio-button>
               </n-radio-group>
             </n-form-item>
           </n-space>

@@ -77,7 +77,8 @@ export function useTaskEdit(props: any, emit: any) {
     { label: '完整复制', value: 'copy' },
     { label: '建立硬链', value: 'link' },
     { label: 'CD2 移动', value: 'cd2_move' },
-    { label: 'CD2 复制', value: 'cd2_copy' }
+    { label: 'CD2 复制', value: 'cd2_copy' },
+    { label: '仅记录哈希', value: 'hash_only' }
   ]
 
   return {

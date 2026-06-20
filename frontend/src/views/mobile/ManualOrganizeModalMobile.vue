@@ -62,6 +62,7 @@ const {
               <n-gi><n-radio-button value="link" style="width: 100%; text-align: center">硬链</n-radio-button></n-gi>
               <n-gi><n-radio-button value="cd2_move" style="width: 100%; text-align: center">CD2移</n-radio-button></n-gi>
               <n-gi><n-radio-button value="cd2_copy" style="width: 100%; text-align: center">CD2复</n-radio-button></n-gi>
+              <n-gi><n-radio-button value="hash_only" style="width: 100%; text-align: center">记哈希</n-radio-button></n-gi>
             </n-grid>
           </n-radio-group>
         </n-form-item>

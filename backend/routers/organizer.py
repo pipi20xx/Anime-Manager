@@ -154,7 +154,7 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
         await log_task(task_id, f"📁 源: {task.get('source_dir')}")
         await log_task(task_id, f"📁 目标: {task.get('target_dir')}")
         action_type = task.get('action_type', 'move')
-        action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制'}.get(action_type, action_type)
+        action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制', 'hash_only': '仅记录哈希'}.get(action_type, action_type)
         mode_label = f"预览 ({action_label})" if dry_run else f"正式执行 ({action_label})"
         await log_task(task_id, f"🔧 模式: {mode_label}")
         await log_task(task_id, "──────────────────")
