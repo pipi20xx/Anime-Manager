@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ANIME Pro Matcher Client
 // @namespace    http://tampermonkey.net/
-// @version      5.0
+// @version      5.1
 // @description  ANIME Pro Matcher 客户端 - 支持 API Token 认证 + TMDB直达
 // @author       User & Refactored
 // @match        https://*/detail/*
@@ -31,6 +31,7 @@
 const CONFIG = {
     serverUrl: 'http://192.168.50.202:6868', // ANIME Pro Matcher 服务器地址
     apiToken: '',                             // 外部访问 API Token (在 APM 设置 > 外部控制中生成)
+    enableAutoRecognize: true,                // 是否开启页面自动识别（关闭后仅保留划词识别）
     enablePopup: true,                        // 是否开启划词弹窗
 };
 // ----------------
@@ -122,7 +123,7 @@ function renderProjectHeader(ptype, content) {
         return `<td class="rowhead nowrap" valign="top" align="right">${brand}</td><td class="rowfollow" valign="top" align="left">${content}</td>`;
     }
     if (ptype === 'm-team') {
-        return `<th class="ant-descriptions-item-label" style="width:135px;text-align:right;" colspan="1"><span>${brand}</span></th><td class="ant-descriptions-item-content" colspan="1"><span>${content}</span></td>`;
+        return `<div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:4px 0;"><span style="font-weight:bold;color:#3e84f4;white-space:nowrap;">ANIME Pro Matcher</span><span>${content}</span></div>`;
     }
     return content;
 }
@@ -313,19 +314,37 @@ function createRecognizeTip(tip, text) {
         }
     });
 
-    // --- 站点适配 ---
-    if (siteDomain.includes('m-team')) {
-        waitForElements(['ant-descriptions-row']).then(([rows]) => {
-            const ptype = 'm-team';
-            let torrentName = '';
-            try {
-                torrentName = rows[0].innerText.split('\n')[1] || rows[0].textContent;
-            } catch (e) {}
+    // --- 站点适配（自动识别） ---
+    if (!CONFIG.enableAutoRecognize) return;
 
-            const table = rows[0].parentNode;
-            const row = table.insertRow(2);
-            row.className = 'ant-descriptions-row';
-            if (torrentName) createRecognizeRow(row, ptype, torrentName);
+    if (siteDomain.includes('m-team')) {
+        waitForElements(['text-mt-gray-4']).then(([subtitleEls]) => {
+            const ptype = 'm-team';
+            const subtitleEl = subtitleEls[0];
+            const subtitle = subtitleEl?.textContent?.trim() || '';
+
+            // 从 h2 中的 span.align-middle 提取种子标题
+            const titleSpan = document.querySelector('h2 span.align-middle');
+            let torrentName = titleSpan?.textContent?.trim() || '';
+
+            // 拼接副标题中的中文信息，辅助识别
+            let batchEnhancement = false;
+            if (subtitle && torrentName) {
+                const cnPart = subtitle.split('|')[0].trim();
+                if (cnPart) {
+                    torrentName += ` [${cnPart}]`;
+                }
+                if (/全\d+集|合集|全集|\d+\s*[-~]\s*\d+集/.test(subtitle)) {
+                    batchEnhancement = true;
+                }
+            }
+
+            // 在副标题后插入识别结果
+            if (torrentName) {
+                const resultDiv = document.createElement('div');
+                subtitleEl.parentNode.insertBefore(resultDiv, subtitleEl.nextSibling);
+                createRecognizeRow(resultDiv, ptype, torrentName, { batchEnhancement });
+            }
         }).catch(() => {});
     } else if (siteDomain.includes('hhanclub')) {
         waitForElements(['font-bold leading-6']).then(([divs]) => {
