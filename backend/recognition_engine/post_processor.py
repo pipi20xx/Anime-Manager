@@ -377,7 +377,11 @@ class PostProcessor:
         
         current_logs.append(f"┣ [类型判定] 当前状态: 季号={meta_obj.begin_season}, 集数={meta_obj.begin_episode}, 类型={meta_obj.type.value.upper()}")
         
-        if meta_obj.forced_tmdbid: 
+        if fingerprint_data and fingerprint_data.get("type"):
+            cached_type = fingerprint_data.get("type")
+            meta_obj.type = MediaType.MOVIE if cached_type == "movie" else MediaType.TV
+            current_logs.append(f"┣ [类型判定] 智能记忆已命中(type={cached_type})，直接采用记忆类型: {meta_obj.type.value.upper()}")
+        elif meta_obj.forced_tmdbid: 
             current_logs.append(f"┣ [类型判定] 已锁定 TMDB ID，跳过自动类型判断")
         elif meta_obj.type == MediaType.AUTO:
             current_logs.append(f"┣ [类型判定] 类型为 AUTO，将由匹配结果自动确定")
