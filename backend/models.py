@@ -1,7 +1,7 @@
 from typing import Optional, List, Any, Dict
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship, Column
-from sqlalchemy import JSON
+from sqlalchemy import JSON, BigInteger
 from sqlalchemy.dialects.postgresql import JSONB
 
 def get_public_schema():
@@ -261,7 +261,7 @@ class FileHash(SQLModel, table=True):
     ed2k: str = Field(index=True)
     ed2k_link: str
     original_filename: str
-    file_size: Optional[int] = None
+    file_size: Optional[int] = Field(default=None, sa_column=Column(BigInteger))
     tmdb_id: Optional[str] = Field(default=None, index=True)
     title: Optional[str] = None
     season: Optional[int] = None

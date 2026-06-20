@@ -256,6 +256,16 @@ async def init_db():
     
     await migrate_columns()
 
+    # [类型迁移] file_hashes.file_size: INTEGER -> BIGINT (支持 >2GB 文件)
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text(
+                "ALTER TABLE public.file_hashes ALTER COLUMN file_size TYPE BIGINT USING file_size::BIGINT;"
+            ))
+        print("[AutoMigrate] file_hashes.file_size 已迁移为 BIGINT")
+    except Exception as e:
+        print(f"[AutoMigrate] file_hashes.file_size 类型迁移跳过: {e}")
+
     async with engine.begin() as conn:
 
         # 4. 清理已废弃的表
