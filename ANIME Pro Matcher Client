@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ANIME Pro Matcher Client
 // @namespace    http://tampermonkey.net/
-// @version      4.0.0
+// @version      5.0
 // @description  ANIME Pro Matcher 客户端 - 支持 API Token 认证 + TMDB直达
 // @author       User & Refactored
 // @match        https://*/detail/*
@@ -38,13 +38,12 @@ const CONFIG = {
 const siteDomain = window.location.hostname;
 
 // --- API 请求 ---
-function recognize(text) {
+function recognize(text, options = {}) {
     return new Promise((resolve, reject) => {
         const headers = {
             'Content-Type': 'application/json',
         };
 
-        // 优先使用 GM 存储的 token，其次使用配置中的 token
         const token = GM_getValue('apm_api_token', '') || CONFIG.apiToken;
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -58,6 +57,7 @@ function recognize(text) {
                 filename: text,
                 anime_priority: true,
                 force_filename: true,
+                batch_enhancement: options.batchEnhancement || false,
             }),
             responseType: 'json',
             onload: (res) => {
@@ -140,6 +140,7 @@ function getTmdbLink(id, category) {
 function buildTagsHtml(ptype, f) {
     let html = '';
     html += renderTag(ptype, f.category, '#2775b6');
+    html += renderTag(ptype, f.secondary_category, '#2196f3');
     html += renderTag(ptype, f.title, '#c54640');
 
     let se = '';
@@ -147,6 +148,7 @@ function buildTagsHtml(ptype, f) {
     if (f.episode != null) se += `E${f.episode}`;
     html += renderTag(ptype, se || null, '#e6702e');
     html += renderTag(ptype, f.year, '#e6702e');
+    html += renderTag(ptype, f.origin_country, '#607d8b');
 
     if (f.tmdb_id) {
         const link = getTmdbLink(f.tmdb_id, f.category);
@@ -157,13 +159,17 @@ function buildTagsHtml(ptype, f) {
     html += renderTag(ptype, f.resolution, '#677489');
     html += renderTag(ptype, f.source, '#95a5a6');
     html += renderTag(ptype, f.video_encode, '#8e44ad');
+    html += renderTag(ptype, f.audio_encode, '#795548');
+    html += renderTag(ptype, f.video_effect, '#ff5722');
+    html += renderTag(ptype, f.platform, '#009688');
+    html += renderTag(ptype, f.subtitle, '#9e9e9e');
     return html;
 }
 
-function createRecognizeRow(row, ptype, torrentName) {
+function createRecognizeRow(row, ptype, torrentName, options = {}) {
     row.innerHTML = renderProjectHeader(ptype, '<span style="color:#999;">正在分析...</span>');
 
-    recognize(torrentName).then(data => {
+    recognize(torrentName, options).then(data => {
         const f = data.final_result;
         if (f && data.success) {
             row.innerHTML = renderProjectHeader(ptype, buildTagsHtml(ptype, f));
@@ -182,7 +188,10 @@ function createRecognizeTip(tip, text) {
         const f = data.final_result;
         if (f && data.success) {
             let html = '<div style="margin-bottom:5px;border-bottom:1px solid #eee;padding-bottom:5px;"><b>识别成功</b></div>';
-            html += f.category ? `分类：${escapeHtml(f.category)}<br>` : '';
+
+            // 基本信息
+            const cat = [f.category, f.secondary_category].filter(Boolean).join(' / ');
+            html += cat ? `分类：${escapeHtml(cat)}<br>` : '';
             html += f.title ? `标题：<b>${escapeHtml(f.title)}</b><br>` : '';
 
             let se = '';
@@ -191,13 +200,38 @@ function createRecognizeTip(tip, text) {
             html += se ? `季集：${se}<br>` : '';
 
             html += f.year ? `年份：${f.year}<br>` : '';
-            html += f.team ? `制作：${escapeHtml(f.team)}<br>` : '';
-            html += f.resolution ? `画质：${f.resolution}<br>` : '';
+            html += f.origin_country ? `产地：${escapeHtml(f.origin_country)}<br>` : '';
 
+            // TMDB
             if (f.tmdb_id) {
                 const link = getTmdbLink(f.tmdb_id, f.category);
                 html += `TMDB：<a href="${link}" target="_blank" style="color:#3e84f4;">${f.tmdb_id}</a>`;
+                if (f.vote_average) html += ` (${f.vote_average})`;
+                html += '<br>';
             }
+
+            // 规格信息
+            const specs = [
+                f.team && `制作：${f.team}`,
+                f.resolution && `分辨率：${f.resolution}`,
+                f.source && `来源：${f.source}`,
+                f.video_encode && `视频编码：${f.video_encode}`,
+                f.audio_encode && `音频编码：${f.audio_encode}`,
+                f.video_effect && `动态范围：${f.video_effect}`,
+                f.platform && `平台：${f.platform}`,
+                f.subtitle && `字幕：${f.subtitle}`,
+            ].filter(Boolean);
+
+            if (specs.length) {
+                html += '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;">';
+                html += specs.join('<br>') + '</div>';
+            }
+
+            // 渲染名
+            if (f.processed_name) {
+                html += `<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:11px;color:#666;">${escapeHtml(f.processed_name)}</div>`;
+            }
+
             tip.showText(html);
         } else {
             tip.showText('未能识别出有效元数据');
@@ -309,18 +343,62 @@ function createRecognizeTip(tip, text) {
         waitForElements(['rowhead']).then(([rows]) => {
             const ptype = 'common';
             let torrentName = '';
-            try {
-                const link = rows[0].nextElementSibling?.querySelector('a');
-                torrentName = link?.innerText || link?.title || rows[0].nextElementSibling?.innerText || '';
-                torrentName = torrentName.replace(/^\[.*?\]\s*/, '');
-            } catch (e) {}
+            let subtitle = '';
+
+            // 1. 优先从 <h1> 提取主标题（含集号信息，如 S01E15）
+            const h1 = document.querySelector('h1#top') || document.querySelector('h1');
+            if (h1) {
+                // h1 第一个文本节点是主标题，后续 <b> 等是促销/时间信息
+                const firstText = h1.childNodes[0]?.textContent?.trim();
+                if (firstText && firstText.length > 5) {
+                    torrentName = firstText;
+                } else {
+                    // 兜底：取完整文本并清理促销信息
+                    torrentName = h1.textContent.trim()
+                        .split(/\s+\[/)[0]    // 去掉 [免费] 等
+                        .split(/剩余时间/)[0]  // 去掉倒计时
+                        .trim();
+                }
+            }
+
+            // 2. 提取副标题（中文名 + 集数），辅助识别
+            const allRowHeads = document.querySelectorAll('td.rowhead');
+            for (const td of allRowHeads) {
+                if (td.textContent.trim() === '副标题') {
+                    subtitle = td.nextElementSibling?.textContent?.trim() || '';
+                    break;
+                }
+            }
+
+            // 3. 如果 h1 没取到，回退到种子链接
+            if (!torrentName) {
+                try {
+                    const link = rows[0].nextElementSibling?.querySelector('a');
+                    torrentName = link?.innerText || link?.title || rows[0].nextElementSibling?.innerText || '';
+                    torrentName = torrentName.replace(/^\[.*?\]\s*/, '');
+                } catch (e) {}
+            }
+
+            // 4. 拼接副标题中的中文信息到文件名，帮助 TMDB 中文匹配
+            // 5. 检测副标题中的合集关键词，自动开启 batch_enhancement
+            let batchEnhancement = false;
+            if (subtitle && torrentName) {
+                const cnPart = subtitle.split('|')[0].trim(); // 如 "女画师 第15集"
+                if (cnPart) {
+                    torrentName += ` [${cnPart}]`;
+                }
+                // 合集关键词：全X集、合集、全集、X-X集、X~X集
+                if (/全\d+集|合集|全集|\d+\s*[-~]\s*\d+集/.test(subtitle)) {
+                    batchEnhancement = true;
+                }
+            }
 
             let table = rows[1]?.parentNode?.parentNode?.parentNode;
             if (table?.tagName !== 'TABLE') table = table?.closest('table');
 
             if (torrentName && table) {
                 const row = table.insertRow(2);
-                createRecognizeRow(row, ptype, torrentName);
+                createRecognizeRow(row, ptype, torrentName, { batchEnhancement });
             }
         }).catch(() => {});
     }
