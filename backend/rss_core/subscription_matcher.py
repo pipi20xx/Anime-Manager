@@ -179,7 +179,7 @@ class SubscriptionMatcher:
                     
                     if recog_task_id:
                         try:
-                            stats = {"title": _title, "tmdb_id": _tmdb, "season": _season, "episode": _episode}
+                            stats = {"title": _title, "tmdb_id": _tmdb, "category": final_result.get("category"), "season": _season, "episode": _episode}
                             await _finish_task(recog_task_id, "completed", stats=stats)
                         except Exception:
                             pass

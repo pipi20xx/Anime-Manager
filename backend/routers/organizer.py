@@ -371,7 +371,7 @@ async def recalculate_item(request: dict):
     final = result_data.get("final_result", {})
     if recog_task_id and final.get("tmdb_id"):
         try:
-            stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+            stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "category": final.get("category"), "season": final.get("season"), "episode": final.get("episode")}
             await finish_task(recog_task_id, "completed", stats=stats)
         except Exception:
             pass

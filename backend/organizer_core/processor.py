@@ -168,12 +168,14 @@ class FileProcessor:
                     
                 return [{"type": "skip", "skip_type": "recognition_failed", "source": v_path, "reason": "识别失败 (无 TMDB ID)"}]
 
-            logger.info(f"✨ [整理] 识别: {v_file} → {final['title']} S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
-            await FileProcessor._log_detail(task_id, f"✅ 识别成功: {final['title']} - S{final.get('season','-')}E{final.get('episode','-')} (ID: {final['tmdb_id']})")
+            _cat = final.get("category") or "未知"
+            _ep_info = f" S{final.get('season','-')}E{final.get('episode','-')}" if _cat == "剧集" else ""
+            logger.info(f"✨ [整理] 识别: {v_file} → {final['title']} | {_cat}{_ep_info} (ID: {final['tmdb_id']})")
+            await FileProcessor._log_detail(task_id, f"✅ 识别成功: {final['title']} | {_cat}{_ep_info} (ID: {final['tmdb_id']})")
             
             if recog_task_id:
                 try:
-                    stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+                    stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "category": final.get("category"), "season": final.get("season"), "episode": final.get("episode")}
                     await _finish_task(recog_task_id, "completed", stats=stats)
                 except Exception:
                     pass

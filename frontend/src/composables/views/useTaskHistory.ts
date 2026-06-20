@@ -179,6 +179,14 @@ export function useTaskHistory() {
       if (stats.title) parts.push(stats.title)
       if (stats.tmdb_id) parts.push(`ID:${stats.tmdb_id}`)
       if (stats.category) parts.push(stats.category)
+      // 剧集显示季集信息
+      if (stats.category === '剧集') {
+        const season = stats.season != null ? String(stats.season).padStart(2, '0') : null
+        const episode = stats.episode != null ? String(stats.episode).padStart(2, '0') : null
+        if (season && episode) parts.push(`S${season}E${episode}`)
+        else if (season) parts.push(`S${season}`)
+        else if (episode) parts.push(`E${episode}`)
+      }
       return parts.join(' | ') || null
     }
     return null

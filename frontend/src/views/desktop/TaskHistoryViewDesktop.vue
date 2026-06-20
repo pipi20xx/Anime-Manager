@@ -120,8 +120,8 @@ onUnmounted(() => {
             <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
               {{ getStatusTag(task.status).label }}
             </n-tag>
-            <span class="task-name">{{ task.name || task.module }}</span>
             <span class="task-time">{{ formatTime(task.started_at) }}</span>
+            <span class="task-name">{{ task.name || task.module }}</span>
           </div>
           <div class="task-meta">
             <span v-if="task.status === 'completed'" class="meta-item">
@@ -205,7 +205,7 @@ onUnmounted(() => {
 }
 .module-icon { font-size: var(--text-xl); }
 .task-name { font-weight: 500; }
-.task-time { color: var(--text-tertiary); font-size: var(--text-sm); }
+.task-time { color: var(--text-tertiary); font-size: var(--text-sm); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .task-meta {
   display: flex;
   gap: var(--space-4);

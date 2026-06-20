@@ -119,13 +119,13 @@ onUnmounted(() => {
       <n-card v-for="task in tasks" :key="task.task_id" class="task-item" embedded>
         <div class="task-header">
           <div class="task-main">
+            <span class="task-time">{{ formatTime(task.started_at) }}</span>
             <span class="task-name">{{ task.name || task.module }}</span>
           </div>
           <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
             {{ getStatusTag(task.status).label }}
           </n-tag>
         </div>
-        <div class="task-time">{{ formatTime(task.started_at) }}</div>
         <div class="task-meta">
           <span v-if="task.status === 'completed'" class="meta-item">
             耗时 {{ formatDuration(task.started_at, task.finished_at) }}
@@ -263,7 +263,8 @@ onUnmounted(() => {
 .task-time {
   color: var(--text-tertiary);
   font-size: var(--m-text-xs);
-  margin-bottom: var(--m-spacing-sm);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .task-meta {

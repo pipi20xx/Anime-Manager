@@ -296,7 +296,7 @@ async def recognize_filename(filename: str) -> ToolResult:
         
         if recog_task_id:
             try:
-                stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "season": final.get("season"), "episode": final.get("episode")}
+                stats = {"title": final.get("title"), "tmdb_id": final.get("tmdb_id"), "category": final.get("category"), "season": final.get("season"), "episode": final.get("episode")}
                 await _finish_task(recog_task_id, "completed", stats=stats)
             except Exception:
                 pass

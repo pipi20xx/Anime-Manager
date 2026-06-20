@@ -166,8 +166,14 @@ class ParserStage:
             ctx.log(f"┣ [强制参数] 🔧 强制 TMDB ID: {meta.forced_tmdbid}")
         if k.get("forced_type"):
             ft = k["forced_type"].lower()
-            meta.type = MediaType.MOVIE if ft == "movie" else MediaType.TV
-            ctx.log(f"┣ [强制参数] 🔧 强制类型: {ft}")
+            # [Guard] 智能记忆已命中时，以记忆中的类型为准，忽略 forced_type
+            cached_type = ctx.tmdb_data.get("type") if ctx.tmdb_data else None
+            if cached_type:
+                meta.type = MediaType.MOVIE if cached_type == "movie" else MediaType.TV
+                ctx.log(f"┣ [强制参数] ⚠️ 智能记忆已命中(type={cached_type})，忽略 forced_type={ft}，保持记忆类型")
+            else:
+                meta.type = MediaType.MOVIE if ft == "movie" else MediaType.TV
+                ctx.log(f"┣ [强制参数] 🔧 强制类型: {ft}")
         if k.get("forced_season") is not None and k.get("forced_season") != "":
             try: meta.begin_season = int(k["forced_season"]); ctx.log(f"┣ [强制参数] 🔧 强制季号: S{meta.begin_season}")
             except: pass
