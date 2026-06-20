@@ -22,7 +22,7 @@ export function useManualOrganizeModal(props: any, emit: any) {
     check_emby_exists: false,
     calculate_hash: false,
     forced_tmdb_id: '',
-    forced_type: 'tv',
+    forced_type: null,
     forced_season: null,
     ignore_history: true
   })
@@ -59,7 +59,8 @@ export function useManualOrganizeModal(props: any, emit: any) {
     if (!manualSearch.keyword) return
     manualSearch.loading = true
     try {
-      const res = await fetch(`${props.apiBase}/api/tmdb/search?query=${encodeURIComponent(manualSearch.keyword)}&type=${manualTask.forced_type}`)
+      const typeParam = manualTask.forced_type || ''
+      const res = await fetch(`${props.apiBase}/api/tmdb/search?query=${encodeURIComponent(manualSearch.keyword)}&type=${typeParam}`)
       const data = await res.json()
       manualSearch.results = data.results || []
     } finally { manualSearch.loading = false }

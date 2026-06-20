@@ -74,7 +74,7 @@ const {
            <n-space vertical :size="8">
              <n-input v-model:value="manualTask.forced_tmdb_id" placeholder="TMDB ID" />
              <div class="row-inputs">
-                <n-select v-model:value="manualTask.forced_type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" style="width: 100px" />
+                <n-select v-model:value="manualTask.forced_type" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="自动" clearable style="width: 100px" />
                 <n-input-number v-model:value="manualTask.forced_season" placeholder="季 (S)" :show-button="false" style="flex: 1" />
              </div>
              

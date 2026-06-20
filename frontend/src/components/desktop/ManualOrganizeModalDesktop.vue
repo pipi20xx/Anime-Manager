@@ -70,7 +70,7 @@ const {
               <div class="pl"><n-icon><TuneIcon /></n-icon> 强制元数据 (可选)</div>
               <n-grid :cols="3" :x-gap="12">
                 <n-gi><n-input v-model:value="manualTask.forced_tmdb_id" placeholder="TMDB ID" size="small" /></n-gi>
-                <n-gi><n-select v-model:value="manualTask.forced_type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" size="small" /></n-gi>
+                <n-gi><n-select v-model:value="manualTask.forced_type" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="自动" clearable size="small" /></n-gi>
                 <n-gi><n-input-number v-model:value="manualTask.forced_season" placeholder="季号 (自动)" :show-button="false" size="small" style="width: 100%" /></n-gi>
               </n-grid>
 
