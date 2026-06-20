@@ -212,7 +212,7 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
         else:
             _background_tasks[task_id]["status"] = "completed"
             _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
-            stats = {"success": processed, "skipped": skipped, "errors": errors}
+            stats = {"success": processed, "skipped": skipped, "errors": errors, "mode": mode_label}
             await finish_task(task_id, "completed", processed, stats)
             logger.info(f"✨ [整理] 后台完成: {task_name} - 成功 {processed} | 跳过 {skipped} | 失败 {errors}")
         

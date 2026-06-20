@@ -152,6 +152,7 @@ export function useTaskHistory() {
       return parts.join(' | ')
     } else if (module === '整理') {
       const parts = []
+      if (stats.mode) parts.push(stats.mode)
       if (stats.success) parts.push(`成功${stats.success}`)
       if (stats.skipped) parts.push(`跳过${stats.skipped}`)
       if (stats.errors) parts.push(`失败${stats.errors}`)
