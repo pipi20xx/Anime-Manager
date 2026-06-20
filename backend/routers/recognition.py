@@ -29,6 +29,7 @@ class RecognizeRequest(BaseModel):
     bangumi_failover: Optional[bool] = None
     series_fingerprint: Optional[bool] = None # 智能指纹覆盖
     batch_enhancement: Optional[bool] = None # 合集增强覆盖
+    description: Optional[str] = None # 副标题描述 (PT站副标题/RSS description)
     # 临时调试规则 (Debug Sandbox)
     temp_noise: Optional[List[str]] = None
     temp_groups: Optional[List[str]] = None
@@ -80,7 +81,8 @@ async def recognize(req: RecognizeRequest):
             forced_tmdb_id=req.forced_tmdb_id,
             forced_type=req.forced_type,
             forced_season=req.forced_season,
-            forced_episode=req.forced_episode
+            forced_episode=req.forced_episode,
+            description=req.description
         )
 
         if task_id:

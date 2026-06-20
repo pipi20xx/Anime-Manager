@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ANIME Pro Matcher Client
 // @namespace    http://tampermonkey.net/
-// @version      5.1
+// @version      5.3
 // @description  ANIME Pro Matcher 客户端 - 支持 API Token 认证 + TMDB直达
 // @author       User & Refactored
 // @match        https://*/detail/*
@@ -29,10 +29,11 @@
 
 // --- 配置区域 ---
 const CONFIG = {
-    serverUrl: 'http://192.168.50.202:6868', // ANIME Pro Matcher 服务器地址
-    apiToken: '',                             // 外部访问 API Token (在 APM 设置 > 外部控制中生成)
+    serverUrl: 'http://192.168.50.12:6868', // ANIME Pro Matcher 服务器地址
+    apiToken: 'ak-KE9DmVEDvpH8ISfLumPvMTVyEsqn',                             // 外部访问 API Token (在 APM 设置 > 外部控制中生成)
     enableAutoRecognize: true,                // 是否开启页面自动识别（关闭后仅保留划词识别）
     enablePopup: true,                        // 是否开启划词弹窗
+    animePriority: true,                      // 是否开启动漫优化（关闭后走常规影视识别流程）
 };
 // ----------------
 
@@ -50,16 +51,21 @@ function recognize(text, options = {}) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
+        const body = {
+            filename: text,
+            anime_priority: CONFIG.animePriority,
+            force_filename: true,
+            batch_enhancement: options.batchEnhancement || false,
+        };
+        if (options.description) {
+            body.description = options.description;
+        }
+
         GM_xmlhttpRequest({
             url: `${CONFIG.serverUrl}/api/recognize`,
             method: 'POST',
             headers,
-            data: JSON.stringify({
-                filename: text,
-                anime_priority: true,
-                force_filename: true,
-                batch_enhancement: options.batchEnhancement || false,
-            }),
+            data: JSON.stringify(body),
             responseType: 'json',
             onload: (res) => {
                 if (res.status === 200) {
@@ -318,34 +324,49 @@ function createRecognizeTip(tip, text) {
     if (!CONFIG.enableAutoRecognize) return;
 
     if (siteDomain.includes('m-team')) {
-        waitForElements(['text-mt-gray-4']).then(([subtitleEls]) => {
+        // 等待 h2 中的标题 span 出现
+        const mteamWait = new Promise((resolve) => {
+            const interval = 500;
+            let tries = 0;
+            const maxTries = 60; // 30s
+            const timer = setInterval(() => {
+                const titleSpan = document.querySelector('h2 span.align-middle');
+                if (titleSpan) {
+                    clearInterval(timer);
+                    resolve(titleSpan);
+                } else if (++tries >= maxTries) {
+                    clearInterval(timer);
+                    resolve(null);
+                }
+            }, interval);
+        });
+
+        mteamWait.then((titleSpan) => {
+            if (!titleSpan) return;
             const ptype = 'm-team';
-            const subtitleEl = subtitleEls[0];
+            let torrentName = titleSpan.textContent.trim();
+
+            // 查找副标题（可能不存在）
+            const subtitleEl = document.querySelector('p.text-mt-gray-4');
             const subtitle = subtitleEl?.textContent?.trim() || '';
 
-            // 从 h2 中的 span.align-middle 提取种子标题
-            const titleSpan = document.querySelector('h2 span.align-middle');
-            let torrentName = titleSpan?.textContent?.trim() || '';
-
-            // 拼接副标题中的中文信息，辅助识别
             let batchEnhancement = false;
-            if (subtitle && torrentName) {
-                const cnPart = subtitle.split('|')[0].trim();
-                if (cnPart) {
-                    torrentName += ` [${cnPart}]`;
-                }
+            if (subtitle) {
+                // 检测合集关键词
                 if (/全\d+集|合集|全集|\d+\s*[-~]\s*\d+集/.test(subtitle)) {
                     batchEnhancement = true;
                 }
             }
 
-            // 在副标题后插入识别结果
-            if (torrentName) {
+            // 在 h2 的父容器后插入识别结果
+            const h2 = titleSpan.closest('h2');
+            const insertAfter = subtitleEl || h2;
+            if (torrentName && insertAfter) {
                 const resultDiv = document.createElement('div');
-                subtitleEl.parentNode.insertBefore(resultDiv, subtitleEl.nextSibling);
-                createRecognizeRow(resultDiv, ptype, torrentName, { batchEnhancement });
+                insertAfter.parentNode.insertBefore(resultDiv, insertAfter.nextSibling);
+                createRecognizeRow(resultDiv, ptype, torrentName, { batchEnhancement, description: subtitle || undefined });
             }
-        }).catch(() => {});
+        });
     } else if (siteDomain.includes('hhanclub')) {
         waitForElements(['font-bold leading-6']).then(([divs]) => {
             const ptype = 'hhanclub';
@@ -398,14 +419,9 @@ function createRecognizeTip(tip, text) {
                 } catch (e) {}
             }
 
-            // 4. 拼接副标题中的中文信息到文件名，帮助 TMDB 中文匹配
-            // 5. 检测副标题中的合集关键词，自动开启 batch_enhancement
+            // 4. 检测副标题中的合集关键词，自动开启 batch_enhancement
             let batchEnhancement = false;
             if (subtitle && torrentName) {
-                const cnPart = subtitle.split('|')[0].trim(); // 如 "女画师 第15集"
-                if (cnPart) {
-                    torrentName += ` [${cnPart}]`;
-                }
                 // 合集关键词：全X集、合集、全集、X-X集、X~X集
                 if (/全\d+集|合集|全集|\d+\s*[-~]\s*\d+集/.test(subtitle)) {
                     batchEnhancement = true;
@@ -417,7 +433,7 @@ function createRecognizeTip(tip, text) {
 
             if (torrentName && table) {
                 const row = table.insertRow(2);
-                createRecognizeRow(row, ptype, torrentName, { batchEnhancement });
+                createRecognizeRow(row, ptype, torrentName, { batchEnhancement, description: subtitle || undefined });
             }
         }).catch(() => {});
     }
