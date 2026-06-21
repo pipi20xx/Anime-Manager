@@ -29,13 +29,16 @@
 | **remote_rules** | 从远程 URL 同步下来的社区识别与清理规则 |
 | **calendar_subjects** | 番剧放送时刻表数据 |
 | **quality_profiles** | 下载质量优先偏好设置 |
-| **strm_tasks** | 虚拟链接 (STRM) 生成任务记录 |
 | **health_check_configs** | 系统健康检查监控配置 |
 | **users** | 系统用户账户与认证信息 |
+| **sessions** | 登录会话管理（Token、设备、过期时间） |
 | **task_records** | 任务中心执行记录（整理/STRM/RSS等任务的日志） |
 | **system_logs** | 系统操作审计日志 |
 | **feeds** | RSS 订阅源地址与连接配置 |
 | **feed_items** | RSS 抓取到的下载条目记录 |
+| **file_hashes** | 文件哈希记录（SHA1/ED2K，整理时按 ED2K 去重写入，用于历史追溯） |
+| **rss_detect_tasks** | RSS 探测订阅任务（按 URL 定时探测并自动订阅） |
+| **bgm_tmdb_mapping** | Bangumi ID 到 TMDB ID 的预制映射表（加速匹配） |
 
 ### metadata Schema
 存放 100w+ 级别的全球元数据资产。
@@ -47,13 +50,13 @@
 | **ref_genres** | 番剧类型字典 |
 | **ref_companies** | 动画制作/发行公司资料 |
 | **ref_keywords** | 番剧特征关键词库 |
-| **bgm_archive** | Bangumi 归档数据 |
-| **recognition_corrections** | 用户手动指定的识别修正映射 |
 | **user_genre_mapping** | 用户自定义流派 ID 中文映射 |
 | **user_company_mapping** | 用户自定义公司 ID 中文映射 |
 | **user_keyword_mapping** | 用户自定义关键词 ID 中文映射 |
 | **user_language_mapping** | 用户自定义语言代码中文映射 |
 | **user_country_mapping** | 用户自定义国家代码中文映射 |
+
+> **关于用户修正**：系统不再使用独立的 `recognition_corrections` 表。手动修正直接固化在 `tmdb_deep_meta` 表的 `custom_title` 和 `is_custom` 字段中，确保修正永远优先且受保护（详见下方"用户修正保护"章节）。
 
 #### 核心表：tmdb_deep_meta (超级表)
 

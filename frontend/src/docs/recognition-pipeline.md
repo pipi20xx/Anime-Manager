@@ -11,9 +11,9 @@
 | 逻辑层级 | 物理路径 (Backend) | 性质 | 核心职能与设计哲学 |
 | :--- | :--- | :--- | :--- |
 | **API 接口层** | `routers/recognition.py` | **接入** | **(Entry)** 仅负责接收 HTTP 请求与参数校验，不做任何业务处理，直接唤醒 L3 编排器。 |
-| **L3 编排层** | `recognition/pipeline/` | **胶水** | **(Orchestrator)** 业务的大脑。定义识别的"步骤"与"顺序"。它负责指挥 L1 进行解析，指挥 L2 获取数据，并管理全局上下文 (`Context`) 的状态流转。 |
+| **L3 编排层** | `recognition/` | **胶水** | **(Orchestrator)** 业务的大脑。定义识别的"步骤"与"顺序"。它负责指挥 L1 进行解析，指挥 L2 获取数据，并管理全局上下文 (`Context`) 的状态流转。核心入口 `recognizer.py`，状态容器 `context.py`，AI 介入 `ai_helper.py`，结果渲染 `renderer.py` + `render/`。 |
 | **L2 数据层** | `recognition/data_provider/` | **I/O** | **(Data Provider)** 系统的手脚。负责一切与"外部"的交互（TMDB API, Bangumi API, 数据库, 文件系统）。**只提供原始数据，不负责判断数据是否匹配。** |
-| **L1 内核层** | `recognition_engine/` | **纯逻辑** | **(Kernel)** 系统的核心算法。**纯 CPU 计算，无 I/O，无副作用。** 负责字符串清洗、正则提取、Anitopy 封装、以及最关键的"对撞算法"（计算两个标题是否属于同一部番剧）。 |
+| **L1 内核层** | `recognition_engine/` | **纯逻辑** | **(Kernel)** 系统的核心算法。**纯 CPU 计算，无 I/O，无副作用。** 负责字符串清洗、正则提取、Anitopy 封装、路径解析、制作组加载、以及最关键的"对撞算法"（计算两个标题是否属于同一部番剧）。 |
 
 ---
 
@@ -26,21 +26,27 @@
     ⬇️
 [API 层] (routers/recognition.py)
     ⬇️ 1. 启动工作流
-[L3 编排层] (recognition/recognizer.py) -> 实例化 Context (状态容器)
+[L3 编排层] (recognition/recognizer.py) -> 实例化 Context (recognition/context.py 状态容器)
     │
     ├── ⚡ [Step 0: 智能记忆预检] (Fingerprint Check)
     │       ⬇️ 计算文件特征指纹 (Regex Signature)
     │       ⬇️ 查 L2 LocalCache (智能指纹库)
     │       ✅ 命中! (Log: "[智能记忆] ⚡ 命中加速: 间谍过家家 (ID: 120089)")
     │       ⚠️ 标记 Context: has_fingerprint = True, 锁定 TMDB ID
+    │       ⚠️ 命中后内核自动简化流程，跳过冗余解析步骤
     │
-    ├── 2. [ParserStage] 文件名解析阶段
+    ├── 2. [ParserStage] 文件名解析阶段 (recognition/pipeline/parser.py)
+    │       │
+    │       ⬇️ [Step 0.5: 路径溯源与锚点锁定] ⭐ NEW
+    │    [L3 ParserStage] -> 扫描父级目录，嗅探 tmdbid= 锁定 ID，识别 Season X 季文件夹
+    │       (Log: "[路径锁定] 🔐 锁定 ID: 120089")
+    │       (Log: "[路径锁定] 📂 识别到季层: S2 (强制类型: TV)")
     │       │
     │       ⬇️ [Step 1: 预处理与自定义规则]
     │    [L1 TitleCleaner] -> 剔除干扰词、应用自定义规则
     │       (Log: "清洗后结果: ...")
     │       │
-    │       ⬇️ [Step 1.5: 特权提取 (标题 + 集数)] ⭐ NEW
+    │       ⬇️ [Step 1.5: 特权提取 (标题 + 集数)] ⭐
     │    [L1 SpecialEpisodeHandler] -> 匹配外部特权规则
     │       ✅ 命中规则 -> 锁定集数、提取标题作为优先搜索词
     │       (Log: "[规则][特权] LoliHouse 定向命中")
@@ -56,6 +62,10 @@
     │       提取: 分辨率、视频编码、音频编码、制作组
     │       (Log: "[规则][内置] 分辨率标准化: 1080p -> 1080P")
     │       │
+    │       ⬇️ [Step 2.6: 副标题描述注入] ⭐ NEW
+    │    [L1 BatchHelper] -> 从 PT 站副标题/RSS description 提取合集/规格特征
+    │       (Log: "[STEP 2.6: 副标题描述注入]: 启动检测")
+    │       │
     │       ⬇️ [Step 3: Anitopy 语义内核]
     │    [L1 AnitopyWrapper] -> 解析标题、集数、季号
     │       📝 即使命中特权规则，仍需运行此步以补全其他信息
@@ -65,23 +75,35 @@
     │    [L1 PostProcessor] -> 属性对撞、合集处理、标题修正
     │       合并特权提取结果与 Anitopy 结果
     │
-    ├── 3. [MatcherStage] 数据对撞匹配阶段 (智能跳过!)
+    ├── 3. [MatcherStage] 数据对撞匹配阶段 (recognition/pipeline/matcher.py)
     │       ❓ 检查 Context: 是否已有锁定 ID?
-    │       ✅ 是 (来自智能记忆) -> ⏩ 跳过耗时的数据库/API 搜索
+    │       ✅ 是 (来自智能记忆/路径锁定) -> ⏩ 跳过耗时的数据库/API 搜索
     │       ❌ 否 -> 进入常规匹配流程
     │           ⬇️ 优先使用特权标题搜索 (如有)
-    │           ⬇️ 本地 DB -> 在线 API -> L1 对撞
+    │           ⬇️ 本地 DB (L2 Offline) -> 在线 API (TMDB/Bangumi) -> L1 对撞
+    │       ❓ 常规匹配失败?
+    │       ✅ AI 智能介入 (recognition/ai_helper.py) ⭐ NEW
+    │           ⬇️ 调用 OpenAI 兼容 API 推断真实标题
+    │           ⬇️ 用 AI 返回的标题变体重新搜索本地/云端
+    │           (Log: "[AI 智能体] 🤖 启动 AI 智能介入...")
     │
-    ├── 4. [EnrichmentStage] 元数据补全阶段
+    ├── 4. [EnrichmentStage] 元数据补全阶段 (recognition/pipeline/enricher.py)
     │       ⬇️ 已知 ID, 请求详细信息
-    │    [L2 TMDBProvider] -> get_details(id)
+    │    [L2 OfflineDAO] -> get_deep_meta(id) (统一从 MetaCacheManager 获取)
     │       ⬇️ 获取: 官方标题, 简介, 海报, 演职员
-    │       🛡️ [用户修正检查] -> 检查是否有 "User Fix" 记录并覆盖
+    │       ⬇️ 空壳记录自动补全 (fetch_and_ingest)
+    │       🛡️ [用户修正检查] -> 检查 is_custom 字段并覆盖
+    │       ⬇️ 计算二级分类 (TmdbMateFullManager)
     │
-    └── 5. [Finalize] 渲染与输出
+    ├── 5. [MaintenanceStage] 维护阶段 (recognition/pipeline/maintenance.py)
+    │       ⬇️ 写入/刷新智能记忆 (Fingerprint)
+    │       ⬇️ 自动同步元数据到数据中心 (落库存档)
+    │       ⬇️ 保护用户修正记录 (is_custom 不被覆盖)
+    │
+    └── 6. [Finalize] 渲染与输出 (recognition/renderer.py + render/)
             ⬇️ 应用用户自定义渲染规则 (RenderEngine)
-            ⬇️ 二级分类计算 (Classifier)
-            ⬇️ 写入/刷新智能记忆 (Maintenance)
+            ⬇️ 应用重命名规则 (Renamer)
+            ⬇️ 汇报最终结论 (RenderReporter)
             ⬇️ 生成最终 JSON 响应
 ```
 
@@ -363,6 +385,20 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 - **字段**: type, title, year, season, episode, resolution, codec 等
 - **特点**: 支持序列化为 JSON
 
+##### `path_parser.py` - 路径解析器
+- **职责**: 处理复杂文件路径，嗅探路径中的元数据（如 `tmdbid=12345`）
+- **功能**: 智能扁平化目录结构、提取强制 ID、识别季文件夹
+- **特点**: 支持从父级目录反向溯源元数据
+
+##### `builtin_group_loader.py` - 内置制作组加载器
+- **职责**: 从 `builtin_groups.txt` 加载预置的制作组名单
+- **特点**: 单例模式，懒加载，避免重复读取文件
+
+##### `bgm_mapping_service.py` - Bangumi 映射服务
+- **职责**: 维护 Bangumi ID 到 TMDB ID 的预制映射表
+- **功能**: 定期从 bangumi-data 同步、加速番剧识别
+- **存储**: `bgm_tmdb_mapping` 表 + `discover_cache` 同步状态
+
 ##### `constants.py` - 常量定义
 - **内容**: 所有正则模式、映射表、关键词列表
 - **包括**: SEASON_PATTERNS, EPISODE_PATTERNS, NOISE_WORDS, GROUP_KEYWORDS 等
@@ -378,10 +414,11 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 #### 关键组件详解
 
 ##### `offline.py` (OfflineDAO) - 本地极速拦截
-- **职责**: 直接查询本地 PostgreSQL 数据库
+- **职责**: 直接查询本地 PostgreSQL 数据库（通过 `TmdbMateFullManager`）
 - **索引**: 基于 `pg_trgm` 三元组索引，支持模糊匹配
 - **性能**: 5ms 内完成匹配，无需联网
 - **覆盖率**: 95% 的识别请求可在此完成
+- **深度档案**: 统一通过 `MetaCacheManager.get()` 获取合并后的元数据
 
 ##### `tmdb/client.py` - TMDB API 封装
 - **职责**: 封装 TMDB API，处理搜索和详情获取
@@ -396,11 +433,12 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 - **适用场景**: 新番、冷门番、TMDB 缺失条目
 - **特点**: 专注于 ACG 内容，元数据更丰富
 
-##### `local_cache.py` - 智能指纹缓存
-- **职责**: 处理文件系统的指纹缓存 (Series Fingerprint)
-- **存储**: SQLite / PostgreSQL
+##### `local_cache.py` (LocalCacheDAO) - 智能指纹缓存
+- **职责**: 处理文件系统的指纹缓存 (Series Fingerprint) 和元数据存档
+- **存储**: PostgreSQL `series_fingerprint` 表 + `metadata.tmdb_deep_meta` 超级表
 - **生命周期**: 永久，直到用户手动清除
 - **性能**: 实现毫秒级二次识别
+- **统一接口**: 通过 `MetaCacheManager` 统一管理指纹与深度档案
 
 ---
 
@@ -408,39 +446,64 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 
 > **设计目标**：业务逻辑的组装者，灵活调整识别策略。
 
-**物理位置**: `backend/recognition/pipeline/`
+**物理位置**: `backend/recognition/`
 
 #### 关键组件详解
 
-##### `parser.py` (ParserStage) - 解析阶段
+##### `recognizer.py` - 编排主入口
+- **职责**: 定义 `RecognitionWorkflow`，串联五个阶段的执行顺序
+- **流程**: ParserStage → MatcherStage → EnrichmentStage → MaintenanceStage → ResultRenderer
+- **入口**: `MovieRecognizer.recognize_full()` 静态方法
+
+##### `context.py` - 状态容器
+- **职责**: 封装单次识别任务的所有配置、日志和中间状态
+- **内容**: 配置快照、策略开关、L2 Provider 实例、规则集、性能统计
+- **特点**: 每个 API 请求独立一个 Context，互不干扰
+
+##### `ai_helper.py` - AI 智能介入 ⭐
+- **职责**: 常规识别失败时，调用 OpenAI 兼容 API 推断真实标题
+- **触发条件**: `ai_fallback_enabled` 开启且常规匹配未命中
+- **输出**: 真实标题、原名、中文名、备选标题、置信度、媒体类型
+- **特点**: 单例模式，支持标题变体重新搜索
+
+##### `pipeline/parser.py` (ParserStage) - 解析阶段
 - **职责**: 驱动 L1 内核进行文件名解析
-- **调用顺序**: TitleCleaner → SpecialEpisodeHandler → TagExtractor → Anitopy → PostProcessor
+- **新增功能**: 路径溯源与锚点锁定、副标题描述注入 (STEP 2.6)
+- **调用顺序**: 路径溯源 → TitleCleaner → SpecialEpisodeHandler → TagExtractor → Anitopy → PostProcessor
 - **输出**: 填充完整的 `MetaBase` 对象
 
-##### `matcher.py` (MatcherStage) - 匹配阶段
+##### `pipeline/matcher.py` (MatcherStage) - 匹配阶段
 - **职责**: 核心调度器，实现数据对撞匹配
 - **决策树**:
-  1. 检查智能记忆是否命中 → 命中则跳过
-  2. 查本地数据库 (L2 Offline)
-  3. 若未命中，查智能指纹 (L2 Cache)
-  4. 若未命中，决定是查 Bangumi 还是 TMDB (根据配置策略)
-  5. 拿到数据后，扔给 L1 对撞机计算得分
+  1. 检查智能记忆/路径锁定是否命中 → 命中则跳过
+  2. 强制 TMDB ID 锁定模式 → 直接调取详情
+  3. 优先使用特权标题搜索本地数据库 (L2 Offline)
+  4. 若未命中，查 TMDB/Bangumi API (根据配置策略)
+  5. 常规匹配失败 → AI 智能介入 (ai_helper.py)
 - **特权标题**: 优先使用特权提取的标题进行搜索
 
-##### `enricher.py` (EnrichmentStage) - 补全阶段
+##### `pipeline/enricher.py` (EnrichmentStage) - 补全阶段
 - **职责**: 获取详细元数据，加载用户修正
 - **操作**:
-  - 调用 TMDB/Bangumi 获取详情
-  - 加载海报、简介、演职员
-  - 检查并应用用户修正记录
-  - 计算二级分类
+  - 通过 `OfflineDAO.get_deep_meta()` 统一调取深度档案
+  - 空壳记录自动补全 (`fetch_and_ingest`)
+  - 检查并应用用户修正记录 (`is_custom` 字段)
+  - 计算二级分类 (`TmdbMateFullManager`)
+  - 联网补全缺失的展示资料 (海报、简介等)
 
-##### `maintenance.py` - 维护阶段
+##### `pipeline/maintenance.py` (MaintenanceStage) - 维护阶段
 - **职责**: 识别成功后的数据维护
 - **操作**:
-  - 写入智能记忆
-  - 更新本地缓存
-  - 同步数据中心
+  - 写入/刷新智能记忆 (Fingerprint)
+  - 自动同步元数据到数据中心 (落库存档)
+  - 保护用户修正记录 (`is_custom` 不被覆盖)
+
+##### `renderer.py` + `render/` - 渲染与汇报
+- **职责**: 最终结果的渲染、重命名和汇报
+- **组件**:
+  - `render/engine.py` (RenderEngine): 执行自定义渲染规则
+  - `render/reporter.py` (RenderReporter): 汇报最终结论和性能审计
+  - `renderer.py` (ResultRenderer): 协调渲染流程，应用重命名规则 (Renamer)
 
 ---
 
@@ -460,9 +523,12 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
-| `/api/recognize` | POST | 单文件识别 |
-| `/api/recognize/batch` | POST | 批量识别 |
-| `/api/recognize/preview` | POST | 预览识别结果 |
+| `/api/recognize` | POST | 全链路识别接口（支持单文件、强制参数、临时规则） |
+| `/api/tmdb/search` | GET | TMDB 关键词搜索 |
+| `/api/tmdb/tv/{tmdb_id}` | GET | 获取剧集季度详情 |
+| `/api/ai/test` | POST | AI 实验室：语义解析测试 |
+| `/api/privilege/test` | POST | 特权集数锁定测试 |
+| `/api/privilege/rules` | GET | 获取内置特权规则列表 |
 
 ---
 
@@ -510,9 +576,10 @@ L1 内核不含任何数据库或网络代码。
 | 选项 | 说明 | 默认值 |
 |------|------|--------|
 | `animePriority` | 动漫识别优化 | ON |
-| `batchEnhancement` | 合集增强 | ON |
-| `offlinePriority` | 本地数据中心优先 | OFF |
+| `batchEnhancement` | 合集增强 | OFF |
+| `offlinePriority` | 本地数据中心优先 | ON |
 | `bangumiPriority` | Bangumi 数据源优先 | OFF |
-| `bangumiFailover` | Bangumi 故障转移 | OFF |
+| `bangumiFailover` | Bangumi 故障转移 | ON |
 | `forceFilename` | 强制单文件模式 | OFF |
-| `seriesFingerprint` | 智能记忆 | OFF |
+| `seriesFingerprint` | 智能记忆 | ON |
+| `aiFallbackEnabled` | AI 智能介入（需配置 OpenAI 兼容 API） | OFF |
