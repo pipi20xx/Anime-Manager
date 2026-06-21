@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { 
-  NCarousel, NImage, NTag, NIcon, NScrollbar, NTabs, NTabPane, NSkeleton
+  NTag, NIcon, NScrollbar, NTabs, NTabPane, NSkeleton
 } from 'naive-ui'
 import {
-  StarOutlined as StarIcon,
   CalendarMonthOutlined as CalendarIcon
 } from '@vicons/material'
 import BangumiCard from '../../../components/BangumiCard.vue'
@@ -15,7 +14,6 @@ const {
   currentDayTab,
   isSubscribed,
   getPoster,
-  getBackdrop,
   openDetail,
   openBangumi
 } = useRecommend()
@@ -29,25 +27,6 @@ const {
       </div>
 
       <template v-else>
-        <!-- Trending Carousel -->
-        <n-carousel show-arrow autoplay draggable class="mobile-carousel">
-            <div v-for="item in exploreData.trending.slice(0, 5)" :key="item.id" class="carousel-item" @click="openDetail(item, item.media_type || item.type || 'tv')">
-            <img :src="getBackdrop(item.backdrop_path) || getPoster(item.poster_path)" class="carousel-img" />
-            <div class="carousel-gradient"></div>
-            <div class="carousel-content">
-                <div class="c-tag-line">
-                    <n-tag v-if="isSubscribed(item)" type="primary" size="tiny" round :bordered="false" class="subbed-badge" style="margin-right: var(--m-1)">
-                        已订
-                    </n-tag>
-                    <n-tag type="warning" size="tiny" round :bordered="false" class="rating-tag">
-                        {{ item.vote_average?.toFixed(1) }}
-                    </n-tag>
-                </div>
-                <div class="c-title">{{ item.title || item.name }}</div>
-            </div>
-            </div>
-        </n-carousel>
-
         <!-- Bangumi Calendar -->
         <div class="section-header">
             <div class="section-title"><n-icon><CalendarIcon /></n-icon> 每日放送</div>
@@ -112,23 +91,6 @@ const {
   padding-bottom: var(--space-10); 
   box-sizing: border-box;
 }
-
-/* Carousel */
-.mobile-carousel { 
-  height: 200px;
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--m-5);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-}
-.carousel-item { position: relative; width: 100%; height: 100%; }
-.carousel-img { width: 100%; height: 100%; object-fit: cover; }
-.carousel-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,var(--opacity-80)) 0%, transparent 60%); }
-.carousel-content { position: absolute; bottom: var(--space-3); left: var(--space-3); right: var(--space-3); z-index: 2; }
-.c-tag-line { display: flex; align-items: center; gap: var(--space-1); margin-bottom: var(--m-1); }
-.rating-tag { font-weight: bold; background: var(--color-warning); color: var(--text-primary); }
-.c-title { font-size: var(--text-lg); font-weight: bold; color: var(--text-primary); line-height: var(--leading-snug); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Calendar */
 .calendar-box { margin-bottom: var(--m-5); }
