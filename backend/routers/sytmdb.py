@@ -1,13 +1,31 @@
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 import httpx
 import asyncio
+from datetime import datetime, timedelta
 from metadata.meta_cache import MetaCacheManager
 from recognition_engine.tmdb_matcher.logic import TMDBMatcher
 from logger import log_audit
 from config_manager import ConfigManager
 
 router = APIRouter(prefix="/sytmdb", tags=["SYTMDB 同步"])
+
+# 剧集组内存缓存 (5 分钟 TTL)
+_episode_group_cache: Dict[str, Tuple[Any, datetime]] = {}
+_episode_group_cache_ttl = timedelta(minutes=5)
+
+
+def _get_episode_group_cache(key: str) -> Any:
+    if key in _episode_group_cache:
+        data, expire_at = _episode_group_cache[key]
+        if expire_at > datetime.now():
+            return data
+        del _episode_group_cache[key]
+    return None
+
+
+def _set_episode_group_cache(key: str, data: Any):
+    _episode_group_cache[key] = (data, datetime.now() + _episode_group_cache_ttl)
 
 def _build_url(addr: str) -> str:
     addr = addr.rstrip("/")
@@ -159,11 +177,18 @@ async def get_episode_group(series_id: str):
         ]
     }
     """
+    cache_key = f"sytmdb:episodegroup:{series_id}"
+    cached = _get_episode_group_cache(cache_key)
+    if cached is not None:
+        return cached
+
     addr, token = _get_sytmdb_config()
     
     if not addr:
         log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 未配置SYTMDB地址，跳过剧集组查询")
-        return {"id": series_id, "description": "", "groups": []}
+        result = {"id": series_id, "description": "", "groups": []}
+        _set_episode_group_cache(cache_key, result)
+        return result
     
     url = _build_episode_group_url(addr, series_id)
     headers = {}
@@ -205,13 +230,20 @@ async def get_episode_group(series_id: str):
             else:
                 log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询成功，无剧集组定义")
             
+            _set_episode_group_cache(cache_key, data)
             return data
         except httpx.ConnectError:
             log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 无法连接到SYTMDB服务", level="WARNING")
-            return {"id": series_id, "description": "", "groups": []}
+            result = {"id": series_id, "description": "", "groups": []}
+            _set_episode_group_cache(cache_key, result)
+            return result
         except httpx.TimeoutException:
             log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 连接SYTMDB超时", level="WARNING")
-            return {"id": series_id, "description": "", "groups": []}
+            result = {"id": series_id, "description": "", "groups": []}
+            _set_episode_group_cache(cache_key, result)
+            return result
         except Exception as e:
             log_audit("SYTMDB", "剧集组", f"TMDB ID {series_id}: 查询失败 - {str(e)[:50]}", level="WARNING")
-            return {"id": series_id, "description": "", "groups": []}
+            result = {"id": series_id, "description": "", "groups": []}
+            _set_episode_group_cache(cache_key, result)
+            return result

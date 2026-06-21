@@ -1,8 +1,28 @@
+import asyncio
+from datetime import datetime, timedelta
+from typing import Dict, Tuple, Any
 from fastapi import APIRouter, HTTPException
 from recognition.data_provider.tmdb.client import TMDBProvider
 from logger import log_audit
 
 router = APIRouter(prefix="/api/tmdb", tags=["TMDB 云端数据"])
+
+# Emby 查询内存缓存 (5 分钟 TTL)
+_emby_cache: Dict[str, Tuple[Any, datetime]] = {}
+_emby_cache_ttl = timedelta(minutes=5)
+
+
+def _get_emby_cache(key: str) -> Any:
+    if key in _emby_cache:
+        data, expire_at = _emby_cache[key]
+        if expire_at > datetime.now():
+            return data
+        del _emby_cache[key]
+    return None
+
+
+def _set_emby_cache(key: str, data: Any):
+    _emby_cache[key] = (data, datetime.now() + _emby_cache_ttl)
 
 @router.get("/trending", summary="获取动漫趋势")
 async def get_trending():
@@ -45,14 +65,21 @@ async def get_detail_emby_status(media_type: str, tmdb_id: str):
     """
     获取指定作品在 Emby 库中的入库状态。
     """
-    from emby_client import get_emby_client
-    emby = get_emby_client()
-    
-    if media_type == 'movie':
-        result = emby.get_movie_info(tmdb_id)
-    else:
-        result = emby.get_series_library_status(tmdb_id)
-    
+    cache_key = f"emby:status:{media_type}:{tmdb_id}"
+    cached = _get_emby_cache(cache_key)
+    if cached is not None:
+        return cached
+
+    def _fetch():
+        from emby_client import get_emby_client
+        emby = get_emby_client()
+        if media_type == 'movie':
+            return emby.get_movie_info(tmdb_id)
+        else:
+            return emby.get_series_library_status(tmdb_id)
+
+    result = await asyncio.to_thread(_fetch)
+    _set_emby_cache(cache_key, result)
     return result
 
 @router.get("/recommendations/{media_type}/{tmdb_id}", summary="获取推荐内容")
@@ -80,10 +107,20 @@ async def get_season_episodes_emby(tmdb_id: str, season_number: int):
     """
     获取指定季度在 Emby 库中的集信息。
     """
-    from emby_client import get_emby_client
-    emby = get_emby_client()
-    episodes_info = emby.get_season_episodes_info(tmdb_id, season_number)
-    return {"episodes": episodes_info}
+    cache_key = f"emby:season:{tmdb_id}:{season_number}"
+    cached = _get_emby_cache(cache_key)
+    if cached is not None:
+        return cached
+
+    def _fetch():
+        from emby_client import get_emby_client
+        emby = get_emby_client()
+        return emby.get_season_episodes_info(tmdb_id, season_number)
+
+    episodes_info = await asyncio.to_thread(_fetch)
+    result = {"episodes": episodes_info}
+    _set_emby_cache(cache_key, result)
+    return result
 
 @router.get("/search", summary="搜索 TMDB 条目", operation_id="tmdb_search_global")
 async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):

@@ -7,7 +7,25 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
+from starlette.types import Scope
 from config_manager import ConfigManager
+
+
+class NoCacheStaticFiles(StaticFiles):
+    """对入口文件和 PWA 相关文件禁用浏览器缓存，避免更新后不生效。"""
+
+    async def get_response(self, path: str, scope: Scope):
+        response = await super().get_response(path, scope)
+        request_path = scope.get("path", "")
+        if (
+            path in ("", "/", "index.html")
+            or request_path in ("/", "/index.html", "/sw.js")
+            or request_path.startswith("/workbox-")
+        ):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
 from monitor import MonitorManager
 from logger import init_logging, LogBroadcaster
 from metadata.meta_cache import MetaCacheManager
@@ -369,7 +387,7 @@ async def shutdown_event():
     log_audit("系统", "停止", "服务已安全关闭。")
 
 if os.path.exists(DIST_DIR):
-    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="static")
+    app.mount("/", NoCacheStaticFiles(directory=DIST_DIR, html=True), name="static")
 
     @app.exception_handler(404)
     async def spa_fallback(request, exc):

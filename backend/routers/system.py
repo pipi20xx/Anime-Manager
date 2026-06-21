@@ -282,6 +282,13 @@ async def trigger_stalled_check():
     except Exception as e:
         raise HTTPException(500, detail=str(e))
 
+def _ensure_dir_and_write(path: str, content: bytes):
+    """同步文件 IO 辅助函数，用于在线程池中执行。"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(content)
+
+
 @router.get("/img", summary="TMDB 图片本地代理")
 async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (例如 /w500/abc.jpg 或 /abc.jpg)")):
     """
@@ -320,7 +327,6 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
     if os.path.exists(local_file):
         return FileResponse(local_file)
     
-    os.makedirs(os.path.dirname(local_file), exist_ok=True)
     image_domain = ConfigManager.get_tmdb_image_domain()
     tmdb_url = f"https://{image_domain}/t/p/{size}{clean_path}"
     
@@ -332,8 +338,7 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
         try:
             resp = await client.get(tmdb_url)
             if resp.status_code == 200:
-                with open(local_file, "wb") as f:
-                    f.write(resp.content)
+                await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
                 return Response(content=resp.content, media_type="image/jpeg")
             else:
                 print(f"[IMG PROXY ERROR] Failed to download {tmdb_url}: {resp.status_code}")
@@ -379,8 +384,7 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
             try:
                 resp = await client.get(url, headers=headers)
                 if resp.status_code == 200:
-                    with open(local_file, "wb") as f:
-                        f.write(resp.content)
+                    await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
                     return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/jpeg"))
                 elif resp.status_code == 404:
                     break # 没必要重试
