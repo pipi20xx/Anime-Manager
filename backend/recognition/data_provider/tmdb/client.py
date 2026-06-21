@@ -239,6 +239,10 @@ class TMDBProvider:
         """
         获取指定季度的详细信息和剧集列表
         """
+        cache_key = f"tmdb:season:v2:{tmdb_id}:{season_number}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached: return cached
+
         endpoint = f"/tv/{tmdb_id}/season/{season_number}"
         data, _ = await self._fetch(endpoint, logs=logs)
         if not data or "episodes" not in data:
@@ -267,7 +271,9 @@ class TMDBProvider:
             "vote_average": data.get("vote_average")
         }
         
-        return {"season_info": season_info, "episodes": episodes}
+        result = {"season_info": season_info, "episodes": episodes}
+        await MetaCacheManager.set_discover_cache(cache_key, result, expire_hours=6)
+        return result
 
     async def get_recommendations(self, tmdb_id: str, media_type: str, logs: Any = None) -> List[Dict]:
         """
