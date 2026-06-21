@@ -39,6 +39,7 @@ const {
 } = useOrganizeHistory()
 
 const showSearch = ref(false)
+const shouldDeleteFile = ref(false)
 
 const scrollTarget = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
@@ -144,25 +145,34 @@ const handleAction = (key: string) => {
             <div class="card-title">{{ item.title || item.filename }}</div>
             <div class="card-meta-inline">
               <span v-if="item.year" class="meta-year">({{ item.year }})</span>
-              <span v-if="item.season || item.episode" class="meta-se">S{{ String(item.season || 1).padStart(2, '0') }}E{{ item.episode }}</span>
-              <n-tag v-if="item.media_type" size="tiny" :type="item.media_type === '电影' ? 'warning' : 'success'" quaternary round>
-                {{ item.media_type }}
-              </n-tag>
             </div>
           </div>
           <div class="card-status">
-             <n-icon v-if="item.status === 'failed'" style="color: var(--n-error-color)" size="20"><ErrorIcon/></n-icon>
-             <n-icon v-else-if="item.status === 'skipped'" style="color: var(--n-warning-color)" size="20"><ArrowIcon/></n-icon>
-             <n-icon v-else style="color: var(--n-primary-color)" size="20"><SuccessIcon/></n-icon>
+             <span class="history-tag" :class="'tag-status-' + item.status">
+               {{ item.status === 'failed' ? '失败' : (item.status === 'skipped' ? '跳过' : '成功') }}
+             </span>
           </div>
         </div>
         
         <div class="card-tags">
-           <n-tag v-if="item.resolution" size="tiny" type="info" bordered>{{ item.resolution }}</n-tag>
-           <n-tag v-if="item.video_encode" size="tiny" type="warning" bordered>{{ item.video_encode }}</n-tag>
-           <n-tag v-if="item.team" size="tiny" type="default" bordered>{{ item.team }}</n-tag>
-           <n-tag size="tiny" quaternary>{{ getActionLabel(item.action_type) }}</n-tag>
-           <n-tag v-if="item.file_size" size="tiny" quaternary style="color: var(--text-muted)">{{ item.file_size }}</n-tag>
+           <n-tag v-if="item.in_subscription" size="tiny" round :bordered="false" style="color: #fff; background: #0288d1;">
+             已订阅
+           </n-tag>
+           <n-tag v-if="item.episode_collected" size="tiny" round :bordered="false" style="color: #fff; background: #2e7d32;">
+             订阅已下载
+           </n-tag>
+           <a v-if="item.tmdb_id"
+             :href="`https://www.themoviedb.org/${item.media_type === '电影' ? 'movie' : 'tv'}/${item.tmdb_id}`"
+             target="_blank"
+             class="history-tag tag-tmdb tag-link"
+           >TMDB: {{ item.tmdb_id }}</a>
+           <span v-if="item.season || item.episode" class="history-tag tag-episode">S{{ String(item.season || 1).padStart(2, '0') }}E{{ item.episode }}</span>
+           <span v-if="item.media_type" class="history-tag tag-type">{{ item.media_type }}</span>
+           <span v-if="item.resolution" class="history-tag tag-res">{{ item.resolution }}</span>
+           <span v-if="item.video_encode" class="history-tag tag-encode">{{ item.video_encode }}</span>
+           <span v-if="item.team" class="history-tag tag-team">{{ item.team }}</span>
+           <span class="history-tag tag-action">{{ getActionLabel(item.action_type) }}</span>
+           <span v-if="item.file_size" class="history-tag tag-size">{{ item.file_size }}</span>
         </div>
 
         <div v-if="item.status === 'failed' && item.message" class="error-box">
@@ -190,19 +200,22 @@ const handleAction = (key: string) => {
              <div v-if="item.tmdb_id" class="footer-tmdb">TMDB: {{ item.tmdb_id }}</div>
            </div>
            <n-popconfirm 
-              @positive-click="deleteItem(item.id, item.shouldDeleteFile)" 
-              @negative-click="item.shouldDeleteFile = false"
-              positive-text="确定"
+              @positive-click="deleteItem(item.id, shouldDeleteFile); shouldDeleteFile = false" 
+              @negative-click="shouldDeleteFile = false"
+              positive-text="确定删除"
               negative-text="取消"
             >
               <template #trigger>
                 <n-button v-bind="getButtonStyle('iconDanger')" size="tiny"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
               </template>
               <div style="max-width: 200px">
-                <p style="margin: 0 0 8px 0">删除此记录?</p>
-                <n-checkbox v-model:checked="item.shouldDeleteFile">
+                <p style="margin: 0 0 8px 0">确定要删除这条整理记录吗？</p>
+                <n-checkbox v-model:checked="shouldDeleteFile">
                    <span style="color: var(--n-error-color); font-size: 12px">同时物理删除源文件</span>
                 </n-checkbox>
+                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
+                   警告：这将尝试永久删除原始源路径下的文件。
+                </div>
               </div>
            </n-popconfirm>
         </div>
@@ -284,7 +297,6 @@ const handleAction = (key: string) => {
 .card-title { font-weight: bold; font-size: 15px; line-height: 1.3; margin-bottom: 4px; word-break: break-all; color: var(--n-text-color-1); }
 .card-meta-inline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .meta-year { font-size: 12px; color: var(--n-text-color-3); }
-.meta-se { font-size: 12px; font-weight: bold; color: var(--n-primary-color); font-family: monospace; }
 
 .card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
 
@@ -393,4 +405,31 @@ const handleAction = (key: string) => {
   font-size: var(--m-text-md);
   font-weight: 500;
 }
+
+/* 与桌面版对齐的历史标签 */
+.history-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 10px;
+  font-family: var(--code-font);
+  border: 1px solid;
+}
+
+.history-tag.tag-episode { background: #3B82F6; color: #fff; border-color: #3B82F6; }
+.history-tag.tag-type { background: #1565c0; color: #fff; border-color: #1565c0; }
+.history-tag.tag-res { background: #e65100; color: #fff; border-color: #e65100; }
+.history-tag.tag-encode { background: #e65100; color: #fff; border-color: #e65100; }
+.history-tag.tag-team { background: #1565c0; color: #fff; border-color: #1565c0; }
+.history-tag.tag-tmdb { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.history-tag.tag-link { cursor: pointer; text-decoration: none; transition: all 0.2s ease; }
+.history-tag.tag-link:active { opacity: 0.85; transform: scale(0.95); }
+.history-tag.tag-action { background: #c62828; color: #fff; border-color: #c62828; }
+.history-tag.tag-size { background: #7b1fa2; color: #fff; border-color: #7b1fa2; }
+.history-tag.tag-status-success { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.history-tag.tag-status-failed { background: #c62828; color: #fff; border-color: #c62828; }
+.history-tag.tag-status-skipped { background: #f57c00; color: #fff; border-color: #f57c00; }
 </style>

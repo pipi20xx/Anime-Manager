@@ -53,6 +53,7 @@ const formatPubDate = (dateStr: string | null | undefined): string => {
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) return dateStr
     return date.toLocaleString('zh-CN', {
+      year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
@@ -137,7 +138,6 @@ watch(() => props.show, (newVal) => {
         <div v-if="items.length > 0" class="items-list">
           <div v-for="item in items" :key="item.guid" class="feed-item">
             <div class="item-header">
-              <div class="status-indicator" :class="{ downloaded: item.is_downloaded }"></div>
               <div class="item-title">{{ item.title }}</div>
             </div>
             
@@ -159,7 +159,7 @@ watch(() => props.show, (newVal) => {
               </n-tag>
               <n-tag v-if="item.episode_collected" size="tiny" round :bordered="false"
                 style="color: #fff; background: #2e7d32;">
-                已下载
+                订阅已下载
               </n-tag>
 
               <template v-if="item.recognition_done && item.tmdb_id">
@@ -169,7 +169,7 @@ watch(() => props.show, (newVal) => {
                   class="tmdb-link"
                 >ID: {{ item.tmdb_id }}</a>
                 <n-tag size="tiny" round :bordered="false" style="color: #fff; background: #1565c0;">
-                  {{ item.media_type === 'movie' ? '🎬' : '📺' }}
+                  {{ item.media_type === 'movie' ? '🎬 电影' : '📺 剧集' }}
                 </n-tag>
                 <n-tag v-if="item.media_type === 'tv'" size="tiny" round :bordered="false"
                   style="color: #fff; background: #3B82F6;">
@@ -185,13 +185,38 @@ watch(() => props.show, (newVal) => {
                 style="color: #fff; background: #0d47a1;">
                 {{ item.team }}
               </n-tag>
+              <n-tag v-if="item.source" size="tiny" round :bordered="false"
+                style="color: #fff; background: #c62828;">
+                {{ item.source }}
+              </n-tag>
+              <n-tag v-if="item.platform" size="tiny" round :bordered="false"
+                style="color: #fff; background: #c62828;">
+                {{ item.platform }}
+              </n-tag>
               <n-tag v-if="item.resolution" size="tiny" round :bordered="false"
                 style="color: #fff; background: #e65100;">
                 {{ item.resolution }}
               </n-tag>
-              <n-tag v-if="item.source" size="tiny" round :bordered="false"
-                style="color: #fff; background: #c62828;">
-                {{ item.source }}
+              <n-tag v-if="item.video_effect" size="tiny" round :bordered="false"
+                style="color: #fff; background: #e65100;">
+                {{ item.video_effect }}
+              </n-tag>
+              <n-tag v-if="item.video_encode" size="tiny" round :bordered="false"
+                style="color: #fff; background: #e65100;">
+                {{ item.video_encode }}
+              </n-tag>
+              <n-tag v-if="item.audio_encode" size="tiny" round :bordered="false"
+                style="color: #fff; background: #e65100;">
+                {{ item.audio_encode }}
+              </n-tag>
+              <n-tag v-if="item.subtitle" size="tiny" round :bordered="false"
+                style="color: #fff; background: #e65100;">
+                {{ item.subtitle }}
+              </n-tag>
+
+              <n-tag size="tiny" round :bordered="false"
+                :style="{ color: '#fff', background: item.is_downloaded ? '#2e7d32' : '#757575' }">
+                {{ item.is_downloaded ? '已推送' : '未推送' }}
               </n-tag>
             </div>
 
@@ -211,7 +236,7 @@ watch(() => props.show, (newVal) => {
                 @click="handleToggleHistory(item)"
               >
                 <template #icon><n-icon><HistoryIcon/></n-icon></template>
-                {{ item.is_downloaded ? '清除' : '标记' }}
+                {{ item.is_downloaded ? '清除下载记录' : '设为已下载' }}
               </n-button>
             </div>
           </div>
@@ -334,20 +359,6 @@ watch(() => props.show, (newVal) => {
   display: flex;
   align-items: flex-start;
   gap: var(--m-spacing-sm);
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-tertiary);
-  flex-shrink: 0;
-  margin-top: 6px;
-}
-
-.status-indicator.downloaded {
-  background: var(--n-success-color);
-  box-shadow: 0 0 6px var(--n-success-color);
 }
 
 .item-title {
