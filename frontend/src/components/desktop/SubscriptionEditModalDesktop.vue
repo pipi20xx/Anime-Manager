@@ -141,10 +141,10 @@ watch(() => props.show, (newVal) => {
 
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_res" label="分辨率" placeholder="如: 1080P" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_team" label="制作组" placeholder="如: LoliHouse" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_source" label="介质来源" placeholder="如: Web-DL" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_codec" label="视频编码" placeholder="如: HEVC" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_source" label="介质来源" placeholder="如: WEB-DL" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_codec" label="视频编码" placeholder="如: H.265" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_audio" label="音频编码" placeholder="如: FLAC" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_sub" label="字幕语言" placeholder="如: CHS" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_sub" label="字幕语言" placeholder="如: 简体内封" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_effect" label="视频特效" placeholder="如: HDR10" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_platform" label="发布平台" placeholder="如: Baha" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.save_path" label="下载目录" placeholder="留空默认" /></n-form-item></n-gi>

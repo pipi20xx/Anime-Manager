@@ -88,13 +88,13 @@ const columns = [
         <n-grid :cols="2" :x-gap="12">
           <n-gi :span="2"><n-form-item><AppTextField v-model:value="editModel.name" label="预设名称" placeholder="例如: 默认动漫预设" /></n-form-item></n-gi>
           
-          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_res" label="分辨率" placeholder="如: 1080p, 4k" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_res" label="分辨率" placeholder="如: 1080P, 4K" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_team" label="制作组" placeholder="如: LoliHouse, VCB-Studio" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, Web-DL" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_codec" label="视频编码" placeholder="如: HEVC, AVC" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, WEB-DL" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_codec" label="视频编码" placeholder="如: H.265, H.264" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_audio" label="音频编码" placeholder="如: FLAC, AAC" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_sub" label="字幕语言" placeholder="如: CHS, CHT" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_effect" label="视频特效" placeholder="如: HDR10, DV" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_sub" label="字幕语言" placeholder="如: 简体内封, 繁日内嵌" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_effect" label="视频特效" placeholder="如: HDR10, Dolby Vision" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_platform" label="发布平台" placeholder="如: Baha, Netflix" /></n-form-item></n-gi>
           
           <n-gi :span="2"><n-divider style="margin: 8px 0" /></n-gi>

@@ -149,22 +149,22 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
 
           <template v-if="mode === 'custom'">
             <n-gi>
-              <AppTextField v-model:value="filterRes" label="分辨率" placeholder="如: 1080p, 4K" />
+              <AppTextField v-model:value="filterRes" label="分辨率" placeholder="如: 1080P, 4K" />
             </n-gi>
             <n-gi>
               <AppTextField v-model:value="filterTeam" label="制作组/字幕组" placeholder="如: 某字幕组" />
             </n-gi>
             <n-gi>
-              <AppTextField v-model:value="filterSource" label="介质来源" placeholder="如: WebDL, BDRip" />
+              <AppTextField v-model:value="filterSource" label="介质来源" placeholder="如: WEB-DL, Blu-ray" />
             </n-gi>
             <n-gi>
-              <AppTextField v-model:value="filterCodec" label="编码" placeholder="如: x265, AVC" />
+              <AppTextField v-model:value="filterCodec" label="编码" placeholder="如: H.265, H.264" />
             </n-gi>
             <n-gi>
               <AppTextField v-model:value="filterAudio" label="音频" placeholder="如: FLAC, AAC" />
             </n-gi>
             <n-gi>
-              <AppTextField v-model:value="filterSub" label="字幕" placeholder="如: 简中, 繁中" />
+              <AppTextField v-model:value="filterSub" label="字幕" placeholder="如: 简体内封, 繁日内嵌" />
             </n-gi>
           </template>
         </n-grid>

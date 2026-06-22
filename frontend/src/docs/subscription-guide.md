@@ -8,18 +8,18 @@
 
 ## 归一化元数据标签对照表 (完整清单)
 
-在设置规则时，**必须**从下表中选择对应的值填入。匹配逻辑为**全字匹配**（区分大小写，请按需复制）。
+在设置规则时，**必须**从下表中选择对应的值填入。匹配逻辑为**全字匹配**（不区分大小写，但建议按表中格式填写以保持一致）。
 
 | <div style="width: 140px">类别</div> | <div style="width: 200px">标签 `{tag}`</div> | 系统所有可能的规范化值 (请按需复制填入规则) |
 | :--- | :--- | :--- |
 | **制作组** | `{team}` | *非固定列表，常用示例*：`LoliHouse`, `VCB-Studio`, `ANi`, `DMG`, `Sakurato`, `喵萌奶茶屋`, `织梦字幕组`, `极影字幕社`, `诸神字幕组` |
 | **分辨率** | `{resolution}` | `4K`, `1080P`, `720P`, `540P`, `480P` |
-| **视频编码** | `{video_encode}` | `H.265`, `H.264`, `AV1`, `AVC`, `HEVC` |
+| **视频编码** | `{video_encode}` | `H.265`, `H.264`, `AV1`, `MPEG2`, `MPEG4`, `Xvid`, `DivX`, `VC1` |
 | **音频编码** | `{audio_encode}` | `Dolby Atmos`, `TrueHD`, `DTS-HD MA`, `DTS-HD`, `DTS`, `LPCM`, `E-AC-3`, `AC-3`, `FLAC`, `Opus`, `Vorbis`, `AAC` <br>*(注：通常带声道后缀，如：`FLAC 2.0`, `Dolby Atmos 7.1`, `E-AC-3 5.1`)* |
 | **介质来源** | `{source}` | `Blu-ray`, `Remux`, `WEB-DL`, `WebRip`, `HDTV`, `UHDTV`, `BD-Rip`, `DVD-Rip`, `DVD-SCR`, `UHD`, `PDTV`, `WEB` |
 | **视频特效** | `{video_effect}` | `Dolby Vision`, `HDR10+`, `HDR10`, `HDR`, `HLG`, `IMAX`, `SDR` |
-| **发布平台** | `{platform}` | `Crunchyroll`, `Netflix`, `Amazon`, `Disney+`, `AppleTV+`, `Baha`, `Bilibili`, `AbemaTV`, `iQIYI`, `LINE TV`, `KKTV`, `YouTube`, `iTunes`, `HIDIVE`, `B-Global`, `friDay`, `Hulu`, `HBO`, `playWEB` |
-| **字幕语言** | `{subtitle}` | `简体内封`, `繁体内封`, `简日双语`, `繁日双语`, `简体内嵌`, `繁体内嵌`, `简繁内封`, `日文内封`, `英文内封`, `简繁日内封`, `中英双语` |
+| **发布平台** | `{platform}` | `Crunchyroll`, `Netflix`, `Amazon`, `Disney+`, `AppleTV+`, `Baha`, `Bilibili`, `AbemaTV`, `iQIYI`, `LINE TV`, `KKTV`, `YouTube`, `iTunes`, `HIDIVE`, `B-Global`, `friDay`, `Hulu`, `HBO`, `playWEB`, `Viu` |
+| **字幕语言** | `{subtitle}` | 单语言：`简体内封`, `简体内嵌`, `简体外挂`, `简体双语`, `繁体内封`, `繁体内嵌`, `繁体外挂`, `繁体双语`, `日文内封`, `日文内嵌`, `日文外挂`, `日文双语`, `英文内封`, `英文内嵌`, `英文外挂`, `英文双语` <br>多语言：`简繁内封`, `简繁内嵌`, `简繁外挂`, `简繁双语`, `简日双语`, `简日内嵌`, `简日外挂`, `繁日双语`, `繁日内嵌`, `繁日外挂`, `简英内封`, `简英内嵌`, `简英外挂`, `简英双语`, `繁英内封`, `繁英内嵌`, `繁英外挂`, `繁英双语`, `日英内封`, `日英内嵌`, `日英外挂`, `日英双语`, `简繁日内封`, `简繁日内嵌`, `简繁日外挂`, `简繁日双语`, `简繁英内封`, `简繁英内嵌`, `简繁英外挂`, `简繁英双语`, `简日英内封`, `简日英内嵌`, `简日英外挂`, `简日英双语`, `繁日英内封`, `繁日英内嵌`, `繁日英外挂`, `繁日英双语`, `简繁日英内封`, `简繁日英内嵌`, `简繁日英外挂`, `简繁日英双语` |
 
 ---
 

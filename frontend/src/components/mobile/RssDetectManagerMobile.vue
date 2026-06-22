@@ -101,13 +101,13 @@ const close = () => {
           />
 
           <template v-if="!editModel.template_id">
-            <AppTextField v-model:value="editModel.filter_res" label="任务名称" placeholder="分辨率 (如: 1080p, 4k)" />
+            <AppTextField v-model:value="editModel.filter_res" label="任务名称" placeholder="分辨率 (如: 1080P, 4K)" />
             <AppTextField v-model:value="editModel.filter_team" label="任务名称" placeholder="制作组 (如: LoliHouse)" />
-            <AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, Web-DL" />
-            <AppTextField v-model:value="editModel.filter_codec" label="任务名称" placeholder="视频编码 (如: HEVC, AVC)" />
+            <AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, WEB-DL" />
+            <AppTextField v-model:value="editModel.filter_codec" label="任务名称" placeholder="视频编码 (如: H.265, H.264)" />
             <AppTextField v-model:value="editModel.filter_audio" label="任务名称" placeholder="音频编码 (如: FLAC, AAC)" />
-            <AppTextField v-model:value="editModel.filter_sub" label="任务名称" placeholder="字幕语言 (如: CHS, CHT)" />
-            <AppTextField v-model:value="editModel.filter_effect" label="任务名称" placeholder="视频特效 (如: HDR10, DV)" />
+            <AppTextField v-model:value="editModel.filter_sub" label="任务名称" placeholder="字幕语言 (如: 简体内封, 繁日内嵌)" />
+            <AppTextField v-model:value="editModel.filter_effect" label="任务名称" placeholder="视频特效 (如: HDR10, Dolby Vision)" />
             <AppTextField v-model:value="editModel.filter_platform" label="任务名称" placeholder="发布平台 (如: Baha, Netflix)" />
           </template>
 
