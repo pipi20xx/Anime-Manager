@@ -287,7 +287,7 @@ const {
                 </div>
               </template>
               <n-form label-placement="left" label-width="120">
-                <n-grid :cols="2" :x-gap="24" :y-gap="16">
+                <n-grid :cols="2" :x-gap="24" :y-gap="16" style="align-items: center">
                   <!-- 第一行: RSS 刷新 -->
                   <n-gi>
                     <div class="switch-row">
