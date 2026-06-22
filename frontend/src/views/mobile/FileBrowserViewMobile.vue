@@ -237,7 +237,7 @@ const getShortName = (path: string) => {
                  <template #icon><n-icon><MoreIcon /></n-icon></template>
                </n-button>
                <n-button v-if="!item.is_dir" v-bind="getButtonStyle('primary')" size="tiny" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
-                  识别
+                  单文件识别
                 </n-button>
              </n-space>
           </template>

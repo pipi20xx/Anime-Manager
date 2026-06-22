@@ -1,6 +1,29 @@
 import { reactive, ref, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 
+const STRATEGY_KEYS = [
+  'anime_priority', 'offline_priority', 'bangumi_priority',
+  'bangumi_failover', 'force_filename', 'series_fingerprint', 'batch_enhancement'
+] as const
+
+const STORAGE_KEY = 'recognition_strategy_prefs'
+
+function loadStrategyPrefs(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {}
+  return {}
+}
+
+function saveStrategyPrefs(params: Record<string, any>) {
+  const prefs: Record<string, boolean> = {}
+  for (const key of STRATEGY_KEYS) {
+    prefs[key] = params[key]
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs))
+}
+
 export function useRecognitionModal(props: any, emit: any) {
   const message = useMessage()
 
@@ -28,19 +51,33 @@ export function useRecognitionModal(props: any, emit: any) {
     return ""
   }
 
-  // --- Forced Params ---
+  // --- Forced Params (策略开关从 localStorage 恢复) ---
+  const savedPrefs = loadStrategyPrefs()
   const forcedParams = reactive({ 
     tmdb_id: '', type: null as string | null, season: '', episode: '',
-    anime_priority: true
+    anime_priority: savedPrefs.anime_priority ?? false,
+    offline_priority: savedPrefs.offline_priority ?? false,
+    bangumi_priority: savedPrefs.bangumi_priority ?? false,
+    bangumi_failover: savedPrefs.bangumi_failover ?? false,
+    force_filename: savedPrefs.force_filename ?? false,
+    series_fingerprint: savedPrefs.series_fingerprint ?? false,
+    batch_enhancement: savedPrefs.batch_enhancement ?? false
   })
+
+  // 策略开关变化时自动保存到 localStorage
+  for (const key of STRATEGY_KEYS) {
+    watch(() => forcedParams[key], () => {
+      saveStrategyPrefs(forcedParams)
+    })
+  }
   
   const testSearch = reactive({ keyword: '', loading: false, results: [] as any[] })
 
   watch(() => props.show, (newVal) => {
     if (newVal && !props.loading) {
+      // 只重置非策略字段，策略开关从 localStorage 保持
       Object.assign(forcedParams, { 
-        tmdb_id: '', type: null, season: '', episode: '', 
-        anime_priority: true
+        tmdb_id: '', type: null, season: '', episode: ''
       })
       testSearch.keyword = ''; testSearch.results = []
       hashResult.value = null
@@ -59,9 +96,8 @@ export function useRecognitionModal(props: any, emit: any) {
 
   const handleRecognize = () => {
     emit('recognize', { 
-      ...forcedParams, 
-      force_filename: true,
-      batch_enhancement: false 
+      ...forcedParams,
+      batch_enhancement: forcedParams.batch_enhancement 
     })
   }
 

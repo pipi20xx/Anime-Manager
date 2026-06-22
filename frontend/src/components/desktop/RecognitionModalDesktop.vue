@@ -2,7 +2,7 @@
 import { 
   NModal, NSpin, NSpace, NGrid, NGi, NTag, NIcon, NButton, 
   NInput, NSelect, NScrollbar, NList, NListItem, NAvatar, NImage,
-  NCheckbox, NCollapse, NCollapseItem
+  NSwitch, NCollapse, NCollapseItem
 } from 'naive-ui'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
@@ -52,83 +52,68 @@ const {
     @update:show="val => emit('update:show', val)" 
     preset="card" 
     style="width: 850px" 
-    title="识别详情与强制测试"
+    title="单文件识别"
   >
     <n-spin :show="loading">
-      <div v-if="data" class="res-detail">
+      <div class="res-detail">
         <n-space vertical size="large">
-          <div class="main-layout">
-             <div class="poster-box">
-                <n-image v-if="data.final_result.poster_path" :src="getImg(data.final_result.poster_path)" width="120" class="poster-img" preview-disabled />
-                <div v-else class="poster-placeholder">无海报</div>
-             </div>
-             <div class="details-box">
-                <div class="title-line">{{ data.final_result.title }}</div>
-                <div class="pure-tags-row">
-                   <span class="p-tag tag-green">{{ data.final_result.category }}</span>
-                   <span v-if="data.final_result.secondary_category" class="p-tag tag-blue">🏷️ {{ data.final_result.secondary_category }}</span>
-                   <a v-if="data.final_result.tmdb_id && data.final_result.tmdb_id !== 'N/A'" 
-                      :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`" 
-                      target="_blank" class="id-link">TMDB: {{ data.final_result.tmdb_id }}</a>
-                   <span v-else class="id-text">TMDB: {{ data.final_result.tmdb_id || 'N/A' }}</span>
-                   <span class="date-text" v-if="data.final_result.release_date">📅 {{ data.final_result.release_date }}</span>
-                </div>
-                <div class="pure-specs-row">
-                   <span v-if="data.final_result.resolution" class="p-badge">{{ data.final_result.resolution }}</span>
-                   <span v-if="data.final_result.video_encode" class="p-badge blue">{{ data.final_result.video_encode }}</span>
-                   <span v-if="data.final_result.audio_encode" class="p-badge blue">{{ data.final_result.audio_encode }}</span>
-                </div>
-                <div class="flex-info-grid">
-                   <div class="fig-item"><div class="fig-l">年份</div><div class="fig-v">{{ data.final_result.year || '-' }}</div></div>
-                   <div class="fig-item"><div class="fig-l">季号</div><div class="fig-v">{{ data.final_result.season !== undefined ? 'S'+data.final_result.season : '-' }}</div></div>
-                   <div class="fig-item"><div class="fig-l">集数</div><div class="fig-v">{{ data.final_result.episode !== undefined ? 'E'+data.final_result.episode : '-' }}</div></div>
-                   <div class="fig-item"><div class="fig-l">来源</div><div class="fig-v">{{ data.final_result.source || '-' }}</div></div>
-                </div>
-                <div class="text-info-rows">
-                   <div class="row"><span class="rl">原产地:</span><span class="rv">{{ data.final_result.origin_country || '-' }}</span></div>
-                   <div class="row"><span class="rl">字幕语言:</span><span class="rv">{{ data.final_result.subtitle || '无' }}</span></div>
-                   <div class="row"><span class="rl">制作组:</span><span class="rv team">{{ data.final_result.team || '未知' }}</span></div>
-                   <div class="row"><span class="rl">发布平台:</span><span class="rv">{{ data.final_result.platform || '-' }}</span></div>
-                   <div class="row"><span class="rl">视频特效:</span><span class="rv">{{ data.final_result.video_effect || '-' }}</span></div>
-                   <div class="row"><span class="rl">处理后名:</span><span class="rv mono">{{ data.final_result.processed_name }}</span></div>
-                </div>
-             </div>
-          </div>
-          
-          <div class="preview-box">
-            <div class="pl"><n-icon><DriveIcon /></n-icon> 重命名路径预览</div>
-            <div class="pv">{{ previewPath || (loading ? '正在计算...' : '无法生成预览') }}</div>
-          </div>
-
-          <div v-if="hashResult" class="hash-result-box">
-            <div class="pl" style="color: var(--n-success-color)"><n-icon><CheckIcon /></n-icon> 哈希已计算并入库</div>
-            <div class="hash-info-grid">
-              <div class="hi-row"><span class="hi-label">SHA1</span><span class="hi-value mono">{{ hashResult.sha1 }}</span></div>
-              <div class="hi-row"><span class="hi-label">ED2K</span><span class="hi-value mono">{{ hashResult.ed2k }}</span></div>
-              <div class="hi-row"><span class="hi-label">ED2K链接</span><span class="hi-value mono" style="font-size: 11px">{{ hashResult.ed2k_link }}</span></div>
-            </div>
-          </div>
-
-          <n-collapse arrow-placement="right">
-            <n-collapse-item title="查看深度识别审计日志" name="logs">
-              <template #header-extra><n-icon><SearchBtnIcon /></n-icon></template>
-              <n-scrollbar style="max-height: 250px" class="audit-log-box">
-                <div v-for="(log, i) in data.logs" :key="i" :class="['log-line', getLogClass(log)]">
-                  <span class="idx">{{ String(i+1).padStart(2, '0') }}</span>
-                  <span class="txt">{{ log }}</span>
-                </div>
-              </n-scrollbar>
-            </n-collapse-item>
-          </n-collapse>
-
+          <!-- 强制参数调试 - 放在最前面，先设置再识别 -->
           <div class="forced-box">
-            <div class="pl"><n-icon><BuildIcon /></n-icon> 强制参数调试 (仅本次生效)</div>
+            <div class="pl"><n-icon><BuildIcon /></n-icon> 识别参数配置 (仅本次生效)</div>
             
-            <div class="preference-group">
-              <n-checkbox v-model:checked="forcedParams.anime_priority"><span class="check-label">动漫识别优化</span></n-checkbox>
+            <div class="strategy-list">
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">动漫识别优化</div>
+                  <div class="strategy-desc">开启后提升动画匹配精度，过滤同名真人剧</div>
+                </div>
+                <n-switch v-model:value="forcedParams.anime_priority" />
+              </div>
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">本地数据中心</div>
+                  <div class="strategy-desc">优先碰撞本地数据库，实现毫秒级离线匹配</div>
+                </div>
+                <n-switch v-model:value="forcedParams.offline_priority" />
+              </div>
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">Bangumi 数据源优先</div>
+                  <div class="strategy-desc">针对新番或缺失条目，优先尝试 BGM 镜像</div>
+                </div>
+                <n-switch v-model:value="forcedParams.bangumi_priority" />
+              </div>
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">Bangumi 故障转移</div>
+                  <div class="strategy-desc">当 TMDB 搜索失败时，自动使用 BGM 补全</div>
+                </div>
+                <n-switch v-model:value="forcedParams.bangumi_failover" />
+              </div>
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">强制单文件模式</div>
+                  <div class="strategy-desc">将完整输入作为文件名解析，无视路径干扰</div>
+                </div>
+                <n-switch v-model:value="forcedParams.force_filename" />
+              </div>
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">智能记忆</div>
+                  <div class="strategy-desc">自动记住系列特征，后续文件实现秒级拦截</div>
+                </div>
+                <n-switch v-model:value="forcedParams.series_fingerprint" />
+              </div>
+              <div class="strategy-row">
+                <div class="strategy-info">
+                  <div class="strategy-title">合集识别增强</div>
+                  <div class="strategy-desc">支持解析 01-12 等合集，自动计算集数区间</div>
+                </div>
+                <n-switch v-model:value="forcedParams.batch_enhancement" />
+              </div>
             </div>
 
-            <n-grid :cols="4" :x-gap="12" class="mb-4">
+            <n-grid :cols="4" :x-gap="12" class="mb-4 mt-4">
               <n-gi><AppTextField v-model:value="forcedParams.tmdb_id" label="TMDB ID" placeholder="TMDB ID" /></n-gi>
               <n-gi><AppSelectField v-model:value="forcedParams.type" label="资源类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" /></n-gi>
               <n-gi><AppTextField v-model:value="forcedParams.season" label="指定季" placeholder="指定季" /></n-gi>
@@ -144,7 +129,77 @@ const {
                 </n-list-item>
               </n-list>
             </n-scrollbar>
-            <n-button type="warning" ghost block size="small" class="mt-4" @click="handleRecognize">应用参数并重试识别</n-button>
+
+            <n-button type="primary" block size="small" class="mt-4" :loading="loading" @click="handleRecognize">
+              开始识别
+            </n-button>
+          </div>
+
+          <!-- 识别结果 - 有数据时才显示 -->
+          <div v-if="data" class="result-section">
+            <div class="main-layout">
+               <div class="poster-box">
+                  <n-image v-if="data.final_result.poster_path" :src="getImg(data.final_result.poster_path)" width="120" class="poster-img" preview-disabled />
+                  <div v-else class="poster-placeholder">无海报</div>
+               </div>
+               <div class="details-box">
+                  <div class="title-line">{{ data.final_result.title }}</div>
+                  <div class="pure-tags-row">
+                     <span class="p-tag tag-green">{{ data.final_result.category }}</span>
+                     <span v-if="data.final_result.secondary_category" class="p-tag tag-blue">🏷️ {{ data.final_result.secondary_category }}</span>
+                     <a v-if="data.final_result.tmdb_id && data.final_result.tmdb_id !== 'N/A'" 
+                        :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`" 
+                        target="_blank" class="id-link">TMDB: {{ data.final_result.tmdb_id }}</a>
+                     <span v-else class="id-text">TMDB: {{ data.final_result.tmdb_id || 'N/A' }}</span>
+                     <span class="date-text" v-if="data.final_result.release_date">📅 {{ data.final_result.release_date }}</span>
+                  </div>
+                  <div class="pure-specs-row">
+                     <span v-if="data.final_result.resolution" class="p-badge">{{ data.final_result.resolution }}</span>
+                     <span v-if="data.final_result.video_encode" class="p-badge blue">{{ data.final_result.video_encode }}</span>
+                     <span v-if="data.final_result.audio_encode" class="p-badge blue">{{ data.final_result.audio_encode }}</span>
+                  </div>
+                  <div class="flex-info-grid">
+                     <div class="fig-item"><div class="fig-l">年份</div><div class="fig-v">{{ data.final_result.year || '-' }}</div></div>
+                     <div class="fig-item"><div class="fig-l">季号</div><div class="fig-v">{{ data.final_result.season !== undefined ? 'S'+data.final_result.season : '-' }}</div></div>
+                     <div class="fig-item"><div class="fig-l">集数</div><div class="fig-v">{{ data.final_result.episode !== undefined ? 'E'+data.final_result.episode : '-' }}</div></div>
+                     <div class="fig-item"><div class="fig-l">来源</div><div class="fig-v">{{ data.final_result.source || '-' }}</div></div>
+                  </div>
+                  <div class="text-info-rows">
+                     <div class="row"><span class="rl">原产地:</span><span class="rv">{{ data.final_result.origin_country || '-' }}</span></div>
+                     <div class="row"><span class="rl">字幕语言:</span><span class="rv">{{ data.final_result.subtitle || '无' }}</span></div>
+                     <div class="row"><span class="rl">制作组:</span><span class="rv team">{{ data.final_result.team || '未知' }}</span></div>
+                     <div class="row"><span class="rl">发布平台:</span><span class="rv">{{ data.final_result.platform || '-' }}</span></div>
+                     <div class="row"><span class="rl">视频特效:</span><span class="rv">{{ data.final_result.video_effect || '-' }}</span></div>
+                     <div class="row"><span class="rl">处理后名:</span><span class="rv mono">{{ data.final_result.processed_name }}</span></div>
+                  </div>
+               </div>
+            </div>
+            
+            <div class="preview-box">
+              <div class="pl"><n-icon><DriveIcon /></n-icon> 重命名路径预览</div>
+              <div class="pv">{{ previewPath || (loading ? '正在计算...' : '无法生成预览') }}</div>
+            </div>
+
+            <div v-if="hashResult" class="hash-result-box">
+              <div class="pl" style="color: var(--n-success-color)"><n-icon><CheckIcon /></n-icon> 哈希已计算并入库</div>
+              <div class="hash-info-grid">
+                <div class="hi-row"><span class="hi-label">SHA1</span><span class="hi-value mono">{{ hashResult.sha1 }}</span></div>
+                <div class="hi-row"><span class="hi-label">ED2K</span><span class="hi-value mono">{{ hashResult.ed2k }}</span></div>
+                <div class="hi-row"><span class="hi-label">ED2K链接</span><span class="hi-value mono" style="font-size: 11px">{{ hashResult.ed2k_link }}</span></div>
+              </div>
+            </div>
+
+            <n-collapse arrow-placement="right">
+              <n-collapse-item title="查看深度识别审计日志" name="logs">
+                <template #header-extra><n-icon><SearchBtnIcon /></n-icon></template>
+                <n-scrollbar style="max-height: 250px" class="audit-log-box">
+                  <div v-for="(log, i) in data.logs" :key="i" :class="['log-line', getLogClass(log)]">
+                    <span class="idx">{{ String(i+1).padStart(2, '0') }}</span>
+                    <span class="txt">{{ log }}</span>
+                  </div>
+                </n-scrollbar>
+              </n-collapse-item>
+            </n-collapse>
           </div>
         </n-space>
       </div>
@@ -153,10 +208,10 @@ const {
       <n-space justify="end" style="width: 100%">
         <n-space>
           <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
-          <n-button type="warning" :loading="isHashing" :disabled="!data" @click="calculateHash">
+          <n-button v-if="data" type="warning" :loading="isHashing" @click="calculateHash">
             计算哈希
           </n-button>
-          <n-button v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')">
+          <n-button v-if="data" v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')">
             确认重命名
           </n-button>
         </n-space>
@@ -242,9 +297,26 @@ const {
   border: 1px solid var(--app-border-light); 
   box-sizing: border-box;
 }
-.forced-box .pl { font-size: 12px; font-weight: bold; color: var(--n-warning-color); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
-.preference-group { background: var(--app-surface-inner); padding: 10px; border-radius: 6px; border: 1px solid var(--app-border-light); margin-bottom: 16px; }
-.check-label { font-size: 12px; color: var(--text-secondary); }
+.forced-box .pl { font-size: 14px; font-weight: bold; color: var(--n-warning-color); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+
+.strategy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.strategy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--app-surface-inner);
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--app-border-light);
+}
+.strategy-info { min-width: 0; }
+.strategy-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.strategy-desc { font-size: 13px; color: var(--text-hint); line-height: 1.45; }
 .search-res-list { background: var(--app-surface-inner); border: 1px solid var(--app-border-light); border-radius: 6px; }
 .audit-log-box { background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px solid var(--app-border-light); font-family: var(--code-font); font-size: 12px; line-height: 1.6; }
 .log-line { display: flex; gap: 8px; border-bottom: 1px solid var(--border-light); padding: 2px 0; }

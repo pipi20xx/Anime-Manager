@@ -192,11 +192,14 @@ export function useFileBrowserView() {
     selectedFile.value = item
     previewPath.value = ''
     
+    // 没有强制参数时，只打开弹窗，不自动识别
     if (!forcedParams) {
-      recognizingPath.value = item.path
       showResultModal.value = true
+      return
     }
     
+    // 有强制参数时，执行识别
+    recognizingPath.value = item.path
     isRecogLoading.value = true
     try {
       const payload = { 

@@ -232,7 +232,7 @@ onMounted(() => {
             </div>
             <template #suffix>
               <n-button v-if="!item.is_dir" size="small" secondary round type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
-                识别测试
+                单文件识别
               </n-button>
               <n-icon v-else :color="textMutedColor" size="20"><NextIcon /></n-icon>
             </template>
