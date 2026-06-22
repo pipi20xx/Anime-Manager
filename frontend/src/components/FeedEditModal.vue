@@ -87,39 +87,36 @@ const handleSave = () => {
       
       <n-form-item label="自动监控设置">
         <n-space vertical :size="12">
-          <n-space align="center" :size="8">
+          <div class="switch-row">
             <n-switch v-model:value="form.enabled" />
-            <span style="font-size: 12px; color: var(--text-secondary);">全局监控</span>
-          </n-space>
-          
-          <n-space vertical :size="8" v-if="form.enabled">
-            <n-space align="center" :size="8">
-              <n-switch v-model:value="form.for_subscription" />
-              <span style="font-size: 12px; color: var(--text-secondary);">追剧订阅</span>
-            </n-space>
-            <n-space align="center" :size="8">
-              <n-switch v-model:value="form.for_rules" />
-              <span style="font-size: 12px; color: var(--text-secondary);">下载规则</span>
-            </n-space>
-            <n-space align="center" :size="8">
-              <n-switch v-model:value="form.anime_priority" />
-              <span style="font-size: 12px; color: var(--text-secondary);">动漫优先</span>
-            </n-space>
-            <n-space align="center" :size="8">
-              <n-switch v-model:value="form.check_emby_exists" />
-              <span style="font-size: 12px; color: var(--text-secondary);">Emby 检查</span>
-            </n-space>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
-              检测 Emby 库是否存在，存在则跳过处理
-            </div>
-            <n-space align="center" :size="8">
-              <n-switch v-model:value="form.batch_enhance" />
-              <span style="font-size: 12px; color: var(--text-secondary);">副标题合集提取</span>
-            </n-space>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
-              从 RSS 副标题中提取合集信息，部分源可能误判
-            </div>
-          </n-space>
+            <span class="switch-row__label">全局监控</span>
+            <span class="switch-row__desc">关闭后该源不再参与定时全量刷新</span>
+          </div>
+          <div class="switch-row">
+            <n-switch v-model:value="form.for_subscription" />
+            <span class="switch-row__label">追剧订阅</span>
+            <span class="switch-row__desc">用于自动匹配并下载订阅的番剧更新</span>
+          </div>
+          <div class="switch-row">
+            <n-switch v-model:value="form.for_rules" />
+            <span class="switch-row__label">下载规则</span>
+            <span class="switch-row__desc">用于触发 RSS 下载规则匹配</span>
+          </div>
+          <div class="switch-row">
+            <n-switch v-model:value="form.anime_priority" />
+            <span class="switch-row__label">动漫优先</span>
+            <span class="switch-row__desc">优先使用动漫专用识别策略，提高动漫识别准确率</span>
+          </div>
+          <div class="switch-row">
+            <n-switch v-model:value="form.check_emby_exists" />
+            <span class="switch-row__label">Emby 检查</span>
+            <span class="switch-row__desc">检测 Emby 库是否存在，存在则跳过处理</span>
+          </div>
+          <div class="switch-row">
+            <n-switch v-model:value="form.batch_enhance" />
+            <span class="switch-row__label">副标题合集提取</span>
+            <span class="switch-row__desc">从 RSS 副标题中提取合集信息，部分源可能误判</span>
+          </div>
         </n-space>
       </n-form-item>
     </n-space>
@@ -134,3 +131,20 @@ const handleSave = () => {
     </template>
   </n-modal>
 </template>
+
+<style scoped>
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.switch-row__label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.switch-row__desc {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+</style>

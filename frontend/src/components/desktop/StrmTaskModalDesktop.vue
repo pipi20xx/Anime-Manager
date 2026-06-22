@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { 
-  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NGrid, NGi, 
+  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, 
   NDivider, NCheckbox, NSelect, NDynamicTags, NAlert, 
-  NSpin, NCode, NEmpty, NIcon, NButton, NScrollbar, NRadioButton, NRadioGroup,
+  NSpin, NCode, NEmpty, NIcon, NButton, NScrollbar,
   NSwitch
 } from 'naive-ui'
 import {
   FolderOpenOutlined as FolderIcon
 } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import FilePickerModal from '../FilePickerModal.vue'
 import { useStrmTask } from '../../composables/modals/useStrmTask'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -85,20 +86,7 @@ const {
             <n-form-item>
               <AppTextField v-model:value="form.content_prefix" label="链接前缀" placeholder="http://ip:port/..." />
             </n-form-item>
-          </n-space>
-        </n-tab-pane>
-
-        <!-- 2. 过滤与策略 -->
-        <n-tab-pane name="filters" tab="过滤与策略">
-          <n-space vertical size="large" class="mt-4">
-            <n-form-item label="视频扩展名"><n-dynamic-tags v-model:value="form.target_extensions" /></n-form-item>
-            <n-form-item label="元数据扩展名"><n-dynamic-tags v-model:value="form.meta_extensions" /></n-form-item>
-            <n-divider dashed title-placement="left">生成与限流选项</n-divider>
-            <n-grid :cols="2">
-              <n-gi><n-space vertical><n-checkbox v-model:checked="form.copy_meta">同步元数据文件</n-checkbox><n-checkbox v-model:checked="form.clean_target">生成前清理目标</n-checkbox></n-space></n-gi>
-              <n-gi><n-space vertical><n-checkbox v-model:checked="form.overwrite_strm">覆盖已有 STRM</n-checkbox><n-checkbox v-model:checked="form.overwrite_meta">覆盖已有元数据</n-checkbox><n-checkbox v-model:checked="form.clean_empty_dirs">生成后清理空目录</n-checkbox></n-space></n-gi>
-            </n-grid>
-            <n-form-item class="mt-4">
+            <n-form-item>
               <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0" :step="0.1" style="width: 350px">
                 <template #suffix>秒/文件 (建议: 0.5 - 1.0)</template>
               </AppTextField>
@@ -106,70 +94,90 @@ const {
           </n-space>
         </n-tab-pane>
 
-        <!-- 3. 自动化与预览 -->
+        <!-- 2. 自动化与预览 -->
         <n-tab-pane name="automation" tab="自动化与预览">
           <n-form label-placement="top" size="small">
             <n-space vertical size="large" class="mt-4">
-              <n-grid :cols="2" :x-gap="12">
-                <n-gi>
-                  <n-form-item label="实时监控">
-                    <n-space align="center">
-                      <n-switch v-model:value="form.incremental_enabled" />
-                      <n-radio-group v-if="form.incremental_enabled" v-model:value="form.incremental_mode" size="small">
-                        <n-radio-button value="realtime">实时</n-radio-button>
-                        <n-radio-button value="polling">轮询</n-radio-button>
-                      </n-radio-group>
-                    </n-space>
-                  </n-form-item>
-                </n-gi>
-                <n-gi>
-                  <n-form-item label="定时扫描">
-                    <n-switch v-model:value="form.scheduler_enabled" />
-                  </n-form-item>
-                </n-gi>
-              </n-grid>
+              <div class="config-row">
+                <n-switch v-model:value="form.incremental_enabled" />
+                <span class="config-row__label">实时监控</span>
+                <AppSelectField v-model:value="form.incremental_mode" label="模式" :options="[{label:'实时', value:'realtime'}, {label:'轮询', value:'polling'}]" style="width: 160px" />
+                <AppTextField v-if="form.incremental_mode === 'polling'" v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1" style="width: 160px">
+                  <template #suffix>秒</template>
+                </AppTextField>
+                <span v-else class="config-row__hint">实时监听文件系统事件 (Inotify)</span>
+              </div>
 
-              <n-grid :cols="2" :x-gap="12">
-                <n-gi>
-                  <n-form-item v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
-                    <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
-                      <template #suffix>秒</template>
-                    </AppTextField>
-                  </n-form-item>
-                </n-gi>
-                <n-gi>
-                  <n-form-item v-if="form.scheduler_enabled">
-                    <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
-                      <template #suffix>秒</template>
-                    </AppTextField>
-                  </n-form-item>
-                </n-gi>
-              </n-grid>
-
-              <n-form-item label="实时联动策略">
-                <n-checkbox v-model:checked="form.webhook_enabled">
-                  <span style="font-size: 13px">响应 CD2 Webhook 推送并自动同步 (建议开启以获得实时入库体验)</span>
-                </n-checkbox>
-              </n-form-item>
+              <div class="config-row">
+                <n-switch v-model:value="form.scheduler_enabled" />
+                <span class="config-row__label">定时扫描</span>
+                <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60" style="width: 160px">
+                  <template #suffix>秒</template>
+                </AppTextField>
+              </div>
 
               <n-divider dashed />
             
-            <n-space align="center" justify="space-between">
-              <b style="font-size: 14px">实时 URL 预览</b>
-              <n-checkbox v-model:checked="form.url_encode">路径 URL 编码</n-checkbox>
-            </n-space>
+              <n-space align="center" justify="space-between">
+                <b style="font-size: 14px">实时 URL 预览</b>
+                <n-checkbox v-model:checked="form.url_encode">路径 URL 编码</n-checkbox>
+              </n-space>
             
-            <div class="preview-mini-box">
-              <n-spin :show="previewLoading">
-                <div v-if="previewData" class="p-wrap">
-                  <div class="p-line"><code>{{ previewData.preview_content }}</code></div>
-                  <div class="p-sub">基于文件: {{ previewData.sample_file }}</div>
-                </div>
-                <n-empty v-else size="small" description="配置源目录以查看预览" />
-              </n-spin>
+              <div class="preview-mini-box">
+                <n-spin :show="previewLoading">
+                  <div v-if="previewData" class="p-wrap">
+                    <div class="p-line"><code>{{ previewData.preview_content }}</code></div>
+                    <div class="p-sub">基于文件: {{ previewData.sample_file }}</div>
+                  </div>
+                  <n-empty v-else size="small" description="配置源目录以查看预览" />
+                </n-spin>
+              </div>
+            </n-space>
+          </n-form>
+        </n-tab-pane>
+
+        <!-- 3. 过滤规则 -->
+        <n-tab-pane name="filters" tab="过滤规则">
+          <n-space vertical size="large" class="mt-4">
+            <n-form-item label="视频扩展名"><n-dynamic-tags v-model:value="form.target_extensions" /></n-form-item>
+            <n-form-item label="元数据扩展名"><n-dynamic-tags v-model:value="form.meta_extensions" /></n-form-item>
+          </n-space>
+        </n-tab-pane>
+
+        <!-- 4. 高级设置 -->
+        <n-tab-pane name="advanced" tab="高级设置">
+          <n-space vertical size="large" class="mt-4">
+            <div class="switch-row">
+              <n-switch v-model:value="form.copy_meta" />
+              <span class="switch-row__label">同步元数据文件</span>
+              <span class="switch-row__desc">将 nfo、海报等元数据文件一起同步到目标目录</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.clean_target" />
+              <span class="switch-row__label">生成前清理目标</span>
+              <span class="switch-row__desc">生成 STRM 前清空目标目录已有内容</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.overwrite_strm" />
+              <span class="switch-row__label">覆盖已有 STRM</span>
+              <span class="switch-row__desc">目标目录存在同名 STRM 时覆盖</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.overwrite_meta" />
+              <span class="switch-row__label">覆盖已有元数据</span>
+              <span class="switch-row__desc">目标目录存在同名元数据时覆盖</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.clean_empty_dirs" />
+              <span class="switch-row__label">生成后清理空目录</span>
+              <span class="switch-row__desc">同步完成后删除目标目录中的空文件夹</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.webhook_enabled" />
+              <span class="switch-row__label">实时联动策略</span>
+              <span class="switch-row__desc">响应 CD2 Webhook 推送并自动同步（建议开启以获得实时入库体验）</span>
             </div>
           </n-space>
-          </n-form>
         </n-tab-pane>
       </n-tabs>
     </n-form>
@@ -191,6 +199,28 @@ const {
 </template>
 
 <style scoped>
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+}
+.config-row__label {
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  line-height: 1;
+  width: 84px;
+}
+.config-row__hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
 .mt-4 { margin-top: 16px; }
 .preview-mini-box { 
   background: var(--app-surface-inner); 

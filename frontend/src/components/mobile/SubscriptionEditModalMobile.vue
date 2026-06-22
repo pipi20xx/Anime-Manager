@@ -84,15 +84,7 @@ watch(() => props.show, (newVal) => {
 
           <n-gi>
             <n-form-item>
-              <div style="display: flex; align-items: center; gap: 8px; width: 100%">
-                <AppSelectField 
-                  v-model:value="formModel.media_type" 
-                  label="媒体类型"
-                  :options="[{label:'剧集', value:'tv'}, {label:'电影', value:'movie'}]" 
-                  style="width: 120px; flex-shrink: 0"
-                />
-                <AppSearchField v-model:value="searchQuery" placeholder="输入名称搜索 TMDB..." :loading="loading" @search="handleSearch" style="flex: 1" />
-              </div>
+              <AppSearchField v-model:value="searchQuery" placeholder="输入名称搜索 TMDB..." :loading="loading" @search="handleSearch" style="width: 100%" />
             </n-form-item>
           </n-gi>
 
@@ -111,6 +103,15 @@ watch(() => props.show, (newVal) => {
           <n-gi>
             <n-form-item>
               <AppTextField v-model:value="formModel.tmdb_id" label="TMDB ID" placeholder="手动输入" />
+            </n-form-item>
+          </n-gi>
+          <n-gi>
+            <n-form-item>
+              <AppSelectField 
+                v-model:value="formModel.media_type" 
+                label="媒体类型"
+                :options="[{label:'剧集', value:'tv'}, {label:'电影', value:'movie'}]" 
+              />
             </n-form-item>
           </n-gi>
           <n-gi>

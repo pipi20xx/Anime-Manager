@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { 
-  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NGrid, NGi, 
+  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, 
   NDivider, NCheckbox, NSelect, NDynamicTags, NAlert, 
-  NSpin, NCode, NEmpty, NIcon, NButton, NScrollbar, NRadioButton, NRadioGroup,
+  NSpin, NCode, NEmpty, NIcon, NButton, NScrollbar,
   NSwitch
 } from 'naive-ui'
 import {
@@ -87,78 +87,43 @@ const {
             <n-form-item>
               <AppTextField v-model:value="form.content_prefix" label="链接前缀" placeholder="http://ip:port/..." />
             </n-form-item>
-          </n-space>
-        </n-tab-pane>
-
-        <!-- 2. 过滤与策略 -->
-        <n-tab-pane name="filters" tab="过滤与策略">
-          <n-space vertical size="small" class="mt-4">
-            <n-form-item label="视频扩展名" :label-style="{fontSize: '12px', marginBottom: '2px'}">
-              <n-dynamic-tags v-model:value="form.target_extensions" size="small" />
-            </n-form-item>
-            <n-form-item label="元数据扩展名" :label-style="{fontSize: '12px', marginBottom: '2px'}">
-              <n-dynamic-tags v-model:value="form.meta_extensions" size="small" />
-            </n-form-item>
-            
-            <n-divider dashed style="margin: 8px 0;">生成选项</n-divider>
-            <n-grid :cols="2" :y-gap="8" :x-gap="8">
-              <n-gi><n-checkbox v-model:checked="form.copy_meta">同步元数据</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.clean_target">生成前清理</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.overwrite_strm">覆盖 STRM</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.overwrite_meta">覆盖元数据</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.clean_empty_dirs">清理空目录</n-checkbox></n-gi>
-              <n-gi><n-checkbox v-model:checked="form.url_encode">URL 编码</n-checkbox></n-gi>
-            </n-grid>
-
-            <n-form-item class="mt-2">
+            <n-form-item>
               <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0" :step="0.1">
-                <template #suffix>秒</template>
+                <template #suffix>秒/文件</template>
               </AppTextField>
             </n-form-item>
           </n-space>
         </n-tab-pane>
 
-        <!-- 3. 自动化与预览 -->
+        <!-- 2. 自动化 -->
         <n-tab-pane name="automation" tab="自动化">
           <n-space vertical size="large" class="mt-4">
-            <n-form-item label="实时监控">
-              <n-space align="center">
-                <n-switch v-model:value="form.incremental_enabled" />
-                <AppSelectField 
-                  v-if="form.incremental_enabled" 
-                  v-model:value="form.incremental_mode" 
-                  label="模式"
-                  style="width: 120px"
-                  :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
-                />
-              </n-space>
+            <div class="m-config-row">
+              <n-switch v-model:value="form.incremental_enabled" />
+              <span class="m-config-row__label">实时监控</span>
+              <AppSelectField 
+                v-model:value="form.incremental_mode" 
+                label="模式"
+                style="width: 120px"
+                :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
+              />
+            </div>
+            <n-form-item v-if="form.incremental_mode === 'polling'">
+              <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
+                <template #suffix>秒</template>
+              </AppTextField>
+            </n-form-item>
+            <n-form-item v-else>
+              <AppTextField :value="'实时监听文件系统事件 (Inotify)'" label="监控状态" readonly />
             </n-form-item>
             
-            <n-form-item label="定时扫描">
+            <div class="m-config-row">
               <n-switch v-model:value="form.scheduler_enabled" />
-            </n-form-item>
-
-            <n-grid :cols="1" :y-gap="12">
-              <n-gi>
-                <n-form-item v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
-                  <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
-                    <template #suffix>秒</template>
-                  </AppTextField>
-                </n-form-item>
-              </n-gi>
-              <n-gi>
-                <n-form-item v-if="form.scheduler_enabled">
-                  <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
-                    <template #suffix>秒</template>
-                  </AppTextField>
-                </n-form-item>
-              </n-gi>
-            </n-grid>
-
-                          <n-form-item label="实时联动策略">
-                            <n-checkbox v-model:checked="form.webhook_enabled">                <span style="font-size: 13px">响应 CD2 Webhook 推送</span>
-              </n-checkbox>
-            </n-form-item>
+              <span class="m-config-row__label">定时扫描</span>
+              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60" style="width: 120px">
+                <template #suffix>秒</template>
+              </AppTextField>
+            </div>
 
             <n-divider dashed />
             
@@ -175,6 +140,54 @@ const {
                 </div>
                 <n-empty v-else size="small" description="需配置源目录" />
               </n-spin>
+            </div>
+          </n-space>
+        </n-tab-pane>
+
+        <!-- 3. 过滤规则 -->
+        <n-tab-pane name="filters" tab="过滤规则">
+          <n-space vertical size="small" class="mt-4">
+            <n-form-item label="视频扩展名" :label-style="{fontSize: '12px', marginBottom: '2px'}">
+              <n-dynamic-tags v-model:value="form.target_extensions" size="small" />
+            </n-form-item>
+            <n-form-item label="元数据扩展名" :label-style="{fontSize: '12px', marginBottom: '2px'}">
+              <n-dynamic-tags v-model:value="form.meta_extensions" size="small" />
+            </n-form-item>
+          </n-space>
+        </n-tab-pane>
+
+        <!-- 4. 高级设置 -->
+        <n-tab-pane name="advanced" tab="高级设置">
+          <n-space vertical size="large" class="mt-4">
+            <div class="switch-row">
+              <n-switch v-model:value="form.copy_meta" />
+              <span class="switch-row__label">同步元数据文件</span>
+              <span class="switch-row__desc">将 nfo、海报等元数据文件一起同步到目标目录</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.clean_target" />
+              <span class="switch-row__label">生成前清理目标</span>
+              <span class="switch-row__desc">生成 STRM 前清空目标目录已有内容</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.overwrite_strm" />
+              <span class="switch-row__label">覆盖已有 STRM</span>
+              <span class="switch-row__desc">目标目录存在同名 STRM 时覆盖</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.overwrite_meta" />
+              <span class="switch-row__label">覆盖已有元数据</span>
+              <span class="switch-row__desc">目标目录存在同名元数据时覆盖</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.clean_empty_dirs" />
+              <span class="switch-row__label">生成后清理空目录</span>
+              <span class="switch-row__desc">同步完成后删除目标目录中的空文件夹</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.webhook_enabled" />
+              <span class="switch-row__label">实时联动策略</span>
+              <span class="switch-row__desc">响应 CD2 Webhook 推送并自动同步（建议开启以获得实时入库体验）</span>
             </div>
           </n-space>
         </n-tab-pane>
@@ -198,6 +211,25 @@ const {
 </template>
 
 <style scoped>
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+
+.m-config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  flex-wrap: wrap;
+}
+.m-config-row__label {
+  font-size: var(--m-text-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  line-height: 1;
+  width: 84px;
+}
+
 .mt-4 { margin-top: 16px; }
 .preview-mini-box { 
   background: var(--app-surface-inner); 

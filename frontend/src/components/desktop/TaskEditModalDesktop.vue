@@ -116,38 +116,57 @@ const {
           </n-space>
         </n-tab-pane>
 
-        <n-tab-pane name="advanced" tab="高级选项">
+        <n-tab-pane name="filters" tab="过滤规则">
           <n-space vertical size="large" class="mt-4">
             <n-form-item label="忽略文件正则"><n-dynamic-tags v-model:value="form.ignore_file_regex" /></n-form-item>
             <n-form-item label="忽略目录正则"><n-dynamic-tags v-model:value="form.ignore_dir_regex" /></n-form-item>
-            <n-space justify="space-around" class="mt-2">
-              <n-checkbox v-model:checked="form.anime_priority">动漫优先</n-checkbox>
-              <n-checkbox v-model:checked="form.overwrite_mode">覆盖模式</n-checkbox>
-              <n-checkbox v-model:checked="form.trigger_strm">联动 STRM</n-checkbox>
-              <n-checkbox v-model:checked="form.clean_empty_dir">清理空目录</n-checkbox>
-              <n-checkbox v-model:checked="form.ignore_history">忽略历史</n-checkbox>
-            </n-space>
-            <n-form-item class="mt-4">
-              <div class="switch-row">
-                <n-switch v-model:value="form.check_emby_exists" />
-                <span class="switch-row__label">Emby 检查</span>
-                <span class="switch-row__desc">检测 Emby 库是否存在，存在则跳过处理</span>
-              </div>
-            </n-form-item>
-            <n-form-item>
-              <div class="switch-row">
-                <n-switch v-model:value="form.calculate_hash" />
-                <n-space vertical :size="4">
-                  <div class="switch-row">
-                    <span class="switch-row__label">哈希计算</span>
-                    <span class="switch-row__desc">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
-                  </div>
-                  <div style="font-size: 11px; color: var(--color-error); padding: 4px 8px; background: var(--color-error-bg); border-radius: 4px;">
-                    ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
-                  </div>
-                </n-space>
-              </div>
-            </n-form-item>
+          </n-space>
+        </n-tab-pane>
+
+        <n-tab-pane name="advanced" tab="高级选项">
+          <n-space vertical size="medium" class="mt-4">
+            <div class="switch-row">
+              <n-switch v-model:value="form.anime_priority" />
+              <span class="switch-row__label">动漫优先</span>
+              <span class="switch-row__desc">优先使用动漫专用识别策略，提高动漫识别准确率</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.overwrite_mode" />
+              <span class="switch-row__label">覆盖模式</span>
+              <span class="switch-row__desc">目标路径已存在文件时允许覆盖</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.trigger_strm" />
+              <span class="switch-row__label">联动 STRM</span>
+              <span class="switch-row__desc">整理完成后自动生成/更新 STRM 文件</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.clean_empty_dir" />
+              <span class="switch-row__label">清理空目录</span>
+              <span class="switch-row__desc">整理后删除源目录中的空文件夹</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.ignore_history" />
+              <span class="switch-row__label">忽略历史</span>
+              <span class="switch-row__desc">本次任务不参考历史匹配记录</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.check_emby_exists" />
+              <span class="switch-row__label">Emby 检查</span>
+              <span class="switch-row__desc">检测 Emby 库是否存在，存在则跳过处理</span>
+            </div>
+            <div class="switch-row" style="align-items: flex-start;">
+              <n-switch v-model:value="form.calculate_hash" />
+              <n-space vertical :size="4">
+                <div class="switch-row">
+                  <span class="switch-row__label">哈希计算</span>
+                  <span class="switch-row__desc">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                </div>
+                <div style="font-size: 11px; color: var(--color-error); padding: 4px 8px; background: var(--color-error-bg); border-radius: 4px;">
+                  ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
+                </div>
+              </n-space>
+            </div>
           </n-space>
         </n-tab-pane>
       </n-tabs>

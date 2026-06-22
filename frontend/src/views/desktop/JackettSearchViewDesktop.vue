@@ -117,7 +117,7 @@ const formatSize = (sizeStr: string) => {
           label="搜索范围"
           :options="indexers.map(i => ({ label: i.name, value: i.id }))" 
           placeholder="搜索范围"
-          style="width: 180px"
+          style="width: 240px"
           :loading="indexers.length <= 1"
         />
         <AppSelectField 
@@ -126,7 +126,7 @@ const formatSize = (sizeStr: string) => {
           label="下载客户端"
           :options="clients.map(c => ({ label: c.name + ' (' + c.type + ')', value: c.id }))" 
           placeholder="下载客户端"
-          style="width: 200px"
+          style="width: 320px"
         />
       </n-space>
     </div>

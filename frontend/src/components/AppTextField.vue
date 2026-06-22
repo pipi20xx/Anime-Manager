@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { NIcon } from 'naive-ui'
 import {
   VisibilityOutlined as EyeOpenIcon,
@@ -33,6 +33,7 @@ const emit = defineEmits<{
 
 const focused = ref(false)
 const showPassword = ref(false)
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 const isPassword = computed(() => props.type === 'password')
 const isTextarea = computed(() => props.type === 'textarea')
@@ -52,6 +53,37 @@ const textRows = computed(() => {
   return 2
 })
 
+const shouldAutoResize = computed(() => isTextarea.value && !!props.autosize)
+
+const autoResize = () => {
+  if (!shouldAutoResize.value || !textareaRef.value) return
+  const textarea = textareaRef.value
+  const computedStyle = window.getComputedStyle(textarea)
+  let lineHeight = parseFloat(computedStyle.lineHeight)
+  if (isNaN(lineHeight)) {
+    lineHeight = (parseFloat(computedStyle.fontSize) || 16) * 1.4
+  }
+  const paddingTop = parseFloat(computedStyle.paddingTop) || 0
+  const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0
+
+  let minHeight = 0
+  let maxHeight = Infinity
+  if (typeof props.autosize === 'object') {
+    if (props.autosize?.minRows) {
+      minHeight = props.autosize.minRows * lineHeight + paddingTop + paddingBottom
+    }
+    if (props.autosize?.maxRows) {
+      maxHeight = props.autosize.maxRows * lineHeight + paddingTop + paddingBottom
+    }
+  }
+
+  textarea.style.height = 'auto'
+  const scrollHeight = textarea.scrollHeight
+  const targetHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight))
+  textarea.style.height = `${targetHeight}px`
+  textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden'
+}
+
 const handleInput = (e: Event) => {
   const raw = (e.target as HTMLInputElement).value
   if (isNumber.value) {
@@ -59,7 +91,22 @@ const handleInput = (e: Event) => {
   } else {
     emit('update:value', raw)
   }
+  if (shouldAutoResize.value) {
+    nextTick(autoResize)
+  }
 }
+
+watch(() => props.value, () => {
+  if (shouldAutoResize.value) {
+    nextTick(autoResize)
+  }
+})
+
+onMounted(() => {
+  if (shouldAutoResize.value) {
+    nextTick(autoResize)
+  }
+})
 </script>
 
 <template>
@@ -90,7 +137,9 @@ const handleInput = (e: Event) => {
 
       <template v-if="isTextarea">
         <textarea
+          ref="textareaRef"
           class="app-text-field__input app-text-field__input--textarea"
+          :class="{ 'is-autosize': shouldAutoResize }"
           :rows="textRows"
           :value="value"
           :placeholder="showPlaceholder"
@@ -205,6 +254,11 @@ const handleInput = (e: Event) => {
   min-height: 72px;
   padding: 20px 16px 8px;
   resize: vertical;
+}
+
+.app-text-field__input--textarea.is-autosize {
+  resize: none;
+  overflow: hidden;
 }
 
 .app-text-field__box.has-prefix .app-text-field__input {

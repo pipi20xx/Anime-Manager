@@ -149,13 +149,13 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
     </div>
 
     <!-- 编辑/新增元数据弹窗 -->
-    <n-modal v-model:show="showEditModal" preset="card" style="width: 100%; height: 96vh; margin: 0;" content-style="padding: 16px; overflow-y: auto;" :title="isEditing ? '修正元数据' : '新增元数据'">
+    <n-modal v-model:show="showEditModal" preset="card" style="width: 100%; margin: 0;" content-style="padding: 16px;" :title="isEditing ? '修正元数据' : '新增元数据'">
       <n-form label-placement="top">
         <n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="ID" /></n-form-item>
         <n-form-item><AppSelectField v-model:value="editForm.type" label="媒体类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" /></n-form-item>
         <n-form-item><AppTextField v-model:value="editForm.title" label="显示标题" /></n-form-item>
         <n-form-item><AppTextField v-model:value="editForm.poster_path" label="海报链接" /></n-form-item>
-        <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" type="textarea" :autosize="{minRows:10, maxRows:18}" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" type="textarea" :autosize="{minRows:10}" /></n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>

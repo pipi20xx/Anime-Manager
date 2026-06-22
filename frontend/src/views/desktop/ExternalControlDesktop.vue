@@ -2,14 +2,16 @@
 import { ref, onMounted, h } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NFormItem, 
-  NDivider, NTag, NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
+  NTag, NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
   NModal, NTooltip
 } from 'naive-ui'
 import AppTextField from '../../components/AppTextField.vue'
 import {
   ContentCopyOutlined as CopyIcon,
   RefreshOutlined as RefreshIcon,
-  DescriptionOutlined as DocIcon
+  DescriptionOutlined as DocIcon,
+  VisibilityOutlined as EyeOpenIcon,
+  VisibilityOffOutlined as EyeClosedIcon
 } from '@vicons/material'
 import { useExternalControl } from '../../composables/views/useExternalControl'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -33,6 +35,7 @@ const {
 } = useExternalControl()
 
 const activeTab = ref('keys')
+const showToken = ref(false)
 
 // --- Log Details UI State ---
 const showLogDetail = ref(false)
@@ -167,11 +170,23 @@ const logColumns = [
               <AppTextField 
                 v-model:value="config.external_token" 
                 label="当前生效的密钥"
-                type="password" 
+                :type="showToken ? 'text' : 'password'"
                 placeholder="尚未生成密钥" 
                 readonly
               >
                 <template #suffix>
+                  <n-tooltip trigger="hover">
+                    <template #trigger>
+                      <n-button 
+                        v-bind="getButtonStyle('icon')"
+                        style="margin-right: 4px"
+                        @click.stop="showToken = !showToken"
+                      >
+                        <template #icon><n-icon><component :is="showToken ? EyeClosedIcon : EyeOpenIcon" /></n-icon></template>
+                      </n-button>
+                    </template>
+                    {{ showToken ? '隐藏访问密钥' : '显示访问密钥' }}
+                  </n-tooltip>
                   <n-tooltip trigger="hover">
                     <template #trigger>
                       <n-button 
@@ -187,74 +202,64 @@ const logColumns = [
                 </template>
               </AppTextField>
             </n-form-item>
-            <n-button v-bind="getButtonStyle('primary')" size="large" @click="generateToken" style="width: 100%; margin-top: 12px">
+            <n-button v-bind="getButtonStyle('primary')" size="large" @click="generateToken" style="width: 100%; margin-top: 12px; margin-bottom: 24px">
               重新生成访问令牌 (Token)
             </n-button>
 
-            <n-divider title-placement="left">Webhook 推送</n-divider>
-            
-            <n-alert type="success" title="CloudDrive2 联动" :show-icon="true">
-              当您的云盘文件发生变动时，CD2 会通过此 Webhook 通知番剧管家立即刷新。必须要有CloudDrive2会员才可以使用此功能。
-            </n-alert>
-            
-            <div class="webhook-section">
-              <n-form-item>
-                <AppTextField 
-                  :value="webhookUrl" 
-                  label="回调 URL"
-                  readonly 
-                >
-                  <template #suffix>
-                    <n-tooltip trigger="hover">
-                      <template #trigger>
-                        <n-button 
-                          v-bind="getButtonStyle('icon')"
-                          style="margin-right: -4px"
-                          @click.stop="copyToClipboard(webhookUrl)"
-                        >
-                          <template #icon><n-icon><CopyIcon /></n-icon></template>
-                        </n-button>
-                      </template>
-                      复制回调链接
-                    </n-tooltip>
-                  </template>
-                </AppTextField>
-              </n-form-item>
+            <div class="content-header">
+              <h3>Webhook 推送</h3>
+              <p>当您的云盘文件发生变动时，CD2 会通过此 Webhook 通知番剧管家立即刷新。必须要有 CloudDrive2 会员才可以使用此功能。</p>
             </div>
 
-            <n-divider title-placement="left">Emby Webhook</n-divider>
-            <n-alert title="Emby 配置指引" type="info" style="margin-bottom: 12px">
-              在 Emby 设置的 <b>控制面板 -> Webhook</b> 中添加该地址，并确保以下设置：
-              <ul style="margin: 8px 0 0 16px; padding: 0;">
-                <li>发送格式：<b>JSON</b></li>
-                <li>勾选事件：<b>媒体库 - 已添加新媒体</b></li>
-                <li>勾选行为：<b>按剧集和专辑对通知进行分组</b></li>
-              </ul>
-            </n-alert>
-            <div class="webhook-section">
-              <n-form-item>
-                <AppTextField 
-                  :value="embyWebhookUrl" 
-                  label="Emby 通知地址"
-                  readonly 
-                >
-                  <template #suffix>
-                    <n-tooltip trigger="hover">
-                      <template #trigger>
-                        <n-button 
-                          v-bind="getButtonStyle('icon')"
-                          style="margin-right: -4px"
-                          @click.stop="copyToClipboard(embyWebhookUrl)"
-                        >
-                          <template #icon><n-icon><CopyIcon /></n-icon></template>
-                        </n-button>
-                      </template>
-                      复制 Emby 回调链接
-                    </n-tooltip>
-                  </template>
-                </AppTextField>
-              </n-form-item>
+            <n-form-item>
+              <AppTextField 
+                :value="webhookUrl" 
+                label="回调 URL"
+                readonly 
+              >
+                <template #suffix>
+                  <n-tooltip trigger="hover">
+                    <template #trigger>
+                      <n-button 
+                        v-bind="getButtonStyle('icon')"
+                        style="margin-right: -4px"
+                        @click.stop="copyToClipboard(webhookUrl)"
+                      >
+                        <template #icon><n-icon><CopyIcon /></n-icon></template>
+                      </n-button>
+                    </template>
+                    复制回调链接
+                  </n-tooltip>
+                </template>
+              </AppTextField>
+            </n-form-item>
+
+            <div class="content-header">
+              <h3>Emby Webhook</h3>
+              <p>在 Emby 设置的 <code>控制面板 -> Webhook</code> 中添加该地址，并确保发送格式为 <b>JSON</b>、勾选事件 <b>媒体库 - 已添加新媒体</b> 与行为 <b>按剧集和专辑对通知进行分组</b>。</p>
             </div>
+            <n-form-item>
+              <AppTextField 
+                :value="embyWebhookUrl" 
+                label="Emby 通知地址"
+                readonly 
+              >
+                <template #suffix>
+                  <n-tooltip trigger="hover">
+                    <template #trigger>
+                      <n-button 
+                        v-bind="getButtonStyle('icon')"
+                        style="margin-right: -4px"
+                        @click.stop="copyToClipboard(embyWebhookUrl)"
+                      >
+                        <template #icon><n-icon><CopyIcon /></n-icon></template>
+                      </n-button>
+                    </template>
+                    复制 Emby 回调链接
+                  </n-tooltip>
+                </template>
+              </AppTextField>
+            </n-form-item>
           </div>
         </n-tab-pane>
 
@@ -396,7 +401,6 @@ const logColumns = [
 .content-header h3 { margin: 0 0 8px 0; font-size: 18px; }
 .content-header p { margin: 0; color: var(--text-tertiary); font-size: 13px; line-height: 1.6; }
 
-.webhook-section { margin-top: 20px; }
 .table-actions { margin-bottom: 16px; display: flex; justify-content: flex-end; }
 
 .docs-container {

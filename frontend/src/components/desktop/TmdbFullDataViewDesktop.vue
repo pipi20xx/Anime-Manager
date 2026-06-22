@@ -177,7 +177,7 @@ const executeRefresh = () => {
     </n-space>
 
     <!-- 编辑/新增元数据弹窗 -->
-    <n-modal v-model:show="showEditModal" preset="card" style="width: 700px; height: 96vh" content-style="padding: 16px; overflow-y: auto;" :title="isEditing ? '修正元数据' : '手动新增元数据'">
+    <n-modal v-model:show="showEditModal" preset="card" style="width: 700px" :title="isEditing ? '修正元数据' : '手动新增元数据'">
       <n-form label-placement="left" label-width="90">
         <n-grid :cols="2" :x-gap="12">
           <n-gi><n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="请输入 TMDB ID" /></n-form-item></n-gi>
@@ -185,7 +185,7 @@ const executeRefresh = () => {
         </n-grid>
         <n-form-item><AppTextField v-model:value="editForm.title" label="显示标题" placeholder="请输入显示标题" /></n-form-item>
         <n-form-item><AppTextField v-model:value="editForm.poster_path" label="海报链接" placeholder="请输入海报链接" /></n-form-item>
-        <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" placeholder="请输入内容简介" type="textarea" :autosize="{minRows:12, maxRows:24}" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" placeholder="请输入内容简介" type="textarea" :autosize="{minRows:12}" /></n-form-item>
       </n-form>
       <template #action>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>
