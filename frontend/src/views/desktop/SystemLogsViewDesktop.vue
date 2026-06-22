@@ -3,6 +3,7 @@ import { h } from 'vue'
 import { 
   NCard, NDataTable, NSpace, NButton, NIcon, NInput, NSelect, NTag, NText, NGrid, NGi
 } from 'naive-ui'
+import AppSelectField from '../../components/AppSelectField.vue'
 import {
   HistoryOutlined as LogIcon,
   DeleteSweepOutlined as ClearIcon,
@@ -79,17 +80,19 @@ const columns = [
       <n-space vertical>
         <n-grid :cols="4" :x-gap="12">
           <n-gi :span="1">
-            <n-select 
+            <AppSelectField 
               v-model:value="filters.module" 
-              placeholder="模块" 
+              label="模块"
+              placeholder="全部模块" 
               clearable 
               :options="[{label: '识别', value: '识别'}, {label: '整理', value: '整理'}, {label: 'STRM', value: 'STRM'}, {label: 'RSS', value: 'RSS'}, {label: '订阅', value: '订阅'}, {label: '系统', value: '系统'}, {label: '网络', value: '网络'}, {label: '数据库', value: '数据库'}]" 
             />
           </n-gi>
           <n-gi :span="1">
-            <n-select 
+            <AppSelectField 
               v-model:value="filters.level" 
-              placeholder="等级" 
+              label="等级"
+              placeholder="全部等级" 
               clearable 
               :options="[{label: 'INFO', value: 'INFO'}, {label: 'WARNING', value: 'WARNING'}, {label: 'ERROR', value: 'ERROR'}, {label: 'DEBUG', value: 'DEBUG'}]" 
             />

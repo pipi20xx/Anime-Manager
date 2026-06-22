@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
   NCard, NSpace, NButton, NModal, NForm, NFormItem, 
-  NInput, NInputNumber, NSwitch, NPopconfirm, NTag, NIcon,
+  NSwitch, NPopconfirm, NTag, NIcon,
   NList, NListItem, NThing, NButtonGroup
 } from 'naive-ui'
 import {
@@ -14,6 +14,7 @@ import {
   EditOutlined as EditIcon,
   PlayArrowOutlined as PlayIcon
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
 import { useHealthCheck } from '../../composables/useHealthCheck'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -50,8 +51,8 @@ const getStatusTagStyle = (status: string) => {
               <n-switch v-model:value="config.health_check_enabled" />
             </n-space>
             <n-space justify="space-between" align="center" style="width: 100%">
-              <span>频率 (分钟)</span>
-              <n-input-number v-model:value="config.health_check_interval" :min="1" size="small" style="width: 100px" />
+              <span>自动巡检</span>
+              <AppTextField v-model:value="config.health_check_interval" label="频率 (分钟)" type="number" :min="1" />
             </n-space>
             <n-button v-bind="getButtonStyle('primary')" block @click="saveAll" style="margin-top: 8px">保存全局设置</n-button>
           </n-space>
@@ -123,14 +124,14 @@ const getStatusTagStyle = (status: string) => {
     <!-- 移动端 Modal -->
     <n-modal v-model:show="showModal" preset="card" title="编辑项目" style="width: 90%; max-width: 400px;">
       <n-form :model="editingConfig" label-placement="top">
-        <n-form-item label="名称">
-          <n-input v-model:value="editingConfig.name" />
+        <n-form-item>
+          <AppTextField v-model:value="editingConfig.name" label="名称" />
         </n-form-item>
-        <n-form-item label="路径">
-          <n-input v-model:value="editingConfig.file_path" type="textarea" :autosize="{ minRows: 2 }" />
+        <n-form-item>
+          <AppTextField v-model:value="editingConfig.file_path" label="路径" type="textarea" :autosize="{ minRows: 2 }" />
         </n-form-item>
-        <n-form-item label="URL (可选)">
-          <n-input v-model:value="editingConfig.file_url" type="textarea" :autosize="{ minRows: 2 }" />
+        <n-form-item>
+          <AppTextField v-model:value="editingConfig.file_url" label="URL (可选)" type="textarea" :autosize="{ minRows: 2 }" />
         </n-form-item>
         <n-form-item label="启用">
           <n-switch v-model:value="editingConfig.enabled" />

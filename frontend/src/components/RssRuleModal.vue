@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import AppTextField from './AppTextField.vue'
+import AppSelectField from './AppSelectField.vue'
 import { reactive, watch, ref, onMounted, computed } from 'vue'
 import { 
-  NModal, NSpace, NFormItem, NInput, NSwitch, 
+  NModal, NSpace, NFormItem, NSwitch, 
   NButton, NSelect, NInputNumber, NDivider, NIcon, NTooltip, useMessage
 } from 'naive-ui'
 import { HelpOutlineOutlined as HelpIcon } from '@vicons/material'
@@ -99,8 +101,8 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
   >
     <n-space vertical size="medium">
       
-      <n-form-item label="规则名称">
-        <n-input v-model:value="form.name" placeholder="例如: 海贼王 1080p" />
+      <n-form-item>
+        <AppTextField v-model:value="form.name" label="规则名称" placeholder="例如: 海贼王 1080p" />
       </n-form-item>
 
       <n-divider title-placement="left" style="margin: 0">匹配条件配置</n-divider>
@@ -123,36 +125,36 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
             </n-tooltip>
           </div>
         </template>
-        <n-input v-model:value="form.must_contain" type="textarea" :autosize="{minRows: 2}" placeholder="输入需要包含的词，支持高级逻辑..." />
+        <AppTextField v-model:value="form.must_contain" label="" type="textarea" :autosize="{minRows: 2}" placeholder="输入需要包含的词，支持高级逻辑..." />
       </n-form-item>
 
-      <n-form-item label="排除关键词">
-        <n-input v-model:value="form.must_not_contain" placeholder="碰到这些词就跳过该任务 (用 | 分隔)" />
+      <n-form-item>
+        <AppTextField v-model:value="form.must_not_contain" label="排除关键词" placeholder="碰到这些词就跳过该任务 (用 | 分隔)" />
       </n-form-item>
 
-      <n-form-item label="作用范围 (留空则监控所有源)">
-        <n-select multiple v-model:value="selectedFeedIds" :options="feedOptions" placeholder="选择此规则生效的特定订阅源" />
+      <n-form-item>
+        <AppSelectField label="作用范围 (留空则监控所有源)" multiple v-model:value="selectedFeedIds" :options="feedOptions" placeholder="选择此规则生效的特定订阅源" />
       </n-form-item>
 
       <n-divider title-placement="left" style="margin: 0">下载任务设置</n-divider>
 
-      <n-form-item label="指定下载器">
-        <n-select v-model:value="form.target_client_id" :options="clientOptions" placeholder="选择推送的目标客户端" />
+      <n-form-item>
+        <AppSelectField v-model:value="form.target_client_id" label="指定下载器" :options="clientOptions" placeholder="选择推送的目标客户端" clearable />
       </n-form-item>
 
-      <n-form-item label="保存路径">
-        <n-input v-model:value="form.save_path" placeholder="留空则使用下载器默认路径" />
+      <n-form-item>
+        <AppTextField v-model:value="form.save_path" label="保存路径" placeholder="留空则使用下载器默认路径" />
       </n-form-item>
 
       <n-grid :cols="2" :x-gap="12">
         <n-gi>
-          <n-form-item label="分类">
-            <n-input v-model:value="form.category" placeholder="例如: Anime" />
+          <n-form-item>
+            <AppTextField v-model:value="form.category" label="分类" placeholder="例如: Anime" />
           </n-form-item>
         </n-gi>
         <n-gi>
-          <n-form-item label="标签">
-            <n-input v-model:value="form.tags" placeholder="例如: RSS, 自动推送" />
+          <n-form-item>
+            <AppTextField v-model:value="form.tags" label="标签" placeholder="例如: RSS, 自动推送" />
           </n-form-item>
         </n-gi>
       </n-grid>

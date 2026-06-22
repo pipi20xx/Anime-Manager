@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { ref, h } from 'vue'
 import {
   NSpace, NButton, NIcon, NText, NInput, NInputGroup,
   NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
   NList, NListItem, NThing, NDrawer, NDrawerContent, NPopconfirm,
-  NInputNumber
+
 } from 'naive-ui'
 import {
   EditOutlined as EditIcon,
@@ -153,11 +155,11 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
     <!-- 编辑/新增元数据弹窗 -->
     <n-modal v-model:show="showEditModal" preset="card" style="width: 100%; height: 100vh; margin: 0;" content-style="padding: 16px; overflow-y: auto;" :title="isEditing ? '修正元数据' : '新增元数据'">
       <n-form label-placement="top">
-        <n-form-item label="TMDB ID"><n-input v-model:value="editForm.id" :disabled="isEditing" placeholder="ID" /></n-form-item>
-        <n-form-item label="媒体类型"><n-select v-model:value="editForm.type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" /></n-form-item>
-        <n-form-item label="显示标题"><n-input v-model:value="editForm.title" /></n-form-item>
-        <n-form-item label="海报链接"><n-input v-model:value="editForm.poster_path" /></n-form-item>
-        <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="ID" /></n-form-item>
+        <n-form-item><AppSelectField v-model:value="editForm.type" label="媒体类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.title" label="显示标题" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.poster_path" label="海报链接" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #footer>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>
@@ -167,28 +169,31 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
     <!-- 全量刷新弹窗 -->
     <n-modal v-model:show="showRefreshModal" preset="card" style="width: 100%; top: 20px;" title="全量刷新设置">
       <n-form label-placement="top">
-        <n-form-item label="更新时间筛选">
-          <n-input-number 
+        <n-form-item>
+          <AppTextField 
             v-model:value="refreshForm.olderThanDays" 
+            label="更新时间筛选"
             placeholder="留空表示不限制"
-            :min="1" 
-            style="width: 100%"
+            type="number"
+            :min="1"
           >
             <template #suffix>天前的数据</template>
-          </n-input-number>
+          </AppTextField>
         </n-form-item>
-        <n-form-item label="首播年份筛选">
-          <n-input-number 
+        <n-form-item>
+          <AppTextField 
             v-model:value="refreshForm.year" 
+            label="首播年份筛选"
             placeholder="留空表示不限制"
+            type="number"
             :min="1900" 
             :max="2100"
-            style="width: 100%"
           />
         </n-form-item>
-        <n-form-item label="媒体类型筛选">
-          <n-select 
+        <n-form-item>
+          <AppSelectField 
             v-model:value="refreshForm.mediaType"
+            label="媒体类型筛选"
             placeholder="留空表示不限制"
             clearable
             :options="[

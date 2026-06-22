@@ -8,14 +8,14 @@
               <n-icon size="20" color="var(--n-primary-color)"><KeyIcon /></n-icon>
             </template>
             <n-form label-placement="top">
-              <n-form-item label="当前密码">
-                <n-input v-model:value="pwdForm.old_password" type="password" show-password-on="mousedown" placeholder="验证当前密码" />
+              <n-form-item>
+                <AppTextField v-model:value="pwdForm.old_password" label="当前密码" type="password" placeholder="验证当前密码" />
               </n-form-item>
-              <n-form-item label="新密码">
-                <n-input v-model:value="pwdForm.new_password" type="password" show-password-on="mousedown" placeholder="设置新密码" />
+              <n-form-item>
+                <AppTextField v-model:value="pwdForm.new_password" label="新密码" type="password" placeholder="设置新密码" />
               </n-form-item>
-              <n-form-item label="确认新密码">
-                <n-input v-model:value="confirmPassword" type="password" show-password-on="mousedown" placeholder="再次输入新密码" />
+              <n-form-item>
+                <AppTextField v-model:value="confirmPassword" label="确认新密码" type="password" placeholder="再次输入新密码" />
               </n-form-item>
               <n-button type="primary" block secondary :loading="savingPwd" @click="handleUpdatePasswordDirectly">立即更新密码</n-button>
             </n-form>
@@ -109,10 +109,11 @@
         <n-text align="center">请使用验证器应用扫描下方二维码</n-text>
         <div class="qr-container"><img :src="otpSetupData.qr_code" alt="QR Code" v-if="otpSetupData.qr_code" /></div>
         <n-alert type="warning" :show-icon="false" style="width: 100%">密钥: {{ otpSetupData.secret }}</n-alert>
-        <n-input-group>
-          <n-input v-model:value="otpConfirmCode" placeholder="输入 6 位验证码确认" maxlength="6" />
-          <n-button type="primary" @click="confirmEnableOtp">确认开启</n-button>
-        </n-input-group>
+        <AppTextField v-model:value="otpConfirmCode" label="验证码" placeholder="输入 6 位验证码确认" maxlength="6">
+          <template #suffix>
+            <n-button type="primary" @click="confirmEnableOtp">确认开启</n-button>
+          </template>
+        </AppTextField>
       </n-space>
     </n-modal>
   </div>
@@ -121,8 +122,8 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { 
-  useMessage, NSpace, NCard, NIcon, NForm, NGrid, NInput, NButton, NGi, 
-  NThing, NSwitch, NFormItem, NAlert, NModal, NInputGroup, NText, NList,
+  useMessage, NSpace, NCard, NIcon, NForm, NGrid, NButton, NGi, 
+  NThing, NSwitch, NFormItem, NAlert, NModal, NText, NList,
   NListItem, NSpin, NTag, NEmpty, NDivider
 } from 'naive-ui'
 import { 
@@ -130,6 +131,7 @@ import {
   VerifiedUserOutlined as ShieldIcon,
   DevicesOutlined as DeviceIcon
 } from '@vicons/material'
+import AppTextField from '../../components/AppTextField.vue'
 import axios from 'axios'
 import { logout } from '../../store/navigationStore'
 

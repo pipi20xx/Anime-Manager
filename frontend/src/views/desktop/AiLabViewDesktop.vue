@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import AppTextField from '../../components/AppTextField.vue'
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NInput, NDivider, 
   NTag, useMessage, NAlert, NText, NSwitch, NSlider,
-  NCollapse, NCollapseItem, NForm, NFormItem, NInputNumber, NEmpty,
+  NCollapse, NCollapseItem, NForm, NFormItem, NEmpty,
   NTabs, NTabPane, NList, NListItem, NThing,
   NSpin, NRadioGroup, NRadioButton, NCode
 } from 'naive-ui'
@@ -580,27 +581,16 @@ onMounted(() => {
                 </n-radio-group>
               </n-form-item>
               
-              <n-form-item label="Base URL">
-                <n-input 
-                  v-model:value="assistantConfig.base_url" 
-                  placeholder="http://localhost:11434 或 https://api.openai.com" 
-                />
+              <n-form-item>
+                <AppTextField v-model:value="assistantConfig.base_url" label="Base URL" placeholder="http://localhost:11434 或 https://api.openai.com" />
               </n-form-item>
               
-              <n-form-item v-if="assistantConfig.provider === 'openai'" label="API Key">
-                <n-input 
-                  v-model:value="assistantConfig.api_key" 
-                  type="password" 
-                  show-password-on="click"
-                  placeholder="sk-..." 
-                />
+              <n-form-item v-if="assistantConfig.provider === 'openai'">
+                <AppTextField v-model:value="assistantConfig.api_key" label="API Key" type="password" placeholder="sk-..." />
               </n-form-item>
               
-              <n-form-item label="模型名称">
-                <n-input 
-                  v-model:value="assistantConfig.model" 
-                  placeholder="gpt-4o 或 qwen2.5:7b" 
-                />
+              <n-form-item>
+                <AppTextField v-model:value="assistantConfig.model" label="模型名称" placeholder="gpt-4o 或 qwen2.5:7b" />
               </n-form-item>
               
               <n-form-item label="Temperature">
@@ -613,17 +603,21 @@ onMounted(() => {
                 <span class="slider-value">{{ assistantConfig.temperature }}</span>
               </n-form-item>
               
-              <n-form-item label="Max Tokens (K)">
-                <n-input-number 
+              <n-form-item>
+                <AppTextField 
                   v-model:value="assistantConfig.max_tokens" 
+                  label="Max Tokens (K)"
+                  type="number"
                   :min="1" 
                   :max="128"
                 />
               </n-form-item>
               
-              <n-form-item label="最大迭代次数">
-                <n-input-number 
+              <n-form-item>
+                <AppTextField 
                   v-model:value="assistantConfig.max_iterations" 
+                  label="最大迭代次数"
+                  type="number"
                   :min="1" 
                   :max="20"
                 />
@@ -651,14 +645,9 @@ onMounted(() => {
                 </n-text>
               </n-form-item>
               
-              <n-form-item label="允许的 Chat ID" :style="{ opacity: telegramBotConfig.enabled ? 1 : 0.5 }">
-                <n-input 
-                  v-model:value="telegramBotConfig.allowedChats"
-                  placeholder="多个用逗号分隔，留空则不限制"
-                  :disabled="!telegramBotConfig.enabled"
-                  @blur="saveTelegramBotConfig"
-                />
-              </n-form-item>
+              <n-form-item :style="{ opacity: telegramBotConfig.enabled ? 1 : 0.5 }">
+                  <AppTextField v-model:value="telegramBotConfig.allowedChats" label="允许的 Chat ID" :disabled="!telegramBotConfig.enabled" placeholder="多个用逗号分隔，留空则不限制" @blur="saveTelegramBotConfig" />
+                </n-form-item>
               
               <n-alert type="info" size="small" :show-icon="false" style="margin-bottom: 16px;">
                 启用后，向你的 Telegram Bot 发送消息即可与智能体对话。需要先在设置中配置 Bot Token。

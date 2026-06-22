@@ -2,6 +2,7 @@
 import { 
   NTag, NSpace, NIcon, NSpin, NSelect, NButton, NSkeleton, NEmpty, NBackTop
 } from 'naive-ui'
+import AppSelectField from '../../../components/AppSelectField.vue'
 import {
   FilterAltOutlined as FilterIcon,
   StarOutlined as StarIcon
@@ -111,7 +112,7 @@ const {
 
         <div class="filter-actions">
             <div class="sort-wrapper">
-                <n-select v-model:value="filters.sort_by" :options="config.sort_options" size="small" style="width: 200px" />
+                <AppSelectField v-model:value="filters.sort_by" label="排序方式" :options="config.sort_options" style="width: 200px" />
             </div>
             <n-tag type="primary" :bordered="false" size="small" style="background: var(--color-primary-bg)">
                 共 {{ data.items.length }} 条结果

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
 import { 
-  NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
+  NSpace, NIcon, NSpin, NText, NButton, NModal,
   NList, NListItem, NAvatar, NPopconfirm, NTabs, NTabPane,
   NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup, NThing, NTag,
   NSwitch, NTimePicker
@@ -153,9 +154,9 @@ const {
 
         <n-tab-pane name="add" tab="添加">
           <n-form :model="newSubject" label-placement="top" style="padding: 16px">
-            <n-form-item label="TMDB ID"><n-input v-model:value="newSubject.tmdb_id" placeholder="ID" /></n-form-item>
-            <n-form-item label="标题"><n-input v-model:value="newSubject.title" placeholder="标题" /></n-form-item>
-            <n-form-item label="季号"><n-input-number v-model:value="newSubject.season" :min="1" style="width: 100%" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="newSubject.tmdb_id" label="TMDB ID" placeholder="ID" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="newSubject.title" label="标题" placeholder="标题" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="newSubject.season" label="季号" type="number" :min="1" /></n-form-item>
             <n-button v-bind="getButtonStyle('primary')" block @click="handleAddSubject">保存</n-button>
           </n-form>
         </n-tab-pane>
@@ -221,13 +222,13 @@ const {
                 <n-switch v-model:value="subscriptionNotifyConfig.enabled" @update:value="saveSubscriptionNotifyConfig" />
               </n-form-item>
               
-              <n-form-item label="检查间隔(分钟)" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
-                <n-input-number 
+              <n-form-item :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <AppTextField 
                   v-model:value="subscriptionNotifyConfig.interval"
+                  label="检查间隔(分钟)"
+                  type="number"
                   :min="5"
                   :max="1440"
-                  size="small"
-                  style="width: 100%"
                   :disabled="!subscriptionNotifyConfig.enabled"
                   @update:value="saveSubscriptionNotifyConfig"
                 />

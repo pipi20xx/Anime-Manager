@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { NModal, NSpace, NFormItem, NInput, NSwitch, NButton } from 'naive-ui'
+import { NModal, NSpace, NFormItem, NSwitch, NButton } from 'naive-ui'
+import AppTextField from './AppTextField.vue'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
@@ -68,20 +69,20 @@ const handleSave = () => {
     <n-scrollbar style="max-height: 75vh" trigger="none">
       <div style="padding-right: 12px;">
         <n-space vertical size="large">
-      <n-form-item label="订阅名称 (备注)">
-        <n-input v-model:value="form.title" placeholder="例如: 蜜柑 - 季度新番" />
+      <n-form-item>
+        <AppTextField v-model:value="form.title" label="订阅名称 (备注)" placeholder="例如: 蜜柑 - 季度新番" />
       </n-form-item>
       
-      <n-form-item label="RSS 订阅地址">
-        <n-input v-model:value="form.url" placeholder="支持 Mikan, Nyaa, Jackett 等标准 RSS 链接" />
+      <n-form-item>
+        <AppTextField v-model:value="form.url" label="RSS 订阅地址" placeholder="支持 Mikan, Nyaa, Jackett 等标准 RSS 链接" />
       </n-form-item>
 
-      <n-form-item label="前置包含词 (可选)">
-        <n-input v-model:value="form.include_keywords" placeholder="空格=且，| =或。例如: 1080P | 4K" />
+      <n-form-item>
+        <AppTextField v-model:value="form.include_keywords" label="前置包含词 (可选)" placeholder="空格=且，| =或。例如: 1080P | 4K" />
       </n-form-item>
 
-      <n-form-item label="前置排除词 (可选)">
-        <n-input v-model:value="form.exclude_keywords" placeholder="命中任意一个词即过滤该条目" />
+      <n-form-item>
+        <AppTextField v-model:value="form.exclude_keywords" label="前置排除词 (可选)" placeholder="命中任意一个词即过滤该条目" />
       </n-form-item>
       
       <n-form-item label="自动监控设置">

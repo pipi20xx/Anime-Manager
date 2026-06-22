@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { 
-  NModal, NCard, NTabs, NTabPane, NButton, NSpace, NInput, NSelect, NSwitch, 
+  NModal, NCard, NTabs, NTabPane, NButton, NSpace, NSelect, NSwitch, 
   NIcon, NTag, NEmpty, NPopconfirm, NDivider, NList, NListItem, NThing,
   NForm, NFormItem, NInputNumber, NScrollbar
 } from 'naive-ui'
@@ -133,20 +135,20 @@ const {
     <n-modal v-model:show="showRuleEdit" preset="card" class="mobile-fullscreen-modal" title="编辑基础规则">
        <n-scrollbar style="max-height: 80vh">
         <n-form label-placement="top">
-          <n-form-item label="规则名称"><n-input v-model:value="currentRule.name" placeholder="例如: 4K HDR 优先" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" /></n-form-item>
           
           <n-divider>匹配条件 (留空不限)</n-divider>
-          <n-form-item label="分辨率"><n-input v-model:value="currentRule.conditions.resolution" placeholder="如: 4K, 1080P" /></n-form-item>
-          <n-form-item label="制作组"><n-input v-model:value="currentRule.conditions.team" placeholder="如: LoliHouse" /></n-form-item>
-          <n-form-item label="来源"><n-input v-model:value="currentRule.conditions.source" placeholder="如: Blu-ray" /></n-form-item>
-          <n-form-item label="视频编码"><n-input v-model:value="currentRule.conditions.video_encode" placeholder="如: HEVC" /></n-form-item>
-          <n-form-item label="音频编码"><n-input v-model:value="currentRule.conditions.audio_encode" placeholder="如: FLAC" /></n-form-item>
-          <n-form-item label="字幕语言"><n-input v-model:value="currentRule.conditions.subtitle" placeholder="如: CHS" /></n-form-item>
-          <n-form-item label="视频特效"><n-input v-model:value="currentRule.conditions.video_effect" placeholder="如: HDR" /></n-form-item>
-          <n-form-item label="发布平台"><n-input v-model:value="currentRule.conditions.platform" placeholder="如: Baha" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.resolution" label="分辨率" placeholder="如: 4K, 1080P" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.team" label="制作组" placeholder="如: LoliHouse" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.source" label="来源" placeholder="如: Blu-ray" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.video_encode" label="视频编码" placeholder="如: HEVC" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.audio_encode" label="音频编码" placeholder="如: FLAC" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.subtitle" label="字幕语言" placeholder="如: CHS" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.video_effect" label="视频特效" placeholder="如: HDR" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.platform" label="发布平台" placeholder="如: Baha" /></n-form-item>
           
-          <n-form-item label="必须包含关键词"><n-input v-model:value="currentRule.conditions.must_contain" placeholder="正则或普通词" /></n-form-item>
-          <n-form-item label="排除关键词"><n-input v-model:value="currentRule.conditions.must_not_contain" placeholder="正则或普通词" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.must_contain" label="必须包含关键词" placeholder="正则或普通词" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentRule.conditions.must_not_contain" label="排除关键词" placeholder="正则或普通词" /></n-form-item>
         </n-form>
        </n-scrollbar>
        <template #footer>
@@ -158,15 +160,14 @@ const {
     <n-modal v-model:show="showProfileEdit" preset="card" class="mobile-fullscreen-modal" title="编辑策略">
        <n-scrollbar style="max-height: 80vh">
         <n-form label-placement="top">
-          <n-form-item label="策略名称"><n-input v-model:value="currentProfile.name" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="currentProfile.name" label="策略名称" /></n-form-item>
           <n-form-item label="洗版设置">
             <div style="display:flex; flex-direction: column; gap: 8px; width: 100%">
               <div style="display: flex; justify-content: space-between; align-items: center">
                 <span>允许洗版</span> <n-switch v-model:value="currentProfile.upgrade_allowed" />
               </div>
-              <div v-if="currentProfile.upgrade_allowed" style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
-                <span>截止分值</span>
-                <n-input-number v-model:value="currentProfile.cutoff_score" size="small" style="flex: 1" />
+              <div v-if="currentProfile.upgrade_allowed">
+                <AppTextField v-model:value="currentProfile.cutoff_score" label="截止分值" type="number" />
               </div>
             </div>
           </n-form-item>
@@ -190,7 +191,7 @@ const {
               </div>
             </template>
           </draggable>
-          <n-select :options="availableRules.map(r=>({label:r.name, value:r.id}))" @update:value="addRuleToProfile" placeholder="点击添加规则..." />
+          <AppSelectField :options="availableRules.map(r=>({label:r.name, value:r.id}))" label="添加规则" @update:value="addRuleToProfile" placeholder="选择要添加的规则..." />
         </div>
        </n-scrollbar>
        <template #footer>

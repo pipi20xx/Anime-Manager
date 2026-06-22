@@ -2,7 +2,7 @@
 FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm config set registry https://registry.npmmirror.com && \
+RUN npm config set registry https://repo.huaweicloud.com/repository/npm/ && \
     npm install --legacy-peer-deps
 COPY frontend/ ./
 RUN npm run build

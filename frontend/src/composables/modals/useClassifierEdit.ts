@@ -286,6 +286,11 @@ export function useClassifierEdit(props: any, emit: any) {
         }
       } else {
         formModel.value = JSON.parse(JSON.stringify(props.ruleData))
+        if (formModel.value.criteria.genre_ids) loadAllGenres()
+        if (formModel.value.criteria.company_ids) loadAllCompanies()
+        if (formModel.value.criteria.keyword_ids) loadAllKeywords()
+        if (formModel.value.criteria.original_language) loadAllLanguages()
+        if (formModel.value.criteria.origin_country) loadAllCountries()
       }
     }
   })

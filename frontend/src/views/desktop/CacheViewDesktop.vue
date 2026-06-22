@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppTextField from '../../components/AppTextField.vue'
+import AppSelectField from '../../components/AppSelectField.vue'
 import { ref, onMounted, reactive, h, onUnmounted, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NTag, NImage,
@@ -334,29 +336,29 @@ onUnmounted(() => {
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="12">
           <n-gi>
-            <n-form-item label="TMDB ID"><n-input v-model:value="editForm.id" placeholder="数字 ID" :disabled="isEditing" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="数字 ID" /></n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="媒体类型">
-              <n-select v-model:value="editForm.type" :options="[{label:'剧集', value:'tv'}, {label:'电影', value:'movie'}]" />
+            <n-form-item>
+              <AppSelectField v-model:value="editForm.type" label="媒体类型" :options="[{label:'剧集', value:'tv'}, {label:'电影', value:'movie'}]" />
             </n-form-item>
           </n-gi>
         </n-grid>
-        <n-form-item label="中文标题"><n-input v-model:value="editForm.title" /></n-form-item>
-        <n-form-item label="原始标题"><n-input v-model:value="editForm.original_title" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.title" label="中文标题" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.original_title" label="原始标题" /></n-form-item>
         <n-grid :cols="3" :x-gap="12">
           <n-gi>
-            <n-form-item label="分类名称"><n-input v-model:value="editForm.category" placeholder="电影 / 剧集" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editForm.category" label="分类名称" placeholder="电影 / 剧集" /></n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="发行年份"><n-input v-model:value="editForm.year" placeholder="YYYY" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editForm.year" label="发行年份" placeholder="YYYY" /></n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="播出日期"><n-input v-model:value="editForm.release_date" placeholder="YYYY-MM-DD" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editForm.release_date" label="播出日期" placeholder="YYYY-MM-DD" /></n-form-item>
           </n-gi>
         </n-grid>
-        <n-form-item label="海报链接"><n-input v-model:value="editForm.poster_path" /></n-form-item>
-        <n-form-item label="内容简介"><n-input v-model:value="editForm.overview" type="textarea" :autosize="{minRows:3}" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.poster_path" label="海报链接" /></n-form-item>
+        <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" type="textarea" :autosize="{minRows:3}" /></n-form-item>
       </n-form>
       <template #action>
         <n-space justify="end">

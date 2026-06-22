@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { 
-  NModal, NCard, NForm, NFormItem, NInput, NSelect, NButton, NSpace, NGrid, NGi, NDivider, NIcon
+  NModal, NCard, NForm, NFormItem, NSelect, NButton, NSpace, NGrid, NGi, NDivider, NIcon
 } from 'naive-ui'
 import { SaveOutlined as SaveIcon } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { useClassifierEdit } from '../../composables/modals/useClassifierEdit'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -64,13 +66,13 @@ const {
         <n-divider title-placement="left">基础设置</n-divider>
         <n-grid :cols="2" :x-gap="12">
           <n-gi :span="2">
-            <n-form-item label="分类名称" path="name">
-              <n-input v-model:value="formModel.name" placeholder="对应的二级文件夹名称" />
+            <n-form-item path="name">
+              <AppTextField v-model:value="formModel.name" label="分类名称" placeholder="对应的二级文件夹名称" />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="适用对象">
-              <n-select v-model:value="formModel.target" :options="[{label:'全部',value:'all'},{label:'仅电影',value:'movie'},{label:'仅剧集',value:'tv'}]" />
+            <n-form-item>
+              <AppSelectField v-model:value="formModel.target" label="适用对象" :options="[{label:'全部',value:'all'},{label:'仅电影',value:'movie'},{label:'仅剧集',value:'tv'}]" />
             </n-form-item>
           </n-gi>
         </n-grid>
@@ -78,8 +80,9 @@ const {
         <n-divider title-placement="left">匹配条件 (AND 逻辑)</n-divider>
         <n-grid :cols="2" :x-gap="12">
           <n-gi>
-            <n-form-item label="流派">
-              <n-select
+            <n-form-item>
+              <AppSelectField
+                label="流派"
                 :value="getSelectedGenreIds()"
                 :options="genreOptions"
                 :loading="genreLoading"
@@ -89,15 +92,17 @@ const {
                 placeholder="下拉选择或搜索流派"
                 remote
                 max-tag-count="responsive"
-                @search="handleGenreSearch"
+                :fallback-option="(val: string | number) => ({ label: `ID: ${val}`, value: val })"
+                :on-search="handleGenreSearch"
                 @update:value="handleGenreSelect"
-                @update:show="handleGenreDropdownOpen"
+                :on-update-show="handleGenreDropdownOpen"
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="原始国家">
-              <n-select
+            <n-form-item>
+              <AppSelectField
+                label="原始国家"
                 :value="getSelectedCountryCodes()"
                 :options="countryOptions"
                 :loading="countryLoading"
@@ -107,15 +112,17 @@ const {
                 clearable
                 placeholder="下拉选择或输入国家代码"
                 max-tag-count="responsive"
-                @search="handleCountrySearch"
+                :fallback-option="(val: string | number) => ({ label: `${val}`, value: val })"
+                :on-search="handleCountrySearch"
                 @update:value="handleCountrySelect"
-                @update:show="handleCountryDropdownOpen"
+                :on-update-show="handleCountryDropdownOpen"
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="原始语言">
-              <n-select
+            <n-form-item>
+              <AppSelectField
+                label="原始语言"
                 :value="getSelectedLanguageCodes()"
                 :options="languageOptions"
                 :loading="languageLoading"
@@ -125,15 +132,17 @@ const {
                 clearable
                 placeholder="下拉选择或输入语言代码"
                 max-tag-count="responsive"
-                @search="handleLanguageSearch"
+                :fallback-option="(val: string | number) => ({ label: `${val}`, value: val })"
+                :on-search="handleLanguageSearch"
                 @update:value="handleLanguageSelect"
-                @update:show="handleLanguageDropdownOpen"
+                :on-update-show="handleLanguageDropdownOpen"
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="制作公司">
-              <n-select
+            <n-form-item>
+              <AppSelectField
+                label="制作公司"
                 :value="getSelectedCompanyIds()"
                 :options="companyOptions"
                 :loading="companyLoading"
@@ -143,15 +152,17 @@ const {
                 placeholder="下拉选择或搜索公司"
                 remote
                 max-tag-count="responsive"
-                @search="handleCompanySearch"
+                :fallback-option="(val: string | number) => ({ label: `ID: ${val}`, value: val })"
+                :on-search="handleCompanySearch"
                 @update:value="handleCompanySelect"
-                @update:show="handleCompanyDropdownOpen"
+                :on-update-show="handleCompanyDropdownOpen"
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="关键词">
-              <n-select
+            <n-form-item>
+              <AppSelectField
+                label="关键词"
                 :value="getSelectedKeywordIds()"
                 :options="keywordOptions"
                 :loading="keywordLoading"
@@ -161,21 +172,22 @@ const {
                 placeholder="下拉选择或搜索关键词"
                 remote
                 max-tag-count="responsive"
-                @search="handleKeywordSearch"
+                :fallback-option="(val: string | number) => ({ label: `ID: ${val}`, value: val })"
+                :on-search="handleKeywordSearch"
                 @update:value="handleKeywordSelect"
-                @update:show="handleKeywordDropdownOpen"
+                :on-update-show="handleKeywordDropdownOpen"
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="年份/范围">
-              <n-input v-model:value="formModel.criteria.year" placeholder="2024 或 2020-2025" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.criteria.year" label="年份/范围" placeholder="2024 或 2020-2025" />
             </n-form-item>
           </n-gi>
           <n-gi :span="2">
-            <n-form-item label="名称匹配">
+            <n-form-item>
               <div style="display: flex; flex-direction: column; gap: 4px;">
-                <n-input v-model:value="formModel.criteria.title" placeholder="匹配标题关键词，多个用逗号分隔" />
+                <AppTextField v-model:value="formModel.criteria.title" label="名称匹配" placeholder="匹配标题关键词，多个用逗号分隔" />
                 <span style="font-size: 11px; color: var(--text-tertiary); line-height: 1.4;">
                   匹配数据库字段: custom_title (用户自定义) → title (TMDB官方) → name (备用)
                 </span>

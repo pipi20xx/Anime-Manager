@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { 
   NTag, NSpace, NIcon, NSpin, NSelect, NButton, NSkeleton, NEmpty, NBackTop, NDrawer, NDrawerContent, NDivider
 } from 'naive-ui'
+import AppSelectField from '../../../components/AppSelectField.vue'
 import {
   FilterAltOutlined as FilterIcon,
   StarOutlined as StarIcon
@@ -32,10 +33,10 @@ useBackClose(showFilterDrawer)
     <!-- Top Control Bar -->
     <div class="mobile-filter-bar">
         <div class="filter-row-top">
-            <n-select 
+            <AppSelectField 
                 v-model:value="filters.source" 
-                :options="[{label:'数据源: Bangumi', value:'bangumi'}, {label:'数据源: TMDB', value:'tmdb'}]" 
-                size="medium" 
+                label="数据源"
+                :options="[{label:'Bangumi', value:'bangumi'}, {label:'TMDB', value:'tmdb'}]" 
                 style="flex: 1" 
             />
             <n-button v-bind="getButtonStyle('icon')" @click="showFilterDrawer = true" size="medium" style="margin-left: 12px">
@@ -43,10 +44,10 @@ useBackClose(showFilterDrawer)
             </n-button>
         </div>
         <div class="filter-row-bottom">
-            <n-select 
+            <AppSelectField 
                 v-model:value="filters.sort_by" 
+                label="排序方式"
                 :options="config.sort_options" 
-                size="medium" 
                 placeholder="排序方式"
                 style="width: 100%" 
             />

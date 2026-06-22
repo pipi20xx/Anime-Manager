@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { 
-  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NInput, NGrid, NGi, 
-  NDivider, NCheckbox, NInputNumber, NSelect, NDynamicTags, NAlert, 
+  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NGrid, NGi, 
+  NDivider, NCheckbox, NSelect, NDynamicTags, NAlert, 
   NSpin, NCode, NEmpty, NIcon, NButton, NScrollbar, NRadioButton, NRadioGroup,
   NSwitch
 } from 'naive-ui'
 import {
   FolderOpenOutlined as FolderIcon
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
 import FilePickerModal from '../FilePickerModal.vue'
 import { useStrmTask } from '../../composables/modals/useStrmTask'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -46,45 +47,43 @@ const {
         <!-- 1. 基础设置 -->
         <n-tab-pane name="basic" tab="核心设置">
           <n-space vertical size="large" class="mt-4">
-            <n-form-item label="任务名称"><n-input v-model:value="form.name" placeholder="例如: 百度网盘电影库" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="form.name" label="任务名称" placeholder="例如: 百度网盘电影库" /></n-form-item>
             
-            <n-form-item label="同步模式">
-              <n-space>
-                <n-radio-group v-model:value="form.sync_mode">
-                  <n-radio-button value="local">本地文件扫描</n-radio-button>
-                  <n-radio-button value="tree_file">目录树文件</n-radio-button>
-                </n-radio-group>
-              </n-space>
+            <n-form-item>
+              <AppSelectField v-model:value="form.sync_mode" label="同步模式" :options="[
+                {label:'本地文件扫描', value:'local'},
+                {label:'目录树文件', value:'tree_file'}
+              ]" />
             </n-form-item>
 
             <n-alert v-if="form.sync_mode === 'tree_file'" type="warning" size="small" class="mb-4">
               目录树模式将解析您提供的文本文件内容来同步 STRM。
             </n-alert>
 
-            <n-form-item label="目录树文件" v-if="form.sync_mode === 'tree_file'">
-              <n-input v-model:value="form.tree_file_path" placeholder="例如: /root/tree.txt">
+            <n-form-item v-if="form.sync_mode === 'tree_file'">
+              <AppTextField v-model:value="form.tree_file_path" label="目录树文件" placeholder="例如: /root/tree.txt">
                 <template #suffix>
                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('tree')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
-              </n-input>
+              </AppTextField>
             </n-form-item>
 
-            <n-form-item label="源目录">
-              <n-input v-model:value="form.source_path" placeholder="待扫描的本地媒体文件夹">
+            <n-form-item>
+              <AppTextField v-model:value="form.source_path" label="源目录" placeholder="待扫描的本地媒体文件夹">
                 <template #suffix>
                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('source')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
-              </n-input>
+              </AppTextField>
             </n-form-item>
-            <n-form-item label="目标目录">
-              <n-input v-model:value="form.target_path" placeholder="STRM 文件存放位置">
+            <n-form-item>
+              <AppTextField v-model:value="form.target_path" label="目标目录" placeholder="STRM 文件存放位置">
                 <template #suffix>
                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('target')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
-              </n-input>
+              </AppTextField>
             </n-form-item>
-            <n-form-item label="链接前缀">
-              <n-input v-model:value="form.content_prefix" placeholder="http://ip:port/..." />
+            <n-form-item>
+              <AppTextField v-model:value="form.content_prefix" label="链接前缀" placeholder="http://ip:port/..." />
             </n-form-item>
           </n-space>
         </n-tab-pane>
@@ -99,10 +98,10 @@ const {
               <n-gi><n-space vertical><n-checkbox v-model:checked="form.copy_meta">同步元数据文件</n-checkbox><n-checkbox v-model:checked="form.clean_target">生成前清理目标</n-checkbox></n-space></n-gi>
               <n-gi><n-space vertical><n-checkbox v-model:checked="form.overwrite_strm">覆盖已有 STRM</n-checkbox><n-checkbox v-model:checked="form.overwrite_meta">覆盖已有元数据</n-checkbox><n-checkbox v-model:checked="form.clean_empty_dirs">生成后清理空目录</n-checkbox></n-space></n-gi>
             </n-grid>
-            <n-form-item label="限流间隔" class="mt-4">
-              <n-input-number v-model:value="form.process_interval" :min="0" :step="0.1" style="width: 350px">
+            <n-form-item class="mt-4">
+              <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0" :step="0.1" style="width: 350px">
                 <template #suffix>秒/文件 (建议: 0.5 - 1.0)</template>
-              </n-input-number>
+              </AppTextField>
             </n-form-item>
           </n-space>
         </n-tab-pane>
@@ -132,17 +131,17 @@ const {
 
               <n-grid :cols="2" :x-gap="12">
                 <n-gi>
-                  <n-form-item label="轮询间隔" v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
-                    <n-input-number v-model:value="form.monitor_interval" :min="1" style="width: 100%">
+                  <n-form-item v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
+                    <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
                       <template #suffix>秒</template>
-                    </n-input-number>
+                    </AppTextField>
                   </n-form-item>
                 </n-gi>
                 <n-gi>
-                  <n-form-item label="扫描间隔" v-if="form.scheduler_enabled">
-                    <n-input-number v-model:value="form.scheduler_interval" :min="60" style="width: 100%">
+                  <n-form-item v-if="form.scheduler_enabled">
+                    <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
                       <template #suffix>秒</template>
-                    </n-input-number>
+                    </AppTextField>
                   </n-form-item>
                 </n-gi>
               </n-grid>

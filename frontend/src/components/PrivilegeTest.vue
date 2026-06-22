@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { 
-  NCard, NInput, NButton, NSpace, NIcon, NDivider, 
-  NAlert, NInputGroup, useMessage, NTag, NInputNumber,
+  NCard, NButton, NSpace, NIcon, NDivider, 
+  NAlert, useMessage, NTag,
   NList, NListItem, NThing, NScrollbar, NTooltip
 } from 'naive-ui'
 import {
@@ -11,6 +11,7 @@ import {
   RefreshOutlined as RefreshIcon,
   InputOutlined as LoadIcon
 } from '@vicons/material'
+import AppTextField from './AppTextField.vue'
 
 const props = defineProps<{
   apiBase: string
@@ -105,8 +106,9 @@ onMounted(fetchRules)
             <n-space vertical size="medium">
               <div>
                 <div class="label-mini">测试对象 (文件名)</div>
-                <n-input 
+                <AppTextField 
                   v-model:value="filename" 
+                  label="测试对象 (文件名)"
                   type="textarea"
                   :autosize="{ minRows: 2, maxRows: 3 }"
                   placeholder="粘贴文件名..."
@@ -129,19 +131,19 @@ onMounted(fetchRules)
 
               <div>
                 <div class="label-mini">正则表达式 (Regex)</div>
-                <n-input 
+                <AppTextField 
                   v-model:value="customRegex" 
+                  label="正则表达式 (Regex)"
                   placeholder="输入正则..."
                   style="font-family: monospace;"
                 >
                   <template #prefix><n-icon :component="BugIcon" /></template>
-                </n-input>
+                </AppTextField>
               </div>
 
               <n-space align="center" justify="space-between">
                 <n-space align="center">
-                  <span class="label-mini">捕获组索引:</span>
-                  <n-input-number v-model:value="groupIndex" :min="1" :max="10" size="small" style="width: 80px" />
+                  <AppTextField v-model:value="groupIndex" label="捕获组索引" type="number" :min="1" :max="10" />
                 </n-space>
                 <n-button type="primary" @click="handleTest" :loading="loading" style="padding: 0 32px">
                   运行测试

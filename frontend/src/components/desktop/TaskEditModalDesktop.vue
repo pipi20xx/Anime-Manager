@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { 
-  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NInput, NSelect, 
-  NInputNumber, NCheckbox, NCheckboxGroup, NButton, NIcon, NGrid, NGi, NDynamicTags,
+  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NSelect, 
+  NCheckbox, NCheckboxGroup, NButton, NIcon, NGrid, NGi, NDynamicTags,
   NRadioGroup, NRadioButton, NSwitch
 } from 'naive-ui'
 import {
   FolderOpenOutlined as FolderIcon
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import FilePickerModal from '../FilePickerModal.vue'
 import { useTaskEdit } from '../../composables/modals/useTaskEdit'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -43,33 +45,33 @@ const {
       <n-tabs type="line" animated>
         <n-tab-pane name="basic" tab="核心配置">
           <n-space vertical size="large" class="mt-4">
-            <n-form-item label="任务名称"><n-input v-model:value="form.name" placeholder="起个名字" /></n-form-item>
-            <n-form-item label="重命名规则">
-              <n-select v-model:value="form.rule_id" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择规则" />
+            <n-form-item><AppTextField v-model:value="form.name" label="任务名称" placeholder="起个名字" /></n-form-item>
+            <n-form-item>
+              <AppSelectField v-model:value="form.rule_id" label="重命名规则" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择规则" clearable />
             </n-form-item>
-            <n-form-item label="源目录">
-              <n-input v-model:value="form.source_dir" placeholder="待整理的文件夹">
+            <n-form-item>
+              <AppTextField v-model:value="form.source_dir" label="源目录" placeholder="待整理的文件夹">
                 <template #suffix>
                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('source')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
-              </n-input>
+              </AppTextField>
             </n-form-item>
-            <n-form-item label="目标目录">
-              <n-input v-model:value="form.target_dir" placeholder="整理后的根目录">
+            <n-form-item>
+              <AppTextField v-model:value="form.target_dir" label="目标目录" placeholder="整理后的根目录">
                 <template #suffix>
                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openPicker('target')"><template #icon><n-icon><FolderIcon /></n-icon></template></n-button>
                 </template>
-              </n-input>
+              </AppTextField>
             </n-form-item>
-            <n-form-item label="操作类型">
-              <n-radio-group v-model:value="form.action_type">
-                <n-radio-button value="move">物理移动</n-radio-button>
-                <n-radio-button value="copy">完整复制</n-radio-button>
-                <n-radio-button value="link">建立硬链</n-radio-button>
-                <n-radio-button value="cd2_move">CD2 移动</n-radio-button>
-                <n-radio-button value="cd2_copy">CD2 复制</n-radio-button>
-                <n-radio-button value="hash_only">仅记录哈希</n-radio-button>
-              </n-radio-group>
+            <n-form-item>
+              <AppSelectField v-model:value="form.action_type" label="操作类型" :options="[
+                {label:'物理移动', value:'move'},
+                {label:'完整复制', value:'copy'},
+                {label:'建立硬链', value:'link'},
+                {label:'CD2 移动', value:'cd2_move'},
+                {label:'CD2 复制', value:'cd2_copy'},
+                {label:'仅记录哈希', value:'hash_only'}
+              ]" />
             </n-form-item>
           </n-space>
         </n-tab-pane>
@@ -81,10 +83,7 @@ const {
                 <n-form-item label="实时监控">
                   <n-space align="center">
                     <n-switch v-model:value="form.incremental_enabled" />
-                    <n-radio-group v-if="form.incremental_enabled" v-model:value="form.incremental_mode" size="small">
-                      <n-radio-button value="realtime">实时</n-radio-button>
-                      <n-radio-button value="polling">轮询</n-radio-button>
-                    </n-radio-group>
+                    <AppSelectField v-if="form.incremental_enabled" v-model:value="form.incremental_mode" label="模式" :options="[{label:'实时', value:'realtime'}, {label:'轮询', value:'polling'}]" style="width: 120px" />
                   </n-space>
                 </n-form-item>
               </n-gi>
@@ -97,28 +96,28 @@ const {
 
             <n-grid :cols="2" :x-gap="12">
               <n-gi>
-                <n-form-item label="轮询间隔" v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
-                  <n-input-number v-model:value="form.monitor_interval" :min="1" style="width: 100%">
+                <n-form-item v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
+                  <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
                     <template #suffix>秒</template>
-                  </n-input-number>
+                  </AppTextField>
                 </n-form-item>
                 <n-form-item label="监控状态" v-else-if="form.incremental_enabled">
                   <div style="color: var(--text-muted)">实时监听文件系统事件 (Inotify)</div>
                 </n-form-item>
               </n-gi>
               <n-gi>
-                <n-form-item label="扫描间隔" v-if="form.scheduler_enabled">
-                  <n-input-number v-model:value="form.scheduler_interval" :min="60" style="width: 100%">
+                <n-form-item v-if="form.scheduler_enabled">
+                  <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
                     <template #suffix>秒</template>
-                  </n-input-number>
+                  </AppTextField>
                 </n-form-item>
               </n-gi>
             </n-grid>
 
-            <n-form-item label="限流间隔">
-              <n-input-number v-model:value="form.process_interval" :min="0" style="width: 100%">
+            <n-form-item>
+              <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0">
                 <template #suffix>秒</template>
-              </n-input-number>
+              </AppTextField>
             </n-form-item>
             <n-form-item label="跳过限流">
               <n-space vertical :size="8">

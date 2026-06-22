@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { watch } from 'vue'
 import { 
   NModal, NButton, NSpace,
@@ -75,52 +77,55 @@ const close = () => {
       <n-form label-placement="left" label-width="80">
         <n-space vertical size="medium">
 
-          <n-form-item label="RSS 链接">
-            <n-input-group>
-              <n-input v-model:value="editModel.rss_url" placeholder="输入 RSS 链接" />
-              <n-button type="primary" :loading="testing" @click="testRss">测试</n-button>
-            </n-input-group>
+          <n-form-item>
+            <AppTextField v-model:value="editModel.rss_url" label="RSS 链接" placeholder="输入 RSS 链接">
+              <template #suffix>
+                <n-button type="primary" :loading="testing" @click="testRss" style="height: 40px; border-radius: 6px; margin-right: -4px">测试</n-button>
+              </template>
+            </AppTextField>
           </n-form-item>
 
-          <n-form-item label="任务名称"><n-input v-model:value="editModel.name" placeholder="留空自动生成" /></n-form-item>
+          <n-form-item><AppTextField v-model:value="editModel.name" label="任务名称" placeholder="留空自动生成" /></n-form-item>
           
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="label">启用状态</span>
             <n-switch v-model:value="editModel.enabled" />
           </div>
 
-          <n-select 
+          <AppSelectField 
             v-model:value="editModel.template_id"
+            label="预设选项"
             :options="[{label: '自定义筛选', value: null}, ...templates.map(t => ({label: t.name, value: t.id}))]"
             placeholder="选择预设或自定义筛选"
             clearable
           />
 
           <template v-if="!editModel.template_id">
-            <n-input v-model:value="editModel.filter_res" placeholder="分辨率 (如: 1080p, 4k)" />
-            <n-input v-model:value="editModel.filter_team" placeholder="制作组 (如: LoliHouse)" />
-            <n-input v-model:value="editModel.filter_source" placeholder="来源 (如: Blu-ray, Web-DL)" />
-            <n-input v-model:value="editModel.filter_codec" placeholder="视频编码 (如: HEVC, AVC)" />
-            <n-input v-model:value="editModel.filter_audio" placeholder="音频编码 (如: FLAC, AAC)" />
-            <n-input v-model:value="editModel.filter_sub" placeholder="字幕语言 (如: CHS, CHT)" />
-            <n-input v-model:value="editModel.filter_effect" placeholder="视频特效 (如: HDR10, DV)" />
-            <n-input v-model:value="editModel.filter_platform" placeholder="发布平台 (如: Baha, Netflix)" />
+            <AppTextField v-model:value="editModel.filter_res" label="任务名称" placeholder="分辨率 (如: 1080p, 4k)" />
+            <AppTextField v-model:value="editModel.filter_team" label="任务名称" placeholder="制作组 (如: LoliHouse)" />
+            <AppTextField v-model:value="editModel.filter_source" label="任务名称" placeholder="来源 (如: Blu-ray, Web-DL)" />
+            <AppTextField v-model:value="editModel.filter_codec" label="任务名称" placeholder="视频编码 (如: HEVC, AVC)" />
+            <AppTextField v-model:value="editModel.filter_audio" label="任务名称" placeholder="音频编码 (如: FLAC, AAC)" />
+            <AppTextField v-model:value="editModel.filter_sub" label="任务名称" placeholder="字幕语言 (如: CHS, CHT)" />
+            <AppTextField v-model:value="editModel.filter_effect" label="任务名称" placeholder="视频特效 (如: HDR10, DV)" />
+            <AppTextField v-model:value="editModel.filter_platform" label="任务名称" placeholder="发布平台 (如: Baha, Netflix)" />
           </template>
 
-          <n-select 
+          <AppSelectField 
             v-model:value="editModel.target_client_id" 
+            label="下载客户端"
             :options="clients.map(c => ({label: c.name, value: c.id}))" 
             placeholder="下载客户端"
             clearable
           />
 
-          <n-input v-model:value="editModel.save_path" placeholder="下载目录（留空使用默认路径）" />
-          <n-input v-model:value="editModel.category" placeholder="分类/标签 (例如: Anime)" />
+          <AppTextField v-model:value="editModel.save_path" label="任务名称" placeholder="下载目录（留空使用默认路径）" />
+          <AppTextField v-model:value="editModel.category" label="任务名称" placeholder="分类/标签 (例如: Anime)" />
 
           <div class="label">执行间隔: {{ editModel.interval_minutes }} 分钟</div>
 
-          <n-input v-model:value="editModel.include_keywords" placeholder="必须包含（包含这些关键词才下载）" />
-          <n-input v-model:value="editModel.exclude_keywords" placeholder="排除关键词（包含这些关键词则跳过）" />
+          <AppTextField v-model:value="editModel.include_keywords" label="任务名称" placeholder="必须包含（包含这些关键词才下载）" />
+          <AppTextField v-model:value="editModel.exclude_keywords" label="任务名称" placeholder="排除关键词（包含这些关键词则跳过）" />
 
           <template v-if="testResult?.detected_shows?.length > 0">
             <n-alert type="success">

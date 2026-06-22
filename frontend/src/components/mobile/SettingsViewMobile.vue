@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import {
-  NSpace, NButton, NIcon, NInput, NForm, NFormItem,
+  NSpace, NButton, NIcon, NForm, NFormItem,
   NDivider, NSwitch, NTabs, NTabPane,
-  NSpin, NCheckbox, NInputNumber, NPopconfirm, NTag
+  NSpin, NCheckbox, NPopconfirm, NTag
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
@@ -15,6 +15,7 @@ import ConfigSectionMobile from './ConfigSectionMobile.vue'
 import ClientEditModal from '../../components/ClientEditModal.vue'
 import HealthCheckManager from '../../components/HealthCheckManager.vue'
 import EmbyConfigMobile from './EmbyConfigMobile.vue'
+import AppTextField from '../../components/AppTextField.vue'
 import AiLabView from '../../views/AiLabView.vue'
 import AccountTab from '../../views/settings/AccountTab.vue'
 import ServiceStatusTabMobile from '../../views/settings/ServiceStatusTabMobile.vue'
@@ -62,13 +63,13 @@ const {
                 <div class="m-card-header">
                   <h3 class="m-card-title">TMDB 设置</h3>
                 </div>
-                <n-form label-placement="top">
-                  <n-form-item label="TMDB API Key">
-                    <n-input v-model:value="config.tmdb_api_key" type="password" show-password-on="click" placeholder="输入 Key" />
+                <n-form>
+                  <n-form-item>
+                    <AppTextField v-model:value="config.tmdb_api_key" label="TMDB API Key" type="password" />
                   </n-form-item>
-                  <n-form-item label="图片域名">
+                  <n-form-item>
                     <n-space vertical :size="2" style="width: 100%">
-                      <n-input v-model:value="config.tmdb_image_domain" placeholder="默认: image.tmdb.org" />
+                      <AppTextField v-model:value="config.tmdb_image_domain" label="图片域名" />
                       <span style="font-size: 12px; color: var(--n-text-color-3);">可替换为国内镜像站加速图片加载</span>
                     </n-space>
                   </n-form-item>
@@ -86,9 +87,9 @@ const {
                 <div class="m-card-header">
                   <h3 class="m-card-title">Bangumi 设置</h3>
                 </div>
-                <n-form label-placement="top">
-                  <n-form-item label="Bangumi Token">
-                    <n-input v-model:value="config.bangumi_token" type="password" show-password-on="click" placeholder="可选 Token" />
+                <n-form>
+                  <n-form-item>
+                    <AppTextField v-model:value="config.bangumi_token" label="Bangumi Token" type="password" />
                   </n-form-item>
                 </n-form>
               </div>
@@ -98,18 +99,18 @@ const {
                 <div class="m-card-header">
                   <h3 class="m-card-title">SYTMDB 设置</h3>
                 </div>
-                <n-form label-placement="top">
+                <n-form>
                   <div style="margin-bottom: 12px; padding: 8px 12px; background: var(--n-color); border-radius: 4px; border-left: 3px solid var(--n-warning-color);">
                     <span style="font-size: 13px; color: var(--n-text-color-2);">作者的另一个项目，用于同步修正后的元数据，非必要无需填写。</span>
                   </div>
-                  <n-form-item label="服务地址">
+                  <n-form-item>
                     <n-space vertical :size="2" style="width: 100%">
-                      <n-input v-model:value="config.sytmdb_host" placeholder="IP:Port (例如: 192.168.1.10:8121)" />
+                      <AppTextField v-model:value="config.sytmdb_host" label="服务地址" />
                       <span style="font-size: 12px; color: var(--n-text-color-3);">SYTMDB 服务地址</span>
                     </n-space>
                   </n-form-item>
-                  <n-form-item label="API Token">
-                    <n-input v-model:value="config.sytmdb_token" type="password" show-password-on="click" placeholder="可选 Token" />
+                  <n-form-item>
+                    <AppTextField v-model:value="config.sytmdb_token" label="API Token" type="password" />
                   </n-form-item>
                 </n-form>
               </div>
@@ -154,15 +155,15 @@ const {
                 <div class="m-card-header">
                   <h3 class="m-card-title">Jackett 设置</h3>
                 </div>
-                <n-form label-placement="top">
-                  <n-form-item label="URL">
-                    <n-input v-model:value="config.jackett_url" placeholder="http://ip:port" />
+                <n-form>
+                  <n-form-item>
+                    <AppTextField v-model:value="config.jackett_url" label="URL" />
                   </n-form-item>
-                  <n-form-item label="API Key">
-                    <n-input v-model:value="config.jackett_api_key" type="password" show-password-on="click" placeholder="API Key" />
+                  <n-form-item>
+                    <AppTextField v-model:value="config.jackett_api_key" label="API Key" type="password" />
                   </n-form-item>
-                  <n-form-item label="管理密码">
-                    <n-input v-model:value="config.jackett_password" type="password" show-password-on="click" placeholder="可选" />
+                  <n-form-item>
+                    <AppTextField v-model:value="config.jackett_password" label="管理密码" type="password" />
                   </n-form-item>
                 </n-form>
               </div>
@@ -186,12 +187,12 @@ const {
                 <div class="m-card-header">
                   <h3 class="m-card-title">通知设置 (Telegram)</h3>
                 </div>
-                <n-form label-placement="top">
-                  <n-form-item label="Bot Token">
-                    <n-input v-model:value="config.telegram.bot_token" type="password" show-password-on="click" placeholder="Bot Token" />
+                <n-form>
+                  <n-form-item>
+                    <AppTextField v-model:value="config.telegram.bot_token" label="Bot Token" type="password" />
                   </n-form-item>
-                  <n-form-item label="Chat ID">
-                    <n-input v-model:value="config.telegram.chat_id" type="password" show-password-on="click" placeholder="Chat ID" />
+                  <n-form-item>
+                    <AppTextField v-model:value="config.telegram.chat_id" label="Chat ID" type="password" />
                   </n-form-item>
 
                   <n-divider dashed>通知类型</n-divider>
@@ -221,9 +222,9 @@ const {
                 <div class="m-card-header">
                   <h3 class="m-card-title">代理设置</h3>
                 </div>
-                <n-form label-placement="top">
-                  <n-form-item label="HTTP 代理">
-                    <n-input v-model:value="config.http_proxy" placeholder="http://ip:port 或 http://user:pass@ip:port" />
+                <n-form>
+                  <n-form-item>
+                    <AppTextField v-model:value="config.http_proxy" label="HTTP 代理" />
                   </n-form-item>
 
                   <n-divider dashed>应用范围</n-divider>
@@ -251,9 +252,9 @@ const {
                       <n-switch v-model:value="config.rss_auto_refresh" size="small" />
                     </div>
                     <div class="auto-desc">定时拉取 RSS 源，检测新发布的资源</div>
-                    <n-input-number v-if="config.rss_auto_refresh" v-model:value="config.rss_refresh_interval" :min="1" size="small" style="width: 120px">
+                    <AppTextField v-if="config.rss_auto_refresh" v-model:value="config.rss_refresh_interval" label="刷新间隔" type="number" :min="1">
                       <template #suffix>分钟</template>
-                    </n-input-number>
+                    </AppTextField>
                   </div>
 
                   <div class="auto-item">
@@ -262,9 +263,9 @@ const {
                       <n-switch v-model:value="config.rule_auto_update" size="small" />
                     </div>
                     <div class="auto-desc">定时从远程地址同步社区识别规则</div>
-                    <n-input-number v-if="config.rule_auto_update" v-model:value="config.rule_update_interval" :min="1" size="small" style="width: 120px">
+                    <AppTextField v-if="config.rule_auto_update" v-model:value="config.rule_update_interval" label="同步周期" type="number" :min="1">
                       <template #suffix>小时</template>
-                    </n-input-number>
+                    </AppTextField>
                   </div>
 
                   <div class="auto-item">
@@ -273,9 +274,9 @@ const {
                       <n-switch v-model:value="config.sub_auto_fill" size="small" />
                     </div>
                     <div class="auto-desc">自动搜寻补全缺失的订阅集数</div>
-                    <n-input-number v-if="config.sub_auto_fill" v-model:value="config.sub_fill_interval" :min="1" size="small" style="width: 120px">
+                    <AppTextField v-if="config.sub_auto_fill" v-model:value="config.sub_fill_interval" label="补全周期" type="number" :min="1">
                       <template #suffix>小时</template>
-                    </n-input-number>
+                    </AppTextField>
                   </div>
 
                   <div class="auto-item">
@@ -284,23 +285,23 @@ const {
                       <n-switch v-model:value="config.auto_clear_recognition" size="small" />
                     </div>
                     <div class="auto-desc">定时清空 RSS 订阅项缓存</div>
-                    <n-input-number v-if="config.auto_clear_recognition" v-model:value="config.auto_clear_interval" :min="1" size="small" style="width: 120px">
+                    <AppTextField v-if="config.auto_clear_recognition" v-model:value="config.auto_clear_interval" label="清理周期" type="number" :min="1">
                       <template #suffix>小时</template>
-                    </n-input-number>
+                    </AppTextField>
                   </div>
 
                   <n-divider dashed />
 
                   <div class="number-row">
-                    <n-form-item label="死种超时清理" style="flex: 1">
-                      <n-input-number v-model:value="config.stalled_timeout_minutes" :min="0" size="small" style="width: 100%">
+                    <n-form-item style="flex: 1">
+                      <AppTextField v-model:value="config.stalled_timeout_minutes" label="死种超时清理" type="number" :min="0">
                         <template #suffix>分钟</template>
-                      </n-input-number>
+                      </AppTextField>
                     </n-form-item>
-                    <n-form-item label="巡检频率" style="flex: 1">
-                      <n-input-number v-model:value="config.stalled_monitor_interval" :min="0" size="small" style="width: 100%">
+                    <n-form-item style="flex: 1">
+                      <AppTextField v-model:value="config.stalled_monitor_interval" label="巡检频率" type="number" :min="0">
                         <template #suffix>分钟</template>
-                      </n-input-number>
+                      </AppTextField>
                     </n-form-item>
                   </div>
                   <div class="auto-desc">检查 QB 下载器中超时的任务，自动删除并加入黑名单</div>

@@ -4,6 +4,7 @@ import {
   NCard, NInput, NButton, 
   NSpace, NDataTable, NIcon, NPopconfirm, NSelect, NTabs, NTabPane, NAlert, NPopover
 } from 'naive-ui'
+import AppSelectField from '../AppSelectField.vue'
 import DatabaseConfig from '../../components/DatabaseConfig.vue'
 import MaintenanceManager from '../../components/MaintenanceManager.vue'
 import TmdbFullDataView from '../../views/TmdbFullDataView.vue'
@@ -145,7 +146,7 @@ const dataTableColumns = computed(() => {
                 <template #icon><n-icon><RefreshIcon /></n-icon></template>
               </n-button>
             </template>
-            <n-select v-model:value="currentTable" filterable placeholder="🔍 选择数据表进行浏览..." :options="tableOptions" :loading="loading" @update:value="selectTable" />
+            <AppSelectField v-model:value="currentTable" label="选择数据表" filterable placeholder="🔍 选择数据表进行浏览..." :options="tableOptions" :loading="loading" @update:value="selectTable" />
           </n-card>
           <n-card bordered size="small">
             <div class="sql-box">

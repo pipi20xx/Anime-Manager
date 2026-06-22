@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NCard, NForm, NFormItem, NInput, NSwitch, NSpace, NButton, useMessage } from 'naive-ui'
+import AppTextField from '../AppTextField.vue'
 
 interface Props {
   embyUrl: string
@@ -87,53 +88,53 @@ const fetchToken = async () => {
     </div>
 
     <n-form label-placement="top">
-      <n-form-item label="服务地址">
-        <n-input
+      <n-form-item>
+        <AppTextField
           :value="embyUrl"
+          label="服务地址"
           placeholder="http://localhost:8096"
           @update:value="(val: string) => emit('update:embyUrl', val)"
         />
       </n-form-item>
 
-      <n-form-item label="API Key">
-        <n-input
+      <n-form-item>
+        <AppTextField
           :value="embyApiKey"
+          label="API Key"
           type="password"
-          show-password-on="click"
           placeholder="输入 API Key"
           @update:value="(val: string) => emit('update:embyApiKey', val)"
         />
       </n-form-item>
 
-      <n-form-item label="用户名">
-        <n-input
+      <n-form-item>
+        <AppTextField
           :value="embyUsername"
+          label="用户名"
           placeholder="管理员用户名"
           @update:value="(val: string) => emit('update:embyUsername', val)"
         />
       </n-form-item>
 
-      <n-form-item label="密码">
-        <n-input
+      <n-form-item>
+        <AppTextField
           :value="embyPassword"
+          label="密码"
           type="password"
-          show-password-on="click"
           placeholder="管理员密码"
           @update:value="(val: string) => emit('update:embyPassword', val)"
         />
       </n-form-item>
 
-      <n-form-item label="用户 ID">
-        <n-space vertical :size="4" style="width: 100%">
-          <n-input
-            :value="embyUserId"
-            type="password"
-            show-password-on="click"
-            placeholder="自动获取或手动输入"
-            @update:value="(val: string) => emit('update:embyUserId', val)"
-          />
-          <span class="hint-text">在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值</span>
-        </n-space>
+      <n-form-item>
+        <AppTextField
+          :value="embyUserId"
+          label="用户 ID"
+          type="password"
+          placeholder="自动获取或手动输入"
+          hint="在 Emby 用户配置页面，从浏览器地址栏复制 userId 参数值"
+          @update:value="(val: string) => emit('update:embyUserId', val)"
+        />
       </n-form-item>
 
       <n-form-item label="操作">

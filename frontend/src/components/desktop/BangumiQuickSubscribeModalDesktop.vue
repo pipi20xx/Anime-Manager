@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { 
   NModal, NButton, NSpace, NIcon, NCheckbox, NCheckboxGroup,
-  NImage, NScrollbar, NSelect, NInput, NInputGroup,
+  NImage, NScrollbar, NSelect,
   NSpin, NEmpty, NGrid, NGi, NTag, NTabs, NTabPane
 } from 'naive-ui'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import {
   FlashOnOutlined as FlashIcon,
   CheckCircleOutlined as CheckIcon,
@@ -46,15 +48,14 @@ const {
         <n-space vertical size="large">
           <n-grid :cols="2" :x-gap="20">
             <n-gi>
-              <div class="label">套用预设预设</div>
-              <n-select v-model:value="selectedTemplate" :options="templates.map(t => ({label: t.name, value: t.id}))" />
+              <AppSelectField v-model:value="selectedTemplate" label="套用预设" :options="templates.map(t => ({label: t.name, value: t.id}))" clearable />
             </n-gi>
             <n-gi>
-              <div class="label">手动添加 Bangumi ID</div>
-              <n-input-group>
-                <n-input v-model:value="manualId" placeholder="请输入 Bangumi ID" @keypress.enter="addManualItem" />
-                <n-button v-bind="getButtonStyle('primary')" @click="addManualItem">添加</n-button>
-              </n-input-group>
+              <AppTextField v-model:value="manualId" label="手动添加 Bangumi ID" placeholder="请输入 Bangumi ID" @keyup.enter="addManualItem">
+                <template #suffix>
+                  <n-button v-bind="getButtonStyle('primary')" @click="addManualItem">添加</n-button>
+                </template>
+              </AppTextField>
             </n-gi>
           </n-grid>
 

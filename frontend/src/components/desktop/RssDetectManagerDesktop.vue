@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { h, watch } from 'vue'
 import { 
   NModal, NDataTable, NButton, NSpace,
   NSwitch, NPopconfirm, NTag, NEmpty, NAlert,
-  NForm, NFormItem, NInput, NSelect, NInputNumber,
+  NForm, NFormItem, NInput, NSelect,
   NGrid, NGi, NDivider, NScrollbar
 } from 'naive-ui'
 import { useRssDetectManager } from '../../composables/components/useRssDetectManager'
@@ -142,23 +144,25 @@ const testColumns = [
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="16">
           <n-gi :span="2">
-            <n-form-item label="RSS 链接">
-              <n-input-group style="width: 100%;">
-                <n-input v-model:value="editModel.rss_url" placeholder="请输入 RSS 链接" />
-                <n-button type="primary" :loading="testing" @click="testRss">测试</n-button>
-              </n-input-group>
+            <n-form-item>
+              <AppTextField v-model:value="editModel.rss_url" label="RSS 链接" placeholder="请输入 RSS 链接">
+                <template #suffix>
+                  <n-button type="primary" :loading="testing" @click="testRss" style="height: 40px; border-radius: 6px; margin-right: -4px">测试</n-button>
+                </template>
+              </AppTextField>
             </n-form-item>
           </n-gi>
 
-          <n-gi><n-form-item label="任务名称"><n-input v-model:value="editModel.name" placeholder="留空自动生成" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.name" label="任务名称" placeholder="留空自动生成" /></n-form-item></n-gi>
           <n-gi><n-form-item label="启用状态"><n-switch v-model:value="editModel.enabled" /></n-form-item></n-gi>
 
           <n-divider style="grid-column: span 2;" />
 
           <n-gi :span="2">
-            <n-form-item label="预设选项">
-              <n-select 
+            <n-form-item>
+              <AppSelectField 
                 v-model:value="editModel.template_id" 
+                label="预设选项"
                 :options="[{label: '自定义筛选', value: null}, ...templates.map(t => ({label: t.name, value: t.id}))]"
                 placeholder="选择预设或自定义筛选"
                 clearable
@@ -167,34 +171,35 @@ const testColumns = [
           </n-gi>
 
           <template v-if="!editModel.template_id">
-            <n-gi><n-form-item label="分辨率"><n-input v-model:value="editModel.filter_res" placeholder="如: 1080p, 4k" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="制作组"><n-input v-model:value="editModel.filter_team" placeholder="如: LoliHouse, VCB-Studio" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="来源"><n-input v-model:value="editModel.filter_source" placeholder="如: Blu-ray, Web-DL" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="视频编码"><n-input v-model:value="editModel.filter_codec" placeholder="如: HEVC, AVC" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="音频编码"><n-input v-model:value="editModel.filter_audio" placeholder="如: FLAC, AAC" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="字幕语言"><n-input v-model:value="editModel.filter_sub" placeholder="如: CHS, CHT" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="视频特效"><n-input v-model:value="editModel.filter_effect" placeholder="如: HDR10, DV" /></n-form-item></n-gi>
-            <n-gi><n-form-item label="发布平台"><n-input v-model:value="editModel.filter_platform" placeholder="如: Baha, Netflix" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_res" label="分辨率" placeholder="如: 1080p, 4k" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_team" label="制作组" placeholder="如: LoliHouse, VCB-Studio" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_source" label="来源" placeholder="如: Blu-ray, Web-DL" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_codec" label="视频编码" placeholder="如: HEVC, AVC" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_audio" label="音频编码" placeholder="如: FLAC, AAC" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_sub" label="字幕语言" placeholder="如: CHS, CHT" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_effect" label="视频特效" placeholder="如: HDR10, DV" /></n-form-item></n-gi>
+            <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_platform" label="发布平台" placeholder="如: Baha, Netflix" /></n-form-item></n-gi>
           </template>
 
           <n-divider style="grid-column: span 2;" />
 
-          <n-gi><n-form-item label="下载客户端">
-            <n-select 
+          <n-gi><n-form-item>
+            <AppSelectField 
               v-model:value="editModel.target_client_id" 
+              label="下载客户端"
               :options="clients.map(c => ({label: c.name, value: c.id}))" 
               placeholder="默认客户端"
               clearable
             />
           </n-form-item></n-gi>
-          <n-gi><n-form-item label="下载目录"><n-input v-model:value="editModel.save_path" placeholder="留空则使用客户端默认路径" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="分类/标签"><n-input v-model:value="editModel.category" placeholder="例如: Anime" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="执行间隔（分钟）">
-            <n-input-number v-model:value="editModel.interval_minutes" :min="10" :max="10080" :step="30" />
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.save_path" label="下载目录" placeholder="留空则使用客户端默认路径" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.category" label="分类/标签" placeholder="例如: Anime" /></n-form-item></n-gi>
+          <n-gi><n-form-item>
+            <AppTextField v-model:value="editModel.interval_minutes" label="执行间隔（分钟）" type="number" :min="10" :max="10080" :step="30" />
           </n-form-item></n-gi>
 
-          <n-gi :span="2"><n-form-item label="必须包含"><n-input v-model:value="editModel.include_keywords" placeholder="包含这些关键词才下载" /></n-form-item></n-gi>
-          <n-gi :span="2"><n-form-item label="排除关键词"><n-input v-model:value="editModel.exclude_keywords" placeholder="包含这些关键词则跳过" /></n-form-item></n-gi>
+          <n-gi :span="2"><n-form-item><AppTextField v-model:value="editModel.include_keywords" label="必须包含" placeholder="包含这些关键词才下载" /></n-form-item></n-gi>
+          <n-gi :span="2"><n-form-item><AppTextField v-model:value="editModel.exclude_keywords" label="排除关键词" placeholder="包含这些关键词则跳过" /></n-form-item></n-gi>
         </n-grid>
       </n-form>
 

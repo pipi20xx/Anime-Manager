@@ -2,6 +2,7 @@
 import { 
   NCard, NList, NListItem, NThing, NSpace, NButton, NIcon, NInput, NSelect, NTag, NCollapse, NCollapseItem
 } from 'naive-ui'
+import AppSelectField from '../../components/AppSelectField.vue'
 import {
   HistoryOutlined as LogIcon,
   DeleteSweepOutlined as ClearIcon,
@@ -51,8 +52,8 @@ const loadMore = () => {
       <n-collapse>
         <n-collapse-item title="筛选与搜索" name="1">
           <n-space vertical>
-            <n-select v-model:value="filters.module" placeholder="模块" clearable :options="[{label: '识别', value: '识别'}, {label: '整理', value: '整理'}, {label: 'STRM', value: 'STRM'}, {label: 'RSS', value: 'RSS'}, {label: '订阅', value: '订阅'}, {label: '系统', value: '系统'}, {label: '网络', value: '网络'}, {label: '数据库', value: '数据库'}]" />
-            <n-select v-model:value="filters.level" placeholder="等级" clearable :options="[{label: 'INFO', value: 'INFO'}, {label: 'WARNING', value: 'WARNING'}, {label: 'ERROR', value: 'ERROR'}, {label: 'DEBUG', value: 'DEBUG'}]" />
+            <AppSelectField v-model:value="filters.module" label="模块" placeholder="全部模块" clearable :options="[{label: '识别', value: '识别'}, {label: '整理', value: '整理'}, {label: 'STRM', value: 'STRM'}, {label: 'RSS', value: 'RSS'}, {label: '订阅', value: '订阅'}, {label: '系统', value: '系统'}, {label: '网络', value: '网络'}, {label: '数据库', value: '数据库'}]" />
+            <AppSelectField v-model:value="filters.level" label="等级" placeholder="全部等级" clearable :options="[{label: 'INFO', value: 'INFO'}, {label: 'WARNING', value: 'WARNING'}, {label: 'ERROR', value: 'ERROR'}, {label: 'DEBUG', value: 'DEBUG'}]" />
             <n-input v-model:value="filters.keyword" placeholder="搜索内容..." @keypress.enter="fetchLogs">
               <template #prefix><n-icon><SearchIcon /></n-icon></template>
             </n-input>

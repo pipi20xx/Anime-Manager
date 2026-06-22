@@ -4,6 +4,7 @@ import {
   NModal, NProgress, NScrollbar, NList, NListItem, NIcon,
   NButton, NSpace, NText, NResult, NSelect
 } from 'naive-ui'
+import AppSelectField from './AppSelectField.vue'
 import {
   SearchOutlined as SearchIcon,
   ErrorOutlineOutlined as ErrorIcon,
@@ -167,11 +168,10 @@ watch(() => props.show, (newVal) => {
           <!-- 站点选择区 -->
           <n-space align="center" justify="space-between">
             <n-space align="center">
-              <span style="color: var(--text-tertiary)">搜寻范围:</span>
-              <n-select 
+              <AppSelectField 
                 v-model:value="selectedIndexerId" 
+                label="搜寻范围"
                 :options="indexers.map(i => ({ label: i.name, value: i.id }))" 
-                size="small"
                 style="width: 220px"
                 :disabled="isRunning"
                 :loading="indexers.length <= 1"

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { watch } from 'vue'
 import { 
   NModal, NCard, NForm, NFormItem, NInput, NSelect, NButton, 
   NSpace, NGrid, NGi, NSwitch, NImage, NInputGroup,
-  NInputNumber, NScrollbar, NDivider, NIcon
+  NScrollbar, NDivider, NIcon
 } from 'naive-ui'
 import { SearchOutlined as SearchIcon } from '@vicons/material'
 import { useSubscriptionEdit } from '../../composables/modals/useSubscriptionEdit'
@@ -55,8 +57,9 @@ watch(() => props.show, (newVal) => {
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="12">
           <n-gi :span="2" v-if="isNew && templates.length > 0">
-            <n-form-item label="套用预设">
-              <n-select 
+            <n-form-item>
+              <AppSelectField 
+                label="套用预设"
                 placeholder="快速选择已保存的订阅预设..." 
                 :options="templates.map(t => ({label: t.name, value: t.id}))"
                 @update:value="applyTemplate"
@@ -65,9 +68,10 @@ watch(() => props.show, (newVal) => {
           </n-gi>
           
           <n-gi :span="2">
-             <n-form-item label="优先级策略">
-              <n-select 
+             <n-form-item>
+              <AppSelectField 
                 v-model:value="formModel.quality_profile_id"
+                label="优先级策略"
                 placeholder="选择洗版/优先级策略 (可选)" 
                 :options="profiles.map(p => ({label: p.name, value: p.id}))"
                 clearable
@@ -77,18 +81,19 @@ watch(() => props.show, (newVal) => {
           </n-gi>
 
           <n-gi :span="2">
-            <n-form-item label="搜索/选择">
-              <n-input-group>
-                <n-select 
+            <n-form-item>
+              <div style="display: flex; align-items: flex-end; gap: 8px; width: 100%">
+                <AppSelectField 
                   v-model:value="formModel.media_type" 
+                  label="媒体类型"
                   :options="[{label:'剧集', value:'tv'}, {label:'电影', value:'movie'}]" 
-                  style="width: 100px"
+                  style="width: 150px; flex-shrink: 0"
                 />
-                <n-input v-model:value="searchQuery" placeholder="输入名称搜索 TMDB..." @keypress.enter="handleSearch" />
-                <n-button type="primary" @click="handleSearch" :loading="loading">
+                <AppTextField v-model:value="searchQuery" label="搜索 TMDB" placeholder="输入名称搜索 TMDB..." @keyup.enter="handleSearch" style="flex: 1" />
+                <n-button type="primary" @click="handleSearch" :loading="loading" style="height: 56px; border-radius: 8px">
                   搜索
                 </n-button>
-              </n-input-group>
+              </div>
             </n-form-item>
           </n-gi>
 
@@ -105,13 +110,13 @@ watch(() => props.show, (newVal) => {
           </n-gi>
 
           <n-gi>
-            <n-form-item label="TMDB ID">
-              <n-input v-model:value="formModel.tmdb_id" placeholder="手动输入" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.tmdb_id" label="TMDB ID" placeholder="手动输入" />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="Bangumi ID">
-              <n-input v-model:value="formModel.bangumi_id" placeholder="可选: 关联 Bangumi" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.bangumi_id" label="Bangumi ID" placeholder="可选: 关联 Bangumi" />
               <template #feedback>
                 <div v-if="bangumiName" style="color: var(--n-primary-color); font-size: 12px; font-weight: bold;">
                   📺 {{ bangumiName }}
@@ -120,8 +125,8 @@ watch(() => props.show, (newVal) => {
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="标题">
-              <n-input v-model:value="formModel.title" placeholder="基础名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.title" label="标题" placeholder="基础名称" />
             </n-form-item>
           </n-gi>
 
@@ -135,63 +140,68 @@ watch(() => props.show, (newVal) => {
              </div>
           </n-gi>
 
-          <n-gi><n-form-item label="分辨率"><n-input v-model:value="formModel.filter_res" placeholder="如: 1080P" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="制作组"><n-input v-model:value="formModel.filter_team" placeholder="如: LoliHouse" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="来源"><n-input v-model:value="formModel.filter_source" placeholder="如: Web-DL" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="视频编码"><n-input v-model:value="formModel.filter_codec" placeholder="如: HEVC" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="音频编码"><n-input v-model:value="formModel.filter_audio" placeholder="如: FLAC" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="字幕语言"><n-input v-model:value="formModel.filter_sub" placeholder="如: CHS" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="视频特效"><n-input v-model:value="formModel.filter_effect" placeholder="如: HDR10" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="发布平台"><n-input v-model:value="formModel.filter_platform" placeholder="如: Baha" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="下载目录"><n-input v-model:value="formModel.save_path" placeholder="留空默认" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="必须包含"><n-input v-model:value="formModel.include_keywords" placeholder="关键词" /></n-form-item></n-gi>
-          <n-gi><n-form-item label="排除关键词"><n-input v-model:value="formModel.exclude_keywords" placeholder="排除词" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_res" label="分辨率" placeholder="如: 1080P" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_team" label="制作组" placeholder="如: LoliHouse" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_source" label="来源" placeholder="如: Web-DL" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_codec" label="视频编码" placeholder="如: HEVC" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_audio" label="音频编码" placeholder="如: FLAC" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_sub" label="字幕语言" placeholder="如: CHS" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_effect" label="视频特效" placeholder="如: HDR10" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_platform" label="发布平台" placeholder="如: Baha" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.save_path" label="下载目录" placeholder="留空默认" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.include_keywords" label="必须包含" placeholder="关键词" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.exclude_keywords" label="排除关键词" placeholder="排除词" /></n-form-item></n-gi>
 
           <n-gi>
-            <n-form-item label="下载客户端">
-              <n-select 
+            <n-form-item>
+              <AppSelectField 
                 v-model:value="formModel.target_client_id" 
+                label="下载客户端"
                 :options="clients.map(c => ({label: c.name, value: c.id}))" 
+                clearable
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="监控订阅源">
-              <n-select 
+            <n-form-item>
+              <AppSelectField 
                 v-model:value="formModel.target_feeds" 
+                label="监控订阅源"
                 multiple
                 placeholder="留空则监控所有"
                 :options="feeds.map(f => ({label: f.title || f.url, value: String(f.id)}))"
-                :fallback-option="(val) => ({ label: `源ID: ${val}`, value: val })"
+                :fallback-option="(val: string | number) => ({ label: `源ID: ${val}`, value: val })"
               />
             </n-form-item>
           </n-gi>
           <n-gi>
-            <n-form-item label="分类/标签">
-              <n-input v-model:value="formModel.category" placeholder="分类" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.category" label="分类/标签" placeholder="分类" />
             </n-form-item>
           </n-gi>
 
           <n-gi v-if="formModel.media_type === 'tv'">
-            <n-form-item label="订阅季度">
-              <n-select 
+            <n-form-item>
+              <AppSelectField 
                 v-model:value="formModel.season" 
+                label="订阅季度"
                 filterable
                 tag
                 :options="[{label: '全部季度', value: 0}, ...tmdbSeasons.map(s => ({label: `第 ${s.season_number} 季 (${s.episode_count}集)`, value: s.season_number}))]"
+                :fallback-option="(val: string | number) => ({ label: val === 0 || val === '0' ? '全部季度' : `第 ${val} 季`, value: val })"
                 @update:value="onSeasonChange"
                 placeholder="选择季度"
               />
             </n-form-item>
           </n-gi>
           <n-gi v-if="formModel.media_type === 'tv'">
-            <n-form-item label="起始集数">
-              <n-input-number v-model:value="formModel.start_episode" :min="0" placeholder="0" style="width: 100%" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.start_episode" label="起始集数" type="number" :min="0" placeholder="0" />
             </n-form-item>
           </n-gi>
           <n-gi v-if="formModel.media_type === 'tv'">
-            <n-form-item label="结束集数">
-              <n-input-number v-model:value="formModel.end_episode" :min="0" placeholder="0" style="width: 100%" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.end_episode" label="结束集数" type="number" :min="0" placeholder="0" />
             </n-form-item>
           </n-gi>
 

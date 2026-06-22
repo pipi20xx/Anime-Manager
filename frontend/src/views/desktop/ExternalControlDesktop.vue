@@ -5,6 +5,7 @@ import {
   NDivider, NTag, NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
   NModal, NTooltip
 } from 'naive-ui'
+import AppTextField from '../../components/AppTextField.vue'
 import {
   ContentCopyOutlined as CopyIcon,
   RefreshOutlined as RefreshIcon,
@@ -162,38 +163,33 @@ const logColumns = [
               <p>密钥用于身份验证，请妥善保管。在请求头中加入 <code>Authorization: Bearer [您的密钥]</code> 即可调用接口。</p>
             </div>
 
-            <n-form-item label="当前生效的密钥" label-placement="top">
-              <n-space vertical style="width: 100%" :size="12">
-                <n-input 
-                  v-model:value="config.external_token" 
-                  type="password" 
-                  show-password-on="click" 
-                  placeholder="尚未生成密钥" 
-                  readonly
-                  size="large"
-                  style="width: 100%; font-family: monospace; font-size: 13px;"
-                >
-                  <template #suffix>
-                    <n-tooltip trigger="hover">
-                      <template #trigger>
-                        <n-button 
-                          v-bind="getButtonStyle('icon')"
-                          style="margin-right: -4px"
-                          @click.stop="copyToClipboard(config.external_token)"
-                        >
-                          <template #icon><n-icon><CopyIcon /></n-icon></template>
-                        </n-button>
-                      </template>
-                      复制访问密钥
-                    </n-tooltip>
-                  </template>
-                </n-input>
-                
-                <n-button v-bind="getButtonStyle('primary')" size="large" @click="generateToken" style="width: 100%">
-                  重新生成访问令牌 (Token)
-                </n-button>
-              </n-space>
+            <n-form-item>
+              <AppTextField 
+                v-model:value="config.external_token" 
+                label="当前生效的密钥"
+                type="password" 
+                placeholder="尚未生成密钥" 
+                readonly
+              >
+                <template #suffix>
+                  <n-tooltip trigger="hover">
+                    <template #trigger>
+                      <n-button 
+                        v-bind="getButtonStyle('icon')"
+                        style="margin-right: -4px"
+                        @click.stop="copyToClipboard(config.external_token)"
+                      >
+                        <template #icon><n-icon><CopyIcon /></n-icon></template>
+                      </n-button>
+                    </template>
+                    复制访问密钥
+                  </n-tooltip>
+                </template>
+              </AppTextField>
             </n-form-item>
+            <n-button v-bind="getButtonStyle('primary')" size="large" @click="generateToken" style="width: 100%; margin-top: 12px">
+              重新生成访问令牌 (Token)
+            </n-button>
 
             <n-divider title-placement="left">Webhook 推送</n-divider>
             
@@ -202,12 +198,11 @@ const logColumns = [
             </n-alert>
             
             <div class="webhook-section">
-              <n-form-item label="回调 URL" label-placement="top">
-                <n-input 
+              <n-form-item>
+                <AppTextField 
                   :value="webhookUrl" 
+                  label="回调 URL"
                   readonly 
-                  size="large" 
-                  style="width: 100%; font-family: monospace; font-size: 13px;"
                 >
                   <template #suffix>
                     <n-tooltip trigger="hover">
@@ -223,7 +218,7 @@ const logColumns = [
                       复制回调链接
                     </n-tooltip>
                   </template>
-                </n-input>
+                </AppTextField>
               </n-form-item>
             </div>
 
@@ -237,12 +232,11 @@ const logColumns = [
               </ul>
             </n-alert>
             <div class="webhook-section">
-              <n-form-item label="Emby 通知地址" label-placement="top">
-                <n-input 
+              <n-form-item>
+                <AppTextField 
                   :value="embyWebhookUrl" 
+                  label="Emby 通知地址"
                   readonly 
-                  size="large" 
-                  style="width: 100%; font-family: monospace; font-size: 13px;"
                 >
                   <template #suffix>
                     <n-tooltip trigger="hover">
@@ -258,7 +252,7 @@ const logColumns = [
                       复制 Emby 回调链接
                     </n-tooltip>
                   </template>
-                </n-input>
+                </AppTextField>
               </n-form-item>
             </div>
           </div>

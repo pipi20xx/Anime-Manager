@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
-  NInput, NRadioGroup, NRadioButton, NGrid, NGi, NInputNumber, 
+  NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
   NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, 
   NSwitch, NDynamicTags
 } from 'naive-ui'
@@ -47,31 +49,31 @@ const {
           <n-space vertical size="large" class="mt-4">
             <n-alert type="info" :bordered="false">整理针对目录: {{ currentPath }}</n-alert>
             
-            <n-form-item label="整理规则">
-              <n-select v-model:value="manualTask.rule_id" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择重命名规则" />
+            <n-form-item>
+              <AppSelectField v-model:value="manualTask.rule_id" label="整理规则" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择重命名规则" clearable />
             </n-form-item>
 
-            <n-form-item label="目标目录">
-              <n-input v-model:value="manualTask.target_dir" placeholder="媒体库绝对路径 (如: /vol1/1000/Media)" />
+            <n-form-item>
+              <AppTextField v-model:value="manualTask.target_dir" label="目标目录" placeholder="媒体库绝对路径 (如: /vol1/1000/Media)" />
             </n-form-item>
 
-            <n-form-item label="操作类型">
-              <n-radio-group v-model:value="manualTask.action_type">
-                <n-radio-button value="move">物理移动</n-radio-button>
-                <n-radio-button value="copy">完整复制</n-radio-button>
-                <n-radio-button value="link">建立硬链</n-radio-button>
-                <n-radio-button value="cd2_move">CD2 移动</n-radio-button>
-                <n-radio-button value="cd2_copy">CD2 复制</n-radio-button>
-                <n-radio-button value="hash_only">仅记录哈希</n-radio-button>
-              </n-radio-group>
+            <n-form-item>
+              <AppSelectField v-model:value="manualTask.action_type" label="操作类型" :options="[
+                {label:'物理移动', value:'move'},
+                {label:'完整复制', value:'copy'},
+                {label:'建立硬链', value:'link'},
+                {label:'CD2 移动', value:'cd2_move'},
+                {label:'CD2 复制', value:'cd2_copy'},
+                {label:'仅记录哈希', value:'hash_only'}
+              ]" />
             </n-form-item>
 
             <div class="forced-box">
               <div class="pl"><n-icon><TuneIcon /></n-icon> 强制元数据 (可选)</div>
               <n-grid :cols="3" :x-gap="12">
-                <n-gi><n-input v-model:value="manualTask.forced_tmdb_id" placeholder="TMDB ID" size="small" /></n-gi>
-                <n-gi><n-select v-model:value="manualTask.forced_type" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="自动" clearable size="small" /></n-gi>
-                <n-gi><n-input-number v-model:value="manualTask.forced_season" placeholder="季号 (自动)" :show-button="false" size="small" style="width: 100%" /></n-gi>
+                <n-gi><AppTextField v-model:value="manualTask.forced_tmdb_id" label="TMDB ID" placeholder="TMDB ID" /></n-gi>
+                <n-gi><AppSelectField v-model:value="manualTask.forced_type" label="类型" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="自动" clearable /></n-gi>
+                <n-gi><AppTextField v-model:value="manualTask.forced_season" label="季号" placeholder="自动" type="number" /></n-gi>
               </n-grid>
 
               <n-input v-model:value="manualSearch.keyword" placeholder="搜索剧名自动填入 ID 和类型..." size="small" class="mt-2" @keypress.enter="searchTmdb">
@@ -98,8 +100,8 @@ const {
           <n-space vertical size="large" class="mt-4">
             <n-grid :cols="2" :x-gap="12">
               <n-gi>
-                <n-form-item label="处理间隔(s)">
-                  <n-input-number v-model:value="manualTask.process_interval" :min="0" style="width: 100%" />
+                <n-form-item>
+                  <AppTextField v-model:value="manualTask.process_interval" label="处理间隔(s)" type="number" :min="0" />
                 </n-form-item>
               </n-gi>
             </n-grid>

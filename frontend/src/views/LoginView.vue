@@ -14,35 +14,31 @@
       <n-form ref="formInst" :model="formValue" :rules="rules" size="large">
         <template v-if="!showOtp">
           <n-form-item path="username">
-            <n-input v-model:value="formValue.username" placeholder="用户名">
-              <template #prefix><n-icon><UserIcon /></n-icon></template>
-            </n-input>
-          </n-form-item>
-          <n-form-item path="password">
-            <n-input
-              v-model:value="formValue.password"
-              type="password"
-              show-password-on="mousedown"
-              placeholder="密码"
-              @keyup.enter="handleLogin"
-            >
-              <template #prefix><n-icon><KeyIcon /></n-icon></template>
-            </n-input>
-          </n-form-item>
-        </template>
+          <AppTextField v-model:value="formValue.username" label="用户名" :prefix-icon="UserIcon" />
+        </n-form-item>
+        <n-form-item path="password">
+          <AppTextField
+            v-model:value="formValue.password"
+            label="密码"
+            type="password"
+            :prefix-icon="KeyIcon"
+            @keyup.enter="handleLogin"
+          />
+        </n-form-item>
+      </template>
 
-        <template v-else>
-          <n-form-item label="双重验证码" path="otp_code">
-            <n-input
-              v-model:value="formValue.otp_code"
-              placeholder="请输入 6 位动态验证码"
-              maxlength="6"
-              @keyup.enter="handleLogin"
-              autofocus
-            >
-              <template #prefix><n-icon><LockIcon /></n-icon></template>
-            </n-input>
-          </n-form-item>
+      <template v-else>
+        <n-form-item path="otp_code">
+          <AppTextField
+            v-model:value="formValue.otp_code"
+            label="双重验证码"
+            :prefix-icon="LockIcon"
+            placeholder="请输入 6 位动态验证码"
+            maxlength="6"
+            @keyup.enter="handleLogin"
+            autofocus
+          />
+        </n-form-item>
           <n-button block @click="showOtp = false" style="margin-bottom: 10px; height: 48px;">返回账号登录</n-button>
         </template>
         
@@ -68,13 +64,14 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { 
-  NCard, NForm, NFormItem, NInput, NButton, NIcon, NH2, NText, useMessage 
+  NCard, NForm, NFormItem, NButton, NIcon, NH2, NText, useMessage 
 } from 'naive-ui'
 import { 
   LockOpenOutlined as LockIcon,
   PersonOutlined as UserIcon,
   KeyOutlined as KeyIcon
 } from '@vicons/material'
+import AppTextField from '../components/AppTextField.vue'
 import axios from 'axios'
 import { loginSuccess } from '../store/navigationStore'
 

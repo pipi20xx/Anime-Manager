@@ -4,6 +4,8 @@ import {
   NInput, NSelect, NScrollbar, NList, NListItem, NAvatar, NImage,
   NCheckbox, NCollapse, NCollapseItem
 } from 'naive-ui'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import {
   SuccessIcon, SearchIcon, TuneIcon, RenameIcon
 } from '../../assets/icons' // Assuming icons might be centralized or re-import here
@@ -114,10 +116,10 @@ const {
             </div>
 
             <n-grid :cols="4" :x-gap="12" class="mb-4">
-              <n-gi><n-input v-model:value="forcedParams.tmdb_id" placeholder="TMDB ID" size="small" /></n-gi>
-              <n-gi><n-select v-model:value="forcedParams.type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" size="small" /></n-gi>
-              <n-gi><n-input v-model:value="forcedParams.season" placeholder="指定季" size="small" /></n-gi>
-              <n-gi><n-input v-model:value="forcedParams.episode" placeholder="指定集" size="small" /></n-gi>
+              <n-gi><AppTextField v-model:value="forcedParams.tmdb_id" label="TMDB ID" placeholder="TMDB ID" /></n-gi>
+              <n-gi><AppSelectField v-model:value="forcedParams.type" label="资源类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" /></n-gi>
+              <n-gi><AppTextField v-model:value="forcedParams.season" label="指定季" placeholder="指定季" /></n-gi>
+              <n-gi><AppTextField v-model:value="forcedParams.episode" label="指定集" placeholder="指定集" /></n-gi>
             </n-grid>
 
             <n-input v-model:value="testSearch.keyword" placeholder="快捷搜索剧名找 ID..." size="small" class="mt-4" @keypress.enter="searchTmdbForTest">

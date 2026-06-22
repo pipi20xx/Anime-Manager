@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppTextField from '../../components/AppTextField.vue'
+import AppSelectField from '../../components/AppSelectField.vue'
 import { ref } from 'vue'
 import { 
   NInput, NButton, NSwitch, NCollapse, NCollapseItem,
@@ -33,8 +35,9 @@ const activeTab = ref('dashboard')
         <div class="m-tab-content">
           <!-- Hero Input -->
           <div class="m-form-group">
-             <n-input 
+             <AppTextField 
                 v-model:value="recognitionState.filename" 
+                label="文件名/路径"
                 type="textarea" 
                 placeholder="输入文件名/路径..." 
                 :autosize="{ minRows: 2, maxRows: 4 }" 
@@ -57,7 +60,7 @@ const activeTab = ref('dashboard')
                 <span style="font-weight: bold; color: var(--n-primary-color)">高级参数 & 调试</span>
               </template>
               <div class="m-card m-card-compact">
-                 <n-form-item label="搜索辅助 (TMDB)">
+                 <n-form-item>
                     <n-input-group>
                       <n-input v-model:value="sandboxSearch.keyword" placeholder="搜索..." />
                       <n-button v-bind="getButtonStyle('primary')" @click="searchTmdbForSandbox" :loading="sandboxSearch.loading">
@@ -87,27 +90,28 @@ const activeTab = ref('dashboard')
                  </n-list>
 
                  <n-space vertical size="small">
-                    <n-input v-model:value="recognitionState.forced_tmdb_id" placeholder="强制 TMDB ID" />
-                    <n-select 
+                    <AppTextField v-model:value="recognitionState.forced_tmdb_id" label="搜索辅助 (TMDB)" placeholder="强制 TMDB ID" />
+                    <AppSelectField 
                       v-model:value="recognitionState.forced_type" 
+                      label="媒体类型"
                       :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" 
                     />
                     <div class="m-input-group">
-                       <n-input v-model:value="recognitionState.forced_season" placeholder="季 S" />
-                       <n-input v-model:value="recognitionState.forced_episode" placeholder="集 E" />
+                       <AppTextField v-model:value="recognitionState.forced_season" label="搜索辅助 (TMDB)" placeholder="季 S" />
+                       <AppTextField v-model:value="recognitionState.forced_episode" label="搜索辅助 (TMDB)" placeholder="集 E" />
                     </div>
                     <n-divider dashed>临时注入 (仅本次生效)</n-divider>
-                    <n-form-item label="自定义识别词">
-                       <n-input v-model:value="recognitionState.temp_noise" placeholder="屏蔽词正则" />
+                    <n-form-item>
+                       <AppTextField v-model:value="recognitionState.temp_noise" label="自定义识别词" placeholder="屏蔽词正则" />
                     </n-form-item>
-                    <n-form-item label="自定义制作组">
-                       <n-input v-model:value="recognitionState.temp_groups" placeholder="自定义制作组" />
+                    <n-form-item>
+                       <AppTextField v-model:value="recognitionState.temp_groups" label="自定义制作组" placeholder="自定义制作组" />
                     </n-form-item>
-                    <n-form-item label="自定义渲染词">
-                       <n-input v-model:value="recognitionState.temp_render" placeholder="渲染替换" />
+                    <n-form-item>
+                       <AppTextField v-model:value="recognitionState.temp_render" label="自定义渲染词" placeholder="渲染替换" />
                     </n-form-item>
-                    <n-form-item label="自定义特权规则">
-                       <n-input v-model:value="recognitionState.temp_privilege" placeholder="特权规则 (每行一条)" />
+                    <n-form-item>
+                       <AppTextField v-model:value="recognitionState.temp_privilege" label="自定义特权规则" placeholder="特权规则 (每行一条)" />
                     </n-form-item>
                  </n-space>
               </div>

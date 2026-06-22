@@ -829,6 +829,55 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 }
 
 /* ============================================
+ * 全局输入框尺寸对齐 Vuetify 默认高度（56px）
+ * ============================================ */
+.n-input {
+  --n-height: 56px !important;
+}
+
+.n-input .n-input__input-el,
+.n-input .n-input__textarea-el {
+  height: 56px !important;
+  min-height: 56px !important;
+  font-size: 16px !important;
+  line-height: 1.4 !important;
+}
+
+.n-input .n-input__placeholder {
+  font-size: 16px !important;
+}
+
+/* small 尺寸保留一定紧凑性，避免表格/筛选区过度撑开 */
+.n-input.n-input--small {
+  --n-height: 40px !important;
+}
+
+.n-input.n-input--small .n-input__input-el,
+.n-input.n-input--small .n-input__textarea-el {
+  height: 40px !important;
+  min-height: 40px !important;
+  font-size: 14px !important;
+}
+
+.n-input.n-input--small .n-input__placeholder {
+  font-size: 14px !important;
+}
+
+/* ============================================
+ * 左侧/抽屉导航菜单文字尺寸对齐 MP
+ * ============================================ */
+.n-menu-item-content__icon {
+  font-size: 22px !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.n-menu-item-content-header {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+}
+
+/* ============================================
  * Checkbox 复选框统一样式 - 电光蓝
  * ============================================ */
 

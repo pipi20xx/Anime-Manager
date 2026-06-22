@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { 
-  NModal, NSpace, NFormItem, NInput, NCollapse, NCollapseItem, 
+  NModal, NSpace, NFormItem, NCollapse, NCollapseItem, 
   NIcon, NGrid, NGi, NButton
 } from 'naive-ui'
 import {
   CodeOutlined as VariableIcon
 } from '@vicons/material'
+import AppTextField from './AppTextField.vue'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
@@ -98,13 +99,14 @@ const handleSave = () => {
     :title="isNew ? '创建新规则' : '编辑重命名规则'"
   >
     <n-space vertical size="large">
-      <n-form-item label="规则名称">
-        <n-input v-model:value="form.name" placeholder="起个名字方便辨认" />
+      <n-form-item>
+        <AppTextField v-model:value="form.name" label="规则名称" placeholder="起个名字方便辨认" />
       </n-form-item>
       
-      <n-form-item label="电影命名模板">
-        <n-input 
+      <n-form-item>
+        <AppTextField 
           v-model:value="form.movie_pattern" 
+          label="电影命名模板"
           type="textarea" 
           :autosize="{minRows:2}" 
           placeholder="{title} ({year})/{title} ({year})"
@@ -112,9 +114,10 @@ const handleSave = () => {
         />
       </n-form-item>
       
-      <n-form-item label="剧集命名模板">
-        <n-input 
+      <n-form-item>
+        <AppTextField 
           v-model:value="form.tv_pattern" 
+          label="剧集命名模板"
           type="textarea" 
           :autosize="{minRows:2}" 
           placeholder="{title} ({year})/Season {season}/S{season_02}E{episode_02} - {title}"

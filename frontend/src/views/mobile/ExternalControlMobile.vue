@@ -5,6 +5,7 @@ import {
   NDivider, NTag, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
   NDrawer, NDrawerContent, NSpin
 } from 'naive-ui'
+import AppTextField from '../../components/AppTextField.vue'
 import {
   ContentCopyOutlined as CopyIcon,
   RefreshOutlined as RefreshIcon,
@@ -75,10 +76,10 @@ onMounted(() => {
         <template #tab><n-icon size="20"><KeyIcon /></n-icon></template>
         <div class="content-body">
           <n-card :bordered="false" title="访问令牌" size="small">
-            <n-input 
+            <AppTextField 
               v-model:value="config.external_token" 
+              label="访问令牌"
               type="password" 
-              show-password-on="click" 
               readonly 
               placeholder="未生成"
             >
@@ -87,7 +88,7 @@ onMounted(() => {
                    <n-icon><CopyIcon /></n-icon>
                  </n-button>
               </template>
-            </n-input>
+            </AppTextField>
             <n-button v-bind="getButtonStyle('primary')" dashed block style="margin-top: 10px" @click="generateToken">
               重置令牌
             </n-button>
@@ -95,24 +96,24 @@ onMounted(() => {
 
           <n-card :bordered="false" title="CD2 Webhook" size="small" style="margin-top: 12px">
              <div class="info-text">云盘文件变动通知</div>
-             <n-input :value="webhookUrl" readonly size="small">
+             <AppTextField :value="webhookUrl" label="CD2 Webhook" readonly>
                 <template #suffix>
                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(webhookUrl)">
                    <n-icon><CopyIcon /></n-icon>
                  </n-button>
               </template>
-             </n-input>
+             </AppTextField>
           </n-card>
 
           <n-card :bordered="false" title="Emby Webhook" size="small" style="margin-top: 12px">
              <div class="info-text">Emby 媒体库通知</div>
-             <n-input :value="embyWebhookUrl" readonly size="small">
+             <AppTextField :value="embyWebhookUrl" label="Emby Webhook" readonly>
                 <template #suffix>
                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(embyWebhookUrl)">
                    <n-icon><CopyIcon /></n-icon>
                  </n-button>
               </template>
-             </n-input>
+             </AppTextField>
           </n-card>
         </div>
       </n-tab-pane>

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { 
-  NModal, NSpace, NFormItem, NInput, NSelect, 
-  NButton, NIcon, NAlert, NSwitch, NForm, NInputNumber
+  NModal, NSpace, NFormItem, NSelect, 
+  NButton, NIcon, NAlert, NSwitch, NForm
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
   CloudUploadOutlined as TestIcon,
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { useClientEdit } from '../../composables/modals/useClientEdit'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -40,36 +42,36 @@ const {
   >
     <n-form label-placement="top">
       <n-space vertical size="large">
-        <n-form-item label="类型">
-          <n-select v-model:value="form.type" :options="typeOptions" />
+        <n-form-item>
+          <AppSelectField v-model:value="form.type" label="类型" :options="typeOptions" />
         </n-form-item>
         
-        <n-form-item label="名称">
-          <n-input v-model:value="form.name" placeholder="起个名字" />
+        <n-form-item>
+          <AppTextField v-model:value="form.name" label="名称" placeholder="起个名字" />
         </n-form-item>
         
-        <n-form-item label="地址 (URL)">
-          <n-input v-model:value="form.url" placeholder="http://192.168.1.x:8080" />
+        <n-form-item>
+          <AppTextField v-model:value="form.url" label="地址 (URL)" placeholder="http://192.168.1.x:8080" />
         </n-form-item>
         
-        <n-form-item label="用户名">
-          <n-input v-model:value="form.username" placeholder="admin" type="password" show-password-on="click" />
+        <n-form-item>
+          <AppTextField v-model:value="form.username" label="用户名" placeholder="admin" type="password" />
         </n-form-item>
         
-        <n-form-item label="密码">
-          <n-input v-model:value="form.password" type="password" show-password-on="click" placeholder="password" />
+        <n-form-item>
+          <AppTextField v-model:value="form.password" label="密码" placeholder="password" type="password" />
         </n-form-item>
 
-        <n-form-item v-if="form.type === 'cd2'" label="API Token (选填)">
-          <n-input v-model:value="form.api_token" type="password" show-password-on="click" placeholder="直接使用 API Token" />
+        <n-form-item v-if="form.type === 'cd2'">
+          <AppTextField v-model:value="form.api_token" label="API Token (选填)" placeholder="直接使用 API Token" type="password" />
         </n-form-item>
 
-        <n-form-item label="默认下载路径 (选填)">
-          <n-input v-model:value="form.default_save_path" placeholder="留空默认" />
+        <n-form-item>
+          <AppTextField v-model:value="form.default_save_path" label="默认下载路径 (选填)" placeholder="留空默认" />
         </n-form-item>
 
-        <n-form-item v-if="form.type === 'cd2'" label="CD2 本地挂载点">
-          <n-input v-model:value="form.mount_path" placeholder="例如: /NVME/..." />
+        <n-form-item v-if="form.type === 'cd2'">
+          <AppTextField v-model:value="form.mount_path" label="CD2 本地挂载点" placeholder="例如: /NVME/..." />
         </n-form-item>
 
         <n-form-item v-if="form.type === 'cd2'">
@@ -80,9 +82,8 @@ const {
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px">轮询云端任务触发STRM联动</div>
         </n-form-item>
 
-        <n-form-item v-if="form.type === 'cd2' && form.monitor_enabled" label="监控间隔 (秒)">
-          <n-input-number v-model:value="form.monitor_interval" :min="1" :max="60" placeholder="5" style="width: 100%" />
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px">默认 5 秒，gRPC 开销小可适当降低</div>
+        <n-form-item v-if="form.type === 'cd2' && form.monitor_enabled">
+          <AppTextField v-model:value="form.monitor_interval" label="监控间隔 (秒)" type="number" :min="1" :max="60" placeholder="5" hint="默认 5 秒，gRPC 开销小可适当降低" />
         </n-form-item>
 
         <n-form-item label="选项">

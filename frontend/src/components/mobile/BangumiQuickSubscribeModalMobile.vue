@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { 
   NModal, NButton, NSpace, NIcon, NCheckbox, NCheckboxGroup,
-  NImage, NScrollbar, NSelect, NInput, NInputGroup,
+  NImage, NScrollbar, NSelect,
   NSpin, NEmpty, NTag, NTabs, NTabPane, NList, NListItem, NThing
 } from 'naive-ui'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import {
   FlashOnOutlined as FlashIcon,
   ArrowBackOutlined as BackIcon,
@@ -42,11 +44,12 @@ const {
     <div class="mobile-bangumi-container">
       <n-spin :show="loading">
         <div class="mobile-tools">
-          <n-select v-model:value="selectedTemplate" :options="templates.map(t => ({label: t.name, value: t.id}))" placeholder="选择预设" />
-          <n-input-group style="margin-top: 8px">
-            <n-input v-model:value="manualId" placeholder="输入 ID" />
-            <n-button @click="addManualItem">添加</n-button>
-          </n-input-group>
+          <AppSelectField v-model:value="selectedTemplate" label="套用预设" :options="templates.map(t => ({label: t.name, value: t.id}))" placeholder="选择预设" clearable />
+          <AppTextField v-model:value="manualId" label="手动添加 Bangumi ID" placeholder="输入 ID" style="margin-top: 8px">
+            <template #suffix>
+              <n-button @click="addManualItem">添加</n-button>
+            </template>
+          </AppTextField>
         </div>
 
         <n-checkbox-group v-model:value="selectedIds" v-if="renderReady && weeklyData.length > 0">

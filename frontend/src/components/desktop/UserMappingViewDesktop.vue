@@ -16,6 +16,7 @@ import {
   PublicOutlined as CountryIcon,
   SearchOutlined as SearchIcon
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -406,85 +407,62 @@ const countryColumns = [
       >
         <n-form label-placement="left" label-width="80">
           <template v-if="activeType === 'genre'">
-            <n-form-item label="ID" required>
-              <n-input 
-                v-model:value="formModel.id" 
-                :disabled="!isNewItem"
-                placeholder="输入 TMDB ID"
-                type="number"
-              />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.id" label="ID" :disabled="!isNewItem" placeholder="输入 TMDB ID" type="number" />
             </n-form-item>
-            <n-form-item label="中文名">
-              <n-input v-model:value="formModel.name_zh" placeholder="流派中文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_zh" label="中文名" placeholder="流派中文名称" />
             </n-form-item>
-            <n-form-item label="英文名">
-              <n-input v-model:value="formModel.name_en" placeholder="流派英文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_en" label="英文名" placeholder="流派英文名称" />
             </n-form-item>
           </template>
           
           <template v-else-if="activeType === 'company'">
-            <n-form-item label="ID" required>
-              <n-input 
-                v-model:value="formModel.id" 
-                :disabled="!isNewItem"
-                placeholder="输入 TMDB ID"
-                type="number"
-              />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.id" label="ID" :disabled="!isNewItem" placeholder="输入 TMDB ID" type="number" />
             </n-form-item>
-            <n-form-item label="名称">
-              <n-input v-model:value="formModel.name" placeholder="公司名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name" label="名称" placeholder="公司名称" />
             </n-form-item>
-            <n-form-item label="国家">
-              <n-input v-model:value="formModel.country" placeholder="如: JP, CN, US" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.country" label="国家" placeholder="如: JP, CN, US" />
             </n-form-item>
           </template>
           
           <template v-else-if="activeType === 'keyword'">
-            <n-form-item label="ID" required>
-              <n-input 
-                v-model:value="formModel.id" 
-                :disabled="!isNewItem"
-                placeholder="输入 TMDB ID"
-                type="number"
-              />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.id" label="ID" :disabled="!isNewItem" placeholder="输入 TMDB ID" type="number" />
             </n-form-item>
-            <n-form-item label="中文名">
-              <n-input v-model:value="formModel.name_zh" placeholder="关键词中文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_zh" label="中文名" placeholder="关键词中文名称" />
             </n-form-item>
-            <n-form-item label="英文名">
-              <n-input v-model:value="formModel.name_en" placeholder="关键词英文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_en" label="英文名" placeholder="关键词英文名称" />
             </n-form-item>
           </template>
 
           <template v-else-if="activeType === 'language'">
-            <n-form-item label="代码" required>
-              <n-input 
-                v-model:value="formModel.code" 
-                :disabled="!isNewItem"
-                placeholder="如: ja, zh, en"
-              />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.code" label="代码" :disabled="!isNewItem" placeholder="如: ja, zh, en" />
             </n-form-item>
-            <n-form-item label="中文名">
-              <n-input v-model:value="formModel.name_zh" placeholder="语言中文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_zh" label="中文名" placeholder="语言中文名称" />
             </n-form-item>
-            <n-form-item label="英文名">
-              <n-input v-model:value="formModel.name_en" placeholder="语言英文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_en" label="英文名" placeholder="语言英文名称" />
             </n-form-item>
           </template>
 
           <template v-else>
-            <n-form-item label="代码" required>
-              <n-input 
-                v-model:value="formModel.code" 
-                :disabled="!isNewItem"
-                placeholder="如: JP, CN, US"
-              />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.code" label="代码" :disabled="!isNewItem" placeholder="如: JP, CN, US" />
             </n-form-item>
-            <n-form-item label="中文名">
-              <n-input v-model:value="formModel.name_zh" placeholder="国家中文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_zh" label="中文名" placeholder="国家中文名称" />
             </n-form-item>
-            <n-form-item label="英文名">
-              <n-input v-model:value="formModel.name_en" placeholder="国家英文名称" />
+            <n-form-item>
+              <AppTextField v-model:value="formModel.name_en" label="英文名" placeholder="国家英文名称" />
             </n-form-item>
           </template>
         </n-form>

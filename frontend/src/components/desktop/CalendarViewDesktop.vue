@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppTextField from '../AppTextField.vue'
 import { ref, computed } from 'vue'
 import {
   NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
@@ -299,9 +300,9 @@ const goToToday = () => {
 
         <n-tab-pane name="add" tab="手动添加">
           <n-form :model="newSubject" label-placement="left" label-width="80">
-            <n-form-item label="TMDB ID"><n-input v-model:value="newSubject.tmdb_id" placeholder="例如: 1399" /></n-form-item>
-            <n-form-item label="标题"><n-input v-model:value="newSubject.title" placeholder="日历显示的标题" /></n-form-item>
-            <n-form-item label="季号"><n-input-number v-model:value="newSubject.season" :min="1" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="newSubject.tmdb_id" label="TMDB ID" placeholder="例如: 1399" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="newSubject.title" label="标题" placeholder="日历显示的标题" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="newSubject.season" label="季号" type="number" :min="1" /></n-form-item>
             <n-button v-bind="getButtonStyle('primary')" block @click="handleAddSubject">保存追踪</n-button>
           </n-form>
         </n-tab-pane>
@@ -362,17 +363,17 @@ const goToToday = () => {
                 <n-switch v-model:value="subscriptionNotifyConfig.enabled" @update:value="saveSubscriptionNotifyConfig" />
               </n-form-item>
               
-              <n-form-item label="检查间隔" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
-                <n-input-number 
+              <n-form-item :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">
+                <AppTextField 
                   v-model:value="subscriptionNotifyConfig.interval"
+                  label="检查间隔"
+                  type="number"
                   :min="5"
                   :max="1440"
-                  size="small"
-                  style="width: 120px"
+                  suffix="分钟"
                   :disabled="!subscriptionNotifyConfig.enabled"
                   @update:value="saveSubscriptionNotifyConfig"
                 />
-                <n-text depth="3" style="margin-left: 8px; font-size: 12px">分钟</n-text>
               </n-form-item>
               
               <n-form-item label="新集通知" :style="{ opacity: subscriptionNotifyConfig.enabled ? 1 : 0.5 }">

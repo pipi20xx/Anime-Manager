@@ -3,6 +3,7 @@ import { watch, ref } from 'vue'
 import { 
   NModal, NSpace, NButton, NIcon, NTag, NSwitch, NVirtualList, NSelect, NSpin
 } from 'naive-ui'
+import AppSelectField from '../AppSelectField.vue'
 import {
   PauseCircleRound as PauseIcon,
   PlayCircleRound as PlayIcon,
@@ -112,12 +113,11 @@ watch(() => props.show, (newVal) => {
             </div>
             
             <div class="setting-row">
-               <span class="setting-label">历史日志回溯</span>
-               <n-select 
+               <AppSelectField 
                   v-model:value="selectedDate"
+                  label="历史日志回溯"
                   placeholder="选择日期"
-                  size="small"
-                  style="width: 180px;"
+                  style="width: 200px;"
                   :options="[
                     { label: '🔴 实时日志流', value: null },
                     ...logDates.map(d => ({ label: `📅 ${d}`, value: d }))

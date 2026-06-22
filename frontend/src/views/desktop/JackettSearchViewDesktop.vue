@@ -4,6 +4,7 @@ import {
   NInput, NButton, NIcon, NSpace, NList, NListItem, 
   NThing, NTag, NEmpty, NSpin, useMessage, NSelect
 } from 'naive-ui'
+import AppSelectField from '../../components/AppSelectField.vue'
 import { SearchOutlined as SearchIcon, CloudDownloadOutlined as DownloadIcon } from '@vicons/material'
 import { searchKeyword } from '../../store/navigationStore'
 
@@ -110,16 +111,18 @@ const formatSize = (sizeStr: string) => {
       </div>
       
       <n-space align="center">
-        <n-select 
+        <AppSelectField 
           v-model:value="selectedIndexerId" 
+          label="搜索范围"
           :options="indexers.map(i => ({ label: i.name, value: i.id }))" 
           placeholder="搜索范围"
           style="width: 180px"
           :loading="indexers.length <= 1"
         />
-        <n-select 
+        <AppSelectField 
           v-if="clients.length > 0"
           v-model:value="selectedClientId" 
+          label="下载客户端"
           :options="clients.map(c => ({ label: c.name + ' (' + c.type + ')', value: c.id }))" 
           placeholder="下载客户端"
           style="width: 200px"

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppTextField from '../../components/AppTextField.vue'
+import AppSelectField from '../../components/AppSelectField.vue'
 import { 
   NGrid, NGi, NInput, NButton, NSwitch, NCollapse, NCollapseItem,
   NCard, NSpace, NAvatar, NList, NListItem, NIcon, NScrollbar, NFormItem, 
@@ -75,8 +77,8 @@ const {
                         
                         <n-grid :cols="40" :x-gap="12" :y-gap="12">
                           <n-gi :span="20">
-                            <n-form-item label="搜索辅助 (TMDB)" path="sandboxSearch.keyword">
-                              <n-input v-model:value="sandboxSearch.keyword" placeholder="输入剧名搜索..." @keypress.enter="searchTmdbForSandbox">
+                            <n-form-item>
+                              <AppTextField v-model:value="sandboxSearch.keyword" label="搜索辅助 (TMDB)" placeholder="输入剧名搜索..." @keyup.enter="searchTmdbForSandbox">
                                 <template #suffix>
                                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForSandbox" :loading="sandboxSearch.loading">
                                     <template #icon>
@@ -84,7 +86,7 @@ const {
                                     </template>
                                   </n-button>
                                 </template>
-                              </n-input>
+                              </AppTextField>
                             </n-form-item>
                             <n-scrollbar v-if="(sandboxSearch.results || []).length > 0" style="max-height: 120px" class="search-res-box mb-4">
                               <n-list hoverable clickable size="small">
@@ -103,20 +105,20 @@ const {
                               </n-list>
                             </n-scrollbar>
                           </n-gi>
-                          <n-gi :span="5"><n-form-item label="强制 ID"><n-input v-model:value="recognitionState.forced_tmdb_id" placeholder="TMDB ID" /></n-form-item></n-gi>
-                          <n-gi :span="5"><n-form-item label="媒体类型"><n-select v-model:value="recognitionState.forced_type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="Type" /></n-form-item></n-gi>
-                          <n-gi :span="5"><n-form-item label="强制季号"><n-input v-model:value="recognitionState.forced_season" placeholder="Season" /></n-form-item></n-gi>
-                          <n-gi :span="5"><n-form-item label="强制集号"><n-input v-model:value="recognitionState.forced_episode" placeholder="Episode" /></n-form-item></n-gi>
+                          <n-gi :span="5"><n-form-item><AppTextField v-model:value="recognitionState.forced_tmdb_id" label="强制 ID" placeholder="TMDB ID" /></n-form-item></n-gi>
+                          <n-gi :span="5"><n-form-item><AppSelectField v-model:value="recognitionState.forced_type" label="媒体类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="Type" /></n-form-item></n-gi>
+                          <n-gi :span="5"><n-form-item><AppTextField v-model:value="recognitionState.forced_season" label="强制季号" placeholder="Season" /></n-form-item></n-gi>
+                          <n-gi :span="5"><n-form-item><AppTextField v-model:value="recognitionState.forced_episode" label="强制集号" placeholder="Episode" /></n-form-item></n-gi>
                           
                           <n-gi :span="40">
                             <n-divider dashed style="margin: 0">
                               <div class="sandbox-label">临时规则注入 (仅本次生效)</div>
                             </n-divider>
                           </n-gi>
-                          <n-gi :span="40"><n-form-item label="自定义识别词"><n-input v-model:value="recognitionState.temp_noise" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="屏蔽词 (Regex)" /></n-form-item></n-gi>
-                          <n-gi :span="40"><n-form-item label="自定义制作组"><n-input v-model:value="recognitionState.temp_groups" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义制作组" /></n-form-item></n-gi>
-                          <n-gi :span="40"><n-form-item label="自定义渲染词"><n-input v-model:value="recognitionState.temp_render" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义渲染词" /></n-form-item></n-gi>
-                          <n-gi :span="40"><n-form-item label="自定义特权规则"><n-input v-model:value="recognitionState.temp_privilege" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="特权规则 (每行一条)" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item><AppTextField v-model:value="recognitionState.temp_noise" label="自定义识别词" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="屏蔽词 (Regex)" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item><AppTextField v-model:value="recognitionState.temp_groups" label="自定义制作组" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义制作组" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item><AppTextField v-model:value="recognitionState.temp_render" label="自定义渲染词" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="自定义渲染词" /></n-form-item></n-gi>
+                          <n-gi :span="40"><n-form-item><AppTextField v-model:value="recognitionState.temp_privilege" label="自定义特权规则" type="textarea" :autosize="{minRows:2, maxRows: 3}" placeholder="特权规则 (每行一条)" /></n-form-item></n-gi>
                         </n-grid>
                       </n-collapse-item>
                     </n-collapse>

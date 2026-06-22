@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import AppTextField from '../../components/AppTextField.vue'
+import AppSelectField from '../../components/AppSelectField.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
-  NInput, NRadioGroup, NRadioButton, NGrid, NGi, NInputNumber, 
+  NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
   NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, 
   NSwitch, NCollapse, NCollapseItem, NDynamicTags
 } from 'naive-ui'
@@ -46,15 +48,15 @@ const {
       </n-alert>
 
       <n-form label-placement="top" size="small">
-        <n-form-item label="整理规则">
-          <n-select v-model:value="manualTask.rule_id" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择规则" />
+        <n-form-item>
+          <AppSelectField v-model:value="manualTask.rule_id" label="整理规则" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择规则" clearable />
         </n-form-item>
 
-        <n-form-item label="目标目录">
-          <n-input v-model:value="manualTask.target_dir" placeholder="例如: /Media" />
+        <n-form-item>
+          <AppTextField v-model:value="manualTask.target_dir" label="目标目录" placeholder="例如: /Media" />
         </n-form-item>
 
-        <n-form-item label="操作类型">
+        <n-form-item>
           <n-radio-group v-model:value="manualTask.action_type" size="small">
             <n-grid :cols="3" :x-gap="8" :y-gap="8">
               <n-gi><n-radio-button value="move" style="width: 100%; text-align: center">移动</n-radio-button></n-gi>
@@ -72,10 +74,10 @@ const {
            <div class="section-title"><n-icon><TuneIcon /></n-icon> 强制参数 (可选)</div>
            
            <n-space vertical :size="8">
-             <n-input v-model:value="manualTask.forced_tmdb_id" placeholder="TMDB ID" />
+             <AppTextField v-model:value="manualTask.forced_tmdb_id" label="操作类型" placeholder="TMDB ID" />
              <div class="row-inputs">
-                <n-select v-model:value="manualTask.forced_type" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="自动" clearable style="width: 100px" />
-                <n-input-number v-model:value="manualTask.forced_season" placeholder="季 (S)" :show-button="false" style="flex: 1" />
+                <AppSelectField v-model:value="manualTask.forced_type" label="类型" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="自动" clearable style="width: 120px" />
+                <AppTextField v-model:value="manualTask.forced_season" label="季 (S)" placeholder="季号" type="number" style="flex: 1" />
              </div>
              
              <!-- 搜索栏 -->
@@ -103,7 +105,7 @@ const {
         <n-collapse arrow-placement="right" style="margin-top: 12px">
            <n-collapse-item title="高级策略与过滤" name="advanced">
               <n-space vertical :size="12">
-                 <n-input-number v-model:value="manualTask.process_interval" placeholder="处理间隔 (s)" :min="0" />
+                 <AppTextField v-model:value="manualTask.process_interval" label="处理间隔 (s)" type="number" :min="0" />
                  <n-dynamic-tags v-model:value="manualTask.ignore_file_regex" />
                  <div class="checkbox-grid">
                     <n-checkbox v-model:checked="manualTask.anime_priority">动漫优化</n-checkbox>

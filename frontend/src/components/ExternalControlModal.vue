@@ -6,6 +6,7 @@ import {
   NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
   NModal
 } from 'naive-ui'
+import AppTextField from './AppTextField.vue'
 import {
   ApiOutlined as ApiIcon,
   ContentCopyOutlined as CopyIcon,
@@ -169,19 +170,21 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
         <!-- API 密钥 -->
         <n-tab-pane name="keys" tab="API 密钥">
           <div class="modal-tab-content">
-            <n-form-item label="访问令牌 (Bearer Token)" label-placement="top">
-              <n-input-group>
-                <n-input v-model:value="config.external_token" type="password" show-password-on="click" readonly placeholder="尚未生成密钥" />
-                <n-button type="primary" @click="generateToken">重新生成</n-button>
-                <n-button v-bind="getButtonStyle('icon')" @click="copyToClipboard(config.external_token)"><template #icon><n-icon><CopyIcon /></n-icon></template></n-button>
-              </n-input-group>
+            <n-form-item>
+              <AppTextField v-model:value="config.external_token" label="访问令牌 (Bearer Token)" type="password" readonly placeholder="尚未生成密钥">
+                <template #suffix>
+                  <n-button v-bind="getButtonStyle('icon')" @click="copyToClipboard(config.external_token)"><template #icon><n-icon><CopyIcon /></n-icon></template></n-button>
+                </template>
+              </AppTextField>
             </n-form-item>
+            <n-button type="primary" @click="generateToken" style="width: 100%; margin-top: 12px">重新生成</n-button>
             <n-divider title-placement="left">Webhook</n-divider>
-            <n-form-item label="CloudDrive2 通知地址" label-placement="left">
-              <n-input-group>
-                <n-input :value="webhookUrl" readonly size="small" />
-                <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(webhookUrl)">复制</n-button>
-              </n-input-group>
+            <n-form-item>
+              <AppTextField :value="webhookUrl" label="CloudDrive2 通知地址" readonly>
+                <template #suffix>
+                  <n-button v-bind="getButtonStyle('icon')" @click="copyToClipboard(webhookUrl)">复制</n-button>
+                </template>
+              </AppTextField>
             </n-form-item>
 
             <n-divider title-placement="left">Emby Webhook</n-divider>
@@ -193,11 +196,12 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
                 <li>勾选行为：<b>按剧集和专辑对通知进行分组</b></li>
               </ul>
             </n-alert>
-            <n-form-item label="Emby 通知地址" label-placement="left">
-              <n-input-group>
-                <n-input :value="embyWebhookUrl" readonly size="small" />
-                <n-button v-bind="getButtonStyle('icon')" size="small" @click="copyToClipboard(embyWebhookUrl)">复制</n-button>
-              </n-input-group>
+            <n-form-item>
+              <AppTextField :value="embyWebhookUrl" label="Emby 通知地址" readonly>
+                <template #suffix>
+                  <n-button v-bind="getButtonStyle('icon')" @click="copyToClipboard(embyWebhookUrl)">复制</n-button>
+                </template>
+              </AppTextField>
             </n-form-item>
           </div>
         </n-tab-pane>

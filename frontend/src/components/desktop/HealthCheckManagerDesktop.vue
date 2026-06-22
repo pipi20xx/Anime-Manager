@@ -2,7 +2,7 @@
 import { h } from 'vue'
 import { 
   NCard, NSpace, NButton, NDataTable, NModal, NForm, NFormItem, 
-  NInput, NInputNumber, NSwitch, NPopconfirm, NTag, NIcon
+  NSwitch, NPopconfirm, NTag, NIcon
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -10,6 +10,7 @@ import {
   DeleteOutlineOutlined as DeleteIcon,
   PlayCircleOutlined as PlayIcon
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
 import { useHealthCheck } from '../../composables/useHealthCheck'
 import type { HealthCheckConfig } from '../../api/health'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -104,8 +105,8 @@ const columns = [
         <n-form-item label="自动巡检" label-placement="left" :show-feedback="false">
           <n-switch v-model:value="config.health_check_enabled" />
         </n-form-item>
-        <n-form-item label="巡检频率 (分)" label-placement="left" :show-feedback="false">
-          <n-input-number v-model:value="config.health_check_interval" :min="1" size="small" style="width: 120px" />
+        <n-form-item label-placement="left" :show-feedback="false">
+          <AppTextField v-model:value="config.health_check_interval" label="巡检频率 (分)" type="number" :min="1" />
         </n-form-item>
         <n-button v-bind="getButtonStyle('primary')" size="small" @click="saveAll">保存设置</n-button>
       </n-space>
@@ -121,14 +122,14 @@ const columns = [
     <!-- Modal 共享 -->
     <n-modal v-model:show="showModal" preset="card" title="健康检查配置" style="width: 600px">
       <n-form :model="editingConfig" label-placement="left" label-width="100">
-        <n-form-item label="配置名称">
-          <n-input v-model:value="editingConfig.name" placeholder="例如: 阿里云盘掉盘检测" />
+        <n-form-item>
+          <AppTextField v-model:value="editingConfig.name" label="配置名称" placeholder="例如: 阿里云盘掉盘检测" />
         </n-form-item>
-        <n-form-item label="文件路径">
-          <n-input v-model:value="editingConfig.file_path" placeholder="容器内的文件路径，例如: /mnt/aliyun/check.txt" />
+        <n-form-item>
+          <AppTextField v-model:value="editingConfig.file_path" label="文件路径" placeholder="容器内的文件路径，例如: /mnt/aliyun/check.txt" />
         </n-form-item>
-        <n-form-item label="远程 URL">
-          <n-input v-model:value="editingConfig.file_url" placeholder="文件的直链 URL (包含 Cookie 或 Token)" />
+        <n-form-item>
+          <AppTextField v-model:value="editingConfig.file_url" label="远程 URL" placeholder="文件的直链 URL (包含 Cookie 或 Token)" />
         </n-form-item>
         <n-form-item label="启用检测">
           <n-switch v-model:value="editingConfig.enabled" />

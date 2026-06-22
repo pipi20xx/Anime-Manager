@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
   NModal, NButton, NSpace, NIcon, NForm, NFormItem, 
-  NInput, NSelect, NSwitch, NPopconfirm,
+  NSelect, NSwitch, NPopconfirm,
   NScrollbar, NDivider, NList, NListItem, NTag, NText
 } from 'naive-ui'
 import {
@@ -11,6 +11,8 @@ import {
   DeleteOutlined as DeleteIcon,
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { useSubscriptionTemplates } from '../../composables/components/useSubscriptionTemplates'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -90,31 +92,32 @@ const {
       <div v-else class="tab-content full-edit">
         <n-scrollbar style="max-height: calc(100vh - 180px)">
           <n-form label-placement="top">
-            <n-form-item label="预设名称"><n-input v-model:value="editModel.name" placeholder="例如: 默认预设" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.name" label="预设名称" placeholder="例如: 默认预设" /></n-form-item>
             
             <n-divider>匹配过滤</n-divider>
-            <n-form-item label="分辨率"><n-input v-model:value="editModel.filter_res" placeholder="1080p, 4k" /></n-form-item>
-            <n-form-item label="制作组"><n-input v-model:value="editModel.filter_team" placeholder="LoliHouse" /></n-form-item>
-            <n-form-item label="来源"><n-input v-model:value="editModel.filter_source" placeholder="Web-DL" /></n-form-item>
-            <n-form-item label="视频编码"><n-input v-model:value="editModel.filter_codec" placeholder="HEVC" /></n-form-item>
-            <n-form-item label="音频编码"><n-input v-model:value="editModel.filter_audio" placeholder="FLAC" /></n-form-item>
-            <n-form-item label="字幕语言"><n-input v-model:value="editModel.filter_sub" placeholder="CHS" /></n-form-item>
-            <n-form-item label="视频特效"><n-input v-model:value="editModel.filter_effect" placeholder="HDR10" /></n-form-item>
-            <n-form-item label="发布平台"><n-input v-model:value="editModel.filter_platform" placeholder="Baha" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_res" label="分辨率" placeholder="1080p, 4k" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_team" label="制作组" placeholder="LoliHouse" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_source" label="来源" placeholder="Web-DL" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_codec" label="视频编码" placeholder="HEVC" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_audio" label="音频编码" placeholder="FLAC" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_sub" label="字幕语言" placeholder="CHS" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_effect" label="视频特效" placeholder="HDR10" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_platform" label="发布平台" placeholder="Baha" /></n-form-item>
             
             <n-divider>关键词过滤</n-divider>
-            <n-form-item label="必须包含"><n-input v-model:value="editModel.include_keywords" placeholder="关键词" /></n-form-item>
-            <n-form-item label="排除关键词"><n-input v-model:value="editModel.exclude_keywords" placeholder="排除词" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.include_keywords" label="必须包含" placeholder="关键词" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.exclude_keywords" label="排除关键词" placeholder="排除词" /></n-form-item>
             
             <n-divider>下载设置</n-divider>
-            <n-form-item label="下载目录"><n-input v-model:value="editModel.save_path" placeholder="留空默认" /></n-form-item>
-            <n-form-item label="下载客户端">
-              <n-select v-model:value="editModel.target_client_id" :options="clients.map(c => ({label: c.name, value: c.id}))" />
+            <n-form-item><AppTextField v-model:value="editModel.save_path" label="下载目录" placeholder="留空默认" /></n-form-item>
+            <n-form-item>
+              <AppSelectField v-model:value="editModel.target_client_id" label="下载客户端" :options="clients.map(c => ({label: c.name, value: c.id}))" clearable />
             </n-form-item>
-            <n-form-item label="分类/标签"><n-input v-model:value="editModel.category" placeholder="Anime" /></n-form-item>
-            <n-form-item label="监控订阅源">
-              <n-select 
+            <n-form-item><AppTextField v-model:value="editModel.category" label="分类/标签" placeholder="Anime" /></n-form-item>
+            <n-form-item>
+              <AppSelectField 
                 v-model:value="editModel.target_feeds" 
+                label="监控订阅源"
                 multiple
                 placeholder="留空则监控所有"
                 :options="feeds.map(f => ({label: f.title || f.url, value: String(f.id)}))"

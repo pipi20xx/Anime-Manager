@@ -4,6 +4,8 @@ import {
   NInput, NSelect, NScrollbar, NList, NListItem, NAvatar, NImage,
   NCheckbox, NCollapse, NCollapseItem
 } from 'naive-ui'
+import AppTextField from '../../components/AppTextField.vue'
+import AppSelectField from '../../components/AppSelectField.vue'
 import {
   CheckCircleOutlined as CheckIcon,
   SearchOutlined as SearchBtnIcon,
@@ -101,11 +103,11 @@ const {
                    </n-checkbox>
                    
                    <n-space vertical :size="8">
-                      <n-input v-model:value="forcedParams.tmdb_id" placeholder="TMDB ID" size="small" />
-                      <n-select v-model:value="forcedParams.type" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" size="small" />
+                      <AppTextField v-model:value="forcedParams.tmdb_id" label="TMDB ID" placeholder="TMDB ID" />
+                      <AppSelectField v-model:value="forcedParams.type" label="资源类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" />
                       <div class="season-ep-row">
-                         <n-input v-model:value="forcedParams.season" placeholder="季 (S)" size="small" />
-                         <n-input v-model:value="forcedParams.episode" placeholder="集 (E)" size="small" />
+                         <AppTextField v-model:value="forcedParams.season" label="季 (S)" placeholder="季 (S)" />
+                         <AppTextField v-model:value="forcedParams.episode" label="集 (E)" placeholder="集 (E)" />
                       </div>
                    </n-space>
 

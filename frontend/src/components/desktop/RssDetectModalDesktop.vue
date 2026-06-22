@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { 
-  NModal, NButton, NSpace, NSelect, NInput, NInputNumber,
+  NModal, NButton, NSpace, NSelect, NInput,
   NSpin, NEmpty, NTag, NDivider, NRadioGroup, NRadio,
   NGrid, NGi, NDataTable, NPopconfirm, NSwitch, NAlert
 } from 'naive-ui'
 import { h } from 'vue'
+import AppTextField from '../AppTextField.vue'
+import AppSelectField from '../AppSelectField.vue'
 import { useRssDetect } from '../../composables/components/useRssDetect'
 
 const props = defineProps<{ show: boolean }>()
@@ -113,18 +115,18 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
           已有 {{ tasks.length }} 个定时任务，可在下方管理
         </n-alert>
 
-        <div class="section-title">RSS 链接</div>
-        <n-input-group>
-          <n-input 
-            v-model:value="rssUrl" 
-            placeholder="请输入 RSS 链接，例如: https://example.com/feed.xml" 
-            size="large"
-            @keypress.enter="handlePreview"
-          />
-          <n-button type="primary" size="large" :loading="detecting" @click="handlePreview">
-            探测
-          </n-button>
-        </n-input-group>
+        <AppTextField 
+          v-model:value="rssUrl" 
+          label="RSS 链接"
+          placeholder="请输入 RSS 链接，例如: https://example.com/feed.xml" 
+          @keyup.enter="handlePreview"
+        >
+          <template #suffix>
+            <n-button type="primary" :loading="detecting" @click="handlePreview" style="height: 40px; border-radius: 6px; margin-right: -4px">
+              探测
+            </n-button>
+          </template>
+        </AppTextField>
 
         <div class="section-title">预设选项</div>
         <n-radio-group v-model:value="mode">
@@ -136,37 +138,33 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
 
         <n-grid :cols="mode === 'custom' ? 3 : 1" :x-gap="16" :y-gap="12">
           <n-gi v-if="mode === 'template'">
-            <n-select 
+            <AppSelectField 
               v-model:value="selectedTemplate" 
+              label="订阅预设"
               :options="templates.map(t => ({label: t.name + (t.is_default ? ' (默认)' : ''), value: t.id}))" 
               placeholder="选择订阅预设"
+              clearable
             />
           </n-gi>
 
           <template v-if="mode === 'custom'">
             <n-gi>
-              <div class="field-label">分辨率</div>
-              <n-input v-model:value="filterRes" placeholder="如: 1080p, 4K" />
+              <AppTextField v-model:value="filterRes" label="分辨率" placeholder="如: 1080p, 4K" />
             </n-gi>
             <n-gi>
-              <div class="field-label">制作组/字幕组</div>
-              <n-input v-model:value="filterTeam" placeholder="如: 某字幕组" />
+              <AppTextField v-model:value="filterTeam" label="制作组/字幕组" placeholder="如: 某字幕组" />
             </n-gi>
             <n-gi>
-              <div class="field-label">来源</div>
-              <n-input v-model:value="filterSource" placeholder="如: WebDL, BDRip" />
+              <AppTextField v-model:value="filterSource" label="来源" placeholder="如: WebDL, BDRip" />
             </n-gi>
             <n-gi>
-              <div class="field-label">编码</div>
-              <n-input v-model:value="filterCodec" placeholder="如: x265, AVC" />
+              <AppTextField v-model:value="filterCodec" label="编码" placeholder="如: x265, AVC" />
             </n-gi>
             <n-gi>
-              <div class="field-label">音频</div>
-              <n-input v-model:value="filterAudio" placeholder="如: FLAC, AAC" />
+              <AppTextField v-model:value="filterAudio" label="音频" placeholder="如: FLAC, AAC" />
             </n-gi>
             <n-gi>
-              <div class="field-label">字幕</div>
-              <n-input v-model:value="filterSub" placeholder="如: 简中, 繁中" />
+              <AppTextField v-model:value="filterSub" label="字幕" placeholder="如: 简中, 繁中" />
             </n-gi>
           </template>
         </n-grid>
@@ -175,32 +173,28 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
 
         <n-grid :cols="3" :x-gap="16">
           <n-gi>
-            <div class="field-label">下载客户端</div>
-            <n-select 
+            <AppSelectField 
               v-model:value="targetClientId" 
+              label="下载客户端"
               :options="clients.map(c => ({label: c.name, value: c.id}))" 
               placeholder="默认客户端"
               clearable
             />
           </n-gi>
           <n-gi>
-            <div class="field-label">保存路径</div>
-            <n-input v-model:value="savePath" placeholder="可选，留空使用默认" />
+            <AppTextField v-model:value="savePath" label="保存路径" placeholder="可选，留空使用默认" />
           </n-gi>
           <n-gi>
-            <div class="field-label">分类</div>
-            <n-input v-model:value="category" placeholder="默认: Anime" />
+            <AppTextField v-model:value="category" label="分类" placeholder="默认: Anime" />
           </n-gi>
         </n-grid>
 
         <n-grid :cols="2" :x-gap="16">
           <n-gi>
-            <div class="field-label">包含关键词</div>
-            <n-input v-model:value="includeKeywords" placeholder="可选，逗号分隔" />
+            <AppTextField v-model:value="includeKeywords" label="包含关键词" placeholder="可选，逗号分隔" />
           </n-gi>
           <n-gi>
-            <div class="field-label">排除关键词</div>
-            <n-input v-model:value="excludeKeywords" placeholder="可选，逗号分隔" />
+            <AppTextField v-model:value="excludeKeywords" label="排除关键词" placeholder="可选，逗号分隔" />
           </n-gi>
         </n-grid>
 
@@ -214,12 +208,10 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
 
         <n-grid v-if="saveAsTask" :cols="2" :x-gap="16">
           <n-gi>
-            <div class="field-label">任务名称</div>
-            <n-input v-model:value="taskName" placeholder="可选，留空自动生成" />
+            <AppTextField v-model:value="taskName" label="任务名称" placeholder="可选，留空自动生成" />
           </n-gi>
           <n-gi>
-            <div class="field-label">执行间隔（分钟）</div>
-            <n-input-number v-model:value="intervalMinutes" :min="10" :max="10080" :step="30" />
+            <AppTextField v-model:value="intervalMinutes" label="执行间隔（分钟）" type="number" :min="10" :max="10080" :step="30" />
           </n-gi>
         </n-grid>
 

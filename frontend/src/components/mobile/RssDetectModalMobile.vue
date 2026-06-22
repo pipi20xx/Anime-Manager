@@ -4,6 +4,8 @@ import {
   NSpin, NEmpty, NTag, NDivider, NRadioGroup, NRadio,
   NPopconfirm, NSwitch, NAlert
 } from 'naive-ui'
+import AppSelectField from '../../components/AppSelectField.vue'
+import AppTextField from '../../components/AppTextField.vue'
 import { useRssDetect } from '../../composables/components/useRssDetect'
 
 const props = defineProps<{ show: boolean }>()
@@ -39,16 +41,18 @@ const {
     <n-scrollbar style="max-height: 70vh;">
       <n-space vertical size="medium">
 
-        <n-input-group>
-          <n-input 
-            v-model:value="rssUrl" 
-            placeholder="输入 RSS 链接" 
-            @keypress.enter="handlePreview"
-          />
-          <n-button type="primary" :loading="detecting" @click="handlePreview">
-            探测
-          </n-button>
-        </n-input-group>
+        <AppTextField 
+          v-model:value="rssUrl" 
+          label="RSS 链接"
+          placeholder="输入 RSS 链接" 
+          @keyup.enter="handlePreview"
+        >
+          <template #suffix>
+            <n-button type="primary" :loading="detecting" @click="handlePreview" style="height: 40px; border-radius: 6px; margin-right: -4px">
+              探测
+            </n-button>
+          </template>
+        </AppTextField>
 
         <div class="label">预设选项</div>
         <n-radio-group v-model:value="mode">
@@ -58,11 +62,13 @@ const {
           </n-space>
         </n-radio-group>
 
-        <n-select 
+        <AppSelectField 
           v-if="mode === 'template'"
           v-model:value="selectedTemplate" 
+          label="订阅预设"
           :options="templates.map(t => ({label: t.name + (t.is_default ? ' (默认)' : ''), value: t.id}))" 
           placeholder="选择订阅预设"
+          clearable
         />
 
         <template v-if="mode === 'custom'">
@@ -75,8 +81,9 @@ const {
 
         <n-divider style="margin: 12px 0;" />
 
-        <n-select 
+        <AppSelectField 
           v-model:value="targetClientId" 
+          label="下载客户端"
           :options="clients.map(c => ({label: c.name, value: c.id}))" 
           placeholder="下载客户端"
           clearable
@@ -88,7 +95,7 @@ const {
         </n-space>
 
         <template v-if="saveAsTask">
-          <n-input v-model:value="taskName" placeholder="任务名称（可选）" />
+          <AppTextField v-model:value="taskName" label="任务名称" placeholder="任务名称（可选）" />
           <div class="label">执行间隔: {{ intervalMinutes }} 分钟</div>
           <n-slider v-model:value="intervalMinutes" :min="30" :max="1440" :step="30" />
         </template>
