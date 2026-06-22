@@ -6,6 +6,7 @@ from sqlmodel import select, desc, func
 
 from database import db
 from models import FileHash
+from utils.hash_calculator import HashCalculator
 
 router = APIRouter(prefix="/api/file_hashes", tags=["文件哈希"])
 
@@ -147,3 +148,86 @@ async def get_file_hash_by_sha1(sha1_hash: str):
         if not item:
             raise HTTPException(status_code=404, detail="记录不存在")
         return {"status": "success", "data": item}
+
+
+class SingleFileHashRequest(BaseModel):
+    file_path: str = Field(..., description="文件的绝对路径")
+    tmdb_id: Optional[str] = Field(None, description="TMDB ID")
+    title: Optional[str] = Field(None, description="标题")
+    season: Optional[int] = Field(None, description="季号")
+    episode: Optional[str] = Field(None, description="集数")
+    media_type: Optional[str] = Field(None, description="媒体类型 (tv/movie)")
+    resolution: Optional[str] = Field(None, description="分辨率")
+    team: Optional[str] = Field(None, description="制作组")
+    video_encode: Optional[str] = Field(None, description="视频编码")
+
+
+@router.post("/calculate", summary="计算单文件哈希并入库")
+async def calculate_single_file_hash(request: SingleFileHashRequest):
+    """
+    对指定文件计算 SHA1 和 ED2K 哈希值，并按 ED2K 去重后存入数据库。
+    支持同时传入识别结果信息（标题、季集等）一起写入。
+    如果该文件的 ED2K 哈希已存在，则更新记录。
+    """
+    import os
+    if not os.path.exists(request.file_path):
+        raise HTTPException(status_code=404, detail=f"文件不存在: {request.file_path}")
+    if not os.path.isfile(request.file_path):
+        raise HTTPException(status_code=400, detail=f"路径不是文件: {request.file_path}")
+
+    hash_result = await HashCalculator.calculate_hashes(request.file_path)
+    if not hash_result:
+        raise HTTPException(status_code=500, detail="哈希计算失败，请检查文件权限或日志")
+
+    async with db.session_scope() as session:
+        stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
+        result = await session.execute(stmt)
+        existing = result.scalars().first()
+
+        if existing:
+            existing.sha1 = hash_result.sha1
+            existing.ed2k_link = hash_result.ed2k_link
+            existing.original_filename = hash_result.filename
+            existing.file_size = hash_result.file_size
+            existing.source_path = hash_result.file_path
+            existing.calculated_at = datetime.now()
+            if request.tmdb_id is not None:
+                existing.tmdb_id = request.tmdb_id
+            if request.title is not None:
+                existing.title = request.title
+            if request.season is not None:
+                existing.season = request.season
+            if request.episode is not None:
+                existing.episode = request.episode
+            if request.media_type is not None:
+                existing.media_type = request.media_type
+            if request.resolution is not None:
+                existing.resolution = request.resolution
+            if request.team is not None:
+                existing.team = request.team
+            if request.video_encode is not None:
+                existing.video_encode = request.video_encode
+            await session.commit()
+            await session.refresh(existing)
+            return {"status": "success", "message": "哈希记录已更新", "data": existing}
+        else:
+            new_record = FileHash(
+                sha1=hash_result.sha1,
+                ed2k=hash_result.ed2k,
+                ed2k_link=hash_result.ed2k_link,
+                original_filename=hash_result.filename,
+                file_size=hash_result.file_size,
+                source_path=hash_result.file_path,
+                tmdb_id=request.tmdb_id,
+                title=request.title,
+                season=request.season,
+                episode=request.episode,
+                media_type=request.media_type,
+                resolution=request.resolution,
+                team=request.team,
+                video_encode=request.video_encode,
+            )
+            session.add(new_record)
+            await session.commit()
+            await session.refresh(new_record)
+            return {"status": "success", "message": "哈希记录已创建", "data": new_record}

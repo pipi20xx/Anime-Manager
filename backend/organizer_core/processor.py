@@ -46,6 +46,70 @@ class FileProcessor:
                 pass
 
     @staticmethod
+    async def _save_related_file_hashes(
+        related_files: List[str], root: str, final: dict, task_id: str = None
+    ):
+        """
+        对关联文件（字幕、音轨等）计算哈希并入库。
+        字幕文件继承视频的识别信息（tmdb_id、title、season 等）。
+        """
+        from models import FileHash
+        from database import db
+
+        for related_file in related_files:
+            related_path = os.path.join(root, related_file)
+            if not os.path.isfile(related_path):
+                continue
+
+            await FileProcessor._log_detail(task_id, f"🔢 计算关联文件哈希: {related_file}")
+            hash_result = await HashCalculator.calculate_hashes(related_path)
+            if not hash_result:
+                await FileProcessor._log_detail(task_id, f"⚠️ 无法计算哈希: {related_file}", "WARN")
+                continue
+
+            async with db.session_scope():
+                stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)
+                existing = await db.first(FileHash, stmt)
+
+                if existing:
+                    existing.sha1 = hash_result.sha1
+                    existing.ed2k_link = hash_result.ed2k_link
+                    existing.original_filename = related_file
+                    existing.file_size = hash_result.file_size
+                    existing.tmdb_id = str(final.get("tmdb_id")) if final.get("tmdb_id") else None
+                    existing.title = final.get("title")
+                    existing.season = final.get("season")
+                    existing.episode = str(final.get("episode")) if final.get("episode") else None
+                    existing.media_type = final.get("category")
+                    existing.resolution = final.get("resolution")
+                    existing.team = final.get("team")
+                    existing.video_encode = final.get("video_encode")
+                    existing.source_path = related_path
+                    existing.calculated_at = datetime.now()
+                    await db.save(existing, audit=False)
+                    await FileProcessor._log_detail(task_id, f"📝 关联文件哈希已更新: {related_file}")
+                else:
+                    file_hash = FileHash(
+                        sha1=hash_result.sha1,
+                        ed2k=hash_result.ed2k,
+                        ed2k_link=hash_result.ed2k_link,
+                        original_filename=related_file,
+                        file_size=hash_result.file_size,
+                        tmdb_id=str(final.get("tmdb_id")) if final.get("tmdb_id") else None,
+                        title=final.get("title"),
+                        season=final.get("season"),
+                        episode=str(final.get("episode")) if final.get("episode") else None,
+                        media_type=final.get("category"),
+                        resolution=final.get("resolution"),
+                        team=final.get("team"),
+                        video_encode=final.get("video_encode"),
+                        source_path=related_path,
+                        target_path=None
+                    )
+                    await db.save(file_hash, audit=False)
+                    await FileProcessor._log_detail(task_id, f"📝 关联文件哈希已保存: {related_file}")
+
+    @staticmethod
     async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True, task_id: str = None) -> List[Dict[str, Any]]:
         """
         处理单个视频文件及其关联字幕
@@ -334,6 +398,10 @@ class FileProcessor:
                                 await FileProcessor._log_detail(task_id, f"📝 哈希记录已保存: {v_file}")
                     else:
                         await FileProcessor._log_detail(task_id, f"⚠️ 跳过哈希记录（无法计算）: {v_file}", "WARN")
+
+                    # [New] 计算关联字幕文件的哈希
+                    if related_files:
+                        await FileProcessor._save_related_file_hashes(related_files, root, final, task_id)
                 else:
                     await FileProcessor._log_detail(task_id, f"🔍 [预览] 仅记录哈希: {v_file} → {final.get('title', '未知')}")
 
@@ -473,6 +541,10 @@ class FileProcessor:
                                         target_path=new_abs_path
                                     )
                                     await db.save(file_hash, audit=False)
+                            
+                            # [New] 计算关联字幕文件的哈希
+                            if hash_result and batch_res == "success" and related_files:
+                                await FileProcessor._save_related_file_hashes(related_files, root, final, task_id)
                     
                     return results
 
@@ -567,6 +639,10 @@ class FileProcessor:
                                     target_path=new_abs_path
                                 )
                                 await db.save(file_hash, audit=False)
+
+                            # [New] 计算关联字幕文件的哈希
+                            if related_files:
+                                await FileProcessor._save_related_file_hashes(related_files, root, final, task_id)
 
                     if v_res == "success":
                         # [New] 清理源空目录 (向上递归)

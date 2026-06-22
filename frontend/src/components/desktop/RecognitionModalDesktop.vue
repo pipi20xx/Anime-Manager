@@ -39,7 +39,10 @@ const {
   forcedParams,
   testSearch,
   searchTmdbForTest,
-  handleRecognize
+  handleRecognize,
+  isHashing,
+  hashResult,
+  calculateHash
 } = useRecognitionModal(props, emit)
 </script>
 
@@ -97,6 +100,15 @@ const {
             <div class="pv">{{ previewPath || (loading ? '正在计算...' : '无法生成预览') }}</div>
           </div>
 
+          <div v-if="hashResult" class="hash-result-box">
+            <div class="pl" style="color: var(--n-success-color)"><n-icon><CheckIcon /></n-icon> 哈希已计算并入库</div>
+            <div class="hash-info-grid">
+              <div class="hi-row"><span class="hi-label">SHA1</span><span class="hi-value mono">{{ hashResult.sha1 }}</span></div>
+              <div class="hi-row"><span class="hi-label">ED2K</span><span class="hi-value mono">{{ hashResult.ed2k }}</span></div>
+              <div class="hi-row"><span class="hi-label">ED2K链接</span><span class="hi-value mono" style="font-size: 11px">{{ hashResult.ed2k_link }}</span></div>
+            </div>
+          </div>
+
           <n-collapse arrow-placement="right">
             <n-collapse-item title="查看深度识别审计日志" name="logs">
               <template #header-extra><n-icon><SearchBtnIcon /></n-icon></template>
@@ -141,6 +153,9 @@ const {
       <n-space justify="end" style="width: 100%">
         <n-space>
           <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
+          <n-button type="warning" :loading="isHashing" :disabled="!data" @click="calculateHash">
+            计算哈希
+          </n-button>
           <n-button v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')">
             确认重命名
           </n-button>
@@ -205,6 +220,20 @@ const {
   border-radius: 6px;
   border: 1px solid var(--app-border-light);
 }
+
+.hash-result-box { 
+  background: var(--app-surface-card); 
+  padding: 14px; 
+  border-radius: var(--card-border-radius, 8px); 
+  border: 1px solid var(--n-success-color); 
+  box-sizing: border-box;
+}
+.hash-result-box .pl { font-size: 12px; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.hash-info-grid { display: flex; flex-direction: column; gap: 4px; }
+.hi-row { display: flex; gap: 8px; align-items: baseline; }
+.hi-label { font-size: 11px; color: var(--text-hint); width: 60px; flex-shrink: 0; text-align: right; }
+.hi-value { font-size: 12px; color: var(--text-secondary); word-break: break-all; }
+.hi-value.mono { font-family: var(--code-font); }
 
 .forced-box { 
   background: var(--app-surface-card); 

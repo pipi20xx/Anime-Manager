@@ -11,7 +11,8 @@ import {
   CheckCircleOutlined as CheckIcon,
   SearchOutlined as SearchBtnIcon,
   BuildOutlined as BuildIcon,
-  DriveFileMoveOutlined as DriveIcon
+  DriveFileMoveOutlined as DriveIcon,
+  TagOutlined as HashIcon
 } from '@vicons/material'
 
 import { useRecognitionModal } from '../../composables/components/useRecognitionModal'
@@ -36,7 +37,10 @@ const {
   forcedParams,
   testSearch,
   searchTmdbForTest,
-  handleRecognize
+  handleRecognize,
+  isHashing,
+  hashResult,
+  calculateHash
 } = useRecognitionModal(props, emit)
 </script>
 
@@ -94,6 +98,15 @@ const {
             <div class="pv">{{ previewPath || (loading ? '计算中...' : '无法预览') }}</div>
           </div>
 
+          <!-- 哈希计算结果 -->
+          <div v-if="hashResult" class="hash-result-mobile">
+            <div class="pl" style="color: var(--n-success-color)"><n-icon><CheckIcon /></n-icon> 哈希已入库</div>
+            <div class="hash-rows">
+              <div class="hr"><span class="hl">SHA1</span><span class="hv mono">{{ hashResult.sha1 }}</span></div>
+              <div class="hr"><span class="hl">ED2K</span><span class="hv mono">{{ hashResult.ed2k }}</span></div>
+            </div>
+          </div>
+
           <!-- 强制参数调试 (单列布局) -->
           <n-collapse arrow-placement="right" display-directive="show">
              <n-collapse-item title="强制参数调试" name="debug">
@@ -148,9 +161,15 @@ const {
     <template #action>
       <n-space justify="space-between" style="width: 100%">
           <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
-          <n-button v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')" size="small">
-            确认重命名
-          </n-button>
+          <n-space>
+            <n-button type="warning" size="small" :loading="isHashing" :disabled="!data" @click="calculateHash">
+              <template #icon><n-icon><HashIcon /></n-icon></template>
+              哈希
+            </n-button>
+            <n-button v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')" size="small">
+              确认重命名
+            </n-button>
+          </n-space>
       </n-space>
     </template>
   </n-modal>
@@ -204,6 +223,18 @@ const {
 }
 .pl { font-size: 11px; font-weight: bold; color: var(--n-info-color); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
 .pv { font-family: monospace; font-size: 11px; word-break: break-all; color: var(--n-text-color-1); }
+
+.hash-result-mobile {
+  background: var(--app-surface-inner);
+  padding: 10px;
+  border-radius: var(--button-border-radius, 8px);
+  border: 1px solid var(--n-success-color);
+}
+.hash-rows { display: flex; flex-direction: column; gap: 4px; }
+.hr { display: flex; gap: 6px; align-items: baseline; }
+.hl { font-size: 10px; color: var(--text-hint); width: 36px; flex-shrink: 0; }
+.hv { font-size: 10px; color: var(--text-secondary); word-break: break-all; }
+.hv.mono { font-family: monospace; }
 
 .debug-panel { background: var(--app-surface-inner); padding: 12px; border-radius: var(--button-border-radius, 8px); border: 1px solid var(--app-border-light); }
 .season-ep-row { display: flex; gap: 8px; }

@@ -1,8 +1,12 @@
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 
 export function useRecognitionModal(props: any, emit: any) {
   const message = useMessage()
+
+  // --- Hash Calculation State ---
+  const isHashing = ref(false)
+  const hashResult = ref<any>(null)
 
   const getImg = (path: string) => {
     if (!path) return ''
@@ -39,6 +43,7 @@ export function useRecognitionModal(props: any, emit: any) {
         anime_priority: true
       })
       testSearch.keyword = ''; testSearch.results = []
+      hashResult.value = null
     }
   })
 
@@ -60,12 +65,54 @@ export function useRecognitionModal(props: any, emit: any) {
     })
   }
 
+  const calculateHash = async () => {
+    if (!props.file?.path || !props.data?.final_result) {
+      message.warning('缺少文件路径或识别结果')
+      return
+    }
+    isHashing.value = true
+    hashResult.value = null
+    try {
+      const fr = props.data.final_result
+      const payload: any = {
+        file_path: props.file.path,
+        tmdb_id: fr.tmdb_id && fr.tmdb_id !== 'N/A' ? String(fr.tmdb_id) : undefined,
+        title: fr.title || undefined,
+        season: fr.season !== undefined ? Number(fr.season) : undefined,
+        episode: fr.episode !== undefined ? String(fr.episode) : undefined,
+        media_type: fr.category || undefined,
+        resolution: fr.resolution || undefined,
+        team: fr.team || undefined,
+        video_encode: fr.video_encode || undefined,
+      }
+      const res = await fetch(`${props.apiBase}/api/file_hashes/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        hashResult.value = data.data
+        message.success(data.message || '哈希计算完成，已写入数据库')
+      } else {
+        message.error(data.detail || '哈希计算失败')
+      }
+    } catch (e) {
+      message.error('哈希计算请求失败')
+    } finally {
+      isHashing.value = false
+    }
+  }
+
   return {
     getImg,
     getLogClass,
     forcedParams,
     testSearch,
     searchTmdbForTest,
-    handleRecognize
+    handleRecognize,
+    isHashing,
+    hashResult,
+    calculateHash
   }
 }
