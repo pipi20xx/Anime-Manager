@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ANIME Pro Matcher Client
 // @namespace    http://tampermonkey.net/
-// @version      5.3
+// @version      5.4
 // @description  ANIME Pro Matcher 客户端 - 支持 API Token 认证 + TMDB直达
 // @author       User & Refactored
 // @match        https://*/detail/*
@@ -197,8 +197,8 @@ function createRecognizeTip(tip, text) {
             let html = '<div style="margin-bottom:5px;border-bottom:1px solid #eee;padding-bottom:5px;"><b>识别成功</b></div>';
 
             // 基本信息
-            const cat = [f.category, f.secondary_category].filter(Boolean).join(' / ');
-            html += cat ? `分类：${escapeHtml(cat)}<br>` : '';
+            html += f.category ? `一级分类：${escapeHtml(f.category)}<br>` : '';
+            html += f.secondary_category ? `二级分类：${escapeHtml(f.secondary_category)}<br>` : '';
             html += f.title ? `标题：<b>${escapeHtml(f.title)}</b><br>` : '';
 
             let se = '';
@@ -207,7 +207,7 @@ function createRecognizeTip(tip, text) {
             html += se ? `季集：${se}<br>` : '';
 
             html += f.year ? `年份：${f.year}<br>` : '';
-            html += f.origin_country ? `产地：${escapeHtml(f.origin_country)}<br>` : '';
+            html += f.origin_country ? `原产地：${escapeHtml(f.origin_country)}<br>` : '';
 
             // TMDB
             if (f.tmdb_id) {
@@ -219,14 +219,14 @@ function createRecognizeTip(tip, text) {
 
             // 规格信息
             const specs = [
-                f.team && `制作：${f.team}`,
+                f.team && `制作组：${f.team}`,
                 f.resolution && `分辨率：${f.resolution}`,
-                f.source && `来源：${f.source}`,
+                f.source && `介质来源：${f.source}`,
                 f.video_encode && `视频编码：${f.video_encode}`,
                 f.audio_encode && `音频编码：${f.audio_encode}`,
-                f.video_effect && `动态范围：${f.video_effect}`,
-                f.platform && `平台：${f.platform}`,
-                f.subtitle && `字幕：${f.subtitle}`,
+                f.video_effect && `视频特效：${f.video_effect}`,
+                f.platform && `发布平台：${f.platform}`,
+                f.subtitle && `字幕语言：${f.subtitle}`,
             ].filter(Boolean);
 
             if (specs.length) {
