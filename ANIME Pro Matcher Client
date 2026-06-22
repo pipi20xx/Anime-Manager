@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ANIME Pro Matcher Client
 // @namespace    http://tampermonkey.net/
-// @version      5.4
+// @version      5.5
 // @description  ANIME Pro Matcher 客户端 - 支持 API Token 认证 + TMDB直达
 // @author       User & Refactored
 // @match        https://*/detail/*
@@ -197,7 +197,7 @@ function createRecognizeTip(tip, text) {
             let html = '<div style="margin-bottom:5px;border-bottom:1px solid #eee;padding-bottom:5px;"><b>识别成功</b></div>';
 
             // 基本信息
-            html += f.category ? `一级分类：${escapeHtml(f.category)}<br>` : '';
+            html += f.category ? `资源类别：${escapeHtml(f.category)}<br>` : '';
             html += f.secondary_category ? `二级分类：${escapeHtml(f.secondary_category)}<br>` : '';
             html += f.title ? `标题：<b>${escapeHtml(f.title)}</b><br>` : '';
 
