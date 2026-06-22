@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { 
   NGrid, NGi, NInput, NButton, NSwitch, NCollapse, NCollapseItem,
   NCard, NSpace, NAvatar, NList, NListItem, NIcon, NScrollbar, NFormItem, 
@@ -45,23 +46,11 @@ const {
                   <n-space vertical size="large">
                     <!-- Search Hero -->
                     <div class="search-hero">
-                      <n-input-group>
-                        <n-input 
-                          v-model:value="recognitionState.filename" 
-                          size="large" 
-                          placeholder="粘贴文件名或完整路径进行深度解析..." 
-                          clearable 
-                          @keypress.enter="handleRecognize"
-                          style="flex: 1; font-family: monospace;"
-                        >
-                          <template #prefix>
-                            <n-icon :component="SearchIcon" />
-                          </template>
-                        </n-input>
-                        <n-button type="primary" size="large" :loading="recognitionState.loading" @click="handleRecognize" style="padding: 0 24px;">
-                          立即解析
-                        </n-button>
-                      </n-input-group>
+                      <AppSearchField
+                        v-model:value="recognitionState.filename"
+                        placeholder="粘贴文件名或完整路径进行深度解析..."
+                        @search="handleRecognize"
+                      />
                     </div>
 
                     <n-collapse display-directive="show">
@@ -78,15 +67,7 @@ const {
                         <n-grid :cols="40" :x-gap="12" :y-gap="12">
                           <n-gi :span="20">
                             <n-form-item>
-                              <AppTextField v-model:value="sandboxSearch.keyword" label="搜索辅助 (TMDB)" placeholder="输入剧名搜索..." @keyup.enter="searchTmdbForSandbox">
-                                <template #suffix>
-                                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForSandbox" :loading="sandboxSearch.loading">
-                                    <template #icon>
-                                      <n-icon :component="SearchIcon" />
-                                    </template>
-                                  </n-button>
-                                </template>
-                              </AppTextField>
+                              <AppSearchField v-model:value="sandboxSearch.keyword" placeholder="搜索辅助 (TMDB)，输入剧名..." :loading="sandboxSearch.loading" @search="searchTmdbForSandbox" />
                             </n-form-item>
                             <n-scrollbar v-if="(sandboxSearch.results || []).length > 0" style="max-height: 120px" class="search-res-box mb-4">
                               <n-list hoverable clickable size="small">

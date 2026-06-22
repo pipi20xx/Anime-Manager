@@ -6,6 +6,7 @@ import {
 } from 'naive-ui'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppSearchField from '../AppSearchField.vue'
 import {
   SuccessIcon, SearchIcon, TuneIcon, RenameIcon
 } from '../../assets/icons' // Assuming icons might be centralized or re-import here
@@ -122,9 +123,7 @@ const {
               <n-gi><AppTextField v-model:value="forcedParams.episode" label="指定集" placeholder="指定集" /></n-gi>
             </n-grid>
 
-            <n-input v-model:value="testSearch.keyword" placeholder="快捷搜索剧名找 ID..." size="small" class="mt-4" @keypress.enter="searchTmdbForTest">
-              <template #suffix><n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForTest" :loading="testSearch.loading"><template #icon><n-icon><SearchBtnIcon /></n-icon></template></n-button></template>
-            </n-input>
+            <AppSearchField v-model:value="testSearch.keyword" placeholder="快捷搜索剧名找 ID..." :loading="testSearch.loading" @search="searchTmdbForTest" class="mt-4" />
             <n-scrollbar v-if="testSearch.results.length > 0" style="max-height: 120px" class="search-res-list mt-2">
               <n-list hoverable clickable>
                 <n-list-item v-for="res in testSearch.results" :key="res.id" @click="forcedParams.tmdb_id = String(res.id); forcedParams.type = res.media_type || forcedParams.type; testSearch.results = []">

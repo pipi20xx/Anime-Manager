@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
@@ -81,13 +82,7 @@ const {
              </div>
              
              <!-- 搜索栏 -->
-             <n-input v-model:value="manualSearch.keyword" placeholder="搜剧名自动填入..." @keypress.enter="searchTmdb">
-                <template #suffix>
-                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdb" :loading="manualSearch.loading">
-                    <template #icon><n-icon><SearchIcon /></n-icon></template>
-                  </n-button>
-                </template>
-             </n-input>
+             <AppSearchField v-model:value="manualSearch.keyword" placeholder="搜剧名自动填入..." :loading="manualSearch.loading" @search="searchTmdb" />
              
              <!-- 搜索结果 -->
              <n-scrollbar v-if="manualSearch.results.length > 0" style="max-height: 120px" class="search-res-list">

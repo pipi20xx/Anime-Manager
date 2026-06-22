@@ -148,7 +148,7 @@ const fetchToken = async () => {
         </n-space>
       </n-form-item>
 
-      <n-form-item label="操作">
+      <n-form-item>
         <n-space>
           <n-button type="primary" :loading="loading" @click="fetchToken">
             自动获取 Token

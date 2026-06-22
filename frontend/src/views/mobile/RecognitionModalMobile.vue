@@ -6,6 +6,7 @@ import {
 } from 'naive-ui'
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import {
   CheckCircleOutlined as CheckIcon,
   SearchOutlined as SearchBtnIcon,
@@ -112,13 +113,7 @@ const {
                    </n-space>
 
                    <div class="search-box-mobile">
-                      <n-input v-model:value="testSearch.keyword" placeholder="搜剧名找ID..." size="small" @keypress.enter="searchTmdbForTest">
-                        <template #suffix>
-                           <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdbForTest" :loading="testSearch.loading">
-                              <template #icon><n-icon><SearchBtnIcon /></n-icon></template>
-                           </n-button>
-                        </template>
-                      </n-input>
+                      <AppSearchField v-model:value="testSearch.keyword" placeholder="搜剧名找ID..." :loading="testSearch.loading" @search="searchTmdbForTest" />
                       <n-scrollbar v-if="testSearch.results.length > 0" style="max-height: 120px" class="search-res-list mt-2">
                         <n-list hoverable clickable>
                           <n-list-item v-for="res in testSearch.results" :key="res.id" @click="forcedParams.tmdb_id = String(res.id); forcedParams.type = res.media_type || forcedParams.type; testSearch.results = []">

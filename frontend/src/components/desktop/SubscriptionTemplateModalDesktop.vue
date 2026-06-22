@@ -122,9 +122,12 @@ const columns = [
             </n-form-item>
           </n-gi>
 
-          <n-gi>
-            <n-form-item label="定时补全">
-              <n-switch v-model:value="editModel.auto_fill" />
+          <n-gi :span="2">
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="editModel.auto_fill" />
+                <span class="switch-row__label">定时补全</span>
+              </div>
             </n-form-item>
           </n-gi>
         </n-grid>
@@ -140,3 +143,9 @@ const columns = [
     </template>
   </n-modal>
 </template>
+
+<style scoped>
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+</style>

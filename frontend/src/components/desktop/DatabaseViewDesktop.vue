@@ -5,6 +5,7 @@ import {
   NSpace, NDataTable, NIcon, NPopconfirm, NSelect, NTabs, NTabPane, NAlert, NPopover
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
+import AppSearchField from '../AppSearchField.vue'
 import DatabaseConfig from '../../components/DatabaseConfig.vue'
 import MaintenanceManager from '../../components/MaintenanceManager.vue'
 import TmdbFullDataView from '../../views/TmdbFullDataView.vue'
@@ -157,7 +158,7 @@ const dataTableColumns = computed(() => {
             </div>
           </n-card>
           <n-card bordered title="执行结果" size="small" class="result-card">
-            <template #header-extra><n-input v-model:value="searchText" placeholder="在结果中搜索..." size="small" clearable style="width: 250px" /></template>
+            <template #header-extra><AppSearchField v-model:value="searchText" placeholder="在结果中搜索..." style="width: 250px" /></template>
             <n-data-table :columns="dataTableColumns" :data="filteredData" :loading="queryLoading" :max-height="500" :scroll-x="scrollX" virtual-scroll size="small" :single-line="false" />
             <template #footer><div class="footer-info">显示 {{ filteredData.length }} / 共 {{ queryResult.length }} 条记录</div></template>
           </n-card>

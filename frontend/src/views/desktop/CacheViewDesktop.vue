@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { ref, onMounted, reactive, h, onUnmounted, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NTag, NImage,
@@ -268,10 +269,7 @@ onUnmounted(() => {
     <n-space vertical size="large">
       <div class="toolbar-row">
         <n-space>
-          <n-input v-model:value="searchKeyword" placeholder="搜索标题或 TMDB ID..." @keypress.enter="handleSearch" style="width: 300px">
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
-          <n-button type="primary" @click="handleSearch">搜索</n-button>
+          <AppSearchField v-model:value="searchKeyword" placeholder="搜索标题或 TMDB ID..." :loading="loading" @search="handleSearch" style="width: 300px" />
         </n-space>
         <n-space>
           <div class="stat-actions">

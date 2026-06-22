@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppSearchField from '../AppSearchField.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
@@ -76,13 +77,7 @@ const {
                 <n-gi><AppTextField v-model:value="manualTask.forced_season" label="季号" placeholder="自动" type="number" /></n-gi>
               </n-grid>
 
-              <n-input v-model:value="manualSearch.keyword" placeholder="搜索剧名自动填入 ID 和类型..." size="small" class="mt-2" @keypress.enter="searchTmdb">
-                <template #suffix>
-                  <n-button v-bind="getButtonStyle('icon')" size="small" @click="searchTmdb" :loading="manualSearch.loading">
-                    <template #icon><n-icon><SearchIcon /></n-icon></template>
-                  </n-button>
-                </template>
-              </n-input>
+              <AppSearchField v-model:value="manualSearch.keyword" placeholder="搜索剧名自动填入 ID 和类型..." :loading="manualSearch.loading" @search="searchTmdb" class="mt-2" />
               <n-scrollbar v-if="manualSearch.results.length > 0" style="max-height: 120px" class="search-res-list mt-2">
                 <n-list hoverable clickable>
                   <n-list-item v-for="res in manualSearch.results" :key="res.id" @click="manualTask.forced_tmdb_id = String(res.id); manualTask.forced_type = res.media_type || manualTask.forced_type; manualSearch.results = []">

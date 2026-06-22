@@ -125,14 +125,14 @@ const {
             </n-form-item>
 
             <n-divider>其他选项</n-divider>
-            <n-space justify="space-between" align="center" style="margin-bottom: 12px;">
-              <span>定时补全</span>
+            <div class="switch-row" style="margin-bottom: 12px;">
               <n-switch v-model:value="editModel.auto_fill" />
-            </n-space>
-            <n-space justify="space-between" align="center" style="margin-bottom: 24px;">
-              <span>设为默认预设</span>
+              <span class="switch-row__label">定时补全</span>
+            </div>
+            <div class="switch-row" style="margin-bottom: 24px;">
               <n-switch v-model:value="editModel.is_default" />
-            </n-space>
+              <span class="switch-row__label">设为默认预设</span>
+            </div>
           </n-form>
         </n-scrollbar>
         <div class="footer-btn">
@@ -144,6 +144,10 @@ const {
 </template>
 
 <style scoped>
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+
 .mobile-fullscreen-modal {
   width: 100vw !important;
   height: 100vh !important;

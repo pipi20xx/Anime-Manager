@@ -72,11 +72,11 @@ const {
         />
 
         <template v-if="mode === 'custom'">
-          <n-input v-model:value="filterRes" placeholder="分辨率 (如: 1080p)" />
-          <n-input v-model:value="filterTeam" placeholder="制作组/字幕组" />
-          <n-input v-model:value="filterSource" placeholder="来源" />
-          <n-input v-model:value="filterCodec" placeholder="编码" />
-          <n-input v-model:value="filterSub" placeholder="字幕语言" />
+          <AppTextField v-model:value="filterRes" label="分辨率" placeholder="分辨率 (如: 1080p)" />
+          <AppTextField v-model:value="filterTeam" label="制作组/字幕组" placeholder="制作组/字幕组" />
+          <AppTextField v-model:value="filterSource" label="来源" placeholder="来源" />
+          <AppTextField v-model:value="filterCodec" label="编码" placeholder="编码" />
+          <AppTextField v-model:value="filterSub" label="字幕语言" placeholder="字幕语言" />
         </template>
 
         <n-divider style="margin: 12px 0;" />

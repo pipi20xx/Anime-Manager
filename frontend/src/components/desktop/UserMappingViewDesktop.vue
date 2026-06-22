@@ -17,6 +17,7 @@ import {
   SearchOutlined as SearchIcon
 } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
+import AppSearchField from '../AppSearchField.vue'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -281,15 +282,7 @@ const countryColumns = [
       
       <n-tabs type="segment" animated v-model:value="activeType" style="height: 60vh">
         <n-tab-pane name="genre" tab="流派" style="height: 100%; display: flex; flex-direction: column">
-          <n-input 
-            v-model:value="genreSearch" 
-            placeholder="搜索 ID 或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 12px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
+          <AppSearchField v-model:value="genreSearch" placeholder="搜索 ID 或名称..." style="margin-bottom: 12px" />
           <n-data-table 
             :columns="genreColumns" 
             :data="genreMappings" 
@@ -301,15 +294,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="company" tab="制作公司" style="height: 100%; display: flex; flex-direction: column">
-          <n-input 
-            v-model:value="companySearch" 
-            placeholder="搜索 ID、名称或国家..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 12px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
+          <AppSearchField v-model:value="companySearch" placeholder="搜索 ID、名称或国家..." style="margin-bottom: 12px" />
           <div class="scroll-table-wrap" @scroll="handleCompanyScroll">
             <n-data-table 
               :columns="companyColumns" 
@@ -329,15 +314,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="keyword" tab="关键词" style="height: 100%; display: flex; flex-direction: column">
-          <n-input 
-            v-model:value="keywordSearch" 
-            placeholder="搜索 ID 或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 12px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
+          <AppSearchField v-model:value="keywordSearch" placeholder="搜索 ID 或名称..." style="margin-bottom: 12px" />
           <div class="scroll-table-wrap" @scroll="handleKeywordScroll">
             <n-data-table 
               :columns="keywordColumns" 
@@ -357,15 +334,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="language" tab="原始语言" style="height: 100%; display: flex; flex-direction: column">
-          <n-input 
-            v-model:value="languageSearch" 
-            placeholder="搜索代码或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 12px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
+          <AppSearchField v-model:value="languageSearch" placeholder="搜索代码或名称..." style="margin-bottom: 12px" />
           <n-data-table 
             :columns="languageColumns" 
             :data="languageMappings" 
@@ -377,15 +346,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="country" tab="原始国家" style="height: 100%; display: flex; flex-direction: column">
-          <n-input 
-            v-model:value="countrySearch" 
-            placeholder="搜索代码或名称..." 
-            size="small" 
-            clearable
-            style="margin-bottom: 12px"
-          >
-            <template #prefix><n-icon><SearchIcon /></n-icon></template>
-          </n-input>
+          <AppSearchField v-model:value="countrySearch" placeholder="搜索代码或名称..." style="margin-bottom: 12px" />
           <n-data-table 
             :columns="countryColumns" 
             :data="countryMappings" 

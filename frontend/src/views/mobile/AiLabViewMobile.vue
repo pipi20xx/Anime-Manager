@@ -590,11 +590,12 @@ onMounted(() => {
                 
                 <n-divider>识别增强</n-divider>
                 
-                <n-form-item label="AI 智能介入">
-                  <n-switch v-model:value="assistantConfig.ai_fallback_enabled" />
-                  <n-text depth="3" style="margin-left: 12px; font-size: 12px">
-                    识别失败时，让 AI 猜测标题并重新搜索
-                  </n-text>
+                <n-form-item>
+                  <div class="switch-row">
+                    <n-switch v-model:value="assistantConfig.ai_fallback_enabled" />
+                    <span class="switch-row__label">AI 智能介入</span>
+                    <span class="switch-row__desc">识别失败时，让 AI 猜测标题并重新搜索</span>
+                  </div>
                 </n-form-item>
                 
                 <n-alert type="info" size="small" :show-icon="false" style="margin-bottom: 16px;">
@@ -603,11 +604,12 @@ onMounted(() => {
                 
                 <n-divider>Telegram Bot</n-divider>
                 
-                <n-form-item label="启用 Bot 对话">
-                  <n-switch v-model:value="telegramBotConfig.enabled" @update:value="saveTelegramBotConfig" />
-                  <n-text depth="3" style="margin-left: 12px; font-size: 12px">
-                    通过 Telegram 与智能体对话
-                  </n-text>
+                <n-form-item>
+                  <div class="switch-row">
+                    <n-switch v-model:value="telegramBotConfig.enabled" @update:value="saveTelegramBotConfig" />
+                    <span class="switch-row__label">启用 Bot 对话</span>
+                    <span class="switch-row__desc">通过 Telegram 与智能体对话</span>
+                  </div>
                 </n-form-item>
                 
                 <n-form-item :style="{ opacity: telegramBotConfig.enabled ? 1 : 0.5 }">
@@ -633,6 +635,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+
 .ai-content {
   flex: 1;
   display: flex;

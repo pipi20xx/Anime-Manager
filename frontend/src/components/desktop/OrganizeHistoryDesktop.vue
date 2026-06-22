@@ -16,6 +16,7 @@ import {
   KeyboardDoubleArrowDownOutlined as MoreIcon,
   RefreshOutlined as RefreshIcon
 } from '@vicons/material'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -96,9 +97,7 @@ const handleRefresh = () => {
           <n-radio-button value="skipped">跳过</n-radio-button>
           <n-radio-button value="failed">失败</n-radio-button>
         </n-radio-group>
-        <n-input v-model:value="searchQuery" placeholder="搜索标题或文件名..." style="width: 250px">
-          <template #prefix><n-icon><SearchIcon /></n-icon></template>
-        </n-input>
+        <AppSearchField v-model:value="searchQuery" placeholder="搜索标题或文件名..." style="width: 250px" />
         <n-popconfirm @positive-click="clearAll" positive-text="确定清空" negative-text="我再想想">
           <template #trigger>
             <n-button v-bind="getButtonStyle('danger')">

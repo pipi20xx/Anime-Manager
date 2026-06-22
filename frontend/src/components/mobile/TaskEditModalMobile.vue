@@ -75,33 +75,32 @@ const {
         
         <n-tab-pane name="automation" tab="自动化与过滤">
           <n-space vertical size="large" class="m-mt-md">
-            <n-form-item label="实时监控">
-              <n-space align="center" wrap>
-                <n-switch v-model:value="form.incremental_enabled" />
-                <AppSelectField 
-                  v-if="form.incremental_enabled" 
-                  v-model:value="form.incremental_mode" 
-                  label="模式"
-                  style="width: 120px"
-                  :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
-                />
-              </n-space>
-            </n-form-item>
+            <div class="m-config-row">
+              <span class="m-config-row__label">实时监控</span>
+              <n-switch v-model:value="form.incremental_enabled" />
+              <AppSelectField 
+                v-model:value="form.incremental_mode" 
+                label="模式"
+                style="width: 140px"
+                :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
+              />
+            </div>
             
-            <n-form-item label="定时扫描">
+            <div class="m-config-row">
+              <span class="m-config-row__label">定时扫描</span>
               <n-switch v-model:value="form.scheduler_enabled" />
-            </n-form-item>
+            </div>
 
-            <n-form-item v-if="form.incremental_enabled && form.incremental_mode === 'polling'">
+            <n-form-item v-if="form.incremental_mode === 'polling'">
               <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
                 <template #suffix>秒</template>
               </AppTextField>
             </n-form-item>
-            <n-form-item label="监控状态" v-else-if="form.incremental_enabled">
-              <div style="color: var(--text-muted)">实时监听文件系统事件 (Inotify)</div>
+            <n-form-item v-else>
+              <AppTextField :value="'实时监听文件系统事件 (Inotify)'" label="监控状态" readonly />
             </n-form-item>
             
-            <n-form-item v-if="form.scheduler_enabled">
+            <n-form-item>
               <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
                 <template #suffix>秒</template>
               </AppTextField>
@@ -176,4 +175,19 @@ const {
 <style scoped>
 .m-mt-sm { margin-top: var(--m-spacing-sm); }
 .m-mt-md { margin-top: var(--m-spacing-md); }
+
+.m-config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  flex-wrap: wrap;
+}
+
+.m-config-row__label {
+  font-size: var(--m-text-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  line-height: 1;
+}
 </style>

@@ -5,6 +5,7 @@ import {
   NThing, NTag, NEmpty, NSpin, useMessage, NSelect
 } from 'naive-ui'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { SearchOutlined as SearchIcon, CloudDownloadOutlined as DownloadIcon } from '@vicons/material'
 import { searchKeyword } from '../../store/navigationStore'
 
@@ -110,20 +111,12 @@ const formatSize = (sizeStr: string) => {
     </div>
 
     <div class="m-search-bar">
-      <n-input 
-        v-model:value="keyword" 
-        placeholder="输入动画名称、电影关键字..." 
-        size="large"
-        @keyup.enter="handleSearch"
-        clearable
-      >
-        <template #prefix>
-          <n-icon><SearchIcon /></n-icon>
-        </template>
-      </n-input>
-      <n-button type="primary" size="large" @click="handleSearch" :loading="loading" block style="margin-top: var(--m-spacing-sm);">
-        搜索
-      </n-button>
+      <AppSearchField
+        v-model:value="keyword"
+        placeholder="输入动画名称、电影关键字..."
+        :loading="loading"
+        @search="handleSearch"
+      />
     </div>
 
     <div class="m-selectors">

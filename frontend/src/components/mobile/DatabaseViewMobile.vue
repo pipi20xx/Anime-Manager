@@ -5,6 +5,7 @@ import {
   NSpace, NIcon, NTabs, NTabPane, NAlert, NList, NListItem, NThing, NTag, NCollapse, NCollapseItem, NCollapseTransition,
   NDrawer, NDrawerContent
 } from 'naive-ui'
+import AppSearchField from '../../components/AppSearchField.vue'
 import DatabaseConfig from '../../components/DatabaseConfig.vue'
 import MaintenanceManager from '../../components/MaintenanceManager.vue'
 import TmdbFullDataView from '../../views/TmdbFullDataView.vue'
@@ -120,7 +121,7 @@ const handleTableSelect = (tableName: string) => {
         <div v-if="queryResult.length > 0" style="margin-top: 16px;">
           <div class="result-header">
             <span>结果: {{ filteredData.length }} 行</span>
-            <n-input v-model:value="searchText" placeholder="结果搜索..." size="tiny" style="width: 120px" />
+            <AppSearchField v-model:value="searchText" placeholder="结果搜索..." style="width: 160px" />
           </div>
           
           <div class="result-card-list">

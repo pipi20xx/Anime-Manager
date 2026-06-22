@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { ref } from 'vue'
 import { 
   NInput, NButton, NSwitch, NCollapse, NCollapseItem,
@@ -61,12 +62,7 @@ const activeTab = ref('dashboard')
               </template>
               <div class="m-card m-card-compact">
                  <n-form-item>
-                    <n-input-group>
-                      <n-input v-model:value="sandboxSearch.keyword" placeholder="搜索..." />
-                      <n-button v-bind="getButtonStyle('primary')" @click="searchTmdbForSandbox" :loading="sandboxSearch.loading">
-                        <n-icon :component="SearchIcon" />
-                      </n-button>
-                    </n-input-group>
+                    <AppSearchField v-model:value="sandboxSearch.keyword" placeholder="搜索剧名..." :loading="sandboxSearch.loading" @search="searchTmdbForSandbox" />
                  </n-form-item>
                  
                  <n-list 

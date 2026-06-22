@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { 
-  NInput, NButton, NIcon, NSpin, NEmpty, NDivider
+  NSpin, NEmpty, NDivider
 } from 'naive-ui'
-import { SearchOutlined } from '@vicons/material'
+import AppSearchField from '../../../components/AppSearchField.vue'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useSearch } from '../../../composables/explore/useSearch'
@@ -22,21 +22,12 @@ const {
 <template>
   <div class="search-tab">
     <div class="search-bar">
-        <n-input 
-            v-model:value="keyword" 
-            type="text" 
-            placeholder="输入名称搜索 TMDB 和 Bangumi..." 
-            size="large"
-            clearable
-            @keydown.enter="doSearch"
-        >
-            <template #prefix>
-                <n-icon :component="SearchOutlined" />
-            </template>
-        </n-input>
-        <n-button type="primary" size="large" @click="doSearch" :loading="loading">
-            搜索
-        </n-button>
+        <AppSearchField
+            v-model:value="keyword"
+            placeholder="输入名称搜索 TMDB 和 Bangumi..."
+            :loading="loading"
+            @search="doSearch"
+        />
     </div>
 
     <div class="results-area" v-if="hasSearched">

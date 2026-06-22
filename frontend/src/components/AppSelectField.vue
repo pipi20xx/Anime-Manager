@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { NSelect } from 'naive-ui'
+import { NSelect, NIcon } from 'naive-ui'
+import { ExpandMoreOutlined, ExpandLessOutlined } from '@vicons/material'
 
 export interface SelectOption {
   label: string
@@ -39,6 +40,12 @@ const emit = defineEmits<{
 }>()
 
 const focused = ref(false)
+const showMenu = ref(false)
+
+const handleUpdateShow = (show: boolean) => {
+  showMenu.value = show
+  props.onUpdateShow?.(show)
+}
 
 const hasValue = computed(() => {
   if (props.multiple && Array.isArray(props.value)) return props.value.length > 0
@@ -86,8 +93,14 @@ const showPlaceholder = computed(() =>
         @focus="focused = true"
         @blur="(e: FocusEvent) => { focused = false; emit('blur', e) }"
         @search="(q: string) => onSearch?.(q)"
-        @update:show="(show: boolean) => onUpdateShow?.(show)"
+        @update:show="handleUpdateShow"
       />
+      <div class="app-select-field__arrow">
+        <n-icon size="20">
+          <ExpandLessOutlined v-if="showMenu" />
+          <ExpandMoreOutlined v-else />
+        </n-icon>
+      </div>
     </div>
   </div>
 </template>
@@ -167,9 +180,22 @@ const showPlaceholder = computed(() =>
   display: none;
 }
 
-.app-select-field__select :deep(.n-base-suffix) {
+.app-select-field__select :deep(.n-base-suffix__arrow) {
+  display: none !important;
+}
+
+.app-select-field__arrow {
+  position: absolute;
   right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
 }
 
 .app-select-field__label {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppSearchField from '../AppSearchField.vue'
 import { watch } from 'vue'
 import { 
   NModal, NCard, NForm, NFormItem, NInput, NSelect, NButton, 
@@ -82,17 +83,14 @@ watch(() => props.show, (newVal) => {
 
           <n-gi :span="2">
             <n-form-item>
-              <div style="display: flex; align-items: flex-end; gap: 8px; width: 100%">
+              <div style="display: flex; align-items: center; gap: 8px; width: 100%">
                 <AppSelectField 
                   v-model:value="formModel.media_type" 
                   label="媒体类型"
                   :options="[{label:'剧集', value:'tv'}, {label:'电影', value:'movie'}]" 
                   style="width: 150px; flex-shrink: 0"
                 />
-                <AppTextField v-model:value="searchQuery" label="搜索 TMDB" placeholder="输入名称搜索 TMDB..." @keyup.enter="handleSearch" style="flex: 1" />
-                <n-button type="primary" @click="handleSearch" :loading="loading" style="height: 56px; border-radius: 8px">
-                  搜索
-                </n-button>
+                <AppSearchField v-model:value="searchQuery" placeholder="输入名称搜索 TMDB..." :loading="loading" @search="handleSearch" style="flex: 1" />
               </div>
             </n-form-item>
           </n-gi>
@@ -205,17 +203,21 @@ watch(() => props.show, (newVal) => {
             </n-form-item>
           </n-gi>
 
-          <n-gi>
-            <n-form-item label="启用订阅">
-              <n-switch v-model:value="formModel.enabled" />
+          <n-gi span="2">
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="formModel.enabled" />
+                <span class="switch-row__label">启用订阅</span>
+              </div>
             </n-form-item>
           </n-gi>
-          <n-gi>
-            <n-form-item label="定时补全">
-              <n-space vertical :size="4">
+          <n-gi span="2">
+            <n-form-item>
+              <div class="switch-row">
                 <n-switch v-model:value="formModel.auto_fill" />
-                <span style="font-size: 12px; color: var(--text-muted);">自动从 Jackett 所有源搜索，无法指定源</span>
-              </n-space>
+                <span class="switch-row__label">定时补全</span>
+                <span class="switch-row__desc">自动从 Jackett 所有源搜索，无法指定源</span>
+              </div>
             </n-form-item>
           </n-gi>
         </n-grid>
@@ -232,6 +234,10 @@ watch(() => props.show, (newVal) => {
 </template>
 
 <style scoped>
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+
 .search-results {
   border: 1px solid var(--app-border-light);
   border-radius: var(--code-radius, 6px);

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { 
-  NInput, NButton, NIcon, NSpin, NEmpty, NDivider, NInputGroup
+  NSpin, NEmpty, NDivider
 } from 'naive-ui'
-import { SearchOutlined } from '@vicons/material'
+import AppSearchField from '../../../components/AppSearchField.vue'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useSearch } from '../../../composables/explore/useSearch'
@@ -22,19 +22,7 @@ const {
 <template>
   <div class="search-tab-mobile">
     <div class="mobile-search-bar">
-        <n-input-group>
-            <n-input 
-                v-model:value="keyword" 
-                type="text" 
-                placeholder="搜 TMDB / Bangumi..." 
-                size="small"
-                clearable
-                @keydown.enter="doSearch"
-            />
-            <n-button type="primary" size="small" @click="doSearch" :loading="loading">
-                <template #icon><n-icon :component="SearchOutlined" /></template>
-            </n-button>
-        </n-input-group>
+        <AppSearchField v-model:value="keyword" placeholder="搜 TMDB / Bangumi..." :loading="loading" @search="doSearch" />
     </div>
 
     <div class="results-area" v-if="hasSearched">

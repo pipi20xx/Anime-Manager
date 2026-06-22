@@ -4,6 +4,7 @@ import {
   NCard, NDataTable, NSpace, NButton, NIcon, NInput, NSelect, NTag, NText, NGrid, NGi
 } from 'naive-ui'
 import AppSelectField from '../../components/AppSelectField.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import {
   HistoryOutlined as LogIcon,
   DeleteSweepOutlined as ClearIcon,
@@ -98,9 +99,7 @@ const columns = [
             />
           </n-gi>
           <n-gi :span="2">
-            <n-input v-model:value="filters.keyword" placeholder="搜索..." @keypress.enter="fetchLogs">
-              <template #prefix><n-icon><SearchIcon /></n-icon></template>
-            </n-input>
+            <AppSearchField v-model:value="filters.keyword" placeholder="搜索..." :loading="logLoading" @search="fetchLogs" />
           </n-gi>
         </n-grid>
 

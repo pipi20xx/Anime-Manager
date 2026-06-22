@@ -290,10 +290,11 @@ const {
                 <n-grid :cols="2" :x-gap="24" :y-gap="16">
                   <!-- 第一行: RSS 刷新 -->
                   <n-gi>
-                    <n-form-item label="RSS 自动刷新">
+                    <div class="switch-row">
                       <n-switch v-model:value="config.rss_auto_refresh" />
-                    </n-form-item>
-                    <div class="form-item-desc">定时拉取 RSS 源，检测新发布的资源</div>
+                      <span class="switch-row__label">RSS 自动刷新</span>
+                      <span class="switch-row__desc">定时拉取 RSS 源，检测新发布的资源</span>
+                    </div>
                   </n-gi>
                   <n-gi>
                     <n-form-item>
@@ -310,10 +311,11 @@ const {
 
                   <!-- 第二行: 规则同步 -->
                   <n-gi>
-                    <n-form-item label="规则自动同步">
+                    <div class="switch-row">
                       <n-switch v-model:value="config.rule_auto_update" />
-                    </n-form-item>
-                    <div class="form-item-desc">定时从远程地址同步社区识别规则</div>
+                      <span class="switch-row__label">规则自动同步</span>
+                      <span class="switch-row__desc">定时从远程地址同步社区识别规则</span>
+                    </div>
                   </n-gi>
                   <n-gi>
                     <n-form-item>
@@ -330,10 +332,11 @@ const {
 
                   <!-- 第三行: 自动补全 -->
                   <n-gi>
-                    <n-form-item label="自动搜寻补全">
+                    <div class="switch-row">
                       <n-switch v-model:value="config.sub_auto_fill" />
-                    </n-form-item>
-                    <div class="form-item-desc">自动搜寻补全缺失的订阅集数</div>
+                      <span class="switch-row__label">自动搜寻补全</span>
+                      <span class="switch-row__desc">自动搜寻补全缺失的订阅集数</span>
+                    </div>
                   </n-gi>
                   <n-gi>
                     <n-form-item>
@@ -350,10 +353,11 @@ const {
 
                   <!-- 第四行: 定时清理 -->
                   <n-gi>
-                    <n-form-item label="定时清理缓存">
+                    <div class="switch-row">
                       <n-switch v-model:value="config.auto_clear_recognition" />
-                    </n-form-item>
-                    <div class="form-item-desc">定时清空 RSS 订阅项缓存</div>
+                      <span class="switch-row__label">定时清理缓存</span>
+                      <span class="switch-row__desc">定时清空 RSS 订阅项缓存</span>
+                    </div>
                   </n-gi>
                   <n-gi>
                     <n-form-item>
@@ -551,6 +555,10 @@ const {
 
 .switch-label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
 .switch-desc { font-size: 12px; color: var(--text-tertiary); }
+
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
 
 .form-item-desc { font-size: 12px; color: var(--text-tertiary); margin-top: -8px; margin-bottom: 8px; line-height: 1.4; }
 

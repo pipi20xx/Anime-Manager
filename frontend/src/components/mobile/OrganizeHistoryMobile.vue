@@ -20,6 +20,7 @@ import {
   KeyboardDoubleArrowDownOutlined as MoreArrowIcon,
   CleaningServicesOutlined as ClearIcon
 } from '@vicons/material'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
 import { useBackClose } from '../../composables/useBackClose'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -124,9 +125,7 @@ const handleAction = (key: string) => {
 
     <!-- Search & Filter Bar (Expandable) -->
     <div v-if="showSearch" class="search-bar">
-      <n-input v-model:value="searchQuery" placeholder="搜索..." size="small" clearable>
-        <template #prefix><n-icon><SearchIcon /></n-icon></template>
-      </n-input>
+      <AppSearchField v-model:value="searchQuery" placeholder="搜索..." />
       <div class="filter-row">
         <n-radio-group v-model:value="statusFilter" size="small">
           <n-radio-button value="all">全部</n-radio-button>
