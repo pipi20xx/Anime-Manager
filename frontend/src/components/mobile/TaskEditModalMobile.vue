@@ -73,24 +73,18 @@ const {
           </n-space>
         </n-tab-pane>
         
-        <n-tab-pane name="automation" tab="自动化与过滤">
+        <n-tab-pane name="automation" tab="自动化">
           <n-space vertical size="large" class="m-mt-md">
             <div class="m-config-row">
-              <span class="m-config-row__label">实时监控</span>
               <n-switch v-model:value="form.incremental_enabled" />
+              <span class="m-config-row__label">实时监控</span>
               <AppSelectField 
                 v-model:value="form.incremental_mode" 
                 label="模式"
-                style="width: 140px"
+                style="width: 160px"
                 :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
               />
             </div>
-            
-            <div class="m-config-row">
-              <span class="m-config-row__label">定时扫描</span>
-              <n-switch v-model:value="form.scheduler_enabled" />
-            </div>
-
             <n-form-item v-if="form.incremental_mode === 'polling'">
               <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
                 <template #suffix>秒</template>
@@ -100,20 +94,21 @@ const {
               <AppTextField :value="'实时监听文件系统事件 (Inotify)'" label="监控状态" readonly />
             </n-form-item>
             
-            <n-form-item>
-              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
+            <div class="m-config-row">
+              <n-switch v-model:value="form.scheduler_enabled" />
+              <span class="m-config-row__label">定时扫描</span>
+              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60" style="width: 160px">
                 <template #suffix>秒</template>
               </AppTextField>
-            </n-form-item>
+            </div>
 
-            <n-form-item>
-              <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0">
-                <template #suffix>秒</template>
-              </AppTextField>
-            </n-form-item>
-            <n-form-item label="跳过限流">
-              <n-space vertical :size="8">
-                <n-switch v-model:value="form.skip_rate_limit" />
+            <div class="m-config-row">
+              <n-switch v-model:value="form.skip_rate_limit" />
+              <span class="m-config-row__label">跳过限流</span>
+              <n-space vertical :size="8" style="flex: 1;">
+                <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0" style="width: 160px">
+                  <template #suffix>秒</template>
+                </AppTextField>
                 <n-checkbox-group v-if="form.skip_rate_limit" v-model:value="form.skip_rate_limit_types">
                   <n-space vertical>
                     <n-checkbox value="history">历史记录跳过</n-checkbox>
@@ -123,7 +118,12 @@ const {
                   </n-space>
                 </n-checkbox-group>
               </n-space>
-            </n-form-item>
+            </div>
+          </n-space>
+        </n-tab-pane>
+
+        <n-tab-pane name="advanced" tab="高级选项">
+          <n-space vertical size="large" class="m-mt-md">
             <n-form-item label="忽略文件正则"><n-dynamic-tags v-model:value="form.ignore_file_regex" /></n-form-item>
             <n-form-item label="忽略目录正则"><n-dynamic-tags v-model:value="form.ignore_dir_regex" /></n-form-item>
             
@@ -135,22 +135,26 @@ const {
               <n-checkbox v-model:checked="form.ignore_history">忽略历史</n-checkbox>
             </n-space>
             
-            <n-form-item label="Emby 检查" class="m-mt-md">
-              <n-space align="center">
+            <n-form-item class="m-mt-md">
+              <div class="switch-row">
                 <n-switch v-model:value="form.check_emby_exists" />
-                <span style="font-size: var(--m-text-xs); color: var(--text-muted);">检测 Emby 库是否存在，存在则跳过处理</span>
-              </n-space>
+                <span class="switch-row__label">Emby 检查</span>
+                <span class="switch-row__desc">检测 Emby 库是否存在，存在则跳过处理</span>
+              </div>
             </n-form-item>
-            <n-form-item label="哈希计算" class="m-mt-sm">
-              <n-space vertical size="small">
-                <n-space align="center">
-                  <n-switch v-model:value="form.calculate_hash" />
-                  <span style="font-size: var(--m-text-xs); color: var(--text-muted);">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="form.calculate_hash" />
+                <n-space vertical :size="4">
+                  <div class="switch-row">
+                    <span class="switch-row__label">哈希计算</span>
+                    <span class="switch-row__desc">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                  </div>
+                  <div style="font-size: var(--m-text-xs); color: var(--color-error); padding: var(--m-spacing-xs) var(--m-spacing-sm); background: var(--color-error-bg); border-radius: var(--m-radius-sm);">
+                    ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
+                  </div>
                 </n-space>
-                <div style="font-size: var(--m-text-xs); color: var(--color-error); padding: var(--m-spacing-xs) var(--m-spacing-sm); background: var(--color-error-bg); border-radius: var(--m-radius-sm);">
-                  ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
-                </div>
-              </n-space>
+              </div>
             </n-form-item>
           </n-space>
         </n-tab-pane>
@@ -189,5 +193,21 @@ const {
   color: var(--text-primary);
   white-space: nowrap;
   line-height: 1;
+  width: 84px;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.switch-row__label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.switch-row__desc {
+  font-size: var(--m-text-xs);
+  color: var(--text-tertiary);
 }
 </style>

@@ -102,9 +102,10 @@ const columns = [
       </div>
 
       <n-space align="center" style="background: var(--bg-surface); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
-        <n-form-item label="自动巡检" label-placement="left" :show-feedback="false">
+        <div class="switch-row">
           <n-switch v-model:value="config.health_check_enabled" />
-        </n-form-item>
+          <span class="switch-row__label">自动巡检</span>
+        </div>
         <n-form-item label-placement="left" :show-feedback="false">
           <AppTextField v-model:value="config.health_check_interval" label="巡检频率 (分)" type="number" :min="1" />
         </n-form-item>
@@ -131,8 +132,11 @@ const columns = [
         <n-form-item>
           <AppTextField v-model:value="editingConfig.file_url" label="远程 URL" placeholder="文件的直链 URL (包含 Cookie 或 Token)" />
         </n-form-item>
-        <n-form-item label="启用检测">
-          <n-switch v-model:value="editingConfig.enabled" />
+        <n-form-item>
+          <div class="switch-row">
+            <n-switch v-model:value="editingConfig.enabled" />
+            <span class="switch-row__label">启用检测</span>
+          </div>
         </n-form-item>
       </n-form>
       <template #footer>
@@ -144,3 +148,16 @@ const columns = [
     </n-modal>
   </div>
 </template>
+
+<style scoped>
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.switch-row__label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+</style>

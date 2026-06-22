@@ -46,10 +46,10 @@ const getStatusTagStyle = (status: string) => {
       <n-card title="巡检设置" size="small">
         <n-form label-placement="left" :show-feedback="false">
           <n-space vertical>
-            <n-space justify="space-between" align="center" style="width: 100%">
-              <span>自动巡检开关</span>
+            <div class="switch-row">
               <n-switch v-model:value="config.health_check_enabled" />
-            </n-space>
+              <span class="switch-row__label">自动巡检开关</span>
+            </div>
             <n-space justify="space-between" align="center" style="width: 100%">
               <span>自动巡检</span>
               <AppTextField v-model:value="config.health_check_interval" label="频率 (分钟)" type="number" :min="1" />
@@ -133,8 +133,11 @@ const getStatusTagStyle = (status: string) => {
         <n-form-item>
           <AppTextField v-model:value="editingConfig.file_url" label="URL (可选)" type="textarea" :autosize="{ minRows: 2 }" />
         </n-form-item>
-        <n-form-item label="启用">
-          <n-switch v-model:value="editingConfig.enabled" />
+        <n-form-item>
+          <div class="switch-row">
+            <n-switch v-model:value="editingConfig.enabled" />
+            <span class="switch-row__label">启用</span>
+          </div>
         </n-form-item>
       </n-form>
       <template #footer>
@@ -150,5 +153,16 @@ const getStatusTagStyle = (status: string) => {
   color: var(--text-muted);
   word-break: break-all;
   max-width: 200px;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.switch-row__label {
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 </style>
