@@ -84,6 +84,16 @@ class FileProcessor:
                     existing.resolution = final.get("resolution")
                     existing.team = final.get("team")
                     existing.video_encode = final.get("video_encode")
+                    existing.audio_encode = final.get("audio_encode")
+                    existing.video_effect = final.get("video_effect")
+                    existing.source = final.get("source")
+                    existing.subtitle = final.get("subtitle")
+                    existing.platform = final.get("platform")
+                    existing.year = final.get("year")
+                    existing.secondary_category = final.get("secondary_category")
+                    existing.origin_country = final.get("origin_country")
+                    existing.release_date = final.get("release_date")
+
                     existing.source_path = related_path
                     existing.calculated_at = datetime.now()
                     await db.save(existing, audit=False)
@@ -103,6 +113,16 @@ class FileProcessor:
                         resolution=final.get("resolution"),
                         team=final.get("team"),
                         video_encode=final.get("video_encode"),
+                        audio_encode=final.get("audio_encode"),
+                        video_effect=final.get("video_effect"),
+                        source=final.get("source"),
+                        subtitle=final.get("subtitle"),
+                        platform=final.get("platform"),
+                        year=final.get("year"),
+                        secondary_category=final.get("secondary_category"),
+                        origin_country=final.get("origin_country"),
+                        release_date=final.get("release_date"),
+
                         source_path=related_path,
                         target_path=None
                     )
@@ -371,6 +391,16 @@ class FileProcessor:
                                 existing.resolution = final.get("resolution")
                                 existing.team = final.get("team")
                                 existing.video_encode = final.get("video_encode")
+                                existing.audio_encode = final.get("audio_encode")
+                                existing.video_effect = final.get("video_effect")
+                                existing.source = final.get("source")
+                                existing.subtitle = final.get("subtitle")
+                                existing.platform = final.get("platform")
+                                existing.year = final.get("year")
+                                existing.secondary_category = final.get("secondary_category")
+                                existing.origin_country = final.get("origin_country")
+                                existing.release_date = final.get("release_date")
+
                                 existing.source_path = v_path
                                 existing.target_path = None
                                 existing.calculated_at = datetime.now()
@@ -391,6 +421,15 @@ class FileProcessor:
                                     resolution=final.get("resolution"),
                                     team=final.get("team"),
                                     video_encode=final.get("video_encode"),
+                                    audio_encode=final.get("audio_encode"),
+                                    video_effect=final.get("video_effect"),
+                                    source=final.get("source"),
+                                    subtitle=final.get("subtitle"),
+                                    platform=final.get("platform"),
+                                    year=final.get("year"),
+                                    secondary_category=final.get("secondary_category"),
+                                    origin_country=final.get("origin_country"),
+                                    release_date=final.get("release_date"),
                                     source_path=v_path,
                                     target_path=None
                                 )
@@ -518,6 +557,15 @@ class FileProcessor:
                                     existing.resolution = final.get("resolution")
                                     existing.team = final.get("team")
                                     existing.video_encode = final.get("video_encode")
+                                    existing.audio_encode = final.get("audio_encode")
+                                    existing.video_effect = final.get("video_effect")
+                                    existing.source = final.get("source")
+                                    existing.subtitle = final.get("subtitle")
+                                    existing.platform = final.get("platform")
+                                    existing.year = final.get("year")
+                                    existing.secondary_category = final.get("secondary_category")
+                                    existing.origin_country = final.get("origin_country")
+                                    existing.release_date = final.get("release_date")
                                     existing.source_path = v_path
                                     existing.target_path = new_abs_path
                                     existing.calculated_at = datetime.now()
@@ -537,6 +585,16 @@ class FileProcessor:
                                         resolution=final.get("resolution"),
                                         team=final.get("team"),
                                         video_encode=final.get("video_encode"),
+                                        audio_encode=final.get("audio_encode"),
+                                        video_effect=final.get("video_effect"),
+                                        source=final.get("source"),
+                                        subtitle=final.get("subtitle"),
+                                        platform=final.get("platform"),
+                                        year=final.get("year"),
+                                        secondary_category=final.get("secondary_category"),
+                                        origin_country=final.get("origin_country"),
+                                        release_date=final.get("release_date"),
+
                                         source_path=v_path,
                                         target_path=new_abs_path
                                     )
@@ -616,6 +674,16 @@ class FileProcessor:
                                 existing.resolution = final.get("resolution")
                                 existing.team = final.get("team")
                                 existing.video_encode = final.get("video_encode")
+                                existing.audio_encode = final.get("audio_encode")
+                                existing.video_effect = final.get("video_effect")
+                                existing.source = final.get("source")
+                                existing.subtitle = final.get("subtitle")
+                                existing.platform = final.get("platform")
+                                existing.year = final.get("year")
+                                existing.secondary_category = final.get("secondary_category")
+                                existing.origin_country = final.get("origin_country")
+                                existing.release_date = final.get("release_date")
+
                                 existing.source_path = v_path
                                 existing.target_path = new_abs_path
                                 existing.calculated_at = datetime.now()
@@ -635,6 +703,15 @@ class FileProcessor:
                                     resolution=final.get("resolution"),
                                     team=final.get("team"),
                                     video_encode=final.get("video_encode"),
+                                    audio_encode=final.get("audio_encode"),
+                                    video_effect=final.get("video_effect"),
+                                    source=final.get("source"),
+                                    subtitle=final.get("subtitle"),
+                                    platform=final.get("platform"),
+                                    year=final.get("year"),
+                                    secondary_category=final.get("secondary_category"),
+                                    origin_country=final.get("origin_country"),
+                                    release_date=final.get("release_date"),
                                     source_path=v_path,
                                     target_path=new_abs_path
                                 )

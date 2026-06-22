@@ -155,7 +155,7 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
               <AppTextField v-model:value="filterTeam" label="制作组/字幕组" placeholder="如: 某字幕组" />
             </n-gi>
             <n-gi>
-              <AppTextField v-model:value="filterSource" label="来源" placeholder="如: WebDL, BDRip" />
+              <AppTextField v-model:value="filterSource" label="介质来源" placeholder="如: WebDL, BDRip" />
             </n-gi>
             <n-gi>
               <AppTextField v-model:value="filterCodec" label="编码" placeholder="如: x265, AVC" />

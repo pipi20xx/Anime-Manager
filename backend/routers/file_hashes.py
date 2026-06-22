@@ -26,6 +26,15 @@ class FileHashResponse(BaseModel):
     resolution: Optional[str]
     team: Optional[str]
     video_encode: Optional[str]
+    audio_encode: Optional[str]
+    video_effect: Optional[str]
+    source: Optional[str]
+    subtitle: Optional[str]
+    platform: Optional[str]
+    year: Optional[str]
+    secondary_category: Optional[str]
+    origin_country: Optional[str]
+    release_date: Optional[str]
     source_path: str
     target_path: Optional[str]
     calculated_at: datetime
@@ -160,6 +169,15 @@ class SingleFileHashRequest(BaseModel):
     resolution: Optional[str] = Field(None, description="分辨率")
     team: Optional[str] = Field(None, description="制作组")
     video_encode: Optional[str] = Field(None, description="视频编码")
+    audio_encode: Optional[str] = Field(None, description="音频编码")
+    video_effect: Optional[str] = Field(None, description="视频特效 (HDR/DV等)")
+    source: Optional[str] = Field(None, description="介质来源 (WEB-DL/Blu-ray等)")
+    subtitle: Optional[str] = Field(None, description="字幕语言")
+    platform: Optional[str] = Field(None, description="发布平台")
+    year: Optional[str] = Field(None, description="年份")
+    secondary_category: Optional[str] = Field(None, description="二级分类")
+    origin_country: Optional[str] = Field(None, description="原产地")
+    release_date: Optional[str] = Field(None, description="发布日期")
 
 
 @router.post("/calculate", summary="计算单文件哈希并入库")
@@ -207,6 +225,24 @@ async def calculate_single_file_hash(request: SingleFileHashRequest):
                 existing.team = request.team
             if request.video_encode is not None:
                 existing.video_encode = request.video_encode
+            if request.audio_encode is not None:
+                existing.audio_encode = request.audio_encode
+            if request.video_effect is not None:
+                existing.video_effect = request.video_effect
+            if request.source is not None:
+                existing.source = request.source
+            if request.subtitle is not None:
+                existing.subtitle = request.subtitle
+            if request.platform is not None:
+                existing.platform = request.platform
+            if request.year is not None:
+                existing.year = request.year
+            if request.secondary_category is not None:
+                existing.secondary_category = request.secondary_category
+            if request.origin_country is not None:
+                existing.origin_country = request.origin_country
+            if request.release_date is not None:
+                existing.release_date = request.release_date
             await session.commit()
             await session.refresh(existing)
             return {"status": "success", "message": "哈希记录已更新", "data": existing}
@@ -226,6 +262,15 @@ async def calculate_single_file_hash(request: SingleFileHashRequest):
                 resolution=request.resolution,
                 team=request.team,
                 video_encode=request.video_encode,
+                audio_encode=request.audio_encode,
+                video_effect=request.video_effect,
+                source=request.source,
+                subtitle=request.subtitle,
+                platform=request.platform,
+                year=request.year,
+                secondary_category=request.secondary_category,
+                origin_country=request.origin_country,
+                release_date=request.release_date,
             )
             session.add(new_record)
             await session.commit()

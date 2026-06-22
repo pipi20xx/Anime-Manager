@@ -97,7 +97,7 @@ const {
             <n-divider>匹配过滤</n-divider>
             <n-form-item><AppTextField v-model:value="editModel.filter_res" label="分辨率" placeholder="1080p, 4k" /></n-form-item>
             <n-form-item><AppTextField v-model:value="editModel.filter_team" label="制作组" placeholder="LoliHouse" /></n-form-item>
-            <n-form-item><AppTextField v-model:value="editModel.filter_source" label="来源" placeholder="Web-DL" /></n-form-item>
+            <n-form-item><AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="Web-DL" /></n-form-item>
             <n-form-item><AppTextField v-model:value="editModel.filter_codec" label="视频编码" placeholder="HEVC" /></n-form-item>
             <n-form-item><AppTextField v-model:value="editModel.filter_audio" label="音频编码" placeholder="FLAC" /></n-form-item>
             <n-form-item><AppTextField v-model:value="editModel.filter_sub" label="字幕语言" placeholder="CHS" /></n-form-item>

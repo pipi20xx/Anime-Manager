@@ -103,7 +103,7 @@ const close = () => {
           <template v-if="!editModel.template_id">
             <AppTextField v-model:value="editModel.filter_res" label="任务名称" placeholder="分辨率 (如: 1080p, 4k)" />
             <AppTextField v-model:value="editModel.filter_team" label="任务名称" placeholder="制作组 (如: LoliHouse)" />
-            <AppTextField v-model:value="editModel.filter_source" label="任务名称" placeholder="来源 (如: Blu-ray, Web-DL)" />
+            <AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, Web-DL" />
             <AppTextField v-model:value="editModel.filter_codec" label="任务名称" placeholder="视频编码 (如: HEVC, AVC)" />
             <AppTextField v-model:value="editModel.filter_audio" label="任务名称" placeholder="音频编码 (如: FLAC, AAC)" />
             <AppTextField v-model:value="editModel.filter_sub" label="任务名称" placeholder="字幕语言 (如: CHS, CHT)" />

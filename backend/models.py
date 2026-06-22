@@ -270,6 +270,15 @@ class FileHash(SQLModel, table=True):
     resolution: Optional[str] = None
     team: Optional[str] = None
     video_encode: Optional[str] = None
+    audio_encode: Optional[str] = None
+    video_effect: Optional[str] = None
+    source: Optional[str] = None
+    subtitle: Optional[str] = None
+    platform: Optional[str] = None
+    year: Optional[str] = None
+    secondary_category: Optional[str] = None
+    origin_country: Optional[str] = None
+    release_date: Optional[str] = None
     source_path: str = Field(index=True)
     target_path: Optional[str] = None
     calculated_at: datetime = Field(default_factory=datetime.now)

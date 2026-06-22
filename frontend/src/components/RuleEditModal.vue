@@ -44,7 +44,7 @@ const variableGroups = [
       "{episode_02}": "集号补零",
       "{resolution}": "分辨率",
       "{team}": "制作组",
-      "{source}": "来源",
+      "{source}": "介质来源",
       "{video_encode}": "视频编码",
       "{audio_encode}": "音频编码",
       "{subtitle}": "字幕语言",

@@ -28,7 +28,7 @@ const { raw, tags, safeGet } = useRecognitionRaw()
           <span class="rs-value warning">{{ safeGet(raw.resource_team) }}</span>
         </div>
         <div class="rs-item">
-          <span class="rs-label">媒介/来源</span>
+          <span class="rs-label">介质来源</span>
           <span class="rs-value">{{ safeGet(raw.resource_type) }}</span>
         </div>
         <div class="rs-item">

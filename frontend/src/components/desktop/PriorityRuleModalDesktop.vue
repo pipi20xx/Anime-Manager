@@ -155,7 +155,7 @@ const {
         <n-divider title-placement="left">匹配条件 (留空表示不限制)</n-divider>
         <n-grid :cols="2" :x-gap="12">
                       <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.resolution" label="分辨率" placeholder="如: 4K, 1080P" /></n-form-item></n-gi>          <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.team" label="制作组" placeholder="如: LoliHouse" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.source" label="来源" placeholder="如: Blu-ray" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.source" label="介质来源" placeholder="如: Blu-ray" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.video_encode" label="视频编码" placeholder="如: HEVC" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.audio_encode" label="音频编码" placeholder="如: FLAC" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="currentRule.conditions.subtitle" label="字幕语言" placeholder="如: CHS" /></n-form-item></n-gi>

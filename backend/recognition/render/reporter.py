@@ -30,7 +30,7 @@ class RenderReporter:
         if f.get('video_encode'): specs.append(f"🎞️ 视频编码: {f['video_encode']}")
         if f.get('audio_encode'): specs.append(f"🔊 音频编码: {f['audio_encode']}")
         if f.get('subtitle'): specs.append(f"💬 字幕语言 {{subtitle}}: {f['subtitle']}")
-        if f.get('source'): specs.append(f"CD 来源: {f['source']}")
+        if f.get('source'): specs.append(f"💿 介质来源: {f['source']}")
         if f.get('platform'): specs.append(f"📡 发布平台: {f['platform']}")
         if specs: ctx.log(f"┣ 🛠️ 规格: {' | '.join(specs)}")
         

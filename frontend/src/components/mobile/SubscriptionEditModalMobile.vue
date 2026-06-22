@@ -142,7 +142,7 @@ watch(() => props.show, (newVal) => {
 
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_res" label="分辨率" placeholder="如: 1080P" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_team" label="制作组" placeholder="如: LoliHouse" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_source" label="来源" placeholder="如: Web-DL" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_source" label="介质来源" placeholder="如: Web-DL" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_codec" label="视频编码" placeholder="如: HEVC" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_audio" label="音频编码" placeholder="如: FLAC" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="formModel.filter_sub" label="字幕语言" placeholder="如: CHS" /></n-form-item></n-gi>

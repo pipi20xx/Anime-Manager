@@ -49,7 +49,7 @@ const {
         <div class="fig-item"><div class="fig-l">年份</div><div class="fig-v">{{ year }}</div></div>
         <div class="fig-item"><div class="fig-l">季号</div><div class="fig-v">{{ season }}</div></div>
         <div class="fig-item"><div class="fig-l">集数</div><div class="fig-v">{{ episode }}</div></div>
-        <div class="fig-item"><div class="fig-l">来源</div><div class="fig-v">{{ source }}</div></div>
+        <div class="fig-item"><div class="fig-l">介质来源</div><div class="fig-v">{{ source }}</div></div>
       </div>
 
       <!-- 技术规格 -->

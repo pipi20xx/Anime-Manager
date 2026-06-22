@@ -90,7 +90,7 @@ const columns = [
           
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_res" label="分辨率" placeholder="如: 1080p, 4k" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_team" label="制作组" placeholder="如: LoliHouse, VCB-Studio" /></n-form-item></n-gi>
-          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_source" label="来源" placeholder="如: Blu-ray, Web-DL" /></n-form-item></n-gi>
+          <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, Web-DL" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_codec" label="视频编码" placeholder="如: HEVC, AVC" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_audio" label="音频编码" placeholder="如: FLAC, AAC" /></n-form-item></n-gi>
           <n-gi><n-form-item><AppTextField v-model:value="editModel.filter_sub" label="字幕语言" placeholder="如: CHS, CHT" /></n-form-item></n-gi>

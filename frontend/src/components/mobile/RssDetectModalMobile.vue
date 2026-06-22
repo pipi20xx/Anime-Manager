@@ -74,7 +74,7 @@ const {
         <template v-if="mode === 'custom'">
           <AppTextField v-model:value="filterRes" label="分辨率" placeholder="分辨率 (如: 1080p)" />
           <AppTextField v-model:value="filterTeam" label="制作组/字幕组" placeholder="制作组/字幕组" />
-          <AppTextField v-model:value="filterSource" label="来源" placeholder="来源" />
+          <AppTextField v-model:value="filterSource" label="介质来源" placeholder="如: WebDL, BDRip" />
           <AppTextField v-model:value="filterCodec" label="编码" placeholder="编码" />
           <AppTextField v-model:value="filterSub" label="字幕语言" placeholder="字幕语言" />
         </template>
