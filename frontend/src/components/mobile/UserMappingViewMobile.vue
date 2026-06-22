@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import {
-  NCard, NTabs, NTabPane, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NEmpty, NSpin, NDrawer, NDrawerContent, NTag
+  NCard, NTabs, NTabPane, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NEmpty, NSpin, NDrawer, NDrawerContent, NTag, NPagination
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -35,6 +35,13 @@ const {
   keywordPage,
   companyLoading,
   keywordLoading,
+  genrePage,
+  languagePage,
+  countryPage,
+  pageSize,
+  genreTotal,
+  languageTotal,
+  countryTotal,
   genreSearch,
   companySearch,
   keywordSearch,
@@ -44,8 +51,6 @@ const {
   fetchMappings,
   fetchCompanies,
   fetchKeywords,
-  loadMoreCompanies,
-  loadMoreKeywords,
   saveGenreMapping,
   deleteGenreMapping,
   saveCompanyMapping,
@@ -71,21 +76,20 @@ watch(activeType, (newType) => {
   }
 })
 
-const handleCompanyScroll = (e: Event) => {
-  const target = e.target as HTMLElement
-  const { scrollTop, scrollHeight, clientHeight } = target
-  if (scrollHeight - scrollTop - clientHeight < 50 && !companyLoading.value && companyMappings.value.length < companyTotal.value) {
-    loadMoreCompanies()
-  }
-}
+const paginatedGenres = computed(() => {
+  const start = (genrePage.value - 1) * pageSize.value
+  return genreMappings.value.slice(start, start + pageSize.value)
+})
 
-const handleKeywordScroll = (e: Event) => {
-  const target = e.target as HTMLElement
-  const { scrollTop, scrollHeight, clientHeight } = target
-  if (scrollHeight - scrollTop - clientHeight < 50 && !keywordLoading.value && keywordMappings.value.length < keywordTotal.value) {
-    loadMoreKeywords()
-  }
-}
+const paginatedLanguages = computed(() => {
+  const start = (languagePage.value - 1) * pageSize.value
+  return languageMappings.value.slice(start, start + pageSize.value)
+})
+
+const paginatedCountries = computed(() => {
+  const start = (countryPage.value - 1) * pageSize.value
+  return countryMappings.value.slice(start, start + pageSize.value)
+})
 
 const showModal = ref(false)
 const isNewItem = ref(false)
@@ -231,7 +235,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in genreMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+            <div v-for="item in paginatedGenres" :key="item.id" class="mapping-card" @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.id }}</n-tag>
@@ -245,6 +249,7 @@ const tabCounts = computed(() => ({
             </div>
             <n-empty v-if="genreMappings.length === 0 && !loading" description="暂无数据" />
           </div>
+          <n-pagination v-if="genreTotal > pageSize" v-model:page="genrePage" :page-size="pageSize" :item-count="genreTotal" size="small" style="margin-top: 12px; justify-content: center" />
         </n-tab-pane>
 
         <n-tab-pane name="company" tab="公司">
@@ -258,7 +263,7 @@ const tabCounts = computed(() => ({
               <template #prefix><n-icon><SearchIcon /></n-icon></template>
             </n-input>
           </div>
-          <div class="mapping-list scrollable" @scroll="handleCompanyScroll">
+          <div class="mapping-list">
             <div v-for="item in companyMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
@@ -271,15 +276,9 @@ const tabCounts = computed(() => ({
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
             </div>
-            <div v-if="companyLoading && companyMappings.length > 0" class="loading-more">
-              <n-spin size="small" />
-              <span>加载中...</span>
-            </div>
-            <div v-if="!companyLoading && companyMappings.length >= companyTotal && companyTotal > 0" class="no-more">
-              已加载全部 {{ companyTotal }} 条
-            </div>
             <n-empty v-if="companyMappings.length === 0 && !companyLoading" description="暂无数据" />
           </div>
+          <n-pagination v-if="companyTotal > pageSize" v-model:page="companyPage" :page-size="pageSize" :item-count="companyTotal" size="small" style="margin-top: 12px; justify-content: center" />
         </n-tab-pane>
 
         <n-tab-pane name="keyword" tab="关键词">
@@ -293,7 +292,7 @@ const tabCounts = computed(() => ({
               <template #prefix><n-icon><SearchIcon /></n-icon></template>
             </n-input>
           </div>
-          <div class="mapping-list scrollable" @scroll="handleKeywordScroll">
+          <div class="mapping-list">
             <div v-for="item in keywordMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
@@ -306,15 +305,9 @@ const tabCounts = computed(() => ({
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
             </div>
-            <div v-if="keywordLoading && keywordMappings.length > 0" class="loading-more">
-              <n-spin size="small" />
-              <span>加载中...</span>
-            </div>
-            <div v-if="!keywordLoading && keywordMappings.length >= keywordTotal && keywordTotal > 0" class="no-more">
-              已加载全部 {{ keywordTotal }} 条
-            </div>
             <n-empty v-if="keywordMappings.length === 0 && !keywordLoading" description="暂无数据" />
           </div>
+          <n-pagination v-if="keywordTotal > pageSize" v-model:page="keywordPage" :page-size="pageSize" :item-count="keywordTotal" size="small" style="margin-top: 12px; justify-content: center" />
         </n-tab-pane>
 
         <n-tab-pane name="language" tab="语言">
@@ -329,7 +322,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in languageMappings" :key="item.code" class="mapping-card" @click="openEditModal(item)">
+            <div v-for="item in paginatedLanguages" :key="item.code" class="mapping-card" @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.code }}</n-tag>
@@ -343,6 +336,7 @@ const tabCounts = computed(() => ({
             </div>
             <n-empty v-if="languageMappings.length === 0 && !loading" description="暂无数据" />
           </div>
+          <n-pagination v-if="languageTotal > pageSize" v-model:page="languagePage" :page-size="pageSize" :item-count="languageTotal" size="small" style="margin-top: 12px; justify-content: center" />
         </n-tab-pane>
 
         <n-tab-pane name="country" tab="国家">
@@ -357,7 +351,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in countryMappings" :key="item.code" class="mapping-card" @click="openEditModal(item)">
+            <div v-for="item in paginatedCountries" :key="item.code" class="mapping-card" @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.code }}</n-tag>
@@ -371,6 +365,7 @@ const tabCounts = computed(() => ({
             </div>
             <n-empty v-if="countryMappings.length === 0 && !loading" description="暂无数据" />
           </div>
+          <n-pagination v-if="countryTotal > pageSize" v-model:page="countryPage" :page-size="pageSize" :item-count="countryTotal" size="small" style="margin-top: 12px; justify-content: center" />
         </n-tab-pane>
       </n-tabs>
     </div>
@@ -547,10 +542,6 @@ const tabCounts = computed(() => ({
   flex-direction: column;
   gap: var(--m-spacing-sm);
 }
-.mapping-list.scrollable {
-  max-height: calc(100vh - 280px);
-}
-
 /* 映射卡片 */
 .mapping-card {
   display: flex;
@@ -606,22 +597,6 @@ const tabCounts = computed(() => ({
 .card-actions:active {
   background: var(--app-surface-inner);
   color: var(--text-primary);
-}
-
-/* 加载更多 */
-.loading-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  color: var(--text-muted);
-}
-.no-more {
-  text-align: center;
-  padding: 12px;
-  color: var(--text-tertiary);
-  font-size: 12px;
 }
 
 /* 操作列表样式 */

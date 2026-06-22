@@ -3,7 +3,7 @@ import { h } from 'vue'
 import { 
   NModal, NDataTable, NButton, NSpace, NIcon, NForm, NFormItem, 
   NSelect, NSwitch, NGrid, NGi, NPopconfirm,
-  NScrollbar, NDivider
+  NDivider
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -83,7 +83,7 @@ const columns = [
       <n-data-table :columns="columns" :data="templates" :loading="loading" max-height="55vh" />
     </div>
 
-    <n-scrollbar v-else style="max-height: 65vh; padding-right: 12px;">
+    <div v-else class="edit-form">
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="12">
           <n-gi :span="2"><n-form-item><AppTextField v-model:value="editModel.name" label="预设名称" placeholder="例如: 默认动漫预设" /></n-form-item></n-gi>
@@ -132,7 +132,7 @@ const columns = [
           </n-gi>
         </n-grid>
       </n-form>
-    </n-scrollbar>
+    </div>
 
     <template #action>
       <n-space justify="end">
@@ -148,4 +148,5 @@ const columns = [
 .switch-row { display: flex; align-items: center; gap: 8px; }
 .switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
 .switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+.edit-form { padding-right: 12px; }
 </style>

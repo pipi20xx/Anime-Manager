@@ -224,8 +224,8 @@ const goToToday = () => {
     </n-spin>
 
     <n-modal v-model:show="showManageModal" preset="card" style="width: 95%; max-width: 1200px" content-style="padding: 0" title="追踪管理">
-      <n-tabs type="line" animated style="height: 80vh">
-        <n-tab-pane name="list" tab="正在追踪" style="height: 100%; display: flex; flex-direction: column">
+      <n-tabs type="line" animated class="manage-tabs">
+        <n-tab-pane name="list" tab="正在追踪">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
             <span style="font-size: 12px; color: var(--text-tertiary)">共 {{ trackingList.length }} 个追踪项</span>
             <n-space :size="8">
@@ -237,7 +237,7 @@ const goToToday = () => {
               </n-button>
             </n-space>
           </div>
-          <div class="scroll-container-full">
+          <div class="tab-content">
             <n-list :show-divider="false" class="compact-list">
               <n-list-item v-for="sub in trackingList" :key="sub.id">
                 <div class="tracking-item-row">
@@ -279,14 +279,14 @@ const goToToday = () => {
           </div>
         </n-tab-pane>
 
-        <n-tab-pane name="discover" tab="从放送表导入" style="height: 100%; display: flex; flex-direction: column">
+        <n-tab-pane name="discover" tab="从放送表导入">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
             <span style="font-size: 12px; color: var(--text-tertiary)">点击下方番剧可自动同步至日历</span>
             <n-button type="primary" size="small" :loading="importingBatch" @click="handleBatchImport">
               导入全周番剧
             </n-button>
           </div>
-          <div class="discover-scroll">
+          <div class="tab-content">
             <div class="discover-grid">
               <div v-for="day in bangumiRaw" :key="day.weekday.id" style="display: contents">
                 <div v-for="item in day.items" :key="item.id" class="discover-item" @click="handleAutoImport(item)">
@@ -308,7 +308,7 @@ const goToToday = () => {
         </n-tab-pane>
 
         <n-tab-pane name="settings" tab="推送设置">
-          <div style="padding: 24px 40px; max-height: 70vh; overflow-y: auto;">
+          <div class="tab-content settings-content">
             <n-form label-placement="left" label-width="140">
               <!-- 每日播报设置 -->
               <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px">
@@ -728,10 +728,19 @@ const goToToday = () => {
   padding: 4px;
 }
 
-.scroll-container-full {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 16px 16px;
+.manage-tabs {
+  padding-bottom: 16px;
+}
+.manage-tabs :deep(.n-tab-pane) {
+  padding: 16px 0;
+}
+
+.tab-content {
+  padding: 0 16px;
+}
+
+.settings-content {
+  padding: 24px 40px;
 }
 
 .tracking-item-row {
@@ -814,12 +823,6 @@ const goToToday = () => {
 
 .compact-list :deep(.n-list-item--hover) {
   background-color: transparent !important;
-}
-
-.discover-scroll {
-  height: 100%;
-  overflow-y: auto;
-  padding: 0 16px 16px;
 }
 
 .discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background var(--transition-fast); min-width: 0; }

@@ -1,4 +1,4 @@
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useMessage } from 'naive-ui'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -54,7 +54,12 @@ export function useUserMapping() {
   const keywordPage = ref(1)
   const companyLoading = ref(false)
   const keywordLoading = ref(false)
-  
+
+  const genrePage = ref(1)
+  const languagePage = ref(1)
+  const countryPage = ref(1)
+  const pageSize = ref(20)
+
   const genreSearch = ref('')
   const companySearch = ref('')
   const keywordSearch = ref('')
@@ -84,17 +89,13 @@ export function useUserMapping() {
     }
   }
 
-  const fetchCompanies = async (page: number = 1, append: boolean = false) => {
+  const fetchCompanies = async (page: number = 1) => {
     if (companyLoading.value) return
     companyLoading.value = true
     try {
-      const res = await fetch(`${API_BASE}/api/user_mapping/companies?page=${page}&page_size=100&q=${encodeURIComponent(companySearch.value)}`)
+      const res = await fetch(`${API_BASE}/api/user_mapping/companies?page=${page}&page_size=${pageSize.value}&q=${encodeURIComponent(companySearch.value)}`)
       const data = await res.json()
-      if (append) {
-        companyMappings.value = [...companyMappings.value, ...data.items]
-      } else {
-        companyMappings.value = data.items
-      }
+      companyMappings.value = data.items
       companyTotal.value = data.total
       companyPage.value = page
     } catch (e) {
@@ -104,17 +105,13 @@ export function useUserMapping() {
     }
   }
 
-  const fetchKeywords = async (page: number = 1, append: boolean = false) => {
+  const fetchKeywords = async (page: number = 1) => {
     if (keywordLoading.value) return
     keywordLoading.value = true
     try {
-      const res = await fetch(`${API_BASE}/api/user_mapping/keywords?page=${page}&page_size=100&q=${encodeURIComponent(keywordSearch.value)}`)
+      const res = await fetch(`${API_BASE}/api/user_mapping/keywords?page=${page}&page_size=${pageSize.value}&q=${encodeURIComponent(keywordSearch.value)}`)
       const data = await res.json()
-      if (append) {
-        keywordMappings.value = [...keywordMappings.value, ...data.items]
-      } else {
-        keywordMappings.value = data.items
-      }
+      keywordMappings.value = data.items
       keywordTotal.value = data.total
       keywordPage.value = page
     } catch (e) {
@@ -124,27 +121,46 @@ export function useUserMapping() {
     }
   }
 
+  const paginatedGenres = computed(() => {
+    const start = (genrePage.value - 1) * pageSize.value
+    return genreMappings.value.slice(start, start + pageSize.value)
+  })
+  const genreTotal = computed(() => genreMappings.value.length)
+
+  const paginatedLanguages = computed(() => {
+    const start = (languagePage.value - 1) * pageSize.value
+    return languageMappings.value.slice(start, start + pageSize.value)
+  })
+  const languageTotal = computed(() => languageMappings.value.length)
+
+  const paginatedCountries = computed(() => {
+    const start = (countryPage.value - 1) * pageSize.value
+    return countryMappings.value.slice(start, start + pageSize.value)
+  })
+  const countryTotal = computed(() => countryMappings.value.length)
+
   const debouncedSearchGenre = useDebounce(() => {
+    genrePage.value = 1
     fetchMappings()
   }, 300)
 
   const debouncedSearchCompany = useDebounce(() => {
     companyPage.value = 1
-    companyMappings.value = []
-    fetchCompanies()
+    fetchCompanies(1)
   }, 300)
 
   const debouncedSearchKeyword = useDebounce(() => {
     keywordPage.value = 1
-    keywordMappings.value = []
-    fetchKeywords()
+    fetchKeywords(1)
   }, 300)
 
   const debouncedSearchLanguage = useDebounce(() => {
+    languagePage.value = 1
     fetchMappings()
   }, 300)
 
   const debouncedSearchCountry = useDebounce(() => {
+    countryPage.value = 1
     fetchMappings()
   }, 300)
 
@@ -167,18 +183,6 @@ export function useUserMapping() {
   watch(countrySearch, () => {
     debouncedSearchCountry()
   })
-
-  const loadMoreCompanies = async () => {
-    if (companyMappings.value.length < companyTotal.value) {
-      await fetchCompanies(companyPage.value + 1, true)
-    }
-  }
-
-  const loadMoreKeywords = async () => {
-    if (keywordMappings.value.length < keywordTotal.value) {
-      await fetchKeywords(keywordPage.value + 1, true)
-    }
-  }
 
   const fetchRefCounts = async () => {
     try {
@@ -453,6 +457,16 @@ export function useUserMapping() {
     keywordPage,
     companyLoading,
     keywordLoading,
+    genrePage,
+    languagePage,
+    countryPage,
+    pageSize,
+    genreTotal,
+    languageTotal,
+    countryTotal,
+    paginatedGenres,
+    paginatedLanguages,
+    paginatedCountries,
     genreSearch,
     companySearch,
     keywordSearch,
@@ -462,8 +476,6 @@ export function useUserMapping() {
     fetchRefCounts,
     fetchCompanies,
     fetchKeywords,
-    loadMoreCompanies,
-    loadMoreKeywords,
     importFromRef,
     saveGenreMapping,
     deleteGenreMapping,

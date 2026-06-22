@@ -6,7 +6,7 @@ import {
   NModal, NDataTable, NButton, NSpace,
   NSwitch, NPopconfirm, NTag, NEmpty, NAlert,
   NForm, NFormItem, NInput, NSelect,
-  NGrid, NGi, NDivider, NScrollbar
+  NGrid, NGi, NDivider
 } from 'naive-ui'
 import { useRssDetectManager } from '../../composables/components/useRssDetectManager'
 
@@ -111,11 +111,9 @@ const testColumns = [
     :show="show" 
     @update:show="close"
     preset="card"
-    style="width: 1100px; max-width: 98vw; display: flex; flex-direction: column;"
-    :content-style="{ padding: '0', flex: 1, overflow: 'hidden' }"
+    style="width: 1100px; max-width: 98vw;"
     :title="showEdit ? (editingTask ? '编辑探测任务' : '添加探测任务') : '自动 RSS 订阅管理'"
   >
-    <div style="height: 100%; overflow-y: auto; padding: 16px;">
     <div v-if="!showEdit">
       <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
         <div style="color: var(--text-tertiary); font-size: 13px;">
@@ -130,7 +128,6 @@ const testColumns = [
         :columns="(listColumns as any)" 
         :data="tasks" 
         :loading="loading"
-        max-height="55vh"
       />
 
       <n-empty v-if="!loading && tasks.length === 0" description="暂无探测任务" style="margin-top: 20px;">
@@ -140,7 +137,7 @@ const testColumns = [
       </n-empty>
     </div>
 
-    <n-scrollbar v-else style="max-height: 60vh; padding-right: 12px;">
+    <div v-else class="edit-form">
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="16">
           <n-gi :span="2">
@@ -212,11 +209,9 @@ const testColumns = [
           :columns="(testColumns as any)" 
           :data="testResult.detected_shows"
           :row-key="(row: any) => row.tmdb_id"
-          max-height="25vh"
           size="small"
         />
       </template>
-    </n-scrollbar>
     </div>
 
     <template #action>
@@ -230,4 +225,5 @@ const testColumns = [
 </template>
 
 <style scoped>
+.edit-form { padding-right: 12px; }
 </style>

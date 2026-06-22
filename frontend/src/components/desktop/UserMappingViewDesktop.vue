@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, h, watch, nextTick } from 'vue'
+import { ref, computed, h, watch } from 'vue'
 import { 
   NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NPopconfirm, NSpin
 } from 'naive-ui'
@@ -37,6 +37,16 @@ const {
   keywordPage,
   companyLoading,
   keywordLoading,
+  genrePage,
+  languagePage,
+  countryPage,
+  pageSize,
+  genreTotal,
+  languageTotal,
+  countryTotal,
+  paginatedGenres,
+  paginatedLanguages,
+  paginatedCountries,
   genreSearch,
   companySearch,
   keywordSearch,
@@ -46,8 +56,6 @@ const {
   fetchMappings,
   fetchCompanies,
   fetchKeywords,
-  loadMoreCompanies,
-  loadMoreKeywords,
   saveGenreMapping,
   deleteGenreMapping,
   saveCompanyMapping,
@@ -72,22 +80,6 @@ watch(activeType, (newType) => {
     fetchKeywords()
   }
 })
-
-const handleCompanyScroll = (e: Event) => {
-  const target = e.target as HTMLElement
-  const { scrollTop, scrollHeight, clientHeight } = target
-  if (scrollHeight - scrollTop - clientHeight < 100 && !companyLoading.value && companyMappings.value.length < companyTotal.value) {
-    loadMoreCompanies()
-  }
-}
-
-const handleKeywordScroll = (e: Event) => {
-  const target = e.target as HTMLElement
-  const { scrollTop, scrollHeight, clientHeight } = target
-  if (scrollHeight - scrollTop - clientHeight < 100 && !keywordLoading.value && keywordMappings.value.length < keywordTotal.value) {
-    loadMoreKeywords()
-  }
-}
 
 const showModal = ref(false)
 const editingItem = ref<MappingItem | null>(null)
@@ -280,78 +272,67 @@ const countryColumns = [
         <n-tag type="info" size="small">自定义中文名称，优先于 TMDB 官方数据</n-tag>
       </template>
       
-      <n-tabs type="segment" animated v-model:value="activeType" style="height: 60vh">
-        <n-tab-pane name="genre" tab="流派" style="height: 100%; display: flex; flex-direction: column">
+      <n-tabs type="segment" animated v-model:value="activeType">
+        <n-tab-pane name="genre" tab="流派">
           <AppSearchField v-model:value="genreSearch" placeholder="搜索 ID 或名称..." style="margin-bottom: 12px" />
-          <n-data-table 
-            :columns="genreColumns" 
-            :data="genreMappings" 
+          <n-data-table
+            remote
+            :columns="genreColumns"
+            :data="paginatedGenres"
             :loading="loading"
-            :max-height="400"
+            :pagination="{ page: genrePage, pageSize: pageSize, itemCount: genreTotal, onChange: (p: number) => { genrePage = p } }"
             size="small"
           />
           <n-empty v-if="!loading && genreMappings.length === 0" description="暂无流派映射，点击「导入当前分类」从 TMDB 导入" style="padding: 40px 0" />
         </n-tab-pane>
 
-        <n-tab-pane name="company" tab="制作公司" style="height: 100%; display: flex; flex-direction: column">
+        <n-tab-pane name="company" tab="制作公司">
           <AppSearchField v-model:value="companySearch" placeholder="搜索 ID、名称或国家..." style="margin-bottom: 12px" />
-          <div class="scroll-table-wrap" @scroll="handleCompanyScroll">
-            <n-data-table 
-              :columns="companyColumns" 
-              :data="companyMappings" 
-              :loading="companyLoading && companyMappings.length === 0"
-              size="small"
-            />
-            <div class="loading-more" v-if="companyLoading && companyMappings.length > 0">
-              <n-spin size="small" />
-              <span>加载中...</span>
-            </div>
-            <div class="no-more" v-if="!companyLoading && companyMappings.length >= companyTotal && companyTotal > 0">
-              已加载全部 {{ companyTotal }} 条
-            </div>
-          </div>
+          <n-data-table
+            remote
+            :columns="companyColumns"
+            :data="companyMappings"
+            :loading="companyLoading"
+            :pagination="{ page: companyPage, pageSize: pageSize, itemCount: companyTotal, onChange: (p: number) => { companyPage = p; fetchCompanies(p) } }"
+            size="small"
+          />
           <n-empty v-if="!companyLoading && companyMappings.length === 0" description="暂无制作公司映射，点击「导入当前分类」从 TMDB 导入" style="padding: 40px 0" />
         </n-tab-pane>
 
-        <n-tab-pane name="keyword" tab="关键词" style="height: 100%; display: flex; flex-direction: column">
+        <n-tab-pane name="keyword" tab="关键词">
           <AppSearchField v-model:value="keywordSearch" placeholder="搜索 ID 或名称..." style="margin-bottom: 12px" />
-          <div class="scroll-table-wrap" @scroll="handleKeywordScroll">
-            <n-data-table 
-              :columns="keywordColumns" 
-              :data="keywordMappings" 
-              :loading="keywordLoading && keywordMappings.length === 0"
-              size="small"
-            />
-            <div class="loading-more" v-if="keywordLoading && keywordMappings.length > 0">
-              <n-spin size="small" />
-              <span>加载中...</span>
-            </div>
-            <div class="no-more" v-if="!keywordLoading && keywordMappings.length >= keywordTotal && keywordTotal > 0">
-              已加载全部 {{ keywordTotal }} 条
-            </div>
-          </div>
+          <n-data-table
+            remote
+            :columns="keywordColumns"
+            :data="keywordMappings"
+            :loading="keywordLoading"
+            :pagination="{ page: keywordPage, pageSize: pageSize, itemCount: keywordTotal, onChange: (p: number) => { keywordPage = p; fetchKeywords(p) } }"
+            size="small"
+          />
           <n-empty v-if="!keywordLoading && keywordMappings.length === 0" description="暂无关键词映射，点击「导入当前分类」从 TMDB 导入" style="padding: 40px 0" />
         </n-tab-pane>
 
-        <n-tab-pane name="language" tab="原始语言" style="height: 100%; display: flex; flex-direction: column">
+        <n-tab-pane name="language" tab="原始语言">
           <AppSearchField v-model:value="languageSearch" placeholder="搜索代码或名称..." style="margin-bottom: 12px" />
-          <n-data-table 
-            :columns="languageColumns" 
-            :data="languageMappings" 
+          <n-data-table
+            remote
+            :columns="languageColumns"
+            :data="paginatedLanguages"
             :loading="loading"
-            :max-height="400"
+            :pagination="{ page: languagePage, pageSize: pageSize, itemCount: languageTotal, onChange: (p: number) => { languagePage = p } }"
             size="small"
           />
           <n-empty v-if="!loading && languageMappings.length === 0" description="暂无语言映射，点击「添加映射」手动添加" style="padding: 40px 0" />
         </n-tab-pane>
 
-        <n-tab-pane name="country" tab="原始国家" style="height: 100%; display: flex; flex-direction: column">
+        <n-tab-pane name="country" tab="原始国家">
           <AppSearchField v-model:value="countrySearch" placeholder="搜索代码或名称..." style="margin-bottom: 12px" />
-          <n-data-table 
-            :columns="countryColumns" 
-            :data="countryMappings" 
+          <n-data-table
+            remote
+            :columns="countryColumns"
+            :data="paginatedCountries"
             :loading="loading"
-            :max-height="400"
+            :pagination="{ page: countryPage, pageSize: pageSize, itemCount: countryTotal, onChange: (p: number) => { countryPage = p } }"
             size="small"
           />
           <n-empty v-if="!loading && countryMappings.length === 0" description="暂无国家映射，点击「添加映射」手动添加" style="padding: 40px 0" />
@@ -454,23 +435,5 @@ const countryColumns = [
 .card-title {
   font-weight: 600;
   font-size: 15px;
-}
-.scroll-table-wrap {
-  max-height: 400px;
-  overflow-y: auto;
-}
-.loading-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  color: var(--text-muted);
-}
-.no-more {
-  text-align: center;
-  padding: 12px;
-  color: var(--text-tertiary);
-  font-size: 12px;
 }
 </style>

@@ -1,4 +1,4 @@
-import { ref, onMounted, computed, h } from 'vue'
+import { ref, onMounted, computed, h, watch } from 'vue'
 import { useMessage, NInput, NPopover } from 'naive-ui'
 
 export function useDatabase() {
@@ -23,14 +23,25 @@ export function useDatabase() {
     return columns.value.length * 200 + (currentPk.value ? 100 : 0)
   })
 
+  const sqlPage = ref(1)
+  const sqlPageSize = ref(20)
+
   const filteredData = computed(() => {
     if (!searchText.value) return queryResult.value
     const lowerSearch = searchText.value.toLowerCase()
     return queryResult.value.filter(row => {
-      return Object.values(row).some(val => 
+      return Object.values(row).some(val =>
         String(val).toLowerCase().includes(lowerSearch)
       )
     })
+  })
+
+  watch(searchText, () => { sqlPage.value = 1 })
+
+  const sqlTotal = computed(() => filteredData.value.length)
+  const paginatedData = computed(() => {
+    const start = (sqlPage.value - 1) * sqlPageSize.value
+    return filteredData.value.slice(start, start + sqlPageSize.value)
   })
 
   const fetchTables = async () => {
@@ -165,19 +176,8 @@ export function useDatabase() {
     queryLoading,
     currentSql,
     queryResult,
-    columns,
-    searchText,
-    currentTable,
-    currentPk,
-    editState,
-    scrollX,
-    filteredData,
-    tableOptions,
-    fetchTables,
-    handleUpdate,
-    deleteRow,
-    runQuery,
-    selectTable,
-    handleManualRun
+    columns, searchText, currentTable, currentPk, editState, scrollX, filteredData,
+    sqlPage, sqlPageSize, sqlTotal, paginatedData,
+    tableOptions, fetchTables, handleUpdate, deleteRow, runQuery, selectTable, handleManualRun
   }
 }

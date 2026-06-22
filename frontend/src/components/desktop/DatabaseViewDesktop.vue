@@ -33,6 +33,10 @@ const {
   editState,
   scrollX,
   filteredData,
+  sqlPage,
+  sqlPageSize,
+  sqlTotal,
+  paginatedData,
   tableOptions,
   fetchTables,
   handleUpdate,
@@ -159,8 +163,17 @@ const dataTableColumns = computed(() => {
           </n-card>
           <n-card bordered title="执行结果" size="small" class="result-card">
             <template #header-extra><AppSearchField v-model:value="searchText" placeholder="在结果中搜索..." style="width: 250px" /></template>
-            <n-data-table :columns="dataTableColumns" :data="filteredData" :loading="queryLoading" :max-height="500" :scroll-x="scrollX" virtual-scroll size="small" :single-line="false" />
-            <template #footer><div class="footer-info">显示 {{ filteredData.length }} / 共 {{ queryResult.length }} 条记录</div></template>
+            <n-data-table
+              remote
+              :columns="dataTableColumns"
+              :data="paginatedData"
+              :loading="queryLoading"
+              :scroll-x="scrollX"
+              size="small"
+              :single-line="false"
+              :pagination="{ page: sqlPage, pageSize: sqlPageSize, itemCount: sqlTotal, onChange: (p: number) => { sqlPage = p } }"
+            />
+            <template #footer><div class="footer-info">显示 {{ paginatedData.length }} / 共 {{ queryResult.length }} 条记录</div></template>
           </n-card>
         </n-space>
       </n-tab-pane>
