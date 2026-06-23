@@ -17,6 +17,21 @@ class EmbyClient:
             'X-Emby-Token': self.api_key,
             'Accept': 'application/json'
         })
+        # 索引上下文 (由调用方在异步侧设置，同步侧读取)
+        self._index_titles: Optional[List[str]] = None
+        self._index_writeback: List[Dict] = []
+
+    def set_index_context(self, titles: List[str]):
+        """设置索引上下文，search_by_tmdb_id 将优先用这些标题搜索。"""
+        self._index_titles = titles
+        self._index_writeback = []
+
+    def clear_index_context(self) -> List[Dict]:
+        """清除索引上下文并返回兜底遍历发现的需要回写的条目。"""
+        self._index_titles = None
+        result = list(self._index_writeback)
+        self._index_writeback = []
+        return result
 
     def _make_request(self, method: str, endpoint: str, params: Optional[Dict] = None, data: Optional[Dict] = None) -> Optional[Dict]:
         if not self.base_url or not self.api_key:
@@ -31,26 +46,82 @@ class EmbyClient:
             print(f"Emby API 请求失败: {e}")
             return None
 
-    def search_by_tmdb_id(self, tmdb_id: str, media_type: str = 'all') -> Optional[Dict]:
+    def search_by_tmdb_id(self, tmdb_id: str, media_type: str = 'all',
+                          index_titles: Optional[List[str]] = None,
+                          on_items_matched: Optional[callable] = None) -> Optional[Dict]:
+        """
+        通过 TMDB ID 搜索 Emby 库。
+        - index_titles: 显式传入的索引标题 (优先级最高)
+        - 同时检查实例上下文 self._index_titles
+        - on_items_matched: 兜底遍历找到新条目时的立即回调
+        - 兜底发现也会收集到 self._index_writeback 中
+        """
+        # 合并参数和实例上下文的标题
+        titles = index_titles or []
+        if self._index_titles:
+            titles = list(set(titles + self._index_titles))
+
+        new_items_for_index = []  # 兜底遍历时发现的新条目
+
+        # 1. 优先走索引: 用标题搜索 → 比对 TMDB ID
+        if titles:
+            for title in titles:
+                search_result = self.search_by_title(title, media_type)
+                if not search_result or not search_result.get('Items'):
+                    continue
+
+                matched = []
+                for item in search_result['Items']:
+                    item_tmdb_id = (item.get('ProviderIds', {}) or {}).get('Tmdb')
+                    if item_tmdb_id and str(item_tmdb_id) == str(tmdb_id):
+                        if media_type == 'all' or item.get('Type', '').lower() == media_type.lower():
+                            matched.append(item)
+
+                if matched:
+                    logger.info(f"索引命中: tmdb_id={tmdb_id} 标题='{title}' 匹配 {len(matched)} 项")
+                    return {
+                        'tmdb_id': tmdb_id,
+                        'matched_items': matched,
+                        'total': len(matched)
+                    }
+
+        # 2. 兜底: 遍历整个 Emby 库
+        logger.info(f"执行兜底遍历: tmdb_id={tmdb_id}")
         items = self._make_request('GET', '/Items', params={
             'IncludeItemTypes': 'Movie,Series',
             'Recursive': 'true',
             'Fields': 'ProviderIds,Path,MediaSources',
             'EnableUserData': 'false'
         })
-        
+
         if not items or 'Items' not in items:
             return None
-        
+
         matched_items = []
         for item in items['Items']:
-            provider_ids = item.get('ProviderIds', {})
-            item_tmdb_id = provider_ids.get('Tmdb')
-            
+            item_tmdb_id = (item.get('ProviderIds', {}) or {}).get('Tmdb')
             if item_tmdb_id and str(item_tmdb_id) == str(tmdb_id):
                 if media_type == 'all' or item.get('Type', '').lower() == media_type.lower():
                     matched_items.append(item)
-        
+                    entry = {
+                        'tmdb_id': str(tmdb_id),
+                        'media_type': item.get('Type', ''),
+                        'emby_item_id': item.get('Id', ''),
+                        'title': item.get('Name', ''),
+                    }
+                    new_items_for_index.append(entry)
+
+        # 3. 回写索引
+        if new_items_for_index:
+            # 收集到实例上下文
+            self._index_writeback.extend(new_items_for_index)
+            # 同时调用显式回调
+            if on_items_matched:
+                try:
+                    on_items_matched(new_items_for_index)
+                except Exception as e:
+                    logger.warning(f"回写索引回调失败: {e}")
+
         return {
             'tmdb_id': tmdb_id,
             'matched_items': matched_items,
@@ -347,6 +418,51 @@ class EmbyClient:
         return self._make_request('GET', f'/Items/{item_id}', params={
             'Fields': 'ProviderIds,Path,MediaSources,MediaStreams,Overview,Genres,Studios'
         })
+
+    def fetch_all_items_brief(self) -> List[Dict]:
+        """
+        获取 Emby 库中所有媒体项的简要信息 (ID, TMDB ID, 类型, 标题)。
+        用于构建索引。
+        """
+        result = self._make_request('GET', '/Items', params={
+            'IncludeItemTypes': 'Movie,Series',
+            'Recursive': 'true',
+            'Fields': 'ProviderIds',
+            'EnableUserData': 'false'
+        })
+        if not result or 'Items' not in result:
+            logger.warning("Emby fetch_all_items_brief: 未获取到任何条目")
+            return []
+
+        brief_items = []
+        for item in result['Items']:
+            provider_ids = item.get('ProviderIds', {})
+            tmdb_id = provider_ids.get('Tmdb')
+            if tmdb_id:
+                brief_items.append({
+                    'emby_item_id': item.get('Id', ''),
+                    'tmdb_id': str(tmdb_id),
+                    'media_type': item.get('Type', ''),  # "Movie" 或 "Series"
+                    'title': item.get('Name', ''),
+                })
+        logger.info(f"Emby fetch_all_items_brief: 共获取 {len(brief_items)} 个带 TMDB ID 的条目")
+        return brief_items
+
+    def search_by_title(self, title: str, media_type: str = 'all') -> Optional[Dict]:
+        """
+        通过标题搜索 Emby 库，返回匹配的媒体项。
+        """
+        include_types = 'Movie,Series' if media_type == 'all' else media_type
+        result = self._make_request('GET', '/Items', params={
+            'IncludeItemTypes': include_types,
+            'Recursive': 'true',
+            'Fields': 'ProviderIds,Path,MediaSources',
+            'SearchTerm': title,
+            'EnableUserData': 'false'
+        })
+        if not result or 'Items' not in result:
+            return None
+        return {'Items': result['Items'], 'TotalRecordCount': result.get('TotalRecordCount', 0)}
 
     def test_connection(self) -> bool:
         result = self._make_request('GET', '/System/Info')

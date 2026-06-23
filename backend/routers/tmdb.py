@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from recognition.data_provider.tmdb.client import TMDBProvider
 from tmdbmatefull.database import DEFAULT_GENRE_MAPPINGS, DEFAULT_COUNTRY_MAPPINGS, DEFAULT_LANGUAGE_MAPPINGS
 from logger import log_audit
+from emby_index_service import wrap_emby_with_index, sync_index
 
 router = APIRouter(prefix="/api/tmdb", tags=["TMDB 云端数据"])
 
@@ -83,6 +84,7 @@ async def get_detail(media_type: str, tmdb_id: str):
 async def get_detail_emby_status(media_type: str, tmdb_id: str):
     """
     获取指定作品在 Emby 库中的入库状态。
+    优先用索引标题搜索 Emby，未命中时兜底遍历并回写索引。
     """
     cache_key = f"emby:status:{media_type}:{tmdb_id}"
     cached = _get_emby_cache(cache_key)
@@ -92,15 +94,19 @@ async def get_detail_emby_status(media_type: str, tmdb_id: str):
 
     log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: 开始查询...")
 
+    from emby_client import get_emby_client
+    emby = get_emby_client()
+    cleanup = await wrap_emby_with_index(emby, tmdb_id, media_type)
+
     def _fetch():
-        from emby_client import get_emby_client
-        emby = get_emby_client()
         if media_type == 'movie':
             return emby.get_movie_info(tmdb_id)
         else:
             return emby.get_series_library_status(tmdb_id)
 
     result = await asyncio.to_thread(_fetch)
+    await cleanup()
+
     _set_emby_cache(cache_key, result)
 
     # 记录查询结果
@@ -151,12 +157,16 @@ async def get_season_episodes_emby(tmdb_id: str, season_number: int):
 
     log_audit("Emby", "季度集", f"TMDB ID {tmdb_id} S{season_number}: 开始查询...")
 
+    from emby_client import get_emby_client
+    emby = get_emby_client()
+    cleanup = await wrap_emby_with_index(emby, tmdb_id, 'tv')
+
     def _fetch():
-        from emby_client import get_emby_client
-        emby = get_emby_client()
         return emby.get_season_episodes_info(tmdb_id, season_number)
 
     episodes_info = await asyncio.to_thread(_fetch)
+    await cleanup()
+
     result = {"episodes": episodes_info}
     _set_emby_cache(cache_key, result)
 
@@ -216,3 +226,17 @@ async def get_person_credits(person_id: str):
     result = await TMDBProvider().get_person_credits(person_id)
     log_audit("TMDB", "人物作品", f"获取作品列表: {person_id}")
     return result
+
+
+@router.post("/emby/sync-index", summary="同步 Emby 库索引")
+async def sync_emby_index():
+    """
+    从 Emby 库拉取所有媒体的 TMDB ID + 类型 + 标题，写入索引表。
+    用于加速后续的库状态查询。
+    """
+    log_audit("Emby", "索引同步", "开始同步...")
+    count = await sync_index()
+    if count < 0:
+        raise HTTPException(status_code=500, detail="索引同步失败，请检查 Emby 连接")
+    log_audit("Emby", "索引同步", f"完成，共 {count} 条")
+    return {"status": "success", "count": count}

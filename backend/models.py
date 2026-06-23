@@ -514,4 +514,15 @@ class BgmTmdbMapping(SQLModel, table=True):
     source: str = Field(default="bangumi-data")
     updated_at: datetime = Field(default_factory=datetime.now)
 
+class EmbyMediaIndex(SQLModel, table=True):
+    __tablename__ = "emby_media_index"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "Emby库索引 (TMDB ID + 类型 + Emby标题的快速查找表)"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    tmdb_id: str = Field(index=True)
+    media_type: str = Field(index=True)  # "Movie" 或 "Series"
+    emby_item_id: str
+    title: str
+    sync_at: datetime = Field(default_factory=datetime.now)
+
 

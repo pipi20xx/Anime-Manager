@@ -306,6 +306,38 @@ async def startup_event():
         
         log_audit("系统", "启动完成", "所有后台服务已启动。")
 
+        # Emby 索引初始化与定时同步
+        try:
+            from emby_index_service import is_index_empty, sync_index
+            emby_config = ConfigManager.get_config()
+            if emby_config.get('emby_url') and emby_config.get('emby_api_key'):
+                empty = await is_index_empty()
+                if empty:
+                    logger.info("[Emby索引] 索引表为空，启动时自动同步...")
+                    count = await sync_index()
+                    if count >= 0:
+                        logger.info(f"[Emby索引] 启动同步完成: {count} 条")
+                    else:
+                        logger.warning("[Emby索引] 启动同步失败")
+                else:
+                    logger.info("[Emby索引] 索引表非空，跳过启动同步")
+
+                # 后台每小时同步
+                async def _emby_index_sync_loop():
+                    while True:
+                        await asyncio.sleep(86400)  # 24小时
+                        try:
+                            await sync_index()
+                        except Exception as e:
+                            logger.warning(f"[Emby索引] 定时同步失败: {e}")
+
+                asyncio.create_task(_emby_index_sync_loop())
+                logger.info("[Emby索引] 后台定时同步已启动 (间隔: 1小时)")
+            else:
+                logger.info("[Emby索引] Emby 未配置，跳过索引同步")
+        except Exception as e:
+            logger.warning(f"[Emby索引] 初始化失败: {e}")
+
         try:
             from notification import NotificationManager
             from clients.cd2_monitor import CD2TransferMonitor

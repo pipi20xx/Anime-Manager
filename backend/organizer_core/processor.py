@@ -269,6 +269,7 @@ class FileProcessor:
             
             if check_emby_exists:
                 from emby_client import get_emby_client
+                from emby_index_service import wrap_emby_with_index
                 emby_client = get_emby_client()
                 
                 tmdb_id = final.get("tmdb_id")
@@ -279,10 +280,14 @@ class FileProcessor:
                 if tmdb_id and emby_client:
                     try:
                         exists = False
-                        if media_type == "电影":
-                            exists = emby_client.check_movie_exists(tmdb_id)
-                        elif media_type == "剧集" and season is not None and episode is not None:
-                            exists = emby_client.check_episode_exists(tmdb_id, season, episode)
+                        cleanup = await wrap_emby_with_index(emby_client, tmdb_id, media_type)
+                        try:
+                            if media_type == "电影":
+                                exists = emby_client.check_movie_exists(tmdb_id)
+                            elif media_type == "剧集" and season is not None and episode is not None:
+                                exists = emby_client.check_episode_exists(tmdb_id, season, episode)
+                        finally:
+                            await cleanup()
                         
                         if exists:
                             logger.info(f"✨ [整理] Emby已存在: {final['title']} - S{season}E{episode}")
