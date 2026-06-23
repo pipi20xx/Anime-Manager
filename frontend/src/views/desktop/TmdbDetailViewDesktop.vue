@@ -69,6 +69,9 @@ const displayGenres = computed(() => {
     .map((g: string) => genreNameMap.value.get(g.toLowerCase()) || g))]
 })
 
+const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='
+const DEFAULT_POSTER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMzAwIiBmaWxsPSIjZTBlMGUwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjxwYXRoIGQ9Ik04MCAxMjAgaDQwIHY0MCBoLTQwIHoiIGZpbGw9IiM5OTkiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMjUiIGZpbGw9IiM5OTkiLz48L3N2Zz4='
+
 const getImg = (path: string) => {
   if (!path) return ''
   if (path.includes('/api/system/img') || path.includes('/api/system/bgm_img')) return path
@@ -375,7 +378,7 @@ watch(tmdbId, (newId, oldId) => {
     <div v-else-if="detail" class="detail-container">
         <div class="header-content">
           <div class="poster-col">
-            <n-image :src="getPoster(detail.poster_path)" class="main-poster" object-fit="cover" />
+            <n-image :src="getPoster(detail.poster_path)" class="main-poster" object-fit="cover" :fallback-src="DEFAULT_POSTER" />
           </div>
           <div class="info-col">
             <div class="title-row">
@@ -460,7 +463,7 @@ watch(tmdbId, (newId, oldId) => {
               <div class="cast-scroller">
                 <div v-for="c in detail.cast" :key="c.actor + c.character" class="cast-card" @click="openPersonDetail(c.id)">
                   <div class="cast-avatar">
-                    <n-image :src="getPoster(c.image)" object-fit="cover" preview-disabled />
+                    <n-image :src="getPoster(c.image)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
                   </div>
                   <div class="cast-names">
                     <div class="actor-name" :title="c.actor">{{ c.actor }}</div>
@@ -476,7 +479,7 @@ watch(tmdbId, (newId, oldId) => {
               <div v-for="s in detail.seasons" :key="s.id" class="season-item">
                 <div class="season-card" @click="toggleSeason(s.season_number)">
                   <div class="s-poster">
-                    <n-image :src="getPoster(s.poster_path)" object-fit="cover" preview-disabled />
+                    <n-image :src="getPoster(s.poster_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" />
                   </div>
                   <div class="s-info">
                     <div class="s-name-row">
@@ -502,7 +505,7 @@ watch(tmdbId, (newId, oldId) => {
                   </div>
                   <div v-for="ep in getSeasonEpisodes(s.season_number)" :key="ep.episode" class="episode-item">
                     <div class="ep-still" v-if="ep.still_path">
-                      <n-image :src="getPoster(ep.still_path)" object-fit="cover" preview-disabled />
+                      <n-image :src="getPoster(ep.still_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" />
                     </div>
                     <div class="ep-still ep-still-placeholder" v-else>
                       <span>E{{ ep.episode }}</span>

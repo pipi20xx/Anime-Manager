@@ -28,6 +28,9 @@ const detail = ref<any>(null)
 const subscriptions = ref<any[]>([])
 const matchingTmdb = ref(false)
 
+const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='
+const DEFAULT_POSTER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMzAwIiBmaWxsPSIjZTBlMGUwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjxwYXRoIGQ9Ik04MCAxMjAgaDQwIHY0MCBoLTQwIHoiIGZpbGw9IiM5OTkiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMjUiIGZpbGw9IiM5OTkiLz48L3N2Zz4='
+
 const getImg = (path: string) => {
   if (!path) return ''
   if (path.includes('/api/system/img') || path.includes('/api/system/bgm_img')) return path
@@ -182,7 +185,7 @@ onMounted(() => {
       <div class="m-detail-hero" style="min-height: auto; padding: var(--m-spacing-lg) 0;">
         <div class="m-detail-hero-content" style="padding: 0 var(--m-spacing-lg); align-items: flex-start;">
           <div class="m-detail-poster" style="width: 120px;">
-            <n-image :src="getImg(detail.poster_path)" object-fit="cover" preview-disabled style="width: 100%; aspect-ratio: 3/4;" />
+            <n-image :src="getImg(detail.poster_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" style="width: 100%; aspect-ratio: 3/4;" />
           </div>
           <div class="m-detail-info">
             <h1 class="m-detail-title">{{ detail.title || detail.name }}</h1>
@@ -260,7 +263,7 @@ onMounted(() => {
           <div class="m-h-scroll">
             <div v-for="c in detail.cast" :key="c.character" class="cast-card-mobile">
               <div class="cast-avatar-mobile">
-                <n-image :src="c.image" object-fit="cover" preview-disabled />
+                <n-image :src="c.image" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
               </div>
               <div class="cast-name-mobile" style="font-weight: 600;">{{ c.character }}</div>
               <div class="cast-name-mobile" style="color: var(--text-muted);">{{ c.actor }}</div>

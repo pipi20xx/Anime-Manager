@@ -70,6 +70,9 @@ const displayGenres = computed(() => {
     .map((g: string) => genreNameMap.value.get(g.toLowerCase()) || g))]
 })
 
+const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='
+const DEFAULT_POSTER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMzAwIiBmaWxsPSIjZTBlMGUwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjxwYXRoIGQ9Ik04MCAxMjAgaDQwIHY0MCBoLTQwIHoiIGZpbGw9IiM5OTkiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMjUiIGZpbGw9IiM5OTkiLz48L3N2Zz4='
+
 const getImg = (path: string) => {
   if (!path) return ''
   if (path.includes('/api/system/img') || path.includes('/api/system/bgm_img')) return path
@@ -390,7 +393,7 @@ watch(tmdbId, (newId, oldId) => {
       <div class="m-detail-hero" style="min-height: auto; padding: var(--m-spacing-lg) 0;">
         <div class="m-detail-hero-content" style="padding: 0 var(--m-spacing-lg); align-items: flex-start;">
           <div class="m-detail-poster" style="width: 120px;">
-            <n-image :src="getPoster(detail.poster_path)" object-fit="cover" preview-disabled style="width: 100%; aspect-ratio: 3/4;" />
+            <n-image :src="getPoster(detail.poster_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" style="width: 100%; aspect-ratio: 3/4;" />
           </div>
           <div class="m-detail-info">
             <h1 class="m-detail-title">
@@ -486,7 +489,7 @@ watch(tmdbId, (newId, oldId) => {
           <div class="m-h-scroll">
             <div v-for="c in detail.cast" :key="c.actor + c.character" class="cast-card-mobile" @click="openPersonDetail(c.id)">
               <div class="cast-avatar-mobile">
-                <n-image :src="getPoster(c.image)" object-fit="cover" preview-disabled />
+                <n-image :src="getPoster(c.image)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
               </div>
               <div class="cast-name-mobile">{{ c.actor }}</div>
             </div>
@@ -505,7 +508,7 @@ watch(tmdbId, (newId, oldId) => {
             >
               <template #header>
                 <div class="season-header-mobile">
-                  <n-image :src="getPoster(s.poster_path)" object-fit="cover" preview-disabled style="width: 48px; aspect-ratio: 3/4; border-radius: var(--m-radius-sm);" />
+                  <n-image :src="getPoster(s.poster_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" style="width: 48px; aspect-ratio: 3/4; border-radius: var(--m-radius-sm);" />
                   <div class="season-info-mobile">
                     <div class="season-name-mobile">
                       {{ s.name }}
@@ -525,7 +528,7 @@ watch(tmdbId, (newId, oldId) => {
                 </div>
                 <div v-for="ep in getSeasonEpisodes(s.season_number)" :key="ep.episode" class="episode-item-mobile">
                   <div class="ep-still-mobile" v-if="ep.still_path">
-                    <n-image :src="getPoster(ep.still_path)" object-fit="cover" preview-disabled />
+                    <n-image :src="getPoster(ep.still_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" />
                   </div>
                   <div class="ep-still-mobile ep-placeholder-mobile" v-else>
                     <span>E{{ ep.episode }}</span>

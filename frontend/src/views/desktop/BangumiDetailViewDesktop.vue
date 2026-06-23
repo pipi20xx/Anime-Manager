@@ -27,6 +27,9 @@ const detail = ref<any>(null)
 const subscriptions = ref<any[]>([])
 const matchingTmdb = ref(false)
 
+const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='
+const DEFAULT_POSTER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMzAwIiBmaWxsPSIjZTBlMGUwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjxwYXRoIGQ9Ik04MCAxMjAgaDQwIHY0MCBoLTQwIHoiIGZpbGw9IiM5OTkiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMjUiIGZpbGw9IiM5OTkiLz48L3N2Zz4='
+
 const getImg = (path: string) => {
   if (!path) return ''
   if (path.includes('/api/system/img') || path.includes('/api/system/bgm_img')) return path
@@ -171,7 +174,7 @@ onMounted(() => {
     <div v-else-if="detail" class="detail-container">
         <div class="header-content">
           <div class="poster-col">
-            <n-image :src="getImg(detail.poster_path)" class="main-poster" object-fit="contain" />
+            <n-image :src="getImg(detail.poster_path)" class="main-poster" object-fit="contain" :fallback-src="DEFAULT_POSTER" />
           </div>
           <div class="info-col">
             <h1 class="title">{{ detail.title || detail.name }}</h1>
@@ -238,7 +241,7 @@ onMounted(() => {
               <div class="cast-scroller">
                 <div v-for="c in detail.cast" :key="c.character" class="cast-card">
                   <div class="cast-avatar">
-                    <n-image :src="c.image" object-fit="cover" preview-disabled />
+                    <n-image :src="c.image" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
                   </div>
                   <div class="cast-names">
                     <div class="char-name">{{ c.character }}</div>

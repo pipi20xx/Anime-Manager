@@ -289,6 +289,28 @@ def _ensure_dir_and_write(path: str, content: bytes):
         f.write(content)
 
 
+def _is_valid_image(content: bytes) -> bool:
+    """检查内容是否为常见图片格式（JPEG/PNG/GIF/WebP/SVG）。"""
+    if not content or len(content) < 8:
+        return False
+    if content[:3] == b'\xff\xd8\xff':  # JPEG
+        return True
+    if content[:4] == b'\x89PNG':  # PNG
+        return True
+    if content[:4] == b'GIF8':  # GIF
+        return True
+    if content[:4] == b'RIFF' and len(content) >= 12 and content[8:12] == b'WEBP':  # WebP
+        return True
+    # SVG/XML
+    try:
+        text = content.lstrip().lower()
+        if text.startswith(b'<svg') or text.startswith(b'<?xml'):
+            return True
+    except Exception:
+        pass
+    return False
+
+
 @router.get("/img", summary="TMDB 图片本地代理")
 async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (例如 /w500/abc.jpg 或 /abc.jpg)")):
     """
@@ -325,7 +347,20 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
     local_file = os.path.join(cache_subdir, clean_path.lstrip("/"))
     
     if os.path.exists(local_file):
-        return FileResponse(local_file)
+        def _read_cache():
+            try:
+                with open(local_file, "rb") as f:
+                    return f.read()
+            except OSError:
+                return None
+        cached = await asyncio.to_thread(_read_cache)
+        if cached and _is_valid_image(cached):
+            return Response(content=cached, media_type="image/jpeg")
+        # 缓存文件损坏/非图片，删除后重新下载
+        try:
+            os.remove(local_file)
+        except OSError:
+            pass
     
     image_domain = ConfigManager.get_tmdb_image_domain()
     tmdb_url = f"https://{image_domain}/t/p/{size}{clean_path}"
@@ -337,7 +372,7 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
     async with httpx.AsyncClient(timeout=30, proxy=proxy) as client:
         try:
             resp = await client.get(tmdb_url)
-            if resp.status_code == 200:
+            if resp.status_code == 200 and _is_valid_image(resp.content):
                 await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
                 return Response(content=resp.content, media_type="image/jpeg")
             else:
@@ -367,23 +402,33 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
     cache_dir = "data/tmp/bgmimg"
     local_file = os.path.join(cache_dir, f"{url_hash}{ext}")
     
-    # 1. 命中缓存直接返回
+    # 1. 命中缓存时校验有效性
     if os.path.exists(local_file):
-        return FileResponse(local_file)
+        def _read_cache():
+            try:
+                with open(local_file, "rb") as f:
+                    return f.read()
+            except OSError:
+                return None
+        cached = await asyncio.to_thread(_read_cache)
+        if cached and _is_valid_image(cached):
+            return Response(content=cached, media_type="image/jpeg")
+        # 缓存文件损坏/非图片，删除后重新下载
+        try:
+            os.remove(local_file)
+        except OSError:
+            pass
     
     # 2. 未命中缓存，尝试下载 (带重试机制)
     os.makedirs(cache_dir, exist_ok=True)
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
     proxy = ConfigManager.get_proxy("bangumi")
     
-    # 透明 1x1 像素 GIF 占位符，用于失败回退
-    TRANSPARENT_GIF = b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b"
-
     async with httpx.AsyncClient(timeout=10, proxy=proxy, follow_redirects=True) as client:
         for attempt in range(3):
             try:
                 resp = await client.get(url, headers=headers)
-                if resp.status_code == 200:
+                if resp.status_code == 200 and _is_valid_image(resp.content):
                     await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
                     return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/jpeg"))
                 elif resp.status_code == 404:
@@ -396,8 +441,8 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
                 print(f"[BGM IMG] 未知异常: {str(e)}")
                 break
 
-    # 如果所有尝试都失败，返回透明占位图，避免 500 错误
-    return Response(content=TRANSPARENT_GIF, media_type="image/gif")
+    # 如果所有尝试都失败，返回 404，让前端 fallback
+    raise HTTPException(status_code=404, detail="Bangumi 图片未找到")
 
 @router.post("/telegram/test", summary="测试 Telegram 通知")
 async def test_telegram_notification():
