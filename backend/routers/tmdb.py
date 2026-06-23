@@ -87,7 +87,10 @@ async def get_detail_emby_status(media_type: str, tmdb_id: str):
     cache_key = f"emby:status:{media_type}:{tmdb_id}"
     cached = _get_emby_cache(cache_key)
     if cached is not None:
+        log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: 缓存命中")
         return cached
+
+    log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: 开始查询...")
 
     def _fetch():
         from emby_client import get_emby_client
@@ -99,6 +102,20 @@ async def get_detail_emby_status(media_type: str, tmdb_id: str):
 
     result = await asyncio.to_thread(_fetch)
     _set_emby_cache(cache_key, result)
+
+    # 记录查询结果
+    if result and result.get('exists'):
+        if media_type == 'movie':
+            movie_name = result.get('name', 'Unknown')
+            files_count = len(result.get('files', []))
+            log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: ✅ 电影 '{movie_name}' 已入库 ({files_count} 个文件)")
+        else:
+            series_name = result.get('series_name', 'Unknown')
+            seasons_count = len(result.get('seasons', {}))
+            log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: ✅ 剧集 '{series_name}' 已入库 ({seasons_count} 季)")
+    else:
+        log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: ❌ 未入库")
+
     return result
 
 @router.get("/recommendations/{media_type}/{tmdb_id}", summary="获取推荐内容")
@@ -129,7 +146,10 @@ async def get_season_episodes_emby(tmdb_id: str, season_number: int):
     cache_key = f"emby:season:{tmdb_id}:{season_number}"
     cached = _get_emby_cache(cache_key)
     if cached is not None:
+        log_audit("Emby", "季度集", f"TMDB ID {tmdb_id} S{season_number}: 缓存命中")
         return cached
+
+    log_audit("Emby", "季度集", f"TMDB ID {tmdb_id} S{season_number}: 开始查询...")
 
     def _fetch():
         from emby_client import get_emby_client
@@ -139,6 +159,15 @@ async def get_season_episodes_emby(tmdb_id: str, season_number: int):
     episodes_info = await asyncio.to_thread(_fetch)
     result = {"episodes": episodes_info}
     _set_emby_cache(cache_key, result)
+
+    # 记录查询结果
+    episodes_count = len(episodes_info)
+    total_files = sum(len(ep.get('files', [])) for ep in episodes_info.values())
+    if episodes_count > 0:
+        log_audit("Emby", "季度集", f"TMDB ID {tmdb_id} S{season_number}: ✅ 已入库 ({episodes_count} 集, {total_files} 个文件)")
+    else:
+        log_audit("Emby", "季度集", f"TMDB ID {tmdb_id} S{season_number}: ❌ 未入库")
+
     return result
 
 @router.get("/search", summary="搜索 TMDB 条目", operation_id="tmdb_search_global")

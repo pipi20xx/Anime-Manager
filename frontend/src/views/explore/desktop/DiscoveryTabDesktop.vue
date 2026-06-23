@@ -112,7 +112,7 @@ const {
 
         <div class="filter-actions">
             <div class="sort-wrapper">
-                <AppSelectField v-model:value="filters.sort_by" label="排序方式" :options="config.sort_options" style="width: 240px" />
+                <AppSelectField v-model:value="filters.sort_by" label="排序方式" :options="config.sort_options" style="width: 280px" />
             </div>
             <n-tag type="primary" :bordered="false" size="small" style="background: var(--color-primary-bg)">
                 共 {{ data.items.length }} 条结果
