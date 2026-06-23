@@ -88,12 +88,13 @@ watch(() => props.show, (newVal) => {
           </n-gi>
 
           <n-gi :span="2" v-if="searchResults.length > 0">
-            <n-scrollbar style="max-height: 300px" class="search-results">
+            <n-scrollbar class="search-results">
               <div v-for="item in searchResults" :key="item.id" class="result-item" @click="selectResult(item)">
-                <n-image width="40" :src="getImg(item.poster_path)" preview-disabled />
+                <n-image width="50" :src="getImg(item.poster_path)" preview-disabled />
                 <div class="result-info">
                   <div class="res-title">{{ item.title }} ({{ item.year }})</div>
-                  <div class="res-sub">{{ item.original_title }}</div>
+                  <div class="res-sub">ID: {{ item.id }} · {{ item.category || item.media_type }} · {{ item.original_title || '-' }}</div>
+                  <div v-if="item.genres?.length" class="res-sub">流派：{{ item.genres.join(' / ') }}</div>
                 </div>
               </div>
             </n-scrollbar>
@@ -247,26 +248,37 @@ watch(() => props.show, (newVal) => {
 }
 .result-item {
   display: flex;
-  padding: 8px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
   cursor: pointer;
   border-bottom: 1px solid var(--app-border-light);
   transition: background var(--transition-fast);
+}
+.result-item:last-child {
+  border-bottom: none;
 }
 .result-item:hover {
   background: var(--app-surface-card);
 }
 .result-item :deep(img) {
   border-radius: var(--button-border-radius, 4px);
+  object-fit: cover;
+  flex-shrink: 0;
 }
 .result-info {
-  margin-left: 12px;
+  flex: 1;
+  min-width: 0;
 }
 .res-title {
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.4;
 }
 .res-sub {
   font-size: 12px;
+  line-height: 1.4;
   color: var(--text-tertiary);
 }
 .poster-preview {

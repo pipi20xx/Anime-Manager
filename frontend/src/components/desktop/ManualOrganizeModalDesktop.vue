@@ -5,7 +5,7 @@ import AppSearchField from '../AppSearchField.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
-  NScrollbar, NList, NListItem, NAvatar, NButton, NIcon, NCheckbox, 
+  NScrollbar, NImage, NButton, NIcon, NCheckbox, 
   NSwitch, NDynamicTags
 } from 'naive-ui'
 import {
@@ -78,13 +78,20 @@ const {
               </n-grid>
 
               <AppSearchField v-model:value="manualSearch.keyword" placeholder="搜索剧名自动填入 ID 和类型..." :loading="manualSearch.loading" @search="searchTmdb" class="mt-2" />
-              <n-scrollbar v-if="manualSearch.results.length > 0" style="max-height: 120px" class="search-res-list mt-2">
-                <n-list hoverable clickable>
-                  <n-list-item v-for="res in manualSearch.results" :key="res.id" @click="manualTask.forced_tmdb_id = String(res.id); manualTask.forced_type = res.media_type || manualTask.forced_type; manualSearch.results = []">
-                    <template #prefix><n-avatar :src="getImg(res.poster_path)" size="small" /></template>
-                    <div style="font-size:12px; color: var(--text-secondary)"><b>{{ res.title }}</b> ({{ res.year }}) - ID: {{ res.id }}</div>
-                  </n-list-item>
-                </n-list>
+              <n-scrollbar v-if="manualSearch.results.length > 0" class="search-res-list mt-2">
+                <div
+                  v-for="res in manualSearch.results"
+                  :key="res.id"
+                  class="search-result-item"
+                  @click="manualTask.forced_tmdb_id = String(res.id); manualTask.forced_type = res.media_type || manualTask.forced_type; manualSearch.results = []"
+                >
+                  <n-image width="50" :src="getImg(res.poster_path)" preview-disabled />
+                  <div class="search-result-info">
+                      <div class="search-result-title">{{ res.title }} ({{ res.year }})</div>
+                      <div class="search-result-sub">ID: {{ res.id }} · {{ res.category }} · {{ res.original_title || '-' }}</div>
+                      <div v-if="res.genres?.length" class="search-result-sub">流派：{{ res.genres.join(' / ') }}</div>
+                    </div>
+                </div>
               </n-scrollbar>
             </div>
           </n-space>
@@ -169,4 +176,11 @@ const {
   border: 1px solid var(--app-border-light); 
   border-radius: var(--code-radius, 6px); 
 }
+.search-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--app-border-light); transition: background var(--transition-fast); }
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--app-surface-card); }
+.search-result-item :deep(img) { border-radius: var(--button-border-radius, 4px); object-fit: cover; flex-shrink: 0; }
+.search-result-info { flex: 1; min-width: 0; }
+.search-result-title { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+.search-result-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; line-height: 1.4; }
 </style>

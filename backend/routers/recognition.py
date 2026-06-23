@@ -125,46 +125,6 @@ async def recognize(req: RecognizeRequest):
                 pass
         raise
 
-@router.get("/api/tmdb/search", summary="TMDB 关键词搜索", operation_id="tmdb_search_recognition")
-async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
-    """
-    直接调用 TMDB API 搜索作品，用于强制手动识别时的关键词匹配。
-    """
-    config = ConfigManager.get_config()
-    api_key = config.get("tmdb_api_key")
-    if not api_key:
-        raise HTTPException(status_code=400, detail="未配置 TMDB API Key")
-    
-    proxy = ConfigManager.get_proxy("tmdb")
-    proxy_info = f" [代理: {proxy}]" if proxy else " [直连]"
-    log_audit("TMDB", "搜索", f"关键词: {query} (类型: {type}){proxy_info}")
-        
-    logs = []        
-    import httpx
-    base_url = "https://api.themoviedb.org/3"
-    search_type = "movie" if type == "movie" else "tv"
-    params = {"api_key": api_key, "query": query, "language": "zh-CN", "include_adult": "false"}
-    if year: params["year" if search_type == "movie" else "first_air_date_year"] = year
-    
-    async with httpx.AsyncClient(proxy=proxy, timeout=10) as client:
-        try:
-            resp = await client.get(f"{base_url}/search/{search_type}", params=params)
-            data = resp.json()
-            results = data.get("results", [])
-            formatted = []
-            for item in results:
-                formatted.append({
-                    "id": item.get("id"),
-                    "title": item.get("title") or item.get("name"),
-                    "original_title": item.get("original_title") or item.get("original_name"),
-                    "year": (item.get("release_date") or item.get("first_air_date") or "")[:4],
-                    "overview": item.get("overview"),
-                    "poster_path": item.get('poster_path')
-                })
-            return {"results": formatted}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/api/tmdb/tv/{tmdb_id}", summary="获取剧集季度详情")
 async def get_tmdb_tv_details(tmdb_id: str):
     """

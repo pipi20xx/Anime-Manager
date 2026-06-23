@@ -4,7 +4,7 @@ import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
 import { 
   NGrid, NGi, NInput, NButton, NSwitch, NCollapse, NCollapseItem,
-  NCard, NSpace, NAvatar, NList, NListItem, NIcon, NScrollbar, NFormItem, 
+  NCard, NSpace, NImage, NIcon, NScrollbar, NFormItem, 
   NSelect, NDivider, NTabs, NTabPane, NInputGroup
 } from 'naive-ui'
 import {
@@ -65,31 +65,30 @@ const {
                         </template>
                         
                         <n-grid :cols="40" :x-gap="12" :y-gap="12">
-                          <n-gi :span="20">
+                          <n-gi :span="40">
                             <n-form-item>
                               <AppSearchField v-model:value="sandboxSearch.keyword" placeholder="搜索辅助 (TMDB)，输入剧名..." :loading="sandboxSearch.loading" @search="searchTmdbForSandbox" />
                             </n-form-item>
-                            <n-scrollbar v-if="(sandboxSearch.results || []).length > 0" style="max-height: 120px" class="search-res-box mb-4">
-                              <n-list hoverable clickable size="small">
-                                <n-list-item 
-                                  v-for="res in (sandboxSearch.results || [])" 
-                                  :key="res.id" 
-                                  @click="selectSandboxResult(res)"
-                                >
-                                  <template #prefix>
-                                    <n-avatar :src="getImg(res.poster_path)" size="small" shape="square" />
-                                  </template>
-                                  <div style="font-size: var(--text-sm);">
-                                    <b>{{ res.title }}</b> ({{ res.year }}) <span style="opacity: var(--opacity-50)">ID: {{ res.id }}</span>
-                                  </div>
-                                </n-list-item>
-                              </n-list>
+                            <n-scrollbar v-if="(sandboxSearch.results || []).length > 0" class="search-res-box mb-4">
+                              <div
+                                v-for="res in (sandboxSearch.results || [])"
+                                :key="res.id"
+                                class="search-result-item"
+                                @click="selectSandboxResult(res)"
+                              >
+                                <n-image width="50" :src="getImg(res.poster_path)" preview-disabled />
+                                <div class="search-result-info">
+                                  <div class="search-result-title">{{ res.title }} ({{ res.year }})</div>
+                                  <div class="search-result-sub">ID: {{ res.id }} · {{ res.category }} · {{ res.original_title || '-' }}</div>
+                                  <div v-if="res.genres?.length" class="search-result-sub">流派：{{ res.genres.join(' / ') }}</div>
+                                </div>
+                              </div>
                             </n-scrollbar>
                           </n-gi>
-                          <n-gi :span="5"><n-form-item><AppTextField v-model:value="recognitionState.forced_tmdb_id" label="强制 ID" placeholder="TMDB ID" /></n-form-item></n-gi>
-                          <n-gi :span="5"><n-form-item><AppSelectField v-model:value="recognitionState.forced_type" label="媒体类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="Type" /></n-form-item></n-gi>
-                          <n-gi :span="5"><n-form-item><AppTextField v-model:value="recognitionState.forced_season" label="强制季号" placeholder="Season" /></n-form-item></n-gi>
-                          <n-gi :span="5"><n-form-item><AppTextField v-model:value="recognitionState.forced_episode" label="强制集号" placeholder="Episode" /></n-form-item></n-gi>
+                          <n-gi :span="10"><n-form-item><AppTextField v-model:value="recognitionState.forced_tmdb_id" label="强制 ID" placeholder="TMDB ID" /></n-form-item></n-gi>
+                          <n-gi :span="10"><n-form-item><AppSelectField v-model:value="recognitionState.forced_type" label="媒体类型" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="Type" clearable /></n-form-item></n-gi>
+                          <n-gi :span="10"><n-form-item><AppTextField v-model:value="recognitionState.forced_season" label="强制季号" placeholder="Season" /></n-form-item></n-gi>
+                          <n-gi :span="10"><n-form-item><AppTextField v-model:value="recognitionState.forced_episode" label="强制集号" placeholder="Episode" /></n-form-item></n-gi>
                           
                           <n-gi :span="40">
                             <n-divider dashed style="margin: 0">
@@ -200,6 +199,13 @@ const {
 .label-text { font-size: var(--text-md); color: var(--text-tertiary); font-weight: 500; }
 .sandbox-label { font-size: var(--text-base); font-weight: 700; color: var(--n-primary-color); margin-bottom: 0; }
 .search-res-box { border: 1px solid var(--app-border-light); border-radius: var(--radius-md); background: var(--app-surface-inner); margin-top: var(--space-2); }
+.search-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--app-border-light); transition: background var(--transition-fast); }
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--app-surface-card); }
+.search-result-item :deep(img) { border-radius: var(--button-border-radius, 4px); object-fit: cover; flex-shrink: 0; }
+.search-result-info { flex: 1; min-width: 0; }
+.search-result-title { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+.search-result-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; line-height: 1.4; }
 .preference-card { height: 100%; }
 .pref-list { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
 .pref-item { display: flex; justify-content: space-between; align-items: center; padding: var(--space-2) var(--space-3); background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); transition: all var(--transition-normal); }

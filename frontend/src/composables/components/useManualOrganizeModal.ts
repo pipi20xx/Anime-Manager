@@ -61,7 +61,7 @@ export function useManualOrganizeModal(props: any, emit: any) {
     if (!manualSearch.keyword) return
     manualSearch.loading = true
     try {
-      const typeParam = manualTask.forced_type || ''
+      const typeParam = manualTask.forced_type || 'multi'
       const res = await fetch(`${props.apiBase}/api/tmdb/search?query=${encodeURIComponent(manualSearch.keyword)}&type=${typeParam}`)
       const data = await res.json()
       manualSearch.results = data.results || []

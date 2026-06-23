@@ -88,7 +88,8 @@ export function useRecognitionModal(props: any, emit: any) {
     if (!testSearch.keyword) return
     testSearch.loading = true
     try {
-      const res = await fetch(`${props.apiBase}/api/tmdb/search?query=${encodeURIComponent(testSearch.keyword)}&type=${forcedParams.type || 'tv'}`)
+      const typeParam = forcedParams.type || 'multi'
+      const res = await fetch(`${props.apiBase}/api/tmdb/search?query=${encodeURIComponent(testSearch.keyword)}&type=${typeParam}`)
       const data = await res.json()
       testSearch.results = data.results || []
     } finally { testSearch.loading = false }

@@ -30,7 +30,8 @@ export function useHome() {
     if (!sandboxSearch.keyword) return
     sandboxSearch.loading = true
     try {
-      const res = await fetch(`${API_BASE}/api/tmdb/search?query=${encodeURIComponent(sandboxSearch.keyword)}&type=${recognitionState.forced_type || 'tv'}`)
+      const typeParam = recognitionState.forced_type || 'multi'
+      const res = await fetch(`${API_BASE}/api/tmdb/search?query=${encodeURIComponent(sandboxSearch.keyword)}&type=${typeParam}`)
       const resData = await res.json()
       sandboxSearch.results = resData.results || []
     } catch (e: any) { message.error("搜索失败") }

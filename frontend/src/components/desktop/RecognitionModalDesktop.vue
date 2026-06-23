@@ -115,19 +115,26 @@ const {
 
             <n-grid :cols="4" :x-gap="12" class="mb-4 mt-4">
               <n-gi><AppTextField v-model:value="forcedParams.tmdb_id" label="TMDB ID" placeholder="TMDB ID" /></n-gi>
-              <n-gi><AppSelectField v-model:value="forcedParams.type" label="资源类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" /></n-gi>
+              <n-gi><AppSelectField v-model:value="forcedParams.type" label="资源类型" :options="[{label:'自动',value:null},{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" placeholder="资源类型" clearable /></n-gi>
               <n-gi><AppTextField v-model:value="forcedParams.season" label="指定季" placeholder="指定季" /></n-gi>
               <n-gi><AppTextField v-model:value="forcedParams.episode" label="指定集" placeholder="指定集" /></n-gi>
             </n-grid>
 
             <AppSearchField v-model:value="testSearch.keyword" placeholder="快捷搜索剧名找 ID..." :loading="testSearch.loading" @search="searchTmdbForTest" class="mt-4" />
-            <n-scrollbar v-if="testSearch.results.length > 0" style="max-height: 120px" class="search-res-list mt-2">
-              <n-list hoverable clickable>
-                <n-list-item v-for="res in testSearch.results" :key="res.id" @click="forcedParams.tmdb_id = String(res.id); forcedParams.type = res.media_type || forcedParams.type; testSearch.results = []">
-                  <template #prefix><n-avatar :src="getImg(res.poster_path)" size="small" /></template>
-                  <div style="font-size:12px; color: var(--text-secondary)"><b>{{ res.title }}</b> ({{ res.year }}) - ID: {{ res.id }}</div>
-                </n-list-item>
-              </n-list>
+            <n-scrollbar v-if="testSearch.results.length > 0" class="search-res-list mt-2">
+              <div
+                v-for="res in testSearch.results"
+                :key="res.id"
+                class="search-result-item"
+                @click="forcedParams.tmdb_id = String(res.id); forcedParams.type = res.media_type || forcedParams.type; testSearch.results = []"
+              >
+                <n-image width="50" :src="getImg(res.poster_path)" preview-disabled />
+                <div class="search-result-info">
+                  <div class="search-result-title">{{ res.title }} ({{ res.year }})</div>
+                  <div class="search-result-sub">ID: {{ res.id }} · {{ res.category }} · {{ res.original_title || '-' }}</div>
+                  <div v-if="res.genres?.length" class="search-result-sub">流派：{{ res.genres.join(' / ') }}</div>
+                </div>
+              </div>
             </n-scrollbar>
 
             <n-button type="primary" block size="small" class="mt-4" :loading="loading" @click="handleRecognize">
@@ -318,6 +325,13 @@ const {
 .strategy-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
 .strategy-desc { font-size: 13px; color: var(--text-hint); line-height: 1.45; }
 .search-res-list { background: var(--app-surface-inner); border: 1px solid var(--app-border-light); border-radius: 6px; }
+.search-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--app-border-light); transition: background var(--transition-fast); }
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--app-surface-card); }
+.search-result-item :deep(img) { border-radius: var(--button-border-radius, 4px); object-fit: cover; flex-shrink: 0; }
+.search-result-info { flex: 1; min-width: 0; }
+.search-result-title { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+.search-result-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; line-height: 1.4; }
 .audit-log-box { background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px solid var(--app-border-light); font-family: var(--code-font); font-size: 12px; line-height: 1.6; }
 .log-line { display: flex; gap: 8px; border-bottom: 1px solid var(--border-light); padding: 2px 0; }
 .log-line .idx { color: var(--text-hint); font-size: 10px; width: 20px; flex-shrink: 0; }

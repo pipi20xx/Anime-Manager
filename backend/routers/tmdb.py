@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Tuple, Any
 from fastapi import APIRouter, HTTPException
 from recognition.data_provider.tmdb.client import TMDBProvider
+from tmdbmatefull.database import DEFAULT_GENRE_MAPPINGS
 from logger import log_audit
 
 router = APIRouter(prefix="/api/tmdb", tags=["TMDB 云端数据"])
@@ -10,6 +11,9 @@ router = APIRouter(prefix="/api/tmdb", tags=["TMDB 云端数据"])
 # Emby 查询内存缓存 (5 分钟 TTL)
 _emby_cache: Dict[str, Tuple[Any, datetime]] = {}
 _emby_cache_ttl = timedelta(minutes=5)
+
+# 流派 ID 到中文名称的映射
+_GENRE_MAP: Dict[int, str] = {g["id"]: g["name_zh"] for g in DEFAULT_GENRE_MAPPINGS}
 
 
 def _get_emby_cache(key: str) -> Any:
@@ -126,16 +130,27 @@ async def get_season_episodes_emby(tmdb_id: str, season_number: int):
 async def search_tmdb_endpoint(query: str, type: str = "tv", year: str = None):
     """
     直接调用 TMDB API 搜索作品。
+    type 为空或 'multi' 时同时搜索 movie 和 tv。
     """
     from config_manager import ConfigManager
     proxy = ConfigManager.get_proxy("tmdb")
     proxy_info = f" [代理: {proxy}]" if proxy else " [直连]"
     log_audit("TMDB", "搜索", f"关键词: {query} (类型: {type}){proxy_info}")
-    
+
     logs = []
-    results, _ = await TMDBProvider().search(query, year, type, logs=logs)
+    provider = TMDBProvider()
+    search_type = (type or "").strip().lower()
+    if search_type in ("", "multi"):
+        results, _ = await provider.search_multi(query, year, logs=logs)
+    else:
+        results, _ = await provider.search(query, year, search_type, logs=logs)
     from recognition_engine.tmdb_matcher.logic import TMDBMatcher
-    formatted = [TMDBMatcher.normalize(i, media_type_hint=type) for i in results]
+    formatted = []
+    for i in results:
+        norm = TMDBMatcher.normalize(i, media_type_hint=i.get("media_type") or type)
+        genre_ids = i.get("genre_ids") or []
+        norm["genres"] = [_GENRE_MAP.get(gid) for gid in genre_ids if _GENRE_MAP.get(gid)]
+        formatted.append(norm)
     return {"results": formatted}
 
 @router.get("/person/{person_id}", summary="获取人物详情")
