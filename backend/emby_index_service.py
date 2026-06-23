@@ -2,14 +2,68 @@
 Emby 库索引服务 — 提供索引表的异步 CRUD 操作和同步逻辑。
 """
 import logging
-from typing import List, Dict, Set
-from datetime import datetime
+from typing import List, Dict, Set, Optional, Any
+from datetime import datetime, timedelta
 from sqlmodel import select, delete
 
 from database import DBService
 from models import EmbyMediaIndex
 
 logger = logging.getLogger(__name__)
+
+# 同步间隔（秒）— 与 main.py 中的 _emby_index_sync_loop 保持一致
+SYNC_INTERVAL_SECONDS = 86400  # 24 小时
+
+# 模块级同步状态跟踪（进程内）
+# None = 从未同步；-1 = 上次同步失败；>=0 = 上次同步的条目数
+_last_sync_time: Optional[datetime] = None
+_last_sync_count: Optional[int] = None
+_sync_loop_running: bool = False
+
+
+def mark_sync_loop_running(running: bool) -> None:
+    """标记后台同步循环是否在运行（由 main.py 调用）。"""
+    global _sync_loop_running
+    _sync_loop_running = running
+
+
+async def init_status_from_db() -> None:
+    """
+    从数据库索引表初始化同步状态（用于启动时索引非空的情况）。
+    读取最新一条记录的 sync_at 作为上次同步时间，统计总条目数。
+    """
+    global _last_sync_time, _last_sync_count
+    try:
+        async with DBService().session_scope() as session:
+            from sqlalchemy import func
+            count_stmt = select(func.count(EmbyMediaIndex.id))
+            total = (await session.execute(count_stmt)).scalar() or 0
+
+            if total > 0:
+                latest_stmt = select(func.max(EmbyMediaIndex.sync_at))
+                latest = (await session.execute(latest_stmt)).scalar()
+                _last_sync_time = latest
+                _last_sync_count = total
+                logger.info(f"[Emby索引] 从数据库恢复状态: {total} 条, 上次同步 {latest}")
+    except Exception as e:
+        logger.warning(f"[Emby索引] 从数据库初始化状态失败: {e}")
+
+
+def get_emby_index_status() -> Dict[str, Any]:
+    """
+    返回 Emby 索引同步的当前状态，供服务状态展示使用。
+    """
+    next_run = None
+    if _last_sync_time is not None:
+        next_run = (_last_sync_time + timedelta(seconds=SYNC_INTERVAL_SECONDS)).isoformat()
+
+    return {
+        "last_sync_time": _last_sync_time.isoformat() if _last_sync_time else None,
+        "next_sync_time": next_run,
+        "last_sync_count": _last_sync_count,
+        "loop_running": _sync_loop_running,
+        "interval_seconds": SYNC_INTERVAL_SECONDS,
+    }
 
 
 async def get_index_titles(tmdb_id: str, media_type: str) -> List[str]:
@@ -120,6 +174,7 @@ async def sync_index() -> int:
     从 Emby 库拉取所有带 TMDB ID 的媒体项，全量重建索引。
     返回同步的条目数，-1 表示失败。
     """
+    global _last_sync_time, _last_sync_count
     import asyncio
     from emby_client import get_emby_client
 
@@ -133,10 +188,13 @@ async def sync_index() -> int:
         items = await asyncio.to_thread(_fetch)
     except Exception as e:
         logger.error(f"同步索引: Emby 请求失败: {e}")
+        _last_sync_count = -1
         return -1
 
     if not items:
         logger.info("同步索引: Emby 库中没有带 TMDB ID 的条目")
+        _last_sync_time = datetime.now()
+        _last_sync_count = 0
         return 0
 
     try:
@@ -152,8 +210,11 @@ async def sync_index() -> int:
                     sync_at=now
                 ))
             await session.commit()
+        _last_sync_time = datetime.now()
+        _last_sync_count = len(items)
         logger.info(f"同步索引完成: {len(items)} 条")
         return len(items)
     except Exception as e:
         logger.error(f"同步索引: 写入失败: {e}")
+        _last_sync_count = -1
         return -1

@@ -15,7 +15,8 @@
               <span class="service-name">{{ service.name }}</span>
               <div class="service-meta">
                 <span>{{ service.interval }}</span>
-                <span v-if="service.next_run">· {{ formatNextRun(service.next_run) }}</span>
+                <span v-if="service.next_run">· 下次 {{ formatNextRun(service.next_run) }}</span>
+                <span v-if="service.last_run">· 上次 {{ formatNextRun(service.last_run) }}</span>
               </div>
             </div>
             <n-tag size="tiny" round :bordered="false" :style="getStatusTagStyle(service)">

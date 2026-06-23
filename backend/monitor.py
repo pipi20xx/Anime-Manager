@@ -592,7 +592,7 @@ class MonitorManager:
         return False
 
     @staticmethod
-    def get_services_status() -> Dict[str, Any]:
+    async def get_services_status() -> Dict[str, Any]:
         """
         获取所有后台服务的运行状态
         返回: { services: [...], monitors: [...] }
@@ -756,6 +756,34 @@ class MonitorManager:
                 "description": "自动清理 30 天前的系统日志"
             })
 
+            # BGM-TMDB 映射同步
+            bgm_job = job_map.get("bgm_mapping_sync_job")
+            bgm_enabled = config.get("bgm_mapping_auto_sync", True)
+            bgm_last_run = None
+            bgm_interval_str = "7 天" if bgm_enabled else "已禁用"
+            try:
+                from recognition_engine.bgm_mapping_service import bgm_mapping_service
+                bgm_status = await bgm_mapping_service.get_sync_status()
+                bgm_last_run = bgm_status.get("last_sync_time")
+                bgm_count = bgm_status.get("mapping_count")
+            except Exception as e:
+                logger.warning(f"[Monitor] 获取BGM映射同步状态失败: {e}")
+                bgm_count = None
+            bgm_desc = "同步 Bangumi-TMDB 映射表用于番剧识别"
+            if bgm_count is not None:
+                bgm_desc += f" (当前 {bgm_count} 条)"
+            services.append({
+                "id": "bgm_mapping_sync",
+                "name": "BGM 映射同步",
+                "type": "scheduler",
+                "enabled": bgm_enabled,
+                "running": bgm_job is not None,
+                "interval": bgm_interval_str,
+                "next_run": bgm_job.next_run_time.isoformat() if bgm_job and bgm_job.next_run_time else None,
+                "last_run": bgm_last_run,
+                "description": bgm_desc
+            })
+
         # 2. CD2 传输监控
         cd2_running = CD2TransferMonitor._instance is not None and CD2TransferMonitor._thread is not None and CD2TransferMonitor._thread.is_alive()
         cd2_config = None
@@ -779,7 +807,36 @@ class MonitorManager:
             "description": "监控 CD2 上传/下载任务完成并触发联动"
         })
 
-        # 3. 文件监控任务 (整理任务)
+        # 3. Emby 索引同步 (后台 asyncio 循环，非调度器任务)
+        emby_configured = bool(config.get('emby_url') and config.get('emby_api_key'))
+        emby_index_status = {}
+        if emby_configured:
+            try:
+                from emby_index_service import get_emby_index_status
+                emby_index_status = get_emby_index_status()
+            except Exception as e:
+                logger.warning(f"[Monitor] 获取Emby索引同步状态失败: {e}")
+        emby_last_run = emby_index_status.get("last_sync_time")
+        emby_next_run = emby_index_status.get("next_sync_time")
+        emby_count = emby_index_status.get("last_sync_count")
+        emby_desc = "同步 Emby 库索引以加速 TMDB ID 查询"
+        if emby_count is not None and emby_count >= 0:
+            emby_desc += f" (当前 {emby_count} 条)"
+        elif emby_count == -1:
+            emby_desc += " (上次同步失败)"
+        services.append({
+            "id": "emby_index_sync",
+            "name": "Emby 索引同步",
+            "type": "thread",
+            "enabled": emby_configured,
+            "running": emby_index_status.get("loop_running", False),
+            "interval": "24 小时" if emby_configured else "未配置",
+            "next_run": emby_next_run,
+            "last_run": emby_last_run,
+            "description": emby_desc
+        })
+
+        # 4. 文件监控任务 (整理任务)
         organize_tasks = config.get("organize_tasks", [])
         for task in organize_tasks:
             incremental_enabled = task.get("incremental_enabled", False)

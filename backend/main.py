@@ -308,7 +308,7 @@ async def startup_event():
 
         # Emby 索引初始化与定时同步
         try:
-            from emby_index_service import is_index_empty, sync_index
+            from emby_index_service import is_index_empty, sync_index, mark_sync_loop_running, SYNC_INTERVAL_SECONDS, init_status_from_db
             emby_config = ConfigManager.get_config()
             if emby_config.get('emby_url') and emby_config.get('emby_api_key'):
                 empty = await is_index_empty()
@@ -320,19 +320,24 @@ async def startup_event():
                     else:
                         logger.warning("[Emby索引] 启动同步失败")
                 else:
-                    logger.info("[Emby索引] 索引表非空，跳过启动同步")
+                    logger.info("[Emby索引] 索引表非空，跳过启动同步，从数据库恢复状态")
+                    await init_status_from_db()
 
-                # 后台每小时同步
+                # 后台定时同步
                 async def _emby_index_sync_loop():
-                    while True:
-                        await asyncio.sleep(86400)  # 24小时
-                        try:
-                            await sync_index()
-                        except Exception as e:
-                            logger.warning(f"[Emby索引] 定时同步失败: {e}")
+                    mark_sync_loop_running(True)
+                    try:
+                        while True:
+                            await asyncio.sleep(SYNC_INTERVAL_SECONDS)
+                            try:
+                                await sync_index()
+                            except Exception as e:
+                                logger.warning(f"[Emby索引] 定时同步失败: {e}")
+                    finally:
+                        mark_sync_loop_running(False)
 
                 asyncio.create_task(_emby_index_sync_loop())
-                logger.info("[Emby索引] 后台定时同步已启动 (间隔: 1小时)")
+                logger.info(f"[Emby索引] 后台定时同步已启动 (间隔: {SYNC_INTERVAL_SECONDS} 秒)")
             else:
                 logger.info("[Emby索引] Emby 未配置，跳过索引同步")
         except Exception as e:

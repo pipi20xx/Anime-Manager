@@ -26,6 +26,10 @@
                   <span class="label">下次执行</span>
                   <span class="value">{{ formatNextRun(service.next_run) }}</span>
                 </div>
+                <div class="meta-item" v-if="service.last_run">
+                  <span class="label">上次同步</span>
+                  <span class="value">{{ formatNextRun(service.last_run) }}</span>
+                </div>
               </div>
               <div class="service-desc">{{ service.description }}</div>
             </div>

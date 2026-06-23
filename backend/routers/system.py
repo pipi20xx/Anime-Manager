@@ -25,7 +25,7 @@ async def get_services_status():
     包括：RSS刷新、规则同步、订阅补全、健康检查、CD2监控、文件监控任务等。
     """
     try:
-        status = MonitorManager.get_services_status()
+        status = await MonitorManager.get_services_status()
         return status
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取服务状态失败: {str(e)}")
