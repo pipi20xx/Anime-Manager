@@ -16,6 +16,7 @@ import {
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch, openTmdbPersonDetail } from '../../store/navigationStore'
+import { STATUS_MAP } from '../../composables/useTmdbDisplayMaps'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,9 +47,26 @@ const isSubscribed = computed(() => {
   return subscriptions.value.some((sub: any) => String(sub.tmdb_id) === String(tmdbId.value))
 })
 
+const displayStatus = computed(() => {
+  if (!detail.value?.status) return ''
+  return STATUS_MAP[detail.value.status] || detail.value.status
+})
+
+const displayCountries = computed(() => {
+  return detail.value?.origin_country_zh || []
+})
+
+const displayLanguage = computed(() => {
+  return detail.value?.original_language_zh || ''
+})
+
+const genreNameMap = ref<Map<string, string>>(new Map())
+
 const displayGenres = computed(() => {
   if (!detail.value || !detail.value.genres) return []
-  return [...new Set(detail.value.genres.filter((g: any) => g))]
+  return [...new Set(detail.value.genres
+    .filter((g: any) => g)
+    .map((g: string) => genreNameMap.value.get(g.toLowerCase()) || g))]
 })
 
 const getImg = (path: string) => {
@@ -76,9 +94,10 @@ const fetchDetail = async () => {
   fetchSubscriptions()
   try {
     const apiType = type === '电影' || type === 'movie' ? 'movie' : 'tv'
-    const [detailRes, recRes] = await Promise.all([
+    const [detailRes, recRes, genreRes] = await Promise.all([
       fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}`),
-      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`)
+      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`),
+      fetch(`${API_BASE}/api/user_mapping/genres`)
     ])
 
     if (detailRes.ok) {
@@ -89,6 +108,17 @@ const fetchDetail = async () => {
 
     if (recRes.ok) {
       recommendations.value = await recRes.json()
+    }
+
+    if (genreRes.ok) {
+      const genreData = await genreRes.json()
+      const map = new Map<string, string>()
+      for (const item of genreData) {
+        if (item.name_en && item.name_zh) {
+          map.set(item.name_en.toLowerCase(), item.name_zh)
+        }
+      }
+      genreNameMap.value = map
     }
   } catch (e) {
     console.error(e)
@@ -350,6 +380,7 @@ watch(tmdbId, (newId, oldId) => {
           <div class="info-col">
             <div class="title-row">
               <h1 class="title">{{ detail.title || detail.name }}</h1>
+              <n-tag v-if="detail.adult" type="error" size="small" round style="font-weight: bold;">R18</n-tag>
               <n-tag v-if="isInLibrary" type="success" size="small" round>
                 <template #icon><n-icon><CheckCircleOutlined /></n-icon></template>
                 已入库
@@ -384,17 +415,17 @@ watch(tmdbId, (newId, oldId) => {
                 <span class="info-label">IMDb ID</span>
                 <span class="info-value link" @click="openImdb(detail.imdb_id)">{{ detail.imdb_id }}</span>
               </div>
-              <div v-if="detail.status" class="info-item">
+              <div v-if="displayStatus" class="info-item">
                 <span class="info-label">状态</span>
-                <span class="info-value">{{ detail.status }}</span>
+                <span class="info-value">{{ displayStatus }}</span>
               </div>
-              <div v-if="detail.origin_country?.length" class="info-item">
+              <div v-if="displayCountries.length" class="info-item">
                 <span class="info-label">地区</span>
-                <span class="info-value">{{ detail.origin_country.join(', ') }}</span>
+                <span class="info-value">{{ displayCountries.join(' / ') }}</span>
               </div>
-              <div v-if="detail.original_language" class="info-item">
+              <div v-if="displayLanguage" class="info-item">
                 <span class="info-label">语言</span>
-                <span class="info-value">{{ detail.original_language.toUpperCase() }}</span>
+                <span class="info-value">{{ displayLanguage }}</span>
               </div>
             </div>
 

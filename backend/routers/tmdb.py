@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Tuple, Any
 from fastapi import APIRouter, HTTPException
 from recognition.data_provider.tmdb.client import TMDBProvider
-from tmdbmatefull.database import DEFAULT_GENRE_MAPPINGS
+from tmdbmatefull.database import DEFAULT_GENRE_MAPPINGS, DEFAULT_COUNTRY_MAPPINGS, DEFAULT_LANGUAGE_MAPPINGS
 from logger import log_audit
 
 router = APIRouter(prefix="/api/tmdb", tags=["TMDB 云端数据"])
@@ -14,6 +14,12 @@ _emby_cache_ttl = timedelta(minutes=5)
 
 # 流派 ID 到中文名称的映射
 _GENRE_MAP: Dict[int, str] = {g["id"]: g["name_zh"] for g in DEFAULT_GENRE_MAPPINGS}
+
+# 国家/地区代码到中文名称的映射
+_COUNTRY_MAP: Dict[str, str] = {g["code"]: g["name_zh"] for g in DEFAULT_COUNTRY_MAPPINGS}
+
+# 语言代码到中文名称的映射
+_LANGUAGE_MAP: Dict[str, str] = {g["code"]: g["name_zh"] for g in DEFAULT_LANGUAGE_MAPPINGS}
 
 
 def _get_emby_cache(key: str) -> Any:
@@ -60,7 +66,16 @@ async def get_detail(media_type: str, tmdb_id: str):
     if not result:
         log_audit("TMDB", "详情", f"获取失败: {media_type}/{tmdb_id}", details="\n".join(logs), level="ERROR")
         raise HTTPException(status_code=404, detail="TMDB 内容未找到")
-    
+
+    # 补充中文映射字段
+    if isinstance(result, dict):
+        if result.get("origin_country"):
+            result["origin_country_zh"] = [_COUNTRY_MAP.get(code, code) for code in result["origin_country"]]
+        if result.get("original_language"):
+            result["original_language_zh"] = _LANGUAGE_MAP.get(result["original_language"].lower(), result["original_language"].upper())
+        if result.get("genres"):
+            result["genres"] = [g if isinstance(g, str) else g.get("name", g) for g in result["genres"]]
+
     log_audit("TMDB", "详情", f"获取成功: {result.get('title')}", details="\n".join(logs))
     return result
 

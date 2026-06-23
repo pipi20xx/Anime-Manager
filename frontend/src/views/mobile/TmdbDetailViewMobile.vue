@@ -17,6 +17,7 @@ import {
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch, openTmdbPersonDetail } from '../../store/navigationStore'
+import { STATUS_MAP } from '../../composables/useTmdbDisplayMaps'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,9 +48,26 @@ const isSubscribed = computed(() => {
   return subscriptions.value.some((sub: any) => String(sub.tmdb_id) === String(tmdbId.value))
 })
 
+const displayStatus = computed(() => {
+  if (!detail.value?.status) return ''
+  return STATUS_MAP[detail.value.status] || detail.value.status
+})
+
+const displayCountries = computed(() => {
+  return detail.value?.origin_country_zh || []
+})
+
+const displayLanguage = computed(() => {
+  return detail.value?.original_language_zh || ''
+})
+
+const genreNameMap = ref<Map<string, string>>(new Map())
+
 const displayGenres = computed(() => {
   if (!detail.value || !detail.value.genres) return []
-  return [...new Set(detail.value.genres.filter((g: any) => g))]
+  return [...new Set(detail.value.genres
+    .filter((g: any) => g)
+    .map((g: string) => genreNameMap.value.get(g.toLowerCase()) || g))]
 })
 
 const getImg = (path: string) => {
@@ -77,9 +95,10 @@ const fetchDetail = async () => {
   fetchSubscriptions()
   try {
     const apiType = type === '电影' || type === 'movie' ? 'movie' : 'tv'
-    const [detailRes, recRes] = await Promise.all([
+    const [detailRes, recRes, genreRes] = await Promise.all([
       fetch(`${API_BASE}/api/tmdb/detail/${apiType}/${id}`),
-      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`)
+      fetch(`${API_BASE}/api/tmdb/recommendations/${apiType}/${id}`),
+      fetch(`${API_BASE}/api/user_mapping/genres`)
     ])
 
     if (detailRes.ok) {
@@ -90,6 +109,17 @@ const fetchDetail = async () => {
 
     if (recRes.ok) {
       recommendations.value = await recRes.json()
+    }
+
+    if (genreRes.ok) {
+      const genreData = await genreRes.json()
+      const map = new Map<string, string>()
+      for (const item of genreData) {
+        if (item.name_en && item.name_zh) {
+          map.set(item.name_en.toLowerCase(), item.name_zh)
+        }
+      }
+      genreNameMap.value = map
     }
   } catch (e) {
     console.error(e)
@@ -363,7 +393,10 @@ watch(tmdbId, (newId, oldId) => {
             <n-image :src="getPoster(detail.poster_path)" object-fit="cover" preview-disabled style="width: 100%; aspect-ratio: 3/4;" />
           </div>
           <div class="m-detail-info">
-            <h1 class="m-detail-title">{{ detail.title || detail.name }}</h1>
+            <h1 class="m-detail-title">
+              {{ detail.title || detail.name }}
+              <n-tag v-if="detail.adult" type="error" size="tiny" round style="margin-left: 8px; font-weight: bold;">R18</n-tag>
+            </h1>
             <div v-if="detail.original_title || detail.original_name" style="font-size: var(--m-text-sm); color: var(--text-muted); margin-top: var(--m-spacing-xs);">
               {{ detail.original_title || detail.original_name }}
             </div>
@@ -428,17 +461,17 @@ watch(tmdbId, (newId, oldId) => {
               <span class="meta-label">IMDb ID</span>
               <span class="meta-value link" @click="openImdb(detail.imdb_id)">{{ detail.imdb_id }}</span>
             </div>
-            <div v-if="detail.status" class="meta-row">
+            <div v-if="displayStatus" class="meta-row">
               <span class="meta-label">状态</span>
-              <span class="meta-value">{{ detail.status }}</span>
+              <span class="meta-value">{{ displayStatus }}</span>
             </div>
-            <div v-if="detail.origin_country?.length" class="meta-row">
+            <div v-if="displayCountries.length" class="meta-row">
               <span class="meta-label">地区</span>
-              <span class="meta-value">{{ detail.origin_country.join(', ') }}</span>
+              <span class="meta-value">{{ displayCountries.join(' / ') }}</span>
             </div>
-            <div v-if="detail.original_language" class="meta-row">
+            <div v-if="displayLanguage" class="meta-row">
               <span class="meta-label">语言</span>
-              <span class="meta-value">{{ detail.original_language.toUpperCase() }}</span>
+              <span class="meta-value">{{ displayLanguage }}</span>
             </div>
             <div v-if="detail.number_of_episodes" class="meta-row">
               <span class="meta-label">总集数</span>
