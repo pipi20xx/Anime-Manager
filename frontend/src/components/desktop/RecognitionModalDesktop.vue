@@ -199,12 +199,12 @@ const {
             <n-collapse arrow-placement="right">
               <n-collapse-item title="查看深度识别审计日志" name="logs">
                 <template #header-extra><n-icon><SearchBtnIcon /></n-icon></template>
-                <n-scrollbar style="max-height: 250px" class="audit-log-box">
+                <div class="audit-log-box">
                   <div v-for="(log, i) in data.logs" :key="i" :class="['log-line', getLogClass(log)]">
                     <span class="idx">{{ String(i+1).padStart(2, '0') }}</span>
                     <span class="txt">{{ log }}</span>
                   </div>
-                </n-scrollbar>
+                </div>
               </n-collapse-item>
             </n-collapse>
           </div>

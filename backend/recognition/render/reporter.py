@@ -8,9 +8,9 @@ class RenderReporter:
     def report(ctx: RecognitionContext, data_packet: dict):
         # 1. 性能统计
         ctx.log(f"⏱️ [性能审计]: 全链路耗时 {int(ctx.duration * 1000)}ms ({' | '.join(ctx.perf_stats)})")
-        
+
         f = data_packet["final_result"]
-        
+
         # 2. 控制台结论汇报
         ctx.log("📢 [最终结论汇报 (标准化元数据)]")
 
@@ -33,12 +33,12 @@ class RenderReporter:
             f"💬 字幕语言 {{subtitle}}: {f.get('subtitle') or 'null'}",
             f"💿 介质来源 {{source}}: {f.get('source') or 'null'}",
             f"📡 发布平台 {{platform}}: {f.get('platform') or 'null'}",
-            f"� 渲染后名: {f['processed_name']}",
+            f"📄 渲染后名 {{processed_name}}: {f['processed_name']}",
         ]
 
         for i, line in enumerate(lines):
             prefix = "┗" if i == len(lines) - 1 else "┣"
             ctx.log(f"{prefix} {line}")
-        
+
         data_packet["logs"] = ctx.logs
         return data_packet
