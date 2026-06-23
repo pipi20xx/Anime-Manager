@@ -185,7 +185,7 @@ onMounted(() => {
       <div class="m-detail-hero" style="min-height: auto; padding: var(--m-spacing-lg) 0;">
         <div class="m-detail-hero-content" style="padding: 0 var(--m-spacing-lg); align-items: flex-start;">
           <div class="m-detail-poster" style="width: 120px;">
-            <n-image :src="getImg(detail.poster_path)" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" style="width: 100%; aspect-ratio: 3/4;" />
+            <n-image :src="getImg(detail.poster_path) || DEFAULT_POSTER" object-fit="cover" preview-disabled :fallback-src="DEFAULT_POSTER" style="width: 100%; aspect-ratio: 3/4;" />
           </div>
           <div class="m-detail-info">
             <h1 class="m-detail-title">{{ detail.title || detail.name }}</h1>
@@ -263,7 +263,7 @@ onMounted(() => {
           <div class="m-h-scroll">
             <div v-for="c in detail.cast" :key="c.character" class="cast-card-mobile">
               <div class="cast-avatar-mobile">
-                <n-image :src="c.image" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
+                <n-image :src="c.image || DEFAULT_AVATAR" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
               </div>
               <div class="cast-name-mobile" style="font-weight: 600;">{{ c.character }}</div>
               <div class="cast-name-mobile" style="color: var(--text-muted);">{{ c.actor }}</div>

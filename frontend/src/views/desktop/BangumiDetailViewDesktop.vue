@@ -174,7 +174,7 @@ onMounted(() => {
     <div v-else-if="detail" class="detail-container">
         <div class="header-content">
           <div class="poster-col">
-            <n-image :src="getImg(detail.poster_path)" class="main-poster" object-fit="contain" :fallback-src="DEFAULT_POSTER" />
+            <n-image :src="getImg(detail.poster_path) || DEFAULT_POSTER" class="main-poster" object-fit="contain" :fallback-src="DEFAULT_POSTER" />
           </div>
           <div class="info-col">
             <h1 class="title">{{ detail.title || detail.name }}</h1>
@@ -241,7 +241,7 @@ onMounted(() => {
               <div class="cast-scroller">
                 <div v-for="c in detail.cast" :key="c.character" class="cast-card">
                   <div class="cast-avatar">
-                    <n-image :src="c.image" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
+                    <n-image :src="c.image || DEFAULT_AVATAR" object-fit="cover" preview-disabled :fallback-src="DEFAULT_AVATAR" />
                   </div>
                   <div class="cast-names">
                     <div class="char-name">{{ c.character }}</div>

@@ -47,7 +47,7 @@ export function useManualOrganizeModal(props: any, emit: any) {
         Object.assign(manualTask, JSON.parse(JSON.stringify(props.defaultTask)))
       }
       // 手动整理是临时任务，统一使用固定名称，避免任务中心记录成 defaultTask 的名字
-      manualTask.name = '手动整理当前目录'
+      manualTask.name = `手动整理当前目录 (${props.currentPath})`
       // Fallback rule selection
       if (!manualTask.rule_id && props.availableRules.length > 0) {
         manualTask.rule_id = props.availableRules[0].id
