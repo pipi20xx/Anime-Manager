@@ -13,28 +13,32 @@ class RenderReporter:
         
         # 2. 控制台结论汇报
         ctx.log("📢 [最终结论汇报 (标准化元数据)]")
-        ctx.log(f"┣ 🎬 标题 {{title}}: {f['title']} ({f.get('year', '')})")
-        ctx.log(f"┣ 🆔 TMDB ID {{tmdb_id}}: {f['tmdb_id']} [{f.get('category', '未知')}]")
-        ctx.log(f"┣ 📅 季号 {{season}}: {f.get('season', 1)} | 集号 {{episode}}: {f.get('episode', '')}")
-        
+
         sec_cat = f.get('secondary_category')
-        if str(sec_cat) == '123': sec_cat = "未分类 (待修正)"
-        ctx.log(f"┣ 🏷️ 二级分类: {sec_cat or '未命中'}")
-        
-        if f.get('origin_country'): 
-            ctx.log(f"┣ 🌍 原产地 {{origin_country}}: {f['origin_country']}")
-            
-        specs = []
-        if f.get('team'): specs.append(f"👥 制作组 {{team}}: {f['team']}")
-        if f.get('resolution'): specs.append(f"📺 分辨率 {{resolution}}: {f['resolution']}")
-        if f.get('video_encode'): specs.append(f"🎞️ 视频编码: {f['video_encode']}")
-        if f.get('audio_encode'): specs.append(f"🔊 音频编码: {f['audio_encode']}")
-        if f.get('subtitle'): specs.append(f"💬 字幕语言 {{subtitle}}: {f['subtitle']}")
-        if f.get('source'): specs.append(f"💿 介质来源: {f['source']}")
-        if f.get('platform'): specs.append(f"📡 发布平台: {f['platform']}")
-        if specs: ctx.log(f"┣ 🛠️ 规格: {' | '.join(specs)}")
-        
-        ctx.log(f"┗ 📝 渲染后名: {f['processed_name']}")
+        if str(sec_cat) == '123':
+            sec_cat = "未分类 (待修正)"
+
+        lines = [
+            f"🎬 标题 {{title}}: {f['title']}",
+            f"📆 年份 {{year}}: {f.get('year') or 'null'}",
+            f"🆔 TMDB ID {{tmdb_id}}: {f['tmdb_id']}",
+            f"🎦 类型 {{category}}: {f.get('category') or 'null'}",
+            f"📅 季号 {{season}}: {f.get('season', 1)} | 集号 {{episode}}: {f.get('episode', '')}",
+            f"🏷️ 二级分类 {{secondary_category}}: {sec_cat or 'null'}",
+            f"🌍 原产地 {{origin_country}}: {f.get('origin_country') or 'null'}",
+            f"👥 制作组 {{team}}: {f.get('team') or 'null'}",
+            f"📺 分辨率 {{resolution}}: {f.get('resolution') or 'null'}",
+            f"🎞️ 视频编码 {{video_encode}}: {f.get('video_encode') or 'null'}",
+            f"🔊 音频编码 {{audio_encode}}: {f.get('audio_encode') or 'null'}",
+            f"💬 字幕语言 {{subtitle}}: {f.get('subtitle') or 'null'}",
+            f"💿 介质来源 {{source}}: {f.get('source') or 'null'}",
+            f"📡 发布平台 {{platform}}: {f.get('platform') or 'null'}",
+            f"� 渲染后名: {f['processed_name']}",
+        ]
+
+        for i, line in enumerate(lines):
+            prefix = "┗" if i == len(lines) - 1 else "┣"
+            ctx.log(f"{prefix} {line}")
         
         data_packet["logs"] = ctx.logs
         return data_packet
