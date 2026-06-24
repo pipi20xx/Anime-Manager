@@ -61,6 +61,15 @@ const {
 const runningTasks = computed(() => backgroundTasks.value.filter(t => t.status === 'running'))
 const finishedTasks = computed(() => backgroundTasks.value.filter(t => t.status !== 'running'))
 
+const actionTypeMap: Record<string, string> = {
+  move: '物理移动',
+  copy: '完整复制',
+  link: '建立硬链',
+  cd2_move: 'CD2 移动',
+  cd2_copy: 'CD2 复制',
+  hash_only: '仅记录哈希'
+}
+
 onMounted(() => {
   fetchConfig()
   startBgTaskPolling()
@@ -222,8 +231,14 @@ onUnmounted(stopBgTaskPolling)
                   <div class="p-row" :title="task.source_dir"><span class="p-label">源目录</span><code>{{ task.source_dir }}</code></div>
                   <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><code>{{ task.target_dir }}</code></div>
                   <div class="p-row">
+                    <span class="p-label">操作类型</span>
+                    <n-tag size="small" :bordered="false" type="info" style="background: var(--color-info-bg)">
+                      {{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}
+                    </n-tag>
+                  </div>
+                  <div class="p-row">
                     <span class="p-label">重命名规则</span>
-                    <n-tag size="tiny" :bordered="false" type="info" style="background: var(--color-info-bg)">
+                    <n-tag size="small" :bordered="false" type="info" style="background: var(--color-info-bg)">
                       {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
                     </n-tag>
                   </div>
@@ -317,19 +332,18 @@ onUnmounted(stopBgTaskPolling)
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
   border: 1px solid var(--app-border-light);
 }
-.p-disp { flex-grow: 1; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-1); }
-.p-disp .p-row { display: flex; align-items: center; gap: 4px; }
+.p-disp { flex-grow: 1; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.p-disp .p-row { display: flex; align-items: center; gap: 8px; }
 .p-disp .p-label { 
-  font-size: var(--text-3xs); 
+  font-size: var(--text-sm); 
   color: var(--text-tertiary); 
-  font-weight: bold; 
-  text-transform: uppercase;
-  min-width: 60px;
+  font-weight: 600; 
+  min-width: 70px;
   flex-shrink: 0;
 }
 .p-disp code { 
   flex: 1;
-  font-size: var(--text-xs); 
+  font-size: var(--text-sm); 
   font-family: var(--code-font);
   background: var(--app-surface-inner); 
   padding: var(--space-1) var(--space-2); 

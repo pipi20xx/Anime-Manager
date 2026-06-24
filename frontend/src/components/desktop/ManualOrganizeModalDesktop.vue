@@ -165,7 +165,7 @@ const {
 .mt-4 { margin-top: 16px; }
 .mt-2 { margin-top: 8px; }
 .forced-box {
-  background: var(--warning-subtle);
+  background: var(--app-surface-card);
   padding: 16px;
   border-radius: var(--card-border-radius, 8px);
   border: 1px solid var(--app-border-light);

@@ -145,9 +145,9 @@ const handleAction = (key: string) => {
   padding: 12px;
 }
 .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.rule-name { font-weight: bold; font-size: 15px; color: var(--text-primary); }
+.rule-name { font-weight: bold; font-size: var(--m-text-lg); color: var(--text-primary); }
 .criteria-mini { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.c-tag { font-size: 10px; background: var(--app-surface-inner); padding: 2px 6px; border-radius: 4px; color: var(--text-tertiary); border: 1px solid var(--app-border-light); }
+.c-tag { font-size: var(--m-text-xs); background: var(--app-surface-inner); padding: 2px 6px; border-radius: 4px; color: var(--text-tertiary); border: 1px solid var(--app-border-light); }
 .c-tag.target { color: var(--color-success); border-color: var(--success-medium); }
 .card-footer { border-top: 1px solid var(--app-border-light); padding-top: 10px; }
 

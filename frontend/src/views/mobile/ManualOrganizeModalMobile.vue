@@ -156,7 +156,7 @@ const {
 }
 
 .forced-section {
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card);
   padding: 12px;
   border-radius: 8px;
   margin-top: 12px;

@@ -68,6 +68,15 @@ useBackClose(showExecModal)
 const runningTasks = computed(() => backgroundTasks.value.filter(t => t.status === 'running'))
 const finishedTasks = computed(() => backgroundTasks.value.filter(t => t.status !== 'running'))
 
+const actionTypeMap: Record<string, string> = {
+  move: '物理移动',
+  copy: '完整复制',
+  link: '建立硬链',
+  cd2_move: 'CD2 移动',
+  cd2_copy: 'CD2 复制',
+  hash_only: '仅记录哈希'
+}
+
 // 操作抽屉状态
 const showRuleActionDrawer = ref(false)
 const showTaskActionDrawer = ref(false)
@@ -238,8 +247,14 @@ onUnmounted(stopBgTaskPolling)
                    <span class="path-label">目标</span>
                    <div class="path-val">{{ task.target_dir }}</div>
                  </div>
+                 <div class="meta-row">
+                   <span class="path-label">操作类型</span>
+                   <n-tag size="small" :bordered="false" type="info">
+                     {{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}
+                   </n-tag>
+                 </div>
                  <div class="rule-tag">
-                    <n-tag size="tiny" :bordered="false" type="info">
+                    <n-tag size="small" :bordered="false" type="info">
                       {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
                     </n-tag>
                  </div>
@@ -419,9 +434,10 @@ onUnmounted(stopBgTaskPolling)
 }
 
 .path-label {
-  font-size: var(--m-text-xs);
+  font-size: var(--m-text-sm);
   color: var(--text-tertiary);
   margin-bottom: var(--m-spacing-xs);
+  font-weight: 500;
 }
 
 .path-val {
@@ -429,9 +445,15 @@ onUnmounted(stopBgTaskPolling)
   background: var(--app-surface-inner);
   padding: var(--m-spacing-sm);
   border-radius: var(--m-radius-sm);
-  font-size: var(--m-text-sm);
+  font-size: var(--m-text-md);
   word-break: break-all;
   line-height: 1.4;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--m-spacing-sm);
 }
 
 .rule-tag {

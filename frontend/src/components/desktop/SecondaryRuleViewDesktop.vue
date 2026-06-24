@@ -124,7 +124,10 @@ const {
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 1px 2px 0 var(--shadow-light);
-  height: auto;
+  height: 320px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 .rect-rule-card:hover { 
   border-color: var(--n-primary-color); 
@@ -136,14 +139,33 @@ const {
 .is-dragging { opacity: var(--opacity-muted); border: 2px dashed var(--n-primary-color); }
 .is-disabled { opacity: var(--opacity-secondary); filter: grayscale(0.8); }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 10px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 12px; }
 .header-left { display: flex; align-items: center; gap: 8px; }
 .drag-handle { color: var(--text-tertiary); cursor: grab; }
-.index-badge { font-family: monospace; font-size: var(--text-xs); background: var(--bg-tertiary); padding: 1px 4px; border-radius: var(--radius-sm); color: var(--n-primary-color); }
-.rule-name { font-size: 15px; color: var(--text-primary); }
+.index-badge { font-family: monospace; font-size: var(--text-sm); background: var(--bg-tertiary); padding: 2px 6px; border-radius: var(--radius-sm); color: var(--n-primary-color); }
+.rule-name { font-size: var(--text-xl); color: var(--text-primary); }
 
-.criteria-list { font-size: 11px; color: var(--text-tertiary); display: grid; gap: 4px; margin-bottom: 12px; }
-.c-val { color: var(--n-info-color); margin-left: 4px; font-weight: 500; }
+.card-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.criteria-list { 
+  flex: 1; 
+  min-height: 0;
+  font-size: var(--text-sm); 
+  color: var(--text-tertiary); 
+  display: flex;
+  flex-direction: column;
+  gap: 6px; 
+  overflow: hidden; 
+}
+.c-item { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.c-val { 
+  flex: 1; 
+  min-width: 0;
+  color: var(--n-info-color); 
+  font-weight: 600; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
 
 .card-footer { 
   display: flex; 
@@ -151,5 +173,7 @@ const {
   align-items: center; 
   border-top: none; 
   padding-top: 12px; 
+  margin-top: auto;
+  min-height: 36px;
 }
 </style>
