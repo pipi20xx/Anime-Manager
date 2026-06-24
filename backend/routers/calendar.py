@@ -31,10 +31,11 @@ async def add_subject(subject: CalendarSubject):
         if subject.media_type == "tv" and not subject.episodes_cache:
             tmdb = TMDBProvider()
             eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
-            if eps:
-                subject.episodes_cache = eps
+            episodes = eps.get("episodes") if eps else None
+            if episodes:
+                subject.episodes_cache = episodes
                 # 顺便更新首播日期
-                subject.first_air_date = eps[0]["air_date"]
+                subject.first_air_date = episodes[0]["air_date"]
         
         await db.save(subject)
     return {"success": True, "message": "已成功加入日历并同步放送日期"}
@@ -53,12 +54,13 @@ async def refresh_subject(subject_id: int):
         
         tmdb = TMDBProvider()
         eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
-        if eps:
+        episodes = eps.get("episodes") if eps else None
+        if episodes:
             old_count = len(subject.episodes_cache) if subject.episodes_cache else 0
-            new_count = len(eps)
+            new_count = len(episodes)
             
-            subject.episodes_cache = eps
-            subject.first_air_date = eps[0]["air_date"]
+            subject.episodes_cache = episodes
+            subject.first_air_date = episodes[0]["air_date"]
             await db.save(subject)
             
             logger.info(f"✅ [日历刷新] 刷新成功: 《{subject.title}》 S{subject.season} - {old_count} → {new_count} 集")
@@ -89,12 +91,13 @@ async def refresh_all_subjects():
                 logger.info(f"  [{idx}/{len(subjects)}] 🔄 开始刷新: 《{subject.title}》 S{subject.season} (TMDB ID: {subject.tmdb_id})")
                 
                 eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
-                if eps:
+                episodes = eps.get("episodes") if eps else None
+                if episodes:
                     old_count = len(subject.episodes_cache) if subject.episodes_cache else 0
-                    new_count = len(eps)
+                    new_count = len(episodes)
                     
-                    subject.episodes_cache = eps
-                    subject.first_air_date = eps[0]["air_date"]
+                    subject.episodes_cache = episodes
+                    subject.first_air_date = episodes[0]["air_date"]
                     await db.save(subject)
                     updated_count += 1
                     
@@ -199,22 +202,14 @@ async def update_subject(subject_id: int, updated_data: dict):
             subject.season = new_season
 
             tmdb = TMDBProvider()
-
             eps = await tmdb.get_season_episodes(subject.tmdb_id, subject.season)
-
-            if eps:
-
-                subject.episodes_cache = eps
-
-                subject.first_air_date = eps[0]["air_date"]
-
+            episodes = eps.get("episodes") if eps else None
+            if episodes:
+                subject.episodes_cache = episodes
+                subject.first_air_date = episodes[0]["air_date"]
         
-
         await db.save(subject)
-
     return {"success": True}
-
-
 
 @router.post("/import_bangumi/{bgm_id}", summary="从 Bangumi 一键导入")
 
@@ -259,29 +254,18 @@ async def import_bangumi(bgm_id: int):
 
 
         # 3. 抓取放送日期
-
         tmdb = TMDBProvider()
-
         eps = await tmdb.get_season_episodes(tmdb_id, season)
-
+        episodes = eps.get("episodes") if eps else None
         
-
         new_sub = CalendarSubject(
-
             tmdb_id=tmdb_id,
-
             media_type=match_res["media_type"],
-
             title=title,
-
             season=season,
-
             poster_path=poster,
-
-            episodes_cache=eps,
-
-            first_air_date=eps[0]["air_date"] if eps else None
-
+            episodes_cache=episodes,
+            first_air_date=episodes[0]["air_date"] if episodes else None
         )
 
         await db.save(new_sub)

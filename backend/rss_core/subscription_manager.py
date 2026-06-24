@@ -74,6 +74,7 @@ class SubscriptionManager:
                 # 不存在则抓取并新建
                 tmdb = TMDBProvider()
                 eps = await tmdb.get_season_episodes(sub.tmdb_id, sub.season)
+                episodes = eps.get("episodes") if eps else None
                 
                 new_cal = CalendarSubject(
                     tmdb_id=sub.tmdb_id,
@@ -81,8 +82,8 @@ class SubscriptionManager:
                     title=sub.title,
                     season=sub.season,
                     poster_path=sub.poster_path,
-                    episodes_cache=eps,
-                    first_air_date=eps[0]["air_date"] if eps else None
+                    episodes_cache=episodes,
+                    first_air_date=episodes[0]["air_date"] if episodes else None
                 )
                 await db.save(new_cal)
                 logger.info(f"已自动同步订阅《{sub.title}》至追剧日历")
