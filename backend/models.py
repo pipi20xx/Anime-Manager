@@ -514,6 +514,9 @@ class BangumiDataItem(SQLModel, table=True):
     anidb_id: Optional[int] = Field(default=None, index=True)
     title: Optional[str] = None
     title_cn: Optional[str] = Field(default=None, index=True)
+    broadcast: Optional[str] = None
+    begin: Optional[str] = None
+    end: Optional[str] = None
     raw_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     updated_at: datetime = Field(default_factory=datetime.now)
 

@@ -217,6 +217,9 @@ class BangumiDataItemService:
                     "anidb_id": anidb_id,
                     "title": title,
                     "title_cn": title_cn,
+                    "broadcast": item.get("broadcast", ""),
+                    "begin": item.get("begin", ""),
+                    "end": item.get("end", ""),
                     "raw_data": item
                 })
             else:
@@ -286,6 +289,9 @@ class BangumiDataItemService:
                             "anidb_id": stmt.excluded.anidb_id,
                             "title": stmt.excluded.title,
                             "title_cn": stmt.excluded.title_cn,
+                            "broadcast": stmt.excluded.broadcast,
+                            "begin": stmt.excluded.begin,
+                            "end": stmt.excluded.end,
                             "raw_data": stmt.excluded.raw_data
                         }
                     )
