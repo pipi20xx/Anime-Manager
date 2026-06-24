@@ -365,4 +365,4 @@ class BangumiDataItemService:
             return {"total": 0, "by_type": {}}
 
 
-bgm_mapping_service = BangumiDataItemService()
+bangumi_data_service = BangumiDataItemService()

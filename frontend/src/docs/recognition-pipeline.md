@@ -394,7 +394,7 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 - **职责**: 从 `builtin_groups.txt` 加载预置的制作组名单
 - **特点**: 单例模式，懒加载，避免重复读取文件
 
-##### `bgm_mapping_service.py` - Bangumi 映射服务
+##### `bangumi_data_service.py` - Bangumi 数据服务
 - **职责**: 维护 Bangumi 数据条目表（BangumiDataItem）
 - **功能**: 定期从 bangumi-data 同步、加速番剧识别
 - **存储**: `bangumi_data_item` 表 + `discover_cache` 同步状态

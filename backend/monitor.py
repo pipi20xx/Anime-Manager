@@ -372,12 +372,12 @@ class MonitorManager:
         try:
             await start_task(task_id, "BangumiData同步", "BangumiData条目表自动同步")
             
-            from recognition_engine.bgm_mapping_service import bgm_mapping_service
+            from recognition_engine.bangumi_data_service import bangumi_data_service
             
-            should, reason = await bgm_mapping_service.should_sync()
+            should, reason = await bangumi_data_service.should_sync()
             if not should:
                 await log_task(task_id, f"⏭️ 跳过同步: {reason}")
-                stats = await bgm_mapping_service.get_stats()
+                stats = await bangumi_data_service.get_stats()
                 await log_task(task_id, f"📊 当前条目表: {stats.get('total', 0)} 条记录")
                 await finish_task(task_id, "completed", 0, {"skipped": True})
                 logger.info(f"[BangumiData] {reason}")
@@ -387,13 +387,13 @@ class MonitorManager:
             await log_task(task_id, f"📝 原因: {reason}")
             await log_task(task_id, "📡 数据源: https://unpkg.com/bangumi-data@0.3/dist/data.json")
             
-            result = await bgm_mapping_service.sync_from_remote(force=True)
+            result = await bangumi_data_service.sync_from_remote(force=True)
             
             if result.get("success"):
                 count = result.get("count", 0)
                 await log_task(task_id, f"✅ 同步成功: 共更新 {count} 条条目记录")
                 
-                stats = await bgm_mapping_service.get_stats()
+                stats = await bangumi_data_service.get_stats()
                 await log_task(task_id, f"📊 条目表统计:")
                 await log_task(task_id, f"   ┗ 总记录数: {stats.get('total', 0)}")
                 for media_type, cnt in stats.get("by_type", {}).items():
@@ -762,8 +762,8 @@ class MonitorManager:
             bgm_last_run = None
             bgm_interval_str = "7 天" if bgm_enabled else "已禁用"
             try:
-                from recognition_engine.bgm_mapping_service import bgm_mapping_service
-                bgm_status = await bgm_mapping_service.get_sync_status()
+                from recognition_engine.bangumi_data_service import bangumi_data_service
+                bgm_status = await bangumi_data_service.get_sync_status()
                 bgm_last_run = bgm_status.get("last_sync_time")
                 bgm_count = bgm_status.get("mapping_count")
             except Exception as e:

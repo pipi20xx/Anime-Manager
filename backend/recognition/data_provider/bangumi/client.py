@@ -415,8 +415,8 @@ class BangumiProvider:
         
         if bgm_id:
             try:
-                from recognition_engine.bgm_mapping_service import bgm_mapping_service
-                mapping = await bgm_mapping_service.lookup(bgm_id)
+                from recognition_engine.bangumi_data_service import bangumi_data_service
+                mapping = await bangumi_data_service.lookup(bgm_id)
                 if mapping:
                     _log(f"┃ [BangumiData] 📋 命中 BangumiData 表: BGM:{bgm_id} -> TMDB:{mapping['tmdb_id']} ({mapping['media_type']})")
                     tmdb = TMDBClient(tmdb_api_key)

@@ -239,8 +239,8 @@ async def get_mapping_stats():
     """
     获取 BangumiData 条目表的统计信息。
     """
-    from recognition_engine.bgm_mapping_service import bgm_mapping_service
-    return await bgm_mapping_service.get_stats()
+    from recognition_engine.bangumi_data_service import bangumi_data_service
+    return await bangumi_data_service.get_stats()
 
 @router.post("/mapping/sync", summary="从 bangumi-data 同步映射")
 async def sync_mapping(force: bool = False):
@@ -250,8 +250,8 @@ async def sync_mapping(force: bool = False):
     
     :param force: 是否强制同步（忽略7天间隔检查）
     """
-    from recognition_engine.bgm_mapping_service import bgm_mapping_service
-    result = await bgm_mapping_service.sync_from_remote(force=force)
+    from recognition_engine.bangumi_data_service import bangumi_data_service
+    result = await bangumi_data_service.sync_from_remote(force=force)
     log_audit("BangumiData", "同步", result.get("message", ""))
     return result
 
@@ -260,8 +260,8 @@ async def lookup_mapping(bgm_id: int):
     """
     查询指定 Bangumi ID 的 TMDB 映射。
     """
-    from recognition_engine.bgm_mapping_service import bgm_mapping_service
-    mapping = await bgm_mapping_service.lookup(bgm_id)
+    from recognition_engine.bangumi_data_service import bangumi_data_service
+    mapping = await bangumi_data_service.lookup(bgm_id)
     if mapping:
         return {"success": True, "mapping": mapping}
     return {"success": False, "message": "未找到映射"}
