@@ -45,7 +45,7 @@ export function useMaintenance() {
     'public.task_records': '任务中心执行记录（整理/STRM/RSS等任务的日志）',
     'public.file_hashes': '文件哈希记录（SHA1、ED2K 及识别信息缓存）',
     'public.rss_detect_tasks': 'RSS探测订阅任务（自动发现并订阅新番）',
-    'public.bgm_tmdb_mapping': 'BGM-TMDB映射表（Bangumi ID 到 TMDB ID 的预制映射，用于加速匹配）',
+    'public.bangumi_data_item': 'Bangumi 数据条目（Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射，含完整原始数据）',
     'public.emby_media_index': 'Emby 库索引（TMDB ID + 类型 + Emby 标题的快速查找表）'
   }
 

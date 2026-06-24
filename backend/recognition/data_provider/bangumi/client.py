@@ -405,7 +405,7 @@ class BangumiProvider:
     async def map_to_tmdb(bgm_item: Dict, tmdb_api_key: str, logs: Any) -> Optional[Dict]:
         """
         Bangumi 条目对撞 TMDB (整合 L1 算法)
-        优先查询映射表，表中没有再用算法匹配
+        优先查询 BangumiData 表，表中没有再用算法匹配
         """
         def _log(msg):
             if hasattr(logs, "log"): logs.log(msg)
@@ -418,14 +418,14 @@ class BangumiProvider:
                 from recognition_engine.bgm_mapping_service import bgm_mapping_service
                 mapping = await bgm_mapping_service.lookup(bgm_id)
                 if mapping:
-                    _log(f"┃ [BGM-Link] 📋 命中映射表: BGM:{bgm_id} -> TMDB:{mapping['tmdb_id']} ({mapping['media_type']})")
+                    _log(f"┃ [BangumiData] 📋 命中 BangumiData 表: BGM:{bgm_id} -> TMDB:{mapping['tmdb_id']} ({mapping['media_type']})")
                     tmdb = TMDBClient(tmdb_api_key)
                     details = await tmdb.get_details(str(mapping['tmdb_id']), mapping['media_type'], logs=logs)
                     if details:
                         return details
-                    _log(f"┃   ⚠️ 映射表命中但获取 TMDB 详情失败，回退到算法匹配")
+                    _log(f"┃   ⚠️ BangumiData 表命中但获取 TMDB 详情失败，回退到算法匹配")
             except Exception as e:
-                _log(f"┃   ⚠️ 查询映射表异常: {e}，回退到算法匹配")
+                _log(f"┃   ⚠️ 查询 BangumiData 表异常: {e}，回退到算法匹配")
 
         bgm_platform = bgm_item.get('platform', '')
         name_cn = bgm_item.get('title', '')

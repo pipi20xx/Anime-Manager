@@ -395,9 +395,9 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
 - **特点**: 单例模式，懒加载，避免重复读取文件
 
 ##### `bgm_mapping_service.py` - Bangumi 映射服务
-- **职责**: 维护 Bangumi ID 到 TMDB ID 的预制映射表
+- **职责**: 维护 Bangumi 数据条目表（BangumiDataItem）
 - **功能**: 定期从 bangumi-data 同步、加速番剧识别
-- **存储**: `bgm_tmdb_mapping` 表 + `discover_cache` 同步状态
+- **存储**: `bangumi_data_item` 表 + `discover_cache` 同步状态
 
 ##### `constants.py` - 常量定义
 - **内容**: 所有正则模式、映射表、关键词列表

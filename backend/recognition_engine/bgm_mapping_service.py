@@ -7,16 +7,16 @@ from sqlmodel import select
 from sqlalchemy.dialects.postgresql import insert
 
 from database import db
-from models import BgmTmdbMapping, DiscoverCache
+from models import BangumiDataItem, DiscoverCache
 
-logger = logging.getLogger("BGM-Mapping")
+logger = logging.getLogger("BangumiData")
 
 BANGUMI_DATA_URL = "https://unpkg.com/bangumi-data@0.3/dist/data.json"
 SYNC_CACHE_KEY = "bgm_mapping_sync"
 SYNC_INTERVAL_DAYS = 7
 
 
-class BgmTmdbMappingService:
+class BangumiDataItemService:
     _instance = None
     
     def __new__(cls):
@@ -35,7 +35,7 @@ class BgmTmdbMappingService:
                 if cache:
                     return cache.content or {}
         except Exception as e:
-            logger.warning(f"[BGM-Mapping] 获取同步状态失败: {e}")
+            logger.warning(f"[BangumiData] 获取同步状态失败: {e}")
         return {}
     
     @staticmethod
@@ -69,11 +69,25 @@ class BgmTmdbMappingService:
                 db.session.add(cache)
                 await db.session.commit()
         except Exception as e:
-            logger.warning(f"[BGM-Mapping] 保存同步状态失败: {e}")
+            logger.warning(f"[BangumiData] 保存同步状态失败: {e}")
     
     @staticmethod
     async def should_sync() -> tuple[bool, str]:
-        status = await BgmTmdbMappingService.get_sync_status()
+        # 1. 表为空则必须同步（首次启动 / 数据被清空）
+        try:
+            async with db.session_scope():
+                from sqlalchemy import text
+                count_result = await db.session.execute(
+                    text("SELECT COUNT(*) FROM public.bangumi_data_item")
+                )
+                row_count = count_result.scalar() or 0
+            if row_count == 0:
+                return True, "条目表为空，需要同步"
+        except Exception as e:
+            logger.warning(f"[BangumiData] 检查表数据失败，按缓存策略继续: {e}")
+        
+        # 2. 按缓存状态判断 7 天间隔
+        status = await BangumiDataItemService.get_sync_status()
         
         if not status:
             return True, "首次启动，需要同步"
@@ -95,20 +109,20 @@ class BgmTmdbMappingService:
     
     @staticmethod
     async def fetch_bangumi_data() -> Optional[Dict]:
-        logger.info(f"[BGM-Mapping] 📡 正在请求: {BANGUMI_DATA_URL}")
+        logger.info(f"[BangumiData] 📡 正在请求: {BANGUMI_DATA_URL}")
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
             try:
                 resp = await client.get(BANGUMI_DATA_URL)
                 if resp.status_code == 200:
                     data = resp.json()
                     items_count = len(data.get("items", []))
-                    logger.info(f"[BGM-Mapping] ✅ 数据获取成功，共 {items_count} 个条目")
+                    logger.info(f"[BangumiData] ✅ 数据获取成功，共 {items_count} 个条目")
                     return data
-                logger.error(f"[BGM-Mapping] ❌ HTTP 错误: {resp.status_code}")
+                logger.error(f"[BangumiData] ❌ HTTP 错误: {resp.status_code}")
             except httpx.TimeoutException:
-                logger.error(f"[BGM-Mapping] ❌ 请求超时 (30s)")
+                logger.error(f"[BangumiData] ❌ 请求超时 (30s)")
             except Exception as e:
-                logger.error(f"[BGM-Mapping] ❌ 请求异常: {e}")
+                logger.error(f"[BangumiData] ❌ 请求异常: {e}")
         return None
     
     @staticmethod
@@ -127,6 +141,9 @@ class BgmTmdbMappingService:
             bgm_id = None
             tmdb_id = None
             tmdb_type = "tv"
+            mal_id = None
+            anilist_id = None
+            anidb_id = None
             
             for site in sites:
                 site_name = site.get("site", "")
@@ -151,6 +168,24 @@ class BgmTmdbMappingService:
                             tmdb_id = int(site_id)
                         except (ValueError, TypeError):
                             continue
+                
+                elif site_name == "mal":
+                    try:
+                        mal_id = int(site_id)
+                    except (ValueError, TypeError):
+                        continue
+                
+                elif site_name == "anilist":
+                    try:
+                        anilist_id = int(site_id)
+                    except (ValueError, TypeError):
+                        continue
+                
+                elif site_name == "anidb":
+                    try:
+                        anidb_id = int(site_id)
+                    except (ValueError, TypeError):
+                        continue
             
             if bgm_id and tmdb_id:
                 if bgm_id in seen_bgm_ids:
@@ -166,8 +201,7 @@ class BgmTmdbMappingService:
                     if zh_hans:
                         title_cn = zh_hans[0]
                 
-                item_type = item.get("type", "tv")
-                media_type = "movie" if item_type == "movie" else "tv"
+                media_type = "movie" if tmdb_type == "movie" else "tv"
                 
                 if media_type == "tv":
                     tv_count += 1
@@ -178,29 +212,31 @@ class BgmTmdbMappingService:
                     "bgm_id": bgm_id,
                     "tmdb_id": tmdb_id,
                     "media_type": media_type,
+                    "mal_id": mal_id,
+                    "anilist_id": anilist_id,
+                    "anidb_id": anidb_id,
                     "title": title,
                     "title_cn": title_cn,
-                    "source": "bangumi-data",
-                    "updated_at": datetime.now()
+                    "raw_data": item
                 })
             else:
                 skipped_count += 1
         
-        logger.info(f"[BGM-Mapping] 📊 解析完成:")
-        logger.info(f"[BGM-Mapping]    ├─ TV 剧集: {tv_count} 条")
-        logger.info(f"[BGM-Mapping]    ├─ 电影: {movie_count} 条")
-        logger.info(f"[BGM-Mapping]    ├─ 跳过 (无映射): {skipped_count} 条")
-        logger.info(f"[BGM-Mapping]    └─ 去重 (重复BGM ID): {duplicate_count} 条")
+        logger.info(f"[BangumiData] 📊 解析完成:")
+        logger.info(f"[BangumiData]    ├─ TV 剧集: {tv_count} 条")
+        logger.info(f"[BangumiData]    ├─ 电影: {movie_count} 条")
+        logger.info(f"[BangumiData]    ├─ 跳过 (无映射): {skipped_count} 条")
+        logger.info(f"[BangumiData]    └─ 去重 (重复BGM ID): {duplicate_count} 条")
         
         return mappings
     
     @staticmethod
     async def sync_from_remote(force: bool = False) -> Dict[str, Any]:
         if not force:
-            should, reason = await BgmTmdbMappingService.should_sync()
+            should, reason = await BangumiDataItemService.should_sync()
             if not should:
-                logger.info(f"[BGM-Mapping] ⏭️ 跳过同步: {reason}")
-                status = await BgmTmdbMappingService.get_sync_status()
+                logger.info(f"[BangumiData] ⏭️ 跳过同步: {reason}")
+                status = await BangumiDataItemService.get_sync_status()
                 return {
                     "success": True,
                     "message": reason,
@@ -209,21 +245,21 @@ class BgmTmdbMappingService:
                 }
         
         logger.info("=" * 50)
-        logger.info("[BGM-Mapping] 🔄 开始同步 BGM-TMDB 映射表")
-        logger.info(f"[BGM-Mapping] 📅 同步时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info("[BangumiData] 🔄 开始同步 BangumiData 条目表")
+        logger.info(f"[BangumiData] 📅 同步时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
-        data = await BgmTmdbMappingService.fetch_bangumi_data()
+        data = await BangumiDataItemService.fetch_bangumi_data()
         if not data:
-            logger.error("[BGM-Mapping] ❌ 同步失败: 无法获取远程数据")
+            logger.error("[BangumiData] ❌ 同步失败: 无法获取远程数据")
             return {"success": False, "message": "获取远程数据失败"}
         
         items_count = len(data.get("items", []))
-        mappings = BgmTmdbMappingService.parse_mapping(data)
+        mappings = BangumiDataItemService.parse_mapping(data)
         if not mappings:
-            logger.error("[BGM-Mapping] ❌ 同步失败: 解析结果为空")
+            logger.error("[BangumiData] ❌ 同步失败: 解析结果为空")
             return {"success": False, "message": "解析映射数据为空"}
         
-        logger.info(f"[BGM-Mapping] 💾 正在写入数据库 (分批处理)...")
+        logger.info(f"[BangumiData] 💾 正在写入数据库 (分批处理)...")
         
         try:
             batch_size = 1000
@@ -234,21 +270,23 @@ class BgmTmdbMappingService:
                 batch_num = i // batch_size + 1
                 total_batches = (len(mappings) + batch_size - 1) // batch_size
                 
-                logger.info(f"[BGM-Mapping]    批次 {batch_num}/{total_batches}: 写入 {len(batch)} 条")
+                logger.info(f"[BangumiData]    批次 {batch_num}/{total_batches}: 写入 {len(batch)} 条")
                 
                 async with db.session_scope():
                     from sqlalchemy.dialects.postgresql import insert
                     
-                    stmt = insert(BgmTmdbMapping.__table__).values(batch)
+                    stmt = insert(BangumiDataItem.__table__).values(batch)
                     stmt = stmt.on_conflict_do_update(
                         index_elements=["bgm_id"],
                         set_={
                             "tmdb_id": stmt.excluded.tmdb_id,
                             "media_type": stmt.excluded.media_type,
+                            "mal_id": stmt.excluded.mal_id,
+                            "anilist_id": stmt.excluded.anilist_id,
+                            "anidb_id": stmt.excluded.anidb_id,
                             "title": stmt.excluded.title,
                             "title_cn": stmt.excluded.title_cn,
-                            "source": stmt.excluded.source,
-                            "updated_at": stmt.excluded.updated_at
+                            "raw_data": stmt.excluded.raw_data
                         }
                     )
                     
@@ -257,9 +295,9 @@ class BgmTmdbMappingService:
                 
                 total_written += len(batch)
             
-            await BgmTmdbMappingService.save_sync_status(items_count, total_written)
+            await BangumiDataItemService.save_sync_status(items_count, total_written)
             
-            logger.info(f"[BGM-Mapping] ✅ 同步成功: {total_written} 条记录")
+            logger.info(f"[BangumiData] ✅ 同步成功: {total_written} 条记录")
             logger.info("=" * 50)
             
             return {
@@ -268,55 +306,34 @@ class BgmTmdbMappingService:
                 "count": total_written
             }
         except Exception as e:
-            logger.error(f"[BGM-Mapping] ❌ 数据库写入失败: {e}")
+            logger.error(f"[BangumiData] ❌ 数据库写入失败: {e}")
             return {"success": False, "message": f"数据库写入失败: {e}"}
     
     @staticmethod
     async def lookup(bgm_id: int) -> Optional[Dict]:
         try:
             async with db.session_scope():
-                stmt = select(BgmTmdbMapping).where(BgmTmdbMapping.bgm_id == bgm_id)
+                stmt = select(BangumiDataItem).where(BangumiDataItem.bgm_id == bgm_id)
                 result = await db.session.execute(stmt)
                 mapping = result.scalars().first()
                 
                 if mapping:
-                    logger.debug(f"[BGM-Mapping] 📋 命中: BGM:{bgm_id} -> TMDB:{mapping.tmdb_id} ({mapping.media_type})")
+                    logger.debug(f"[BangumiData] 📋 命中: BGM:{bgm_id} -> TMDB:{mapping.tmdb_id} ({mapping.media_type})")
                     return {
                         "bgm_id": mapping.bgm_id,
                         "tmdb_id": mapping.tmdb_id,
                         "media_type": mapping.media_type,
+                        "mal_id": mapping.mal_id,
+                        "anilist_id": mapping.anilist_id,
+                        "anidb_id": mapping.anidb_id,
                         "title": mapping.title,
                         "title_cn": mapping.title_cn
                     }
                 else:
-                    logger.debug(f"[BGM-Mapping] ❓ 未命中: BGM:{bgm_id}")
+                    logger.debug(f"[BangumiData] ❓ 未命中: BGM:{bgm_id}")
         except Exception as e:
-            logger.warning(f"[BGM-Mapping] ⚠️ 查询异常: {e}")
+            logger.warning(f"[BangumiData] ⚠️ 查询异常: {e}")
         return None
-    
-    @staticmethod
-    async def add_manual_mapping(bgm_id: int, tmdb_id: int, media_type: str = "tv", 
-                                  title: str = None, title_cn: str = None) -> Dict[str, Any]:
-        logger.info(f"[BGM-Mapping] ✏️ 手动添加映射: BGM:{bgm_id} -> TMDB:{tmdb_id} ({media_type})")
-        
-        try:
-            async with db.session_scope():
-                mapping = BgmTmdbMapping(
-                    bgm_id=bgm_id,
-                    tmdb_id=tmdb_id,
-                    media_type=media_type,
-                    title=title,
-                    title_cn=title_cn,
-                    source="manual",
-                    updated_at=datetime.now()
-                )
-                await db.save(mapping)
-            
-            logger.info(f"[BGM-Mapping] ✅ 手动映射添加成功")
-            return {"success": True, "message": f"已添加映射: BGM:{bgm_id} -> TMDB:{tmdb_id}"}
-        except Exception as e:
-            logger.error(f"[BGM-Mapping] ❌ 手动映射添加失败: {e}")
-            return {"success": False, "message": f"添加失败: {e}"}
     
     @staticmethod
     async def get_stats() -> Dict[str, Any]:
@@ -325,33 +342,27 @@ class BgmTmdbMappingService:
                 from sqlalchemy import text
                 
                 total_result = await db.session.execute(
-                    text("SELECT COUNT(*) FROM public.bgm_tmdb_mapping")
+                    text("SELECT COUNT(*) FROM public.bangumi_data_item")
                 )
                 total = total_result.scalar() or 0
                 
-                source_result = await db.session.execute(
-                    text("SELECT source, COUNT(*) as cnt FROM public.bgm_tmdb_mapping GROUP BY source")
-                )
-                by_source = {row[0]: row[1] for row in source_result.fetchall()}
-                
                 type_result = await db.session.execute(
-                    text("SELECT media_type, COUNT(*) as cnt FROM public.bgm_tmdb_mapping GROUP BY media_type")
+                    text("SELECT media_type, COUNT(*) as cnt FROM public.bangumi_data_item GROUP BY media_type")
                 )
                 by_type = {row[0]: row[1] for row in type_result.fetchall()}
             
-            status = await BgmTmdbMappingService.get_sync_status()
+            status = await BangumiDataItemService.get_sync_status()
                 
             return {
                 "total": total,
-                "by_source": by_source,
                 "by_type": by_type,
                 "last_sync": status.get("last_sync_time"),
                 "items_count": status.get("items_count"),
                 "mapping_count": status.get("mapping_count")
             }
         except Exception as e:
-            logger.error(f"[BGM-Mapping] ❌ 获取统计失败: {e}")
-            return {"total": 0, "by_source": {}, "by_type": {}}
+            logger.error(f"[BangumiData] ❌ 获取统计失败: {e}")
+            return {"total": 0, "by_type": {}}
 
 
-bgm_mapping_service = BgmTmdbMappingService()
+bgm_mapping_service = BangumiDataItemService()

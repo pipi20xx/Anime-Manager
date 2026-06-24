@@ -270,6 +270,7 @@ async def init_db():
 
         # 4. 清理已废弃的表
         await conn.execute(text("DROP TABLE IF EXISTS public.task_logs;"))
+        await conn.execute(text("DROP TABLE IF EXISTS public.bgm_tmdb_mapping;"))
         
         # 5. 执行索引创建和高级优化
         # [性能增强] 建立三元组索引以加速 ILIKE 模糊搜索
@@ -278,6 +279,26 @@ async def init_db():
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_title_trgm ON metadata.tmdb_deep_meta USING gin (title gin_trgm_ops);"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_orig_title_trgm ON metadata.tmdb_deep_meta USING gin (original_title gin_trgm_ops);"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_full_data_gin ON metadata.tmdb_deep_meta USING GIN (full_data);"))
+        
+        # [BangumiDataItem] raw_data JSONB 字段建立 GIN 索引以加速 JSON 查询
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_bangumi_data_item_raw_data_gin ON public.bangumi_data_item USING GIN (raw_data);"))
+        
+        # [BangumiDataItem] updated_at 字段由触发器自动维护
+        await conn.execute(text("""
+            CREATE OR REPLACE FUNCTION public.set_updated_at()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW.updated_at = NOW();
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """))
+        await conn.execute(text("DROP TRIGGER IF EXISTS trg_bangumi_data_item_updated_at ON public.bangumi_data_item;"))
+        await conn.execute(text("""
+            CREATE TRIGGER trg_bangumi_data_item_updated_at
+                BEFORE INSERT OR UPDATE ON public.bangumi_data_item
+                FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+        """))
         
         # [新增加速] 针对 MediaTitleIndex 的模糊搜索索引
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_media_index_title_trgm ON metadata.media_title_index USING gin (title gin_trgm_ops);"))

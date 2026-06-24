@@ -361,16 +361,16 @@ class MonitorManager:
                 id="bgm_mapping_sync_job",
                 replace_existing=True
             )
-            logger.info("[BGM映射] 已启动自动同步任务，间隔 7 天")
+            logger.info("[BangumiData] 已启动自动同步任务，间隔 7 天")
             
             asyncio.create_task(MonitorManager._auto_sync_bgm_mapping())
 
     @staticmethod
     async def _auto_sync_bgm_mapping():
-        """自动同步 BGM-TMDB 映射表"""
+        """自动同步 BangumiData 条目表"""
         task_id = f"bgm_mapping_{uuid.uuid4().hex[:8]}"
         try:
-            await start_task(task_id, "BGM映射同步", "BGM-TMDB映射表自动同步")
+            await start_task(task_id, "BangumiData同步", "BangumiData条目表自动同步")
             
             from recognition_engine.bgm_mapping_service import bgm_mapping_service
             
@@ -378,12 +378,12 @@ class MonitorManager:
             if not should:
                 await log_task(task_id, f"⏭️ 跳过同步: {reason}")
                 stats = await bgm_mapping_service.get_stats()
-                await log_task(task_id, f"� 当前映射表: {stats.get('total', 0)} 条记录")
+                await log_task(task_id, f"📊 当前条目表: {stats.get('total', 0)} 条记录")
                 await finish_task(task_id, "completed", 0, {"skipped": True})
-                logger.info(f"[BGM映射] {reason}")
+                logger.info(f"[BangumiData] {reason}")
                 return
             
-            await log_task(task_id, "�🚀 开始执行 BGM-TMDB 映射表自动同步")
+            await log_task(task_id, "🚀 开始执行 BangumiData 条目表自动同步")
             await log_task(task_id, f"📝 原因: {reason}")
             await log_task(task_id, "📡 数据源: https://unpkg.com/bangumi-data@0.3/dist/data.json")
             
@@ -391,28 +391,28 @@ class MonitorManager:
             
             if result.get("success"):
                 count = result.get("count", 0)
-                await log_task(task_id, f"✅ 同步成功: 共更新 {count} 条映射记录")
+                await log_task(task_id, f"✅ 同步成功: 共更新 {count} 条条目记录")
                 
                 stats = await bgm_mapping_service.get_stats()
-                await log_task(task_id, f"📊 映射表统计:")
+                await log_task(task_id, f"📊 条目表统计:")
                 await log_task(task_id, f"   ┗ 总记录数: {stats.get('total', 0)}")
-                for source, cnt in stats.get("by_source", {}).items():
-                    await log_task(task_id, f"   ┗ {source}: {cnt} 条")
+                for media_type, cnt in stats.get("by_type", {}).items():
+                    await log_task(task_id, f"   ┗ {media_type}: {cnt} 条")
                 
-                await log_task(task_id, "🏁 BGM映射同步完成")
+                await log_task(task_id, "🏁 BangumiData同步完成")
                 await finish_task(task_id, "completed", count, stats)
                 
                 from logger import log_audit
-                log_audit("BGM映射", "自动同步", f"成功更新 {count} 条映射记录")
+                log_audit("BangumiData", "自动同步", f"成功更新 {count} 条条目记录")
             else:
                 msg = result.get("message", "未知错误")
                 await log_task(task_id, f"❌ 同步失败: {msg}", "ERROR")
                 await finish_task(task_id, "error", 0)
-                logger.error(f"[BGM映射] 自动同步失败: {msg}")
+                logger.error(f"[BangumiData] 自动同步失败: {msg}")
         except Exception as e:
             await log_task(task_id, f"❌ 同步异常: {str(e)}", "ERROR")
             await finish_task(task_id, "error", 0)
-            logger.error(f"[BGM映射] 自动同步异常: {e}")
+            logger.error(f"[BangumiData] 自动同步异常: {e}")
 
     @staticmethod
     async def _calendar_daily_push():
@@ -756,7 +756,7 @@ class MonitorManager:
                 "description": "自动清理 30 天前的系统日志"
             })
 
-            # BGM-TMDB 映射同步
+            # BangumiData 同步
             bgm_job = job_map.get("bgm_mapping_sync_job")
             bgm_enabled = config.get("bgm_mapping_auto_sync", True)
             bgm_last_run = None
@@ -767,14 +767,14 @@ class MonitorManager:
                 bgm_last_run = bgm_status.get("last_sync_time")
                 bgm_count = bgm_status.get("mapping_count")
             except Exception as e:
-                logger.warning(f"[Monitor] 获取BGM映射同步状态失败: {e}")
+                logger.warning(f"[Monitor] 获取BangumiData同步状态失败: {e}")
                 bgm_count = None
-            bgm_desc = "同步 Bangumi-TMDB 映射表用于番剧识别"
+            bgm_desc = "同步 BangumiData 条目表用于番剧识别"
             if bgm_count is not None:
                 bgm_desc += f" (当前 {bgm_count} 条)"
             services.append({
                 "id": "bgm_mapping_sync",
-                "name": "BGM 映射同步",
+                "name": "BangumiData 同步",
                 "type": "scheduler",
                 "enabled": bgm_enabled,
                 "running": bgm_job is not None,

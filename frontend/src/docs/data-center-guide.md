@@ -38,7 +38,7 @@
 | **feed_items** | RSS 抓取到的下载条目记录 |
 | **file_hashes** | 文件哈希记录（SHA1/ED2K，整理时按 ED2K 去重写入，用于历史追溯） |
 | **rss_detect_tasks** | RSS 探测订阅任务（按 URL 定时探测并自动订阅） |
-| **bgm_tmdb_mapping** | Bangumi ID 到 TMDB ID 的预制映射表（加速匹配） |
+| **bangumi_data_item** | Bangumi 数据条目（Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射，含完整原始数据） |
 
 ### metadata Schema
 存放 100w+ 级别的全球元数据资产。

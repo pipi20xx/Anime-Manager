@@ -502,16 +502,19 @@ class RssDetectTask(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-class BgmTmdbMapping(SQLModel, table=True):
-    __tablename__ = "bgm_tmdb_mapping"
+class BangumiDataItem(SQLModel, table=True):
+    __tablename__ = "bangumi_data_item"
     __table_args__ = {"schema": get_public_schema()}
-    __admin_name__ = "BGM-TMDB映射表 (Bangumi ID 到 TMDB ID 的预制映射，用于加速匹配)"
+    __admin_name__ = "Bangumi 数据条目（Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射，含完整原始数据）"
     bgm_id: int = Field(primary_key=True, index=True)
-    tmdb_id: int = Field(index=True)
-    media_type: str = Field(default="tv")
+    tmdb_id: Optional[int] = Field(default=None, index=True)
+    media_type: str = Field(default="tv", max_length=10)
+    mal_id: Optional[int] = Field(default=None, index=True)
+    anilist_id: Optional[int] = Field(default=None, index=True)
+    anidb_id: Optional[int] = Field(default=None, index=True)
     title: Optional[str] = None
-    title_cn: Optional[str] = None
-    source: str = Field(default="bangumi-data")
+    title_cn: Optional[str] = Field(default=None, index=True)
+    raw_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     updated_at: datetime = Field(default_factory=datetime.now)
 
 class EmbyMediaIndex(SQLModel, table=True):
