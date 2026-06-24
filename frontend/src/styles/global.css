@@ -835,9 +835,14 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   --n-height: 56px !important;
 }
 
-.n-input .n-input__input-el,
-.n-input .n-input__textarea-el {
+.n-input .n-input__input-el {
   height: 56px !important;
+  min-height: 56px !important;
+  font-size: 16px !important;
+  line-height: 1.4 !important;
+}
+
+.n-input .n-input__textarea-el {
   min-height: 56px !important;
   font-size: 16px !important;
   line-height: 1.4 !important;
@@ -852,9 +857,13 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   --n-height: 40px !important;
 }
 
-.n-input.n-input--small .n-input__input-el,
-.n-input.n-input--small .n-input__textarea-el {
+.n-input.n-input--small .n-input__input-el {
   height: 40px !important;
+  min-height: 40px !important;
+  font-size: 14px !important;
+}
+
+.n-input.n-input--small .n-input__textarea-el {
   min-height: 40px !important;
   font-size: 14px !important;
 }

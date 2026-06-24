@@ -305,11 +305,12 @@ const runningMonitorsCount = computed(() =>
 }
 
 .service-card.is-running {
-  border-color: var(--color-success-border);
-  background: var(--color-success-bg);
+  border-color: var(--n-primary-color);
+  background: var(--primary-light);
 }
 
 .service-card.is-stopped {
+  border-color: var(--n-primary-color);
   opacity: var(--opacity-60);
 }
 
@@ -362,8 +363,8 @@ const runningMonitorsCount = computed(() =>
 }
 
 .monitor-card.is-running {
-  border-color: var(--color-warning-border);
-  background: var(--color-warning-bg);
+  border-color: var(--n-primary-color);
+  background: var(--primary-light);
 }
 
 .monitor-header {

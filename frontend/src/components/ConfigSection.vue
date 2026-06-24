@@ -51,7 +51,7 @@ const remoteText = computed({
             v-model:value="localText"
             type="textarea"
             :placeholder="placeholder"
-            :autosize="{ minRows: 8, maxRows: 12 }"
+            :rows="8"
             class="mono-input"
           />
         </div>
@@ -67,7 +67,7 @@ const remoteText = computed({
             v-model:value="remoteText"
             type="textarea"
             placeholder="http://example.com/rules.txt"
-            :autosize="{ minRows: 8, maxRows: 12 }"
+            :rows="8"
             class="mono-input"
           />
         </div>

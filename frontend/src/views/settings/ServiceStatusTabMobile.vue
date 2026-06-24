@@ -10,7 +10,7 @@
           </div>
         </div>
         <div class="service-list">
-          <div v-for="service in data.services" :key="service.id" class="service-item">
+          <div v-for="service in data.services" :key="service.id" class="service-item" :class="{ 'is-running': service.running && service.enabled, 'is-stopped': !service.enabled }">
             <div class="service-info">
               <span class="service-name">{{ service.name }}</span>
               <div class="service-meta">
@@ -212,6 +212,20 @@ const runningMonitorsCount = computed(() =>
 
 .service-item:last-child {
   border-bottom: none;
+}
+
+.service-item.is-running {
+  border-left: 3px solid var(--n-primary-color);
+  background: var(--primary-light);
+  border-radius: var(--m-radius-md);
+  padding-left: var(--m-spacing-sm);
+}
+
+.service-item.is-stopped {
+  border-left: 3px solid var(--n-primary-color);
+  border-radius: var(--m-radius-md);
+  padding-left: var(--m-spacing-sm);
+  opacity: var(--opacity-60);
 }
 
 .service-info {

@@ -547,9 +547,25 @@ const {
 <style scoped>
 .settings-view { width: 100%; }
 
+.client-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 140px;
+}
+.client-card :deep(.n-card__content) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.client-card .client-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .client-card .client-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
 .client-card .client-meta { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.client-card .client-version { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+.client-card .client-version { margin-top: auto; padding-top: 8px; display: flex; align-items: center; gap: 8px; }
 .client-card .test-time { font-size: 11px; color: var(--text-tertiary); }
 .empty-clients { padding: 40px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-medium); border-radius: 8px; }
 
