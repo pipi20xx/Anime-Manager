@@ -98,12 +98,17 @@ const getTagStyle = (count: number) => {
   border-color: var(--n-primary-color) !important;
   transform: translateY(-2px);
 }
+.table-card :deep(.n-card__content) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
 .table-info {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 12px;
+  flex: 1;
 }
 .table-name {
   font-weight: bold;
