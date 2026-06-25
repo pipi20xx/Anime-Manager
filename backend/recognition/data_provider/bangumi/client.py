@@ -292,31 +292,38 @@ class BangumiProvider:
         if data:
             total = data.get("total", 0)
             items = data.get("data", [])
-            
+
+            # 批量查询播出时间
+            all_bgm_ids = [i.get("id") for i in items if i.get("id")]
+            from recognition_engine.bangumi_data_service import bangumi_data_service
+            broadcast_map = await bangumi_data_service.get_broadcast_times(all_bgm_ids)
+
             for item in items:
                 images = item.get("images") or {}
                 raw_poster = images.get("large") or images.get("common") or ""
                 poster = BangumiProvider._proxy_img(raw_poster)
-                
+
                 # Robust score extraction (Search returns flat 'score', Browse returns 'rating' object)
                 score = item.get("score")
                 if score is None:
                     score = item.get("rating", {}).get("score")
-                
+
+                bgm_id = item.get("id")
                 results.append({
-                    "id": item.get("id"),
+                    "id": bgm_id,
                     "title": item.get("name_cn") or item.get("name"),
                     "original_title": item.get("name"),
-                    "overview": item.get("summary") or "", 
+                    "overview": item.get("summary") or "",
                     "poster_path": poster,
                     "backdrop_path": poster,
                     "vote_average": score or 0,
                     "release_date": item.get("date"),
                     "first_air_date": item.get("date"),
-                    "media_type": "tv", 
-                    "source": "bangumi"
+                    "media_type": "tv",
+                    "source": "bangumi",
+                    "broadcast_time": broadcast_map.get(bgm_id) if bgm_id else None
                 })
-        
+
         final_result = {
             "results": results,
             "total_pages": (total + limit - 1) // limit,
@@ -343,7 +350,16 @@ class BangumiProvider:
 
         data = await BangumiProvider._fetch("GET", f"{BangumiProvider.BASE_URL}/calendar", logs=logs)
         if not data: return {"data": []}
-        
+
+        # 批量查询播出时间（基于 bangumi_data_item 表，按 TZ 环境变量转换）
+        all_bgm_ids = []
+        for day_item in data:
+            for i in day_item.get('items', []):
+                if i.get('id'):
+                    all_bgm_ids.append(i['id'])
+        from recognition_engine.bangumi_data_service import bangumi_data_service
+        broadcast_map = await bangumi_data_service.get_broadcast_times(all_bgm_ids)
+
         today_idx = datetime.datetime.today().weekday() + 1
         result = []
         for day_item in data:
@@ -354,13 +370,15 @@ class BangumiProvider:
                 images = i.get('images') or {}
                 raw_img = images.get('large') or images.get('common') or images.get('medium') or ''
                 img_url = BangumiProvider._proxy_img(raw_img)
-                
+
+                bgm_id = i.get('id')
                 norm_items.append({
-                    "id": i.get('id'),
+                    "id": bgm_id,
                     "title": i.get('name_cn') or i.get('name'),
                     "original_title": i.get('name'),
                     "image": img_url,
-                    "rating": i.get('rating', {}).get('score')
+                    "rating": i.get('rating', {}).get('score'),
+                    "broadcast_time": broadcast_map.get(bgm_id) if bgm_id else None
                 })
             result.append({
                 "weekday": weekday_obj,

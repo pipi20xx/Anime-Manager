@@ -409,6 +409,94 @@ class BangumiDataItemService:
             return False
 
     @staticmethod
+    async def get_broadcast_times(bgm_ids: List[int]) -> Dict[int, Optional[str]]:
+        """
+        批量查询番剧播出时间（基于 broadcast / begin 字段）。
+        返回 {bgm_id: "HH:MM" | "END" | None}；None 表示无数据。
+        时间根据 TZ 环境变量转换为本地时区；已完结显示 "END"。
+        """
+        if not bgm_ids:
+            return {}
+        try:
+            async with db.session_scope():
+                stmt = select(
+                    BangumiDataItem.bgm_id,
+                    BangumiDataItem.broadcast,
+                    BangumiDataItem.begin,
+                    BangumiDataItem.end,
+                ).where(BangumiDataItem.bgm_id.in_(bgm_ids))
+                result = await db.session.execute(stmt)
+                rows = result.all()
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 批量查询播出时间异常: {e}")
+            return {}
+        return {row[0]: BangumiDataItemService._parse_broadcast_time(row[1], row[2], row[3]) for row in rows}
+
+    @staticmethod
+    def _parse_broadcast_time(
+        broadcast: Optional[str], begin: Optional[str], end: Optional[str]
+    ) -> Optional[str]:
+        """
+        解析播出时间为 "周X HH:MM"（本地时区）。
+        - 优先 broadcast，回退 begin
+        - end 已过当天 → 返回 "END"
+        - 无数据 → 返回 None
+        - 输入格式: "R/1967-04-01T16:00:00.000Z/P7D" 或 "1967-03-31T16:00:00.000Z"
+        - 星期以本地时区换算后的日期为准（UTC+8 可能跨天）
+        """
+        import os
+        from datetime import timezone
+        try:
+            from zoneinfo import ZoneInfo
+        except ImportError:
+            ZoneInfo = None
+
+        # 已完结检查：end 时间已过当天
+        if end:
+            try:
+                end_str = str(end).strip()
+                if end_str.endswith("Z"):
+                    end_str = end_str[:-1] + "+00:00"
+                end_dt = datetime.fromisoformat(end_str)
+                if end_dt.tzinfo is None:
+                    end_dt = end_dt.replace(tzinfo=timezone.utc)
+                now_utc = datetime.now(timezone.utc)
+                if now_utc.date() > end_dt.date():
+                    return "END"
+            except Exception:
+                pass
+
+        # 优先 broadcast，回退 begin
+        raw = broadcast or begin
+        if not raw:
+            return None
+
+        try:
+            # 提取 datetime 部分: "R/1967-04-01T16:00:00.000Z/P7D" → "1967-04-01T16:00:00.000Z"
+            dt_str = raw
+            if raw.startswith("R/"):
+                parts = raw[2:].split("/")
+                if len(parts) >= 1:
+                    dt_str = parts[0]
+
+            # 解析 datetime（UTC，末尾 Z）
+            if dt_str.endswith("Z"):
+                dt_str = dt_str[:-1] + "+00:00"
+            dt = datetime.fromisoformat(dt_str)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+
+            # 转换为 TZ 环境变量指定的本地时区
+            tz_name = os.environ.get("TZ", "Asia/Shanghai")
+            tz = ZoneInfo(tz_name) if ZoneInfo else timezone(timedelta(hours=8))
+            local_dt = dt.astimezone(tz)
+            weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][local_dt.weekday()]
+            return f"{weekday_cn} {local_dt.strftime('%H:%M')}"
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 解析播出时间失败 ({raw}): {e}")
+            return None
+
+    @staticmethod
     async def get_raw_cache(bgm_id: int) -> Optional[BangumiRawCache]:
         """
         读取本地缓存的 Bangumi 原始 API 响应（Subject / Episodes）。

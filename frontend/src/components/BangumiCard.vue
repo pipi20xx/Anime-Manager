@@ -27,13 +27,14 @@ const getImg = (path: string) => {
 <template>
   <div class="bgm-card" @click="emit('click', item)">
     <div class="bgm-cover">
-      <n-image 
-        :src="getImg(item.image || item.poster_path)" 
-        object-fit="cover" 
-        lazy 
-        preview-disabled 
-        fallback-src="/favicon.svg" 
+      <n-image
+        :src="getImg(item.image || item.poster_path)"
+        object-fit="cover"
+        lazy
+        preview-disabled
+        fallback-src="/favicon.svg"
       />
+      <div class="bgm-sub-badge" v-if="isSubscribed">已订阅</div>
     </div>
     <div class="bgm-info">
       <div class="bgm-title" :title="item.title || item.name">{{ item.title || item.name }}</div>
@@ -44,8 +45,10 @@ const getImg = (path: string) => {
         <div class="bgm-score" v-if="(item.rating || item.vote_average) > 0">
           ⭐ {{ typeof item.rating === 'object' ? item.rating?.score : (item.rating || item.vote_average)?.toFixed(1) }}
         </div>
-        <div v-else></div>
-        <div class="bgm-sub-label" v-if="isSubscribed">已订阅</div>
+        <div class="bgm-right">
+          <div v-if="item.broadcast_time === 'END'" class="bgm-end-badge">END</div>
+          <div v-else-if="item.broadcast_time" class="bgm-time">{{ item.broadcast_time }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -110,19 +113,38 @@ const getImg = (path: string) => {
   margin-top: 2px;
 }
 
-.bgm-footer { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-top: auto; 
-    padding-top: 6px; 
+.bgm-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 6px;
     height: 24px;
+    gap: 6px;
 }
 .bgm-score { font-size: var(--text-sm); color: var(--color-warning); font-weight: bold; }
-.bgm-sub-label {
-    background: var(--bg-primary); color: var(--n-primary-color);
-    padding: 1px 6px; border-radius: var(--radius-sm);
-    font-size: var(--text-xs); font-weight: bold;
-    border: 1px solid var(--border-medium);
+.bgm-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.bgm-time { font-size: var(--text-sm); color: var(--text-tertiary); font-weight: 500; }
+.bgm-end-badge {
+  background: var(--color-error);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: bold;
+  line-height: 1.4;
+}
+.bgm-sub-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--n-primary-color);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: bold;
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
 }
 </style>
