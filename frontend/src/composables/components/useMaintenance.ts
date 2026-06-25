@@ -46,6 +46,7 @@ export function useMaintenance() {
     'public.file_hashes': '文件哈希记录（SHA1、ED2K 及识别信息缓存）',
     'public.rss_detect_tasks': 'RSS探测订阅任务（自动发现并订阅新番）',
     'public.bangumi_data_item': 'Bangumi 数据条目（Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射，含完整原始数据）',
+    'public.bangumi_raw_cache': 'Bangumi 原始 API 响应缓存（完结番剧的 Subject/Episodes/Characters 原始响应，永久缓存）',
     'public.emby_media_index': 'Emby 库索引（TMDB ID + 类型 + Emby 标题的快速查找表）'
   }
 
