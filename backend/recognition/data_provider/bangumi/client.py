@@ -339,6 +339,7 @@ class BangumiProvider:
     async def get_calendar(logs: Any = None) -> Dict:
         """
         获取每日放送表 (带缓存)
+        数据来源：BGM 官方 /calendar API，按周一到周日分组。
         """
         cache_key = "bangumi:calendar"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
@@ -385,7 +386,165 @@ class BangumiProvider:
                 "is_today": weekday_obj.get('id') == today_idx,
                 "items": norm_items
             })
-        
+
+        resp_data = {"status": "success", "data": result}
+        await MetaCacheManager.set_discover_cache(cache_key, resp_data, expire_hours=24)
+        return resp_data
+
+    @staticmethod
+    async def get_calendar_from_local(logs: Any = None) -> Dict:
+        """
+        基于 bangumi_data_item 表生成本地日历（不调用 BGM /calendar API）。
+        - 查询所有 TV 类型且有 broadcast/begin 的番剧
+        - 过滤已完结（end < 今天）的番剧，仍保留在分组中以 END 标签展示
+        - 按今天起未来7天的星期分组
+        - 对每个 bgm_id 按需查 subject 详情获取海报和评分（有7天缓存）
+        """
+        import datetime as _dt
+        import os
+        from recognition_engine.bangumi_data_service import bangumi_data_service
+
+        cache_key = "bangumi:calendar_local"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached:
+            today_iso = _dt.date.today().isoformat()
+            for day in cached.get("data", []):
+                day["is_today"] = day["date"] == today_iso
+                day["day_offset"] = (_dt.date.fromisoformat(day["date"]) - _dt.date.today()).days
+                day["label"] = "今天" if day["day_offset"] == 0 else ("明天" if day["day_offset"] == 1 else "")
+
+            # 补救：对 image 为空的 item 重新拉一次 subject 详情
+            # （详情页可能已经请求成功并填充了 bangumi_raw_cache/discover_cache，这里命中很快）
+            missing_ids: List[int] = []
+            for day in cached.get("data", []):
+                for item in day.get("items", []):
+                    if not item.get("image"):
+                        missing_ids.append(item["id"])
+
+            if missing_ids:
+                semaphore = asyncio.Semaphore(5)
+
+                async def _refetch(bgm_id: int):
+                    async with semaphore:
+                        try:
+                            return bgm_id, await BangumiProvider.get_subject_details(bgm_id, logs=logs)
+                        except Exception:
+                            return bgm_id, None
+
+                refetch_results = await asyncio.gather(*[_refetch(bid) for bid in missing_ids])
+                refetch_map = {bid: detail for bid, detail in refetch_results if detail}
+
+                if refetch_map:
+                    for day in cached.get("data", []):
+                        for item in day.get("items", []):
+                            if not item.get("image"):
+                                detail = refetch_map.get(item["id"])
+                                if detail:
+                                    item["image"] = detail.get("poster_path")
+                                    item["rating"] = detail.get("vote_average") or item.get("rating")
+                                    if detail.get("title"):
+                                        item["title"] = detail["title"]
+                                    if detail.get("original_title"):
+                                        item["original_title"] = detail["original_title"]
+                    # 有补全才回写缓存，避免下次还重复拉
+                    await MetaCacheManager.set_discover_cache(cache_key, cached, expire_hours=24)
+
+            return cached
+
+        # 1. 从 bangumi_data_item 表查所有 TV 番剧
+        from database import db
+        from models import BangumiDataItem
+        from sqlmodel import select
+        try:
+            async with db.session_scope():
+                stmt = select(BangumiDataItem).where(
+                    BangumiDataItem.media_type == "tv"
+                )
+                result = await db.session.execute(stmt)
+                rows = result.scalars().all()
+        except Exception as e:
+            if logs:
+                _l = logs.log if hasattr(logs, "log") else (lambda m: logs.append(m) if isinstance(logs, list) else None)
+                _l(f"┃ [BGM] ⚠️ 查询 bangumi_data_item 失败: {e}")
+            return {"data": []}
+
+        # 2. 计算每部番剧的播出星期（1-7）和播出时间字符串
+        weekday_to_items: Dict[int, List[Dict]] = {i: [] for i in range(1, 8)}
+        bgm_ids_need_details: List[int] = []
+
+        for row in rows:
+            info = bangumi_data_service._parse_broadcast_info(row.broadcast, row.begin, row.end)
+            # 跳过已完结番剧（每日放送只展示在播/未播出的）
+            if info["is_ended"]:
+                continue
+            weekday = info["weekday"]
+            if weekday is None or not (1 <= weekday <= 7):
+                continue
+            bgm_ids_need_details.append(row.bgm_id)
+            weekday_to_items[weekday].append({
+                "id": row.bgm_id,
+                "title": row.title_cn or row.title,
+                "original_title": row.title,
+                "broadcast_time": info["time_str"]
+            })
+
+        # 3. 批量获取海报和评分（按需查 subject 详情，有7天缓存）
+        if bgm_ids_need_details:
+            # 并发查询，限制并发数
+            semaphore = asyncio.Semaphore(5)
+
+            async def fetch_detail(bgm_id: int):
+                async with semaphore:
+                    for attempt in range(2):  # 最多重试 1 次
+                        try:
+                            detail = await BangumiProvider.get_subject_details(bgm_id, logs=logs)
+                            if detail:
+                                return bgm_id, detail
+                            if attempt == 0:
+                                await asyncio.sleep(1)  # 等 1 秒后重试
+                        except Exception:
+                            if attempt == 0:
+                                await asyncio.sleep(1)
+                    return bgm_id, None
+
+            detail_results = await asyncio.gather(*[fetch_detail(bid) for bid in bgm_ids_need_details])
+            detail_map = {bid: detail for bid, detail in detail_results}
+
+            for weekday, items in weekday_to_items.items():
+                for item in items:
+                    detail = detail_map.get(item["id"])
+                    if detail:
+                        item["image"] = detail.get("poster_path")
+                        item["rating"] = detail.get("vote_average")
+                        # 用 BGM API 返回的 name_cn / name 覆盖本地表标题
+                        if detail.get("title"):
+                            item["title"] = detail["title"]
+                        if detail.get("original_title"):
+                            item["original_title"] = detail["original_title"]
+                    else:
+                        item["image"] = None
+                        item["rating"] = None
+
+        # 4. 按「今天起未来7天」生成日期分组
+        today = _dt.date.today()
+        weekday_cn_list = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        result = []
+        for offset in range(7):
+            day_date = today + _dt.timedelta(days=offset)
+            weekday = day_date.isoweekday()
+            items = weekday_to_items.get(weekday, [])
+            label = "今天" if offset == 0 else ("明天" if offset == 1 else "")
+            result.append({
+                "date": day_date.isoformat(),
+                "weekday": {"id": weekday, "cn": weekday_cn_list[weekday - 1]},
+                "weekday_cn": weekday_cn_list[weekday - 1],
+                "is_today": offset == 0,
+                "day_offset": offset,
+                "label": label,
+                "count": len(items),
+                "items": items
+            })
+
         resp_data = {"status": "success", "data": result}
         await MetaCacheManager.set_discover_cache(cache_key, resp_data, expire_hours=24)
         return resp_data

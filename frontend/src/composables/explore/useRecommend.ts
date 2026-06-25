@@ -11,11 +11,13 @@ export function useRecommend() {
     movies: [] as any[],
     tv: [] as any[],
     calendar: [] as any[],
+    schedule: [] as any[],
     subscriptions: [] as any[],
     loading: false
   })
 
-  const currentDayTab = ref("today")
+  const currentDayTab = ref("")
+  const currentScheduleTab = ref("")
 
   const fetchSubscriptions = async () => {
     try {
@@ -46,22 +48,30 @@ export function useRecommend() {
   const fetchExploreData = async () => {
     exploreData.loading = true
     try {
-      const [trendRes, movieRes, tvRes, calRes] = await Promise.all([
-        fetch(`${API_BASE}/api/tmdb/trending`), 
+      const [trendRes, movieRes, tvRes, calRes, schedRes] = await Promise.all([
+        fetch(`${API_BASE}/api/tmdb/trending`),
         fetch(`${API_BASE}/api/tmdb/popular/movie`),
         fetch(`${API_BASE}/api/tmdb/popular/tv`),
-        fetch(`${API_BASE}/api/bangumi/calendar`)
+        fetch(`${API_BASE}/api/bangumi/calendar`),
+        fetch(`${API_BASE}/api/bangumi/calendar_local`)
       ])
-      
+
       if (trendRes.ok) exploreData.trending = (await trendRes.json()).results || []
       if (movieRes.ok) exploreData.movies = (await movieRes.json()).results || []
       if (tvRes.ok) exploreData.tv = (await tvRes.json()).results || []
-      
+
       if (calRes.ok) {
           const calData = await calRes.json()
           exploreData.calendar = calData.data || []
           const todayItem = exploreData.calendar.find((d: any) => d.is_today)
           if (todayItem) currentDayTab.value = todayItem.weekday.en
+      }
+
+      if (schedRes.ok) {
+          const schedData = await schedRes.json()
+          exploreData.schedule = schedData.data || []
+          const todayItem = exploreData.schedule.find((d: any) => d.is_today)
+          if (todayItem) currentScheduleTab.value = todayItem.date
       }
 
       await fetchSubscriptions()
@@ -104,6 +114,7 @@ export function useRecommend() {
   return {
     exploreData,
     currentDayTab,
+    currentScheduleTab,
     fetchSubscriptions,
     isSubscribed,
     fetchExploreData,

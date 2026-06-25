@@ -1,7 +1,8 @@
 import asyncio
 import httpx
 import logging
-from datetime import datetime, timedelta
+import os
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List, Any
 from sqlmodel import select
 from sqlalchemy.dialects.postgresql import insert
@@ -28,14 +29,38 @@ class BangumiDataItemService:
     
     @staticmethod
     async def get_sync_status() -> Dict[str, Any]:
+        """
+        从 bangumi_data_item 表本身获取同步状态（MAX(updated_at) + COUNT(*)）。
+        不依赖 discover_cache，清理缓存不会影响同步判断。
+        items_count 从 discover_cache 补充（仅用于显示）。
+        """
         try:
             async with db.session_scope():
-                stmt = select(DiscoverCache).where(DiscoverCache.key == SYNC_CACHE_KEY)
-                result = await db.session.execute(stmt)
-                cache = result.scalars().first()
-                
-                if cache:
-                    return cache.content or {}
+                from sqlalchemy import text
+                result = await db.session.execute(
+                    text("SELECT MAX(updated_at), COUNT(*) FROM public.bangumi_data_item")
+                )
+                row = result.fetchone()
+                last_sync = row[0] if row else None
+                mapping_count = row[1] if row else 0
+
+                content: Dict[str, Any] = {
+                    "last_sync_time": last_sync.isoformat() if last_sync else None,
+                    "mapping_count": mapping_count,
+                }
+
+                # items_count 仅从 discover_cache 补充（远程条目数，仅显示用）
+                try:
+                    stmt = select(DiscoverCache).where(DiscoverCache.key == SYNC_CACHE_KEY)
+                    cache_result = await db.session.execute(stmt)
+                    cache = cache_result.scalars().first()
+                    if cache and cache.content:
+                        content["items_count"] = cache.content.get("items_count")
+                        content["version"] = cache.content.get("version")
+                except Exception:
+                    pass
+
+                return content
         except Exception as e:
             logger.warning(f"[BangumiData] 获取同步状态失败: {e}")
         return {}
@@ -433,6 +458,61 @@ class BangumiDataItemService:
         return {row[0]: BangumiDataItemService._parse_broadcast_time(row[1], row[2], row[3]) for row in rows}
 
     @staticmethod
+    async def get_broadcast_weekday_map(bgm_ids: List[int]) -> Dict[int, Optional[int]]:
+        """
+        批量查询番剧播出星期（基于 broadcast / begin 字段）。
+        返回 {bgm_id: 1~7}，其中 1=周一 ... 7=周日。
+        - 优先 broadcast，回退 begin
+        - 时间按 TZ 环境变量转换为本地时区后取星期
+        - 已完结（end 早于今天）仍返回其播出星期，便于在每日放送里显示 END 标签
+        - 无数据 → 不包含在返回字典里
+        """
+        if not bgm_ids:
+            return {}
+        try:
+            async with db.session_scope():
+                stmt = select(
+                    BangumiDataItem.bgm_id,
+                    BangumiDataItem.broadcast,
+                    BangumiDataItem.begin,
+                ).where(BangumiDataItem.bgm_id.in_(bgm_ids))
+                result = await db.session.execute(stmt)
+                rows = result.all()
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 批量查询播出星期异常: {e}")
+            return {}
+
+        out: Dict[int, Optional[int]] = {}
+        for bgm_id, broadcast, begin in rows:
+            raw = broadcast or begin
+            if not raw:
+                continue
+            try:
+                dt_str = raw
+                if raw.startswith("R/"):
+                    parts = raw[2:].split("/")
+                    if len(parts) >= 1:
+                        dt_str = parts[0]
+                if dt_str.endswith("Z"):
+                    dt_str = dt_str[:-1] + "+00:00"
+                dt = datetime.fromisoformat(dt_str)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                try:
+                    from zoneinfo import ZoneInfo
+                    tz_name = os.environ.get("TZ", "Asia/Shanghai")
+                    tz = ZoneInfo(tz_name)
+                except ImportError:
+                    tz = timezone(timedelta(hours=8))
+                local_dt = dt.astimezone(tz)
+                # isoweekday: 1=Mon ... 7=Sun
+                out[bgm_id] = local_dt.isoweekday()
+            except Exception as e:
+                logger.warning(f"[BangumiData] ⚠️ 解析播出星期失败 (bgm_id={bgm_id}, raw={raw}): {e}")
+                continue
+        return out
+
+    @staticmethod
     def _parse_broadcast_time(
         broadcast: Optional[str], begin: Optional[str], end: Optional[str]
     ) -> Optional[str]:
@@ -495,6 +575,69 @@ class BangumiDataItemService:
         except Exception as e:
             logger.warning(f"[BangumiData] ⚠️ 解析播出时间失败 ({raw}): {e}")
             return None
+
+    @staticmethod
+    def _parse_broadcast_info(
+        broadcast: Optional[str], begin: Optional[str], end: Optional[str]
+    ) -> Dict[str, Any]:
+        """
+        综合解析播出信息，返回:
+        - weekday: 1~7 (本地时区)，None 表示无 broadcast/begin 数据
+        - time_str: "周X HH:MM" 或 "END" 或 None
+        - is_ended: bool，end < 今天
+        """
+        import os as _os
+        try:
+            from zoneinfo import ZoneInfo as _ZI
+        except ImportError:
+            _ZI = None
+
+        # 已完结检查
+        is_ended = False
+        if end:
+            try:
+                end_str = str(end).strip()
+                if end_str.endswith("Z"):
+                    end_str = end_str[:-1] + "+00:00"
+                end_dt = datetime.fromisoformat(end_str)
+                if end_dt.tzinfo is None:
+                    end_dt = end_dt.replace(tzinfo=timezone.utc)
+                if datetime.now(timezone.utc).date() > end_dt.date():
+                    is_ended = True
+            except Exception:
+                pass
+
+        if is_ended:
+            return {"weekday": None, "time_str": "END", "is_ended": True}
+
+        raw = broadcast or begin
+        if not raw:
+            return {"weekday": None, "time_str": None, "is_ended": False}
+
+        try:
+            dt_str = raw
+            if raw.startswith("R/"):
+                parts = raw[2:].split("/")
+                if len(parts) >= 1:
+                    dt_str = parts[0]
+            if dt_str.endswith("Z"):
+                dt_str = dt_str[:-1] + "+00:00"
+            dt = datetime.fromisoformat(dt_str)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            tz_name = _os.environ.get("TZ", "Asia/Shanghai")
+            tz = _ZI(tz_name) if _ZI else timezone(timedelta(hours=8))
+            local_dt = dt.astimezone(tz)
+            weekday = local_dt.isoweekday()  # 1=Mon ... 7=Sun
+            weekday_cn = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][weekday - 1]
+            return {
+                "weekday": weekday,
+                "time_str": f"{weekday_cn} {local_dt.strftime('%H:%M')}",
+                "is_ended": False
+            }
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 解析播出信息失败 ({raw}): {e}")
+            return {"weekday": None, "time_str": None, "is_ended": False}
 
     @staticmethod
     async def get_raw_cache(bgm_id: int) -> Optional[BangumiRawCache]:

@@ -14,6 +14,14 @@ async def get_calendar():
     """
     return await BangumiProvider.get_calendar()
 
+@router.get("/calendar_local", summary="获取本地日历（基于 bangumi_data_item 表）")
+async def get_calendar_local():
+    """
+    基于 bangumi_data_item 表生成本地日历，不调用 BGM /calendar API。
+    按今天起未来7天分组，海报和评分按需从 subject 详情获取。
+    """
+    return await BangumiProvider.get_calendar_from_local()
+
 @router.get("/calendar/full", summary="获取增强版追剧日历")
 async def get_calendar_full():
     """
