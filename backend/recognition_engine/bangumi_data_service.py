@@ -7,13 +7,15 @@ from sqlmodel import select
 from sqlalchemy.dialects.postgresql import insert
 
 from database import db
-from models import BangumiDataItem, DiscoverCache
+from models import BangumiDataItem, BangumiRawCache, DiscoverCache
 
 logger = logging.getLogger("BangumiData")
 
 BANGUMI_DATA_URL = "https://unpkg.com/bangumi-data@0.3/dist/data.json"
 SYNC_CACHE_KEY = "bgm_mapping_sync"
 SYNC_INTERVAL_DAYS = 7
+# 完结超过该天数后，Subject/Episodes 原始响应视为稳定，可直接使用本地缓存
+LONG_ENDED_DAYS = 30
 
 
 class BangumiDataItemService:
@@ -369,6 +371,95 @@ class BangumiDataItemService:
         except Exception as e:
             logger.error(f"[BangumiData] ❌ 获取统计失败: {e}")
             return {"total": 0, "by_type": {}}
+
+    @staticmethod
+    async def is_long_ended(bgm_id: int, days: int = LONG_ENDED_DAYS) -> bool:
+        """
+        判断指定 Bangumi ID 对应的番剧是否已完结超过指定天数。
+        依据 bangumi_data_item.end 列与当前时间比较。
+        无 end 或 end 在未来/近期 → 返回 False（数据可能仍在变化）。
+        """
+        try:
+            async with db.session_scope():
+                stmt = select(BangumiDataItem.end).where(BangumiDataItem.bgm_id == bgm_id)
+                result = await db.session.execute(stmt)
+                end_str = result.scalar()
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 查询 end 列异常: {e}")
+            return False
+
+        if not end_str:
+            return False
+
+        try:
+            # 兼容 "2024-03-28T00:00:00.000Z" / "2024-03-28" 等格式
+            from datetime import timezone
+            end_str = str(end_str).strip()
+            # 末尾带 Z 表示 UTC，转成 +00:00 以便 fromisoformat 解析
+            if end_str.endswith("Z"):
+                end_str = end_str[:-1] + "+00:00"
+            end_dt = datetime.fromisoformat(end_str)
+            if end_dt.tzinfo is None:
+                # 视为 UTC
+                end_dt = end_dt.replace(tzinfo=timezone.utc)
+            now_utc = datetime.now(timezone.utc)
+            return now_utc >= end_dt + timedelta(days=days)
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 解析 end 时间失败 ({end_str}): {e}")
+            return False
+
+    @staticmethod
+    async def get_raw_cache(bgm_id: int) -> Optional[BangumiRawCache]:
+        """
+        读取本地缓存的 Bangumi 原始 API 响应（Subject / Episodes）。
+        """
+        try:
+            async with db.session_scope():
+                stmt = select(BangumiRawCache).where(BangumiRawCache.bgm_id == bgm_id)
+                result = await db.session.execute(stmt)
+                return result.scalars().first()
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 读取原始缓存异常: {e}")
+            return None
+
+    @staticmethod
+    async def save_raw_cache(
+        bgm_id: int,
+        subject_data: Optional[Dict[str, Any]] = None,
+        episodes_data: Optional[Dict[str, Any]] = None,
+        characters_data: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """
+        保存/更新 Bangumi 原始 API 响应缓存。
+        传入 None 的字段不会覆盖已有值。
+        """
+        try:
+            async with db.session_scope():
+                stmt = select(BangumiRawCache).where(BangumiRawCache.bgm_id == bgm_id)
+                result = await db.session.execute(stmt)
+                existing = result.scalars().first()
+
+                now = datetime.now()
+                if existing:
+                    if subject_data is not None:
+                        existing.subject_data = subject_data
+                    if episodes_data is not None:
+                        existing.episodes_data = episodes_data
+                    if characters_data is not None:
+                        existing.characters_data = characters_data
+                    existing.fetched_at = now
+                    db.session.add(existing)
+                else:
+                    db.session.add(BangumiRawCache(
+                        bgm_id=bgm_id,
+                        subject_data=subject_data,
+                        episodes_data=episodes_data,
+                        characters_data=characters_data,
+                        fetched_at=now,
+                    ))
+                await db.session.commit()
+        except Exception as e:
+            logger.warning(f"[BangumiData] ⚠️ 保存原始缓存异常: {e}")
 
 
 bangumi_data_service = BangumiDataItemService()

@@ -6,6 +6,7 @@ from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
 from recognition_engine.bgm_matcher.logic import BangumiMatcher
 from recognition_engine.tmdb_matcher.logic import TMDBMatcher
+from logger import log_audit
 from ..tmdb.client import TMDBProvider as TMDBClient
 
 class BangumiProvider:
@@ -34,9 +35,12 @@ class BangumiProvider:
         query_str = f"?{'&'.join([f'{k}={v}' for k, v in params.items()])}" if params else ""
         payload_str = f" | Body: {json}" if json else ""
         _log(f"┃ [BGM] ☁️ {method} {url}{query_str}{payload_str}")
-        
+
         if proxy:
             _log(f"┃ [Proxy] 🛡️ 启用代理加速")
+            log_audit("BGM", "请求", f"{method} {url.replace(BangumiProvider.BASE_URL, '')}{query_str} [代理: {proxy}]")
+        else:
+            log_audit("BGM", "请求", f"{method} {url.replace(BangumiProvider.BASE_URL, '')}{query_str} [直连]")
 
         async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:
             try:
@@ -67,6 +71,107 @@ class BangumiProvider:
         # 编码 URL 参数
         from urllib.parse import quote
         return f"/api/system/bgm_img?url={quote(url)}"
+
+    @staticmethod
+    async def _fetch_subject_raw(subject_id: int, logs: Any = None) -> Optional[Dict]:
+        """
+        [统一入口] 获取 /v0/subjects/{subject_id} 的原始响应。
+        所有请求该 API 的地方都应走这里，统一处理完结番剧长缓存。
+
+        策略:
+          1. 查 bangumi_data_item.end 判断是否已完结超过 30 天
+          2. 若长完结 → 查 bangumi_raw_cache.subject_data
+             - 命中: 直接返回 (永久缓存，不再请求 API)
+             - 未命中: 请求官方 API，并写入 bangumi_raw_cache
+          3. 未完结 / 无 end → 正常请求官方 API
+        """
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        from recognition_engine.bangumi_data_service import bangumi_data_service
+
+        if await bangumi_data_service.is_long_ended(subject_id):
+            raw_cache = await bangumi_data_service.get_raw_cache(subject_id)
+            if raw_cache and raw_cache.subject_data:
+                _log(f"┃ [BGM] 🗄️ 完结番剧长缓存命中 (Subject ID:{subject_id})")
+                log_audit("BGM", "缓存", f"Subject ID:{subject_id} 长缓存命中（完结番剧）")
+                return raw_cache.subject_data
+
+            data = await BangumiProvider._fetch(
+                "GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}", logs=logs
+            )
+            if data:
+                await bangumi_data_service.save_raw_cache(subject_id, subject_data=data)
+            return data
+
+        return await BangumiProvider._fetch(
+            "GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}", logs=logs
+        )
+
+    @staticmethod
+    async def _fetch_episodes_raw(subject_id: int, logs: Any = None, episode_type: int = 0) -> Optional[Dict]:
+        """
+        [统一入口] 获取 /v0/episodes 的原始响应。
+        所有请求该 API 的地方都应走这里，统一处理完结番剧长缓存。
+        缓存策略与 _fetch_subject_raw 一致。
+        """
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        from recognition_engine.bangumi_data_service import bangumi_data_service
+
+        params = {"subject_id": subject_id, "type": episode_type, "limit": 100, "offset": 0}
+
+        if await bangumi_data_service.is_long_ended(subject_id):
+            raw_cache = await bangumi_data_service.get_raw_cache(subject_id)
+            if raw_cache and raw_cache.episodes_data:
+                _log(f"┃ [BGM] 🗄️ 完结番剧长缓存命中 (Episodes ID:{subject_id})")
+                log_audit("BGM", "缓存", f"Episodes ID:{subject_id} 长缓存命中（完结番剧）")
+                return raw_cache.episodes_data
+
+            data = await BangumiProvider._fetch(
+                "GET", f"{BangumiProvider.BASE_URL}/v0/episodes", logs=logs, params=params
+            )
+            if data:
+                await bangumi_data_service.save_raw_cache(subject_id, episodes_data=data)
+            return data
+
+        return await BangumiProvider._fetch(
+            "GET", f"{BangumiProvider.BASE_URL}/v0/episodes", logs=logs, params=params
+        )
+
+    @staticmethod
+    async def _fetch_characters_raw(subject_id: int, logs: Any = None) -> Optional[Dict]:
+        """
+        [统一入口] 获取 /v0/subjects/{subject_id}/characters 的原始响应。
+        所有请求该 API 的地方都应走这里，统一处理完结番剧长缓存。
+        缓存策略与 _fetch_subject_raw / _fetch_episodes_raw 一致。
+        """
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        from recognition_engine.bangumi_data_service import bangumi_data_service
+
+        if await bangumi_data_service.is_long_ended(subject_id):
+            raw_cache = await bangumi_data_service.get_raw_cache(subject_id)
+            if raw_cache and raw_cache.characters_data:
+                _log(f"┃ [BGM] 🗄️ 完结番剧长缓存命中 (Characters ID:{subject_id})")
+                log_audit("BGM", "缓存", f"Characters ID:{subject_id} 长缓存命中（完结番剧）")
+                return raw_cache.characters_data
+
+            data = await BangumiProvider._fetch(
+                "GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}/characters", logs=logs
+            )
+            if data:
+                await bangumi_data_service.save_raw_cache(subject_id, characters_data=data)
+            return data
+
+        return await BangumiProvider._fetch(
+            "GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}/characters", logs=logs
+        )
 
     @staticmethod
     async def discover(params: Dict[str, Any], logs: Any = None) -> Dict:
@@ -277,22 +382,22 @@ class BangumiProvider:
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
 
+        # 上层应用缓存 (加工后数据，7天) — 对所有番剧统一生效
         cache_key = f"bangumi:detail:{subject_id}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
-        
-        # 缓存命中逻辑：如果缓存里已经有 cast 了，或者我们本次不需要 cast，直接返回
         if cached:
             if not include_cast or (include_cast and cached.get("cast")):
                 _log(f"┃ [BGM] ⚡️ 本地数据库命中 (ID:{subject_id})")
                 return cached
 
-        data = await BangumiProvider._fetch("GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}", logs=logs)
+        # 统一入口：内部管理 bangumi_raw_cache (永久) + 官方 API 请求
+        data = await BangumiProvider._fetch_subject_raw(subject_id, logs=logs)
         if not data: return None
         
-        # 2. 角色 (声优) - 按需抓取
+        # 2. 角色 (声优) - 按需抓取 (走统一入口，享用完结番剧长缓存)
         cast = []
         if include_cast:
-            characters = await BangumiProvider._fetch("GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}/characters", logs=logs) or []
+            characters = await BangumiProvider._fetch_characters_raw(subject_id, logs=logs) or []
             for char in characters[:12]:
                 actors = char.get("actors", [])
                 cast.append({
@@ -335,6 +440,31 @@ class BangumiProvider:
         }
         await MetaCacheManager.set_discover_cache(cache_key, result, expire_hours=24 * 7)
         return result
+
+    @staticmethod
+    async def get_episodes(subject_id: int, logs: Any = None, episode_type: int = 0) -> Optional[Dict]:
+        """
+        获取条目的章节列表 (GET /v0/episodes)
+        :param episode_type: 0=全部, 1=正片, 2=特别篇, 3=OP, 4=ED, 6=预告
+        上层 discover_cache (7天) + 统一入口管理 bangumi_raw_cache (永久)。
+        """
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        # 上层应用缓存 (7天) — 对所有番剧统一生效
+        cache_key = f"bangumi:episodes:{subject_id}:{episode_type}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached:
+            _log(f"┃ [BGM] ⚡️ 章节列表本地缓存命中 (ID:{subject_id})")
+            return cached
+
+        # 统一入口：内部管理 bangumi_raw_cache (永久) + 官方 API 请求
+        data = await BangumiProvider._fetch_episodes_raw(subject_id, logs=logs, episode_type=episode_type)
+        if not data: return None
+
+        await MetaCacheManager.set_discover_cache(cache_key, data, expire_hours=24 * 7)
+        return data
 
     @staticmethod
     async def search_subject(keyword: str, logs: Any, current_episode: Optional[int] = None, expected_type: str = "tv") -> Optional[dict]:

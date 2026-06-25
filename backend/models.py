@@ -520,6 +520,16 @@ class BangumiDataItem(SQLModel, table=True):
     raw_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     updated_at: datetime = Field(default_factory=datetime.now)
 
+class BangumiRawCache(SQLModel, table=True):
+    __tablename__ = "bangumi_raw_cache"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "Bangumi 原始响应缓存（完结番剧的 Subject/Episodes/Characters 原始 API 响应）"
+    bgm_id: int = Field(primary_key=True, index=True)
+    subject_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
+    episodes_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
+    characters_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
+    fetched_at: datetime = Field(default_factory=datetime.now)
+
 class EmbyMediaIndex(SQLModel, table=True):
     __tablename__ = "emby_media_index"
     __table_args__ = {"schema": get_public_schema()}
