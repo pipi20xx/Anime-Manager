@@ -39,6 +39,7 @@
 | **file_hashes** | 文件哈希记录（SHA1/ED2K，整理时按 ED2K 去重写入，用于历史追溯） |
 | **rss_detect_tasks** | RSS 探测订阅任务（按 URL 定时探测并自动订阅） |
 | **bangumi_data_item** | Bangumi 数据条目（Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射，含完整原始数据） |
+| **bangumi_raw_cache** | Bangumi 原始 API 响应缓存（完结番剧的 Subject/Episodes/Characters 原始响应，永久缓存） |
 
 ### metadata Schema
 存放 100w+ 级别的全球元数据资产。
@@ -222,6 +223,43 @@ CREATE TABLE metadata.media_title_index (
 - 分页浏览：支持分页查询元数据
 - 全量导出：导出为字典格式
 - 模糊搜索：基于标题的快速搜索
+
+### 5. BangumiRawCache - 完结番剧原始响应缓存
+
+**职责：** 对 Bangumi 三个核心 API 端点统一管理永久缓存，减少对官方 API 的重复请求。
+
+**触发条件：** 番剧在 `bangumi_data_item.end` 字段记录的完结时间超过当前时间 30 天以上时，视为"长完结"，其原始 API 响应视为稳定数据，永久缓存到本地。
+
+**覆盖的 API 端点：**
+
+| 端点 | 统一入口 | raw_cache 列 |
+|------|---------|--------------|
+| `GET /v0/subjects/{id}` | `_fetch_subject_raw` | `subject_data` |
+| `GET /v0/episodes` | `_fetch_episodes_raw` | `episodes_data` |
+| `GET /v0/subjects/{id}/characters` | `_fetch_characters_raw` | `characters_data` |
+
+**两层缓存策略：**
+
+```
+请求进入
+  ↓
+① discover_cache (上层应用缓存，7天，加工后数据，所有番剧统一生效)
+  ├─ 命中 → 返回
+  └─ 未命中 ↓
+② bangumi_raw_cache (原始响应永久缓存，仅完结番剧)
+    ├─ is_long_ended? (查 bangumi_data_item.end)
+    │   ├─ 是 → 查 raw_cache
+    │   │       ├─ 命中 → 返回（不再请求 API）
+    │   │       └─ 未命中 → 请求官方 API → 写入 raw_cache → 返回
+    │   └─ 否 → 请求官方 API → 返回
+    ↓
+加工数据 → 写 discover_cache → 返回
+```
+
+**关键特性：**
+- **单一入口**：全项目所有对这三个端点的请求都收口到三个统一入口，业务代码无需关心完结状态
+- **判断内聚**：`is_long_ended` 判断只在统一入口内部出现，调用方完全无感
+- **写入隔离**：`bangumi_raw_cache` 的写入只在统一入口里发生，不会散落到各业务方法
 
 ---
 
