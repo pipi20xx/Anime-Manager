@@ -21,6 +21,7 @@ import {
 } from '@vicons/material'
 import { useCalendar } from '../../composables/views/useCalendar'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { openTmdbDetail } from '../../store/navigationStore'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
@@ -69,66 +70,72 @@ const {
 
 const selectedDate = ref<number>(Date.now())
 
-const formatDayNum = (dateStr: string) => {
-  const [year, month, day] = dateStr.split('-')
-  return `${parseInt(month)}-${parseInt(day)}`
-}
-
 const handleDateChange = (timestamp: number) => {
   if (!timestamp) return
   selectedDate.value = timestamp
 }
 
-const timelineDays = computed(() => {
-  const list = []
-  const baseDate = new Date(selectedDate.value)
+const formatDateStr = (ts: number) => {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
-  for (let offset = -1; offset <= 1; offset++) {
-    const d = new Date(baseDate)
-    d.setDate(baseDate.getDate() + offset)
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+// 仅展示所选日期的番剧卡片
+const selectedDateItems = computed(() => {
+  const dateStr = formatDateStr(selectedDate.value)
+  const items: any[] = []
 
-    let dayLabel = ''
-    if (offset === -1) dayLabel = '昨天'
-    else if (offset === 0) dayLabel = '今天'
-    else if (offset === 1) dayLabel = '明天'
-    else dayLabel = `周${['日', '一', '二', '三', '四', '五', '六'][d.getDay()]}`
-
-    const items: any[] = []
-
-    trackingList.value.forEach(sub => {
-      if (sub.episodes_cache && Array.isArray(sub.episodes_cache)) {
-        const matches = sub.episodes_cache.filter((ep: any) => ep.air_date === dateStr)
-        if (matches.length > 0) {
-          items.push({
-            id: sub.id,
-            title: sub.title,
-            season: sub.season,
-            posterPath: sub.poster_path || null,
-            episodes: matches.map((m: any) => ({
-              ep: m.episode,
-              title: m.name,
-              isFinale: m.episode_type === 'finale'
-            }))
-          })
-        }
+  trackingList.value.forEach(sub => {
+    if (sub.episodes_cache && Array.isArray(sub.episodes_cache)) {
+      const matches = sub.episodes_cache.filter((ep: any) => ep.air_date === dateStr)
+      if (matches.length > 0) {
+        items.push({
+          id: sub.id,
+          tmdbId: sub.tmdb_id,
+          mediaType: sub.media_type || 'tv',
+          title: sub.title,
+          season: sub.season,
+          posterPath: sub.poster_path || null,
+          episodes: matches.map((m: any) => ({
+            ep: m.episode,
+            title: m.name,
+            isFinale: m.episode_type === 'finale'
+          }))
+        })
       }
-    })
+    }
+  })
 
-    list.push({
-      dateStr,
-      dayLabel,
-      fullDate: `${d.getMonth() + 1}月${d.getDate()}日`,
-      isToday: offset === 0,
-      items
-    })
-  }
+  return items
+})
 
-  return list
+// 所选日期的展示标签
+const selectedDateLabel = computed(() => {
+  const d = new Date(selectedDate.value)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(d)
+  target.setHours(0, 0, 0, 0)
+  const diff = Math.round((target.getTime() - today.getTime()) / 86400000)
+  let label = ''
+  if (diff === 0) label = '今天'
+  else if (diff === -1) label = '昨天'
+  else if (diff === 1) label = '明天'
+  else label = `周${['日', '一', '二', '三', '四', '五', '六'][d.getDay()]}`
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${label}`
 })
 
 const goToToday = () => {
   selectedDate.value = Date.now()
+}
+
+const openCardDetail = (item: any) => {
+  if (!item.tmdbId) return
+  openTmdbDetail(item.tmdbId, item.mediaType || 'tv', {
+    id: item.tmdbId,
+    title: item.title,
+    poster_path: item.posterPath
+  })
 }
 </script>
 
@@ -159,56 +166,40 @@ const goToToday = () => {
     </div>
 
     <n-spin :show="loading" class="calendar-spin">
-      <div class="timeline-container">
-        <!-- 时间线内容 -->
-          <div class="timeline-scroll">
-            <div class="timeline-content">
-            <div v-for="day in timelineDays" :key="day.dateStr" class="day-card" :class="{ 'is-today-card': day.isToday }">
-              <!-- 日期头部 -->
-              <div class="day-header">
-                <span class="date-num">{{ formatDayNum(day.dateStr) }}</span>
-                <span class="weekday">{{ day.dayLabel }}</span>
-              </div>
+      <div class="card-grid-container">
+        <div class="selected-date-label">{{ selectedDateLabel }}</div>
 
-              <!-- 番剧列表 -->
-              <div v-if="day.items.length > 0" class="anime-list">
-                <div v-for="(item, idx) in day.items" :key="item.id + '-' + idx" class="anime-item">
-                  <div class="anime-entry">
-                    <div class="poster-wrapper">
-                      <img
-                        v-if="item.posterPath"
-                        :src="getImg(item.posterPath)"
-                        :alt="item.title"
-                        class="poster-img"
-                        @error="$event.target.style.display = 'none'"
-                      />
-                      <div v-else class="placeholder-poster">
-                        {{ item.title.charAt(0) }}
-                      </div>
-                    </div>
+        <div v-if="selectedDateItems.length > 0" class="track-card-grid">
+          <div v-for="item in selectedDateItems" :key="item.id" class="track-card" @click="openCardDetail(item)">
+            <div class="card-poster">
+              <img
+                v-if="item.posterPath"
+                :src="getImg(item.posterPath)"
+                :alt="item.title"
+                class="poster-img"
+                @error="$event.target.style.display = 'none'"
+              />
+              <div v-else class="placeholder-poster">{{ item.title.charAt(0) }}</div>
+              <div class="track-badge">已追踪</div>
+            </div>
 
-                    <div class="info-wrapper">
-                      <div class="anime-title" :title="item.title">{{ item.title }}</div>
-                      <div class="ep-tags">
-                        <template v-for="ep in item.episodes" :key="ep.ep">
-                          <span class="ep-tag" :class="{ 'ep-finale': ep.isFinale }">
-                            第{{ item.season }}季 第{{ ep.ep }}话
-                          </span>
-                          <span v-if="ep.isFinale" class="finale-badge">END</span>
-                        </template>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 空状态 -->
-              <div v-else class="empty-day">
-                <div class="mascot-placeholder">📺</div>
-                <span>今日无更新</span>
+            <div class="card-info">
+              <div class="card-title" :title="item.title">{{ item.title }}</div>
+              <div class="ep-tags">
+                <template v-for="ep in item.episodes" :key="ep.ep">
+                  <span class="ep-tag" :class="{ 'ep-finale': ep.isFinale }">
+                    第{{ item.season }}季 第{{ ep.ep }}话
+                  </span>
+                  <span v-if="ep.isFinale" class="finale-badge">END</span>
+                </template>
               </div>
             </div>
           </div>
+        </div>
+
+        <div v-else class="empty-day">
+          <div class="mascot-placeholder">📺</div>
+          <span>该日无更新</span>
         </div>
       </div>
 
@@ -463,193 +454,96 @@ const goToToday = () => {
   overflow: hidden;
 }
 
-/* 横向时间线容器 */
-.timeline-container {
-  display: flex;
-  align-items: stretch;
-  height: 100%;
-}
-
-/* 滚动区域 - 改为自适应网格 */
-.timeline-scroll {
+/* 卡片网格容器 */
+.card-grid-container {
   flex: 1;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
+  padding: var(--space-2) 0 var(--space-8);
 }
 
-.timeline-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.timeline-scroll::-webkit-scrollbar-track {
-  background: var(--app-surface-inner);
-  border-radius: 3px;
-}
-
-.timeline-scroll::-webkit-scrollbar-thumb {
-  background: var(--text-tertiary);
-  border-radius: 3px;
-}
-
-.timeline-content {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  padding: 20px 0;
-  width: 100%;
-  min-height: 0;
-}
-
-/* 日期卡片 - 自适应宽度 */
-.day-card {
-  background: var(--app-surface-card);
-  border-radius: var(--card-border-radius);
-  border: 1px solid var(--app-border-light);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
-  min-width: 0; /* 防止内容溢出 */
-}
-
-.day-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-/* 今天卡片特殊样式 */
-.is-today-card {
-  border-color: var(--n-primary-color);
-  background: linear-gradient(135deg, #ffffff 0%, var(--primary-subtle, #f0f7ff) 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.is-today-card:hover {
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
-}
-
-.is-today-card .day-header {
-  border-bottom-color: var(--n-primary-color);
-}
-
-.is-today-card .date-num {
-  color: var(--n-primary-color);
-  font-size: 28px;
-}
-
-.is-today-card .weekday {
-  color: var(--n-primary-color);
+.selected-date-label {
+  font-size: var(--text-xl);
   font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  padding: 0 var(--m-1);
 }
 
-/* 日期头部 */
-.day-header {
-  text-align: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--primary-light, #e8f4ff);
+/* 番剧卡片网格 - 参考 TMDB 热门动画卡片样式 */
+.track-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-5);
+  padding: 0 var(--m-1);
 }
 
-.date-num {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--n-primary-color);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-}
-
-.weekday {
-  font-size: 14px;
-  color: var(--text-tertiary);
-  margin-top: 4px;
-  font-weight: 600;
-}
-
-/* 番剧列表 */
-.anime-list {
+.track-card {
+  cursor: pointer;
+  transition: transform var(--transition-fast);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
+  min-width: 0;
+  -webkit-tap-highlight-color: transparent;
 }
+.track-card:hover { transform: translateY(-5px); }
+.track-card:active { transform: scale(0.95); }
 
-.anime-item {
-  animation: slideIn 0.3s ease-out;
+.card-poster {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-tertiary);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-2);
 }
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* 番剧条目 */
-.anime-entry {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.anime-entry:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--primary-strong);
-  box-shadow: var(--shadow-sm);
-}
-
-.poster-wrapper {
-  flex-shrink: 0;
+.card-poster .poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .placeholder-poster {
-  width: 48px;
-  height: 64px;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(135deg, var(--n-primary-color), #667eea);
-  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 20px;
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.track-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--n-primary-color);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   font-weight: bold;
   box-shadow: var(--shadow-sm);
 }
 
-.poster-img {
-  width: 48px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-}
-
-.info-wrapper {
-  flex: 1;
-  min-width: 0;
+.card-info {
+  padding: 0 2px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 6px;
 }
 
-.anime-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.3;
+.card-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 6px;
+  line-height: 1.4;
 }
 
 .ep-tags {
@@ -659,11 +553,11 @@ const goToToday = () => {
 }
 
 .ep-tag {
-  font-size: 11px;
+  font-size: var(--text-sm);
   padding: 2px 8px;
   background: var(--primary-medium, #e3f2fd);
   color: var(--n-primary-color);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
   border: 1px solid transparent;
   transition: all 0.2s ease;
@@ -686,11 +580,11 @@ const goToToday = () => {
 }
 
 .finale-badge {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   background: #ff4757;
   color: white;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-weight: bold;
   margin-left: 4px;
   animation: pulse 2s infinite;
@@ -706,6 +600,7 @@ const goToToday = () => {
   gap: 12px;
   opacity: 0.5;
   user-select: none;
+  padding: var(--space-10) 0;
 }
 
 .empty-day .mascot-placeholder {
@@ -714,7 +609,7 @@ const goToToday = () => {
 }
 
 .empty-day span {
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--text-tertiary);
   font-weight: 500;
 }
@@ -849,27 +744,10 @@ const goToToday = () => {
 .switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
 
 /* 响应式布局 */
-@media (max-width: 1200px) {
-  .timeline-content {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-}
-
 @media (max-width: 900px) {
-  .timeline-content {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .day-card {
-    padding: 12px;
-  }
-
-  .poster-img,
-  .placeholder-poster {
-    width: 40px;
-    height: 54px;
+  .track-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-4);
   }
 }
 </style>
