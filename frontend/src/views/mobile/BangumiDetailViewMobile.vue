@@ -11,7 +11,8 @@ import {
   PersonOutlined as CastIcon,
   CompareArrowsOutlined as MatchIcon,
   ArrowBackOutlined as BackIcon,
-  SearchOutlined as SearchIcon
+  SearchOutlined as SearchIcon,
+  LiveTvOutlined as EpisodeIcon
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch } from '../../store/navigationStore'
@@ -27,6 +28,9 @@ const loading = ref(false)
 const detail = ref<any>(null)
 const subscriptions = ref<any[]>([])
 const matchingTmdb = ref(false)
+const episodes = ref<any[]>([])
+const episodesTotal = ref(0)
+const episodesLoading = ref(false)
 
 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='
 const DEFAULT_POSTER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMzAwIiBmaWxsPSIjZTBlMGUwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjxwYXRoIGQ9Ik04MCAxMjAgaDQwIHY0MCBoLTQwIHoiIGZpbGw9IiM5OTkiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMjUiIGZpbGw9IiM5OTkiLz48L3N2Zz4='
@@ -64,7 +68,8 @@ const isSubscribed = computed(() => {
 const fetchDetail = async () => {
   if (!bangumiId.value) return
   loading.value = true
-  fetchSubscriptions() 
+  fetchSubscriptions()
+  fetchEpisodes()
   try {
     const res = await fetch(`${API_BASE}/api/bangumi/subject/${bangumiId.value}`)
     if (res.ok) {
@@ -77,6 +82,51 @@ const fetchDetail = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const fetchEpisodes = async () => {
+  if (!bangumiId.value) return
+  episodesLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/api/bangumi/subject/${bangumiId.value}/episodes?type=0`)
+    if (res.ok) {
+        const data = await res.json()
+        episodes.value = data?.data || []
+        episodesTotal.value = data?.total || episodes.value.length
+    } else {
+        episodes.value = []
+        episodesTotal.value = 0
+    }
+  } catch (e) {
+    console.error(e)
+    episodes.value = []
+    episodesTotal.value = 0
+  } finally {
+    episodesLoading.value = false
+  }
+}
+
+const formatDuration = (dur: string) => {
+  if (!dur) return ''
+  const parts = dur.split(':')
+  if (parts.length === 3) {
+    const h = parseInt(parts[0])
+    const m = parseInt(parts[1])
+    const s = parseInt(parts[2])
+    if (h > 0) return `${h}时${m}分`
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+  return dur
+}
+
+const airedStatus = (airdate: string) => {
+  if (!airdate) return ''
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const d = new Date(airdate)
+  if (isNaN(d.getTime())) return ''
+  d.setHours(0, 0, 0, 0)
+  return d <= today ? '已播出' : '未播出'
 }
 
 const goBack = () => {
@@ -270,6 +320,44 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
+        <!-- Episodes -->
+        <div class="m-detail-section">
+          <h3 class="m-detail-section-title">
+            <n-icon><EpisodeIcon /></n-icon> 章节列表
+            <span v-if="episodesTotal" style="font-size: var(--m-text-sm); color: var(--text-muted); font-weight: normal;">（共 {{ episodesTotal }} 集）</span>
+          </h3>
+
+          <div v-if="episodesLoading" class="m-ep-loading">
+            <n-skeleton height="64px" width="100%" style="margin-bottom: 8px; border-radius: var(--m-radius-md);" />
+            <n-skeleton height="64px" width="100%" style="margin-bottom: 8px; border-radius: var(--m-radius-md);" />
+            <n-skeleton height="64px" width="100%" style="border-radius: var(--m-radius-md);" />
+          </div>
+
+          <div v-else-if="episodes.length" class="m-ep-list">
+            <div v-for="ep in episodes" :key="ep.id" class="m-ep-item">
+              <div class="m-ep-number">
+                <span class="m-ep-num">{{ ep.ep ?? ep.sort }}</span>
+                <span v-if="ep.sort !== ep.ep" class="m-ep-sort">排序{{ ep.sort }}</span>
+              </div>
+              <div class="m-ep-body">
+                <div class="m-ep-title">{{ ep.name_cn || ep.name || `第 ${ep.ep ?? ep.sort} 集` }}</div>
+                <div v-if="ep.name && ep.name_cn && ep.name !== ep.name_cn" class="m-ep-orig">{{ ep.name }}</div>
+                <div class="m-ep-meta">
+                  <span v-if="ep.airdate" class="m-ep-date">{{ ep.airdate }}</span>
+                  <span v-if="airedStatus(ep.airdate)" class="m-ep-status" :class="{ 'aired': airedStatus(ep.airdate) === '已播出' }">
+                    {{ airedStatus(ep.airdate) }}
+                  </span>
+                  <span v-if="ep.duration" class="m-ep-dur">{{ formatDuration(ep.duration) }}</span>
+                  <span v-if="ep.comment" class="m-ep-cmt">{{ ep.comment }}评</span>
+                </div>
+                <div v-if="ep.desc" class="m-ep-desc">{{ ep.desc }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else style="color: var(--text-muted); font-size: var(--m-text-md);">暂无章节信息</div>
+        </div>
       </div>
     </div>
   </div>
@@ -308,5 +396,46 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.m-ep-loading { padding: 0; }
+.m-ep-list {
+  display: flex; flex-direction: column; gap: var(--m-spacing-sm);
+}
+.m-ep-item {
+  display: flex; gap: var(--m-spacing-sm); padding: var(--m-spacing-sm);
+  background: var(--app-surface-card); border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-md);
+}
+.m-ep-number {
+  flex-shrink: 0; min-width: 44px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--app-surface-inner); border-radius: var(--m-radius-sm);
+  padding: 4px 2px;
+}
+.m-ep-num { font-size: 18px; font-weight: 900; color: var(--n-primary-color); line-height: 1; }
+.m-ep-sort { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.m-ep-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.m-ep-title {
+  font-size: var(--m-text-md); font-weight: 600; color: var(--text-primary);
+  line-height: 1.3; word-break: break-word;
+}
+.m-ep-orig { font-size: var(--m-text-xs); color: var(--text-muted); }
+.m-ep-meta {
+  display: flex; align-items: center; gap: var(--m-spacing-xs); flex-wrap: wrap;
+  font-size: var(--m-text-xs); color: var(--text-muted);
+}
+.m-ep-date { color: var(--text-muted); }
+.m-ep-dur { color: var(--text-muted); }
+.m-ep-cmt { color: var(--text-muted); }
+.m-ep-status {
+  padding: 1px 5px; border-radius: 3px; font-size: 10px;
+  background: var(--app-surface-inner); color: var(--text-muted);
+}
+.m-ep-status.aired { color: var(--n-success-color); }
+.m-ep-desc {
+  font-size: var(--m-text-xs); color: var(--text-secondary); line-height: 1.55;
+  white-space: pre-line;
+  padding-top: 4px; border-top: 1px dashed var(--app-border-light); margin-top: 2px;
 }
 </style>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { 
+import {
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton
 } from 'naive-ui'
 import {
@@ -10,7 +10,8 @@ import {
   LinkOutlined as LinkIcon,
   PersonOutlined as CastIcon,
   CompareArrowsOutlined as MatchIcon,
-  ArrowBackOutlined as BackIcon
+  ArrowBackOutlined as BackIcon,
+  LiveTvOutlined as EpisodeIcon
 } from '@vicons/material'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail } from '../../store/navigationStore'
@@ -26,6 +27,9 @@ const loading = ref(false)
 const detail = ref<any>(null)
 const subscriptions = ref<any[]>([])
 const matchingTmdb = ref(false)
+const episodes = ref<any[]>([])
+const episodesTotal = ref(0)
+const episodesLoading = ref(false)
 
 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzk5OSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='
 const DEFAULT_POSTER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMzAwIiBmaWxsPSIjZTBlMGUwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIvPjxwYXRoIGQ9Ik04MCAxMjAgaDQwIHY0MCBoLTQwIHoiIGZpbGw9IiM5OTkiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMjUiIGZpbGw9IiM5OTkiLz48L3N2Zz4='
@@ -63,7 +67,8 @@ const isSubscribed = computed(() => {
 const fetchDetail = async () => {
   if (!bangumiId.value) return
   loading.value = true
-  fetchSubscriptions() 
+  fetchSubscriptions()
+  fetchEpisodes()
   try {
     const res = await fetch(`${API_BASE}/api/bangumi/subject/${bangumiId.value}`)
     if (res.ok) {
@@ -76,6 +81,52 @@ const fetchDetail = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const fetchEpisodes = async () => {
+  if (!bangumiId.value) return
+  episodesLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/api/bangumi/subject/${bangumiId.value}/episodes?type=0`)
+    if (res.ok) {
+        const data = await res.json()
+        episodes.value = data?.data || []
+        episodesTotal.value = data?.total || episodes.value.length
+    } else {
+        episodes.value = []
+        episodesTotal.value = 0
+    }
+  } catch (e) {
+    console.error(e)
+    episodes.value = []
+    episodesTotal.value = 0
+  } finally {
+    episodesLoading.value = false
+  }
+}
+
+const formatDuration = (dur: string) => {
+  if (!dur) return ''
+  // "00:23:40" -> "23:40"
+  const parts = dur.split(':')
+  if (parts.length === 3) {
+    const h = parseInt(parts[0])
+    const m = parseInt(parts[1])
+    const s = parseInt(parts[2])
+    if (h > 0) return `${h}时${m}分`
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+  return dur
+}
+
+const airedStatus = (airdate: string) => {
+  if (!airdate) return ''
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const d = new Date(airdate)
+  if (isNaN(d.getTime())) return ''
+  d.setHours(0, 0, 0, 0)
+  return d <= today ? '已播出' : '未播出'
 }
 
 const goBack = () => {
@@ -251,6 +302,48 @@ onMounted(() => {
               </div>
             </n-scrollbar>
           </div>
+
+          <div class="episodes-section">
+            <h3>
+              <n-icon><EpisodeIcon /></n-icon> 章节列表
+              <span class="ep-count" v-if="episodesTotal">（共 {{ episodesTotal }} 集）</span>
+            </h3>
+
+            <div v-if="episodesLoading" class="ep-loading">
+              <n-skeleton height="56px" width="100%" style="margin-bottom: 8px" />
+              <n-skeleton height="56px" width="100%" style="margin-bottom: 8px" />
+              <n-skeleton height="56px" width="100%" />
+            </div>
+
+            <div v-else-if="episodes.length" class="episode-list">
+              <div v-for="ep in episodes" :key="ep.id" class="episode-item">
+                <div class="ep-number">
+                  <span class="ep-num-main">{{ ep.ep ?? ep.sort }}</span>
+                  <span v-if="ep.sort !== ep.ep" class="ep-num-sort">排序 {{ ep.sort }}</span>
+                </div>
+                <div class="ep-body">
+                  <div class="ep-headline">
+                    <span class="ep-title-text">{{ ep.name_cn || ep.name || `第 ${ep.ep ?? ep.sort} 集` }}</span>
+                    <span v-if="ep.name && ep.name_cn && ep.name !== ep.name_cn" class="ep-title-orig">{{ ep.name }}</span>
+                  </div>
+                  <div class="ep-meta">
+                    <n-tag v-if="ep.airdate" :bordered="false" size="tiny" style="background: var(--app-surface-inner)">
+                      <template #icon><n-icon><DateIcon /></n-icon></template>
+                      {{ ep.airdate }}
+                    </n-tag>
+                    <span v-if="airedStatus(ep.airdate)" class="ep-status" :class="{ 'aired': airedStatus(ep.airdate) === '已播出' }">
+                      {{ airedStatus(ep.airdate) }}
+                    </span>
+                    <span v-if="ep.duration" class="ep-duration">{{ formatDuration(ep.duration) }}</span>
+                    <span v-if="ep.comment" class="ep-comments">{{ ep.comment }} 评论</span>
+                  </div>
+                  <div v-if="ep.desc" class="ep-desc">{{ ep.desc }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="ep-empty">暂无章节信息</div>
+          </div>
         </div>
     </div>
   </div>
@@ -259,7 +352,7 @@ onMounted(() => {
 <style scoped>
 .bangumi-detail-page {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--app-bg-color);
@@ -273,7 +366,7 @@ onMounted(() => {
 
 .loading-box { padding: 40px; }
 
-.detail-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.detail-container { flex: 1; display: flex; flex-direction: column; }
 
 .header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 20px; width: 100%; }
 .main-poster { 
@@ -312,4 +405,43 @@ onMounted(() => {
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .char-name { font-size: 12px; font-weight: bold; color: var(--text-primary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .actor-name { font-size: 12px; color: var(--text-tertiary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.episodes-section { margin-bottom: 24px; }
+.episodes-section h3 {
+  margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ep-count { font-size: 12px; color: var(--text-tertiary); font-weight: normal; }
+.ep-loading { padding: 0; }
+.episode-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.episode-item {
+  display: flex; gap: 14px; padding: 10px 12px;
+  background: var(--app-surface-card); border: 1px solid var(--app-border-light);
+  border-radius: 6px; transition: border-color 0.15s;
+}
+.episode-item:hover { border-color: var(--n-primary-color); }
+.ep-number {
+  flex-shrink: 0; min-width: 52px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--app-surface-inner); border-radius: 6px; padding: 6px 4px;
+}
+.ep-num-main { font-size: 18px; font-weight: 900; color: var(--n-primary-color); line-height: 1; }
+.ep-num-sort { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+.ep-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ep-headline { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ep-title-text { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.ep-title-orig { font-size: 12px; color: var(--text-tertiary); }
+.ep-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--text-tertiary); }
+.ep-duration { color: var(--text-tertiary); }
+.ep-comments { color: var(--text-tertiary); }
+.ep-status { padding: 1px 6px; border-radius: 4px; font-size: 11px; background: var(--app-surface-inner); color: var(--text-tertiary); }
+.ep-status.aired { color: var(--n-success-color); }
+.ep-desc {
+  font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+  white-space: pre-line;
+  padding-top: 4px; border-top: 1px dashed var(--app-border-light); margin-top: 2px;
+}
+.ep-empty { color: var(--text-tertiary); font-size: 13px; padding: 16px 0; }
 </style>

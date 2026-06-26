@@ -76,6 +76,17 @@ async def get_subject(subject_id: int):
         raise HTTPException(status_code=404, detail="Bangumi 条目未找到")
     return result
 
+@router.get("/subject/{subject_id}/episodes", summary="获取条目章节列表")
+async def get_subject_episodes(subject_id: int, type: int = 0):
+    """
+    获取 Bangumi 指定条目的章节列表。
+    :param type: 0=正片, 1=特别篇, 2=OP, 3=ED, 4=预告, 6=其它
+    """
+    result = await BangumiProvider.get_episodes(subject_id, episode_type=type)
+    if not result:
+        raise HTTPException(status_code=404, detail="未获取到章节列表")
+    return result
+
 @router.get("/match_tmdb/{subject_id}", summary="Bangumi 匹配 TMDB")
 async def match_tmdb(subject_id: int):
     """
