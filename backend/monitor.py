@@ -384,7 +384,8 @@ class MonitorManager:
             from recognition.data_provider.bangumi.client import BangumiProvider
             await BangumiProvider.discover({"page": 1, "sort_by": "popularity.desc"})
             await BangumiProvider.discover({"page": 1, "sort_by": "match"})
-            logger.info("[Bangumi] 发现页第一页缓存预热完成")
+            await BangumiProvider.get_calendar()
+            logger.info("[Bangumi] 发现页 + 日历缓存预热完成")
         except Exception as e:
             logger.warning(f"[Bangumi] 发现页缓存预热失败: {e}")
         
@@ -397,7 +398,9 @@ class MonitorManager:
                 tmdb = TMDBProvider(tmdb_key)
                 await tmdb.discover("tv", {"page": 1, "sort_by": "popularity.desc"})
                 await tmdb.discover("movie", {"page": 1, "sort_by": "popularity.desc"})
-                logger.info("[TMDB] 发现页第一页缓存预热完成")
+                await tmdb.get_popular("tv")
+                await tmdb.get_popular("movie")
+                logger.info("[TMDB] 发现页 + 热门列表缓存预热完成")
         except Exception as e:
             logger.warning(f"[TMDB] 发现页缓存预热失败: {e}")
 
