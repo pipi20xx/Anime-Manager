@@ -116,7 +116,7 @@ const goToExternal = (sub: any, type: 'tmdb' | 'bgm') => {
       : `https://www.themoviedb.org/tv/${sub.tmdb_id}`
     window.open(url, '_blank')
   } else if (type === 'bgm' && sub.bangumi_id) {
-    window.open(`https://bgm.tv/subject/${sub.bangumi_id}`, '_blank')
+    window.open(`https://bangumi.tv/subject/${sub.bangumi_id}`, '_blank')
   }
 }
 

@@ -76,7 +76,7 @@ export function useBangumiDetail(props: any, emit: any) {
   }
 
   const openExternal = () => {
-      window.open(`https://bgm.tv/subject/${props.subjectId}`, '_blank')
+      window.open(`https://bangumi.tv/subject/${props.subjectId}`, '_blank')
   }
 
   const handleSubscribe = async () => {

@@ -134,7 +134,7 @@ const goBack = () => {
 }
 
 const openExternal = () => {
-    window.open(`https://bgm.tv/subject/${bangumiId.value}`, '_blank')
+    window.open(`https://bangumi.tv/subject/${bangumiId.value}`, '_blank')
 }
 
 const handleSubscribe = async () => {
