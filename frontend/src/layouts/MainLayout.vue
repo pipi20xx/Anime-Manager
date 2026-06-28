@@ -179,7 +179,7 @@ const isNavActive = (key: string) => route.name === key
       <div class="logo-container">
         <n-space align="center" :size="10" :wrap="false">
           <div @click="router.push({ name: 'Explore' })" style="cursor: pointer; display: flex; align-items: center; gap: var(--space-2);">
-            <n-icon size="24" :color="logoColor"><MovieIcon /></n-icon>
+            <img src="/favicon.svg" alt="logo" style="width: 24px; height: 24px;" />
             <div v-if="!collapsed" class="logo-text">
               <span class="title" :style="{ color: logoColor }">番剧管家</span>
               <div class="version">v{{ APP_VERSION }}</div>
@@ -275,7 +275,7 @@ const isNavActive = (key: string) => route.name === key
       <div v-if="isMobile" class="mobile-header">
         <n-space align="center" justify="space-between" style="width: 100%">
           <div style="display: flex; align-items: center; gap: var(--space-2);">
-            <n-icon size="22" :color="logoColor"><MovieIcon /></n-icon>
+            <img src="/favicon.svg" alt="logo" style="width: 22px; height: 22px;" />
             <div style="display: flex; flex-direction: column;">
               <span class="title" :style="{ color: logoColor, fontWeight: '800', lineHeight: '1.2' }">番剧管家</span>
               <span style="font-size: var(--text-2xs); opacity: var(--opacity-60); margin-top: -2px;">v{{ APP_VERSION }}</span>
