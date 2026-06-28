@@ -40,17 +40,17 @@ const {
     @update:show="close"
     preset="card"
     style="width: 900px; max-width: 95vw; height: 80vh;"
-    title="优先级规则管理"
+    title="洗版规则管理"
     :bordered="false"
   >
     <div class="main-container">
       <n-tabs v-model:value="activeTab" type="segment" animated>
         
         <!-- Tab 1: Profiles -->
-        <n-tab-pane name="profiles" tab="优先级策略 (Profiles)">
+        <n-tab-pane name="profiles" tab="洗版策略 (Profiles)">
           <div class="tab-header">
             <div class="desc">
-              策略决定了下载的优先顺序。您可以将多个"基础规则"组合，越靠上的规则优先级越高。
+              策略决定了洗版的优先顺序。您可以将多个"基础规则"组合，越靠上的规则洗版优先级越高。
             </div>
             <n-button v-bind="getButtonStyle('primary')" @click="openAddProfile">
               新建策略
@@ -178,7 +178,7 @@ const {
     </n-modal>
 
     <!-- Profile Editor Modal -->
-    <n-modal v-model:show="showProfileEdit" preset="card" title="编辑优先级策略" style="width: 600px">
+    <n-modal v-model:show="showProfileEdit" preset="card" title="编辑洗版策略" style="width: 600px">
       <n-form label-placement="left" label-width="80">
         <n-form-item><AppTextField v-model:value="currentProfile.name" label="策略名称" /></n-form-item>
         <n-grid :cols="2" :x-gap="12">
@@ -198,7 +198,7 @@ const {
           </n-gi>
         </n-grid>
       </n-form>
-      <n-divider title-placement="left">优先级排序 (拖拽调整，上方优先)</n-divider>
+      <n-divider title-placement="left">洗版排序 (拖拽调整，上方优先)</n-divider>
       <div class="drag-area">
           <draggable v-model="currentProfile.rules_config" item-key="rule_id" handle=".drag-handle">
             <template #item="{ element, index }">

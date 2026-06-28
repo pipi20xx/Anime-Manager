@@ -66,7 +66,7 @@ class SubscriptionMatcher:
 
     @staticmethod
     def _calculate_score(item_data: Dict, profile: QualityProfile, rules_map: Dict[int, FilterRule]) -> int:
-        """根据策略计算分数 (返回匹配到的最高优先级分数)"""
+        """根据策略计算分数 (返回匹配到的最高洗版分数)"""
         if not profile or not profile.rules_config:
             return 0
         
@@ -244,6 +244,9 @@ class SubscriptionMatcher:
                                                     sub.tmdb_id, sub.media_type, season, ep_num,
                                                     title=f"Emby库已存在: {title}"
                                                 )
+
+                                                if sub.end_episode > 0:
+                                                    await SubscriptionManager.check_and_complete_subscription(sub.id)
                                             elif media_type == "电影":
                                                 await SubscriptionManager.add_subscribed_episode(
                                                     sub.tmdb_id, sub.media_type, 0, 0,
@@ -298,6 +301,9 @@ class SubscriptionMatcher:
                                                 if task_id:
                                                     from task_history import log_task as _log_task
                                                     await _log_task(task_id, f"📌 订阅 '{sub.title}' 已存在，标记已下载: {title}")
+
+                                                if sub.end_episode > 0:
+                                                    await SubscriptionManager.check_and_complete_subscription(sub.id)
                                             elif media_type == "电影":
                                                 await SubscriptionManager.add_subscribed_episode(
                                                     sub.tmdb_id, sub.media_type, 0, 0,
@@ -512,6 +518,10 @@ class SubscriptionMatcher:
                                         download_client_id=None, info_hash=None
                                     )
                                     await RssManager.add_history(history)
+
+                                if sub.media_type == "tv" and sub.end_episode > 0:
+                                    await SubscriptionManager.check_and_complete_subscription(sub.id)
+
                                 continue
                         except Exception as e:
                             logger.warning(f"订阅 '{sub.title}' Emby检查异常，继续下载: {e}")

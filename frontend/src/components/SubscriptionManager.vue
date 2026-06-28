@@ -232,7 +232,7 @@ onMounted(() => {
           自动RSS订阅管理
         </n-button>
         <n-button v-bind="getButtonStyle('secondary')" @click="showPriorityModal = true">
-          优先级规则
+          洗版规则
         </n-button>
         <n-button v-bind="getButtonStyle('secondary')" @click="showTemplateModal = true">
           订阅预设管理

@@ -35,7 +35,7 @@ class FilterRule(SQLModel, table=True):
 class QualityProfile(SQLModel, table=True):
     __tablename__ = "quality_profiles"
     __table_args__ = {"schema": get_public_schema()}
-    __admin_name__ = "优先级策略"
+    __admin_name__ = "洗版策略"
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
     description: Optional[str] = None
@@ -179,7 +179,7 @@ class Subscription(SQLModel, table=True):
     enabled: bool = Field(default=True)
     auto_fill: bool = Field(default=True)
     bangumi_id: Optional[str] = Field(default=None, index=True) # 关联 Bangumi ID
-    quality_profile_id: Optional[int] = Field(foreign_key="public.quality_profiles.id", default=None) # 关联优先级策略
+    quality_profile_id: Optional[int] = Field(foreign_key="public.quality_profiles.id", default=None) # 关联洗版策略
     last_check: datetime = Field(default_factory=datetime.now)
     created_at: datetime = Field(default_factory=datetime.now)
 

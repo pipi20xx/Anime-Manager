@@ -339,7 +339,7 @@ onMounted(() => {
           </div>
           <div class="action-item" @click="openFromDrawer(() => showPriorityModal = true)">
             <div class="action-icon"><n-icon size="22"><LayersIcon/></n-icon></div>
-            <span class="action-label">优先级规则</span>
+            <span class="action-label">洗版规则</span>
           </div>
           <div class="action-item" @click="openFromDrawer(() => showTemplateModal = true)">
             <div class="action-icon"><n-icon size="22"><TemplateIcon/></n-icon></div>

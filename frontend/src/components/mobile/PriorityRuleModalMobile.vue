@@ -47,7 +47,7 @@ const {
         <n-button v-bind="getButtonStyle('iconPrimary')" @click="close">
           <template #icon><n-icon><BackIcon/></n-icon></template>
         </n-button>
-        <span class="title">优先级规则</span>
+        <span class="title">洗版规则</span>
       </div>
     </template>
 
@@ -55,10 +55,10 @@ const {
       <n-tabs v-model:value="activeTab" type="line" animated justify-content="space-evenly">
         
         <!-- Tab 1: Profiles -->
-        <n-tab-pane name="profiles" tab="优先级策略">
+        <n-tab-pane name="profiles" tab="洗版策略">
           <div class="tab-content">
             <n-button v-bind="getButtonStyle('primary')" block @click="openAddProfile" style="margin-bottom: 16px;">
-              新建优先级策略
+              新建洗版策略
             </n-button>
 
             <div v-if="profiles.length > 0" class="mobile-list">
@@ -172,7 +172,7 @@ const {
             </div>
           </n-form-item>
         </n-form>
-        <n-divider>规则优先级排序</n-divider>
+        <n-divider>规则洗版排序</n-divider>
         <div class="mobile-drag-area">
           <draggable v-model="currentProfile.rules_config" item-key="rule_id" handle=".drag-handle">
             <template #item="{ element, index }">

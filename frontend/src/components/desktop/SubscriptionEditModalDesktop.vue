@@ -72,8 +72,8 @@ watch(() => props.show, (newVal) => {
              <n-form-item>
               <AppSelectField 
                 v-model:value="formModel.quality_profile_id"
-                label="优先级策略"
-                placeholder="选择洗版/优先级策略 (可选)" 
+                label="洗版策略"
+                placeholder="选择洗版策略 (可选)" 
                 :options="profiles.map(p => ({label: p.name, value: p.id}))"
                 clearable
               />
