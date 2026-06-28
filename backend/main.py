@@ -384,11 +384,16 @@ async def startup_event():
             logger.info("[系统] 正在预热元数据发现中心...")
             
             await BangumiProvider.get_calendar()
+            await BangumiProvider.discover({"page": 1, "sort_by": "popularity.desc"})
+            await BangumiProvider.discover({"page": 1, "sort_by": "match"})
             
             config = ConfigManager.get_config()
             tmdb_key = config.get("tmdb_api_key")
             if tmdb_key:
                 tmdb = TMDBProvider(tmdb_key)
+                await tmdb.discover("tv", {"page": 1, "sort_by": "popularity.desc"})
+                await tmdb.discover("movie", {"page": 1, "sort_by": "popularity.desc"})
+                
                 trending = await tmdb.get_trending()
                 
                 poster_tasks = []

@@ -364,6 +364,42 @@ class MonitorManager:
             logger.info("[BangumiData] 已启动自动同步任务，间隔 7 天")
             
             asyncio.create_task(MonitorManager._auto_sync_bgm_mapping())
+        
+        # 11. [Discover Cache] 每日预热发现页第一页缓存 (Bangumi + TMDB)
+        MonitorManager._scheduler.add_job(
+            MonitorManager._warmup_discover_cache,
+            'cron',
+            hour=4,
+            minute=0,
+            id="discover_cache_warmup_job",
+            replace_existing=True
+        )
+        logger.info("[Discover] 已调度每日发现页第一页缓存预热 (04:00)")
+
+    @staticmethod
+    async def _warmup_discover_cache():
+        """预热发现页第一页缓存 (Bangumi + TMDB)"""
+        # Bangumi
+        try:
+            from recognition.data_provider.bangumi.client import BangumiProvider
+            await BangumiProvider.discover({"page": 1, "sort_by": "popularity.desc"})
+            await BangumiProvider.discover({"page": 1, "sort_by": "match"})
+            logger.info("[Bangumi] 发现页第一页缓存预热完成")
+        except Exception as e:
+            logger.warning(f"[Bangumi] 发现页缓存预热失败: {e}")
+        
+        # TMDB
+        try:
+            from recognition.data_provider.tmdb.client import TMDBProvider
+            config = ConfigManager.get_config()
+            tmdb_key = config.get("tmdb_api_key")
+            if tmdb_key:
+                tmdb = TMDBProvider(tmdb_key)
+                await tmdb.discover("tv", {"page": 1, "sort_by": "popularity.desc"})
+                await tmdb.discover("movie", {"page": 1, "sort_by": "popularity.desc"})
+                logger.info("[TMDB] 发现页第一页缓存预热完成")
+        except Exception as e:
+            logger.warning(f"[TMDB] 发现页缓存预热失败: {e}")
 
     @staticmethod
     async def _auto_sync_bgm_mapping():

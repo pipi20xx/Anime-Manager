@@ -208,7 +208,7 @@ class BangumiProvider:
                 break
         
         page = int(params.get("page", 1))
-        limit = 60 
+        limit = 50
         offset = (page - 1) * limit
         sort_by = params.get("sort_by")
 
@@ -330,8 +330,9 @@ class BangumiProvider:
             "total_results": total
         }
         
-        # 写入缓存 (6小时过期)
-        await MetaCacheManager.set_discover_cache(cache_key, final_result, expire_hours=6)
+        # 写入缓存 (第一页24小时, 其他页面6小时)
+        cache_hours = 24 if page == 1 else 6
+        await MetaCacheManager.set_discover_cache(cache_key, final_result, expire_hours=cache_hours)
         
         return final_result
 

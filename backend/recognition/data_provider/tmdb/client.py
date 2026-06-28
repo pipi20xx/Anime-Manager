@@ -148,7 +148,9 @@ class TMDBProvider:
             "total_pages": frontend_total_pages,
             "total_results": total_results
         }
-        await MetaCacheManager.set_discover_cache(cache_key, resp_data, expire_hours=6)
+        # 写入缓存 (第一页24小时, 其他页面6小时)
+        cache_hours = 24 if page == 1 else 6
+        await MetaCacheManager.set_discover_cache(cache_key, resp_data, expire_hours=cache_hours)
         return resp_data
 
     async def get_trending(self) -> Dict:
