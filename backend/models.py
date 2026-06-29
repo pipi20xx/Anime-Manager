@@ -251,6 +251,15 @@ class OrganizeHistory(SQLModel, table=True):
     year: Optional[str] = None
     status: str = Field(default="success") # success, failed, skipped
     message: Optional[str] = None
+    # 重试所需的任务配置快照（用于精确复现当时的整理流程）
+    rule_id: Optional[str] = None
+    source_dir: Optional[str] = None
+    target_dir: Optional[str] = None
+    overwrite_mode: Optional[bool] = None
+    check_emby_exists: Optional[bool] = None
+    calculate_hash: Optional[bool] = None
+    clean_empty_dir: Optional[bool] = None
+    trigger_strm: Optional[bool] = None
 
 class FileHash(SQLModel, table=True):
     __tablename__ = "file_hashes"

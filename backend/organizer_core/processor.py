@@ -244,7 +244,15 @@ class FileProcessor:
                         history = OrganizeHistory(
                             source_path=v_path, filename=v_file,
                             status="failed", message="识别失败 (无 TMDB ID)",
-                            action_type=action_type
+                            action_type=action_type,
+                            rule_id=task.get("rule_id"),
+                            source_dir=task.get("source_dir"),
+                            target_dir=task.get("target_dir"),
+                            overwrite_mode=task.get("overwrite_mode"),
+                            check_emby_exists=task.get("check_emby_exists", False),
+                            calculate_hash=task.get("calculate_hash", False),
+                            clean_empty_dir=task.get("clean_empty_dir", False),
+                            trigger_strm=task.get("trigger_strm", False)
                         )
                         await db.save(history, audit=False)
                     
@@ -302,7 +310,15 @@ class FileProcessor:
                                         season=season, episode=str(episode),
                                         media_type=media_type,
                                         action_type=action_type,
-                                        status="skipped", message="Emby库中已存在"
+                                        status="skipped", message="Emby库中已存在",
+                                        rule_id=task.get("rule_id"),
+                                        source_dir=task.get("source_dir"),
+                                        target_dir=task.get("target_dir"),
+                                        overwrite_mode=task.get("overwrite_mode"),
+                                        check_emby_exists=task.get("check_emby_exists", False),
+                                        calculate_hash=task.get("calculate_hash", False),
+                                        clean_empty_dir=task.get("clean_empty_dir", False),
+                                        trigger_strm=task.get("trigger_strm", False)
                                     )
                                     await db.save(history, audit=False)
                             return [{"type": "skip", "skip_type": "emby_exists", "source": v_path, "reason": "Emby库中已存在"}]
@@ -541,7 +557,15 @@ class FileProcessor:
                                 video_encode=final.get("video_encode"),
                                 year=str(final.get("year")) if final.get("year") else None,
                                 status="success" if batch_res == "success" else "skipped",
-                                message=None if batch_res == "success" else f"目标已存在 (跳过)"
+                                message=None if batch_res == "success" else f"目标已存在 (跳过)",
+                                rule_id=task.get("rule_id"),
+                                source_dir=task.get("source_dir"),
+                                target_dir=task.get("target_dir"),
+                                overwrite_mode=task.get("overwrite_mode"),
+                                check_emby_exists=task.get("check_emby_exists", False),
+                                calculate_hash=task.get("calculate_hash", False),
+                                clean_empty_dir=task.get("clean_empty_dir", False),
+                                trigger_strm=task.get("trigger_strm", False)
                             )
                             await db.save(history, audit=False)
                             
@@ -658,7 +682,15 @@ class FileProcessor:
                             video_encode=final.get("video_encode"),
                             year=str(final.get("year")) if final.get("year") else None,
                             status="success" if v_res == "success" else ("skipped" if v_res in ["skipped", "skipped_conflict"] else "failed"),
-                            message=None if v_res == "success" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}"
+                            message=None if v_res == "success" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}",
+                            rule_id=task.get("rule_id"),
+                            source_dir=task.get("source_dir"),
+                            target_dir=task.get("target_dir"),
+                            overwrite_mode=task.get("overwrite_mode"),
+                            check_emby_exists=task.get("check_emby_exists", False),
+                            calculate_hash=task.get("calculate_hash", False),
+                            clean_empty_dir=task.get("clean_empty_dir", False),
+                            trigger_strm=task.get("trigger_strm", False)
                         )
                         await db.save(history, audit=False)
                         

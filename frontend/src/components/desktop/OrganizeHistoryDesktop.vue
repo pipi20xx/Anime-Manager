@@ -14,7 +14,8 @@ import {
   DoneAllOutlined as SuccessIcon,
   ErrorOutlineOutlined as ErrorIcon,
   KeyboardDoubleArrowDownOutlined as MoreIcon,
-  RefreshOutlined as RefreshIcon
+  RefreshOutlined as RefreshIcon,
+  ReplayOutlined as RetryIcon
 } from '@vicons/material'
 import AppSearchField from '../../components/AppSearchField.vue'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
@@ -29,6 +30,8 @@ const {
   fetchData,
   loadMore,
   deleteItem,
+  retryItem,
+  isRetrying,
   clearAll,
   getActionLabel,
   formatTime
@@ -194,9 +197,32 @@ const handleRefresh = () => {
             </div>
           </div>
           <div class="delete-btn-wrapper">
-            <n-popconfirm 
+            <n-popconfirm
+              @positive-click="retryItem(item.id)"
+              positive-text="确定重试"
+              negative-text="取消"
+            >
+              <template #trigger>
+                <n-button
+                  v-bind="getButtonStyle('iconPrimary')"
+                  size="small"
+                  :loading="isRetrying(item.id)"
+                  :disabled="isRetrying(item.id)"
+                  style="margin-right: 6px"
+                >
+                  <template #icon><n-icon><RetryIcon /></n-icon></template>
+                </n-button>
+              </template>
+              <div style="max-width: 240px">
+                <p class="m-0">将根据源路径重新执行识别与整理流程（绕过历史去重）。</p>
+                <p class="m-0" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
+                  进度可在「任务历史」中查看。
+                </p>
+              </div>
+            </n-popconfirm>
+            <n-popconfirm
               v-model:show="deletePopconfirmShow[item.id]"
-              @positive-click="deleteItem(item.id, shouldDeleteFile); deletePopconfirmShow[item.id] = false" 
+              @positive-click="deleteItem(item.id, shouldDeleteFile); deletePopconfirmShow[item.id] = false"
               @negative-click="shouldDeleteFile = false; deletePopconfirmShow[item.id] = false"
               positive-text="确定删除"
               negative-text="取消"
@@ -473,7 +499,7 @@ const handleRefresh = () => {
 .detail-group { display: flex; align-items: center; gap: 24px; }
 .detail-item { display: flex; align-items: center; gap: 6px; }
 .detail-item .label { color: var(--text-tertiary); }
-.delete-btn-wrapper { margin-left: auto; }
+.delete-btn-wrapper { margin-left: auto; display: flex; align-items: center; }
 
 /* Compact Alert - 改成标签样式 */
 .compact-alert { display: inline-block; width: auto; max-width: 100%; }

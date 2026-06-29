@@ -74,6 +74,29 @@ export function useOrganizeHistory() {
     } catch (e) { message.error('删除失败') }
   }
 
+  const retryingIds = ref<Set<number>>(new Set())
+
+  const retryItem = async (id: number) => {
+    if (retryingIds.value.has(id)) return
+    retryingIds.value.add(id)
+    try {
+      const res = await fetch(`${API_BASE}/api/organize/history/${id}/retry`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        message.success(data.message || '重试任务已启动，可在「任务历史」查看进度')
+      } else {
+        message.error(data.message || '重试失败')
+      }
+    } catch (e) {
+      message.error('请求服务器失败')
+    } finally {
+      // 释放按钮锁定（后台任务仍在执行）
+      setTimeout(() => retryingIds.value.delete(id), 1500)
+    }
+  }
+
+  const isRetrying = (id: number) => retryingIds.value.has(id)
+
   const clearAll = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/organize/history/clear`, { method: 'DELETE' })
@@ -138,6 +161,8 @@ export function useOrganizeHistory() {
     fetchData,
     loadMore,
     deleteItem,
+    retryItem,
+    isRetrying,
     clearAll,
     getActionLabel,
     formatTime

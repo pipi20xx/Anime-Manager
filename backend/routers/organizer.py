@@ -501,7 +501,7 @@ async def delete_organize_history(history_id: int, delete_file: bool = Query(Fal
             history = await db.get(OrganizeHistory, history_id)
             if not history:
                 raise HTTPException(status_code=404, detail="记录不存在")
-            
+
             # 如果要求删除物理文件
             if delete_file:
                 # 仅尝试删除源路径（原始文件，适用于 copy/link 模式后的清理）
@@ -521,8 +521,192 @@ async def delete_organize_history(history_id: int, delete_file: bool = Query(Fal
         return {"success": False, "message": str(e)}
 
 
+def _match_task_from_config(source_path: str):
+    """
+    从 organize_tasks 配置中按 source_dir 前缀匹配 source_path 所属的任务。
+    用于旧历史记录（未保存任务配置快照）的回退匹配。
+    当多个任务都能匹配时，选择 source_dir 最长的（最具体）。
+    """
+    import os
+    config = ConfigManager.get_config()
+    organize_tasks = config.get("organize_tasks", [])
+    abs_source = os.path.abspath(source_path)
+
+    candidates = []
+    for t in organize_tasks:
+        t_source = t.get("source_dir") or t.get("source_path")
+        if not t_source:
+            continue
+        try:
+            abs_t_source = os.path.abspath(t_source)
+            if abs_source == abs_t_source or abs_source.startswith(abs_t_source + os.sep):
+                candidates.append((t, abs_t_source))
+        except Exception:
+            continue
+
+    if not candidates:
+        return None
+
+    # 选 source_dir 最长的（最具体）
+    candidates.sort(key=lambda x: len(x[1]), reverse=True)
+    return candidates[0][0]
 
 
+async def _retry_history_runner(history_id: int, task_id: str):
+    """
+    后台重试整理历史记录的执行器。
+    优先使用历史记录中保存的任务配置快照，若无则回退到 organize_tasks 配置匹配。
+    """
+    from database import db
+    from models import OrganizeHistory
+    from organizer_core.processor import FileProcessor
+    from task_history import start_task, log_task, finish_task
+    import os
+    import copy
+
+    try:
+        async with db.session_scope():
+            history = await db.get(OrganizeHistory, history_id)
+            if not history:
+                await log_task(task_id, "❌ 历史记录不存在", "ERROR")
+                await finish_task(task_id, "error")
+                return
+            source_path = history.source_path
+            v_file = history.filename
+            action_type = history.action_type or "move"
+            title_hint = history.title or v_file
+
+        await start_task(task_id, "重试整理", f"{title_hint} ({v_file})")
+        await log_task(task_id, f"🔁 开始重试整理: {source_path}")
+
+        # 1. 检查源文件是否存在
+        if not os.path.exists(source_path):
+            await log_task(task_id, f"❌ 源文件不存在: {source_path}", "ERROR")
+            await log_task(task_id, "（可能已被移动或删除，无法重试）", "WARN")
+            await finish_task(task_id, "error")
+            return
+
+        # 2. 构造 task —— 优先用历史记录里的快照，回退到配置匹配
+        if history.rule_id and history.target_dir:
+            # 新数据：直接用历史记录保存的配置快照
+            task = {
+                "rule_id": history.rule_id,
+                "source_dir": history.source_dir or os.path.dirname(source_path),
+                "target_dir": history.target_dir,
+                "action_type": action_type,
+                "overwrite_mode": history.overwrite_mode if history.overwrite_mode is not None else False,
+                "check_emby_exists": history.check_emby_exists if history.check_emby_exists is not None else False,
+                "calculate_hash": history.calculate_hash if history.calculate_hash is not None else False,
+                "clean_empty_dir": history.clean_empty_dir if history.clean_empty_dir is not None else False,
+                "trigger_strm": history.trigger_strm if history.trigger_strm is not None else False,
+                "ignore_history": True,
+                "name": f"重试整理 (历史#{history_id})"
+            }
+            await log_task(task_id, f"📋 使用历史快照配置 | 规则: {history.rule_id} | 目标: {history.target_dir} | 操作: {action_type}")
+        else:
+            # 旧数据：回退到 organize_tasks 配置匹配
+            matched_task = _match_task_from_config(source_path)
+            if not matched_task:
+                await log_task(task_id, "❌ 未找到源路径所属的整理任务配置", "ERROR")
+                await log_task(task_id, "（请在「整理任务」中配置包含此源路径的任务后重试）", "WARN")
+                await finish_task(task_id, "error")
+                return
+            task = copy.deepcopy(matched_task)
+            task["ignore_history"] = True
+            if action_type:
+                task["action_type"] = action_type
+            await log_task(task_id, f"📋 使用任务配置(回退匹配): {matched_task.get('name', '未命名')} | 操作: {action_type}")
+
+        # 3. 加载上下文并执行
+        context = FileProcessor.load_context(task)
+        if not context["rule"]:
+            await log_task(task_id, f"❌ 重命名规则未找到: {task.get('rule_id')}", "ERROR")
+            await finish_task(task_id, "error")
+            return
+
+        context["dir_cache"] = set()
+
+        results = await FileProcessor.organize_video_file(
+            source_path, task, context, dry_run=False, task_id=task_id
+        )
+
+        # 4. 汇总结果
+        success_count = 0
+        skip_count = 0
+        error_count = 0
+        for r in results:
+            status = r.get("status")
+            rtype = r.get("type")
+            if status == "success":
+                success_count += 1
+            elif rtype == "skip" or status in ("skip", "skipped"):
+                skip_count += 1
+                await log_task(task_id, f"⏭️ 跳过: {r.get('reason', '未知原因')}", "WARN")
+            elif status == "error":
+                error_count += 1
+                await log_task(task_id, f"❌ 失败: {r.get('msg', '未知错误')}", "ERROR")
+
+        if error_count > 0 and success_count == 0:
+            await finish_task(task_id, "error")
+        elif success_count > 0:
+            await log_task(task_id, f"✅ 重试完成: 成功 {success_count} 项，跳过 {skip_count} 项")
+            await finish_task(task_id, "completed")
+        else:
+            await finish_task(task_id, "skipped")
+
+    except Exception as e:
+        logger.error(f"重试整理历史 {history_id} 时异常: {str(e)}", exc_info=True)
+        try:
+            await log_task(task_id, f"❌ 异常: {str(e)}", "ERROR")
+            await finish_task(task_id, "error")
+        except Exception:
+            pass
+
+
+@router.post("/api/organize/history/{history_id}/retry", summary="重试单条整理历史")
+async def retry_organize_history(history_id: int):
+    """
+    根据历史记录重新执行识别+整理流程。
+    优先使用历史记录中保存的任务配置快照（rule_id/target_dir 等），
+    若为旧数据则回退到 organize_tasks 配置的 source_dir 前缀匹配。
+    始终绕过历史去重检查。
+    任务匹配与执行均在后台 _retry_history_runner 中完成，匹配失败会在任务历史日志中显示。
+    """
+    from database import db
+    from models import OrganizeHistory
+    import os
+
+    try:
+        async with db.session_scope():
+            history = await db.get(OrganizeHistory, history_id)
+            if not history:
+                raise HTTPException(status_code=404, detail="记录不存在")
+            source_path = history.source_path
+            action_type = history.action_type or "move"
+            title_hint = history.title or history.filename
+
+        # 预检查：源文件必须存在（立即失败的场景）
+        if not os.path.exists(source_path):
+            return {
+                "success": False,
+                "message": f"源文件不存在: {source_path}（可能已被移动或删除）"
+            }
+
+        # 启动后台任务，任务配置匹配与执行统一在 runner 中完成
+        task_id = f"retry_{uuid.uuid4().hex[:12]}"
+        asyncio.create_task(_retry_history_runner(history_id, task_id))
+
+        logger.debug(f"启动重试任务: history_id={history_id}, task_id={task_id}")
+        return {
+            "success": True,
+            "task_id": task_id,
+            "message": f"重试已启动: {title_hint}（操作方式: {action_type}）"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"启动重试任务失败: {str(e)}", exc_info=True)
+        return {"success": False, "message": str(e)}
 
 
 

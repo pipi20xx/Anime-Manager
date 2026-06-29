@@ -18,7 +18,8 @@ import {
   FilterListOutlined as FilterIcon,
   RefreshOutlined as RefreshIcon,
   KeyboardDoubleArrowDownOutlined as MoreArrowIcon,
-  CleaningServicesOutlined as ClearIcon
+  CleaningServicesOutlined as ClearIcon,
+  ReplayOutlined as RetryIcon
 } from '@vicons/material'
 import AppSearchField from '../../components/AppSearchField.vue'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
@@ -34,6 +35,8 @@ const {
   fetchData,
   loadMore,
   deleteItem,
+  retryItem,
+  isRetrying,
   clearAll,
   getActionLabel,
   formatTime
@@ -198,25 +201,48 @@ const handleAction = (key: string) => {
              <div class="footer-time">{{ formatTime(item.processed_at) }}</div>
              <div v-if="item.tmdb_id" class="footer-tmdb">TMDB: {{ item.tmdb_id }}</div>
            </div>
-           <n-popconfirm 
-              @positive-click="deleteItem(item.id, shouldDeleteFile); shouldDeleteFile = false" 
-              @negative-click="shouldDeleteFile = false"
-              positive-text="确定删除"
-              negative-text="取消"
-            >
-              <template #trigger>
-                <n-button v-bind="getButtonStyle('iconDanger')" size="tiny"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
-              </template>
-              <div style="max-width: 200px">
-                <p style="margin: 0 0 8px 0">确定要删除这条整理记录吗？</p>
-                <n-checkbox v-model:checked="shouldDeleteFile">
-                   <span style="color: var(--n-error-color); font-size: 12px">同时物理删除源文件</span>
-                </n-checkbox>
-                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
-                   警告：这将尝试永久删除原始源路径下的文件。
+           <div class="footer-actions">
+             <n-popconfirm
+                @positive-click="retryItem(item.id)"
+                positive-text="确定重试"
+                negative-text="取消"
+              >
+                <template #trigger>
+                  <n-button
+                    v-bind="getButtonStyle('iconPrimary')"
+                    size="tiny"
+                    :loading="isRetrying(item.id)"
+                    :disabled="isRetrying(item.id)"
+                    style="margin-right: 4px"
+                  ><template #icon><n-icon><RetryIcon/></n-icon></template></n-button>
+                </template>
+                <div style="max-width: 200px">
+                  <p style="margin: 0 0 4px 0">重新执行识别与整理？</p>
+                  <p style="margin: 0; font-size: 11px; color: var(--text-tertiary); line-height: 1.2;">
+                    将绕过历史去重，进度可在「任务历史」查看。
+                  </p>
                 </div>
-              </div>
-           </n-popconfirm>
+             </n-popconfirm>
+             <n-popconfirm
+                @positive-click="deleteItem(item.id, shouldDeleteFile); shouldDeleteFile = false"
+                @negative-click="shouldDeleteFile = false"
+                positive-text="确定删除"
+                negative-text="取消"
+              >
+                <template #trigger>
+                  <n-button v-bind="getButtonStyle('iconDanger')" size="tiny"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                </template>
+                <div style="max-width: 200px">
+                  <p style="margin: 0 0 8px 0">确定要删除这条整理记录吗？</p>
+                  <n-checkbox v-model:checked="shouldDeleteFile">
+                     <span style="color: var(--n-error-color); font-size: 12px">同时物理删除源文件</span>
+                  </n-checkbox>
+                  <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
+                     警告：这将尝试永久删除原始源路径下的文件。
+                  </div>
+                </div>
+             </n-popconfirm>
+           </div>
         </div>
       </div>
 
@@ -336,6 +362,7 @@ const handleAction = (key: string) => {
 
 .card-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--border-light); padding-top: 8px; }
 .footer-left { display: flex; flex-direction: column; gap: 2px; }
+.footer-actions { display: flex; align-items: center; }
 .footer-time { font-size: 11px; color: var(--text-muted); }
 .footer-tmdb { font-size: 10px; color: var(--text-hint); font-family: monospace; }
 
