@@ -64,8 +64,13 @@ class ParserStage:
 
             # 3. 应用探测结果
             if found_id:
-                ctx.kwargs["forced_tmdb_id"] = found_id
-                ctx.log(f"┣ [路径锁定] 🔐 锁定 ID: {found_id}")
+                existing = ctx.kwargs.get("forced_tmdb_id")
+                if existing:
+                    # [Guard] 用户手动设置的强制元数据优先，路径锁定不覆盖
+                    ctx.log(f"┣ [路径锁定] ⏭️ 路径检测到 ID: {found_id}，但已有强制元数据 {existing}，保留用户设置")
+                else:
+                    ctx.kwargs["forced_tmdb_id"] = found_id
+                    ctx.log(f"┣ [路径锁定] 🔐 锁定 ID: {found_id}")
                 has_id_lock = True
                 
             if found_season:

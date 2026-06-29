@@ -171,18 +171,34 @@ class MatcherStage:
             # 2.1 强制 TMDB ID 锁定模式
             if meta.forced_tmdbid:
                 if meta.type == MediaType.AUTO:
-                    ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid} (类型: AUTO)，尝试 TV 和 Movie...")
+                    ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid} (类型: AUTO)，优先查询数据中心...")
+                    # [Optimization] 优先查数据中心，命中完整档案则跳过云端请求
                     for try_type in ["tv", "movie"]:
-                        details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, try_type, ctx.logs)
-                        if details:
-                            ctx.tmdb_data = details
-                            ctx.log(f"[匹配] ✅ 类型自动判定为: {try_type.upper()}")
+                        archive = await ctx.full_db.get_deep_meta(meta.forced_tmdbid, try_type)
+                        if archive and archive.get("genre_ids"):
+                            ctx.tmdb_data = {**archive, "id": str(meta.forced_tmdbid), "type": try_type}
+                            ctx.log(f"[匹配] ✅ 数据中心已有完整档案，类型自动判定为: {try_type.upper()}")
                             break
+                    # 数据中心未命中完整档案，回退到云端
+                    if not ctx.tmdb_data:
+                        ctx.log(f"[匹配] ☁️ 数据中心无完整档案，启动云端获取...")
+                        for try_type in ["tv", "movie"]:
+                            details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, try_type, ctx.logs)
+                            if details:
+                                ctx.tmdb_data = details
+                                ctx.log(f"[匹配] ✅ 类型自动判定为: {try_type.upper()}")
+                                break
                 else:
                     m_type_str = "movie" if meta.type == MediaType.MOVIE else "tv"
-                    ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid}，正在联网获取...")
-                    details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, m_type_str, ctx.logs)
-                    if details: ctx.tmdb_data = details
+                    # [Optimization] 优先查数据中心，命中完整档案则跳过云端请求
+                    archive = await ctx.full_db.get_deep_meta(meta.forced_tmdbid, m_type_str)
+                    if archive and archive.get("genre_ids"):
+                        ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid}，数据中心已有完整档案，直接使用")
+                        ctx.tmdb_data = {**archive, "id": str(meta.forced_tmdbid), "type": m_type_str}
+                    else:
+                        ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid}，数据中心无完整档案，正在联网获取...")
+                        details = await ctx.tmdb_client.get_details(meta.forced_tmdbid, m_type_str, ctx.logs)
+                        if details: ctx.tmdb_data = details
 
             # 2.2 定义搜索策略
             async def search_offline(use_privileged: bool = False, title_index: int = 0):
