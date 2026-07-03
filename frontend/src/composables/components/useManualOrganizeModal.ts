@@ -21,6 +21,7 @@ export function useManualOrganizeModal(props: any, emit: any) {
     clean_empty_dir: false,
     check_emby_exists: false,
     calculate_hash: false,
+    series_fingerprint: true,
     forced_tmdb_id: '',
     forced_type: null,
     forced_season: null,

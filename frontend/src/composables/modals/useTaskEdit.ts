@@ -23,7 +23,8 @@ export function useTaskEdit(props: any, emit: any) {
     trigger_strm: false,
     ignore_history: false,
     check_emby_exists: false,
-    calculate_hash: false
+    calculate_hash: false,
+    series_fingerprint: true
   })
 
   const showPicker = ref(false)

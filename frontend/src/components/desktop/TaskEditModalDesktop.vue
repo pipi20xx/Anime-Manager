@@ -167,6 +167,11 @@ const {
                 </div>
               </n-space>
             </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.series_fingerprint" />
+              <span class="switch-row__label">智能记忆</span>
+              <span class="switch-row__desc">自动记住系列特征，后续文件实现秒级识别</span>
+            </div>
           </n-space>
         </n-tab-pane>
       </n-tabs>
