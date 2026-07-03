@@ -249,6 +249,31 @@ async def reset_feed_history(feed_id: int):
     await RssManager.reset_feed_history(feed_id)
     return {"success": True, "message": "已重置下载历史"}
 
+@router.post("/feeds/reset-history", summary="批量重置下载历史（按站点筛选）")
+async def reset_history_batch(feed_ids: str = ""):
+    """
+    批量清除 download_history 表记录。
+    - feed_ids 为空：清除全部下载记录
+    - feed_ids 逗号分隔的 id 列表：仅清除指定站点的记录
+    """
+    async with db.session_scope() as session:
+        if feed_ids and feed_ids.strip():
+            try:
+                ids = [int(i) for i in feed_ids.split(',') if i.strip()]
+                if ids:
+                    result = await session.execute(
+                        delete(DownloadHistory).where(DownloadHistory.feed_id.in_(ids))
+                    )
+                    await session.commit()
+                    return {"success": True, "message": f"已清除 {len(ids)} 个站点的下载记录", "count": result.rowcount}
+            except ValueError:
+                pass
+        # 清除全部
+        result = await session.execute(delete(DownloadHistory))
+        await session.commit()
+        return {"success": True, "message": "已清除全部下载记录", "count": result.rowcount}
+
+
 @router.post("/feeds/{feed_id}/retry", summary="重试源识别失败项")
 async def retry_feed_recognition(feed_id: int):
     """

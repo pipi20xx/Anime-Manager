@@ -11,7 +11,6 @@ import {
   DeleteOutlined as DeleteIcon,
   RssFeedOutlined as FeedIcon,
   DownloadOutlined as AutoIcon,
-  HistoryOutlined as ResetIcon,
   ContentCopyOutlined as CopyIcon,
   CloudSyncOutlined as SyncIcon
 } from '@vicons/material'
@@ -42,7 +41,6 @@ const {
   openEditFeed,
   saveFeed,
   deleteFeed,
-  resetFeedHistory,
   openAddRule,
   openEditRule,
   saveRule,
@@ -142,20 +140,6 @@ onMounted(fetchData)
                 
                 <div class="f-act" @click.stop>
                   <n-space :size="4">
-                    <n-popconfirm @positive-click="resetFeedHistory(feed.id)" positive-text="重置" negative-text="取消">
-                      <template #trigger>
-                        <n-tooltip trigger="hover">
-                          <template #trigger>
-                            <n-button v-bind="getButtonStyle('icon')" size="small">
-                              <template #icon><n-icon><ResetIcon/></n-icon></template>
-                            </n-button>
-                          </template>
-                          清除下载历史
-                        </n-tooltip>
-                      </template>
-                      确认清除该源的下载历史吗？
-                    </n-popconfirm>
-
                     <n-popconfirm @positive-click="deleteFeed(feed.id)" positive-text="删除" negative-text="取消">
                       <template #trigger>
                         <n-tooltip trigger="hover">

@@ -121,6 +121,28 @@ export function useAggregatedFeedItems(props: any) {
     }
   }
 
+  // 批量清除下载记录：根据当前筛选的站点，不筛选则清除全部
+  const handleClearHistory = async (): Promise<boolean> => {
+    try {
+      const qs = selectedFeedIds.value.length > 0
+        ? `?feed_ids=${selectedFeedIds.value.join(',')}`
+        : ''
+      const res = await fetch(`${API_BASE}/api/feeds/reset-history${qs}`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        message.success(data.message)
+        await fetchItems()
+        return true
+      } else {
+        message.error(data.message || '清除失败')
+        return false
+      }
+    } catch (e) {
+      message.error('清除请求失败')
+      return false
+    }
+  }
+
   return {
     loading,
     items,
@@ -136,6 +158,7 @@ export function useAggregatedFeedItems(props: any) {
     handlePageSizeChange,
     handleDownload,
     handleToggleHistory,
-    handleRetryRecognition
+    handleRetryRecognition,
+    handleClearHistory
   }
 }

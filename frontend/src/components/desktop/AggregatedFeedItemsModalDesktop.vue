@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue'
 import {
-  NModal, NDataTable, NTag, NButton, NSpace, NText, NSelect, NInput
+  NModal, NDataTable, NTag, NButton, NSpace, NText, NSelect, NInput, NPopconfirm
 } from 'naive-ui'
 import { useAggregatedFeedItems } from '../../composables/modals/useAggregatedFeedItems'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -29,7 +29,8 @@ const {
   handlePageSizeChange,
   handleDownload,
   handleToggleHistory,
-  handleRetryRecognition
+  handleRetryRecognition,
+  handleClearHistory
 } = useAggregatedFeedItems(props)
 
 const activeDropdownKey = ref<string | null>(null)
@@ -37,6 +38,13 @@ const activeDropdownKey = ref<string | null>(null)
 // 站点选项：使用用户备注名作为标签
 const feedOptions = computed(() => {
   return (props.feeds || []).map(f => ({ label: f.title || f.url, value: f.id }))
+})
+
+// 清除下载记录的确认文案：根据是否筛选站点动态变化
+const clearHistoryTip = computed(() => {
+  return selectedFeedIds.value.length > 0
+    ? `确认清除当前筛选的 ${selectedFeedIds.value.length} 个站点的下载记录吗？`
+    : '未筛选站点，将清除全部下载记录，确认吗？'
 })
 
 const toggleDropdown = (key: string) => {
@@ -378,6 +386,12 @@ const columns = [
           共 {{ total }} 条记录
         </div>
         <n-space>
+          <n-popconfirm @positive-click="handleClearHistory" positive-text="确认清除" negative-text="取消">
+            <template #trigger>
+              <n-button v-bind="getButtonStyle('text')" size="medium" style="color: var(--n-error-color); height: 34px">清除下载记录</n-button>
+            </template>
+            {{ clearHistoryTip }}
+          </n-popconfirm>
           <n-button v-bind="getButtonStyle('secondary')" @click="handleRetryRecognition" :loading="loading">
             重试识别失败项
           </n-button>
