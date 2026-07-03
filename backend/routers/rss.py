@@ -365,6 +365,76 @@ async def delete_rule(rule_id: int):
     await RssManager.delete_rule(rule_id)
     return {"success": True}
 
+@router.get("/rules/history/all", summary="聚合获取所有规则推送历史")
+async def get_all_rule_history(
+    limit: int = 50,
+    offset: int = 0,
+    rule_ids: str = "",
+    keyword: str = ""
+):
+    """
+    跨规则聚合查询推送历史，支持按 rule_ids 列表筛选、标题关键词搜索。
+    返回 {items: [...], total: N} 结构。
+    每条记录附加 rule_name（规则名称）与 link（资源链接，从 FeedItem 关联）。
+    """
+    from sqlalchemy import func
+
+    async with db.session_scope():
+        # 1. 构建 rule_id -> name 映射
+        rules = await db.all(Rule)
+        rule_map = {r.id: r.name for r in rules}
+
+        # 2. 构建查询
+        stmt = select(DownloadHistory)
+
+        # 按 rule_ids 过滤
+        if rule_ids and rule_ids.strip():
+            try:
+                ids = [int(i) for i in rule_ids.split(',') if i.strip()]
+                if ids:
+                    stmt = stmt.where(DownloadHistory.rule_id.in_(ids))
+            except ValueError:
+                pass
+
+        # 按关键词过滤（标题、描述）
+        if keyword and keyword.strip():
+            kw = f"%{keyword.strip()}%"
+            stmt = stmt.where(or_(
+                DownloadHistory.title.ilike(kw),
+                DownloadHistory.description.ilike(kw)
+            ))
+
+        # 2.1 先查总数
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_result = await db.session.execute(count_stmt)
+        total = total_result.scalar() or 0
+
+        # 2.2 再查分页数据
+        stmt = stmt.order_by(DownloadHistory.created_at.desc()).offset(offset).limit(limit)
+        history_list = await db.all(DownloadHistory, stmt)
+
+        if not history_list:
+            return {"items": [], "total": total}
+
+        # 3. 批量关联 FeedItem 获取 link
+        guids = [h.guid for h in history_list]
+        item_map = {}
+        if guids:
+            item_stmt = select(FeedItem).where(FeedItem.guid.in_(guids))
+            items = await db.all(FeedItem, item_stmt)
+            for item in items:
+                item_map[item.guid] = item.link
+
+        # 4. 构建响应
+        result = []
+        for h in history_list:
+            data = h.model_dump(mode='json')
+            data['rule_name'] = rule_map.get(h.rule_id, f"Rule #{h.rule_id}") if h.rule_id else "手动记录"
+            data['link'] = item_map.get(h.guid)
+            result.append(data)
+
+        return {"items": result, "total": total}
+
 # --- Actions & History ---
 @router.post("/rss/run", summary="手动执行 RSS 刷新")
 async def run_rss_now():

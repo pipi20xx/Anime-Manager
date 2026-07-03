@@ -19,8 +19,8 @@ import {
 import FeedEditModal from '../../components/FeedEditModal.vue'
 import RssRuleModal from '../../components/RssRuleModal.vue'
 import AggregatedFeedItemsModalDesktop from '../../components/desktop/AggregatedFeedItemsModalDesktop.vue'
+import AggregatedRuleHistoryModalDesktop from '../../components/desktop/AggregatedRuleHistoryModalDesktop.vue'
 import RulePreviewModal from '../../components/RulePreviewModal.vue'
-import RuleHistoryModal from '../../components/RuleHistoryModal.vue'
 import SubscriptionManager from '../../components/SubscriptionManager.vue'
 import { useSubscriptionView } from '../../composables/views/useSubscriptionView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -34,7 +34,6 @@ const {
   showFeedModal,
   showRuleModal,
   showPreviewModal,
-  showHistoryModal,
   currentItem,
   previewRuleData,
   isNew,
@@ -43,7 +42,6 @@ const {
   openEditFeed,
   saveFeed,
   deleteFeed,
-  openViewHistory,
   resetFeedHistory,
   openAddRule,
   openEditRule,
@@ -60,6 +58,8 @@ const {
 
 // 聚合订阅源详情弹窗（本地状态，无需侵入 composable）
 const showAggregatedModal = ref(false)
+// 聚合下载记录弹窗
+const showRuleHistoryModal = ref(false)
 
 onMounted(fetchData)
 </script>
@@ -190,9 +190,14 @@ onMounted(fetchData)
             </div>
           </template>
           <template #header-extra>
-            <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAddRule">
-              创建新规则
-            </n-button>
+            <n-space :size="8">
+              <n-button v-bind="getButtonStyle('primary')" size="small" @click="showRuleHistoryModal = true">
+                下载记录
+              </n-button>
+              <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAddRule">
+                创建新规则
+              </n-button>
+            </n-space>
           </template>
 
           <n-data-table 
@@ -220,13 +225,6 @@ onMounted(fetchData)
                         icon: () => h(NIcon, null, { default: () => h(EditIcon) }) 
                       }),
                       default: () => '编辑规则'
-                    }),
-                    // 记录
-                    h(NTooltip, { trigger: 'hover' }, {
-                      trigger: () => h(NButton, { ...getButtonStyle('iconPrimary'), onClick: ()=>openViewHistory(r) }, { 
-                        icon: () => h(NIcon, null, { default: () => h(ResetIcon) })
-                      }),
-                      default: () => '推送历史'
                     }),
                     // 删除
                     h(NPopconfirm, { 
@@ -275,15 +273,15 @@ onMounted(fetchData)
       :clients="clients"
     />
 
-    <RulePreviewModal
-      v-model:show="showPreviewModal"
-      :rule-data="previewRuleData"
+    <AggregatedRuleHistoryModalDesktop
+      v-model:show="showRuleHistoryModal"
+      :rules="rules"
       :clients="clients"
     />
 
-    <RuleHistoryModal
-      v-model:show="showHistoryModal"
-      :rule="currentItem"
+    <RulePreviewModal
+      v-model:show="showPreviewModal"
+      :rule-data="previewRuleData"
       :clients="clients"
     />
 
