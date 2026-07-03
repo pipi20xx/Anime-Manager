@@ -44,10 +44,40 @@ const episodeRange = computed(() => {
 
 const totalEpisodes = computed(() => episodeRange.value.length || 1)
 
+// 目标集数范围标签 (如 E1156-1181)
+const episodeRangeLabel = computed(() => {
+  const sub = props.sub
+  if (!sub || isMovie.value) return '电影'
+  const start = sub.start_episode || 1
+  const end = sub.end_episode && sub.end_episode > 0 ? sub.end_episode : 12
+  return `E${start}-${end}`
+})
+
+// 已推送的集数（仅统计目标范围内的去重集数，洗版重推不增加计数）
 const pushedEpisodes = computed(() => {
-  return episodes.value.filter((item, idx, arr) =>
-    arr.findIndex(e => e.season === item.season && e.episode === item.episode) === idx
-  )
+  const sub = props.sub
+  if (!sub) return []
+  if (isMovie.value) {
+    const seen = new Set()
+    return episodes.value.filter(e => {
+      const key = `${e.season}-${e.episode}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+  const season = sub.season || 1
+  const start = sub.start_episode || 1
+  const end = sub.end_episode && sub.end_episode > 0 ? sub.end_episode : 12
+  const seen = new Set()
+  return episodes.value
+    .filter(e => e.season === season && e.episode >= start && e.episode <= end)
+    .filter(e => {
+      const key = `${e.season}-${e.episode}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 })
 
 const pushedCount = computed(() => pushedEpisodes.value.length)
@@ -173,7 +203,7 @@ watch(() => props.show, (newVal) => {
             <template #icon><n-icon><BackIcon /></n-icon></template>
           </n-button>
           <div class="header-title">
-            <span>{{ selectedEpisode ? formatEpisode(selectedEpisode) + ' 推送记录' : '订阅详情' }}</span>
+            <span>{{ selectedEpisode ? formatEpisode(selectedEpisode) + ' 推送记录' : '订阅推送记录详情' }}</span>
           </div>
         </div>
         <n-button
@@ -227,11 +257,11 @@ watch(() => props.show, (newVal) => {
             <div class="stats-row">
               <div class="stat-card">
                 <div class="stat-label">已推送</div>
-                <div class="stat-value">{{ pushedCount }}</div>
+                <div class="stat-value">{{ pushedCount }}/{{ totalEpisodes }}</div>
               </div>
               <div class="stat-card">
-                <div class="stat-label">目标</div>
-                <div class="stat-value">{{ totalEpisodes }}</div>
+                <div class="stat-label">总集数</div>
+                <div class="stat-value stat-value-range">{{ episodeRangeLabel }}</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">完成度</div>
@@ -459,6 +489,11 @@ watch(() => props.show, (newVal) => {
   font-size: var(--m-text-md);
   font-weight: 700;
   color: var(--n-primary-color);
+}
+
+.stat-value-range {
+  font-size: var(--m-text-sm);
+  font-family: monospace;
 }
 
 .progress-bar {

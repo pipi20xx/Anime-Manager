@@ -151,7 +151,7 @@ const columns = [
         ...getButtonStyle('primary'),
         size: 'small',
         onClick: () => handleDelete(row)
-      }, { default: () => '清除记录' }))
+      }, { default: () => '清除下载记录' }))
 
       if (row.link) {
         const dropdownKey = `download-${row.guid}`
@@ -169,7 +169,7 @@ const columns = [
                 toggleDropdown(dropdownKey)
               }
             }, {
-              default: () => clientOptions.value.length === 0 ? '无下载器' : '再下载'
+              default: () => clientOptions.value.length === 0 ? '无下载器' : '手动下载'
             }),
             activeDropdownKey.value === dropdownKey ? h('div', {
               class: 'custom-dropdown-menu',

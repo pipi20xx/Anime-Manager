@@ -369,12 +369,12 @@ onMounted(() => {
 .detail-container { flex: 1; display: flex; flex-direction: column; }
 
 .header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 20px; width: 100%; }
-.main-poster { 
-  width: 130px; aspect-ratio: 3/4; 
-  border-radius: var(--card-border-radius, 6px); 
-  box-shadow: 0 8px 24px var(--shadow-heavy); 
-  border: 1px solid var(--app-border-light); 
-  overflow: hidden; background: var(--bg-primary); 
+.main-poster {
+  width: 260px; aspect-ratio: 3/4;
+  border-radius: var(--card-border-radius, 6px);
+  box-shadow: 0 8px 24px var(--shadow-heavy);
+  border: 1px solid var(--app-border-light);
+  overflow: hidden; background: var(--bg-primary);
 }
 .main-poster :deep(img) { width: 100%; height: 100%; object-fit: contain; }
 

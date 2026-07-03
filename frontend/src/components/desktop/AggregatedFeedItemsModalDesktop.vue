@@ -259,7 +259,7 @@ const columns = [
               toggleDropdown(dropdownKey)
             }
           }, {
-            default: () => clientOptions.value.length === 0 ? '无下载器' : '下载'
+            default: () => clientOptions.value.length === 0 ? '无下载器' : '手动下载'
           }),
           activeDropdownKey.value === dropdownKey ? h('div', {
             class: 'custom-dropdown-menu',

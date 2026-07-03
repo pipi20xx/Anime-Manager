@@ -43,11 +43,42 @@ const episodeRange = computed(() => {
 
 const totalEpisodes = computed(() => episodeRange.value.length || 1)
 
-// 已推送的集数（去重）
+// 目标集数范围标签 (如 E1156-1181)
+const episodeRangeLabel = computed(() => {
+  const sub = props.sub
+  if (!sub || isMovie.value) return '电影'
+  const start = sub.start_episode || 1
+  const end = sub.end_episode && sub.end_episode > 0 ? sub.end_episode : 12
+  return `E${start}-${end}`
+})
+
+// 已推送的集数（仅统计目标范围内的去重集数，洗版重推不增加计数）
 const pushedEpisodes = computed(() => {
-  return episodes.value.filter((item, idx, arr) =>
-    arr.findIndex(e => e.season === item.season && e.episode === item.episode) === idx
-  )
+  const sub = props.sub
+  if (!sub) return []
+  // 电影：直接去重返回
+  if (isMovie.value) {
+    const seen = new Set()
+    return episodes.value.filter(e => {
+      const key = `${e.season}-${e.episode}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
+  // 剧集：只统计目标集数范围内、同季的去重集数
+  const season = sub.season || 1
+  const start = sub.start_episode || 1
+  const end = sub.end_episode && sub.end_episode > 0 ? sub.end_episode : 12
+  const seen = new Set()
+  return episodes.value
+    .filter(e => e.season === season && e.episode >= start && e.episode <= end)
+    .filter(e => {
+      const key = `${e.season}-${e.episode}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 })
 
 const pushedCount = computed(() => pushedEpisodes.value.length)
@@ -69,6 +100,13 @@ const selectedRecords = computed(() => {
     e.season === selectedEpisode.value?.season &&
     e.episode === selectedEpisode.value?.episode
   ).sort((a, b) => new Date(b.download_at).getTime() - new Date(a.download_at).getTime())
+})
+
+// 全部推送记录（按推送时间倒序）
+const sortedEpisodes = computed(() => {
+  return [...episodes.value].sort((a, b) =>
+    new Date(b.download_at).getTime() - new Date(a.download_at).getTime()
+  )
 })
 
 const posterUrl = computed(() => {
@@ -164,7 +202,7 @@ watch(() => props.show, (newVal) => {
     style="width: 1100px; max-width: 98vw;"
     content-style="padding: 0;"
     :segmented="{ content: true, footer: 'soft' }"
-    :title="`订阅详情: ${sub?.title || ''}`"
+    :title="`订阅推送记录详情: ${sub?.title || ''}`"
   >
     <div class="detail-container">
       <n-spin :show="loading">
@@ -212,11 +250,11 @@ watch(() => props.show, (newVal) => {
             <div class="stats-row">
               <div class="stat-card">
                 <div class="stat-label">已推送</div>
-                <div class="stat-value">{{ pushedCount }}</div>
+                <div class="stat-value">{{ pushedCount }}/{{ totalEpisodes }}</div>
               </div>
               <div class="stat-card">
-                <div class="stat-label">目标集数</div>
-                <div class="stat-value">{{ totalEpisodes }}</div>
+                <div class="stat-label">总集数</div>
+                <div class="stat-value stat-value-range">{{ episodeRangeLabel }}</div>
               </div>
               <div class="stat-card">
                 <div class="stat-label">完成度</div>
@@ -312,9 +350,9 @@ watch(() => props.show, (newVal) => {
                 </div>
               </div>
               <div v-else>
-                <div v-if="episodes.length > 0">
+                <div v-if="sortedEpisodes.length > 0">
                   <div
-                    v-for="item in episodes"
+                    v-for="item in sortedEpisodes"
                     :key="`${item.season}-${item.episode}-${item.id || item.download_at}`"
                     class="record-item"
                   >
@@ -469,6 +507,11 @@ watch(() => props.show, (newVal) => {
   font-size: 22px;
   font-weight: 700;
   color: var(--n-primary-color);
+}
+
+.stat-value-range {
+  font-size: 18px;
+  font-family: monospace;
 }
 
 .progress-bar {

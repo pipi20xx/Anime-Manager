@@ -25,6 +25,7 @@ export function useTaskEdit(props: any, emit: any) {
     retry_failed: true,  // 默认重试失败的记录
     check_emby_exists: false,
     calculate_hash: false,
+    clean_empty_dir: false,
     series_fingerprint: true
   })
 
