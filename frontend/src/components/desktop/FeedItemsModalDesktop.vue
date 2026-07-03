@@ -213,13 +213,13 @@ const columns = [
   },
   { title: '发布时间', key: 'pub_date', width: 140, render(row: any) { return formatPubDate(row.pub_date) } },
   {
-    title: 'GUID 状态',
+    title: '下载状态',
     key: 'is_downloaded',
     width: 100,
     render(row: any) {
       return row.is_downloaded
-        ? h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '已推送' })
-        : h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#757575', borderRadius: '12px' } }, { default: () => '未推送' })
+        ? h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '已下载' })
+        : h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#757575', borderRadius: '12px' } }, { default: () => '未下载' })
     }
   },
   {

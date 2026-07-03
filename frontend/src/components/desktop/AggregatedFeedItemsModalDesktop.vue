@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue'
 import {
-  NModal, NDataTable, NTag, NButton, NSpace, NText, NSelect, NInput, NPopconfirm
+  NModal, NDataTable, NTag, NButton, NSpace, NText, NPopconfirm
 } from 'naive-ui'
 import { useAggregatedFeedItems } from '../../composables/modals/useAggregatedFeedItems'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import AppSearchField from '../AppSearchField.vue'
+import AppSelectField from '../AppSelectField.vue'
 
 const props = defineProps<{
   show: boolean
@@ -212,13 +214,13 @@ const columns = [
   },
   { title: '发布时间', key: 'pub_date', width: 140, render(row: any) { return formatPubDate(row.pub_date) } },
   {
-    title: 'GUID 状态',
+    title: '下载状态',
     key: 'is_downloaded',
     width: 100,
     render(row: any) {
       return row.is_downloaded
-        ? h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '已推送' })
-        : h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#757575', borderRadius: '12px' } }, { default: () => '未推送' })
+        ? h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' } }, { default: () => '已下载' })
+        : h(NTag, { size: 'small', round: true, bordered: false, style: { color: '#fff', backgroundColor: '#757575', borderRadius: '12px' } }, { default: () => '未下载' })
     }
   },
   {
@@ -347,23 +349,24 @@ const columns = [
     <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 20px;">
       <!-- 筛选工具栏 -->
       <div class="filter-bar">
-        <n-input
-          v-model:value="keyword"
+        <AppSearchField
+          :value="keyword"
           placeholder="搜索资源标题或识别名..."
-          clearable
           class="filter-item"
-          @update:value="applyFilter"
+          @update:value="val => keyword = val"
+          @search="applyFilter"
         />
-        <n-select
-          v-model:value="selectedFeedIds"
+        <AppSelectField
+          :value="selectedFeedIds"
+          label="筛选站点"
+          placeholder="筛选站点（可多选）"
+          :options="feedOptions"
           multiple
           filterable
           clearable
-          placeholder="筛选站点（可多选）"
-          :options="feedOptions"
-          max-tag-count="1"
+          :max-tag-count="'responsive'"
           class="filter-item"
-          @update:value="applyFilter"
+          @update:value="val => { selectedFeedIds = val; applyFilter() }"
         />
       </div>
 
@@ -412,8 +415,8 @@ const columns = [
 .filter-item {
   flex: 1;
 }
-.filter-item :deep(.n-input-wrapper) {
-  display: flex;
-  align-items: center;
+.filter-item :deep(.app-search-field),
+.filter-item :deep(.app-search-field__box) {
+  height: 100%;
 }
 </style>

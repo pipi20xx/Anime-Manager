@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
-import { 
-  NConfigProvider, 
-  NDialogProvider, 
-  NMessageProvider, 
+import {
+  NConfigProvider,
+  NDialogProvider,
+  NMessageProvider,
   NNotificationProvider,
   NGlobalStyle,
   darkTheme,
-  lightTheme
+  lightTheme,
+  zhCN,
+  dateZhCN
 } from 'naive-ui'
 
 import MainLayout from './layouts/MainLayout.vue'
@@ -26,7 +28,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <n-config-provider :theme="currentNaiveTheme" :theme-overrides="themeOverrides">
+  <n-config-provider :theme="currentNaiveTheme" :theme-overrides="themeOverrides" :locale="zhCN" :date-locale="dateZhCN">
     <n-global-style />
     <n-notification-provider>
       <n-dialog-provider>

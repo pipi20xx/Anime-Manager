@@ -216,7 +216,7 @@ watch(() => props.show, (newVal) => {
 
               <n-tag size="tiny" round :bordered="false"
                 :style="{ color: '#fff', background: item.is_downloaded ? '#2e7d32' : '#757575' }">
-                {{ item.is_downloaded ? '已推送' : '未推送' }}
+                {{ item.is_downloaded ? '已下载' : '未下载' }}
               </n-tag>
             </div>
 

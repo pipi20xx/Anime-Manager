@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue'
 import {
-  NModal, NDataTable, NTag, NButton, NSpace, NSelect, NInput
+  NModal, NDataTable, NTag, NButton, NSpace
 } from 'naive-ui'
 import { useAggregatedRuleHistory } from '../../composables/modals/useAggregatedRuleHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import AppSearchField from '../AppSearchField.vue'
+import AppSelectField from '../AppSelectField.vue'
 
 const props = defineProps<{
   show: boolean
@@ -264,23 +266,24 @@ const columns = [
     <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 20px;">
       <!-- 筛选工具栏 -->
       <div class="filter-bar">
-        <n-input
-          v-model:value="keyword"
+        <AppSearchField
+          :value="keyword"
           placeholder="搜索资源标题或描述..."
-          clearable
           class="filter-item"
-          @update:value="applyFilter"
+          @update:value="val => keyword = val"
+          @search="applyFilter"
         />
-        <n-select
-          v-model:value="selectedRuleIds"
+        <AppSelectField
+          :value="selectedRuleIds"
+          label="筛选规则"
+          placeholder="筛选规则（可多选）"
+          :options="ruleOptions"
           multiple
           filterable
           clearable
-          placeholder="筛选规则（可多选）"
-          :options="ruleOptions"
-          max-tag-count="1"
+          :max-tag-count="'responsive'"
           class="filter-item"
-          @update:value="applyFilter"
+          @update:value="val => { selectedRuleIds = val; applyFilter() }"
         />
       </div>
 
@@ -318,8 +321,8 @@ const columns = [
 .filter-item {
   flex: 1;
 }
-.filter-item :deep(.n-input-wrapper) {
-  display: flex;
-  align-items: center;
+.filter-item :deep(.app-search-field),
+.filter-item :deep(.app-search-field__box) {
+  height: 100%;
 }
 </style>
