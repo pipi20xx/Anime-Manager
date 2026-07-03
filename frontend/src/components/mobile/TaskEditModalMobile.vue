@@ -137,19 +137,19 @@ const {
               <span class="switch-row__desc">优先使用动漫专用识别策略，提高动漫识别准确率</span>
             </div>
             <div class="switch-row">
-              <n-switch v-model:value="form.overwrite_mode" />
+              <n-switch v-model:value="form.overwrite_mode" :disabled="form.action_type === 'hash_only'" />
               <span class="switch-row__label">覆盖模式</span>
-              <span class="switch-row__desc">目标路径已存在文件时允许覆盖</span>
+              <span class="switch-row__desc">目标路径已存在文件时允许覆盖<span v-if="form.action_type === 'hash_only'" class="inactive-hint">（仅记录哈希模式下无效）</span></span>
             </div>
             <div class="switch-row">
-              <n-switch v-model:value="form.trigger_strm" />
+              <n-switch v-model:value="form.trigger_strm" :disabled="form.action_type === 'hash_only'" />
               <span class="switch-row__label">联动 STRM</span>
-              <span class="switch-row__desc">整理完成后自动生成/更新 STRM 文件</span>
+              <span class="switch-row__desc">整理完成后自动生成/更新 STRM 文件<span v-if="form.action_type === 'hash_only'" class="inactive-hint">（仅记录哈希模式下无效）</span></span>
             </div>
             <div class="switch-row">
-              <n-switch v-model:value="form.clean_empty_dir" />
+              <n-switch v-model:value="form.clean_empty_dir" :disabled="form.action_type === 'hash_only'" />
               <span class="switch-row__label">清理空目录</span>
-              <span class="switch-row__desc">整理后删除源目录中的空文件夹</span>
+              <span class="switch-row__desc">整理后删除源目录中的空文件夹<span v-if="form.action_type === 'hash_only'" class="inactive-hint">（仅记录哈希模式下无效）</span></span>
             </div>
             <div class="switch-row">
               <n-switch v-model:value="form.ignore_history" />
@@ -162,18 +162,18 @@ const {
               <span class="switch-row__desc">重新尝试之前识别失败的文件（TMDB 数据可能已更新）</span>
             </div>
             <div class="switch-row">
-              <n-switch v-model:value="form.check_emby_exists" />
+              <n-switch v-model:value="form.check_emby_exists" :disabled="form.action_type === 'hash_only'" />
               <span class="switch-row__label">Emby 检查</span>
-              <span class="switch-row__desc">检测 Emby 库是否存在，存在则跳过处理</span>
+              <span class="switch-row__desc">检测 Emby 库是否存在，存在则跳过处理<span v-if="form.action_type === 'hash_only'" class="inactive-hint">（仅记录哈希模式下无效）</span></span>
             </div>
             <div class="switch-row" style="align-items: flex-start;">
-              <n-switch v-model:value="form.calculate_hash" />
+              <n-switch v-model:value="form.calculate_hash" :disabled="form.action_type === 'hash_only'" />
               <n-space vertical :size="4">
                 <div class="switch-row">
                   <span class="switch-row__label">哈希计算</span>
-                  <span class="switch-row__desc">整理时计算 SHA1 和 ED2K 哈希值并记录</span>
+                  <span class="switch-row__desc">整理时计算 SHA1 和 ED2K 哈希值并记录<span v-if="form.action_type === 'hash_only'" class="inactive-hint">（仅记录哈希模式下强制启用）</span></span>
                 </div>
-                <div style="font-size: var(--m-text-xs); color: var(--color-error); padding: var(--m-spacing-xs) var(--m-spacing-sm); background: var(--color-error-bg); border-radius: var(--m-radius-sm);">
+                <div v-if="form.action_type !== 'hash_only'" style="font-size: var(--m-text-xs); color: var(--color-error); padding: var(--m-spacing-xs) var(--m-spacing-sm); background: var(--color-error-bg); border-radius: var(--m-radius-sm);">
                   ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
                 </div>
               </n-space>
@@ -236,5 +236,9 @@ const {
 .switch-row__desc {
   font-size: var(--m-text-xs);
   color: var(--text-tertiary);
+}
+.inactive-hint {
+  color: var(--text-disabled);
+  font-style: italic;
 }
 </style>

@@ -104,26 +104,29 @@ const {
                  <n-dynamic-tags v-model:value="manualTask.ignore_file_regex" />
                  <div class="checkbox-grid">
                     <n-checkbox v-model:checked="manualTask.anime_priority">动漫优化</n-checkbox>
-                    <n-checkbox v-model:checked="manualTask.overwrite_mode">覆盖模式</n-checkbox>
-                    <n-checkbox v-model:checked="manualTask.trigger_strm">联动STRM</n-checkbox>
-                    <n-checkbox v-model:checked="manualTask.clean_empty_dir">清理空目录</n-checkbox>
+                    <n-checkbox v-model:checked="manualTask.overwrite_mode" :disabled="manualTask.action_type === 'hash_only'">覆盖模式</n-checkbox>
+                    <n-checkbox v-model:checked="manualTask.trigger_strm" :disabled="manualTask.action_type === 'hash_only'">联动STRM</n-checkbox>
+                    <n-checkbox v-model:checked="manualTask.clean_empty_dir" :disabled="manualTask.action_type === 'hash_only'">清理空目录</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.ignore_history">忽略历史</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.retry_failed">重试失败</n-checkbox>
+                 </div>
+                 <div v-if="manualTask.action_type === 'hash_only'" class="inactive-notice">
+                    覆盖/联动STRM/清理空目录 在「仅记录哈希」模式下无效
                  </div>
                  
                  <div class="switch-section">
                     <div class="switch-item">
                        <span class="switch-label">Emby 检查</span>
-                       <n-switch v-model:value="manualTask.check_emby_exists" size="small" />
+                       <n-switch v-model:value="manualTask.check_emby_exists" size="small" :disabled="manualTask.action_type === 'hash_only'" />
                     </div>
-                    <div class="switch-desc">检测 Emby 库是否存在，存在则跳过处理</div>
+                    <div class="switch-desc">检测 Emby 库是否存在，存在则跳过处理<span v-if="manualTask.action_type === 'hash_only'" class="inactive-hint">（无效）</span></div>
                     
                     <div class="switch-item">
                        <span class="switch-label">哈希计算</span>
-                       <n-switch v-model:value="manualTask.calculate_hash" size="small" />
+                       <n-switch v-model:value="manualTask.calculate_hash" size="small" :disabled="manualTask.action_type === 'hash_only'" />
                     </div>
-                    <div class="switch-desc">整理时计算 SHA1 和 ED2K 哈希值并记录</div>
-                    <div class="switch-warning">⚠️ 需要读取整个文件，云盘环境不建议开启</div>
+                    <div class="switch-desc">整理时计算 SHA1 和 ED2K 哈希值并记录<span v-if="manualTask.action_type === 'hash_only'" class="inactive-hint">（强制启用）</span></div>
+                    <div v-if="manualTask.action_type !== 'hash_only'" class="switch-warning">⚠️ 需要读取整个文件，云盘环境不建议开启</div>
                  </div>
               </n-space>
            </n-collapse-item>
@@ -223,5 +226,19 @@ const {
   background: var(--color-error-bg);
   border-radius: 4px;
   margin-top: 4px;
+}
+
+.inactive-notice {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 6px 8px;
+  background: var(--app-surface-inner);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.inactive-hint {
+  color: var(--text-disabled);
+  font-style: italic;
 }
 </style>
