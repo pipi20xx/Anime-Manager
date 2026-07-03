@@ -97,7 +97,7 @@ class ParserStage:
         p_anime = "ON" if ctx.anime_priority else "OFF"
         p_batch = "ON" if ctx.batch_enhance else "OFF"
         p_fp = "ON" if ctx.use_fingerprint else "OFF"
-        p_off = "Local-First" if ctx.offline_priority else "Cloud-First"
+        p_off = "本地优先" if ctx.offline_priority else "云端优先"
         p_bgm = "ON" if ctx.bangumi_priority else "OFF"
         p_failover = "ON" if ctx.bangumi_failover else "OFF"
         p_force_file = "ON" if is_force_file else "OFF"
@@ -110,7 +110,7 @@ class ParserStage:
 
         ctx.log(f"🚀 --- [ANIME 深度审计流水线启动] ---")
         ctx.log(f"┃ [待处理条目]: {ctx.filename}")
-        ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 记忆[{p_fp}] | 搜索顺序[{p_off}] | BGM优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
+        ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 智能记忆[{p_fp}] | 搜索顺序[{p_off}] | BGM数据源优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
 
         # 1. 检查系列指纹 (Pre-match Acceleration)
         # 只有在启用指纹且当前还未获取到数据时执行
