@@ -22,7 +22,7 @@ import {
 import { pendingSubscription } from '../../store/navigationStore'
 import SubscriptionEditModal from './SubscriptionEditModalMobile.vue'
 import JackettFillModal from './JackettFillModalMobile.vue'
-import SubscriptionHistoryModal from '../SubscriptionHistoryModal.vue'
+import SubscriptionDetailModal from '../SubscriptionDetailModal.vue'
 import SubscriptionTemplateModal from '../SubscriptionTemplateModal.vue'
 import BangumiQuickSubscribeModal from '../BangumiQuickSubscribeModal.vue'
 import PriorityRuleModal from '../PriorityRuleModal.vue'
@@ -380,7 +380,7 @@ onMounted(() => {
     <RssDetectManagerMobile v-model:show="showRssDetectManager" @finish="fetchSubscriptions" />
     <SubscriptionEditModal v-model:show="showEditModal" :sub-data="currentSub" :is-new="isNew" :clients="clients" @save="saveSubscription" />
     <JackettFillModal v-model:show="showFillModal" :sub-id="currentSub?.id" :sub-title="currentSub?.title" :api-base="API_BASE" @finish="fetchSubscriptions" />
-    <SubscriptionHistoryModal v-model:show="showHistoryModal" :sub="currentSub" :api-base="API_BASE" />
+    <SubscriptionDetailModal v-model:show="showHistoryModal" :sub="currentSub" :api-base="API_BASE" />
   </div>
 </template>
 

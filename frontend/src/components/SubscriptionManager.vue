@@ -23,7 +23,7 @@ import { getButtonStyle } from '../composables/useButtonStyles'
 import { pendingSubscription } from '../store/navigationStore'
 import SubscriptionEditModal from './SubscriptionEditModal.vue'
 import JackettFillModal from './JackettFillModal.vue'
-import SubscriptionHistoryModal from './SubscriptionHistoryModal.vue'
+import SubscriptionDetailModal from './SubscriptionDetailModal.vue'
 import SubscriptionTemplateModal from './SubscriptionTemplateModal.vue'
 import BangumiQuickSubscribeModal from './BangumiQuickSubscribeModal.vue'
 import PriorityRuleModal from './PriorityRuleModal.vue'
@@ -387,7 +387,7 @@ onMounted(() => {
       @finish="fetchSubscriptions"
     />
 
-    <SubscriptionHistoryModal
+    <SubscriptionDetailModal
       v-model:show="showHistoryModal"
       :sub="currentSub"
       :api-base="API_BASE"
