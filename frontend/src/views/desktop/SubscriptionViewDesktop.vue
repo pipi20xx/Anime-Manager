@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, h } from 'vue'
+import { onMounted, h, ref } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NDataTable, 
   NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip
@@ -11,7 +11,6 @@ import {
   DeleteOutlined as DeleteIcon,
   RssFeedOutlined as FeedIcon,
   DownloadOutlined as AutoIcon,
-  ListAltOutlined as ListIcon,
   HistoryOutlined as ResetIcon,
   ContentCopyOutlined as CopyIcon,
   CloudSyncOutlined as SyncIcon
@@ -19,7 +18,7 @@ import {
 
 import FeedEditModal from '../../components/FeedEditModal.vue'
 import RssRuleModal from '../../components/RssRuleModal.vue'
-import FeedItemsModal from '../../components/FeedItemsModal.vue'
+import AggregatedFeedItemsModalDesktop from '../../components/desktop/AggregatedFeedItemsModalDesktop.vue'
 import RulePreviewModal from '../../components/RulePreviewModal.vue'
 import RuleHistoryModal from '../../components/RuleHistoryModal.vue'
 import SubscriptionManager from '../../components/SubscriptionManager.vue'
@@ -34,7 +33,6 @@ const {
   syncing,
   showFeedModal,
   showRuleModal,
-  showItemsModal,
   showPreviewModal,
   showHistoryModal,
   currentItem,
@@ -45,7 +43,6 @@ const {
   openEditFeed,
   saveFeed,
   deleteFeed,
-  openViewItems,
   openViewHistory,
   resetFeedHistory,
   openAddRule,
@@ -60,6 +57,9 @@ const {
   clearBlacklist,
   syncJackettFeeds
 } = useSubscriptionView()
+
+// 聚合订阅源详情弹窗（本地状态，无需侵入 composable）
+const showAggregatedModal = ref(false)
 
 onMounted(fetchData)
 </script>
@@ -115,6 +115,9 @@ onMounted(fetchData)
           </template>
           <template #header-extra>
             <n-space :size="8">
+              <n-button v-bind="getButtonStyle('primary')" size="small" @click="showAggregatedModal = true">
+                订阅源详情
+              </n-button>
               <n-button v-bind="getButtonStyle('secondary')" size="small" @click="syncJackettFeeds">
                 同步 Jackett 源
               </n-button>
@@ -139,15 +142,6 @@ onMounted(fetchData)
                 
                 <div class="f-act" @click.stop>
                   <n-space :size="4">
-                    <n-tooltip trigger="hover">
-                      <template #trigger>
-                        <n-button v-bind="getButtonStyle('icon')" size="small" @click="openViewItems(feed)">
-                          <template #icon><n-icon><ListIcon/></n-icon></template>
-                        </n-button>
-                      </template>
-                      查看订阅源详情
-                    </n-tooltip>
-
                     <n-popconfirm @positive-click="resetFeedHistory(feed.id)" positive-text="重置" negative-text="取消">
                       <template #trigger>
                         <n-tooltip trigger="hover">
@@ -275,9 +269,9 @@ onMounted(fetchData)
       @preview="handlePreviewRule"
     />
 
-    <FeedItemsModal
-      v-model:show="showItemsModal"
-      :feed="currentItem"
+    <AggregatedFeedItemsModalDesktop
+      v-model:show="showAggregatedModal"
+      :feeds="feeds"
       :clients="clients"
     />
 

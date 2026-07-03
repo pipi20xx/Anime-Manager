@@ -69,6 +69,103 @@ async def delete_feed(feed_id: int):
     await RssManager.delete_feed(feed_id)
     return {"success": True}
 
+@router.get("/feeds/items/all", summary="聚合获取所有源条目")
+async def get_all_feed_items(
+    limit: int = 100,
+    offset: int = 0,
+    feed_ids: str = "",
+    keyword: str = ""
+):
+    """
+    跨订阅源聚合查询条目，支持按 feed_ids 列表筛选与标题关键词搜索。
+    返回 {items: [...], total: N} 结构，total 为总数用于前端分页。
+    每条 item 额外附加 feed_name、is_downloaded、in_subscription、episode_collected。
+    """
+    async with db.session_scope():
+        # 1. 构建 feed_id -> name 映射
+        feeds = await db.all(Feed)
+        feed_map = {f.id: (f.title or f.url) for f in feeds}
+
+        # 2. 构建查询
+        stmt = select(FeedItem)
+
+        # 按 feed_ids 过滤
+        if feed_ids and feed_ids.strip():
+            try:
+                ids = [int(i) for i in feed_ids.split(',') if i.strip()]
+                if ids:
+                    stmt = stmt.where(FeedItem.feed_id.in_(ids))
+            except ValueError:
+                pass
+
+        # 按关键词过滤 (标题、tmdb_title)
+        if keyword and keyword.strip():
+            kw = f"%{keyword.strip()}%"
+            stmt = stmt.where(or_(
+                FeedItem.title.ilike(kw),
+                FeedItem.tmdb_title.ilike(kw)
+            ))
+
+        # 2.1 先查总数
+        from sqlalchemy import func
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_result = await db.session.execute(count_stmt)
+        total = total_result.scalar() or 0
+
+        # 2.2 再查分页数据
+        stmt = stmt.order_by(FeedItem.created_at.desc()).offset(offset).limit(limit)
+        items = await db.all(FeedItem, stmt)
+
+        if not items:
+            return {"items": [], "total": total}
+
+        # 3. 批量查询状态标记
+        tmdb_ids = {item.tmdb_id for item in items if item.tmdb_id}
+        guids = [item.guid for item in items]
+
+        sub_map = {}
+        collected_map = set()
+        downloaded_guids = set()
+
+        if guids:
+            hist_stmt = select(DownloadHistory).where(DownloadHistory.guid.in_(guids))
+            hist_items = await db.all(DownloadHistory, hist_stmt)
+            downloaded_guids = {h.guid for h in hist_items}
+
+        if tmdb_ids:
+            sub_stmt = select(Subscription).where(Subscription.tmdb_id.in_(tmdb_ids))
+            subs = await db.all(Subscription, sub_stmt)
+            sub_map = {s.tmdb_id: s for s in subs}
+
+            ep_stmt = select(SubscribedEpisode).where(SubscribedEpisode.tmdb_id.in_(tmdb_ids))
+            eps = await db.all(SubscribedEpisode, ep_stmt)
+            for ep in eps:
+                collected_map.add((ep.tmdb_id, ep.season, ep.episode))
+
+        # 4. 构建响应
+        result = []
+        for item in items:
+            data = item.model_dump(mode='json')
+            data['feed_name'] = feed_map.get(item.feed_id, f"Feed #{item.feed_id}")
+            data['is_downloaded'] = item.guid in downloaded_guids
+            data['in_subscription'] = item.tmdb_id in sub_map
+
+            is_collected = False
+            if item.tmdb_id:
+                try:
+                    ep_val = int(str(item.episode).split('-')[0]) if item.episode else 0
+                    season_val = item.season if item.season is not None else 1
+                    if item.media_type == 'movie':
+                        is_collected = (item.tmdb_id, 0, 0) in collected_map
+                    else:
+                        is_collected = (item.tmdb_id, season_val, ep_val) in collected_map
+                except:
+                    pass
+            data['episode_collected'] = is_collected
+            result.append(data)
+
+        return {"items": result, "total": total}
+
 @router.get("/feeds/{feed_id}/items", summary="获取源条目列表")
 async def get_feed_items(feed_id: int, limit: int = 50, offset: int = 0):
     """
