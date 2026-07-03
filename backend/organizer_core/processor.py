@@ -139,20 +139,31 @@ class FileProcessor:
             
         # [New] History Check
         ignore_history = task.get("ignore_history", False)
+        retry_failed = task.get("retry_failed", True)  # 默认重试失败项
         if not dry_run and not ignore_history:
             from database import db
             from models import OrganizeHistory
             async with db.session_scope():
+                # 构建状态过滤条件
+                skip_statuses = ["success", "skipped"]
+                if not retry_failed:
+                    skip_statuses.append("failed")  # 不重试失败项时，也跳过 failed
+                
                 stmt = select(OrganizeHistory).where(
                     and_(
                         OrganizeHistory.source_path == v_path,
-                        OrganizeHistory.status.in_(["success", "skipped"])
+                        OrganizeHistory.status.in_(skip_statuses)
                     )
                 )
                 existing = await db.first(OrganizeHistory, stmt)
                 if existing:
-                    await FileProcessor._log_detail(task_id, f"⏭️ 跳过（已整理过）: {os.path.basename(v_path)}")
-                    return [{"type": "skip", "skip_type": "history", "source": v_path, "reason": "已成功整理过或已跳过"}]
+                    status_desc = {
+                        "success": "已成功整理",
+                        "skipped": "已跳过",
+                        "failed": "之前识别失败"
+                    }.get(existing.status, existing.status)
+                    await FileProcessor._log_detail(task_id, f"⏭️ 跳过（{status_desc}）: {os.path.basename(v_path)}")
+                    return [{"type": "skip", "skip_type": "history", "source": v_path, "reason": f"{status_desc}，历史记录已存在"}]
 
         rule = context["rule"]
         if not rule: return [{"type": "error", "source": v_path, "message": "Rule not found"}]

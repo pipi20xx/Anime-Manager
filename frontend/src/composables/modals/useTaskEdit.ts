@@ -22,6 +22,7 @@ export function useTaskEdit(props: any, emit: any) {
     ignore_dir_regex: [],
     trigger_strm: false,
     ignore_history: false,
+    retry_failed: true,  // 默认重试失败的记录
     check_emby_exists: false,
     calculate_hash: false,
     series_fingerprint: true

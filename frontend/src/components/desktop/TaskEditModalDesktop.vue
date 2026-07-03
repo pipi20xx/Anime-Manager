@@ -148,7 +148,12 @@ const {
             <div class="switch-row">
               <n-switch v-model:value="form.ignore_history" />
               <span class="switch-row__label">忽略历史</span>
-              <span class="switch-row__desc">本次任务不参考历史匹配记录</span>
+              <span class="switch-row__desc">跳过已成功整理或已跳过的历史记录，不重新处理</span>
+            </div>
+            <div class="switch-row">
+              <n-switch v-model:value="form.retry_failed" />
+              <span class="switch-row__label">重试失败项</span>
+              <span class="switch-row__desc">重新尝试之前识别失败的文件（TMDB 数据可能已更新）</span>
             </div>
             <div class="switch-row">
               <n-switch v-model:value="form.check_emby_exists" />

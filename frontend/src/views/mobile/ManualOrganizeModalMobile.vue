@@ -108,6 +108,7 @@ const {
                     <n-checkbox v-model:checked="manualTask.trigger_strm">联动STRM</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.clean_empty_dir">清理空目录</n-checkbox>
                     <n-checkbox v-model:checked="manualTask.ignore_history">忽略历史</n-checkbox>
+                    <n-checkbox v-model:checked="manualTask.retry_failed">重试失败</n-checkbox>
                  </div>
                  
                  <div class="switch-section">

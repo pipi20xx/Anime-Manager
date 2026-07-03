@@ -25,7 +25,8 @@ export function useManualOrganizeModal(props: any, emit: any) {
     forced_tmdb_id: '',
     forced_type: null,
     forced_season: null,
-    ignore_history: true
+    ignore_history: true,
+    retry_failed: true  // 默认重试失败的记录
   })
 
   const manualSearch = reactive({ keyword: '', loading: false, results: [] as any[] })
