@@ -48,7 +48,7 @@ onMounted(fetchTasks)
     </div>
 
     <n-space vertical size="large">
-      <n-card bordered style="background: var(--app-surface-card)">
+      <n-card class="app-card-config">
         <template #header>
           <div class="card-title-box">
             <span class="card-title-text">STRM 任务管理</span>

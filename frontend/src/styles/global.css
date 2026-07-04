@@ -9,6 +9,19 @@
   --app-surface-inner: #1e1e2e;
   --app-border-light: rgba(255, 255, 255, 0.08);
   --app-border-medium: rgba(255, 255, 255, 0.15);
+
+  /* ========== 外观自定义基础变量 ========== */
+
+  /* 卡片边框相关 */
+  --app-border-hover: rgba(59, 130, 246, 0.5);
+  --card-border-radius: 8px;
+  --app-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  /* 外观自定义扩展变量(后期可配置) */
+  --app-card-bg-image: none;  /* 卡片背景图片 */
+  --app-card-bg-opacity: 1;   /* 卡片背景透明度 */
+  --app-card-border-style: solid;  /* 边框样式 */
+  --app-card-border-width: 1px;    /* 边框宽度 */
   
   /* 文本颜色变量 */
   --text-primary: #ffffff;
@@ -943,6 +956,93 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 .n-checkbox.n-checkbox--indeterminate .n-checkbox-box:hover {
   background-color: #2563EB !important;
   border-color: #2563EB !important;
+}
+
+/* ============================================
+ * 预设卡片样式类 - 支持外观自定义
+ * 用于统一管理页面、网格、配置项等不同场景的卡片样式
+ * ============================================ */
+
+/* 主容器卡片 - 用于页面主容器(任务中心、数据中心等) */
+.app-card-container {
+  background: var(--app-surface-card) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  transition: all var(--transition-normal) !important;
+}
+
+/* 网格展示卡片 - 用于任务网格、数据网格等(可交互) */
+.app-card-grid {
+  background: var(--app-surface-inner) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+  cursor: pointer !important;
+  transition: all var(--transition-normal) !important;
+}
+
+.app-card-grid:hover {
+  border-color: var(--app-border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* 配置项卡片 - 用于设置页面配置项 */
+.app-card-config {
+  background: var(--app-surface-card) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+  transition: all var(--transition-normal) !important;
+}
+
+/* 透明卡片 - 用于特殊展示 */
+.app-card-transparent {
+  background: transparent !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+}
+
+/* Guide卡片 - 用于帮助指南 */
+.app-card-guide {
+  background: var(--app-surface-card) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+}
+
+/* 数据维护卡片 - 用于数据清理等特殊卡片 */
+.app-card-maintenance {
+  background: var(--app-surface-card) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 140px !important;
+}
+
+/* 下载客户端卡片 - 用于下载器配置展示 */
+.app-card-client {
+  background: var(--app-surface-card) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border-radius: var(--card-border-radius) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 140px !important;
+  cursor: pointer !important;
+  transition: all var(--transition-normal) !important;
+}
+
+.app-card-client:hover {
+  border-color: var(--app-border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* 标签卡片 - 用于标签展示(如Bangumi详情中的标签) */
+.app-card-tag {
+  background: var(--app-surface-inner) !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 2px 8px !important;
 }
 
 

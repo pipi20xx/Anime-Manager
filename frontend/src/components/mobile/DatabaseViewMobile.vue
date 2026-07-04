@@ -77,15 +77,16 @@ const handleTableSelect = (tableName: string) => {
       <n-tab-pane name="lab" tab="SQL" style="padding: 12px; overflow-y: auto; box-sizing: border-box;">
         
         <!-- Table Selector Area -->
-        <div style="background: var(--app-surface-card); border: 1px solid var(--app-border-light); border-radius: var(--card-border-radius, 8px); padding: 12px; margin-bottom: 12px; box-sizing: border-box;">
+        <div class="app-card-container" style="padding: 12px; margin-bottom: 12px;">
           <div style="font-size: 12px; color: var(--n-text-color-3); margin-bottom: 8px; font-weight: bold; display: flex; justify-content: space-between;">
             <span>操作数据表</span>
             <span>共 {{ tableOptions.length }} 张表</span>
           </div>
           
-          <div 
+          <div
+            class="app-card-grid"
+            style="padding: 10px; border-radius: 4px;"
             @click="showTableDrawer = true"
-            style="background: var(--app-surface-inner); padding: 10px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; border: 1px solid var(--app-border-light);"
           >
             <span style="font-weight: bold; color: var(--n-primary-color);">
               {{ currentTable || '点击选择数据表...' }}
@@ -95,7 +96,7 @@ const handleTableSelect = (tableName: string) => {
         </div>
 
         <!-- Advanced SQL Area -->
-        <n-card size="small" :bordered="true" title="自定义 SQL" style="margin-bottom: 12px; background: var(--app-surface-inner); box-sizing: border-box;">
+        <n-card class="app-card-config" size="small" title="自定义 SQL" style="margin-bottom: 12px;">
             <template #header-extra>
                <n-button v-bind="getButtonStyle('secondary')" @click="showSql = !showSql" size="small">
                  {{ showSql ? '收起' : '展开编辑器' }}

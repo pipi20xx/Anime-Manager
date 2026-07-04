@@ -56,7 +56,7 @@ const {
         <!-- 基础配置 -->
         <n-tab-pane name="basic" tab="基础配置">
           <n-space vertical size="large">
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">TMDB 设置</span>
@@ -85,7 +85,7 @@ const {
               </n-form>
             </n-card>
 
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">Bangumi 设置</span>
@@ -101,7 +101,7 @@ const {
               </n-form>
             </n-card>
 
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">SYTMDB 设置</span>
@@ -126,7 +126,7 @@ const {
               </n-form>
             </n-card>
 
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">识别偏好设置</span>
@@ -169,7 +169,7 @@ const {
             </n-card>
 
             <!-- Jackett 设置 -->
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">Jackett 设置</span>
@@ -209,7 +209,7 @@ const {
             />
 
             <!-- Telegram 通知设置 -->
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">通知设置 (Telegram)</span>
@@ -253,7 +253,7 @@ const {
             </n-card>
 
             <!-- 代理设置 -->
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">网络代理设置</span>
@@ -280,7 +280,7 @@ const {
               </n-form>
             </n-card>
 
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <template #header>
                 <div class="card-title-box">
                   <span class="card-title-text">自动化设置</span>
@@ -414,7 +414,7 @@ const {
 
         <!-- 下载器管理 -->
         <n-tab-pane name="clients" tab="下载器管理">
-          <n-card bordered style="background: var(--app-surface-card)">
+          <n-card class="app-card-config">
             <template #header>
               <div class="card-title-box">
                 <span class="card-title-text">下载客户端配置</span>
@@ -502,7 +502,7 @@ const {
               v-model:remote="config.remote_privileged_urls" 
             />
 
-            <n-card bordered style="background: var(--app-surface-card)">
+            <n-card class="app-card-config">
               <n-space justify="center">
                 <n-button v-bind="getButtonStyle('secondary')" :loading="syncLoading" @click="refreshRemoteRules">
                   立即从所有远程 URL 同步规则
