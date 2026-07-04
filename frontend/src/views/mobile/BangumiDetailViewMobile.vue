@@ -247,7 +247,7 @@ onMounted(() => {
                 <template #icon><n-icon><StarIcon /></n-icon></template>
                 {{ detail.vote_average?.toFixed(1) }}
               </n-tag>
-              <n-tag :bordered="false" size="tiny" style="background: var(--app-surface-inner)">
+              <n-tag :bordered="false" size="tiny" style="background: var(--app-surface-card-mixed)">
                 <template #icon><n-icon><DateIcon /></n-icon></template>
                 {{ detail.release_date }}
               </n-tag>
@@ -375,7 +375,7 @@ onMounted(() => {
   overflow: hidden;
   border: 1px solid var(--app-border-light);
   margin-bottom: var(--m-spacing-xs);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
 }
 
 .cast-avatar-mobile :deep(img) {
@@ -405,7 +405,7 @@ onMounted(() => {
 .m-ep-number {
   flex-shrink: 0; min-width: 44px; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  background: var(--app-surface-inner); border-radius: var(--m-radius-sm);
+  background: var(--app-surface-card-mixed); border-radius: var(--m-radius-sm);
   padding: 4px 2px;
 }
 .m-ep-num { font-size: 18px; font-weight: 900; color: var(--n-primary-color); line-height: 1; }
@@ -425,7 +425,7 @@ onMounted(() => {
 .m-ep-cmt { color: var(--text-muted); }
 .m-ep-status {
   padding: 1px 5px; border-radius: 3px; font-size: 10px;
-  background: var(--app-surface-inner); color: var(--text-muted);
+  background: var(--app-surface-card-mixed); color: var(--text-muted);
 }
 .m-ep-status.aired { color: var(--n-success-color); }
 .m-ep-desc {

@@ -397,7 +397,7 @@ watch(tmdbId, (newId, oldId) => {
                 <template #icon><n-icon><StarIcon /></n-icon></template>
                 {{ detail.vote_average?.toFixed(1) }}
               </n-tag>
-              <n-tag :bordered="false" size="small" style="background: var(--app-surface-inner)">
+              <n-tag :bordered="false" size="small" style="background: var(--app-surface-card-mixed)">
                 <template #icon><n-icon><DateIcon /></n-icon></template>
                 {{ detail.release_date || detail.first_air_date }}
               </n-tag>
@@ -578,7 +578,7 @@ watch(tmdbId, (newId, oldId) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
+  background: color-mix(in srgb, var(--app-bg-color) var(--app-layout-opacity, 100%), transparent);
 }
 
 .page-header {
@@ -626,11 +626,11 @@ watch(tmdbId, (newId, oldId) => {
 .cast-scroller { display: flex; gap: 16px; padding-bottom: 8px; }
 .cast-card { min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; transition: transform 0.2s; }
 .cast-card:hover { transform: translateY(-4px); }
-.cast-avatar { 
-  width: 64px; height: 64px; 
-  border-radius: 50%; overflow: hidden; 
-  border: 1px solid var(--app-border-light); 
-  margin-bottom: 6px; background: var(--app-surface-inner); 
+.cast-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%; overflow: hidden;
+  border: 1px solid var(--app-border-light);
+  margin-bottom: 6px; background: var(--app-surface-card-mixed);
 }
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .actor-name { font-size: 12px; color: var(--text-primary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
@@ -642,7 +642,7 @@ watch(tmdbId, (newId, oldId) => {
   display: flex; align-items: center; gap: 12px; padding: 12px; 
   cursor: pointer; transition: background 0.2s;
 }
-.season-card:hover { background: var(--app-surface-inner); }
+.season-card:hover { background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(255,255,255,0.04)); }
 .s-poster { width: 60px; aspect-ratio: 2/3; border-radius: var(--button-border-radius, 4px); overflow: hidden; background: var(--bg-primary); flex-shrink: 0; }
 .s-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .s-info { flex: 1; min-width: 0; }
@@ -654,15 +654,15 @@ watch(tmdbId, (newId, oldId) => {
 .loading-spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.episodes-panel { 
-  background: var(--app-surface-inner); 
-  border-top: 1px solid var(--app-border-light); 
-  padding: 12px; 
+.episodes-panel {
+  background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(0,0,0,0.05));
+  border-top: 1px solid var(--app-border-light);
+  padding: 12px;
 }
-.season-overview { 
-  font-size: 13px; color: var(--text-secondary); line-height: 1.6; 
-  padding: 10px 12px; margin-bottom: 12px; 
-  background: var(--app-bg-color); border-radius: 6px; 
+.season-overview {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+  padding: 10px 12px; margin-bottom: 12px;
+  background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(0,0,0,0.1)); border-radius: 6px;
   border-left: 3px solid var(--n-primary-color);
 }
 .episode-item { 
@@ -672,17 +672,17 @@ watch(tmdbId, (newId, oldId) => {
   margin-bottom: 8px;
 }
 .episode-item:last-child { margin-bottom: 0; }
-.episode-item:hover { background: var(--app-bg-color); }
+.episode-item:hover { background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(255,255,255,0.04)); }
 .ep-still { 
   width: 200px; aspect-ratio: 16/9; 
   border-radius: 4px; overflow: hidden; 
   flex-shrink: 0; background: var(--bg-primary); 
 }
 .ep-still :deep(img) { width: 100%; height: 100%; object-fit: cover; }
-.ep-still-placeholder { 
-  display: flex; align-items: center; justify-content: center; 
-  color: var(--text-tertiary); font-size: 18px; font-weight: bold; 
-  background: var(--app-surface-inner); 
+.ep-still-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-tertiary); font-size: 18px; font-weight: bold;
+  background: var(--app-surface-card-mixed);
 }
 .ep-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .ep-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -700,7 +700,7 @@ watch(tmdbId, (newId, oldId) => {
 .ep-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-tertiary); }
 .ep-rating { display: flex; align-items: center; gap: 2px; }
 .ep-overview { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-.ep-emby-info { margin-top: 6px; padding: 8px; background: var(--app-bg-color); border-radius: 4px; }
+.ep-emby-info { margin-top: 6px; padding: 8px; background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(0,0,0,0.1)); border-radius: 4px; }
 .emby-file-item { font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
 .emby-file-item:last-child { margin-bottom: 0; }
 .emby-filename { color: var(--text-secondary); }

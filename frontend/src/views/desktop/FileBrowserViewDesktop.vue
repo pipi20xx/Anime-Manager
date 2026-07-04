@@ -346,16 +346,16 @@ onMounted(() => {
 
 .file-icon-box {
   width: 40px; height: 40px;
-  border-radius: var(--button-border-radius, 10px);
+  border-radius: var(--card-border-radius, var(--button-border-radius, 10px));
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg-surface);
+  background: var(--app-surface-card-mixed);
   color: var(--text-secondary);
-  border: none;
+  border: 1px solid var(--app-border-light);
 }
 .file-icon-box.is-dir {
-  background: var(--bg-surface);
+  background: var(--app-surface-card-mixed);
   color: var(--text-secondary);
-  border: none;
+  border: 1px solid var(--app-border-light);
 }
 
 .file-info .file-name { font-weight: 600; font-size: var(--text-xl); color: var(--text-primary); margin-bottom: 4px; }

@@ -412,7 +412,7 @@ watch(tmdbId, (newId, oldId) => {
                 <template #icon><n-icon><StarIcon /></n-icon></template>
                 {{ detail.vote_average?.toFixed(1) }}
               </n-tag>
-              <n-tag :bordered="false" size="tiny" style="background: var(--app-surface-inner)">
+              <n-tag :bordered="false" size="tiny" style="background: var(--app-surface-card-mixed)">
                 <template #icon><n-icon><DateIcon /></n-icon></template>
                 {{ detail.release_date || detail.first_air_date }}
               </n-tag>
@@ -630,7 +630,7 @@ watch(tmdbId, (newId, oldId) => {
   overflow: hidden;
   border: 1px solid var(--app-border-light);
   margin-bottom: var(--m-spacing-xs);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
 }
 
 .cast-avatar-mobile :deep(img) {
@@ -695,7 +695,7 @@ watch(tmdbId, (newId, oldId) => {
   line-height: 1.6;
   margin-bottom: var(--m-spacing-md);
   padding: var(--m-spacing-md);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
   border-radius: var(--m-radius-md);
 }
 
@@ -716,7 +716,7 @@ watch(tmdbId, (newId, oldId) => {
   aspect-ratio: 16/9;
   border-radius: var(--m-radius-md);
   overflow: hidden;
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
 }
 
 .ep-still-mobile :deep(img) {
@@ -786,7 +786,7 @@ watch(tmdbId, (newId, oldId) => {
 .ep-file-mobile {
   font-size: var(--m-text-xs);
   color: var(--text-muted);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
   padding: var(--m-spacing-xs) var(--m-spacing-sm);
   border-radius: var(--m-radius-sm);
   margin-bottom: var(--m-spacing-xs);
@@ -810,7 +810,7 @@ watch(tmdbId, (newId, oldId) => {
   overflow: hidden;
   border: 1px solid var(--app-border-light);
   margin-bottom: var(--m-spacing-sm);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
 }
 
 .rec-poster-mobile :deep(img) {

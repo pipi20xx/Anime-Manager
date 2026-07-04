@@ -23,6 +23,8 @@ import {
 import { useCalendar } from '../../composables/views/useCalendar'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { openTmdbDetail } from '../../store/navigationStore'
+import { appearanceConfig } from '../../store/appearanceStore'
+import { isDarkMode } from '../../store/themeStore'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
@@ -130,6 +132,46 @@ const goToToday = () => {
   selectedDate.value = Date.now()
 }
 
+// 输入框外观 themeOverrides - 跟随「输入框外观」设置
+// 用于 NDatePicker / NInput / NInputNumber 等原生 Naive UI 输入组件
+// NInput 直接接收平铺字段；NDatePicker / NInputNumber 内部嵌套 Input，需用 peers 结构
+const inputThemeOverrides = computed(() => {
+  // 依赖 isDarkMode 确保主题切换时重算
+  const _dark = isDarkMode.value
+  const cfg = appearanceConfig.value.input
+  const rootStyle = getComputedStyle(document.documentElement)
+  const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
+  const alpha = cfg.enabled ? cfg.bg_opacity : 1
+  const rgba = hexToRgba(baseColor, alpha)
+  const radius = `${cfg.enabled ? cfg.border_radius : 8}px`
+  // 保留 Naive UI 原生边框视觉：普通 / hover / focus 三态
+  const border = '1px solid var(--border-medium)'
+  const borderHover = '1px solid var(--text-muted)'
+  const borderFocus = '1px solid var(--n-primary-color)'
+  return {
+    color: rgba,
+    colorFocus: rgba,
+    border,
+    borderHover,
+    borderFocus,
+    borderRadius: radius
+  }
+})
+
+// NDatePicker / NInputNumber 等嵌套 Input 的组件使用 peers 结构
+const inputPeerThemeOverrides = computed(() => ({
+  peers: { Input: inputThemeOverrides.value }
+}))
+
+function hexToRgba(hex: string, alpha: number): string {
+  const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i)
+  if (!match) return `rgba(30, 30, 46, ${alpha})`
+  const r = parseInt(match[1], 16)
+  const g = parseInt(match[2], 16)
+  const b = parseInt(match[3], 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 const openCardDetail = (item: any) => {
   if (!item.tmdbId) return
   openTmdbDetail(item.tmdbId, item.mediaType || 'tv', {
@@ -153,6 +195,7 @@ const openCardDetail = (item: any) => {
           v-model:value="selectedDate"
           type="date"
           :clearable="false"
+          :theme-overrides="inputPeerThemeOverrides"
           style="width: 160px"
           size="small"
           @update:value="handleDateChange"
@@ -242,8 +285,8 @@ const openCardDetail = (item: any) => {
                   <div class="item-actions">
                     <template v-if="editingId === sub.id">
                       <n-space :size="4" align="center">
-                        <n-input v-model:value="editBuffer.title" placeholder="标题" size="tiny" style="width: 150px" />
-                        <n-input-number v-model:value="editBuffer.season" :min="1" size="tiny" style="width: 80px" />
+                        <n-input v-model:value="editBuffer.title" placeholder="标题" size="tiny" :theme-overrides="inputThemeOverrides" style="width: 150px" />
+                        <n-input-number v-model:value="editBuffer.season" :min="1" size="tiny" :theme-overrides="inputPeerThemeOverrides" style="width: 80px" />
                         <n-button v-bind="getButtonStyle('primary')" @click="saveEdit(sub.id)">保存</n-button>
                         <n-button v-bind="getButtonStyle('dialogCancel')" @click="editingId = null">取消</n-button>
                       </n-space>

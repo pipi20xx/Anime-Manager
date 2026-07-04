@@ -232,10 +232,10 @@ const {
 
 .mt-4 { margin-top: 16px; }
 .preview-mini-box { 
-  background: var(--app-surface-inner); 
+  background: var(--app-surface-card-mixed); 
   border: 1px solid var(--app-border-light); 
   padding: 12px; 
-  border-radius: var(--button-border-radius, 4px); 
+  border-radius: var(--card-border-radius, var(--button-border-radius, 4px)); 
   min-height: 80px; 
 }
 .p-wrap { word-break: break-all; }

@@ -165,7 +165,7 @@ const formatFileSize = (size: number) => {
               </div>
             </div>
             <div class="form-row">
-              <div class="form-label">布局透明度 <n-tag size="small" type="info">{{ (form.global.layout_opacity * 100).toFixed(0) }}%</n-tag></div>
+              <div class="form-label">布局不透明度 <n-tag size="small" type="info">{{ (form.global.layout_opacity * 100).toFixed(0) }}%</n-tag></div>
               <div class="form-control">
                 <n-slider v-model:value="form.global.layout_opacity" :min="0.1" :max="1" :step="0.05" @update:value="preview" />
               </div>

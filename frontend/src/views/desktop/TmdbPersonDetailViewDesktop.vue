@@ -143,11 +143,11 @@ onMounted(() => {
                 <template #icon><n-icon><StarIcon /></n-icon></template>
                 {{ detail.popularity.toFixed(1) }}
               </n-tag>
-              <n-tag :bordered="false" size="small" style="background: var(--app-surface-inner)">
+              <n-tag :bordered="false" size="small" style="background: var(--app-surface-card-mixed)">
                 <template #icon><n-icon><PersonIcon /></n-icon></template>
                 {{ genderText(detail.gender) }}
               </n-tag>
-              <n-tag v-if="detail.birthday" :bordered="false" size="small" style="background: var(--app-surface-inner)">
+              <n-tag v-if="detail.birthday" :bordered="false" size="small" style="background: var(--app-surface-card-mixed)">
                 <template #icon><n-icon><DateIcon /></n-icon></template>
                 {{ calculateAge(detail.birthday, detail.deathday) }}岁
               </n-tag>
@@ -251,7 +251,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
+  background: color-mix(in srgb, var(--app-bg-color) var(--app-layout-opacity, 100%), transparent);
 }
 
 .page-header {
@@ -304,11 +304,11 @@ onMounted(() => {
 .credits-scroller { display: flex; gap: 16px; padding-bottom: 8px; }
 .credit-card { min-width: 120px; width: 120px; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s; }
 .credit-card:hover { transform: translateY(-4px); }
-.credit-poster { 
+.credit-poster {
   width: 120px; aspect-ratio: 2/3;
-  border-radius: var(--card-border-radius, 6px); overflow: hidden; 
-  border: 1px solid var(--app-border-light); 
-  margin-bottom: 8px; background: var(--app-surface-inner); 
+  border-radius: var(--card-border-radius, 6px); overflow: hidden;
+  border: 1px solid var(--app-border-light);
+  margin-bottom: 8px; background: var(--app-surface-card-mixed);
 }
 .credit-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .credit-info { text-align: center; }

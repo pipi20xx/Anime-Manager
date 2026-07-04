@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NRadioGroup, NRadioButton, NList, NListItem } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, NList, NListItem } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
@@ -86,12 +86,10 @@ onUnmounted(() => {
         <div class="subtitle">任务执行历史与日志</div>
       </div>
       <n-space>
-        <n-radio-group v-model:value="moduleFilter" size="medium">
-          <n-radio-button value="all">全部</n-radio-button>
-          <n-radio-button v-for="mod in moduleOptions.slice(1)" :key="mod" :value="mod">
-            {{ mod }}
-          </n-radio-button>
-        </n-radio-group>
+        <n-tabs type="segment" v-model:value="moduleFilter" size="medium" class="filter-tabs" style="height: var(--space-8)">
+          <n-tab-pane name="all" tab="全部" />
+          <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
+        </n-tabs>
         <n-button v-bind="getButtonStyle('secondary')" @click="startPolling">
           刷新
         </n-button>
@@ -190,8 +188,10 @@ onUnmounted(() => {
 .page-header h1 { margin: 0; font-size: var(--text-3xl); }
 .subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 .page-header :deep(.n-space) { align-items: stretch; }
-.page-header :deep(.n-radio-group) { height: var(--space-8); }
 .page-header :deep(.n-button) { height: var(--space-8); }
+.filter-tabs { height: var(--space-8); }
+.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
+.filter-tabs :deep(.n-tabs-tab) { height: 26px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
 
 .task-list { margin-bottom: var(--space-6); }
 .task-list :deep(.n-list) { background: transparent; }

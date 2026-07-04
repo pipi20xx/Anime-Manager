@@ -65,28 +65,26 @@ const selectThemeOverrides = computed(() => {
   // 依赖 isDarkMode 确保主题切换时重算
   const _dark = isDarkMode.value
   const cfg = appearanceConfig.value.input
-  if (!cfg.enabled) {
-    return {
-      peers: {
-        InternalSelection: {
-          color: 'var(--app-surface-card)',
-          borderRadius: '8px'
-        }
-      }
-    }
-  }
   // 从 CSS 变量读取基础背景色，转为 rgba
   const rootStyle = getComputedStyle(document.documentElement)
   const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
-  const alpha = cfg.bg_opacity
+  const alpha = cfg.enabled ? cfg.bg_opacity : 1
   const rgba = hexToRgba(baseColor, alpha)
-  const radius = `${cfg.border_radius}px`
+  const tagText = isDarkMode.value ? '#ffffff' : '#1a1a1a'
+  const radius = `${cfg.enabled ? cfg.border_radius : 8}px`
   return {
     peers: {
       InternalSelection: {
         color: rgba,
         colorActive: rgba,
         borderRadius: radius
+      },
+      Tag: {
+        color: rgba,
+        textColor: tagText,
+        borderColor: 'var(--app-border-light)',
+        closeColor: 'var(--text-muted)',
+        closeColorHover: 'var(--text-primary)'
       }
     }
   }
@@ -215,6 +213,19 @@ function hexToRgba(hex: string, alpha: number): string {
 .app-select-field__select :deep(.n-base-selection-tags) {
   padding: 18px 36px 6px 12px !important;
   align-items: center !important;
+}
+
+/* 多选 tag 背景跟随「输入框外观」透明度 */
+.app-select-field__select :deep(.n-base-selection-tag-wrapper .n-tag) {
+  background: color-mix(in srgb, var(--input-bg) var(--input-bg-opacity, 100%), transparent) !important;
+  border-color: var(--app-border-light) !important;
+  color: var(--text-primary) !important;
+}
+.app-select-field__select :deep(.n-base-selection-tag-wrapper .n-tag__content) {
+  color: var(--text-primary) !important;
+}
+.app-select-field__select :deep(.n-base-selection-tag-wrapper .n-base-close) {
+  color: var(--text-muted) !important;
 }
 
 .app-select-field__select :deep(.n-base-selection__border) {

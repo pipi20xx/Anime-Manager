@@ -126,7 +126,7 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
+  background-color: color-mix(in srgb, var(--app-bg-color) var(--app-layout-opacity, 100%), transparent);
   position: relative;
   overflow: hidden;
 }

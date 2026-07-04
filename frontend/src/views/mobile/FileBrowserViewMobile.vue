@@ -367,13 +367,13 @@ const getShortName = (path: string) => {
 .file-icon-box {
   width: 42px;
   height: 42px;
-  border-radius: var(--m-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
   color: var(--n-primary-color);
   margin-right: var(--m-spacing-md);
+  border-radius: var(--card-border-radius, 8px);
   border: 1px solid var(--border-light);
   flex-shrink: 0;
 }

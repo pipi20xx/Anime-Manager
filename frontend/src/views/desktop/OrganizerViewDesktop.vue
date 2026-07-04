@@ -149,8 +149,8 @@ onUnmounted(stopBgTaskPolling)
                   </div>
                 </template>
                 <div class="rule-preview-mini">
-                  <div class="p-item"><span class="p-label">电影</span><code>{{ rule.movie_pattern || '未设置' }}</code></div>
-                  <div class="p-item"><span class="p-label">剧集</span><code>{{ rule.tv_pattern || '未设置' }}</code></div>
+                  <div class="p-item"><span class="p-label">电影</span><div class="v" :title="rule.movie_pattern">{{ rule.movie_pattern || '未设置' }}</div></div>
+                  <div class="p-item"><span class="p-label">剧集</span><div class="v" :title="rule.tv_pattern">{{ rule.tv_pattern || '未设置' }}</div></div>
                 </div>
                 <template #action>
                   <n-space justify="end" @click.stop>
@@ -185,7 +185,7 @@ onUnmounted(stopBgTaskPolling)
           
           <draggable v-model="tasks" item-key="id" @end="saveConfig" class="card-grid">
             <template #item="{element: task, index: i}">
-              <n-card bordered embedded class="task-card clickable-card" @click="openEditTask(i)">
+              <n-card bordered class="task-card clickable-card" @click="openEditTask(i)">
                 <template #header>
                   <n-space align="center" justify="space-between" style="width: 100%">
                     <n-space align="center">
@@ -228,8 +228,8 @@ onUnmounted(stopBgTaskPolling)
                   </n-space>
                 </template>
                 <div class="p-disp">
-                  <div class="p-row" :title="task.source_dir"><span class="p-label">源目录</span><code>{{ task.source_dir }}</code></div>
-                  <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><code>{{ task.target_dir }}</code></div>
+                  <div class="p-row" :title="task.source_dir"><span class="p-label">源目录</span><div class="v">{{ task.source_dir }}</div></div>
+                  <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><div class="v">{{ task.target_dir }}</div></div>
                   <div class="p-row">
                     <span class="p-label">操作类型</span>
                     <n-tag size="small" :bordered="false" type="info" style="background: var(--color-info-bg)">
@@ -294,12 +294,9 @@ onUnmounted(stopBgTaskPolling)
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
 .rule-card, .task-card {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--card-border-radius, 12px) !important;
-  border: 1px solid var(--app-border-light) !important;
-  background: var(--app-surface-card-mixed) !important;
-  transition: all var(--transition-normal);
+  transition: transform var(--transition-fast);
+  border: 1px solid var(--app-border-light);
+  background: var(--app-surface-card-mixed);
 }
 .clickable-card { cursor: pointer; }
 .rule-card:hover, .task-card:hover {
@@ -321,14 +318,14 @@ onUnmounted(stopBgTaskPolling)
   text-transform: uppercase;
   flex-shrink: 0;
 }
-.rule-preview-mini code { 
+.rule-preview-mini .v { 
   flex: 1;
   font-size: var(--text-xs); 
   font-family: var(--code-font);
   color: var(--n-info-color); 
-  background: var(--app-surface-inner); 
+  background: var(--app-surface-card-mixed); 
   padding: var(--space-1) var(--space-2); 
-  border-radius: var(--button-border-radius, 4px); 
+  border-radius: var(--card-border-radius, var(--button-border-radius, 4px)); 
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
   border: 1px solid var(--app-border-light);
 }
@@ -341,13 +338,13 @@ onUnmounted(stopBgTaskPolling)
   min-width: 70px;
   flex-shrink: 0;
 }
-.p-disp code { 
+.p-disp .v { 
   flex: 1;
   font-size: var(--text-sm); 
   font-family: var(--code-font);
-  background: var(--app-surface-inner); 
+  background: var(--app-surface-card-mixed); 
   padding: var(--space-1) var(--space-2); 
-  border-radius: var(--button-border-radius, 4px); 
+  border-radius: var(--card-border-radius, var(--button-border-radius, 4px)); 
   color: var(--text-secondary); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
   border: 1px solid var(--app-border-light);

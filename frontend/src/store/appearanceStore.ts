@@ -76,6 +76,7 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--app-global-bg-image', 'none')
     root.style.setProperty('--app-global-bg-blur', 'none')
     root.style.setProperty('--app-global-bg-overlay-opacity', '0.6')
+    // 未启用全局背景时，布局不透明（100% = 不透明，与侧边栏逻辑一致）
     root.style.setProperty('--app-layout-opacity', '100%')
     root.removeAttribute('data-global-bg')
   }
@@ -230,8 +231,16 @@ export const dataTableThemeOverrides = computed(() => {
     borderRadius: cardCfg.enabled ? `${cardCfg.border_radius}px` : undefined,
     thColor: hexToRgba(innerBg, tableBgAlpha),
     thColorHover: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
+    thColorModal: hexToRgba(innerBg, tableBgAlpha),
+    thColorHoverModal: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
+    thColorPopover: hexToRgba(innerBg, tableBgAlpha),
+    thColorHoverPopover: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
     tdColor: hexToRgba(bgPrimary, rowBgAlpha),
     tdColorHover: hexToRgba(bgPrimary, rowHoverAlpha),
+    tdColorModal: hexToRgba(bgPrimary, rowBgAlpha),
+    tdColorHoverModal: hexToRgba(bgPrimary, rowHoverAlpha),
+    tdColorPopover: hexToRgba(bgPrimary, rowBgAlpha),
+    tdColorHoverPopover: hexToRgba(bgPrimary, rowHoverAlpha),
     borderColor: 'var(--app-border-light)',
     thTextColor: 'var(--text-primary)',
     tdTextColor: 'var(--text-primary)',

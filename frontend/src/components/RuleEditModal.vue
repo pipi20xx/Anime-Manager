@@ -151,10 +151,10 @@ const handleSave = () => {
 </template>
 
 <style scoped>
-.v-manual { 
-  padding: 12px; 
-  background: var(--app-surface-inner); 
-  border-radius: var(--card-border-radius, 8px); 
+.v-manual {
+  padding: 12px;
+  background: var(--app-surface-list-mixed);
+  border-radius: var(--list-border-radius, 8px);
   border: 1px solid var(--app-border-light);
 }
 .v-s { margin-bottom: 20px; }

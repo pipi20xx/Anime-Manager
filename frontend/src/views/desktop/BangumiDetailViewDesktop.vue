@@ -235,7 +235,7 @@ onMounted(() => {
                 <template #icon><n-icon><StarIcon /></n-icon></template>
                 {{ detail.vote_average?.toFixed(1) }}
               </n-tag>
-              <n-tag :bordered="false" size="small" style="background: var(--app-surface-inner)">
+              <n-tag :bordered="false" size="small" style="background: var(--app-surface-card-mixed)">
                 <template #icon><n-icon><DateIcon /></n-icon></template>
                 {{ detail.release_date }}
               </n-tag>
@@ -323,7 +323,7 @@ onMounted(() => {
                     <span v-if="ep.name && ep.name_cn && ep.name !== ep.name_cn" class="ep-title-orig">{{ ep.name }}</span>
                   </div>
                   <div class="ep-meta">
-                    <n-tag v-if="ep.airdate" :bordered="false" size="tiny" style="background: var(--app-surface-inner)">
+                    <n-tag v-if="ep.airdate" :bordered="false" size="tiny" style="background: var(--app-surface-card-mixed)">
                       <template #icon><n-icon><DateIcon /></n-icon></template>
                       {{ ep.airdate }}
                     </n-tag>
@@ -351,7 +351,7 @@ onMounted(() => {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
+  background: color-mix(in srgb, var(--app-bg-color) var(--app-layout-opacity, 100%), transparent);
 }
 
 .page-header {
@@ -395,11 +395,11 @@ onMounted(() => {
 .cast-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; display: flex; align-items: center; gap: 6px; }
 .cast-scroller { display: flex; gap: 16px; padding-bottom: 8px; }
 .cast-card { min-width: 90px; width: 90px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.cast-avatar { 
-  width: 64px; height: 64px; 
-  border-radius: 50%; overflow: hidden; 
-  border: 1px solid var(--app-border-light); 
-  margin-bottom: 6px; background: var(--app-surface-inner); 
+.cast-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%; overflow: hidden;
+  border: 1px solid var(--app-border-light);
+  margin-bottom: 6px; background: var(--app-surface-card-mixed);
 }
 .cast-avatar :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 .char-name { font-size: 12px; font-weight: bold; color: var(--text-primary); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -424,7 +424,7 @@ onMounted(() => {
 .ep-number {
   flex-shrink: 0; min-width: 52px; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  background: var(--app-surface-inner); border-radius: 6px; padding: 6px 4px;
+  background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(0,0,0,0.1)); border-radius: 6px; padding: 6px 4px;
 }
 .ep-num-main { font-size: 18px; font-weight: 900; color: var(--n-primary-color); line-height: 1; }
 .ep-num-sort { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
@@ -435,7 +435,7 @@ onMounted(() => {
 .ep-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--text-tertiary); }
 .ep-duration { color: var(--text-tertiary); }
 .ep-comments { color: var(--text-tertiary); }
-.ep-status { padding: 1px 6px; border-radius: 4px; font-size: 11px; background: var(--app-surface-inner); color: var(--text-tertiary); }
+.ep-status { padding: 1px 6px; border-radius: 4px; font-size: 11px; background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(0,0,0,0.1)); color: var(--text-tertiary); }
 .ep-status.aired { color: var(--n-success-color); }
 .ep-desc {
   font-size: 12px; color: var(--text-secondary); line-height: 1.6;

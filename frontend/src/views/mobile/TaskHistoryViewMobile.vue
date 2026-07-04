@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NRadioGroup, NRadioButton, NList, NListItem } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, NList, NListItem } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
@@ -104,12 +104,10 @@ onUnmounted(() => {
     </div>
 
     <div class="filter-bar">
-      <n-radio-group v-model:value="moduleFilter" size="small">
-        <n-radio-button value="all">全部</n-radio-button>
-        <n-radio-button v-for="mod in moduleOptions.slice(1)" :key="mod" :value="mod">
-          {{ mod }}
-        </n-radio-button>
-      </n-radio-group>
+      <n-tabs type="segment" v-model:value="moduleFilter" size="small" class="filter-tabs">
+        <n-tab-pane name="all" tab="全部" />
+        <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
+      </n-tabs>
     </div>
 
     <n-card v-if="tasks.length === 0" embedded style="margin-top: 16px">
@@ -212,15 +210,22 @@ onUnmounted(() => {
   -webkit-overflow-scrolling: touch;
 }
 
-.filter-bar :deep(.n-radio-group) {
+.filter-bar :deep(.filter-tabs) {
   display: flex;
   flex-wrap: nowrap;
   white-space: nowrap;
+  height: 32px;
 }
 
-.filter-bar :deep(.n-radio-button) {
+.filter-bar :deep(.n-tabs-tab) {
   flex-shrink: 0;
+  height: 26px !important;
+  padding: 0 10px !important;
+  display: flex !important;
+  align-items: center !important;
 }
+
+.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 3px !important; padding: 2px !important; }
 
 .task-list { margin-bottom: var(--m-spacing-lg); }
 .task-list :deep(.n-list) { background: transparent; }

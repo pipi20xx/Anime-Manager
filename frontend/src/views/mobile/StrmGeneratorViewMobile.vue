@@ -196,9 +196,9 @@ onMounted(fetchTasks)
 .path-row .label { font-size: 10px; color: var(--text-tertiary); }
 .path-row .val { 
   font-family: monospace; 
-  background: var(--app-surface-input); 
+  background: var(--app-surface-card-mixed); 
   padding: 6px 8px; 
-  border-radius: 6px; 
+  border-radius: var(--card-border-radius, 6px); 
   font-size: 12px;
   word-break: break-all;
   line-height: 1.4;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, h, onMounted, onUnmounted } from 'vue'
 import {
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NRadioGroup, NRadioButton, NAlert, NText,
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText,
   NDrawer, NDrawerContent, NCollapse, NCollapseItem, NCheckbox, NSpin, NDivider, NList, NListItem
 } from 'naive-ui'
 import {
@@ -130,12 +130,12 @@ const handleAction = (key: string) => {
     <div v-if="showSearch" class="search-bar">
       <AppSearchField v-model:value="searchQuery" placeholder="搜索..." :loading="loading" />
       <div class="filter-row">
-        <n-radio-group v-model:value="statusFilter" size="small">
-          <n-radio-button value="all">全部</n-radio-button>
-          <n-radio-button value="success">成功</n-radio-button>
-          <n-radio-button value="skipped">跳过</n-radio-button>
-          <n-radio-button value="failed">失败</n-radio-button>
-        </n-radio-group>
+        <n-tabs type="segment" v-model:value="statusFilter" size="small" class="filter-tabs">
+          <n-tab-pane name="all" tab="全部" />
+          <n-tab-pane name="success" tab="成功" />
+          <n-tab-pane name="skipped" tab="跳过" />
+          <n-tab-pane name="failed" tab="失败" />
+        </n-tabs>
       </div>
     </div>
 
@@ -308,7 +308,10 @@ const handleAction = (key: string) => {
   border-radius: 8px;
   margin-bottom: 16px;
 }
-.filter-row { margin-top: 8px; display: flex; justify-content: center; }
+.filter-row { margin-top: 8px; display: flex; justify-content: center; height: 32px; }
+.filter-tabs { height: 100%; }
+.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 3px !important; padding: 2px !important; }
+.filter-tabs :deep(.n-tabs-tab) { height: 26px !important; padding: 0 10px !important; display: flex !important; align-items: center !important; }
 
 .history-list { margin-bottom: 20px; }
 .history-list :deep(.n-list) { background: transparent; }

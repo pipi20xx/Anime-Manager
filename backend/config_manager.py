@@ -159,6 +159,8 @@ class ConfigManager:
                         existing = json.loads(content)
                         for k, v in existing.items():
                             if k not in config:
+                                # 保留不在 DEFAULT_CONFIG 里的自定义字段（如 appearance）
+                                config[k] = v
                                 continue
                             
                             if isinstance(v, dict) and isinstance(config.get(k), dict):

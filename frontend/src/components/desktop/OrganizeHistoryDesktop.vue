@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { 
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NRadioGroup, NRadioButton, NAlert, NText, NCheckbox, NSpin, NDivider, NList, NListItem
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NList, NListItem
 } from 'naive-ui'
 import {
   HistoryOutlined as HistoryIcon,
@@ -94,12 +94,12 @@ const handleRefresh = () => {
         </div>
       </div>
       <n-space>
-        <n-radio-group v-model:value="statusFilter" size="medium">
-          <n-radio-button value="all">全部</n-radio-button>
-          <n-radio-button value="success">成功</n-radio-button>
-          <n-radio-button value="skipped">跳过</n-radio-button>
-          <n-radio-button value="failed">失败</n-radio-button>
-        </n-radio-group>
+        <n-tabs type="segment" v-model:value="statusFilter" size="medium" class="filter-tabs">
+          <n-tab-pane name="all" tab="全部" />
+          <n-tab-pane name="success" tab="成功" />
+          <n-tab-pane name="skipped" tab="跳过" />
+          <n-tab-pane name="failed" tab="失败" />
+        </n-tabs>
         <AppSearchField v-model:value="searchQuery" placeholder="搜索标题或文件名..." :loading="loading" style="width: 250px" />
         <n-popconfirm @positive-click="clearAll" positive-text="确定清空" negative-text="我再想想">
           <template #trigger>
@@ -275,9 +275,11 @@ const handleRefresh = () => {
 .page-header h1 { margin: 0; font-size: 26px; font-weight: bold; color: var(--text-primary); }
 .subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 1px; }
 .page-header :deep(.n-space) { align-items: stretch; }
-.page-header :deep(.n-radio-group) { height: 34px; }
 .page-header :deep(.n-input) { height: 34px; }
 .page-header :deep(.n-button) { height: 34px; }
+.filter-tabs { height: 34px; }
+.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
+.filter-tabs :deep(.n-tabs-tab) { height: 28px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
 
 .history-list { margin-bottom: 40px; }
 .history-list :deep(.n-list) { background: transparent; }
@@ -451,12 +453,12 @@ const handleRefresh = () => {
 }
 
 .source .path-label {
-  background: var(--bg-surface);
+  background: var(--app-surface-card-mixed);
   color: var(--text-secondary);
   border: 1px solid var(--border-light);
 }
 .target .path-label {
-  background: var(--bg-surface);
+  background: var(--app-surface-card-mixed);
   color: var(--text-secondary);
   border: 1px solid var(--border-light);
 }

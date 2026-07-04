@@ -38,7 +38,7 @@
   --app-global-bg-image: none;  /* 全局背景图片 */
   --app-global-bg-blur: 0px;   /* 全局背景模糊 */
   --app-global-bg-overlay-opacity: 0.6;  /* 全局背景遮罩透明度 */
-  --app-layout-opacity: 100%;     /* 布局透明度（全局背景启用时降低，color-mix 百分比）*/
+  --app-layout-opacity: 100%;     /* 布局不透明度（0%=完全透明，100%=不透明；与侧边栏逻辑一致）*/
 
   /* 弹框外观自定义变量 */
   --app-modal-bg-image: none;  /* 弹框背景图片 */
@@ -156,7 +156,7 @@
   --input-placeholder-color: var(--text-muted);  /* 占位符颜色 */
   --input-label-color: var(--text-muted);  /* 标签颜色 */
   --input-label-focused-color: var(--n-primary-color);  /* 标签聚焦颜色 */
-  --input-label-bg: var(--app-surface-card);  /* 标签背景色（浮动时） */
+  --input-label-bg: color-mix(in srgb, var(--input-bg) var(--input-bg-opacity, 100%), transparent);  /* 标签背景色（浮动时），跟随输入框透明度 */
 
   /* ========== AppSearchField 外观自定义变量 ========== */
   --search-input-bg: var(--app-surface-card);  /* 搜索框背景色 */
@@ -236,12 +236,12 @@
   --z-max: 9999;
 }
 
-/* 1. 基础 code 标签：所有组件通用继承 */
+/* 1. 基础 code 标签：所有组件通用继承 - 跟随「卡片外观」设置 */
 code {
   font-family: var(--code-font);
-  background: var(--code-bg);
+  background: var(--app-surface-card-mixed);
   padding: 2px 6px;
-  border-radius: var(--code-radius);
+  border-radius: var(--card-border-radius, var(--code-radius));
   color: var(--n-primary-color);
   font-size: 0.9em;
   border: 1px solid var(--app-border-light);
@@ -1231,7 +1231,7 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   -webkit-backdrop-filter: var(--app-global-bg-blur, none);
 }
 
-/* ========== 全局背景启用时的布局透明度 ========== */
+/* ========== 全局背景启用时的布局不透明度 ========== */
 .n-layout-content {
   background-color: var(--app-bg-color);
 }

@@ -182,7 +182,7 @@ const activeTab = ref('dashboard')
 
 <style scoped>
 .m-page {
-  background-color: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
+  background-color: color-mix(in srgb, var(--app-bg-color) var(--app-layout-opacity, 100%), transparent);
 }
 
 .m-tabs {
