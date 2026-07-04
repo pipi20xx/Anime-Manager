@@ -54,8 +54,9 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="props.show" 
+  <AppGlassModal
+    appearance-key="classifier-edit-modal"
+    :show="props.show"
     @update:show="val => emit('update:show', val)"
     style="width: 800px;"
     :title="props.isNew ? '添加二级分类规则' : '编辑分类规则'"

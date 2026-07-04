@@ -33,9 +33,10 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
+  <AppGlassModal
+    appearance-key="client-edit-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
     style="width: 100%; height: 100vh; margin: 0;"
     content-style="padding: 16px; overflow-y: auto;"
     :title="isNew ? '添加下载器' : '编辑下载器'"

@@ -96,6 +96,7 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
 
 <template>
   <AppGlassModal 
+    appearance-key="rss-detect-modal"
     :show="show" 
     @update:show="v => emit('update:show', v)"
     style="width: 950px; max-width: 95vw;"

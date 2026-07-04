@@ -154,10 +154,11 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="handleClose" 
-    style="width: 700px;" 
+  <AppGlassModal
+    appearance-key="jackett-fill-modal"
+    :show="show"
+    @update:show="handleClose"
+    style="width: 700px;"
     :title="`搜寻补全: ${subTitle}`"
     :closable="true"
     :mask-closable="!isRunning"

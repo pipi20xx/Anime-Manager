@@ -124,7 +124,7 @@ const columns = [
     </n-card>
 
     <!-- Modal 共享 -->
-    <AppGlassModal v-model:show="showModal" title="健康检查配置" style="width: 600px">
+    <AppGlassModal appearance-key="health-check-manager-modal" v-model:show="showModal" title="健康检查配置" style="width: 600px">
       <n-form :model="editingConfig" label-placement="left" label-width="100">
         <n-form-item>
           <AppTextField v-model:value="editingConfig.name" label="配置名称" placeholder="例如: 阿里云盘掉盘检测" />

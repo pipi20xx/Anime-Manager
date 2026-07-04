@@ -29,6 +29,7 @@ const {
 
 <template>
   <AppGlassModal 
+    appearance-key="rss-detect-modal"
     :show="show" 
     @update:show="v => emit('update:show', v)"
     style="width: 95vw;"

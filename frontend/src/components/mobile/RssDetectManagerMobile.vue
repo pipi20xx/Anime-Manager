@@ -35,6 +35,7 @@ const close = () => {
 
 <template>
   <AppGlassModal 
+    appearance-key="rss-detect-manager-modal"
     :show="show" 
     @update:show="close"
     style="width: 95vw;"

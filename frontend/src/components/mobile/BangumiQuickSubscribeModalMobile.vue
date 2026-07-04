@@ -28,6 +28,7 @@ const {
 
 <template>
   <AppGlassModal 
+    appearance-key="bangumi-quick-subscribe-modal"
     :show="show" 
     @update:show="v => emit('update:show', v)"
     class="mobile-fullscreen-modal"

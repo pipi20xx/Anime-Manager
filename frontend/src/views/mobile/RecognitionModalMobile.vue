@@ -46,9 +46,10 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
+  <AppGlassModal
+    appearance-key="recognition-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
     class="mobile-modal"
     title="单文件识别"
   >

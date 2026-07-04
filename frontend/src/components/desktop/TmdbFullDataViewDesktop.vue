@@ -92,7 +92,7 @@ const executeRefresh = () => {
         </n-space>
       </div>
 
-      <AppGlassModal v-model:show="showRefreshModal" title="全量刷新设置" style="width: 450px">
+      <AppGlassModal appearance-key="tmdb-full-data-modal" v-model:show="showRefreshModal" title="全量刷新设置" style="width: 450px">
         <n-form label-placement="left" label-width="120px">
           <n-form-item>
             <AppTextField 
@@ -180,7 +180,7 @@ const executeRefresh = () => {
     </n-space>
 
     <!-- 编辑/新增元数据弹窗 -->
-    <AppGlassModal v-model:show="showEditModal" style="width: 700px" :title="isEditing ? '修正元数据' : '手动新增元数据'">
+    <AppGlassModal appearance-key="tmdb-full-data-modal" v-model:show="showEditModal" style="width: 700px" :title="isEditing ? '修正元数据' : '手动新增元数据'">
       <n-form label-placement="left" label-width="90">
         <n-grid :cols="2" :x-gap="12">
           <n-gi><n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="请输入 TMDB ID" /></n-form-item></n-gi>

@@ -225,10 +225,11 @@ const columns = [
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 1000px; max-width: 98vw; height: 96vh;" 
+  <AppGlassModal
+    appearance-key="rule-preview-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 1000px; max-width: 98vw; height: 96vh;"
     content-style="display: flex; flex-direction: column; padding: 0;"
     :segmented="{ content: true, footer: 'soft' }"
     title="匹配结果预览"

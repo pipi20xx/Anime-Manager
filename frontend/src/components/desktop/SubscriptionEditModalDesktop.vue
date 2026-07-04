@@ -48,6 +48,7 @@ watch(() => props.show, (newVal) => {
 
 <template>
   <AppGlassModal 
+    appearance-key="subscription-edit-modal"
     :show="show" 
     @update:show="v => emit('update:show', v)"
     style="width: 700px;"

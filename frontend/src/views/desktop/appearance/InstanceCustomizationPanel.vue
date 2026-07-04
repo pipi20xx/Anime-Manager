@@ -6,7 +6,7 @@ import {
 } from 'naive-ui'
 import type { AppearanceConfig, AppearanceInstanceOverrides } from '../../../api/appearance'
 import {
-  appearanceKeyOptions,
+  appearanceKeyGroupedOptions,
   getAppearanceKeyMeta,
   type AppearanceKey
 } from '../../../constants/appearanceKeys'
@@ -149,7 +149,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
       <div class="form-control" style="display: flex; gap: 8px; align-items: center;">
         <n-select
           v-model:value="selectedInstanceKey"
-          :options="appearanceKeyOptions"
+          :options="appearanceKeyGroupedOptions"
           placeholder="选择要单独自定义的弹框"
           style="flex: 1;"
         />
@@ -168,6 +168,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
     <!-- 选中实例后的配置面板 -->
     <template v-if="selectedInstanceKey">
       <div class="instance-meta" v-if="getAppearanceKeyMeta(selectedInstanceKey)">
+        <div class="instance-meta__page">{{ getAppearanceKeyMeta(selectedInstanceKey)?.page }}</div>
         <div class="instance-meta__title">{{ getAppearanceKeyMeta(selectedInstanceKey)?.label }}</div>
         <div class="instance-meta__desc">{{ getAppearanceKeyMeta(selectedInstanceKey)?.description }}</div>
         <div class="instance-meta__key">key: <code>{{ selectedInstanceKey }}</code></div>
@@ -327,6 +328,45 @@ defineExpose({ currentInstanceOverrides, instanceCount })
           </div>
         </n-tab-pane>
 
+        <!-- 标签页外观分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('tabs')" name="tabs" tab="标签页外观">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'nav_blur')" @update:checked="v => toggleFieldOverride('tabs', 'nav_blur', v)">导航栏模糊</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'nav_blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'nav_blur')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('tabs', 'nav_blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'nav_blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.nav_blur }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'nav_opacity')" @update:checked="v => toggleFieldOverride('tabs', 'nav_opacity', v)">导航栏不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'nav_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'nav_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('tabs', 'nav_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('tabs', 'nav_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.tabs.nav_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_active_bg')" @update:checked="v => toggleFieldOverride('tabs', 'tab_active_bg', v)">激活标签背景色</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_active_bg')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('tabs', 'tab_active_bg')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('tabs', 'tab_active_bg', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_active_bg }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_active_text_color')" @update:checked="v => toggleFieldOverride('tabs', 'tab_active_text_color', v)">激活标签文字色</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_active_text_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('tabs', 'tab_active_text_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('tabs', 'tab_active_text_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_active_text_color }}</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
         <!-- 卡片分区 -->
         <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('card')" name="card" tab="卡片">
           <div class="instance-fields">
@@ -430,6 +470,16 @@ defineExpose({ currentInstanceOverrides, instanceCount })
   border-radius: 8px;
   border-left: 3px solid var(--n-primary-color);
   margin-top: 8px;
+}
+.instance-meta__page {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--n-primary-color);
+  background: color-mix(in srgb, var(--n-primary-color) 12%, transparent);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
 }
 .instance-meta__title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .instance-meta__desc { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }

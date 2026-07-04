@@ -340,6 +340,7 @@ const columns = [
 
 <template>
   <AppGlassModal
+    appearance-key="aggregated-feed-items-modal"
     :show="show"
     @update:show="val => emit('update:show', val)"
     style="width: 1400px; height: 96vh;"

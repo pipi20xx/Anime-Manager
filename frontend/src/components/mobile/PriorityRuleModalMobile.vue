@@ -37,8 +37,9 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
+  <AppGlassModal
+    appearance-key="priority-rule-modal"
+    :show="show"
     @update:show="close"
     class="mobile-fullscreen-modal"
   >

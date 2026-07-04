@@ -331,7 +331,7 @@ onUnmounted(() => {
     </n-space>
 
     <!-- Edit/Add Cache Modal -->
-    <AppGlassModal v-model:show="showEditModal" style="width: 750px" :title="isEditing ? '编辑缓存记录' : '新增缓存记录'">
+    <AppGlassModal appearance-key="cache-modal" v-model:show="showEditModal" style="width: 750px" :title="isEditing ? '编辑缓存记录' : '新增缓存记录'">
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="12">
           <n-gi>

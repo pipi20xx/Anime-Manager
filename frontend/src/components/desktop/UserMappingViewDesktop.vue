@@ -347,7 +347,7 @@ const countryColumns = [
       </n-tabs>
     </n-card>
 
-    <AppGlassModal :show="showModal" @update:show="val => showModal = val" style="width: 500px;" :title="isNewItem ? '添加映射' : '编辑映射'" bordered size="huge">
+    <AppGlassModal appearance-key="user-mapping-modal" :show="showModal" @update:show="val => showModal = val" style="width: 500px;" :title="isNewItem ? '添加映射' : '编辑映射'" bordered size="huge">
         <n-form label-placement="left" label-width="80">
           <template v-if="activeType === 'genre'">
             <n-form-item>

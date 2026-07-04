@@ -160,7 +160,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <AppGlassModal v-model:show="showLogModal" style="width: 90vw; max-height: 80vh" title="任务日志">
+    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" style="width: 90vw; max-height: 80vh" title="任务日志">
       <template #header-extra>
         <n-tag v-if="selectedTask" size="small" round :bordered="false" :style="getStatusTag(selectedTask.status).style">
           {{ getStatusTag(selectedTask.status).label }}

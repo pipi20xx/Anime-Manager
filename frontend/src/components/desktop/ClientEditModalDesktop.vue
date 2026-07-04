@@ -33,10 +33,11 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 600px;" 
+  <AppGlassModal
+    appearance-key="client-edit-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 600px;"
     :title="isNew ? '添加下载器' : '编辑下载器'"
   >
     <n-space vertical size="large">

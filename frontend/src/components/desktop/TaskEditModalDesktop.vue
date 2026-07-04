@@ -35,10 +35,11 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 700px" 
+  <AppGlassModal
+    appearance-key="task-edit-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 700px"
     :title="isNew ? '创建新整理任务' : '编辑任务配置'"
   >
     <n-form label-placement="left" label-width="100" size="small">

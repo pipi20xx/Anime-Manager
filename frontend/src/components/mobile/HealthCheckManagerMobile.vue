@@ -123,7 +123,7 @@ const getStatusTagStyle = (status: string) => {
     </n-space>
 
     <!-- 移动端 Modal -->
-    <AppGlassModal v-model:show="showModal" title="编辑项目" style="width: 90%;">
+    <AppGlassModal appearance-key="health-check-manager-modal" v-model:show="showModal" title="编辑项目" style="width: 90%;">
       <n-form :model="editingConfig" label-placement="top">
         <n-form-item>
           <AppTextField v-model:value="editingConfig.name" label="名称" />

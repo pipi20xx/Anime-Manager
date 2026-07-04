@@ -30,7 +30,7 @@ onMounted(() => {
     </div>
   </n-card>
   
-  <AppGlassModal v-model:show="showPreview" :style="{ width: '90vw' }" :title="'图片预览'" :bordered="false" size="huge" :segmented="{ content: 'soft', footer: 'soft' }">
+  <AppGlassModal appearance-key="settings-guide-modal" v-model:show="showPreview" :style="{ width: '90vw' }" :title="'图片预览'" :bordered="false" size="huge" :segmented="{ content: 'soft', footer: 'soft' }">
     <div class="preview-container">
       <n-image v-if="previewImage" :src="previewImage" object-fit="contain" />
     </div>

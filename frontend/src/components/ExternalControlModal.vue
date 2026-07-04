@@ -152,8 +152,9 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
+  <AppGlassModal
+    appearance-key="external-control-modal"
+    :show="show"
     @update:show="val => emit('update:show', val)"
     title="API 外部控制中心"
     style="width: 1000px;"

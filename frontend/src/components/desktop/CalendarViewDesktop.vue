@@ -256,7 +256,7 @@ const openCardDetail = (item: any) => {
       </div>
     </n-spin>
 
-    <AppGlassModal v-model:show="showManageModal" style="width: 95%;" content-style="padding: 0" title="追踪管理">
+    <AppGlassModal appearance-key="calendar-modal" v-model:show="showManageModal" style="width: 95%;" content-style="padding: 0" title="追踪管理">
       <n-tabs type="line" animated class="manage-tabs">
         <n-tab-pane name="list" tab="正在追踪">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">

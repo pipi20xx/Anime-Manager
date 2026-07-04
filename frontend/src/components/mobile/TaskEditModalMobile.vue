@@ -36,9 +36,10 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
+  <AppGlassModal
+    appearance-key="task-edit-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
     style="width: 100%; height: 100vh; margin: 0;"
     content-style="padding: 0; display: flex; flex-direction: column;"
     :title="isNew ? '创建新整理任务' : '编辑任务配置'"

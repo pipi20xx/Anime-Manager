@@ -205,7 +205,7 @@
       </n-card>
     </n-space>
     
-    <AppGlassModal v-model:show="queueModalVisible" style="width: 800px; max-width: 90vw;" title="队列内容">
+    <AppGlassModal appearance-key="service-status-modal" v-model:show="queueModalVisible" style="width: 800px; max-width: 90vw;" title="队列内容">
       <template #header>
         <div class="modal-header">
           <span>{{ queueModalData?.name }} - 队列内容</span>

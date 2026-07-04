@@ -34,6 +34,7 @@ const {
 
 <template>
   <AppGlassModal 
+    appearance-key="subscription-template-modal"
     :show="show" 
     @update:show="close"
     class="mobile-fullscreen-modal"

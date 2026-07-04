@@ -54,7 +54,7 @@ const {
 </script>
 
 <template>
-  <AppGlassModal :show="props.show" @update:show="val => emit('update:show', val)" style="width: 100%; height: 100vh; margin: 0;" content-style="padding: 16px; overflow-y: auto;" :title="props.isNew ? '添加分类规则' : '编辑分类规则'">
+  <AppGlassModal appearance-key="classifier-edit-modal" :show="props.show" @update:show="val => emit('update:show', val)" style="width: 100%; height: 100vh; margin: 0;" content-style="padding: 16px; overflow-y: auto;" :title="props.isNew ? '添加分类规则' : '编辑分类规则'">
     <n-form label-placement="top">
       <n-divider dashed title-placement="left">基础设置</n-divider>
       <n-form-item path="name">

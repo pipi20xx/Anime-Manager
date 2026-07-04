@@ -68,6 +68,7 @@ const handleConfirm = () => {
 
 <template>
   <AppGlassModal 
+    appearance-key="file-picker-modal"
     :show="show" 
     @update:show="val => emit('update:show', val)" 
     style="width: 500px" 

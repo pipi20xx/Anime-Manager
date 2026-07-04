@@ -372,7 +372,7 @@ const tabCounts = computed(() => ({
     </div>
 
     <!-- 编辑弹窗 -->
-    <AppGlassModal :show="showModal" @update:show="val => showModal = val" style="width: 90%;" :title="isNewItem ? '添加映射' : '编辑映射'">
+    <AppGlassModal appearance-key="user-mapping-modal" :show="showModal" @update:show="val => showModal = val" style="width: 90%;" :title="isNewItem ? '添加映射' : '编辑映射'">
       <n-form label-placement="top">
         <template v-if="activeType === 'genre'">
           <n-form-item><AppTextField v-model:value="formModel.id" label="ID" :disabled="!isNewItem" placeholder="TMDB ID" type="number" /></n-form-item>

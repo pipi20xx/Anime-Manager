@@ -36,8 +36,9 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
+  <AppGlassModal
+    appearance-key="priority-rule-modal"
+    :show="show"
     @update:show="close"
     style="width: 900px; height: 80vh;"
     title="洗版规则管理"
@@ -149,7 +150,7 @@ const {
     </div>
 
     <!-- Rule Editor Modal -->
-    <AppGlassModal v-model:show="showRuleEdit" title="编辑基础规则" style="width: 600px;">
+    <AppGlassModal appearance-key="priority-rule-modal" v-model:show="showRuleEdit" title="编辑基础规则" style="width: 600px;">
       <n-form label-placement="left" label-width="80">
         <n-form-item><AppTextField v-model:value="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" /></n-form-item>
         <n-divider title-placement="left">匹配条件 (留空表示不限制)</n-divider>
@@ -178,7 +179,7 @@ const {
     </AppGlassModal>
 
     <!-- Profile Editor Modal -->
-    <AppGlassModal v-model:show="showProfileEdit" title="编辑洗版策略" style="width: 600px;">
+    <AppGlassModal appearance-key="priority-rule-modal" v-model:show="showProfileEdit" title="编辑洗版策略" style="width: 600px;">
       <n-form label-placement="left" label-width="80">
         <n-form-item><AppTextField v-model:value="currentProfile.name" label="策略名称" /></n-form-item>
         <n-grid :cols="2" :x-gap="12">

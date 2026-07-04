@@ -339,7 +339,7 @@ const logColumns = [
       </n-tabs>
     </n-card>
 
-    <AppGlassModal v-model:show="showLogDetail" title="请求详情" style="width: 600px">
+    <AppGlassModal appearance-key="external-control-modal" v-model:show="showLogDetail" title="请求详情" style="width: 600px">
       <div style="background: var(--bg-surface); padding: 12px; border-radius: 8px">
         <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 13px">{{ currentLogDetail }}</pre>
       </div>

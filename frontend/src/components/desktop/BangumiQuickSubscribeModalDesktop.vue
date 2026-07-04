@@ -29,6 +29,7 @@ const {
 
 <template>
   <AppGlassModal
+    appearance-key="bangumi-quick-subscribe-modal"
     :show="show"
     @update:show="v => emit('update:show', v)"
     style="width: 1000px; max-width: 95vw;"

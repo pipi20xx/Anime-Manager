@@ -330,9 +330,10 @@ onUnmounted(() => {
     </div>
 
     <!-- Edit/Add Cache Modal -->
-    <AppGlassModal 
-      v-model:show="showEditModal" 
-      style="width: 92%; max-width: 480px; max-height: 90vh" 
+    <AppGlassModal
+      appearance-key="cache-modal"
+      v-model:show="showEditModal"
+      style="width: 92%; max-width: 480px; max-height: 90vh"
       :title="isEditing ? '编辑缓存记录' : '新增缓存记录'"
       :segmented="{ content: true, action: true }"
     >

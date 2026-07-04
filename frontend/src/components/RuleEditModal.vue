@@ -92,10 +92,11 @@ const handleSave = () => {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 800px;" 
+  <AppGlassModal
+    appearance-key="rule-edit-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 800px;"
     :title="isNew ? '创建新规则' : '编辑重命名规则'"
   >
     <n-space vertical size="large">

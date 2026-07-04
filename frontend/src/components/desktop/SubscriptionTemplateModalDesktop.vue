@@ -69,6 +69,7 @@ const columns = [
 
 <template>
   <AppGlassModal 
+    appearance-key="subscription-template-modal"
     :show="show" 
     @update:show="close"
     style="width: 750px;"

@@ -38,6 +38,7 @@ const {
 
 <template>
   <AppGlassModal 
+    appearance-key="manual-organize-modal"
     :show="show" 
     @update:show="val => emit('update:show', val)" 
     class="mobile-modal"

@@ -39,10 +39,11 @@ watch(() => props.logs.length, () => {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 950px; max-height: 90vh; display: flex; flex-direction: column;" 
+  <AppGlassModal
+    appearance-key="execution-log-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 950px; max-height: 90vh; display: flex; flex-direction: column;"
     :title="isDryRun ? '整理任务预览' : '正式执行日志'"
     :segmented="{
       content: true,

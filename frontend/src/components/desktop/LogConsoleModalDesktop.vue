@@ -66,9 +66,10 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
+  <AppGlassModal
+    appearance-key="log-console-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
     transform-origin="center"
     style="width: 96vw; height: 96vh;"
     content-style="padding: 0; display: flex; flex-direction: column; height: 100%; overflow: hidden;"

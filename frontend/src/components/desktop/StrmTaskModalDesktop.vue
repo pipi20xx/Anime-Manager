@@ -37,10 +37,11 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 950px" 
+  <AppGlassModal
+    appearance-key="strm-task-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 950px"
     :title="isNew ? '新建 STRM 任务' : '编辑 STRM 任务配置'"
   >
     <n-form label-placement="left" label-width="100" size="small">

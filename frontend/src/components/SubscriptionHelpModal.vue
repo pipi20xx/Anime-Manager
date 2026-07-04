@@ -30,7 +30,7 @@ const data = [
 </script>
 
 <template>
-  <AppGlassModal :show="show" @update:show="v => emit('update:show', v)" style="width: 800px;" title="订阅过滤项填写指南">
+  <AppGlassModal appearance-key="subscription-help-modal" :show="show" @update:show="v => emit('update:show', v)" style="width: 800px;" title="订阅过滤项填写指南">
     <n-card :bordered="false">
       <div style="margin-bottom: 20px">
         <span style="color: var(--text-tertiary)">

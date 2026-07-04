@@ -48,10 +48,11 @@ const {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 850px" 
+  <AppGlassModal
+    appearance-key="recognition-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 850px"
     title="单文件识别"
   >
     <n-spin :show="loading">

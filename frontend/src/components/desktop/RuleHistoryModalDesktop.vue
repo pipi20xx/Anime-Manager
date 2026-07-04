@@ -243,10 +243,11 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 800px" 
+  <AppGlassModal
+    appearance-key="rule-history-modal"
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 800px"
     :title="`推送历史: ${rule?.name}`"
   >
     <n-spin :show="loading">
