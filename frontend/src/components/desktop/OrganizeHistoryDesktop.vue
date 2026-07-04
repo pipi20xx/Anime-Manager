@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { 
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NRadioGroup, NRadioButton, NAlert, NText, NCheckbox, NSpin, NDivider
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NRadioGroup, NRadioButton, NAlert, NText, NCheckbox, NSpin, NDivider, NList, NListItem
 } from 'naive-ui'
 import {
   HistoryOutlined as HistoryIcon,
@@ -116,135 +116,137 @@ const handleRefresh = () => {
     </div>
 
     <div v-if="filteredHistory.length > 0" class="history-list">
-      <div v-for="item in filteredHistory" :key="item.id" class="history-item">
-        <!-- 现有项内容保持不变 -->
-        <!-- 1. Header: Title & Meta -->
-        <div class="item-row header-row">
-          <div class="title-group">
-            <span class="item-title">{{ item.title || item.filename }}</span>
-            <span class="item-year" v-if="item.year">({{ item.year }})</span>
-            <span class="history-tag tag-episode" v-if="item.season || item.episode">
-              S{{ item.season?.toString().padStart(2, '0') }}E{{ item.episode }}
-            </span>
-            <span v-if="item.media_type" class="history-tag tag-type">{{ item.media_type }}</span>
-            <span v-if="item.resolution" class="history-tag tag-res">{{ item.resolution }}</span>
-            <span v-if="item.video_encode" class="history-tag tag-encode">{{ item.video_encode }}</span>
-            <span v-if="item.team" class="history-tag tag-team">{{ item.team }}</span>
+      <n-list hoverable :show-divider="false">
+        <n-list-item v-for="item in filteredHistory" :key="item.id" class="history-item">
+          <!-- 现有项内容保持不变 -->
+          <!-- 1. Header: Title & Meta -->
+          <div class="item-row header-row">
+            <div class="title-group">
+              <span class="item-title">{{ item.title || item.filename }}</span>
+              <span class="item-year" v-if="item.year">({{ item.year }})</span>
+              <span class="history-tag tag-episode" v-if="item.season || item.episode">
+                S{{ item.season?.toString().padStart(2, '0') }}E{{ item.episode }}
+              </span>
+              <span v-if="item.media_type" class="history-tag tag-type">{{ item.media_type }}</span>
+              <span v-if="item.resolution" class="history-tag tag-res">{{ item.resolution }}</span>
+              <span v-if="item.video_encode" class="history-tag tag-encode">{{ item.video_encode }}</span>
+              <span v-if="item.team" class="history-tag tag-team">{{ item.team }}</span>
+            </div>
+            <div class="item-status">
+              <span class="history-tag" :class="'tag-status-' + item.status">
+                {{ item.status === 'failed' ? '失败' : (item.status === 'skipped' ? '跳过' : '成功') }}
+              </span>
+            </div>
           </div>
-          <div class="item-status">
-            <span class="history-tag" :class="'tag-status-' + item.status">
-              {{ item.status === 'failed' ? '失败' : (item.status === 'skipped' ? '跳过' : '成功') }}
-            </span>
-          </div>
-        </div>
 
-        <!-- Error Message Row -->
-        <div v-if="item.status === 'failed' && item.message" class="error-msg-row mt-2">
-          <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
-            {{ item.message }}
-          </n-alert>
-        </div>
+          <!-- Error Message Row -->
+          <div v-if="item.status === 'failed' && item.message" class="error-msg-row mt-2">
+            <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
+              {{ item.message }}
+            </n-alert>
+          </div>
 
-        <!-- Skipped Message Row -->
-        <div v-if="item.status === 'skipped' && item.message" class="skipped-msg-row mt-2">
-          <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
-            {{ item.message }}
-          </n-alert>
-        </div>
+          <!-- Skipped Message Row -->
+          <div v-if="item.status === 'skipped' && item.message" class="skipped-msg-row mt-2">
+            <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
+              {{ item.message }}
+            </n-alert>
+          </div>
 
-        <!-- 2. Paths (Vertical Stacked) -->
-        <div class="path-container mt-3">
-          <div class="path-item source">
-            <div class="path-label">源路径</div>
-            <div class="path-content">
-              <n-icon><FolderIcon /></n-icon>
-              <span class="path-text">{{ item.source_path }}</span>
-            </div>
-          </div>
-          <div class="path-divider">
-            <div class="line"></div>
-            <n-icon size="14"><ArrowIcon /></n-icon>
-            <div class="line"></div>
-          </div>
-          <div class="path-item target">
-            <div class="path-label">目标路径</div>
-            <div class="path-content">
-              <n-icon style="color: var(--n-primary-color)"><FolderIcon /></n-icon>
-              <span class="path-text">{{ item.target_path }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Footer: Details -->
-        <div class="item-row footer-row mt-3">
-          <div class="detail-group">
-            <div class="detail-item">
-              <span class="label">转移方式：</span>
-              <span class="history-tag tag-action">{{ getActionLabel(item.action_type) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="history-tag tag-size">{{ item.file_size || '未知大小' }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="history-tag tag-time">{{ formatTime(item.processed_at) }}</span>
-            </div>
-            <div class="detail-item" v-if="item.tmdb_id">
-              <a 
-                :href="`https://www.themoviedb.org/${item.media_type === '电影' ? 'movie' : 'tv'}/${item.tmdb_id}`" 
-                target="_blank"
-                class="history-tag tag-tmdb tag-link"
-              >TMDB: {{ item.tmdb_id }}</a>
-            </div>
-          </div>
-          <div class="delete-btn-wrapper">
-            <n-popconfirm
-              @positive-click="retryItem(item.id)"
-              positive-text="确定重试"
-              negative-text="取消"
-            >
-              <template #trigger>
-                <n-button
-                  v-bind="getButtonStyle('iconPrimary')"
-                  size="small"
-                  :loading="isRetrying(item.id)"
-                  :disabled="isRetrying(item.id)"
-                  style="margin-right: 6px"
-                >
-                  <template #icon><n-icon><RetryIcon /></n-icon></template>
-                </n-button>
-              </template>
-              <div style="max-width: 240px">
-                <p class="m-0">将根据源路径重新执行识别与整理流程（绕过历史去重）。</p>
-                <p class="m-0" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
-                  进度可在「任务历史」中查看。
-                </p>
+          <!-- 2. Paths (Vertical Stacked) -->
+          <div class="path-container mt-3">
+            <div class="path-item source">
+              <div class="path-label">源路径</div>
+              <div class="path-content">
+                <n-icon><FolderIcon /></n-icon>
+                <span class="path-text">{{ item.source_path }}</span>
               </div>
-            </n-popconfirm>
-            <n-popconfirm
-              v-model:show="deletePopconfirmShow[item.id]"
-              @positive-click="deleteItem(item.id, shouldDeleteFile); deletePopconfirmShow[item.id] = false"
-              @negative-click="shouldDeleteFile = false; deletePopconfirmShow[item.id] = false"
-              positive-text="确定删除"
-              negative-text="取消"
-            >
-              <template #trigger>
-                <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deletePopconfirmShow[item.id] = true">
-                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
-                </n-button>
-              </template>
-              <div style="max-width: 240px">
-                <p class="m-0 mb-2">确定要删除这条整理记录吗？</p>
-                <n-checkbox v-model:checked="shouldDeleteFile">
-                  <span style="color: var(--n-error-color)">同时物理删除源文件</span>
-                </n-checkbox>
-                <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
-                   警告：这将尝试永久删除原始源路径下的文件。
+            </div>
+            <div class="path-divider">
+              <div class="line"></div>
+              <n-icon size="14"><ArrowIcon /></n-icon>
+              <div class="line"></div>
+            </div>
+            <div class="path-item target">
+              <div class="path-label">目标路径</div>
+              <div class="path-content">
+                <n-icon style="color: var(--n-primary-color)"><FolderIcon /></n-icon>
+                <span class="path-text">{{ item.target_path }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Footer: Details -->
+          <div class="item-row footer-row mt-3">
+            <div class="detail-group">
+              <div class="detail-item">
+                <span class="label">转移方式：</span>
+                <span class="history-tag tag-action">{{ getActionLabel(item.action_type) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="history-tag tag-size">{{ item.file_size || '未知大小' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="history-tag tag-time">{{ formatTime(item.processed_at) }}</span>
+              </div>
+              <div class="detail-item" v-if="item.tmdb_id">
+                <a 
+                  :href="`https://www.themoviedb.org/${item.media_type === '电影' ? 'movie' : 'tv'}/${item.tmdb_id}`" 
+                  target="_blank"
+                  class="history-tag tag-tmdb tag-link"
+                >TMDB: {{ item.tmdb_id }}</a>
+              </div>
+            </div>
+            <div class="delete-btn-wrapper">
+              <n-popconfirm
+                @positive-click="retryItem(item.id)"
+                positive-text="确定重试"
+                negative-text="取消"
+              >
+                <template #trigger>
+                  <n-button
+                    v-bind="getButtonStyle('iconPrimary')"
+                    size="small"
+                    :loading="isRetrying(item.id)"
+                    :disabled="isRetrying(item.id)"
+                    style="margin-right: 6px"
+                  >
+                    <template #icon><n-icon><RetryIcon /></n-icon></template>
+                  </n-button>
+                </template>
+                <div style="max-width: 240px">
+                  <p class="m-0">将根据源路径重新执行识别与整理流程（绕过历史去重）。</p>
+                  <p class="m-0" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
+                    进度可在「任务历史」中查看。
+                  </p>
                 </div>
-              </div>
-            </n-popconfirm>
+              </n-popconfirm>
+              <n-popconfirm
+                v-model:show="deletePopconfirmShow[item.id]"
+                @positive-click="deleteItem(item.id, shouldDeleteFile); deletePopconfirmShow[item.id] = false"
+                @negative-click="shouldDeleteFile = false; deletePopconfirmShow[item.id] = false"
+                positive-text="确定删除"
+                negative-text="取消"
+              >
+                <template #trigger>
+                  <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deletePopconfirmShow[item.id] = true">
+                    <template #icon><n-icon><DeleteIcon /></n-icon></template>
+                  </n-button>
+                </template>
+                <div style="max-width: 240px">
+                  <p class="m-0 mb-2">确定要删除这条整理记录吗？</p>
+                  <n-checkbox v-model:checked="shouldDeleteFile">
+                    <span style="color: var(--n-error-color)">同时物理删除源文件</span>
+                  </n-checkbox>
+                  <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
+                     警告：这将尝试永久删除原始源路径下的文件。
+                  </div>
+                </div>
+              </n-popconfirm>
+            </div>
           </div>
-        </div>
-      </div>
+        </n-list-item>
+      </n-list>
 
       <!-- Sentinel for Infinite Scroll -->
       <div ref="scrollTarget" class="load-more-sentinel">
@@ -277,20 +279,22 @@ const handleRefresh = () => {
 .page-header :deep(.n-input) { height: 34px; }
 .page-header :deep(.n-button) { height: 34px; }
 
-.history-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
-
-.history-item {
+.history-list { margin-bottom: 40px; }
+.history-list :deep(.n-list) { background: transparent; }
+.history-list :deep(.n-list-item) {
   background: var(--app-surface-card);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 12px);
-  padding: 16px 20px;
+  padding: 16px 20px !important;
+  margin-bottom: 16px;
   transition: all var(--transition-normal);
 }
-.history-item:hover {
+.history-list :deep(.n-list-item:hover) {
   background: var(--app-surface-inner);
   border-color: var(--n-primary-color);
-  transform: translateY(-2px);
 }
+
+/* 原history-item样式已迁移到n-list-item */
 
 .item-row { display: flex; align-items: center; justify-content: space-between; }
 

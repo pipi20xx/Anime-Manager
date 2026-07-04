@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, computed, ref } from 'vue'
 import {
-  NButton, NIcon, NTabs, NTabPane, NTag, NDrawer, NDrawerContent, NSpace
+  NButton, NIcon, NTabs, NTabPane, NTag, NDrawer, NDrawerContent, NSpace, NList, NListItem
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
@@ -140,8 +140,8 @@ onUnmounted(stopBgTaskPolling)
           <n-tag size="small" :bordered="false">{{ runningTasks.length }} 运行中</n-tag>
         </div>
       </div>
-      <div class="m-list">
-        <div v-for="task in runningTasks" :key="task.task_id" class="m-list-item">
+      <n-list :show-divider="false" class="m-list">
+        <n-list-item v-for="task in runningTasks" :key="task.task_id" class="m-list-item">
           <div class="m-flex m-items-center m-gap-sm">
             <n-tag type="info" size="small">运行中</n-tag>
             <span class="m-list-item-title">{{ task.name }}</span>
@@ -149,8 +149,8 @@ onUnmounted(stopBgTaskPolling)
           <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="stopBackgroundTask(task.task_id)">
             <template #icon><n-icon><StopIcon /></n-icon></template>
           </n-button>
-        </div>
-        <div v-for="task in finishedTasks" :key="task.task_id" class="m-list-item">
+        </n-list-item>
+        <n-list-item v-for="task in finishedTasks" :key="task.task_id" class="m-list-item">
           <div class="m-flex m-items-center m-gap-sm">
             <n-tag :type="task.status === 'completed' ? 'success' : task.status === 'stopped' ? 'warning' : 'error'" size="small">
               {{ task.status === 'completed' ? '完成' : task.status === 'stopped' ? '停止' : '错误' }}
@@ -158,8 +158,8 @@ onUnmounted(stopBgTaskPolling)
             <span class="m-list-item-title">{{ task.name }}</span>
           </div>
           <n-button v-bind="getButtonStyle('text')" size="small" @click="deleteBackgroundTask(task.task_id)">清除</n-button>
-        </div>
-      </div>
+        </n-list-item>
+      </n-list>
     </div>
 
     <n-tabs type="line" animated class="m-tabs" pane-class="m-tab-content">
@@ -173,8 +173,8 @@ onUnmounted(stopBgTaskPolling)
             </n-button>
           </div>
           
-          <div class="m-card-list">
-            <div
+          <n-list :show-divider="false" class="m-card-list">
+            <n-list-item
               v-for="(rule, i) in rules"
               :key="rule.id"
               class="m-card-item m-card-touchable m-touchable"
@@ -190,7 +190,7 @@ onUnmounted(stopBgTaskPolling)
                   <template #icon><n-icon><MoreIcon /></n-icon></template>
                 </n-button>
               </div>
-              
+
               <div class="rule-details">
                 <div class="detail-row">
                   <span class="label">电影</span>
@@ -201,8 +201,8 @@ onUnmounted(stopBgTaskPolling)
                   <code class="pattern">{{ rule.tv_pattern || '未设置' }}</code>
                 </div>
               </div>
-            </div>
-          </div>
+            </n-list-item>
+          </n-list>
         </div>
       </n-tab-pane>
 
@@ -216,8 +216,8 @@ onUnmounted(stopBgTaskPolling)
             </n-button>
           </div>
           
-          <div class="m-card-list">
-            <div
+          <n-list :show-divider="false" class="m-card-list">
+            <n-list-item
               v-for="(task, i) in tasks"
               :key="task.id"
               class="m-card-item m-card-touchable m-touchable"
@@ -237,7 +237,7 @@ onUnmounted(stopBgTaskPolling)
                    </n-button>
                 </div>
               </div>
-              
+
               <div class="task-details">
                  <div class="path-box">
                    <span class="path-label">源</span>
@@ -261,8 +261,8 @@ onUnmounted(stopBgTaskPolling)
               </div>
 
               <div class="card-footer">
-                  <n-button 
-                    size="tiny" 
+                  <n-button
+                    size="tiny"
                     secondary
                     round
                     :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'default'"
@@ -272,8 +272,8 @@ onUnmounted(stopBgTaskPolling)
                     实时监控
                   </n-button>
 
-                  <n-button 
-                    size="tiny" 
+                  <n-button
+                    size="tiny"
                     secondary
                     round
                     :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'default'"
@@ -283,8 +283,8 @@ onUnmounted(stopBgTaskPolling)
                     定时扫描
                   </n-button>
               </div>
-            </div>
-          </div>
+            </n-list-item>
+          </n-list>
         </div>
       </n-tab-pane>
     </n-tabs>
@@ -529,5 +529,37 @@ onUnmounted(stopBgTaskPolling)
 .m-action-bar .n-button {
   flex: 1;
   min-width: 120px;
+}
+
+/* NList 样式适配 */
+.m-list :deep(.n-list) { background: transparent; }
+.m-list :deep(.n-list-item) {
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-md) !important;
+  margin-bottom: var(--m-spacing-md);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-list :deep(.n-list-item:active) {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
+}
+
+.m-card-list :deep(.n-list) { background: transparent; }
+.m-card-list :deep(.n-list-item) {
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--m-radius-lg);
+  padding: var(--m-spacing-lg) !important;
+  margin-bottom: var(--m-spacing-lg);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+.m-card-list :deep(.n-list-item:active) {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, h } from 'vue'
-import { NTag, NButton, NIcon, NDrawer, NDrawerContent, NEmpty, useDialog } from 'naive-ui'
+import { NTag, NButton, NIcon, NDrawer, NDrawerContent, NEmpty, useDialog, NList, NListItem } from 'naive-ui'
 import {
   MoreVertOutlined as MoreIcon,
   EditOutlined as EditIcon,
@@ -68,25 +68,27 @@ const handleAction = (key: string) => {
 <template>
   <div class="mobile-rule-list">
     <div v-if="rules.length > 0">
-      <div v-for="rule in rules" :key="rule.id" class="rule-item m-touchable" @click="emit('edit', rule)">
-        <div class="rule-content">
-          <div class="rule-header">
-            <span class="rule-name">{{ rule.name }}</span>
-            <n-tag size="small" round :bordered="false" :style="rule.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }" class="status-tag">
-              {{ rule.enabled ? '生效' : '关闭' }}
-            </n-tag>
+      <n-list hoverable :show-divider="false">
+        <n-list-item v-for="rule in rules" :key="rule.id" class="rule-item m-touchable" @click="emit('edit', rule)">
+          <div class="rule-content">
+            <div class="rule-header">
+              <span class="rule-name">{{ rule.name }}</span>
+              <n-tag size="small" round :bordered="false" :style="rule.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }" class="status-tag">
+                {{ rule.enabled ? '生效' : '关闭' }}
+              </n-tag>
+            </div>
+            <div class="rule-details">
+              <span class="rule-keyword">包含: {{ rule.must_contain || '无' }}</span>
+              <span class="rule-regex" v-if="rule.use_regex">正则</span>
+            </div>
           </div>
-          <div class="rule-details">
-            <span class="rule-keyword">包含: {{ rule.must_contain || '无' }}</span>
-            <span class="rule-regex" v-if="rule.use_regex">正则</span>
+          <div class="rule-action" @click.stop="openActions(rule, $event)">
+            <n-button v-bind="getButtonStyle('icon')" size="small">
+              <template #icon><n-icon><MoreIcon/></n-icon></template>
+            </n-button>
           </div>
-        </div>
-        <div class="rule-action" @click.stop="openActions(rule, $event)">
-          <n-button v-bind="getButtonStyle('icon')" size="small">
-            <template #icon><n-icon><MoreIcon/></n-icon></template>
-          </n-button>
-        </div>
-      </div>
+        </n-list-item>
+      </n-list>
     </div>
     <div v-else class="empty-state">
       <n-empty description="暂无下载规则" />
@@ -120,23 +122,28 @@ const handleAction = (key: string) => {
   flex-direction: column;
   gap: var(--m-spacing-md);
 }
-.rule-item {
+.mobile-rule-list :deep(.n-list) { background: transparent; }
+.mobile-rule-list :deep(.n-list-item) {
   display: flex;
   align-items: center;
   background: var(--app-surface-card);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-md);
+  padding: var(--m-spacing-md) !important;
+  margin-bottom: var(--m-spacing-md);
   min-height: 64px;
   transition: transform 0.1s ease, box-shadow 0.2s ease;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   box-shadow: var(--shadow-sm);
 }
-.rule-item:active {
+.mobile-rule-list :deep(.n-list-item:active) {
   transform: scale(0.98);
   box-shadow: var(--shadow-md);
 }
+
+/* 原rule-item样式已迁移到n-list-item */
+.rule-item { /* 内部元素样式 */ }
 .rule-content {
   flex: 1;
   overflow: hidden;

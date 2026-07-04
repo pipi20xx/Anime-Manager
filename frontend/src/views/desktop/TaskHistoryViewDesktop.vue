@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NRadioGroup, NRadioButton } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NRadioGroup, NRadioButton, NList, NListItem } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
@@ -115,34 +115,36 @@ onUnmounted(() => {
     </n-card>
 
     <div v-else class="task-list">
-      <n-card v-for="task in tasks" :key="task.task_id" class="task-item" embedded>
-        <div class="task-row">
-          <div class="task-main">
-            <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
-              {{ getStatusTag(task.status).label }}
-            </n-tag>
-            <span class="task-time">{{ formatTime(task.started_at) }}</span>
-            <span class="task-name">{{ task.name || task.module }}</span>
+      <n-list hoverable :show-divider="false">
+        <n-list-item v-for="task in tasks" :key="task.task_id" class="task-item">
+          <div class="task-row">
+            <div class="task-main">
+              <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
+                {{ getStatusTag(task.status).label }}
+              </n-tag>
+              <span class="task-time">{{ formatTime(task.started_at) }}</span>
+              <span class="task-name">{{ task.name || task.module }}</span>
+            </div>
+            <div class="task-meta">
+              <span v-if="task.status === 'completed'" class="meta-item">
+                耗时 {{ formatDuration(task.started_at, task.finished_at) }}
+              </span>
+              <span v-if="getTaskStats(task)" class="meta-item">
+                {{ getTaskStats(task) }}
+              </span>
+              <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
+            </div>
+            <div class="task-actions">
+              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
+                查看日志
+              </n-button>
+              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
+                <template #icon><n-icon><DeleteIcon /></n-icon></template>
+              </n-button>
+            </div>
           </div>
-          <div class="task-meta">
-            <span v-if="task.status === 'completed'" class="meta-item">
-              耗时 {{ formatDuration(task.started_at, task.finished_at) }}
-            </span>
-            <span v-if="getTaskStats(task)" class="meta-item">
-              {{ getTaskStats(task) }}
-            </span>
-            <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
-          </div>
-          <div class="task-actions">
-            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
-              查看日志
-            </n-button>
-            <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
-              <template #icon><n-icon><DeleteIcon /></n-icon></template>
-            </n-button>
-          </div>
-        </div>
-      </n-card>
+        </n-list-item>
+      </n-list>
 
       <div ref="scrollTarget" class="load-more-sentinel">
         <n-spin v-if="loading" size="small" description="正在加载更多..." />
@@ -191,8 +193,19 @@ onUnmounted(() => {
 .page-header :deep(.n-radio-group) { height: var(--space-8); }
 .page-header :deep(.n-button) { height: var(--space-8); }
 
-.task-list { display: flex; flex-direction: column; gap: var(--space-2); }
-.task-item { border-radius: var(--radius-lg); }
+.task-list { margin-bottom: var(--space-6); }
+.task-list :deep(.n-list) { background: transparent; }
+.task-list :deep(.n-list-item) {
+  background: var(--app-surface-card);
+  border: 1px solid var(--app-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4) !important;
+  margin-bottom: var(--space-2);
+}
+
+/* 原task-item样式已迁移到n-list-item */
+.task-item { /* 内部元素样式 */ }
+
 .task-row {
   display: flex;
   align-items: center;

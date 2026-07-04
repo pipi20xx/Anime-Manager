@@ -9,8 +9,8 @@
             <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">{{ runningServicesCount }}/{{ data.services.length }}</n-tag>
           </div>
         </div>
-        <div class="service-list">
-          <div v-for="service in data.services" :key="service.id" class="service-item" :class="{ 'is-running': service.running && service.enabled, 'is-stopped': !service.enabled }">
+        <n-list :show-divider="false" class="service-list">
+          <n-list-item v-for="service in data.services" :key="service.id" class="service-item" :class="{ 'is-running': service.running && service.enabled, 'is-stopped': !service.enabled }">
             <div class="service-info">
               <span class="service-name">{{ service.name }}</span>
               <div class="service-meta">
@@ -22,8 +22,8 @@
             <n-tag size="tiny" round :bordered="false" :style="getStatusTagStyle(service)">
               {{ getStatusTag(service).text }}
             </n-tag>
-          </div>
-        </div>
+          </n-list-item>
+        </n-list>
       </div>
 
       <!-- 文件监控 -->
@@ -34,8 +34,8 @@
             <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }">{{ runningMonitorsCount }}/{{ data.monitors.length }}</n-tag>
           </div>
         </div>
-        <div class="monitor-list">
-          <div v-for="monitor in data.monitors" :key="monitor.id" class="monitor-item">
+        <n-list :show-divider="false" class="monitor-list">
+          <n-list-item v-for="monitor in data.monitors" :key="monitor.id" class="monitor-item">
             <div class="monitor-header">
               <div class="monitor-tags">
                 <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: monitor.type === 'organize' ? '#0288d1' : '#2e7d32', borderColor: 'transparent' }">
@@ -65,8 +65,8 @@
                 <n-text type="success">队列: {{ monitor.queue_size }} 待处理</n-text>
               </div>
             </div>
-          </div>
-        </div>
+          </n-list-item>
+        </n-list>
       </div>
 
       <!-- 运行时 -->
@@ -95,37 +95,37 @@
         <div class="m-card-header">
           <span class="m-card-title">规则统计</span>
         </div>
-        <div class="rule-list">
-          <div class="rule-item">
+        <n-list :show-divider="false" class="rule-list">
+          <n-list-item class="rule-item">
             <span class="rule-name">自定义识别词</span>
             <n-space :size="4">
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">本地 {{ data.rules.custom_noise.local }}</n-tag>
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">远程 {{ data.rules.custom_noise.remote }}</n-tag>
             </n-space>
-          </div>
-          <div class="rule-item">
+          </n-list-item>
+          <n-list-item class="rule-item">
             <span class="rule-name">自定义制作组</span>
             <n-space :size="4">
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">本地 {{ data.rules.custom_groups.local }}</n-tag>
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">远程 {{ data.rules.custom_groups.remote }}</n-tag>
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }">内置 {{ data.rules.custom_groups.builtin || 0 }}</n-tag>
             </n-space>
-          </div>
-          <div class="rule-item">
+          </n-list-item>
+          <n-list-item class="rule-item">
             <span class="rule-name">自定义渲染词</span>
             <n-space :size="4">
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">本地 {{ data.rules.custom_render.local }}</n-tag>
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">远程 {{ data.rules.custom_render.remote }}</n-tag>
             </n-space>
-          </div>
-          <div class="rule-item">
+          </n-list-item>
+          <n-list-item class="rule-item">
             <span class="rule-name">特权规则</span>
             <n-space :size="4">
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">本地 {{ data.rules.privileged.local }}</n-tag>
               <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">远程 {{ data.rules.privileged.remote }}</n-tag>
             </n-space>
-          </div>
-        </div>
+          </n-list-item>
+        </n-list>
       </div>
     </n-space>
   </div>
@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  NSpace, NTag, NText
+  NSpace, NTag, NText, NList, NListItem
 } from 'naive-ui'
 import { useServiceStatus } from '../../composables/views/useServiceStatus'
 
@@ -196,35 +196,34 @@ const runningMonitorsCount = computed(() =>
 }
 
 /* 服务列表 */
-.service-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--m-spacing-sm);
+.service-list :deep(.n-list) { background: transparent; }
+.service-list :deep(.n-list-item) {
+  padding: var(--m-spacing-sm) 0 !important;
+  border-bottom: 1px solid var(--app-border-light);
+  margin-bottom: 0;
 }
+.service-list :deep(.n-list-item:last-child) { border-bottom: none; }
+
+/* 原service-list样式已迁移到n-list */
+.service-list { /* 容器样式 */ }
 
 .service-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--m-spacing-sm) 0;
-  border-bottom: 1px solid var(--app-border-light);
-}
-
-.service-item:last-child {
-  border-bottom: none;
 }
 
 .service-item.is-running {
   border-left: 3px solid var(--n-primary-color);
   background: var(--primary-light);
   border-radius: var(--m-radius-md);
-  padding-left: var(--m-spacing-sm);
+  padding-left: var(--m-spacing-sm) !important;
 }
 
 .service-item.is-stopped {
   border-left: 3px solid var(--n-primary-color);
   border-radius: var(--m-radius-md);
-  padding-left: var(--m-spacing-sm);
+  padding-left: var(--m-spacing-sm) !important;
   opacity: var(--opacity-60);
 }
 
@@ -247,20 +246,18 @@ const runningMonitorsCount = computed(() =>
 }
 
 /* 监控列表 */
-.monitor-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--m-spacing-md);
-}
-
-.monitor-item {
-  padding: var(--m-spacing-sm) 0;
+.monitor-list :deep(.n-list) { background: transparent; }
+.monitor-list :deep(.n-list-item) {
+  padding: var(--m-spacing-sm) 0 !important;
   border-bottom: 1px solid var(--app-border-light);
+  margin-bottom: 0;
 }
+.monitor-list :deep(.n-list-item:last-child) { border-bottom: none; }
 
-.monitor-item:last-child {
-  border-bottom: none;
-}
+/* 原monitor-list样式已迁移到n-list */
+.monitor-list { /* 容器样式 */ }
+
+.monitor-item { /* 内部元素样式 */ }
 
 .monitor-header {
   display: flex;
@@ -334,23 +331,20 @@ const runningMonitorsCount = computed(() =>
 }
 
 /* 规则列表 */
-.rule-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--m-spacing-sm);
-}
-
-.rule-item {
+.rule-list :deep(.n-list) { background: transparent; }
+.rule-list :deep(.n-list-item) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--m-spacing-sm) 0;
+  padding: var(--m-spacing-sm) 0 !important;
   border-bottom: 1px solid var(--app-border-light);
+  margin-bottom: 0;
 }
+.rule-list :deep(.n-list-item:last-child) { border-bottom: none; }
 
-.rule-item:last-child {
-  border-bottom: none;
-}
+/* 原rule-list样式已迁移到n-list */
+.rule-list { /* 容器样式 */ }
+.rule-item { /* 内部元素样式 */ }
 
 .rule-name {
   font-size: var(--m-text-sm);
