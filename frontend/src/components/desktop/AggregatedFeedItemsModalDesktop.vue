@@ -352,6 +352,7 @@ const columns = [
         <AppSearchField
           :value="keyword"
           placeholder="搜索资源标题或识别名..."
+          :loading="loading"
           class="filter-item"
           @update:value="val => keyword = val"
           @search="applyFilter"

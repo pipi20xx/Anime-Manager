@@ -49,6 +49,8 @@ const {
                       <AppSearchField
                         v-model:value="recognitionState.filename"
                         placeholder="粘贴文件名或完整路径进行深度解析..."
+                        :loading="recognitionState.loading"
+                        :disabled="recognitionState.loading"
                         @search="handleRecognize"
                       />
                     </div>

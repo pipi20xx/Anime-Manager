@@ -274,7 +274,7 @@ const countryColumns = [
       
       <n-tabs type="segment" animated v-model:value="activeType">
         <n-tab-pane name="genre" tab="流派">
-          <AppSearchField v-model:value="genreSearch" placeholder="搜索 ID 或名称..." style="margin-bottom: 12px" />
+          <AppSearchField v-model:value="genreSearch" placeholder="搜索 ID 或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
             remote
             :columns="genreColumns"
@@ -287,7 +287,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="company" tab="制作公司">
-          <AppSearchField v-model:value="companySearch" placeholder="搜索 ID、名称或国家..." style="margin-bottom: 12px" />
+          <AppSearchField v-model:value="companySearch" placeholder="搜索 ID、名称或国家..." :loading="companyLoading" style="margin-bottom: 12px" />
           <n-data-table
             remote
             :columns="companyColumns"
@@ -300,7 +300,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="keyword" tab="关键词">
-          <AppSearchField v-model:value="keywordSearch" placeholder="搜索 ID 或名称..." style="margin-bottom: 12px" />
+          <AppSearchField v-model:value="keywordSearch" placeholder="搜索 ID 或名称..." :loading="keywordLoading" style="margin-bottom: 12px" />
           <n-data-table
             remote
             :columns="keywordColumns"
@@ -313,7 +313,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="language" tab="原始语言">
-          <AppSearchField v-model:value="languageSearch" placeholder="搜索代码或名称..." style="margin-bottom: 12px" />
+          <AppSearchField v-model:value="languageSearch" placeholder="搜索代码或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
             remote
             :columns="languageColumns"
@@ -326,7 +326,7 @@ const countryColumns = [
         </n-tab-pane>
 
         <n-tab-pane name="country" tab="原始国家">
-          <AppSearchField v-model:value="countrySearch" placeholder="搜索代码或名称..." style="margin-bottom: 12px" />
+          <AppSearchField v-model:value="countrySearch" placeholder="搜索代码或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
             remote
             :columns="countryColumns"

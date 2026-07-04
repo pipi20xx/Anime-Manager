@@ -128,7 +128,7 @@ const handleAction = (key: string) => {
 
     <!-- Search & Filter Bar (Expandable) -->
     <div v-if="showSearch" class="search-bar">
-      <AppSearchField v-model:value="searchQuery" placeholder="搜索..." />
+      <AppSearchField v-model:value="searchQuery" placeholder="搜索..." :loading="loading" />
       <div class="filter-row">
         <n-radio-group v-model:value="statusFilter" size="small">
           <n-radio-button value="all">全部</n-radio-button>

@@ -100,7 +100,7 @@ const handleRefresh = () => {
           <n-radio-button value="skipped">跳过</n-radio-button>
           <n-radio-button value="failed">失败</n-radio-button>
         </n-radio-group>
-        <AppSearchField v-model:value="searchQuery" placeholder="搜索标题或文件名..." style="width: 250px" />
+        <AppSearchField v-model:value="searchQuery" placeholder="搜索标题或文件名..." :loading="loading" style="width: 250px" />
         <n-popconfirm @positive-click="clearAll" positive-text="确定清空" negative-text="我再想想">
           <template #trigger>
             <n-button v-bind="getButtonStyle('danger')">

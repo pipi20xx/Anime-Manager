@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { 
-  NCard, NSpace, NButton, NIcon, NGrid, NGi, NTag, NEmpty, 
-  NPopconfirm, useMessage, NImage, NText, NTooltip, NDivider
+import { ref, onMounted, h } from 'vue'
+import {
+  NCard, NSpace, NButton, NIcon, NGrid, NGi, NEmpty,
+  NPopconfirm, useMessage, NImage, NDropdown, NTooltip, useDialog
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
-  LiveTvOutlined as TvIcon,
-  MovieOutlined as MovieIcon,
   SearchOutlined as SearchIcon,
   HistoryOutlined as HistoryIcon,
-  OpenInNewOutlined as ExternalIcon,
-  LanguageOutlined as BgmIcon,
+  MoreVertOutlined as MoreIcon,
   SettingsSuggestOutlined as TemplateIcon,
   FlashOnOutlined as FlashIcon,
   LayersOutlined as LayersIcon,
@@ -34,6 +31,7 @@ const props = defineProps<{
 }>()
 
 const message = useMessage()
+const dialog = useDialog()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
 const subscriptions = ref<any[]>([])
@@ -154,6 +152,58 @@ const openHistory = (sub: any) => {
   showHistoryModal.value = true
 }
 
+// 卡片右下角「更多」下拉菜单
+const getMenuOptions = (sub: any) => {
+  const options: any[] = [
+    {
+      label: '搜寻补全缺失集数',
+      key: 'fill',
+      icon: () => h(NIcon, null, { default: () => h(SearchIcon) })
+    },
+    {
+      label: '查看推送记录',
+      key: 'history',
+      icon: () => h(NIcon, null, { default: () => h(HistoryIcon) })
+    },
+    {
+      label: '在 TMDB 中查看',
+      key: 'tmdb',
+      icon: () => h('img', { src: '/TMDB.SVG', style: 'width: 16px; height: 16px;' })
+    }
+  ]
+  if (sub.bangumi_id) {
+    options.push({
+      label: '在 Bangumi 中查看',
+      key: 'bgm',
+      icon: () => h('img', { src: 'https://bgm.tv/img/favicon.ico', style: 'width: 14px; height: 14px; border-radius: 2px;' })
+    })
+  }
+  options.push({ type: 'divider', key: 'd1' })
+  options.push({
+    label: '删除订阅',
+    key: 'delete',
+    icon: () => h(NIcon, { color: 'var(--n-error-color)' }, { default: () => h(DeleteIcon) }),
+    props: { style: 'color: var(--n-error-color);' }
+  })
+  return options
+}
+
+const handleMenuSelect = (key: string, sub: any) => {
+  if (key === 'fill') openFill(sub)
+  else if (key === 'history') openHistory(sub)
+  else if (key === 'tmdb') goToExternal(sub, 'tmdb')
+  else if (key === 'bgm') goToExternal(sub, 'bgm')
+  else if (key === 'delete') {
+    dialog.warning({
+      title: '确认删除',
+      content: `确定要删除「${sub.title}」吗？`,
+      positiveText: '确定删除',
+      negativeText: '取消',
+      onPositiveClick: () => deleteSubscription(sub.id)
+    })
+  }
+}
+
 const clearAllSubscriptions = async () => {
   try {
     const res = await fetch(`${API_BASE}/api/subscriptions/clear_all`, { method: 'DELETE' })
@@ -248,17 +298,14 @@ onMounted(() => {
         <n-card hoverable class="sub-card" content-style="padding: 0;">
           <div class="card-content">
             <div class="poster-box" @click="openEdit(sub)">
-              <n-image 
-                v-if="sub.poster_path" 
-                :src="getImg(sub.poster_path)" 
+              <n-image
+                v-if="sub.poster_path"
+                :src="getImg(sub.poster_path)"
                 fallback-src="https://via.placeholder.com/300x450?text=No+Poster"
                 object-fit="cover"
                 style="width: 100%; height: 100%;"
                 preview-disabled
               />
-              <div class="media-type-tag">
-                <n-icon size="14" :component="sub.media_type === 'movie' ? MovieIcon : TvIcon" />
-              </div>
               <div class="upgrade-tag" v-if="getUpgradeStatus(sub)">
                 <n-tooltip trigger="hover">
                   <template #trigger>
@@ -279,62 +326,18 @@ onMounted(() => {
                   S{{ sub.season === 0 ? 'All' : sub.season }} · E{{ sub.start_episode === 0 ? '1' : sub.start_episode }}{{ sub.end_episode > 0 ? '-' + sub.end_episode : '+' }}
                 </span>
                 <span class="meta-year" v-else>{{ sub.year || 'Movie' }}</span>
-              </div>
-              <div class="sub-actions">
-                <n-space :size="4">
-                  <n-tooltip trigger="hover">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="openFill(sub)">
-                        <template #icon><n-icon size="14"><SearchIcon/></n-icon></template>
-                      </n-button>
-                    </template>
-                    搜寻补全缺失集数
-                  </n-tooltip>
-                  
-                  <n-tooltip trigger="hover">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="openHistory(sub)">
-                        <template #icon><n-icon size="14"><HistoryIcon/></n-icon></template>
-                      </n-button>
-                    </template>
-                    查看推送记录
-                  </n-tooltip>
-
-                  <n-divider vertical />
-
-                  <n-tooltip trigger="hover">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="goToExternal(sub, 'tmdb')" style="padding: 0; overflow: hidden;">
-                        <template #icon>
-                          <img src="/TMDB.SVG" style="width: 16px; height: 16px; transform: scale(1.2);" />
-                        </template>
-                      </n-button>
-                    </template>
-                    在 TMDB 中查看
-                  </n-tooltip>
-
-                  <n-tooltip trigger="hover" v-if="sub.bangumi_id">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('icon')" size="tiny" @click.stop="goToExternal(sub, 'bgm')" style="padding: 0; overflow: hidden;">
-                        <template #icon>
-                          <img src="https://bgm.tv/img/favicon.ico" style="width: 14px; height: 14px; border-radius: 2px;" />
-                        </template>
-                      </n-button>
-                    </template>
-                    在 Bangumi 中查看
-                  </n-tooltip>
-                </n-space>
-
-                <n-space :size="4">
-                  <n-popconfirm @positive-click="deleteSubscription(sub.id)" positive-text="确定" negative-text="取消">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" @click.stop>
-                        <template #icon><n-icon size="14"><DeleteIcon/></n-icon></template>
-                      </n-button>
-                    </template>
-                    确定删除？
-                  </n-popconfirm>
-                </n-space>
+                <div class="sub-actions" @click.stop>
+                  <n-dropdown
+                    trigger="click"
+                    placement="bottom-end"
+                    :options="getMenuOptions(sub)"
+                    @select="(key: string) => handleMenuSelect(key, sub)"
+                  >
+                    <n-button v-bind="getButtonStyle('icon')" size="tiny">
+                      <template #icon><n-icon size="16"><MoreIcon/></n-icon></template>
+                    </n-button>
+                  </n-dropdown>
+                </div>
               </div>
             </div>
           </div>
@@ -396,14 +399,23 @@ onMounted(() => {
 .poster-box { position: relative; width: 100%; aspect-ratio: 2 / 3; background: var(--app-surface-inner); overflow: hidden; border-radius: var(--card-border-radius, 8px); cursor: pointer; }
 .poster-box :deep(img) { width: 100%; height: 100%; border-radius: var(--card-border-radius, 8px); transition: transform var(--transition-slow); }
 .sub-card:hover .poster-box :deep(img) { transform: scale(1.1); }
-.media-type-tag { position: absolute; top: 8px; right: 8px; background: var(--bg-overlay); backdrop-filter: blur(8px); color: var(--text-primary); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
-.upgrade-tag { position: absolute; top: 8px; right: 40px; background: var(--bg-overlay); backdrop-filter: blur(8px); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
-.status-indicator { position: absolute; top: 8px; left: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--n-error-color); box-shadow: var(--shadow-glow-error); z-index: 2; }
-.status-indicator.is-enabled { background: var(--n-primary-color); box-shadow: var(--shadow-glow-primary); }
+.upgrade-tag { position: absolute; top: 8px; right: 8px; background: var(--bg-overlay); backdrop-filter: blur(8px); padding: 4px; border-radius: var(--button-border-radius, 6px); display: flex; align-items: center; z-index: 2; }
+.status-indicator { position: absolute; top: 8px; left: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--n-error-color); z-index: 2; animation: pulse-red 2s infinite; }
+.status-indicator.is-enabled { background: #2e7d32; animation: pulse-green 2s infinite; }
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(207, 102, 121, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(207, 102, 121, 0); }
+}
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(129, 199, 132, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(129, 199, 132, 0); }
+}
+
 .info-box { padding: 12px; }
 .sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--text-primary); cursor: pointer; }
 .sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
 .meta-range { color: var(--n-primary-color); font-weight: 600; }
-.sub-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--app-border-light); }
+.sub-actions { display: flex; align-items: center; margin-left: auto; }
 .empty-state { padding: 80px 0; }
 </style>

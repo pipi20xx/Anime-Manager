@@ -162,7 +162,7 @@ const dataTableColumns = computed(() => {
             </div>
           </n-card>
           <n-card bordered title="执行结果" size="small" class="result-card">
-            <template #header-extra><AppSearchField v-model:value="searchText" placeholder="在结果中搜索..." style="width: 250px" /></template>
+            <template #header-extra><AppSearchField v-model:value="searchText" placeholder="在结果中搜索..." :loading="queryLoading" style="width: 250px" /></template>
             <n-data-table
               remote
               :columns="dataTableColumns"

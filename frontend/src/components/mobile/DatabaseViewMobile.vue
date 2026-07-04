@@ -121,7 +121,7 @@ const handleTableSelect = (tableName: string) => {
         <div v-if="queryResult.length > 0" style="margin-top: 16px;">
           <div class="result-header">
             <span>结果: {{ filteredData.length }} 行</span>
-            <AppSearchField v-model:value="searchText" placeholder="结果搜索..." style="width: 160px" />
+            <AppSearchField v-model:value="searchText" placeholder="结果搜索..." :loading="queryLoading" style="width: 160px" />
           </div>
           
           <div class="result-card-list">
