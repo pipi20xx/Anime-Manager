@@ -97,6 +97,55 @@
   --success-medium: rgba(129, 199, 132, 0.15);
   --success-strong: rgba(129, 199, 132, 0.3);
 
+  /* ========== Tabs 外观自定义变量 ========== */
+  --tabs-nav-bg: var(--app-surface-card);  /* Tabs导航栏背景色 */
+  --tabs-nav-bg-opacity: 1;  /* Tabs导航栏背景透明度 */
+  --tabs-nav-border: 1px solid var(--app-border-light);  /* Tabs导航栏边框 */
+  --tabs-nav-border-radius: var(--card-border-radius);  /* Tabs导航栏圆角 */
+  --tabs-nav-blur: none;  /* Tabs导航栏模糊效果 */
+  --tabs-nav-shadow: none;  /* Tabs导航栏阴影 */
+  --tabs-nav-padding: 0;  /* Tabs导航栏内边距 */
+  
+  --tabs-tab-bg: transparent;  /* 未选中Tab背景色 */
+  --tabs-tab-active-bg: #3b82f6;  /* 选中Tab背景色 */
+  --tabs-tab-text-color: var(--n-text-color-1);  /* 未选中Tab文字颜色 */
+  --tabs-tab-active-text-color: #ffffff;  /* 选中Tab文字颜色 */
+  --tabs-tab-border-radius: var(--card-border-radius);  /* Tab圆角 */
+  
+  --tabs-pane-bg: transparent;  /* Tab面板背景色 */
+  --tabs-pane-padding: 0;  /* Tab面板内边距 */
+
+  /* ========== AppTextField 外观自定义变量 ========== */
+  --input-bg: var(--app-surface-card);  /* 输入框背景色 */
+  --input-bg-opacity: 1;  /* 输入框背景透明度 */
+  --input-border: 1px solid var(--border-medium);  /* 输入框边框 */
+  --input-border-radius: 8px;  /* 输入框圆角 */
+  --input-height: 56px;  /* 输入框高度 */
+  --input-blur: none;  /* 输入框模糊效果 */
+  --input-shadow: none;  /* 输入框阴影 */
+  
+  --input-text-color: var(--text-primary);  /* 输入框文字颜色 */
+  --input-placeholder-color: var(--text-muted);  /* 占位符颜色 */
+  --input-label-color: var(--text-muted);  /* 标签颜色 */
+  --input-label-focused-color: var(--n-primary-color);  /* 标签聚焦颜色 */
+  --input-label-bg: var(--app-surface-card);  /* 标签背景色（浮动时） */
+
+  /* ========== AppSearchField 外观自定义变量 ========== */
+  --search-input-bg: var(--app-surface-card);  /* 搜索框背景色 */
+  --search-input-bg-opacity: 1;  /* 搜索框背景透明度 */
+  --search-input-border: 1px solid var(--app-border-light);  /* 搜索框边框 */
+  --search-input-border-radius: 22px;  /* 搜索框圆角（药丸形状） */
+  --search-input-height: 44px;  /* 搜索框高度 */
+  --search-input-blur: none;  /* 搜索框模糊效果 */
+  --search-input-shadow: none;  /* 搜索框阴影 */
+  --search-input-focus-shadow: 0 0 0 2px var(--n-primary-color) inset;  /* 搜索框聚焦阴影 */
+  
+  --search-input-text-color: var(--text-primary);  /* 搜索框文字颜色 */
+  --search-input-placeholder-color: var(--text-muted);  /* 搜索框占位符颜色 */
+  --search-input-icon-color: var(--text-muted);  /* 搜索框图标颜色 */
+  --search-input-btn-bg: var(--n-primary-color);  /* 搜索按钮背景色 */
+  --search-input-btn-text-color: #ffffff;  /* 搜索按钮文字颜色 */
+
   /* 阴影变量（带层级） */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -266,22 +315,28 @@ input, textarea, select, button {
   background: var(--bg-surface-hover) !important;
 }
 
-/* Tabs 主题化 */
+/* Tabs 主题化 - 使用CSS变量支持外观自定义 */
 .n-tabs {
-  background: transparent !important;
+  background: var(--tabs-pane-bg) !important;
 }
 .n-tabs-nav {
-  background: transparent !important;
+  background: color-mix(in srgb, var(--tabs-nav-bg), transparent calc(100% - var(--tabs-nav-bg-opacity) * 100%)) !important;
+  border: var(--tabs-nav-border) !important;
+  border-radius: var(--tabs-nav-border-radius) !important;
+  padding: var(--tabs-nav-padding) !important;
+  backdrop-filter: var(--tabs-nav-blur) !important;
+  box-shadow: var(--tabs-nav-shadow) !important;
 }
 .n-tabs-pane-wrapper {
-  background: transparent !important;
+  background: var(--tabs-pane-bg) !important;
 }
 .n-tab-pane {
-  background: transparent !important;
+  background: var(--tabs-pane-bg) !important;
+  padding: var(--tabs-pane-padding) !important;
 }
 
 /* ============================================
- * Tabs segment 类型样式统一
+ * Tabs segment 类型样式统一 - 使用CSS变量
  * ============================================ */
 
 /* 轨道背景 - 白天白色，夜间跟随主题 */
@@ -293,34 +348,40 @@ input, textarea, select, button {
 div.n-tabs.n-tabs--segment-type > div.n-tabs-nav,
 div.n-tabs.n-tabs--segment-type div.n-tabs-nav--segment-type,
 div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
-  background: var(--app-surface-card) !important;
-  border-radius: 8px !important;
-  padding: 0 !important;
+  background: color-mix(in srgb, var(--tabs-nav-bg), transparent calc(100% - var(--tabs-nav-bg-opacity) * 100%)) !important;
+  border: var(--tabs-nav-border) !important;
+  border-radius: var(--tabs-nav-border-radius) !important;
+  padding: var(--tabs-nav-padding) !important;
+  backdrop-filter: var(--tabs-nav-blur) !important;
+  box-shadow: var(--tabs-nav-shadow) !important;
 }
 
 /* n-tabs-rail 样式 - segment 类型，白天白色，夜间跟随主题 */
 .n-tabs.n-tabs--segment-type .n-tabs-rail,
 .n-tabs.n-tabs--segment-type div.n-tabs-rail,
 .n-tabs.n-tabs--segment-type [class*="n-tabs-rail"] {
-  background: var(--app-surface-card) !important;
-  border-radius: 8px !important;
-  padding: 0 !important;
+  background: color-mix(in srgb, var(--tabs-nav-bg), transparent calc(100% - var(--tabs-nav-bg-opacity) * 100%)) !important;
+  border: var(--tabs-nav-border) !important;
+  border-radius: var(--tabs-nav-border-radius) !important;
+  padding: var(--tabs-nav-padding) !important;
+  backdrop-filter: var(--tabs-nav-blur) !important;
+  box-shadow: var(--tabs-nav-shadow) !important;
   gap: 0 !important;
 }
 
 /* 未选中 tab 项 - segment 类型 */
 .n-tabs.n-tabs--segment-type .n-tabs-tab {
-  background: transparent !important;
-  color: var(--n-text-color-1) !important;
-  border-radius: 0 !important;
+  background: var(--tabs-tab-bg) !important;
+  color: var(--tabs-tab-text-color) !important;
+  border-radius: var(--tabs-tab-border-radius) !important;
   margin: 0 !important;
 }
 
 /* 选中 tab 项 - segment 类型，填满无间隔，白色文字 */
 .n-tabs.n-tabs--segment-type .n-tabs-tab.n-tabs-tab--active {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border-radius: 8px !important;
+  background: var(--tabs-tab-active-bg) !important;
+  color: var(--tabs-tab-active-text-color) !important;
+  border-radius: var(--tabs-tab-border-radius) !important;
   margin: 0 !important;
   box-shadow: none !important;
 }

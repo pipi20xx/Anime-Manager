@@ -198,10 +198,12 @@ onMounted(() => {
 
 .app-text-field__box {
   position: relative;
-  height: 56px;
-  border: 1px solid var(--border-medium);
-  border-radius: 8px;
-  background: transparent;
+  height: var(--input-height);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius);
+  background: color-mix(in srgb, var(--input-bg), transparent calc(100% - var(--input-bg-opacity) * 100%));
+  backdrop-filter: var(--input-blur);
+  box-shadow: var(--input-shadow);
   transition: border-color 0.2s;
   display: flex;
   align-items: center;
@@ -232,11 +234,11 @@ onMounted(() => {
   padding: 0 16px;
   border: none;
   background: transparent;
-  color: var(--text-primary);
+  color: var(--input-text-color);
   font-size: 16px;
   line-height: 1.4;
   outline: none;
-  border-radius: 8px;
+  border-radius: var(--input-border-radius);
 }
 
 .app-text-field__input::-webkit-outer-spin-button,
@@ -282,7 +284,7 @@ onMounted(() => {
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-muted);
+  color: var(--input-label-color);
   font-size: 16px;
   pointer-events: none;
   transition: all 0.2s;
@@ -292,7 +294,7 @@ onMounted(() => {
   max-width: calc(100% - 32px);
   padding: 0 4px;
   margin-left: -4px;
-  background-color: var(--app-surface-card);
+  background-color: var(--input-label-bg);
   line-height: 1;
 }
 
@@ -308,7 +310,7 @@ onMounted(() => {
 }
 
 .app-text-field__label.is-focused {
-  color: var(--n-primary-color);
+  color: var(--input-label-focused-color);
 }
 
 .app-text-field__prefix,

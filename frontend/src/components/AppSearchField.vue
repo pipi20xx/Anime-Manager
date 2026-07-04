@@ -79,29 +79,32 @@ const triggerSearch = () => {
 
 .app-search-field__box {
   position: relative;
-  height: 44px;
-  border-radius: 22px;
-  background: var(--n-input-color, rgba(128, 128, 128, 0.12));
+  height: var(--search-input-height);
+  border: var(--search-input-border);
+  border-radius: var(--search-input-border-radius);
+  background: color-mix(in srgb, var(--search-input-bg), transparent calc(100% - var(--search-input-bg-opacity) * 100%));
+  backdrop-filter: var(--search-input-blur);
+  box-shadow: var(--search-input-shadow);
   display: flex;
   align-items: center;
   padding: 0 6px 0 14px;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .app-search-field__box:hover {
-  background: var(--n-input-color-hover, rgba(128, 128, 128, 0.18));
+  background: color-mix(in srgb, var(--search-input-bg), transparent calc(100% - var(--search-input-bg-opacity) * 100% * 0.85));
 }
 
 .app-search-field__box:focus-within {
-  background: var(--n-input-color-focus, rgba(128, 128, 128, 0.08));
-  box-shadow: 0 0 0 2px var(--n-primary-color, #18a058) inset;
+  background: color-mix(in srgb, var(--search-input-bg), transparent calc(100% - var(--search-input-bg-opacity) * 100% * 0.92));
+  box-shadow: var(--search-input-focus-shadow);
 }
 
 .app-search-field__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--search-input-icon-color);
   flex-shrink: 0;
 }
 
@@ -128,8 +131,8 @@ const triggerSearch = () => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--n-primary-color, #18a058);
-  color: #fff;
+  background: var(--search-input-btn-bg);
+  color: var(--search-input-btn-text-color);
   flex-shrink: 0;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s;
@@ -160,10 +163,10 @@ const triggerSearch = () => {
   background: transparent;
   outline: none;
   font-size: 15px;
-  color: var(--text-primary);
+  color: var(--search-input-text-color);
 }
 
 .app-search-field__input::placeholder {
-  color: var(--text-muted);
+  color: var(--search-input-placeholder-color);
 }
 </style>
