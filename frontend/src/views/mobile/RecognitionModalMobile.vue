@@ -7,6 +7,7 @@ import {
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import {
   CheckCircleOutlined as CheckIcon,
   SearchOutlined as SearchBtnIcon,
@@ -45,10 +46,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     class="mobile-modal"
     title="单文件识别"
   >
@@ -216,7 +216,7 @@ const {
           </n-space>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

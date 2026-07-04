@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { h, watch } from 'vue'
 import { 
-  NModal, NDataTable, NButton, NSpace,
+  NDataTable, NButton, NSpace,
   NSwitch, NPopconfirm, NTag, NEmpty, NAlert,
   NForm, NFormItem, NInput, NSelect,
   NGrid, NGi, NDivider
@@ -107,11 +108,10 @@ const testColumns = [
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="close"
-    preset="card"
-    style="width: 1100px; max-width: 98vw;"
+    style="width: 1100px;"
     :title="showEdit ? (editingTask ? '编辑探测任务' : '添加探测任务') : '自动 RSS 订阅管理'"
   >
     <div v-if="!showEdit">
@@ -221,7 +221,7 @@ const testColumns = [
         <n-button v-if="showEdit" type="primary" @click="saveTask">保存任务</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

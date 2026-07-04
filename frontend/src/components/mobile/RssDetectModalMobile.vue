@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NButton, NSpace, NSelect, NInput, NInputNumber,
+  NButton, NSpace, NSelect, NInput, NInputNumber,
   NSpin, NEmpty, NTag, NDivider, NRadioGroup, NRadio,
-  NPopconfirm, NSwitch, NAlert
+  NPopconfirm, NSwitch, NAlert, NScrollbar
 } from 'naive-ui'
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppTextField from '../../components/AppTextField.vue'
@@ -27,11 +28,10 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="v => emit('update:show', v)"
-    preset="card"
-    style="width: 95vw; max-width: 500px;"
+    style="width: 95vw;"
     :style="{ maxHeight: '90vh' }"
   >
     <template #header>
@@ -146,7 +146,7 @@ const {
         保存配置
       </n-button>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

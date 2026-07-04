@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick } from 'vue'
 import {
-  NModal, NProgress, NScrollbar, NList, NListItem, NIcon,
+  NProgress, NScrollbar, NList, NListItem, NIcon,
   NButton, NSpace, NText, NResult, NSelect
 } from 'naive-ui'
 import AppSelectField from './AppSelectField.vue'
+import AppGlassModal from './AppGlassModal.vue'
 import {
   SearchOutlined as SearchIcon,
   ErrorOutlineOutlined as ErrorIcon,
@@ -153,11 +154,10 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="handleClose" 
-    preset="card" 
-    style="width: 700px" 
+    style="width: 700px;" 
     :title="`搜寻补全: ${subTitle}`"
     :closable="true"
     :mask-closable="!isRunning"
@@ -241,7 +241,7 @@ watch(() => props.show, (newVal) => {
         <n-button @click="handleClose" :disabled="isRunning">关闭窗口</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

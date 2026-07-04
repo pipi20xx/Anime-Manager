@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed, h } from 'vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import {
-  NModal, NButton, NSpace, NTag, NSpin, NEmpty, NImage, NPopconfirm,
+  NButton, NSpace, NTag, NSpin, NEmpty, NImage, NPopconfirm,
   useDialog, useMessage
 } from 'naive-ui'
 import {
@@ -195,11 +196,10 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal
+  <AppGlassModal
     :show="show"
     @update:show="val => emit('update:show', val)"
-    preset="card"
-    style="width: 1100px; max-width: 98vw;"
+    style="width: 1100px;"
     content-style="padding: 0;"
     :segmented="{ content: true, footer: 'soft' }"
     :title="`订阅推送记录详情: ${sub?.title || ''}`"
@@ -407,7 +407,7 @@ watch(() => props.show, (newVal) => {
         </n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

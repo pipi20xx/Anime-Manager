@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { 
-  NModal, NSpace, NFormItem, NSelect, 
+  NSpace, NFormItem, NSelect, 
   NButton, NIcon, NAlert, NSwitch
 } from 'naive-ui'
 import {
@@ -9,6 +9,7 @@ import {
 } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { useClientEdit } from '../../composables/modals/useClientEdit'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -32,11 +33,10 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
-    style="width: 600px" 
+    style="width: 600px;" 
     :title="isNew ? '添加下载器' : '编辑下载器'"
   >
     <n-space vertical size="large">
@@ -122,7 +122,7 @@ const {
         </n-space>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

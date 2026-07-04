@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import {
-  NCard, NTabs, NTabPane, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NEmpty, NSpin, NDrawer, NDrawerContent, NTag, NPagination
+  NCard, NTabs, NTabPane, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NEmpty, NSpin, NDrawer, NDrawerContent, NTag, NPagination
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -371,7 +372,7 @@ const tabCounts = computed(() => ({
     </div>
 
     <!-- 编辑弹窗 -->
-    <n-modal :show="showModal" @update:show="val => showModal = val" preset="card" style="width: 90%; max-width: 400px" :title="isNewItem ? '添加映射' : '编辑映射'">
+    <AppGlassModal :show="showModal" @update:show="val => showModal = val" style="width: 90%;" :title="isNewItem ? '添加映射' : '编辑映射'">
       <n-form label-placement="top">
         <template v-if="activeType === 'genre'">
           <n-form-item><AppTextField v-model:value="formModel.id" label="ID" :disabled="!isNewItem" placeholder="TMDB ID" type="number" /></n-form-item>
@@ -406,7 +407,7 @@ const tabCounts = computed(() => ({
           <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
         </n-space>
       </template>
-    </n-modal>
+  </AppGlassModal>
 
     <!-- 项目操作抽屉 -->
     <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="260" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">

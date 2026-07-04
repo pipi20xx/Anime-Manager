@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { h } from 'vue'
-import { NModal, NCard, NDataTable, NText, NTag, NSpace } from 'naive-ui'
+import { NCard, NDataTable, NText, NTag, NSpace } from 'naive-ui'
+import AppGlassModal from './AppGlassModal.vue'
 
 defineProps<{ show: boolean }>()
 const emit = defineEmits(['update:show'])
@@ -28,7 +29,7 @@ const data = [
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="v => emit('update:show', v)" preset="card" style="width: 800px" title="订阅过滤项填写指南">
+  <AppGlassModal :show="show" @update:show="v => emit('update:show', v)" style="width: 800px;" title="订阅过滤项填写指南">
     <n-card :bordered="false">
       <div style="margin-bottom: 20px">
         <span style="color: var(--text-tertiary)">
@@ -47,7 +48,7 @@ const data = [
         </span>
       </div>
     </n-card>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, h, watch } from 'vue'
+import AppGlassModal from './AppGlassModal.vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NForm, NFormItem, 
   NDivider, NGrid, NGi, useMessage, NAlert, NSpin, NTag,
-  NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
-  NModal
+  NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing
 } from 'naive-ui'
 import AppTextField from './AppTextField.vue'
 import {
@@ -151,12 +151,11 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)"
-    preset="card" 
     title="API 外部控制中心"
-    style="width: 1000px; max-width: 95vw;"
+    style="width: 1000px;"
     class="external-modal"
   >
     <template #header-extra>
@@ -248,7 +247,7 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
     <n-modal v-model:show="showLogDetail" preset="card" title="请求详情" style="width: 500px">
       <div class="detail-box"><pre>{{ currentLogDetail }}</pre></div>
     </n-modal>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

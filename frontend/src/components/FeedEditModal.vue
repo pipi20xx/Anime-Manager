@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { NModal, NSpace, NFormItem, NSwitch, NButton } from 'naive-ui'
+import { NSpace, NFormItem, NSwitch, NButton, NScrollbar } from 'naive-ui'
 import AppTextField from './AppTextField.vue'
+import AppGlassModal from './AppGlassModal.vue'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
@@ -59,11 +60,10 @@ const handleSave = () => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
-    style="width: 500px; max-width: 95vw;" 
+    style="width: 500px;" 
     :title="isNew ? '添加 RSS 订阅源' : '编辑 RSS 订阅源'"
   >
     <n-scrollbar style="max-height: 75vh" trigger="none">
@@ -129,7 +129,7 @@ const handleSave = () => {
         <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

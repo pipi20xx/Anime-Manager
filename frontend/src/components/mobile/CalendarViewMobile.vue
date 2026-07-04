@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import AppTextField from '../AppTextField.vue'
 import AppTimeField from '../AppTimeField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { ref, computed } from 'vue'
 import {
-  NSpace, NIcon, NSpin, NText, NButton, NModal, NDatePicker,
+  NSpace, NIcon, NSpin, NText, NButton, NDatePicker,
   NList, NListItem, NAvatar, NPopconfirm, NTabs, NTabPane,
   NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup, NThing, NTag,
   NSwitch
@@ -208,7 +209,7 @@ const openCardDetail = (item: any) => {
     </n-spin>
 
     <!-- Manage Modal -->
-    <n-modal v-model:show="showManageModal" preset="card" style="width: 100%; height: 100vh; margin: 0;" content-style="padding: 0; display: flex; flex-direction: column;" title="追踪管理">
+    <AppGlassModal v-model:show="showManageModal" style="width: 100%; height: 100vh; margin: 0;" content-style="padding: 0; display: flex; flex-direction: column;" title="追踪管理">
       <n-tabs type="line" animated style="flex: 1; display: flex; flex-direction: column;">
         <n-tab-pane name="list" tab="正在追踪" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
           <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--app-border-light);">
@@ -396,7 +397,7 @@ const openCardDetail = (item: any) => {
           </div>
         </n-tab-pane>
       </n-tabs>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

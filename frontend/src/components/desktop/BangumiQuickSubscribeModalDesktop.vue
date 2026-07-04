@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { 
-  NModal, NButton, NSpace, NIcon, NCheckbox, NCheckboxGroup,
+import AppGlassModal from '../AppGlassModal.vue'
+import {
+  NButton, NSpace, NIcon, NCheckbox, NCheckboxGroup,
   NImage, NScrollbar, NSelect,
   NSpin, NEmpty, NGrid, NGi, NTag, NTabs, NTabPane
 } from 'naive-ui'
@@ -27,10 +28,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
-    :show="show" 
+  <AppGlassModal
+    :show="show"
     @update:show="v => emit('update:show', v)"
-    preset="card"
     style="width: 1000px; max-width: 95vw;"
   >
     <template #header>
@@ -91,7 +91,7 @@ const {
         </n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

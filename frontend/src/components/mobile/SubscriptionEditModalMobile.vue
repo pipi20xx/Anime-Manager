@@ -2,9 +2,10 @@
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { watch } from 'vue'
 import { 
-  NModal, NCard, NForm, NFormItem, NInput, NSelect, NButton, 
+  NForm, NFormItem, NInput, NSelect, NButton, 
   NSpace, NGrid, NGi, NSwitch, NImage, NInputGroup,
   NScrollbar, NDivider, NIcon
 } from 'naive-ui'
@@ -46,16 +47,17 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="v => emit('update:show', v)">
-    <n-card
-      style="width: 100%; height: 100vh; margin: 0;"
-      :title="isNew ? '新建订阅' : '编辑订阅'"
-      :bordered="false"
-      size="huge"
-      role="dialog"
-      aria-modal="true"
-      content-style="padding: var(--m-spacing-lg); overflow-y: auto;"
-    >
+  <AppGlassModal 
+    :show="show" 
+    @update:show="v => emit('update:show', v)"
+    style="width: 100%; height: 100vh; margin: 0;"
+    :title="isNew ? '新建订阅' : '编辑订阅'"
+    :bordered="false"
+    size="huge"
+    role="dialog"
+    aria-modal="true"
+    content-style="padding: var(--m-spacing-lg); overflow-y: auto;"
+  >
       <n-form label-placement="top" label-width="100">
         <n-grid :cols="1" x-gap="12">
           <n-gi v-if="isNew && templates.length > 0">
@@ -231,8 +233,7 @@ watch(() => props.show, (newVal) => {
           <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
         </n-space>
       </template>
-    </n-card>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import AppTextField from './AppTextField.vue'
 import AppSelectField from './AppSelectField.vue'
+import AppGlassModal from './AppGlassModal.vue'
 import { reactive, watch, ref, onMounted, computed } from 'vue'
 import { 
-  NModal, NSpace, NFormItem, NSwitch, 
+  NSpace, NFormItem, NSwitch, 
   NButton, NSelect, NInputNumber, NDivider, NIcon, NTooltip, useMessage
 } from 'naive-ui'
 import { HelpOutlineOutlined as HelpIcon } from '@vicons/material'
@@ -92,11 +93,10 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
-    style="width: 800px; max-width: 95vw;" 
+    style="width: 800px" 
     :title="isNew ? '添加匹配规则' : '编辑匹配规则'"
   >
     <n-space vertical size="medium">
@@ -183,7 +183,7 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
         </n-space>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

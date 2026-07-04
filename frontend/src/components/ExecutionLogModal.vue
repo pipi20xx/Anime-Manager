@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
+import AppGlassModal from './AppGlassModal.vue'
 import { 
-  NModal, NScrollbar, NIcon, NProgress, NSpace, NButton
+  NScrollbar, NIcon, NProgress, NSpace, NButton
 } from 'naive-ui'
 import {
   CheckCircleOutlined as SuccessIcon,
@@ -38,11 +39,10 @@ watch(() => props.logs.length, () => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
-    style="width: 950px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column;" 
+    style="width: 950px; max-height: 90vh; display: flex; flex-direction: column;" 
     :title="isDryRun ? '整理任务预览' : '正式执行日志'"
     :segmented="{
       content: true,
@@ -108,7 +108,7 @@ watch(() => props.logs.length, () => {
         </n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

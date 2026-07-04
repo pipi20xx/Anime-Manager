@@ -8,6 +8,7 @@ import {
   ClearAllOutlined as ClearIcon,
   KeyboardDoubleArrowDownOutlined as MoreIcon
 } from '@vicons/material'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import { useTaskHistory } from '../../composables/views/useTaskHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -157,7 +158,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <n-modal v-model:show="showLogModal" preset="card" style="width: 960px; height: 96vh" title="任务日志">
+    <AppGlassModal v-model:show="showLogModal" style="width: 960px; height: 96vh" title="任务日志">
       <template #header-extra>
         <n-tag v-if="selectedTask" size="small" round :bordered="false" :style="getStatusTag(selectedTask.status).style">
           {{ getStatusTag(selectedTask.status).label }}
@@ -172,7 +173,7 @@ onUnmounted(() => {
           </div>
         </div>
       </n-scrollbar>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

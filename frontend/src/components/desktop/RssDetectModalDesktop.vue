@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NButton, NSpace, NSelect, NInput,
+  NButton, NSpace, NSelect, NInput,
   NSpin, NEmpty, NTag, NDivider, NRadioGroup, NRadio,
   NGrid, NGi, NDataTable, NPopconfirm, NSwitch, NAlert
 } from 'naive-ui'
@@ -93,10 +94,9 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="v => emit('update:show', v)"
-    preset="card"
     style="width: 950px; max-width: 95vw;"
   >
     <template #header>
@@ -289,7 +289,7 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
         </n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

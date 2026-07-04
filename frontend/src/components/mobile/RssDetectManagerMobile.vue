@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { watch } from 'vue'
 import { 
-  NModal, NButton, NSpace,
+  NButton, NSpace,
   NSwitch, NPopconfirm, NTag, NEmpty, NAlert,
   NForm, NFormItem, NInput, NSelect,
   NScrollbar
@@ -33,11 +34,10 @@ const close = () => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="close"
-    preset="card"
-    style="width: 95vw; max-width: 500px;"
+    style="width: 95vw;"
     :title="showEdit ? (editingTask ? '编辑任务' : '添加任务') : '自动 RSS 订阅管理'"
   >
     <div v-if="!showEdit">
@@ -156,7 +156,7 @@ const close = () => {
         <n-button v-if="showEdit" block type="primary" @click="saveTask">保存任务</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

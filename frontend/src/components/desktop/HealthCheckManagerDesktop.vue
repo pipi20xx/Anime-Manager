@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { h } from 'vue'
 import { 
-  NCard, NSpace, NButton, NDataTable, NModal, NForm, NFormItem, 
+  NCard, NSpace, NButton, NDataTable, NForm, NFormItem, 
   NSwitch, NPopconfirm, NTag, NIcon
 } from 'naive-ui'
 import {
@@ -121,7 +122,7 @@ const columns = [
     </n-card>
 
     <!-- Modal 共享 -->
-    <n-modal v-model:show="showModal" preset="card" title="健康检查配置" style="width: 600px">
+    <AppGlassModal v-model:show="showModal" title="健康检查配置" style="width: 600px">
       <n-form :model="editingConfig" label-placement="left" label-width="100">
         <n-form-item>
           <AppTextField v-model:value="editingConfig.name" label="配置名称" placeholder="例如: 阿里云盘掉盘检测" />
@@ -145,7 +146,7 @@ const columns = [
           <n-button v-bind="getButtonStyle('primary')" @click="saveConfig">提交保存</n-button>
         </n-space>
       </template>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

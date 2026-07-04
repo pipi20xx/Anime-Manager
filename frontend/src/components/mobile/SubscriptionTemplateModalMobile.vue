@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NButton, NSpace, NIcon, NForm, NFormItem, 
+  NButton, NSpace, NIcon, NForm, NFormItem, 
   NSelect, NSwitch, NPopconfirm,
   NScrollbar, NDivider, NList, NListItem, NTag, NText
 } from 'naive-ui'
@@ -32,10 +33,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="close"
-    preset="card"
     class="mobile-fullscreen-modal"
   >
     <template #header>
@@ -140,7 +140,7 @@ const {
         </div>
       </div>
     </div>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

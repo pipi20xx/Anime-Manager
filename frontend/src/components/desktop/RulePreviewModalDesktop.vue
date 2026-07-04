@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { watch, h, ref, onMounted, onUnmounted } from 'vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NDataTable, NTag, NButton, NSpace, NSpin, NEmpty
+  NDataTable, NTag, NButton, NSpace, NSpin, NEmpty
 } from 'naive-ui'
 import { useRulePreview } from '../../composables/modals/useRulePreview'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -223,10 +224,9 @@ const columns = [
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 1000px; max-width: 98vw; height: 96vh;" 
     content-style="display: flex; flex-direction: column; padding: 0;"
     :segmented="{ content: true, footer: 'soft' }"
@@ -250,5 +250,5 @@ const columns = [
         <n-button @click="emit('update:show', false)">返回编辑</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>

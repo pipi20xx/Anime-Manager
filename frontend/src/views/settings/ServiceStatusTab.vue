@@ -205,7 +205,7 @@
       </n-card>
     </n-space>
     
-    <n-modal v-model:show="queueModalVisible" preset="card" style="width: 800px; max-width: 90vw;" title="队列内容">
+    <AppGlassModal v-model:show="queueModalVisible" style="width: 800px; max-width: 90vw;" title="队列内容">
       <template #header>
         <div class="modal-header">
           <span>{{ queueModalData?.name }} - 队列内容</span>
@@ -221,7 +221,7 @@
         </div>
         <n-empty v-else description="队列为空" />
       </n-spin>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 
@@ -230,6 +230,7 @@ import { computed, ref } from 'vue'
 import { 
   NSpace, NCard, NGrid, NGi, NTag, NStatistic, NText, NButton, NModal, NSpin, NEmpty
 } from 'naive-ui'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import { useServiceStatus } from '../../composables/views/useServiceStatus'
 
 const { data, formatNextRun, getStatusTag } = useServiceStatus()

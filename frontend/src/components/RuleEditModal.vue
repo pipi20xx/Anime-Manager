@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { 
-  NModal, NSpace, NFormItem, NCollapse, NCollapseItem, 
+  NSpace, NFormItem, NCollapse, NCollapseItem, 
   NIcon, NGrid, NGi, NButton
 } from 'naive-ui'
 import {
   CodeOutlined as VariableIcon
 } from '@vicons/material'
 import AppTextField from './AppTextField.vue'
+import AppGlassModal from './AppGlassModal.vue'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
@@ -91,11 +92,10 @@ const handleSave = () => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
-    style="width: 800px" 
+    style="width: 800px;" 
     :title="isNew ? '创建新规则' : '编辑重命名规则'"
   >
     <n-space vertical size="large">
@@ -147,7 +147,7 @@ const handleSave = () => {
         <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存规则配置</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

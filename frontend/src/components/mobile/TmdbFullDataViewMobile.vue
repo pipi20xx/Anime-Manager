@@ -2,10 +2,11 @@
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { ref, h } from 'vue'
 import {
   NSpace, NButton, NIcon, NText, NInput, NInputGroup,
-  NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
+  NTooltip, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
   NList, NListItem, NThing, NDrawer, NDrawerContent, NPopconfirm,
 
 } from 'naive-ui'
@@ -149,7 +150,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
     </div>
 
     <!-- 编辑/新增元数据弹窗 -->
-    <n-modal v-model:show="showEditModal" preset="card" style="width: 100%; margin: 0;" content-style="padding: 16px;" :title="isEditing ? '修正元数据' : '新增元数据'">
+    <AppGlassModal v-model:show="showEditModal" style="width: 100%; margin: 0;" content-style="padding: 16px;" :title="isEditing ? '修正元数据' : '新增元数据'">
       <n-form label-placement="top">
         <n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="ID" /></n-form-item>
         <n-form-item><AppSelectField v-model:value="editForm.type" label="媒体类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" /></n-form-item>
@@ -160,10 +161,10 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
       <template #footer>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>
       </template>
-    </n-modal>
+    </AppGlassModal>
 
     <!-- 全量刷新弹窗 -->
-    <n-modal v-model:show="showRefreshModal" preset="card" style="width: 100%; top: 20px;" title="全量刷新设置">
+    <AppGlassModal v-model:show="showRefreshModal" style="width: 100%; top: 20px;" title="全量刷新设置">
       <n-form label-placement="top">
         <n-form-item>
           <AppTextField 
@@ -213,7 +214,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
           </n-popconfirm>
         </n-space>
       </template>
-    </n-modal>
+    </AppGlassModal>
 
     <!-- 操作抽屉 -->
     <n-drawer v-model:show="showActionDrawer" placement="bottom" :height="actionItems.length * 100 + 60" style="border-radius: var(--m-radius-xl) var(--m-radius-xl) 0 0;">

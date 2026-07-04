@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NCard, NImage, NModal } from 'naive-ui'
+import AppGlassModal from './AppGlassModal.vue'
+import { NCard, NImage } from 'naive-ui'
 import GuideContent from '@/docs/settings-guide.md'
 
 const previewImage = ref<string | null>(null)
@@ -29,11 +30,11 @@ onMounted(() => {
     </div>
   </n-card>
   
-  <n-modal v-model:show="showPreview" preset="card" :style="{ width: '90vw', maxWidth: '1200px' }" :title="'图片预览'" :bordered="false" size="huge" :segmented="{ content: 'soft', footer: 'soft' }">
+  <AppGlassModal v-model:show="showPreview" :style="{ width: '90vw' }" :title="'图片预览'" :bordered="false" size="huge" :segmented="{ content: 'soft', footer: 'soft' }">
     <div class="preview-container">
       <n-image v-if="previewImage" :src="previewImage" object-fit="contain" />
     </div>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

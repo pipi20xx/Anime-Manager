@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import AppGlassModal from './AppGlassModal.vue'
 import { 
-  NModal, NButton, NScrollbar, NList, NListItem, NIcon, NSpace
+  NButton, NScrollbar, NList, NListItem, NIcon, NSpace
 } from 'naive-ui'
 import {
   FolderOpenOutlined as FolderIcon,
@@ -66,10 +67,9 @@ const handleConfirm = () => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 500px" 
     :title="allowFiles ? '选择文件或目录' : '选择目录'"
   >
@@ -104,7 +104,7 @@ const handleConfirm = () => {
         {{ selectedFile ? '确认选择此文件' : '确认选择此目录' }}
       </n-button>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

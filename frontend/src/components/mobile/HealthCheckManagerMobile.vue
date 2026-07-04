@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NCard, NSpace, NButton, NModal, NForm, NFormItem, 
+  NCard, NSpace, NButton, NForm, NFormItem, 
   NSwitch, NPopconfirm, NTag, NIcon,
   NList, NListItem, NThing, NButtonGroup
 } from 'naive-ui'
@@ -122,7 +123,7 @@ const getStatusTagStyle = (status: string) => {
     </n-space>
 
     <!-- 移动端 Modal -->
-    <n-modal v-model:show="showModal" preset="card" title="编辑项目" style="width: 90%; max-width: 400px;">
+    <AppGlassModal v-model:show="showModal" title="编辑项目" style="width: 90%;">
       <n-form :model="editingConfig" label-placement="top">
         <n-form-item>
           <AppTextField v-model:value="editingConfig.name" label="名称" />
@@ -143,7 +144,7 @@ const getStatusTagStyle = (status: string) => {
       <template #footer>
         <n-button v-bind="getButtonStyle('primary')" block @click="saveConfig">保存配置</n-button>
       </template>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

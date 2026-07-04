@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, 
   NDivider, NCheckbox, NSelect, NDynamicTags, NAlert, 
@@ -38,10 +39,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 100%; height: 100vh; margin: 0;"
     content-style="padding: 0; display: flex; flex-direction: column;"
     :title="isNew ? '新建 STRM 任务' : '编辑 STRM 任务'"
@@ -207,7 +207,7 @@ const {
       :allow-files="pickerTarget === 'tree'"
       @confirm="handlePickerConfirm"
     />
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

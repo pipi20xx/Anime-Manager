@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import {
-  NModal, NDataTable, NTag, NButton, NSpace
+  NDataTable, NTag, NButton, NSpace
 } from 'naive-ui'
 import { useAggregatedRuleHistory } from '../../composables/modals/useAggregatedRuleHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -254,11 +255,10 @@ const columns = [
 </script>
 
 <template>
-  <n-modal
+  <AppGlassModal
     :show="show"
     @update:show="val => emit('update:show', val)"
-    preset="card"
-    style="width: 1400px; max-width: 98vw; height: 96vh;"
+    style="width: 1400px; height: 96vh;"
     content-style="display: flex; flex-direction: column; padding: 0;"
     :segmented="{ content: true, footer: 'soft' }"
     title="下载记录"
@@ -309,7 +309,7 @@ const columns = [
         <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">关闭</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

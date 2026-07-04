@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { 
-  NModal, NCard, NForm, NFormItem, NSelect, NButton, NSpace, NGrid, NGi, NDivider, NIcon
+  NForm, NFormItem, NSelect, NButton, NSpace, NGrid, NGi, NDivider, NIcon
 } from 'naive-ui'
 import { SaveOutlined as SaveIcon } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { useClassifierEdit } from '../../composables/modals/useClassifierEdit'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -53,15 +54,16 @@ const {
 </script>
 
 <template>
-  <n-modal :show="props.show" @update:show="val => emit('update:show', val)">
-    <n-card
-      style="width: 800px"
-      :title="props.isNew ? '添加二级分类规则' : '编辑分类规则'"
-      bordered
-      size="huge"
-      role="dialog"
-      aria-modal="true"
-    >
+  <AppGlassModal 
+    :show="props.show" 
+    @update:show="val => emit('update:show', val)"
+    style="width: 800px;"
+    :title="props.isNew ? '添加二级分类规则' : '编辑分类规则'"
+    bordered
+    size="huge"
+    role="dialog"
+    aria-modal="true"
+  >
       <n-form label-placement="left" label-width="100">
         <n-divider title-placement="left">基础设置</n-divider>
         <n-grid :cols="2" :x-gap="12">
@@ -205,8 +207,7 @@ const {
           </n-button>
         </n-space>
       </template>
-    </n-card>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

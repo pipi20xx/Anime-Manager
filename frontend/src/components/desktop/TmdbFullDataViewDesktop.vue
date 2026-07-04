@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
 import { h, ref } from 'vue'
 import { 
   NSpace, NButton, NIcon, NText, NDataTable, NInput, NInputGroup, 
-  NTooltip, NModal, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
+  NTooltip, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
   NPopconfirm
 } from 'naive-ui'
 import {
@@ -90,7 +91,7 @@ const executeRefresh = () => {
         </n-space>
       </div>
 
-      <n-modal v-model:show="showRefreshModal" preset="card" title="全量刷新设置" style="width: 450px">
+      <AppGlassModal v-model:show="showRefreshModal" title="全量刷新设置" style="width: 450px">
         <n-form label-placement="left" label-width="120px">
           <n-form-item>
             <AppTextField 
@@ -140,7 +141,7 @@ const executeRefresh = () => {
             </n-popconfirm>
           </n-space>
         </template>
-      </n-modal>
+      </AppGlassModal>
 
       <div class="browser-wrapper">
         <n-data-table
@@ -177,7 +178,7 @@ const executeRefresh = () => {
     </n-space>
 
     <!-- 编辑/新增元数据弹窗 -->
-    <n-modal v-model:show="showEditModal" preset="card" style="width: 700px" :title="isEditing ? '修正元数据' : '手动新增元数据'">
+    <AppGlassModal v-model:show="showEditModal" style="width: 700px" :title="isEditing ? '修正元数据' : '手动新增元数据'">
       <n-form label-placement="left" label-width="90">
         <n-grid :cols="2" :x-gap="12">
           <n-gi><n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="请输入 TMDB ID" /></n-form-item></n-gi>
@@ -190,7 +191,7 @@ const executeRefresh = () => {
       <template #action>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存并固定</n-button></n-space>
       </template>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

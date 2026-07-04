@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NSelect, 
+  NForm, NFormItem, NTabs, NTabPane, NSpace, NSelect, 
   NCheckbox, NCheckboxGroup, NButton, NIcon, NGrid, NGi, NDynamicTags,
   NRadioGroup, NRadioButton, NSwitch
 } from 'naive-ui'
@@ -34,10 +35,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 700px" 
     :title="isNew ? '创建新整理任务' : '编辑任务配置'"
   >
@@ -194,7 +194,7 @@ const {
       :api-base="apiBase"
       @confirm="handlePickerConfirm"
     />
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

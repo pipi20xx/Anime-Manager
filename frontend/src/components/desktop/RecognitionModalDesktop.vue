@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NSpin, NSpace, NGrid, NGi, NTag, NIcon, NButton, 
+  NSpin, NSpace, NGrid, NGi, NTag, NIcon, NButton, 
   NInput, NSelect, NScrollbar, NList, NListItem, NAvatar, NImage,
   NSwitch, NCollapse, NCollapseItem
 } from 'naive-ui'
@@ -47,10 +48,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 850px" 
     title="单文件识别"
   >
@@ -224,7 +224,7 @@ const {
         </n-space>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

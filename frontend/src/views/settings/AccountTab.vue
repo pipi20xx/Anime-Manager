@@ -104,7 +104,7 @@
       </n-card>
     </n-space>
 
-    <n-modal v-model:show="showOtpSetup" preset="card" title="设置双重身份验证" style="width: 400px">
+    <AppGlassModal v-model:show="showOtpSetup" title="设置双重身份验证" style="width: 400px">
       <n-space vertical align="center" size="large">
         <n-text align="center">请使用验证器应用扫描下方二维码</n-text>
         <div class="qr-container"><img :src="otpSetupData.qr_code" alt="QR Code" v-if="otpSetupData.qr_code" /></div>
@@ -115,7 +115,7 @@
           </template>
         </AppTextField>
       </n-space>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 
@@ -132,6 +132,7 @@ import {
   DevicesOutlined as DeviceIcon
 } from '@vicons/material'
 import AppTextField from '../../components/AppTextField.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import axios from 'axios'
 import { logout } from '../../store/navigationStore'
 

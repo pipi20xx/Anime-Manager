@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NSpace, NFormItem, NSelect, 
+  NSpace, NFormItem, NSelect, 
   NButton, NIcon, NAlert, NSwitch, NForm
 } from 'naive-ui'
 import {
@@ -32,10 +33,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 100%; height: 100vh; margin: 0;"
     content-style="padding: 16px; overflow-y: auto;"
     :title="isNew ? '添加下载器' : '编辑下载器'"
@@ -115,5 +115,5 @@ const {
         </n-space>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>

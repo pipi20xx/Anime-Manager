@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { h } from 'vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NDataTable, NButton, NSpace, NIcon, NForm, NFormItem, 
+  NDataTable, NButton, NSpace, NIcon, NForm, NFormItem, 
   NSelect, NSwitch, NGrid, NGi, NPopconfirm,
   NDivider
 } from 'naive-ui'
@@ -66,11 +67,10 @@ const columns = [
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="close"
-    preset="card"
-    style="width: 750px; max-width: 95vw;"
+    style="width: 750px;"
     :title="showEdit ? (editModel.id ? '编辑订阅预设' : '新增订阅预设') : '订阅预设模板管理'"
   >
     <div v-if="!showEdit">
@@ -141,7 +141,7 @@ const columns = [
         <n-button v-if="showEdit" v-bind="getButtonStyle('primary')" @click="saveTemplate">保存该预设</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

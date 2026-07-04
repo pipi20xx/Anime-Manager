@@ -6,6 +6,7 @@ import {
   NModal, NTooltip
 } from 'naive-ui'
 import AppTextField from '../../components/AppTextField.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import {
   ContentCopyOutlined as CopyIcon,
   RefreshOutlined as RefreshIcon,
@@ -336,7 +337,7 @@ const logColumns = [
       </n-tabs>
     </n-card>
 
-    <n-modal v-model:show="showLogDetail" preset="card" title="请求详情" style="width: 600px">
+    <AppGlassModal v-model:show="showLogDetail" title="请求详情" style="width: 600px">
       <div style="background: var(--bg-surface); padding: 12px; border-radius: 8px">
         <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 13px">{{ currentLogDetail }}</pre>
       </div>
@@ -345,7 +346,7 @@ const logColumns = [
           <n-button @click="showLogDetail = false">关闭</n-button>
         </n-space>
       </template>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

@@ -2,9 +2,10 @@
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { watch } from 'vue'
 import { 
-  NModal, NCard, NForm, NFormItem, NInput, NSelect, NButton, 
+  NForm, NFormItem, NInput, NSelect, NButton, 
   NSpace, NGrid, NGi, NSwitch, NImage, NInputGroup,
   NScrollbar, NDivider, NIcon
 } from 'naive-ui'
@@ -46,15 +47,16 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="v => emit('update:show', v)">
-    <n-card
-      style="width: 700px"
-      :title="isNew ? '新建订阅' : '编辑订阅'"
-      bordered
-      size="huge"
-      role="dialog"
-      aria-modal="true"
-    >
+  <AppGlassModal 
+    :show="show" 
+    @update:show="v => emit('update:show', v)"
+    style="width: 700px;"
+    :title="isNew ? '新建订阅' : '编辑订阅'"
+    bordered
+    size="huge"
+    role="dialog"
+    aria-modal="true"
+  >
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="12">
           <n-gi :span="2" v-if="isNew && templates.length > 0">
@@ -231,8 +233,7 @@ watch(() => props.show, (newVal) => {
           <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存订阅</n-button>
         </n-space>
       </template>
-    </n-card>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

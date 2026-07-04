@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, h, computed, onMounted, onUnmounted } from 'vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NDataTable, NTag, NButton, NSpace, NSpin, NEmpty, useMessage
+  NDataTable, NTag, NButton, NSpace, NSpin, NEmpty, useMessage
 } from 'naive-ui'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -241,10 +242,9 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 800px" 
     :title="`推送历史: ${rule?.name}`"
   >
@@ -265,5 +265,5 @@ watch(() => props.show, (newVal) => {
         <n-button @click="emit('update:show', false)">关闭</n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>

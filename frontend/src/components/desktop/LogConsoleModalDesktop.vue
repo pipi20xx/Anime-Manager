@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { 
-  NModal, NCard, NSpace, NButton, NIcon, NTag, NSwitch, NVirtualList, NSelect, NSpin
+  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NVirtualList, NSelect, NSpin
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import {
   TerminalRound as TerminalIcon,
   PauseCircleRound as PauseIcon,
@@ -65,14 +66,16 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal :show="show" @update:show="val => emit('update:show', val)" transform-origin="center">
-    <n-card
-      style="width: 96vw; height: 96vh; display: flex; flex-direction: column;"
-      content-style="padding: 0; display: flex; flex-direction: column; height: 100%; overflow: hidden;"
-      :bordered="false"
-      size="small"
-      aria-modal="true"
-    >
+  <AppGlassModal 
+    :show="show" 
+    @update:show="val => emit('update:show', val)" 
+    transform-origin="center"
+    style="width: 96vw; height: 96vh;"
+    content-style="padding: 0; display: flex; flex-direction: column; height: 100%; overflow: hidden;"
+    :bordered="false"
+    size="small"
+    aria-modal="true"
+  >
       <template #header>
         <div class="console-header">
           <div class="d-flex align-center gap-2">
@@ -145,8 +148,7 @@ watch(() => props.show, (newVal) => {
           </div>
         </n-spin>
       </div>
-    </n-card>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NModal, NCard, NTabs, NTabPane, NButton, NSpace, NSelect, NSwitch, 
   NIcon, NTag, NEmpty, NPopconfirm, NDivider, NList, NListItem, NThing,
@@ -36,10 +37,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="close"
-    preset="card"
     class="mobile-fullscreen-modal"
   >
     <template #header>
@@ -132,7 +132,7 @@ const {
     </div>
 
     <!-- Rule Editor (Mobile Version: Use Modal or Drawer) -->
-    <n-modal v-model:show="showRuleEdit" preset="card" class="mobile-fullscreen-modal" title="编辑基础规则">
+    <n-modal v-model:show="showRuleEdit" class="mobile-fullscreen-modal" title="编辑基础规则">
        <n-scrollbar style="max-height: 80vh">
         <n-form label-placement="top">
           <n-form-item><AppTextField v-model:value="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" /></n-form-item>
@@ -157,7 +157,7 @@ const {
     </n-modal>
 
     <!-- Profile Editor (Mobile Version) -->
-    <n-modal v-model:show="showProfileEdit" preset="card" class="mobile-fullscreen-modal" title="编辑策略">
+    <n-modal v-model:show="showProfileEdit" class="mobile-fullscreen-modal" title="编辑策略">
        <n-scrollbar style="max-height: 80vh">
         <n-form label-placement="top">
           <n-form-item><AppTextField v-model:value="currentProfile.name" label="策略名称" /></n-form-item>
@@ -198,7 +198,7 @@ const {
           <n-button block v-bind="getButtonStyle('primary')" @click="saveProfile">保存策略</n-button>
        </template>
     </n-modal>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

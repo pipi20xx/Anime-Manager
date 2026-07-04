@@ -2,6 +2,7 @@
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import { ref, onMounted, reactive, h, onUnmounted, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NTag, NImage,
@@ -330,7 +331,7 @@ onUnmounted(() => {
     </n-space>
 
     <!-- Edit/Add Cache Modal -->
-    <n-modal v-model:show="showEditModal" preset="card" style="width: 750px" :title="isEditing ? '编辑缓存记录' : '新增缓存记录'">
+    <AppGlassModal v-model:show="showEditModal" style="width: 750px" :title="isEditing ? '编辑缓存记录' : '新增缓存记录'">
       <n-form label-placement="left" label-width="100">
         <n-grid :cols="2" :x-gap="12">
           <n-gi>
@@ -364,7 +365,7 @@ onUnmounted(() => {
           <n-button type="primary" @click="saveCache">保存记录</n-button>
         </n-space>
       </template>
-    </n-modal>
+    </AppGlassModal>
   </div>
 </template>
 

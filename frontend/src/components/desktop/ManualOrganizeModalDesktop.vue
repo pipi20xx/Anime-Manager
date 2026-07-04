@@ -2,8 +2,9 @@
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
+  NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
   NScrollbar, NImage, NButton, NIcon, NCheckbox, 
   NSwitch, NDynamicTags
@@ -36,10 +37,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     style="width: 750px" 
     title="手动整理当前目录 (临时任务)"
   >
@@ -185,7 +185,7 @@ const {
         </n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

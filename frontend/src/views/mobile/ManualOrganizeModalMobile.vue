@@ -2,6 +2,7 @@
 import AppTextField from '../../components/AppTextField.vue'
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import { 
   NModal, NForm, NFormItem, NTabs, NTabPane, NSpace, NAlert, NSelect, 
   NInput, NRadioGroup, NRadioButton, NGrid, NGi, 
@@ -36,10 +37,9 @@ const {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    preset="card" 
     class="mobile-modal"
     title="手动整理"
   >
@@ -143,7 +143,7 @@ const {
         </n-button>
       </n-space>
     </template>
-  </n-modal>
+  </AppGlassModal>
 </template>
 
 <style scoped>

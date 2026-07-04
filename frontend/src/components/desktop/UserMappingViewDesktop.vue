@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, h, watch } from 'vue'
 import { 
-  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NModal, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NPopconfirm, NSpin
+  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NPopconfirm, NSpin
 } from 'naive-ui'
+import AppGlassModal from '../AppGlassModal.vue'
 import {
   AddOutlined as AddIcon, 
   EditOutlined as EditIcon, 
@@ -340,13 +341,7 @@ const countryColumns = [
       </n-tabs>
     </n-card>
 
-    <n-modal :show="showModal" @update:show="val => showModal = val">
-      <n-card
-        style="width: 500px"
-        :title="isNewItem ? '添加映射' : '编辑映射'"
-        bordered
-        size="huge"
-      >
+    <AppGlassModal :show="showModal" @update:show="val => showModal = val" style="width: 500px;" :title="isNewItem ? '添加映射' : '编辑映射'" bordered size="huge">
         <n-form label-placement="left" label-width="80">
           <template v-if="activeType === 'genre'">
             <n-form-item>
@@ -415,8 +410,7 @@ const countryColumns = [
             <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>
           </n-space>
         </template>
-      </n-card>
-    </n-modal>
+    </AppGlassModal>
 
     <input 
       type="file" 
