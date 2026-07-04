@@ -16,6 +16,7 @@ const defaultConfig: AppearanceConfig = {
     background_image: '',
     background_blur: 0,
     background_opacity: 1,
+    background_overlay_opacity: 0,
     border_color: '#3B82F6',
     border_width: 1,
     border_radius: 14,
@@ -24,7 +25,9 @@ const defaultConfig: AppearanceConfig = {
     enabled: false,
     background_image: '',
     background_opacity: 1,
+    background_overlay_opacity: 0,
     border_radius: 14,
+    blur: 0,
   },
   tabs: {
     enabled: false,
@@ -68,7 +71,7 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
   const globalBg = config.global
   if (globalBg.enabled && globalBg.background_image) {
     root.style.setProperty('--app-global-bg-image', `url(/api/appearance/image/${globalBg.background_image})`)
-    root.style.setProperty('--app-global-bg-blur', globalBg.background_blur > 0 ? `${globalBg.background_blur}px` : 'none')
+    root.style.setProperty('--app-global-bg-blur', globalBg.background_blur > 0 ? `blur(${globalBg.background_blur}px)` : 'none')
     root.style.setProperty('--app-global-bg-overlay-opacity', String(globalBg.background_overlay_opacity))
     root.style.setProperty('--app-layout-opacity', `${Math.round(globalBg.layout_opacity * 100)}%`)
     root.setAttribute('data-global-bg', 'on')
@@ -91,10 +94,11 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
       root.style.setProperty('--app-modal-bg-image', 'none')
       root.removeAttribute('data-modal-bg')
     }
-    root.style.setProperty('--app-modal-blur', modal.background_blur > 0 ? `${modal.background_blur}px` : 'none')
+    root.style.setProperty('--app-modal-blur', modal.background_blur > 0 ? `blur(${modal.background_blur}px)` : 'none')
     // 预计算百分比，避免 calc() 在 color-mix() 内的兼容性问题
     root.style.setProperty('--app-modal-bg-opacity-pct', `${Math.round(modal.background_opacity * 100)}%`)
     root.style.setProperty('--app-modal-bg-opacity', String(modal.background_opacity))
+    root.style.setProperty('--app-modal-bg-overlay-opacity', String(modal.background_overlay_opacity))
     root.style.setProperty('--app-modal-border-color', modal.border_color)
     root.style.setProperty('--app-modal-border-width', `${modal.border_width}px`)
     root.style.setProperty('--app-modal-border-radius', `${modal.border_radius}px`)
@@ -103,6 +107,7 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--app-modal-blur', 'none')
     root.style.setProperty('--app-modal-bg-opacity-pct', '100%')
     root.style.setProperty('--app-modal-bg-opacity', '1')
+    root.style.setProperty('--app-modal-bg-overlay-opacity', '0')
     root.style.setProperty('--app-modal-border-color', '#3B82F6')
     root.style.setProperty('--app-modal-border-width', '1px')
     root.style.setProperty('--app-modal-border-radius', '14px')
@@ -121,19 +126,23 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     }
     root.style.setProperty('--app-card-bg-opacity', `${Math.round(card.background_opacity * 100)}%`)
     root.style.setProperty('--app-card-bg-transparent-pct', `${Math.round((1 - card.background_opacity) * 100)}%`)
+    root.style.setProperty('--app-card-bg-overlay-opacity', String(card.background_overlay_opacity))
     root.style.setProperty('--card-border-radius', `${card.border_radius}px`)
+    root.style.setProperty('--app-card-blur', card.blur > 0 ? `blur(${card.blur}px)` : 'none')
   } else {
     root.style.setProperty('--app-card-bg-image', 'none')
     root.style.setProperty('--app-card-bg-opacity', '100%')
     root.style.setProperty('--app-card-bg-transparent-pct', '0%')
+    root.style.setProperty('--app-card-bg-overlay-opacity', '0')
     root.style.setProperty('--card-border-radius', '14px')
+    root.style.setProperty('--app-card-blur', 'none')
     root.removeAttribute('data-card-bg')
   }
 
   // === 标签页外观 ===
   const tabs = config.tabs
   if (tabs.enabled) {
-    root.style.setProperty('--tabs-nav-blur', tabs.nav_blur > 0 ? `${tabs.nav_blur}px` : 'none')
+    root.style.setProperty('--tabs-nav-blur', tabs.nav_blur > 0 ? `blur(${tabs.nav_blur}px)` : 'none')
     // 预计算透明度百分比，避免 calc() 在 color-mix() 里的兼容性问题
     const transparentPct = Math.round((1 - tabs.nav_opacity) * 100)
     root.style.setProperty('--tabs-nav-bg-transparent-pct', `${transparentPct}%`)
@@ -154,7 +163,7 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--input-bg-transparent-pct', `${inputTransparentPct}%`)
     root.style.setProperty('--input-border-radius', `${input.border_radius}px`)
     root.style.setProperty('--input-height', `${input.height}px`)
-    root.style.setProperty('--input-blur', input.blur > 0 ? `${input.blur}px` : 'none')
+    root.style.setProperty('--input-blur', input.blur > 0 ? `blur(${input.blur}px)` : 'none')
   } else {
     root.style.setProperty('--input-bg-opacity', '100%')
     root.style.setProperty('--input-bg-transparent-pct', '0%')
@@ -173,7 +182,7 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--search-input-bg-transparent-pct-focus', `${Math.min(100, Math.round(searchTransparentPct * 0.92))}%`)
     root.style.setProperty('--search-input-border-radius', `${search.border_radius}px`)
     root.style.setProperty('--search-input-height', `${search.height}px`)
-    root.style.setProperty('--search-input-blur', search.blur > 0 ? `${search.blur}px` : 'none')
+    root.style.setProperty('--search-input-blur', search.blur > 0 ? `blur(${search.blur}px)` : 'none')
   } else {
     root.style.setProperty('--search-input-bg-opacity', '100%')
     root.style.setProperty('--search-input-bg-transparent-pct', '0%')
@@ -190,7 +199,7 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     const listTransparentPct = Math.round((1 - list.bg_opacity) * 100)
     root.style.setProperty('--list-bg-transparent-pct', `${listTransparentPct}%`)
     root.style.setProperty('--list-border-radius', `${list.border_radius}px`)
-    root.style.setProperty('--list-blur', list.blur > 0 ? `${list.blur}px` : 'none')
+    root.style.setProperty('--list-blur', list.blur > 0 ? `blur(${list.blur}px)` : 'none')
   } else {
     root.style.setProperty('--list-bg-transparent-pct', '0%')
     root.style.setProperty('--list-border-radius', '8px')

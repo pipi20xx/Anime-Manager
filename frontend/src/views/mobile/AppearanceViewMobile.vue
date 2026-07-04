@@ -175,12 +175,16 @@ const formatFileSize = (size: number) => {
               <n-select v-model:value="form.modal.background_image" :options="imageOptions" @update:value="preview" />
             </div>
             <div class="m-form-row">
-              <div class="m-form-label">模糊程度 {{ form.modal.background_blur }}px</div>
+              <div class="m-form-label">背景模糊 {{ form.modal.background_blur }}px</div>
               <n-slider v-model:value="form.modal.background_blur" :min="0" :max="30" :step="1" @update:value="preview" />
             </div>
             <div class="m-form-row">
               <div class="m-form-label">背景不透明度 {{ (form.modal.background_opacity * 100).toFixed(0) }}%</div>
               <n-slider v-model:value="form.modal.background_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />
+            </div>
+            <div class="m-form-row" v-if="form.modal.background_image">
+              <div class="m-form-label">遮罩暗化 {{ (form.modal.background_overlay_opacity * 100).toFixed(0) }}%</div>
+              <n-slider v-model:value="form.modal.background_overlay_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />
             </div>
             <div class="m-form-row">
               <div class="m-form-label">边框颜色</div>
@@ -214,9 +218,17 @@ const formatFileSize = (size: number) => {
               <div class="m-form-label">背景不透明度 {{ (form.card.background_opacity * 100).toFixed(0) }}%</div>
               <n-slider v-model:value="form.card.background_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />
             </div>
+            <div class="m-form-row" v-if="form.card.background_image">
+              <div class="m-form-label">遮罩暗化 {{ (form.card.background_overlay_opacity * 100).toFixed(0) }}%</div>
+              <n-slider v-model:value="form.card.background_overlay_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />
+            </div>
             <div class="m-form-row">
               <div class="m-form-label">圆角 {{ form.card.border_radius }}px</div>
               <n-slider v-model:value="form.card.border_radius" :min="0" :max="30" :step="1" @update:value="preview" />
+            </div>
+            <div class="m-form-row">
+              <div class="m-form-label">背景模糊 {{ form.card.blur }}px</div>
+              <n-slider v-model:value="form.card.blur" :min="0" :max="20" :step="1" @update:value="preview" />
             </div>
           </template>
         </n-collapse-item>
@@ -231,7 +243,7 @@ const formatFileSize = (size: number) => {
           </template>
           <template v-if="form.tabs.enabled">
             <div class="m-form-row">
-              <div class="m-form-label">导航栏模糊 {{ form.tabs.nav_blur }}px</div>
+              <div class="m-form-label">背景模糊 {{ form.tabs.nav_blur }}px</div>
               <n-slider v-model:value="form.tabs.nav_blur" :min="0" :max="30" :step="1" @update:value="preview" />
             </div>
             <div class="m-form-row">

@@ -297,7 +297,7 @@ const {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--app-surface-inner);
+  background: color-mix(in srgb, var(--app-surface-card-mixed), rgba(0,0,0,0.05));
   padding: 10px 11px;
   border-radius: 6px;
   border: 1px solid var(--app-border-light);

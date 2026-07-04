@@ -18,6 +18,7 @@ export interface AppearanceModal {
   background_image: string
   background_blur: number
   background_opacity: number
+  background_overlay_opacity: number
   border_color: string
   border_width: number
   border_radius: number
@@ -27,7 +28,9 @@ export interface AppearanceCard {
   enabled: boolean
   background_image: string
   background_opacity: number
+  background_overlay_opacity: number
   border_radius: number
+  blur: number
 }
 
 export interface AppearanceTabs {
