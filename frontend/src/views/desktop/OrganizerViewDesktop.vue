@@ -351,5 +351,9 @@ onUnmounted(stopBgTaskPolling)
 }
 .mb-4 { margin-bottom: var(--m-4); }
 
+.custom-tabs :deep(.n-tab-pane) {
+  padding-top: 16px !important;
+}
+
 /* Tabs 样式已移至 global.css 统一管理 */
 </style>

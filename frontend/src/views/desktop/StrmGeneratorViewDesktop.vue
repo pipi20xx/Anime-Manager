@@ -47,97 +47,88 @@ onMounted(fetchTasks)
       </n-button>
     </div>
 
-    <n-space vertical size="large">
-      <n-card class="app-card-config">
-        <template #header>
-          <div class="card-title-box">
-            <span class="card-title-text">STRM 任务管理</span>
-          </div>
-        </template>
-        <div v-if="tasks.length > 0" class="task-grid">
-          <n-card 
-            v-for="(task, index) in tasks" 
-            :key="task.id" 
-            bordered 
-            embedded 
-            class="task-card clickable-card"
-            @click="openEdit(index)"
-          >
-            <div class="task-header mb-2">
-              <span class="task-name">{{ task.name }}</span>
-              <n-space>
-                <!-- 实时监控 -->
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button
-                      circle
-                      ghost
-                      size="small"
-                      :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
-                      @click.stop="toggleTaskMonitor(task, 'incremental')"
-                    >
-                      <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><BoltIcon /></n-icon></template>
-                    </n-button>
-                  </template>
-                  实时监控: {{ (task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode)) ? '开启 (' + (task.incremental_mode || task.monitor_mode || 'realtime') + ')' : '关闭' }} (点击切换)
-                </n-tooltip>
+    <div v-if="tasks.length > 0" class="task-grid">
+      <n-card
+        v-for="(task, index) in tasks"
+        :key="task.id"
+        bordered
+        embedded
+        class="task-card clickable-card"
+        @click="openEdit(index)"
+      >
+        <div class="task-header mb-2">
+          <span class="task-name">{{ task.name }}</span>
+          <n-space>
+            <!-- 实时监控 -->
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button
+                  circle
+                  ghost
+                  size="small"
+                  :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
+                  @click.stop="toggleTaskMonitor(task, 'incremental')"
+                >
+                  <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><BoltIcon /></n-icon></template>
+                </n-button>
+              </template>
+              实时监控: {{ (task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode)) ? '开启 (' + (task.incremental_mode || task.monitor_mode || 'realtime') + ')' : '关闭' }} (点击切换)
+            </n-tooltip>
 
-                <!-- 定时扫描 -->
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button
-                      circle
-                      ghost
-                      size="small"
-                      :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'primary'"
-                      @click.stop="toggleTaskMonitor(task, 'scheduler')"
-                    >
-                      <template #icon><n-icon :color="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? undefined : 'var(--text-primary)'"><ScheduleIcon /></n-icon></template>
-                    </n-button>
-                  </template>
-                  定时扫描: {{ (task.scheduler_enabled || task.monitor_mode === 'scheduled') ? '开启' : '关闭' }} (点击切换)
-                </n-tooltip>
-              </n-space>
-            </div>
-            <div class="path-info">
-              <div class="l">源路径</div><div class="v" :title="task.source_path || task.source_dir">{{ task.source_path || task.source_dir }}</div>
-              <div class="l mt-1">目标路径</div><div class="v" :title="task.target_path || task.target_dir">{{ task.target_path || task.target_dir }}</div>
-            </div>
-            <template #action>
-              <n-space justify="end" @click.stop>
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateTask(index)">
-                      <template #icon><n-icon><CopyIcon /></n-icon></template>
-                    </n-button>
-                  </template>
-                  复制任务
-                </n-tooltip>
-
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(index)">
-                      <template #icon><n-icon><DeleteIcon /></n-icon></template>
-                    </n-button>
-                  </template>
-                  删除任务
-                </n-tooltip>
-
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="runTask(task.id)">
-                      <template #icon><n-icon><RunIcon /></n-icon></template>
-                    </n-button>
-                  </template>
-                  立即运行任务
-                </n-tooltip>
-              </n-space>
-            </template>
-          </n-card>
+            <!-- 定时扫描 -->
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button
+                  circle
+                  ghost
+                  size="small"
+                  :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'primary'"
+                  @click.stop="toggleTaskMonitor(task, 'scheduler')"
+                >
+                  <template #icon><n-icon :color="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? undefined : 'var(--text-primary)'"><ScheduleIcon /></n-icon></template>
+                </n-button>
+              </template>
+              定时扫描: {{ (task.scheduler_enabled || task.monitor_mode === 'scheduled') ? '开启' : '关闭' }} (点击切换)
+            </n-tooltip>
+          </n-space>
         </div>
-        <n-empty v-else description="暂无任务" />
+        <div class="path-info">
+          <div class="l">源路径</div><div class="v" :title="task.source_path || task.source_dir">{{ task.source_path || task.source_dir }}</div>
+          <div class="l mt-1">目标路径</div><div class="v" :title="task.target_path || task.target_dir">{{ task.target_path || task.target_dir }}</div>
+        </div>
+        <template #action>
+          <n-space justify="end" @click.stop>
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateTask(index)">
+                  <template #icon><n-icon><CopyIcon /></n-icon></template>
+                </n-button>
+              </template>
+              复制任务
+            </n-tooltip>
+
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(index)">
+                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
+                </n-button>
+              </template>
+              删除任务
+            </n-tooltip>
+
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="runTask(task.id)">
+                  <template #icon><n-icon><RunIcon /></n-icon></template>
+                </n-button>
+              </template>
+              立即运行任务
+            </n-tooltip>
+          </n-space>
+        </template>
       </n-card>
-    </n-space>
+    </div>
+    <n-empty v-else description="暂无任务" />
 
     <!-- 配置组件 -->
     <StrmTaskModal 

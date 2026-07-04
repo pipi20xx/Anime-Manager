@@ -121,5 +121,5 @@ const getTagStyle = (count: number) => {
   color: var(--text-tertiary);
   line-height: 1.4;
 }
-.actions { margin-top: auto; }
+.actions { margin-top: auto; padding-top: 16px; }
 </style>

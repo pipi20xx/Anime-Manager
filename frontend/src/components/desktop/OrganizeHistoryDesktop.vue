@@ -139,13 +139,6 @@ const handleRefresh = () => {
             </div>
           </div>
 
-          <!-- Error Message Row -->
-          <div v-if="item.status === 'failed' && item.message" class="error-msg-row mt-2">
-            <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
-              {{ item.message }}
-            </n-alert>
-          </div>
-
           <!-- Skipped Message Row -->
           <div v-if="item.status === 'skipped' && item.message" class="skipped-msg-row mt-2">
             <n-alert :show-icon="false" size="small" class="compact-alert" :bordered="false">
@@ -182,6 +175,10 @@ const handleRefresh = () => {
               <div class="detail-item">
                 <span class="label">转移方式：</span>
                 <span class="history-tag tag-action">{{ getActionLabel(item.action_type) }}</span>
+              </div>
+              <div class="detail-item" v-if="item.status === 'failed' && item.message">
+                <span class="label">失败原因：</span>
+                <span class="history-tag tag-error" :title="item.message">{{ item.message }}</span>
               </div>
               <div class="detail-item">
                 <span class="history-tag tag-size">{{ item.file_size || '未知大小' }}</span>
@@ -277,6 +274,7 @@ const handleRefresh = () => {
 .page-header :deep(.n-space) { align-items: stretch; }
 .page-header :deep(.n-input) { height: 34px; }
 .page-header :deep(.n-button) { height: 34px; }
+.page-header .app-search-field { --search-input-height: 34px; }
 .filter-tabs { height: 34px; }
 .filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
 .filter-tabs :deep(.n-tabs-tab) { height: 28px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
@@ -378,6 +376,18 @@ const handleRefresh = () => {
   background: #c62828;
   color: #fff;
   border-color: #c62828;
+}
+
+/* Error Reason Tag - 红色底色+白色文字 */
+.history-tag.tag-error,
+.detail-item .history-tag.tag-error {
+  background: #c62828;
+  color: #fff;
+  border-color: #c62828;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Size Tag - 紫色底色+白色文字 */
