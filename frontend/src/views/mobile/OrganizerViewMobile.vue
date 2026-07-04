@@ -534,7 +534,7 @@ onUnmounted(stopBgTaskPolling)
 /* NList 样式适配 */
 .m-list :deep(.n-list) { background: transparent; }
 .m-list :deep(.n-list-item) {
-  background: var(--app-surface-card);
+  background: var(--app-surface-list-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-md) !important;
@@ -549,7 +549,7 @@ onUnmounted(stopBgTaskPolling)
 
 .m-card-list :deep(.n-list) { background: transparent; }
 .m-card-list :deep(.n-list-item) {
-  background: var(--app-surface-card);
+  background: var(--app-surface-list-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-lg) !important;

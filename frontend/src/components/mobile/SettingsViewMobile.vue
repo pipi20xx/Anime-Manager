@@ -471,7 +471,7 @@ const {
 
 /* 卡片样式 */
 .m-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-md);
@@ -562,7 +562,7 @@ const {
   justify-content: space-between;
   align-items: center;
   padding: var(--m-spacing-md);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-md);
 }

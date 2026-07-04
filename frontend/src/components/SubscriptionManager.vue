@@ -393,7 +393,7 @@ onMounted(() => {
 
 <style scoped>
 .action-bar { margin-bottom: 24px; display: flex; justify-content: flex-end; }
-.sub-card { overflow: hidden; border: 1px solid var(--app-border-light) !important; background: var(--app-surface-card) !important; transition: all var(--transition-normal); border-radius: var(--card-border-radius, 8px) !important; }
+.sub-card { overflow: hidden; border: 1px solid var(--app-border-light) !important; background: var(--app-surface-card-mixed) !important; transition: all var(--transition-normal); border-radius: var(--card-border-radius, 8px) !important; }
 .sub-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-xl); border-color: var(--n-primary-color) !important; }
 .card-content { display: flex; flex-direction: column; }
 .poster-box { position: relative; width: 100%; aspect-ratio: 2 / 3; background: var(--app-surface-inner); overflow: hidden; border-radius: var(--card-border-radius, 8px); cursor: pointer; }

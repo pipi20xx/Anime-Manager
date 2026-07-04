@@ -291,7 +291,7 @@ onMounted(fetchData)
 
 .feed-card {
   border: 1px solid var(--app-border-light) !important;
-  background: var(--app-surface-card) !important;
+  background: var(--app-surface-card-mixed) !important;
   border-radius: var(--card-border-radius, 12px) !important;
   transition: all var(--transition-normal);
   position: relative;

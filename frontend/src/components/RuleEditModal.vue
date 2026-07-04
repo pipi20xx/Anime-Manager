@@ -169,7 +169,7 @@ const handleSave = () => {
 .v-c code { 
   color: var(--n-warning-color); 
   font-family: var(--code-font); 
-  background: var(--app-surface-card); 
+  background: var(--app-surface-card-mixed); 
   padding: 2px 4px; 
   border-radius: 4px; 
   border: 1px solid var(--app-border-light);

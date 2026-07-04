@@ -578,13 +578,13 @@ watch(tmdbId, (newId, oldId) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--app-bg-color);
+  background: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
 }
 
 .page-header {
   padding: 16px 32px;
   border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 
 .loading-box { padding: 40px; }

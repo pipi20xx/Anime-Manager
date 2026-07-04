@@ -20,8 +20,34 @@
   /* 外观自定义扩展变量(后期可配置) */
   --app-card-bg-image: none;  /* 卡片背景图片 */
   --app-card-bg-opacity: 1;   /* 卡片背景透明度 */
+  --app-card-bg-transparent-pct: 0%;  /* 卡片背景透明百分比（预计算）*/
   --app-card-border-style: solid;  /* 边框样式 */
   --app-card-border-width: 1px;    /* 边框宽度 */
+
+  /* 混合后的卡片背景色（自动跟随透明度）- 用于所有 background 属性 */
+  --app-surface-card-mixed: color-mix(in srgb, var(--app-surface-card), transparent var(--app-card-bg-transparent-pct, 0%));
+  /* 混合后的列表项背景色 */
+  --app-surface-list-mixed: color-mix(in srgb, var(--app-surface-card), transparent var(--list-bg-transparent-pct, 0%));
+
+  /* 列表外观自定义变量 */
+  --list-bg-transparent-pct: 0%;  /* 列表项背景透明百分比 */
+  --list-border-radius: 8px;      /* 列表项圆角 */
+  --list-blur: none;              /* 列表项模糊 */
+
+  /* 全局背景自定义变量 */
+  --app-global-bg-image: none;  /* 全局背景图片 */
+  --app-global-bg-blur: 0px;   /* 全局背景模糊 */
+  --app-global-bg-overlay-opacity: 0.6;  /* 全局背景遮罩透明度 */
+  --app-layout-opacity: 100%;     /* 布局透明度（全局背景启用时降低，color-mix 百分比）*/
+
+  /* 弹框外观自定义变量 */
+  --app-modal-bg-image: none;  /* 弹框背景图片 */
+  --app-modal-blur: 0px;       /* 弹框模糊效果 */
+  --app-modal-bg-opacity: 1;   /* 弹框背景透明度 */
+  --app-modal-bg-opacity-pct: 100%;  /* 弹框背景透明度百分比（预计算）*/
+  --app-modal-border-color: #3B82F6;  /* 弹框边框颜色 */
+  --app-modal-border-width: 1px;      /* 弹框边框宽度 */
+  --app-modal-border-radius: 14px;    /* 弹框圆角 */
   
   /* 文本颜色变量 */
   --text-primary: #ffffff;
@@ -100,6 +126,7 @@
   /* ========== Tabs 外观自定义变量 ========== */
   --tabs-nav-bg: var(--app-surface-card);  /* Tabs导航栏背景色 */
   --tabs-nav-bg-opacity: 1;  /* Tabs导航栏背景透明度 */
+  --tabs-nav-bg-transparent-pct: 0%;  /* Tabs导航栏透明百分比（预计算）*/
   --tabs-nav-border: 1px solid var(--app-border-light);  /* Tabs导航栏边框 */
   --tabs-nav-border-radius: var(--card-border-radius);  /* Tabs导航栏圆角 */
   --tabs-nav-blur: none;  /* Tabs导航栏模糊效果 */
@@ -118,6 +145,7 @@
   /* ========== AppTextField 外观自定义变量 ========== */
   --input-bg: var(--app-surface-card);  /* 输入框背景色 */
   --input-bg-opacity: 1;  /* 输入框背景透明度 */
+  --input-bg-transparent-pct: 0%;  /* 输入框透明百分比（预计算）*/
   --input-border: 1px solid var(--border-medium);  /* 输入框边框 */
   --input-border-radius: 8px;  /* 输入框圆角 */
   --input-height: 56px;  /* 输入框高度 */
@@ -133,6 +161,9 @@
   /* ========== AppSearchField 外观自定义变量 ========== */
   --search-input-bg: var(--app-surface-card);  /* 搜索框背景色 */
   --search-input-bg-opacity: 1;  /* 搜索框背景透明度 */
+  --search-input-bg-transparent-pct: 0%;  /* 搜索框透明百分比（预计算）*/
+  --search-input-bg-transparent-pct-hover: 0%;  /* 搜索框hover透明百分比 */
+  --search-input-bg-transparent-pct-focus: 0%;  /* 搜索框focus透明百分比 */
   --search-input-border: 1px solid var(--app-border-light);  /* 搜索框边框 */
   --search-input-border-radius: 22px;  /* 搜索框圆角（药丸形状） */
   --search-input-height: 44px;  /* 搜索框高度 */
@@ -287,7 +318,7 @@ input, textarea, select, button {
 /* Naive UI 统一覆盖增强 - 降低 Padding */
 .n-card {
   border-radius: var(--card-border-radius, 8px) !important;
-  background: var(--app-surface-card) !important;
+  background: var(--app-surface-card-mixed) !important;
 }
 .n-card > .n-card__content {
   padding: 12px 16px !important;
@@ -303,16 +334,68 @@ input, textarea, select, button {
   padding: 12px 16px !important;
 }
 
+/* 卡片自定义背景图启用时 */
+:root[data-card-bg="on"] .n-card {
+  position: relative;
+  overflow: hidden;
+}
+:root[data-card-bg="on"] .n-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--app-card-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--app-card-bg-opacity, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+:root[data-card-bg="on"] .n-card > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* List 主题化 */
 .n-list {
   background: transparent !important;
 }
 .n-list-item {
-  background: transparent !important;
+  background: var(--app-surface-list-mixed) !important;
   border-bottom: 1px solid var(--app-border-light) !important;
+  border-radius: var(--list-border-radius) !important;
+  backdrop-filter: var(--list-blur) !important;
+  -webkit-backdrop-filter: var(--list-blur) !important;
 }
 .n-list-item:hover {
   background: var(--bg-surface-hover) !important;
+}
+
+/* DataTable 主题化 - 支持外观自定义 */
+.n-data-table,
+.n-data-table .n-data-table-base-table,
+.n-data-table .n-data-table-table {
+  background: var(--app-surface-card-mixed) !important;
+}
+.n-data-table {
+  border-radius: var(--card-border-radius, 8px) !important;
+  overflow: hidden !important;
+}
+.n-data-table .n-data-table-thead,
+.n-data-table .n-data-table-thead .n-data-table-th {
+  background: var(--app-surface-inner) !important;
+}
+.n-data-table .n-data-table-tbody .n-data-table-tr,
+.n-data-table .n-data-table-tbody .n-data-table-tr .n-data-table-td {
+  background: transparent !important;
+}
+.n-data-table .n-data-table-tbody .n-data-table-tr:hover,
+.n-data-table .n-data-table-tbody .n-data-table-tr:hover .n-data-table-td {
+  background: var(--bg-surface-hover) !important;
+}
+.n-data-table .n-data-table-td,
+.n-data-table .n-data-table-th {
+  border-bottom: 1px solid var(--app-border-light) !important;
 }
 
 /* Tabs 主题化 - 使用CSS变量支持外观自定义 */
@@ -320,7 +403,7 @@ input, textarea, select, button {
   background: var(--tabs-pane-bg) !important;
 }
 .n-tabs-nav {
-  background: color-mix(in srgb, var(--tabs-nav-bg), transparent calc(100% - var(--tabs-nav-bg-opacity) * 100%)) !important;
+  background: color-mix(in srgb, var(--tabs-nav-bg), transparent var(--tabs-nav-bg-transparent-pct, 0%)) !important;
   border: var(--tabs-nav-border) !important;
   border-radius: var(--tabs-nav-border-radius) !important;
   padding: var(--tabs-nav-padding) !important;
@@ -348,7 +431,7 @@ input, textarea, select, button {
 div.n-tabs.n-tabs--segment-type > div.n-tabs-nav,
 div.n-tabs.n-tabs--segment-type div.n-tabs-nav--segment-type,
 div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
-  background: color-mix(in srgb, var(--tabs-nav-bg), transparent calc(100% - var(--tabs-nav-bg-opacity) * 100%)) !important;
+  background: color-mix(in srgb, var(--tabs-nav-bg), transparent var(--tabs-nav-bg-transparent-pct, 0%)) !important;
   border: var(--tabs-nav-border) !important;
   border-radius: var(--tabs-nav-border-radius) !important;
   padding: var(--tabs-nav-padding) !important;
@@ -360,7 +443,7 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 .n-tabs.n-tabs--segment-type .n-tabs-rail,
 .n-tabs.n-tabs--segment-type div.n-tabs-rail,
 .n-tabs.n-tabs--segment-type [class*="n-tabs-rail"] {
-  background: color-mix(in srgb, var(--tabs-nav-bg), transparent calc(100% - var(--tabs-nav-bg-opacity) * 100%)) !important;
+  background: color-mix(in srgb, var(--tabs-nav-bg), transparent var(--tabs-nav-bg-transparent-pct, 0%)) !important;
   border: var(--tabs-nav-border) !important;
   border-radius: var(--tabs-nav-border-radius) !important;
   padding: var(--tabs-nav-padding) !important;
@@ -415,12 +498,51 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 
 /* Modal 主题化 */
 .n-modal-container .n-modal {
+  position: relative;
   background: var(--app-modal-bg) !important;
-  border: 1px solid #3B82F6 !important;
+  border: var(--app-modal-border-width, 1px) solid var(--app-modal-border-color, #3B82F6) !important;
+  border-radius: var(--app-modal-border-radius, 14px) !important;
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3) !important;
+  overflow: hidden;
 }
 .n-modal-container .n-modal-body-wrapper {
   background: transparent !important;
+}
+
+/* 弹框自定义背景图启用时 */
+:root[data-modal-bg="on"] .n-modal-container .n-modal {
+  background: transparent !important;
+}
+:root[data-modal-bg="on"] .n-modal-container .n-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--app-modal-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+:root[data-modal-bg="on"] .n-modal-container .n-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-modal-blur, none);
+  -webkit-backdrop-filter: var(--app-modal-blur, none);
+  background: color-mix(in srgb, var(--app-modal-bg) var(--app-modal-bg-opacity-pct, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+}
+:root[data-modal-bg="on"] .n-modal-container .n-modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 弹框自定义未启用背景图时，仅支持边框/圆角自定义 */
+:root:not([data-modal-bg="on"]) .n-modal-container .n-modal::before,
+:root:not([data-modal-bg="on"]) .n-modal-container .n-modal::after {
+  display: none;
 }
 
 /* Modal 遮罩：完全透明，不加模糊 */
@@ -566,7 +688,8 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 .n-dialog {
   background: var(--app-modal-bg) !important;
   color: var(--text-primary) !important;
-  border: 1px solid #3B82F6 !important;
+  border: var(--app-modal-border-width, 1px) solid var(--app-modal-border-color, #3B82F6) !important;
+  border-radius: var(--app-modal-border-radius, 14px) !important;
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3) !important;
 }
 
@@ -1047,9 +1170,12 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   box-shadow: var(--shadow-md) !important;
 }
 
-/* 配置项卡片 - 用于设置页面配置项 */
-.app-card-config {
-  background: var(--app-surface-card) !important;
+/* 卡片背景统一使用 color-mix 支持透明度（当启用全局/卡片背景时） */
+.app-card-config,
+.app-card-guide,
+.app-card-maintenance,
+.app-card-client {
+  background: var(--app-surface-card-mixed) !important;
   border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
   border-radius: var(--card-border-radius) !important;
   transition: all var(--transition-normal) !important;
@@ -1062,18 +1188,8 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   border-radius: var(--card-border-radius) !important;
 }
 
-/* Guide卡片 - 用于帮助指南 */
-.app-card-guide {
-  background: var(--app-surface-card) !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
-  border-radius: var(--card-border-radius) !important;
-}
-
 /* 数据维护卡片 - 用于数据清理等特殊卡片 */
 .app-card-maintenance {
-  background: var(--app-surface-card) !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
-  border-radius: var(--card-border-radius) !important;
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
@@ -1082,15 +1198,11 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 
 /* 下载客户端卡片 - 用于下载器配置展示 */
 .app-card-client {
-  background: var(--app-surface-card) !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
-  border-radius: var(--card-border-radius) !important;
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
   min-height: 140px !important;
   cursor: pointer !important;
-  transition: all var(--transition-normal) !important;
 }
 
 .app-card-client:hover {
@@ -1104,6 +1216,59 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   border: none !important;
   border-radius: 4px !important;
   padding: 2px 8px !important;
+}
+
+/* ========== 全局背景图片层 ========== */
+.app-global-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--app-global-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.app-global-bg-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--app-global-bg-overlay-opacity, 0.6));
+  backdrop-filter: var(--app-global-bg-blur, none);
+  -webkit-backdrop-filter: var(--app-global-bg-blur, none);
+}
+
+/* ========== 全局背景启用时的布局透明度 ========== */
+.n-layout-content {
+  background-color: var(--app-bg-color);
+}
+:root[data-global-bg="on"] .n-layout {
+  background-color: transparent !important;
+}
+:root[data-global-bg="on"] .n-layout-content {
+  background-color: transparent !important;
+}
+:root[data-global-bg="on"] .n-layout-sider {
+  background-color: color-mix(in srgb, var(--sidebar-bg-color) var(--app-layout-opacity), transparent) !important;
+}
+:root[data-global-bg="on"] .main-sider {
+  background-color: color-mix(in srgb, var(--sidebar-bg-color) var(--app-layout-opacity), transparent) !important;
+}
+:root[data-global-bg="on"] .mobile-bottom-nav {
+  background-color: color-mix(in srgb, var(--app-surface-card) var(--app-layout-opacity), transparent) !important;
+}
+:root[data-global-bg="on"] .mobile-header {
+  background-color: color-mix(in srgb, var(--app-surface-card) var(--app-layout-opacity), transparent) !important;
+}
+
+/* ========== 外观设置：输入框组件全局覆盖（通过 :theme-overrides 实现，此处仅留辅助规则）========== */
+
+/* AppSearchField - 搜索框背景 */
+.app-search-field .app-search-field__box {
+  background: color-mix(in srgb, var(--search-input-bg), transparent var(--search-input-bg-transparent-pct, 0%)) !important;
+  backdrop-filter: var(--search-input-blur, none) !important;
+  -webkit-backdrop-filter: var(--search-input-blur, none) !important;
+  border-radius: var(--search-input-border-radius, 22px) !important;
 }
 
 

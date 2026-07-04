@@ -48,7 +48,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   flex-grow: 1; 
   display: flex; 
   flex-direction: column;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 
 .log-container-wrapper {

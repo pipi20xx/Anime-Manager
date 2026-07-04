@@ -201,7 +201,7 @@ onMounted(() => {
   height: var(--input-height);
   border: var(--input-border);
   border-radius: var(--input-border-radius);
-  background: color-mix(in srgb, var(--input-bg), transparent calc(100% - var(--input-bg-opacity) * 100%));
+  background: color-mix(in srgb, var(--input-bg), transparent var(--input-bg-transparent-pct, 0%));
   backdrop-filter: var(--input-blur);
   box-shadow: var(--input-shadow);
   transition: border-color 0.2s;

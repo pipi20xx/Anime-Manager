@@ -353,7 +353,7 @@ const getShortName = (path: string) => {
   padding: var(--m-spacing-md);
   margin-bottom: var(--m-spacing-sm);
   border-radius: var(--m-radius-lg);
-  background-color: var(--app-surface-card);
+  background-color: var(--app-surface-list-mixed);
   border: 1px solid var(--border-light);
   transition: transform 0.1s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color: transparent;

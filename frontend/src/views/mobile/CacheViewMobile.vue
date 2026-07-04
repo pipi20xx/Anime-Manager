@@ -409,7 +409,7 @@ onUnmounted(() => {
 
 .cache-card-mobile {
   position: relative;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-md);
   overflow: hidden;

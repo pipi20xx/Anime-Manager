@@ -328,7 +328,7 @@ onMounted(() => {
 
 /* 顶部工具栏 */
 .browser-toolbar { 
-  background: var(--app-surface-card); 
+  background: var(--app-surface-card-mixed); 
   padding: 12px 20px; 
   border-radius: var(--card-border-radius, 12px); 
   border: 1px solid var(--app-border-light); 
@@ -336,7 +336,7 @@ onMounted(() => {
 
 /* 现代列表样式 */
 .list-wrapper { 
-  background: var(--app-surface-card); 
+  background: var(--app-surface-card-mixed); 
   border-radius: var(--card-border-radius, 12px); 
   border: 1px solid var(--app-border-light); 
   overflow: hidden; 

@@ -299,7 +299,7 @@ watch(() => props.show, (newVal) => {
 .mobile-feed-modal {
   width: 100vw;
   height: 100vh;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   display: flex;
   flex-direction: column;
 }
@@ -391,7 +391,7 @@ watch(() => props.show, (newVal) => {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border-radius: var(--m-radius-sm);
   border: 1px solid var(--app-border-light);
 }

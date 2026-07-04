@@ -216,7 +216,7 @@ const {
 
 .mobile-list { display: flex; flex-direction: column; gap: 12px; }
 .mobile-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
   padding: 12px;

@@ -126,7 +126,7 @@ const handleAction = (key: string) => {
 .mobile-rule-list :deep(.n-list-item) {
   display: flex;
   align-items: center;
-  background: var(--app-surface-card);
+  background: var(--app-surface-list-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-md) !important;

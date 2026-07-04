@@ -51,7 +51,7 @@ __version__ = _get_version()
 # Import Routers
 from routers import (
     recognition, organizer, cache, strm, config,
-    system, clients, rss, subscriptions, tmdb, bangumi, webhook, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, assistant, sytmdb, file_hashes
+    system, clients, rss, subscriptions, tmdb, bangumi, webhook, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, assistant, sytmdb, file_hashes, appearance
 )
 
 app = FastAPI(
@@ -90,6 +90,7 @@ app.include_router(user_mapping.router)
 app.include_router(task_history.router)
 app.include_router(assistant.router)
 app.include_router(file_hashes.router)
+app.include_router(appearance.router)
 
 # --- API Audit & Security Middleware ---
 @app.middleware("http")
@@ -120,7 +121,7 @@ async def api_audit_middleware(request: Request, call_next):
     if path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth") or path == "/api/system/openapi.json":
         is_authenticated = True
     
-    elif "/api/system/img" in path or "/api/system/bgm_img" in path:
+    elif "/api/system/img" in path or "/api/system/bgm_img" in path or "/api/appearance/image" in path:
         referer = request.headers.get("referer", "")
         host = request.headers.get("host", "")
         if host and host in referer:

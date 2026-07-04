@@ -141,6 +141,7 @@ const menuOptions: MenuOption[] = [
   { label: '任务中心', key: 'TaskHistory', icon: renderIcon(TaskIcon) },
   { label: '外部控制 (API)', key: 'ExternalControl', icon: renderIcon(ApiIcon) },
   { label: '系统数据中心', key: 'Database', icon: renderIcon(DbIcon) },
+  { label: '外观设置', key: 'Appearance', icon: renderIcon(ThemeIcon) },
   { label: '规则说明', key: 'UsageGuide', icon: renderIcon(GuideIcon) },
 ]
 
@@ -163,6 +164,8 @@ const isNavActive = (key: string) => route.name === key
 </script>
 
 <template>
+  <!-- 全局背景图片层 -->
+  <div class="app-global-bg-layer" />
   <n-layout :has-sider="!isMobile" position="absolute">
     <!-- Desktop Sidebar -->
     <n-layout-sider
@@ -268,8 +271,8 @@ const isNavActive = (key: string) => route.name === key
       </div>
     </n-layout-sider>
 
-    <n-layout-content 
-      :content-style="`padding: var(--space-4); padding-bottom: ${isMobile ? '80px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column; background-color: var(--app-bg-color);`"
+    <n-layout-content
+      :content-style="`padding: var(--space-4); padding-bottom: ${isMobile ? '80px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
     >
       <!-- Mobile Top Bar (Optional, for Logo/Search if needed, or keep clean) -->
       <div v-if="isMobile" class="mobile-header">
@@ -376,7 +379,7 @@ const isNavActive = (key: string) => route.name === key
 }
 
 :deep(.n-layout-sider-trigger) {
-  background: var(--app-surface-card) !important;
+  background: var(--app-surface-card-mixed) !important;
   color: var(--text-secondary) !important;
   border-color: var(--app-border-light) !important;
 }
@@ -387,7 +390,7 @@ const isNavActive = (key: string) => route.name === key
 }
 
 :deep(.n-layout-toggle-button) {
-  background: var(--app-surface-card) !important;
+  background: var(--app-surface-card-mixed) !important;
   color: var(--text-secondary) !important;
   border-color: var(--app-border-light) !important;
 }

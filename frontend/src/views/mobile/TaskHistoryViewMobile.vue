@@ -225,7 +225,7 @@ onUnmounted(() => {
 .task-list { margin-bottom: var(--m-spacing-lg); }
 .task-list :deep(.n-list) { background: transparent; }
 .task-list :deep(.n-list-item) {
-  background: var(--app-surface-card);
+  background: var(--app-surface-list-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-md) !important;

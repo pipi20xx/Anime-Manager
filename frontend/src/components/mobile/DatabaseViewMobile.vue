@@ -217,7 +217,7 @@ const handleTableSelect = (tableName: string) => {
   box-sizing: border-box;
 }
 .sql-result-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
   padding: 12px;

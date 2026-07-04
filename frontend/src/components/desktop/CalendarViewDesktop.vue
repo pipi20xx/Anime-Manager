@@ -427,7 +427,7 @@ const openCardDetail = (item: any) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: var(--app-bg-color);
+  background-color: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
 }
 
 .page-header {

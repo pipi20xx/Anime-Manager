@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue'
 import { NSelect, NIcon } from 'naive-ui'
 import { ExpandMoreOutlined, ExpandLessOutlined } from '@vicons/material'
+import { appearanceConfig } from '../store/appearanceStore'
+import { isDarkMode } from '../store/themeStore'
 
 export interface SelectOption {
   label: string
@@ -56,6 +58,49 @@ const isFloated = computed(() => focused.value || hasValue.value)
 const showPlaceholder = computed(() =>
   (!props.label || focused.value || hasValue.value) ? props.placeholder : ''
 )
+
+// 动态生成 themeOverrides，用 JS 预计算 rgba 值（Naive UI 不接受 color-mix()）
+// 注意：Naive UI 的 theme 属性名是 color 不是 backgroundColor
+const selectThemeOverrides = computed(() => {
+  // 依赖 isDarkMode 确保主题切换时重算
+  const _dark = isDarkMode.value
+  const cfg = appearanceConfig.value.input
+  if (!cfg.enabled) {
+    return {
+      peers: {
+        InternalSelection: {
+          color: 'var(--app-surface-card)',
+          borderRadius: '8px'
+        }
+      }
+    }
+  }
+  // 从 CSS 变量读取基础背景色，转为 rgba
+  const rootStyle = getComputedStyle(document.documentElement)
+  const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
+  const alpha = cfg.bg_opacity
+  const rgba = hexToRgba(baseColor, alpha)
+  const radius = `${cfg.border_radius}px`
+  return {
+    peers: {
+      InternalSelection: {
+        color: rgba,
+        colorActive: rgba,
+        borderRadius: radius
+      }
+    }
+  }
+})
+
+function hexToRgba(hex: string, alpha: number): string {
+  // 支持 #rrggbb 格式
+  const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i)
+  if (!match) return `rgba(30, 30, 46, ${alpha})`
+  const r = parseInt(match[1], 16)
+  const g = parseInt(match[2], 16)
+  const b = parseInt(match[3], 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 </script>
 
 <template>
@@ -76,6 +121,7 @@ const showPlaceholder = computed(() =>
 
       <n-select
         class="app-select-field__select"
+        :theme-overrides="selectThemeOverrides"
         :value="value"
         :options="options"
         :placeholder="showPlaceholder"
@@ -112,9 +158,9 @@ const showPlaceholder = computed(() =>
 
 .app-select-field__box {
   position: relative;
-  height: 56px;
+  height: var(--input-height, 56px);
   border: 1px solid var(--border-medium);
-  border-radius: 8px;
+  border-radius: var(--input-border-radius, 8px);
   background: transparent;
   transition: border-color 0.2s;
 }
@@ -140,7 +186,6 @@ const showPlaceholder = computed(() =>
 .app-select-field__select :deep(.n-base-selection) {
   height: 100% !important;
   border: none !important;
-  background: transparent !important;
 }
 
 .app-select-field__select :deep(.n-base-selection-label) {
@@ -213,7 +258,7 @@ const showPlaceholder = computed(() =>
   max-width: calc(100% - 32px);
   padding: 0 4px;
   margin-left: -4px;
-  background-color: var(--app-surface-card);
+  background-color: var(--input-label-bg);
   line-height: 1;
   z-index: 1;
 }

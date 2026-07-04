@@ -351,13 +351,13 @@ onMounted(() => {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--app-bg-color);
+  background: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
 }
 
 .page-header {
   padding: 16px 32px;
   border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 
 .loading-box { padding: 40px; }
@@ -417,7 +417,7 @@ onMounted(() => {
 }
 .episode-item {
   display: flex; gap: 14px; padding: 10px 12px;
-  background: var(--app-surface-card); border: 1px solid var(--app-border-light);
+  background: var(--app-surface-card-mixed); border: 1px solid var(--app-border-light);
   border-radius: 6px; transition: border-color 0.15s;
 }
 .episode-item:hover { border-color: var(--n-primary-color); }

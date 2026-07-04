@@ -399,7 +399,7 @@ onMounted(() => {
 }
 .m-ep-item {
   display: flex; gap: var(--m-spacing-sm); padding: var(--m-spacing-sm);
-  background: var(--app-surface-card); border: 1px solid var(--app-border-light);
+  background: var(--app-surface-card-mixed); border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-md);
 }
 .m-ep-number {

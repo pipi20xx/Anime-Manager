@@ -27,7 +27,7 @@ defineProps<Props>()
 
 .meta-box:hover {
   border-color: var(--app-border-medium);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 
 .label {

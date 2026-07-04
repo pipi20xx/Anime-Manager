@@ -95,12 +95,12 @@ const {
 .mobile-modal-header .title { font-weight: bold; font-size: 16px; }
 
 .mobile-bangumi-container { height: calc(100vh - 160px); overflow-y: auto; }
-.mobile-tools { padding: 12px; background: var(--app-surface-card); }
+.mobile-tools { padding: 12px; background: var(--app-surface-card-mixed); }
 
 .mobile-anime-list { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
 .mobile-anime-card {
   display: flex; align-items: center; gap: 12px; padding: 10px;
-  background: var(--app-surface-card); border-radius: 8px;
+  background: var(--app-surface-card-mixed); border-radius: 8px;
   border: 1px solid var(--app-border-light);
 }
 .mobile-anime-card.is-subbed { opacity: var(--opacity-secondary); }

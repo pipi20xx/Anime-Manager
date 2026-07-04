@@ -20,10 +20,14 @@ import { themeOverrides, isDarkMode } from './store/themeStore'
 
 import { isLoggedIn } from './store/navigationStore'
 
+import { loadAppearanceConfig } from './store/appearanceStore'
+
 const currentNaiveTheme = computed(() => isDarkMode.value ? darkTheme : lightTheme)
 
 onMounted(() => {
   localStorage.setItem('apm_ui_auth_enabled', 'true')
+  // 加载外观配置并应用 CSS 变量
+  loadAppearanceConfig()
 })
 </script>
 

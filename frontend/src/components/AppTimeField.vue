@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NTimePicker } from 'naive-ui'
+import { appearanceConfig } from '../store/appearanceStore'
+import { isDarkMode } from '../store/themeStore'
 
 const props = withDefaults(defineProps<{
   value: string | null
@@ -34,6 +36,53 @@ const handleUpdateFormattedValue = (val: string | null) => {
   emit('update:formattedValue', val)
   emit('update:value', val)
 }
+
+// 动态生成 themeOverrides，用 JS 预计算 rgba 值（Naive UI 不接受 color-mix()）
+// 注意：Naive UI 的 theme 属性名是 color 不是 backgroundColor
+const timePickerThemeOverrides = computed(() => {
+  const _dark = isDarkMode.value
+  const cfg = appearanceConfig.value.input
+  if (!cfg.enabled) {
+    return {
+      peers: {
+        Input: {
+          color: 'var(--app-surface-card)',
+          colorFocus: 'var(--app-surface-card)',
+          border: '1px solid transparent',
+          borderHover: '1px solid transparent',
+          borderFocus: '1px solid transparent',
+          borderRadius: '8px'
+        }
+      }
+    }
+  }
+  const rootStyle = getComputedStyle(document.documentElement)
+  const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
+  const alpha = cfg.bg_opacity
+  const rgba = hexToRgba(baseColor, alpha)
+  const radius = `${cfg.border_radius}px`
+  return {
+    peers: {
+      Input: {
+        color: rgba,
+        colorFocus: rgba,
+        border: '1px solid transparent',
+        borderHover: '1px solid transparent',
+        borderFocus: '1px solid transparent',
+        borderRadius: radius
+      }
+    }
+  }
+})
+
+function hexToRgba(hex: string, alpha: number): string {
+  const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i)
+  if (!match) return `rgba(30, 30, 46, ${alpha})`
+  const r = parseInt(match[1], 16)
+  const g = parseInt(match[2], 16)
+  const b = parseInt(match[3], 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 </script>
 
 <template>
@@ -54,6 +103,7 @@ const handleUpdateFormattedValue = (val: string | null) => {
 
       <n-time-picker
         class="app-time-field__picker"
+        :theme-overrides="timePickerThemeOverrides"
         :formatted-value="value"
         :value-format="valueFormat"
         :format="format"
@@ -75,9 +125,9 @@ const handleUpdateFormattedValue = (val: string | null) => {
 
 .app-time-field__box {
   position: relative;
-  height: 56px;
+  height: var(--input-height, 56px);
   border: 1px solid var(--border-medium);
-  border-radius: 8px;
+  border-radius: var(--input-border-radius, 8px);
   background: transparent;
   transition: border-color 0.2s;
 }
@@ -103,7 +153,6 @@ const handleUpdateFormattedValue = (val: string | null) => {
 .app-time-field__picker :deep(.n-input) {
   height: 100% !important;
   border: none !important;
-  background: transparent !important;
 }
 
 .app-time-field__picker :deep(.n-input .n-input-wrapper) {
@@ -153,7 +202,7 @@ const handleUpdateFormattedValue = (val: string | null) => {
   max-width: calc(100% - 32px);
   padding: 0 4px;
   margin-left: -4px;
-  background-color: var(--app-surface-card);
+  background-color: var(--input-label-bg);
   line-height: 1;
   z-index: 1;
 }

@@ -286,7 +286,7 @@ const {
 .mt-3 { margin-top: 12px; }
 
 .forced-box-mobile {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   padding: 12px;
   border-radius: var(--button-border-radius, 8px);
   border: 1px solid var(--app-border-light);

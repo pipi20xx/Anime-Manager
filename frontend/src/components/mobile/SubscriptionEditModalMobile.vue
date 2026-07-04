@@ -255,7 +255,7 @@ watch(() => props.show, (newVal) => {
   transition: background var(--transition-fast);
 }
 .result-item:hover {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 .result-item :deep(img) {
   border-radius: var(--m-radius-sm);
@@ -275,7 +275,7 @@ watch(() => props.show, (newVal) => {
 .poster-preview {
   display: flex;
   align-items: center;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   padding: var(--m-spacing-md);
   border-radius: var(--m-radius-lg);
   border: 1px solid var(--app-border-light);

@@ -265,7 +265,7 @@ watch(() => props.show, (newVal) => {
 .mobile-fill-modal {
   width: 100vw;
   height: 100vh;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   display: flex;
   flex-direction: column;
 }

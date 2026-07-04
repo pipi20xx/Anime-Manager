@@ -830,7 +830,7 @@ onMounted(() => {
 .message-content {
   padding: 12px 16px;
   border-radius: 12px;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--border-light);
   line-height: 1.6;
 }

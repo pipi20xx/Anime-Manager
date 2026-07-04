@@ -247,7 +247,7 @@ watch(() => props.show, (newVal) => {
 <style scoped>
 .fill-container { display: flex; flex-direction: column; gap: 16px; }
 .header-status { 
-  background: var(--app-surface-card); 
+  background: var(--app-surface-card-mixed); 
   padding: 16px;
   border-radius: var(--card-border-radius, 8px);
   border: 1px solid var(--app-border-light);

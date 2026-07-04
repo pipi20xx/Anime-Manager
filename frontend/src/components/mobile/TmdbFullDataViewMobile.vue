@@ -244,7 +244,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
 .list-container { flex: 1; overflow-y: auto; padding: 12px; box-sizing: border-box; }
 .metadata-grid { display: flex; flex-direction: column; gap: 12px; }
 .metadata-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
   padding: 12px;

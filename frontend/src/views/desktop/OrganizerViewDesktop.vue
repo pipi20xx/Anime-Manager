@@ -292,13 +292,13 @@ onUnmounted(stopBgTaskPolling)
 .header h1 { margin: 0; font-size: var(--text-3xl); color: var(--text-primary); }
 .subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
-.rule-card, .task-card { 
-  height: 100%; 
-  display: flex; 
-  flex-direction: column; 
+.rule-card, .task-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--card-border-radius, 12px) !important;
   border: 1px solid var(--app-border-light) !important;
-  background: var(--app-surface-card) !important;
+  background: var(--app-surface-card-mixed) !important;
   transition: all var(--transition-normal);
 }
 .clickable-card { cursor: pointer; }

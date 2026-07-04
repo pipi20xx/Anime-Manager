@@ -95,7 +95,7 @@ const getTagStyle = (count: number) => {
 
 .maintenance-grid { display: flex; flex-direction: column; gap: 10px; }
 .maintenance-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
   padding: 12px;

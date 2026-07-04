@@ -82,7 +82,7 @@ const triggerSearch = () => {
   height: var(--search-input-height);
   border: var(--search-input-border);
   border-radius: var(--search-input-border-radius);
-  background: color-mix(in srgb, var(--search-input-bg), transparent calc(100% - var(--search-input-bg-opacity) * 100%));
+  background: color-mix(in srgb, var(--search-input-bg), transparent var(--search-input-bg-transparent-pct, 0%));
   backdrop-filter: var(--search-input-blur);
   box-shadow: var(--search-input-shadow);
   display: flex;
@@ -92,11 +92,11 @@ const triggerSearch = () => {
 }
 
 .app-search-field__box:hover {
-  background: color-mix(in srgb, var(--search-input-bg), transparent calc(100% - var(--search-input-bg-opacity) * 100% * 0.85));
+  background: color-mix(in srgb, var(--search-input-bg), transparent var(--search-input-bg-transparent-pct-hover, 0%));
 }
 
 .app-search-field__box:focus-within {
-  background: color-mix(in srgb, var(--search-input-bg), transparent calc(100% - var(--search-input-bg-opacity) * 100% * 0.92));
+  background: color-mix(in srgb, var(--search-input-bg), transparent var(--search-input-bg-transparent-pct-focus, 0%));
   box-shadow: var(--search-input-focus-shadow);
 }
 

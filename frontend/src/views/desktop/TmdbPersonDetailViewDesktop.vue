@@ -251,7 +251,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--app-bg-color);
+  background: color-mix(in srgb, var(--app-bg-color), transparent var(--app-layout-opacity, 0%));
 }
 
 .page-header {

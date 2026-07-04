@@ -260,7 +260,7 @@ watch(() => props.show, (newVal) => {
   border-bottom: none;
 }
 .result-item:hover {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 .result-item :deep(img) {
   border-radius: var(--button-border-radius, 4px);
@@ -285,7 +285,7 @@ watch(() => props.show, (newVal) => {
 .poster-preview {
   display: flex;
   align-items: center;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   padding: 12px;
   border-radius: var(--card-border-radius, 12px);
   border: 1px solid var(--app-border-light);

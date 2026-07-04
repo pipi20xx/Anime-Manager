@@ -476,7 +476,7 @@ const tabCounts = computed(() => ({
 
 /* 统计卡片 */
 .stats-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-lg);
   border: 1px solid var(--app-border-light);
@@ -549,7 +549,7 @@ const tabCounts = computed(() => ({
   align-items: center;
   justify-content: space-between;
   padding: var(--m-spacing-md);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-md);
   cursor: pointer;

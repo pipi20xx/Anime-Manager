@@ -162,7 +162,7 @@ const {
 
 .mobile-list { display: flex; flex-direction: column; gap: 12px; }
 .mobile-card {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: 12px;
   padding: 12px;

@@ -95,13 +95,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:show'])
 
-// 合并后的modal样式 - 确保统一的外观
+// 合并后的modal样式 - 使用CSS变量支持外观自定义
 const modalStyle = computed(() => ({
-  // 默认样式,会被外部传入的style覆盖/合并
   maxWidth: '95vw',
-  // 蓝色边框和阴影
-  border: '1px solid #3B82F6',
-  boxShadow: '0 8px 32px rgba(59, 130, 246, 0.3)',
 }))
 </script>
 

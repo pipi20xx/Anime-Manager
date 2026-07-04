@@ -605,7 +605,7 @@ watch(() => props.show, (newVal) => {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -674,7 +674,7 @@ watch(() => props.show, (newVal) => {
   gap: 12px;
   padding: 12px;
   border-radius: 10px;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   margin-bottom: 8px;
 }

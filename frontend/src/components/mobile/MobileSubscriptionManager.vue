@@ -401,7 +401,7 @@ onMounted(() => {
 }
 .sub-item {
   display: flex;
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border-radius: var(--m-radius-lg);
   overflow: hidden;
   border: 1px solid var(--app-border-light);

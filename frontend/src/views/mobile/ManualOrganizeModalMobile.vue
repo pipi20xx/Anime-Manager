@@ -160,7 +160,7 @@ const {
 }
 
 .forced-section {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   padding: 12px;
   border-radius: 8px;
   margin-top: 12px;
@@ -183,7 +183,7 @@ const {
 }
 
 .search-res-list {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: 6px;
 }

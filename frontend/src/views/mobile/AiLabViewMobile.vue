@@ -721,7 +721,7 @@ onMounted(() => {
 .message-content-mobile {
   padding: var(--m-spacing-md);
   border-radius: var(--m-radius-lg);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--border-light);
   line-height: 1.6;
   font-size: var(--m-text-md);
@@ -794,7 +794,7 @@ onMounted(() => {
   align-items: flex-end;
   flex-shrink: 0;
   padding: var(--m-spacing-sm);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   border: 1px solid var(--border-light);
   border-radius: var(--m-radius-lg);
 }

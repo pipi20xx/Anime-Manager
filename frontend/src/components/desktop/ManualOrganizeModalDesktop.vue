@@ -192,7 +192,7 @@ const {
 .mt-4 { margin-top: 16px; }
 .mt-2 { margin-top: 8px; }
 .forced-box {
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
   padding: 16px;
   border-radius: var(--card-border-radius, 8px);
   border: 1px solid var(--app-border-light);
@@ -205,7 +205,7 @@ const {
 }
 .search-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--app-border-light); transition: background var(--transition-fast); }
 .search-result-item:last-child { border-bottom: none; }
-.search-result-item:hover { background: var(--app-surface-card); }
+.search-result-item:hover { background: var(--app-surface-card-mixed); }
 .search-result-item :deep(img) { border-radius: var(--button-border-radius, 4px); object-fit: cover; flex-shrink: 0; }
 .search-result-info { flex: 1; min-width: 0; }
 .search-result-title { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }

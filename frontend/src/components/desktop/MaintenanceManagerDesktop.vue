@@ -92,7 +92,7 @@ const getTagStyle = (count: number) => {
 .table-card {
   height: 100%;
   transition: all var(--transition-normal);
-  background: var(--app-surface-card);
+  background: var(--app-surface-card-mixed);
 }
 .table-card:hover {
   border-color: var(--n-primary-color) !important;

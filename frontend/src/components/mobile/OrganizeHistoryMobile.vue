@@ -313,7 +313,7 @@ const handleAction = (key: string) => {
 .history-list { margin-bottom: 20px; }
 .history-list :deep(.n-list) { background: transparent; }
 .history-list :deep(.n-list-item) {
-  background: var(--app-surface-card);
+  background: var(--app-surface-list-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
   padding: 12px !important;
