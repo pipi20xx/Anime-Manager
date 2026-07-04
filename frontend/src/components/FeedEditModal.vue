@@ -60,11 +60,12 @@ const handleSave = () => {
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 500px;" 
+  <AppGlassModal
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 500px;"
     :title="isNew ? '添加 RSS 订阅源' : '编辑 RSS 订阅源'"
+    appearance-key="feed-edit-modal"
   >
     <n-space vertical size="large">
       <n-form-item>

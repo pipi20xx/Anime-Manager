@@ -64,6 +64,19 @@ export interface AppearanceList {
   blur: number
 }
 
+/**
+ * 实例级覆盖：每个字段的 undefined 表示"继承全局默认"
+ * 仅填写需要覆盖的字段，未填写的字段会自动继承 :root 全局变量值
+ */
+export interface AppearanceInstanceOverrides {
+  modal?: Partial<AppearanceModal>
+  card?: Partial<AppearanceCard>
+  tabs?: Partial<AppearanceTabs>
+  input?: Partial<AppearanceInput>
+  search?: Partial<AppearanceSearch>
+  list?: Partial<AppearanceList>
+}
+
 export interface AppearanceConfig {
   global: AppearanceGlobal
   modal: AppearanceModal
@@ -72,6 +85,8 @@ export interface AppearanceConfig {
   input: AppearanceInput
   search: AppearanceSearch
   list: AppearanceList
+  /** 实例级覆盖：key 对应组件的 appearance-key，value 为该组件的独立配置 */
+  instances?: Record<string, AppearanceInstanceOverrides>
 }
 
 export interface AppearanceImage {

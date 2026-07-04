@@ -91,6 +91,13 @@ import { NModal } from 'naive-ui'
 const props = defineProps<{
   show: boolean
   glassContent?: boolean  // 是否对内容区域启用毛玻璃效果
+  /**
+   * 实例级外观 key：用于独立自定义此弹框的外观
+   * 传入后会在 NModal 根元素上设置 data-app-instance 属性，
+   * 配合 appearanceStore 注入的 scoped CSS 变量实现独立自定义
+   * 不传则走全局默认外观
+   */
+  appearanceKey?: string
 }>()
 
 const emit = defineEmits(['update:show'])
@@ -108,6 +115,7 @@ const modalStyle = computed(() => ({
     preset="card"
     :style="modalStyle"
     v-bind="$attrs"
+    :data-app-instance="appearanceKey || undefined"
     :segmented="{ content: true, footer: 'soft' }"
   >
     <!-- 内容区域 - 默认不启用毛玻璃 -->

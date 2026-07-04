@@ -2,7 +2,8 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import {
   NCard, NSlider, NColorPicker, NButton, NSpace, NUpload, NImage,
-  NSpin, NSelect, useMessage, NDivider, NPopconfirm, NTag, NSwitch
+  NSpin, NSelect, useMessage, NDivider, NPopconfirm, NTag, NSwitch,
+  NTabs, NTabPane
 } from 'naive-ui'
 import type { UploadFileInfo } from 'naive-ui'
 import {
@@ -16,6 +17,7 @@ import {
   resetAppearanceConfig,
   applyAppearanceToCss
 } from '../../store/appearanceStore'
+import InstanceCustomizationPanel from './appearance/InstanceCustomizationPanel.vue'
 
 const message = useMessage()
 const loading = ref(false)
@@ -31,7 +33,12 @@ const form = reactive<AppearanceConfig>({
   input: { ...appearanceConfig.value.input },
   search: { ...appearanceConfig.value.search },
   list: { ...appearanceConfig.value.list },
+  instances: JSON.parse(JSON.stringify(appearanceConfig.value.instances || {})),
 })
+
+// ============= 实例级自定义相关 =============
+// 已迁移至 ./appearance/InstanceCustomizationPanel.vue
+// 父组件仅保留 form.instances 字段的初始化和重置逻辑
 
 // 图片选项（修复：返回 .value）
 const imageOptions = computed(() => {
@@ -77,6 +84,8 @@ const handleReset = async () => {
     Object.assign(form.tabs, appearanceConfig.value.tabs)
     Object.assign(form.input, appearanceConfig.value.input)
     Object.assign(form.search, appearanceConfig.value.search)
+    Object.assign(form.list, appearanceConfig.value.list)
+    form.instances = JSON.parse(JSON.stringify(appearanceConfig.value.instances || {}))
     message.success('已恢复默认设置')
   } catch (e: any) {
     message.error('重置失败')
@@ -134,6 +143,8 @@ const formatFileSize = (size: number) => {
     </div>
 
     <n-spin :show="loading">
+      <n-tabs type="line" animated size="large">
+        <n-tab-pane name="global" tab="全局设置">
       <div class="settings-grid">
         <!-- ===== 全局背景 ===== -->
         <n-card class="app-card-config settings-section" :bordered="true">
@@ -445,6 +456,16 @@ const formatFileSize = (size: number) => {
           <div v-else class="empty-images">暂无图片，请上传</div>
         </n-card>
       </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="instance" tab="单独自定义弹框">
+          <InstanceCustomizationPanel
+            :form="form"
+            :image-options="imageOptions"
+            @change="preview"
+          />
+        </n-tab-pane>
+      </n-tabs>
     </n-spin>
   </div>
 </template>

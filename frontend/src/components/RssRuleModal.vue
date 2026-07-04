@@ -93,11 +93,12 @@ const clientOptions = computed(() => props.clients.map(c => ({ label: c.name, va
 </script>
 
 <template>
-  <AppGlassModal 
-    :show="show" 
-    @update:show="val => emit('update:show', val)" 
-    style="width: 800px" 
+  <AppGlassModal
+    :show="show"
+    @update:show="val => emit('update:show', val)"
+    style="width: 800px"
     :title="isNew ? '添加匹配规则' : '编辑匹配规则'"
+    appearance-key="rss-rule-modal"
   >
     <n-space vertical size="medium">
       

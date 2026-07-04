@@ -1,0 +1,472 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import {
+  NCard, NSlider, NColorPicker, NButton, NSpace, NSelect, NDivider,
+  NPopconfirm, NTag, NTabs, NTabPane, NCheckbox, NEmpty
+} from 'naive-ui'
+import type { AppearanceConfig, AppearanceInstanceOverrides } from '../../../api/appearance'
+import {
+  appearanceKeyOptions,
+  getAppearanceKeyMeta,
+  type AppearanceKey
+} from '../../../constants/appearanceKeys'
+
+/**
+ * 单独自定义弹框管理面板
+ *
+ * 让指定的弹框组件（声明了 appearance-key 的）可以独立配置外观，
+ * 未配置的字段自动继承全局默认。
+ *
+ * 通过 v-model 形式操作父组件传入的 form.instances，
+ * 任何修改都会触发 preview 事件让父组件实时应用预览。
+ */
+
+const props = defineProps<{
+  /** 父组件的 form 对象（reactive，会直接修改其 instances 字段） */
+  form: AppearanceConfig
+  /** 背景图片选项（来自父组件加载的 images 列表） */
+  imageOptions: { label: string; value: string }[]
+}>()
+
+const emit = defineEmits<{
+  /** 任何配置变更后触发，让父组件调用 applyAppearanceToCss 实时预览 */
+  (e: 'change'): void
+}>()
+
+const selectedInstanceKey = ref<AppearanceKey | ''>('')
+
+/** 当前选中实例的覆盖对象（只读视图，不创建副作用） */
+const currentInstanceOverrides = computed<AppearanceInstanceOverrides>(() => {
+  if (!selectedInstanceKey.value) return {}
+  return props.form.instances![selectedInstanceKey.value] || {}
+})
+
+/** 已存在自定义配置的实例数量 */
+const instanceCount = computed(() => Object.keys(props.form.instances || {}).length)
+
+/** 通知父组件预览 */
+function notifyChange(): void {
+  emit('change')
+}
+
+/** 判断某字段是否已被覆盖（!== undefined 视为覆盖） */
+function isFieldOverridden(category: keyof AppearanceInstanceOverrides, field: string): boolean {
+  if (!selectedInstanceKey.value) return false
+  const inst = props.form.instances![selectedInstanceKey.value]
+  if (!inst || !inst[category]) return false
+  return (inst[category] as Record<string, any>)[field] !== undefined
+}
+
+/** 启用字段覆盖：用当前全局值作为初始值 */
+function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
+  if (!selectedInstanceKey.value) return
+  const key = selectedInstanceKey.value
+  if (!props.form.instances![key]) props.form.instances![key] = {}
+  if (!props.form.instances![key][category]) {
+    ;(props.form.instances![key] as any)[category] = {}
+  }
+  ;(props.form.instances![key][category] as Record<string, any>)[field] = (props.form[category] as any)[field]
+  notifyChange()
+}
+
+/** 取消字段覆盖：删除字段 */
+function clearFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
+  if (!selectedInstanceKey.value) return
+  const key = selectedInstanceKey.value
+  if (!props.form.instances![key] || !props.form.instances![key][category]) return
+  delete (props.form.instances![key][category] as Record<string, any>)[field]
+  // 如果该分区已无任何覆盖，删除整个分区对象
+  if (Object.keys(props.form.instances![key][category] as object).length === 0) {
+    delete (props.form.instances![key] as any)[category]
+  }
+  // 如果该实例已无任何覆盖，删除整个实例
+  if (Object.keys(props.form.instances![key]).length === 0) {
+    delete props.form.instances![key]
+  }
+  notifyChange()
+}
+
+/** 切换字段覆盖状态 */
+function toggleFieldOverride(category: keyof AppearanceInstanceOverrides, field: string, checked: boolean): void {
+  if (checked) {
+    enableFieldOverride(category, field)
+  } else {
+    clearFieldOverride(category, field)
+  }
+}
+
+/** 获取字段值（覆盖值优先，未覆盖则返回全局值） */
+function getFieldValue(category: keyof AppearanceInstanceOverrides, field: string): any {
+  if (!selectedInstanceKey.value) return (props.form[category] as any)[field]
+  const inst = props.form.instances![selectedInstanceKey.value]
+  if (inst && inst[category] && (inst[category] as Record<string, any>)[field] !== undefined) {
+    return (inst[category] as Record<string, any>)[field]
+  }
+  return (props.form[category] as any)[field]
+}
+
+/** 设置字段值（直接设置到 instances 中） */
+function setFieldValue(category: keyof AppearanceInstanceOverrides, field: string, value: any): void {
+  if (!selectedInstanceKey.value) return
+  const key = selectedInstanceKey.value
+  if (!props.form.instances![key]) props.form.instances![key] = {}
+  if (!props.form.instances![key][category]) {
+    ;(props.form.instances![key] as any)[category] = {}
+  }
+  ;(props.form.instances![key][category] as Record<string, any>)[field] = value
+  notifyChange()
+}
+
+/** 删除整个实例的自定义配置 */
+function deleteInstanceConfig(key: string): void {
+  delete props.form.instances![key]
+  if (selectedInstanceKey.value === key) {
+    selectedInstanceKey.value = ''
+  }
+  notifyChange()
+}
+
+defineExpose({ currentInstanceOverrides, instanceCount })
+</script>
+
+<template>
+  <n-card class="app-card-config settings-section instance-section" :bordered="true">
+    <div class="section-header">
+      <div>
+        <div class="section-title">
+          单独自定义弹框
+          <n-tag v-if="instanceCount > 0" size="small" type="success" style="margin-left: 8px;">{{ instanceCount }} 个已自定义</n-tag>
+        </div>
+        <div class="section-desc">为指定的弹框表单设置独立外观，未配置的弹框走全局默认</div>
+      </div>
+    </div>
+
+    <n-divider />
+
+    <!-- 选择要配置的弹框 -->
+    <div class="form-row">
+      <div class="form-label">选择弹框</div>
+      <div class="form-control" style="display: flex; gap: 8px; align-items: center;">
+        <n-select
+          v-model:value="selectedInstanceKey"
+          :options="appearanceKeyOptions"
+          placeholder="选择要单独自定义的弹框"
+          style="flex: 1;"
+        />
+        <n-popconfirm
+          v-if="selectedInstanceKey && form.instances![selectedInstanceKey]"
+          @positive-click="deleteInstanceConfig(selectedInstanceKey)"
+        >
+          <template #trigger>
+            <n-button type="error" ghost>清除该弹框配置</n-button>
+          </template>
+          确定清除该弹框的所有自定义配置？将回退到全局默认。
+        </n-popconfirm>
+      </div>
+    </div>
+
+    <!-- 选中实例后的配置面板 -->
+    <template v-if="selectedInstanceKey">
+      <div class="instance-meta" v-if="getAppearanceKeyMeta(selectedInstanceKey)">
+        <div class="instance-meta__title">{{ getAppearanceKeyMeta(selectedInstanceKey)?.label }}</div>
+        <div class="instance-meta__desc">{{ getAppearanceKeyMeta(selectedInstanceKey)?.description }}</div>
+        <div class="instance-meta__key">key: <code>{{ selectedInstanceKey }}</code></div>
+      </div>
+
+      <n-tabs type="line" animated style="margin-top: 16px;">
+        <!-- 弹框本身分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('modal')" name="modal" tab="弹框本身">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'background_image')" @update:checked="v => toggleFieldOverride('modal', 'background_image', v)">背景图片</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'background_image')" class="instance-field__control">
+                <n-select
+                  :value="getFieldValue('modal', 'background_image')"
+                  :options="imageOptions"
+                  placeholder="选择背景图片"
+                  @update:value="v => setFieldValue('modal', 'background_image', v)"
+                />
+              </div>
+              <div v-else class="instance-field__hint">继承全局</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'background_blur')" @update:checked="v => toggleFieldOverride('modal', 'background_blur', v)">背景模糊</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'background_blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('modal', 'background_blur')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('modal', 'background_blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('modal', 'background_blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.modal.background_blur }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'background_opacity')" @update:checked="v => toggleFieldOverride('modal', 'background_opacity', v)">背景不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'background_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('modal', 'background_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('modal', 'background_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('modal', 'background_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.modal.background_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'background_overlay_opacity')" @update:checked="v => toggleFieldOverride('modal', 'background_overlay_opacity', v)">遮罩暗化</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'background_overlay_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('modal', 'background_overlay_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('modal', 'background_overlay_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('modal', 'background_overlay_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.modal.background_overlay_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'border_color')" @update:checked="v => toggleFieldOverride('modal', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('modal', 'border_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('modal', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.modal.border_color }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'border_width')" @update:checked="v => toggleFieldOverride('modal', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('modal', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('modal', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('modal', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.modal.border_width }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('modal', 'border_radius')" @update:checked="v => toggleFieldOverride('modal', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('modal', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('modal', 'border_radius')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('modal', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('modal', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.modal.border_radius }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
+        <!-- 输入框分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('input')" name="input" tab="输入框">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'bg_opacity')" @update:checked="v => toggleFieldOverride('input', 'bg_opacity', v)">背景不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'bg_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('input', 'bg_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('input', 'bg_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('input', 'bg_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.input.bg_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'border_radius')" @update:checked="v => toggleFieldOverride('input', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('input', 'border_radius')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('input', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('input', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.input.border_radius }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'height')" @update:checked="v => toggleFieldOverride('input', 'height', v)">高度</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'height')" class="instance-field__control">
+                <n-slider :value="getFieldValue('input', 'height')" :min="36" :max="72" :step="2" @update:value="v => setFieldValue('input', 'height', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('input', 'height') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.input.height }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'blur')" @update:checked="v => toggleFieldOverride('input', 'blur', v)">背景模糊</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('input', 'blur')" :min="0" :max="20" :step="1" @update:value="v => setFieldValue('input', 'blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('input', 'blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.input.blur }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
+        <!-- 搜索框分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('search')" name="search" tab="搜索框">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'bg_opacity')" @update:checked="v => toggleFieldOverride('search', 'bg_opacity', v)">背景不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'bg_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('search', 'bg_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('search', 'bg_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('search', 'bg_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.search.bg_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'border_radius')" @update:checked="v => toggleFieldOverride('search', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('search', 'border_radius')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('search', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('search', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.search.border_radius }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'height')" @update:checked="v => toggleFieldOverride('search', 'height', v)">高度</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'height')" class="instance-field__control">
+                <n-slider :value="getFieldValue('search', 'height')" :min="32" :max="60" :step="2" @update:value="v => setFieldValue('search', 'height', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('search', 'height') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.search.height }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'blur')" @update:checked="v => toggleFieldOverride('search', 'blur', v)">背景模糊</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('search', 'blur')" :min="0" :max="20" :step="1" @update:value="v => setFieldValue('search', 'blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('search', 'blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.search.blur }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
+        <!-- 卡片分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('card')" name="card" tab="卡片">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'background_image')" @update:checked="v => toggleFieldOverride('card', 'background_image', v)">背景图片</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'background_image')" class="instance-field__control">
+                <n-select
+                  :value="getFieldValue('card', 'background_image')"
+                  :options="imageOptions"
+                  placeholder="选择背景图片"
+                  @update:value="v => setFieldValue('card', 'background_image', v)"
+                />
+              </div>
+              <div v-else class="instance-field__hint">继承全局</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'background_opacity')" @update:checked="v => toggleFieldOverride('card', 'background_opacity', v)">背景不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'background_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('card', 'background_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('card', 'background_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('card', 'background_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.card.background_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'border_radius')" @update:checked="v => toggleFieldOverride('card', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('card', 'border_radius')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('card', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('card', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.card.border_radius }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'blur')" @update:checked="v => toggleFieldOverride('card', 'blur', v)">背景模糊</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('card', 'blur')" :min="0" :max="20" :step="1" @update:value="v => setFieldValue('card', 'blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('card', 'blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.card.blur }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
+        <!-- 列表分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('list')" name="list" tab="列表">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('list', 'bg_opacity')" @update:checked="v => toggleFieldOverride('list', 'bg_opacity', v)">背景不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('list', 'bg_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('list', 'bg_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('list', 'bg_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('list', 'bg_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.list.bg_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('list', 'border_radius')" @update:checked="v => toggleFieldOverride('list', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('list', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('list', 'border_radius')" :min="0" :max="20" :step="1" @update:value="v => setFieldValue('list', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('list', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.list.border_radius }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('list', 'blur')" @update:checked="v => toggleFieldOverride('list', 'blur', v)">背景模糊</n-checkbox>
+              <div v-if="isFieldOverridden('list', 'blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('list', 'blur')" :min="0" :max="20" :step="1" @update:value="v => setFieldValue('list', 'blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('list', 'blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.list.blur }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+      </n-tabs>
+    </template>
+
+    <n-empty v-else description="请选择一个弹框开始自定义" style="padding: 40px 0;" />
+  </n-card>
+</template>
+
+<style scoped>
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.section-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.section-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+.form-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.form-row:last-child { margin-bottom: 0; }
+.form-label { min-width: 130px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.form-control { flex: 1; }
+
+.instance-section .instance-meta {
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  border-left: 3px solid var(--n-primary-color);
+  margin-top: 8px;
+}
+.instance-meta__title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.instance-meta__desc { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+.instance-meta__key { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.instance-meta__key code {
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  color: var(--n-primary-color);
+}
+
+.instance-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+}
+.instance-field {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border-light);
+}
+.instance-field:last-child { border-bottom: none; }
+.instance-field__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.instance-field__control .n-slider { flex: 1; }
+.instance-field__hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding-left: 4px;
+}
+</style>

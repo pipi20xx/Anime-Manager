@@ -30,6 +30,9 @@ const form = reactive<AppearanceConfig>({
   tabs: { ...appearanceConfig.value.tabs },
   input: { ...appearanceConfig.value.input },
   search: { ...appearanceConfig.value.search },
+  list: { ...appearanceConfig.value.list },
+  // mobile 端暂不提供实例级自定义 UI，但保留 instances 字段以免保存时擦除
+  instances: JSON.parse(JSON.stringify(appearanceConfig.value.instances || {})),
 })
 
 const imageOptions = computed(() => {
@@ -75,6 +78,8 @@ const handleReset = async () => {
     Object.assign(form.tabs, appearanceConfig.value.tabs)
     Object.assign(form.input, appearanceConfig.value.input)
     Object.assign(form.search, appearanceConfig.value.search)
+    Object.assign(form.list, appearanceConfig.value.list)
+    form.instances = JSON.parse(JSON.stringify(appearanceConfig.value.instances || {}))
     message.success('已恢复默认设置')
   } catch (e: any) {
     message.error('重置失败')

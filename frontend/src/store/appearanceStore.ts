@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { appearanceApi, type AppearanceConfig } from '../api/appearance'
+import { appearanceApi, type AppearanceConfig, type AppearanceInstanceOverrides } from '../api/appearance'
 import { currentThemeConfig } from './themeStore'
 
 // 默认外观配置
@@ -56,6 +56,9 @@ const defaultConfig: AppearanceConfig = {
     border_radius: 8,
     blur: 0,
   },
+  // 实例级覆盖：key 对应组件的 appearance-key
+  // 默认为空对象，未列出的组件走全局默认
+  instances: {},
 }
 
 export const appearanceConfig = ref<AppearanceConfig>(JSON.parse(JSON.stringify(defaultConfig)))
@@ -205,6 +208,251 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--list-border-radius', '8px')
     root.style.setProperty('--list-blur', 'none')
   }
+
+  // === 实例级覆盖 ===
+  applyInstanceOverrides(config)
+}
+
+// ============= 实例级 scoped CSS 注入 =============
+// 通过 <style id="app-instance-overrides"> 动态注入 scoped CSS 变量与伪元素规则，
+// 让每个声明了 appearanceKey 的组件可以独立覆盖全局默认外观
+const INSTANCE_STYLE_ID = 'app-instance-overrides'
+
+function getOrCreateInstanceStyleEl(): HTMLStyleElement {
+  let el = document.getElementById(INSTANCE_STYLE_ID) as HTMLStyleElement | null
+  if (!el) {
+    el = document.createElement('style')
+    el.id = INSTANCE_STYLE_ID
+    document.head.appendChild(el)
+  }
+  return el
+}
+
+/** 把单个 instance 的覆盖配置转换为 CSS 声明字符串数组 */
+function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
+  const decls: string[] = []
+
+  // Modal
+  if (overrides.modal) {
+    const m = overrides.modal
+    if (m.background_image !== undefined) {
+      decls.push(`--app-modal-bg-image: ${m.background_image ? `url(/api/appearance/image/${m.background_image})` : 'none'};`)
+    }
+    if (m.background_blur !== undefined) {
+      decls.push(`--app-modal-blur: ${m.background_blur > 0 ? `blur(${m.background_blur}px)` : 'none'};`)
+    }
+    if (m.background_opacity !== undefined) {
+      decls.push(`--app-modal-bg-opacity-pct: ${Math.round(m.background_opacity * 100)}%;`)
+      decls.push(`--app-modal-bg-opacity: ${m.background_opacity};`)
+    }
+    if (m.background_overlay_opacity !== undefined) {
+      decls.push(`--app-modal-bg-overlay-opacity: ${m.background_overlay_opacity};`)
+    }
+    if (m.border_color !== undefined) {
+      decls.push(`--app-modal-border-color: ${m.border_color};`)
+    }
+    if (m.border_width !== undefined) {
+      decls.push(`--app-modal-border-width: ${m.border_width}px;`)
+    }
+    if (m.border_radius !== undefined) {
+      decls.push(`--app-modal-border-radius: ${m.border_radius}px;`)
+    }
+  }
+
+  // Card
+  if (overrides.card) {
+    const c = overrides.card
+    if (c.background_image !== undefined) {
+      decls.push(`--app-card-bg-image: ${c.background_image ? `url(/api/appearance/image/${c.background_image})` : 'none'};`)
+    }
+    if (c.background_opacity !== undefined) {
+      decls.push(`--app-card-bg-opacity: ${Math.round(c.background_opacity * 100)}%;`)
+      decls.push(`--app-card-bg-transparent-pct: ${Math.round((1 - c.background_opacity) * 100)}%;`)
+    }
+    if (c.background_overlay_opacity !== undefined) {
+      decls.push(`--app-card-bg-overlay-opacity: ${c.background_overlay_opacity};`)
+    }
+    if (c.border_radius !== undefined) {
+      decls.push(`--card-border-radius: ${c.border_radius}px;`)
+    }
+    if (c.blur !== undefined) {
+      decls.push(`--app-card-blur: ${c.blur > 0 ? `blur(${c.blur}px)` : 'none'};`)
+    }
+  }
+
+  // Tabs
+  if (overrides.tabs) {
+    const t = overrides.tabs
+    if (t.nav_blur !== undefined) {
+      decls.push(`--tabs-nav-blur: ${t.nav_blur > 0 ? `blur(${t.nav_blur}px)` : 'none'};`)
+    }
+    if (t.nav_opacity !== undefined) {
+      decls.push(`--tabs-nav-bg-transparent-pct: ${Math.round((1 - t.nav_opacity) * 100)}%;`)
+    }
+    if (t.tab_active_bg !== undefined) {
+      decls.push(`--tabs-tab-active-bg: ${t.tab_active_bg};`)
+    }
+    if (t.tab_active_text_color !== undefined) {
+      decls.push(`--tabs-tab-active-text-color: ${t.tab_active_text_color};`)
+    }
+  }
+
+  // Input
+  if (overrides.input) {
+    const i = overrides.input
+    if (i.bg_opacity !== undefined) {
+      decls.push(`--input-bg-opacity: ${Math.round(i.bg_opacity * 100)}%;`)
+      decls.push(`--input-bg-transparent-pct: ${Math.round((1 - i.bg_opacity) * 100)}%;`)
+    }
+    if (i.border_radius !== undefined) {
+      decls.push(`--input-border-radius: ${i.border_radius}px;`)
+    }
+    if (i.height !== undefined) {
+      decls.push(`--input-height: ${i.height}px;`)
+    }
+    if (i.blur !== undefined) {
+      decls.push(`--input-blur: ${i.blur > 0 ? `blur(${i.blur}px)` : 'none'};`)
+    }
+  }
+
+  // Search
+  if (overrides.search) {
+    const s = overrides.search
+    if (s.bg_opacity !== undefined) {
+      const pct = Math.round((1 - s.bg_opacity) * 100)
+      decls.push(`--search-input-bg-opacity: ${Math.round(s.bg_opacity * 100)}%;`)
+      decls.push(`--search-input-bg-transparent-pct: ${pct}%;`)
+      decls.push(`--search-input-bg-transparent-pct-hover: ${Math.min(100, Math.round(pct * 0.85))}%;`)
+      decls.push(`--search-input-bg-transparent-pct-focus: ${Math.min(100, Math.round(pct * 0.92))}%;`)
+    }
+    if (s.border_radius !== undefined) {
+      decls.push(`--search-input-border-radius: ${s.border_radius}px;`)
+    }
+    if (s.height !== undefined) {
+      decls.push(`--search-input-height: ${s.height}px;`)
+    }
+    if (s.blur !== undefined) {
+      decls.push(`--search-input-blur: ${s.blur > 0 ? `blur(${s.blur}px)` : 'none'};`)
+    }
+  }
+
+  // List
+  if (overrides.list) {
+    const l = overrides.list
+    if (l.bg_opacity !== undefined) {
+      decls.push(`--list-bg-transparent-pct: ${Math.round((1 - l.bg_opacity) * 100)}%;`)
+    }
+    if (l.border_radius !== undefined) {
+      decls.push(`--list-border-radius: ${l.border_radius}px;`)
+    }
+    if (l.blur !== undefined) {
+      decls.push(`--list-blur: ${l.blur > 0 ? `blur(${l.blur}px)` : 'none'};`)
+    }
+  }
+
+  return decls
+}
+
+/** 为设置了 modal 背景图的 instance 输出背景图层伪元素规则（与 global.css 等价但作用域为 instance） */
+function buildModalBgLayerRules(key: string): string {
+  return `/* instance "${key}" 的 modal 背景图层 */
+[data-app-instance="${key}"].n-modal,
+[data-app-instance="${key}"] .n-modal {
+  background: transparent !important;
+  position: relative;
+  overflow: hidden;
+}
+[data-app-instance="${key}"].n-modal::before,
+[data-app-instance="${key}"] .n-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-modal-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-modal-bg-overlay-opacity, 0))),
+    var(--app-modal-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  /* 关键：覆盖 global.css 中 :root:not([data-modal-bg="on"]) ... .n-modal::before { display: none } */
+  display: block !important;
+}
+[data-app-instance="${key}"].n-modal::after,
+[data-app-instance="${key}"] .n-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-modal-blur, none);
+  -webkit-backdrop-filter: var(--app-modal-blur, none);
+  background: color-mix(in srgb, var(--app-modal-bg) var(--app-modal-bg-opacity-pct, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+[data-app-instance="${key}"].n-modal > *,
+[data-app-instance="${key}"] .n-modal > * {
+  position: relative;
+  z-index: 1;
+}`
+}
+
+/** 为设置了 card 背景图的 instance 输出卡片背景图层伪元素规则 */
+function buildCardBgLayerRules(key: string): string {
+  return `/* instance "${key}" 的 card 背景图层 */
+[data-app-instance="${key}"] .n-card,
+[data-app-instance="${key}"].n-card {
+  position: relative;
+  overflow: hidden;
+}
+[data-app-instance="${key}"] .n-card::before,
+[data-app-instance="${key}"].n-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-card-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-card-bg-overlay-opacity, 0))),
+    var(--app-card-bg-image);
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--app-card-bg-opacity, 1);
+}`
+}
+
+/** 把实例级覆盖配置注入到 <style id="app-instance-overrides"> 标签 */
+function applyInstanceOverrides(config: AppearanceConfig) {
+  const styleEl = getOrCreateInstanceStyleEl()
+  const instances = config.instances
+
+  if (!instances || Object.keys(instances).length === 0) {
+    styleEl.textContent = ''
+    return
+  }
+
+  const rules: string[] = []
+
+  for (const [key, overrides] of Object.entries(instances)) {
+    // 1. 变量声明块（仅输出明确设置的字段，未设置的字段自动继承 :root）
+    const decls = buildInstanceDecls(overrides)
+    if (decls.length > 0) {
+      rules.push(`[data-app-instance="${key}"] {\n  ${decls.join('\n  ')}\n}`)
+    }
+
+    // 2. 如果设置了 modal 背景图，需要触发背景图层显示
+    //    （global.css 的 :root[data-modal-bg="on"] 规则只对全局生效，instance scope 需要单独注入等价规则）
+    if (overrides.modal?.background_image) {
+      rules.push(buildModalBgLayerRules(key))
+    }
+
+    // 3. 如果设置了 card 背景图，类似处理
+    if (overrides.card?.background_image) {
+      rules.push(buildCardBgLayerRules(key))
+    }
+  }
+
+  styleEl.textContent = rules.join('\n\n')
 }
 
 /** hex 转 rgba */
