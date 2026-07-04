@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { NSpace, NFormItem, NSwitch, NButton, NScrollbar } from 'naive-ui'
+import { NSpace, NFormItem, NSwitch, NButton } from 'naive-ui'
 import AppTextField from './AppTextField.vue'
 import AppGlassModal from './AppGlassModal.vue'
 import { getButtonStyle } from '../composables/useButtonStyles'
@@ -66,9 +66,7 @@ const handleSave = () => {
     style="width: 500px;" 
     :title="isNew ? '添加 RSS 订阅源' : '编辑 RSS 订阅源'"
   >
-    <n-scrollbar style="max-height: 75vh" trigger="none">
-      <div style="padding-right: 12px;">
-        <n-space vertical size="large">
+    <n-space vertical size="large">
       <n-form-item>
         <AppTextField v-model:value="form.title" label="订阅名称 (备注)" placeholder="例如: 蜜柑 - 季度新番" />
       </n-form-item>
@@ -120,8 +118,6 @@ const handleSave = () => {
         </n-space>
       </n-form-item>
     </n-space>
-      </div>
-    </n-scrollbar>
     
     <template #action>
       <n-space justify="end">

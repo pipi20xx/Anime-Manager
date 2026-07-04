@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { onMounted, h, ref } from 'vue'
-import { dataTableThemeOverrides } from '../../store/appearanceStore'
-import { 
-  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NDataTable, 
+import { onMounted, ref, computed } from 'vue'
+import {
+  NCard, NSpace, NButton, NIcon, NTabs, NTabPane,
   NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
   RefreshOutlined as RefreshIcon,
-  EditOutlined as EditIcon,
   DeleteOutlined as DeleteIcon,
   ContentCopyOutlined as CopyIcon,
   CloudSyncOutlined as SyncIcon
@@ -57,6 +55,14 @@ const {
 const showAggregatedModal = ref(false)
 // 聚合下载记录弹窗
 const showRuleHistoryModal = ref(false)
+
+// 通过 client id 查询下载器名称
+const clientNameMap = computed(() => {
+  const map: Record<string, string> = {}
+  clients.value.forEach(c => { map[c.id] = c.name })
+  return map
+})
+const getClientName = (id: string) => (id ? (clientNameMap.value[id] || '—') : '—')
 
 onMounted(fetchData)
 </script>
@@ -168,52 +174,69 @@ onMounted(fetchData)
           </n-space>
         </div>
 
-        <n-data-table
-          :theme-overrides="dataTableThemeOverrides"
-          :columns="[
-            { title: '规则名称', key: 'name', width: 180 },
-            { title: '包含关键词', key: 'must_contain', ellipsis: { tooltip: true } },
-            { title: '模式', key: 'use_regex', width: 80, render(r: any){
-                return h(NTag, { size: 'small', round: true, bordered: false, style: r.use_regex ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' } }, { default: () => r.use_regex ? '正则' : '普通' })
-            }},
-            { title: '状态', key: 'enabled', width: 80, render(r: any){
-                return h(NTag, { size: 'small', round: true, bordered: false, style: r.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' } }, { default: () => r.enabled ? '生效中' : '未启用' })
-            }},
-            { title: '操作', key: 'actions', width: 180, render(r: any){
-                return h(NSpace, { size: 'small' }, { default: () => [
-                  // 复制
-                  h(NTooltip, { trigger: 'hover' }, {
-                    trigger: () => h(NButton, { ...getButtonStyle('icon'), onClick: ()=>duplicateRule(r) }, {
-                      icon: () => h(NIcon, null, { default: () => h(CopyIcon) })
-                    }),
-                    default: () => '复制规则'
-                  }),
-                  // 编辑
-                  h(NTooltip, { trigger: 'hover' }, {
-                    trigger: () => h(NButton, { ...getButtonStyle('icon'), onClick: ()=>openEditRule(r) }, {
-                      icon: () => h(NIcon, null, { default: () => h(EditIcon) })
-                    }),
-                    default: () => '编辑规则'
-                  }),
-                  // 删除
-                  h(NPopconfirm, {
-                    onPositiveClick: ()=>deleteRule(r.id),
-                    positiveText: '确定删除',
-                    negativeText: '取消'
-                  }, {
-                     trigger: () => h(NTooltip, { trigger: 'hover' }, {
-                       trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, {
-                         icon: () => h(NIcon, null, { default: () => h(DeleteIcon) })
-                       }),
-                       default: () => '删除规则'
-                     }),
-                     default: () => '确定要删除此规则吗？'
-                  })
-                ]})
-            }}
-          ]"
-          :data="rules"
-        />
+        <n-grid :x-gap="12" :y-gap="12" :cols="3" v-if="rules.length > 0">
+          <n-gi v-for="rule in rules" :key="rule.id">
+            <n-card hoverable class="rule-card clickable-card" @click="openEditRule(rule)">
+              <div class="f-head">
+                <div class="f-title">{{ rule.name || '未命名规则' }}</div>
+                <div class="f-status">
+                  <n-tag size="small" round :bordered="false" :style="rule.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }">
+                    {{ rule.enabled ? '生效中' : '未启用' }}
+                  </n-tag>
+                </div>
+              </div>
+              <div class="r-info-row">
+                <span class="r-label">包含关键词：</span>
+                <span class="r-value r-ellipsis" :title="rule.must_contain">{{ rule.must_contain || '无' }}</span>
+              </div>
+              <div class="r-info-row">
+                <span class="r-label">排除关键词：</span>
+                <span class="r-value r-ellipsis" :title="rule.must_not_contain">{{ rule.must_not_contain || '无' }}</span>
+              </div>
+              <div class="r-info-row">
+                <span class="r-label">匹配模式：</span>
+                <span class="r-value">{{ rule.use_regex ? '正则' : '普通' }}</span>
+              </div>
+              <div class="r-info-row">
+                <span class="r-label">下载器：</span>
+                <span class="r-value">{{ getClientName(rule.target_client_id) }}</span>
+              </div>
+              <div class="r-info-row">
+                <span class="r-label">保存路径：</span>
+                <span class="r-value r-ellipsis code-inline" :title="rule.save_path">{{ rule.save_path || '默认' }}</span>
+              </div>
+
+              <div class="f-act" @click.stop>
+                <n-space :size="4">
+                  <n-tooltip trigger="hover">
+                    <template #trigger>
+                      <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateRule(rule)">
+                        <template #icon><n-icon><CopyIcon/></n-icon></template>
+                      </n-button>
+                    </template>
+                    复制规则
+                  </n-tooltip>
+                  <n-popconfirm @positive-click="deleteRule(rule.id)" positive-text="删除" negative-text="取消">
+                    <template #trigger>
+                      <n-tooltip trigger="hover">
+                        <template #trigger>
+                          <n-button v-bind="getButtonStyle('iconDanger')" size="small">
+                            <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                          </n-button>
+                        </template>
+                        删除规则
+                      </n-tooltip>
+                    </template>
+                    确定要删除此规则吗？
+                  </n-popconfirm>
+                </n-space>
+              </div>
+            </n-card>
+          </n-gi>
+        </n-grid>
+        <div v-else class="empty-tip">
+          <n-empty description="暂无下载规则，快去创建一个吧" />
+        </div>
       </n-tab-pane>
     </n-tabs>
 
@@ -273,7 +296,8 @@ onMounted(fetchData)
   padding-top: 16px !important;
 }
 
-.feed-card {
+.feed-card,
+.rule-card {
   border: 1px solid var(--app-border-light) !important;
   background: var(--app-surface-card-mixed) !important;
   border-radius: var(--card-border-radius, 12px) !important;
@@ -281,7 +305,8 @@ onMounted(fetchData)
   position: relative;
 }
 .clickable-card { cursor: pointer; }
-.feed-card:hover {
+.feed-card:hover,
+.rule-card:hover {
   border-color: var(--n-primary-color) !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
@@ -292,6 +317,13 @@ onMounted(fetchData)
 .f-status { flex-shrink: 0; }
 .f-url { font-size: 11px; color: var(--text-tertiary); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
 .f-act { display: flex; justify-content: flex-end; }
+
+.r-keywords { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; min-height: 32px; word-break: break-all; opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.r-label { color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
+.r-value { color: var(--text-secondary); font-size: 12px; word-break: break-all; }
+.r-info-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 22px; }
+.r-ellipsis { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+.r-exclude { font-size: 11px; color: var(--text-tertiary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; opacity: 0.8; }
 
 .empty-tip { padding: 40px; text-align: center; color: var(--text-muted); }
 

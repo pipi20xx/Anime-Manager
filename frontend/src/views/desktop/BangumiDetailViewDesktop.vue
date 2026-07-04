@@ -224,7 +224,7 @@ onMounted(() => {
     <div v-else-if="detail" class="detail-container">
         <div class="header-content">
           <div class="poster-col">
-            <n-image :src="getImg(detail.poster_path) || DEFAULT_POSTER" class="main-poster" object-fit="contain" :fallback-src="DEFAULT_POSTER" />
+            <n-image :src="getImg(detail.poster_path) || DEFAULT_POSTER" class="main-poster" object-fit="cover" :fallback-src="DEFAULT_POSTER" />
           </div>
           <div class="info-col">
             <h1 class="title">{{ detail.title || detail.name }}</h1>
@@ -357,7 +357,6 @@ onMounted(() => {
 .page-header {
   padding: 16px 32px;
   border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-surface-card-mixed);
 }
 
 .loading-box { padding: 40px; }
@@ -372,7 +371,7 @@ onMounted(() => {
   border: 1px solid var(--app-border-light);
   overflow: hidden; background: var(--bg-primary);
 }
-.main-poster :deep(img) { width: 100%; height: 100%; object-fit: contain; }
+.main-poster :deep(img) { width: 100%; height: 100%; object-fit: cover; }
 
 .info-col { flex-grow: 1; }
 .title { margin: 0; font-size: 26px; font-weight: 900; color: var(--text-primary); line-height: 1.2; }

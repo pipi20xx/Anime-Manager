@@ -7,7 +7,7 @@ import {
   NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
   NList, NListItem, NAvatar, NPopconfirm, NTabs, NTabPane,
   NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup,
-  NSwitch, NDatePicker
+  NSwitch, NDatePicker, NCard
 } from 'naive-ui'
 import {
   CalendarMonthOutlined as CalendarIcon,
@@ -214,7 +214,7 @@ const openCardDetail = (item: any) => {
         <div class="selected-date-label">{{ selectedDateLabel }}</div>
 
         <div v-if="selectedDateItems.length > 0" class="track-card-grid">
-          <div v-for="item in selectedDateItems" :key="item.id" class="track-card" @click="openCardDetail(item)">
+          <n-card v-for="item in selectedDateItems" :key="item.id" hoverable class="track-card" content-style="padding: 0;" @click="openCardDetail(item)">
             <div class="card-poster">
               <img
                 v-if="item.posterPath"
@@ -224,7 +224,6 @@ const openCardDetail = (item: any) => {
                 @error="$event.target.style.display = 'none'"
               />
               <div v-else class="placeholder-poster">{{ item.title.charAt(0) }}</div>
-              <div class="track-badge">已追踪</div>
             </div>
 
             <div class="card-info">
@@ -238,7 +237,7 @@ const openCardDetail = (item: any) => {
                 </template>
               </div>
             </div>
-          </div>
+          </n-card>
         </div>
 
         <div v-else class="empty-day">
@@ -515,31 +514,36 @@ const openCardDetail = (item: any) => {
 /* 番剧卡片网格 - 参考 TMDB 热门动画卡片样式 */
 .track-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--space-5);
   padding: 0 var(--m-1);
 }
 
 .track-card {
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: all var(--transition-normal);
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-border-light) !important;
+  background: var(--app-surface-card-mixed) !important;
+  border-radius: var(--card-border-radius, 12px) !important;
   -webkit-tap-highlight-color: transparent;
 }
-.track-card:hover { transform: translateY(-5px); }
+.track-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--n-primary-color) !important;
+}
 .track-card:active { transform: scale(0.95); }
 
 .card-poster {
   width: 100%;
   aspect-ratio: 2/3;
-  border-radius: var(--radius-xl);
   overflow: hidden;
   position: relative;
   background: var(--bg-tertiary);
-  box-shadow: var(--shadow-md);
-  margin-bottom: var(--space-2);
 }
 .card-poster .poster-img {
   width: 100%;
@@ -559,21 +563,8 @@ const openCardDetail = (item: any) => {
   font-weight: bold;
 }
 
-.track-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  background: var(--n-primary-color);
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-xs);
-  font-weight: bold;
-  box-shadow: var(--shadow-sm);
-}
-
 .card-info {
-  padding: 0 2px;
+  padding: var(--space-2) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -789,7 +780,7 @@ const openCardDetail = (item: any) => {
 /* 响应式布局 */
 @media (max-width: 900px) {
   .track-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: var(--space-4);
   }
 }

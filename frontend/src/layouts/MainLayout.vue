@@ -147,6 +147,12 @@ const menuOptions: MenuOption[] = [
 
 const currentMenuKey = computed(() => route.name as string)
 
+// 详情页需要铺满整个内容区域，不保留外层 padding
+const isFullBleedPage = computed(() => {
+  const fullBleedNames = ['TmdbDetail', 'BangumiDetail', 'TmdbPersonDetail']
+  return fullBleedNames.includes(route.name as string)
+})
+
 const handleMenuSelect = (key: string) => {
   router.push({ name: key })
 }
@@ -272,7 +278,9 @@ const isNavActive = (key: string) => route.name === key
     </n-layout-sider>
 
     <n-layout-content
-      :content-style="`padding: var(--space-4); padding-bottom: ${isMobile ? '80px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
+      :content-style="isFullBleedPage
+        ? `padding: 0; min-height: 100vh; display: flex; flex-direction: column;`
+        : `padding: var(--space-4); padding-bottom: ${isMobile ? '80px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
     >
       <!-- Mobile Top Bar (Optional, for Logo/Search if needed, or keep clean) -->
       <div v-if="isMobile" class="mobile-header">
@@ -290,7 +298,7 @@ const isNavActive = (key: string) => route.name === key
         </n-space>
       </div>
 
-      <div class="view-wrapper">
+      <div class="view-wrapper" :class="{ 'view-wrapper--full-bleed': isFullBleedPage }">
         <router-view v-slot="{ Component, route }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="route.fullPath" />
@@ -483,6 +491,9 @@ const isNavActive = (key: string) => route.name === key
   width: 100%;
   max-width: 100%;
   padding: 0 var(--m-1);
+}
+.view-wrapper--full-bleed {
+  padding: 0;
 }
 
 /* Mobile Specific Styles */

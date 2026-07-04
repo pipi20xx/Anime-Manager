@@ -584,7 +584,6 @@ watch(tmdbId, (newId, oldId) => {
 .page-header {
   padding: 16px 32px;
   border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-surface-card-mixed);
 }
 
 .loading-box { padding: 40px; }
