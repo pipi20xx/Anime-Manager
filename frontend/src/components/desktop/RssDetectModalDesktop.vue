@@ -6,6 +6,7 @@ import {
   NGrid, NGi, NDataTable, NPopconfirm, NSwitch, NAlert
 } from 'naive-ui'
 import { h } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useRssDetect } from '../../composables/components/useRssDetect'
@@ -229,6 +230,7 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
               </n-alert>
               
               <n-data-table
+                :theme-overrides="dataTableThemeOverrides"
                 :columns="createColumns()"
                 :data="previewResult.detected_shows"
                 :row-key="(row: any) => row.tmdb_id"
@@ -248,6 +250,7 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
           </n-alert>
           
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             v-if="subscribeResult.shows && subscribeResult.shows.length > 0"
             :columns="createColumns()"
             :data="subscribeResult.shows.map((s: any) => ({
@@ -266,6 +269,7 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
         <template v-if="tasks.length > 0">
           <div class="section-title">已有定时任务</div>
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             :columns="createTaskColumns(handleRunTask, handleDeleteTask)"
             :data="tasks"
             :row-key="(row: any) => row.id"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { h } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NDataTable, NButton, NSpace, NIcon, NForm, NFormItem, 
@@ -80,7 +81,7 @@ const columns = [
             创建新预设
           </n-button>
       </div>
-      <n-data-table :columns="columns" :data="templates" :loading="loading" max-height="55vh" />
+      <n-data-table :theme-overrides="dataTableThemeOverrides" :columns="columns" :data="templates" :loading="loading" max-height="55vh" />
     </div>
 
     <div v-else class="edit-form">

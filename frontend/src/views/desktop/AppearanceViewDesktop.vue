@@ -228,7 +228,7 @@ const formatFileSize = (size: number) => {
           <div class="section-header">
             <div>
               <div class="section-title">卡片外观</div>
-              <div class="section-desc">设置卡片的透明度与圆角</div>
+              <div class="section-desc">设置卡片、DataTable 表格容器的透明度与圆角</div>
             </div>
             <n-switch v-model:value="form.card.enabled" @update:value="preview" />
           </div>
@@ -374,7 +374,7 @@ const formatFileSize = (size: number) => {
           <div class="section-header">
             <div>
               <div class="section-title">列表外观</div>
-              <div class="section-desc">设置列表项的不透明度与圆角</div>
+              <div class="section-desc">设置列表项、DataTable 表格行的透明度与圆角</div>
             </div>
             <n-switch v-model:value="form.list.enabled" @update:value="preview" />
           </div>

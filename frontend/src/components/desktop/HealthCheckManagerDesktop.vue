@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppGlassModal from '../AppGlassModal.vue'
 import { h } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NSpace, NButton, NDataTable, NForm, NFormItem, 
   NSwitch, NPopconfirm, NTag, NIcon
@@ -116,6 +117,7 @@ const columns = [
       <n-data-table 
         :columns="columns" 
         :data="configs" 
+        :theme-overrides="dataTableThemeOverrides"
         :loading="loading"
         size="small"
       />

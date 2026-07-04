@@ -115,12 +115,12 @@ const {
 <style scoped>
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 
-/* 卡片核心样式 - 增强对比度 */
+/* 卡片核心样式 - 跟随「卡片外观」设置 */
 .rect-rule-card {
-  background-color: var(--bg-surface);
+  background-color: var(--app-surface-card-mixed);
   border: 1px solid var(--border-medium);
   padding: var(--space-4);
-  border-radius: var(--radius-lg);
+  border-radius: var(--card-border-radius, var(--radius-lg));
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 1px 2px 0 var(--shadow-light);
@@ -129,11 +129,11 @@ const {
   display: flex;
   flex-direction: column;
 }
-.rect-rule-card:hover { 
-  border-color: var(--n-primary-color); 
-  background-color: var(--bg-surface-hover); 
-  transform: translateY(-2px); 
-  box-shadow: 0 4px 12px var(--shadow-medium); 
+.rect-rule-card:hover {
+  border-color: var(--n-primary-color);
+  background-color: var(--bg-surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 .is-dragging { opacity: var(--opacity-muted); border: 2px dashed var(--n-primary-color); }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { h } from 'vue'
+import { dataTableThemeOverrides } from '../store/appearanceStore'
 import { NCard, NDataTable, NText, NTag, NSpace } from 'naive-ui'
 import AppGlassModal from './AppGlassModal.vue'
 
@@ -37,7 +38,7 @@ const data = [
           <strong>填写技巧：</strong>支持模糊匹配，且多个关键词请用<strong>英文逗号</strong>分隔。
         </span>
       </div>
-      <n-data-table :columns="columns" :data="data" :pagination="false" />
+      <n-data-table :theme-overrides="dataTableThemeOverrides" :columns="columns" :data="data" :pagination="false" />
       
       <div style="margin-top: 24px; background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
         <div style="font-weight: bold; margin-bottom: 8px; color: var(--n-primary-color)">💡 如何知道应该填什么？</div>

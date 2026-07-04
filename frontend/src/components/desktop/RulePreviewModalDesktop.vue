@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { watch, h, ref, onMounted, onUnmounted } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NDataTable, NTag, NButton, NSpace, NSpin, NEmpty
@@ -235,6 +236,7 @@ const columns = [
     <n-spin :show="loading" style="flex: 1; display: flex; flex-direction: column;" content-style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
       <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 20px;">
         <n-data-table
+          :theme-overrides="dataTableThemeOverrides"
           v-if="items.length > 0"
           :columns="columns"
           :data="items"

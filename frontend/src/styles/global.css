@@ -371,27 +371,20 @@ input, textarea, select, button {
   background: var(--bg-surface-hover) !important;
 }
 
-/* DataTable 主题化 - 支持外观自定义 */
+/* DataTable 主题化 - 容器背景跟随卡片外观；表头/行背景交由 themeOverrides 控制 */
 .n-data-table,
+.n-data-table .n-data-table-wrapper,
 .n-data-table .n-data-table-base-table,
-.n-data-table .n-data-table-table {
-  background: var(--app-surface-card-mixed) !important;
+.n-data-table .n-data-table-base-table-header,
+.n-data-table .n-data-table-base-table-body,
+.n-data-table .n-data-table-table,
+.n-data-table .n-scrollbar-container,
+.n-data-table .n-scrollbar-content {
+  background: transparent !important;
 }
 .n-data-table {
   border-radius: var(--card-border-radius, 8px) !important;
   overflow: hidden !important;
-}
-.n-data-table .n-data-table-thead,
-.n-data-table .n-data-table-thead .n-data-table-th {
-  background: var(--app-surface-inner) !important;
-}
-.n-data-table .n-data-table-tbody .n-data-table-tr,
-.n-data-table .n-data-table-tbody .n-data-table-tr .n-data-table-td {
-  background: transparent !important;
-}
-.n-data-table .n-data-table-tbody .n-data-table-tr:hover,
-.n-data-table .n-data-table-tbody .n-data-table-tr:hover .n-data-table-td {
-  background: var(--bg-surface-hover) !important;
 }
 .n-data-table .n-data-table-td,
 .n-data-table .n-data-table-th {

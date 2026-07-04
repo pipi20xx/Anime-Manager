@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, h, ref } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NDataTable, 
   NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip
@@ -185,6 +186,7 @@ onMounted(fetchData)
           </template>
 
           <n-data-table 
+            :theme-overrides="dataTableThemeOverrides"
             :columns="[
               { title: '规则名称', key: 'name', width: 180 },
               { title: '包含关键词', key: 'must_contain', ellipsis: { tooltip: true } },

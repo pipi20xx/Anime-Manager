@@ -4,6 +4,7 @@ import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
 import { h, ref } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NSpace, NButton, NIcon, NText, NDataTable, NInput, NInputGroup, 
   NTooltip, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
@@ -145,6 +146,7 @@ const executeRefresh = () => {
 
       <div class="browser-wrapper">
         <n-data-table
+          :theme-overrides="dataTableThemeOverrides"
           remote
           :loading="browserLoading"
           :columns="[
@@ -197,5 +199,5 @@ const executeRefresh = () => {
 
 <style scoped>
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.browser-wrapper { background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--app-border-light); padding: 8px; }
+.browser-wrapper { background: var(--app-surface-card-mixed); border-radius: var(--card-border-radius, 8px); border: 1px solid var(--app-border-light); padding: 8px; }
 </style>

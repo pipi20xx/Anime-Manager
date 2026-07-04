@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, h, watch } from 'vue'
+import { dataTableThemeOverrides } from '../store/appearanceStore'
 import AppGlassModal from './AppGlassModal.vue'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NForm, NFormItem, 
@@ -227,7 +228,7 @@ const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emb
             <div style="margin-bottom: 12px; display: flex; justify-content: flex-end">
               <n-button size="small" secondary @click="fetchLogs" :loading="logLoading">刷新日志</n-button>
             </div>
-            <n-data-table :columns="logColumns" :data="logs" size="small" :max-height="400" />
+            <n-data-table :theme-overrides="dataTableThemeOverrides" :columns="logColumns" :data="logs" size="small" :max-height="400" />
           </div>
         </n-tab-pane>
 

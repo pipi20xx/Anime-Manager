@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { h } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NDataTable, NSpace, NButton, NIcon, NInput, NSelect, NTag, NText, NGrid, NGi
 } from 'naive-ui'
@@ -104,6 +105,7 @@ const columns = [
         </n-grid>
 
         <n-data-table
+          :theme-overrides="dataTableThemeOverrides"
           remote
           striped
           size="small"

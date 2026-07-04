@@ -3,6 +3,7 @@ import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import { h, watch } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NDataTable, NButton, NSpace,
   NSwitch, NPopconfirm, NTag, NEmpty, NAlert,
@@ -127,6 +128,7 @@ const testColumns = [
       <n-data-table 
         :columns="(listColumns as any)" 
         :data="tasks" 
+        :theme-overrides="dataTableThemeOverrides"
         :loading="loading"
       />
 
@@ -207,6 +209,7 @@ const testColumns = [
         </n-alert>
         <n-data-table 
           :columns="(testColumns as any)" 
+          :theme-overrides="dataTableThemeOverrides"
           :data="testResult.detected_shows"
           :row-key="(row: any) => row.tmdb_id"
           size="small"

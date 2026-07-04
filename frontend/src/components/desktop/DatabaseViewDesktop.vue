@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, h } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NInput, NButton, 
   NSpace, NDataTable, NIcon, NPopconfirm, NSelect, NTabs, NTabPane, NAlert, NPopover
@@ -164,6 +165,7 @@ const dataTableColumns = computed(() => {
           <n-card bordered title="执行结果" size="small" class="result-card">
             <template #header-extra><AppSearchField v-model:value="searchText" placeholder="在结果中搜索..." :loading="queryLoading" style="width: 250px" /></template>
             <n-data-table
+              :theme-overrides="dataTableThemeOverrides"
               remote
               :columns="dataTableColumns"
               :data="paginatedData"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, h, computed, onMounted, onUnmounted } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NDataTable, NTag, NButton, NSpace, NSpin, NEmpty, useMessage
@@ -251,6 +252,7 @@ watch(() => props.show, (newVal) => {
     <n-spin :show="loading">
       <div style="min-height: 300px">
         <n-data-table
+          :theme-overrides="dataTableThemeOverrides"
           v-if="items.length > 0"
           :columns="columns"
           :data="items"

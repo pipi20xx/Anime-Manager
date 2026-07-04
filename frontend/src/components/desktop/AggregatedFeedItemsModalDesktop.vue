@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
   NDataTable, NTag, NButton, NSpace, NText, NPopconfirm
@@ -372,6 +373,7 @@ const columns = [
       </div>
 
       <n-data-table
+        :theme-overrides="dataTableThemeOverrides"
         :columns="columns"
         :data="items"
         :loading="loading"

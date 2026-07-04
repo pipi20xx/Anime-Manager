@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, h } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NSpace, NButton, NIcon, NInput, NFormItem, 
   NTag, NDataTable, NSwitch, NTabs, NTabPane, NList, NListItem, NThing,
@@ -305,6 +306,7 @@ const logColumns = [
             </div>
             
             <n-data-table
+              :theme-overrides="dataTableThemeOverrides"
               remote
               :loading="logLoading"
               :columns="logColumns"

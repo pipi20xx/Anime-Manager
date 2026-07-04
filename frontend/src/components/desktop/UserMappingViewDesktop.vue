@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, h, watch } from 'vue'
+import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NPopconfirm, NSpin
 } from 'naive-ui'
@@ -277,6 +278,7 @@ const countryColumns = [
         <n-tab-pane name="genre" tab="流派">
           <AppSearchField v-model:value="genreSearch" placeholder="搜索 ID 或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             remote
             :columns="genreColumns"
             :data="paginatedGenres"
@@ -290,6 +292,7 @@ const countryColumns = [
         <n-tab-pane name="company" tab="制作公司">
           <AppSearchField v-model:value="companySearch" placeholder="搜索 ID、名称或国家..." :loading="companyLoading" style="margin-bottom: 12px" />
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             remote
             :columns="companyColumns"
             :data="companyMappings"
@@ -303,6 +306,7 @@ const countryColumns = [
         <n-tab-pane name="keyword" tab="关键词">
           <AppSearchField v-model:value="keywordSearch" placeholder="搜索 ID 或名称..." :loading="keywordLoading" style="margin-bottom: 12px" />
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             remote
             :columns="keywordColumns"
             :data="keywordMappings"
@@ -316,6 +320,7 @@ const countryColumns = [
         <n-tab-pane name="language" tab="原始语言">
           <AppSearchField v-model:value="languageSearch" placeholder="搜索代码或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             remote
             :columns="languageColumns"
             :data="paginatedLanguages"
@@ -329,6 +334,7 @@ const countryColumns = [
         <n-tab-pane name="country" tab="原始国家">
           <AppSearchField v-model:value="countrySearch" placeholder="搜索代码或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
+            :theme-overrides="dataTableThemeOverrides"
             remote
             :columns="countryColumns"
             :data="paginatedCountries"

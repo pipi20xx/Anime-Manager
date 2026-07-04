@@ -1,5 +1,6 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { appearanceApi, type AppearanceConfig } from '../api/appearance'
+import { currentThemeConfig } from './themeStore'
 
 // 默认外观配置
 const defaultConfig: AppearanceConfig = {
@@ -195,6 +196,48 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--list-blur', 'none')
   }
 }
+
+/** hex 转 rgba */
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.substring(0, 2), 16)
+  const g = parseInt(h.substring(2, 4), 16)
+  const b = parseInt(h.substring(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+/** DataTable 主题覆盖 - 跟随「卡片外观」+「列表外观」设置
+ * 注意：直接绑定到 <n-data-table :theme-overrides="...">，
+ * 不需要外层 DataTable 键（那种结构是给 n-config-provider 用的）
+ *
+ * 字段名注意：
+ * - card 配置用 `background_opacity`
+ * - list 配置用 `bg_opacity`
+ */
+export const dataTableThemeOverrides = computed(() => {
+  const cardCfg = appearanceConfig.value.card
+  const listCfg = appearanceConfig.value.list
+  const bgPrimary = currentThemeConfig.value?.bgPrimary || '#1e1e2e'
+  const innerBg = currentThemeConfig.value?.bgSecondary || '#2a2a3e'
+
+  // 表格容器背景跟随卡片外观（card 用 background_opacity）
+  const tableBgAlpha = cardCfg.enabled ? cardCfg.background_opacity : 1
+  // 行背景跟随列表外观（list 用 bg_opacity）
+  const rowBgAlpha = listCfg.enabled ? listCfg.bg_opacity : 1
+  const rowHoverAlpha = listCfg.enabled ? Math.min(1, listCfg.bg_opacity + 0.08) : 1
+
+  return {
+    borderRadius: cardCfg.enabled ? `${cardCfg.border_radius}px` : undefined,
+    thColor: hexToRgba(innerBg, tableBgAlpha),
+    thColorHover: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
+    tdColor: hexToRgba(bgPrimary, rowBgAlpha),
+    tdColorHover: hexToRgba(bgPrimary, rowHoverAlpha),
+    borderColor: 'var(--app-border-light)',
+    thTextColor: 'var(--text-primary)',
+    tdTextColor: 'var(--text-primary)',
+    thFontWeight: '600',
+  }
+})
 
 /** 从后端加载配置并应用 */
 export async function loadAppearanceConfig() {
