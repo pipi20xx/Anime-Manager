@@ -39,7 +39,7 @@ const darkBgColors = {
   bgSecondary: '#242429',
   bgTertiary: '#2e2e33',
   surfaceColor: '255, 255, 255',
-  modalBg: 'rgba(30, 30, 46, 0.95)',
+  modalBg: 'rgba(30, 30, 46, 1)',
   dropdownBg: 'rgba(30, 30, 46, 0.98)'
 }
 
@@ -49,7 +49,7 @@ const lightBgColors = {
   bgSecondary: '#f5f5f5',
   bgTertiary: '#eeeeee',
   surfaceColor: '0, 0, 0',
-  modalBg: 'rgba(255, 255, 255, 0.98)',
+  modalBg: 'rgba(255, 255, 255, 1)',
   dropdownBg: 'rgba(255, 255, 255, 0.98)'
 }
 

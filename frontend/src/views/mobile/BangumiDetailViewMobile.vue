@@ -7,7 +7,6 @@ import {
 import {
   StarOutlined as StarIcon,
   CalendarMonthOutlined as DateIcon,
-  LinkOutlined as LinkIcon,
   PersonOutlined as CastIcon,
   CompareArrowsOutlined as MatchIcon,
   ArrowBackOutlined as BackIcon,
@@ -243,7 +242,7 @@ onMounted(() => {
               {{ detail.original_title }}
             </div>
             <div class="m-detail-meta" style="flex-wrap: wrap;">
-              <n-tag type="error" size="tiny" :bordered="false">Bangumi</n-tag>
+              <span class="m-bangumi-id-text">Bangumi ID <span class="m-bangumi-id-value" @click="openExternal">{{ bangumiId }}</span></span>
               <n-tag type="warning" round size="tiny">
                 <template #icon><n-icon><StarIcon /></n-icon></template>
                 {{ detail.vote_average?.toFixed(1) }}
@@ -272,10 +271,6 @@ onMounted(() => {
         <n-button block size="large" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
           <template #icon><n-icon><SearchIcon /></n-icon></template>
           搜资源
-        </n-button>
-        <n-button ghost block size="large" @click="openExternal">
-          <template #icon><n-icon><LinkIcon /></n-icon></template>
-          访问 Bangumi
         </n-button>
       </div>
 
@@ -438,4 +433,7 @@ onMounted(() => {
   white-space: pre-line;
   padding-top: 4px; border-top: 1px dashed var(--app-border-light); margin-top: 2px;
 }
+.m-bangumi-id-text { font-size: var(--m-text-xs); color: var(--text-muted); }
+.m-bangumi-id-value { color: #3B82F6; cursor: pointer; }
+.m-bangumi-id-value:hover { text-decoration: underline; }
 </style>
