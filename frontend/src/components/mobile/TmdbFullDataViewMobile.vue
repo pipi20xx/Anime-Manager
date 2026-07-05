@@ -3,11 +3,12 @@ import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
+import AppGlassCard from '../AppGlassCard.vue'
 import { ref, h } from 'vue'
 import {
   NSpace, NButton, NIcon, NText, NInput, NInputGroup,
   NTooltip, NForm, NFormItem, NSelect, NTag, NGrid, NGi,
-  NCard, NDrawer, NDrawerContent, NPopconfirm
+  NDrawer, NDrawerContent, NPopconfirm
 } from 'naive-ui'
 import {
   EditOutlined as EditIcon,
@@ -114,7 +115,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
 
     <div class="list-container">
       <div v-if="browserData.length > 0" class="metadata-grid">
-        <n-card v-for="item in browserData" :key="item.tmdb_id" class="metadata-card" data-app-instance="tmdb-data-card" :bordered="false" hoverable @click="openEdit(item)">
+        <AppGlassCard v-for="item in browserData" :key="item.tmdb_id" appearance-key="tmdb-data-card" class="metadata-card" :bordered="true" hoverable @click="openEdit(item)">
           <div class="card-main">
             <div class="item-header">
               <span class="item-title">{{ item.title }}</span>
@@ -137,7 +138,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
               确认删除?
             </n-popconfirm>
           </div>
-        </n-card>
+        </AppGlassCard>
       </div>
       <div v-if="browserData.length === 0 && !browserLoading" style="padding: 40px; text-align: center; color: var(--text-muted);">暂无数据</div>
     </div>
@@ -243,8 +244,6 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
 .list-container { flex: 1; overflow-y: auto; padding: 12px; box-sizing: border-box; }
 .metadata-grid { display: flex; flex-direction: column; gap: 12px; }
 .metadata-card {
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--card-border-radius, 8px);
   display: flex;
   justify-content: space-between;
   align-items: center;

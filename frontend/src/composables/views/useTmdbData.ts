@@ -13,6 +13,8 @@ export function useTmdbData() {
   const browserPage = ref(1)
   const browserSearch = ref('')
   const browserLoading = ref(false)
+  const browserHasMore = ref(true)
+  const PAGE_SIZE = 20
 
   const showEditModal = ref(false)
   const isEditing = ref(false)
@@ -27,20 +29,33 @@ export function useTmdbData() {
     token: localStorage.getItem('sytmdb_token') || '' 
   })
 
-  const fetchBrowserData = async () => {
+  const fetchBrowserData = async (append = false) => {
+    if (append && !browserHasMore.value) return
+    if (!append) {
+      browserPage.value = 1
+      browserData.value = []
+      browserHasMore.value = true
+    }
     browserLoading.value = true
     try {
       const url = `${API_BASE}/api/tmdb_full/list?page=${browserPage.value}&search=${encodeURIComponent(browserSearch.value)}`
       const res = await fetch(url)
       const data = await res.json()
-      browserData.value = data.items || []
+      const newItems = data.items || []
       browserTotal.value = data.total || 0
+      if (newItems.length < PAGE_SIZE) browserHasMore.value = false
+      if (append) {
+        browserData.value.push(...newItems)
+      } else {
+        browserData.value = newItems
+      }
+      browserPage.value++
     } catch (e) { message.error('数据加载失败') }
     finally { browserLoading.value = false }
   }
 
   const handleBrowserSearch = () => {
-    browserPage.value = 1; fetchBrowserData()
+    fetchBrowserData(false)
   }
 
   const openCreate = () => {
@@ -191,6 +206,7 @@ export function useTmdbData() {
     browserPage,
     browserSearch,
     browserLoading,
+    browserHasMore,
     showEditModal,
     isEditing,
     editForm,
