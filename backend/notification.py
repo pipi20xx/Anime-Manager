@@ -757,45 +757,80 @@ class NotificationManager:
 
     @staticmethod
     async def push_startup_notification(status_info: dict):
-        """系统启动通知 - 汇报各功能模块状态"""
+        """系统启动通知 - 汇报各功能模块状态（HTML 格式美化版）"""
         config = ConfigManager.get_config()
         if not config.get("telegram", {}).get("notify_on_startup", True): return
 
         from datetime import datetime
         start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        lines = [f"🚀 <b>番剧管家启动完成</b>", f"⏰ <b>时间：</b>{start_time}", ""]
+        # ── 收集模块状态 ──
+        modules = []
 
+        # CD2 监控
         cd2_status = status_info.get("cd2_monitor", {})
         if cd2_status.get("enabled"):
-            status_icon = "✅" if cd2_status.get("running") else "❌"
-            lines.append(f"📡 <b>CD2 监控：</b>{status_icon} {'运行中' if cd2_status.get('running') else '未启动'}")
+            running = cd2_status.get("running", False)
+            icon = "🟢" if running else "🔴"
+            label = "运行中" if running else "未启动"
+            detail = ""
             if cd2_status.get("client"):
-                lines.append(f"   └─ 客户端: {cd2_status['client']}")
+                detail = f' <code>{cd2_status["client"]}</code>'
+            modules.append((icon, "CD2 监控", label, detail))
 
+        # 整理任务
         organize_tasks = status_info.get("organize_tasks", 0)
-        strm_tasks = status_info.get("strm_tasks", 0)
-        rss_feeds = status_info.get("rss_feeds", 0)
-        
         if organize_tasks > 0:
-            lines.append(f"📁 <b>整理任务：</b>✅ {organize_tasks} 个")
-        if strm_tasks > 0:
-            lines.append(f"🎬 <b>STRM 任务：</b>✅ {strm_tasks} 个")
-        if rss_feeds > 0:
-            lines.append(f"📡 <b>RSS 订阅：</b>✅ {rss_feeds} 个")
+            modules.append(("🟢", "整理任务", f"{organize_tasks} 个", ""))
 
+        # STRM 任务
+        strm_tasks = status_info.get("strm_tasks", 0)
+        if strm_tasks > 0:
+            modules.append(("🟢", "STRM 任务", f"{strm_tasks} 个", ""))
+
+        # RSS 订阅
+        rss_feeds = status_info.get("rss_feeds", 0)
+        if rss_feeds > 0:
+            modules.append(("🟢", "RSS 订阅", f"{rss_feeds} 个", ""))
+
+        # 定时任务
         scheduler_jobs = status_info.get("scheduler_jobs", 0)
         if scheduler_jobs > 0:
-            lines.append(f"⏱️ <b>定时任务：</b>✅ {scheduler_jobs} 个")
+            modules.append(("🟢", "定时任务", f"{scheduler_jobs} 个", ""))
 
+        # ── 构建 HTML 消息 ──
+        parts = []
+
+        # 标题区
+        parts.append(
+            "┌─────────────────────────────┐\n"
+            "│     🚀 番剧管家 启动完成      │\n"
+            "└─────────────────────────────┘"
+        )
+        parts.append(f"🕐  <i>{start_time}</i>\n")
+
+        # 模块状态列表
+        if modules:
+            module_lines = []
+            for icon, name, value, detail in modules:
+                line = f"{icon}  <b>{name}</b>  →  {value}{detail}"
+                module_lines.append(line)
+            parts.append("▎ <b>服务状态</b>")
+            parts.append("")
+            for line in module_lines:
+                parts.append(f"  {line}")
+
+        # 错误/警告
         errors = status_info.get("errors", [])
         if errors:
-            lines.append("")
-            lines.append("⚠️ <b>启动警告：</b>")
+            parts.append("")
+            parts.append("▎ ⚠️ <b>启动警告</b>")
             for err in errors[:3]:
-                lines.append(f"   • {err}")
+                parts.append(f"  🔸 {err}")
 
-        lines.append("")
-        lines.append("💡 系统已就绪，等待任务调度...")
+        # 底部
+        parts.append("")
+        parts.append("━━━━━━━━━━━━━━━━━━━━━━━━━")
+        parts.append("💡 <i>系统已就绪，等待任务调度...</i>")
 
-        await NotificationManager.send_telegram_message("\n".join(lines))
+        await NotificationManager.send_telegram_message("\n".join(parts))
