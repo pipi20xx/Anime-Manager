@@ -5,6 +5,8 @@ import { ExpandMoreOutlined, ExpandLessOutlined } from '@vicons/material'
 import { appearanceConfig } from '../store/appearanceStore'
 import { isDarkMode } from '../store/themeStore'
 
+const selectRef = ref<HTMLElement | null>(null)
+
 export interface SelectOption {
   label: string
   value: string | number | null
@@ -62,16 +64,19 @@ const showPlaceholder = computed(() =>
 // 动态生成 themeOverrides，用 JS 预计算 rgba 值（Naive UI 不接受 color-mix()）
 // 注意：Naive UI 的 theme 属性名是 color 不是 backgroundColor
 const selectThemeOverrides = computed(() => {
-  // 依赖 isDarkMode 确保主题切换时重算
+  // 保留全局配置依赖，确保配置变化时重算
+  const _cfg = appearanceConfig.value.input
   const _dark = isDarkMode.value
-  const cfg = appearanceConfig.value.input
-  // 从 CSS 变量读取基础背景色，转为 rgba
-  const rootStyle = getComputedStyle(document.documentElement)
-  const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
-  const alpha = cfg.enabled ? cfg.bg_opacity : 1
-  const rgba = hexToRgba(baseColor, alpha)
+  // 从组件自身 DOM 读取继承的 CSS 变量，以便支持 data-app-instance 级别的覆盖
+  const el = selectRef.value
+  const style = el ? getComputedStyle(el) : getComputedStyle(document.documentElement)
+  const baseColor = style.getPropertyValue('--app-surface-card').trim()
+  const bgOpacityRaw = style.getPropertyValue('--input-bg-opacity').trim()
+  const bgOpacity = bgOpacityRaw ? parseFloat(bgOpacityRaw) / 100 : (_cfg.enabled ? _cfg.bg_opacity : 1)
+  const rgba = hexToRgba(baseColor, bgOpacity)
   const tagText = isDarkMode.value ? '#ffffff' : '#1a1a1a'
-  const radius = `${cfg.enabled ? cfg.border_radius : 8}px`
+  const radiusRaw = style.getPropertyValue('--input-border-radius').trim()
+  const radius = radiusRaw || `${_cfg.enabled ? _cfg.border_radius : 8}px`
   return {
     peers: {
       InternalSelection: {
@@ -102,7 +107,7 @@ function hexToRgba(hex: string, alpha: number): string {
 </script>
 
 <template>
-  <div class="app-select-field">
+  <div ref="selectRef" class="app-select-field">
     <div
       class="app-select-field__box"
       :class="{

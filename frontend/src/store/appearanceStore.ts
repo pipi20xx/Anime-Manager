@@ -311,6 +311,10 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     if (i.bg_opacity !== undefined) {
       decls.push(`--input-bg-opacity: ${Math.round(i.bg_opacity * 100)}%;`)
       decls.push(`--input-bg-transparent-pct: ${Math.round((1 - i.bg_opacity) * 100)}%;`)
+      // 关键：在实例级重算 --input-label-bg
+      // 该变量在 :root 处定义，会随 :root 的 --input-bg-opacity 计算后被继承为静态值，
+      // 无法跟随实例级覆盖重算。此处重新声明，让输入框标签浮动时的底色能正确跟随实例级透明度。
+      decls.push(`--input-label-bg: color-mix(in srgb, var(--input-bg) var(--input-bg-opacity, 100%), transparent);`)
     }
     if (i.border_radius !== undefined) {
       decls.push(`--input-border-radius: ${i.border_radius}px;`)

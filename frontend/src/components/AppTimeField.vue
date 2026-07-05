@@ -4,6 +4,8 @@ import { NTimePicker } from 'naive-ui'
 import { appearanceConfig } from '../store/appearanceStore'
 import { isDarkMode } from '../store/themeStore'
 
+const timeRef = ref<HTMLElement | null>(null)
+
 const props = withDefaults(defineProps<{
   value: string | null
   label: string
@@ -40,27 +42,18 @@ const handleUpdateFormattedValue = (val: string | null) => {
 // 动态生成 themeOverrides，用 JS 预计算 rgba 值（Naive UI 不接受 color-mix()）
 // 注意：Naive UI 的 theme 属性名是 color 不是 backgroundColor
 const timePickerThemeOverrides = computed(() => {
+  // 保留全局配置依赖，确保配置变化时重算
+  const _cfg = appearanceConfig.value.input
   const _dark = isDarkMode.value
-  const cfg = appearanceConfig.value.input
-  if (!cfg.enabled) {
-    return {
-      peers: {
-        Input: {
-          color: 'var(--app-surface-card)',
-          colorFocus: 'var(--app-surface-card)',
-          border: '1px solid transparent',
-          borderHover: '1px solid transparent',
-          borderFocus: '1px solid transparent',
-          borderRadius: '8px'
-        }
-      }
-    }
-  }
-  const rootStyle = getComputedStyle(document.documentElement)
-  const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
-  const alpha = cfg.bg_opacity
-  const rgba = hexToRgba(baseColor, alpha)
-  const radius = `${cfg.border_radius}px`
+  // 从组件自身 DOM 读取继承的 CSS 变量，以便支持 data-app-instance 级别的覆盖
+  const el = timeRef.value
+  const style = el ? getComputedStyle(el) : getComputedStyle(document.documentElement)
+  const baseColor = style.getPropertyValue('--app-surface-card').trim()
+  const bgOpacityRaw = style.getPropertyValue('--input-bg-opacity').trim()
+  const bgOpacity = bgOpacityRaw ? parseFloat(bgOpacityRaw) / 100 : (_cfg.enabled ? _cfg.bg_opacity : 1)
+  const radiusRaw = style.getPropertyValue('--input-border-radius').trim()
+  const radius = radiusRaw || `${_cfg.enabled ? _cfg.border_radius : 8}px`
+  const rgba = hexToRgba(baseColor, bgOpacity)
   return {
     peers: {
       Input: {
@@ -86,7 +79,7 @@ function hexToRgba(hex: string, alpha: number): string {
 </script>
 
 <template>
-  <div class="app-time-field">
+  <div ref="timeRef" class="app-time-field">
     <div
       class="app-time-field__box"
       :class="{
