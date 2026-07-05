@@ -236,7 +236,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in paginatedGenres" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+            <n-card v-for="item in paginatedGenres" :key="item.id" class="mapping-card" data-app-instance="mapping-card" :bordered="false" hoverable @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.id }}</n-tag>
@@ -247,7 +247,7 @@ const tabCounts = computed(() => ({
               <div class="card-actions" @click.stop="openItemActions(item, $event)">
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
-            </div>
+            </n-card>
             <n-empty v-if="genreMappings.length === 0 && !loading" description="暂无数据" />
           </div>
           <n-pagination v-if="genreTotal > pageSize" v-model:page="genrePage" :page-size="pageSize" :item-count="genreTotal" size="small" style="margin-top: 12px; justify-content: center" />
@@ -265,7 +265,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in companyMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+            <n-card v-for="item in companyMappings" :key="item.id" class="mapping-card" data-app-instance="mapping-card" :bordered="false" hoverable @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.id }}</n-tag>
@@ -276,7 +276,7 @@ const tabCounts = computed(() => ({
               <div class="card-actions" @click.stop="openItemActions(item, $event)">
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
-            </div>
+            </n-card>
             <n-empty v-if="companyMappings.length === 0 && !companyLoading" description="暂无数据" />
           </div>
           <n-pagination v-if="companyTotal > pageSize" v-model:page="companyPage" :page-size="pageSize" :item-count="companyTotal" size="small" style="margin-top: 12px; justify-content: center" />
@@ -294,7 +294,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in keywordMappings" :key="item.id" class="mapping-card" @click="openEditModal(item)">
+            <n-card v-for="item in keywordMappings" :key="item.id" class="mapping-card" data-app-instance="mapping-card" :bordered="false" hoverable @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.id }}</n-tag>
@@ -305,7 +305,7 @@ const tabCounts = computed(() => ({
               <div class="card-actions" @click.stop="openItemActions(item, $event)">
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
-            </div>
+            </n-card>
             <n-empty v-if="keywordMappings.length === 0 && !keywordLoading" description="暂无数据" />
           </div>
           <n-pagination v-if="keywordTotal > pageSize" v-model:page="keywordPage" :page-size="pageSize" :item-count="keywordTotal" size="small" style="margin-top: 12px; justify-content: center" />
@@ -323,7 +323,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in paginatedLanguages" :key="item.code" class="mapping-card" @click="openEditModal(item)">
+            <n-card v-for="item in paginatedLanguages" :key="item.code" class="mapping-card" data-app-instance="mapping-card" :bordered="false" hoverable @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.code }}</n-tag>
@@ -334,7 +334,7 @@ const tabCounts = computed(() => ({
               <div class="card-actions" @click.stop="openItemActions(item, $event)">
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
-            </div>
+            </n-card>
             <n-empty v-if="languageMappings.length === 0 && !loading" description="暂无数据" />
           </div>
           <n-pagination v-if="languageTotal > pageSize" v-model:page="languagePage" :page-size="pageSize" :item-count="languageTotal" size="small" style="margin-top: 12px; justify-content: center" />
@@ -352,7 +352,7 @@ const tabCounts = computed(() => ({
             </n-input>
           </div>
           <div class="mapping-list">
-            <div v-for="item in paginatedCountries" :key="item.code" class="mapping-card" @click="openEditModal(item)">
+            <n-card v-for="item in paginatedCountries" :key="item.code" class="mapping-card" data-app-instance="mapping-card" :bordered="false" hoverable @click="openEditModal(item)">
               <div class="card-content">
                 <div class="card-header">
                   <n-tag size="small" type="info">{{ item.code }}</n-tag>
@@ -363,7 +363,7 @@ const tabCounts = computed(() => ({
               <div class="card-actions" @click.stop="openItemActions(item, $event)">
                 <n-icon size="20"><MoreIcon /></n-icon>
               </div>
-            </div>
+            </n-card>
             <n-empty v-if="countryMappings.length === 0 && !loading" description="暂无数据" />
           </div>
           <n-pagination v-if="countryTotal > pageSize" v-model:page="countryPage" :page-size="pageSize" :item-count="countryTotal" size="small" style="margin-top: 12px; justify-content: center" />
@@ -545,19 +545,19 @@ const tabCounts = computed(() => ({
 }
 /* 映射卡片 */
 .mapping-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--m-spacing-md);
-  background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--m-radius-md);
   cursor: pointer;
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
+.mapping-card :deep(.n-card__content) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--m-spacing-md);
+}
 .mapping-card:active {
-  background: var(--bg-surface-hover);
   transform: scale(0.995);
 }
 .card-content {

@@ -349,6 +349,18 @@ export const APPEARANCE_KEYS = {
     page: '卡片',
     categories: ['card']
   },
+  'tmdb-data-card': {
+    label: '元数据资产卡片',
+    description: '数据中心页面「元数据资产」中的数据表格和卡片',
+    page: '卡片',
+    categories: ['card', 'list']
+  },
+  'mapping-card': {
+    label: 'ID映射管理卡片',
+    description: '数据中心页面「ID映射管理」中的统计卡片和数据表格',
+    page: '卡片',
+    categories: ['card', 'list', 'search', 'tabs']
+  },
 } as const
 
 export type AppearanceKey = keyof typeof APPEARANCE_KEYS

@@ -144,7 +144,7 @@ const executeRefresh = () => {
         </template>
       </AppGlassModal>
 
-      <div class="browser-wrapper">
+      <n-card class="browser-wrapper" data-app-instance="tmdb-data-card" :bordered="true" size="small">
         <n-data-table
           :theme-overrides="dataTableThemeOverrides"
           remote
@@ -176,7 +176,7 @@ const executeRefresh = () => {
           :bordered="false"
           size="small"
         />
-      </div>
+      </n-card>
     </n-space>
 
     <!-- 编辑/新增元数据弹窗 -->
@@ -199,5 +199,5 @@ const executeRefresh = () => {
 
 <style scoped>
 .toolbar-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.browser-wrapper { background: var(--app-surface-card-mixed); border-radius: var(--card-border-radius, 8px); border: 1px solid var(--app-border-light); padding: 8px; }
+.browser-wrapper :deep(.n-card__content) { padding: 8px; }
 </style>

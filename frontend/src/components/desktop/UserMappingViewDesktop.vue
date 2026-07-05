@@ -250,7 +250,7 @@ const countryColumns = [
       </n-gi>
     </n-grid>
 
-    <n-card bordered size="small">
+    <n-card bordered size="small" data-app-instance="mapping-card">
       <template #header>
         <n-space justify="space-between" align="center">
           <span class="card-title">ID 映射管理</span>
