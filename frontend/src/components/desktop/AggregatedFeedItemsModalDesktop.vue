@@ -165,9 +165,6 @@ onBeforeUnmount(cleanupObserver)
         <n-button v-bind="getButtonStyle('secondary')" size="small" @click="handleRetryRecognition" :loading="loading">
           重试识别失败项
         </n-button>
-        <n-button v-bind="getButtonStyle('dialogCancel')" size="small" @click="emit('update:show', false)">
-          关闭
-        </n-button>
       </div>
     </div>
 

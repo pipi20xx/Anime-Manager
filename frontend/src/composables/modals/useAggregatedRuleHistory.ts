@@ -8,8 +8,9 @@ export function useAggregatedRuleHistory(props: any) {
   const loading = ref(false)
   const items = ref<any[]>([])
   const total = ref(0)
-  const page = ref(1)
-  const pageSize = ref(50)
+  const offset = ref(0)
+  const hasMore = ref(true)
+  const LIMIT = 50
 
   // 筛选状态
   const selectedRuleIds = ref<number[]>([])
@@ -21,8 +22,8 @@ export function useAggregatedRuleHistory(props: any) {
 
   const buildQuery = () => {
     const params = new URLSearchParams()
-    params.set('limit', String(pageSize.value))
-    params.set('offset', String((page.value - 1) * pageSize.value))
+    params.set('limit', String(LIMIT))
+    params.set('offset', String(offset.value))
     if (selectedRuleIds.value.length > 0) {
       params.set('rule_ids', selectedRuleIds.value.join(','))
     }
@@ -32,13 +33,29 @@ export function useAggregatedRuleHistory(props: any) {
     return params.toString()
   }
 
-  const fetchItems = async () => {
+  const fetchItems = async (append = false) => {
+    if (!append) {
+      offset.value = 0
+      items.value = []
+      hasMore.value = true
+    }
+    if (!hasMore.value) return
+
     loading.value = true
     try {
       const res = await fetch(`${API_BASE}/api/rules/history/all?${buildQuery()}`)
       const data = await res.json()
-      items.value = data.items || []
+      const newItems = data.items || []
       total.value = data.total || 0
+
+      if (newItems.length < LIMIT) hasMore.value = false
+
+      if (append) {
+        items.value.push(...newItems)
+      } else {
+        items.value = newItems
+      }
+      offset.value += newItems.length
     } catch (e) {
       console.error(e)
     } finally {
@@ -46,20 +63,9 @@ export function useAggregatedRuleHistory(props: any) {
     }
   }
 
+  // 筛选条件变化时重置并从头拉取
   const applyFilter = () => {
-    page.value = 1
-    fetchItems()
-  }
-
-  const handlePageChange = (p: number) => {
-    page.value = p
-    fetchItems()
-  }
-
-  const handlePageSizeChange = (s: number) => {
-    pageSize.value = s
-    page.value = 1
-    fetchItems()
+    fetchItems(false)
   }
 
   const handleDownload = async (item: any, clientId: string) => {
@@ -105,15 +111,13 @@ export function useAggregatedRuleHistory(props: any) {
     loading,
     items,
     total,
-    page,
-    pageSize,
+    offset,
+    hasMore,
     clientOptions,
     selectedRuleIds,
     keyword,
     fetchItems,
     applyFilter,
-    handlePageChange,
-    handlePageSizeChange,
     handleDownload,
     handleDelete
   }
