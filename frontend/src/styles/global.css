@@ -396,7 +396,7 @@ input, textarea, select, button {
   background: var(--bg-surface-hover) !important;
 }
 
-/* DataTable 主题化 - 容器背景跟随卡片外观；表头/行背景交由 themeOverrides 控制 */
+/* DataTable 主题化 - 容器/表头/行背景全部跟随外观 CSS 变量 */
 .n-data-table,
 .n-data-table .n-data-table-wrapper,
 .n-data-table .n-data-table-base-table,
@@ -411,9 +411,17 @@ input, textarea, select, button {
   border-radius: var(--card-border-radius, 8px) !important;
   overflow: hidden !important;
 }
-.n-data-table .n-data-table-td,
 .n-data-table .n-data-table-th {
+  background: var(--app-surface-card-mixed) !important;
   border-bottom: 1px solid var(--app-border-light) !important;
+}
+.n-data-table .n-data-table-td {
+  background: var(--app-surface-list-mixed) !important;
+  border-bottom: 1px solid var(--app-border-light) !important;
+}
+.n-data-table .n-data-table-td:hover,
+.n-data-table .n-data-table-tr:hover .n-data-table-td {
+  background: var(--app-surface-inner) !important;
 }
 
 /* Tabs 主题化 - 使用CSS变量支持外观自定义 */

@@ -349,6 +349,11 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     const l = overrides.list
     if (l.bg_opacity !== undefined) {
       decls.push(`--list-bg-transparent-pct: ${Math.round((1 - l.bg_opacity) * 100)}%;`)
+      // 关键：在实例级重算 --app-surface-list-mixed
+      // 该变量在 :root 处定义，会随 :root 的 --list-bg-transparent-pct 计算后被继承为静态值，
+      // 无法跟随实例级覆盖重算。此处重新声明，让实例内所有使用它的元素（.n-data-table-td 等）
+      // 都能正确跟随实例级列表背景不透明度。
+      decls.push(`--app-surface-list-mixed: color-mix(in srgb, var(--app-surface-card), transparent var(--list-bg-transparent-pct, 0%));`)
     }
     if (l.border_radius !== undefined) {
       decls.push(`--list-border-radius: ${l.border_radius}px;`)
@@ -501,40 +506,26 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-/** DataTable 主题覆盖 - 跟随「卡片外观」+「列表外观」设置
- * 注意：直接绑定到 <n-data-table :theme-overrides="...">，
- * 不需要外层 DataTable 键（那种结构是给 n-config-provider 用的）
- *
- * 字段名注意：
- * - card 配置用 `background_opacity`
- * - list 配置用 `bg_opacity`
+/** DataTable 主题覆盖 - 表头/行背景由全局 CSS（var(--app-surface-card-mixed) / var(--app-surface-list-mixed)) 控制，
+ * 这里只保留边框、文字、圆角等无法通过 CSS 变量覆盖的属性。
  */
 export const dataTableThemeOverrides = computed(() => {
   const cardCfg = appearanceConfig.value.card
-  const listCfg = appearanceConfig.value.list
-  const bgPrimary = currentThemeConfig.value?.bgPrimary || '#1e1e2e'
-  const innerBg = currentThemeConfig.value?.bgSecondary || '#2a2a3e'
-
-  // 表格容器背景跟随卡片外观（card 用 background_opacity）
-  const tableBgAlpha = cardCfg.enabled ? cardCfg.background_opacity : 1
-  // 行背景跟随列表外观（list 用 bg_opacity）
-  const rowBgAlpha = listCfg.enabled ? listCfg.bg_opacity : 1
-  const rowHoverAlpha = listCfg.enabled ? Math.min(1, listCfg.bg_opacity + 0.08) : 1
 
   return {
     borderRadius: cardCfg.enabled ? `${cardCfg.border_radius}px` : undefined,
-    thColor: hexToRgba(innerBg, tableBgAlpha),
-    thColorHover: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
-    thColorModal: hexToRgba(innerBg, tableBgAlpha),
-    thColorHoverModal: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
-    thColorPopover: hexToRgba(innerBg, tableBgAlpha),
-    thColorHoverPopover: hexToRgba(innerBg, Math.min(1, tableBgAlpha + 0.05)),
-    tdColor: hexToRgba(bgPrimary, rowBgAlpha),
-    tdColorHover: hexToRgba(bgPrimary, rowHoverAlpha),
-    tdColorModal: hexToRgba(bgPrimary, rowBgAlpha),
-    tdColorHoverModal: hexToRgba(bgPrimary, rowHoverAlpha),
-    tdColorPopover: hexToRgba(bgPrimary, rowBgAlpha),
-    tdColorHoverPopover: hexToRgba(bgPrimary, rowHoverAlpha),
+    thColor: 'transparent',
+    thColorHover: 'transparent',
+    thColorModal: 'transparent',
+    thColorHoverModal: 'transparent',
+    thColorPopover: 'transparent',
+    thColorHoverPopover: 'transparent',
+    tdColor: 'transparent',
+    tdColorHover: 'transparent',
+    tdColorModal: 'transparent',
+    tdColorHoverModal: 'transparent',
+    tdColorPopover: 'transparent',
+    tdColorHoverPopover: 'transparent',
     borderColor: 'var(--app-border-light)',
     thTextColor: 'var(--text-primary)',
     tdTextColor: 'var(--text-primary)',
