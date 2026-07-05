@@ -265,6 +265,16 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     if (c.background_image !== undefined) {
       decls.push(`--app-card-bg-image: ${c.background_image ? `url(/api/appearance/image/${c.background_image})` : 'none'};`)
     }
+    // 实例级边框样式（border_color/border_width/border_style 为实例级专用字段）
+    if (c.border_color !== undefined) {
+      decls.push(`--app-card-border-color: ${c.border_color};`)
+    }
+    if (c.border_width !== undefined) {
+      decls.push(`--app-card-border-width: ${c.border_width}px;`)
+    }
+    if (c.border_style !== undefined) {
+      decls.push(`--app-card-border-style: ${c.border_style};`)
+    }
     if (c.background_opacity !== undefined) {
       // 与全局公式保持一致——控制卡片底色层（::after）的不透明度：
       //   background_opacity = 1（100%）→ 底色不透明（遮住背景图片）
@@ -303,6 +313,24 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     if (t.tab_active_text_color !== undefined) {
       decls.push(`--tabs-tab-active-text-color: ${t.tab_active_text_color};`)
     }
+    // 实例级边框样式
+    if (t.border_color !== undefined) {
+      decls.push(`--tabs-nav-border-color: ${t.border_color};`)
+    }
+    if (t.border_width !== undefined) {
+      decls.push(`--tabs-nav-border-width: ${t.border_width}px;`)
+    }
+    if (t.border_style !== undefined) {
+      decls.push(`--tabs-nav-border-style: ${t.border_style};`)
+    }
+    // 关键：重新声明组合变量 --tabs-nav-border
+    // 该变量在 :root 处定义为 width + style + color 的组合，
+    // 浏览器在 :root 解析后得到静态字符串并继承给所有后代。
+    // 当实例级覆盖了 border-color/width/style 后，已解析的 --tabs-nav-border 不会重算，
+    // 必须在此重新声明才能让 .n-tabs-nav 的 border 跟随实例级配置。
+    if (t.border_color !== undefined || t.border_width !== undefined || t.border_style !== undefined) {
+      decls.push(`--tabs-nav-border: var(--tabs-nav-border-width) var(--tabs-nav-border-style) var(--tabs-nav-border-color);`)
+    }
   }
 
   // Input
@@ -325,6 +353,24 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     if (i.blur !== undefined) {
       decls.push(`--input-blur: ${i.blur > 0 ? `blur(${i.blur}px)` : 'none'};`)
     }
+    // 实例级边框样式
+    if (i.border_color !== undefined) {
+      decls.push(`--input-border-color: ${i.border_color};`)
+    }
+    if (i.border_width !== undefined) {
+      decls.push(`--input-border-width: ${i.border_width}px;`)
+    }
+    if (i.border_style !== undefined) {
+      decls.push(`--input-border-style: ${i.border_style};`)
+    }
+    // 关键：重新声明组合变量 --input-border
+    // 该变量在 :root 处定义为 width + style + color 的组合，
+    // 浏览器在 :root 解析后得到静态字符串并继承给所有后代。
+    // 当实例级覆盖了 border-color/width/style 后，已解析的 --input-border 不会重算，
+    // 必须在此重新声明才能让 AppTextField / AppSelectField / AppTimeField 的 border 跟随实例级配置。
+    if (i.border_color !== undefined || i.border_width !== undefined || i.border_style !== undefined) {
+      decls.push(`--input-border: var(--input-border-width) var(--input-border-style) var(--input-border-color);`)
+    }
   }
 
   // Search
@@ -346,6 +392,24 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     if (s.blur !== undefined) {
       decls.push(`--search-input-blur: ${s.blur > 0 ? `blur(${s.blur}px)` : 'none'};`)
     }
+    // 实例级边框样式
+    if (s.border_color !== undefined) {
+      decls.push(`--search-input-border-color: ${s.border_color};`)
+    }
+    if (s.border_width !== undefined) {
+      decls.push(`--search-input-border-width: ${s.border_width}px;`)
+    }
+    if (s.border_style !== undefined) {
+      decls.push(`--search-input-border-style: ${s.border_style};`)
+    }
+    // 关键：重新声明组合变量 --search-input-border
+    // 该变量在 :root 处定义为 width + style + color 的组合，
+    // 浏览器在 :root 解析后得到静态字符串并继承给所有后代。
+    // 当实例级覆盖了 border-color/width/style 后，已解析的 --search-input-border 不会重算，
+    // 必须在此重新声明才能让 AppSearchField 的 border 跟随实例级配置。
+    if (s.border_color !== undefined || s.border_width !== undefined || s.border_style !== undefined) {
+      decls.push(`--search-input-border: var(--search-input-border-width) var(--search-input-border-style) var(--search-input-border-color);`)
+    }
   }
 
   // List
@@ -364,6 +428,16 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
     if (l.blur !== undefined) {
       decls.push(`--list-blur: ${l.blur > 0 ? `blur(${l.blur}px)` : 'none'};`)
+    }
+    // 实例级边框样式
+    if (l.border_color !== undefined) {
+      decls.push(`--list-border-color: ${l.border_color};`)
+    }
+    if (l.border_width !== undefined) {
+      decls.push(`--list-border-width: ${l.border_width}px;`)
+    }
+    if (l.border_style !== undefined) {
+      decls.push(`--list-border-style: ${l.border_style};`)
     }
   }
 

@@ -25,6 +25,7 @@
   --app-card-blur: none;  /* 卡片背景模糊 */
   --app-card-border-style: solid;  /* 边框样式 */
   --app-card-border-width: 1px;    /* 边框宽度 */
+  --app-card-border-color: var(--app-border-light);  /* 边框颜色（实例级可覆盖）*/
 
   /* 混合后的卡片背景色（自动跟随透明度）- 用于所有 background 属性 */
   --app-surface-card-mixed: color-mix(in srgb, var(--app-surface-card), transparent var(--app-card-bg-transparent-pct, 0%));
@@ -35,6 +36,9 @@
   --list-bg-transparent-pct: 0%;  /* 列表项背景透明百分比 */
   --list-border-radius: 8px;      /* 列表项圆角 */
   --list-blur: none;              /* 列表项模糊 */
+  --list-border-color: var(--app-border-light);  /* 列表项边框颜色（实例级可覆盖）*/
+  --list-border-width: 1px;                       /* 列表项边框宽度（实例级可覆盖）*/
+  --list-border-style: solid;                     /* 列表项边框样式（实例级可覆盖）*/
 
   /* 全局背景自定义变量 */
   --app-global-bg-image: none;  /* 全局背景图片 */
@@ -130,7 +134,10 @@
   --tabs-nav-bg: var(--app-surface-card);  /* Tabs导航栏背景色 */
   --tabs-nav-bg-opacity: 1;  /* Tabs导航栏背景透明度 */
   --tabs-nav-bg-transparent-pct: 0%;  /* Tabs导航栏透明百分比（预计算）*/
-  --tabs-nav-border: 1px solid var(--app-border-light);  /* Tabs导航栏边框 */
+  --tabs-nav-border-color: var(--app-border-light);  /* Tabs导航栏边框颜色（实例级可覆盖）*/
+  --tabs-nav-border-width: 1px;  /* Tabs导航栏边框宽度（实例级可覆盖）*/
+  --tabs-nav-border-style: solid;  /* Tabs导航栏边框样式（实例级可覆盖）*/
+  --tabs-nav-border: var(--tabs-nav-border-width) var(--tabs-nav-border-style) var(--tabs-nav-border-color);  /* Tabs导航栏边框（组合）*/
   --tabs-nav-border-radius: var(--card-border-radius);  /* Tabs导航栏圆角 */
   --tabs-nav-blur: none;  /* Tabs导航栏模糊效果 */
   --tabs-nav-shadow: none;  /* Tabs导航栏阴影 */
@@ -149,7 +156,10 @@
   --input-bg: var(--app-surface-card);  /* 输入框背景色 */
   --input-bg-opacity: 1;  /* 输入框背景透明度 */
   --input-bg-transparent-pct: 0%;  /* 输入框透明百分比（预计算）*/
-  --input-border: 1px solid var(--border-medium);  /* 输入框边框 */
+  --input-border-color: var(--border-medium);  /* 输入框边框颜色（实例级可覆盖）*/
+  --input-border-width: 1px;  /* 输入框边框宽度（实例级可覆盖）*/
+  --input-border-style: solid;  /* 输入框边框样式（实例级可覆盖）*/
+  --input-border: var(--input-border-width) var(--input-border-style) var(--input-border-color);  /* 输入框边框（组合）*/
   --input-border-radius: 8px;  /* 输入框圆角 */
   --input-height: 56px;  /* 输入框高度 */
   --input-blur: none;  /* 输入框模糊效果 */
@@ -167,7 +177,10 @@
   --search-input-bg-transparent-pct: 0%;  /* 搜索框透明百分比（预计算）*/
   --search-input-bg-transparent-pct-hover: 0%;  /* 搜索框hover透明百分比 */
   --search-input-bg-transparent-pct-focus: 0%;  /* 搜索框focus透明百分比 */
-  --search-input-border: 1px solid var(--app-border-light);  /* 搜索框边框 */
+  --search-input-border-color: var(--app-border-light);  /* 搜索框边框颜色（实例级可覆盖）*/
+  --search-input-border-width: 1px;  /* 搜索框边框宽度（实例级可覆盖）*/
+  --search-input-border-style: solid;  /* 搜索框边框样式（实例级可覆盖）*/
+  --search-input-border: var(--search-input-border-width) var(--search-input-border-style) var(--search-input-border-color);  /* 搜索框边框（组合）*/
   --search-input-border-radius: 22px;  /* 搜索框圆角（药丸形状） */
   --search-input-height: 44px;  /* 搜索框高度 */
   --search-input-blur: none;  /* 搜索框模糊效果 */
@@ -325,6 +338,12 @@ input, textarea, select, button {
   backdrop-filter: var(--app-card-blur, none);
   -webkit-backdrop-filter: var(--app-card-blur, none);
 }
+/* 实例级卡片边框：仅在有 data-app-instance 作用域时覆盖边框，
+   避免影响普通页面上 bordered=false 的卡片 */
+.n-card[data-app-instance],
+[data-app-instance] .n-card {
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light)) !important;
+}
 .n-card > .n-card__content {
   padding: 12px 16px !important;
 }
@@ -387,7 +406,7 @@ input, textarea, select, button {
 }
 .n-list-item {
   background: var(--app-surface-list-mixed) !important;
-  border-bottom: 1px solid var(--app-border-light) !important;
+  border-bottom: var(--list-border-width) var(--list-border-style) var(--list-border-color) !important;
   border-radius: var(--list-border-radius) !important;
   backdrop-filter: var(--list-blur) !important;
   -webkit-backdrop-filter: var(--list-blur) !important;
@@ -413,11 +432,11 @@ input, textarea, select, button {
 }
 .n-data-table .n-data-table-th {
   background: var(--app-surface-card-mixed) !important;
-  border-bottom: 1px solid var(--app-border-light) !important;
+  border-bottom: var(--list-border-width) var(--list-border-style) var(--list-border-color) !important;
 }
 .n-data-table .n-data-table-td {
   background: var(--app-surface-list-mixed) !important;
-  border-bottom: 1px solid var(--app-border-light) !important;
+  border-bottom: var(--list-border-width) var(--list-border-style) var(--list-border-color) !important;
 }
 .n-data-table .n-data-table-td:hover,
 .n-data-table .n-data-table-tr:hover .n-data-table-td {
@@ -666,6 +685,16 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 .n-card[data-app-instance] .n-input .n-input__textarea-el {
   color: var(--app-instance-text-input-color, var(--app-instance-text-color, var(--text-primary))) !important;
   text-shadow: var(--app-instance-text-input-shadow, none) !important;
+}
+
+/* 实例级原生 n-input 边框覆盖：让 Naive UI 原生输入框的边框也跟随实例级 --input-border */
+.n-modal-container .n-modal[data-app-instance] .n-input .n-input__border,
+.n-modal-container .n-modal[data-app-instance] .n-input .n-input__border-hover,
+.n-modal-container .n-modal[data-app-instance] .n-input .n-input__border-focus,
+.n-card[data-app-instance] .n-input .n-input__border,
+.n-card[data-app-instance] .n-input .n-input__border-hover,
+.n-card[data-app-instance] .n-input .n-input__border-focus {
+  border: var(--input-border) !important;
 }
 
 /* 实例级下拉框已选文字（包括自己输入的过滤文字和多选 tag）跟随输入文字色 */
@@ -1279,7 +1308,7 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 /* 主容器卡片 - 用于页面主容器(任务中心、数据中心等) */
 .app-card-container {
   background: var(--app-surface-card) !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-card-border-color) !important;
   border-radius: var(--card-border-radius) !important;
   box-shadow: var(--app-card-shadow) !important;
   transition: all var(--transition-normal) !important;
@@ -1288,7 +1317,7 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 /* 网格展示卡片 - 用于任务网格、数据网格等(可交互) */
 .app-card-grid {
   background: var(--app-surface-inner) !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-card-border-color) !important;
   border-radius: var(--card-border-radius) !important;
   cursor: pointer !important;
   transition: all var(--transition-normal) !important;
@@ -1305,7 +1334,7 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 .app-card-maintenance,
 .app-card-client {
   background: var(--app-surface-card-mixed) !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-card-border-color) !important;
   border-radius: var(--card-border-radius) !important;
   transition: all var(--transition-normal) !important;
 }
@@ -1313,7 +1342,7 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
 /* 透明卡片 - 用于特殊展示 */
 .app-card-transparent {
   background: transparent !important;
-  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-border-light) !important;
+  border: var(--app-card-border-width) var(--app-card-border-style) var(--app-card-border-color) !important;
   border-radius: var(--card-border-radius) !important;
 }
 

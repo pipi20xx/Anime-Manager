@@ -119,7 +119,7 @@ function hexToRgba(hex: string, alpha: number): string {
 .app-time-field__box {
   position: relative;
   height: var(--input-height, 56px);
-  border: 1px solid var(--border-medium);
+  border: var(--input-border);
   border-radius: var(--input-border-radius, 8px);
   background: transparent;
   transition: border-color 0.2s;

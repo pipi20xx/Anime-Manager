@@ -92,18 +92,34 @@ export interface AppearanceText {
 }
 
 /**
+ * 实例级边框样式扩展：仅用于单独自定义弹框/卡片，不在全局默认中提供。
+ * 所有字段 undefined 表示继承默认边框样式。
+ */
+export interface InstanceBorderOverrides {
+  /** 边框颜色 */
+  border_color?: string
+  /** 边框宽度（px） */
+  border_width?: number
+  /** 边框样式：solid / dashed / dotted / double / groove / ridge / inset / outset / none */
+  border_style?: string
+}
+
+/**
  * 实例级覆盖：每个字段的 undefined 表示"继承全局默认"
  * 仅填写需要覆盖的字段，未填写的字段会自动继承 :root 全局变量值
+ *
+ * 边框样式（border_color/border_width/border_style）为实例级专用字段，
+ * 全局默认不做此配置，仅在单独自定义弹框/卡片中支持。
  */
 export interface AppearanceInstanceOverrides {
   modal?: Partial<AppearanceModal>
-  card?: Partial<AppearanceCard>
+  card?: Partial<AppearanceCard> & InstanceBorderOverrides
   /** 文字样式：仅实例级覆盖，全局默认不做文字样式调整 */
   text?: Partial<AppearanceText>
-  tabs?: Partial<AppearanceTabs>
-  input?: Partial<AppearanceInput>
-  search?: Partial<AppearanceSearch>
-  list?: Partial<AppearanceList>
+  tabs?: Partial<AppearanceTabs> & InstanceBorderOverrides
+  input?: Partial<AppearanceInput> & InstanceBorderOverrides
+  search?: Partial<AppearanceSearch> & InstanceBorderOverrides
+  list?: Partial<AppearanceList> & InstanceBorderOverrides
 }
 
 export interface AppearanceConfig {

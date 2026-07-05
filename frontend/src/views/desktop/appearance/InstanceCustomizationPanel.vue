@@ -58,6 +58,42 @@ const textDefaults = {
   font_size: 14,
 }
 
+/**
+ * 实例级专用边框字段默认值：全局默认不做边框样式配置，
+ * 仅在单独自定义弹框/卡片中支持。
+ * 默认值与 global.css 中 :root 的初始值保持一致。
+ */
+const instanceOnlyDefaults: Record<string, Record<string, any>> = {
+  card: { border_color: 'rgba(255, 255, 255, 0.08)', border_width: 1, border_style: 'solid' },
+  input: { border_color: 'rgba(255, 255, 255, 0.12)', border_width: 1, border_style: 'solid' },
+  search: { border_color: 'rgba(255, 255, 255, 0.08)', border_width: 1, border_style: 'solid' },
+  list: { border_color: 'rgba(255, 255, 255, 0.08)', border_width: 1, border_style: 'solid' },
+  tabs: { border_color: 'rgba(255, 255, 255, 0.08)', border_width: 1, border_style: 'solid' },
+}
+
+/** 边框样式下拉选项 */
+const borderStyleOptions = [
+  { label: '实线 (solid)', value: 'solid' },
+  { label: '虚线 (dashed)', value: 'dashed' },
+  { label: '点线 (dotted)', value: 'dotted' },
+  { label: '双线 (double)', value: 'double' },
+  { label: '凹槽 (groove)', value: 'groove' },
+  { label: '凸脊 (ridge)', value: 'ridge' },
+  { label: '内陷 (inset)', value: 'inset' },
+  { label: '外凸 (outset)', value: 'outset' },
+  { label: '无边框 (none)', value: 'none' },
+]
+
+/** 判断字段是否为实例级专用字段（不存在于全局配置中） */
+function isInstanceOnlyField(category: string, field: string): boolean {
+  return !!(instanceOnlyDefaults[category] && field in instanceOnlyDefaults[category])
+}
+
+/** 获取实例级专用字段的默认值 */
+function getInstanceOnlyDefault(category: string, field: string): any {
+  return instanceOnlyDefaults[category]?.[field]
+}
+
 /** 根据 pageFilter 过滤后的下拉选项 */
 const filteredOptions = computed(() => {
   if (props.pageFilter) {
@@ -118,7 +154,7 @@ function isFieldOverridden(category: keyof AppearanceInstanceOverrides, field: s
   return (inst[category] as Record<string, any>)[field] !== undefined
 }
 
-/** 启用字段覆盖：用当前全局值作为初始值（文字样式字段使用内置默认值） */
+/** 启用字段覆盖：用当前全局值作为初始值（文字样式/边框样式字段使用内置默认值） */
 function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
   if (!selectedInstanceKey.value) return
   const key = selectedInstanceKey.value
@@ -128,6 +164,8 @@ function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field:
   }
   if (category === 'text') {
     ;(props.form.instances![key][category] as Record<string, any>)[field] = (textDefaults as Record<string, any>)[field]
+  } else if (isInstanceOnlyField(category, field)) {
+    ;(props.form.instances![key][category] as Record<string, any>)[field] = getInstanceOnlyDefault(category, field)
   } else {
     ;(props.form.instances![key][category] as Record<string, any>)[field] = (props.form[category] as any)[field]
   }
@@ -160,10 +198,11 @@ function toggleFieldOverride(category: keyof AppearanceInstanceOverrides, field:
   }
 }
 
-/** 获取字段值（覆盖值优先，未覆盖则返回全局值；文字样式字段返回内置默认值） */
+/** 获取字段值（覆盖值优先，未覆盖则返回全局值；文字样式/边框样式字段返回内置默认值） */
 function getFieldValue(category: keyof AppearanceInstanceOverrides, field: string): any {
   if (!selectedInstanceKey.value) {
     if (category === 'text') return (textDefaults as Record<string, any>)[field]
+    if (isInstanceOnlyField(category, field)) return getInstanceOnlyDefault(category, field)
     return (props.form[category] as any)[field]
   }
   const inst = props.form.instances![selectedInstanceKey.value]
@@ -171,6 +210,7 @@ function getFieldValue(category: keyof AppearanceInstanceOverrides, field: strin
     return (inst[category] as Record<string, any>)[field]
   }
   if (category === 'text') return (textDefaults as Record<string, any>)[field]
+  if (isInstanceOnlyField(category, field)) return getInstanceOnlyDefault(category, field)
   return (props.form[category] as any)[field]
 }
 
@@ -353,6 +393,31 @@ defineExpose({ currentInstanceOverrides, instanceCount })
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.input.blur }}px</div>
             </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'border_color')" @update:checked="v => toggleFieldOverride('input', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('input', 'border_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('input', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'border_width')" @update:checked="v => toggleFieldOverride('input', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('input', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('input', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('input', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('input', 'border_style')" @update:checked="v => toggleFieldOverride('input', 'border_style', v)">边框样式</n-checkbox>
+              <div v-if="isFieldOverridden('input', 'border_style')" class="instance-field__control">
+                <n-select :value="getFieldValue('input', 'border_style')" :options="borderStyleOptions" size="small" @update:value="v => setFieldValue('input', 'border_style', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
           </div>
         </n-tab-pane>
 
@@ -394,6 +459,31 @@ defineExpose({ currentInstanceOverrides, instanceCount })
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.search.blur }}px</div>
             </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'border_color')" @update:checked="v => toggleFieldOverride('search', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('search', 'border_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('search', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'border_width')" @update:checked="v => toggleFieldOverride('search', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('search', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('search', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('search', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('search', 'border_style')" @update:checked="v => toggleFieldOverride('search', 'border_style', v)">边框样式</n-checkbox>
+              <div v-if="isFieldOverridden('search', 'border_style')" class="instance-field__control">
+                <n-select :value="getFieldValue('search', 'border_style')" :options="borderStyleOptions" size="small" @update:value="v => setFieldValue('search', 'border_style', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
           </div>
         </n-tab-pane>
 
@@ -432,6 +522,31 @@ defineExpose({ currentInstanceOverrides, instanceCount })
                 <n-color-picker :value="getFieldValue('tabs', 'tab_active_text_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('tabs', 'tab_active_text_color', v)" />
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_active_text_color }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'border_color')" @update:checked="v => toggleFieldOverride('tabs', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('tabs', 'border_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('tabs', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'border_width')" @update:checked="v => toggleFieldOverride('tabs', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('tabs', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'border_style')" @update:checked="v => toggleFieldOverride('tabs', 'border_style', v)">边框样式</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'border_style')" class="instance-field__control">
+                <n-select :value="getFieldValue('tabs', 'border_style')" :options="borderStyleOptions" size="small" @update:value="v => setFieldValue('tabs', 'border_style', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
             </div>
           </div>
         </n-tab-pane>
@@ -477,6 +592,31 @@ defineExpose({ currentInstanceOverrides, instanceCount })
                 <n-tag size="small" type="info">{{ getFieldValue('card', 'blur') }}px</n-tag>
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.card.blur }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'border_color')" @update:checked="v => toggleFieldOverride('card', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('card', 'border_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('card', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'border_width')" @update:checked="v => toggleFieldOverride('card', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('card', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('card', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('card', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('card', 'border_style')" @update:checked="v => toggleFieldOverride('card', 'border_style', v)">边框样式</n-checkbox>
+              <div v-if="isFieldOverridden('card', 'border_style')" class="instance-field__control">
+                <n-select :value="getFieldValue('card', 'border_style')" :options="borderStyleOptions" size="small" @update:value="v => setFieldValue('card', 'border_style', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
             </div>
           </div>
         </n-tab-pane>
@@ -612,6 +752,31 @@ defineExpose({ currentInstanceOverrides, instanceCount })
                 <n-tag size="small" type="info">{{ getFieldValue('list', 'blur') }}px</n-tag>
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.list.blur }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('list', 'border_color')" @update:checked="v => toggleFieldOverride('list', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('list', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('list', 'border_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('list', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('list', 'border_width')" @update:checked="v => toggleFieldOverride('list', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('list', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('list', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('list', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('list', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('list', 'border_style')" @update:checked="v => toggleFieldOverride('list', 'border_style', v)">边框样式</n-checkbox>
+              <div v-if="isFieldOverridden('list', 'border_style')" class="instance-field__control">
+                <n-select :value="getFieldValue('list', 'border_style')" :options="borderStyleOptions" size="small" @update:value="v => setFieldValue('list', 'border_style', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认</div>
             </div>
           </div>
         </n-tab-pane>
