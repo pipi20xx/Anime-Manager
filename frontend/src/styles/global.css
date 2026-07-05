@@ -653,6 +653,34 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   text-shadow: var(--app-instance-text-tint-shadow, none) !important;
 }
 
+/* 实例级输入框/搜索框文字统一跟随输入文字色（自己输入的文字） */
+.n-modal-container .n-modal[data-app-instance] .app-text-field__input,
+.n-modal-container .n-modal[data-app-instance] .app-text-field__input--textarea,
+.n-modal-container .n-modal[data-app-instance] .app-search-field__input,
+.n-modal-container .n-modal[data-app-instance] .n-input .n-input__input-el,
+.n-modal-container .n-modal[data-app-instance] .n-input .n-input__textarea-el,
+.n-card[data-app-instance] .app-text-field__input,
+.n-card[data-app-instance] .app-text-field__input--textarea,
+.n-card[data-app-instance] .app-search-field__input,
+.n-card[data-app-instance] .n-input .n-input__input-el,
+.n-card[data-app-instance] .n-input .n-input__textarea-el {
+  color: var(--app-instance-text-input-color, var(--app-instance-text-color, var(--text-primary))) !important;
+  text-shadow: var(--app-instance-text-input-shadow, none) !important;
+}
+
+/* 实例级下拉框已选文字（包括自己输入的过滤文字和多选 tag）跟随输入文字色 */
+.n-modal-container .n-modal[data-app-instance] .app-select-field__select .n-base-selection-label,
+.n-modal-container .n-modal[data-app-instance] .app-select-field__select .n-base-selection-label__input,
+.n-modal-container .n-modal[data-app-instance] .app-select-field__select .n-base-selection-tag-wrapper .n-tag,
+.n-modal-container .n-modal[data-app-instance] .app-select-field__select .n-base-selection-tag-wrapper .n-tag__content,
+.n-card[data-app-instance] .app-select-field__select .n-base-selection-label,
+.n-card[data-app-instance] .app-select-field__select .n-base-selection-label__input,
+.n-card[data-app-instance] .app-select-field__select .n-base-selection-tag-wrapper .n-tag,
+.n-card[data-app-instance] .app-select-field__select .n-base-selection-tag-wrapper .n-tag__content {
+  color: var(--app-instance-text-input-color, var(--app-instance-text-color, var(--text-primary))) !important;
+  text-shadow: var(--app-instance-text-input-shadow, none) !important;
+}
+
 /* Popconfirm 主题化 */
 .n-popconfirm {
   background: var(--app-modal-bg) !important;

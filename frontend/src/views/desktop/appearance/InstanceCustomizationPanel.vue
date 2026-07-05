@@ -48,10 +48,12 @@ const textDefaults = {
   secondary_color: 'rgba(255, 255, 255, 0.7)',
   tertiary_color: 'rgba(255, 255, 255, 0.5)',
   tint_color: '#ffffff',
+  input_color: '#ffffff',
   shadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
   secondary_shadow: 'none',
   tertiary_shadow: 'none',
   tint_shadow: 'none',
+  input_shadow: 'none',
   font_weight: 400,
   font_size: 14,
 }
@@ -515,6 +517,14 @@ defineExpose({ currentInstanceOverrides, instanceCount })
             </div>
 
             <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'input_color')" @update:checked="v => toggleFieldOverride('text', 'input_color', v)">输入框文字色</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'input_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('text', 'input_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('text', 'input_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('text', 'shadow')" @update:checked="v => toggleFieldOverride('text', 'shadow', v)">主字阴影</n-checkbox>
               <div v-if="isFieldOverridden('text', 'shadow')" class="instance-field__control">
                 <n-input :value="getFieldValue('text', 'shadow')" placeholder="例如：0 2px 4px rgba(0,0,0,0.5)" @update:value="v => setFieldValue('text', 'shadow', v)" size="small" style="flex: 1;" />
@@ -542,6 +552,14 @@ defineExpose({ currentInstanceOverrides, instanceCount })
               <n-checkbox :checked="isFieldOverridden('text', 'tint_shadow')" @update:checked="v => toggleFieldOverride('text', 'tint_shadow', v)">彩色底色文字阴影</n-checkbox>
               <div v-if="isFieldOverridden('text', 'tint_shadow')" class="instance-field__control">
                 <n-input :value="getFieldValue('text', 'tint_shadow')" placeholder="例如：0 1px 2px rgba(0,0,0,0.3)" @update:value="v => setFieldValue('text', 'tint_shadow', v)" size="small" style="flex: 1;" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'input_shadow')" @update:checked="v => toggleFieldOverride('text', 'input_shadow', v)">输入框文字阴影</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'input_shadow')" class="instance-field__control">
+                <n-input :value="getFieldValue('text', 'input_shadow')" placeholder="例如：0 1px 2px rgba(0,0,0,0.3)" @update:value="v => setFieldValue('text', 'input_shadow', v)" size="small" style="flex: 1;" />
               </div>
               <div v-else class="instance-field__hint">继承默认主题</div>
             </div>

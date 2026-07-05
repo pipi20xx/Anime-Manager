@@ -382,6 +382,9 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     if (t.tint_color !== undefined) {
       decls.push(`--app-instance-text-tint-color: ${t.tint_color};`)
     }
+    if (t.input_color !== undefined) {
+      decls.push(`--app-instance-text-input-color: ${t.input_color};`)
+    }
     if (t.shadow !== undefined) {
       decls.push(`--app-instance-text-shadow: ${t.shadow};`)
     }
@@ -393,6 +396,9 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
     if (t.tint_shadow !== undefined) {
       decls.push(`--app-instance-text-tint-shadow: ${t.tint_shadow};`)
+    }
+    if (t.input_shadow !== undefined) {
+      decls.push(`--app-instance-text-input-shadow: ${t.input_shadow};`)
     }
     if (t.font_weight !== undefined) {
       decls.push(`--app-instance-text-font-weight: ${t.font_weight};`)

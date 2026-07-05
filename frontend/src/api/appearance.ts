@@ -75,6 +75,8 @@ export interface AppearanceText {
   tertiary_color: string
   /** 彩色底色上的文字色（状态标签、徽章等） */
   tint_color: string
+  /** 输入框/搜索框/下拉框中自己输入或已选中的文字色 */
+  input_color: string
   /** 文字主色阴影 */
   shadow: string
   /** 次要文字色阴影 */
@@ -83,6 +85,8 @@ export interface AppearanceText {
   tertiary_shadow: string
   /** 彩色底色文字色阴影 */
   tint_shadow: string
+  /** 输入文字色阴影 */
+  input_shadow: string
   font_weight: number
   font_size: number
 }
