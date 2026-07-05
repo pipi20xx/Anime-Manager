@@ -12,6 +12,7 @@ import {
   type AppearanceImage
 } from '../../api/appearance'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { useAppearanceConfigIO } from '../../composables/useAppearanceConfigIO'
 import {
   appearanceConfig,
   saveAppearanceConfig,
@@ -61,6 +62,19 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// ============= 配置导入/导出 =============
+const {
+  fileInput,
+  importLoading,
+  exportLoading,
+  exportConfig,
+  triggerImport,
+  handleFileImport
+} = useAppearanceConfigIO()
+
+const handleExportConfig = () => { exportConfig(form) }
+const onImportFileChange = (e: Event) => { handleFileImport(e, form, preview) }
 
 const preview = () => { applyAppearanceToCss(form) }
 
@@ -133,6 +147,8 @@ const formatFileSize = (size: number) => {
         <div class="subtitle">自定义界面外观与视觉效果</div>
       </div>
       <n-space>
+        <n-button v-bind="getButtonStyle('primary')" :loading="exportLoading" @click="handleExportConfig">导出配置</n-button>
+        <n-button v-bind="getButtonStyle('primary')" :loading="importLoading" @click="triggerImport">导入配置</n-button>
         <n-popconfirm @positive-click="handleReset">
           <template #trigger>
             <n-button v-bind="getButtonStyle('warning')">恢复默认</n-button>
@@ -477,6 +493,15 @@ const formatFileSize = (size: number) => {
         </n-tab-pane>
       </n-tabs>
     </n-spin>
+
+    <!-- 导入配置文件选择（隐藏） -->
+    <input
+      type="file"
+      ref="fileInput"
+      accept=".zip"
+      style="display: none"
+      @change="onImportFileChange"
+    />
   </div>
 </template>
 

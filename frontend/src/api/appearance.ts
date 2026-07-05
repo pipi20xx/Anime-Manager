@@ -160,5 +160,11 @@ export const appearanceApi = {
   listImages: () =>
     axios.get<AppearanceImage[]>('/api/appearance/images', { headers: getHeaders() }),
 
-  getImageUrl: (filename: string) => `/api/appearance/image/${filename}`
+  getImageUrl: (filename: string) => `/api/appearance/image/${filename}`,
+
+  getImageBlob: (filename: string) =>
+    axios.get<Blob>(`/api/appearance/image/${filename}`, {
+      headers: getHeaders(),
+      responseType: 'blob'
+    })
 }
