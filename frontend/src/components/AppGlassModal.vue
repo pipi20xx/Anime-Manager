@@ -35,7 +35,6 @@ import { NModal } from 'naive-ui'
  * - 编辑RSS订阅源 (FeedEditModal)
  * - 订阅预设模板管理 (SubscriptionTemplateModalDesktop/Mobile)
  * - 订阅详情查看 (SubscriptionDetailModalDesktop)
- * - RSS订阅项列表 (FeedItemsModalDesktop)
  * - 订阅源详情 (AggregatedFeedItemsModalDesktop)
  * - 订阅过滤项填写指南 (SubscriptionHelpModal)
  * 
@@ -49,7 +48,6 @@ import { NModal } from 'naive-ui'
  * - 编辑基础规则 (PriorityRuleModalDesktop/Mobile内部)
  * - 编辑洗版策略 (PriorityRuleModalDesktop/Mobile内部)
  * - 规则历史记录 (AggregatedRuleHistoryModalDesktop)
- * - 推送历史查看 (RuleHistoryModalDesktop/Mobile)
  * - 规则预览 (RulePreviewModalDesktop/Mobile)
  * 
  * 【下载器与客户端类】

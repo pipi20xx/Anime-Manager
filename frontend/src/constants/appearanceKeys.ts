@@ -69,12 +69,6 @@ export const APPEARANCE_KEYS = {
     page: '订阅与下载',
     categories: ['modal', 'input', 'search', 'tabs', 'card', 'list']
   },
-  'feed-items-modal': {
-    label: '查看内容 → 订阅源详情',
-    description: '查看单个 RSS 源条目的弹框',
-    page: '订阅与下载',
-    categories: ['modal', 'input', 'search', 'tabs', 'card', 'list']
-  },
   'rss-detect-manager-modal': {
     label: '自动RSS订阅管理 → 自动 RSS 订阅管理',
     description: '管理 RSS 自动订阅探测任务，可添加或编辑探测任务的弹框',
@@ -104,12 +98,6 @@ export const APPEARANCE_KEYS = {
   'priority-rule-modal': {
     label: '洗版规则 → 洗版规则管理',
     description: '编辑优先级基础规则与洗版策略的弹框表单',
-    page: '规则与匹配',
-    categories: ['modal', 'input', 'search', 'tabs', 'card', 'list']
-  },
-  'rule-history-modal': {
-    label: '推送历史',
-    description: '查看规则推送历史的弹框',
     page: '规则与匹配',
     categories: ['modal', 'input', 'search', 'tabs', 'card', 'list']
   },
@@ -266,97 +254,97 @@ export const APPEARANCE_KEYS = {
 
   // ===== 卡片 =====
   'strm-task-card': {
-    label: 'STRM 任务卡片',
+    label: '虚拟 STRM 库 → STRM 任务卡片',
     description: '虚拟 STRM 库页面中的任务列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'organize-rule-card': {
-    label: '整理规则卡片',
+    label: '整理与重命名 → 规则管理 → 整理规则卡片',
     description: '整理与重命名页面「规则管理」中的规则列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'organize-task-card': {
-    label: '整理任务卡片',
+    label: '整理与重命名 → 整理任务 → 整理任务卡片',
     description: '整理与重命名页面「整理任务」中的任务列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'subscription-card': {
-    label: '追剧订阅卡片',
+    label: '订阅管理 → 追剧订阅卡片',
     description: '订阅管理页面中的番剧订阅列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'feed-card': {
-    label: '订阅源卡片',
+    label: '订阅与下载 → 订阅源 → 订阅源卡片',
     description: '订阅与下载页面「订阅源」中的 RSS 订阅源列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'rss-rule-card': {
-    label: '下载规则卡片',
+    label: '订阅与下载 → 下载规则 → 下载规则卡片',
     description: '订阅与下载页面「下载规则」中的 RSS 匹配规则列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'client-card': {
-    label: '下载客户端卡片',
+    label: '系统设置 → 下载客户端卡片',
     description: '系统设置页面中的下载客户端配置卡片',
     page: '卡片',
     categories: ['card']
   },
   'profile-card': {
-    label: '洗版策略卡片',
+    label: '洗版规则弹框 → 洗版策略卡片',
     description: '洗版规则弹框「洗版策略」中的策略配置卡片',
     page: '卡片',
     categories: ['card']
   },
   'priority-rule-card': {
-    label: '基础规则卡片',
+    label: '洗版规则弹框 → 基础规则卡片',
     description: '洗版规则弹框「基础规则」中的规则列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'track-card': {
-    label: '追踪番剧卡片',
+    label: '日历 → 追踪番剧卡片',
     description: '日历页面中选中日期的番剧追踪卡片',
     page: '卡片',
     categories: ['card']
   },
   'table-card': {
-    label: '数据库表卡片',
+    label: '数据维护 → 数据库表卡片',
     description: '数据维护页面中的数据库表信息卡片',
     page: '卡片',
     categories: ['card']
   },
   'organize-history-card': {
-    label: '整理历史卡片',
+    label: '整理历史 → 整理历史卡片',
     description: '整理历史页面中的整理记录列表卡片',
     page: '卡片',
     categories: ['card']
   },
   'secondary-rule-card': {
-    label: '二级分类规则卡片',
+    label: '数据中心 → 二级分类规则 → 二级分类规则卡片',
     description: '数据中心页面「二级分类规则」中的规则配置卡片',
     page: '卡片',
     categories: ['card']
   },
   'maintenance-card': {
-    label: '维护中心卡片',
+    label: '数据中心 → 维护中心 → 维护中心卡片',
     description: '数据中心页面「维护中心」中的数据库维护卡片',
     page: '卡片',
     categories: ['card']
   },
   'tmdb-data-card': {
-    label: '元数据资产卡片',
+    label: '数据中心 → 元数据资产 → 元数据资产卡片',
     description: '数据中心页面「元数据资产」中的数据表格和卡片',
     page: '卡片',
     categories: ['card', 'list']
   },
   'mapping-card': {
-    label: 'ID映射管理卡片',
+    label: '数据中心 → ID映射管理 → ID映射管理卡片',
     description: '数据中心页面「ID映射管理」中的统计卡片和数据表格',
     page: '卡片',
     categories: ['card', 'list', 'search', 'tabs']
