@@ -269,13 +269,30 @@ const handleRefresh = () => {
 .page-header { display: flex; justify-content: space-between; align-items: center; }
 .page-header h1 { margin: 0; font-size: 26px; font-weight: bold; color: var(--text-primary); }
 .subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 1px; }
-.page-header :deep(.n-space) { align-items: stretch; }
+.page-header :deep(.n-space) { align-items: center; }
 .page-header :deep(.n-input) { height: 34px; }
 .page-header :deep(.n-button) { height: 34px; }
 .page-header .app-search-field { --search-input-height: 34px; }
-.filter-tabs { height: 34px; }
-.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
-.filter-tabs :deep(.n-tabs-tab) { height: 28px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
+.filter-tabs :deep(.n-tabs-nav),
+.filter-tabs :deep(.n-tabs-rail) {
+  height: 100% !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.filter-tabs :deep(.n-tabs-rail) {
+  border: 1px solid var(--app-border-light) !important;
+  gap: 4px !important;
+  padding: 3px !important;
+}
+.filter-tabs :deep(.n-tabs-tab) {
+  height: 28px !important;
+  padding: 0 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.filter-tabs :deep(.n-tabs-tab--active) { border: 1px solid var(--app-border-hover) !important; }
 
 .history-list { margin-bottom: 40px; }
 .history-list .history-item {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, NList, NListItem } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
@@ -115,36 +115,34 @@ onUnmounted(() => {
     </n-card>
 
     <div v-else class="task-list">
-      <n-list hoverable :show-divider="false">
-        <n-list-item v-for="task in tasks" :key="task.task_id" class="task-item">
-          <div class="task-header">
-            <div class="task-main">
-              <span class="task-time">{{ formatTime(task.started_at) }}</span>
-              <span class="task-name">{{ task.name || task.module }}</span>
-            </div>
-            <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
-              {{ getStatusTag(task.status).label }}
-            </n-tag>
+      <n-card v-for="task in tasks" :key="task.task_id" class="task-card" data-app-instance="task-history-card" hoverable :bordered="false">
+        <div class="task-header">
+          <div class="task-main">
+            <span class="task-time">{{ formatTime(task.started_at) }}</span>
+            <span class="task-name">{{ task.name || task.module }}</span>
           </div>
-          <div class="task-meta">
-            <span v-if="task.status === 'completed'" class="meta-item">
-              耗时 {{ formatDuration(task.started_at, task.finished_at) }}
-            </span>
-            <span v-if="getTaskStats(task)" class="meta-item">
-              {{ getTaskStats(task) }}
-            </span>
-            <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
-          </div>
-          <div class="task-actions">
-            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
-              查看日志
-            </n-button>
-            <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
-              <template #icon><n-icon><DeleteIcon /></n-icon></template>
-            </n-button>
-          </div>
-        </n-list-item>
-      </n-list>
+          <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
+            {{ getStatusTag(task.status).label }}
+          </n-tag>
+        </div>
+        <div class="task-meta">
+          <span v-if="task.status === 'completed'" class="meta-item">
+            耗时 {{ formatDuration(task.started_at, task.finished_at) }}
+          </span>
+          <span v-if="getTaskStats(task)" class="meta-item">
+            {{ getTaskStats(task) }}
+          </span>
+          <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
+        </div>
+        <div class="task-actions">
+          <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
+            查看日志
+          </n-button>
+          <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
+            <template #icon><n-icon><DeleteIcon /></n-icon></template>
+          </n-button>
+        </div>
+      </n-card>
 
       <div ref="scrollTarget" class="load-more-sentinel">
         <n-spin v-if="loading" size="small" description="正在加载..." />
@@ -228,23 +226,18 @@ onUnmounted(() => {
 .filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 3px !important; padding: 2px !important; }
 
 .task-list { margin-bottom: var(--m-spacing-lg); }
-.task-list :deep(.n-list) { background: transparent; }
-.task-list :deep(.n-list-item) {
-  background: var(--app-surface-list-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-md) !important;
+.task-list .task-card {
   margin-bottom: var(--m-spacing-md);
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  transition: all var(--transition-normal);
   -webkit-tap-highlight-color: transparent;
 }
-.task-list :deep(.n-list-item:active) {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-sm);
+.task-list .task-card :deep(.n-card__content) {
+  padding: var(--m-spacing-md) var(--m-spacing-md) !important;
 }
-
-/* 原task-item样式已迁移到n-list-item */
-.task-item { /* 内部元素样式 */ }
+.task-list .task-card:active {
+  transform: scale(0.98);
+  border-color: var(--n-primary-color) !important;
+}
 
 .task-header {
   display: flex;

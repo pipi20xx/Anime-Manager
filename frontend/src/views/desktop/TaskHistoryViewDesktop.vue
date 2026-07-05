@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, NList, NListItem } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
@@ -113,36 +113,36 @@ onUnmounted(() => {
     </n-card>
 
     <div v-else class="task-list">
-      <n-list hoverable :show-divider="false">
-        <n-list-item v-for="task in tasks" :key="task.task_id" class="task-item">
-          <div class="task-row">
-            <div class="task-main">
-              <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
-                {{ getStatusTag(task.status).label }}
-              </n-tag>
-              <span class="task-time">{{ formatTime(task.started_at) }}</span>
-              <span class="task-name">{{ task.name || task.module }}</span>
-            </div>
-            <div class="task-meta">
-              <span v-if="task.status === 'completed'" class="meta-item">
-                耗时 {{ formatDuration(task.started_at, task.finished_at) }}
-              </span>
-              <span v-if="getTaskStats(task)" class="meta-item">
-                {{ getTaskStats(task) }}
-              </span>
-              <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
-            </div>
-            <div class="task-actions">
-              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
-                查看日志
-              </n-button>
-              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
-                <template #icon><n-icon><DeleteIcon /></n-icon></template>
-              </n-button>
-            </div>
+      <n-card v-for="task in tasks" :key="task.task_id" class="task-card" data-app-instance="task-history-card" hoverable :bordered="false">
+        <div class="card-header">
+          <div class="header-main">
+            <n-tag size="small" round :bordered="false" :style="getStatusTag(task.status).style">
+              {{ getStatusTag(task.status).label }}
+            </n-tag>
+            <span class="task-name">{{ task.name || task.module }}</span>
           </div>
-        </n-list-item>
-      </n-list>
+          <span class="task-time">{{ formatTime(task.started_at) }}</span>
+        </div>
+        <div class="card-footer">
+          <div class="task-meta">
+            <span v-if="task.status === 'completed'" class="meta-item">
+              耗时 {{ formatDuration(task.started_at, task.finished_at) }}
+            </span>
+            <span v-if="getTaskStats(task)" class="meta-item">
+              {{ getTaskStats(task) }}
+            </span>
+            <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
+          </div>
+          <div class="task-actions">
+            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
+              查看日志
+            </n-button>
+            <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
+              <template #icon><n-icon><DeleteIcon /></n-icon></template>
+            </n-button>
+          </div>
+        </div>
+      </n-card>
 
       <div ref="scrollTarget" class="load-more-sentinel">
         <n-spin v-if="loading" size="small" description="正在加载更多..." />
@@ -187,39 +187,62 @@ onUnmounted(() => {
 }
 .page-header h1 { margin: 0; font-size: var(--text-3xl); }
 .subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
-.page-header :deep(.n-space) { align-items: stretch; }
+.page-header :deep(.n-space) { align-items: center; }
 .page-header :deep(.n-button) { height: var(--space-8); }
 .filter-tabs { height: var(--space-8); }
-.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
-.filter-tabs :deep(.n-tabs-tab) { height: 26px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
+.filter-tabs :deep(.n-tabs-nav),
+.filter-tabs :deep(.n-tabs-rail) {
+  height: 100% !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.filter-tabs :deep(.n-tabs-rail) {
+  border: 1px solid var(--app-border-light) !important;
+  gap: 4px !important;
+  padding: 3px !important;
+}
+.filter-tabs :deep(.n-tabs-tab) { display: flex !important; align-items: center !important; padding: 0 12px !important; border: none !important; box-shadow: none !important; }
+.filter-tabs :deep(.n-tabs-tab--active) { border: 1px solid var(--app-border-hover) !important; }
 
 .task-list { margin-bottom: var(--space-6); }
-.task-list :deep(.n-list) { background: transparent; }
-.task-list :deep(.n-list-item) {
-  background: var(--app-surface-list-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4) !important;
-  margin-bottom: var(--space-2);
+.task-list .task-card {
+  margin-bottom: var(--space-4);
+  transition: all var(--transition-normal);
+}
+.task-list .task-card :deep(.n-card__content) {
+  padding: 16px 20px !important;
+}
+.task-list .task-card:hover {
+  border-color: var(--n-primary-color) !important;
 }
 
-/* 原task-item样式已迁移到n-list-item */
-.task-item { /* 内部元素样式 */ }
-
-.task-row {
+.card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
+  margin-bottom: var(--space-2);
 }
-.task-main {
+.header-main {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   flex: 1;
+  min-width: 0;
 }
-.module-icon { font-size: var(--text-xl); }
-.task-name { font-weight: 500; }
+.task-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .task-time { color: var(--text-tertiary); font-size: var(--text-sm); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
 .task-meta {
   display: flex;
   gap: var(--space-4);
