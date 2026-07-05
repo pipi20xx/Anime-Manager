@@ -37,7 +37,7 @@ const getTagStyle = (count: number) => {
         </div>
         
         <div class="maintenance-grid">
-          <div v-for="table in groupTables" :key="table.name" class="maintenance-card" data-app-instance="table-card">
+          <div v-for="table in groupTables" :key="table.name" class="maintenance-card" data-app-instance="maintenance-card">
             <div class="m-card-header">
               <span class="table-name">{{ table.name.split('.')[1] }}</span>
               <n-popconfirm 

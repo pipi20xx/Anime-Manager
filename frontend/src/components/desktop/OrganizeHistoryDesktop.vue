@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { 
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NList, NListItem
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard
 } from 'naive-ui'
 import {
   HistoryOutlined as HistoryIcon,
@@ -116,8 +116,7 @@ const handleRefresh = () => {
     </div>
 
     <div v-if="filteredHistory.length > 0" class="history-list">
-      <n-list hoverable :show-divider="false">
-        <n-list-item v-for="item in filteredHistory" :key="item.id" class="history-item">
+        <n-card v-for="item in filteredHistory" :key="item.id" class="history-item" data-app-instance="organize-history-card" hoverable :bordered="false">
           <!-- 现有项内容保持不变 -->
           <!-- 1. Header: Title & Meta -->
           <div class="item-row header-row">
@@ -242,8 +241,7 @@ const handleRefresh = () => {
               </n-popconfirm>
             </div>
           </div>
-        </n-list-item>
-      </n-list>
+        </n-card>
 
       <!-- Sentinel for Infinite Scroll -->
       <div ref="scrollTarget" class="load-more-sentinel">
@@ -280,17 +278,17 @@ const handleRefresh = () => {
 .filter-tabs :deep(.n-tabs-tab) { height: 28px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
 
 .history-list { margin-bottom: 40px; }
-.history-list :deep(.n-list) { background: transparent; }
-.history-list :deep(.n-list-item) {
-  background: var(--app-surface-list-mixed);
+.history-list .history-item {
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 12px);
-  padding: 16px 20px !important;
   margin-bottom: 16px;
   transition: all var(--transition-normal);
+  background: var(--app-surface-card-mixed);
 }
-.history-list :deep(.n-list-item:hover) {
-  background: var(--app-surface-inner);
+.history-list .history-item :deep(.n-card__content) {
+  padding: 16px 20px !important;
+}
+.history-list .history-item:hover {
   border-color: var(--n-primary-color);
 }
 

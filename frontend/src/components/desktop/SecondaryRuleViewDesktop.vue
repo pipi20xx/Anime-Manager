@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
   NSpace, NButton, NIcon, NPopconfirm, NEmpty, 
-  NSwitch, NGrid, NGi, NText
+  NSwitch, NGrid, NGi, NText, NCard
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -61,9 +61,11 @@ const {
         <n-empty v-if="rules.length === 0" description="尚未配置二级分类规则" style="padding: 100px 0" />
         <n-grid :cols="3" :x-gap="16" :y-gap="16" v-else>
           <n-gi v-for="(rule, index) in rules" :key="rule.id || index">
-            <div 
+            <n-card
               class="rect-rule-card" 
               :class="{ 'is-dragging': draggedIndex === index, 'is-disabled': !rule.enabled }"
+              data-app-instance="secondary-rule-card"
+              :bordered="false"
               draggable="true"
               @dragstart="onDragStart(index)"
               @dragover="onDragOver"
@@ -102,7 +104,7 @@ const {
                   确定删除该规则吗？
                 </n-popconfirm>
               </div>
-            </div>
+            </n-card>
           </n-gi>
         </n-grid>
       </div>
@@ -119,7 +121,6 @@ const {
 .rect-rule-card {
   background-color: var(--app-surface-card-mixed);
   border: 1px solid var(--border-medium);
-  padding: var(--space-4);
   border-radius: var(--card-border-radius, var(--radius-lg));
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -128,6 +129,13 @@ const {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+.rect-rule-card :deep(.n-card__content) {
+  padding: var(--space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .rect-rule-card:hover {
   border-color: var(--n-primary-color);

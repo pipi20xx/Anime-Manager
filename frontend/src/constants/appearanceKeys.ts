@@ -331,6 +331,24 @@ export const APPEARANCE_KEYS = {
     page: '卡片',
     categories: ['card']
   },
+  'organize-history-card': {
+    label: '整理历史卡片',
+    description: '整理历史页面中的整理记录列表卡片',
+    page: '卡片',
+    categories: ['card']
+  },
+  'secondary-rule-card': {
+    label: '二级分类规则卡片',
+    description: '数据中心页面「二级分类规则」中的规则配置卡片',
+    page: '卡片',
+    categories: ['card']
+  },
+  'maintenance-card': {
+    label: '维护中心卡片',
+    description: '数据中心页面「维护中心」中的数据库维护卡片',
+    page: '卡片',
+    categories: ['card']
+  },
 } as const
 
 export type AppearanceKey = keyof typeof APPEARANCE_KEYS

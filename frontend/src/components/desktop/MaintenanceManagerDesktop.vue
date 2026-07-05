@@ -38,7 +38,7 @@ const getTagStyle = (count: number) => {
         
         <n-grid x-gap="12" y-gap="12" cols="1 s:2 m:3 l:4" responsive="screen">
           <n-grid-item v-for="table in groupTables" :key="table.name">
-            <n-card bordered size="small" class="table-card" :data-app-instance="'table-card'">
+            <n-card bordered size="small" class="table-card" :data-app-instance="'maintenance-card'">
               <div class="table-info">
                 <div class="table-name" :title="table.name">{{ table.name.split('.')[1] }}</div>
                 <div class="table-desc">{{ tableDescriptions[table.name] || '暂无说明' }}</div>

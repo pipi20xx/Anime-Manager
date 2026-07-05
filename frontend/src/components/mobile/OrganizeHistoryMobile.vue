@@ -2,7 +2,7 @@
 import { ref, h, onMounted, onUnmounted } from 'vue'
 import {
   NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText,
-  NDrawer, NDrawerContent, NCollapse, NCollapseItem, NCheckbox, NSpin, NDivider, NList, NListItem
+  NDrawer, NDrawerContent, NCollapse, NCollapseItem, NCheckbox, NSpin, NDivider, NCard
 } from 'naive-ui'
 import {
   HistoryOutlined as HistoryIcon,
@@ -141,8 +141,7 @@ const handleAction = (key: string) => {
 
     <!-- List -->
     <div v-if="filteredHistory.length > 0" class="history-list">
-      <n-list hoverable :show-divider="false">
-        <n-list-item v-for="item in filteredHistory" :key="item.id" class="history-card">
+        <n-card v-for="item in filteredHistory" :key="item.id" class="history-card" data-app-instance="organize-history-card" hoverable :bordered="false">
           <div class="card-top">
             <div class="card-title-group">
               <div class="card-title">{{ item.title || item.filename }}</div>
@@ -245,8 +244,7 @@ const handleAction = (key: string) => {
                </n-popconfirm>
              </div>
           </div>
-        </n-list-item>
-      </n-list>
+        </n-card>
 
       <!-- Sentinel for Infinite Scroll -->
       <div ref="scrollTarget" class="load-more-sentinel">
@@ -314,13 +312,14 @@ const handleAction = (key: string) => {
 .filter-tabs :deep(.n-tabs-tab) { height: 26px !important; padding: 0 10px !important; display: flex !important; align-items: center !important; }
 
 .history-list { margin-bottom: 20px; }
-.history-list :deep(.n-list) { background: transparent; }
-.history-list :deep(.n-list-item) {
-  background: var(--app-surface-list-mixed);
+.history-list .history-card {
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
-  padding: 12px !important;
   margin-bottom: 12px;
+  background: var(--app-surface-card-mixed);
+}
+.history-list .history-card :deep(.n-card__content) {
+  padding: 12px !important;
 }
 
 /* 原history-card样式已迁移到n-list-item */

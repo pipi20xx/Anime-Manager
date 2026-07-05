@@ -2,7 +2,7 @@
 import { ref, h } from 'vue'
 import {
   NSpace, NButton, NIcon, NPopconfirm, NEmpty,
-  NSwitch, NList, NListItem, NThing, NDrawer, NDrawerContent
+  NSwitch, NCard, NDrawer, NDrawerContent
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -72,10 +72,12 @@ const handleAction = (key: string) => {
     <div class="rules-list">
       <n-empty v-if="rules.length === 0" description="暂无规则" style="padding: 60px 0" />
       <div v-else class="rules-grid">
-        <div 
+        <n-card
           v-for="(rule, index) in rules" 
           :key="rule.id || index" 
           class="rule-card"
+          data-app-instance="secondary-rule-card"
+          :bordered="false"
           @click="editingRule = rule; isNewRule = false; editingIndex = index; showRuleModal = true"
         >
           <div class="card-top">
@@ -104,7 +106,7 @@ const handleAction = (key: string) => {
               </n-popconfirm>
             </n-space>
           </div>
-        </div>
+        </n-card>
       </div>
     </div>
 
@@ -142,6 +144,8 @@ const handleAction = (key: string) => {
   background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   border-radius: var(--card-border-radius, 8px);
+}
+.rule-card :deep(.n-card__content) {
   padding: 12px;
 }
 .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
