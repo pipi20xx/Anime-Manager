@@ -129,7 +129,7 @@ onMounted(fetchData)
               <div class="f-head">
                 <div class="f-title">{{ feed.title || '未命名订阅' }}</div>
                 <div class="f-status">
-                  <n-tag size="small" round :bordered="false" :style="feed.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }">
+                  <n-tag size="small" round :bordered="false" :style="feed.enabled ? { color: 'var(--app-instance-text-tint-color, #fff)', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: 'var(--app-instance-text-tint-color, #fff)', backgroundColor: '#c62828', borderColor: 'transparent' }">
                     {{ feed.enabled ? '监控中' : '已暂停' }}
                   </n-tag>
                 </div>
@@ -180,7 +180,7 @@ onMounted(fetchData)
               <div class="f-head">
                 <div class="f-title">{{ rule.name || '未命名规则' }}</div>
                 <div class="f-status">
-                  <n-tag size="small" round :bordered="false" :style="rule.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }">
+                  <n-tag size="small" round :bordered="false" :style="rule.enabled ? { color: 'var(--app-instance-text-tint-color, #fff)', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: 'var(--app-instance-text-tint-color, #fff)', backgroundColor: '#c62828', borderColor: 'transparent' }">
                     {{ rule.enabled ? '生效中' : '未启用' }}
                   </n-tag>
                 </div>
@@ -313,17 +313,17 @@ onMounted(fetchData)
 }
 
 .f-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.f-title { font-weight: bold; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; margin-right: 8px; }
+.f-title { font-weight: bold; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; margin-right: 8px; color: var(--app-instance-text-color, var(--text-primary)); }
 .f-status { flex-shrink: 0; }
-.f-url { font-size: 11px; color: var(--text-tertiary); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
+.f-url { font-size: 11px; color: var(--app-instance-text-tertiary-color, var(--text-tertiary)); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
 .f-act { display: flex; justify-content: flex-end; }
 
-.r-keywords { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; min-height: 32px; word-break: break-all; opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.r-label { color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
-.r-value { color: var(--text-secondary); font-size: 12px; word-break: break-all; }
+.r-keywords { font-size: 12px; color: var(--app-instance-text-tertiary-color, var(--text-tertiary)); margin-bottom: 10px; min-height: 32px; word-break: break-all; opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.r-label { color: var(--app-instance-text-secondary-color, var(--text-muted)); font-size: 12px; flex-shrink: 0; }
+.r-value { color: var(--app-instance-text-tertiary-color, var(--text-secondary)); font-size: 12px; word-break: break-all; }
 .r-info-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 22px; }
 .r-ellipsis { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
-.r-exclude { font-size: 11px; color: var(--text-tertiary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; opacity: 0.8; }
+.r-exclude { font-size: 11px; color: var(--app-instance-text-tertiary-color, var(--text-tertiary)); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; opacity: 0.8; }
 
 .empty-tip { padding: 40px; text-align: center; color: var(--text-muted); }
 

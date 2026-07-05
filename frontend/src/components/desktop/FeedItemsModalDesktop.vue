@@ -171,8 +171,9 @@ const columns = [
         tags.push(h('a', { 
           href: tmdbUrl, 
           target: '_blank',
+          class: 'media-badge',
           style: { 
-            color: '#fff', 
+            color: 'var(--app-instance-text-tint-color, #fff)', 
             backgroundColor: '#2e7d32', 
             borderRadius: '12px',
             padding: '2px 10px',

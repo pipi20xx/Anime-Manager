@@ -301,10 +301,10 @@ onMounted(() => {
             <span v-else>{{ sub.year }}</span>
           </div>
           <div class="sub-status">
-             <n-tag size="small" :type="sub.enabled ? 'success' : 'error'" round style="zoom: 0.8">
+             <n-tag size="small" :type="sub.enabled ? 'success' : 'error'" round style="zoom: 0.8; color: var(--app-instance-text-tint-color, #fff) !important;">
                {{ sub.enabled ? '监控中' : '已暂停' }}
              </n-tag>
-             <n-tag v-if="getUpgradeStatus(sub)?.allowed" size="small" type="info" round style="zoom: 0.8; margin-left: 4px;">
+             <n-tag v-if="getUpgradeStatus(sub)?.allowed" size="small" type="info" round style="zoom: 0.8; margin-left: 4px; color: var(--app-instance-text-tint-color, #fff) !important;">
                洗版
              </n-tag>
           </div>
@@ -434,7 +434,7 @@ onMounted(() => {
   font-weight: 600;
   padding: 3px 6px;
   border-radius: var(--m-radius-sm);
-  color: white;
+  color: var(--app-instance-text-tint-color, white);
   text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 .media-badge.movie { background: linear-gradient(135deg, var(--color-error), #ff6b6b); }
@@ -456,11 +456,11 @@ onMounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: var(--text-primary);
+  color: var(--app-instance-text-color, var(--text-primary));
 }
 .sub-details {
   font-size: var(--m-text-sm);
-  color: var(--text-secondary);
+  color: var(--app-instance-text-secondary-color, var(--text-secondary));
 }
 .sub-actions-btn {
   width: 44px;

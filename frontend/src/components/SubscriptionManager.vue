@@ -413,8 +413,8 @@ onMounted(() => {
 }
 
 .info-box { padding: 12px; }
-.sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--text-primary); cursor: pointer; }
-.sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+.sub-title { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--app-instance-text-color, var(--text-primary)); cursor: pointer; }
+.sub-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--app-instance-text-secondary-color, var(--text-tertiary)); margin-bottom: 8px; }
 .meta-range { color: var(--n-primary-color); font-weight: 600; }
 .sub-actions { display: flex; align-items: center; margin-left: auto; }
 .empty-state { padding: 80px 0; }

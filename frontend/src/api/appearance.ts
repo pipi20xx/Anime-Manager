@@ -65,12 +65,37 @@ export interface AppearanceList {
 }
 
 /**
+ * 实例级文字样式：仅用于单独自定义弹框/卡片，不在全局默认中提供。
+ * 所有字段 undefined 表示继承默认主题文字样式。
+ */
+export interface AppearanceText {
+  color: string
+  secondary_color: string
+  /** 第三级文字色（URL、元信息、说明等更淡的文字） */
+  tertiary_color: string
+  /** 彩色底色上的文字色（状态标签、徽章等） */
+  tint_color: string
+  /** 文字主色阴影 */
+  shadow: string
+  /** 次要文字色阴影 */
+  secondary_shadow: string
+  /** 第三文字色阴影 */
+  tertiary_shadow: string
+  /** 彩色底色文字色阴影 */
+  tint_shadow: string
+  font_weight: number
+  font_size: number
+}
+
+/**
  * 实例级覆盖：每个字段的 undefined 表示"继承全局默认"
  * 仅填写需要覆盖的字段，未填写的字段会自动继承 :root 全局变量值
  */
 export interface AppearanceInstanceOverrides {
   modal?: Partial<AppearanceModal>
   card?: Partial<AppearanceCard>
+  /** 文字样式：仅实例级覆盖，全局默认不做文字样式调整 */
+  text?: Partial<AppearanceText>
   tabs?: Partial<AppearanceTabs>
   input?: Partial<AppearanceInput>
   search?: Partial<AppearanceSearch>

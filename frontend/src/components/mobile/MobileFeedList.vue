@@ -81,7 +81,7 @@ const handleAction = (key: string) => {
         <div class="feed-content">
           <div class="feed-header">
             <span class="feed-title">{{ feed.title || '未命名' }}</span>
-            <n-tag size="small" round :bordered="false" :style="feed.enabled ? { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' }" class="status-tag">
+            <n-tag size="small" round :bordered="false" :style="feed.enabled ? { color: 'var(--app-instance-text-tint-color, #fff)', backgroundColor: '#2e7d32', borderColor: 'transparent' } : { color: 'var(--app-instance-text-tint-color, #fff)', backgroundColor: '#c62828', borderColor: 'transparent' }" class="status-tag">
               {{ feed.enabled ? '监控' : '暂停' }}
             </n-tag>
           </div>
@@ -161,7 +161,7 @@ const handleAction = (key: string) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-primary);
+  color: var(--app-instance-text-color, var(--text-primary));
 }
 .status-tag {
   flex-shrink: 0;
@@ -170,7 +170,7 @@ const handleAction = (key: string) => {
 }
 .feed-url {
   font-size: var(--m-text-xs);
-  color: var(--text-tertiary);
+  color: var(--app-instance-text-tertiary-color, var(--text-tertiary));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

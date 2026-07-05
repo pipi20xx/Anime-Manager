@@ -573,11 +573,84 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   display: none;
 }
 
+
 /* Modal 遮罩：完全透明，不加模糊 */
 .n-modal-container .n-modal-mask {
   background: rgba(0, 0, 0, 0) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* 实例级文字样式（单独自定义弹框/卡片） */
+.n-modal-container .n-modal[data-app-instance] {
+  color: var(--app-instance-text-color, inherit);
+  text-shadow: var(--app-instance-text-shadow, none);
+  font-weight: var(--app-instance-text-font-weight, inherit);
+  font-size: var(--app-instance-text-font-size, inherit);
+}
+.n-modal-container .n-modal[data-app-instance] .n-modal-body {
+  color: var(--app-instance-text-secondary-color, var(--app-instance-text-color, inherit));
+  text-shadow: var(--app-instance-text-secondary-shadow, var(--app-instance-text-shadow, none));
+}
+
+.n-card[data-app-instance] {
+  color: var(--app-instance-text-color, inherit);
+  text-shadow: var(--app-instance-text-shadow, none);
+  font-weight: var(--app-instance-text-font-weight, inherit);
+  font-size: var(--app-instance-text-font-size, inherit);
+}
+.n-card[data-app-instance] .n-card__content {
+  color: var(--app-instance-text-color, inherit);
+}
+
+/* 实例级文字色覆盖（处理 scoped 样式优先级） */
+.n-card[data-app-instance] .n-card__content .f-title,
+.n-card[data-app-instance] .n-card__content .feed-title,
+.n-card[data-app-instance] .n-card__content .sub-title,
+.n-card[data-app-instance] .n-card__content .f-head .f-title {
+  color: var(--app-instance-text-color, var(--text-primary)) !important;
+}
+
+.n-card[data-app-instance] .n-card__content .sub-meta,
+.n-card[data-app-instance] .n-card__content .sub-details,
+.n-card[data-app-instance] .n-card__content .r-info-row .r-label,
+.n-card[data-app-instance] .n-card__content .f-head .f-status {
+  color: var(--app-instance-text-secondary-color, var(--app-instance-text-color, var(--text-secondary))) !important;
+  text-shadow: var(--app-instance-text-secondary-shadow, var(--app-instance-text-shadow, none)) !important;
+}
+
+.n-card[data-app-instance] .n-card__content .f-url,
+.n-card[data-app-instance] .n-card__content .feed-url,
+.n-card[data-app-instance] .n-card__content .r-keywords,
+.n-card[data-app-instance] .n-card__content .r-value,
+.n-card[data-app-instance] .n-card__content .r-ellipsis,
+.n-card[data-app-instance] .n-card__content .r-exclude,
+.n-card[data-app-instance] .n-card__content .meta-range,
+.n-card[data-app-instance] .n-card__content .meta-year {
+  color: var(--app-instance-text-tertiary-color, var(--app-instance-text-secondary-color, var(--app-instance-text-color, var(--text-tertiary)))) !important;
+  text-shadow: var(--app-instance-text-tertiary-shadow, var(--app-instance-text-secondary-shadow, var(--app-instance-text-shadow, none))) !important;
+}
+
+/* 彩色底色上的文字（状态标签、徽章等）：原内联白色，可被实例级覆盖 */
+.n-card[data-app-instance] .n-card__content .n-tag,
+.n-card[data-app-instance] .n-card__content .media-badge {
+  color: var(--app-instance-text-tint-color, #fff) !important;
+  text-shadow: var(--app-instance-text-tint-shadow, none) !important;
+}
+
+/* 实例级 modal 内彩色底色文字统一（状态标签、徽章、按钮、下拉项） */
+.n-modal-container .n-modal[data-app-instance] .n-tag:not(.n-tag--quaternary),
+.n-modal-container .n-modal[data-app-instance] .media-badge,
+.n-modal-container .n-modal[data-app-instance] .tint-badge,
+.n-modal-container .n-modal[data-app-instance] .custom-dropdown-item {
+  color: var(--app-instance-text-tint-color, #fff) !important;
+  text-shadow: var(--app-instance-text-tint-shadow, none) !important;
+}
+
+.n-modal-container .n-modal[data-app-instance] .n-button:not(.n-button--ghost):not(.n-button--quaternary),
+.n-modal-container .n-modal[data-app-instance] .n-button:not(.n-button--ghost):not(.n-button--quaternary) * {
+  color: var(--app-instance-text-tint-color, #fff) !important;
+  text-shadow: var(--app-instance-text-tint-shadow, none) !important;
 }
 
 /* Popconfirm 主题化 */

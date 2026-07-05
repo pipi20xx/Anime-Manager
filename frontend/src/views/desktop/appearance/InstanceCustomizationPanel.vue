@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import {
   NCard, NSlider, NColorPicker, NButton, NSpace, NSelect, NDivider,
-  NPopconfirm, NTag, NTabs, NTabPane, NCheckbox, NEmpty
+  NPopconfirm, NTag, NTabs, NTabPane, NCheckbox, NEmpty, NInput
 } from 'naive-ui'
 import type { AppearanceConfig, AppearanceInstanceOverrides } from '../../../api/appearance'
 import {
@@ -41,6 +41,20 @@ const emit = defineEmits<{
 }>()
 
 const selectedInstanceKey = ref<AppearanceKey | ''>('')
+
+/** 文字样式默认值：仅实例级覆盖，全局默认不做此配置 */
+const textDefaults = {
+  color: '#ffffff',
+  secondary_color: 'rgba(255, 255, 255, 0.7)',
+  tertiary_color: 'rgba(255, 255, 255, 0.5)',
+  tint_color: '#ffffff',
+  shadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+  secondary_shadow: 'none',
+  tertiary_shadow: 'none',
+  tint_shadow: 'none',
+  font_weight: 400,
+  font_size: 14,
+}
 
 /** 根据 pageFilter 过滤后的下拉选项 */
 const filteredOptions = computed(() => {
@@ -102,7 +116,7 @@ function isFieldOverridden(category: keyof AppearanceInstanceOverrides, field: s
   return (inst[category] as Record<string, any>)[field] !== undefined
 }
 
-/** 启用字段覆盖：用当前全局值作为初始值 */
+/** 启用字段覆盖：用当前全局值作为初始值（文字样式字段使用内置默认值） */
 function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
   if (!selectedInstanceKey.value) return
   const key = selectedInstanceKey.value
@@ -110,7 +124,11 @@ function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field:
   if (!props.form.instances![key][category]) {
     ;(props.form.instances![key] as any)[category] = {}
   }
-  ;(props.form.instances![key][category] as Record<string, any>)[field] = (props.form[category] as any)[field]
+  if (category === 'text') {
+    ;(props.form.instances![key][category] as Record<string, any>)[field] = (textDefaults as Record<string, any>)[field]
+  } else {
+    ;(props.form.instances![key][category] as Record<string, any>)[field] = (props.form[category] as any)[field]
+  }
   notifyChange()
 }
 
@@ -140,13 +158,17 @@ function toggleFieldOverride(category: keyof AppearanceInstanceOverrides, field:
   }
 }
 
-/** 获取字段值（覆盖值优先，未覆盖则返回全局值） */
+/** 获取字段值（覆盖值优先，未覆盖则返回全局值；文字样式字段返回内置默认值） */
 function getFieldValue(category: keyof AppearanceInstanceOverrides, field: string): any {
-  if (!selectedInstanceKey.value) return (props.form[category] as any)[field]
+  if (!selectedInstanceKey.value) {
+    if (category === 'text') return (textDefaults as Record<string, any>)[field]
+    return (props.form[category] as any)[field]
+  }
   const inst = props.form.instances![selectedInstanceKey.value]
   if (inst && inst[category] && (inst[category] as Record<string, any>)[field] !== undefined) {
     return (inst[category] as Record<string, any>)[field]
   }
+  if (category === 'text') return (textDefaults as Record<string, any>)[field]
   return (props.form[category] as any)[field]
 }
 
@@ -453,6 +475,93 @@ defineExpose({ currentInstanceOverrides, instanceCount })
                 <n-tag size="small" type="info">{{ getFieldValue('card', 'blur') }}px</n-tag>
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.card.blur }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
+        <!-- 文字样式分区（仅实例级，全局默认不做） -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('modal') || getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('card')" name="text" tab="文字样式">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'color')" @update:checked="v => toggleFieldOverride('text', 'color', v)">文字主色</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('text', 'color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('text', 'color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'secondary_color')" @update:checked="v => toggleFieldOverride('text', 'secondary_color', v)">次要文字色</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'secondary_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('text', 'secondary_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('text', 'secondary_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'tertiary_color')" @update:checked="v => toggleFieldOverride('text', 'tertiary_color', v)">第三文字色</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'tertiary_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('text', 'tertiary_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('text', 'tertiary_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'tint_color')" @update:checked="v => toggleFieldOverride('text', 'tint_color', v)">彩色底色文字色</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'tint_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('text', 'tint_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('text', 'tint_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'shadow')" @update:checked="v => toggleFieldOverride('text', 'shadow', v)">主字阴影</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'shadow')" class="instance-field__control">
+                <n-input :value="getFieldValue('text', 'shadow')" placeholder="例如：0 2px 4px rgba(0,0,0,0.5)" @update:value="v => setFieldValue('text', 'shadow', v)" size="small" style="flex: 1;" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'secondary_shadow')" @update:checked="v => toggleFieldOverride('text', 'secondary_shadow', v)">次要文字色阴影</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'secondary_shadow')" class="instance-field__control">
+                <n-input :value="getFieldValue('text', 'secondary_shadow')" placeholder="例如：0 1px 2px rgba(0,0,0,0.3)" @update:value="v => setFieldValue('text', 'secondary_shadow', v)" size="small" style="flex: 1;" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'tertiary_shadow')" @update:checked="v => toggleFieldOverride('text', 'tertiary_shadow', v)">第三文字色阴影</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'tertiary_shadow')" class="instance-field__control">
+                <n-input :value="getFieldValue('text', 'tertiary_shadow')" placeholder="例如：0 1px 2px rgba(0,0,0,0.3)" @update:value="v => setFieldValue('text', 'tertiary_shadow', v)" size="small" style="flex: 1;" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'tint_shadow')" @update:checked="v => toggleFieldOverride('text', 'tint_shadow', v)">彩色底色文字阴影</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'tint_shadow')" class="instance-field__control">
+                <n-input :value="getFieldValue('text', 'tint_shadow')" placeholder="例如：0 1px 2px rgba(0,0,0,0.3)" @update:value="v => setFieldValue('text', 'tint_shadow', v)" size="small" style="flex: 1;" />
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'font_weight')" @update:checked="v => toggleFieldOverride('text', 'font_weight', v)">字重</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'font_weight')" class="instance-field__control">
+                <n-slider :value="getFieldValue('text', 'font_weight')" :min="100" :max="900" :step="100" @update:value="v => setFieldValue('text', 'font_weight', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('text', 'font_weight') }}</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('text', 'font_size')" @update:checked="v => toggleFieldOverride('text', 'font_size', v)">字号</n-checkbox>
+              <div v-if="isFieldOverridden('text', 'font_size')" class="instance-field__control">
+                <n-slider :value="getFieldValue('text', 'font_size')" :min="12" :max="24" :step="1" @update:value="v => setFieldValue('text', 'font_size', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('text', 'font_size') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承默认主题</div>
             </div>
           </div>
         </n-tab-pane>

@@ -367,6 +367,41 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
   }
 
+  // Text (实例级专用)
+  if (overrides.text) {
+    const t = overrides.text
+    if (t.color !== undefined) {
+      decls.push(`--app-instance-text-color: ${t.color};`)
+    }
+    if (t.secondary_color !== undefined) {
+      decls.push(`--app-instance-text-secondary-color: ${t.secondary_color};`)
+    }
+    if (t.tertiary_color !== undefined) {
+      decls.push(`--app-instance-text-tertiary-color: ${t.tertiary_color};`)
+    }
+    if (t.tint_color !== undefined) {
+      decls.push(`--app-instance-text-tint-color: ${t.tint_color};`)
+    }
+    if (t.shadow !== undefined) {
+      decls.push(`--app-instance-text-shadow: ${t.shadow};`)
+    }
+    if (t.secondary_shadow !== undefined) {
+      decls.push(`--app-instance-text-secondary-shadow: ${t.secondary_shadow};`)
+    }
+    if (t.tertiary_shadow !== undefined) {
+      decls.push(`--app-instance-text-tertiary-shadow: ${t.tertiary_shadow};`)
+    }
+    if (t.tint_shadow !== undefined) {
+      decls.push(`--app-instance-text-tint-shadow: ${t.tint_shadow};`)
+    }
+    if (t.font_weight !== undefined) {
+      decls.push(`--app-instance-text-font-weight: ${t.font_weight};`)
+    }
+    if (t.font_size !== undefined) {
+      decls.push(`--app-instance-text-font-size: ${t.font_size}px;`)
+    }
+  }
+
   return decls
 }
 
