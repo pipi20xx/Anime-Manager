@@ -109,6 +109,7 @@ class ConfigManager:
         "subscription_summary_time": "08:00", # 每日摘要推送时间
         "telegram_bot_enabled": False, # Telegram Bot 对话功能
         "telegram_allowed_chats": [], # 允许的 chat_id 列表（空为不限制）
+        "file_browser_favorites": [], # 文件浏览器收藏夹 [{"name": "显示名", "path": "/path/to/dir"}]
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",

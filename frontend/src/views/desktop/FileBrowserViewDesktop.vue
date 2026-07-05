@@ -4,6 +4,7 @@ import {
   NButton, NIcon, NBreadcrumb, NBreadcrumbItem,
   NList, NListItem, NSpace, NDivider,
   NDropdown, NModal, NCard, NDescriptions, NDescriptionsItem,
+  NInput, NText,
   useDialog
 } from 'naive-ui'
 import {
@@ -17,7 +18,11 @@ import {
   DeleteOutlined as DeleteIcon,
   InfoOutlined as InfoIcon,
   LinkOutlined as PathIcon,
-  ContentCutOutlined as CutIcon
+  ContentCutOutlined as CutIcon,
+  StarOutlineOutlined as StarIcon,
+  StarOutlined as StarFilledIcon,
+  FolderOpenOutlined as FolderOpenIcon,
+  DriveFileMoveOutlined as GoToIcon
 } from '@vicons/material'
 
 import ManualOrganizeModal from '../../components/ManualOrganizeModal.vue'
@@ -52,6 +57,9 @@ const {
   clipboard,
   showInfoModal,
   fileInfo,
+  favorites,
+  showGoToPathModal,
+  goToPathInput,
   fetchFiles,
   deleteItem,
   copyToClipboard,
@@ -64,7 +72,10 @@ const {
   runManualOrganize,
   runManualOrganizeBackground,
   commitBatch,
-  getFileIcon
+  getFileIcon,
+  addFavorite,
+  removeFavorite,
+  goToPath
 } = useFileBrowserView()
 
 const dialog = useDialog()
@@ -149,6 +160,19 @@ const handleMenuSelect = (key: string) => {
   }
 }
 
+const toggleCurrentFavorite = () => {
+  const isFavorite = favorites.value.some(f => f.path === currentPath.value)
+  if (isFavorite) {
+    removeFavorite(currentPath.value)
+  } else {
+    addFavorite(currentPath.value)
+  }
+}
+
+const handleFavoriteClick = (path: string) => {
+  fetchFiles(path)
+}
+
 const formatSize = (bytes: number | null) => {
   if (bytes === null) return '-'
   if (bytes === 0) return '0 B'
@@ -180,71 +204,131 @@ onMounted(() => {
       </n-button>
     </div>
 
-    <div class="browser-container">
-      <!-- 顶部工具栏：整合面包屑和操作 -->
-      <div class="browser-toolbar">
-        <n-space align="center" justify="space-between" class="w-100">
-          <n-space align="center" size="large">
-            <n-button v-bind="getButtonStyle('icon')" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
-              <template #icon><n-icon><UpIcon /></n-icon></template>
-            </n-button>
-            <n-breadcrumb>
-              <n-breadcrumb-item @click="fetchFiles('/')" style="cursor: pointer">/</n-breadcrumb-item>
-              <n-breadcrumb-item 
-                v-for="part in breadcrumbParts" 
-                :key="part.path" 
-                @click="fetchFiles(part.path)" 
-                style="cursor: pointer"
-              >
-                {{ part.name }}
-              </n-breadcrumb-item>
-            </n-breadcrumb>
-          </n-space>
-          <n-space>
-            <n-button v-bind="getButtonStyle('icon')" @click="fetchFiles(currentPath)">
-              <template #icon><n-icon><RefreshIcon /></n-icon></template>
-            </n-button>
-          </n-space>
-        </n-space>
-      </div>
-
-      <!-- 文件列表 -->
-      <div class="list-wrapper" @contextmenu="handleContextMenu($event, null)">
-        <n-list hoverable clickable class="modern-list">
-          <n-list-item 
-            v-for="item in items" 
-            :key="item.path" 
-            @click="item.is_dir && fetchFiles(item.path)"
-            @contextmenu.stop="handleContextMenu($event, item)"
+    <div class="browser-layout">
+      <!-- 左侧收藏夹侧边栏 -->
+      <div class="favorites-sidebar">
+        <div class="favorites-header">
+          <n-icon size="18" :color="'var(--n-primary-color)'"><StarFilledIcon /></n-icon>
+          <span class="favorites-title">收藏夹</span>
+        </div>
+        <div class="favorites-list">
+          <div 
+            v-for="fav in favorites" 
+            :key="fav.path"
+            class="favorite-item"
+            :class="{ active: fav.path === currentPath }"
           >
-            <template #prefix>
-              <div class="file-icon-box" :class="{ 'is-dir': item.is_dir }">
-                <n-icon size="20"><component :is="getFileIcon(item)" /></n-icon>
-              </div>
-            </template>
-            <div class="file-info">
-              <div class="file-name">{{ item.name }}</div>
-              <div class="file-meta">
-                <span>{{ (item.size/1024/1024).toFixed(2) }} MB</span>
-                <n-divider vertical />
-                <span>{{ new Date(item.mtime*1000).toLocaleString() }}</span>
-              </div>
+            <div class="favorite-content" @click="handleFavoriteClick(fav.path)">
+              <n-icon size="16"><FolderOpenIcon /></n-icon>
+              <span class="favorite-name">{{ fav.name }}</span>
             </div>
-            <template #suffix>
-              <n-button v-if="!item.is_dir" size="small" secondary round type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
-                单文件识别
-              </n-button>
-              <n-icon v-else :color="textMutedColor" size="20"><NextIcon /></n-icon>
-            </template>
-          </n-list-item>
-        </n-list>
+            <n-button 
+              v-bind="getButtonStyle('icon')" 
+              size="tiny"
+              class="favorite-delete"
+              @click.stop="removeFavorite(fav.path)"
+              title="删除收藏"
+            >
+              <template #icon><n-icon><DeleteIcon /></n-icon></template>
+            </n-button>
+          </div>
+          <div v-if="favorites.length === 0" class="favorites-empty">
+            暂无收藏
+          </div>
+        </div>
       </div>
 
-      <!-- 底部轻量信息显示 -->
-      <div class="browser-footer">
-        <div class="count-info">
-          <n-icon size="16"><FileIcon /></n-icon>
-          <span>当前目录共 <b>{{ items.length }}</b> 项内容</span>
+      <!-- 右侧主内容区 -->
+      <div class="browser-main">
+        <!-- 顶部工具栏 -->
+        <div class="browser-toolbar">
+          <n-space align="center" justify="space-between" class="w-100">
+            <n-space align="center" size="large">
+              <n-button v-bind="getButtonStyle('icon')" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
+                <template #icon><n-icon><UpIcon /></n-icon></template>
+              </n-button>
+              <n-breadcrumb>
+                <n-breadcrumb-item @click="fetchFiles('/')" style="cursor: pointer">/</n-breadcrumb-item>
+                <n-breadcrumb-item 
+                  v-for="part in breadcrumbParts" 
+                  :key="part.path" 
+                  @click="fetchFiles(part.path)" 
+                  style="cursor: pointer"
+                >
+                  {{ part.name }}
+                </n-breadcrumb-item>
+              </n-breadcrumb>
+            </n-space>
+            <n-space>
+              <!-- 复制当前路径按钮 -->
+              <n-button 
+                v-bind="getButtonStyle('icon')" 
+                @click="copyPath(currentPath)"
+                title="复制当前路径"
+              >
+                <template #icon><n-icon><CopyIcon /></n-icon></template>
+              </n-button>
+              <!-- 收藏按钮 -->
+              <n-button 
+                v-bind="getButtonStyle('icon')" 
+                :type="favorites.some(f => f.path === currentPath) ? 'warning' : 'default'"
+                @click="toggleCurrentFavorite"
+                title="点击收藏/取消收藏当前目录"
+              >
+                <template #icon>
+                  <n-icon>
+                    <component :is="favorites.some(f => f.path === currentPath) ? StarFilledIcon : StarIcon" />
+                  </n-icon>
+                </template>
+              </n-button>
+              <n-button v-bind="getButtonStyle('icon')" @click="showGoToPathModal = true" title="前往指定路径">
+                <template #icon><n-icon><GoToIcon /></n-icon></template>
+              </n-button>
+              <n-button v-bind="getButtonStyle('icon')" @click="fetchFiles(currentPath)" title="刷新">
+                <template #icon><n-icon><RefreshIcon /></n-icon></template>
+              </n-button>
+            </n-space>
+          </n-space>
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="list-wrapper" @contextmenu="handleContextMenu($event, null)">
+          <n-list hoverable clickable class="modern-list">
+            <n-list-item 
+              v-for="item in items" 
+              :key="item.path" 
+              @click="item.is_dir && fetchFiles(item.path)"
+              @contextmenu.stop="handleContextMenu($event, item)"
+            >
+              <template #prefix>
+                <div class="file-icon-box" :class="{ 'is-dir': item.is_dir }">
+                  <n-icon size="20"><component :is="getFileIcon(item)" /></n-icon>
+                </div>
+              </template>
+              <div class="file-info">
+                <div class="file-name">{{ item.name }}</div>
+                <div class="file-meta">
+                  <span>{{ (item.size/1024/1024).toFixed(2) }} MB</span>
+                  <n-divider vertical />
+                  <span>{{ new Date(item.mtime*1000).toLocaleString() }}</span>
+                </div>
+              </div>
+              <template #suffix>
+                <n-button v-if="!item.is_dir" size="small" secondary round type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
+                  单文件识别
+                </n-button>
+                <n-icon v-else :color="textMutedColor" size="20"><NextIcon /></n-icon>
+              </template>
+            </n-list-item>
+          </n-list>
+        </div>
+
+        <!-- 底部轻量信息显示 -->
+        <div class="browser-footer">
+          <div class="count-info">
+            <n-icon size="16"><FileIcon /></n-icon>
+            <span>当前目录共 <b>{{ items.length }}</b> 项内容</span>
+          </div>
         </div>
       </div>
     </div>
@@ -319,12 +403,144 @@ onMounted(() => {
         </template>
       </n-card>
     </n-modal>
+
+    <!-- 前往指定路径弹框 -->
+    <n-modal v-model:show="showGoToPathModal" preset="card" title="前往指定路径" style="width: 500px" :bordered="false">
+      <n-space vertical>
+        <n-input
+          v-model:value="goToPathInput"
+          placeholder="请输入路径，如 /mnt/media/anime"
+          size="large"
+          @keydown.enter="goToPath(goToPathInput)"
+        >
+          <template #prefix>
+            <n-icon><FolderOpenIcon /></n-icon>
+          </template>
+        </n-input>
+        <n-text depth="3" style="font-size: 12px;">
+          提示：路径以 / 开头，支持直接粘贴完整路径
+        </n-text>
+      </n-space>
+      <template #footer>
+        <n-space justify="end">
+          <n-button v-bind="getButtonStyle('secondary')" @click="showGoToPathModal = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" type="primary" @click="goToPath(goToPathInput)">前往</n-button>
+        </n-space>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <style scoped>
 .file-browser { width: 100%; padding-bottom: 40px; }
-.browser-container { display: flex; flex-direction: column; gap: 16px; }
+
+/* 布局：左侧收藏夹 + 右侧主内容 */
+.browser-layout {
+  display: flex;
+  gap: 16px;
+  min-height: calc(100vh - 200px);
+}
+
+/* 左侧收藏夹侧边栏 */
+.favorites-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--app-surface-card-mixed);
+  border-radius: var(--card-border-radius, 12px);
+  border: 1px solid var(--app-border-light);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.favorites-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--app-border-light);
+  margin-bottom: 12px;
+}
+
+.favorites-title {
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--text-primary);
+}
+
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.favorite-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--button-border-radius, 8px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.favorite-item:hover {
+  background: var(--app-surface-hover);
+  color: var(--text-primary);
+}
+
+.favorite-item:hover .favorite-delete {
+  opacity: 1;
+}
+
+.favorite-item.active {
+  background: var(--n-primary-color-suppl, rgba(24, 160, 88, 0.1));
+  color: var(--n-primary-color);
+}
+
+.favorite-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.favorite-name {
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorite-delete {
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  padding: 4px !important;
+  height: auto !important;
+}
+
+.favorite-delete:hover {
+  color: var(--n-error-color) !important;
+}
+
+.favorites-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+/* 右侧主内容区 */
+.browser-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 /* 顶部工具栏 */
 .browser-toolbar { 
@@ -340,6 +556,7 @@ onMounted(() => {
   border-radius: var(--card-border-radius, 12px); 
   border: 1px solid var(--app-border-light); 
   overflow: hidden; 
+  flex: 1;
 }
 .modern-list :deep(.n-list-item) { padding: 12px 20px !important; transition: background var(--transition-fast); border-bottom: 1px solid var(--app-border-light); }
 .modern-list :deep(.n-list-item:last-child) { border-bottom: none; }

@@ -46,6 +46,11 @@ export function useFileBrowserView() {
   const showInfoModal = ref(false)
   const fileInfo = ref<any>(null)
 
+  // --- Favorites ---
+  const favorites = ref<{ name: string; path: string }[]>([])
+  const showGoToPathModal = ref(false)
+  const goToPathInput = ref('')
+
   const breadcrumbParts = computed(() => {
     const pathStr = String(currentPath.value || '/')
     const parts = pathStr.split('/').filter(x => x)
@@ -184,7 +189,69 @@ export function useFileBrowserView() {
       if (cfg.organize_tasks?.length > 0) {
         defaultTask.value = cfg.organize_tasks[0]
       }
+      // 加载收藏夹
+      favorites.value = cfg.file_browser_favorites || []
     } catch (e) {}
+  }
+
+  // --- Favorites Actions ---
+  const addFavorite = async (path: string, name?: string) => {
+    const displayName = name || path.split('/').filter(Boolean).pop() || path
+    // 检查是否已存在
+    if (favorites.value.some(f => f.path === path)) {
+      message.warning('该路径已在收藏夹中')
+      return
+    }
+    const newFavorites = [...favorites.value, { name: displayName, path }]
+    try {
+      const res = await fetch(`${API_BASE}/api/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_browser_favorites: newFavorites })
+      })
+      if (res.ok) {
+        favorites.value = newFavorites
+        message.success('已添加到收藏夹')
+      } else {
+        message.error('添加收藏失败')
+      }
+    } catch (e) {
+      message.error('添加收藏失败')
+    }
+  }
+
+  const removeFavorite = async (path: string) => {
+    const newFavorites = favorites.value.filter(f => f.path !== path)
+    try {
+      const res = await fetch(`${API_BASE}/api/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_browser_favorites: newFavorites })
+      })
+      if (res.ok) {
+        favorites.value = newFavorites
+        message.success('已从收藏夹移除')
+      } else {
+        message.error('移除收藏失败')
+      }
+    } catch (e) {
+      message.error('移除收藏失败')
+    }
+  }
+
+  const goToPath = async (path: string) => {
+    if (!path || path.trim() === '') {
+      message.warning('请输入有效路径')
+      return
+    }
+    // 确保路径以 / 开头
+    let targetPath = path.trim()
+    if (!targetPath.startsWith('/')) {
+      targetPath = '/' + targetPath
+    }
+    await fetchFiles(targetPath)
+    showGoToPathModal.value = false
+    goToPathInput.value = ''
   }
 
   // --- Recognition Actions ---
@@ -418,6 +485,9 @@ export function useFileBrowserView() {
     clipboard,
     showInfoModal,
     fileInfo,
+    favorites,
+    showGoToPathModal,
+    goToPathInput,
     fetchFiles,
     deleteItem,
     copyToClipboard,
@@ -430,6 +500,9 @@ export function useFileBrowserView() {
     runManualOrganize,
     runManualOrganizeBackground,
     commitBatch,
-    getFileIcon
+    getFileIcon,
+    addFavorite,
+    removeFavorite,
+    goToPath
   }
 }

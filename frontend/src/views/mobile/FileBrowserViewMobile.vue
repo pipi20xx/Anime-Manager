@@ -3,6 +3,7 @@ import { onMounted, ref, nextTick, computed, h } from 'vue'
 import { 
   NButton, NIcon, NList, NListItem, NSpace, NDivider,
   NDropdown, NModal, NCard, NDescriptions, NDescriptionsItem,
+  NInput, NText,
   useDialog, useMessage
 } from 'naive-ui'
 import {
@@ -16,7 +17,11 @@ import {
   InfoOutlined as InfoIcon,
   LinkOutlined as PathIcon,
   ContentCutOutlined as CutIcon,
-  MoreVertOutlined as MoreIcon
+  MoreVertOutlined as MoreIcon,
+  StarOutlineOutlined as StarIcon,
+  StarOutlined as StarFilledIcon,
+  FolderOpenOutlined as FolderOpenIcon,
+  DriveFileMoveOutlined as GoToIcon
 } from '@vicons/material'
 
 import ManualOrganizeModal from '../../components/ManualOrganizeModal.vue'
@@ -51,6 +56,9 @@ const {
   clipboard,
   showInfoModal,
   fileInfo,
+  favorites,
+  showGoToPathModal,
+  goToPathInput,
   fetchFiles,
   deleteItem,
   copyToClipboard,
@@ -63,7 +71,10 @@ const {
   runManualOrganize,
   runManualOrganizeBackground,
   commitBatch,
-  getFileIcon
+  getFileIcon,
+  addFavorite,
+  removeFavorite,
+  goToPath
 } = useFileBrowserView()
 
 const dialog = useDialog()
@@ -79,6 +90,68 @@ const showContextMenu = ref(false)
 const x = ref(0)
 const y = ref(0)
 const contextMenuItem = ref<any>(null)
+const showFavoritesDropdown = ref(false)
+
+const favoriteOptions = computed(() => {
+  const options: any[] = []
+  
+  if (favorites.value.length === 0) {
+    options.push({
+      label: '暂无收藏',
+      key: 'empty',
+      disabled: true
+    })
+  } else {
+    favorites.value.forEach(fav => {
+      options.push({
+        label: fav.name,
+        key: fav.path,
+        icon: () => h(NIcon, null, { default: () => h(FolderOpenIcon) })
+      })
+    })
+  }
+  
+  options.push({ type: 'divider', key: 'd1' })
+  
+  // 检查当前目录是否已收藏
+  const isCurrentFavorite = favorites.value.some(f => f.path === currentPath.value)
+  if (isCurrentFavorite) {
+    options.push({
+      label: '移除当前目录',
+      key: 'remove_current',
+      icon: () => h(NIcon, null, { default: () => h(StarFilledIcon) })
+    })
+  } else {
+    options.push({
+      label: '添加当前目录到收藏',
+      key: 'add_current',
+      icon: () => h(NIcon, null, { default: () => h(StarIcon) })
+    })
+  }
+  
+  return options
+})
+
+const toggleCurrentFavorite = () => {
+  const isFavorite = favorites.value.some(f => f.path === currentPath.value)
+  if (isFavorite) {
+    removeFavorite(currentPath.value)
+  } else {
+    addFavorite(currentPath.value)
+  }
+}
+
+const handleFavoriteSelect = (key: string) => {
+  if (key === 'add_current') {
+    addFavorite(currentPath.value)
+  } else if (key === 'remove_current') {
+    removeFavorite(currentPath.value)
+  } else if (key !== 'empty') {
+    // 点击收藏的路径，直接跳转
+    fetchFiles(key)
+  }
+  showFavoritesDropdown.value = false
+}
 
 const menuOptions = computed(() => {
   if (!contextMenuItem.value) return []
@@ -197,6 +270,34 @@ const getShortName = (path: string) => {
          <span class="path-text m-truncate">{{ getShortName(currentPath) }}</span>
       </div>
       <n-space>
+        <!-- 收藏按钮：直接点击收藏/取消 -->
+        <n-button 
+          v-bind="getButtonStyle('icon')" 
+          size="small"
+          :type="favorites.some(f => f.path === currentPath) ? 'warning' : 'default'"
+          @click="toggleCurrentFavorite"
+        >
+          <template #icon>
+            <n-icon>
+              <component :is="favorites.some(f => f.path === currentPath) ? StarFilledIcon : StarIcon" />
+            </n-icon>
+          </template>
+        </n-button>
+        <!-- 收藏夹下拉菜单 -->
+        <n-dropdown
+          :options="favoriteOptions"
+          :show="showFavoritesDropdown"
+          @select="handleFavoriteSelect"
+          @clickoutside="showFavoritesDropdown = false"
+          placement="bottom-end"
+        >
+          <n-button v-bind="getButtonStyle('icon')" size="small" @click="showFavoritesDropdown = !showFavoritesDropdown">
+            <template #icon><n-icon><FolderOpenIcon /></n-icon></template>
+          </n-button>
+        </n-dropdown>
+        <n-button v-bind="getButtonStyle('icon')" size="small" @click="showGoToPathModal = true">
+          <template #icon><n-icon><GoToIcon /></n-icon></template>
+        </n-button>
         <n-button v-bind="getButtonStyle('icon')" size="small" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
           <template #icon><n-icon><UpIcon /></n-icon></template>
         </n-button>
@@ -325,6 +426,31 @@ const getShortName = (path: string) => {
           </n-space>
         </template>
       </n-card>
+    </n-modal>
+
+    <!-- 前往指定路径弹框 -->
+    <n-modal v-model:show="showGoToPathModal" preset="card" title="前往指定路径" style="width: 90vw; max-width: 400px" :bordered="false">
+      <n-space vertical>
+        <n-input
+          v-model:value="goToPathInput"
+          placeholder="请输入路径，如 /mnt/media/anime"
+          size="large"
+          @keydown.enter="goToPath(goToPathInput)"
+        >
+          <template #prefix>
+            <n-icon><FolderOpenIcon /></n-icon>
+          </template>
+        </n-input>
+        <n-text depth="3" style="font-size: 12px;">
+          提示：路径以 / 开头，支持直接粘贴完整路径
+        </n-text>
+      </n-space>
+      <template #footer>
+        <n-space justify="end">
+          <n-button v-bind="getButtonStyle('secondary')" @click="showGoToPathModal = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" type="primary" @click="goToPath(goToPathInput)">前往</n-button>
+        </n-space>
+      </template>
     </n-modal>
   </div>
 </template>
