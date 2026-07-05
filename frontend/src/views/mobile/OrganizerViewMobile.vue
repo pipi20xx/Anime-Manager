@@ -221,6 +221,7 @@ onUnmounted(stopBgTaskPolling)
               v-for="(task, i) in tasks"
               :key="task.id"
               class="m-card-item m-card-touchable m-touchable"
+              data-app-instance="organize-task-card"
               @click="openEditTask(i)"
             >
               <div class="card-header">

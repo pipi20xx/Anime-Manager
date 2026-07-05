@@ -186,7 +186,7 @@ onUnmounted(stopBgTaskPolling)
           
           <draggable v-model="tasks" item-key="id" @end="saveConfig" class="card-grid">
             <template #item="{element: task, index: i}">
-              <n-card bordered class="task-card clickable-card" @click="openEditTask(i)">
+              <n-card bordered class="task-card clickable-card" :data-app-instance="'organize-task-card'" @click="openEditTask(i)">
                 <template #header>
                   <n-space align="center" justify="space-between" style="width: 100%">
                     <n-space align="center">

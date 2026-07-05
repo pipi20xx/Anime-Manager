@@ -77,7 +77,7 @@ const handleAction = (key: string) => {
 <template>
   <div class="mobile-feed-list">
     <div v-if="feeds.length > 0">
-      <div v-for="feed in feeds" :key="feed.id" class="feed-item m-touchable" @click="emit('edit', feed)">
+      <div v-for="feed in feeds" :key="feed.id" class="feed-item m-touchable" data-app-instance="feed-card" @click="emit('edit', feed)">
         <div class="feed-content">
           <div class="feed-header">
             <span class="feed-title">{{ feed.title || '未命名' }}</span>

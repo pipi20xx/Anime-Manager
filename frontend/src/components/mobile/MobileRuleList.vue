@@ -69,7 +69,7 @@ const handleAction = (key: string) => {
   <div class="mobile-rule-list">
     <div v-if="rules.length > 0">
       <n-list hoverable :show-divider="false">
-        <n-list-item v-for="rule in rules" :key="rule.id" class="rule-item m-touchable" @click="emit('edit', rule)">
+        <n-list-item v-for="rule in rules" :key="rule.id" class="rule-item m-touchable" data-app-instance="rss-rule-card" @click="emit('edit', rule)">
           <div class="rule-content">
             <div class="rule-header">
               <span class="rule-name">{{ rule.name }}</span>

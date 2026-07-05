@@ -74,7 +74,7 @@ onMounted(fetchTasks)
 
     <div class="content-mobile">
        <div class="card-list">
-         <n-card v-for="(task, index) in tasks" :key="task.id" class="mobile-card" size="small" @click="openEdit(index)">
+         <n-card v-for="(task, index) in tasks" :key="task.id" class="mobile-card" size="small" :data-app-instance="'strm-task-card'" @click="openEdit(index)">
            <div class="card-header">
              <div class="title-row">
                <n-icon size="20" class="link-icon"><LinkIcon /></n-icon>

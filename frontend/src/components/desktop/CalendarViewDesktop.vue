@@ -214,7 +214,7 @@ const openCardDetail = (item: any) => {
         <div class="selected-date-label">{{ selectedDateLabel }}</div>
 
         <div v-if="selectedDateItems.length > 0" class="track-card-grid">
-          <n-card v-for="item in selectedDateItems" :key="item.id" hoverable class="track-card" content-style="padding: 0;" @click="openCardDetail(item)">
+          <n-card v-for="item in selectedDateItems" :key="item.id" hoverable class="track-card" content-style="padding: 0;" :data-app-instance="'track-card'" @click="openCardDetail(item)">
             <div class="card-poster">
               <img
                 v-if="item.posterPath"

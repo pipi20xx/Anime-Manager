@@ -63,7 +63,7 @@ const {
             </n-button>
 
             <div v-if="profiles.length > 0" class="mobile-list">
-              <div v-for="profile in profiles" :key="profile.id" class="mobile-card" @click="openEditProfile(profile)">
+              <div v-for="profile in profiles" :key="profile.id" class="mobile-card" data-app-instance="profile-card" @click="openEditProfile(profile)">
                 <div class="card-body">
                   <div class="card-title-row">
                     <div class="title-box">
@@ -100,7 +100,7 @@ const {
             </n-button>
 
             <div v-if="rules.length > 0" class="mobile-list">
-               <div v-for="rule in rules" :key="rule.id" class="mobile-card" @click="openEditRule(rule)">
+               <div v-for="rule in rules" :key="rule.id" class="mobile-card" data-app-instance="priority-rule-card" @click="openEditRule(rule)">
                   <div class="card-body">
                     <div class="card-title-row">
                       <div class="title-box">
@@ -234,13 +234,16 @@ const {
 
 .mobile-drag-area { display: flex; flex-direction: column; gap: 10px; padding: 4px; }
 .mobile-drag-item {
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
   border-radius: var(--button-border-radius, 8px);
   padding: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
   border: 1px solid var(--app-border-light);
+}
+.mobile-card :deep(.n-tag) {
+  background: var(--app-surface-card-mixed) !important;
 }
 .drag-info { flex: 1; }
 .drag-info .name { font-weight: bold; font-size: 13px; }

@@ -61,7 +61,7 @@ const {
           <div class="profile-list">
             <n-grid :cols="2" :x-gap="12" :y-gap="12">
               <n-gi v-for="profile in profiles" :key="profile.id">
-                <n-card hoverable class="profile-card" @click="openEditProfile(profile)">
+                <n-card hoverable class="profile-card" :data-app-instance="'profile-card'" @click="openEditProfile(profile)">
                   <template #header>
                     <div class="p-header">
                       <span>{{ profile.name }}</span>
@@ -113,7 +113,7 @@ const {
 
           <n-grid :cols="3" :x-gap="12" :y-gap="12">
             <n-gi v-for="rule in rules" :key="rule.id">
-              <n-card size="small" hoverable class="rule-card" @click="openEditRule(rule)">
+              <n-card size="small" hoverable class="rule-card" :data-app-instance="'priority-rule-card'" @click="openEditRule(rule)">
                 <template #header>
                   <div class="r-header">
                     {{ rule.name }}
@@ -236,14 +236,13 @@ const {
 .desc { color: var(--text-tertiary); font-size: 13px; max-width: 70%; }
 .profile-card { cursor: pointer; border-radius: 8px; }
 .p-header { display: flex; align-items: center; gap: 8px; font-weight: bold; }
-.p-preview { margin: 12px 0; background: var(--bg-tertiary); padding: 8px; border-radius: 6px; font-size: 12px; }
-.p-rule-item { display: flex; gap: 8px; margin-bottom: 4px; }
-.p-rule-item .idx { color: var(--n-primary-color); font-weight: bold; }
-.rule-card { border-radius: 8px; }
-.r-header { display: flex; align-items: center; gap: 6px; font-weight: bold; }
-.r-content { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 4px; }
-.drag-area { background: var(--bg-tertiary); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
-.drag-item { background: var(--bg-surface); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.p-preview { margin: 12px 0; background: var(--app-surface-card-mixed); padding: 8px; border-radius: 6px; font-size: 12px; }
+.drag-area { background: var(--app-surface-card-mixed); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+.drag-item { background: var(--app-surface-card-mixed); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.profile-card :deep(.n-tag),
+.rule-card :deep(.n-tag) {
+  background: var(--app-surface-card-mixed) !important;
+}
 .drag-handle { cursor: move; opacity: var(--opacity-secondary); }
 .drag-content { flex: 1; font-weight: 500; }
 .mt-4 { margin-top: 16px; }

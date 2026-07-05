@@ -278,7 +278,7 @@ onMounted(() => {
 
     <!-- List View -->
     <div class="sub-list" v-if="subscriptions.length > 0">
-      <div class="sub-item" v-for="sub in subscriptions" :key="sub.id">
+      <div class="sub-item" v-for="sub in subscriptions" :key="sub.id" data-app-instance="subscription-card">
         <div class="sub-poster" @click="handleItemAction('edit', sub)">
            <n-image 
             v-if="sub.poster_path" 

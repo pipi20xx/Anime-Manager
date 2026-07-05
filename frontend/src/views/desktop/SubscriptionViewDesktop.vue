@@ -125,7 +125,7 @@ onMounted(fetchData)
 
         <n-grid :x-gap="12" :y-gap="12" :cols="3" v-if="feeds.length > 0">
           <n-gi v-for="feed in feeds" :key="feed.id">
-            <n-card hoverable class="feed-card clickable-card" @click="openEditFeed(feed)">
+            <n-card hoverable class="feed-card clickable-card" :data-app-instance="'feed-card'" @click="openEditFeed(feed)">
               <div class="f-head">
                 <div class="f-title">{{ feed.title || '未命名订阅' }}</div>
                 <div class="f-status">
@@ -176,7 +176,7 @@ onMounted(fetchData)
 
         <n-grid :x-gap="12" :y-gap="12" :cols="3" v-if="rules.length > 0">
           <n-gi v-for="rule in rules" :key="rule.id">
-            <n-card hoverable class="rule-card clickable-card" @click="openEditRule(rule)">
+            <n-card hoverable class="rule-card clickable-card" :data-app-instance="'rss-rule-card'" @click="openEditRule(rule)">
               <div class="f-head">
                 <div class="f-title">{{ rule.name || '未命名规则' }}</div>
                 <div class="f-status">

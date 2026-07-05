@@ -428,7 +428,7 @@ const {
             
             <n-grid :x-gap="12" :y-gap="12" :cols="3">
               <n-gi v-for="client in clients" :key="client.id">
-                <n-card hoverable class="client-card" @click="openEditClient(client)">
+                <n-card hoverable class="client-card" :data-app-instance="'client-card'" @click="openEditClient(client)">
                   <div class="client-info">
                     <div class="client-name">
                       <n-icon v-if="client.is_default" style="color: var(--n-warning-color)" title="默认客户端">

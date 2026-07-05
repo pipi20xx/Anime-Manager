@@ -320,7 +320,7 @@ const {
             </n-button>
 
             <div class="m-card-list">
-              <div v-for="client in clients" :key="client.id" class="m-card-item">
+              <div v-for="client in clients" :key="client.id" class="m-card-item" data-app-instance="client-card">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">{{ client.name }}</div>
                   <div class="m-list-item-desc">{{ client.type }} | {{ client.url }}</div>

@@ -295,7 +295,7 @@ onMounted(() => {
 
     <n-grid :x-gap="16" :y-gap="16" cols="2 600:4 1000:6 1600:8" v-if="subscriptions.length > 0">
       <n-gi v-for="sub in subscriptions" :key="sub.id">
-        <n-card hoverable class="sub-card" content-style="padding: 0;">
+        <n-card hoverable class="sub-card" content-style="padding: 0;" :data-app-instance="'subscription-card'">
           <div class="card-content">
             <div class="poster-box" @click="openEdit(sub)">
               <n-image
