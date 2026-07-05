@@ -233,15 +233,11 @@ onUnmounted(stopBgTaskPolling)
                   <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><div class="v">{{ task.target_dir }}</div></div>
                   <div class="p-row">
                     <span class="p-label">操作类型</span>
-                    <n-tag size="small" :bordered="false" type="info" style="background: var(--color-info-bg)">
-                      {{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}
-                    </n-tag>
+                    <div class="v">{{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}</div>
                   </div>
                   <div class="p-row">
                     <span class="p-label">重命名规则</span>
-                    <n-tag size="small" :bordered="false" type="info" style="background: var(--color-info-bg)">
-                      {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
-                    </n-tag>
+                    <div class="v">{{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}</div>
                   </div>
                 </div>
                 <template #action>

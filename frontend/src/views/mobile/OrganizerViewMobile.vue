@@ -250,14 +250,11 @@ onUnmounted(stopBgTaskPolling)
                  </div>
                  <div class="meta-row">
                    <span class="path-label">操作类型</span>
-                   <n-tag size="small" :bordered="false" type="info">
-                     {{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}
-                   </n-tag>
+                   <span class="path-val">{{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}</span>
                  </div>
-                 <div class="rule-tag">
-                    <n-tag size="small" :bordered="false" type="info">
-                      {{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}
-                    </n-tag>
+                 <div class="meta-row">
+                   <span class="path-label">重命名规则</span>
+                   <span class="path-val">{{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}</span>
                  </div>
               </div>
 
@@ -340,6 +337,7 @@ onUnmounted(stopBgTaskPolling)
 <style scoped>
 .m-tabs {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -351,12 +349,14 @@ onUnmounted(stopBgTaskPolling)
 
 .m-tabs :deep(.n-tabs-pane-wrapper) {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
 .m-tabs :deep(.n-tab-pane) {
   height: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 0;
 }
 
@@ -455,10 +455,6 @@ onUnmounted(stopBgTaskPolling)
   display: flex;
   align-items: center;
   gap: var(--m-spacing-sm);
-}
-
-.rule-tag {
-  margin-top: var(--m-spacing-xs);
 }
 
 .card-footer {

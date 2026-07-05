@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import {
-  NList, NListItem, NThing, NButton, NIcon, NDrawer, NDrawerContent, NTag, NSpace, NCard
+  NButton, NIcon, NDrawer, NDrawerContent, NSpace, NCard
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -18,6 +18,13 @@ import StrmTaskModal from '../../components/StrmTaskModal.vue'
 import { useStrmGeneratorView } from '../../composables/views/useStrmGeneratorView'
 import { useBackClose } from '../../composables/useBackClose'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+
+const syncModeMap: Record<string, string> = {
+  local: '本地文件扫描',
+  tree_file: '目录树文件',
+  cd2_api: 'CD2 API',
+  webdav: 'WebDAV'
+}
 
 const {
   API_BASE,
@@ -90,14 +97,18 @@ onMounted(fetchTasks)
              </div>
            </div>
            
-           <div class="path-details">
-             <div class="path-row">
-               <span class="label">源路径</span>
-               <div class="val">{{ task.source_path || task.source_dir }}</div>
+           <div class="task-details">
+             <div class="path-box">
+               <span class="path-label">源</span>
+               <div class="path-val">{{ task.source_path || task.source_dir }}</div>
              </div>
-             <div class="path-row">
-               <span class="label">目标路径</span>
-               <div class="val">{{ task.target_path || task.target_dir }}</div>
+             <div class="path-box">
+               <span class="path-label">目标</span>
+               <div class="path-val">{{ task.target_path || task.target_dir }}</div>
+             </div>
+             <div class="meta-row">
+               <span class="path-label">同步模式</span>
+               <span class="path-val">{{ syncModeMap[task.sync_mode] || task.sync_mode || '本地文件扫描' }}</span>
              </div>
            </div>
 
@@ -191,18 +202,11 @@ onMounted(fetchTasks)
 .task-title { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .action-row { display: flex; align-items: center; flex-shrink: 0; }
 
-.path-details { display: flex; flex-direction: column; gap: 8px; }
-.path-row { display: flex; flex-direction: column; min-width: 0; }
-.path-row .label { font-size: 10px; color: var(--text-tertiary); }
-.path-row .val { 
-  font-family: monospace; 
-  background: var(--app-surface-card-mixed); 
-  padding: 6px 8px; 
-  border-radius: var(--card-border-radius, 6px); 
-  font-size: 12px;
-  word-break: break-all;
-  line-height: 1.4;
-}
+.task-details { display: flex; flex-direction: column; gap: var(--m-spacing-md); }
+.path-box { display: flex; flex-direction: column; min-width: 0; }
+.path-label { font-size: var(--m-text-sm); color: var(--text-tertiary); margin-bottom: var(--m-spacing-xs); font-weight: 500; }
+.path-val { font-family: monospace; background: var(--app-surface-inner); padding: var(--m-spacing-sm); border-radius: var(--m-radius-sm); font-size: var(--m-text-md); word-break: break-all; line-height: 1.4; }
+.meta-row { display: flex; align-items: center; gap: var(--m-spacing-sm); }
 
 .card-footer {
   margin-top: 12px;

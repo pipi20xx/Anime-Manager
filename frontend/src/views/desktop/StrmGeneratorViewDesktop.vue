@@ -13,6 +13,13 @@ import {
   AccessTimeOutlined as ScheduleIcon
 } from '@vicons/material'
 
+const syncModeMap: Record<string, string> = {
+  local: '本地文件扫描',
+  tree_file: '目录树文件',
+  cd2_api: 'CD2 API',
+  webdav: 'WebDAV'
+}
+
 import StrmTaskModal from '../../components/StrmTaskModal.vue'
 import AppGlassCard from '../../components/AppGlassCard.vue'
 import { useStrmGeneratorView } from '../../composables/views/useStrmGeneratorView'
@@ -94,9 +101,13 @@ onMounted(fetchTasks)
             </n-tooltip>
           </n-space>
         </div>
-        <div class="path-info">
-          <div class="l">源路径</div><div class="v" :title="task.source_path || task.source_dir">{{ task.source_path || task.source_dir }}</div>
-          <div class="l mt-1">目标路径</div><div class="v" :title="task.target_path || task.target_dir">{{ task.target_path || task.target_dir }}</div>
+        <div class="p-disp">
+          <div class="p-row" :title="task.source_path || task.source_dir"><span class="p-label">源路径</span><div class="v">{{ task.source_path || task.source_dir }}</div></div>
+          <div class="p-row" :title="task.target_path || task.target_dir"><span class="p-label">目标路径</span><div class="v">{{ task.target_path || task.target_dir }}</div></div>
+          <div class="p-row">
+            <span class="p-label">同步模式</span>
+            <div class="v">{{ syncModeMap[task.sync_mode] || task.sync_mode || '本地文件扫描' }}</div>
+          </div>
         </div>
         <template #action>
           <n-space justify="end" @click.stop>
@@ -153,16 +164,25 @@ onMounted(fetchTasks)
 .task-card:hover { transform: translateY(-4px); border-color: var(--n-primary-color); }
 .task-header { display: flex; justify-content: space-between; align-items: center; }
 .task-name { font-weight: bold; font-size: var(--text-xl); color: var(--text-secondary); }
-.path-info .l { font-size: var(--text-xs); color: var(--text-tertiary); opacity: var(--opacity-60); }
-.path-info .v {
-  font-size: var(--text-base);
-  font-family: monospace;
-  color: var(--text-secondary);
-  background: var(--app-surface-card-mixed);
-  padding: 4px 8px;
-  border-radius: var(--card-border-radius, var(--button-border-radius, 4px));
+.p-disp { flex-grow: 1; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.p-disp .p-row { display: flex; align-items: center; gap: 8px; }
+.p-disp .p-label { 
+  font-size: var(--text-sm); 
+  color: var(--text-tertiary); 
+  font-weight: 600; 
+  min-width: 70px;
+  flex-shrink: 0;
+}
+.p-disp .v { 
+  flex: 1;
+  font-size: var(--text-sm); 
+  font-family: var(--code-font);
+  background: var(--app-surface-card-mixed); 
+  padding: var(--space-1) var(--space-2); 
+  border-radius: var(--card-border-radius, var(--button-border-radius, 4px)); 
+  color: var(--text-secondary); 
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
   border: 1px solid var(--app-border-light);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .mb-4 { margin-bottom: 16px; }
 </style>
