@@ -344,6 +344,11 @@ input, textarea, select, button {
 [data-app-instance] .n-card {
   border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light)) !important;
 }
+/* NCard 的边框实际渲染在 .n-card__border 元素上，必须覆盖它 */
+.n-card[data-app-instance] > .n-card__border,
+[data-app-instance] .n-card > .n-card__border {
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light)) !important;
+}
 .n-card > .n-card__content {
   padding: 12px 16px !important;
 }
@@ -436,6 +441,11 @@ input, textarea, select, button {
 }
 .n-data-table .n-data-table-td {
   background: var(--app-surface-list-mixed) !important;
+  border-bottom: var(--list-border-width) var(--list-border-style) var(--list-border-color) !important;
+}
+/* DataTable 行分隔线完整覆盖：Naive UI 内部在 tr 上也有 border-bottom，
+ * 必须同时覆盖才能消除虚线/默认分隔线 */
+.n-data-table .n-data-table-tr {
   border-bottom: var(--list-border-width) var(--list-border-style) var(--list-border-color) !important;
 }
 .n-data-table .n-data-table-td:hover,
