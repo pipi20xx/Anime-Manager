@@ -295,9 +295,9 @@ onBeforeUnmount(cleanupObserver)
   display: flex;
   gap: 16px;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: var(--card-border-radius, 12px);
   background: var(--app-surface-card-mixed);
-  border: 1px solid var(--app-border-light);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
   transition: all 0.2s ease;
 }
 
