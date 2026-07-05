@@ -8,17 +8,22 @@ import type { AppearanceConfig, AppearanceInstanceOverrides } from '../../../api
 import {
   appearanceKeyGroupedOptions,
   getAppearanceKeyMeta,
+  APPEARANCE_KEYS,
   type AppearanceKey
 } from '../../../constants/appearanceKeys'
 
 /**
- * 单独自定义弹框管理面板
+ * 单独自定义组件管理面板（弹框/卡片通用）
  *
- * 让指定的弹框组件（声明了 appearance-key 的）可以独立配置外观，
+ * 让指定组件（声明了 appearance-key 的）可以独立配置外观，
  * 未配置的字段自动继承全局默认。
  *
  * 通过 v-model 形式操作父组件传入的 form.instances，
  * 任何修改都会触发 preview 事件让父组件实时应用预览。
+ *
+ * 通过 pageFilter prop 控制显示哪些组件：
+ * - 不传：显示所有非"卡片"类型的 key（即弹框）
+ * - 传 '卡片'：只显示卡片类型的 key
  */
 
 const props = defineProps<{
@@ -26,6 +31,8 @@ const props = defineProps<{
   form: AppearanceConfig
   /** 背景图片选项（来自父组件加载的 images 列表） */
   imageOptions: { label: string; value: string }[]
+  /** 按 page 过滤：传 '卡片' 只显示卡片，不传显示所有非卡片 */
+  pageFilter?: string
 }>()
 
 const emit = defineEmits<{
@@ -35,14 +42,52 @@ const emit = defineEmits<{
 
 const selectedInstanceKey = ref<AppearanceKey | ''>('')
 
+/** 根据 pageFilter 过滤后的下拉选项 */
+const filteredOptions = computed(() => {
+  if (props.pageFilter) {
+    // 只显示指定 page 的 key
+    const groups: Record<string, { label: string; value: string }[]> = {}
+    for (const [value, meta] of Object.entries(APPEARANCE_KEYS)) {
+      if (meta.page !== props.pageFilter) continue
+      if (!groups[meta.page]) groups[meta.page] = []
+      groups[meta.page].push({ label: meta.label, value })
+    }
+    return Object.entries(groups).map(([page, items]) => ({
+      type: 'group' as const,
+      label: page,
+      key: page,
+      children: items,
+    }))
+  } else {
+    // 不传 pageFilter：显示所有非"卡片"类型的 key
+    return appearanceKeyGroupedOptions.filter(g => g.label !== '卡片')
+  }
+})
+
+/** 当前项目类型文字（"弹框"或"卡片"） */
+const itemTypeText = computed(() => props.pageFilter === '卡片' ? '卡片' : '弹框')
+
 /** 当前选中实例的覆盖对象（只读视图，不创建副作用） */
 const currentInstanceOverrides = computed<AppearanceInstanceOverrides>(() => {
   if (!selectedInstanceKey.value) return {}
   return props.form.instances![selectedInstanceKey.value] || {}
 })
 
-/** 已存在自定义配置的实例数量 */
-const instanceCount = computed(() => Object.keys(props.form.instances || {}).length)
+/** 已存在自定义配置的实例数量（按 pageFilter 过滤，避免弹框/卡片计数混在一起） */
+const instanceCount = computed(() => {
+  if (!props.form.instances) return 0
+  return Object.keys(props.form.instances).filter(key => {
+    const meta = getAppearanceKeyMeta(key)
+    if (!meta) return false
+    // 与 filteredOptions 的过滤逻辑保持一致：
+    //   pageFilter 存在 → 只统计该 page 的实例（如 '卡片'）
+    //   pageFilter 不存在 → 统计所有非 '卡片' 的实例（即弹框）
+    if (props.pageFilter) {
+      return meta.page === props.pageFilter
+    }
+    return meta.page !== '卡片'
+  }).length
+})
 
 /** 通知父组件预览 */
 function notifyChange(): void {
@@ -134,10 +179,10 @@ defineExpose({ currentInstanceOverrides, instanceCount })
     <div class="section-header">
       <div>
         <div class="section-title">
-          单独自定义弹框
+          单独自定义{{ itemTypeText }}
           <n-tag v-if="instanceCount > 0" size="small" type="success" style="margin-left: 8px;">{{ instanceCount }} 个已自定义</n-tag>
         </div>
-        <div class="section-desc">为指定的弹框表单设置独立外观，未配置的弹框走全局默认</div>
+        <div class="section-desc">为指定的{{ itemTypeText }}设置独立外观，未配置的{{ itemTypeText }}走全局默认</div>
       </div>
     </div>
 
@@ -145,12 +190,12 @@ defineExpose({ currentInstanceOverrides, instanceCount })
 
     <!-- 选择要配置的弹框 -->
     <div class="form-row">
-      <div class="form-label">选择弹框</div>
+      <div class="form-label">{{ pageFilter === '卡片' ? '选择卡片' : '选择弹框' }}</div>
       <div class="form-control" style="display: flex; gap: 8px; align-items: center;">
         <n-select
           v-model:value="selectedInstanceKey"
-          :options="appearanceKeyGroupedOptions"
-          placeholder="选择要单独自定义的弹框"
+          :options="filteredOptions"
+          :placeholder="pageFilter === '卡片' ? '选择要单独自定义的卡片' : '选择要单独自定义的弹框'"
           style="flex: 1;"
         />
         <n-popconfirm
@@ -158,9 +203,9 @@ defineExpose({ currentInstanceOverrides, instanceCount })
           @positive-click="deleteInstanceConfig(selectedInstanceKey)"
         >
           <template #trigger>
-            <n-button type="error" ghost>清除该弹框配置</n-button>
+            <n-button type="error" ghost>清除该{{ itemTypeText }}配置</n-button>
           </template>
-          确定清除该弹框的所有自定义配置？将回退到全局默认。
+          确定清除该{{ itemTypeText }}的所有自定义配置？将回退到全局默认。
         </n-popconfirm>
       </div>
     </div>
@@ -446,7 +491,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
       </n-tabs>
     </template>
 
-    <n-empty v-else description="请选择一个弹框开始自定义" style="padding: 40px 0;" />
+    <n-empty v-else :description="`请选择一个${itemTypeText}开始自定义`" style="padding: 40px 0;" />
   </n-card>
 </template>
 

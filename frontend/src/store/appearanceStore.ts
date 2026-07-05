@@ -266,8 +266,11 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
       decls.push(`--app-card-bg-image: ${c.background_image ? `url(/api/appearance/image/${c.background_image})` : 'none'};`)
     }
     if (c.background_opacity !== undefined) {
-      decls.push(`--app-card-bg-opacity: ${Math.round(c.background_opacity * 100)}%;`)
-      decls.push(`--app-card-bg-transparent-pct: ${Math.round((1 - c.background_opacity) * 100)}%;`)
+      // 注意：这里两个公式的方向与全局保持一致——
+      //   background_opacity = 1（100%）→ 背景完全可见（不透明）
+      //   background_opacity = 0（0%）  → 背景完全透明
+      decls.push(`--app-card-bg-opacity: ${Math.round((1 - c.background_opacity) * 100)}%;`)
+      decls.push(`--app-card-bg-transparent-pct: ${Math.round(c.background_opacity * 100)}%;`)
     }
     if (c.background_overlay_opacity !== undefined) {
       decls.push(`--app-card-bg-overlay-opacity: ${c.background_overlay_opacity};`)
@@ -402,6 +405,9 @@ function buildCardBgLayerRules(key: string): string {
   return `/* instance "${key}" 的 card 背景图层 */
 [data-app-instance="${key}"] .n-card,
 [data-app-instance="${key}"].n-card {
+  /* 用 color-mix 直接覆盖 .n-card 的不透明背景，让其根据实例级 --app-card-bg-transparent-pct 重新计算
+     （--app-surface-card-mixed 在 :root 处计算后被继承为静态值，无法跟随实例级覆盖重算） */
+  background: color-mix(in srgb, var(--app-surface-card), transparent var(--app-card-bg-transparent-pct, 0%)) !important;
   position: relative;
   overflow: hidden;
 }
@@ -415,9 +421,18 @@ function buildCardBgLayerRules(key: string): string {
     var(--app-card-bg-image);
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   z-index: 0;
   pointer-events: none;
   opacity: var(--app-card-bg-opacity, 1);
+  /* 关键：覆盖 global.css 中可能存在的 :root:not([data-card-bg="on"]) .n-card::before { display: none } */
+  display: block !important;
+}
+[data-app-instance="${key}"] .n-card > *,
+[data-app-instance="${key}"].n-card > * {
+  /* 关键：把卡片内容（header/content/footer/action）抬到 ::before 之上，否则会被背景图遮住 */
+  position: relative;
+  z-index: 1;
 }`
 }
 

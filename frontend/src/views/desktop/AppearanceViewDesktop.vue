@@ -465,6 +465,15 @@ const formatFileSize = (size: number) => {
             @change="preview"
           />
         </n-tab-pane>
+
+        <n-tab-pane name="card-instance" tab="单独自定义卡片">
+          <InstanceCustomizationPanel
+            :form="form"
+            :image-options="imageOptions"
+            page-filter="卡片"
+            @change="preview"
+          />
+        </n-tab-pane>
       </n-tabs>
     </n-spin>
   </div>

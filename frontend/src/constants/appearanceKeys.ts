@@ -263,6 +263,20 @@ export const APPEARANCE_KEYS = {
     page: '系统设置',
     categories: ['modal', 'input', 'search', 'tabs', 'card', 'list']
   },
+
+  // ===== 卡片 =====
+  'strm-task-card': {
+    label: 'STRM 任务卡片',
+    description: '虚拟 STRM 库页面中的任务列表卡片',
+    page: '卡片',
+    categories: ['card', 'input']
+  },
+  'organize-rule-card': {
+    label: '整理规则卡片',
+    description: '整理与重命名页面中的规则列表卡片',
+    page: '卡片',
+    categories: ['card', 'input']
+  },
 } as const
 
 export type AppearanceKey = keyof typeof APPEARANCE_KEYS

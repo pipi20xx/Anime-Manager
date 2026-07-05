@@ -39,7 +39,11 @@ async def update_appearance_config(payload: dict):
     def deep_merge(base: dict, override: dict) -> dict:
         result = base.copy()
         for k, v in override.items():
-            if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+            # instances 字段整体替换：前端每次都发送完整状态，
+            # 深合并会导致已删除的 instance key 残留在配置中无法清除
+            if k == "instances":
+                result[k] = v
+            elif k in result and isinstance(result[k], dict) and isinstance(v, dict):
                 result[k] = deep_merge(result[k], v)
             else:
                 result[k] = v

@@ -376,7 +376,11 @@ class ConfigManager:
         """递归合并字典，保留基础配置中未覆盖的字段"""
         result = copy.deepcopy(base)
         for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            # appearance.instances 字段整体替换：前端每次发送完整状态，
+            # 深合并会导致已删除的 instance key 残留在配置中无法清除
+            if key == "instances" and isinstance(value, dict):
+                result[key] = copy.deepcopy(value)
+            elif key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 result[key] = ConfigManager._deep_merge(result[key], value)
             else:
                 result[key] = copy.deepcopy(value) if isinstance(value, (dict, list)) else value

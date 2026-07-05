@@ -14,6 +14,7 @@ import {
 } from '@vicons/material'
 
 import StrmTaskModal from '../../components/StrmTaskModal.vue'
+import AppGlassCard from '../../components/AppGlassCard.vue'
 import { useStrmGeneratorView } from '../../composables/views/useStrmGeneratorView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -48,9 +49,10 @@ onMounted(fetchTasks)
     </div>
 
     <div v-if="tasks.length > 0" class="task-grid">
-      <n-card
+      <AppGlassCard
         v-for="(task, index) in tasks"
         :key="task.id"
+        appearance-key="strm-task-card"
         bordered
         embedded
         class="task-card clickable-card"
@@ -126,7 +128,7 @@ onMounted(fetchTasks)
             </n-tooltip>
           </n-space>
         </template>
-      </n-card>
+      </AppGlassCard>
     </div>
     <n-empty v-else description="暂无任务" />
 

@@ -18,6 +18,7 @@ import draggable from 'vuedraggable'
 import RuleEditModal from '../../components/RuleEditModal.vue'
 import TaskEditModal from '../../components/TaskEditModal.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
+import AppGlassCard from '../../components/AppGlassCard.vue'
 import { useOrganizerView } from '../../composables/views/useOrganizerView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -141,7 +142,7 @@ onUnmounted(stopBgTaskPolling)
           
           <draggable v-model="rules" item-key="id" @end="saveConfig" class="card-grid">
             <template #item="{element: rule, index: i}">
-              <n-card bordered :class="['rule-card', 'clickable-card', { 'default-rule': i === 0 }]" @click="openEditRule(i)">
+              <AppGlassCard bordered appearance-key="organize-rule-card" :class="['rule-card', 'clickable-card', { 'default-rule': i === 0 }]" @click="openEditRule(i)">
                 <template #header>
                   <div class="card-title-box">
                     <span class="card-title-text">{{ rule.name }}</span>
@@ -172,7 +173,7 @@ onUnmounted(stopBgTaskPolling)
                     </n-tooltip>
                   </n-space>
                 </template>
-              </n-card>
+              </AppGlassCard>
             </template>
           </draggable>
         </n-space>
