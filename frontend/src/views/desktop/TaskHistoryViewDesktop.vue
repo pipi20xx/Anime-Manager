@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NScrollbar, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, NList, NListItem } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, NList, NListItem } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
@@ -158,13 +158,13 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" style="width: 960px; height: 96vh" title="任务日志">
+    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" style="width: 960px;" title="任务日志">
       <template #header-extra>
         <n-tag v-if="selectedTask" size="small" round :bordered="false" :style="getStatusTag(selectedTask.status).style">
           {{ getStatusTag(selectedTask.status).label }}
         </n-tag>
       </template>
-      <n-scrollbar v-if="selectedTask" style="max-height: calc(96vh - 120px)">
+      <div v-if="selectedTask" class="log-scroll-area">
         <div class="log-container">
           <div v-for="(log, i) in selectedTask.logs" :key="i" class="log-line">
             <span class="log-time">{{ log.time }}</span>
@@ -172,7 +172,7 @@ onUnmounted(() => {
             <span class="log-msg">{{ log.message }}</span>
           </div>
         </div>
-      </n-scrollbar>
+      </div>
     </AppGlassModal>
   </div>
 </template>
@@ -231,7 +231,7 @@ onUnmounted(() => {
 .log-container {
   font-family: var(--code-font);
   font-size: var(--text-sm);
-  background: var(--app-surface-inner);
+  background: var(--app-surface-card-mixed);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
 }

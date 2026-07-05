@@ -11,6 +11,7 @@ import {
   type AppearanceConfig,
   type AppearanceImage
 } from '../../api/appearance'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 import {
   appearanceConfig,
   saveAppearanceConfig,
@@ -128,7 +129,7 @@ const formatFileSize = (size: number) => {
       <n-space>
         <n-popconfirm @positive-click="handleReset">
           <template #trigger>
-            <n-button type="warning" ghost size="small">恢复默认</n-button>
+            <n-button v-bind="getButtonStyle('warning')" size="small">恢复默认</n-button>
           </template>
           确定恢复默认？
         </n-popconfirm>

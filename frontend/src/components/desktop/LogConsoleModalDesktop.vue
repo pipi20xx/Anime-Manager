@@ -11,7 +11,6 @@ import {
   PlayCircleRound as PlayIcon,
   DeleteSweepRound as ClearIcon,
   VerticalAlignBottomRound as ScrollIcon,
-  CloseRound as CloseIcon,
   OpenInNewRound as OpenIcon
 } from '@vicons/material'
 import { useLogConsole } from '../../composables/components/useLogConsole'
@@ -42,10 +41,6 @@ const {
   clearConsole,
   openFullLog
 } = useLogConsole()
-
-const close = () => {
-  emit('update:show', false)
-}
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement
@@ -96,7 +91,7 @@ watch(() => props.show, (newVal) => {
                 v-model:value="selectedDate"
                 label="历史日志回溯"
                 placeholder="选择日志日期"
-                style="width: 180px;"
+                style="width: 260px;"
                 :options="[
                   { label: '🔴 实时日志流', value: null },
                   ...logDates.map(d => ({ label: `📅 ${d}`, value: d }))
@@ -114,9 +109,6 @@ watch(() => props.show, (newVal) => {
               </n-button>
               <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="clearConsole">
                 清空
-              </n-button>
-              <n-button v-bind="getButtonStyle('iconPrimary')" size="tiny" @click="close">
-                <template #icon><n-icon><CloseIcon /></n-icon></template>
               </n-button>
             </n-space>
           </div>
