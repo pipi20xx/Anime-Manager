@@ -179,9 +179,9 @@ const isNavActive = (key: string) => route.name === key
       bordered
       collapse-mode="width"
       :collapsed-width="56"
-      :width="170"
+      :width="220"
       show-trigger="arrow-circle"
-      content-style="padding: var(--space-2) 0; display: flex; flex-direction: column; height: 100%;"
+      content-style="padding: var(--space-2) var(--space-3); display: flex; flex-direction: column; height: 100%;"
       v-model:collapsed="collapsed"
       class="main-sider"
     >
@@ -200,7 +200,7 @@ const isNavActive = (key: string) => route.name === key
       <n-scrollbar style="flex-grow: 1;">
         <n-menu
           :value="currentMenuKey"
-          :collapsed-width="56"
+          :collapsed-width="32"
           :collapsed-icon-size="18"
           :options="menuOptions"
           :indent="14"

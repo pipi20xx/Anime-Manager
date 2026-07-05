@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { 
-  NInput, NButton, NIcon, NSpace, NList, NListItem, 
-  NThing, NTag, NEmpty, NSpin, useMessage, NSelect
+  NCard, NButton, NIcon, NSpace, NTag, NEmpty, NSpin, useMessage
 } from 'naive-ui'
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
 import { SearchOutlined as SearchIcon, CloudDownloadOutlined as DownloadIcon } from '@vicons/material'
 import { searchKeyword } from '../../store/navigationStore'
+import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const message = useMessage()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
@@ -138,32 +138,33 @@ const formatSize = (sizeStr: string) => {
 
     <div class="m-results">
       <n-spin :show="loading">
-        <n-list hoverable clickable v-if="results.length > 0" bordered>
-          <n-list-item v-for="item in results" :key="item.guid">
-            <n-thing :title="item.title">
-              <template #description>
-                <div v-if="item.description" class="result-description">{{ item.description }}</div>
-                <n-space size="small" style="margin-top: var(--m-spacing-xs)">
-                  <n-tag v-if="item.indexer" size="small" type="warning" round :bordered="false">
-                    {{ item.indexer }}
-                  </n-tag>
-                  <n-tag size="small" type="info" quaternary>{{ formatSize(item.size) }}</n-tag>
-                </n-space>
-              </template>
-            </n-thing>
-            <template #suffix>
-               <n-button 
-                type="primary" 
-                ghost 
-                size="small" 
+        <div v-if="results.length > 0" class="m-result-cards">
+          <n-card
+            v-for="item in results"
+            :key="item.guid"
+            class="m-result-card"
+            hoverable
+          >
+            <div class="m-result-card-header">
+              <div class="m-result-card-title" :title="item.title">{{ item.title }}</div>
+              <n-button
+                v-bind="getButtonStyle('primary')"
+                size="small"
                 @click="handleDownload(item)"
               >
                 <template #icon><n-icon><DownloadIcon /></n-icon></template>
                 下载
               </n-button>
-            </template>
-          </n-list-item>
-        </n-list>
+            </div>
+            <div v-if="item.description" class="result-description">{{ item.description }}</div>
+            <n-space size="small" style="margin-top: var(--m-spacing-xs)">
+              <n-tag v-if="item.indexer" size="small" type="warning" round :bordered="false">
+                {{ item.indexer }}
+              </n-tag>
+              <n-tag size="small" type="info" quaternary>{{ formatSize(item.size) }}</n-tag>
+            </n-space>
+          </n-card>
+        </div>
         <n-empty v-else-if="!loading" description="搜索结果将显示在这里" class="empty-state" />
       </n-spin>
     </div>
@@ -207,6 +208,33 @@ const formatSize = (sizeStr: string) => {
   min-height: 300px;
 }
 
+.m-result-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-spacing-sm);
+}
+
+.m-result-card {
+  transition: all var(--transition-normal);
+}
+
+.m-result-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--m-spacing-sm);
+}
+
+.m-result-card-title {
+  font-size: var(--m-text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
 .empty-state {
   padding: 60px 0;
 }
@@ -214,7 +242,7 @@ const formatSize = (sizeStr: string) => {
 .result-description {
   font-size: 12px;
   color: var(--text-tertiary);
-  margin-top: 4px;
+  margin-top: var(--m-spacing-xs);
   line-height: 1.4;
   word-break: break-all;
 }
