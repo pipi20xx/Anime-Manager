@@ -343,8 +343,14 @@ input, textarea, select, button {
 :root[data-card-bg="on"] .n-card {
   position: relative;
   overflow: hidden;
+  /* 底色移到 ::after，此处置空，避免双层背景 */
+  background: transparent !important;
+  /* 模糊交给 ::after，避免与底色层重复模糊 */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 :root[data-card-bg="on"] .n-card::before {
+  /* 图片层：始终完全显示，不透明度由上层底色(::after)控制 */
   content: '';
   position: absolute;
   inset: 0;
@@ -354,7 +360,19 @@ input, textarea, select, button {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: var(--app-card-bg-opacity, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+:root[data-card-bg="on"] .n-card::after {
+  /* 底色层：盖在图片之上，用 color-mix 控制不透明度
+     --app-card-bg-opacity = 100% → 底色不透明（遮住图片）
+     --app-card-bg-opacity = 0%   → 底色透明（透出图片） */
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-card-blur, none);
+  -webkit-backdrop-filter: var(--app-card-blur, none);
+  background: color-mix(in srgb, var(--app-surface-card) var(--app-card-bg-opacity, 100%), transparent);
   z-index: 0;
   pointer-events: none;
 }

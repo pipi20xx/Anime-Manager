@@ -257,7 +257,7 @@ const formatFileSize = (size: number) => {
                 <n-select v-model:value="form.card.background_image" :options="imageOptions" @update:value="preview" placeholder="选择背景图片" />
               </div>
             </div>
-            <div class="form-row" v-if="form.card.background_image || form.global.enabled">
+            <div class="form-row">
               <div class="form-label">背景不透明度 <n-tag size="small" type="info">{{ (form.card.background_opacity * 100).toFixed(0) }}%</n-tag></div>
               <div class="form-control">
                 <n-slider v-model:value="form.card.background_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />

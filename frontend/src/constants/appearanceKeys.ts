@@ -269,13 +269,13 @@ export const APPEARANCE_KEYS = {
     label: 'STRM 任务卡片',
     description: '虚拟 STRM 库页面中的任务列表卡片',
     page: '卡片',
-    categories: ['card', 'input']
+    categories: ['card']
   },
   'organize-rule-card': {
     label: '整理规则卡片',
     description: '整理与重命名页面中的规则列表卡片',
     page: '卡片',
-    categories: ['card', 'input']
+    categories: ['card']
   },
 } as const
 
