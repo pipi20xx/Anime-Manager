@@ -21,6 +21,9 @@ import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import AppGlassCard from '../../components/AppGlassCard.vue'
 import { useOrganizerView } from '../../composables/views/useOrganizerView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { usePWA } from '../../composables/usePWA'
+
+const { isMobile } = usePWA()
 
 const {
   API_BASE,
@@ -140,7 +143,7 @@ onUnmounted(stopBgTaskPolling)
             </n-button>
           </n-space>
           
-          <draggable v-model="rules" item-key="id" @end="saveConfig" class="card-grid">
+          <draggable v-model="rules" item-key="id" :disabled="isMobile" @end="saveConfig" class="card-grid">
             <template #item="{element: rule, index: i}">
               <AppGlassCard bordered appearance-key="organize-rule-card" :class="['rule-card', 'clickable-card', { 'default-rule': i === 0 }]" @click="openEditRule(i)">
                 <template #header>
@@ -184,7 +187,7 @@ onUnmounted(stopBgTaskPolling)
         <n-space vertical size="large">
           <n-space justify="end"><n-button v-bind="getButtonStyle('primary')" @click="openEditTask(-1)">创建整理任务</n-button></n-space>
           
-          <draggable v-model="tasks" item-key="id" @end="saveConfig" class="card-grid">
+          <draggable v-model="tasks" item-key="id" :disabled="isMobile" @end="saveConfig" class="card-grid">
             <template #item="{element: task, index: i}">
               <n-card bordered class="task-card clickable-card" :data-app-instance="'organize-task-card'" @click="openEditTask(i)">
                 <template #header>
@@ -288,7 +291,13 @@ onUnmounted(stopBgTaskPolling)
 .organizer-view { width: 100%; }
 .header h1 { margin: 0; font-size: var(--text-3xl); color: var(--text-primary); }
 .subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); }
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  box-sizing: border-box;
+  min-width: 0;
+}
 .rule-card, .task-card {
   height: 100%;
   transition: transform var(--transition-fast);

@@ -451,6 +451,8 @@ onMounted(() => {
   padding: 16px;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .favorites-header {
@@ -484,6 +486,8 @@ onMounted(() => {
   cursor: pointer;
   transition: all var(--transition-fast);
   color: var(--text-secondary);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .favorite-item:hover {

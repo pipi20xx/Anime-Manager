@@ -427,7 +427,39 @@
   }
   .favorites-sidebar {
     width: 100% !important;
+    max-width: 100% !important;
     max-height: 200px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  /* 移动端无 hover，收藏夹删除按钮始终可见 */
+  .favorite-delete {
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* —— 卡片网格：移动端单列布局，防止溢出 —— */
+  .card-grid {
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* —— 整理视图：确保内容不溢出 —— */
+  .organizer-view {
+    overflow-x: hidden !important;
+  }
+  .organizer-view .task-card,
+  .organizer-view .rule-card {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* —— 洗版规则弹窗内部网格：移动端单列 —— */
+  .profile-list,
+  .rule-list {
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
   }
 
   /* —— Markdown 表格：水平滚动兜底 ——
