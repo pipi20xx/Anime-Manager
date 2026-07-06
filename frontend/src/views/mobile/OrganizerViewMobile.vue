@@ -162,7 +162,7 @@ onUnmounted(stopBgTaskPolling)
       </n-list>
     </div>
 
-    <n-tabs type="line" animated class="m-tabs" pane-class="m-tab-content">
+    <n-tabs type="line" animated class="m-tabs">
       <!-- 规则管理 Tab -->
       <n-tab-pane name="rules" tab="规则">
         <div class="m-tab-content">
@@ -351,11 +351,15 @@ onUnmounted(stopBgTaskPolling)
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .m-tabs :deep(.n-tab-pane) {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 0;
 }
@@ -416,9 +420,8 @@ onUnmounted(stopBgTaskPolling)
   padding: var(--m-spacing-sm);
   border-radius: var(--m-radius-sm);
   font-size: var(--m-text-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
+  line-height: 1.4;
 }
 
 /* 任务详情 */

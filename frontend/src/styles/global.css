@@ -682,6 +682,15 @@ div[class*="n-tabs--segment"] [class*="n-tabs-nav"] {
   text-shadow: var(--app-instance-text-tint-shadow, none) !important;
 }
 
+/* n-dynamic-tags 默认 tag 是浅灰底，应使用普通文字色，避免被上面 tint 色覆盖成白色 */
+.n-card[data-app-instance] .n-card__content .n-dynamic-tags .n-tag,
+.n-card[data-app-instance] .n-card__content .n-dynamic-tags .n-tag .n-tag__content,
+.n-modal-container .n-modal[data-app-instance] .n-dynamic-tags .n-tag,
+.n-modal-container .n-modal[data-app-instance] .n-dynamic-tags .n-tag .n-tag__content {
+  color: var(--text-primary) !important;
+  text-shadow: none !important;
+}
+
 .n-modal-container .n-modal[data-app-instance] .n-button:not(.n-button--ghost):not(.n-button--quaternary),
 .n-modal-container .n-modal[data-app-instance] .n-button:not(.n-button--ghost):not(.n-button--quaternary) * {
   color: var(--app-instance-text-tint-color, #fff) !important;
