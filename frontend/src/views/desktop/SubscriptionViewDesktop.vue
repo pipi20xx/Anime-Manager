@@ -101,7 +101,7 @@ onMounted(fetchData)
       </n-space>
     </div>
 
-    <n-tabs type="segment" animated class="custom-tabs">
+    <n-tabs type="line" animated class="custom-tabs">
       <!-- 追剧订阅管理 -->
       <n-tab-pane name="subscriptions" tab="追剧订阅">
         <SubscriptionManager :clients="clients" />

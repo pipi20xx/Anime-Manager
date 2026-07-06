@@ -457,18 +457,6 @@
     flex-wrap: wrap !important;
     gap: 8px !important;
   }
-
-  /* —— Segment Tabs：允许横向滚动，防止标签挤压 ——
-     数据中心等页面有 6 个 tab，移动端需要可滚动 */
-  .n-tabs--segment-type .n-tabs-rail {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-  .n-tabs--segment-type .n-tabs-tab {
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-    padding: 0 10px !important;
-  }
 }
 
 /* ============================================

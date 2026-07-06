@@ -156,7 +156,7 @@ const logColumns = [
     <n-card :bordered="false" class="main-card">
       <n-tabs
         v-model:value="activeTab"
-        type="segment"
+        type="line"
         animated
         class="custom-tabs"
       >

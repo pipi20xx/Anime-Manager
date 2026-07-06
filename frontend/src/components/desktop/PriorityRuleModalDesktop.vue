@@ -45,7 +45,7 @@ const {
     :bordered="false"
   >
     <div class="main-container">
-      <n-tabs v-model:value="activeTab" type="segment" animated>
+      <n-tabs v-model:value="activeTab" type="line" animated>
         
         <!-- Tab 1: Profiles -->
         <n-tab-pane name="profiles" tab="洗版策略 (Profiles)">

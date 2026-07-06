@@ -86,7 +86,7 @@ onUnmounted(() => {
         <div class="subtitle">任务执行历史与日志</div>
       </div>
       <n-space>
-        <n-tabs type="segment" animated v-model:value="moduleFilter" class="custom-tabs">
+        <n-tabs type="line" animated v-model:value="moduleFilter" class="custom-tabs">
           <n-tab-pane name="all" tab="全部" />
           <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
         </n-tabs>

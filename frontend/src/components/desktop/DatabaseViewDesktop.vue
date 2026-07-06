@@ -130,7 +130,7 @@ const dataTableColumns = computed(() => {
       </div>
     </div>
 
-    <n-tabs type="segment" animated v-model:value="activeTab" class="main-tabs custom-tabs">
+    <n-tabs type="line" animated v-model:value="activeTab" class="main-tabs custom-tabs">
       <n-tab-pane name="metadata" tab="元数据资产">
         <div class="pane-content"><TmdbFullDataView /></div>
       </n-tab-pane>

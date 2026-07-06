@@ -94,7 +94,7 @@ const handleRefresh = () => {
         </div>
       </div>
       <n-space>
-        <n-tabs type="segment" animated v-model:value="statusFilter" class="custom-tabs">
+        <n-tabs type="line" animated v-model:value="statusFilter" class="custom-tabs">
           <n-tab-pane name="all" tab="全部" />
           <n-tab-pane name="success" tab="成功" />
           <n-tab-pane name="skipped" tab="跳过" />

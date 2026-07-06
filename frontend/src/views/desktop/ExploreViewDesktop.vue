@@ -35,7 +35,7 @@ const currentTab = computed({
     <div class="explore-header">
        <n-tabs 
           v-model:value="currentTab" 
-          type="segment" 
+          type="line"
           animated
           class="custom-tabs"
           style="width: 420px"

@@ -130,7 +130,7 @@ onUnmounted(stopBgTaskPolling)
       </n-space>
     </n-card>
 
-    <n-tabs type="segment" animated class="custom-tabs">
+    <n-tabs type="line" animated class="custom-tabs">
       <!-- 规则管理 Tab -->
       <n-tab-pane name="rules" tab="规则管理">
         <n-space vertical size="large">
