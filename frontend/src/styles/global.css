@@ -473,6 +473,12 @@ input, textarea, select, button {
   padding: var(--tabs-pane-padding) !important;
 }
 
+/* line 类型 tabs 的首个 tab 不要贴到容器左侧 */
+.n-tabs.n-tabs--line-type .n-tabs-tab:first-child,
+.n-tabs.n-tabs--line-type [class*="n-tabs-tab-wrapper"]:first-child .n-tabs-tab {
+  margin-left: 6px !important;
+}
+
 /* ============================================
  * Tabs segment 类型样式统一 - 使用CSS变量
  * ============================================ */

@@ -94,7 +94,7 @@ const handleRefresh = () => {
         </div>
       </div>
       <n-space>
-        <n-tabs type="segment" v-model:value="statusFilter" size="medium" class="filter-tabs">
+        <n-tabs type="segment" animated v-model:value="statusFilter" class="custom-tabs">
           <n-tab-pane name="all" tab="全部" />
           <n-tab-pane name="success" tab="成功" />
           <n-tab-pane name="skipped" tab="跳过" />
@@ -273,26 +273,10 @@ const handleRefresh = () => {
 .page-header :deep(.n-input) { height: 34px; }
 .page-header :deep(.n-button) { height: 34px; }
 .page-header .app-search-field { --search-input-height: 34px; }
-.filter-tabs :deep(.n-tabs-nav),
-.filter-tabs :deep(.n-tabs-rail) {
-  height: 100% !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-.filter-tabs :deep(.n-tabs-rail) {
-  border: 1px solid var(--app-border-light) !important;
-  gap: 4px !important;
-  padding: 3px !important;
-}
-.filter-tabs :deep(.n-tabs-tab) {
-  height: 28px !important;
-  padding: 0 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-.filter-tabs :deep(.n-tabs-tab--active) { border: 1px solid var(--app-border-hover) !important; }
+.custom-tabs { height: 34px; }
+.custom-tabs :deep(.n-tabs-nav) { height: 100% !important; }
+.custom-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
+.custom-tabs :deep(.n-tabs-tab) { height: 28px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
 
 .history-list { margin-bottom: 40px; }
 .history-list .history-item {

@@ -86,7 +86,7 @@ onUnmounted(() => {
         <div class="subtitle">任务执行历史与日志</div>
       </div>
       <n-space>
-        <n-tabs type="segment" v-model:value="moduleFilter" size="medium" class="filter-tabs" style="height: var(--space-8)">
+        <n-tabs type="segment" animated v-model:value="moduleFilter" class="custom-tabs">
           <n-tab-pane name="all" tab="全部" />
           <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
         </n-tabs>
@@ -189,20 +189,10 @@ onUnmounted(() => {
 .subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 .page-header :deep(.n-space) { align-items: center; }
 .page-header :deep(.n-button) { height: var(--space-8); }
-.filter-tabs { height: var(--space-8); }
-.filter-tabs :deep(.n-tabs-nav),
-.filter-tabs :deep(.n-tabs-rail) {
-  height: 100% !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-.filter-tabs :deep(.n-tabs-rail) {
-  border: 1px solid var(--app-border-light) !important;
-  gap: 4px !important;
-  padding: 3px !important;
-}
-.filter-tabs :deep(.n-tabs-tab) { display: flex !important; align-items: center !important; padding: 0 12px !important; border: none !important; box-shadow: none !important; }
-.filter-tabs :deep(.n-tabs-tab--active) { border: 1px solid var(--app-border-hover) !important; }
+.custom-tabs { height: var(--space-8); }
+.custom-tabs :deep(.n-tabs-nav) { height: 100% !important; }
+.custom-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
+.custom-tabs :deep(.n-tabs-tab) { height: calc(var(--space-8) - 6px) !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
 
 .task-list { margin-bottom: var(--space-6); }
 .task-list .task-card {

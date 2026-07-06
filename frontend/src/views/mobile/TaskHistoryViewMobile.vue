@@ -104,7 +104,7 @@ onUnmounted(() => {
     </div>
 
     <div class="filter-bar">
-      <n-tabs type="segment" v-model:value="moduleFilter" size="small" class="filter-tabs">
+      <n-tabs type="segment" animated v-model:value="moduleFilter" class="custom-tabs">
         <n-tab-pane name="all" tab="全部" />
         <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
       </n-tabs>
@@ -207,23 +207,10 @@ onUnmounted(() => {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-
-.filter-bar :deep(.filter-tabs) {
-  display: flex;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  height: 32px;
-}
-
-.filter-bar :deep(.n-tabs-tab) {
-  flex-shrink: 0;
-  height: 26px !important;
-  padding: 0 10px !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-.filter-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 3px !important; padding: 2px !important; }
+.custom-tabs { height: 32px; }
+.custom-tabs :deep(.n-tabs-nav) { height: 100% !important; }
+.custom-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 3px !important; padding: 2px !important; }
+.custom-tabs :deep(.n-tabs-tab) { height: 26px !important; padding: 0 10px !important; display: flex !important; align-items: center !important; }
 
 .task-list { margin-bottom: var(--m-spacing-lg); }
 .task-list .task-card {
