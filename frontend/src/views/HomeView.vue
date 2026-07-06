@@ -21,6 +21,16 @@ import { TuneOutlined as TuneIcon } from '@vicons/material'
 import RecognitionLogsView from './desktop/RecognitionLogsDesktop.vue'
 import RecognitionResult from '../components/RecognitionResult.vue'
 import { useHome } from '../composables/views/useHome'
+
+const {
+  API_BASE,
+  sandboxSearch,
+  recognitionState,
+  getImg,
+  handleRecognize,
+  searchTmdbForSandbox,
+  selectSandboxResult
+} = useHome()
 </script>
 
 <template>

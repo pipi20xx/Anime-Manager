@@ -34,7 +34,8 @@ import {
   TerminalOutlined as ConsoleIcon,
   MenuOutlined as HamburgerIcon,
   PersonOutlined as ProfileIcon,
-  ExitToAppOutlined as LogoutIcon
+  ExitToAppOutlined as LogoutIcon,
+  ArrowBackOutlined as ArrowBackIcon
 } from '@vicons/material'
 
 // Views - 不再需要导入，使用路由
@@ -52,7 +53,7 @@ import {
 } from '../store/navigationStore'
 import { currentThemeMode, isDarkMode, logoColor, toggleThemeMode } from '../store/themeStore'
 import { ThemeMode } from '../themes'
-import { useIsMobile } from '../composables/useIsMobile'
+import { usePWA } from '../composables/usePWA'
 
 const notification = useNotification()
 const router = useRouter()
@@ -114,7 +115,17 @@ import { useBackClose } from '../composables/useBackClose'
 
 // ... existing code ...
 
-const { isMobile } = useIsMobile()
+// PWA 三态导航: desktop / mobile-browser / pwa-app
+const { isMobile, appMode } = usePWA()
+
+/** 返回上一页 (PWA App 模式的返回按钮) */
+function goBack() {
+  if (window.history.length > 1) {
+    window.history.back()
+  } else {
+    router.push({ name: 'Explore' })
+  }
+}
 
 // --- History Management (Android Back Button Support) ---
 // ... (keep existing history logic) ...
@@ -124,6 +135,37 @@ const { isMobile } = useIsMobile()
 useBackClose(isLogConsoleOpen)
 
 const showMobileMenu = ref(false)
+
+// ── 底部功能面板的 History 管理 (不使用 useBackClose, 避免与 router.push 冲突) ──
+let panelNavKey: string | null = null
+let isPanelPopStateClose = false
+
+watch(showMobileMenu, (val) => {
+  if (val) {
+    // 打开时 push 一个 state, 使返回键能关闭面板
+    window.history.pushState({ mobileMenu: true }, '')
+  } else if (!panelNavKey && !isPanelPopStateClose) {
+    // 通过遮罩层/关闭按钮关闭 → 消费 push 的 state
+    window.history.back()
+  }
+  isPanelPopStateClose = false
+})
+
+const onPanelPopState = () => {
+  if (showMobileMenu.value) {
+    // 返回键关闭面板
+    isPanelPopStateClose = true
+    showMobileMenu.value = false
+  } else if (panelNavKey) {
+    // 点击功能项后的 popstate → 执行路由跳转
+    const key = panelNavKey
+    panelNavKey = null
+    router.push({ name: key })
+  }
+}
+
+onMounted(() => window.addEventListener('popstate', onPanelPopState))
+onUnmounted(() => window.removeEventListener('popstate', onPanelPopState))
 
 const collapsed = ref(localStorage.getItem('apm_sidebar_collapsed') === 'true')
 watch(collapsed, (val) => localStorage.setItem('apm_sidebar_collapsed', String(val)))
@@ -157,7 +199,34 @@ const handleMenuSelect = (key: string) => {
   router.push({ name: key })
 }
 
-// Mobile Bottom Nav Helpers
+// 底部导航主菜单 (最多5个, 超出的放入"更多"面板)
+const bottomNavItems = [
+  { key: 'Explore', label: '首页', icon: MovieIcon },
+  { key: 'Calendar', label: '日历', icon: CalendarIcon },
+  { key: 'Subscription', label: '订阅', icon: RssIcon },
+  { key: 'Home', label: '控制台', icon: ConsoleIcon },
+]
+
+// "更多"面板的网格功能列表 (包含所有功能, 使用原始图标组件)
+const gridMenuItems = [
+  { label: '首页', key: 'Explore', icon: MovieIcon },
+  { label: '控制台', key: 'Home', icon: ConsoleIcon },
+  { label: 'Jackett 搜索', key: 'JackettSearch', icon: SearchIcon },
+  { label: '追剧日历', key: 'Calendar', icon: CalendarIcon },
+  { label: '文件浏览', key: 'FileBrowser', icon: FileIcon },
+  { label: '整理重命名', key: 'Organizer', icon: OrganizeIcon },
+  { label: '整理历史', key: 'OrganizeHistory', icon: LogIcon },
+  { label: '订阅与下载', key: 'Subscription', icon: RssIcon },
+  { label: '虚拟库 (STRM)', key: 'StrmGenerator', icon: LinkIcon },
+  { label: '任务中心', key: 'TaskHistory', icon: TaskIcon },
+  { label: '外部控制 (API)', key: 'ExternalControl', icon: ApiIcon },
+  { label: '系统数据中心', key: 'Database', icon: DbIcon },
+  { label: '外观设置', key: 'Appearance', icon: ThemeIcon },
+  { label: '系统设置', key: 'Settings', icon: SettingIcon },
+  { label: '规则说明', key: 'UsageGuide', icon: GuideIcon },
+]
+
+// Mobile Nav Helpers
 const handleMobileNav = (key: string) => {
   if (key === 'MORE') {
     showMobileMenu.value = true
@@ -166,7 +235,31 @@ const handleMobileNav = (key: string) => {
   }
 }
 
-const isNavActive = (key: string) => route.name === key
+const isNavActive = (key: string) => {
+  if (key === 'Explore') return route.name === 'Explore' || route.name === 'ExploreRecommend' || route.name === 'ExploreDiscover' || route.name === 'ExploreSearch'
+  return route.name === key
+}
+
+/** 从"更多"面板选择功能: 先关闭面板再跳转 (避免 history 冲突) */
+const handlePanelSelect = (key: string) => {
+  panelNavKey = key
+  showMobileMenu.value = false
+  // 消费打开面板时 push 的 history state, popstate 中执行 router.push
+  window.history.back()
+}
+
+/** 面板底部快捷操作: 跳转路由 + 关闭面板 (同上机制) */
+const handlePanelAction = (key: string) => {
+  panelNavKey = key
+  showMobileMenu.value = false
+  window.history.back()
+}
+
+/** 面板底部非路由操作: 仅关闭面板 (watch 会自动消费 history state) */
+const handlePanelClose = () => {
+  showMobileMenu.value = false
+  // watch 中 !panelNavKey && !isPanelPopStateClose → 自动 history.back()
+}
 </script>
 
 <template>
@@ -280,12 +373,20 @@ const isNavActive = (key: string) => route.name === key
     <n-layout-content
       :content-style="isFullBleedPage
         ? `padding: 0; min-height: 100vh; display: flex; flex-direction: column;`
-        : `padding: var(--space-4); padding-bottom: ${isMobile ? '80px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
+        : `padding: var(--space-4); padding-bottom: ${isMobile ? '90px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
     >
-      <!-- Mobile Top Bar (Optional, for Logo/Search if needed, or keep clean) -->
+      <!-- Mobile Top Bar -->
       <div v-if="isMobile" class="mobile-header">
         <n-space align="center" justify="space-between" style="width: 100%">
           <div style="display: flex; align-items: center; gap: var(--space-2);">
+            <!-- PWA App 模式: 返回按钮 -->
+            <n-button v-if="appMode" v-bind="getButtonStyle('icon')" size="small" @click="goBack" title="返回">
+              <template #icon><n-icon size="24"><ArrowBackIcon /></n-icon></template>
+            </n-button>
+            <!-- 移动浏览器模式: 汉堡菜单 -->
+            <n-button v-else v-bind="getButtonStyle('icon')" size="small" @click="showMobileMenu = true" title="菜单">
+              <template #icon><n-icon size="24"><HamburgerIcon /></n-icon></template>
+            </n-button>
             <img src="/favicon.svg" alt="logo" style="width: 22px; height: 22px;" />
             <div style="display: flex; flex-direction: column;">
               <span class="title" :style="{ color: logoColor, fontWeight: '800', lineHeight: '1.2' }">番剧管家</span>
@@ -307,70 +408,80 @@ const isNavActive = (key: string) => route.name === key
       </div>
     </n-layout-content>
 
-    <!-- Mobile Bottom Navigation -->
-    <div v-if="isMobile" class="mobile-bottom-nav">
-      <div class="nav-item" :class="{ active: isNavActive('Explore') }" @click="handleMobileNav('Explore')">
-        <n-icon size="24"><MovieIcon /></n-icon>
-        <span class="label">首页</span>
-      </div>
-      <div class="nav-item" :class="{ active: isNavActive('Calendar') }" @click="handleMobileNav('Calendar')">
-        <n-icon size="24"><CalendarIcon /></n-icon>
-        <span class="label">日历</span>
-      </div>
-      <div class="nav-item" :class="{ active: isNavActive('Subscription') }" @click="handleMobileNav('Subscription')">
-        <n-icon size="24"><RssIcon /></n-icon>
-        <span class="label">订阅</span>
-      </div>
-      <div class="nav-item" :class="{ active: showMobileMenu }" @click="handleMobileNav('MORE')">
-        <n-icon size="24"><HamburgerIcon /></n-icon>
-        <span class="label">更多</span>
-      </div>
-    </div>
+    <!-- Mobile Floating Bottom Nav (胶囊浮动卡片) -->
+    <Teleport v-if="isMobile" to="body">
+      <Transition name="nav-slide-up">
+        <div v-if="isMobile" class="mobile-nav-container">
+          <div class="mobile-nav-card">
+            <div class="nav-item" 
+              v-for="item in bottomNavItems" 
+              :key="item.key"
+              :class="{ active: isNavActive(item.key) }" 
+              @click="handleMobileNav(item.key)"
+            >
+              <n-icon size="26"><component :is="item.icon" /></n-icon>
+              <span class="label">{{ item.label }}</span>
+            </div>
+            <!-- 更多按钮 -->
+            <div class="nav-item" :class="{ active: showMobileMenu }" @click="handleMobileNav('MORE')">
+              <n-icon size="26"><HamburgerIcon /></n-icon>
+              <span class="label">更多</span>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
-    <!-- Mobile Drawer for Menu -->
-    <n-drawer v-model:show="showMobileMenu" placement="right" :width="260">
-      <n-drawer-content title="功能菜单" :native-scrollbar="false">
-         <n-menu
-          :value="currentMenuKey"
-          :options="menuOptions"
-          :indent="18"
-          @update:value="(key) => { handleMenuSelect(key); showMobileMenu = false; }"
-        />
+    <!-- Mobile Bottom Panel (从底部弹出的功能面板) -->
+    <n-drawer v-model:show="showMobileMenu" placement="bottom" :height="'65vh'" :style="{ '--n-drawer-body-padding': '16px' }">
+      <n-drawer-content title="全部功能" :native-scrollbar="true" closable>
+        <!-- 功能图标网格 -->
+        <div class="app-grid-panel">
+          <div 
+            v-for="item in gridMenuItems" 
+            :key="item.key"
+            class="app-grid-item"
+            :class="{ active: currentMenuKey === item.key }"
+            @click="handlePanelSelect(item.key)"
+          >
+            <div class="app-grid-icon">
+              <n-icon size="28"><component :is="item.icon" /></n-icon>
+            </div>
+            <div class="app-grid-label">{{ item.label }}</div>
+          </div>
+        </div>
+
+        <!-- 底部快捷操作 -->
         <template #footer>
-          <n-space justify="space-around" style="width: 100%; padding-bottom: var(--space-5);">
-             <n-button 
-                v-bind="getButtonStyle('iconPrimary')" 
-                type="primary"
-                @click="toggleThemeMode"
-                :title="isDarkMode ? '切换白天模式' : '切换黑夜模式'"
-              >
-                <template #icon>
-                  <n-icon>
-                    <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5M2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1m18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1m0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1M5.99 4.58a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41zm12.37 12.37a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0c.39-.39.39-1.03 0-1.41zm1.06-10.96a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0zM7.05 18.36a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0z"/>
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M9 2c-1.05 0-2.05.16-3 .46c1.06.39 1.86 1.27 2.15 2.38A6.01 6.01 0 0 1 9 4c3.31 0 6 2.69 6 6s-2.69 6-6 6s-6-2.69-6-6c0-.6.09-1.18.25-1.73c-.87.33-1.54.99-1.93 1.85C1.16 11.95 1 12.95 1 14c0 4.42 3.58 8 8 8s8-3.58 8-8s-3.58-8-8-8"/>
-                    </svg>
-                  </n-icon>
-                </template>
-              </n-button>
-
-              <n-button 
-                v-bind="getButtonStyle('iconPrimary')"
-                :type="route.name === 'Home' ? 'primary' : 'default'"
-                @click="router.push({ name: 'Home' }); showMobileMenu = false;"
-              >
-                <template #icon><n-icon><MovieIcon /></n-icon></template>
-              </n-button>
-
-              <n-button v-bind="getButtonStyle('iconPrimary')" @click="router.push({ name: 'Settings' }); showMobileMenu = false;">
-                <template #icon><n-icon><SettingIcon /></n-icon></template>
-              </n-button>
-              <n-button v-bind="getButtonStyle('iconPrimary')" @click="{ showLogConsole = true; showMobileMenu = false; }">
-                <template #icon><n-icon><ConsoleIcon /></n-icon></template>
-              </n-button>
-          </n-space>
+          <div class="panel-footer">
+            <div class="panel-footer-item" @click="handlePanelClose(); toggleThemeMode();">
+              <n-icon size="24" :color="isDarkMode ? 'var(--n-primary-color)' : 'var(--text-secondary)'">
+                <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5M2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1m18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1m0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1M5.99 4.58a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41zm12.37 12.37a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0c.39-.39.39-1.03 0-1.41zm1.06-10.96a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0zM7.05 18.36a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0z"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M9 2c-1.05 0-2.05.16-3 .46c1.06.39 1.86 1.27 2.15 2.38A6.01 6.01 0 0 1 9 4c3.31 0 6 2.69 6 6s-2.69 6-6 6s-6-2.69-6-6c0-.6.09-1.18.25-1.73c-.87.33-1.54.99-1.93 1.85C1.16 11.95 1 12.95 1 14c0 4.42 3.58 8 8 8s8-3.58 8-8s-3.58-8-8-8"/>
+                </svg>
+              </n-icon>
+              <span>{{ isDarkMode ? '夜间' : '日间' }}</span>
+            </div>
+            <div class="panel-footer-item" @click="handlePanelAction('Home')">
+              <n-icon size="24"><MovieIcon /></n-icon>
+              <span>控制台</span>
+            </div>
+            <div class="panel-footer-item" @click="handlePanelAction('Settings')">
+              <n-icon size="24"><SettingIcon /></n-icon>
+              <span>设置</span>
+            </div>
+            <div class="panel-footer-item" @click="handlePanelClose(); showLogConsole = true;">
+              <n-icon size="24"><ConsoleIcon /></n-icon>
+              <span>日志</span>
+            </div>
+            <div class="panel-footer-item" @click="handlePanelClose(); logout();">
+              <n-icon size="24" color="var(--n-error-color, #ff4d4f)"><LogoutIcon /></n-icon>
+              <span>退出</span>
+            </div>
+          </div>
         </template>
       </n-drawer-content>
     </n-drawer>
@@ -503,22 +614,30 @@ const isNavActive = (key: string) => route.name === key
   border-bottom: 1px solid var(--border-light);
 }
 
-.mobile-bottom-nav {
+/* 胶囊浮动底部导航 */
+.mobile-nav-container {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background-color: var(--sidebar-bg-color); 
-  /* Use sidebar color for bottom nav background */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-medium);
+  z-index: 2000;
+  padding: 0 12px max(8px, env(safe-area-inset-bottom)) 12px;
+  pointer-events: none;
+}
+
+.mobile-nav-card {
+  pointer-events: auto;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 2000;
-  padding-bottom: env(safe-area-inset-bottom);
+  height: 58px;
+  background-color: color-mix(in srgb, var(--sidebar-bg-color) 85%, transparent);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 1px solid var(--border-light);
+  border-radius: 28px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 .nav-item {
@@ -537,13 +656,13 @@ const isNavActive = (key: string) => route.name === key
 .nav-item::before {
   content: '';
   position: absolute;
-  top: 4px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%) scale(0);
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 32px;
   background: var(--primary-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   transition: transform var(--transition-normal) var(--ease-spring);
   z-index: -1;
 }
@@ -561,14 +680,123 @@ const isNavActive = (key: string) => route.name === key
 }
 
 .nav-item .label {
-  font-size: var(--text-2xs);
+  font-size: 10px;
   margin-top: 2px;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .nav-item.active .label {
   font-weight: 600;
   transform: scale(1.05);
+}
+
+/* 底部弹出功能面板 */
+.app-grid-panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 4px 0 8px 0;
+}
+
+.app-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 4px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+}
+
+.app-grid-item:active {
+  transform: scale(0.94);
+}
+
+.app-grid-item.active {
+  background: var(--primary-subtle);
+  border-color: var(--n-primary-color);
+}
+
+.app-grid-item.active .app-grid-icon {
+  color: var(--n-primary-color);
+}
+
+.app-grid-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--text-secondary);
+  transition: color var(--transition-normal);
+}
+
+.app-grid-item:hover .app-grid-icon {
+  color: var(--n-primary-color);
+}
+
+.app-grid-label {
+  font-size: 11px;
+  text-align: center;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.app-grid-item.active .app-grid-label {
+  color: var(--n-primary-color);
+  font-weight: 600;
+}
+
+/* 面板底部快捷操作 */
+.panel-footer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom)) 0;
+}
+
+.panel-footer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  color: var(--text-secondary);
+}
+
+.panel-footer-item:active {
+  transform: scale(0.92);
+  background: var(--bg-surface-hover);
+}
+
+.panel-footer-item span {
+  font-size: 10px;
+}
+
+/* 导航栏滑入动画 */
+.nav-slide-up-enter-active {
+  transition: transform 0.35s var(--ease-spring), opacity 0.25s ease;
+}
+.nav-slide-up-leave-active {
+  transition: transform 0.2s ease, opacity 0.15s ease;
+}
+.nav-slide-up-enter-from {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.nav-slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 
 /* 页面过渡动画 - 淡入上浮 */
