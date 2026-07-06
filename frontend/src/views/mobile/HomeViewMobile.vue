@@ -70,7 +70,6 @@ const activeTab = ref('dashboard')
                     clickable 
                     hoverable 
                     class="m-mb-md"
-                    style="border: 1px solid var(--border-light); border-radius: var(--m-radius-md);"
                  >
                     <n-list-item 
                       v-for="res in sandboxSearch.results" 
@@ -124,46 +123,46 @@ const activeTab = ref('dashboard')
       <n-tab-pane name="prefs" tab="偏好">
          <div class="m-tab-content">
             <div class="m-card-list">
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">动漫识别优化</div>
                   <div class="m-list-item-desc">过滤同名真人剧</div>
                 </div>
                 <n-switch v-model:value="recognitionState.animePriority" />
               </div>
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">本地数据中心</div>
                   <div class="m-list-item-desc">优先匹配本地库</div>
                 </div>
                 <n-switch v-model:value="recognitionState.offlinePriority" />
               </div>
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">Bangumi 优先</div>
                   <div class="m-list-item-desc">优先 BGM 数据源</div>
                 </div>
                 <n-switch v-model:value="recognitionState.bangumiPriority" />
               </div>
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">Bangumi 故障转移</div>
                 </div>
                 <n-switch v-model:value="recognitionState.bangumiFailover" :disabled="recognitionState.bangumiPriority" />
               </div>
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">强制单文件</div>
                 </div>
                 <n-switch v-model:value="recognitionState.forceFilename" />
               </div>
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">智能记忆</div>
                 </div>
                 <n-switch v-model:value="recognitionState.seriesFingerprint" />
               </div>
-              <div class="m-card-item m-card-touchable m-list-item-touch">
+              <div class="m-card-item m-clickable-card m-list-item-touch">
                 <div class="m-list-item-content">
                   <div class="m-list-item-title">合集增强</div>
                 </div>

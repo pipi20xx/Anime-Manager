@@ -4,10 +4,6 @@ import {
   NSpace, NFormItem, NSelect, 
   NButton, NIcon, NAlert, NSwitch, NForm
 } from 'naive-ui'
-import {
-  SaveOutlined as SaveIcon,
-  CloudUploadOutlined as TestIcon,
-} from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useClientEdit } from '../../composables/modals/useClientEdit'
@@ -37,8 +33,6 @@ const {
     appearance-key="client-edit-modal"
     :show="show"
     @update:show="val => emit('update:show', val)"
-    style="width: 100%; height: 100vh; margin: 0;"
-    content-style="padding: 16px; overflow-y: auto;"
     :title="isNew ? '添加下载器' : '编辑下载器'"
   >
     <n-form label-placement="top">
@@ -103,7 +97,7 @@ const {
       </n-space>
     </n-form>
     
-    <template #footer>
+    <template #action>
       <n-space justify="space-between">
         <n-button v-bind="getButtonStyle('primary')" :loading="testLoading" @click="handleTest">
           测试连接

@@ -79,12 +79,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mobile-task-history-view">
-    <div class="mobile-header">
-      <div class="header-left">
-        <span class="header-title">任务中心</span>
-      </div>
-      <div class="header-right">
+  <div class="m-page m-page-safe-bottom">
+    <div class="m-header m-header-plain">
+      <h1 class="m-header-title">任务中心</h1>
+      <div class="m-header-actions">
         <n-button v-bind="getButtonStyle('icon')" @click="startPolling">
           <template #icon><n-icon><RefreshIcon /></n-icon></template>
         </n-button>
@@ -103,6 +101,9 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <div class="m-page-scrollable">
+      <div class="task-page-inner">
+
     <div class="filter-bar">
       <n-tabs type="segment" animated v-model:value="moduleFilter" class="custom-tabs">
         <n-tab-pane name="all" tab="全部" />
@@ -115,7 +116,7 @@ onUnmounted(() => {
     </n-card>
 
     <div v-else class="task-list">
-      <n-card v-for="task in tasks" :key="task.task_id" class="task-card" data-app-instance="task-history-card" hoverable :bordered="false">
+      <n-card v-for="task in tasks" :key="task.task_id" class="task-card clickable-card" data-app-instance="task-history-card" hoverable :bordered="false">
         <div class="task-header">
           <div class="task-main">
             <span class="task-time">{{ formatTime(task.started_at) }}</span>
@@ -157,8 +158,10 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+      </div>
+    </div>
 
-    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" style="width: 90vw;" title="任务日志">
+    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" title="任务日志">
       <template #header-extra>
         <n-tag v-if="selectedTask" size="small" round :bordered="false" :style="getStatusTag(selectedTask.status).style">
           {{ getStatusTag(selectedTask.status).label }}
@@ -178,25 +181,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.mobile-task-history-view {
-  padding-bottom: var(--m-spacing-lg);
-}
+/* 页面容器和头部已统一至 mobile-base.css .m-page / .m-header */
 
-.mobile-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 var(--m-spacing-xs) var(--m-spacing-md) var(--m-spacing-xs);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.header-title {
-  font-size: var(--m-text-xl);
-  font-weight: 700;
+.task-page-inner {
+  padding: var(--m-spacing-lg);
 }
 
 .filter-bar {
@@ -213,17 +201,13 @@ onUnmounted(() => {
 .custom-tabs :deep(.n-tabs-tab) { height: 26px !important; padding: 0 10px !important; display: flex !important; align-items: center !important; }
 
 .task-list { margin-bottom: var(--m-spacing-lg); }
+/* NCard 卡片样式已统一至 mobile-base.css 全局覆盖 */
 .task-list .task-card {
   margin-bottom: var(--m-spacing-md);
-  transition: all var(--transition-normal);
   -webkit-tap-highlight-color: transparent;
 }
 .task-list .task-card :deep(.n-card__content) {
   padding: var(--m-spacing-md) var(--m-spacing-md) !important;
-}
-.task-list .task-card:active {
-  transform: scale(0.98);
-  border-color: var(--n-primary-color) !important;
 }
 
 .task-header {

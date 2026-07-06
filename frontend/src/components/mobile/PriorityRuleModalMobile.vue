@@ -3,7 +3,7 @@ import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import { 
-  NModal, NCard, NTabs, NTabPane, NButton, NSpace, NSelect, NSwitch, 
+  NCard, NTabs, NTabPane, NButton, NSpace, NSelect, NSwitch, 
   NIcon, NTag, NEmpty, NPopconfirm, NDivider, NList, NListItem, NThing,
   NForm, NFormItem, NInputNumber, NScrollbar
 } from 'naive-ui'
@@ -11,8 +11,7 @@ import {
   AddOutlined as AddIcon,
   DeleteOutlined as DeleteIcon,
   EditOutlined as EditIcon,
-  DragHandleOutlined as DragIcon,
-  ArrowBackOutlined as BackIcon
+  DragHandleOutlined as DragIcon
 } from '@vicons/material'
 import draggable from 'vuedraggable'
 import { usePriorityRules } from '../../composables/components/usePriorityRules'
@@ -41,100 +40,92 @@ const {
     appearance-key="priority-rule-modal"
     :show="show"
     @update:show="close"
-    class="mobile-fullscreen-modal"
+    title="洗版规则"
   >
-    <template #header>
-      <div class="mobile-modal-header">
-        <n-button v-bind="getButtonStyle('iconPrimary')" @click="close">
-          <template #icon><n-icon><BackIcon/></n-icon></template>
-        </n-button>
-        <span class="title">洗版规则</span>
-      </div>
-    </template>
+    <n-tabs v-model:value="activeTab" type="line" animated justify-content="space-evenly">
+      
+      <!-- Tab 1: Profiles -->
+      <n-tab-pane name="profiles" tab="洗版策略">
+        <div class="tab-content">
+          <n-button v-bind="getButtonStyle('primary')" block @click="openAddProfile" style="margin-bottom: 16px;">
+            新建洗版策略
+          </n-button>
 
-    <div class="mobile-container">
-      <n-tabs v-model:value="activeTab" type="line" animated justify-content="space-evenly">
-        
-        <!-- Tab 1: Profiles -->
-        <n-tab-pane name="profiles" tab="洗版策略">
-          <div class="tab-content">
-            <n-button v-bind="getButtonStyle('primary')" block @click="openAddProfile" style="margin-bottom: 16px;">
-              新建洗版策略
-            </n-button>
+          <div v-if="profiles.length > 0" class="mobile-list">
+            <div v-for="profile in profiles" :key="profile.id" class="mobile-card" data-app-instance="profile-card" @click="openEditProfile(profile)">
+              <div class="card-body">
+                <div class="card-title-row">
+                  <div class="title-box">
+                    <span class="name">{{ profile.name }}</span>
+                  </div>
+                  <n-tag v-if="profile.upgrade_allowed" type="success" size="tiny" round>可洗版</n-tag>
+                </div>
+                <div class="rules-preview">
+                  {{ profile.rules_config.map(r => r.name).join(' > ') || '暂无规则' }}
+                </div>
+              </div>
+              <div class="card-actions" @click.stop>
+                 <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditProfile(profile)">
+                   <template #icon><n-icon><EditIcon/></n-icon></template>
+                 </n-button>
+                 <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteProfile(profile.id)">
+                    <template #trigger>
+                      <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
+                    </template>
+                    确定删除？
+                 </n-popconfirm>
+              </div>
+            </div>
+          </div>
+          <n-empty v-else description="暂无策略" />
+        </div>
+      </n-tab-pane>
 
-            <div v-if="profiles.length > 0" class="mobile-list">
-              <div v-for="profile in profiles" :key="profile.id" class="mobile-card" data-app-instance="profile-card" @click="openEditProfile(profile)">
+      <!-- Tab 2: Rules -->
+      <n-tab-pane name="rules" tab="基础规则">
+        <div class="tab-content">
+          <n-button v-bind="getButtonStyle('primary')" block @click="openAddRule" style="margin-bottom: 16px;">
+            新建规则
+          </n-button>
+
+          <div v-if="rules.length > 0" class="mobile-list">
+             <div v-for="rule in rules" :key="rule.id" class="mobile-card" data-app-instance="priority-rule-card" @click="openEditRule(rule)">
                 <div class="card-body">
                   <div class="card-title-row">
                     <div class="title-box">
-                      <span class="name">{{ profile.name }}</span>
+                      <span class="name">{{ rule.name }}</span>
                     </div>
-                    <n-tag v-if="profile.upgrade_allowed" type="success" size="tiny" round>可洗版</n-tag>
                   </div>
-                  <div class="rules-preview">
-                    {{ profile.rules_config.map(r => r.name).join(' > ') || '暂无规则' }}
+                  <div class="tags-row">
+                    <n-tag v-if="rule.conditions.resolution" size="tiny" quaternary>{{ rule.conditions.resolution }}</n-tag>
+                    <n-tag v-if="rule.conditions.team" size="tiny" quaternary>{{ rule.conditions.team }}</n-tag>
+                    <n-tag v-if="rule.conditions.must_contain" size="tiny" quaternary type="warning">正则</n-tag>
                   </div>
                 </div>
                 <div class="card-actions" @click.stop>
-                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditProfile(profile)">
+                   <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditRule(rule)">
                      <template #icon><n-icon><EditIcon/></n-icon></template>
                    </n-button>
-                   <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteProfile(profile.id)">
+                   <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
                       <template #trigger>
                         <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
                       </template>
                       确定删除？
                    </n-popconfirm>
                 </div>
-              </div>
-            </div>
-            <n-empty v-else description="暂无策略" />
+             </div>
           </div>
-        </n-tab-pane>
+          <n-empty v-else description="暂无规则" />
+        </div>
+      </n-tab-pane>
+    </n-tabs>
 
-        <!-- Tab 2: Rules -->
-        <n-tab-pane name="rules" tab="基础规则">
-          <div class="tab-content">
-            <n-button v-bind="getButtonStyle('primary')" block @click="openAddRule" style="margin-bottom: 16px;">
-              新建规则
-            </n-button>
-
-            <div v-if="rules.length > 0" class="mobile-list">
-               <div v-for="rule in rules" :key="rule.id" class="mobile-card" data-app-instance="priority-rule-card" @click="openEditRule(rule)">
-                  <div class="card-body">
-                    <div class="card-title-row">
-                      <div class="title-box">
-                        <span class="name">{{ rule.name }}</span>
-                      </div>
-                    </div>
-                    <div class="tags-row">
-                      <n-tag v-if="rule.conditions.resolution" size="tiny" quaternary>{{ rule.conditions.resolution }}</n-tag>
-                      <n-tag v-if="rule.conditions.team" size="tiny" quaternary>{{ rule.conditions.team }}</n-tag>
-                      <n-tag v-if="rule.conditions.must_contain" size="tiny" quaternary type="warning">正则</n-tag>
-                    </div>
-                  </div>
-                  <div class="card-actions" @click.stop>
-                     <n-button v-bind="getButtonStyle('icon')" size="small" @click="openEditRule(rule)">
-                       <template #icon><n-icon><EditIcon/></n-icon></template>
-                     </n-button>
-                     <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
-                        <template #trigger>
-                          <n-button v-bind="getButtonStyle('iconDanger')" size="small"><template #icon><n-icon><DeleteIcon/></n-icon></template></n-button>
-                        </template>
-                        确定删除？
-                     </n-popconfirm>
-                  </div>
-               </div>
-            </div>
-            <n-empty v-else description="暂无规则" />
-          </div>
-        </n-tab-pane>
-      </n-tabs>
-    </div>
-
-    <!-- Rule Editor (Mobile Version: Use Modal or Drawer) -->
-    <n-modal v-model:show="showRuleEdit" class="mobile-fullscreen-modal" title="编辑基础规则">
-       <n-scrollbar style="max-height: 80vh">
+    <!-- Rule Editor -->
+    <AppGlassModal
+      :show="showRuleEdit"
+      @update:show="val => showRuleEdit = val"
+      title="编辑基础规则"
+    >
         <n-form label-placement="top">
           <n-form-item><AppTextField v-model:value="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" /></n-form-item>
           
@@ -151,26 +142,27 @@ const {
           <n-form-item><AppTextField v-model:value="currentRule.conditions.must_contain" label="必须包含关键词" placeholder="正则或普通词" /></n-form-item>
           <n-form-item><AppTextField v-model:value="currentRule.conditions.must_not_contain" label="排除关键词" placeholder="正则或普通词" /></n-form-item>
         </n-form>
-       </n-scrollbar>
-       <template #footer>
+       <template #action>
           <n-button block v-bind="getButtonStyle('primary')" @click="saveRule">保存规则</n-button>
        </template>
-    </n-modal>
+    </AppGlassModal>
 
-    <!-- Profile Editor (Mobile Version) -->
-    <n-modal v-model:show="showProfileEdit" class="mobile-fullscreen-modal" title="编辑策略">
-       <n-scrollbar style="max-height: 80vh">
+    <!-- Profile Editor -->
+    <AppGlassModal
+      :show="showProfileEdit"
+      @update:show="val => showProfileEdit = val"
+      title="编辑策略"
+    >
         <n-form label-placement="top">
           <n-form-item><AppTextField v-model:value="currentProfile.name" label="策略名称" /></n-form-item>
-          <n-form-item label="洗版设置">
-            <div style="display:flex; flex-direction: column; gap: 8px; width: 100%">
-              <div style="display: flex; justify-content: space-between; align-items: center">
-                <span>允许洗版</span> <n-switch v-model:value="currentProfile.upgrade_allowed" />
-              </div>
-              <div v-if="currentProfile.upgrade_allowed">
-                <AppTextField v-model:value="currentProfile.cutoff_score" label="截止分值" type="number" />
-              </div>
+          <n-form-item>
+            <div class="switch-row">
+              <n-switch v-model:value="currentProfile.upgrade_allowed" />
+              <span class="switch-row__label">允许洗版</span>
             </div>
+          </n-form-item>
+          <n-form-item v-if="currentProfile.upgrade_allowed">
+            <AppTextField v-model:value="currentProfile.cutoff_score" label="截止分值" type="number" />
           </n-form-item>
         </n-form>
         <n-divider>规则洗版排序</n-divider>
@@ -194,36 +186,34 @@ const {
           </draggable>
           <AppSelectField :options="availableRules.map(r=>({label:r.name, value:r.id}))" label="添加规则" @update:value="addRuleToProfile" placeholder="选择要添加的规则..." />
         </div>
-       </n-scrollbar>
-       <template #footer>
+       <template #action>
           <n-button block v-bind="getButtonStyle('primary')" @click="saveProfile">保存策略</n-button>
        </template>
-    </n-modal>
+    </AppGlassModal>
   </AppGlassModal>
 </template>
 
 <style scoped>
-.mobile-fullscreen-modal {
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  max-height: 100vh !important;
-}
-.mobile-modal-header { display: flex; align-items: center; gap: 8px; }
-.mobile-modal-header .title { font-weight: bold; font-size: 16px; }
-
-.mobile-container { height: calc(100vh - 120px); display: flex; flex-direction: column; }
 .tab-content { padding: 12px; }
 
 .mobile-list { display: flex; flex-direction: column; gap: 12px; }
 .mobile-card {
   background: var(--app-surface-card-mixed);
-  border: 1px solid var(--app-border-light);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
   border-radius: var(--card-border-radius, 8px);
+  box-shadow: var(--app-card-shadow);
   padding: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+.mobile-card:active {
+  transform: scale(0.98);
+  border-color: var(--app-border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 .card-body { flex: 1; overflow: hidden; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -232,15 +222,18 @@ const {
 .rules-preview { font-size: 11px; color: var(--n-text-color-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tags-row { display: flex; gap: 4px; flex-wrap: wrap; }
 
+.switch-row { display: flex; align-items: center; gap: 8px; }
+.switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+
 .mobile-drag-area { display: flex; flex-direction: column; gap: 10px; padding: 4px; }
 .mobile-drag-item {
   background: var(--app-surface-card-mixed);
-  border-radius: var(--button-border-radius, 8px);
+  border-radius: var(--card-border-radius, 8px);
   padding: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--app-border-light);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
 }
 .mobile-card :deep(.n-tag) {
   background: var(--app-surface-card-mixed) !important;

@@ -357,7 +357,6 @@ watch(() => props.show, (newVal) => {
           :disabled="episodes.length === 0"
           @click="handleClearHistory"
         >
-          <template #icon><n-icon><ClearIcon /></n-icon></template>
           清空所有推送记录
         </n-button>
       </div>

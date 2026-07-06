@@ -36,9 +36,9 @@ const loadMore = () => {
 </script>
 
 <template>
-  <div class="system-logs-mobile">
-    <div class="mobile-header">
-      <div class="header-title">系统日志</div>
+  <div class="m-page m-page-safe-bottom">
+    <div class="m-header">
+      <div class="m-header-title">系统日志</div>
       <n-space>
         <n-button v-bind="getButtonStyle('icon')" @click="showConsole = true">
           <template #icon><n-icon><TerminalIcon /></n-icon></template>
@@ -48,6 +48,8 @@ const loadMore = () => {
         </n-button>
       </n-space>
     </div>
+
+    <div class="m-page-scrollable">
 
     <n-card :bordered="false" size="small" style="margin-bottom: 12px">
       <n-collapse>
@@ -88,14 +90,13 @@ const loadMore = () => {
       </div>
     </div>
 
+    </div>
+
     <LogConsoleModal v-model:show="showConsole" />
   </div>
 </template>
 
 <style scoped>
-.system-logs-mobile { padding: 12px; }
-.mobile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.header-title { font-size: 18px; font-weight: bold; }
 
 .log-header { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .log-module { font-weight: bold; color: var(--n-text-color-2); }

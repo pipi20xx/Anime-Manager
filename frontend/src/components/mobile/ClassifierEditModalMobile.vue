@@ -3,7 +3,6 @@ import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NCard, NForm, NFormItem, NSelect, NButton, NSpace, NDivider, NIcon
 } from 'naive-ui'
-import { SaveOutlined as SaveIcon } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useClassifierEdit } from '../../composables/modals/useClassifierEdit'
@@ -54,7 +53,7 @@ const {
 </script>
 
 <template>
-  <AppGlassModal appearance-key="classifier-edit-modal" :show="props.show" @update:show="val => emit('update:show', val)" style="width: 100%; height: 100vh; margin: 0;" content-style="padding: 16px; overflow-y: auto;" :title="props.isNew ? '添加分类规则' : '编辑分类规则'">
+  <AppGlassModal appearance-key="classifier-edit-modal" :show="props.show" @update:show="val => emit('update:show', val)" :title="props.isNew ? '添加分类规则' : '编辑分类规则'">
     <n-form label-placement="top">
       <n-divider dashed title-placement="left">基础设置</n-divider>
       <n-form-item path="name">
@@ -168,7 +167,7 @@ const {
       </n-form-item>
     </n-form>
 
-    <template #footer>
+    <template #action>
       <n-space justify="end">
         <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
         <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>

@@ -4,7 +4,6 @@ import {
   NButton, NIcon, NDrawer, NDrawerContent, NSpace, NCard
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
   MoreVertOutlined as MoreIcon,
   BoltOutlined as BoltIcon,
   AccessTimeOutlined as ScheduleIcon,
@@ -71,17 +70,18 @@ onMounted(fetchTasks)
 </script>
 
 <template>
-  <div class="strm-mobile">
-    <div class="header-mobile">
-      <h1>虚拟 STRM 库</h1>
-      <n-button v-bind="getButtonStyle('icon')" @click="openEdit(-1)">
-        <template #icon><n-icon><AddIcon /></n-icon></template>
+  <div class="m-page m-page-safe-bottom">
+    <div class="m-header m-header-plain">
+      <h1 class="m-header-title">虚拟 STRM 库</h1>
+      <n-button v-bind="getButtonStyle('primary')" size="small" @click="openEdit(-1)">
+        新建任务
       </n-button>
     </div>
 
-    <div class="content-mobile">
-       <div class="card-list">
-         <n-card v-for="(task, index) in tasks" :key="task.id" class="mobile-card" size="small" :data-app-instance="'strm-task-card'" @click="openEdit(index)">
+    <div class="m-page-scrollable">
+      <div class="m-content">
+       <div class="m-card-list">
+         <n-card v-for="(task, index) in tasks" :key="task.id" class="mobile-card clickable-card" size="small" :data-app-instance="'strm-task-card'" @click="openEdit(index)">
            <div class="card-header">
              <div class="title-row">
                <n-icon size="20" class="link-icon"><LinkIcon /></n-icon>
@@ -113,30 +113,29 @@ onMounted(fetchTasks)
            </div>
 
            <div class="card-footer">
-              <n-button 
-                size="tiny" 
-                secondary
-                round
-                :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'default'"
+              <n-button
+                size="small"
+                circle
+                ghost
+                :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
                 @click.stop="toggleTaskMonitor(task, 'incremental')"
               >
                 <template #icon><n-icon><BoltIcon /></n-icon></template>
-                实时监控
               </n-button>
 
-              <n-button 
-                size="tiny" 
-                secondary
-                round
-                :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'default'"
+              <n-button
+                size="small"
+                circle
+                ghost
+                :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'primary'"
                 @click.stop="toggleTaskMonitor(task, 'scheduler')"
               >
                 <template #icon><n-icon><ScheduleIcon /></n-icon></template>
-                定时扫描
               </n-button>
            </div>
          </n-card>
        </div>
+      </div>
     </div>
 
     <!-- 配置组件 -->
@@ -171,31 +170,7 @@ onMounted(fetchTasks)
 </template>
 
 <style scoped>
-.strm-mobile {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background-color: var(--app-background);
-  padding-bottom: 80px;
-}
-
-.header-mobile {
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-.header-mobile h1 { margin: 0; font-size: 20px; font-weight: 800; }
-
-.content-mobile {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 16px 16px 16px;
-}
-
-.card-list { display: flex; flex-direction: column; gap: 12px; }
-.mobile-card { border-radius: 12px; background: var(--app-surface-card-mixed); }
+/* NCard 样式已统一至 mobile-base.css 全局覆盖 */
 
 .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
 .title-row { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }

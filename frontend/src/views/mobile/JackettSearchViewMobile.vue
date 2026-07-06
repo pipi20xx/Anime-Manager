@@ -104,12 +104,15 @@ const formatSize = (sizeStr: string) => {
 </script>
 
 <template>
-  <div class="jackett-search-mobile">
-    <div class="m-page-header">
-      <h1>Jackett 搜索</h1>
-      <div class="m-subtitle">全网资源聚合搜索与下载</div>
+  <div class="m-page m-page-safe-bottom">
+    <div class="m-header">
+      <div>
+        <h1 class="m-header-title">Jackett 搜索</h1>
+        <div class="m-subtitle">全网资源聚合搜索与下载</div>
+      </div>
     </div>
 
+    <div class="m-page-scrollable">
     <div class="m-search-bar">
       <AppSearchField
         v-model:value="keyword"
@@ -152,7 +155,6 @@ const formatSize = (sizeStr: string) => {
                 size="small"
                 @click="handleDownload(item)"
               >
-                <template #icon><n-icon><DownloadIcon /></n-icon></template>
                 下载
               </n-button>
             </div>
@@ -168,23 +170,15 @@ const formatSize = (sizeStr: string) => {
         <n-empty v-else-if="!loading" description="搜索结果将显示在这里" class="empty-state" />
       </n-spin>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.jackett-search-mobile {
-  padding: var(--m-spacing-md);
-  padding-bottom: calc(var(--m-spacing-xl) + env(safe-area-inset-bottom));
+.m-page-scrollable {
+  padding: var(--m-spacing-lg);
 }
 
-.m-page-header {
-  margin-bottom: var(--m-spacing-lg);
-}
-.m-page-header h1 {
-  margin: 0;
-  font-size: 22px;
-  color: var(--text-primary);
-}
 .m-subtitle {
   font-size: 11px;
   color: var(--n-primary-color);

@@ -134,10 +134,10 @@ const formatFileSize = (size: number) => {
 </script>
 
 <template>
-  <div class="m-appearance-view">
-    <div class="m-page-header">
+  <div class="m-page m-page-safe-bottom">
+    <div class="m-header">
       <div>
-        <h1>外观设置</h1>
+        <h1 class="m-header-title">外观设置</h1>
         <div class="m-subtitle">自定义界面外观与视觉效果</div>
       </div>
       <n-space>
@@ -153,6 +153,7 @@ const formatFileSize = (size: number) => {
       </n-space>
     </div>
 
+    <div class="m-page-scrollable">
     <n-spin :show="loading">
       <n-collapse :default-expanded-names="['global', 'modal', 'images']">
         <!-- 全局背景 -->
@@ -363,19 +364,15 @@ const formatFileSize = (size: number) => {
       style="display: none"
       @change="onImportFileChange"
     />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.m-appearance-view { width: 100%; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
-
-.m-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+.m-page-scrollable {
+  padding: var(--m-spacing-lg);
 }
-.m-page-header h1 { margin: 0; font-size: 20px; color: var(--text-primary); }
+
 .m-subtitle { font-size: 10px; color: var(--n-primary-color); letter-spacing: 1px; font-weight: bold; margin-top: 2px; }
 
 .m-collapse-header {

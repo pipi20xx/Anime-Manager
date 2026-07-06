@@ -178,7 +178,6 @@ watch(() => props.show, (newVal) => {
                   size="small"
                   @click="handleDelete(item.guid)"
                 >
-                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
                   清除
                 </n-button>
                 <n-button 

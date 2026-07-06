@@ -31,7 +31,7 @@ const { tmdb, getImg } = useRecognitionTmdb()
 </template>
 
 <style scoped>
-.sub-card-mobile { background: var(--bg-surface); border-radius: 8px; }
+.sub-card-mobile { background: var(--app-surface-inner); border-radius: var(--card-border-radius, 8px); }
 .tmdb-main-layout { display: flex; gap: 12px; }
 .tmdb-poster-side { flex-shrink: 0; }
 .small-poster { border-radius: 4px; }

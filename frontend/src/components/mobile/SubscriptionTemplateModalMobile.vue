@@ -9,8 +9,7 @@ import {
   AddOutlined as AddIcon,
   StarOutlined as StarIcon,
   StarFilled as StarFilledIcon,
-  DeleteOutlined as DeleteIcon,
-  ArrowBackOutlined as BackIcon
+  DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
@@ -37,22 +36,11 @@ const {
     appearance-key="subscription-template-modal"
     :show="show" 
     @update:show="close"
-    class="mobile-fullscreen-modal"
+    :title="showEdit ? '编辑预设' : '订阅预设管理'"
   >
-    <template #header>
-      <div class="mobile-modal-header">
-        <n-button v-bind="getButtonStyle('iconPrimary')" @click="showEdit ? showEdit = false : close()">
-          <template #icon><n-icon><BackIcon/></n-icon></template>
-        </n-button>
-        <span class="title">{{ showEdit ? '编辑预设' : '订阅预设管理' }}</span>
-      </div>
-    </template>
-
-    <div class="mobile-template-container">
       <!-- List View -->
       <div v-if="!showEdit" class="tab-content">
         <n-button block type="primary" @click="openAdd" style="margin-bottom: 16px;">
-          <template #icon><n-icon><AddIcon /></n-icon></template>
           创建新预设
         </n-button>
 
@@ -90,8 +78,7 @@ const {
       </div>
 
       <!-- Edit View -->
-      <div v-else class="tab-content full-edit">
-        <n-scrollbar style="max-height: calc(100vh - 180px)">
+      <div v-else class="tab-content">
           <n-form label-placement="top">
             <n-form-item><AppTextField v-model:value="editModel.name" label="预设名称" placeholder="例如: 默认预设" /></n-form-item>
             
@@ -135,12 +122,14 @@ const {
               <span class="switch-row__label">设为默认预设</span>
             </div>
           </n-form>
-        </n-scrollbar>
-        <div class="footer-btn">
-          <n-button block v-bind="getButtonStyle('primary')" @click="saveTemplate">保存预设</n-button>
-        </div>
       </div>
-    </div>
+
+    <template v-if="showEdit" #action>
+      <n-space style="width: 100%" justify="end">
+        <n-button v-bind="getButtonStyle('dialogCancel')" @click="showEdit = false">取消</n-button>
+        <n-button block v-bind="getButtonStyle('primary')" @click="saveTemplate">保存预设</n-button>
+      </n-space>
+    </template>
   </AppGlassModal>
 </template>
 
@@ -149,26 +138,25 @@ const {
 .switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
 .switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
 
-.mobile-fullscreen-modal {
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  max-height: 100vh !important;
-}
-.mobile-modal-header { display: flex; align-items: center; gap: 8px; }
-.mobile-modal-header .title { font-weight: bold; font-size: 16px; }
-
-.mobile-template-container { height: calc(100vh - 120px); }
 .tab-content { padding: 12px; }
 
 .mobile-list { display: flex; flex-direction: column; gap: 12px; }
 .mobile-card {
   background: var(--app-surface-card-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: 12px;
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+  border-radius: var(--card-border-radius, 8px);
+  box-shadow: var(--app-card-shadow);
   padding: 12px;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+.mobile-card:active {
+  transform: scale(0.98);
+  border-color: var(--app-border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 .card-body { flex: 1; overflow: hidden; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }

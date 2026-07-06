@@ -33,7 +33,7 @@ const { raw, tags, safeGet } = useRecognitionRaw()
 </template>
 
 <style scoped>
-.sub-card-mobile { background: var(--bg-surface); border-radius: 8px; }
+.sub-card-mobile { background: var(--app-surface-inner); border-radius: var(--card-border-radius, 8px); }
 .raw-main { font-weight: bold; font-size: 14px; color: var(--text-secondary); }
 
 .raw-specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

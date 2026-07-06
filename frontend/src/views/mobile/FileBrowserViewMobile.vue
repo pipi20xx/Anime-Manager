@@ -429,7 +429,7 @@ const getShortName = (path: string) => {
     </n-modal>
 
     <!-- 前往指定路径弹框 -->
-    <n-modal v-model:show="showGoToPathModal" preset="card" title="前往指定路径" style="width: 90vw; max-width: 400px" :bordered="false">
+    <n-modal v-model:show="showGoToPathModal" preset="card" title="前往指定路径" :bordered="false">
       <n-space vertical>
         <n-input
           v-model:value="goToPathInput"
@@ -445,7 +445,7 @@ const getShortName = (path: string) => {
           提示：路径以 / 开头，支持直接粘贴完整路径
         </n-text>
       </n-space>
-      <template #footer>
+      <template #action>
         <n-space justify="end">
           <n-button v-bind="getButtonStyle('secondary')" @click="showGoToPathModal = false">取消</n-button>
           <n-button v-bind="getButtonStyle('primary')" type="primary" @click="goToPath(goToPathInput)">前往</n-button>

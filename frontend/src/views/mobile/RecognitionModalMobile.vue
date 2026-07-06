@@ -50,7 +50,6 @@ const {
     appearance-key="recognition-modal"
     :show="show"
     @update:show="val => emit('update:show', val)"
-    class="mobile-modal"
     title="单文件识别"
   >
     <n-spin :show="loading">
@@ -208,7 +207,6 @@ const {
           <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
           <n-space>
             <n-button v-if="data" type="warning" size="small" :loading="isHashing" @click="calculateHash">
-              <template #icon><n-icon><HashIcon /></n-icon></template>
               哈希
             </n-button>
             <n-button v-if="data" v-bind="getButtonStyle('primary')" :loading="isRenaming" @click="emit('rename')" size="small">
@@ -221,12 +219,6 @@ const {
 </template>
 
 <style scoped>
-.mobile-modal {
-  width: calc(100vw - 32px) !important;
-  max-width: 400px;
-  margin-top: 60px; /* Offset from top to avoid covering status bar/header too much */
-}
-
 .mobile-header-layout {
   display: flex;
   gap: 12px;

@@ -32,15 +32,9 @@ const {
     appearance-key="rss-detect-modal"
     :show="show" 
     @update:show="v => emit('update:show', v)"
-    style="width: 95vw;"
-    :style="{ maxHeight: '90vh' }"
+    title="RSS 探测订阅"
   >
-    <template #header>
-      <span style="font-weight: bold;">RSS 探测订阅</span>
-    </template>
-
-    <n-scrollbar style="max-height: 70vh;">
-      <n-space vertical size="medium">
+    <n-space vertical size="medium">
 
         <AppTextField 
           v-model:value="rssUrl" 
@@ -49,7 +43,7 @@ const {
           @keyup.enter="handlePreview"
         >
           <template #suffix>
-            <n-button type="primary" :loading="detecting" @click="handlePreview" style="height: 40px; border-radius: 6px; margin-right: -4px">
+            <n-button type="primary" :loading="detecting" @click="handlePreview" style="height: 40px; margin-right: -4px">
               探测
             </n-button>
           </template>
@@ -136,9 +130,8 @@ const {
         </template>
 
       </n-space>
-    </n-scrollbar>
 
-    <template #footer>
+    <template #action>
       <n-button block type="primary" 
         :loading="subscribing" 
         :disabled="!rssUrl.trim()"
@@ -153,10 +146,12 @@ const {
 <style scoped>
 .label { font-size: 12px; margin-bottom: 6px; font-weight: bold; color: var(--text-secondary); }
 .mobile-show-item {
-  padding: 10px;
-  background: var(--app-surface-inner);
-  border-radius: 8px;
-  margin-bottom: 8px;
+  padding: var(--m-spacing-md);
+  background: var(--app-surface-card-mixed);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+  border-radius: var(--card-border-radius, 8px);
+  box-shadow: var(--app-card-shadow);
+  margin-bottom: var(--m-spacing-sm);
 }
 .show-info { display: flex; justify-content: space-between; align-items: center; }
 .show-title { font-size: 14px; font-weight: bold; }

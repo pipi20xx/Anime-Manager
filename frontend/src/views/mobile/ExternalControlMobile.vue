@@ -59,16 +59,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mobile-container">
-    <div class="mobile-header">
-      <h2>外部控制</h2>
+  <div class="m-page m-page-safe-bottom">
+    <div class="m-header">
+      <h2 class="m-header-title">外部控制</h2>
     </div>
 
     <n-tabs 
       v-model:value="activeTab" 
       type="line" 
       animated
-      pane-class="mobile-tab-pane"
+      class="m-tabs"
       justify-content="space-evenly"
     >
       <!-- 密钥 -->
@@ -201,27 +201,29 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.mobile-container {
-  padding-bottom: 80px; /* Space for bottom nav */
-  height: 100vh;
+.m-tabs {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--app-background);
 }
 
-.mobile-header {
-  padding: 16px 16px 0 16px;
+.m-tabs :deep(.n-tabs-nav) {
+  padding: 0 16px;
 }
-.mobile-header h2 { margin: 0; font-size: 20px; }
 
-:deep(.n-tabs-nav) {
-  padding: 0 16px; 
+.m-tabs :deep(.n-tabs-pane-wrapper) {
+  flex: 1;
+  overflow: hidden;
+}
+
+.m-tabs :deep(.n-tab-pane) {
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
 }
 
 .content-body {
-  padding: 16px;
-  overflow-y: auto;
-  height: calc(100vh - 120px);
+  padding: var(--m-spacing-lg);
 }
 .content-body.no-pad { padding: 0; }
 
@@ -235,7 +237,7 @@ onMounted(() => {
 }
 .setting-label { font-size: 15px; font-weight: 500; }
 
-.refresh-bar { padding: 8px 16px; background: var(--app-surface-color); position: sticky; top: 0; z-index: 10; }
+.refresh-bar { padding: var(--m-spacing-sm) var(--m-spacing-lg); background: var(--app-surface-inner); position: sticky; top: 0; z-index: 10; }
 
 .log-detail-pre {
   white-space: pre-wrap;
@@ -247,6 +249,6 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-.docs-body { height: calc(100vh - 100px); }
+.docs-body { height: 100%; }
 .mobile-iframe { width: 100%; height: 100%; border: none; }
 </style>

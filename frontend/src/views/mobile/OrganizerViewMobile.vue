@@ -4,7 +4,6 @@ import {
   NButton, NIcon, NTabs, NTabPane, NTag, NDrawer, NDrawerContent, NSpace, NList, NListItem
 } from 'naive-ui'
 import {
-  SaveOutlined as SaveIcon,
   PlayArrowOutlined as PlayIcon,
   BoltOutlined as BoltIcon,
   AccessTimeOutlined as ScheduleIcon,
@@ -13,8 +12,7 @@ import {
   TextFormatOutlined as RuleIcon,
   StopOutlined as StopIcon,
   ContentCopyOutlined as CopyIcon,
-  DeleteOutlined as DeleteIcon,
-  AddOutlined as AddIcon
+  DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 
 import RuleEditModal from '../../components/RuleEditModal.vue'
@@ -127,7 +125,6 @@ onUnmounted(stopBgTaskPolling)
     <div class="m-header m-header-plain">
       <h1 class="m-header-title">整理与重命名</h1>
       <n-button v-bind="getButtonStyle('primary')" :loading="loading" @click="saveConfig">
-        <template #icon><n-icon><SaveIcon /></n-icon></template>
         保存
       </n-button>
     </div>
@@ -168,7 +165,6 @@ onUnmounted(stopBgTaskPolling)
         <div class="m-tab-content">
           <div class="m-action-bar m-mb-lg">
             <n-button type="primary" dashed size="small" @click="openEditRule(-1)">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
               新建规则
             </n-button>
           </div>
@@ -211,7 +207,6 @@ onUnmounted(stopBgTaskPolling)
         <div class="m-tab-content">
           <div class="m-action-bar m-mb-lg">
             <n-button type="primary" dashed size="small" @click="openEditTask(-1)">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
               新建任务
             </n-button>
           </div>
@@ -220,7 +215,7 @@ onUnmounted(stopBgTaskPolling)
             <n-list-item
               v-for="(task, i) in tasks"
               :key="task.id"
-              class="m-card-item m-card-touchable m-touchable"
+              class="m-card-item m-clickable-card m-touchable"
               data-app-instance="organize-task-card"
               @click="openEditTask(i)"
             >
@@ -260,25 +255,23 @@ onUnmounted(stopBgTaskPolling)
 
               <div class="card-footer">
                   <n-button
-                    size="tiny"
-                    secondary
-                    round
-                    :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'default'"
+                    size="small"
+                    circle
+                    ghost
+                    :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
                     @click.stop="toggleTaskMonitor(task, 'incremental')"
                   >
                     <template #icon><n-icon><BoltIcon /></n-icon></template>
-                    实时监控
                   </n-button>
 
                   <n-button
-                    size="tiny"
-                    secondary
-                    round
-                    :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'default'"
+                    size="small"
+                    circle
+                    ghost
+                    :type="task.scheduler_enabled || task.monitor_mode === 'scheduled' ? 'warning' : 'primary'"
                     @click.stop="toggleTaskMonitor(task, 'scheduler')"
                   >
                     <template #icon><n-icon><ScheduleIcon /></n-icon></template>
-                    定时扫描
                   </n-button>
               </div>
             </n-list-item>
@@ -337,7 +330,6 @@ onUnmounted(stopBgTaskPolling)
 <style scoped>
 .m-tabs {
   flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -349,18 +341,12 @@ onUnmounted(stopBgTaskPolling)
 
 .m-tabs :deep(.n-tabs-pane-wrapper) {
   flex: 1;
-  min-height: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .m-tabs :deep(.n-tab-pane) {
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   padding: 0;
 }
 
@@ -531,35 +517,5 @@ onUnmounted(stopBgTaskPolling)
   min-width: 120px;
 }
 
-/* NList 样式适配 */
-.m-list :deep(.n-list) { background: transparent; }
-.m-list :deep(.n-list-item) {
-  background: var(--app-surface-list-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-md) !important;
-  margin-bottom: var(--m-spacing-md);
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.m-list :deep(.n-list-item:active) {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
-}
-
-.m-card-list :deep(.n-list) { background: transparent; }
-.m-card-list :deep(.n-list-item) {
-  background: var(--app-surface-list-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-lg) !important;
-  margin-bottom: var(--m-spacing-lg);
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-sm);
-}
-.m-card-list :deep(.n-list-item:active) {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
-}
+/* NList 样式已统一至 mobile-base.css 全局覆盖 */
 </style>

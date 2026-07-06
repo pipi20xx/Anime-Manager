@@ -47,7 +47,6 @@ const {
     <div class="m-header m-header-plain">
       <h1 class="m-header-title">系统设置</h1>
       <n-button type="primary" size="small" :loading="loading" @click="saveAll">
-        <template #icon><n-icon><SaveIcon /></n-icon></template>
         保存
       </n-button>
     </div>
@@ -315,7 +314,6 @@ const {
         <n-tab-pane name="clients" tab="下载器">
           <div class="m-tab-content">
             <n-button type="primary" dashed size="small" block class="m-mb-lg" @click="openAddClient">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
               添加客户端
             </n-button>
 
@@ -357,7 +355,6 @@ const {
               <ConfigSectionMobile title="渲染替换" v-model:local="config.custom_render_words" v-model:remote="config.remote_render_urls" />
               <ConfigSectionMobile title="特权规则" v-model:local="config.custom_privileged_rules" v-model:remote="config.remote_privileged_urls" />
               <n-button type="primary" secondary size="small" block :loading="syncLoading" @click="refreshRemoteRules">
-                <template #icon><n-icon><SyncIcon /></n-icon></template>
                 同步远程规则
               </n-button>
             </n-space>
@@ -469,11 +466,8 @@ const {
   padding-bottom: calc(var(--m-spacing-md) + var(--m-safe-bottom));
 }
 
-/* 卡片样式 */
+/* 卡片样式 — 已统一至 mobile-base.css .m-card，此处仅保留布局覆盖 */
 .m-card {
-  background: var(--app-surface-card-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
   padding: var(--m-spacing-md);
 }
 

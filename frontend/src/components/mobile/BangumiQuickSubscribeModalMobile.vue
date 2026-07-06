@@ -7,11 +7,6 @@ import {
 } from 'naive-ui'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
-import {
-  FlashOnOutlined as FlashIcon,
-  ArrowBackOutlined as BackIcon,
-  SearchOutlined as SearchIcon
-} from '@vicons/material'
 import { useBangumiQuickSub } from '../../composables/components/useBangumiQuickSub'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -31,19 +26,9 @@ const {
     appearance-key="bangumi-quick-subscribe-modal"
     :show="show" 
     @update:show="v => emit('update:show', v)"
-    class="mobile-fullscreen-modal"
+    title="Bangumi 一键订阅"
   >
-    <template #header>
-      <div class="mobile-modal-header">
-        <n-button v-bind="getButtonStyle('iconPrimary')" @click="emit('update:show', false)">
-          <template #icon><n-icon><BackIcon/></n-icon></template>
-        </n-button>
-        <span class="title">Bangumi 一键订阅</span>
-      </div>
-    </template>
-
-    <div class="mobile-bangumi-container">
-      <n-spin :show="loading">
+    <n-spin :show="loading">
         <div class="mobile-tools">
           <AppSelectField v-model:value="selectedTemplate" label="套用预设" :options="templates.map(t => ({label: t.name, value: t.id}))" placeholder="选择预设" clearable />
           <AppTextField v-model:value="manualId" label="手动添加 Bangumi ID" placeholder="输入 ID" style="margin-top: 8px">
@@ -72,9 +57,8 @@ const {
           </n-tabs>
         </n-checkbox-group>
       </n-spin>
-    </div>
 
-    <template #footer>
+    <template #action>
       <n-space>
         <n-button @click="selectAll">全选</n-button>
         <n-button @click="deselectAll">取消全选</n-button>
@@ -87,22 +71,15 @@ const {
 </template>
 
 <style scoped>
-.mobile-fullscreen-modal {
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-}
-.mobile-modal-header { display: flex; align-items: center; gap: 8px; }
-.mobile-modal-header .title { font-weight: bold; font-size: 16px; }
-
-.mobile-bangumi-container { height: calc(100vh - 160px); overflow-y: auto; }
 .mobile-tools { padding: 12px; background: var(--app-surface-card-mixed); }
 
 .mobile-anime-list { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
 .mobile-anime-card {
-  display: flex; align-items: center; gap: 12px; padding: 10px;
-  background: var(--app-surface-card-mixed); border-radius: 8px;
-  border: 1px solid var(--app-border-light);
+  display: flex; align-items: center; gap: 12px; padding: var(--m-spacing-md);
+  background: var(--app-surface-card-mixed);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+  border-radius: var(--card-border-radius, 8px);
+  box-shadow: var(--app-card-shadow);
 }
 .mobile-anime-card.is-subbed { opacity: var(--opacity-secondary); }
 .anime-content { flex: 1; display: flex; gap: 12px; align-items: center; }

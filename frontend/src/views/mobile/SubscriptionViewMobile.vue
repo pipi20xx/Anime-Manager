@@ -4,9 +4,7 @@ import {
   NButton, NIcon, NTabs, NTabPane, NSpace, NDrawer, NDrawerContent
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
   MoreVertOutlined as MoreIcon,
-  CloudSyncOutlined as SyncIcon,
   BlockOutlined as BlockIcon,
   CleaningServicesOutlined as CleanIcon,
   RefreshOutlined as RefreshIcon,
@@ -117,11 +115,9 @@ onMounted(fetchData)
           <!-- 操作按钮栏 -->
           <div class="m-action-bar">
             <n-button type="default" dashed size="small" @click="syncJackettFeeds">
-              <template #icon><n-icon><SyncIcon /></n-icon></template>
               同步 Jackett
             </n-button>
             <n-button type="primary" dashed size="small" @click="openAddFeed">
-              <template #icon><n-icon><AddIcon /></n-icon></template>
               新增订阅源
             </n-button>
           </div>
@@ -142,7 +138,6 @@ onMounted(fetchData)
         <div class="m-tab-content">
           <div class="m-action-bar m-mb-lg">
             <n-button type="warning" dashed size="small" @click="openAddRule">
-              <template #icon><n-icon><AddIcon/></n-icon></template>
               创建新规则
             </n-button>
           </div>

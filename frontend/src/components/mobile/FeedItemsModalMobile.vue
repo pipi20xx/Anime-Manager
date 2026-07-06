@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue'
 import { 
-  NModal, NButton, NSpace, NIcon, NTag, NDrawer, NDrawerContent
+  NButton, NSpace, NIcon, NTag, NDrawer, NDrawerContent
 } from 'naive-ui'
 import { 
   DownloadOutlined as DownloadIcon, 
   HistoryOutlined as HistoryIcon,
-  CloseOutlined as CloseIcon,
   RefreshOutlined as RefreshIcon
 } from '@vicons/material'
+import AppGlassModal from '../AppGlassModal.vue'
 import { useFeedItems } from '../../composables/modals/useFeedItems'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -110,31 +110,16 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="val => emit('update:show', val)"
-    :mask-closable="true"
-    transform-origin="center"
+    title="订阅源详情"
   >
-    <div class="mobile-feed-modal">
-      <div class="mobile-header">
-        <div class="header-title">
-          <span>订阅源详情</span>
-        </div>
-        <n-button 
-          v-bind="getButtonStyle('icon')" 
-          size="small" 
-          @click="emit('update:show', false)"
-        >
-          <template #icon><n-icon><CloseIcon /></n-icon></template>
-        </n-button>
-      </div>
+    <div class="mobile-subtitle" v-if="feed?.title || feed?.url">
+      {{ feed.title || feed.url }}
+    </div>
 
-      <div class="mobile-subtitle" v-if="feed?.title || feed?.url">
-        {{ feed.title || feed.url }}
-      </div>
-
-      <div class="mobile-content" ref="mobileListRef">
+    <div ref="mobileListRef">
         <div v-if="items.length > 0" class="items-list">
           <div v-for="item in items" :key="item.guid" class="feed-item">
             <div class="item-header">
@@ -227,7 +212,6 @@ watch(() => props.show, (newVal) => {
                 @click="openDownloadDrawer(item)"
                 :disabled="clientOptions.length === 0"
               >
-                <template #icon><n-icon><DownloadIcon/></n-icon></template>
                 {{ clientOptions.length === 0 ? '无下载器' : '下载' }}
               </n-button>
               <n-button 
@@ -235,7 +219,6 @@ watch(() => props.show, (newVal) => {
                 size="small"
                 @click="handleToggleHistory(item)"
               >
-                <template #icon><n-icon><HistoryIcon/></n-icon></template>
                 {{ item.is_downloaded ? '清除下载记录' : '设为已下载' }}
               </n-button>
             </div>
@@ -252,7 +235,8 @@ watch(() => props.show, (newVal) => {
         </div>
       </div>
 
-      <div class="mobile-footer">
+    <template #action>
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div class="footer-info">
           已加载 {{ items.length }} 条
           <span v-if="loading && offset > 0">...</span>
@@ -268,8 +252,8 @@ watch(() => props.show, (newVal) => {
           </n-button>
         </n-space>
       </div>
-    </div>
-  </n-modal>
+    </template>
+  </AppGlassModal>
 
   <n-drawer 
     v-model:show="showClientDrawer" 
@@ -296,32 +280,6 @@ watch(() => props.show, (newVal) => {
 </template>
 
 <style scoped>
-.mobile-feed-modal {
-  width: 100vw;
-  height: 100vh;
-  background: var(--app-surface-card-mixed);
-  display: flex;
-  flex-direction: column;
-}
-
-.mobile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--m-spacing-md);
-  border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-surface-inner);
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: var(--m-spacing-sm);
-  font-size: var(--m-text-lg);
-  font-weight: bold;
-  color: var(--text-primary);
-}
-
 .mobile-subtitle {
   padding: var(--m-spacing-sm) var(--m-spacing-md);
   font-size: var(--m-text-sm);
@@ -336,7 +294,6 @@ watch(() => props.show, (newVal) => {
 .mobile-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--m-spacing-md);
 }
 
 .items-list {
@@ -346,11 +303,12 @@ watch(() => props.show, (newVal) => {
 }
 
 .feed-item {
-  background: var(--app-surface-inner);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-md);
-  display: flex;
+background: var(--app-surface-card-mixed);
+border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+border-radius: var(--card-border-radius, 8px);
+box-shadow: var(--app-card-shadow);
+padding: var(--m-spacing-md);
+display: flex;
   flex-direction: column;
   gap: var(--m-spacing-sm);
 }
@@ -471,15 +429,6 @@ watch(() => props.show, (newVal) => {
   padding: 80px var(--m-spacing-lg);
   color: var(--text-muted);
   font-size: var(--m-text-md);
-}
-
-.mobile-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--m-spacing-md);
-  border-top: 1px solid var(--app-border-light);
-  background: var(--app-surface-inner);
 }
 
 .footer-info {

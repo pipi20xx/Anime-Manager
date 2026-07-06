@@ -74,7 +74,7 @@ const {
 </template>
 
 <style scoped>
-.final-card-mobile { border-radius: 12px; background: var(--bg-surface); }
+.final-card-mobile { border-radius: var(--card-border-radius, 8px); background: var(--app-surface-card-mixed); border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light)); box-shadow: var(--app-card-shadow); }
 .header-content { display: flex; align-items: center; gap: 8px; }
 .primary-icon { color: var(--n-primary-color); }
 .header-text { font-weight: bold; font-size: 14px; }

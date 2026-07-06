@@ -40,11 +40,9 @@ const {
     appearance-key="task-edit-modal"
     :show="show"
     @update:show="val => emit('update:show', val)"
-    style="width: 100%; height: 100vh; margin: 0;"
-    content-style="padding: 0; display: flex; flex-direction: column;"
     :title="isNew ? '创建新整理任务' : '编辑任务配置'"
   >
-    <n-form label-placement="top" label-width="100" size="small" style="flex: 1; overflow-y: auto; padding: var(--m-spacing-lg);">
+    <n-form label-placement="top" label-width="100" size="small">
       <n-tabs type="line" animated>
         <n-tab-pane name="basic" tab="核心配置">
           <n-space vertical size="large" class="m-mt-md">
@@ -76,16 +74,19 @@ const {
         
         <n-tab-pane name="automation" tab="自动化">
           <n-space vertical size="large" class="m-mt-md">
-            <div class="m-config-row">
-              <n-switch v-model:value="form.incremental_enabled" />
-              <span class="m-config-row__label">实时监控</span>
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="form.incremental_enabled" />
+                <span class="switch-row__label">实时监控</span>
+              </div>
+            </n-form-item>
+            <n-form-item v-if="form.incremental_enabled">
               <AppSelectField 
                 v-model:value="form.incremental_mode" 
                 label="模式"
-                style="width: 160px"
                 :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
               />
-            </div>
+            </n-form-item>
             <n-form-item v-if="form.incremental_mode === 'polling'">
               <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
                 <template #suffix>秒</template>
@@ -95,31 +96,39 @@ const {
               <AppTextField :value="'实时监听文件系统事件 (Inotify)'" label="监控状态" readonly />
             </n-form-item>
             
-            <div class="m-config-row">
-              <n-switch v-model:value="form.scheduler_enabled" />
-              <span class="m-config-row__label">定时扫描</span>
-              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60" style="width: 160px">
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="form.scheduler_enabled" />
+                <span class="switch-row__label">定时扫描</span>
+              </div>
+            </n-form-item>
+            <n-form-item v-if="form.scheduler_enabled">
+              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
                 <template #suffix>秒</template>
               </AppTextField>
-            </div>
+            </n-form-item>
 
-            <div class="m-config-row">
-              <n-switch v-model:value="form.skip_rate_limit" />
-              <span class="m-config-row__label">跳过限流</span>
-              <n-space vertical :size="8" style="flex: 1;">
-                <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0" style="width: 160px">
-                  <template #suffix>秒</template>
-                </AppTextField>
-                <n-checkbox-group v-if="form.skip_rate_limit" v-model:value="form.skip_rate_limit_types">
-                  <n-space vertical>
-                    <n-checkbox value="history">历史记录跳过</n-checkbox>
-                    <n-checkbox value="recognition_failed">识别失败跳过</n-checkbox>
-                    <n-checkbox value="emby_exists">Emby已存在跳过</n-checkbox>
-                    <n-checkbox value="regex_match">正则匹配跳过</n-checkbox>
-                  </n-space>
-                </n-checkbox-group>
-              </n-space>
-            </div>
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="form.skip_rate_limit" />
+                <span class="switch-row__label">跳过限流</span>
+              </div>
+            </n-form-item>
+            <n-form-item v-if="form.skip_rate_limit">
+              <AppTextField v-model:value="form.process_interval" label="限流间隔" type="number" :min="0">
+                <template #suffix>秒</template>
+              </AppTextField>
+            </n-form-item>
+            <n-form-item v-if="form.skip_rate_limit">
+              <n-checkbox-group v-model:value="form.skip_rate_limit_types">
+                <n-space vertical>
+                  <n-checkbox value="history">历史记录跳过</n-checkbox>
+                  <n-checkbox value="recognition_failed">识别失败跳过</n-checkbox>
+                  <n-checkbox value="emby_exists">Emby已存在跳过</n-checkbox>
+                  <n-checkbox value="regex_match">正则匹配跳过</n-checkbox>
+                </n-space>
+              </n-checkbox-group>
+            </n-form-item>
           </n-space>
         </n-tab-pane>
 
@@ -188,7 +197,7 @@ const {
         </n-tab-pane>
       </n-tabs>
     </n-form>
-    <template #footer>
+    <template #action>
       <n-space justify="end">
         <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
         <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>

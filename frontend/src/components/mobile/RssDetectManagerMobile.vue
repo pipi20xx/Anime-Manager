@@ -38,7 +38,6 @@ const close = () => {
     appearance-key="rss-detect-manager-modal"
     :show="show" 
     @update:show="close"
-    style="width: 95vw;"
     :title="showEdit ? (editingTask ? '编辑任务' : '添加任务') : '自动 RSS 订阅管理'"
   >
     <div v-if="!showEdit">
@@ -81,7 +80,7 @@ const close = () => {
           <n-form-item>
             <AppTextField v-model:value="editModel.rss_url" label="RSS 链接" placeholder="输入 RSS 链接">
               <template #suffix>
-                <n-button type="primary" :loading="testing" @click="testRss" style="height: 40px; border-radius: 6px; margin-right: -4px">测试</n-button>
+                <n-button type="primary" :loading="testing" @click="testRss" style="height: 40px; margin-right: -4px">测试</n-button>
               </template>
             </AppTextField>
           </n-form-item>
@@ -164,10 +163,12 @@ const close = () => {
 .label { font-size: 12px; margin-bottom: 6px; font-weight: bold; color: var(--text-secondary); }
 
 .task-item {
-  padding: 12px;
-  background: var(--app-surface-inner);
-  border-radius: 10px;
-  margin-bottom: 10px;
+  padding: var(--m-spacing-md);
+  background: var(--app-surface-card-mixed);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+  border-radius: var(--card-border-radius, 8px);
+  box-shadow: var(--app-card-shadow);
+  margin-bottom: var(--m-spacing-md);
 }
 .task-header {
   display: flex;
@@ -197,10 +198,12 @@ const close = () => {
 }
 
 .mobile-show-item {
-  padding: 10px;
-  background: var(--app-surface-inner);
-  border-radius: 8px;
-  margin-bottom: 8px;
+  padding: var(--m-spacing-md);
+  background: var(--app-surface-card-mixed);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+  border-radius: var(--card-border-radius, 8px);
+  box-shadow: var(--app-card-shadow);
+  margin-bottom: var(--m-spacing-sm);
 }
 .show-info { display: flex; justify-content: space-between; align-items: center; }
 .show-title { font-size: 14px; font-weight: bold; }

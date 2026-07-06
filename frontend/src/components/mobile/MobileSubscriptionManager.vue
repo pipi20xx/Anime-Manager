@@ -402,18 +402,19 @@ onMounted(() => {
 .sub-item {
   display: flex;
   background: var(--app-surface-card-mixed);
-  border-radius: var(--m-radius-lg);
+  border-radius: var(--card-border-radius, 8px);
   overflow: hidden;
-  border: 1px solid var(--app-border-light);
+  border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light));
+  box-shadow: var(--app-card-shadow);
   height: 110px;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  transition: transform 0.1s ease, border-color var(--transition-normal), box-shadow var(--transition-normal);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-sm);
 }
 .sub-item:active {
   transform: scale(0.98);
-  box-shadow: var(--shadow-md);
+  border-color: var(--app-border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 .sub-poster {
   width: 78px;

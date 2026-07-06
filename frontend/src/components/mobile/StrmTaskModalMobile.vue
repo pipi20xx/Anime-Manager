@@ -43,11 +43,9 @@ const {
     appearance-key="strm-task-modal"
     :show="show"
     @update:show="val => emit('update:show', val)"
-    style="width: 100%; height: 100vh; margin: 0;"
-    content-style="padding: 0; display: flex; flex-direction: column;"
     :title="isNew ? '新建 STRM 任务' : '编辑 STRM 任务'"
   >
-    <n-form label-placement="top" label-width="100" size="small" style="flex: 1; overflow-y: auto; padding: 16px;">
+    <n-form label-placement="top" label-width="100" size="small">
       <n-tabs type="line" animated>
         <!-- 1. 基础设置 -->
         <n-tab-pane name="basic" tab="核心设置">
@@ -99,16 +97,19 @@ const {
         <!-- 2. 自动化 -->
         <n-tab-pane name="automation" tab="自动化">
           <n-space vertical size="large" class="mt-4">
-            <div class="m-config-row">
-              <n-switch v-model:value="form.incremental_enabled" />
-              <span class="m-config-row__label">实时监控</span>
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="form.incremental_enabled" />
+                <span class="switch-row__label">实时监控</span>
+              </div>
+            </n-form-item>
+            <n-form-item v-if="form.incremental_enabled">
               <AppSelectField 
                 v-model:value="form.incremental_mode" 
                 label="模式"
-                style="width: 120px"
                 :options="[{label: '实时', value: 'realtime'}, {label: '轮询', value: 'polling'}]" 
               />
-            </div>
+            </n-form-item>
             <n-form-item v-if="form.incremental_mode === 'polling'">
               <AppTextField v-model:value="form.monitor_interval" label="轮询间隔" type="number" :min="1">
                 <template #suffix>秒</template>
@@ -118,13 +119,17 @@ const {
               <AppTextField :value="'实时监听文件系统事件 (Inotify)'" label="监控状态" readonly />
             </n-form-item>
             
-            <div class="m-config-row">
-              <n-switch v-model:value="form.scheduler_enabled" />
-              <span class="m-config-row__label">定时扫描</span>
-              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60" style="width: 120px">
+            <n-form-item>
+              <div class="switch-row">
+                <n-switch v-model:value="form.scheduler_enabled" />
+                <span class="switch-row__label">定时扫描</span>
+              </div>
+            </n-form-item>
+            <n-form-item v-if="form.scheduler_enabled">
+              <AppTextField v-model:value="form.scheduler_interval" label="扫描间隔" type="number" :min="60">
                 <template #suffix>秒</template>
               </AppTextField>
-            </div>
+            </n-form-item>
 
             <n-divider dashed />
             
@@ -194,7 +199,7 @@ const {
         </n-tab-pane>
       </n-tabs>
     </n-form>
-    <template #footer>
+    <template #action>
       <n-space justify="end">
         <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">取消</n-button>
         <n-button v-bind="getButtonStyle('primary')" @click="handleSave">保存</n-button>

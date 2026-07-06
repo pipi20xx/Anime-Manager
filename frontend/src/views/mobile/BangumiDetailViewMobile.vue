@@ -265,11 +265,9 @@ onMounted(() => {
           {{ isSubscribed ? '已在订阅中' : '订阅此番' }}
         </n-button>
         <n-button type="primary" ghost block size="large" :loading="matchingTmdb" @click="matchTmdb">
-          <template #icon><n-icon><MatchIcon /></n-icon></template>
           查看 TMDB
         </n-button>
         <n-button block size="large" @click="triggerGlobalSearch(detail.original_title || detail.title || detail.name)">
-          <template #icon><n-icon><SearchIcon /></n-icon></template>
           搜资源
         </n-button>
       </div>

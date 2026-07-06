@@ -123,7 +123,7 @@ const getStatusTagStyle = (status: string) => {
     </n-space>
 
     <!-- 移动端 Modal -->
-    <AppGlassModal appearance-key="health-check-manager-modal" v-model:show="showModal" title="编辑项目" style="width: 90%;">
+    <AppGlassModal appearance-key="health-check-manager-modal" v-model:show="showModal" title="编辑项目">
       <n-form :model="editingConfig" label-placement="top">
         <n-form-item>
           <AppTextField v-model:value="editingConfig.name" label="名称" />
@@ -141,9 +141,9 @@ const getStatusTagStyle = (status: string) => {
           </div>
         </n-form-item>
       </n-form>
-      <template #footer>
-        <n-button v-bind="getButtonStyle('primary')" block @click="saveConfig">保存配置</n-button>
-      </template>
+    <template #action>
+      <n-button v-bind="getButtonStyle('primary')" block @click="saveConfig">保存配置</n-button>
+    </template>
     </AppGlassModal>
   </div>
 </template>

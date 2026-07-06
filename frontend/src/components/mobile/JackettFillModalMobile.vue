@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import {
-  NModal, NProgress, NScrollbar, NList, NListItem, NIcon,
+  NProgress, NScrollbar, NList, NListItem, NIcon,
   NButton, NSpace, NText, NResult, NSelect
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
+import AppGlassModal from '../AppGlassModal.vue'
 import {
   SearchOutlined as SearchIcon,
   ErrorOutlineOutlined as ErrorIcon,
   DownloadOutlined as DownloadIcon,
   StopCircleOutlined as StopIcon,
-  PlayCircleOutlineOutlined as StartIcon,
-  CloseOutlined as CloseIcon
+  PlayCircleOutlineOutlined as StartIcon
 } from '@vicons/material'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -154,31 +154,14 @@ watch(() => props.show, (newVal) => {
 </script>
 
 <template>
-  <n-modal 
+  <AppGlassModal 
     :show="show" 
     @update:show="handleClose"
-    :mask-closable="!isRunning"
-    transform-origin="center"
+    title="搜寻补全"
   >
-    <div class="mobile-fill-modal">
-      <div class="mobile-header">
-        <div class="header-title">
-          <n-icon size="20"><SearchIcon /></n-icon>
-          <span>搜寻补全</span>
-        </div>
-        <n-button 
-          v-bind="getButtonStyle('icon')" 
-          size="small" 
-          @click="handleClose"
-          :disabled="isRunning"
-        >
-          <template #icon><n-icon><CloseIcon /></n-icon></template>
-        </n-button>
-      </div>
+    <div class="mobile-subtitle" v-if="subTitle">{{ subTitle }}</div>
 
-      <div class="mobile-subtitle" v-if="subTitle">{{ subTitle }}</div>
-
-      <div class="mobile-content">
+    <div class="mobile-content">
         <div class="control-section">
           <div class="control-row">
             <AppSelectField 
@@ -200,7 +183,6 @@ watch(() => props.show, (newVal) => {
               :disabled="!subId"
               block
             >
-              <template #icon><n-icon><StartIcon /></n-icon></template>
               开始搜寻补全
             </n-button>
             <n-button 
@@ -210,7 +192,6 @@ watch(() => props.show, (newVal) => {
               @click="stopProcess"
               block
             >
-              <template #icon><n-icon><StopIcon /></n-icon></template>
               停止执行
             </n-button>
           </div>
@@ -256,38 +237,11 @@ watch(() => props.show, (newVal) => {
             </div>
           </n-scrollbar>
         </div>
-      </div>
-    </div>
-  </n-modal>
+</div>
+  </AppGlassModal>
 </template>
 
 <style scoped>
-.mobile-fill-modal {
-  width: 100vw;
-  height: 100vh;
-  background: var(--app-surface-card-mixed);
-  display: flex;
-  flex-direction: column;
-}
-
-.mobile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--m-spacing-md);
-  border-bottom: 1px solid var(--app-border-light);
-  background: var(--app-surface-inner);
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: var(--m-spacing-sm);
-  font-size: var(--m-text-lg);
-  font-weight: bold;
-  color: var(--text-primary);
-}
-
 .mobile-subtitle {
   padding: var(--m-spacing-sm) var(--m-spacing-md);
   font-size: var(--m-text-sm);

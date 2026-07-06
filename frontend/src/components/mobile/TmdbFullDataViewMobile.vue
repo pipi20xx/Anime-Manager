@@ -150,7 +150,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
     </div>
 
     <!-- 编辑/新增元数据弹窗 -->
-    <AppGlassModal appearance-key="tmdb-full-data-modal" v-model:show="showEditModal" style="width: 100%; margin: 0;" content-style="padding: 16px;" :title="isEditing ? '修正元数据' : '新增元数据'">
+    <AppGlassModal appearance-key="tmdb-full-data-modal" v-model:show="showEditModal" :title="isEditing ? '修正元数据' : '新增元数据'">
       <n-form label-placement="top">
         <n-form-item><AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="ID" /></n-form-item>
         <n-form-item><AppSelectField v-model:value="editForm.type" label="媒体类型" :options="[{label:'剧集',value:'tv'},{label:'电影',value:'movie'}]" /></n-form-item>
@@ -158,13 +158,13 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
         <n-form-item><AppTextField v-model:value="editForm.poster_path" label="海报链接" /></n-form-item>
         <n-form-item><AppTextField v-model:value="editForm.overview" label="内容简介" type="textarea" :autosize="{minRows:10}" /></n-form-item>
       </n-form>
-      <template #footer>
+      <template #action>
         <n-space justify="end"><n-button v-bind="getButtonStyle('dialogCancel')" @click="showEditModal = false">取消</n-button><n-button v-bind="getButtonStyle('primary')" @click="saveMetadata">保存</n-button></n-space>
       </template>
     </AppGlassModal>
 
     <!-- 全量刷新弹窗 -->
-    <AppGlassModal appearance-key="tmdb-full-data-modal" v-model:show="showRefreshModal" style="width: 100%; top: 20px;" title="全量刷新设置">
+    <AppGlassModal appearance-key="tmdb-full-data-modal" v-model:show="showRefreshModal" title="全量刷新设置">
       <n-form label-placement="top">
         <n-form-item>
           <AppTextField 
@@ -201,7 +201,7 @@ const nextPage = () => { if (browserData.value.length === 20) { browserPage.valu
           />
         </n-form-item>
       </n-form>
-      <template #footer>
+      <template #action>
         <n-space vertical style="width: 100%">
           <n-button block @click="showRefreshModal = false">取消</n-button>
           <n-popconfirm @positive-click="executeRefresh" positive-text="确认" negative-text="取消" style="width: 100%">

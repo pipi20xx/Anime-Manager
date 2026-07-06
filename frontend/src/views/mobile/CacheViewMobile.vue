@@ -13,7 +13,6 @@ import {
   DeleteOutlined as DeleteIcon,
   RefreshOutlined as RefreshIcon,
   SearchOutlined as SearchIcon,
-  SyncOutlined as SyncIcon,
   AddOutlined as AddIcon,
   ArrowBackOutlined as BackIcon
 } from '@vicons/material'
@@ -269,7 +268,6 @@ onUnmounted(() => {
 
       <div class="cache-actions">
         <n-button type="primary" block :loading="syncLoading" @click="handleSyncSytmdb">
-          <template #icon><n-icon><SyncIcon /></n-icon></template>
           同步 SYTMDB
         </n-button>
         <n-button block @click="clearFingerprints">
@@ -333,11 +331,8 @@ onUnmounted(() => {
     <AppGlassModal
       appearance-key="cache-modal"
       v-model:show="showEditModal"
-      style="width: 92%; max-width: 480px; max-height: 90vh"
       :title="isEditing ? '编辑缓存记录' : '新增缓存记录'"
-      :segmented="{ content: true, action: true }"
     >
-      <div style="overflow-y: auto; max-height: calc(90vh - 120px); padding-right: 4px;">
         <n-form label-placement="top">
           <n-form-item>
             <AppTextField v-model:value="editForm.id" label="TMDB ID" :disabled="isEditing" placeholder="数字 ID" />
@@ -367,7 +362,6 @@ onUnmounted(() => {
             <AppTextField v-model:value="editForm.overview" label="内容简介" type="textarea" :autosize="{minRows:3, maxRows: 6}" />
           </n-form-item>
         </n-form>
-      </div>
       <template #action>
         <n-space justify="end" style="width: 100%;">
           <n-button @click="showEditModal = false">取消</n-button>

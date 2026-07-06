@@ -77,7 +77,7 @@ const handleAction = (key: string) => {
 <template>
   <div class="mobile-feed-list">
     <div v-if="feeds.length > 0">
-      <div v-for="feed in feeds" :key="feed.id" class="feed-item m-touchable" data-app-instance="feed-card" @click="emit('edit', feed)">
+      <div v-for="feed in feeds" :key="feed.id" class="feed-item m-card-item m-clickable-card" data-app-instance="feed-card" @click="emit('edit', feed)">
         <div class="feed-content">
           <div class="feed-header">
             <span class="feed-title">{{ feed.title || '未命名' }}</span>
@@ -129,19 +129,9 @@ const handleAction = (key: string) => {
 .feed-item {
   display: flex;
   align-items: center;
-  background: var(--app-surface-card-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-md);
-  min-height: 64px;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-sm);
-}
-.feed-item:active {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
+  /* 卡片样式统一由 mobile-base.css .m-card-item 提供 */
 }
 .feed-content {
   flex: 1;

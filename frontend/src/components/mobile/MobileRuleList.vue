@@ -69,7 +69,7 @@ const handleAction = (key: string) => {
   <div class="mobile-rule-list">
     <div v-if="rules.length > 0">
       <n-list hoverable :show-divider="false">
-        <n-list-item v-for="rule in rules" :key="rule.id" class="rule-item m-touchable" data-app-instance="rss-rule-card" @click="emit('edit', rule)">
+        <n-list-item v-for="rule in rules" :key="rule.id" class="rule-item m-clickable-card" data-app-instance="rss-rule-card" @click="emit('edit', rule)">
           <div class="rule-content">
             <div class="rule-header">
               <span class="rule-name">{{ rule.name }}</span>
@@ -122,28 +122,9 @@ const handleAction = (key: string) => {
   flex-direction: column;
   gap: var(--m-spacing-md);
 }
-.mobile-rule-list :deep(.n-list) { background: transparent; }
-.mobile-rule-list :deep(.n-list-item) {
-  display: flex;
-  align-items: center;
-  background: var(--app-surface-list-mixed);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--m-radius-lg);
-  padding: var(--m-spacing-md) !important;
-  margin-bottom: var(--m-spacing-md);
-  min-height: 64px;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: var(--shadow-sm);
-}
-.mobile-rule-list :deep(.n-list-item:active) {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
-}
+/* NList 样式已统一至 mobile-base.css 全局覆盖 */
 
-/* 原rule-item样式已迁移到n-list-item */
-.rule-item { /* 内部元素样式 */ }
+/* 原rule-item样式已迁移到n-list-item，统一样式由全局提供 */
 .rule-content {
   flex: 1;
   overflow: hidden;

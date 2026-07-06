@@ -60,7 +60,6 @@ const handleAction = (key: string) => {
     
     <div class="mobile-toolbar">
       <n-button type="primary" dashed size="small" @click="editingRule = null; isNewRule = true; showRuleModal = true">
-        <template #icon><n-icon><AddIcon /></n-icon></template>
         添加新分类规则
       </n-button>
 

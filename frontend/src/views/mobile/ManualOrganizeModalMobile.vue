@@ -41,15 +41,13 @@ const {
     appearance-key="manual-organize-modal"
     :show="show" 
     @update:show="val => emit('update:show', val)" 
-    class="mobile-modal"
     title="手动整理"
   >
-    <div class="modal-content">
-      <n-alert type="info" :bordered="false" size="small" style="margin-bottom: 12px">
-        当前路径: {{ currentPath }}
-      </n-alert>
+    <n-alert type="info" :bordered="false" size="small" style="margin-bottom: 12px">
+      当前路径: {{ currentPath }}
+    </n-alert>
 
-      <n-form label-placement="top" size="small">
+    <n-form label-placement="top" size="small">
         <n-form-item>
           <AppSelectField v-model:value="manualTask.rule_id" label="整理规则" :options="availableRules.map(r=>({label:r.name, value:r.id}))" placeholder="选择规则" clearable />
         </n-form-item>
@@ -133,8 +131,7 @@ const {
            </n-collapse-item>
         </n-collapse>
 
-      </n-form>
-    </div>
+    </n-form>
 
     <template #action>
       <n-space justify="space-between">
@@ -148,18 +145,6 @@ const {
 </template>
 
 <style scoped>
-.mobile-modal {
-  width: calc(100vw - 32px) !important;
-  max-width: 400px;
-  margin-top: 60px;
-}
-
-.modal-content {
-  max-height: 60vh;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
 .forced-section {
   background: var(--app-surface-card-mixed);
   padding: 12px;
