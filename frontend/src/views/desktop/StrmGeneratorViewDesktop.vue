@@ -20,7 +20,7 @@ const syncModeMap: Record<string, string> = {
   webdav: 'WebDAV'
 }
 
-import StrmTaskModal from '../../components/StrmTaskModal.vue'
+import StrmTaskModal from '../../components/desktop/StrmTaskModalDesktop.vue'
 import AppGlassCard from '../../components/AppGlassCard.vue'
 import { useStrmGeneratorView } from '../../composables/views/useStrmGeneratorView'
 import { getButtonStyle } from '../../composables/useButtonStyles'

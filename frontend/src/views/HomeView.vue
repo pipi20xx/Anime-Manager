@@ -18,7 +18,7 @@ import {
   NDivider, NTabs, NTabPane
 } from 'naive-ui'
 import { TuneOutlined as TuneIcon } from '@vicons/material'
-import RecognitionLogsView from './RecognitionLogsView.vue'
+import RecognitionLogsView from './desktop/RecognitionLogsDesktop.vue'
 import RecognitionResult from '../components/RecognitionResult.vue'
 import { useHome } from '../composables/views/useHome'
 </script>

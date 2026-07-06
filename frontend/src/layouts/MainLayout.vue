@@ -40,7 +40,7 @@ import {
 // Views - 不再需要导入，使用路由
 import { useRouter, useRoute } from 'vue-router'
 
-import LogConsoleModal from '../components/LogConsoleModal.vue'
+import LogConsoleModal from '../components/desktop/LogConsoleModalDesktop.vue'
 import ReloadPrompt from '../components/ReloadPrompt.vue'
 import { systemApi } from '../api/system'
 import { APP_VERSION } from '../version'

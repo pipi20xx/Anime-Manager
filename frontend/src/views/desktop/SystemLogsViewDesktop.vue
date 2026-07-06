@@ -14,7 +14,7 @@ import {
   SearchOutlined as SearchIcon,
   TerminalOutlined as TerminalIcon
 } from '@vicons/material'
-import LogConsoleModal from '../../components/LogConsoleModal.vue'
+import LogConsoleModal from '../../components/desktop/LogConsoleModalDesktop.vue'
 import { useSystemLogs } from '../../composables/views/useSystemLogs'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

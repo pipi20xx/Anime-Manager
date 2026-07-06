@@ -5,23 +5,23 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Explore',
-    component: () => import('../views/ExploreView.vue'),
+    component: () => import('../views/desktop/ExploreViewDesktop.vue'),
     redirect: '/explore/recommend',
     children: [
       {
         path: '/explore/recommend',
         name: 'ExploreRecommend',
-        component: () => import('../views/explore/RecommendTab.vue')
+        component: () => import('../views/explore/desktop/RecommendTabDesktop.vue')
       },
       {
         path: '/explore/discover',
         name: 'ExploreDiscover',
-        component: () => import('../views/explore/DiscoveryTab.vue')
+        component: () => import('../views/explore/desktop/DiscoveryTabDesktop.vue')
       },
       {
         path: '/explore/search',
         name: 'ExploreSearch',
-        component: () => import('../views/explore/SearchTab.vue')
+        component: () => import('../views/explore/desktop/SearchTabDesktop.vue')
       }
     ]
   },
@@ -33,92 +33,92 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/cache',
     name: 'Cache',
-    component: () => import('../views/CacheView.vue')
+    component: () => import('../views/desktop/CacheViewDesktop.vue')
   },
   {
     path: '/settings',
     name: 'Settings',
-    component: () => import('../views/SettingsView.vue')
+    component: () => import('../components/desktop/SettingsViewDesktop.vue')
   },
   {
     path: '/guide',
     name: 'UsageGuide',
-    component: () => import('../views/UsageGuideView.vue')
+    component: () => import('../views/desktop/UsageGuideDesktop.vue')
   },
   {
     path: '/files',
     name: 'FileBrowser',
-    component: () => import('../views/FileBrowserView.vue')
+    component: () => import('../views/desktop/FileBrowserViewDesktop.vue')
   },
   {
     path: '/organizer',
     name: 'Organizer',
-    component: () => import('../views/OrganizerView.vue')
+    component: () => import('../views/desktop/OrganizerViewDesktop.vue')
   },
   {
     path: '/organize-history',
     name: 'OrganizeHistory',
-    component: () => import('../views/OrganizeHistoryView.vue')
+    component: () => import('../components/desktop/OrganizeHistoryDesktop.vue')
   },
   {
     path: '/subscription',
     name: 'Subscription',
-    component: () => import('../views/SubscriptionView.vue')
+    component: () => import('../views/desktop/SubscriptionViewDesktop.vue')
   },
   {
     path: '/strm',
     name: 'StrmGenerator',
-    component: () => import('../views/StrmGeneratorView.vue')
+    component: () => import('../views/desktop/StrmGeneratorViewDesktop.vue')
   },
   {
     path: '/database',
     name: 'Database',
-    component: () => import('../views/DatabaseView.vue')
+    component: () => import('../components/desktop/DatabaseViewDesktop.vue')
   },
   {
     path: '/tmdb-full',
     name: 'TmdbFullData',
-    component: () => import('../views/TmdbFullDataView.vue')
+    component: () => import('../components/desktop/TmdbFullDataViewDesktop.vue')
   },
   {
     path: '/external-control',
     name: 'ExternalControl',
-    component: () => import('../views/ExternalControlView.vue')
+    component: () => import('../views/desktop/ExternalControlDesktop.vue')
   },
   {
     path: '/calendar',
     name: 'Calendar',
-    component: () => import('../views/CalendarView.vue')
+    component: () => import('../components/desktop/CalendarViewDesktop.vue')
   },
   {
     path: '/tasks',
     name: 'TaskHistory',
-    component: () => import('../views/TaskHistoryView.vue')
+    component: () => import('../views/desktop/TaskHistoryViewDesktop.vue')
   },
   {
     path: '/jackett-search',
     name: 'JackettSearch',
-    component: () => import('../views/JackettSearchView.vue')
+    component: () => import('../views/desktop/JackettSearchViewDesktop.vue')
   },
   {
     path: '/appearance',
     name: 'Appearance',
-    component: () => import('../views/AppearanceView.vue')
+    component: () => import('../views/desktop/AppearanceViewDesktop.vue')
   },
   {
     path: '/tmdb/:type/:id',
     name: 'TmdbDetail',
-    component: () => import('../views/TmdbDetailView.vue')
+    component: () => import('../views/desktop/TmdbDetailViewDesktop.vue')
   },
   {
     path: '/bangumi/:id',
     name: 'BangumiDetail',
-    component: () => import('../views/BangumiDetailView.vue')
+    component: () => import('../views/desktop/BangumiDetailViewDesktop.vue')
   },
   {
     path: '/person/:id',
     name: 'TmdbPersonDetail',
-    component: () => import('../views/TmdbPersonDetailView.vue')
+    component: () => import('../views/desktop/TmdbPersonDetailViewDesktop.vue')
   }
 ]
 

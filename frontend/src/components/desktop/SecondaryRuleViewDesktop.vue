@@ -10,7 +10,7 @@ import {
   CloudDownloadOutlined as ExportIcon,
   CloudUploadOutlined as ImportIcon
 } from '@vicons/material'
-import ClassifierEditModal from '../../components/ClassifierEditModal.vue'
+import ClassifierEditModal from './ClassifierEditModalDesktop.vue'
 import { useSecondaryRule } from '../../composables/views/useSecondaryRule'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

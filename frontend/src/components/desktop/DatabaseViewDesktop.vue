@@ -7,11 +7,11 @@ import {
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
-import DatabaseConfig from '../../components/DatabaseConfig.vue'
-import MaintenanceManager from '../../components/MaintenanceManager.vue'
-import TmdbFullDataView from '../../views/TmdbFullDataView.vue'
-import SecondaryRuleView from '../../views/SecondaryRuleView.vue'
-import UserMappingView from '../../views/UserMappingView.vue'
+import DatabaseConfig from './DatabaseConfigDesktop.vue'
+import MaintenanceManager from './MaintenanceManagerDesktop.vue'
+import TmdbFullDataView from './TmdbFullDataViewDesktop.vue'
+import SecondaryRuleView from './SecondaryRuleViewDesktop.vue'
+import UserMappingView from './UserMappingViewDesktop.vue'
 import {
   PlayArrowOutlined as RunIcon,
   RefreshOutlined as RefreshIcon,

@@ -18,12 +18,12 @@ import {
 } from '@vicons/material'
 import { getButtonStyle } from '../composables/useButtonStyles'
 import { pendingSubscription } from '../store/navigationStore'
-import SubscriptionEditModal from './SubscriptionEditModal.vue'
+import SubscriptionEditModal from './desktop/SubscriptionEditModalDesktop.vue'
 import JackettFillModal from './JackettFillModal.vue'
-import SubscriptionDetailModal from './SubscriptionDetailModal.vue'
-import SubscriptionTemplateModal from './SubscriptionTemplateModal.vue'
-import BangumiQuickSubscribeModal from './BangumiQuickSubscribeModal.vue'
-import PriorityRuleModal from './PriorityRuleModal.vue'
+import SubscriptionDetailModal from './desktop/SubscriptionDetailModalDesktop.vue'
+import SubscriptionTemplateModal from './desktop/SubscriptionTemplateModalDesktop.vue'
+import BangumiQuickSubscribeModal from './desktop/BangumiQuickSubscribeModalDesktop.vue'
+import PriorityRuleModal from './desktop/PriorityRuleModalDesktop.vue'
 import RssDetectManagerDesktop from './desktop/RssDetectManagerDesktop.vue'
 
 const props = defineProps<{

@@ -16,7 +16,7 @@ import {
 import draggable from 'vuedraggable'
 
 import RuleEditModal from '../../components/RuleEditModal.vue'
-import TaskEditModal from '../../components/TaskEditModal.vue'
+import TaskEditModal from '../../components/desktop/TaskEditModalDesktop.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import AppGlassCard from '../../components/AppGlassCard.vue'
 import { useOrganizerView } from '../../composables/views/useOrganizerView'

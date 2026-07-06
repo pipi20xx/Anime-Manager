@@ -25,8 +25,8 @@ import {
   DriveFileMoveOutlined as GoToIcon
 } from '@vicons/material'
 
-import ManualOrganizeModal from '../../components/ManualOrganizeModal.vue'
-import RecognitionModal from '../../components/RecognitionModal.vue'
+import ManualOrganizeModal from '../../components/desktop/ManualOrganizeModalDesktop.vue'
+import RecognitionModal from '../../components/desktop/RecognitionModalDesktop.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import { useFileBrowserView } from '../../composables/views/useFileBrowserView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
