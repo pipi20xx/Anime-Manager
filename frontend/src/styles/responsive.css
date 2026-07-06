@@ -1,0 +1,357 @@
+/**
+ * 响应式设计系统
+ * 统一 Desktop / Mobile 布局，消除 useIsMobile 分支
+ *
+ * 断点:
+ *   xs: < 480px   (手机竖屏)
+ *   sm: 480-767px  (手机横屏/小平板)
+ *   md: 768-1023px (平板)
+ *   lg: 1024-1439px (小桌面)
+ *   xl: >= 1440px   (大桌面)
+ */
+
+/* ============================================
+   1. 响应式间距变量
+   ============================================ */
+:root {
+  --rsp-page-padding: var(--space-4);
+  --rsp-card-padding: var(--space-4);
+  --rsp-grid-gap: var(--space-3);
+  --rsp-section-gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --rsp-page-padding: var(--space-6);
+    --rsp-card-padding: var(--space-5);
+    --rsp-grid-gap: var(--space-4);
+    --rsp-section-gap: var(--space-6);
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --rsp-page-padding: var(--space-8);
+    --rsp-section-gap: var(--space-8);
+  }
+}
+
+/* ============================================
+   2. 统一页面容器
+   替代 .m-page (mobile) 和 .xxx-view (desktop)
+   ============================================ */
+.app-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: var(--rsp-page-padding);
+  padding-bottom: max(var(--rsp-page-padding), env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 767px) {
+  .app-page {
+    padding-bottom: max(80px, env(safe-area-inset-bottom, 80px));
+  }
+}
+
+.app-page--full-bleed {
+  padding: 0;
+}
+
+/* ============================================
+   3. 统一页面头部
+   替代 .page-header (desktop) 和 .m-header (mobile)
+   ============================================ */
+.app-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--rsp-section-gap);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.app-page-header__left {
+  min-width: 0;
+}
+
+.app-page-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.app-page-header .subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.app-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .app-page-header h1 {
+    font-size: var(--text-xl);
+  }
+  .app-page-header {
+    margin-bottom: var(--space-4);
+  }
+}
+
+/* ============================================
+   4. 响应式网格
+   替代 NGrid 硬编码 cols
+   ============================================ */
+.app-grid {
+  display: grid;
+  gap: var(--rsp-grid-gap);
+}
+
+/* 默认 1 列 (移动端) */
+.app-grid--auto,
+.app-grid--2,
+.app-grid--3,
+.app-grid--4 {
+  grid-template-columns: 1fr;
+}
+
+/* 平板: 2 列 */
+@media (min-width: 768px) {
+  .app-grid--auto,
+  .app-grid--2,
+  .app-grid--3,
+  .app-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 桌面 */
+@media (min-width: 1024px) {
+  .app-grid--auto { grid-template-columns: repeat(3, 1fr); }
+  .app-grid--2 { grid-template-columns: repeat(2, 1fr); }
+  .app-grid--3 { grid-template-columns: repeat(3, 1fr); }
+  .app-grid--4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* 大桌面 */
+@media (min-width: 1440px) {
+  .app-grid--auto { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ============================================
+   5. 响应式分栏布局
+   替代 HomeView 的 NGrid 3:1 分栏
+   ============================================ */
+.app-split-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsp-grid-gap);
+}
+
+@media (min-width: 1024px) {
+  .app-split-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .app-split-layout__main {
+    flex: 3;
+    min-width: 0;
+  }
+  .app-split-layout__side {
+    flex: 1;
+    min-width: 280px;
+    max-width: 400px;
+  }
+}
+
+/* ============================================
+   6. 统一卡片列表
+   ============================================ */
+.app-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsp-grid-gap);
+}
+
+/* ============================================
+   7. 响应式表单网格
+   替代 NGrid 表单布局
+   ============================================ */
+.app-form-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .app-form-grid--2 { grid-template-columns: repeat(2, 1fr); }
+  .app-form-grid--3 { grid-template-columns: repeat(3, 1fr); }
+  .app-form-grid--4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ============================================
+   8. 统一 section 间距
+   ============================================ */
+.app-section {
+  margin-bottom: var(--rsp-section-gap);
+}
+
+.app-section:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   9. 响应式卡片触摸反馈
+   统一桌面 hover 和移动端 active 效果
+   ============================================ */
+.app-clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.app-clickable:hover {
+  border-color: var(--app-border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.app-clickable:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   10. 统一 section header
+   ============================================ */
+.app-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.app-section-header__title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-section-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   11. 响应式 Tab 内容区
+   ============================================ */
+.app-tab-content {
+  padding: var(--rsp-card-padding);
+}
+
+/* ============================================
+   12. Desktop 组件移动端全局适配
+   让 Desktop 组件在小屏上自动适配，无需修改 Desktop 源码
+   ============================================ */
+@media (max-width: 767px) {
+  /* —— 页面头部：堆叠为纵向 —— */
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: var(--space-2) !important;
+  }
+  .page-header h1 {
+    font-size: var(--text-xl) !important;
+  }
+
+  /* —— 工具栏行：换行 —— */
+  .toolbar-row {
+    flex-wrap: wrap !important;
+    gap: var(--space-2) !important;
+  }
+
+  /* —— 页面级 NGrid：强制单列 ——
+     (Modal 内的 NGrid 已由 mobile-base.css 处理) */
+  .n-grid:not(.n-modal-container .n-grid) {
+    grid-template-columns: 1fr !important;
+  }
+  .n-grid > .n-gi {
+    grid-column: auto !important;
+  }
+
+  /* —— NDataTable：水平滚动 —— */
+  .n-data-table {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .n-data-table .n-data-table-wrapper {
+    overflow-x: auto !important;
+  }
+
+  /* —— 水平 NSpace：自动换行 —— */
+  .n-space:not(.n-space--vertical) {
+    flex-wrap: wrap !important;
+  }
+
+  /* —— 卡片网格：减小最小宽度 —— */
+  .cache-grid,
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: var(--space-2) !important;
+  }
+
+  /* —— 固定宽度元素：变为全宽 —— */
+  .n-input[style*="width"],
+  .n-select[style*="width"] {
+    width: 100% !important;
+  }
+
+  /* —— NCard 内边距缩减 —— */
+  .n-card .n-card__content {
+    padding: var(--space-3) !important;
+  }
+
+  /* —— 页面根容器底部留白 (底部导航栏空间) —— */
+  .cache-view,
+  .system-logs,
+  .task-history,
+  .organize-history,
+  .strm-generator-view,
+  .external-control,
+  .secondary-rule-view,
+  .subscription-view,
+  .organizer-view,
+  .file-browser-view,
+  .jackett-search-view,
+  .explore-view,
+  .ai-lab-view,
+  .appearance-view,
+  .settings-view,
+  .database-view,
+  .calendar-view,
+  .user-mapping-view,
+  .usage-guide,
+  .recognition-logs,
+  .bangumi-detail,
+  .tmdb-detail,
+  .tmdb-person-detail,
+  .tmdb-full-data-view {
+    padding-bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
+  }
+
+  /* —— 隐藏桌面端 hover 专属元素 (可选) —— */
+  .desktop-only {
+    display: none !important;
+  }
+}

@@ -1,11 +1,17 @@
 <script setup lang="ts">
+/**
+ * RecognitionResult - 统一识别结果展示
+ *
+ * 合并自 RecognitionResultDesktop + RecognitionResultMobile
+ * 通过 CSS 媒体查询自动适配:
+ * - 桌面: FinalCard 在上, RawCard + TmdbCard 并排
+ * - 移动: 三张卡片纵向堆叠
+ */
 import { NEmpty } from 'naive-ui'
 import { recognitionState } from '../store/recognitionStore'
-import { useIsMobile } from '../composables/useIsMobile'
-import RecognitionResultDesktop from './desktop/RecognitionResultDesktop.vue'
-import RecognitionResultMobile from './mobile/RecognitionResultMobile.vue'
-
-const { isMobile } = useIsMobile()
+import RecognitionFinalCard from './RecognitionFinalCard.vue'
+import RecognitionRawCard from './RecognitionRawCard.vue'
+import RecognitionTmdbCard from './RecognitionTmdbCard.vue'
 </script>
 
 <template>
@@ -14,14 +20,43 @@ const { isMobile } = useIsMobile()
       <n-empty description="暂无识别结果，请在上方输入文件名开始解析" />
     </div>
 
-    <div v-else class="content-body">
-      <RecognitionResultMobile v-if="isMobile" />
-      <RecognitionResultDesktop v-else />
+    <div v-else class="results-wrapper">
+      <RecognitionFinalCard />
+      <div class="sub-cards-layout">
+        <RecognitionRawCard />
+        <RecognitionTmdbCard />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.recognition-result-container { width: 100%; margin-top: 12px; }
-.empty-state { padding: 60px 0; }
+.recognition-result-container {
+  width: 100%;
+  margin-top: var(--space-3);
+}
+
+.empty-state {
+  padding: 60px 0;
+}
+
+.results-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsp-grid-gap);
+}
+
+/* 移动端: 子卡片纵向堆叠 (默认) */
+.sub-cards-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rsp-grid-gap);
+}
+
+/* 桌面端: RawCard 和 TmdbCard 并排 */
+@media (min-width: 768px) {
+  .sub-cards-layout {
+    flex-direction: row;
+  }
+}
 </style>
