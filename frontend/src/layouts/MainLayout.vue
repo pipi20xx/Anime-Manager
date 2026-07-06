@@ -260,6 +260,18 @@ const handlePanelClose = () => {
   showMobileMenu.value = false
   // watch 中 !panelNavKey && !isPanelPopStateClose → 自动 history.back()
 }
+
+/** 面板内打开弹窗等非路由操作: 关闭面板但不调用 history.back(),
+ *  避免与弹窗自身的 useBackClose history 管理冲突。
+ *  用 replaceState 将面板的 pushState 替换为干净状态,
+ *  这样弹窗关闭后 history.back() 回到的是干净状态而非过期的 panel state。 */
+const handlePanelModalAction = (callback: () => void) => {
+  isPanelPopStateClose = true  // 阻止 watch 调用 history.back()
+  showMobileMenu.value = false
+  // 将面板的 pushState({ mobileMenu: true }) 替换为 null, 清除残留状态
+  window.history.replaceState(null, '')
+  callback()
+}
 </script>
 
 <template>
@@ -432,27 +444,40 @@ const handlePanelClose = () => {
       </Transition>
     </Teleport>
 
-    <!-- Mobile Bottom Panel (从底部弹出的功能面板) -->
-    <n-drawer v-model:show="showMobileMenu" placement="bottom" :height="'65vh'" :style="{ '--n-drawer-body-padding': '16px' }">
-      <n-drawer-content title="全部功能" :native-scrollbar="true" closable>
-        <!-- 功能图标网格 -->
-        <div class="app-grid-panel">
-          <div 
-            v-for="item in gridMenuItems" 
-            :key="item.key"
-            class="app-grid-item"
-            :class="{ active: currentMenuKey === item.key }"
-            @click="handlePanelSelect(item.key)"
-          >
-            <div class="app-grid-icon">
-              <n-icon size="28"><component :is="item.icon" /></n-icon>
+    <!-- Mobile Full-Screen Panel (更多功能面板) -->
+    <n-drawer v-model:show="showMobileMenu" placement="bottom" :height="'100dvh'" :style="{ '--n-drawer-body-padding': '0' }">
+      <div class="full-panel">
+        <!-- 顶部标题栏 -->
+        <div class="full-panel-header">
+          <div class="full-panel-title">
+            <img src="/favicon.svg" alt="logo" style="width: 22px; height: 22px;" />
+            <span>全部功能</span>
+          </div>
+          <n-button v-bind="getButtonStyle('icon')" size="small" @click="handlePanelClose" class="full-panel-close">
+            <template #icon><n-icon size="24"><ArrowBackIcon /></n-icon></template>
+          </n-button>
+        </div>
+
+        <!-- 可滚动功能网格 -->
+        <div class="full-panel-body">
+          <div class="app-grid-panel">
+            <div 
+              v-for="item in gridMenuItems" 
+              :key="item.key"
+              class="app-grid-item"
+              :class="{ active: currentMenuKey === item.key }"
+              @click="handlePanelSelect(item.key)"
+            >
+              <div class="app-grid-icon">
+                <n-icon size="28"><component :is="item.icon" /></n-icon>
+              </div>
+              <div class="app-grid-label">{{ item.label }}</div>
             </div>
-            <div class="app-grid-label">{{ item.label }}</div>
           </div>
         </div>
 
-        <!-- 底部快捷操作 -->
-        <template #footer>
+        <!-- 底部快捷操作栏 -->
+        <div class="full-panel-footer">
           <div class="panel-footer">
             <div class="panel-footer-item" @click="handlePanelClose(); toggleThemeMode();">
               <n-icon size="24" :color="isDarkMode ? 'var(--n-primary-color)' : 'var(--text-secondary)'">
@@ -473,17 +498,17 @@ const handlePanelClose = () => {
               <n-icon size="24"><SettingIcon /></n-icon>
               <span>设置</span>
             </div>
-            <div class="panel-footer-item" @click="handlePanelClose(); showLogConsole = true;">
+            <div class="panel-footer-item" @click="handlePanelModalAction(() => showLogConsole = true);">
               <n-icon size="24"><ConsoleIcon /></n-icon>
               <span>日志</span>
             </div>
-            <div class="panel-footer-item" @click="handlePanelClose(); logout();">
+            <div class="panel-footer-item" @click="handlePanelModalAction(() => logout());">
               <n-icon size="24" color="var(--n-error-color, #ff4d4f)"><LogoutIcon /></n-icon>
               <span>退出</span>
             </div>
           </div>
-        </template>
-      </n-drawer-content>
+        </div>
+      </div>
     </n-drawer>
 
   </n-layout>
@@ -691,12 +716,60 @@ const handlePanelClose = () => {
   transform: scale(1.05);
 }
 
+/* 全屏功能面板 */
+.full-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100vh;
+  background: var(--app-surface-card-mixed);
+  overflow: hidden;
+}
+
+.full-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--sidebar-bg-color) 90%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.full-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.full-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 16px;
+}
+
+.full-panel-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-light);
+  background: color-mix(in srgb, var(--sidebar-bg-color) 90%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* 底部弹出功能面板 */
 .app-grid-panel {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  padding: 4px 0 8px 0;
+  gap: 16px;
+  padding: 0;
 }
 
 .app-grid-item {
@@ -704,8 +777,8 @@ const handlePanelClose = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 4px;
+  gap: 10px;
+  padding: 20px 4px;
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-normal);

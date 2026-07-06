@@ -305,15 +305,22 @@
   }
 
   /* —— 卡片网格：减小最小宽度 —— */
-  .cache-grid,
-  .card-grid {
+  .cache-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
     gap: var(--space-2) !important;
+  }
+  /* —— 整理与重命名的规则/任务卡片：单列 —— */
+  .card-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-3) !important;
   }
 
   /* —— 固定宽度元素：变为全宽 —— */
   .n-input[style*="width"],
-  .n-select[style*="width"] {
+  .n-select[style*="width"],
+  .n-date-picker[style*="width"],
+  .n-input-number[style*="width"],
+  .n-tabs[style*="width"] {
     width: 100% !important;
   }
 
@@ -353,6 +360,114 @@
   /* —— 隐藏桌面端 hover 专属元素 (可选) —— */
   .desktop-only {
     display: none !important;
+  }
+
+  /* —— App*Field 组件内联宽度：覆盖为全宽 ——
+     AppSelectField / AppTextField / AppSearchField 的根 div
+     携带了 style="width: NNNpx" 内联样式，scoped 的 width:100% 无法覆盖内联，
+     需要在这里用 !important 统一处理 */
+  .app-select-field[style*="width"],
+  .app-text-field[style*="width"],
+  .app-search-field[style*="width"] {
+    width: 100% !important;
+  }
+
+  /* —— 详情页头部：海报+信息横向 → 纵向堆叠 ——
+     覆盖 BangumiDetailView / TmdbDetailView / TmdbPersonDetailView 的 .header-content */
+  .header-content {
+    flex-direction: column !important;
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+
+  /* 海报缩小：260px → 120px，180px → 120px */
+  .main-poster,
+  .main-profile {
+    width: 120px !important;
+    max-width: 40vw !important;
+    align-self: center !important;
+  }
+
+  /* 详情页主体内容：减小 padding */
+  .body-content {
+    padding: 16px !important;
+  }
+
+  /* —— 剧集条目：缩略图缩小，防止溢出 ——
+     TmdbDetailView .ep-still 200px → 120px */
+  .ep-still {
+    width: 120px !important;
+    max-width: 35vw !important;
+  }
+
+  /* —— 文件浏览器：侧边栏+主内容横向 → 纵向堆叠 —— */
+  .browser-layout {
+    flex-direction: column !important;
+  }
+  .favorites-sidebar {
+    width: 100% !important;
+    max-height: 200px !important;
+  }
+
+  /* —— Markdown 表格：水平滚动兜底 ——
+     AiLabView 等 AI 对话内容中的宽表格 */
+  .markdown-body table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* —— 搜索栏：换行 —— */
+  .search-bar {
+    flex-wrap: wrap !important;
+  }
+
+  /* —— 信息网格：换行 —— */
+  .info-grid {
+    flex-wrap: wrap !important;
+    gap: 8px 12px !important;
+  }
+
+  /* —— 标题行：缩小字号 —— */
+  .title {
+    font-size: 20px !important;
+  }
+
+  /* —— 开关行：说明文字换行到下一行 ——
+     .switch-row (自动化设置等) 和 n-space>.switch-label+.switch-desc (识别偏好等)
+     在桌面端是 switch + label + desc 一行排列，
+     移动端需要让说明文字独占一行 */
+  .switch-row {
+    flex-wrap: wrap !important;
+  }
+  .switch-row__desc {
+    width: 100% !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+    margin-top: 2px !important;
+  }
+  .switch-desc {
+    width: 100% !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+  }
+
+  /* —— 整理历史卡片：详情标签换行 —— */
+  .detail-group {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* —— Segment Tabs：允许横向滚动，防止标签挤压 ——
+     数据中心等页面有 6 个 tab，移动端需要可滚动 */
+  .n-tabs--segment-type .n-tabs-rail {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .n-tabs--segment-type .n-tabs-tab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 0 10px !important;
   }
 }
 
@@ -431,5 +546,55 @@
   .n-modal-container .n-modal.n-card .switch-row,
   .n-modal-container .n-modal.n-card .m-config-row {
     width: 100% !important;
+  }
+
+  /* —— Modal 内常见 flex 布局：纵向堆叠 ——
+     覆盖 AggregatedFeedItemsModal / AggregatedRuleHistoryModal /
+     SubscriptionDetailModal / RecognitionModal 等弹窗中的
+     .filter-bar / .action-bar / .header-section / .main-layout / .stats-row */
+  .n-modal-container .n-modal.n-card .filter-bar,
+  .n-modal-container .n-modal.n-card .action-bar,
+  .n-modal-container .n-modal.n-card .header-section,
+  .n-modal-container .n-modal.n-card .main-layout {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* —— Modal 内海报/信息横向布局：海报居中缩小 —— */
+  .n-modal-container .n-modal.n-card .poster-box,
+  .n-modal-container .n-modal.n-card .poster-preview {
+    align-self: center !important;
+  }
+
+  /* —— Modal 内统计卡片：允许换行 —— */
+  .n-modal-container .n-modal.n-card .stats-row {
+    flex-wrap: wrap !important;
+  }
+  .n-modal-container .n-modal.n-card .stat-card {
+    min-width: calc(50% - 6px) !important;
+  }
+
+  /* —— Modal 内信息网格：允许换行 —— */
+  .n-modal-container .n-modal.n-card .flex-info-grid {
+    flex-wrap: wrap !important;
+  }
+
+  /* —— Modal 内搜索结果项：图片缩小 —— */
+  .n-modal-container .n-modal.n-card .search-result-item img {
+    width: 40px !important;
+    height: 60px !important;
+  }
+
+  /* —— Modal 内策略行：纵向堆叠 —— */
+  .n-modal-container .n-modal.n-card .strategy-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  /* —— Modal 内表单 label-width 过宽时缩减 —— */
+  .n-modal-container .n-modal.n-card .n-form-item .n-form-item-label {
+    width: auto !important;
+    min-width: 80px !important;
   }
 }
