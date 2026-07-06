@@ -295,10 +295,11 @@ const handleRefresh = () => {
 
 /* 原history-item样式已迁移到n-list-item */
 
-.item-row { display: flex; align-items: center; justify-content: space-between; }
+.item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 /* Header Row */
-.title-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.title-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.item-status { flex-shrink: 0; }
 .item-title { font-size: 17px; font-weight: bold; color: var(--text-primary); }
 .item-year { font-size: 13px; color: var(--text-tertiary); }
 /* History Tags - New Component */
@@ -510,11 +511,13 @@ const handleRefresh = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.detail-group { display: flex; align-items: center; gap: 24px; }
+.detail-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1; min-width: 0; }
 .detail-item { display: flex; align-items: center; gap: 6px; }
 .detail-item .label { color: var(--text-tertiary); }
-.delete-btn-wrapper { margin-left: auto; display: flex; align-items: center; }
+.delete-btn-wrapper { flex-shrink: 0; display: flex; align-items: center; }
 
 /* Compact Alert - 改成标签样式 */
 .compact-alert { display: inline-block; width: auto; max-width: 100%; }

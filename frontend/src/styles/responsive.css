@@ -290,6 +290,27 @@
     grid-column: auto !important;
   }
 
+  /* —— 海报卡片网格：移动端 2 列 ——
+     订阅管理 & 元数据资产 等含海报的卡片网格，
+     参考追剧日历 .track-card-grid 的移动端布局
+     注意：需要 :not() 提升优先级以覆盖上面的全局单列规则
+     使用 minmax(0, 1fr) 防止内容撑开导致列宽不均 */
+  .subscription-manager .n-grid:not(.n-modal-container .n-grid),
+  .tmdb-full-view .n-grid:not(.n-modal-container .n-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: var(--space-2) !important;
+  }
+  .subscription-manager .n-grid > .n-gi,
+  .tmdb-full-view .n-grid > .n-gi {
+    min-width: 0 !important;
+    grid-column: auto !important;
+  }
+  .subscription-manager .sub-card,
+  .tmdb-full-view .meta-card {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
   /* —— NDataTable：水平滚动 —— */
   .n-data-table {
     overflow-x: auto !important;
@@ -584,5 +605,47 @@
   .n-modal-container .n-modal.n-card .n-form-item .n-form-item-label {
     width: auto !important;
     min-width: 80px !important;
+  }
+
+  /* —— 订阅源详情 / 下载记录 卡片：横向 → 纵向堆叠 ——
+     .feed-card-item / .rule-card-item 默认 display:flex (横向)，
+     .card-aside 有 min-width:180px 导致移动端内容挤在左半边、
+     右侧大量留白。移动端改为纵向堆叠，aside 全宽置于底部 */
+  .n-modal-container .n-modal.n-card .feed-card-item,
+  .n-modal-container .n-modal.n-card .rule-card-item {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  /* aside 取消固定宽度，全宽横向排列时间+按钮 */
+  .n-modal-container .n-modal.n-card .feed-card-item .card-aside,
+  .n-modal-container .n-modal.n-card .rule-card-item .card-aside {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* 按钮区允许换行且左对齐 */
+  .n-modal-container .n-modal.n-card .feed-card-item .card-actions,
+  .n-modal-container .n-modal.n-card .rule-card-item .card-actions {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* 顶部标签行：允许换行，不再 overflow:hidden 截断 "未下载" 等标签 */
+  .n-modal-container .n-modal.n-card .feed-card-item .card-tags-left,
+  .n-modal-container .n-modal.n-card .rule-card-item .card-tags-left {
+    overflow: visible !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* 描述区取消右侧 padding（aside 已在下方） */
+  .n-modal-container .n-modal.n-card .feed-card-item .card-desc,
+  .n-modal-container .n-modal.n-card .rule-card-item .card-desc {
+    padding-right: 0 !important;
   }
 }
