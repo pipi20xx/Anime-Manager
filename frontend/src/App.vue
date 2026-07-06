@@ -26,8 +26,10 @@ const currentNaiveTheme = computed(() => isDarkMode.value ? darkTheme : lightThe
 
 onMounted(() => {
   localStorage.setItem('apm_ui_auth_enabled', 'true')
-  // 加载外观配置并应用 CSS 变量
-  loadAppearanceConfig()
+  // 仅在已登录时加载外观配置，避免未登录时发起认证请求导致 401 无限刷新
+  if (isLoggedIn.value) {
+    loadAppearanceConfig()
+  }
 })
 </script>
 

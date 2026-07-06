@@ -74,6 +74,7 @@ import {
 import AppTextField from '../components/AppTextField.vue'
 import axios from 'axios'
 import { loginSuccess } from '../store/navigationStore'
+import { loadAppearanceConfig } from '../store/appearanceStore'
 
 const message = useMessage()
 const loading = ref(false)
@@ -109,6 +110,8 @@ const handleLogin = async () => {
       message.info('请输入双重验证码')
     } else {
       loginSuccess(res.data.access_token, res.data.username)
+      // 登录成功后加载外观配置（App.vue 中仅在页面初始已登录时才加载）
+      loadAppearanceConfig()
       message.success(`欢迎回来, ${res.data.username}`)
     }
   } catch (err: any) {

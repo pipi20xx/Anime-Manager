@@ -161,10 +161,15 @@ async def api_audit_middleware(request: Request, call_next):
                                     )
                                 db_session = session_result.scalars().first()
                                 if db_session:
-                                    db_session.last_activity = datetime.utcnow()
-                                    session.add(db_session)
-                                    await session.commit()
+                                    # 认证已验证，先标记为已认证（last_activity 更新失败不应影响认证结果）
                                     is_authenticated = True
+                                    # 更新 last_activity（非关键操作，并发 commit 可能因数据库锁竞争失败，忽略即可）
+                                    try:
+                                        db_session.last_activity = datetime.utcnow()
+                                        session.add(db_session)
+                                        await session.commit()
+                                    except:
+                                        pass
                                 else:
                                     from logger import log_audit
                                     log_audit("AUTH", "会话失效", f"用户: {user.username}, Token ID: {token_id}", level="WARN")
