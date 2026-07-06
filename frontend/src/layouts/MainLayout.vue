@@ -189,11 +189,9 @@ const menuOptions: MenuOption[] = [
 
 const currentMenuKey = computed(() => route.name as string)
 
-// 详情页需要铺满整个内容区域，不保留外层 padding
-const isFullBleedPage = computed(() => {
-  const fullBleedNames = ['TmdbDetail', 'BangumiDetail', 'TmdbPersonDetail']
-  return fullBleedNames.includes(route.name as string)
-})
+// 详情页不再使用 full-bleed，统一由 n-layout-content 提供 padding，
+// 避免桌面端/移动端顶部间隙丢失的问题
+const isFullBleedPage = computed(() => false)
 
 const handleMenuSelect = (key: string) => {
   router.push({ name: key })
@@ -383,9 +381,7 @@ const handlePanelModalAction = (callback: () => void) => {
     </n-layout-sider>
 
     <n-layout-content
-      :content-style="isFullBleedPage
-        ? `padding: 0; min-height: 100vh; display: flex; flex-direction: column;`
-        : `padding: var(--space-4); padding-bottom: ${isMobile ? '90px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
+      :content-style="`padding: var(--space-4); padding-bottom: ${isMobile ? '90px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
     >
       <!-- Mobile Top Bar -->
       <div v-if="isMobile" class="mobile-header">

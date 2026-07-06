@@ -255,7 +255,7 @@ onMounted(() => {
 }
 
 .page-header {
-  padding: 16px 24px;
+  padding: 16px 0;
   border-bottom: 1px solid var(--app-border-light);
 }
 
@@ -268,7 +268,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 24px; width: 100%; }
+.header-content { position: relative; z-index: 2; padding: 30px 0; display: flex; gap: 24px; width: 100%; }
 .main-profile { 
   width: 180px; aspect-ratio: 2/3; 
   border-radius: var(--card-border-radius, 8px); 
@@ -294,7 +294,7 @@ onMounted(() => {
 .also-label { margin-right: 4px; }
 .also-values { color: var(--text-secondary); }
 
-.body-content { padding: 0 32px 32px 32px; }
+.body-content { padding: 0 0 32px 0; }
 .biography-section { margin-bottom: 24px; }
 .biography-section h3 { margin: 0 0 12px 0; color: var(--n-primary-color); font-size: 15px; }
 .biography-text { color: var(--text-secondary); line-height: 1.8; font-size: 14px; text-align: justify; white-space: pre-wrap; }

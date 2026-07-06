@@ -373,9 +373,9 @@
   .user-mapping-view,
   .usage-guide,
   .recognition-logs,
-  .bangumi-detail,
-  .tmdb-detail,
-  .tmdb-person-detail,
+  .bangumi-detail-page,
+  .tmdb-detail-page,
+  .person-detail-page,
   .tmdb-full-data-view {
     padding-bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
   }
@@ -396,11 +396,13 @@
   }
 
   /* —— 详情页头部：海报+信息横向 → 纵向堆叠 ——
-     覆盖 BangumiDetailView / TmdbDetailView / TmdbPersonDetailView 的 .header-content */
+     覆盖 BangumiDetailView / TmdbDetailView / TmdbPersonDetailView 的 .header-content
+     水平 padding 由 n-layout-content 提供，这里只保留垂直 padding 避免双重 padding */
   .header-content {
     flex-direction: column !important;
-    padding: 16px !important;
+    padding: 16px 0 !important;
     gap: 12px !important;
+    min-width: 0 !important;
   }
 
   /* 海报缩小：260px → 120px，180px → 120px */
@@ -411,9 +413,65 @@
     align-self: center !important;
   }
 
-  /* 详情页主体内容：减小 padding */
+  /* 详情页主体内容：减小 padding
+     水平 padding 由 n-layout-content 提供 */
   .body-content {
-    padding: 16px !important;
+    padding: 16px 0 !important;
+  }
+
+  /* 详情页返回按钮栏：去掉自带水平 padding，由 n-layout-content 统一提供 */
+  .bangumi-detail-page .page-header,
+  .tmdb-detail-page .page-header,
+  .person-detail-page .page-header {
+    padding: 12px 0 !important;
+  }
+
+  /* —— 详情页：修复移动端文字截断和滚动问题 ——
+     1. .info-col 缺少 min-width: 0，作为 flex 子项不会收缩，
+        导致标题/源名溢出后被 .detail-container 的 overflow: hidden 裁切，
+        CJK 文字出现"半个字"现象
+     2. .detail-container 的 overflow: hidden + 页面 height: 100%
+        在移动端阻碍整页滚动，需改为 overflow: visible + min-height: auto
+     3. 标题添加 word-break 让 CJK 文字正常换行 */
+  .bangumi-detail-page,
+  .tmdb-detail-page,
+  .person-detail-page {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+  }
+  .bangumi-detail-page .detail-container,
+  .tmdb-detail-page .detail-container,
+  .person-detail-page .detail-container {
+    overflow: visible !important;
+  }
+  .info-col {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .bangumi-detail-page .title-row,
+  .tmdb-detail-page .title-row,
+  .person-detail-page .title-row,
+  .bangumi-detail-page .title,
+  .tmdb-detail-page .title,
+  .person-detail-page .title {
+    min-width: 0 !important;
+  }
+  .title {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  .original-title,
+  .original-name {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* —— 详情页按钮区：允许换行，防止被截断 —— */
+  .bangumi-detail-page .actions,
+  .tmdb-detail-page .actions,
+  .person-detail-page .actions {
+    flex-wrap: wrap !important;
   }
 
   /* —— 剧集条目：缩略图缩小，防止溢出 ——

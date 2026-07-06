@@ -355,7 +355,7 @@ onMounted(() => {
 }
 
 .page-header {
-  padding: 16px 32px;
+  padding: 16px 0;
   border-bottom: 1px solid var(--app-border-light);
 }
 
@@ -363,7 +363,7 @@ onMounted(() => {
 
 .detail-container { flex: 1; display: flex; flex-direction: column; }
 
-.header-content { position: relative; z-index: 2; padding: 30px 32px; display: flex; gap: 20px; width: 100%; }
+.header-content { position: relative; z-index: 2; padding: 30px 0; display: flex; gap: 20px; width: 100%; }
 .main-poster {
   width: 260px; aspect-ratio: 3/4;
   border-radius: var(--card-border-radius, 6px);
@@ -382,7 +382,7 @@ onMounted(() => {
 .bangumi-id-value:hover { text-decoration: underline; }
 .actions { display: flex; gap: 10px; }
 
-.body-content { padding: 30px 32px 32px 32px; }
+.body-content { padding: 30px 0 32px 0; }
 .genres-row { margin-bottom: 16px; }
 .overview-section { margin-bottom: 20px; }
 .overview-section h3 { margin: 0 0 8px 0; color: var(--n-primary-color); font-size: 15px; }
