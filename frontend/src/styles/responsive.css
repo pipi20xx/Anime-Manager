@@ -282,9 +282,11 @@
   }
 
   /* —— 页面级 NGrid：强制单列 ——
-     (Modal 内的 NGrid 由下方第 13 节处理) */
+     (Modal 内的 NGrid 由下方第 13 节处理)
+     使用 minmax(0, 1fr) 而非 1fr (= minmax(auto, 1fr))，
+     防止卡片内容（如长标题 white-space:nowrap）撑宽网格轨道导致溢出 */
   .n-grid:not(.n-modal-container .n-grid) {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
   .n-grid > .n-gi {
     grid-column: auto !important;
@@ -353,7 +355,7 @@
   /* —— 页面根容器底部留白 (底部导航栏空间) —— */
   .cache-view,
   .system-logs,
-  .task-history,
+  .task-history-view,
   .organize-history,
   .strm-generator-view,
   .external-control,
@@ -440,7 +442,7 @@
 
   /* —— 卡片网格：移动端单列布局，防止溢出 —— */
   .card-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
   }
@@ -455,10 +457,49 @@
     box-sizing: border-box !important;
   }
 
+  /* —— 订阅视图：确保内容不溢出 (同整理视图修复方法) —— */
+  .sub-view {
+    overflow-x: hidden !important;
+  }
+  .sub-view .n-grid > .n-gi {
+    min-width: 0 !important;
+  }
+  .sub-view .feed-card,
+  .sub-view .rule-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  /* 卡片内容区也要能收缩，防止内部 flex 子项撑宽 */
+  .sub-view .n-card .n-card__content {
+    min-width: 0 !important;
+  }
+
+  /* —— 任务中心：n-tabs 横向滚动适配 ——
+     任务中心的 n-tabs (9个标签) 放在 page-header 的 n-space 内，
+     移动端 page-header 纵向堆叠后，n-space 及其子元素无宽度约束，
+     n-tabs 以全部标签的自然宽度渲染，超出屏幕且内置滚动不触发。
+     修复: 让 n-space 占满宽度、子项允许收缩、n-tabs 限制为 100% 宽度 */
+  .task-history-view {
+    overflow-x: hidden !important;
+  }
+  .task-history-view .page-header .n-space {
+    width: 100%;
+  }
+  .task-history-view .page-header .n-space > * {
+    min-width: 0 !important;
+  }
+  .task-history-view .custom-tabs {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
   /* —— 洗版规则弹窗内部网格：移动端单列 —— */
   .profile-list,
   .rule-list {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     min-width: 0 !important;
   }
 

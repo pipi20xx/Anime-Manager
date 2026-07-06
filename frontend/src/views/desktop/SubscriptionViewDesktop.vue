@@ -313,15 +313,15 @@ onMounted(fetchData)
 }
 
 .f-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.f-title { font-weight: bold; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; margin-right: 8px; color: var(--app-instance-text-color, var(--text-primary)); }
+.f-title { font-weight: bold; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; min-width: 0; margin-right: 8px; color: var(--app-instance-text-color, var(--text-primary)); }
 .f-status { flex-shrink: 0; }
 .f-url { font-size: 11px; color: var(--app-instance-text-tertiary-color, var(--text-tertiary)); word-break: break-all; margin-bottom: 16px; height: 32px; overflow: hidden; opacity: 0.8; }
 .f-act { display: flex; justify-content: flex-end; }
 
 .r-keywords { font-size: 12px; color: var(--app-instance-text-tertiary-color, var(--text-tertiary)); margin-bottom: 10px; min-height: 32px; word-break: break-all; opacity: 0.9; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .r-label { color: var(--app-instance-text-secondary-color, var(--text-muted)); font-size: 12px; flex-shrink: 0; }
-.r-value { color: var(--app-instance-text-tertiary-color, var(--text-secondary)); font-size: 12px; word-break: break-all; }
-.r-info-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 22px; }
+.r-value { color: var(--app-instance-text-tertiary-color, var(--text-secondary)); font-size: 12px; word-break: break-all; min-width: 0; }
+.r-info-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 22px; min-width: 0; }
 .r-ellipsis { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
 .r-exclude { font-size: 11px; color: var(--app-instance-text-tertiary-color, var(--text-tertiary)); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; opacity: 0.8; }
 
