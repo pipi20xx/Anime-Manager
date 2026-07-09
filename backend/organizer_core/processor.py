@@ -415,7 +415,7 @@ class FileProcessor:
                             await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
                             await FileProcessor._log_detail(task_id, f"🔢 ED2K: {hash_result.ed2k_link}")
                         else:
-                            await FileProcessor._log_detail(task_id, f"❌ 无法计算哈希: {v_file}", "WARN")
+                            await FileProcessor._log_detail(task_id, f"❌ 无法计算哈希: {v_file}", "ERROR")
 
                     if hash_result:
                         from models import FileHash
@@ -480,22 +480,55 @@ class FileProcessor:
                                 )
                                 await db.save(file_hash, audit=False)
                                 await FileProcessor._log_detail(task_id, f"📝 哈希记录已保存: {v_file}")
-                    else:
-                        await FileProcessor._log_detail(task_id, f"⚠️ 跳过哈希记录（无法计算）: {v_file}", "WARN")
 
-                    # [New] 计算关联字幕文件的哈希
-                    if related_files:
-                        await FileProcessor._save_related_file_hashes(related_files, root, final, task_id)
+                        # [New] 计算关联字幕文件的哈希
+                        if related_files:
+                            await FileProcessor._save_related_file_hashes(related_files, root, final, task_id)
+
+                        results.append({
+                            "type": "item", "status": "success",
+                            "source": v_path, "target": None, "action": "hash_only",
+                            "title": final.get("title"), "season": final.get("season"),
+                            "episode": final.get("episode"), "tmdb_id": final.get("tmdb_id"),
+                            "msg": "仅记录哈希"
+                        })
+                    else:
+                        # 哈希计算失败：记录到整理历史并标记失败
+                        await FileProcessor._log_detail(task_id, f"❌ 仅记录哈希失败: {v_file}", "ERROR")
+                        from models import OrganizeHistory
+                        history = OrganizeHistory(
+                            source_path=v_path, filename=v_file,
+                            status="failed", message="哈希计算失败",
+                            action_type=action_type,
+                            rule_id=task.get("rule_id"),
+                            source_dir=task.get("source_dir"),
+                            target_dir=task.get("target_dir"),
+                            overwrite_mode=task.get("overwrite_mode"),
+                            check_emby_exists=task.get("check_emby_exists", False),
+                            calculate_hash=task.get("calculate_hash", False),
+                            clean_empty_dir=task.get("clean_empty_dir", False),
+                            trigger_strm=task.get("trigger_strm", False)
+                        )
+                        await FileProcessor._save_history_force(history)
+
+                        results.append({
+                            "type": "item", "status": "error",
+                            "source": v_path, "target": None, "action": "hash_only",
+                            "title": final.get("title"), "season": final.get("season"),
+                            "episode": final.get("episode"), "tmdb_id": final.get("tmdb_id"),
+                            "msg": "哈希计算失败"
+                        })
                 else:
                     await FileProcessor._log_detail(task_id, f"🔍 [预览] 仅记录哈希: {v_file} → {final.get('title', '未知')}")
 
-                results.append({
-                    "type": "item", "status": "success",
-                    "source": v_path, "target": None, "action": "hash_only",
-                    "title": final.get("title"), "season": final.get("season"),
-                    "episode": final.get("episode"), "tmdb_id": final.get("tmdb_id"),
-                    "msg": "仅记录哈希"
-                })
+                    results.append({
+                        "type": "item", "status": "success",
+                        "source": v_path, "target": None, "action": "hash_only",
+                        "title": final.get("title"), "season": final.get("season"),
+                        "episode": final.get("episode"), "tmdb_id": final.get("tmdb_id"),
+                        "msg": "仅记录哈希"
+                    })
+
                 return results
 
             # Execute
