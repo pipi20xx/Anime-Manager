@@ -9,6 +9,7 @@ import {
   KeyboardDoubleArrowDownOutlined as MoreIcon
 } from '@vicons/material'
 import AppGlassModal from '../../components/AppGlassModal.vue'
+import AppSearchField from '../../components/AppSearchField.vue'
 import { useTaskHistory } from '../../composables/views/useTaskHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -18,14 +19,14 @@ const {
   selectedTask,
   showLogModal,
   moduleFilter,
+  searchQuery,
   hasMore,
   fetchData,
   loadMore,
+  fetchTasks,
   fetchTaskDetail,
   deleteTask,
   cleanupTasks,
-  startPolling,
-  stopPolling,
   getStatusTag,
   getModuleIcon,
   formatTime,
@@ -71,9 +72,12 @@ watch(moduleFilter, () => {
   fetchData(true)
 })
 
-onMounted(startPolling)
+watch(searchQuery, () => {
+  fetchData(true)
+})
+
+onMounted(fetchTasks)
 onUnmounted(() => {
-  stopPolling()
   if (observer) observer.disconnect()
 })
 </script>
@@ -90,7 +94,8 @@ onUnmounted(() => {
           <n-tab-pane name="all" tab="全部" />
           <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
         </n-tabs>
-        <n-button v-bind="getButtonStyle('secondary')" @click="startPolling">
+        <AppSearchField v-model:value="searchQuery" placeholder="搜索任务名称..." :loading="loading" style="width: 200px" />
+        <n-button v-bind="getButtonStyle('secondary')" @click="fetchTasks">
           刷新
         </n-button>
         <n-popconfirm 

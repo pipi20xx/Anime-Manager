@@ -50,11 +50,13 @@ async def finish_task(task_id: str, status: str, processed: int = 0, stats: Dict
             db.session.add(record)
             await db.session.commit()
 
-async def get_task_list(limit: int = 50, offset: int = 0, module: str = None) -> List[Dict]:
+async def get_task_list(limit: int = 50, offset: int = 0, module: str = None, search: str = None) -> List[Dict]:
     async with db.session_scope(force_new=True):
         query = select(TaskRecord).order_by(TaskRecord.started_at.desc()).limit(limit).offset(offset)
         if module:
             query = query.where(TaskRecord.module == module)
+        if search:
+            query = query.where(TaskRecord.name.ilike(f"%{search}%"))
         result = await db.session.execute(query)
         records = result.scalars().all()
         return [{

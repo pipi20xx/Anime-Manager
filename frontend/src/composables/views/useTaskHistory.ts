@@ -10,6 +10,7 @@ export function useTaskHistory() {
   const selectedTask = ref<any>(null)
   const showLogModal = ref(false)
   const moduleFilter = ref('all')
+  const searchQuery = ref('')
   
   const page = ref(0)
   const pageSize = ref(20)
@@ -30,7 +31,8 @@ export function useTaskHistory() {
     try {
       const offset = page.value * pageSize.value
       const moduleParam = moduleFilter.value !== 'all' ? `&module=${encodeURIComponent(moduleFilter.value)}` : ''
-      const res = await fetch(`${API_BASE}/api/task_history?limit=${pageSize.value}&offset=${offset}${moduleParam}`)
+      const searchParam = searchQuery.value ? `&search=${encodeURIComponent(searchQuery.value)}` : ''
+      const res = await fetch(`${API_BASE}/api/task_history?limit=${pageSize.value}&offset=${offset}${moduleParam}${searchParam}`)
       const data = await res.json()
       
       if (isRefresh) {
@@ -204,6 +206,7 @@ export function useTaskHistory() {
     selectedTask,
     showLogModal,
     moduleFilter,
+    searchQuery,
     hasMore,
     fetchData,
     loadMore,

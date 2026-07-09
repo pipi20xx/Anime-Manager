@@ -5,14 +5,15 @@ from task_history import get_task_list, get_task_detail, delete_task, cleanup_ol
 router = APIRouter(prefix="/api/task_history", tags=["任务中心"])
 
 @router.get("", summary="获取任务历史列表")
-async def list_tasks(limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), module: str = Query(None)):
+async def list_tasks(limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0), module: str = Query(None), search: str = Query(None)):
     """
     获取任务历史记录列表。
     - limit: 返回数量限制
     - offset: 偏移量（用于分页）
     - module: 按模块筛选 (整理/STRM/RSS/元数据)
+    - search: 搜索任务名称
     """
-    return await get_task_list(limit=limit, offset=offset, module=module)
+    return await get_task_list(limit=limit, offset=offset, module=module, search=search)
 
 @router.get("/{task_id}", summary="获取任务详情")
 async def task_detail(task_id: str):
