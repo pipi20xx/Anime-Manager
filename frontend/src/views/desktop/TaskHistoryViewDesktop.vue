@@ -17,6 +17,7 @@ const {
   tasks,
   loading,
   selectedTask,
+  selectedTaskGroupedLogs,
   showLogModal,
   moduleFilter,
   searchQuery,
@@ -171,10 +172,16 @@ onUnmounted(() => {
       </template>
       <div v-if="selectedTask" class="log-scroll-area">
         <div class="log-container">
-          <div v-for="(log, i) in selectedTask.logs" :key="i" class="log-line">
-            <span class="log-time">{{ log.time }}</span>
-            <span :class="['log-level', log.level.toLowerCase()]">{{ log.level }}</span>
-            <span class="log-msg">{{ log.message }}</span>
+          <div v-for="group in selectedTaskGroupedLogs" :key="group.groupTime" class="log-group">
+            <div class="log-group-time">{{ group.displayTime }}</div>
+            <div class="log-group-line"></div>
+            <div class="log-group-items">
+              <div v-for="(log, i) in group.logs" :key="i" class="log-line">
+                <span class="log-time">{{ log.time }}</span>
+                <span :class="['log-level', log.level.toLowerCase()]">{{ log.level }}</span>
+                <span class="log-msg">{{ log.message }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -253,21 +260,50 @@ onUnmounted(() => {
   border-radius: var(--radius-lg);
   padding: var(--space-3);
 }
+.log-group {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.log-group:last-child { border-bottom: none; }
+.log-group-time {
+  color: var(--n-primary-color);
+  font-size: var(--text-xs);
+  min-width: 130px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-weight: 700;
+}
+.log-group-line {
+  width: 2px;
+  background-color: var(--n-primary-color);
+  border-radius: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 4px 0;
+  opacity: 0.6;
+}
+.log-group-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
 .log-line {
   display: flex;
   gap: var(--space-2);
-  padding: var(--space-0) 0;
-  border-bottom: 1px solid var(--border-light);
+  padding: 2px 0;
 }
-.log-line:last-child { border-bottom: none; }
-.log-time { color: var(--text-tertiary); min-width: 60px; }
+.log-time { color: var(--text-tertiary); min-width: 75px; }
 .log-level {
   min-width: 40px;
   font-weight: bold;
 }
-.log-level.info { color: var(--n-info-color); }
-.log-level.error { color: var(--n-error-color); }
-.log-level.warning { color: var(--n-warning-color); }
+.log-level.info { color: #52c41a; }
+.log-level.error { color: #ff4d4f; }
+.log-level.warning { color: #faad14; }
 .log-msg { flex: 1; word-break: break-all; }
 
 .load-more-sentinel {

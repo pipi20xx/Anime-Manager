@@ -2,6 +2,7 @@ import { ref, watch, onMounted, onUnmounted, h } from 'vue'
 import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
 import { DeleteOutlined, PreviewOutlined, PlayArrowOutlined, CloseOutlined } from '@vicons/material'
 import { getButtonStyle } from '../useButtonStyles'
+import { useGroupedLogs } from '../useGroupedLogs'
 
 export function useOrganizerView() {
   const message = useMessage()
@@ -34,6 +35,8 @@ export function useOrganizerView() {
   const showLogModal = ref(false)
   const logDetail = ref<any>(null)
   const logLoading = ref(false)
+
+  const { groupedLogs: logDetailGroupedLogs } = useGroupedLogs(logDetail)
 
   const viewTaskLog = async (taskId: string) => {
     logLoading.value = true
@@ -335,6 +338,7 @@ export function useOrganizerView() {
     stopBgTaskPolling,
     showLogModal,
     logDetail,
+    logDetailGroupedLogs,
     logLoading,
     viewTaskLog,
     fetchConfig,

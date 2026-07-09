@@ -77,7 +77,7 @@ watch(() => props.show, (newVal) => {
           <div class="d-flex align-center gap-2">
             <n-icon size="20" style="color: var(--n-primary-color)"><TerminalIcon /></n-icon>
             <span class="title">{{ selectedDate ? `历史记录: ${selectedDate}` : '实时系统日志 (Live)' }}</span>
-            <n-tag v-if="!selectedDate" :type="socketStatus === 'connected' ? 'success' : 'error'" size="tiny" bordered round>
+            <n-tag v-if="!selectedDate" :type="socketStatus === 'connected' ? 'success' : 'error'" size="small" round :bordered="false">
               <template #icon>
                 <div v-if="socketStatus === 'connected'" class="pulse-dot"></div>
               </template>

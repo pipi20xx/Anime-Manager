@@ -24,7 +24,7 @@ async def log_task(task_id: str, message: str, level: str = "INFO"):
     
     logs = _log_buffer[task_id]
     logs.append({
-        "time": datetime.now().strftime("%H:%M:%S"),
+        "time": datetime.now().strftime("%H:%M:%S.%f")[:-3],
         "level": level,
         "message": message
     })

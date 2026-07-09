@@ -1,5 +1,6 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useMessage } from 'naive-ui'
+import { useGroupedLogs } from '../useGroupedLogs'
 
 export function useTaskHistory() {
   const message = useMessage()
@@ -9,6 +10,8 @@ export function useTaskHistory() {
   const loading = ref(false)
   const selectedTask = ref<any>(null)
   const showLogModal = ref(false)
+
+  const { groupedLogs: selectedTaskGroupedLogs } = useGroupedLogs(selectedTask)
   const moduleFilter = ref('all')
   const searchQuery = ref('')
   
@@ -204,6 +207,7 @@ export function useTaskHistory() {
     tasks,
     loading,
     selectedTask,
+    selectedTaskGroupedLogs,
     showLogModal,
     moduleFilter,
     searchQuery,
