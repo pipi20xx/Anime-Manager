@@ -46,6 +46,22 @@ class FileProcessor:
                 pass
 
     @staticmethod
+    async def _save_history_force(history: "OrganizeHistory"):
+        """
+        保存整理历史记录，同一 source_path 只保留一条记录。
+        如果已存在则先删除旧记录，再插入新记录（与 MP 的 add_force 逻辑一致）。
+        """
+        from models import OrganizeHistory
+        from database import db
+
+        async with db.session_scope():
+            stmt = select(OrganizeHistory).where(OrganizeHistory.source_path == history.source_path)
+            existing = await db.first(OrganizeHistory, stmt)
+            if existing:
+                await db.delete(existing, audit=False)
+            await db.save(history, audit=False)
+
+    @staticmethod
     async def _save_related_file_hashes(
         related_files: List[str], root: str, final: dict, task_id: str = None
     ):
@@ -251,22 +267,20 @@ class FileProcessor:
                         pass
                 if not dry_run:
                     from models import OrganizeHistory
-                    from database import db
-                    async with db.session_scope():
-                        history = OrganizeHistory(
-                            source_path=v_path, filename=v_file,
-                            status="failed", message="识别失败 (无 TMDB ID)",
-                            action_type=action_type,
-                            rule_id=task.get("rule_id"),
-                            source_dir=task.get("source_dir"),
-                            target_dir=task.get("target_dir"),
-                            overwrite_mode=task.get("overwrite_mode"),
-                            check_emby_exists=task.get("check_emby_exists", False),
-                            calculate_hash=task.get("calculate_hash", False),
-                            clean_empty_dir=task.get("clean_empty_dir", False),
-                            trigger_strm=task.get("trigger_strm", False)
-                        )
-                        await db.save(history, audit=False)
+                    history = OrganizeHistory(
+                        source_path=v_path, filename=v_file,
+                        status="failed", message="识别失败 (无 TMDB ID)",
+                        action_type=action_type,
+                        rule_id=task.get("rule_id"),
+                        source_dir=task.get("source_dir"),
+                        target_dir=task.get("target_dir"),
+                        overwrite_mode=task.get("overwrite_mode"),
+                        check_emby_exists=task.get("check_emby_exists", False),
+                        calculate_hash=task.get("calculate_hash", False),
+                        clean_empty_dir=task.get("clean_empty_dir", False),
+                        trigger_strm=task.get("trigger_strm", False)
+                    )
+                    await FileProcessor._save_history_force(history)
                     
                     await NotificationManager.push_organize_error_notification(v_path, "识别失败 (无法获取 TMDB ID)")
                     
@@ -314,25 +328,23 @@ class FileProcessor:
                             await FileProcessor._log_detail(task_id, f"✅ Emby库中已存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})")
                             if not dry_run:
                                 from models import OrganizeHistory
-                                from database import db
-                                async with db.session_scope():
-                                    history = OrganizeHistory(
-                                        source_path=v_path, filename=v_file,
-                                        tmdb_id=str(tmdb_id), title=final.get("title"),
-                                        season=season, episode=str(episode),
-                                        media_type=media_type,
-                                        action_type=action_type,
-                                        status="skipped", message="Emby库中已存在",
-                                        rule_id=task.get("rule_id"),
-                                        source_dir=task.get("source_dir"),
-                                        target_dir=task.get("target_dir"),
-                                        overwrite_mode=task.get("overwrite_mode"),
-                                        check_emby_exists=task.get("check_emby_exists", False),
-                                        calculate_hash=task.get("calculate_hash", False),
-                                        clean_empty_dir=task.get("clean_empty_dir", False),
-                                        trigger_strm=task.get("trigger_strm", False)
-                                    )
-                                    await db.save(history, audit=False)
+                                history = OrganizeHistory(
+                                    source_path=v_path, filename=v_file,
+                                    tmdb_id=str(tmdb_id), title=final.get("title"),
+                                    season=season, episode=str(episode),
+                                    media_type=media_type,
+                                    action_type=action_type,
+                                    status="skipped", message="Emby库中已存在",
+                                    rule_id=task.get("rule_id"),
+                                    source_dir=task.get("source_dir"),
+                                    target_dir=task.get("target_dir"),
+                                    overwrite_mode=task.get("overwrite_mode"),
+                                    check_emby_exists=task.get("check_emby_exists", False),
+                                    calculate_hash=task.get("calculate_hash", False),
+                                    clean_empty_dir=task.get("clean_empty_dir", False),
+                                    trigger_strm=task.get("trigger_strm", False)
+                                )
+                                await FileProcessor._save_history_force(history)
                             return [{"type": "skip", "skip_type": "emby_exists", "source": v_path, "reason": "Emby库中已存在"}]
                         else:
                             await FileProcessor._log_detail(task_id, f"❌ Emby库中不存在: {final['title']} - S{season}E{episode} (TMDB: {tmdb_id})，继续处理")
@@ -579,6 +591,11 @@ class FileProcessor:
                                 clean_empty_dir=task.get("clean_empty_dir", False),
                                 trigger_strm=task.get("trigger_strm", False)
                             )
+                            # 按 source_path 去重后保存
+                            stmt = select(OrganizeHistory).where(OrganizeHistory.source_path == v_path)
+                            existing = await db.first(OrganizeHistory, stmt)
+                            if existing:
+                                await db.delete(existing, audit=False)
                             await db.save(history, audit=False)
                             
                             # [New] Save FileHash (按 ED2K 去重) - 仅成功时保存
@@ -704,6 +721,11 @@ class FileProcessor:
                             clean_empty_dir=task.get("clean_empty_dir", False),
                             trigger_strm=task.get("trigger_strm", False)
                         )
+                        # 按 source_path 去重后保存
+                        stmt = select(OrganizeHistory).where(OrganizeHistory.source_path == v_path)
+                        existing = await db.first(OrganizeHistory, stmt)
+                        if existing:
+                            await db.delete(existing, audit=False)
                         await db.save(history, audit=False)
                         
                         # [New] Save FileHash (按 ED2K 去重)
