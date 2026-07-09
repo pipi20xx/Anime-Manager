@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, computed } from 'vue'
 import { 
-  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty
+  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -19,6 +19,7 @@ import RuleEditModal from '../../components/RuleEditModal.vue'
 import TaskEditModal from '../../components/desktop/TaskEditModalDesktop.vue'
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import AppGlassCard from '../../components/AppGlassCard.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import { useOrganizerView } from '../../composables/views/useOrganizerView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { usePWA } from '../../composables/usePWA'
@@ -47,6 +48,10 @@ const {
   deleteBackgroundTask,
   startBgTaskPolling,
   stopBgTaskPolling,
+  showLogModal,
+  logDetail,
+  logLoading,
+  viewTaskLog,
   fetchConfig,
   saveConfig,
   openEditRule,
@@ -72,6 +77,20 @@ const actionTypeMap: Record<string, string> = {
   cd2_move: 'CD2 移动',
   cd2_copy: 'CD2 复制',
   hash_only: '仅记录哈希'
+}
+
+const getLogStatusLabel = (status: string) => {
+  const map: Record<string, string> = { completed: '完成', running: '运行中', error: '错误', stopped: '已停止' }
+  return map[status] || status
+}
+const getLogStatusStyle = (status: string) => {
+  const map: Record<string, any> = {
+    completed: { color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' },
+    running: { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' },
+    error: { color: '#fff', backgroundColor: '#c62828', borderColor: 'transparent' },
+    stopped: { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }
+  }
+  return map[status] || { color: '#fff', backgroundColor: '#616161', borderColor: 'transparent' }
 }
 
 onMounted(() => {
@@ -111,9 +130,11 @@ onUnmounted(stopBgTaskPolling)
             </n-space>
             <n-space align="center">
               <span style="font-size: var(--text-sm); color: var(--text-tertiary)">已处理: {{ task.processed }}</span>
-              <n-button size="tiny" type="error" secondary @click="stopBackgroundTask(task.task_id)">
+              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="viewTaskLog(task.task_id)">
+                查看日志
+              </n-button>
+              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="stopBackgroundTask(task.task_id)">
                 <template #icon><n-icon><StopIcon /></n-icon></template>
-                停止
               </n-button>
             </n-space>
           </n-space>
@@ -127,7 +148,14 @@ onUnmounted(stopBgTaskPolling)
               <span>{{ task.name }}</span>
               <span style="font-size: var(--text-sm); color: var(--text-tertiary)">处理: {{ task.processed }}</span>
             </n-space>
-            <n-button size="tiny" quaternary @click="deleteBackgroundTask(task.task_id)">清除</n-button>
+            <n-space align="center">
+              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="viewTaskLog(task.task_id)">
+                查看日志
+              </n-button>
+              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteBackgroundTask(task.task_id)">
+                <template #icon><n-icon><DeleteIcon /></n-icon></template>
+              </n-button>
+            </n-space>
           </n-space>
         </n-card>
       </n-space>
@@ -284,6 +312,26 @@ onUnmounted(stopBgTaskPolling)
     <RuleEditModal v-model:show="showRuleModal" :rule-data="editingRule" :is-new="editingRuleIndex===-1" @save="handleSaveRule" />
     <TaskEditModal v-model:show="showTaskModal" :task-data="editingTask" :is-new="editingTaskIndex===-1" :available-rules="rules" :api-base="API_BASE" @save="handleSaveTask" />
     <ExecutionLogModal v-model:show="showExecModal" :is-dry-run="isDryRun" :is-running="isRunning" :logs="execLogs" :scanning-status="scanningStatus" :target-dir="editingTask?.target_dir || ''" @commit="requestCommitBatch" />
+
+    <!-- 任务日志弹窗 -->
+    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" style="width: 960px;" title="任务日志">
+      <template #header-extra>
+        <n-tag v-if="logDetail" size="small" round :bordered="false" :style="getLogStatusStyle(logDetail.status)">
+          {{ getLogStatusLabel(logDetail.status) }}
+        </n-tag>
+      </template>
+      <n-spin v-if="logLoading" style="width: 100%" description="加载中..." />
+      <div v-else-if="logDetail" class="log-scroll-area">
+        <div class="log-container">
+          <div v-for="(log, i) in logDetail.logs" :key="i" class="log-line">
+            <span class="log-time">{{ log.time }}</span>
+            <span :class="['log-level', log.level.toLowerCase()]">{{ log.level }}</span>
+            <span class="log-msg">{{ log.message }}</span>
+          </div>
+          <n-empty v-if="!logDetail.logs?.length" description="暂无日志" style="padding: 24px 0" />
+        </div>
+      </div>
+    </AppGlassModal>
   </div>
 </template>
 
@@ -362,4 +410,25 @@ onUnmounted(stopBgTaskPolling)
 }
 
 /* Tabs 样式已移至 global.css 统一管理 */
+
+.log-container {
+  font-family: var(--code-font);
+  font-size: var(--text-sm);
+  background: var(--app-surface-card-mixed);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+.log-line {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-0) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.log-line:last-child { border-bottom: none; }
+.log-time { color: var(--text-tertiary); min-width: 60px; }
+.log-level { min-width: 40px; font-weight: bold; }
+.log-level.info { color: var(--n-info-color); }
+.log-level.error { color: var(--n-error-color); }
+.log-level.warning { color: var(--n-warning-color); }
+.log-msg { flex: 1; word-break: break-all; }
 </style>

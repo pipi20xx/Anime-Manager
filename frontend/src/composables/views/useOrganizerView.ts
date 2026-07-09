@@ -31,6 +31,23 @@ export function useOrganizerView() {
   const backgroundTasks = ref<any[]>([])
   let bgTaskPollTimer: ReturnType<typeof setInterval> | null = null
 
+  const showLogModal = ref(false)
+  const logDetail = ref<any>(null)
+  const logLoading = ref(false)
+
+  const viewTaskLog = async (taskId: string) => {
+    logLoading.value = true
+    showLogModal.value = true
+    try {
+      const res = await fetch(`${API_BASE}/api/task_history/${taskId}`)
+      logDetail.value = await res.json()
+    } catch (e) {
+      message.error('获取任务日志失败')
+    } finally {
+      logLoading.value = false
+    }
+  }
+
   const fetchBackgroundTasks = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/organize/background_tasks`)
@@ -316,6 +333,10 @@ export function useOrganizerView() {
     deleteBackgroundTask,
     startBgTaskPolling,
     stopBgTaskPolling,
+    showLogModal,
+    logDetail,
+    logLoading,
+    viewTaskLog,
     fetchConfig,
     saveConfig,
     openEditRule,
