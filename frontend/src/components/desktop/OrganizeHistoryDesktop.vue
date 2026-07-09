@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { 
   NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard
 } from 'naive-ui'
@@ -23,9 +23,9 @@ import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const {
   loading,
+  history,
   searchQuery,
   statusFilter,
-  filteredHistory,
   hasMore,
   fetchData,
   loadMore,
@@ -42,8 +42,6 @@ const deletePopconfirmShow = ref<Record<string, boolean>>({})
 
 const scrollTarget = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
-
-import { watch, nextTick } from 'vue'
 
 const setupObserver = (el: HTMLElement) => {
   if (observer) observer.disconnect()
@@ -77,6 +75,15 @@ watch(loading, async (isLoading) => {
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
+})
+
+// 搜索和筛选变化时，重新加载数据
+watch(searchQuery, () => {
+  fetchData(true)
+})
+
+watch(statusFilter, () => {
+  fetchData(true)
 })
 
 const handleRefresh = () => {
@@ -115,8 +122,8 @@ const handleRefresh = () => {
       </n-space>
     </div>
 
-    <div v-if="filteredHistory.length > 0" class="history-list">
-        <n-card v-for="item in filteredHistory" :key="item.id" class="history-item" data-app-instance="organize-history-card" hoverable :bordered="false">
+    <div v-if="history.length > 0" class="history-list">
+        <n-card v-for="item in history" :key="item.id" class="history-item" data-app-instance="organize-history-card" hoverable :bordered="false">
           <!-- 现有项内容保持不变 -->
           <!-- 1. Header: Title & Meta -->
           <div class="item-row header-row">
@@ -248,7 +255,7 @@ const handleRefresh = () => {
         <n-spin v-if="loading" size="small" description="正在加载更多..." />
         <div v-else-if="!hasMore" class="end-of-list">
           <n-divider dashed>
-            <span style="font-size: 12px; color: var(--text-tertiary)">到底了，共 {{ filteredHistory.length }} 条记录</span>
+            <span style="font-size: 12px; color: var(--text-tertiary)">到底了，共 {{ history.length }} 条记录</span>
           </n-divider>
         </div>
         <div v-else class="can-load-more">

@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
 
 export function useOrganizeHistory() {
@@ -8,7 +8,7 @@ export function useOrganizeHistory() {
   const loading = ref(false)
   const history = ref<any[]>([])
   const searchQuery = ref('')
-  const statusFilter = ref('all') // all, success, failed
+  const statusFilter = ref('all') // all, success, failed, skipped
   
   const page = ref(0)
   const pageSize = ref(20)
@@ -19,7 +19,6 @@ export function useOrganizeHistory() {
     if (isRefresh) {
       page.value = 0
       hasMore.value = true
-      // Don't clear history immediately to avoid flicker, clear after success
     }
     
     if (!hasMore.value) return
@@ -27,7 +26,9 @@ export function useOrganizeHistory() {
     loading.value = true
     try {
       const offset = page.value * pageSize.value
-      const res = await fetch(`${API_BASE}/api/organize/history?limit=${pageSize.value}&offset=${offset}`)
+      const statusParam = statusFilter.value !== 'all' ? `&status=${encodeURIComponent(statusFilter.value)}` : ''
+      const searchParam = searchQuery.value ? `&search=${encodeURIComponent(searchQuery.value)}` : ''
+      const res = await fetch(`${API_BASE}/api/organize/history?limit=${pageSize.value}&offset=${offset}${statusParam}${searchParam}`)
       const data = await res.json()
       
       // 为每个 item 添加 shouldDeleteFile 属性
@@ -114,25 +115,6 @@ export function useOrganizeHistory() {
     }
   }
 
-  const filteredHistory = computed(() => {
-    let result = history.value
-    
-    if (statusFilter.value !== 'all') {
-      result = result.filter(item => item.status === statusFilter.value)
-    }
-
-    if (searchQuery.value) {
-      const q = searchQuery.value.toLowerCase()
-      result = result.filter(item => 
-        item.title?.toLowerCase().includes(q) || 
-        item.filename?.toLowerCase().includes(q) ||
-        item.source_path?.toLowerCase().includes(q)
-      )
-    }
-    
-    return result
-  })
-
   const getActionLabel = (type: string) => {
     const map: any = {
       'move': '移动',
@@ -156,7 +138,6 @@ export function useOrganizeHistory() {
     history,
     searchQuery,
     statusFilter,
-    filteredHistory,
     hasMore,
     fetchData,
     loadMore,

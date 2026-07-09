@@ -456,9 +456,18 @@ async def batch_execute(request: Request, body: BatchExecuteRequest, task_id: st
 # --- Organize History ---
 
 @router.get("/api/organize/history", summary="获取整理历史")
-async def get_organize_history(limit: int = 50, offset: int = 0):
+async def get_organize_history(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    status: str = Query(None),
+    search: str = Query(None)
+):
     """
     分页查询已完成的文件整理记录。
+    - limit: 返回数量限制
+    - offset: 偏移量（用于分页）
+    - status: 按状态筛选 (success/failed/skipped)
+    - search: 搜索标题或文件名
     """
     from database import db
     from models import OrganizeHistory
@@ -466,6 +475,13 @@ async def get_organize_history(limit: int = 50, offset: int = 0):
 
     async with db.session_scope():
         stmt = select(OrganizeHistory).order_by(OrganizeHistory.processed_at.desc()).offset(offset).limit(limit)
+        if status:
+            stmt = stmt.where(OrganizeHistory.status == status)
+        if search:
+            stmt = stmt.where(
+                (OrganizeHistory.title.ilike(f"%{search}%")) |
+                (OrganizeHistory.filename.ilike(f"%{search}%"))
+            )
         return await db.all(OrganizeHistory, stmt)
 
 @router.delete("/api/organize/history/clear", summary="清空整理历史")
