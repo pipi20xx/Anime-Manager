@@ -39,9 +39,9 @@ async def update_appearance_config(payload: dict):
     def deep_merge(base: dict, override: dict) -> dict:
         result = base.copy()
         for k, v in override.items():
-            # instances 字段整体替换：前端每次都发送完整状态，
-            # 深合并会导致已删除的 instance key 残留在配置中无法清除
-            if k == "instances":
+            # instances 和 pages 字段整体替换：前端每次都发送完整状态，
+            # 深合并会导致已删除的 key 残留在配置中无法清除
+            if k in ("instances", "pages"):
                 result[k] = v
             elif k in result and isinstance(result[k], dict) and isinstance(v, dict):
                 result[k] = deep_merge(result[k], v)
@@ -110,6 +110,32 @@ async def delete_image(filename: str):
         if section_config.get(bg_key) == filename:
             section_config[bg_key] = ""
             changed = True
+
+    # 清理页面级背景及页面级组件覆盖中的引用
+    pages = appearance.get("pages", {})
+    for page_key, page_config in pages.items():
+        if not isinstance(page_config, dict):
+            continue
+        if page_config.get("background_image") == filename:
+            page_config["background_image"] = ""
+            changed = True
+        # 页面级组件覆盖（overrides）中的背景图片引用
+        overrides = page_config.get("overrides", {})
+        if isinstance(overrides, dict):
+            for cat_key, cat_config in overrides.items():
+                if isinstance(cat_config, dict) and cat_config.get("background_image") == filename:
+                    cat_config["background_image"] = ""
+                    changed = True
+
+    # 清理实例级覆盖中的引用
+    instances = appearance.get("instances", {})
+    for inst_key, inst_config in instances.items():
+        if not isinstance(inst_config, dict):
+            continue
+        for cat_key, cat_config in inst_config.items():
+            if isinstance(cat_config, dict) and cat_config.get("background_image") == filename:
+                cat_config["background_image"] = ""
+                changed = True
 
     if changed:
         ConfigManager.update_config({"appearance": appearance})

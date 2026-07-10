@@ -19,7 +19,7 @@ import {
   resetAppearanceConfig,
   applyAppearanceToCss
 } from '../../store/appearanceStore'
-import InstanceCustomizationPanel from './appearance/InstanceCustomizationPanel.vue'
+import PageCustomizationPanel from './appearance/PageCustomizationPanel.vue'
 
 const message = useMessage()
 const loading = ref(false)
@@ -37,6 +37,7 @@ const form = reactive<AppearanceConfig>({
   list: { ...appearanceConfig.value.list },
   button: { ...appearanceConfig.value.button },
   instances: JSON.parse(JSON.stringify(appearanceConfig.value.instances || {})),
+  pages: JSON.parse(JSON.stringify(appearanceConfig.value.pages || {})),
 })
 
 // ============= 实例级自定义相关 =============
@@ -103,6 +104,7 @@ const handleReset = async () => {
     Object.assign(form.list, appearanceConfig.value.list)
     Object.assign(form.button, appearanceConfig.value.button)
     form.instances = JSON.parse(JSON.stringify(appearanceConfig.value.instances || {}))
+    form.pages = JSON.parse(JSON.stringify(appearanceConfig.value.pages || {}))
     message.success('已恢复默认设置')
   } catch (e: any) {
     message.error('重置失败')
@@ -127,6 +129,24 @@ const handleDeleteImage = async (filename: string) => {
     if (form.global.background_image === filename) form.global.background_image = ''
     if (form.modal.background_image === filename) form.modal.background_image = ''
     if (form.card.background_image === filename) form.card.background_image = ''
+    // 清理页面级背景及页面级组件覆盖中的引用
+    if (form.pages) {
+      for (const pageKey of Object.keys(form.pages)) {
+        const pageConfig = form.pages[pageKey]
+        if (pageConfig.background_image === filename) {
+          pageConfig.background_image = ''
+        }
+        // 页面级组件覆盖中的背景图片引用
+        if (pageConfig.overrides) {
+          for (const catKey of Object.keys(pageConfig.overrides)) {
+            const catConfig = (pageConfig.overrides as any)[catKey]
+            if (catConfig && catConfig.background_image === filename) {
+              catConfig.background_image = ''
+            }
+          }
+        }
+      }
+    }
     preview()
     message.success('图片已删除')
   } catch (e: any) {
@@ -576,19 +596,10 @@ const formatFileSize = (size: number) => {
       </div>
         </n-tab-pane>
 
-        <n-tab-pane name="instance" tab="单独自定义弹框">
-          <InstanceCustomizationPanel
+        <n-tab-pane name="page" tab="自定义页面">
+          <PageCustomizationPanel
             :form="form"
             :image-options="imageOptions"
-            @change="preview"
-          />
-        </n-tab-pane>
-
-        <n-tab-pane name="card-instance" tab="单独自定义卡片">
-          <InstanceCustomizationPanel
-            :form="form"
-            :image-options="imageOptions"
-            page-filter="卡片"
             @change="preview"
           />
         </n-tab-pane>

@@ -46,6 +46,12 @@
   --app-global-bg-overlay-opacity: 0.6;  /* 全局背景遮罩透明度 */
   --app-layout-opacity: 100%;     /* 布局不透明度（0%=完全透明，100%=不透明；与侧边栏逻辑一致）*/
 
+  /* 页面级背景自定义变量（覆盖全局背景，仅对设置了独立背景的页面生效） */
+  --app-page-bg-image: none;     /* 页面背景图片 */
+  --app-page-bg-blur: none;      /* 页面背景模糊 */
+  --app-page-bg-overlay-opacity: 0.6;  /* 页面背景遮罩透明度 */
+  --app-page-layout-opacity: 100%;    /* 页面布局不透明度 */
+
   /* 弹框外观自定义变量 */
   --app-modal-bg-image: none;  /* 弹框背景图片 */
   --app-modal-blur: 0px;       /* 弹框模糊效果 */
@@ -1549,6 +1555,51 @@ input, textarea, select, button {
 }
 :root[data-global-bg="on"] .mobile-header {
   background-color: color-mix(in srgb, var(--app-surface-card) var(--app-layout-opacity), transparent) !important;
+}
+
+/* ========== 页面级背景图片层 ========== */
+/* 固定定位，覆盖在全局背景层之上。仅当 data-page-bg="on" 时显示。 */
+.app-page-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--app-page-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: none;
+}
+.app-page-bg-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--app-page-bg-overlay-opacity, 0.6));
+  backdrop-filter: var(--app-page-bg-blur, none);
+  -webkit-backdrop-filter: var(--app-page-bg-blur, none);
+}
+:root[data-page-bg="on"] .app-page-bg-layer {
+  display: block;
+}
+
+/* 页面级背景启用时，覆盖全局背景的布局不透明度（优先级高于 data-global-bg） */
+:root[data-page-bg="on"] .n-layout {
+  background-color: transparent !important;
+}
+:root[data-page-bg="on"] .n-layout-content {
+  background-color: transparent !important;
+}
+:root[data-page-bg="on"] .n-layout-sider {
+  background-color: color-mix(in srgb, var(--sidebar-bg-color) var(--app-page-layout-opacity, 100%), transparent) !important;
+}
+:root[data-page-bg="on"] .main-sider {
+  background-color: color-mix(in srgb, var(--sidebar-bg-color) var(--app-page-layout-opacity, 100%), transparent) !important;
+}
+:root[data-page-bg="on"] .mobile-bottom-nav {
+  background-color: color-mix(in srgb, var(--app-surface-card) var(--app-page-layout-opacity, 100%), transparent) !important;
+}
+:root[data-page-bg="on"] .mobile-header {
+  background-color: color-mix(in srgb, var(--app-surface-card) var(--app-page-layout-opacity, 100%), transparent) !important;
 }
 
 /* ========== 外观设置：输入框组件全局覆盖（通过 :theme-overrides 实现，此处仅留辅助规则）========== */

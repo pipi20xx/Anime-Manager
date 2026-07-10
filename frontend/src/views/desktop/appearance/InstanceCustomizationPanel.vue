@@ -9,11 +9,13 @@ import {
   appearanceKeyGroupedOptions,
   getAppearanceKeyMeta,
   APPEARANCE_KEYS,
+  getAppearanceKeyPageKeys,
   type AppearanceKey
 } from '../../../constants/appearanceKeys'
+import { defaultPageBackground } from '../../../store/appearanceStore'
 
 /**
- * 单独自定义组件管理面板（弹框/卡片通用）
+ * 组件覆盖管理面板（弹框/卡片/页面级通用）
  *
  * 让指定组件（声明了 appearance-key 的）可以独立配置外观，
  * 未配置的字段自动继承全局默认。
@@ -21,18 +23,24 @@ import {
  * 通过 v-model 形式操作父组件传入的 form.instances，
  * 任何修改都会触发 preview 事件让父组件实时应用预览。
  *
- * 通过 pageFilter prop 控制显示哪些组件：
- * - 不传：显示所有非"卡片"类型的 key（即弹框）
- * - 传 '卡片'：只显示卡片类型的 key
+ * 三种模式：
+ * 1. 默认模式：不传 pageFilter/pageKeyFilter，显示所有非"卡片"类型的 key（即弹框）
+ * 2. pageFilter 模式：传 '卡片' 只显示卡片类型的 key
+ * 3. pageKeyFilter 模式：显示该页面下的所有弹框和卡片
+ * 4. pageOverridesKey 模式：不显示实例选择器，直接编辑 form.pages[pageKey].overrides
  */
 
 const props = defineProps<{
-  /** 父组件的 form 对象（reactive，会直接修改其 instances 字段） */
+  /** 父组件的 form 对象（reactive，会直接修改其 instances/pages 字段） */
   form: AppearanceConfig
   /** 背景图片选项（来自父组件加载的 images 列表） */
   imageOptions: { label: string; value: string }[]
   /** 按 page 过滤：传 '卡片' 只显示卡片，不传显示所有非卡片 */
   pageFilter?: string
+  /** 按 pageKey 过滤：显示该页面下的所有弹框和卡片（优先于 pageFilter） */
+  pageKeyFilter?: string
+  /** 页面级组件覆盖模式：传入页面 key，直接编辑该页面的 overrides 字段 */
+  pageOverridesKey?: string
 }>()
 
 const emit = defineEmits<{
@@ -94,9 +102,28 @@ function getInstanceOnlyDefault(category: string, field: string): any {
   return instanceOnlyDefaults[category]?.[field]
 }
 
-/** 根据 pageFilter 过滤后的下拉选项 */
+/** 是否为页面级覆盖模式 */
+const isPageOverridesMode = computed(() => !!props.pageOverridesKey)
+
+/** 根据 pageKeyFilter / pageFilter 过滤后的下拉选项 */
 const filteredOptions = computed(() => {
-  if (props.pageFilter) {
+  if (props.pageKeyFilter) {
+    // pageKeyFilter 模式：显示该页面下的所有弹框和卡片，按类型分组
+    const modals: { label: string; value: string }[] = []
+    const cards: { label: string; value: string }[] = []
+    for (const [value, meta] of Object.entries(APPEARANCE_KEYS)) {
+      if (!getAppearanceKeyPageKeys(value).includes(props.pageKeyFilter as any)) continue
+      if (meta.page === '卡片') {
+        cards.push({ label: meta.label, value })
+      } else {
+        modals.push({ label: meta.label, value })
+      }
+    }
+    const groups: { type: 'group'; label: string; key: string; children: { label: string; value: string }[] }[] = []
+    if (modals.length > 0) groups.push({ type: 'group', label: '弹框', key: '弹框', children: modals })
+    if (cards.length > 0) groups.push({ type: 'group', label: '卡片', key: '卡片', children: cards })
+    return groups
+  } else if (props.pageFilter) {
     // 只显示指定 page 的 key
     const groups: Record<string, { label: string; value: string }[]> = {}
     for (const [value, meta] of Object.entries(APPEARANCE_KEYS)) {
@@ -116,24 +143,59 @@ const filteredOptions = computed(() => {
   }
 })
 
-/** 当前项目类型文字（"弹框"或"卡片"） */
-const itemTypeText = computed(() => props.pageFilter === '卡片' ? '卡片' : '弹框')
+/** 当前项目类型文字 */
+const itemTypeText = computed(() => {
+  if (isPageOverridesMode.value) return '页面组件'
+  if (props.pageKeyFilter) return '组件'
+  return props.pageFilter === '卡片' ? '卡片' : '弹框'
+})
+
+/** 获取当前操作的覆盖对象（页面级模式或实例级模式） */
+function getOverridesObject(): AppearanceInstanceOverrides | undefined {
+  if (isPageOverridesMode.value) {
+    if (!props.form.pages || !props.form.pages[props.pageOverridesKey!]) return undefined
+    return props.form.pages[props.pageOverridesKey!].overrides
+  }
+  if (!selectedInstanceKey.value) return undefined
+  return props.form.instances![selectedInstanceKey.value]
+}
+
+/** 获取或创建覆盖对象 */
+function getOrCreateOverrides(): AppearanceInstanceOverrides {
+  if (isPageOverridesMode.value) {
+    if (!props.form.pages) (props.form as any).pages = {}
+    if (!props.form.pages[props.pageOverridesKey!]) {
+      props.form.pages[props.pageOverridesKey!] = { ...defaultPageBackground }
+    }
+    if (!props.form.pages[props.pageOverridesKey!].overrides) {
+      props.form.pages[props.pageOverridesKey!].overrides = {}
+    }
+    return props.form.pages[props.pageOverridesKey!].overrides!
+  }
+  const key = selectedInstanceKey.value
+  if (!key) return {}
+  if (!props.form.instances![key]) props.form.instances![key] = {}
+  return props.form.instances![key]
+}
 
 /** 当前选中实例的覆盖对象（只读视图，不创建副作用） */
 const currentInstanceOverrides = computed<AppearanceInstanceOverrides>(() => {
-  if (!selectedInstanceKey.value) return {}
-  return props.form.instances![selectedInstanceKey.value] || {}
+  return getOverridesObject() || {}
 })
 
-/** 已存在自定义配置的实例数量（按 pageFilter 过滤，避免弹框/卡片计数混在一起） */
+/** 已存在自定义配置的实例数量 */
 const instanceCount = computed(() => {
+  if (isPageOverridesMode.value) {
+    const ov = getOverridesObject()
+    return ov ? Object.keys(ov).length : 0
+  }
   if (!props.form.instances) return 0
   return Object.keys(props.form.instances).filter(key => {
     const meta = getAppearanceKeyMeta(key)
     if (!meta) return false
-    // 与 filteredOptions 的过滤逻辑保持一致：
-    //   pageFilter 存在 → 只统计该 page 的实例（如 '卡片'）
-    //   pageFilter 不存在 → 统计所有非 '卡片' 的实例（即弹框）
+    if (props.pageKeyFilter) {
+      return getAppearanceKeyPageKeys(key).includes(props.pageKeyFilter as any)
+    }
     if (props.pageFilter) {
       return meta.page === props.pageFilter
     }
@@ -148,43 +210,41 @@ function notifyChange(): void {
 
 /** 判断某字段是否已被覆盖（!== undefined 视为覆盖） */
 function isFieldOverridden(category: keyof AppearanceInstanceOverrides, field: string): boolean {
-  if (!selectedInstanceKey.value) return false
-  const inst = props.form.instances![selectedInstanceKey.value]
-  if (!inst || !inst[category]) return false
-  return (inst[category] as Record<string, any>)[field] !== undefined
+  const ov = getOverridesObject()
+  if (!ov || !ov[category]) return false
+  return (ov[category] as Record<string, any>)[field] !== undefined
 }
 
 /** 启用字段覆盖：用当前全局值作为初始值（文字样式/边框样式字段使用内置默认值） */
 function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
-  if (!selectedInstanceKey.value) return
-  const key = selectedInstanceKey.value
-  if (!props.form.instances![key]) props.form.instances![key] = {}
-  if (!props.form.instances![key][category]) {
-    ;(props.form.instances![key] as any)[category] = {}
+  const ov = getOrCreateOverrides()
+  if (!ov[category]) {
+    ;(ov as any)[category] = {}
   }
   if (category === 'text') {
-    ;(props.form.instances![key][category] as Record<string, any>)[field] = (textDefaults as Record<string, any>)[field]
+    ;(ov[category] as Record<string, any>)[field] = (textDefaults as Record<string, any>)[field]
   } else if (isInstanceOnlyField(category, field)) {
-    ;(props.form.instances![key][category] as Record<string, any>)[field] = getInstanceOnlyDefault(category, field)
+    ;(ov[category] as Record<string, any>)[field] = getInstanceOnlyDefault(category, field)
   } else {
-    ;(props.form.instances![key][category] as Record<string, any>)[field] = (props.form[category] as any)[field]
+    ;(ov[category] as Record<string, any>)[field] = (props.form[category] as any)[field]
   }
   notifyChange()
 }
 
 /** 取消字段覆盖：删除字段 */
 function clearFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
-  if (!selectedInstanceKey.value) return
-  const key = selectedInstanceKey.value
-  if (!props.form.instances![key] || !props.form.instances![key][category]) return
-  delete (props.form.instances![key][category] as Record<string, any>)[field]
+  const ov = getOverridesObject()
+  if (!ov || !ov[category]) return
+  delete (ov[category] as Record<string, any>)[field]
   // 如果该分区已无任何覆盖，删除整个分区对象
-  if (Object.keys(props.form.instances![key][category] as object).length === 0) {
-    delete (props.form.instances![key] as any)[category]
+  if (Object.keys(ov[category] as object).length === 0) {
+    delete (ov as any)[category]
   }
-  // 如果该实例已无任何覆盖，删除整个实例
-  if (Object.keys(props.form.instances![key]).length === 0) {
-    delete props.form.instances![key]
+  // 实例级模式：如果该实例已无任何覆盖，删除整个实例
+  if (!isPageOverridesMode.value && selectedInstanceKey.value) {
+    if (Object.keys(ov).length === 0) {
+      delete props.form.instances![selectedInstanceKey.value]
+    }
   }
   notifyChange()
 }
@@ -200,29 +260,22 @@ function toggleFieldOverride(category: keyof AppearanceInstanceOverrides, field:
 
 /** 获取字段值（覆盖值优先，未覆盖则返回全局值；文字样式/边框样式字段返回内置默认值） */
 function getFieldValue(category: keyof AppearanceInstanceOverrides, field: string): any {
-  if (!selectedInstanceKey.value) {
-    if (category === 'text') return (textDefaults as Record<string, any>)[field]
-    if (isInstanceOnlyField(category, field)) return getInstanceOnlyDefault(category, field)
-    return (props.form[category] as any)[field]
-  }
-  const inst = props.form.instances![selectedInstanceKey.value]
-  if (inst && inst[category] && (inst[category] as Record<string, any>)[field] !== undefined) {
-    return (inst[category] as Record<string, any>)[field]
+  const ov = getOverridesObject()
+  if (ov && ov[category] && (ov[category] as Record<string, any>)[field] !== undefined) {
+    return (ov[category] as Record<string, any>)[field]
   }
   if (category === 'text') return (textDefaults as Record<string, any>)[field]
   if (isInstanceOnlyField(category, field)) return getInstanceOnlyDefault(category, field)
   return (props.form[category] as any)[field]
 }
 
-/** 设置字段值（直接设置到 instances 中） */
+/** 设置字段值（直接设置到覆盖对象中） */
 function setFieldValue(category: keyof AppearanceInstanceOverrides, field: string, value: any): void {
-  if (!selectedInstanceKey.value) return
-  const key = selectedInstanceKey.value
-  if (!props.form.instances![key]) props.form.instances![key] = {}
-  if (!props.form.instances![key][category]) {
-    ;(props.form.instances![key] as any)[category] = {}
+  const ov = getOrCreateOverrides()
+  if (!ov[category]) {
+    ;(ov as any)[category] = {}
   }
-  ;(props.form.instances![key][category] as Record<string, any>)[field] = value
+  ;(ov[category] as Record<string, any>)[field] = value
   notifyChange()
 }
 
@@ -235,7 +288,28 @@ function deleteInstanceConfig(key: string): void {
   notifyChange()
 }
 
-defineExpose({ currentInstanceOverrides, instanceCount })
+/** 页面级模式：清除所有覆盖 */
+function clearPageOverrides(): void {
+  if (!isPageOverridesMode.value) return
+  if (props.form.pages && props.form.pages[props.pageOverridesKey!]) {
+    props.form.pages[props.pageOverridesKey!].overrides = undefined
+  }
+  notifyChange()
+}
+
+/** 页面级模式：判断是否显示某个分类 tab */
+const PAGE_OVERRIDE_CATEGORIES = ['input', 'search', 'tabs', 'list', 'button', 'text'] as const
+function hasCategory(cat: string): boolean {
+  if (isPageOverridesMode.value) return PAGE_OVERRIDE_CATEGORIES.includes(cat as any)
+  if (!selectedInstanceKey.value) return false
+  const meta = getAppearanceKeyMeta(selectedInstanceKey.value)
+  if (!meta) return false
+  // text tab 显示条件：有 modal 或 card 分区
+  if (cat === 'text') return meta.categories.includes('modal') || meta.categories.includes('card')
+  return meta.categories.includes(cat)
+}
+
+defineExpose({ currentInstanceOverrides, instanceCount, clearPageOverrides })
 </script>
 
 <template>
@@ -252,14 +326,14 @@ defineExpose({ currentInstanceOverrides, instanceCount })
 
     <n-divider />
 
-    <!-- 选择要配置的弹框 -->
-    <div class="form-row">
-      <div class="form-label">{{ pageFilter === '卡片' ? '选择卡片' : '选择弹框' }}</div>
+    <!-- 选择要配置的弹框（页面级覆盖模式下不显示） -->
+    <div v-if="!isPageOverridesMode" class="form-row">
+      <div class="form-label">选择{{ itemTypeText }}</div>
       <div class="form-control" style="display: flex; gap: 8px; align-items: center;">
         <n-select
           v-model:value="selectedInstanceKey"
           :options="filteredOptions"
-          :placeholder="pageFilter === '卡片' ? '选择要单独自定义的卡片' : '选择要单独自定义的弹框'"
+          :placeholder="`选择要单独自定义的${itemTypeText}`"
           style="flex: 1;"
         />
         <n-popconfirm
@@ -274,9 +348,21 @@ defineExpose({ currentInstanceOverrides, instanceCount })
       </div>
     </div>
 
-    <!-- 选中实例后的配置面板 -->
-    <template v-if="selectedInstanceKey">
-      <div class="instance-meta" v-if="getAppearanceKeyMeta(selectedInstanceKey)">
+    <!-- 页面级覆盖模式：清除按钮 -->
+    <div v-if="isPageOverridesMode && instanceCount > 0" class="form-row">
+      <div class="form-control" style="display: flex; justify-content: flex-end;">
+        <n-popconfirm @positive-click="clearPageOverrides">
+          <template #trigger>
+            <n-button type="error" ghost size="small">清除所有组件覆盖</n-button>
+          </template>
+          确定清除该页面的所有组件覆盖配置？将回退到全局默认。
+        </n-popconfirm>
+      </div>
+    </div>
+
+    <!-- 选中实例后的配置面板（页面级覆盖模式下始终显示） -->
+    <template v-if="isPageOverridesMode || selectedInstanceKey">
+      <div class="instance-meta" v-if="!isPageOverridesMode && getAppearanceKeyMeta(selectedInstanceKey)">
         <div class="instance-meta__page">{{ getAppearanceKeyMeta(selectedInstanceKey)?.page }}</div>
         <div class="instance-meta__title">{{ getAppearanceKeyMeta(selectedInstanceKey)?.label }}</div>
         <div class="instance-meta__desc">{{ getAppearanceKeyMeta(selectedInstanceKey)?.description }}</div>
@@ -285,7 +371,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
 
       <n-tabs type="line" animated style="margin-top: 16px; --tabs-pane-padding: 16px 0 0 0;">
         <!-- 弹框本身分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('modal')" name="modal" tab="弹框本身">
+        <n-tab-pane v-if="hasCategory('modal')" name="modal" tab="弹框本身">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('modal', 'background_image')" @update:checked="v => toggleFieldOverride('modal', 'background_image', v)">背景图片</n-checkbox>
@@ -356,7 +442,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 输入框分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('input')" name="input" tab="输入框">
+        <n-tab-pane v-if="hasCategory('input')" name="input" tab="输入框">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('input', 'bg_opacity')" @update:checked="v => toggleFieldOverride('input', 'bg_opacity', v)">背景不透明度</n-checkbox>
@@ -422,7 +508,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 搜索框分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('search')" name="search" tab="搜索框">
+        <n-tab-pane v-if="hasCategory('search')" name="search" tab="搜索框">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('search', 'bg_opacity')" @update:checked="v => toggleFieldOverride('search', 'bg_opacity', v)">背景不透明度</n-checkbox>
@@ -488,7 +574,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 标签页外观分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('tabs')" name="tabs" tab="标签页外观">
+        <n-tab-pane v-if="hasCategory('tabs')" name="tabs" tab="标签页外观">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('tabs', 'nav_blur')" @update:checked="v => toggleFieldOverride('tabs', 'nav_blur', v)">导航栏模糊</n-checkbox>
@@ -597,7 +683,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 卡片分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('card')" name="card" tab="卡片">
+        <n-tab-pane v-if="hasCategory('card')" name="card" tab="卡片">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('card', 'background_image')" @update:checked="v => toggleFieldOverride('card', 'background_image', v)">背景图片</n-checkbox>
@@ -667,7 +753,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 文字样式分区（仅实例级，全局默认不做） -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('modal') || getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('card')" name="text" tab="文字样式">
+        <n-tab-pane v-if="hasCategory('text')" name="text" tab="文字样式">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('text', 'color')" @update:checked="v => toggleFieldOverride('text', 'color', v)">文字主色</n-checkbox>
@@ -770,7 +856,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 列表分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('list')" name="list" tab="列表">
+        <n-tab-pane v-if="hasCategory('list')" name="list" tab="列表">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('list', 'bg_opacity')" @update:checked="v => toggleFieldOverride('list', 'bg_opacity', v)">背景不透明度</n-checkbox>
@@ -827,7 +913,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         </n-tab-pane>
 
         <!-- 按钮分区 -->
-        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('button')" name="button" tab="按钮">
+        <n-tab-pane v-if="hasCategory('button')" name="button" tab="按钮">
           <div class="instance-fields">
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('button', 'border_radius')" @update:checked="v => toggleFieldOverride('button', 'border_radius', v)">圆角</n-checkbox>
@@ -911,7 +997,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
       </n-tabs>
     </template>
 
-    <n-empty v-else :description="`请选择一个${itemTypeText}开始自定义`" style="padding: 40px 0;" />
+    <n-empty v-if="!isPageOverridesMode && !selectedInstanceKey" :description="`请选择一个${itemTypeText}开始自定义`" style="padding: 40px 0;" />
   </n-card>
 </template>
 

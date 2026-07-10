@@ -13,6 +13,27 @@ export interface AppearanceGlobal {
   layout_opacity: number
 }
 
+/**
+ * 页面级背景配置：与 AppearanceGlobal 结构一致，
+ * 但作用于单个页面（覆盖全局背景）。
+ */
+export interface AppearancePageBackground {
+  enabled: boolean
+  background_image: string
+  background_blur: number
+  background_overlay_opacity: number
+  layout_opacity: number
+}
+
+/**
+ * 页面级配置：背景 + 组件覆盖
+ * key 为 CustomizablePageKey（见 constants/appearanceKeys.ts）。
+ */
+export interface AppearancePageConfig extends AppearancePageBackground {
+  /** 页面级组件覆盖：覆盖全局组件设置，作用于该页面内的所有组件 */
+  overrides?: AppearanceInstanceOverrides
+}
+
 export interface AppearanceModal {
   enabled: boolean
   background_image: string
@@ -166,6 +187,8 @@ export interface AppearanceConfig {
   button: AppearanceButton
   /** 实例级覆盖：key 对应组件的 appearance-key，value 为该组件的独立配置 */
   instances?: Record<string, AppearanceInstanceOverrides>
+  /** 页面级配置：key 为可自定义页面 key，value 为该页面的独立配置 */
+  pages?: Record<string, AppearancePageConfig>
 }
 
 export interface AppearanceImage {

@@ -54,6 +54,8 @@ import {
 import { currentThemeMode, isDarkMode, logoColor, toggleThemeMode } from '../store/themeStore'
 import { ThemeMode } from '../themes'
 import { usePWA } from '../composables/usePWA'
+import { currentPageRouteName, applyPageBackground, applyPageOverrides, appearanceConfig, previewPageKey } from '../store/appearanceStore'
+import { getPageKeyByRouteName } from '../constants/appearanceKeys'
 
 const notification = useNotification()
 const router = useRouter()
@@ -167,6 +169,36 @@ const onPanelPopState = () => {
 onMounted(() => window.addEventListener('popstate', onPanelPopState))
 onUnmounted(() => window.removeEventListener('popstate', onPanelPopState))
 
+// 路由变化时更新当前路由名称，并重新应用页面级背景和组件覆盖
+watch(() => route.name, (name) => {
+  currentPageRouteName.value = (name as string) || null
+  applyPageBackground(appearanceConfig.value)
+  applyPageOverrides(appearanceConfig.value)
+}, { immediate: true })
+
+// 外观配置变化时也重新应用页面级背景和组件覆盖
+watch(appearanceConfig, () => {
+  applyPageBackground(appearanceConfig.value)
+  applyPageOverrides(appearanceConfig.value)
+}, { deep: true })
+
+// 当前页面 key（用于设置 data-page-key 属性，驱动页面级组件覆盖）
+// 同时设置在 document.documentElement 上，确保 teleport 到 body 的弹框也能继承页面级覆盖
+const currentPageKey = computed(() => {
+  // 优先使用预览 key（外观设置中选中的页面）
+  if (previewPageKey.value) return previewPageKey.value
+  const name = route.name as string
+  return name ? getPageKeyByRouteName(name) : undefined
+})
+watch(currentPageKey, (key) => {
+  const root = document.documentElement
+  if (key) {
+    root.setAttribute('data-page-key', key)
+  } else {
+    root.removeAttribute('data-page-key')
+  }
+}, { immediate: true })
+
 const collapsed = ref(localStorage.getItem('apm_sidebar_collapsed') === 'true')
 watch(collapsed, (val) => localStorage.setItem('apm_sidebar_collapsed', String(val)))
 
@@ -275,6 +307,8 @@ const handlePanelModalAction = (callback: () => void) => {
 <template>
   <!-- 全局背景图片层 -->
   <div class="app-global-bg-layer" />
+  <!-- 页面级背景图片层（覆盖在全局背景之上，仅当页面有独立背景时显示） -->
+  <div class="app-page-bg-layer" />
   <n-layout :has-sider="!isMobile" position="absolute">
     <!-- Desktop Sidebar -->
     <n-layout-sider
@@ -407,7 +441,7 @@ const handlePanelModalAction = (callback: () => void) => {
         </n-space>
       </div>
 
-      <div class="view-wrapper" :class="{ 'view-wrapper--full-bleed': isFullBleedPage }">
+      <div class="view-wrapper" :class="{ 'view-wrapper--full-bleed': isFullBleedPage }" :data-page-key="currentPageKey || undefined">
         <router-view v-slot="{ Component, route }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="route.fullPath" />

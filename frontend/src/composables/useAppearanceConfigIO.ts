@@ -20,9 +20,9 @@ interface AppearanceExportMeta {
 function deepMergeConfig(base: any, override: any): any {
   const result = { ...base }
   for (const key of Object.keys(override)) {
-    if (key === 'instances') {
-      // instances 整体替换：前端每次都发送完整状态，
-      // 深合并会导致已删除的 instance key 残留
+    if (key === 'instances' || key === 'pages') {
+      // instances 和 pages 整体替换：前端每次都发送完整状态，
+      // 深合并会导致已删除的 key 残留
       result[key] = override[key]
     } else if (
       result[key] && typeof result[key] === 'object' && !Array.isArray(result[key]) &&
@@ -208,8 +208,8 @@ export function useAppearanceConfigIO() {
     const merged = deepMergeConfig(JSON.parse(JSON.stringify(form)), imported)
     for (const key of Object.keys(merged)) {
       const val = merged[key]
-      if (key === 'instances') {
-        form.instances = val || {}
+      if (key === 'instances' || key === 'pages') {
+        (form as any)[key] = val || {}
       } else if (val && typeof val === 'object' && !Array.isArray(val)) {
         if (form[key] && typeof form[key] === 'object') {
           // 原地更新，保持 Vue 响应性

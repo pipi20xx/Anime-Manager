@@ -295,7 +295,7 @@ export const APPEARANCE_KEYS = {
     page: '卡片',
     categories: ['card']
   },
-  'profile-card': {
+  'priority-profile-card': {
     label: '洗版规则弹框 → 洗版策略卡片',
     description: '洗版规则弹框「洗版策略」中的策略配置卡片',
     page: '卡片',
@@ -322,6 +322,12 @@ export const APPEARANCE_KEYS = {
   'organize-history-card': {
     label: '整理历史 → 整理历史卡片',
     description: '整理历史页面中的整理记录列表卡片',
+    page: '卡片',
+    categories: ['card']
+  },
+  'task-history-card': {
+    label: '任务中心 → 任务卡片',
+    description: '任务中心页面中的任务列表卡片',
     page: '卡片',
     categories: ['card']
   },
@@ -377,4 +383,160 @@ export const appearanceKeyGroupedOptions = (() => {
 /** 根据 key 获取元信息 */
 export function getAppearanceKeyMeta(key: string): AppearanceKeyMeta | undefined {
   return (APPEARANCE_KEYS as Record<string, AppearanceKeyMeta>)[key]
+}
+
+// ============================================================
+// 可自定义页面（页面级背景 + 组件覆盖 + 页面内弹框/卡片自定义）
+// ============================================================
+
+export interface CustomizablePageMeta {
+  /** 显示名称 */
+  label: string
+  /** 详细描述 */
+  description: string
+  /** 对应的 Vue Router 路由名称 */
+  routeName: string
+}
+
+/**
+ * 可自定义页面清单
+ *
+ * 每个页面对应一个路由，可以在外观设置中为其设置：
+ * 1. 独立的背景图与遮罩效果（覆盖全局背景）
+ * 2. 页面级组件覆盖（输入框/搜索框/标签页/列表/按钮/卡片/文字样式）
+ * 3. 管理该页面下所有弹框和卡片的单独自定义
+ */
+export const CUSTOMIZABLE_PAGES = {
+  'subscription':      { label: '订阅与下载',     description: 'RSS 订阅与下载管理页面',               routeName: 'Subscription' },
+  'organizer':         { label: '整理与重命名',   description: '整理重命名、规则管理、任务配置页面',   routeName: 'Organizer' },
+  'organize-history':  { label: '整理历史',       description: '整理历史记录页面',                     routeName: 'OrganizeHistory' },
+  'tasks':             { label: '任务中心',       description: '任务管理与日志页面',                   routeName: 'TaskHistory' },
+  'strm':              { label: '虚拟 STRM 库',   description: 'STRM 虚拟库管理页面',                  routeName: 'StrmGenerator' },
+  'calendar':          { label: '追剧日历',       description: '番剧追剧日历页面',                     routeName: 'Calendar' },
+  'cache':             { label: '缓存管理',       description: '缓存记录管理页面',                     routeName: 'Cache' },
+  'tmdb-full':         { label: 'TMDB 元数据',    description: 'TMDB 元数据管理页面',                  routeName: 'TmdbFullData' },
+  'database':          { label: '系统数据中心',   description: '数据中心（元数据/二级分类/ID映射/维护）', routeName: 'Database' },
+  'external-control':  { label: '外部控制',       description: 'API 外部控制页面',                     routeName: 'ExternalControl' },
+  'jackett-search':    { label: 'Jackett 搜索',   description: 'Jackett 索引搜索页面',                 routeName: 'JackettSearch' },
+  'settings':          { label: '系统设置',       description: '系统设置页面（含下载客户端等）',       routeName: 'Settings' },
+  'file-browser':      { label: '文件浏览',       description: '文件浏览与单文件识别页面',             routeName: 'FileBrowser' },
+  'usage-guide':       { label: '规则说明',       description: '使用指南与规则说明页面',               routeName: 'UsageGuide' },
+} as const
+
+export type CustomizablePageKey = keyof typeof CUSTOMIZABLE_PAGES
+
+/**
+ * 外观 key → 可自定义页面 key 的多对多映射
+ *
+ * 一个弹框/卡片可以同时属于多个页面（如 task-history-modal 同时在
+ * 任务中心和整理页面使用）。
+ *
+ * 映射依据：通过搜索代码中 appearance-key / data-app-instance 属性
+ * 的实际使用位置确定。
+ */
+const APPEARANCE_KEY_PAGE_MAP: Record<string, CustomizablePageKey[]> = {
+  // ===== 订阅与下载（SubscriptionViewDesktop + SubscriptionManager） =====
+  'feed-edit-modal':              ['subscription'],
+  'rss-rule-modal':               ['subscription'],
+  'aggregated-feed-items-modal':  ['subscription'],
+  'aggregated-rule-history-modal':['subscription'],
+  'rule-preview-modal':           ['subscription'],
+  'subscription-edit-modal':      ['subscription'],
+  'subscription-detail-modal':    ['subscription'],
+  'subscription-template-modal':  ['subscription'],
+  'bangumi-quick-subscribe-modal':['subscription'],
+  'priority-rule-modal':          ['subscription'],
+  'rss-detect-manager-modal':     ['subscription'],
+  'jackett-fill-modal':           ['subscription'],
+  'subscription-card':            ['subscription'],
+  'feed-card':                    ['subscription'],
+  'rss-rule-card':                ['subscription'],
+  'priority-profile-card':        ['subscription'],
+  'priority-rule-card':           ['subscription'],
+
+  // ===== 整理与重命名（OrganizerViewDesktop） =====
+  'rule-edit-modal':              ['organizer'],
+  'task-edit-modal':              ['organizer'],
+  'execution-log-modal':          ['organizer', 'file-browser'],
+  'task-history-modal':           ['organizer', 'tasks'],
+  'file-picker-modal':            ['organizer', 'strm'],
+  'organize-rule-card':           ['organizer'],
+  'organize-task-card':           ['organizer'],
+
+  // ===== 整理历史（OrganizeHistoryDesktop） =====
+  'organize-history-card':        ['organize-history'],
+
+  // ===== 任务中心（TaskHistoryViewDesktop） =====
+  'task-history-card':            ['tasks'],
+
+  // ===== 虚拟 STRM 库（StrmGeneratorViewDesktop） =====
+  'strm-task-modal':              ['strm'],
+  'strm-task-card':               ['strm'],
+
+  // ===== 追剧日历（CalendarViewDesktop） =====
+  'calendar-modal':               ['calendar'],
+  'track-card':                   ['calendar'],
+
+  // ===== 缓存管理（CacheViewDesktop） =====
+  'cache-modal':                  ['cache'],
+
+  // ===== 文件浏览（FileBrowserViewDesktop） =====
+  'manual-organize-modal':        ['file-browser'],
+  'recognition-modal':            ['file-browser'],
+
+  // ===== 系统数据中心（DatabaseViewDesktop，含子 tab） =====
+  'tmdb-full-data-modal':         ['database', 'tmdb-full'],
+  'tmdb-data-card':               ['database', 'tmdb-full'],
+  'classifier-edit-modal':        ['database'],
+  'secondary-rule-card':          ['database'],
+  'user-mapping-modal':           ['database'],
+  'mapping-card':                 ['database'],
+  'maintenance-card':             ['database'],
+
+  // ===== 外部控制（ExternalControlDesktop） =====
+  'external-control-modal':       ['external-control'],
+
+  // ===== 系统设置（SettingsViewDesktop + 子 tab） =====
+  'client-edit-modal':            ['settings'],
+  'health-check-manager-modal':   ['settings'],
+  'service-status-modal':         ['settings'],
+  'account-modal':                ['settings'],
+  'client-card':                  ['settings'],
+
+  // ===== 规则说明（UsageGuideDesktop → SettingsGuide） =====
+  'settings-guide-modal':         ['usage-guide'],
+
+  // ===== 全局组件（MainLayout，不绑定特定页面） =====
+  'log-console-modal':            [],
+}
+
+/** 获取外观 key 所属的所有可自定义页面 key（支持多页面） */
+export function getAppearanceKeyPageKeys(key: string): CustomizablePageKey[] {
+  return APPEARANCE_KEY_PAGE_MAP[key] || []
+}
+
+/** 获取外观 key 所属的第一个可自定义页面 key（向后兼容） */
+export function getAppearanceKeyPageKey(key: string): CustomizablePageKey | undefined {
+  return APPEARANCE_KEY_PAGE_MAP[key]?.[0]
+}
+
+/** 获取指定页面下的所有外观 key（弹框 + 卡片） */
+export function getAppearanceKeysByPageKey(pageKey: string): string[] {
+  return Object.entries(APPEARANCE_KEY_PAGE_MAP)
+    .filter(([, pks]) => pks.includes(pageKey as CustomizablePageKey))
+    .map(([key]) => key)
+}
+
+/** 获取可自定义页面的下拉选项 */
+export const customizablePageOptions = Object.entries(CUSTOMIZABLE_PAGES).map(([value, meta]) => ({
+  label: meta.label,
+  value,
+}))
+
+/** 根据路由名称获取可自定义页面 key */
+export function getPageKeyByRouteName(routeName: string): CustomizablePageKey | undefined {
+  for (const [key, meta] of Object.entries(CUSTOMIZABLE_PAGES)) {
+    if (meta.routeName === routeName) return key as CustomizablePageKey
+  }
+  return undefined
 }

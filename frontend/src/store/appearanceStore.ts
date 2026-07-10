@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
-import { appearanceApi, type AppearanceConfig, type AppearanceInstanceOverrides } from '../api/appearance'
+import { appearanceApi, type AppearanceConfig, type AppearanceInstanceOverrides, type AppearancePageBackground, type AppearancePageConfig } from '../api/appearance'
 import { currentThemeConfig } from './themeStore'
+import { getPageKeyByRouteName } from '../constants/appearanceKeys'
 
 // 默认外观配置
 const defaultConfig: AppearanceConfig = {
@@ -76,6 +77,23 @@ const defaultConfig: AppearanceConfig = {
   // 实例级覆盖：key 对应组件的 appearance-key
   // 默认为空对象，未列出的组件走全局默认
   instances: {},
+  // 页面级背景：默认为空对象，未配置的页面走全局背景
+  pages: {},
+}
+
+/** 页面级背景默认值 */
+export const defaultPageBackground: AppearancePageBackground = {
+  enabled: false,
+  background_image: '',
+  background_blur: 0,
+  background_overlay_opacity: 0.6,
+  layout_opacity: 0.9,
+}
+
+/** 页面级配置默认值（含组件覆盖） */
+export const defaultPageConfig: AppearancePageConfig = {
+  ...defaultPageBackground,
+  overrides: undefined,
 }
 
 export const appearanceConfig = ref<AppearanceConfig>(JSON.parse(JSON.stringify(defaultConfig)))
@@ -263,6 +281,12 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
 
   // === 实例级覆盖 ===
   applyInstanceOverrides(config)
+
+  // === 页面级背景 ===
+  applyPageBackground(config)
+
+  // === 页面级组件覆盖 ===
+  applyPageOverrides(config)
 }
 
 // ============= 实例级 scoped CSS 注入 =============
@@ -715,6 +739,87 @@ function applyInstanceOverrides(config: AppearanceConfig) {
   styleEl.textContent = rules.join('\n\n')
 }
 
+// ============= 页面级背景 =============
+// 通过 data-page-bg="on" 属性在 :root 上标记当前页面是否有独立背景，
+// CSS 中 .app-page-bg-layer 固定定位覆盖在 .app-global-bg-layer 之上。
+
+/** 预览用页面 key：在外观设置页面中选择某个页面时临时设置，优先于路由 */
+export const previewPageKey = ref<string | null>(null)
+
+/** 当前路由名称：由 MainLayout 的路由 watcher 更新 */
+export const currentPageRouteName = ref<string | null>(null)
+
+/** 应用页面级背景（根据 previewPageKey 或当前路由） */
+export function applyPageBackground(config: AppearanceConfig) {
+  const root = document.documentElement
+
+  // 优先使用预览 key，其次使用当前路由
+  let pageKey: string | undefined = previewPageKey.value || undefined
+  if (!pageKey && currentPageRouteName.value) {
+    pageKey = getPageKeyByRouteName(currentPageRouteName.value)
+  }
+
+  if (!pageKey) {
+    root.removeAttribute('data-page-bg')
+    return
+  }
+
+  const pages = config.pages || {}
+  const pageBg = pages[pageKey]
+
+  if (pageBg && pageBg.enabled && pageBg.background_image) {
+    root.style.setProperty('--app-page-bg-image', `url(/api/appearance/image/${pageBg.background_image})`)
+    root.style.setProperty('--app-page-bg-blur', pageBg.background_blur > 0 ? `blur(${pageBg.background_blur}px)` : 'none')
+    root.style.setProperty('--app-page-bg-overlay-opacity', String(pageBg.background_overlay_opacity))
+    root.style.setProperty('--app-page-layout-opacity', `${Math.round(pageBg.layout_opacity * 100)}%`)
+    root.setAttribute('data-page-bg', 'on')
+  } else {
+    root.removeAttribute('data-page-bg')
+  }
+}
+
+// ============= 页面级组件覆盖 =============
+// 通过 [data-page-key="xxx"] 选择器注入 CSS 变量，
+// 覆盖全局组件设置，作用于该页面内的所有组件。
+// 优先级：实例级 > 页面级 > 全局
+
+const PAGE_OVERRIDE_STYLE_ID = 'app-page-overrides'
+
+function getOrCreatePageOverrideStyleEl(): HTMLStyleElement {
+  let el = document.getElementById(PAGE_OVERRIDE_STYLE_ID) as HTMLStyleElement | null
+  if (!el) {
+    el = document.createElement('style')
+    el.id = PAGE_OVERRIDE_STYLE_ID
+    document.head.appendChild(el)
+  }
+  return el
+}
+
+/** 注入页面级组件覆盖 CSS（复用 buildInstanceDecls 逻辑） */
+export function applyPageOverrides(config: AppearanceConfig) {
+  const styleEl = getOrCreatePageOverrideStyleEl()
+  const pages = config.pages
+
+  if (!pages || Object.keys(pages).length === 0) {
+    styleEl.textContent = ''
+    return
+  }
+
+  const rules: string[] = []
+
+  for (const [pageKey, pageConfig] of Object.entries(pages)) {
+    if (!pageConfig.overrides) continue
+    const decls = buildInstanceDecls(pageConfig.overrides)
+    if (decls.length > 0) {
+      rules.push(`[data-page-key="${pageKey}"] {
+  ${decls.join('\n  ')}
+}`)
+    }
+  }
+
+  styleEl.textContent = rules.join('\n\n')
+}
+
 /** hex 转 rgba */
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace('#', '')
@@ -786,11 +891,13 @@ export async function resetAppearanceConfig() {
   return res.data
 }
 
-/** 深度合并 */
+/** 深度合并（instances 和 pages 整体替换） */
 function deepMerge(base: any, override: any): any {
   const result = { ...base }
   for (const key of Object.keys(override)) {
-    if (key in result && typeof result[key] === 'object' && result[key] !== null && typeof override[key] === 'object' && override[key] !== null) {
+    if (key === 'instances' || key === 'pages') {
+      result[key] = override[key]
+    } else if (key in result && typeof result[key] === 'object' && result[key] !== null && typeof override[key] === 'object' && override[key] !== null) {
       result[key] = deepMerge(result[key], override[key])
     } else {
       result[key] = override[key]
