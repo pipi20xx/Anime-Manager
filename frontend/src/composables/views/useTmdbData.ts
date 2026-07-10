@@ -165,6 +165,43 @@ export function useTmdbData() {
     } catch (e) { message.error('请求异常') }
   }
 
+  const refreshSingleId = ref<string | null>(null)
+
+  const handleRefreshSingle = (item: any) => {
+    const tmdbId = item.tmdb_id || item.id
+    const mediaType = item.media_type || item.type
+    if (!tmdbId || !mediaType) return
+    dialog.warning({
+      title: '确认刷新',
+      content: `确定要从 TMDB 云端刷新 "${item.title}" 的元数据吗？\n刷新后除固定标题外，所有数据将被最新值覆盖。`,
+      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
+        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
+        h(NButton, { ...getButtonStyle('dialogConfirm'), onClick: async () => {
+          refreshSingleId.value = String(tmdbId)
+          try {
+            const res = await fetch(`${API_BASE}/api/tmdb_full/refresh_all`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tmdb_id: String(tmdbId), media_type: mediaType })
+            })
+            const data = await res.json()
+            if (res.ok) {
+              message.success(data.message || '刷新任务已启动')
+              dialog.destroyAll()
+              await fetchBrowserData(false)
+            } else {
+              message.error(data.message || '刷新失败')
+            }
+          } catch (e) {
+            message.error('请求异常')
+          } finally {
+            refreshSingleId.value = null
+          }
+        } }, { default: () => '确认刷新' })
+      ])
+    })
+  }
+
   const handleExport = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/tmdb_full/export_dict`)
@@ -222,6 +259,8 @@ export function useTmdbData() {
     handleSyncSytmdb,
     runSyncSytmdb,
     handleRefreshAll,
+    handleRefreshSingle,
+    refreshSingleId,
     handleExport,
     clearFingerprints
   }

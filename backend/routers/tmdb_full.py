@@ -12,7 +12,8 @@ router = APIRouter(prefix="/tmdb_full", tags=["数据中心"])
 async def task_refresh_all_metadata(
     older_than_days: Optional[int] = None,
     year: Optional[int] = None,
-    media_type: Optional[str] = None
+    media_type: Optional[str] = None,
+    tmdb_id: Optional[str] = None
 ):
     """
     后台执行全量刷新逻辑
@@ -21,8 +22,11 @@ async def task_refresh_all_metadata(
         older_than_days: 只更新 N 天前更新的记录
         year: 只更新指定年份首播的记录
         media_type: 只更新指定类型 (movie/tv)
+        tmdb_id: 只更新指定的 TMDB ID（单个刷新）
     """
     filters = []
+    if tmdb_id:
+        filters.append(f"TMDB ID {tmdb_id}")
     if older_than_days:
         filters.append(f"更新时间早于 {older_than_days} 天")
     if year:
@@ -35,6 +39,9 @@ async def task_refresh_all_metadata(
     
     async with await TmdbFullDB.get_session() as session:
         stmt = select(TmdbDeepMeta.tmdb_id, TmdbDeepMeta.media_type, TmdbDeepMeta.title)
+        
+        if tmdb_id:
+            stmt = stmt.where(TmdbDeepMeta.tmdb_id == str(tmdb_id))
         
         if older_than_days:
             cutoff_date = datetime.now() - timedelta(days=older_than_days)
@@ -125,12 +132,14 @@ async def refresh_all_metadata(
     background_tasks: BackgroundTasks,
     older_than_days: Optional[int] = Body(None, description="只更新 N 天前更新的记录"),
     year: Optional[int] = Body(None, description="只更新指定年份首播的记录"),
-    media_type: Optional[str] = Body(None, description="只更新指定类型 (movie/tv)")
+    media_type: Optional[str] = Body(None, description="只更新指定类型 (movie/tv)"),
+    tmdb_id: Optional[str] = Body(None, description="只更新指定的 TMDB ID（单个刷新）")
 ):
     """
     触发后台异步任务，对库中条目强制与 TMDB 云端同步。
     
     支持筛选条件：
+    - tmdb_id: 只更新指定的 TMDB ID（单个刷新）
     - older_than_days: 只更新 N 天前更新的记录（如 90 表示更新 3 个月前的数据）
     - year: 只更新指定年份首播的记录（如 2024）
     - media_type: 只更新指定类型 (movie/tv)
@@ -141,10 +150,13 @@ async def refresh_all_metadata(
         task_refresh_all_metadata,
         older_than_days=older_than_days,
         year=year,
-        media_type=media_type
+        media_type=media_type,
+        tmdb_id=tmdb_id
     )
     
     filters = []
+    if tmdb_id:
+        filters.append(f"TMDB ID {tmdb_id}")
     if older_than_days:
         filters.append(f"更新时间早于 {older_than_days} 天")
     if year:

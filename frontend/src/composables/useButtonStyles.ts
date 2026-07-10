@@ -57,6 +57,13 @@ export const ButtonStyles = {
     circle: true,
     size: 'small' as const
   },
+  // 警告图标按钮 - 透明底色 + 警告色文字 + 警告色边框
+  iconWarning: {
+    type: 'warning' as const,
+    ghost: true,
+    circle: true,
+    size: 'small' as const
+  },
   // 文字按钮 - 透明底色 + 主题色文字（无边框）
   text: {
     type: 'primary' as const,

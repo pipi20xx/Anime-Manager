@@ -13,7 +13,8 @@ import {
   DeleteOutlined as DeleteIcon,
   SearchOutlined as SearchIcon,
   CloudSyncOutlined as SytmdbIcon,
-  AddOutlined as AddIcon
+  AddOutlined as AddIcon,
+  RefreshOutlined as RefreshIcon
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -43,7 +44,9 @@ const {
   saveMetadata,
   deleteMetadata,
   handleSyncSytmdb,
-  handleRefreshAll
+  handleRefreshAll,
+  handleRefreshSingle,
+  refreshSingleId
 } = useTmdbData()
 
 const executeRefresh = () => {
@@ -201,6 +204,14 @@ onBeforeUnmount(cleanupObserver)
                     <span class="meta-id">ID: {{ item.tmdb_id }}</span>
                   </div>
                   <div class="meta-genres">
+                    <n-button
+                      v-bind="getButtonStyle('iconWarning')"
+                      size="tiny"
+                      :loading="refreshSingleId === String(item.tmdb_id)"
+                      @click.stop="handleRefreshSingle(item)"
+                    >
+                      <template #icon><n-icon><RefreshIcon /></n-icon></template>
+                    </n-button>
                     <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" @click="deleteMetadata(item)">
                       <template #icon><n-icon><DeleteIcon /></n-icon></template>
                     </n-button>
@@ -368,13 +379,14 @@ onBeforeUnmount(cleanupObserver)
 .meta-genres {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
   min-height: 18px;
+  justify-content: flex-end;
 }
 
 .meta-genres :deep(.n-button) {
-  margin-left: auto;
+  margin-left: 0;
 }
 
 /* 底部哨兵 */
