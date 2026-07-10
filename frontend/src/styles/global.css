@@ -7,7 +7,7 @@
   --app-surface-subtle: #1e1e2e;
   --app-surface-card: #1e1e2e;
   --app-surface-inner: #1e1e2e;
-  --app-border-light: rgba(255, 255, 255, 0.08);
+  --app-border-light: rgba(255, 255, 255, 0.20);
   --app-border-medium: rgba(255, 255, 255, 0.15);
 
   /* ========== 外观自定义基础变量 ========== */
