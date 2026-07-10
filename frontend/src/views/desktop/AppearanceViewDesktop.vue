@@ -160,8 +160,8 @@ const formatFileSize = (size: number) => {
     </div>
 
     <n-spin :show="loading">
-      <n-tabs type="line" animated size="large">
-        <n-tab-pane name="global" tab="全局设置">
+<n-tabs type="line" animated size="large" class="appearance-tabs">
+<n-tab-pane name="global" tab="全局设置">
       <div class="settings-grid">
         <!-- ===== 全局背景 ===== -->
         <n-card class="app-card-config settings-section" :bordered="true">
@@ -507,6 +507,7 @@ const formatFileSize = (size: number) => {
 
 <style scoped>
 .appearance-view { width: 100%; }
+.appearance-tabs { --tabs-pane-padding: 16px 0 0 0; }
 
 .page-header {
   display: flex;

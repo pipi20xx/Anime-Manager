@@ -284,7 +284,7 @@ function getConditions(rule: any) {
 </template>
 
 <style scoped>
-.main-container { display: flex; flex-direction: column; }
+.main-container { display: flex; flex-direction: column; --tabs-pane-padding: 16px 0 0 0; }
 .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .desc { color: var(--text-tertiary); font-size: 13px; max-width: 70%; }
 .profile-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }

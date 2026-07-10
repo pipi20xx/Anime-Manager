@@ -274,8 +274,8 @@ const countryColumns = [
         <n-tag type="info" size="small">自定义中文名称，优先于 TMDB 官方数据</n-tag>
       </template>
       
-      <n-tabs type="line" animated v-model:value="activeType">
-        <n-tab-pane name="genre" tab="流派">
+<n-tabs type="line" animated v-model:value="activeType" style="--tabs-pane-padding: 16px 0 0 0;">
+<n-tab-pane name="genre" tab="流派">
           <AppSearchField v-model:value="genreSearch" placeholder="搜索 ID 或名称..." :loading="loading" style="margin-bottom: 12px" />
           <n-data-table
             :theme-overrides="dataTableThemeOverrides"

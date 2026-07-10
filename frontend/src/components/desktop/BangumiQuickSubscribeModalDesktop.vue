@@ -61,8 +61,8 @@ const {
           </n-grid>
 
           <n-checkbox-group v-model:value="selectedIds" v-if="renderReady && weeklyData.length > 0">
-            <n-tabs type="line" animated v-model:value="activeTab">
-              <n-tab-pane v-for="day in weeklyData" :key="day.weekday.id" :name="day.weekday.id" :tab="day.weekday.cn">
+<n-tabs type="line" animated v-model:value="activeTab" style="--tabs-pane-padding: 16px 0 0 0;">
+<n-tab-pane v-for="day in weeklyData" :key="day.weekday.id" :name="day.weekday.id" :tab="day.weekday.cn">
                 <div class="anime-grid">
                   <div v-for="item in day.items" :key="item.id" class="anime-item" :class="{ 'is-subbed': item.isSubscribed }">
                     <n-checkbox :value="item.id" :disabled="item.isSubscribed" />

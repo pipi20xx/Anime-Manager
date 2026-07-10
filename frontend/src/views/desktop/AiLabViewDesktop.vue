@@ -693,6 +693,7 @@ onMounted(() => {
   font-weight: bold;
 }
 
+.assistant-tabs { --tabs-pane-padding: 16px 0 0 0; }
 .assistant-tabs :deep(.n-tabs-tab) {
   padding: 0 24px;
 }

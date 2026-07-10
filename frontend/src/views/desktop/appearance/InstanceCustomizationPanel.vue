@@ -283,7 +283,7 @@ defineExpose({ currentInstanceOverrides, instanceCount })
         <div class="instance-meta__key">key: <code>{{ selectedInstanceKey }}</code></div>
       </div>
 
-      <n-tabs type="line" animated style="margin-top: 16px;">
+      <n-tabs type="line" animated style="margin-top: 16px; --tabs-pane-padding: 16px 0 0 0;">
         <!-- 弹框本身分区 -->
         <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('modal')" name="modal" tab="弹框本身">
           <div class="instance-fields">

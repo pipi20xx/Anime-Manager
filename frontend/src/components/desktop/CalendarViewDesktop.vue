@@ -224,11 +224,8 @@ const handleCardEditSave = async (id: number) => {
           size="small"
           @update:value="handleDateChange"
         />
-        <n-button v-bind="getButtonStyle('secondary')" size="small" @click="goToToday">
-          今天
-        </n-button>
         <n-button v-bind="getButtonStyle('secondary')" size="small" @click="showManageModal = true">
-          管理追踪
+          追踪管理
         </n-button>
       </n-space>
     </div>
@@ -711,9 +708,7 @@ const handleCardEditSave = async (id: number) => {
 
 .manage-tabs {
   padding-bottom: 16px;
-}
-.manage-tabs :deep(.n-tab-pane) {
-  padding: 16px 0;
+  --tabs-pane-padding: 16px 0;
 }
 
 .tab-content {

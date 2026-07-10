@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NForm, NFormItem, 
   NDivider, NGrid, NGi, NSwitch, NTabs, NTabPane,
-  NSpin, NCheckbox, useDialog
+  NSpin, NCheckbox, NInput, NTag, useDialog
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
   DeleteOutlined as DeleteIcon
 } from '@vicons/material'
-import ConfigSection from '../../components/ConfigSection.vue'
 import ClientEditModal from './ClientEditModalDesktop.vue'
 import HealthCheckManager from './HealthCheckManagerDesktop.vue'
 import EmbyConfig from '../../components/EmbyConfig.vue'
@@ -48,6 +48,50 @@ const {
   saveAll,
   refreshRemoteRules
 } = useSettings()
+
+/* ========== 识别与订阅规则：本地/远程文本双向绑定 ========== */
+function arrayToText(arr: string[] | undefined) {
+  return (arr || []).join('\n')
+}
+function textToArray(val: string) {
+  return String(val || '').split('\n').map(s => s.trim())
+}
+
+const noiseLocalText = computed({
+  get() { return arrayToText(config.custom_noise_words) },
+  set(v) { config.custom_noise_words = textToArray(v) }
+})
+const noiseRemoteText = computed({
+  get() { return arrayToText(config.remote_noise_urls) },
+  set(v) { config.remote_noise_urls = textToArray(v) }
+})
+
+const groupLocalText = computed({
+  get() { return arrayToText(config.custom_release_groups) },
+  set(v) { config.custom_release_groups = textToArray(v) }
+})
+const groupRemoteText = computed({
+  get() { return arrayToText(config.remote_group_urls) },
+  set(v) { config.remote_group_urls = textToArray(v) }
+})
+
+const renderLocalText = computed({
+  get() { return arrayToText(config.custom_render_words) },
+  set(v) { config.custom_render_words = textToArray(v) }
+})
+const renderRemoteText = computed({
+  get() { return arrayToText(config.remote_render_urls) },
+  set(v) { config.remote_render_urls = textToArray(v) }
+})
+
+const privilegedLocalText = computed({
+  get() { return arrayToText(config.custom_privileged_rules) },
+  set(v) { config.custom_privileged_rules = textToArray(v) }
+})
+const privilegedRemoteText = computed({
+  get() { return arrayToText(config.remote_privileged_urls) },
+  set(v) { config.remote_privileged_urls = textToArray(v) }
+})
 </script>
 
 <template>
@@ -472,44 +516,162 @@ const {
         <!-- 规则管理 -->
         <n-tab-pane name="rules" tab="识别与订阅规则">
           <n-space vertical size="large">
-            <ConfigSection 
-              title="自定义识别词" 
-              description="这些词会被从文件名中剔除，防止干扰解析。支持正则替换 (A => B) 或直接删除 (A)。"
-              placeholder="例如: 10月新番&#10;或者: 藤本树 17-26 => 藤本树 17_26"
-              v-model:local="config.custom_noise_words" 
-              v-model:remote="config.remote_noise_urls" 
-            />
-
-            <ConfigSection 
-              title="自定义制作组" 
-              description="强制将这些词识别为制作组，不受内置库限制。"
-              placeholder="例如: SweetSub&#10;Mikanani"
-              v-model:local="config.custom_release_groups" 
-              v-model:remote="config.remote_group_urls" 
-            />
-
-            <ConfigSection 
-              title="自定义渲染词" 
-              description="在识别完成后执行，用于修改标题、修正季集或强制重定向 TMDB ID。"
-              placeholder="例如: 剧场版 => {[type=movie]}&#10;S2 => {[s=2]}"
-              v-model:local="config.custom_render_words" 
-              v-model:remote="config.remote_render_urls" 
-            />
-
-            <ConfigSection 
-              title="自定义特权规则" 
-              description="优先级极高的提取规则，命中后集数直接锁定，标题作为优先搜索候选。"
-              placeholder="格式: 正则表达式 => {[字段=值;字段=值]}&#10;例如: ^\[([^\]]+)\]\s+(.+?)\s+-\s+(\d{1,4}) => {[group=\1;title=\2;e=\3]}&#10;例如: Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}"
-              v-model:local="config.custom_privileged_rules" 
-              v-model:remote="config.remote_privileged_urls" 
-            />
+            <div class="rules-toolbar">
+              <n-button type="primary" size="small" :loading="syncLoading" @click="refreshRemoteRules">
+                同步远程规则
+              </n-button>
+            </div>
 
             <n-card class="app-card-config">
-              <n-space justify="center">
-                <n-button v-bind="getButtonStyle('secondary')" :loading="syncLoading" @click="refreshRemoteRules">
-                  立即从所有远程 URL 同步规则
-                </n-button>
-              </n-space>
+              <template #header>
+                <div class="card-title-box">
+                  <span class="card-title-text">自定义识别词</span>
+                </div>
+              </template>
+              <n-grid :cols="2" :x-gap="24" :y-gap="12">
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">本地规则</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">可编辑</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="noiseLocalText"
+                      type="textarea"
+                      placeholder="例如: 10月新番&#10;或者: 藤本树 17-26 => 藤本树 17_26"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">远程订阅</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">仅同步</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="noiseRemoteText"
+                      type="textarea"
+                      placeholder="http://example.com/rules.txt"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+              </n-grid>
+            </n-card>
+
+            <n-card class="app-card-config">
+              <template #header>
+                <div class="card-title-box">
+                  <span class="card-title-text">自定义制作组</span>
+                </div>
+              </template>
+              <n-grid :cols="2" :x-gap="24" :y-gap="12">
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">本地规则</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">可编辑</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="groupLocalText"
+                      type="textarea"
+                      placeholder="例如: SweetSub&#10;Mikanani"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">远程订阅</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">仅同步</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="groupRemoteText"
+                      type="textarea"
+                      placeholder="http://example.com/rules.txt"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+              </n-grid>
+            </n-card>
+
+            <n-card class="app-card-config">
+              <template #header>
+                <div class="card-title-box">
+                  <span class="card-title-text">自定义渲染词</span>
+                </div>
+              </template>
+              <n-grid :cols="2" :x-gap="24" :y-gap="12">
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">本地规则</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">可编辑</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="renderLocalText"
+                      type="textarea"
+                      placeholder="例如: 剧场版 => {[type=movie]}&#10;S2 => {[s=2]}"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">远程订阅</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">仅同步</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="renderRemoteText"
+                      type="textarea"
+                      placeholder="http://example.com/rules.txt"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+              </n-grid>
+            </n-card>
+
+            <n-card class="app-card-config">
+              <template #header>
+                <div class="card-title-box">
+                  <span class="card-title-text">自定义特权规则</span>
+                </div>
+              </template>
+              <n-grid :cols="2" :x-gap="24" :y-gap="12">
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">本地规则</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32', borderColor: 'transparent' }">可编辑</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="privilegedLocalText"
+                      type="textarea"
+                      placeholder="格式: 正则表达式 => {[字段=值;字段=值]}&#10;例如: ^\[([^\]]+)\]\s+(.+?)\s+-\s+(\d{1,4}) => {[group=\1;title=\2;e=\3]}&#10;例如: Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+                <n-gi>
+                  <div class="rule-col">
+                    <div class="rule-col-header">
+                      <span class="switch-label">远程订阅</span>
+                      <n-tag size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">仅同步</n-tag>
+                    </div>
+                    <n-input
+                      v-model:value="privilegedRemoteText"
+                      type="textarea"
+                      placeholder="http://example.com/rules.txt"
+                      :rows="8"
+                    />
+                  </div>
+                </n-gi>
+              </n-grid>
             </n-card>
           </n-space>
         </n-tab-pane>
@@ -548,6 +710,28 @@ const {
 
 <style scoped>
 .settings-view { width: 100%; }
+
+.card-title-box { display: flex; align-items: center; gap: 8px; }
+.card-title-text { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+
+.rules-toolbar { display: flex; justify-content: flex-end; }
+
+.rule-col { display: flex; flex-direction: column; gap: 6px; }
+.rule-col-header { display: flex; align-items: center; gap: 8px; }
+
+/* 规则输入框：移除 Naive UI 默认灰色底色，跟随卡片背景；边框使用项目统一变量 */
+.rule-col :deep(.n-input) {
+  --n-color: transparent !important;
+  --n-color-focus: transparent !important;
+}
+.rule-col :deep(.n-input .n-input-wrapper) {
+  background: transparent !important;
+}
+.rule-col :deep(.n-input .n-input__border),
+.rule-col :deep(.n-input .n-input__border-hover),
+.rule-col :deep(.n-input .n-input__border-focus) {
+  border: var(--input-border) !important;
+}
 
 .client-card {
   display: flex;

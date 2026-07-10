@@ -59,5 +59,6 @@ const { activeTab } = useUsageGuide()
 .subtitle { font-size: var(--text-base); color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .mb-8 { margin-bottom: 32px; }
 
-/* Tabs 样式已移至 global.css 统一管理 */
+/* Tabs 间距：覆盖全局 --tabs-pane-padding，避免内容紧贴 Tabs 导航栏 */
+.custom-tabs { --tabs-pane-padding: 16px 0 0 0; }
 </style>
