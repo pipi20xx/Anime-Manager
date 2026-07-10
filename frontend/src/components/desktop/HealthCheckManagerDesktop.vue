@@ -9,8 +9,8 @@ import {
 import {
   AddOutlined as AddIcon,
   EditOutlined as EditIcon,
-  DeleteOutlineOutlined as DeleteIcon,
-  PlayCircleOutlined as PlayIcon
+  DeleteOutlined as DeleteIcon,
+  PlayArrowOutlined as PlayIcon
 } from '@vicons/material'
 import AppTextField from '../AppTextField.vue'
 import { useHealthCheck } from '../../composables/useHealthCheck'
@@ -62,7 +62,7 @@ const columns = [
     render(row: HealthCheckConfig) {
       return h(NSpace, { size: 4 }, {
         default: () => [
-          h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => startCheck(row.id!) }, { 
+          h(NButton, { ...getButtonStyle('iconPrimary'), size: 'small', onClick: () => startCheck(row.id!) }, { 
             icon: () => h(NIcon, null, { default: () => h(PlayIcon) })
           }),
           h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => openEdit(row) }, { 

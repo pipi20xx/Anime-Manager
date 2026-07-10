@@ -11,7 +11,6 @@ import AppTextField from './AppTextField.vue'
 import {
   ApiOutlined as ApiIcon,
   ContentCopyOutlined as CopyIcon,
-  RefreshOutlined as RefreshIcon,
   LinkOutlined as WebhookIcon,
   HistoryOutlined as LogIcon,
   SettingsOutlined as SettingIcon,

@@ -6,10 +6,8 @@ import {
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
-  RefreshOutlined as RefreshIcon,
   DeleteOutlined as DeleteIcon,
-  ContentCopyOutlined as CopyIcon,
-  CloudSyncOutlined as SyncIcon
+  ContentCopyOutlined as CopyIcon
 } from '@vicons/material'
 
 import FeedEditModal from '../../components/FeedEditModal.vue'

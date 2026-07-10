@@ -10,7 +10,6 @@ import AppTextField from '../../components/AppTextField.vue'
 import AppGlassModal from '../../components/AppGlassModal.vue'
 import {
   ContentCopyOutlined as CopyIcon,
-  RefreshOutlined as RefreshIcon,
   DescriptionOutlined as DocIcon,
   VisibilityOutlined as EyeOpenIcon,
   VisibilityOffOutlined as EyeClosedIcon

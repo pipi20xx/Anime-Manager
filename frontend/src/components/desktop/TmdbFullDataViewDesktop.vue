@@ -205,7 +205,7 @@ onBeforeUnmount(cleanupObserver)
                   </div>
                   <div class="meta-genres">
                     <n-button
-                      v-bind="getButtonStyle('iconWarning')"
+                      v-bind="getButtonStyle('icon')"
                       size="tiny"
                       :loading="refreshSingleId === String(item.tmdb_id)"
                       @click.stop="handleRefreshSingle(item)"

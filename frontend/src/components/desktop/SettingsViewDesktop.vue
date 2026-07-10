@@ -6,8 +6,7 @@ import {
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
-  SyncOutlined as SyncIcon,
-  DeleteOutlineOutlined as DeleteIcon
+  DeleteOutlined as DeleteIcon
 } from '@vicons/material'
 import ConfigSection from '../../components/ConfigSection.vue'
 import ClientEditModal from './ClientEditModalDesktop.vue'

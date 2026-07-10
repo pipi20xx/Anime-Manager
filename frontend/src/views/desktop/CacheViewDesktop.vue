@@ -14,7 +14,6 @@ import {
   RefreshOutlined as RefreshIcon,
   SearchOutlined as SearchIcon,
   SyncOutlined as SyncIcon,
-  EditOutlined as EditIcon,
   AddOutlined as AddIcon
 } from '@vicons/material'
 

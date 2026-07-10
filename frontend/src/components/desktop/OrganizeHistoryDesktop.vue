@@ -14,7 +14,6 @@ import {
   DoneAllOutlined as SuccessIcon,
   ErrorOutlineOutlined as ErrorIcon,
   KeyboardDoubleArrowDownOutlined as MoreIcon,
-  RefreshOutlined as RefreshIcon,
   ReplayOutlined as RetryIcon
 } from '@vicons/material'
 import AppSearchField from '../../components/AppSearchField.vue'

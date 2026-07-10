@@ -6,7 +6,7 @@ import AppGlassCard from '../AppGlassCard.vue'
 import { ref, computed } from 'vue'
 import {
   NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
-  NAvatar, NPopconfirm, NTabs, NTabPane,
+  NAvatar, NTabs, NTabPane, useDialog,
   NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup,
   NSwitch, NDatePicker, NCard, NGrid, NGi, NImage
 } from 'naive-ui'
@@ -16,8 +16,7 @@ import {
   ChevronRightOutlined as NextIcon,
   ImportExportOutlined as ImportIcon,
   DeleteOutlined as DeleteIcon,
-  SyncOutlined as RefreshIcon,
-  EditOutlined as EditIcon,
+  RefreshOutlined as RefreshIcon,
   NotificationsActiveOutlined as NotifyIcon,
   SendOutlined as SendIcon
 } from '@vicons/material'
@@ -28,6 +27,17 @@ import { appearanceConfig } from '../../store/appearanceStore'
 import { isDarkMode } from '../../store/themeStore'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
+const dialog = useDialog()
+
+const handleDeleteSubject = (sub: any) => {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要从日历中移除「${sub.title}」吗？`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteSubject(sub.id)
+  })
+}
 
 const getImg = (path: string) => {
   if (!path) return ''
@@ -311,15 +321,8 @@ const handleCardEditSave = async (id: number) => {
                         <span class="tm-season">S{{ sub.season }}</span>
                         <span class="tm-ep" :class="{ 'no-data-text': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span>
                         <div class="tm-actions" @click.stop>
-                          <n-button v-bind="getButtonStyle('iconPrimary')" size="tiny" @click="refreshSubject(sub.id)" title="同步"><template #icon><n-icon><RefreshIcon /></n-icon></template></n-button>
-                          <n-popconfirm 
-                            positive-text="确认"
-                            negative-text="取消"
-                            @positive-click="deleteSubject(sub.id)"
-                          >
-                            <template #trigger><n-button v-bind="getButtonStyle('iconDanger')" size="tiny" title="删除"><template #icon><n-icon><DeleteIcon /></n-icon></template></n-button></template>
-                            确定要从日历中移除此追踪项吗？
-                          </n-popconfirm>
+                          <n-button v-bind="getButtonStyle('icon')" size="tiny" @click="refreshSubject(sub.id)" title="刷新"><template #icon><n-icon><RefreshIcon /></n-icon></template></n-button>
+                          <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" title="删除" @click="handleDeleteSubject(sub)"><template #icon><n-icon><DeleteIcon /></n-icon></template></n-button>
                         </div>
                       </div>
                     </div>

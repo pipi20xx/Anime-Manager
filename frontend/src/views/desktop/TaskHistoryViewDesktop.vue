@@ -3,7 +3,6 @@ import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
-  RefreshOutlined as RefreshIcon,
   VisibilityOutlined as ViewIcon,
   ClearAllOutlined as ClearIcon,
   KeyboardDoubleArrowDownOutlined as MoreIcon

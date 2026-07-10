@@ -224,7 +224,7 @@ onMounted(() => {
               <span class="favorite-name">{{ fav.name }}</span>
             </div>
             <n-button 
-              v-bind="getButtonStyle('icon')" 
+              v-bind="getButtonStyle('iconDanger')" 
               size="tiny"
               class="favorite-delete"
               @click.stop="removeFavorite(fav.path)"
