@@ -4,7 +4,7 @@ import { h } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NSpace, NButton, NDataTable, NForm, NFormItem, 
-  NSwitch, NPopconfirm, NTag, NIcon
+  NSwitch, NTag, NIcon, useDialog
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -16,6 +16,8 @@ import AppTextField from '../AppTextField.vue'
 import { useHealthCheck } from '../../composables/useHealthCheck'
 import type { HealthCheckConfig } from '../../api/health'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+
+const dialog = useDialog()
 
 const {
   config, saveAll, loading, configs, showModal, editingConfig,
@@ -68,15 +70,16 @@ const columns = [
           h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => openEdit(row) }, { 
             icon: () => h(NIcon, null, { default: () => h(EditIcon) })
           }),
-          h(NPopconfirm, { 
-            onPositiveClick: () => deleteConfig(row.id!),
-            positiveText: '确定',
-            negativeText: '取消'
-          }, {
-            trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { 
-              icon: () => h(NIcon, null, { default: () => h(DeleteIcon) })
-            }),
-            default: () => '确定要删除这条检测配置吗？'
+          h(NButton, { ...getButtonStyle('iconDanger'), size: 'small', onClick: () => {
+            dialog.warning({
+              title: '确认删除',
+              content: `确定要删除检测配置「${row.name}」吗？`,
+              positiveText: '确定删除',
+              negativeText: '取消',
+              onPositiveClick: () => deleteConfig(row.id!)
+            })
+          } }, { 
+            icon: () => h(NIcon, null, { default: () => h(DeleteIcon) })
           })
         ]
       })

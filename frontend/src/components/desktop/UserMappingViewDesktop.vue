@@ -2,7 +2,7 @@
 import { ref, computed, h, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
-  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NPopconfirm, NSpin
+  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NSpin
 } from 'naive-ui'
 import AppGlassModal from '../AppGlassModal.vue'
 import {

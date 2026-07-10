@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { 
-  NSpace, NButton, NIcon, NPopconfirm, NEmpty, 
-  NSwitch, NGrid, NGi, NText, NCard
+  NSpace, NButton, NIcon, NEmpty,
+  NSwitch, NGrid, NGi, NText, NCard, useDialog
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -13,6 +13,19 @@ import {
 import ClassifierEditModal from './ClassifierEditModalDesktop.vue'
 import { useSecondaryRule } from '../../composables/views/useSecondaryRule'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+
+const dialog = useDialog()
+
+const handleDeleteRuleWithConfirm = (index: number) => {
+  const rule = rules.value[index]
+  dialog.warning({
+    title: '确认删除',
+    content: `确定删除规则「${rule?.name || ''}」吗？`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteRule(index)
+  })
+}
 
 const {
   rules,
@@ -95,14 +108,9 @@ const {
 
               <div class="card-footer">
                 <div></div>
-                <n-popconfirm @positive-click.stop="deleteRule(index)" positive-text="确定" negative-text="取消">
-                  <template #trigger>
-                    <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click.stop>
-                      <template #icon><n-icon><DeleteIcon /></n-icon></template>
-                    </n-button>
-                  </template>
-                  确定删除该规则吗？
-                </n-popconfirm>
+                <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click.stop="handleDeleteRuleWithConfirm(index)">
+                  <template #icon><n-icon><DeleteIcon /></n-icon></template>
+                </n-button>
               </div>
             </n-card>
           </n-gi>

@@ -134,10 +134,12 @@ export function useOrganizerView() {
     dialog.warning({
       title: '确认删除规则', 
       content: '确定要删除这条规则吗？',
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { rules.value.splice(index, 1); saveConfig(); dialog.destroyAll() } }, { default: () => '确认' })
-      ])
+      positiveText: '确认',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        rules.value.splice(index, 1)
+        saveConfig()
+      }
     })
   }
 
@@ -176,10 +178,12 @@ export function useOrganizerView() {
     dialog.warning({
       title: '确认删除任务', 
       content: `确定要删除任务 "${tasks.value[index].name}" 吗？`,
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: () => { tasks.value.splice(index, 1); saveConfig(); dialog.destroyAll() } }, { default: () => '确认' })
-      ])
+      positiveText: '确认',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        tasks.value.splice(index, 1)
+        saveConfig()
+      }
     })
   }
 

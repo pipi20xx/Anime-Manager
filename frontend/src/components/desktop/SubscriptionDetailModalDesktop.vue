@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, computed, h } from 'vue'
+import { ref, watch, computed } from 'vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
-  NButton, NSpace, NTag, NSpin, NEmpty, NImage, NPopconfirm,
+  NButton, NSpace, NTag, NSpin, NEmpty, NImage,
   useDialog, useMessage
 } from 'naive-ui'
 import {
@@ -170,22 +170,18 @@ const handleClearHistory = () => {
   dialog.warning({
     title: '确认清空推送记录？',
     content: '清空后，系统将不再认为这些集数已下载，下次刷新或补全时可能会重复下载。确定吗？',
-    action: () => {
-      return h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
-          try {
-            await fetch(`${props.apiBase}/api/subscriptions/${props.sub.id}/episodes`, {
-              method: 'DELETE'
-            })
-            message.success('推送记录已清空')
-            fetchEpisodes()
-            dialog.destroyAll()
-          } catch (e) {
-            message.error('操作失败')
-          }
-        } }, { default: () => '确定清空' })
-      ])
+    positiveText: '确定清空',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await fetch(`${props.apiBase}/api/subscriptions/${props.sub.id}/episodes`, {
+          method: 'DELETE'
+        })
+        message.success('推送记录已清空')
+        fetchEpisodes()
+      } catch (e) {
+        message.error('操作失败')
+      }
     }
   })
 }
@@ -385,24 +381,15 @@ watch(() => props.show, (newVal) => {
 
     <template #footer>
       <n-space justify="space-between" align="center">
-        <n-popconfirm
-          @positive-click="handleClearHistory"
-          positive-text="确定清空"
-          negative-text="取消"
+        <n-button
+          v-bind="getButtonStyle('danger')"
+          size="small"
           :disabled="episodes.length === 0"
+          @click="handleClearHistory"
         >
-          <template #trigger>
-            <n-button
-              v-bind="getButtonStyle('danger')"
-              size="small"
-              :disabled="episodes.length === 0"
-            >
-              <template #icon><n-icon><ClearIcon /></n-icon></template>
-              清空所有推送记录
-            </n-button>
-          </template>
-          清空后，系统将不再认为这些集数已下载，下次刷新或补全时可能会重复下载。确定吗？
-        </n-popconfirm>
+          <template #icon><n-icon><ClearIcon /></n-icon></template>
+          清空所有推送记录
+        </n-button>
         <n-button v-bind="getButtonStyle('dialogCancel')" @click="emit('update:show', false)">
           关闭窗口
         </n-button>

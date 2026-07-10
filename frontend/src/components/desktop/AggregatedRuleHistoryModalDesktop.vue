@@ -2,12 +2,14 @@
 import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
-  NTag, NButton, NSpin, NEmpty, NDropdown, NPopconfirm
+  NTag, NButton, NSpin, NEmpty, NDropdown, useDialog
 } from 'naive-ui'
 import { useAggregatedRuleHistory } from '../../composables/modals/useAggregatedRuleHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import AppSearchField from '../AppSearchField.vue'
 import AppSelectField from '../AppSelectField.vue'
+
+const dialog = useDialog()
 
 const props = defineProps<{
   show: boolean
@@ -68,6 +70,16 @@ const formatDateTime = (dateStr: string | null | undefined): string => {
   } catch {
     return dateStr
   }
+}
+
+const handleDeleteWithConfirm = (item: any) => {
+  dialog.warning({
+    title: '确认清除',
+    content: '确认清除该条下载记录吗？',
+    positiveText: '确认清除',
+    negativeText: '取消',
+    onPositiveClick: () => handleDelete(item)
+  })
 }
 
 // IntersectionObserver：底部哨兵进入视口时自动加载下一页
@@ -198,18 +210,9 @@ onBeforeUnmount(cleanupObserver)
         <div class="card-aside">
           <div class="card-time">{{ formatDateTime(item.created_at) }}</div>
           <div class="card-actions">
-            <n-popconfirm
-              @positive-click="handleDelete(item)"
-              positive-text="确认清除"
-              negative-text="取消"
-            >
-              <template #trigger>
-                <n-button v-bind="getButtonStyle('text')" size="small" style="color: var(--n-error-color);">
-                  清除下载记录
-                </n-button>
-              </template>
-              确认清除该条下载记录吗？
-            </n-popconfirm>
+            <n-button v-bind="getButtonStyle('text')" size="small" style="color: var(--n-error-color);" @click="handleDeleteWithConfirm(item)">
+              清除下载记录
+            </n-button>
             <n-dropdown
               trigger="click"
               placement="bottom-end"

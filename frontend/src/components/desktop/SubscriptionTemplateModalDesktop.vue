@@ -4,8 +4,8 @@ import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NDataTable, NButton, NSpace, NIcon, NForm, NFormItem, 
-  NSelect, NSwitch, NGrid, NGi, NPopconfirm,
-  NDivider
+  NSelect, NSwitch, NGrid, NGi,
+  NDivider, useDialog
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -32,6 +32,8 @@ const {
   close
 } = useSubscriptionTemplates(props, emit)
 
+const dialog = useDialog()
+
 const columns = [
   { 
     title: '默认', key: 'is_default', width: 60, align: 'center',
@@ -54,11 +56,20 @@ const columns = [
           h(NButton, { ...getButtonStyle('icon'), size: 'small', onClick: () => openEdit(row) }, { 
             icon: () => h(NIcon, null, { default: () => h(EditIcon) }) 
           }),
-          h(NPopconfirm, { positiveText: '确定', negativeText: '取消', onPositiveClick: () => deleteTemplate(row.id) }, {
-            trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { 
-              icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) 
-            }),
-            default: () => '确定删除此模板吗？'
+          h(NButton, { 
+            ...getButtonStyle('iconDanger'), 
+            size: 'small',
+            onClick: () => {
+              dialog.warning({
+                title: '确认删除',
+                content: `确定删除模板「${row.name}」吗？`,
+                positiveText: '确定删除',
+                negativeText: '取消',
+                onPositiveClick: () => deleteTemplate(row.id)
+              })
+            }
+          }, { 
+            icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) 
           })
         ]
       })

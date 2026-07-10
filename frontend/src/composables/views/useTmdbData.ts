@@ -1,7 +1,5 @@
-import { ref, reactive, onMounted, h } from 'vue'
-import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
-import { DeleteSweepOutlined, CloseOutlined } from '@vicons/material'
-import { getButtonStyle } from '../useButtonStyles'
+import { ref, reactive, onMounted } from 'vue'
+import { useMessage, useDialog } from 'naive-ui'
 
 export function useTmdbData() {
   const message = useMessage()
@@ -102,19 +100,18 @@ export function useTmdbData() {
     dialog.warning({
       title: '确认删除',
       content: `确定要移除 "${item.title}" 吗？`,
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
-          try {
-            await fetch(`${API_BASE}/api/cache/${type}/${id}`, { method: 'DELETE' })
-            message.success('已移除')
-            dialog.destroyAll()
-            fetchBrowserData()
-          } catch (e) {
-            message.error('删除失败')
-          }
-        } }, { default: () => '确认删除' })
-      ])
+      positiveText: '确认删除',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        try {
+          await fetch(`${API_BASE}/api/cache/${type}/${id}`, { method: 'DELETE' })
+          message.success('已移除')
+          fetchBrowserData()
+        } catch (e) {
+          message.error('删除失败')
+          return false
+        }
+      }
     })
   }
 
@@ -174,31 +171,31 @@ export function useTmdbData() {
     dialog.warning({
       title: '确认刷新',
       content: `确定要从 TMDB 云端刷新 "${item.title}" 的元数据吗？\n刷新后除固定标题外，所有数据将被最新值覆盖。`,
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogConfirm'), onClick: async () => {
-          refreshSingleId.value = String(tmdbId)
-          try {
-            const res = await fetch(`${API_BASE}/api/tmdb_full/refresh_all`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tmdb_id: String(tmdbId), media_type: mediaType })
-            })
-            const data = await res.json()
-            if (res.ok) {
-              message.success(data.message || '刷新任务已启动')
-              dialog.destroyAll()
-              await fetchBrowserData(false)
-            } else {
-              message.error(data.message || '刷新失败')
-            }
-          } catch (e) {
-            message.error('请求异常')
-          } finally {
-            refreshSingleId.value = null
+      positiveText: '确认刷新',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        refreshSingleId.value = String(tmdbId)
+        try {
+          const res = await fetch(`${API_BASE}/api/tmdb_full/refresh_all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tmdb_id: String(tmdbId), media_type: mediaType })
+          })
+          const data = await res.json()
+          if (res.ok) {
+            message.success(data.message || '刷新任务已启动')
+            await fetchBrowserData(false)
+          } else {
+            message.error(data.message || '刷新失败')
+            return false
           }
-        } }, { default: () => '确认刷新' })
-      ])
+        } catch (e) {
+          message.error('请求异常')
+          return false
+        } finally {
+          refreshSingleId.value = null
+        }
+      }
     })
   }
 
@@ -220,18 +217,17 @@ export function useTmdbData() {
     dialog.warning({
       title: '确认清空智能记忆',
       content: '这将删除所有智能记忆。',
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
-          try {
-            const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
-            message.success("智能记忆已清空")
-            dialog.destroyAll()
-          } catch (e) {
-            message.error("操作失败")
-          }
-        } }, { default: () => '清空记忆' })
-      ])
+      positiveText: '清空记忆',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        try {
+          await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
+          message.success("智能记忆已清空")
+        } catch (e) {
+          message.error("操作失败")
+          return false
+        }
+      }
     })
   }
 

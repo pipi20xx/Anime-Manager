@@ -850,6 +850,23 @@ input, textarea, select, button {
   color: #ffffff !important;
 }
 
+/* Dialog 取消按钮（Naive UI Dialog 的 negative button 使用 ghost 属性）- 统一为蓝色底色 + 白色文字 */
+.n-dialog .n-dialog__action .n-button--ghost {
+  background: #3B82F6 !important;
+  color: #ffffff !important;
+}
+.n-dialog .n-dialog__action .n-button--ghost:hover {
+  background: #2563EB !important;
+  color: #ffffff !important;
+}
+.n-dialog .n-dialog__action .n-button--ghost:active {
+  background: #1D4ED8 !important;
+  color: #ffffff !important;
+}
+.n-dialog .n-dialog__action .n-button--ghost * {
+  color: #ffffff !important;
+}
+
 /* 主要按钮 - 电光蓝 #3B82F6（排除 ghost 按钮） */
 .n-button--primary-type:not(.n-button--ghost) {
   background: #3B82F6 !important;

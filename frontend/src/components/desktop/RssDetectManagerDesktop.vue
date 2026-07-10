@@ -6,11 +6,13 @@ import { h, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NDataTable, NButton, NSpace,
-  NSwitch, NPopconfirm, NTag, NEmpty, NAlert,
+  NSwitch, NTag, NEmpty, NAlert,
   NForm, NFormItem, NInput, NSelect,
-  NGrid, NGi, NDivider
+  NGrid, NGi, NDivider, useDialog
 } from 'naive-ui'
 import { useRssDetectManager } from '../../composables/components/useRssDetectManager'
+
+const dialog = useDialog()
 
 const props = defineProps<{
   show: boolean
@@ -73,11 +75,19 @@ const listColumns = [
           h(NButton, { size: 'small', onClick: () => openEdit(row) }, { 
             default: () => '编辑'
           }),
-          h(NPopconfirm, { onPositiveClick: () => deleteTask(row.id) }, {
-            trigger: () => h(NButton, { size: 'small', type: 'error' }, { 
-              default: () => '删除'
-            }),
-            default: () => '确定删除此任务？'
+          h(NButton, { 
+            size: 'small', type: 'error',
+            onClick: () => {
+              dialog.warning({
+                title: '确认删除',
+                content: `确定删除任务「${row.name || row.rss_url.slice(0, 40)}」吗？`,
+                positiveText: '确定删除',
+                negativeText: '取消',
+                onPositiveClick: () => deleteTask(row.id)
+              })
+            }
+          }, { 
+            default: () => '删除'
           })
         ]
       })

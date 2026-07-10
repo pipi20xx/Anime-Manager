@@ -1,7 +1,5 @@
-import { ref, onMounted, h } from 'vue'
-import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
-import { DeleteOutlined, CloseOutlined } from '@vicons/material'
-import { getButtonStyle } from '../useButtonStyles'
+import { ref, onMounted } from 'vue'
+import { useMessage, useDialog } from 'naive-ui'
 
 export function useStrmGeneratorView() {
   const message = useMessage()
@@ -111,21 +109,19 @@ export function useStrmGeneratorView() {
     dialog.warning({
       title: '删除任务',
       content: '确定要删除此 STRM 任务吗？',
-      action: () => h('div', { style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;' }, [
-        h(NButton, { ...getButtonStyle('dialogCancel'), onClick: () => dialog.destroyAll() }, { default: () => '取消' }),
-        h(NButton, { ...getButtonStyle('dialogDanger'), onClick: async () => {
-          const configRes = await fetch(`${API_BASE}/api/config`)
-          const config = await configRes.json()
-          config.strm_tasks.splice(index, 1)
-          await fetch(`${API_BASE}/api/config`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-          })
-          fetchTasks()
-          dialog.destroyAll()
-        } }, { default: () => '确定' })
-      ])
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        const configRes = await fetch(`${API_BASE}/api/config`)
+        const config = await configRes.json()
+        config.strm_tasks.splice(index, 1)
+        await fetch(`${API_BASE}/api/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        })
+        fetchTasks()
+      }
     })
   }
 

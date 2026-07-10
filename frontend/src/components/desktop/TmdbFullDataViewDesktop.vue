@@ -5,9 +5,9 @@ import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
 import { ref, watch, nextTick, onBeforeUnmount } from 'vue'
-import { 
+import {
   NSpace, NButton, NIcon, NGrid, NGi, NImage, NTag,
-  NEmpty, NSpin, NForm, NFormItem, NPopconfirm
+  NEmpty, NSpin, NForm, NFormItem, useDialog
 } from 'naive-ui'
 import {
   DeleteOutlined as DeleteIcon,
@@ -21,6 +21,7 @@ import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
+const dialog = useDialog()
 const showRefreshModal = ref(false)
 const refreshForm = ref({
   olderThanDays: null as number | null,
@@ -48,6 +49,16 @@ const {
   handleRefreshSingle,
   refreshSingleId
 } = useTmdbData()
+
+const handleExecuteRefresh = () => {
+  dialog.warning({
+    title: '确认全量刷新',
+    content: '确定要执行全量刷新吗？此操作将在后台异步进行。',
+    positiveText: '确认刷新',
+    negativeText: '取消',
+    onPositiveClick: () => executeRefresh()
+  })
+}
 
 const executeRefresh = () => {
   const options: { olderThanDays?: number; year?: number; mediaType?: string } = {}
@@ -161,12 +172,7 @@ onBeforeUnmount(cleanupObserver)
       <template #footer>
         <n-space justify="end">
           <n-button @click="showRefreshModal = false">取消</n-button>
-          <n-popconfirm @positive-click="executeRefresh" positive-text="确认" negative-text="取消">
-            <template #trigger>
-              <n-button type="warning">开始刷新</n-button>
-            </template>
-            确定要执行全量刷新吗？此操作将在后台异步进行。
-          </n-popconfirm>
+          <n-button type="warning" @click="handleExecuteRefresh">开始刷新</n-button>
         </n-space>
       </template>
     </AppGlassModal>

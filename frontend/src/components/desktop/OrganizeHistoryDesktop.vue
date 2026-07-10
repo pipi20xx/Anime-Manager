@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted, h } from 'vue'
 import { 
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard, useDialog
 } from 'naive-ui'
 import {
   HistoryOutlined as HistoryIcon,
@@ -36,8 +36,7 @@ const {
   formatTime
 } = useOrganizeHistory()
 
-const shouldDeleteFile = ref(false)
-const deletePopconfirmShow = ref<Record<string, boolean>>({})
+const dialog = useDialog()
 
 const scrollTarget = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
@@ -85,8 +84,38 @@ watch(statusFilter, () => {
   fetchData(true)
 })
 
+const handleRetry = (item: any) => {
+  dialog.warning({
+    title: '确认重试',
+    content: '将根据源路径重新执行识别与整理流程（绕过历史去重）。进度可在「任务历史」中查看。',
+    positiveText: '确定重试',
+    negativeText: '取消',
+    onPositiveClick: () => retryItem(item.id)
+  })
+}
+
 const handleRefresh = () => {
   fetchData(true)
+}
+
+const handleDelete = (item: any) => {
+  const deleteFile = ref(false)
+  dialog.warning({
+    title: '确认删除',
+    content: () => h('div', { style: 'max-width: 400px' }, [
+      h('p', { class: 'm-0 mb-2' }, '确定要删除这条整理记录吗？'),
+      h(NCheckbox, {
+        checked: deleteFile.value,
+        'onUpdate:checked': (val: boolean) => { deleteFile.value = val }
+      }, { default: () => h('span', { style: 'color: var(--n-error-color)' }, '同时物理删除源文件') }),
+      deleteFile.value ? h('div', { style: 'font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;' }, '警告：这将尝试永久删除原始源路径下的文件。') : null
+    ]),
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      deleteItem(item.id, deleteFile.value)
+    }
+  })
 }
 </script>
 
@@ -200,51 +229,19 @@ const handleRefresh = () => {
               </div>
             </div>
             <div class="delete-btn-wrapper">
-              <n-popconfirm
-                @positive-click="retryItem(item.id)"
-                positive-text="确定重试"
-                negative-text="取消"
+              <n-button
+                v-bind="getButtonStyle('iconPrimary')"
+                size="small"
+                :loading="isRetrying(item.id)"
+                :disabled="isRetrying(item.id)"
+                style="margin-right: 6px"
+                @click="handleRetry(item)"
               >
-                <template #trigger>
-                  <n-button
-                    v-bind="getButtonStyle('iconPrimary')"
-                    size="small"
-                    :loading="isRetrying(item.id)"
-                    :disabled="isRetrying(item.id)"
-                    style="margin-right: 6px"
-                  >
-                    <template #icon><n-icon><RetryIcon /></n-icon></template>
-                  </n-button>
-                </template>
-                <div style="max-width: 240px">
-                  <p class="m-0">将根据源路径重新执行识别与整理流程（绕过历史去重）。</p>
-                  <p class="m-0" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
-                    进度可在「任务历史」中查看。
-                  </p>
-                </div>
-              </n-popconfirm>
-              <n-popconfirm
-                v-model:show="deletePopconfirmShow[item.id]"
-                @positive-click="deleteItem(item.id, shouldDeleteFile); deletePopconfirmShow[item.id] = false"
-                @negative-click="shouldDeleteFile = false; deletePopconfirmShow[item.id] = false"
-                positive-text="确定删除"
-                negative-text="取消"
-              >
-                <template #trigger>
-                  <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deletePopconfirmShow[item.id] = true">
-                    <template #icon><n-icon><DeleteIcon /></n-icon></template>
-                  </n-button>
-                </template>
-                <div style="max-width: 240px">
-                  <p class="m-0 mb-2">确定要删除这条整理记录吗？</p>
-                  <n-checkbox v-model:checked="shouldDeleteFile">
-                    <span style="color: var(--n-error-color)">同时物理删除源文件</span>
-                  </n-checkbox>
-                  <div v-if="shouldDeleteFile" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.2;">
-                     警告：这将尝试永久删除原始源路径下的文件。
-                  </div>
-                </div>
-              </n-popconfirm>
+                <template #icon><n-icon><RetryIcon /></n-icon></template>
+              </n-button>
+              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDelete(item)">
+                <template #icon><n-icon><DeleteIcon /></n-icon></template>
+              </n-button>
             </div>
           </div>
         </n-card>

@@ -3,7 +3,7 @@ import { ref, onMounted, computed, h } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NInput, NButton, 
-  NSpace, NDataTable, NIcon, NPopconfirm, NSelect, NTabs, NTabPane, NAlert, NPopover
+  NSpace, NDataTable, NIcon, NSelect, NTabs, NTabPane, NAlert, NPopover, useDialog
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
@@ -19,6 +19,8 @@ import {
 } from '@vicons/material'
 import { useDatabase } from '../../composables/views/useDatabase'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+
+const dialog = useDialog()
 
 const {
   activeTab,
@@ -104,14 +106,19 @@ const dataTableColumns = computed(() => {
       cols.push({
           title: '操作', key: 'actions', width: 80, fixed: 'right',
           render(row: any) {
-              return h(NPopconfirm, { 
-                  onPositiveClick: () => deleteRow(row),
-                  positiveText: '确认删除',
-                  negativeText: '取消'
-              }, {
-                  trigger: () => h(NButton, { ...getButtonStyle('iconDanger'), size: 'small' }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) }),
-                  default: () => `确认删除行?`
-              })
+              return h(NButton, { 
+                ...getButtonStyle('iconDanger'), 
+                size: 'small',
+                onClick: () => {
+                  dialog.warning({
+                    title: '确认删除',
+                    content: '确认删除该行数据？此操作不可撤销。',
+                    positiveText: '确认删除',
+                    negativeText: '取消',
+                    onPositiveClick: () => deleteRow(row)
+                  })
+                }
+              }, { icon: () => h(NIcon, null, { default: () => h(DeleteIcon) }) })
           }
       })
   }

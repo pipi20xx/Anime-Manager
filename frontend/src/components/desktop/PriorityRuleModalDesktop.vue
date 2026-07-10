@@ -5,8 +5,8 @@ import AppGlassModal from '../AppGlassModal.vue'
 import AppGlassCard from '../AppGlassCard.vue'
 import { 
   NTabs, NTabPane, NButton, NSpace, NSelect, NSwitch, 
-  NIcon, NGrid, NGi, NEmpty, NPopconfirm, NDivider,
-  NForm, NFormItem, NInputNumber
+  NIcon, NGrid, NGi, NEmpty, NDivider,
+  NForm, NFormItem, NInputNumber, useDialog
 } from 'naive-ui'
 import { 
   AddOutlined as AddIcon,
@@ -22,6 +22,28 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:show'])
+
+const dialog = useDialog()
+
+const handleDeleteProfileWithConfirm = (profile: any) => {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定删除策略「${profile.name}」吗？`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteProfile(profile.id)
+  })
+}
+
+const handleDeleteRuleWithConfirm = (rule: any) => {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定删除规则「${rule.name}」吗？`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteRule(rule.id)
+  })
+}
 
 const {
   activeTab, rules, profiles,
@@ -118,14 +140,9 @@ function getConditions(rule: any) {
               <div v-else class="rule-preview-empty">暂无规则</div>
               <template #action>
                 <n-space justify="end" @click.stop>
-                  <n-popconfirm positive-text="确定" negative-text="取消" @positive-click.stop="deleteProfile(profile.id)">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('iconDanger')" size="small">
-                        <template #icon><n-icon><DeleteIcon/></n-icon></template>
-                      </n-button>
-                    </template>
-                    确定删除此策略吗？
-                  </n-popconfirm>
+                  <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteProfileWithConfirm(profile)">
+                    <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                  </n-button>
                 </n-space>
               </template>
             </AppGlassCard>
@@ -165,14 +182,9 @@ function getConditions(rule: any) {
               </div>
               <template #action>
                 <n-space justify="end" @click.stop>
-                  <n-popconfirm positive-text="确定" negative-text="取消" @positive-click="deleteRule(rule.id)">
-                    <template #trigger>
-                      <n-button v-bind="getButtonStyle('iconDanger')" size="small">
-                        <template #icon><n-icon><DeleteIcon/></n-icon></template>
-                      </n-button>
-                    </template>
-                    确定删除？
-                  </n-popconfirm>
+                  <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteRuleWithConfirm(rule)">
+                    <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                  </n-button>
                 </n-space>
               </template>
             </AppGlassCard>

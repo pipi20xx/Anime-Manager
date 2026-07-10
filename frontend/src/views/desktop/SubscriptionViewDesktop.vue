@@ -2,7 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import {
   NCard, NSpace, NButton, NIcon, NTabs, NTabPane,
-  NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip
+  NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip, useDialog
 } from 'naive-ui'
 import {
   AddOutlined as AddIcon,
@@ -59,6 +59,28 @@ const clientNameMap = computed(() => {
   return map
 })
 const getClientName = (id: string) => (id ? (clientNameMap.value[id] || '—') : '—')
+
+const dialog = useDialog()
+
+const handleDeleteFeed = (feed: any) => {
+  dialog.warning({
+    title: '确认移除',
+    content: `确定彻底移除订阅源「${feed.title || feed.url}」吗？`,
+    positiveText: '确定移除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteFeed(feed.id)
+  })
+}
+
+const handleDeleteRule = (rule: any) => {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除规则「${rule.name || '未命名规则'}」吗？`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteRule(rule.id)
+  })
+}
 
 onMounted(fetchData)
 </script>
@@ -123,19 +145,14 @@ onMounted(fetchData)
 
               <div class="f-act" @click.stop>
                 <n-space :size="4">
-                  <n-popconfirm @positive-click="deleteFeed(feed.id)" positive-text="删除" negative-text="取消">
+                  <n-tooltip trigger="hover">
                     <template #trigger>
-                      <n-tooltip trigger="hover">
-                        <template #trigger>
-                          <n-button v-bind="getButtonStyle('iconDanger')" size="small">
-                            <template #icon><n-icon><DeleteIcon/></n-icon></template>
-                          </n-button>
-                        </template>
-                        移除订阅源
-                      </n-tooltip>
+                      <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteFeed(feed)">
+                        <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                      </n-button>
                     </template>
-                    确定彻底移除此订阅源吗？
-                  </n-popconfirm>
+                    移除订阅源
+                  </n-tooltip>
                 </n-space>
               </div>
             </n-card>
@@ -201,19 +218,14 @@ onMounted(fetchData)
                     </template>
                     复制规则
                   </n-tooltip>
-                  <n-popconfirm @positive-click="deleteRule(rule.id)" positive-text="删除" negative-text="取消">
+                  <n-tooltip trigger="hover">
                     <template #trigger>
-                      <n-tooltip trigger="hover">
-                        <template #trigger>
-                          <n-button v-bind="getButtonStyle('iconDanger')" size="small">
-                            <template #icon><n-icon><DeleteIcon/></n-icon></template>
-                          </n-button>
-                        </template>
-                        删除规则
-                      </n-tooltip>
+                      <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteRule(rule)">
+                        <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                      </n-button>
                     </template>
-                    确定要删除此规则吗？
-                  </n-popconfirm>
+                    删除规则
+                  </n-tooltip>
                 </n-space>
               </div>
             </n-card>

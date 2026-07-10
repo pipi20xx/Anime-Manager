@@ -2,7 +2,7 @@
 import { 
   NCard, NSpace, NButton, NIcon, NForm, NFormItem, 
   NDivider, NGrid, NGi, NSwitch, NTabs, NTabPane,
-  NSpin, NCheckbox, NPopconfirm
+  NSpin, NCheckbox, useDialog
 } from 'naive-ui'
 import {
   SaveOutlined as SaveIcon,
@@ -18,6 +18,18 @@ import AccountTab from '../../views/settings/AccountTab.vue'
 import ServiceStatusTab from '../../views/settings/ServiceStatusTab.vue'
 import { useSettings } from '../../composables/views/useSettings'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+
+const dialog = useDialog()
+
+const handleDeleteClientWithConfirm = (client: any) => {
+  dialog.warning({
+    title: '确认删除',
+    content: `确定要删除下载客户端「${client.name}」吗？`,
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => handleDeleteClient(client.id)
+  })
+}
 
 const {
   loading,
@@ -443,18 +455,9 @@ const {
                   </div>
                   <template #action>
                     <n-space justify="end" @click.stop>
-                      <n-popconfirm
-                        positive-text="确定"
-                        negative-text="取消"
-                        @positive-click="handleDeleteClient(client.id)"
-                      >
-                        <template #trigger>
-                          <n-button v-bind="getButtonStyle('iconDanger')" size="small">
-                            <template #icon><n-icon><DeleteIcon/></n-icon></template>
-                          </n-button>
-                        </template>
-                        确定要删除该下载客户端配置吗？
-                      </n-popconfirm>
+                      <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteClientWithConfirm(client)">
+                        <template #icon><n-icon><DeleteIcon/></n-icon></template>
+                      </n-button>
                     </n-space>
                   </template>
                 </n-card>

@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import { 
-  NCard, NButton, NSpace, NIcon, NPopconfirm, NAlert, NGrid, NGridItem, NTag, NSpin
+  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, useDialog
 } from 'naive-ui'
 import {
   CleaningServicesOutlined as CleanIcon,
   StorageOutlined as DbIcon
 } from '@vicons/material'
 import { useMaintenance } from '../../composables/components/useMaintenance'
+
+const dialog = useDialog()
+
+const handleTruncateWithConfirm = (tableName: string) => {
+  dialog.error({
+    title: '危险操作',
+    content: `确认要清空数据库表 [${tableName}] 吗？此操作将永久删除表中所有数据，无法撤销。`,
+    positiveText: '确认清空',
+    negativeText: '取消',
+    onPositiveClick: () => handleTruncate(tableName)
+  })
+}
 
 const {
   loading,
@@ -47,25 +59,17 @@ const getTagStyle = (count: number) => {
                 </n-tag>
               </div>
               <div class="actions">
-                <n-popconfirm 
-                  @positive-click="handleTruncate(table.name)"
-                  positive-text="确认清理"
-                  negative-text="取消"
+                <n-button 
+                  block 
+                  secondary 
+                  type="error" 
+                  size="small"
+                  :loading="maintenanceLoading[table.name]"
+                  @click="handleTruncateWithConfirm(table.name)"
                 >
-                  <template #trigger>
-                    <n-button 
-                      block 
-                      secondary 
-                      type="error" 
-                      size="small"
-                      :loading="maintenanceLoading[table.name]"
-                    >
-                      <template #icon><n-icon><CleanIcon /></n-icon></template>
-                      清空数据
-                    </n-button>
-                  </template>
-                  确认要清空数据库表 <code style="color: var(--color-error); font-weight: bold;">[{{ table.name }}]</code> 吗？
-                </n-popconfirm>
+                  <template #icon><n-icon><CleanIcon /></n-icon></template>
+                  清空数据
+                </n-button>
               </div>
             </n-card>
           </n-grid-item>

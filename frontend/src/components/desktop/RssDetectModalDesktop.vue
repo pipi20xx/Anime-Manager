@@ -3,13 +3,15 @@ import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NButton, NSpace, NSelect, NInput,
   NSpin, NEmpty, NTag, NDivider, NRadioGroup, NRadio,
-  NGrid, NGi, NDataTable, NPopconfirm, NSwitch, NAlert
+  NGrid, NGi, NDataTable, NSwitch, NAlert, useDialog
 } from 'naive-ui'
 import { h } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useRssDetect } from '../../composables/components/useRssDetect'
+
+const dialog = useDialog()
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits(['update:show', 'finish'])
@@ -84,10 +86,18 @@ const createTaskColumns = (runFn: Function, deleteFn: Function) => [
     render: (row: any) => h(NSpace, null, {
       default: () => [
         h(NButton, { size: 'tiny', type: 'primary', onClick: () => runFn(row.id) }, { default: () => '执行' }),
-        h(NPopconfirm, { onPositiveClick: () => deleteFn(row.id) }, {
-          trigger: () => h(NButton, { size: 'tiny', type: 'error' }, { default: () => '删除' }),
-          default: () => '确定删除此任务？'
-        })
+        h(NButton, { 
+          size: 'tiny', type: 'error',
+          onClick: () => {
+            dialog.warning({
+              title: '确认删除',
+              content: '确定删除此任务吗？',
+              positiveText: '确定删除',
+              negativeText: '取消',
+              onPositiveClick: () => deleteFn(row.id)
+            })
+          }
+        }, { default: () => '删除' })
       ]
     })
   }

@@ -17,7 +17,7 @@
  * />
  */
 
-import { h, type Component } from 'vue'
+import { type Component } from 'vue'
 import { NPopconfirm, NButton, NIcon, useDialog } from 'naive-ui'
 import { useIsMobile } from '../../composables/useIsMobile'
 import { getButtonStyle, type ButtonStyleKey } from '../../composables/useButtonStyles'
@@ -63,21 +63,13 @@ const handleConfirm = () => {
 }
 
 const triggerMobileDialog = () => {
-  dialog.warning({
+  const dialogMethod = props.danger ? dialog.error : dialog.warning
+  dialogMethod.call(dialog, {
     title: props.title || '确认操作',
     content: props.content,
-    action: () => h('div', {
-      style: 'display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px;'
-    }, [
-      h(NButton, {
-        ...getButtonStyle('dialogCancel'),
-        onClick: () => dialog.destroyAll()
-      }, { default: () => props.cancelText }),
-      h(NButton, {
-        ...getButtonStyle(props.danger ? 'dialogDanger' : 'dialogConfirm'),
-        onClick: () => { handleConfirm(); dialog.destroyAll() }
-      }, { default: () => props.confirmText })
-    ])
+    positiveText: props.confirmText,
+    negativeText: props.cancelText,
+    onPositiveClick: () => handleConfirm()
   })
 }
 </script>
