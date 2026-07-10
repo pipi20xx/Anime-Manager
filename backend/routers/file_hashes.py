@@ -7,6 +7,7 @@ from sqlmodel import select, desc, func
 from database import db
 from models import FileHash
 from utils.hash_calculator import HashCalculator
+from logger import log_audit
 
 router = APIRouter(prefix="/api/file_hashes", tags=["文件哈希"])
 
@@ -245,6 +246,7 @@ async def calculate_single_file_hash(request: SingleFileHashRequest):
                 existing.release_date = request.release_date
             await session.commit()
             await session.refresh(existing)
+            log_audit("哈希", "入库成功", f"{hash_result.filename} (已更新)", level="SUCCESS")
             return {"status": "success", "message": "哈希记录已更新", "data": existing}
         else:
             new_record = FileHash(
@@ -275,4 +277,5 @@ async def calculate_single_file_hash(request: SingleFileHashRequest):
             session.add(new_record)
             await session.commit()
             await session.refresh(new_record)
+            log_audit("哈希", "入库成功", f"{hash_result.filename} (新建)", level="SUCCESS")
             return {"status": "success", "message": "哈希记录已创建", "data": new_record}

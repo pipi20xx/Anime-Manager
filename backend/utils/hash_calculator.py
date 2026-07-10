@@ -188,7 +188,29 @@ class HashCalculator:
     
     @staticmethod
     async def calculate_hashes(file_path: str) -> Optional[HashResult]:
-        return await asyncio.to_thread(HashCalculator.calculate_hashes_sync, file_path)
+        filename = os.path.basename(file_path)
+        file_size = 0
+        try:
+            file_size = os.path.getsize(file_path)
+        except Exception:
+            pass
+
+        from logger import log_audit
+        size_mb = file_size / 1024 / 1024 if file_size else 0
+        log_audit("哈希", "开始计算", f"{filename} ({size_mb:.2f} MB)")
+
+        result = await asyncio.to_thread(HashCalculator.calculate_hashes_sync, file_path)
+
+        if result:
+            log_audit(
+                "哈希", "计算完成", filename,
+                level="SUCCESS",
+                details=f"SHA1: {result.sha1} | ED2K: {result.ed2k}"
+            )
+        else:
+            log_audit("哈希", "计算失败", filename, level="ERROR")
+
+        return result
 
 
 def format_file_size(size_bytes: int) -> str:

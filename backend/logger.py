@@ -227,7 +227,8 @@ def log_audit(module: str, action: str, message: str, level: str = "INFO", detai
         "DONE": "🏁",
         "CLEAN": "🗑️",
         "DB": "🗄️",
-        "AUTH": "🔒"
+        "AUTH": "🔒",
+        "哈希": "🔢"
     }
     
     # 根据 Action 或 Module 自动选择 Emoji
