@@ -2,7 +2,6 @@
 /**
  * RecognitionResult - 统一识别结果展示
  *
- * 合并自 RecognitionResultDesktop + RecognitionResultMobile
  * 通过 CSS 媒体查询自动适配:
  * - 桌面: FinalCard 在上, RawCard + TmdbCard 并排
  * - 移动: 三张卡片纵向堆叠

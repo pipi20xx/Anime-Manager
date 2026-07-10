@@ -2,8 +2,7 @@
 /**
  * RecognitionTmdbCard - TMDB 原始详情卡片
  *
- * 合并自 RecognitionTmdbCardDesktop + RecognitionTmdbCardMobile
- * 以 Desktop 版为基准, 通过 CSS 适配移动端
+ * TMDB 原始详情卡片，通过 CSS 适配移动端
  */
 import { NCard, NIcon, NImage, NTag } from 'naive-ui'
 import { CloudQueueOutlined as RemoteIcon } from '@vicons/material'

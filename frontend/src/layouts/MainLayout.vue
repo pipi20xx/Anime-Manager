@@ -352,7 +352,7 @@ const handlePanelModalAction = (callback: () => void) => {
               size="small"
               :type="route.name === 'Home' ? 'primary' : 'default'"
               @click="router.push({ name: 'Home' })"
-              title="识别控制台"
+              title="识别调试台"
             >
               <template #icon><n-icon><MovieIcon /></n-icon></template>
             </n-button>

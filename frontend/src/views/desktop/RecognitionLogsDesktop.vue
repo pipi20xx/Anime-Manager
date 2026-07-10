@@ -54,9 +54,7 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
 .log-container-wrapper {
   height: calc(100vh - 220px); 
   min-height: 500px;
-  background: var(--app-surface-inner);
-  border: 1px solid var(--app-border-light);
-  border-radius: var(--code-radius, 4px);
+  background: transparent;
 }
 
 .log-content {
@@ -71,5 +69,5 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
 .log-debug { color: var(--n-info-color); }
 .log-success { color: var(--n-primary-color); }
 .log-warning { color: var(--n-warning-color); }
-.log-result { background: var(--warning-light); border-left: 3px solid var(--n-warning-color); padding-left: 12px; font-weight: bold; margin: 8px 0; }
+.log-result { border-left: 3px solid var(--n-warning-color); padding-left: 12px; font-weight: bold; margin: 8px 0; }
 </style>

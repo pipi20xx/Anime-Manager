@@ -1,8 +1,7 @@
 <script setup lang="ts">
 /**
- * HomeView - 识别控制台
+ * HomeView - 识别调试台
  *
- * 合并自 HomeViewDesktop + HomeViewMobile
  * 使用 app-split-layout 实现:
  * - 桌面 (≥1024px): 主区域 + 偏好侧栏并排
  * - 移动 (<1024px): 主区域在上, 偏好在下
@@ -38,8 +37,8 @@ const {
     <!-- 页面头部 -->
     <div class="app-page-header">
       <div>
-        <h1>识别控制台</h1>
-        <div class="subtitle">仪表盘与智能识别</div>
+        <h1>识别调试台</h1>
+        <div class="subtitle">文件名识别测试与结果查看</div>
       </div>
     </div>
 
@@ -48,8 +47,8 @@ const {
       <!-- 主区域 -->
       <div class="app-split-layout__main">
         <n-card content-style="padding: 0;" bordered>
-          <n-tabs type="line" size="large" justify-content="start" tab-style="padding: 12px 24px;">
-            <n-tab-pane name="dashboard" tab="识别仪表盘">
+          <n-tabs type="line" animated class="custom-tabs">
+            <n-tab-pane name="dashboard" tab="识别测试">
               <div class="dashboard-content">
                 <n-space vertical size="large">
                   <!-- 搜索入口 -->
@@ -204,6 +203,7 @@ const {
 
 <style scoped>
 .dashboard-content { padding: var(--rsp-card-padding); }
+.custom-tabs { --tabs-pane-padding: 16px 0 0 0; }
 
 .search-hero { margin-bottom: var(--space-4); }
 

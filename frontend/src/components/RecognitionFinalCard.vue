@@ -2,8 +2,7 @@
 /**
  * RecognitionFinalCard - 最终识别结论卡片
  *
- * 合并自 RecognitionFinalCardDesktop + RecognitionFinalCardMobile
- * 以 Desktop 版为基准 (信息更完整), 通过 CSS 媒体查询适配移动端
+ * 最终识别结论卡片，通过 CSS 媒体查询适配移动端
  */
 import { NCard, NIcon, NImage } from 'naive-ui'
 import { FlagOutlined as FinalIcon } from '@vicons/material'
@@ -129,7 +128,7 @@ const {
 .rl { color: var(--text-muted); width: 160px; flex-shrink: 0; }
 .rv { color: var(--text-secondary); word-break: break-all; }
 .rv.team { color: var(--n-success-color); font-weight: bold; }
-.rv.mono { font-family: monospace; color: var(--n-warning-color); background: var(--warning-subtle); padding: 0 var(--space-1); border-radius: var(--button-border-radius, 2px); }
+.rv.mono { font-family: monospace; color: var(--n-warning-color); padding: 0 var(--space-1); }
 .filename-text { font-size: var(--text-xs); opacity: var(--opacity-tertiary); }
 
 /* === 移动端适配 === */

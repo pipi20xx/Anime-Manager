@@ -2,8 +2,7 @@
 /**
  * RecognitionRawCard - 本地解析元数据卡片
  *
- * 合并自 RecognitionRawCardDesktop + RecognitionRawCardMobile
- * 以 Desktop 版为基准 (显示更多规格信息), 通过 CSS 适配移动端
+ * 本地解析元数据卡片，通过 CSS 适配移动端
  */
 import { NCard, NTag, NIcon, NDivider } from 'naive-ui'
 import { StorageOutlined as LocalIcon } from '@vicons/material'
