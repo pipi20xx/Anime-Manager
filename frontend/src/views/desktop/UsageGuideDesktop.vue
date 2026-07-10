@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { NButtonGroup, NButton } from 'naive-ui'
+import { NTabs, NTabPane } from 'naive-ui'
 import RecognitionPipeline from '../../components/RecognitionPipeline.vue'
 import RecognitionRules from '../../components/RecognitionRules.vue'
 import PrivilegedRules from '../../components/PrivilegedRules.vue'
@@ -13,21 +12,6 @@ import SettingsGuide from '../../components/SettingsGuide.vue'
 import { useUsageGuide } from '../../composables/views/useUsageGuide'
 
 const { activeTab } = useUsageGuide()
-
-const row1 = [
-  { key: 'settings', label: '设置说明' },
-  { key: 'pipeline', label: '全链路识别流水线' },
-  { key: 'recognition', label: '自定义识别词 (预处理)' },
-  { key: 'privileged', label: '自定义特权规则 (优先提取)' },
-  { key: 'render', label: '自定义渲染词 (后处理)' },
-]
-
-const row2 = [
-  { key: 'rss', label: '下载规则配置 (RSS)' },
-  { key: 'subscription', label: '追剧订阅配置 (TMDB)' },
-  { key: 'strm', label: '虚拟库 (STRM)' },
-  { key: 'datacenter', label: '数据中心架构' },
-]
 </script>
 
 <template>
@@ -37,40 +21,35 @@ const row2 = [
       <div class="subtitle">规则与正则指南</div>
     </div>
 
-    <div class="tab-nav">
-      <n-button-group size="small" class="tab-row">
-        <n-button
-          v-for="t in row1" :key="t.key"
-          :type="activeTab === t.key ? 'primary' : 'tertiary'"
-          :ghost="activeTab !== t.key"
-          @click="activeTab = t.key"
-        >
-          {{ t.label }}
-        </n-button>
-      </n-button-group>
-      <n-button-group size="small" class="tab-row">
-        <n-button
-          v-for="t in row2" :key="t.key"
-          :type="activeTab === t.key ? 'primary' : 'tertiary'"
-          :ghost="activeTab !== t.key"
-          @click="activeTab = t.key"
-        >
-          {{ t.label }}
-        </n-button>
-      </n-button-group>
-    </div>
-
-    <div class="tab-content">
-      <SettingsGuide v-if="activeTab === 'settings'" />
-      <RecognitionPipeline v-else-if="activeTab === 'pipeline'" />
-      <RecognitionRules v-else-if="activeTab === 'recognition'" />
-      <PrivilegedRules v-else-if="activeTab === 'privileged'" />
-      <RenderRules v-else-if="activeTab === 'render'" />
-      <RssRuleGuide v-else-if="activeTab === 'rss'" />
-      <SubscriptionGuide v-else-if="activeTab === 'subscription'" />
-      <StrmGuide v-else-if="activeTab === 'strm'" />
-      <DataCenterGuide v-else-if="activeTab === 'datacenter'" />
-    </div>
+    <n-tabs v-model:value="activeTab" type="line" animated class="custom-tabs">
+      <n-tab-pane name="settings" tab="设置说明">
+        <SettingsGuide />
+      </n-tab-pane>
+      <n-tab-pane name="pipeline" tab="全链路识别流水线">
+        <RecognitionPipeline />
+      </n-tab-pane>
+      <n-tab-pane name="recognition" tab="自定义识别词 (预处理)">
+        <RecognitionRules />
+      </n-tab-pane>
+      <n-tab-pane name="privileged" tab="自定义特权规则 (优先提取)">
+        <PrivilegedRules />
+      </n-tab-pane>
+      <n-tab-pane name="render" tab="自定义渲染词 (后处理)">
+        <RenderRules />
+      </n-tab-pane>
+      <n-tab-pane name="rss" tab="下载规则配置 (RSS)">
+        <RssRuleGuide />
+      </n-tab-pane>
+      <n-tab-pane name="subscription" tab="追剧订阅配置 (TMDB)">
+        <SubscriptionGuide />
+      </n-tab-pane>
+      <n-tab-pane name="strm" tab="虚拟库 (STRM)">
+        <StrmGuide />
+      </n-tab-pane>
+      <n-tab-pane name="datacenter" tab="数据中心架构">
+        <DataCenterGuide />
+      </n-tab-pane>
+    </n-tabs>
   </div>
 </template>
 
@@ -80,18 +59,5 @@ const row2 = [
 .subtitle { font-size: var(--text-base); color: var(--n-primary-color); letter-spacing: 2px; font-weight: bold; }
 .mb-8 { margin-bottom: 32px; }
 
-.tab-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.tab-row {
-  flex-wrap: wrap;
-}
-
-.tab-content {
-  margin-top: 16px;
-}
+/* Tabs 样式已移至 global.css 统一管理 */
 </style>
