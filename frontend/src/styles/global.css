@@ -138,6 +138,8 @@
   --btn-text-color: var(--n-primary-color);  /* 纯文字按钮文字颜色 */
   --btn-text-bg-hover: rgba(59, 130, 246, 0.1);  /* 纯文字按钮 hover 底色 */
   --btn-text-bg-pressed: rgba(59, 130, 246, 0.15);  /* 纯文字按钮 pressed 底色 */
+  --btn-warning-color: #F59E0B;  /* 警告按钮背景色 */
+  --btn-danger-color: #EF4444;   /* 危险按钮背景色 */
 
   /* ========== Tabs 外观自定义变量 ========== */
   --tabs-nav-bg: var(--app-surface-card);  /* Tabs导航栏背景色 */
@@ -774,32 +776,30 @@ input, textarea, select, button {
   background: transparent !important;
 }
 
-/* Popconfirm 按钮统一颜色 - 不受白天/黑夜模式影响 */
-
-/* 取消按钮 - 琥珀黄 #F59E0B（警告色）+ 白色文字 */
-.n-popconfirm .n-popconfirm__action .n-button {
-  background-color: #F59E0B !important;
-  color: #ffffff !important;
-  border-color: #F59E0B !important;
+/* Popconfirm 按钮 - 使用统一的按钮外观变量 */
+/* 取消按钮（默认样式） */
+.n-popconfirm .n-popconfirm__action .n-button:not(.n-button--primary-type) {
+  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
+  color: var(--btn-text-color, var(--n-primary-color)) !important;
+  border: none !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
+}
+.n-popconfirm .n-popconfirm__action .n-button:not(.n-button--primary-type):hover {
+  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
 }
 
-.n-popconfirm .n-popconfirm__action .n-button:hover {
-  background-color: #D97706 !important;
-  border-color: #D97706 !important;
+/* 确定按钮（主要样式） */
+.n-popconfirm .n-popconfirm__action .n-button--primary-type {
+  background: #3B82F6 !important;
   color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
-
-/* 确定按钮 - 电光蓝 #3B82F6（主要色）+ 白色文字 */
-.n-popconfirm .n-popconfirm__action .n-button--primary {
-  background-color: #3B82F6 !important;
-  color: #ffffff !important;
-  border-color: #3B82F6 !important;
+.n-popconfirm .n-popconfirm__action .n-button--primary-type:hover {
+  background: #2563EB !important;
 }
-
-.n-popconfirm .n-popconfirm__action .n-button--primary:hover {
-  background-color: #2563EB !important;
-  border-color: #2563EB !important;
-  color: #ffffff !important;
+.n-popconfirm .n-popconfirm__action .n-button--primary-type:active {
+  background: #1D4ED8 !important;
 }
 
 :deep(.n-popconfirm__arrow) {
@@ -893,13 +893,39 @@ input, textarea, select, button {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Dialog 主题化 */
+/* Dialog 主题化 - 跟随 modal 外观设置 */
 .n-dialog {
   background: var(--app-modal-bg) !important;
   color: var(--text-primary) !important;
   border: var(--app-modal-border-width, 1px) solid var(--app-modal-border-color, #3B82F6) !important;
   border-radius: var(--app-modal-border-radius, 14px) !important;
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Dialog 按钮 - 使用统一的按钮外观变量 */
+/* Dialog 取消按钮（ghost） */
+.n-dialog .n-dialog__action .n-button--ghost {
+  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
+  color: var(--btn-text-color, var(--n-primary-color)) !important;
+  border: none !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
+}
+.n-dialog .n-dialog__action .n-button--ghost:hover {
+  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+}
+
+/* Dialog 确定按钮（primary） */
+.n-dialog .n-dialog__action .n-button--primary-type {
+  background: #3B82F6 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
+}
+.n-dialog .n-dialog__action .n-button--primary-type:hover {
+  background: #2563EB !important;
+}
+.n-dialog .n-dialog__action .n-button--primary-type:active {
+  background: #1D4ED8 !important;
 }
 
 /* Sider Trigger 主题化 */
@@ -950,22 +976,6 @@ input, textarea, select, button {
   color: #ffffff !important;
 }
 
-/* Dialog 取消按钮（Naive UI Dialog 的 negative button 使用 ghost 属性）- 统一为蓝色底色 + 白色文字 */
-.n-dialog .n-dialog__action .n-button--ghost {
-  background: #3B82F6 !important;
-  color: #ffffff !important;
-}
-.n-dialog .n-dialog__action .n-button--ghost:hover {
-  background: #2563EB !important;
-  color: #ffffff !important;
-}
-.n-dialog .n-dialog__action .n-button--ghost:active {
-  background: #1D4ED8 !important;
-  color: #ffffff !important;
-}
-.n-dialog .n-dialog__action .n-button--ghost * {
-  color: #ffffff !important;
-}
 
 /* 主要按钮 - 电光蓝 #3B82F6（排除 ghost 按钮） */
 .n-button--primary-type:not(.n-button--ghost) {
@@ -1009,44 +1019,44 @@ input, textarea, select, button {
   color: #ffffff !important;
 }
 
-/* 警告按钮 - 琥珀黄 #F59E0B（排除 ghost 按钮） */
+/* 警告按钮 - 使用 CSS 变量（排除 ghost 按钮） */
 .n-button--warning-type:not(.n-button--ghost) {
-  background: #F59E0B !important;
+  background: var(--btn-warning-color, #F59E0B) !important;
   border: none !important;
   color: #ffffff !important;
   border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--warning-type:not(.n-button--ghost):hover {
-  background: #D97706 !important;
+  background: color-mix(in srgb, var(--btn-warning-color, #F59E0B), black 15%) !important;
   border: none !important;
 }
 .n-button--warning-type:not(.n-button--ghost):active {
-  background: #B45309 !important;
+  background: color-mix(in srgb, var(--btn-warning-color, #F59E0B), black 30%) !important;
   border: none !important;
 }
 .n-button--warning-type:not(.n-button--ghost):focus {
-  background: #F59E0B !important;
+  background: var(--btn-warning-color, #F59E0B) !important;
   border: none !important;
   color: #ffffff !important;
 }
 
-/* 错误/危险按钮 - 珊瑚红 #EF4444（排除 ghost 按钮） */
+/* 错误/危险按钮 - 使用 CSS 变量（排除 ghost 按钮） */
 .n-button--error-type:not(.n-button--ghost) {
-  background: #EF4444 !important;
+  background: var(--btn-danger-color, #EF4444) !important;
   border: none !important;
   color: #ffffff !important;
   border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--error-type:not(.n-button--ghost):hover {
-  background: #DC2626 !important;
+  background: color-mix(in srgb, var(--btn-danger-color, #EF4444), black 15%) !important;
   border: none !important;
 }
 .n-button--error-type:not(.n-button--ghost):active {
-  background: #B91C1C !important;
+  background: color-mix(in srgb, var(--btn-danger-color, #EF4444), black 30%) !important;
   border: none !important;
 }
 .n-button--error-type:not(.n-button--ghost):focus {
-  background: #EF4444 !important;
+  background: var(--btn-danger-color, #EF4444) !important;
   border: none !important;
   color: #ffffff !important;
 }

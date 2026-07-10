@@ -90,6 +90,10 @@ export interface AppearanceButton {
   text_bg_hover: string
   /** 纯文字按钮 pressed 底色 */
   text_bg_pressed: string
+  /** 警告按钮背景色 */
+  warning_color: string
+  /** 危险按钮背景色 */
+  danger_color: string
 }
 
 /**

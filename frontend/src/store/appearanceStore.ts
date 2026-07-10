@@ -70,6 +70,8 @@ const defaultConfig: AppearanceConfig = {
     text_color: '#3B82F6',
     text_bg_hover: 'rgba(59, 130, 246, 0.1)',
     text_bg_pressed: 'rgba(59, 130, 246, 0.15)',
+    warning_color: '#F59E0B',
+    danger_color: '#EF4444',
   },
   // 实例级覆盖：key 对应组件的 appearance-key
   // 默认为空对象，未列出的组件走全局默认
@@ -245,6 +247,8 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--btn-text-color', button.text_color)
     root.style.setProperty('--btn-text-bg-hover', button.text_bg_hover)
     root.style.setProperty('--btn-text-bg-pressed', button.text_bg_pressed)
+    root.style.setProperty('--btn-warning-color', button.warning_color)
+    root.style.setProperty('--btn-danger-color', button.danger_color)
   } else {
     root.style.setProperty('--btn-border-radius', '8px')
     root.style.setProperty('--btn-height-medium', '32px')
@@ -253,6 +257,8 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--btn-text-color', 'var(--n-primary-color)')
     root.style.setProperty('--btn-text-bg-hover', 'rgba(59, 130, 246, 0.1)')
     root.style.setProperty('--btn-text-bg-pressed', 'rgba(59, 130, 246, 0.15)')
+    root.style.setProperty('--btn-warning-color', '#F59E0B')
+    root.style.setProperty('--btn-danger-color', '#EF4444')
   }
 
   // === 实例级覆盖 ===
@@ -525,6 +531,12 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
     if (b.text_bg_pressed !== undefined) {
       decls.push(`--btn-text-bg-pressed: ${b.text_bg_pressed};`)
+    }
+    if (b.warning_color !== undefined) {
+      decls.push(`--btn-warning-color: ${b.warning_color};`)
+    }
+    if (b.danger_color !== undefined) {
+      decls.push(`--btn-danger-color: ${b.danger_color};`)
     }
   }
 

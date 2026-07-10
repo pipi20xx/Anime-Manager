@@ -532,6 +532,19 @@ const formatFileSize = (size: number) => {
                 <n-color-picker v-model:value="form.button.text_bg_pressed" :modes="['hex']" :show-alpha="true" @update:value="preview" size="small" />
               </div>
             </div>
+            <n-divider style="margin: 12px 0;" />
+            <div class="form-row">
+              <div class="form-label">警告按钮颜色</div>
+              <div class="form-control">
+                <n-color-picker v-model:value="form.button.warning_color" :modes="['hex']" :show-alpha="false" @update:value="preview" size="small" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">危险按钮颜色</div>
+              <div class="form-control">
+                <n-color-picker v-model:value="form.button.danger_color" :modes="['hex']" :show-alpha="false" @update:value="preview" size="small" />
+              </div>
+            </div>
           </template>
         </n-card>
 

@@ -888,6 +888,24 @@ defineExpose({ currentInstanceOverrides, instanceCount })
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.button.text_bg_pressed }}</div>
             </div>
+
+            <n-divider style="margin: 12px 0;" />
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'warning_color')" @update:checked="v => toggleFieldOverride('button', 'warning_color', v)">警告按钮颜色</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'warning_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('button', 'warning_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('button', 'warning_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.warning_color }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'danger_color')" @update:checked="v => toggleFieldOverride('button', 'danger_color', v)">危险按钮颜色</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'danger_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('button', 'danger_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('button', 'danger_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.danger_color }}</div>
+            </div>
           </div>
         </n-tab-pane>
       </n-tabs>
