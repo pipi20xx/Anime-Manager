@@ -39,6 +39,16 @@ export interface AppearanceTabs {
   nav_opacity: number
   tab_active_bg: string
   tab_active_text_color: string
+  /** 单个标签高度（px） */
+  tab_height: number
+  /** 标签之间的间距（px） */
+  tab_gap: number
+  /** 单个标签水平内边距（px） */
+  tab_padding: number
+  /** 单个标签圆角（px） */
+  tab_border_radius: number
+  /** 标签文字大小（px） */
+  tab_font_size: number
 }
 
 export interface AppearanceInput {

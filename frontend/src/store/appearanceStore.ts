@@ -35,6 +35,11 @@ const defaultConfig: AppearanceConfig = {
     nav_opacity: 1,
     tab_active_bg: '#3b82f6',
     tab_active_text_color: '#ffffff',
+    tab_height: 40,
+    tab_gap: 4,
+    tab_padding: 16,
+    tab_border_radius: 8,
+    tab_font_size: 14,
   },
   input: {
     enabled: false,
@@ -161,11 +166,21 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--tabs-nav-bg-transparent-pct', `${transparentPct}%`)
     root.style.setProperty('--tabs-tab-active-bg', tabs.tab_active_bg)
     root.style.setProperty('--tabs-tab-active-text-color', tabs.tab_active_text_color)
+    root.style.setProperty('--tabs-tab-height', `${tabs.tab_height}px`)
+    root.style.setProperty('--tabs-tab-gap', `${tabs.tab_gap}px`)
+    root.style.setProperty('--tabs-tab-padding', `${tabs.tab_padding}px`)
+    root.style.setProperty('--tabs-tab-border-radius', `${tabs.tab_border_radius}px`)
+    root.style.setProperty('--tabs-tab-font-size', `${tabs.tab_font_size}px`)
   } else {
     root.style.setProperty('--tabs-nav-blur', 'none')
     root.style.setProperty('--tabs-nav-bg-transparent-pct', '0%')
     root.style.setProperty('--tabs-tab-active-bg', '#3b82f6')
     root.style.setProperty('--tabs-tab-active-text-color', '#ffffff')
+    root.style.setProperty('--tabs-tab-height', '40px')
+    root.style.setProperty('--tabs-tab-gap', '4px')
+    root.style.setProperty('--tabs-tab-padding', '16px')
+    root.style.setProperty('--tabs-tab-border-radius', '8px')
+    root.style.setProperty('--tabs-tab-font-size', '14px')
   }
 
   // === 输入框外观 ===
@@ -343,6 +358,21 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
     if (t.tab_active_text_color !== undefined) {
       decls.push(`--tabs-tab-active-text-color: ${t.tab_active_text_color};`)
+    }
+    if (t.tab_height !== undefined) {
+      decls.push(`--tabs-tab-height: ${t.tab_height}px;`)
+    }
+    if (t.tab_gap !== undefined) {
+      decls.push(`--tabs-tab-gap: ${t.tab_gap}px;`)
+    }
+    if (t.tab_padding !== undefined) {
+      decls.push(`--tabs-tab-padding: ${t.tab_padding}px;`)
+    }
+    if (t.tab_border_radius !== undefined) {
+      decls.push(`--tabs-tab-border-radius: ${t.tab_border_radius}px;`)
+    }
+    if (t.tab_font_size !== undefined) {
+      decls.push(`--tabs-tab-font-size: ${t.tab_font_size}px;`)
     }
     // 实例级边框样式
     if (t.border_color !== undefined) {

@@ -338,6 +338,36 @@ const formatFileSize = (size: number) => {
                 <n-color-picker v-model:value="form.tabs.tab_active_text_color" :modes="['hex']" :show-alpha="false" @update:value="preview" size="small" />
               </div>
             </div>
+            <div class="form-row">
+              <div class="form-label">标签高度 <n-tag size="small" type="info">{{ form.tabs.tab_height }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.tabs.tab_height" :min="28" :max="72" :step="2" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">标签间距 <n-tag size="small" type="info">{{ form.tabs.tab_gap }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.tabs.tab_gap" :min="0" :max="24" :step="1" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">标签内边距 <n-tag size="small" type="info">{{ form.tabs.tab_padding }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.tabs.tab_padding" :min="1" :max="40" :step="1" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">标签圆角 <n-tag size="small" type="info">{{ form.tabs.tab_border_radius }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.tabs.tab_border_radius" :min="0" :max="24" :step="1" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">标签文字大小 <n-tag size="small" type="info">{{ form.tabs.tab_font_size }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.tabs.tab_font_size" :min="10" :max="20" :step="1" @update:value="preview" />
+              </div>
+            </div>
           </template>
         </n-card>
 

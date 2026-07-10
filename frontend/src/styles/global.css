@@ -157,6 +157,10 @@
   --tabs-tab-text-color: var(--n-text-color-1);  /* 未选中Tab文字颜色 */
   --tabs-tab-active-text-color: #ffffff;  /* 选中Tab文字颜色 */
   --tabs-tab-border-radius: var(--card-border-radius);  /* Tab圆角 */
+  --tabs-tab-height: 40px;  /* 单个Tab高度 */
+  --tabs-tab-gap: 4px;  /* Tab之间的间距 */
+  --tabs-tab-padding: 16px;  /* 单个Tab水平内边距 */
+  --tabs-tab-font-size: 14px;  /* Tab文字大小 */
   
   --tabs-pane-bg: transparent;  /* Tab面板背景色 */
   --tabs-pane-padding: 0;  /* Tab面板内边距 */
@@ -502,6 +506,56 @@ input, textarea, select, button {
   backdrop-filter: var(--tabs-nav-blur) !important;
   box-shadow: var(--tabs-nav-shadow) !important;
 }
+
+/* Tab 标签项 - 高度、间距、圆角、内边距、文字大小 */
+/* 关键：必须覆盖 Naive UI 内部多层嵌套的 padding/height */
+/* Naive UI DOM: .n-tabs-tab-wrapper > .n-tabs-tab > .n-tabs-tab__label */
+.n-tabs-tab {
+  height: var(--tabs-tab-height, 40px) !important;
+  padding: 0 var(--tabs-tab-padding, 16px) !important;
+  border-radius: var(--tabs-tab-border-radius, 8px) !important;
+  font-size: var(--tabs-tab-font-size, 14px) !important;
+  background: var(--tabs-tab-bg) !important;
+  color: var(--tabs-tab-text-color) !important;
+}
+.n-tabs-tab.n-tabs-tab--active {
+  background: var(--tabs-tab-active-bg) !important;
+  color: var(--tabs-tab-active-text-color) !important;
+}
+.n-tabs-tab.n-tabs-tab--active * {
+  color: var(--tabs-tab-active-text-color) !important;
+}
+
+/* 覆盖 Naive UI 内部 label 的 padding */
+.n-tabs-tab .n-tabs-tab__label {
+  padding: 0 !important;
+}
+
+/* Tab 间距 - 通过 wrapper margin 实现 */
+.n-tabs .n-tabs-tab-wrapper {
+  margin-right: var(--tabs-tab-gap, 4px) !important;
+}
+.n-tabs .n-tabs-tab-wrapper:last-child {
+  margin-right: 0 !important;
+}
+
+/* line 类型 tabs 的 rail：去掉默认的 padding 和 gap，让 tab 自己控制间距 */
+.n-tabs.n-tabs--line-type .n-tabs-rail {
+  padding: 2px 6px !important;
+  gap: 0 !important;
+}
+
+/* 覆盖 Naive UI 内部 wrapper 的 padding（某些版本 wrapper 有 padding） */
+.n-tabs .n-tabs-tab-wrapper {
+  padding: 0 !important;
+}
+
+/* 关键：覆盖 Naive UI 的 .n-tabs-tab-pad 间隔元素 */
+.n-tabs .n-tabs-tab-pad {
+  width: 0 !important;
+  flex: 0 0 0 !important;
+}
+
 .n-tabs-pane-wrapper {
   background: var(--tabs-pane-bg) !important;
 }

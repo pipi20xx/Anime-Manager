@@ -273,13 +273,7 @@ const handleDelete = (item: any) => {
 .page-header h1 { margin: 0; font-size: 26px; font-weight: bold; color: var(--text-primary); }
 .subtitle { font-size: 12px; color: var(--n-primary-color); letter-spacing: 1px; }
 .page-header :deep(.n-space) { align-items: center; }
-.page-header :deep(.n-input) { height: 34px; }
-.page-header :deep(.n-button) { height: 34px; }
-.page-header .app-search-field { --search-input-height: 34px; }
-.custom-tabs { height: 34px; }
-.custom-tabs :deep(.n-tabs-nav) { height: 100% !important; }
-.custom-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
-.custom-tabs :deep(.n-tabs-tab) { height: 28px !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
+/* 输入框/按钮高度、Tabs 高度/间距/内边距 由 global.css CSS 变量统一管理 */
 
 .history-list { margin-bottom: 40px; }
 .history-list .history-item {

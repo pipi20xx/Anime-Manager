@@ -525,6 +525,51 @@ defineExpose({ currentInstanceOverrides, instanceCount })
             </div>
 
             <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_height')" @update:checked="v => toggleFieldOverride('tabs', 'tab_height', v)">标签高度</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_height')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'tab_height')" :min="28" :max="72" :step="2" @update:value="v => setFieldValue('tabs', 'tab_height', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'tab_height') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_height }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_gap')" @update:checked="v => toggleFieldOverride('tabs', 'tab_gap', v)">标签间距</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_gap')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'tab_gap')" :min="0" :max="24" :step="1" @update:value="v => setFieldValue('tabs', 'tab_gap', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'tab_gap') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_gap }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_padding')" @update:checked="v => toggleFieldOverride('tabs', 'tab_padding', v)">标签内边距</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_padding')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'tab_padding')" :min="1" :max="40" :step="1" @update:value="v => setFieldValue('tabs', 'tab_padding', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'tab_padding') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_padding }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_border_radius')" @update:checked="v => toggleFieldOverride('tabs', 'tab_border_radius', v)">标签圆角</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'tab_border_radius')" :min="0" :max="24" :step="1" @update:value="v => setFieldValue('tabs', 'tab_border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'tab_border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_border_radius }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('tabs', 'tab_font_size')" @update:checked="v => toggleFieldOverride('tabs', 'tab_font_size', v)">标签文字大小</n-checkbox>
+              <div v-if="isFieldOverridden('tabs', 'tab_font_size')" class="instance-field__control">
+                <n-slider :value="getFieldValue('tabs', 'tab_font_size')" :min="10" :max="20" :step="1" @update:value="v => setFieldValue('tabs', 'tab_font_size', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('tabs', 'tab_font_size') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.tabs.tab_font_size }}px</div>
+            </div>
+
+            <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('tabs', 'border_color')" @update:checked="v => toggleFieldOverride('tabs', 'border_color', v)">边框颜色</n-checkbox>
               <div v-if="isFieldOverridden('tabs', 'border_color')" class="instance-field__control">
                 <n-color-picker :value="getFieldValue('tabs', 'border_color')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('tabs', 'border_color', v)" />

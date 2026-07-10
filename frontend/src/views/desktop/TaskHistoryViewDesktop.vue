@@ -199,11 +199,7 @@ onUnmounted(() => {
 .page-header h1 { margin: 0; font-size: var(--text-3xl); }
 .subtitle { font-size: var(--text-sm); color: var(--n-primary-color); letter-spacing: var(--tracking-widest); font-weight: bold; }
 .page-header :deep(.n-space) { align-items: center; }
-.page-header :deep(.n-button) { height: var(--space-8); }
-.custom-tabs { height: var(--space-8); }
-.custom-tabs :deep(.n-tabs-nav) { height: 100% !important; }
-.custom-tabs :deep(.n-tabs-rail) { height: 100% !important; gap: 4px !important; padding: 3px !important; }
-.custom-tabs :deep(.n-tabs-tab) { height: calc(var(--space-8) - 6px) !important; padding: 0 12px !important; display: flex !important; align-items: center !important; }
+/* 按钮高度、Tabs 高度/间距/内边距 由 global.css CSS 变量统一管理 */
 
 .task-list { margin-bottom: var(--space-6); }
 .task-list .task-card {
