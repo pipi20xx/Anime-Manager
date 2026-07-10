@@ -332,6 +332,15 @@ input, textarea, select, button {
 [data-app-instance] .n-card > .n-card__border {
   border: var(--app-card-border-width, 1px) var(--app-card-border-style, solid) var(--app-card-border-color, var(--app-border-light)) !important;
 }
+/* 统一卡片 hover 边框变蓝效果 - 所有 data-app-instance 卡片自动生效 */
+.n-card[data-app-instance]:hover,
+[data-app-instance] .n-card:hover {
+  border-color: var(--n-primary-color) !important;
+}
+.n-card[data-app-instance]:hover > .n-card__border,
+[data-app-instance] .n-card:hover > .n-card__border {
+  border-color: var(--n-primary-color) !important;
+}
 .n-card > .n-card__content {
   padding: 12px 16px !important;
 }
