@@ -176,14 +176,16 @@ const createThemeOverrides = (config: ThemeConfig, isDark: boolean): GlobalTheme
       borderRadius: '10px',
       peers: {
         InternalSelectMenu: {
-          color: config.dropdownBg
+          color: config.dropdownBg,
+          colorPending: 'rgba(59, 130, 246, 0.15)'
         }
       }
     },
     Dropdown: {
       peers: {
         InternalDropdownMenu: {
-          color: config.dropdownBg
+          color: config.dropdownBg,
+          colorPending: 'rgba(59, 130, 246, 0.15)'
         }
       }
     },

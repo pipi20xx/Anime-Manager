@@ -412,6 +412,42 @@ input, textarea, select, button {
   background: rgba(59, 130, 246, 0.15) !important;
 }
 
+/* 下拉框选项 - hover 统一蓝色，与列表项悬浮一致
+   Naive UI 用 ::before 伪元素渲染选项背景，必须覆盖 ::before */
+.n-base-select-option::before {
+  background-color: transparent !important;
+}
+.n-base-select-option--pending::before,
+.n-base-select-option:hover::before {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+.n-base-select-option--selected::before {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+.n-base-select-option--selected.n-base-select-option--pending::before,
+.n-base-select-option--selected:hover::before {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+.n-base-select-option--pending .n-base-select-option__content,
+.n-base-select-option:hover .n-base-select-option__content {
+  color: var(--n-primary-color) !important;
+}
+/* Dropdown 选项 - 同样覆盖 ::before */
+.n-dropdown-option-body::before {
+  background-color: transparent !important;
+}
+.n-dropdown-option-body--pending::before,
+.n-dropdown-option-body:hover::before {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+.n-dropdown-option-body--active::before {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+.n-dropdown-option-body--pending .n-dropdown-option__content,
+.n-dropdown-option-body:hover .n-dropdown-option__content {
+  color: var(--n-primary-color) !important;
+}
+
 /* DataTable 主题化 - 容器/表头/行背景全部跟随外观 CSS 变量 */
 .n-data-table,
 .n-data-table .n-data-table-wrapper,

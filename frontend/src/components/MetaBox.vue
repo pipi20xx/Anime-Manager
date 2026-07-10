@@ -18,7 +18,7 @@ defineProps<Props>()
 
 <style scoped>
 .meta-box {
-  background: var(--app-surface-subtle);
+  background: var(--app-surface-card-mixed);
   padding: 12px 16px;
   border-radius: var(--button-border-radius, 8px);
   border: 1px solid var(--app-border-light);

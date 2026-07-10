@@ -77,7 +77,7 @@ const remoteText = computed({
 </template>
 
 <style scoped>
-.config-section { background: var(--app-surface-subtle); border-radius: 8px; border: 1px solid var(--border-light); }
+.config-section { background: var(--app-surface-card-mixed); border-radius: var(--card-border-radius, 8px); border: 1px solid var(--app-border-light); }
 .section-header { display: flex; align-items: center; gap: 12px; }
 .icon-box { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--primary-light); border-radius: 8px; flex-shrink: 0; }
 .title-group { display: flex; flex-direction: column; gap: 2px; }
@@ -85,7 +85,9 @@ const remoteText = computed({
 .section-header .description { font-size: 12px; color: var(--text-tertiary); font-weight: normal; }
 .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px; }
 .col-header .label { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
-.input-wrapper { background: var(--app-surface-inner); padding: 4px; border-radius: var(--button-border-radius, 4px); border: 1px solid var(--border-light); }
+.input-wrapper { background: var(--app-surface-card-mixed); padding: 4px; border-radius: var(--input-border-radius, 8px); border: var(--input-border); }
+.mono-input { background: transparent !important; --n-color: transparent !important; }
+.mono-input :deep(.n-input-wrapper) { background: transparent !important; }
 .mono-input :deep(textarea) { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: transparent; color: var(--text-secondary); border: none; padding: 8px; }
 .mono-input :deep(.n-input__border), .mono-input :deep(.n-input__state-border) { display: none; }
 </style>
