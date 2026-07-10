@@ -46,8 +46,8 @@ const defaultConfig: AppearanceConfig = {
   search: {
     enabled: false,
     bg_opacity: 1,
-    border_radius: 22,
-    height: 44,
+    border_radius: 8,
+    height: 56,
     blur: 0,
   },
   list: {
@@ -191,8 +191,9 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--search-input-bg-transparent-pct', '0%')
     root.style.setProperty('--search-input-bg-transparent-pct-hover', '0%')
     root.style.setProperty('--search-input-bg-transparent-pct-focus', '0%')
-    root.style.setProperty('--search-input-border-radius', '22px')
-    root.style.setProperty('--search-input-height', '44px')
+    // 搜索框关闭时跟随输入框的圆角和高度
+    root.style.setProperty('--search-input-border-radius', 'var(--input-border-radius)')
+    root.style.setProperty('--search-input-height', 'var(--input-height)')
     root.style.setProperty('--search-input-blur', 'none')
   }
 

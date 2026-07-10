@@ -181,8 +181,8 @@
   --search-input-border-width: 1px;  /* 搜索框边框宽度（实例级可覆盖）*/
   --search-input-border-style: solid;  /* 搜索框边框样式（实例级可覆盖）*/
   --search-input-border: var(--search-input-border-width) var(--search-input-border-style) var(--search-input-border-color);  /* 搜索框边框（组合）*/
-  --search-input-border-radius: 22px;  /* 搜索框圆角（药丸形状） */
-  --search-input-height: 44px;  /* 搜索框高度 */
+  --search-input-border-radius: var(--input-border-radius);  /* 搜索框圆角（跟随输入框） */
+  --search-input-height: var(--input-height);  /* 搜索框高度（跟随输入框） */
   --search-input-blur: none;  /* 搜索框模糊效果 */
   --search-input-shadow: none;  /* 搜索框阴影 */
   --search-input-focus-shadow: 0 0 0 2px var(--n-primary-color) inset;  /* 搜索框聚焦阴影 */
@@ -1395,7 +1395,7 @@ input, textarea, select, button {
   background: color-mix(in srgb, var(--search-input-bg), transparent var(--search-input-bg-transparent-pct, 0%)) !important;
   backdrop-filter: var(--search-input-blur, none) !important;
   -webkit-backdrop-filter: var(--search-input-blur, none) !important;
-  border-radius: var(--search-input-border-radius, 22px) !important;
+  border-radius: var(--search-input-border-radius, var(--input-border-radius, 8px)) !important;
 }
 
 
