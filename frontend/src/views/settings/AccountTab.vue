@@ -1,6 +1,6 @@
 <template>
   <div class="tab-wrapper">
-    <n-space vertical size="large" style="margin-top: 16px;">
+    <n-space vertical size="large">
       <n-grid :cols="2" :x-gap="24" :y-gap="24" item-responsive>
         <n-gi span="2 m:1">
           <n-card title="凭据管理" size="small">

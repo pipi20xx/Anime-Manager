@@ -581,4 +581,8 @@ const {
 .form-item-desc { font-size: 12px; color: var(--text-tertiary); margin-top: -8px; margin-bottom: 8px; line-height: 1.4; }
 
 /* Tabs 样式已移至 global.css 统一管理 */
+/* 统一为所有 Tab 面板添加顶部间距，避免内容紧贴 Tabs 导航栏 */
+.custom-tabs {
+  --tabs-pane-padding: 16px 0 0 0;
+}
 </style>

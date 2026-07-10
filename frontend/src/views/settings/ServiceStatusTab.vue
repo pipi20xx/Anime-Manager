@@ -287,10 +287,6 @@ const runningMonitorsCount = computed(() =>
 </script>
 
 <style scoped>
-.service-status-tab {
-  padding-top: 16px;
-}
-
 .section-header {
   display: flex;
   align-items: center;
