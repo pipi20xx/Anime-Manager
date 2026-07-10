@@ -248,7 +248,7 @@ onMounted(() => {
                 <template #icon><n-icon><UpIcon /></n-icon></template>
               </n-button>
               <n-breadcrumb>
-                <n-breadcrumb-item @click="fetchFiles('/')" style="cursor: pointer">/</n-breadcrumb-item>
+                <n-breadcrumb-item @click="fetchFiles('/')" style="cursor: pointer">根目录</n-breadcrumb-item>
                 <n-breadcrumb-item 
                   v-for="part in breadcrumbParts" 
                   :key="part.path" 

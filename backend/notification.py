@@ -799,38 +799,29 @@ class NotificationManager:
             modules.append(("🟢", "定时任务", f"{scheduler_jobs} 个", ""))
 
         # ── 构建 HTML 消息 ──
-        parts = []
+        lines = []
 
-        # 标题区
-        parts.append(
-            "┌─────────────────────────────┐\n"
-            "│     🚀 番剧管家 启动完成      │\n"
-            "└─────────────────────────────┘"
-        )
-        parts.append(f"🕐  <i>{start_time}</i>\n")
+        # 标题区 - 使用引用块风格
+        lines.append(f"<b>🚀 番剧管家 启动完成</b>")
+        lines.append(f"<blockquote>🕓 {start_time}</blockquote>")
 
         # 模块状态列表
         if modules:
-            module_lines = []
+            lines.append("")
+            lines.append("<b>📋 服务状态</b>")
             for icon, name, value, detail in modules:
-                line = f"{icon}  <b>{name}</b>  →  {value}{detail}"
-                module_lines.append(line)
-            parts.append("▎ <b>服务状态</b>")
-            parts.append("")
-            for line in module_lines:
-                parts.append(f"  {line}")
+                lines.append(f"▪️ <b>{name}</b> — {value}{detail}")
 
         # 错误/警告
         errors = status_info.get("errors", [])
         if errors:
-            parts.append("")
-            parts.append("▎ ⚠️ <b>启动警告</b>")
+            lines.append("")
+            lines.append("<b>⚠️ 启动警告</b>")
             for err in errors[:3]:
-                parts.append(f"  🔸 {err}")
+                lines.append(f"• {err}")
 
         # 底部
-        parts.append("")
-        parts.append("━━━━━━━━━━━━━━━━━━━━━━━━━")
-        parts.append("💡 <i>系统已就绪，等待任务调度...</i>")
+        lines.append("")
+        lines.append("<i>💡 系统已就绪，等待任务调度...</i>")
 
-        await NotificationManager.send_telegram_message("\n".join(parts))
+        await NotificationManager.send_telegram_message("\n".join(lines))

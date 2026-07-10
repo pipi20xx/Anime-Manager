@@ -125,7 +125,7 @@ const {
         </n-tab-pane>
 
         <n-tab-pane name="advanced" tab="高级选项">
-          <n-space vertical size="medium" class="mt-4">
+          <n-space vertical size="medium" class="mt-4 pb-4">
             <div class="switch-row">
               <n-switch v-model:value="form.anime_priority" />
               <span class="switch-row__label">动漫优先</span>
@@ -201,6 +201,7 @@ const {
 <style scoped>
 .mt-2 { margin-top: 8px; }
 .mt-4 { margin-top: 16px; }
+.pb-4 { padding-bottom: 16px; }
 
 .config-row {
   display: flex;

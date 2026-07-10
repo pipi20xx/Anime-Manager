@@ -409,7 +409,7 @@ input, textarea, select, button {
   -webkit-backdrop-filter: var(--list-blur) !important;
 }
 .n-list-item:hover {
-  background: var(--bg-surface-hover) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
 }
 
 /* DataTable 主题化 - 容器/表头/行背景全部跟随外观 CSS 变量 */
@@ -442,7 +442,7 @@ input, textarea, select, button {
 }
 .n-data-table .n-data-table-td:hover,
 .n-data-table .n-data-table-tr:hover .n-data-table-td {
-  background: var(--app-surface-inner) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
 }
 
 /* Tabs 主题化 - 使用CSS变量支持外观自定义 */

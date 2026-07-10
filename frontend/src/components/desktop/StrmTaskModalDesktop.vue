@@ -147,7 +147,7 @@ const {
 
         <!-- 4. 高级设置 -->
         <n-tab-pane name="advanced" tab="高级设置">
-          <n-space vertical size="large" class="mt-4">
+          <n-space vertical size="large" class="mt-4 pb-4">
             <div class="switch-row">
               <n-switch v-model:value="form.copy_meta" />
               <span class="switch-row__label">同步元数据文件</span>
@@ -223,6 +223,7 @@ const {
 }
 
 .mt-4 { margin-top: 16px; }
+.pb-4 { padding-bottom: 16px; }
 .preview-mini-box { 
   background: var(--app-surface-card-mixed); 
   border: 1px solid var(--app-border-light); 
