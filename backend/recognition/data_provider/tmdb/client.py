@@ -44,9 +44,9 @@ class TMDBProvider:
         
         if self.proxy:
             _log(f"┃ [Proxy] 🛡️ 启用代理加速: {self.proxy}")
-            log_audit("TMDB", "请求", f"GET {endpoint} [代理: {self.proxy}]")
+            log_audit("TMDB", "请求", f"GET {endpoint}?{query_str} [代理: {self.proxy}]")
         else:
-            log_audit("TMDB", "请求", f"GET {endpoint} [直连]")
+            log_audit("TMDB", "请求", f"GET {endpoint}?{query_str} [直连]")
 
         async with httpx.AsyncClient(timeout=10, proxy=self.proxy) as client:
             try:
