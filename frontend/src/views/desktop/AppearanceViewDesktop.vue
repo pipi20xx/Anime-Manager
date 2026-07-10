@@ -35,6 +35,7 @@ const form = reactive<AppearanceConfig>({
   input: { ...appearanceConfig.value.input },
   search: { ...appearanceConfig.value.search },
   list: { ...appearanceConfig.value.list },
+  button: { ...appearanceConfig.value.button },
   instances: JSON.parse(JSON.stringify(appearanceConfig.value.instances || {})),
 })
 
@@ -100,6 +101,7 @@ const handleReset = async () => {
     Object.assign(form.input, appearanceConfig.value.input)
     Object.assign(form.search, appearanceConfig.value.search)
     Object.assign(form.list, appearanceConfig.value.list)
+    Object.assign(form.button, appearanceConfig.value.button)
     form.instances = JSON.parse(JSON.stringify(appearanceConfig.value.instances || {}))
     message.success('已恢复默认设置')
   } catch (e: any) {
@@ -442,6 +444,62 @@ const formatFileSize = (size: number) => {
               <div class="form-label">背景模糊 <n-tag size="small" type="info">{{ form.list.blur }}px</n-tag></div>
               <div class="form-control">
                 <n-slider v-model:value="form.list.blur" :min="0" :max="20" :step="1" @update:value="preview" />
+              </div>
+            </div>
+          </template>
+        </n-card>
+
+        <!-- ===== 按钮外观 ===== -->
+        <n-card class="app-card-config settings-section" :bordered="true">
+          <div class="section-header">
+            <div>
+              <div class="section-title">按钮外观</div>
+              <div class="section-desc">设置按钮的圆角、高度与纯文字按钮（ghost/quaternary）样式</div>
+            </div>
+            <n-switch v-model:value="form.button.enabled" @update:value="preview" />
+          </div>
+          <template v-if="form.button.enabled">
+            <n-divider />
+            <div class="form-row">
+              <div class="form-label">圆角 <n-tag size="small" type="info">{{ form.button.border_radius }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.button.border_radius" :min="0" :max="30" :step="1" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">中等高度 <n-tag size="small" type="info">{{ form.button.height_medium }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.button.height_medium" :min="20" :max="72" :step="2" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">小号高度 <n-tag size="small" type="info">{{ form.button.height_small }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.button.height_small" :min="20" :max="72" :step="2" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">超小高度 <n-tag size="small" type="info">{{ form.button.height_tiny }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.button.height_tiny" :min="16" :max="72" :step="2" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">纯文字按钮颜色</div>
+              <div class="form-control">
+                <n-color-picker v-model:value="form.button.text_color" :modes="['hex']" :show-alpha="false" @update:value="preview" size="small" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">文字按钮 hover 底色</div>
+              <div class="form-control">
+                <n-color-picker v-model:value="form.button.text_bg_hover" :modes="['hex']" :show-alpha="true" @update:value="preview" size="small" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">文字按钮 pressed 底色</div>
+              <div class="form-control">
+                <n-color-picker v-model:value="form.button.text_bg_pressed" :modes="['hex']" :show-alpha="true" @update:value="preview" size="small" />
               </div>
             </div>
           </template>

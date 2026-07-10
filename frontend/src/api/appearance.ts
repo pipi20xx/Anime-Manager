@@ -64,6 +64,24 @@ export interface AppearanceList {
   blur: number
 }
 
+export interface AppearanceButton {
+  enabled: boolean
+  /** 按钮圆角（px） */
+  border_radius: number
+  /** medium 尺寸按钮高度（px） */
+  height_medium: number
+  /** small 尺寸按钮高度（px） */
+  height_small: number
+  /** tiny 尺寸按钮高度（px） */
+  height_tiny: number
+  /** 纯文字按钮（ghost/quaternary）文字颜色 */
+  text_color: string
+  /** 纯文字按钮 hover 底色 */
+  text_bg_hover: string
+  /** 纯文字按钮 pressed 底色 */
+  text_bg_pressed: string
+}
+
 /**
  * 实例级文字样式：仅用于单独自定义弹框/卡片，不在全局默认中提供。
  * 所有字段 undefined 表示继承默认主题文字样式。
@@ -120,6 +138,7 @@ export interface AppearanceInstanceOverrides {
   input?: Partial<AppearanceInput> & InstanceBorderOverrides
   search?: Partial<AppearanceSearch> & InstanceBorderOverrides
   list?: Partial<AppearanceList> & InstanceBorderOverrides
+  button?: Partial<AppearanceButton>
 }
 
 export interface AppearanceConfig {
@@ -130,6 +149,7 @@ export interface AppearanceConfig {
   input: AppearanceInput
   search: AppearanceSearch
   list: AppearanceList
+  button: AppearanceButton
   /** 实例级覆盖：key 对应组件的 appearance-key，value 为该组件的独立配置 */
   instances?: Record<string, AppearanceInstanceOverrides>
 }

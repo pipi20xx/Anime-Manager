@@ -780,6 +780,71 @@ defineExpose({ currentInstanceOverrides, instanceCount })
             </div>
           </div>
         </n-tab-pane>
+
+        <!-- 按钮分区 -->
+        <n-tab-pane v-if="getAppearanceKeyMeta(selectedInstanceKey)?.categories.includes('button')" name="button" tab="按钮">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'border_radius')" @update:checked="v => toggleFieldOverride('button', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('button', 'border_radius')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('button', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('button', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.border_radius }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'height_medium')" @update:checked="v => toggleFieldOverride('button', 'height_medium', v)">中等高度</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'height_medium')" class="instance-field__control">
+                <n-slider :value="getFieldValue('button', 'height_medium')" :min="20" :max="72" :step="2" @update:value="v => setFieldValue('button', 'height_medium', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('button', 'height_medium') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.height_medium }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'height_small')" @update:checked="v => toggleFieldOverride('button', 'height_small', v)">小号高度</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'height_small')" class="instance-field__control">
+                <n-slider :value="getFieldValue('button', 'height_small')" :min="20" :max="72" :step="2" @update:value="v => setFieldValue('button', 'height_small', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('button', 'height_small') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.height_small }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'height_tiny')" @update:checked="v => toggleFieldOverride('button', 'height_tiny', v)">超小高度</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'height_tiny')" class="instance-field__control">
+                <n-slider :value="getFieldValue('button', 'height_tiny')" :min="16" :max="72" :step="2" @update:value="v => setFieldValue('button', 'height_tiny', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('button', 'height_tiny') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.height_tiny }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'text_color')" @update:checked="v => toggleFieldOverride('button', 'text_color', v)">纯文字按钮颜色</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'text_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('button', 'text_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('button', 'text_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.text_color }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'text_bg_hover')" @update:checked="v => toggleFieldOverride('button', 'text_bg_hover', v)">文字按钮 hover 底色</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'text_bg_hover')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('button', 'text_bg_hover')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('button', 'text_bg_hover', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.text_bg_hover }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('button', 'text_bg_pressed')" @update:checked="v => toggleFieldOverride('button', 'text_bg_pressed', v)">文字按钮 pressed 底色</n-checkbox>
+              <div v-if="isFieldOverridden('button', 'text_bg_pressed')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('button', 'text_bg_pressed')" :modes="['hex']" :show-alpha="true" size="small" @update:value="v => setFieldValue('button', 'text_bg_pressed', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.button.text_bg_pressed }}</div>
+            </div>
+          </div>
+        </n-tab-pane>
       </n-tabs>
     </template>
 

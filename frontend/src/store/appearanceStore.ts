@@ -56,6 +56,16 @@ const defaultConfig: AppearanceConfig = {
     border_radius: 8,
     blur: 0,
   },
+  button: {
+    enabled: false,
+    border_radius: 8,
+    height_medium: 32,
+    height_small: 32,
+    height_tiny: 32,
+    text_color: '#3B82F6',
+    text_bg_hover: 'rgba(59, 130, 246, 0.1)',
+    text_bg_pressed: 'rgba(59, 130, 246, 0.15)',
+  },
   // 实例级覆盖：key 对应组件的 appearance-key
   // 默认为空对象，未列出的组件走全局默认
   instances: {},
@@ -208,6 +218,26 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--list-bg-transparent-pct', '0%')
     root.style.setProperty('--list-border-radius', '8px')
     root.style.setProperty('--list-blur', 'none')
+  }
+
+  // === 按钮外观 ===
+  const button = config.button
+  if (button.enabled) {
+    root.style.setProperty('--btn-border-radius', `${button.border_radius}px`)
+    root.style.setProperty('--btn-height-medium', `${button.height_medium}px`)
+    root.style.setProperty('--btn-height-small', `${button.height_small}px`)
+    root.style.setProperty('--btn-height-tiny', `${button.height_tiny}px`)
+    root.style.setProperty('--btn-text-color', button.text_color)
+    root.style.setProperty('--btn-text-bg-hover', button.text_bg_hover)
+    root.style.setProperty('--btn-text-bg-pressed', button.text_bg_pressed)
+  } else {
+    root.style.setProperty('--btn-border-radius', '8px')
+    root.style.setProperty('--btn-height-medium', '32px')
+    root.style.setProperty('--btn-height-small', '32px')
+    root.style.setProperty('--btn-height-tiny', '32px')
+    root.style.setProperty('--btn-text-color', 'var(--n-primary-color)')
+    root.style.setProperty('--btn-text-bg-hover', 'rgba(59, 130, 246, 0.1)')
+    root.style.setProperty('--btn-text-bg-pressed', 'rgba(59, 130, 246, 0.15)')
   }
 
   // === 实例级覆盖 ===
@@ -439,6 +469,32 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
     if (l.border_style !== undefined) {
       decls.push(`--list-border-style: ${l.border_style};`)
+    }
+  }
+
+  // Button (实例级)
+  if (overrides.button) {
+    const b = overrides.button
+    if (b.border_radius !== undefined) {
+      decls.push(`--btn-border-radius: ${b.border_radius}px;`)
+    }
+    if (b.height_medium !== undefined) {
+      decls.push(`--btn-height-medium: ${b.height_medium}px;`)
+    }
+    if (b.height_small !== undefined) {
+      decls.push(`--btn-height-small: ${b.height_small}px;`)
+    }
+    if (b.height_tiny !== undefined) {
+      decls.push(`--btn-height-tiny: ${b.height_tiny}px;`)
+    }
+    if (b.text_color !== undefined) {
+      decls.push(`--btn-text-color: ${b.text_color};`)
+    }
+    if (b.text_bg_hover !== undefined) {
+      decls.push(`--btn-text-bg-hover: ${b.text_bg_hover};`)
+    }
+    if (b.text_bg_pressed !== undefined) {
+      decls.push(`--btn-text-bg-pressed: ${b.text_bg_pressed};`)
     }
   }
 

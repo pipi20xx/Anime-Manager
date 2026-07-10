@@ -130,6 +130,15 @@
   --success-medium: rgba(129, 199, 132, 0.15);
   --success-strong: rgba(129, 199, 132, 0.3);
 
+  /* ========== 按钮外观自定义变量 ========== */
+  --btn-border-radius: 8px;   /* 按钮圆角 */
+  --btn-height-medium: 32px;  /* medium 尺寸按钮高度 */
+  --btn-height-small: 32px;   /* small 尺寸按钮高度 */
+  --btn-height-tiny: 32px;    /* tiny 尺寸按钮高度 */
+  --btn-text-color: var(--n-primary-color);  /* 纯文字按钮文字颜色 */
+  --btn-text-bg-hover: rgba(59, 130, 246, 0.1);  /* 纯文字按钮 hover 底色 */
+  --btn-text-bg-pressed: rgba(59, 130, 246, 0.15);  /* 纯文字按钮 pressed 底色 */
+
   /* ========== Tabs 外观自定义变量 ========== */
   --tabs-nav-bg: var(--app-surface-card);  /* Tabs导航栏背景色 */
   --tabs-nav-bg-opacity: 1;  /* Tabs导航栏背景透明度 */
@@ -871,6 +880,7 @@ input, textarea, select, button {
   background: #3B82F6 !important;
   border: none !important;
   color: #ffffff !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--default-type:not(.n-button--ghost):hover {
   background: #2563EB !important;
@@ -908,6 +918,7 @@ input, textarea, select, button {
   background: #3B82F6 !important;
   border: none !important;
   color: #ffffff !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--primary-type:not(.n-button--ghost):hover {
   background: #2563EB !important;
@@ -928,6 +939,7 @@ input, textarea, select, button {
   background: #10B981 !important;
   border: none !important;
   color: #ffffff !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--success-type:not(.n-button--ghost):hover {
   background: #059669 !important;
@@ -948,6 +960,7 @@ input, textarea, select, button {
   background: #F59E0B !important;
   border: none !important;
   color: #ffffff !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--warning-type:not(.n-button--ghost):hover {
   background: #D97706 !important;
@@ -968,6 +981,7 @@ input, textarea, select, button {
   background: #EF4444 !important;
   border: none !important;
   color: #ffffff !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--error-type:not(.n-button--ghost):hover {
   background: #DC2626 !important;
@@ -988,6 +1002,7 @@ input, textarea, select, button {
   background: #3B82F6 !important;
   border: none !important;
   color: #ffffff !important;
+  border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-button--info-type:not(.n-button--ghost):hover {
   background: #2563EB !important;
@@ -1008,9 +1023,45 @@ input, textarea, select, button {
 .n-button--success-type:not(.n-button--ghost) *,
 .n-button--warning-type:not(.n-button--ghost) *,
 .n-button--error-type:not(.n-button--ghost) *,
-.n-button--info-type:not(.n-button--ghost) * {
+.n-button--info-type:not(.n-button--ghost) *,
+.n-button--default-type:not(.n-button--ghost) * {
   color: #ffffff !important;
   font-weight: 500 !important;
+}
+
+/* ============================================
+ * 纯文字按钮（ghost / quaternary）样式统一管理
+ * 透明底色 + 主题色文字 + hover/pressed 淡色底
+ * ============================================ */
+
+/* ghost 按钮圆角 + 文字颜色 */
+.n-button--ghost {
+  border-radius: var(--btn-border-radius, 8px) !important;
+  color: var(--btn-text-color, var(--n-primary-color)) !important;
+}
+.n-button--ghost:hover {
+  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
+}
+.n-button--ghost:active {
+  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+}
+.n-button--ghost * {
+  color: inherit !important;
+}
+
+/* quaternary 按钮圆角 + 文字颜色 */
+.n-button--quaternary {
+  border-radius: var(--btn-border-radius, 8px) !important;
+  color: var(--btn-text-color, var(--n-primary-color)) !important;
+}
+.n-button--quaternary:hover {
+  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
+}
+.n-button--quaternary:active {
+  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+}
+.n-button--quaternary * {
+  color: inherit !important;
 }
 
 /* 强制移除所有按钮边框 - 包括夜晚模式下的边框 */
@@ -1030,6 +1081,18 @@ input, textarea, select, button {
 .n-button * {
   transition: all 0.2s ease;
   font-weight: 500 !important;
+}
+
+/* 按钮高度统一管理 - 通过 CSS 变量控制各尺寸高度 */
+/* Naive UI 的 size class 为 n-button--tiny / n-button--small / n-button--medium / n-button--large */
+.n-button:not(.n-button--circle) {
+  height: var(--btn-height-medium, 32px) !important;
+}
+.n-button.n-button--small:not(.n-button--circle) {
+  height: var(--btn-height-small, 32px) !important;
+}
+.n-button.n-button--tiny:not(.n-button--circle) {
+  height: var(--btn-height-tiny, 32px) !important;
 }
 
 /* 图标按钮统一样式 */
