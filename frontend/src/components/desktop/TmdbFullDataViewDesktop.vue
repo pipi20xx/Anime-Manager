@@ -12,10 +12,8 @@ import {
 import {
   DeleteOutlined as DeleteIcon,
   SearchOutlined as SearchIcon,
-  FileDownloadOutlined as ExportIcon,
   CloudSyncOutlined as SytmdbIcon,
-  AddOutlined as AddIcon,
-  DeleteSweepOutlined as ClearIcon
+  AddOutlined as AddIcon
 } from '@vicons/material'
 import { useTmdbData } from '../../composables/views/useTmdbData'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -45,9 +43,7 @@ const {
   saveMetadata,
   deleteMetadata,
   handleSyncSytmdb,
-  handleRefreshAll,
-  handleExport,
-  clearFingerprints
+  handleRefreshAll
 } = useTmdbData()
 
 const executeRefresh = () => {
@@ -115,9 +111,7 @@ onBeforeUnmount(cleanupObserver)
     <div class="toolbar-row">
       <AppSearchField v-model:value="browserSearch" placeholder="搜索标题或 TMDB ID..." :loading="browserLoading" @search="handleBrowserSearch" style="width: 300px" />
       <n-space>
-        <n-button v-bind="getButtonStyle('secondary')" @click="handleExport">导出字典</n-button>
         <n-button v-bind="getButtonStyle('warning')" @click="showRefreshModal = true">全量刷新</n-button>
-        <n-button v-bind="getButtonStyle('warning')" @click="clearFingerprints">清空智能记忆</n-button>
         <n-button v-bind="getButtonStyle('warning')" @click="handleSyncSytmdb">同步 SYTMDB</n-button>
         <n-button v-bind="getButtonStyle('primary')" @click="openCreate">手动新增</n-button>
       </n-space>
@@ -177,7 +171,7 @@ onBeforeUnmount(cleanupObserver)
     <!-- 卡片网格 -->
     <div class="cards-container">
       <n-spin :show="browserLoading">
-        <n-grid v-if="browserData.length > 0" :x-gap="16" :y-gap="16" cols="2 600:3 900:4 1200:5 1600:6">
+        <n-grid v-if="browserData.length > 0" :x-gap="10" :y-gap="10" cols="3 600:5 900:6 1200:8 1600:9">
           <n-gi v-for="item in browserData" :key="item.tmdb_id">
             <AppGlassCard appearance-key="tmdb-data-card" hoverable class="meta-card" content-style="padding: 0;" :bordered="true">
               <div class="card-content">
@@ -207,14 +201,6 @@ onBeforeUnmount(cleanupObserver)
                     <span class="meta-id">ID: {{ item.tmdb_id }}</span>
                   </div>
                   <div class="meta-genres">
-                    <n-tag
-                      v-for="g in (item.genres || []).slice(0, 3)"
-                      :key="g"
-                      size="tiny"
-                      round
-                      :bordered="false"
-                      style="color: #fff; background: #2e7d32;"
-                    >{{ g }}</n-tag>
                     <n-button v-bind="getButtonStyle('iconDanger')" size="tiny" @click="deleteMetadata(item)">
                       <template #icon><n-icon><DeleteIcon /></n-icon></template>
                     </n-button>
@@ -324,12 +310,12 @@ onBeforeUnmount(cleanupObserver)
 
 .type-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  font-size: 11px;
+  top: 5px;
+  left: 5px;
+  font-size: 9px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 5px;
+  border-radius: 4px;
   color: #fff;
   background: var(--bg-overlay);
   backdrop-filter: blur(8px);
@@ -345,16 +331,16 @@ onBeforeUnmount(cleanupObserver)
 
 /* 信息区 */
 .info-box {
-  padding: 10px 12px 12px;
+  padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .meta-title {
   font-weight: 700;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -366,7 +352,7 @@ onBeforeUnmount(cleanupObserver)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-tertiary);
 }
 
@@ -382,9 +368,9 @@ onBeforeUnmount(cleanupObserver)
 .meta-genres {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
-  min-height: 20px;
+  min-height: 18px;
 }
 
 .meta-genres :deep(.n-button) {

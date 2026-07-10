@@ -125,6 +125,24 @@ export function useAggregatedFeedItems(props: any) {
     }
   }
 
+  const handleClearCache = async (): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/rss/recognition/clear`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        message.success(data.message)
+        await fetchItems(false)
+        return true
+      } else {
+        message.error(data.message || '清空失败')
+        return false
+      }
+    } catch (e) {
+      message.error('清空请求失败')
+      return false
+    }
+  }
+
   // 批量清除下载记录：根据当前筛选的站点，不筛选则清除全部
   const handleClearHistory = async (): Promise<boolean> => {
     try {
@@ -161,6 +179,7 @@ export function useAggregatedFeedItems(props: any) {
     handleDownload,
     handleToggleHistory,
     handleRetryRecognition,
+    handleClearCache,
     handleClearHistory
   }
 }

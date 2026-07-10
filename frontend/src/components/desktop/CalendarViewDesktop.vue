@@ -2,12 +2,13 @@
 import AppTextField from '../AppTextField.vue'
 import AppTimeField from '../AppTimeField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
+import AppGlassCard from '../AppGlassCard.vue'
 import { ref, computed } from 'vue'
 import {
   NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
-  NList, NListItem, NAvatar, NPopconfirm, NTabs, NTabPane,
+  NAvatar, NPopconfirm, NTabs, NTabPane,
   NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup,
-  NSwitch, NDatePicker, NCard
+  NSwitch, NDatePicker, NCard, NGrid, NGi, NImage
 } from 'naive-ui'
 import {
   CalendarMonthOutlined as CalendarIcon,
@@ -180,6 +181,19 @@ const openCardDetail = (item: any) => {
     poster_path: item.posterPath
   })
 }
+
+// 点击卡片打开编辑弹框
+const showCardEditModal = ref(false)
+
+const openCardEdit = (sub: any) => {
+  startEdit(sub)
+  showCardEditModal.value = true
+}
+
+const handleCardEditSave = async (id: number) => {
+  await saveEdit(id)
+  showCardEditModal.value = false
+}
 </script>
 
 <template>
@@ -256,7 +270,7 @@ const openCardDetail = (item: any) => {
       </div>
     </n-spin>
 
-    <AppGlassModal appearance-key="calendar-modal" v-model:show="showManageModal" style="width: 95%;" content-style="padding: 0" title="追踪管理">
+    <AppGlassModal appearance-key="calendar-modal" v-model:show="showManageModal" style="max-width: 900px; width: 90vw;" content-style="padding: 0" title="追踪管理">
       <n-tabs type="line" animated class="manage-tabs">
         <n-tab-pane name="list" tab="正在追踪">
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
@@ -271,43 +285,48 @@ const openCardDetail = (item: any) => {
             </n-space>
           </div>
           <div class="tab-content">
-            <n-list :show-divider="false" class="compact-list">
-              <n-list-item v-for="sub in trackingList" :key="sub.id">
-                <div class="tracking-item-row">
-                  <div class="item-main">
-                    <div class="item-info">
-                      <span class="item-title">{{ sub.title }}</span>
-                      <span class="item-desc">TMDB: {{ sub.tmdb_id }} | S{{ sub.season }} | <span :class="{ 'no-data-text': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span></span>
+            <n-grid :x-gap="8" :y-gap="8" cols="3 600:5 900:6 1200:8 1600:9" v-if="trackingList.length > 0">
+              <n-gi v-for="sub in trackingList" :key="sub.id">
+                <AppGlassCard appearance-key="track-card" hoverable class="track-manage-card" content-style="padding: 0;" :bordered="true" @click="openCardEdit(sub)">
+                  <div class="tm-content">
+                    <!-- 海报 -->
+                    <div class="tm-poster">
+                      <n-image
+                        v-if="sub.poster_path"
+                        :src="getImg(sub.poster_path)"
+                        fallback-src="https://via.placeholder.com/300x450?text=No+Poster"
+                        object-fit="cover"
+                        preview-disabled
+                        style="width: 100%; height: 100%;"
+                      />
+                      <div v-else class="tm-poster-placeholder">
+                        <span>{{ sub.title?.charAt(0) || '?' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- 信息区 -->
+                    <div class="tm-info">
+                      <div class="tm-title" :title="sub.title">{{ sub.title }}</div>
+                      <div class="tm-meta">
+                        <span class="tm-season">S{{ sub.season }}</span>
+                        <span class="tm-ep" :class="{ 'no-data-text': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span>
+                        <div class="tm-actions" @click.stop>
+                          <n-button v-bind="getButtonStyle('iconPrimary')" size="tiny" @click="refreshSubject(sub.id)" title="同步"><template #icon><n-icon><RefreshIcon /></n-icon></template></n-button>
+                          <n-popconfirm 
+                            positive-text="确认"
+                            negative-text="取消"
+                            @positive-click="deleteSubject(sub.id)"
+                          >
+                            <template #trigger><n-button v-bind="getButtonStyle('iconDanger')" size="tiny" title="删除"><template #icon><n-icon><DeleteIcon /></n-icon></template></n-button></template>
+                            确定要从日历中移除此追踪项吗？
+                          </n-popconfirm>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  <div class="item-actions">
-                    <template v-if="editingId === sub.id">
-                      <n-space :size="4" align="center">
-                        <n-input v-model:value="editBuffer.title" placeholder="标题" size="tiny" :theme-overrides="inputThemeOverrides" style="width: 150px" />
-                        <n-input-number v-model:value="editBuffer.season" :min="1" size="tiny" :theme-overrides="inputPeerThemeOverrides" style="width: 80px" />
-                        <n-button v-bind="getButtonStyle('primary')" @click="saveEdit(sub.id)">保存</n-button>
-                        <n-button v-bind="getButtonStyle('dialogCancel')" @click="editingId = null">取消</n-button>
-                      </n-space>
-                    </template>
-                    <template v-else>
-                      <n-button-group>
-                        <n-button v-bind="getButtonStyle('icon')" size="small" @click="startEdit(sub)" title="编辑"><template #icon><n-icon><EditIcon /></n-icon></template></n-button>
-                        <n-button v-bind="getButtonStyle('iconPrimary')" size="small" @click="refreshSubject(sub.id)" title="同步"><template #icon><n-icon><RefreshIcon /></n-icon></template></n-button>
-                        <n-popconfirm 
-                          positive-text="确认"
-                          negative-text="取消"
-                          @positive-click="deleteSubject(sub.id)"
-                        >
-                          <template #trigger><n-button v-bind="getButtonStyle('iconDanger')" size="small" title="删除"><template #icon><n-icon><DeleteIcon /></n-icon></template></n-button></template>
-                          确定要从日历中移除此追踪项吗？
-                        </n-popconfirm>
-                      </n-button-group>
-                    </template>
-                  </div>
-                </div>
-              </n-list-item>
-            </n-list>
+                </AppGlassCard>
+              </n-gi>
+            </n-grid>
             <n-empty v-if="trackingList.length === 0" description="暂无追踪条目" style="margin-top: 100px" />
           </div>
         </n-tab-pane>
@@ -459,6 +478,24 @@ const openCardDetail = (item: any) => {
           </div>
         </n-tab-pane>
       </n-tabs>
+    </AppGlassModal>
+
+    <!-- 卡片编辑弹框 -->
+    <AppGlassModal appearance-key="calendar-modal" v-model:show="showCardEditModal" style="width: 450px;" :title="editBuffer.title ? `编辑 - ${editBuffer.title}` : '编辑追踪项'">
+      <n-form label-placement="left" label-width="60">
+        <n-form-item>
+          <AppTextField v-model:value="editBuffer.title" label="标题" placeholder="日历显示的标题" />
+        </n-form-item>
+        <n-form-item>
+          <AppTextField v-model:value="editBuffer.season" label="季号" type="number" :min="1" />
+        </n-form-item>
+      </n-form>
+      <template #action>
+        <n-space justify="end">
+          <n-button v-bind="getButtonStyle('dialogCancel')" @click="showCardEditModal = false">取消</n-button>
+          <n-button v-bind="getButtonStyle('primary')" @click="handleCardEditSave(editingId!)">保存</n-button>
+        </n-space>
+      </template>
     </AppGlassModal>
   </div>
 </template>
@@ -684,39 +721,86 @@ const openCardDetail = (item: any) => {
   padding: 24px 40px;
 }
 
-.tracking-item-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+/* 追踪管理卡片 - 参考追剧订阅/元数据资产卡片风格 */
+.track-manage-card {
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+.track-manage-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
-.item-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.item-info {
+.tm-content {
   display: flex;
   flex-direction: column;
-  min-width: 0;
 }
 
-.item-title {
-  font-size: var(--text-lg);
+.tm-poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: var(--app-surface-inner);
+  overflow: hidden;
+  cursor: pointer;
+}
+.tm-poster :deep(img) {
+  width: 100%;
+  height: 100%;
+  transition: transform var(--transition-slow);
+}
+.track-manage-card:hover .tm-poster :deep(img) {
+  transform: scale(1.08);
+}
+
+.tm-poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--n-primary-color), #667eea);
+  color: white;
+  font-size: 24px;
   font-weight: bold;
+}
+
+.tm-info {
+  padding: 6px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tm-title {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
+  color: var(--app-instance-text-color, var(--text-primary));
+  cursor: pointer;
 }
 
-.item-desc {
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
+.tm-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--app-instance-text-secondary-color, var(--text-tertiary));
+}
+.tm-meta .tm-actions {
+  margin-left: auto;
+}
+
+.tm-season {
+  color: var(--n-primary-color);
+  font-weight: 600;
+}
+
+.tm-ep {
+  color: var(--app-instance-text-secondary-color, var(--text-tertiary));
 }
 
 .no-data-text {
@@ -724,46 +808,10 @@ const openCardDetail = (item: any) => {
   font-weight: bold;
 }
 
-.end-mark {
-  color: var(--color-error) !important;
-  font-weight: bold;
-  margin-left: 2px;
-}
-
-.item-actions {
-  margin-left: 16px;
-  flex-shrink: 0;
-}
-
-.compact-list :deep(.n-list-item) {
-  padding: 8px 0;
-  border-bottom: none !important;
-}
-
-.compact-list :deep(.n-list-item)::after {
-  display: none !important;
-}
-
-/* 强制隐藏 n-list 分割线 */
-.compact-list :deep(.n-list-item__divider) {
-  display: none !important;
-}
-
-.compact-list :deep(.n-list-item):not(:last-child) {
-  border-bottom: none !important;
-}
-
-.compact-list :deep(.n-list) .n-list-item {
-  border-bottom: 0 !important;
-}
-
-/* 禁用悬停效果 */
-.compact-list :deep(.n-list-item):hover {
-  background-color: transparent !important;
-}
-
-.compact-list :deep(.n-list-item--hover) {
-  background-color: transparent !important;
+.tm-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .discover-item { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; background: var(--bg-surface); cursor: pointer; transition: background var(--transition-fast); min-width: 0; }

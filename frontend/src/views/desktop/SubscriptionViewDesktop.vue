@@ -45,8 +45,6 @@ const {
   deleteRule,
   handlePreviewRule,
   runNow,
-  retryRecognition,
-  clearCache,
   clearBlacklist,
   syncJackettFeeds
 } = useSubscriptionView()
@@ -84,17 +82,6 @@ onMounted(fetchData)
           </template>
           确定清空下载黑名单吗？这会让之前因为下载超时而被屏蔽的资源恢复可下载状态。
         </n-popconfirm>
-        <n-popconfirm @positive-click="clearCache" positive-text="确定重置" negative-text="取消">
-          <template #trigger>
-            <n-button v-bind="getButtonStyle('warning')">
-              清空识别缓存
-            </n-button>
-          </template>
-          确定清空所有已识别的元数据吗？这会导致所有条目在下次刷新时重新执行 AI/TMDB 识别。
-        </n-popconfirm>
-        <n-button v-bind="getButtonStyle('warning')" @click="retryRecognition">
-          重试识别失败项
-        </n-button>
         <n-button v-bind="getButtonStyle('primary')" :loading="syncing" @click="runNow">
           立即触发全量刷新
         </n-button>

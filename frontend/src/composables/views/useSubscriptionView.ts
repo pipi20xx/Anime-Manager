@@ -138,26 +138,6 @@ export function useSubscriptionView() {
     finally { syncing.value = false }
   }
 
-  const retryRecognition = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/rss/recognition/retry`, { method: 'POST' })
-      const data = await res.json()
-      if (data.success) {
-        message.success(data.message)
-      } else {
-        message.error(data.message)
-      }
-    } catch (e) { message.error('触发重试失败') }
-  }
-
-  const clearCache = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/rss/recognition/clear`, { method: 'POST' })
-      const data = await res.json()
-      message.success(data.message)
-    } catch (e) { message.error('重置失败') }
-  }
-
   const clearBlacklist = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/cache/clear_blacklist`, { method: 'POST' })
@@ -210,8 +190,6 @@ export function useSubscriptionView() {
     deleteRule,
     handlePreviewRule,
     runNow,
-    retryRecognition,
-    clearCache,
     clearBlacklist,
     syncJackettFeeds
   }

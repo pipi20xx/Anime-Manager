@@ -31,6 +31,7 @@ const {
   handleDownload,
   handleToggleHistory,
   handleRetryRecognition,
+  handleClearCache,
   handleClearHistory
 } = useAggregatedFeedItems(props)
 
@@ -165,6 +166,12 @@ onBeforeUnmount(cleanupObserver)
         <n-button v-bind="getButtonStyle('secondary')" size="small" @click="handleRetryRecognition" :loading="loading">
           重试识别失败项
         </n-button>
+        <n-popconfirm @positive-click="handleClearCache" positive-text="确定重置" negative-text="取消">
+          <template #trigger>
+            <n-button v-bind="getButtonStyle('text')" size="small" style="color: var(--n-error-color);">清空识别缓存</n-button>
+          </template>
+          确定清空所有已识别的元数据吗？这会导致所有条目在下次刷新时重新执行 AI/TMDB 识别。
+        </n-popconfirm>
       </div>
     </div>
 
