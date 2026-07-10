@@ -261,5 +261,10 @@ const {
   .pref-desc { display: none; }
   .pref-label { font-size: var(--text-sm); }
   .preference-card :deep(.n-scrollbar) { max-height: none !important; }
+  .pref-item { padding: var(--space-2); }
+  /* 搜索结果项: 缩小图片 */
+  .search-result-item { padding: var(--space-2); gap: var(--space-2); }
+  .search-result-title { font-size: var(--text-sm); }
+  .search-result-sub { font-size: var(--text-2xs); }
 }
 </style>

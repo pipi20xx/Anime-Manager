@@ -134,20 +134,39 @@ const {
 /* === 移动端适配 === */
 @media (max-width: 767px) {
   .header-text { font-size: var(--text-md); }
-  .main-layout { gap: var(--space-3); }
+
+  /* 海报+详情: 横向 → 纵向堆叠 (参考单文件识别弹窗适配) */
+  .main-layout {
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .poster-box { align-self: center; }
   .poster-img :deep(img),
   .poster-placeholder { width: 100px !important; height: 140px; }
   .poster-placeholder { font-size: var(--text-2xs); }
-  .title-line { font-size: var(--text-xl); }
+
+  .details-box { width: 100%; }
+  .title-line { font-size: var(--text-xl); text-align: center; }
+  .pure-tags-row { justify-content: center; }
+  .pure-specs-row { justify-content: center; }
+
   .p-tag { font-size: var(--text-xs); padding: 1px var(--space-1); }
   .id-text, .id-link, .date-text { font-size: var(--text-xs); }
   .p-badge { font-size: 9px; }
+
+  /* 信息网格: 4列 → 2x2 网格 */
+  .flex-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: var(--space-3);
+  }
   .fig-item { padding: var(--space-2) 2px; }
   .fig-l { font-size: 9px; }
   .fig-v { font-size: var(--text-md); }
-  .flex-info-grid { margin-bottom: var(--space-3); }
+
   .text-info-rows { font-size: var(--text-sm); gap: var(--space-1); }
-  .rl { width: 50px; font-size: var(--text-xs); }
+  .rl { width: 70px; font-size: var(--text-xs); }
   .rv.mono { font-size: var(--text-xs); }
   .filename-text { font-size: var(--text-2xs); }
 }

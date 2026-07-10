@@ -79,6 +79,6 @@ const { tmdb, getImg } = useRecognitionTmdb()
   .small-no-poster { height: 90px; }
   .tmdb-title { font-size: var(--text-md); }
   .tmdb-meta-line { font-size: var(--text-2xs); gap: var(--space-2); }
-  .overview-text { font-size: var(--text-xs); -webkit-line-clamp: 2; line-height: 1.3; }
+  .overview-text { font-size: var(--text-xs); -webkit-line-clamp: 3; line-height: 1.3; }
 }
 </style>

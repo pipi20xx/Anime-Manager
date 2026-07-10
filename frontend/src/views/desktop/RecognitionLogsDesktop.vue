@@ -57,6 +57,24 @@ const { recognitionState, getLogClass, logScrollbar } = useRecognitionLogs()
   background: transparent;
 }
 
+/* === 移动端适配 === */
+@media (max-width: 767px) {
+  .logs-view { gap: var(--space-2); }
+  .page-header h1 { font-size: var(--text-xl); }
+  .subtitle { font-size: var(--text-2xs); letter-spacing: 1px; }
+  /* 日志容器: 移动端使用固定高度而非视口计算，避免 tab 内嵌套时高度异常 */
+  .log-container-wrapper {
+    height: 50vh;
+    min-height: 300px;
+  }
+  .log-content {
+    padding: var(--space-2);
+    font-size: var(--text-xs);
+  }
+  .log-line { gap: var(--space-2); padding: 1px 0; }
+  .line-num { font-size: 9px; min-width: 20px; }
+}
+
 .log-content {
   padding: 12px;
   font-family: var(--code-font);
