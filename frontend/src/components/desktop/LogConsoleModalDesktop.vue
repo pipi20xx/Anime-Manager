@@ -279,4 +279,30 @@ watch(() => props.show, (newVal) => {
   color: var(--text-tertiary);
   font-size: 12px;
 }
+
+/* === 移动端适配 === */
+@media (max-width: 767px) {
+  /* 头部: 纵向堆叠 */
+  .console-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .header-controls { width: 100%; }
+  .header-controls :deep(.n-space) { flex-wrap: wrap; gap: 4px !important; width: 100%; }
+  .header-controls :deep(.app-select-field[style*="width"]) { width: 100% !important; }
+
+  /* 日志容器: 缩小 padding 和字号 */
+  .log-container { padding: var(--space-2); font-size: var(--text-xs); }
+  .log-group { gap: var(--space-2); padding: var(--space-1) 0; }
+  .log-group-time { min-width: 60px; font-size: var(--text-2xs); }
+  .log-group-line { margin: 2px 0; }
+
+  /* 日志行: 时间+级别独占一行, 消息换行到下一行 */
+  .log-line { flex-wrap: wrap; gap: 4px; padding: 1px 0; }
+  .log-time { font-size: var(--text-2xs); min-width: 0 !important; flex-shrink: 0; }
+  .log-level { font-size: var(--text-2xs); min-width: 0 !important; flex-shrink: 0; }
+  .log-msg { font-size: var(--text-xs); flex: none !important; width: 100%; }
+}
 </style>

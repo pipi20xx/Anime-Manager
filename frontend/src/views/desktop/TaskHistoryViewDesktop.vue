@@ -325,4 +325,27 @@ onUnmounted(() => {
   font-size: var(--text-md);
   opacity: var(--opacity-80);
 }
+
+/* === 移动端适配: 任务日志弹框内容 === */
+@media (max-width: 767px) {
+  /* 日志容器: 缩小 padding 和字号 */
+  .log-container { padding: var(--space-2); font-size: var(--text-xs); }
+  .log-group { gap: var(--space-2); padding: var(--space-1) 0; }
+  .log-group-time { min-width: 60px; font-size: var(--text-2xs); }
+  .log-group-line { margin: 2px 0; }
+
+  /* 日志行: 时间+级别独占一行, 消息换行到下一行 */
+  .log-line { flex-wrap: wrap; gap: 4px; padding: 1px 0; }
+  .log-time { font-size: var(--text-2xs); min-width: 0 !important; }
+  .log-level { font-size: var(--text-2xs); min-width: 0 !important; }
+  .log-msg { font-size: var(--text-xs); flex: none !important; width: 100%; }
+
+  /* 任务卡片: 缩小 padding */
+  .task-list .task-card :deep(.n-card__content) { padding: 12px !important; }
+  .card-header { gap: var(--space-2); margin-bottom: var(--space-1); }
+  .task-name { font-size: var(--text-sm); }
+  .task-time { font-size: var(--text-2xs); }
+  .card-footer { flex-wrap: wrap; gap: var(--space-2); }
+  .task-meta { gap: var(--space-2); font-size: var(--text-2xs); }
+}
 </style>

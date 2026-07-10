@@ -468,4 +468,16 @@ onUnmounted(stopBgTaskPolling)
 .log-level.error { color: #ff4d4f; }
 .log-level.warning { color: #faad14; }
 .log-msg { flex: 1; word-break: break-all; }
+
+/* === 移动端适配: 任务日志弹框内容 === */
+@media (max-width: 767px) {
+  .log-container { padding: var(--space-2); font-size: var(--text-xs); }
+  .log-group { gap: var(--space-2); padding: var(--space-1) 0; }
+  .log-group-time { min-width: 60px; font-size: var(--text-2xs); }
+  .log-group-line { margin: 2px 0; }
+  .log-line { flex-wrap: wrap; gap: 4px; padding: 1px 0; }
+  .log-time { font-size: var(--text-2xs); min-width: 0 !important; }
+  .log-level { font-size: var(--text-2xs); min-width: 0 !important; }
+  .log-msg { font-size: var(--text-xs); flex: none !important; width: 100%; }
+}
 </style>

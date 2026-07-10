@@ -220,7 +220,13 @@ watch([queryResult, activeTab], () => {
 .align-center { align-items: center; }
 .gap-3 { gap: 12px; }
 .sql-box { display: flex; gap: 12px; }
-.sql-input { font-family: 'JetBrains Mono', monospace; background: var(--app-surface-inner); border-radius: 4px; }
+.sql-input {
+  font-family: 'JetBrains Mono', monospace;
+  --n-color: transparent !important;
+  --n-color-focus: transparent !important;
+}
+.sql-input :deep(.n-input-wrapper),
+.sql-input :deep(.n-input__textarea) { background: transparent !important; }
 .run-btn { height: auto; border-radius: 4px; }
 .result-card { background: var(--app-surface-card-mixed) !important; border: 1px solid var(--app-border-light) !important; min-height: 400px; border-radius: 12px !important; }
 .footer-info { font-size: 12px; color: var(--text-tertiary); text-align: right; }
