@@ -220,11 +220,24 @@ onUnmounted(stopBgTaskPolling)
             <template #item="{element: task, index: i}">
               <n-card bordered class="task-card clickable-card" :data-app-instance="'organize-task-card'" @click="openEditTask(i)">
                 <template #header>
-                  <n-space align="center" justify="space-between" style="width: 100%">
-                    <n-space align="center">
-                      <b>{{ task.name }}</b>
-                    </n-space>
-                    
+                  <div class="card-title-box">
+                    <span class="card-title-text" :title="task.name">{{ task.name }}</span>
+                  </div>
+                </template>
+                <div class="p-disp">
+                  <div class="p-row" :title="task.source_dir"><span class="p-label">源目录</span><div class="v">{{ task.source_dir }}</div></div>
+                  <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><div class="v">{{ task.target_dir }}</div></div>
+                  <div class="p-row">
+                    <span class="p-label">操作类型</span>
+                    <div class="v">{{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}</div>
+                  </div>
+                  <div class="p-row">
+                    <span class="p-label">重命名规则</span>
+                    <div class="v">{{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}</div>
+                  </div>
+                </div>
+                <template #action>
+                  <div class="task-footer" @click.stop>
                     <n-space>
                       <!-- 实时监控快速切换 -->
                       <n-tooltip trigger="hover">
@@ -258,23 +271,7 @@ onUnmounted(stopBgTaskPolling)
                         定时扫描: {{ (task.scheduler_enabled || task.monitor_mode === 'scheduled') ? '开启' : '关闭' }} (点击切换)
                       </n-tooltip>
                     </n-space>
-                  </n-space>
-                </template>
-                <div class="p-disp">
-                  <div class="p-row" :title="task.source_dir"><span class="p-label">源目录</span><div class="v">{{ task.source_dir }}</div></div>
-                  <div class="p-row" :title="task.target_dir"><span class="p-label">目标</span><div class="v">{{ task.target_dir }}</div></div>
-                  <div class="p-row">
-                    <span class="p-label">操作类型</span>
-                    <div class="v">{{ actionTypeMap[task.action_type] || task.action_type || '物理移动' }}</div>
-                  </div>
-                  <div class="p-row">
-                    <span class="p-label">重命名规则</span>
-                    <div class="v">{{ rules.find(r => r.id === task.rule_id)?.name || '未指定规则' }}</div>
-                  </div>
-                </div>
-                <template #action>
-                  <n-space justify="end" align="center" @click.stop>
-                    <n-space>
+                    <n-space justify="end">
                       <n-tooltip trigger="hover">
                         <template #trigger>
                           <n-button v-bind="getButtonStyle('icon')" size="small" @click="duplicateTask(i)">
@@ -300,7 +297,7 @@ onUnmounted(stopBgTaskPolling)
                         立即开始整理任务
                       </n-tooltip>
                     </n-space>
-                  </n-space>
+                  </div>
                 </template>
               </n-card>
             </template>
@@ -367,7 +364,8 @@ onUnmounted(stopBgTaskPolling)
 }
 
 .card-title-box { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-.card-title-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-title-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-weight: bold; }
+.task-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .default-tag { margin-left: auto; }
 
 .rule-preview-mini { flex-grow: 1; padding: var(--space-3) 0; }

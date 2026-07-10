@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, h } from 'vue'
+import { ref, onMounted, computed, h, nextTick, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NInput, NButton, 
@@ -19,6 +19,7 @@ import {
 } from '@vicons/material'
 import { useDatabase } from '../../composables/views/useDatabase'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { useDragScroll } from '../../composables/useDragScroll'
 
 const dialog = useDialog()
 
@@ -124,6 +125,15 @@ const dataTableColumns = computed(() => {
   }
   return cols
 })
+
+// --- 拖拽水平滚动 ---
+const tableWrapperRef = ref<HTMLElement | null>(null)
+const { rescan } = useDragScroll(tableWrapperRef)
+
+// 当查询结果或标签页变化时重新扫描
+watch([queryResult, activeTab], () => {
+  nextTick(() => rescan())
+})
 </script>
 
 <template>
@@ -171,17 +181,19 @@ const dataTableColumns = computed(() => {
           </n-card>
           <n-card bordered title="执行结果" size="small" class="result-card">
             <template #header-extra><AppSearchField v-model:value="searchText" placeholder="在结果中搜索..." :loading="queryLoading" style="width: 250px" /></template>
-            <n-data-table
-              :theme-overrides="dataTableThemeOverrides"
-              remote
-              :columns="dataTableColumns"
-              :data="paginatedData"
-              :loading="queryLoading"
-              :scroll-x="scrollX"
-              size="small"
-              :single-line="false"
-              :pagination="{ page: sqlPage, pageSize: sqlPageSize, itemCount: sqlTotal, onChange: (p: number) => { sqlPage = p } }"
-            />
+            <div ref="tableWrapperRef" class="table-drag-wrapper">
+              <n-data-table
+                :theme-overrides="dataTableThemeOverrides"
+                remote
+                :columns="dataTableColumns"
+                :data="paginatedData"
+                :loading="queryLoading"
+                :scroll-x="scrollX"
+                size="small"
+                :single-line="false"
+                :pagination="{ page: sqlPage, pageSize: sqlPageSize, itemCount: sqlTotal, onChange: (p: number) => { sqlPage = p } }"
+              />
+            </div>
             <template #footer><div class="footer-info">显示 {{ paginatedData.length }} / 共 {{ queryResult.length }} 条记录</div></template>
           </n-card>
         </n-space>
@@ -212,6 +224,7 @@ const dataTableColumns = computed(() => {
 .run-btn { height: auto; border-radius: 4px; }
 .result-card { background: var(--app-surface-card-mixed) !important; border: 1px solid var(--app-border-light) !important; min-height: 400px; border-radius: 12px !important; }
 .footer-info { font-size: 12px; color: var(--text-tertiary); text-align: right; }
+.table-drag-wrapper { width: 100%; }
 :deep(.n-tabs-nav) { background: transparent !important; }
 :deep(.n-tabs-pane-wrapper) { padding: 0; }
 
