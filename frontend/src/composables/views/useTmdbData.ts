@@ -16,8 +16,8 @@ export function useTmdbData() {
 
   const showEditModal = ref(false)
   const isEditing = ref(false)
-  const editForm = reactive({
-    id: '', type: 'tv', title: '', poster_path: '', overview: '', manual: true
+  const editForm = reactive<Record<string, any>>({
+    id: '', type: 'tv', title: '', poster_path: '', overview: '', manual: true, full_data: null
   })
 
   const showSyncModal = ref(false)
@@ -58,7 +58,7 @@ export function useTmdbData() {
 
   const openCreate = () => {
     isEditing.value = false
-    Object.assign(editForm, { id: '', type: 'tv', title: '', poster_path: '', overview: '', manual: true })
+    Object.assign(editForm, { id: '', type: 'tv', title: '', poster_path: '', overview: '', manual: true, full_data: null })
     showEditModal.value = true
   }
 
