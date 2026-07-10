@@ -19,6 +19,7 @@ export function useFileBrowserView() {
   const parentPath = ref<string | null>(null)
   const items = ref<FileItem[]>([])
   const loading = ref(false)
+  const showSkeleton = ref(false)
   const recognizingPath = ref<string | null>(null)
   const availableRules = ref<any[]>([])
   const defaultTask = ref<any>(null)
@@ -63,8 +64,14 @@ export function useFileBrowserView() {
   })
 
   // --- Core Browser Functions ---
+  let skeletonTimer: ReturnType<typeof setTimeout> | null = null
   const fetchFiles = async (path: string) => {
     loading.value = true
+    // 延迟 200ms 显示骨架屏，避免快速加载时闪烁
+    if (skeletonTimer) clearTimeout(skeletonTimer)
+    skeletonTimer = setTimeout(() => {
+      if (loading.value) showSkeleton.value = true
+    }, 200)
     try {
       const res = await fetch(`${API_BASE}/api/files/list`, {
         method: 'POST',
@@ -78,7 +85,11 @@ export function useFileBrowserView() {
         items.value = data.data.items
       }
     } catch (e) { message.error('加载失败') }
-    finally { loading.value = false }
+    finally {
+      loading.value = false
+      showSkeleton.value = false
+      if (skeletonTimer) { clearTimeout(skeletonTimer); skeletonTimer = null }
+    }
   }
 
   const deleteItem = async (path: string) => {
@@ -465,6 +476,7 @@ export function useFileBrowserView() {
     parentPath,
     items,
     loading,
+    showSkeleton,
     recognizingPath,
     availableRules,
     defaultTask,

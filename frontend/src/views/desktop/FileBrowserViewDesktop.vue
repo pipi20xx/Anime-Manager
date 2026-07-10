@@ -37,6 +37,7 @@ const {
   parentPath,
   items,
   loading,
+  showSkeleton,
   recognizingPath,
   availableRules,
   defaultTask,
@@ -293,34 +294,58 @@ onMounted(() => {
 
         <!-- 文件列表 -->
         <div class="list-wrapper" @contextmenu="handleContextMenu($event, null)">
-          <n-list hoverable clickable class="modern-list">
-            <n-list-item 
-              v-for="item in items" 
-              :key="item.path" 
-              @click="item.is_dir && fetchFiles(item.path)"
-              @contextmenu.stop="handleContextMenu($event, item)"
-            >
-              <template #prefix>
-                <div class="file-icon-box" :class="{ 'is-dir': item.is_dir }">
-                  <n-icon size="20"><component :is="getFileIcon(item)" /></n-icon>
+          <!-- 顶部加载进度条 -->
+          <Transition name="loading-bar">
+            <div v-if="loading" class="loading-bar">
+              <div class="loading-bar-inner"></div>
+            </div>
+          </Transition>
+
+          <!-- 骨架屏 -->
+          <Transition name="skeleton-fade">
+            <div v-if="showSkeleton" class="skeleton-list">
+              <div v-for="i in 8" :key="i" class="skeleton-item">
+                <div class="skeleton-icon"></div>
+                <div class="skeleton-text-area">
+                  <div class="skeleton-line skeleton-line-1"></div>
+                  <div class="skeleton-line skeleton-line-2"></div>
                 </div>
-              </template>
-              <div class="file-info">
-                <div class="file-name">{{ item.name }}</div>
-                <div class="file-meta">
-                  <span>{{ (item.size/1024/1024).toFixed(2) }} MB</span>
-                  <n-divider vertical />
-                  <span>{{ new Date(item.mtime*1000).toLocaleString() }}</span>
-                </div>
+                <div class="skeleton-suffix"></div>
               </div>
-              <template #suffix>
-                <n-button v-if="!item.is_dir" size="small" secondary round type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
-                  单文件识别
-                </n-button>
-                <n-icon v-else :color="textMutedColor" size="20"><NextIcon /></n-icon>
-              </template>
-            </n-list-item>
-          </n-list>
+            </div>
+          </Transition>
+
+          <!-- 文件列表 -->
+          <Transition name="list-fade">
+            <n-list v-if="!showSkeleton" hoverable clickable class="modern-list" :key="currentPath">
+              <n-list-item 
+                v-for="item in items" 
+                :key="item.path" 
+                @click="item.is_dir && fetchFiles(item.path)"
+                @contextmenu.stop="handleContextMenu($event, item)"
+              >
+                <template #prefix>
+                  <div class="file-icon-box" :class="{ 'is-dir': item.is_dir }">
+                    <n-icon size="20"><component :is="getFileIcon(item)" /></n-icon>
+                  </div>
+                </template>
+                <div class="file-info">
+                  <div class="file-name">{{ item.name }}</div>
+                  <div class="file-meta">
+                    <span>{{ (item.size/1024/1024).toFixed(2) }} MB</span>
+                    <n-divider vertical />
+                    <span>{{ new Date(item.mtime*1000).toLocaleString() }}</span>
+                  </div>
+                </div>
+                <template #suffix>
+                  <n-button v-if="!item.is_dir" size="small" secondary round type="info" :loading="recognizingPath === item.path" @click.stop="recognizeFile(item)">
+                    单文件识别
+                  </n-button>
+                  <n-icon v-else :color="textMutedColor" size="20"><NextIcon /></n-icon>
+                </template>
+              </n-list-item>
+            </n-list>
+          </Transition>
         </div>
 
         <!-- 底部轻量信息显示 -->
@@ -561,6 +586,133 @@ onMounted(() => {
   border: 1px solid var(--app-border-light); 
   overflow: hidden; 
   flex: 1;
+  position: relative;
+}
+
+/* 顶部加载进度条 */
+.loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 10;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--n-primary-color, #18a058) 15%, transparent);
+}
+.loading-bar-inner {
+  height: 100%;
+  width: 40%;
+  background: var(--n-primary-color, #18a058);
+  border-radius: 0 4px 4px 0;
+  animation: loading-slide 1.2s ease-in-out infinite;
+}
+@keyframes loading-slide {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(350%); }
+}
+.loading-bar-enter-active,
+.loading-bar-leave-active {
+  transition: opacity 0.2s ease;
+}
+.loading-bar-enter-from,
+.loading-bar-leave-to {
+  opacity: 0;
+}
+
+/* 骨架屏 */
+.skeleton-list {
+  padding: 12px 20px;
+}
+.skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--app-border-light);
+}
+.skeleton-item:last-child {
+  border-bottom: none;
+}
+.skeleton-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--card-border-radius, var(--button-border-radius, 10px));
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--app-surface-card-mixed) 25%,
+    color-mix(in srgb, var(--app-surface-card-mixed), rgba(128,128,128,0.12)) 50%,
+    var(--app-surface-card-mixed) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+.skeleton-text-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--app-surface-card-mixed) 25%,
+    color-mix(in srgb, var(--app-surface-card-mixed), rgba(128,128,128,0.12)) 50%,
+    var(--app-surface-card-mixed) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+.skeleton-line-1 { width: 45%; }
+.skeleton-line-2 { width: 30%; height: 12px; }
+.skeleton-suffix {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    var(--app-surface-card-mixed) 25%,
+    color-mix(in srgb, var(--app-surface-card-mixed), rgba(128,128,128,0.12)) 50%,
+    var(--app-surface-card-mixed) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 骨架屏淡入淡出 */
+.skeleton-fade-enter-active {
+  transition: opacity 0.2s ease;
+}
+.skeleton-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.skeleton-fade-enter-from,
+.skeleton-fade-leave-to {
+  opacity: 0;
+}
+
+/* 列表淡入动画 */
+.list-fade-enter-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.list-fade-leave-active {
+  transition: opacity 0.1s ease;
+}
+.list-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.list-fade-leave-to {
+  opacity: 0;
 }
 .modern-list :deep(.n-list-item) { padding: 12px 20px !important; transition: background var(--transition-fast); border-bottom: 1px solid var(--app-border-light); }
 .modern-list :deep(.n-list-item:last-child) { border-bottom: none; }
