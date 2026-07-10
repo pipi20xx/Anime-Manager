@@ -8,14 +8,60 @@ export function useLogConsole() {
 
   interface LogItem {
     id: number
-    content: string
+    raw: string
+    time: string
+    level: string
+    message: string
+  }
+
+  interface LogGroup {
+    groupTime: string
+    logs: LogItem[]
   }
 
   const consoleLogs = ref<LogItem[]>([])
   const isPaused = ref(false)
   const autoScroll = ref(true)
-  const virtualListInst = ref<any>(null)
+  const logContainerRef = ref<HTMLElement | null>(null)
   const socketStatus = ref<'connected' | 'disconnected' | 'connecting'>('disconnected')
+
+  /**
+   * 解析日志行，支持两种格式：
+   * - 实时流:  HH:MM:SS | LEVEL  | message
+   * - 历史文件: YYYY-MM-DD HH:MM:SS,ms | LEVEL | message
+   */
+  const parseLog = (raw: string): { time: string; level: string; message: string } => {
+    const match = raw.match(/^(?:(?:\d{4}-\d{2}-\d{2}\s+)?(\d{2}:\d{2}:\d{2}(?:,\d+)?))\s*\|\s*(\w+)\s*\|\s*(.*)$/)
+    if (match) {
+      return {
+        time: match[1],
+        level: match[2].toUpperCase(),
+        message: match[3]
+      }
+    }
+    return { time: '', level: 'INFO', message: raw }
+  }
+
+  /** 为前端系统消息附加当前时间戳，使其能被 parseLog 正确解析 */
+  const formatSystemMessage = (msg: string): string => {
+    const now = new Date()
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+    return `${time} | INFO  | ${msg}`
+  }
+
+  /** 按秒级时间 (HH:MM:SS) 对日志分组，与任务中心日志样式对齐 */
+  const groupedConsoleLogs = computed<LogGroup[]>(() => {
+    const groups = new Map<string, LogItem[]>()
+    for (const log of consoleLogs.value) {
+      const key = log.time?.split(',')[0] || '--:--:--'
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key)!.push(log)
+    }
+    return Array.from(groups.entries()).map(([groupTime, logs]) => ({
+      groupTime,
+      logs
+    }))
+  })
   const logDates = ref<string[]>([])
   const selectedDate = ref<string | null>(null) // null means Live
   const isLoadingHistory = ref(false)
@@ -30,23 +76,28 @@ export function useLogConsole() {
 
   const appendLog = (content: string) => {
     if (consoleLogs.value.length > 10000) {
-      consoleLogs.value = consoleLogs.value.slice(0, 8000)
+      consoleLogs.value = consoleLogs.value.slice(-8000)
     }
-    
-    consoleLogs.value.unshift({
+
+    const parsed = parseLog(content)
+    consoleLogs.value.push({
       id: logCounter++,
-      content: content
+      raw: content,
+      ...parsed
     })
-    
-    if (autoScroll.value) {
+
+    if (autoScroll.value && !selectedDate.value) {
       nextTick(() => {
-        scrollToTop()
+        scrollToBottom()
       })
     }
   }
 
-  const scrollToTop = () => {
-    virtualListInst.value?.scrollTo({ position: 'top' })
+  const scrollToBottom = () => {
+    const el = logContainerRef.value
+    if (el) {
+      el.scrollTop = el.scrollHeight
+    }
   }
 
   const fetchLogDates = async () => {
@@ -64,17 +115,14 @@ export function useLogConsole() {
       hasMore.value = true
       isInitialLoading.value = true
     }
-    
+
     try {
       const url = `${API_BASE}/api/system/logs/date/${date}?page=${page}&limit=${pageSize}`
       const res = await fetch(url)
-      
+
       const text = await res.text()
       if (text.includes("--- [结束]")) {
         hasMore.value = false
-        if (page === 1) {
-          consoleLogs.value = [{ id: -1, content: "该日期暂无更多日志记录" }]
-        }
         return
       }
 
@@ -83,23 +131,39 @@ export function useLogConsole() {
         hasMore.value = false
       }
 
-      const newLogs = lines.map((line, index) => ({
+      // 后端返回倒序 (最新在前)，反转得到正序 (最旧在前)
+      const reversedLines = [...lines].reverse()
+      const newLogs: LogItem[] = reversedLines.map((line, index) => ({
         id: (page - 1) * pageSize + index,
-        content: line
+        raw: line,
+        ...parseLog(line)
       }))
+
+      const container = logContainerRef.value
 
       if (page === 1) {
         consoleLogs.value = newLogs
         nextTick(() => {
-          scrollToTop()
+          scrollToBottom()
         })
       } else {
-        consoleLogs.value = [...consoleLogs.value, ...newLogs]
+        // 加载更旧的历史日志，插入到顶部并保持滚动位置
+        const prevScrollHeight = container?.scrollHeight || 0
+        const prevScrollTop = container?.scrollTop || 0
+
+        consoleLogs.value = [...newLogs, ...consoleLogs.value]
+
+        nextTick(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight
+            container.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight)
+          }
+        })
       }
-      
+
       currentPage.value = page
     } catch (e) {
-      appendLog(`>>> 无法加载 ${date} 的日志，请检查网络或日志文件 <<<`)
+      appendLog(formatSystemMessage(`无法加载 ${date} 的日志，请检查网络或日志文件`))
     } finally {
       isLoadingHistory.value = false
       isInitialLoading.value = false
@@ -114,15 +178,15 @@ export function useLogConsole() {
   const handleDateChange = (val: string | null) => {
     if (val === null) {
       clearConsole()
-      appendLog(">>> 正在切换回实时日志流... <<<")
-      
+      appendLog(formatSystemMessage("正在切换回实时日志流..."))
+
       // 强制重连以获取最新的历史回填 (对齐 cs123)
       if (socket) {
         socket.close()
         socket = null
       }
       connectWebSocket()
-      
+
       isPaused.value = false
     } else {
       isPaused.value = true
@@ -139,7 +203,7 @@ export function useLogConsole() {
 
     socket.onopen = () => {
       socketStatus.value = 'connected'
-      appendLog(">>> 系统实时控制台连接成功 (最新置顶) <<<")
+      appendLog(formatSystemMessage("系统实时控制台连接成功"))
       if (retryTimer) {
         clearTimeout(retryTimer)
         retryTimer = null
@@ -154,8 +218,18 @@ export function useLogConsole() {
     socket.onclose = () => {
       socket = null
       socketStatus.value = 'disconnected'
-      appendLog(">>> 连接断开，正在尝试重连... <<<")
+      appendLog(formatSystemMessage("连接断开，正在尝试重连..."))
       retryTimer = setTimeout(connectWebSocket, 3000)
+    }
+  }
+
+  /** 历史日志模式下滚动到顶部时加载更旧的日志 */
+  const handleScroll = (e: Event) => {
+    const target = e.target as HTMLElement
+    if (selectedDate.value && !isLoadingHistory.value && hasMore.value) {
+      if (target.scrollTop <= 10) {
+        loadMoreHistory()
+      }
     }
   }
 
@@ -707,9 +781,10 @@ export function useLogConsole() {
 
   return {
     consoleLogs,
+    groupedConsoleLogs,
     isPaused,
     autoScroll,
-    virtualListInst,
+    logContainerRef,
     socketStatus,
     logDates,
     selectedDate,
@@ -718,7 +793,8 @@ export function useLogConsole() {
     hasMore,
     handleDateChange,
     loadMoreHistory,
-    scrollToTop,
+    handleScroll,
+    scrollToBottom,
     clearConsole,
     openFullLog
   }

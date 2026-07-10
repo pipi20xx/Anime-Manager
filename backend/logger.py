@@ -131,6 +131,37 @@ class DailyFileHandler(logging.FileHandler):
         except Exception:
             pass
 
+class MonitorLogHandler(logging.FileHandler):
+    """monitor.log 每天清空，只保留当天日志。
+    替代 TimedRotatingFileHandler：后者依赖 rolloverAt 时间戳，
+    app 重启后重新计算会导致跨天轮转失效。
+    本 handler 在每次 emit 时检查日期，跨天时截断文件。
+    """
+    def __init__(self, filename, encoding='utf-8'):
+        self.current_date = datetime.now().strftime("%Y-%m-%d")
+        self.encoding = encoding
+        # 启动时检查文件是否包含旧日期的日志，如果是则截断
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r', encoding=encoding) as f:
+                    first_line = f.readline().strip()
+                # 日志格式: YYYY-MM-DD HH:MM:SS,ms | LEVEL | message
+                if first_line and not first_line.startswith(self.current_date):
+                    super().__init__(filename, mode='w', encoding=encoding)
+                    return
+            except Exception:
+                pass
+        super().__init__(filename, mode='a', encoding=encoding)
+
+    def emit(self, record):
+        new_date = datetime.now().strftime("%Y-%m-%d")
+        if new_date != self.current_date:
+            self.current_date = new_date
+            self.stream.close()
+            # 以 'w' 模式重新打开，截断旧日志
+            self.stream = open(self.baseFilename, 'w', encoding=self.encoding)
+        super().emit(record)
+
 def init_logging(log_file: str = "data/monitor.log", level=logging.INFO):
     """
     初始化日志系统，使其行为与 cs123 完全一致：
@@ -161,17 +192,10 @@ def init_logging(log_file: str = "data/monitor.log", level=logging.INFO):
     file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
     root.addHandler(file_handler)
 
-    # 4. monitor.log 只保留当天的实时日志，每天自动清空
-    try:
-        from logging.handlers import TimedRotatingFileHandler
-        # 每1天轮转一次，backupCount=0 表示不保留备份（轮转后删除旧文件）
-        monitor_handler = TimedRotatingFileHandler(
-            log_file, when='D', interval=1, backupCount=0, encoding='utf-8'
-        )
-        monitor_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
-        root.addHandler(monitor_handler)
-    except:
-        pass
+    # 4. monitor.log 只保留当天的实时日志，跨天自动截断
+    monitor_handler = MonitorLogHandler(log_file, encoding='utf-8')
+    monitor_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+    root.addHandler(monitor_handler)
 
     # 重定向 stdout/stderr
     class StreamToLogger:

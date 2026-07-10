@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
-import { 
-  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NVirtualList, NSelect, NSpin
+import {
+  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NSelect, NSpin
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
@@ -24,37 +24,28 @@ const emit = defineEmits(['update:show'])
 
 const {
   consoleLogs,
+  groupedConsoleLogs,
   isPaused,
   autoScroll,
-  virtualListInst,
+  logContainerRef,
   socketStatus,
   logDates,
   selectedDate,
   isLoadingHistory,
   isInitialLoading,
   hasMore,
-  logSource,
-  handleSourceChange,
   handleDateChange,
   loadMoreHistory,
-  scrollToTop,
+  handleScroll,
+  scrollToBottom,
   clearConsole,
   openFullLog
 } = useLogConsole()
 
-const handleScroll = (e: Event) => {
-  const target = e.target as HTMLElement
-  if (target.scrollTop + target.clientHeight >= target.scrollHeight - 10) {
-    if (selectedDate.value && !isLoadingHistory.value && hasMore.value) {
-      loadMoreHistory()
-    }
-  }
-}
-
 watch(() => props.show, (newVal) => {
   if (newVal) {
     setTimeout(() => {
-      scrollToTop()
+      scrollToBottom()
     }, 100)
   }
 })
@@ -77,13 +68,13 @@ watch(() => props.show, (newVal) => {
           <div class="d-flex align-center gap-2">
             <n-icon size="20" style="color: var(--n-primary-color)"><TerminalIcon /></n-icon>
             <span class="title">{{ selectedDate ? `历史记录: ${selectedDate}` : '实时系统日志 (Live)' }}</span>
-            <n-tag v-if="!selectedDate" :type="socketStatus === 'connected' ? 'success' : 'error'" size="small" round :bordered="false">
+            <n-tag v-if="!selectedDate" size="small" round :bordered="false" :style="socketStatus === 'connected' ? { color: '#fff', backgroundColor: '#10B981', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#ef4444', borderColor: 'transparent' }">
               <template #icon>
                 <div v-if="socketStatus === 'connected'" class="pulse-dot"></div>
               </template>
               {{ socketStatus === 'connected' ? '就绪' : '断开' }}
             </n-tag>
-            <n-tag v-else type="info" size="tiny" bordered round>历史归档</n-tag>
+            <n-tag v-else size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }">历史归档</n-tag>
           </div>
           <div class="header-controls">
              <n-space align="center">
@@ -98,7 +89,7 @@ watch(() => props.show, (newVal) => {
                 ]"
                 @update:value="handleDateChange"
               />
-              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="autoScroll = !autoScroll" :type="autoScroll ? 'primary' : 'default'" title="自动置顶">
+              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="autoScroll = !autoScroll" :type="autoScroll ? 'primary' : 'default'" title="自动置底">
                 {{ autoScroll ? '跟随' : '自由' }}
               </n-button>
               <n-button v-if="!selectedDate" v-bind="getButtonStyle('secondary')" size="tiny" @click="isPaused = !isPaused" :type="isPaused ? 'warning' : 'default'">
@@ -120,18 +111,21 @@ watch(() => props.show, (newVal) => {
           <div v-if="consoleLogs.length === 0 && !isLoadingHistory" class="empty-tip">
             {{ selectedDate ? '该日期暂无日志记录' : '等待系统日志流中...' }}
           </div>
-          <n-virtual-list
-            ref="virtualListInst"
-            class="log-list"
-            :items="consoleLogs"
-            :item-size="20"
-            key-field="id"
-            @scroll="handleScroll"
-          >
-            <template #default="{ item }">
-              <div class="log-line" :id="`log-${item.id}`">{{ item.content }}</div>
-            </template>
-          </n-virtual-list>
+          <div ref="logContainerRef" class="log-scroll-container" @scroll="handleScroll">
+            <div class="log-container">
+              <div v-for="group in groupedConsoleLogs" :key="group.groupTime" class="log-group">
+                <div class="log-group-time">{{ group.groupTime }}</div>
+                <div class="log-group-line"></div>
+                <div class="log-group-items">
+                  <div v-for="log in group.logs" :key="log.id" class="log-line">
+                    <span class="log-time">{{ log.time || '--:--:--' }}</span>
+                    <span :class="['log-level', log.level.toLowerCase()]">{{ log.level }}</span>
+                    <span class="log-msg">{{ log.message }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-if="isLoadingHistory && consoleLogs.length > 0" class="loading-more">
              <n-spin size="small" />
              <span>正在加载更多历史日志...</span>
@@ -162,9 +156,9 @@ watch(() => props.show, (newVal) => {
 .pulse-dot {
   width: 6px;
   height: 6px;
-  background-color: var(--n-primary-color);
+  background-color: #fff;
   border-radius: 50%;
-  box-shadow: 0 0 8px var(--n-primary-color);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
   animation: pulse 1.5s infinite;
 }
 
@@ -197,11 +191,6 @@ watch(() => props.show, (newVal) => {
   height: 100%;
 }
 
-.log-list {
-  flex: 1;
-  height: 100%;
-}
-
 :deep(.n-card) {
   border-radius: var(--card-border-radius, 12px) !important;
   overflow: hidden;
@@ -209,21 +198,75 @@ watch(() => props.show, (newVal) => {
   background: var(--app-modal-bg) !important;
 }
 
-.log-line {
-  padding: 0 var(--space-4);
-  font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  font-size: var(--text-base);
-  line-height: 20px;
-  color: var(--text-secondary);
-  opacity: 1;
-  white-space: pre-wrap;
-  word-break: break-all;
-  transition: background var(--transition-fast);
+/* 日志滚动容器 (使用 div + overflow 替代 n-virtual-list，支持动态分组高度) */
+.log-scroll-container {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.log-line:hover {
-  background-color: var(--bg-surface);
+.log-container {
+  font-family: var(--code-font, 'Fira Code', 'JetBrains Mono', monospace);
+  font-size: var(--text-sm);
+  background: var(--app-surface-card-mixed);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
 }
+
+/* 分组样式 — 与任务中心日志 (MoviePilot 风格) 对齐 */
+.log-group {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.log-group:last-child { border-bottom: none; }
+.log-group-time {
+  color: var(--n-primary-color);
+  font-size: var(--text-xs);
+  min-width: 75px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-weight: 700;
+}
+.log-group-line {
+  width: 2px;
+  background-color: var(--n-primary-color);
+  border-radius: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 4px 0;
+  opacity: 0.6;
+}
+.log-group-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.log-line {
+  display: flex;
+  gap: var(--space-2);
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.log-time { color: var(--text-tertiary); min-width: 75px; flex-shrink: 0; }
+.log-level {
+  min-width: 40px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.log-level.info { color: #52c41a; }
+.log-level.error { color: #ff4d4f; }
+.log-level.warning { color: #faad14; }
+.log-level.debug { color: #8c8c8c; }
+.log-level.critical { color: #ff4d4f; }
+.log-msg { flex: 1; min-width: 0; }
 
 .empty-tip { color: var(--text-tertiary); text-align: center; position: absolute; width: 100%; top: 100px; z-index: 10; font-style: italic; }
 
