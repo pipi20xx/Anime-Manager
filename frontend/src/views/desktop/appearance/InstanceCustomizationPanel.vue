@@ -313,7 +313,7 @@ function clearPageOverrides(): void {
 }
 
 /** 页面级模式：判断是否显示某个分类 tab */
-const PAGE_OVERRIDE_CATEGORIES = ['modal', 'card', 'input', 'search', 'tabs', 'list', 'button', 'text'] as const
+const PAGE_OVERRIDE_CATEGORIES = ['modal', 'dialog', 'card', 'input', 'search', 'tabs', 'list', 'button', 'text'] as const
 function hasCategory(cat: string): boolean {
   if (isPageOverridesMode.value) return PAGE_OVERRIDE_CATEGORIES.includes(cat as any)
   if (!selectedInstanceKey.value) return false
@@ -452,6 +452,77 @@ defineExpose({ currentInstanceOverrides, instanceCount, clearPageOverrides })
                 <n-tag size="small" type="info">{{ getFieldValue('modal', 'border_radius') }}px</n-tag>
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.modal.border_radius }}px</div>
+            </div>
+          </div>
+        </n-tab-pane>
+
+        <!-- 二次确认弹框分区 -->
+        <n-tab-pane v-if="hasCategory('dialog')" name="dialog" tab="二次确认">
+          <div class="instance-fields">
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'background_image')" @update:checked="v => toggleFieldOverride('dialog', 'background_image', v)">背景图片</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'background_image')" class="instance-field__control">
+                <n-select
+                  :value="getFieldValue('dialog', 'background_image')"
+                  :options="imageOptions"
+                  placeholder="选择背景图片"
+                  @update:value="v => setFieldValue('dialog', 'background_image', v)"
+                />
+              </div>
+              <div v-else class="instance-field__hint">继承全局</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'background_blur')" @update:checked="v => toggleFieldOverride('dialog', 'background_blur', v)">背景模糊</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'background_blur')" class="instance-field__control">
+                <n-slider :value="getFieldValue('dialog', 'background_blur')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('dialog', 'background_blur', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('dialog', 'background_blur') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.dialog.background_blur }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'background_opacity')" @update:checked="v => toggleFieldOverride('dialog', 'background_opacity', v)">背景不透明度</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'background_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('dialog', 'background_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('dialog', 'background_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('dialog', 'background_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.dialog.background_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'background_overlay_opacity')" @update:checked="v => toggleFieldOverride('dialog', 'background_overlay_opacity', v)">遮罩暗化</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'background_overlay_opacity')" class="instance-field__control">
+                <n-slider :value="getFieldValue('dialog', 'background_overlay_opacity')" :min="0" :max="1" :step="0.05" @update:value="v => setFieldValue('dialog', 'background_overlay_opacity', v)" />
+                <n-tag size="small" type="info">{{ (getFieldValue('dialog', 'background_overlay_opacity') * 100).toFixed(0) }}%</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ (form.dialog.background_overlay_opacity * 100).toFixed(0) }}%</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'border_color')" @update:checked="v => toggleFieldOverride('dialog', 'border_color', v)">边框颜色</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'border_color')" class="instance-field__control">
+                <n-color-picker :value="getFieldValue('dialog', 'border_color')" :modes="['hex']" :show-alpha="false" size="small" @update:value="v => setFieldValue('dialog', 'border_color', v)" />
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.dialog.border_color }}</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'border_width')" @update:checked="v => toggleFieldOverride('dialog', 'border_width', v)">边框宽度</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'border_width')" class="instance-field__control">
+                <n-slider :value="getFieldValue('dialog', 'border_width')" :min="0" :max="5" :step="1" @update:value="v => setFieldValue('dialog', 'border_width', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('dialog', 'border_width') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.dialog.border_width }}px</div>
+            </div>
+
+            <div class="instance-field">
+              <n-checkbox :checked="isFieldOverridden('dialog', 'border_radius')" @update:checked="v => toggleFieldOverride('dialog', 'border_radius', v)">圆角</n-checkbox>
+              <div v-if="isFieldOverridden('dialog', 'border_radius')" class="instance-field__control">
+                <n-slider :value="getFieldValue('dialog', 'border_radius')" :min="0" :max="30" :step="1" @update:value="v => setFieldValue('dialog', 'border_radius', v)" />
+                <n-tag size="small" type="info">{{ getFieldValue('dialog', 'border_radius') }}px</n-tag>
+              </div>
+              <div v-else class="instance-field__hint">继承全局: {{ form.dialog.border_radius }}px</div>
             </div>
           </div>
         </n-tab-pane>

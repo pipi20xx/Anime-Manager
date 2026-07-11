@@ -45,6 +45,21 @@ export interface AppearanceModal {
   border_radius: number
 }
 
+/**
+ * 二次确认弹框外观（dialog / popconfirm）
+ * 与表单弹框（modal）独立，可分别自定义
+ */
+export interface AppearanceDialog {
+  enabled: boolean
+  background_image: string
+  background_blur: number
+  background_opacity: number
+  background_overlay_opacity: number
+  border_color: string
+  border_width: number
+  border_radius: number
+}
+
 export interface AppearanceCard {
   enabled: boolean
   background_image: string
@@ -166,6 +181,7 @@ export interface InstanceBorderOverrides {
  */
 export interface AppearanceInstanceOverrides {
   modal?: Partial<AppearanceModal>
+  dialog?: Partial<AppearanceDialog>
   card?: Partial<AppearanceCard> & InstanceBorderOverrides
   /** 文字样式：仅实例级覆盖，全局默认不做文字样式调整 */
   text?: Partial<AppearanceText>
@@ -179,6 +195,7 @@ export interface AppearanceInstanceOverrides {
 export interface AppearanceConfig {
   global: AppearanceGlobal
   modal: AppearanceModal
+  dialog: AppearanceDialog
   card: AppearanceCard
   tabs: AppearanceTabs
   input: AppearanceInput

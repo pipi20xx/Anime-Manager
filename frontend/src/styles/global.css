@@ -61,6 +61,16 @@
   --app-modal-border-color: #3B82F6;  /* 弹框边框颜色 */
   --app-modal-border-width: 1px;      /* 弹框边框宽度 */
   --app-modal-border-radius: 14px;    /* 弹框圆角 */
+
+  /* 二次确认弹框外观自定义变量 */
+  --app-dialog-bg-image: none;  /* 二次确认弹框背景图片 */
+  --app-dialog-blur: 0px;       /* 二次确认弹框模糊效果 */
+  --app-dialog-bg-opacity: 1;   /* 二次确认弹框背景透明度 */
+  --app-dialog-bg-opacity-pct: 100%;  /* 二次确认弹框背景透明度百分比（预计算）*/
+  --app-dialog-bg-overlay-opacity: 0;  /* 二次确认弹框背景遮罩暗化 */
+  --app-dialog-border-color: #3B82F6;  /* 二次确认弹框边框颜色 */
+  --app-dialog-border-width: 1px;      /* 二次确认弹框边框宽度 */
+  --app-dialog-border-radius: 14px;    /* 二次确认弹框圆角 */
   
   /* 文本颜色变量 */
   --text-primary: #ffffff;
@@ -647,6 +657,48 @@ input, textarea, select, button {
   display: none;
 }
 
+/* 二次确认弹框自定义背景图启用时 */
+:root[data-dialog-bg="on"] .n-dialog {
+  background: transparent !important;
+}
+:root[data-dialog-bg="on"] .n-dialog::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-dialog-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-dialog-bg-overlay-opacity, 0))),
+    var(--app-dialog-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+:root[data-dialog-bg="on"] .n-dialog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-dialog-blur, none);
+  -webkit-backdrop-filter: var(--app-dialog-blur, none);
+  background: color-mix(in srgb, var(--app-modal-bg) var(--app-dialog-bg-opacity-pct, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+}
+:root[data-dialog-bg="on"] .n-dialog > * {
+  position: relative;
+  z-index: 1;
+}
+/* 关闭按钮保持绝对定位，不被背景图层的 position:relative 覆盖 */
+:root[data-dialog-bg="on"] .n-dialog .n-dialog__close {
+  position: absolute !important;
+}
+
+/* 二次确认弹框自定义未启用背景图时 */
+:root:not([data-dialog-bg="on"]) .n-dialog::before,
+:root:not([data-dialog-bg="on"]) .n-dialog::after {
+  display: none;
+}
+
 
 /* Modal 遮罩：完全透明，不加模糊 */
 .n-modal-container .n-modal-mask {
@@ -774,11 +826,13 @@ input, textarea, select, button {
   text-shadow: var(--app-instance-text-input-shadow, none) !important;
 }
 
-/* Popconfirm 主题化 */
+/* Popconfirm 主题化 - 跟随二次确认弹框外观 */
 .n-popconfirm {
   background: var(--app-modal-bg) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
+  border: var(--app-dialog-border-width, 1px) solid var(--app-dialog-border-color, #3B82F6) !important;
+  border-radius: var(--app-dialog-border-radius, 14px) !important;
 }
 .n-popconfirm__body {
   background: transparent !important;
@@ -907,12 +961,12 @@ input, textarea, select, button {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Dialog 主题化 - 跟随 modal 外观设置 */
+/* Dialog 主题化 - 使用独立的 dialog 外观变量 */
 .n-dialog {
   background: var(--app-modal-bg) !important;
   color: var(--text-primary) !important;
-  border: var(--app-modal-border-width, 1px) solid var(--app-modal-border-color, #3B82F6) !important;
-  border-radius: var(--app-modal-border-radius, 14px) !important;
+  border: var(--app-dialog-border-width, 1px) solid var(--app-dialog-border-color, #3B82F6) !important;
+  border-radius: var(--app-dialog-border-radius, 14px) !important;
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3) !important;
 }
 

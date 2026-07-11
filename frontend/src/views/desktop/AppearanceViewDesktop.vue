@@ -31,6 +31,7 @@ const images = ref<AppearanceImage[]>([])
 const form = reactive<AppearanceConfig>({
   global: { ...appearanceConfig.value.global },
   modal: { ...appearanceConfig.value.modal },
+  dialog: { ...appearanceConfig.value.dialog },
   card: { ...appearanceConfig.value.card },
   tabs: { ...appearanceConfig.value.tabs },
   input: { ...appearanceConfig.value.input },
@@ -45,6 +46,7 @@ const form = reactive<AppearanceConfig>({
 function syncFormFromGlobal() {
   Object.assign(form.global, appearanceConfig.value.global)
   Object.assign(form.modal, appearanceConfig.value.modal)
+  Object.assign(form.dialog, appearanceConfig.value.dialog)
   Object.assign(form.card, appearanceConfig.value.card)
   Object.assign(form.tabs, appearanceConfig.value.tabs)
   Object.assign(form.input, appearanceConfig.value.input)
@@ -289,6 +291,62 @@ const formatFileSize = (size: number) => {
               <div class="form-label">圆角 <n-tag size="small" type="info">{{ form.modal.border_radius }}px</n-tag></div>
               <div class="form-control">
                 <n-slider v-model:value="form.modal.border_radius" :min="0" :max="30" :step="1" @update:value="preview" />
+              </div>
+            </div>
+          </template>
+        </n-card>
+
+        <!-- ===== 二次确认弹框外观 ===== -->
+        <n-card class="app-card-config settings-section" :bordered="true">
+          <div class="section-header">
+            <div>
+              <div class="section-title">二次确认弹框外观</div>
+              <div class="section-desc">设置确认对话框（Dialog）和气泡确认框（Popconfirm）的背景、边框等视觉效果</div>
+            </div>
+            <n-switch v-model:value="form.dialog.enabled" @update:value="preview" />
+          </div>
+          <template v-if="form.dialog.enabled">
+            <n-divider />
+            <div class="form-row">
+              <div class="form-label">背景图片</div>
+              <div class="form-control">
+                <n-select v-model:value="form.dialog.background_image" :options="imageOptions" @update:value="preview" placeholder="选择背景图片" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">背景模糊 <n-tag size="small" type="info">{{ form.dialog.background_blur }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.dialog.background_blur" :min="0" :max="30" :step="1" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">背景不透明度 <n-tag size="small" type="info">{{ (form.dialog.background_opacity * 100).toFixed(0) }}%</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.dialog.background_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row" v-if="form.dialog.background_image">
+              <div class="form-label">遮罩暗化 <n-tag size="small" type="info">{{ (form.dialog.background_overlay_opacity * 100).toFixed(0) }}%</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.dialog.background_overlay_opacity" :min="0" :max="1" :step="0.05" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">边框颜色</div>
+              <div class="form-control">
+                <n-color-picker v-model:value="form.dialog.border_color" :modes="['hex']" :show-alpha="false" @update:value="preview" size="small" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">边框宽度 <n-tag size="small" type="info">{{ form.dialog.border_width }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.dialog.border_width" :min="0" :max="5" :step="1" @update:value="preview" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-label">圆角 <n-tag size="small" type="info">{{ form.dialog.border_radius }}px</n-tag></div>
+              <div class="form-control">
+                <n-slider v-model:value="form.dialog.border_radius" :min="0" :max="30" :step="1" @update:value="preview" />
               </div>
             </div>
           </template>

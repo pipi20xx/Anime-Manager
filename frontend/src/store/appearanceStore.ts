@@ -22,6 +22,16 @@ const defaultConfig: AppearanceConfig = {
     border_width: 1,
     border_radius: 14,
   },
+  dialog: {
+    enabled: false,
+    background_image: '',
+    background_blur: 0,
+    background_opacity: 1,
+    background_overlay_opacity: 0,
+    border_color: '#3B82F6',
+    border_width: 1,
+    border_radius: 14,
+  },
   card: {
     enabled: false,
     background_image: '',
@@ -150,6 +160,35 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--app-modal-border-width', '1px')
     root.style.setProperty('--app-modal-border-radius', '14px')
     root.removeAttribute('data-modal-bg')
+  }
+
+  // === 二次确认弹框外观 ===
+  const dialog = config.dialog
+  if (dialog?.enabled) {
+    if (dialog.background_image) {
+      root.style.setProperty('--app-dialog-bg-image', `url(/api/appearance/image/${dialog.background_image})`)
+      root.setAttribute('data-dialog-bg', 'on')
+    } else {
+      root.style.setProperty('--app-dialog-bg-image', 'none')
+      root.removeAttribute('data-dialog-bg')
+    }
+    root.style.setProperty('--app-dialog-blur', dialog.background_blur > 0 ? `blur(${dialog.background_blur}px)` : 'none')
+    root.style.setProperty('--app-dialog-bg-opacity-pct', `${Math.round(dialog.background_opacity * 100)}%`)
+    root.style.setProperty('--app-dialog-bg-opacity', String(dialog.background_opacity))
+    root.style.setProperty('--app-dialog-bg-overlay-opacity', String(dialog.background_overlay_opacity))
+    root.style.setProperty('--app-dialog-border-color', dialog.border_color)
+    root.style.setProperty('--app-dialog-border-width', `${dialog.border_width}px`)
+    root.style.setProperty('--app-dialog-border-radius', `${dialog.border_radius}px`)
+  } else {
+    root.style.setProperty('--app-dialog-bg-image', 'none')
+    root.style.setProperty('--app-dialog-blur', 'none')
+    root.style.setProperty('--app-dialog-bg-opacity-pct', '100%')
+    root.style.setProperty('--app-dialog-bg-opacity', '1')
+    root.style.setProperty('--app-dialog-bg-overlay-opacity', '0')
+    root.style.setProperty('--app-dialog-border-color', '#3B82F6')
+    root.style.setProperty('--app-dialog-border-width', '1px')
+    root.style.setProperty('--app-dialog-border-radius', '14px')
+    root.removeAttribute('data-dialog-bg')
   }
 
   // === 卡片外观 ===
@@ -336,6 +375,33 @@ function buildInstanceDecls(overrides: AppearanceInstanceOverrides): string[] {
     }
     if (m.border_radius !== undefined) {
       decls.push(`--app-modal-border-radius: ${m.border_radius}px;`)
+    }
+  }
+
+  // Dialog（二次确认弹框）
+  if (overrides.dialog) {
+    const d = overrides.dialog
+    if (d.background_image !== undefined) {
+      decls.push(`--app-dialog-bg-image: ${d.background_image ? `url(/api/appearance/image/${d.background_image})` : 'none'};`)
+    }
+    if (d.background_blur !== undefined) {
+      decls.push(`--app-dialog-blur: ${d.background_blur > 0 ? `blur(${d.background_blur}px)` : 'none'};`)
+    }
+    if (d.background_opacity !== undefined) {
+      decls.push(`--app-dialog-bg-opacity-pct: ${Math.round(d.background_opacity * 100)}%;`)
+      decls.push(`--app-dialog-bg-opacity: ${d.background_opacity};`)
+    }
+    if (d.background_overlay_opacity !== undefined) {
+      decls.push(`--app-dialog-bg-overlay-opacity: ${d.background_overlay_opacity};`)
+    }
+    if (d.border_color !== undefined) {
+      decls.push(`--app-dialog-border-color: ${d.border_color};`)
+    }
+    if (d.border_width !== undefined) {
+      decls.push(`--app-dialog-border-width: ${d.border_width}px;`)
+    }
+    if (d.border_radius !== undefined) {
+      decls.push(`--app-dialog-border-radius: ${d.border_radius}px;`)
     }
   }
 
@@ -715,6 +781,49 @@ function buildCardBgLayerRules(key: string): string {
 }`
 }
 
+/** 为设置了 dialog 背景图的 instance 输出二次确认弹框背景图层伪元素规则 */
+function buildDialogBgLayerRules(key: string): string {
+  return `/* instance "${key}" 的 dialog 背景图层 */
+[data-app-instance="${key}"] .n-dialog {
+  background: transparent !important;
+  position: relative;
+  overflow: hidden;
+}
+[data-app-instance="${key}"] .n-dialog::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-dialog-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-dialog-bg-overlay-opacity, 0))),
+    var(--app-dialog-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+[data-app-instance="${key}"] .n-dialog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-dialog-blur, none);
+  -webkit-backdrop-filter: var(--app-dialog-blur, none);
+  background: color-mix(in srgb, var(--app-modal-bg) var(--app-dialog-bg-opacity-pct, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+[data-app-instance="${key}"] .n-dialog > * {
+  position: relative;
+  z-index: 1;
+}
+/* 关闭按钮保持绝对定位 */
+[data-app-instance="${key}"] .n-dialog .n-dialog__close {
+  position: absolute !important;
+}`
+}
+
 /** 把实例级覆盖配置注入到 <style id="app-instance-overrides"> 标签 */
 function applyInstanceOverrides(config: AppearanceConfig) {
   const styleEl = getOrCreateInstanceStyleEl()
@@ -743,6 +852,11 @@ function applyInstanceOverrides(config: AppearanceConfig) {
     // 3. 如果设置了 card 背景图，注入完整双伪元素背景图层
     if (overrides.card?.background_image) {
       rules.push(buildCardBgLayerRules(key))
+    }
+
+    // 4. 如果设置了 dialog 背景图，注入二次确认弹框背景图层
+    if (overrides.dialog?.background_image) {
+      rules.push(buildDialogBgLayerRules(key))
     }
   }
 
@@ -821,11 +935,16 @@ export function applyPageOverrides(config: AppearanceConfig) {
     lastPageOverrideProps = []
   }
 
-  // 2. 恢复 data-modal-bg / data-card-bg 为全局值
+  // 2. 恢复 data-modal-bg / data-dialog-bg / data-card-bg 为全局值
   if (config.modal.enabled && config.modal.background_image) {
     root.setAttribute('data-modal-bg', 'on')
   } else {
     root.removeAttribute('data-modal-bg')
+  }
+  if (config.dialog?.enabled && config.dialog.background_image) {
+    root.setAttribute('data-dialog-bg', 'on')
+  } else {
+    root.removeAttribute('data-dialog-bg')
   }
   if (config.card.enabled && config.card.background_image) {
     root.setAttribute('data-card-bg', 'on')
@@ -870,9 +989,12 @@ export function applyPageOverrides(config: AppearanceConfig) {
   }
   lastPageOverrideProps = newProps
 
-  // 5. 处理 modal/card 背景图的 data 属性
+  // 5. 处理 modal/dialog/card 背景图的 data 属性
   if (overrides.modal?.background_image) {
     root.setAttribute('data-modal-bg', 'on')
+  }
+  if (overrides.dialog?.background_image) {
+    root.setAttribute('data-dialog-bg', 'on')
   }
   if (overrides.card?.background_image) {
     root.setAttribute('data-card-bg', 'on')
@@ -918,6 +1040,46 @@ export function applyPageOverrides(config: AppearanceConfig) {
 }
 /* 关闭按钮保持绝对定位 */
 :root[data-page-key="${pageKey}"] .n-modal .n-modal__close,
+:root[data-page-key="${pageKey}"] .n-dialog .n-dialog__close {
+  position: absolute !important;
+}`)
+  }
+  if (overrides.dialog?.background_image) {
+    rules.push(`/* page "${pageKey}" 的 dialog 背景图层 */
+:root[data-page-key="${pageKey}"] .n-dialog {
+  background: transparent !important;
+  position: relative;
+  overflow: hidden;
+}
+:root[data-page-key="${pageKey}"] .n-dialog::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-dialog-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-dialog-bg-overlay-opacity, 0))),
+    var(--app-dialog-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+:root[data-page-key="${pageKey}"] .n-dialog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-dialog-blur, none);
+  -webkit-backdrop-filter: var(--app-dialog-blur, none);
+  background: color-mix(in srgb, var(--app-modal-bg) var(--app-dialog-bg-opacity-pct, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+:root[data-page-key="${pageKey}"] .n-dialog > * {
+  position: relative;
+  z-index: 1;
+}
 :root[data-page-key="${pageKey}"] .n-dialog .n-dialog__close {
   position: absolute !important;
 }`)
