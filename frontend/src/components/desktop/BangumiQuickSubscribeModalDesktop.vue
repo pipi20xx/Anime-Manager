@@ -2,15 +2,13 @@
 import AppGlassModal from '../AppGlassModal.vue'
 import {
   NButton, NSpace, NIcon, NCheckbox, NCheckboxGroup,
-  NImage, NScrollbar, NSelect,
-  NSpin, NEmpty, NGrid, NGi, NTag, NTabs, NTabPane
+  NImage,
+  NSpin, NGrid, NGi, NTag, NTabs, NTabPane
 } from 'naive-ui'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import {
-  FlashOnOutlined as FlashIcon,
-  CheckCircleOutlined as CheckIcon,
-  DeleteOutlined as DeleteIcon
+  FlashOnOutlined as FlashIcon
 } from '@vicons/material'
 import { useBangumiQuickSub } from '../../composables/components/useBangumiQuickSub'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -44,43 +42,41 @@ const {
       </div>
     </template>
 
-    <n-scrollbar style="max-height: 65vh; padding-right: 10px;">
-      <n-spin :show="loading">
-        <n-space vertical size="large">
-          <n-grid :cols="2" :x-gap="20">
-            <n-gi>
-              <AppSelectField v-model:value="selectedTemplate" label="套用预设" :options="templates.map(t => ({label: t.name, value: t.id}))" clearable />
-            </n-gi>
-            <n-gi>
-              <AppTextField v-model:value="manualId" label="手动添加 Bangumi ID" placeholder="请输入 Bangumi ID" @keyup.enter="addManualItem">
-                <template #suffix>
-                  <n-button v-bind="getButtonStyle('primary')" @click="addManualItem">添加</n-button>
-                </template>
-              </AppTextField>
-            </n-gi>
-          </n-grid>
+    <n-spin :show="loading">
+      <n-space vertical size="large">
+        <n-grid :cols="2" :x-gap="20">
+          <n-gi>
+            <AppSelectField v-model:value="selectedTemplate" label="套用预设" :options="templates.map(t => ({label: t.name, value: t.id}))" clearable />
+          </n-gi>
+          <n-gi>
+            <AppTextField v-model:value="manualId" label="手动添加 Bangumi ID" placeholder="请输入 Bangumi ID" @keyup.enter="addManualItem">
+              <template #suffix>
+                <n-button v-bind="getButtonStyle('primary')" @click="addManualItem">添加</n-button>
+              </template>
+            </AppTextField>
+          </n-gi>
+        </n-grid>
 
-          <n-checkbox-group v-model:value="selectedIds" v-if="renderReady && weeklyData.length > 0">
+        <n-checkbox-group v-model:value="selectedIds" v-if="renderReady && weeklyData.length > 0">
 <n-tabs type="line" animated v-model:value="activeTab" style="--tabs-pane-padding: 16px 0 0 0;">
 <n-tab-pane v-for="day in weeklyData" :key="day.weekday.id" :name="day.weekday.id" :tab="day.weekday.cn">
-                <div class="anime-grid">
-                  <div v-for="item in day.items" :key="item.id" class="anime-item" :class="{ 'is-subbed': item.isSubscribed }">
-                    <n-checkbox :value="item.id" :disabled="item.isSubscribed" />
-                    <div class="anime-card">
-                      <n-image :src="item.image" class="poster" preview-disabled />
-                      <div class="info">
-                        <div class="name">{{ item.title }}</div>
-                        <n-tag v-if="item.isSubscribed" size="tiny" type="success">已订阅</n-tag>
-                      </div>
+              <div class="anime-grid">
+                <div v-for="item in day.items" :key="item.id" class="anime-item" :class="{ 'is-subbed': item.isSubscribed }">
+                  <n-checkbox :value="item.id" :disabled="item.isSubscribed" />
+                  <div class="anime-card">
+                    <n-image :src="item.image" class="poster" preview-disabled />
+                    <div class="info">
+                      <div class="name">{{ item.title }}</div>
+                      <n-tag v-if="item.isSubscribed" size="tiny" type="success">已订阅</n-tag>
                     </div>
                   </div>
                 </div>
-              </n-tab-pane>
-            </n-tabs>
-          </n-checkbox-group>
-        </n-space>
-      </n-spin>
-    </n-scrollbar>
+              </div>
+            </n-tab-pane>
+          </n-tabs>
+        </n-checkbox-group>
+      </n-space>
+    </n-spin>
 
     <template #action>
       <n-space justify="end" align="center">
@@ -101,10 +97,10 @@ const {
 .subtitle { font-size: 12px; color: var(--text-tertiary); }
 .label { font-size: 12px; margin-bottom: 8px; font-weight: bold; }
 .anime-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.anime-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--app-surface-inner); border-radius: 8px; }
+.anime-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--app-surface-card-mixed); border-radius: var(--card-border-radius, var(--radius-lg)); }
 .anime-item.is-subbed { opacity: var(--opacity-secondary); }
 .anime-card { flex: 1; display: flex; gap: 8px; align-items: center; }
-.poster { width: 40px; height: 55px; border-radius: 4px; object-fit: cover; }
+.poster { width: 40px; height: 55px; border-radius: var(--card-border-radius, var(--radius-lg)); object-fit: cover; }
 .info { flex: 1; overflow: hidden; }
 .name { font-weight: bold; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flash-icon { color: var(--n-primary-color); }

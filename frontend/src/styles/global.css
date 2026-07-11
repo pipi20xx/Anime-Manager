@@ -635,6 +635,11 @@ input, textarea, select, button {
   position: relative;
   z-index: 1;
 }
+/* 关闭按钮保持绝对定位，不被背景图层的 position:relative 覆盖 */
+:root[data-modal-bg="on"] .n-modal .n-modal__close,
+:root[data-modal-bg="on"] .n-dialog .n-dialog__close {
+  position: absolute !important;
+}
 
 /* 弹框自定义未启用背景图时，仅支持边框/圆角自定义 */
 :root:not([data-modal-bg="on"]) .n-modal-container .n-modal::before,

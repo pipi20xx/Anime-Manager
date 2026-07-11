@@ -653,6 +653,12 @@ function buildModalBgLayerRules(key: string): string {
 [data-app-instance="${key}"] .n-modal > * {
   position: relative;
   z-index: 1;
+}
+/* 关闭按钮保持绝对定位 */
+[data-app-instance="${key}"].n-modal .n-modal__close,
+[data-app-instance="${key}"] .n-modal .n-modal__close,
+[data-app-instance="${key}"] .n-dialog .n-dialog__close {
+  position: absolute !important;
 }`
 }
 
@@ -799,30 +805,83 @@ function getOrCreatePageOverrideStyleEl(): HTMLStyleElement {
   return el
 }
 
-/** 注入页面级组件覆盖 CSS（复用 buildInstanceDecls 逻辑） */
-export function applyPageOverrides(config: AppearanceConfig) {
-  const styleEl = getOrCreatePageOverrideStyleEl()
-  const pages = config.pages
+/** 记录页面级覆盖写入 :root 的 CSS 变量名及其全局值，离开页面时恢复 */
+let lastPageOverrideProps: { prop: string; globalValue: string }[] = []
 
-  if (!pages || Object.keys(pages).length === 0) {
+/** 注入页面级组件覆盖 CSS */
+export function applyPageOverrides(config: AppearanceConfig) {
+  const root = document.documentElement
+  const styleEl = getOrCreatePageOverrideStyleEl()
+
+  // 1. 恢复上一轮页面级覆盖的变量为全局值
+  if (lastPageOverrideProps.length > 0) {
+    for (const { prop, globalValue } of lastPageOverrideProps) {
+      root.style.setProperty(prop, globalValue)
+    }
+    lastPageOverrideProps = []
+  }
+
+  // 2. 恢复 data-modal-bg / data-card-bg 为全局值
+  if (config.modal.enabled && config.modal.background_image) {
+    root.setAttribute('data-modal-bg', 'on')
+  } else {
+    root.removeAttribute('data-modal-bg')
+  }
+  if (config.card.enabled && config.card.background_image) {
+    root.setAttribute('data-card-bg', 'on')
+  } else {
+    root.removeAttribute('data-card-bg')
+  }
+
+  // 3. 确定当前页面 key
+  let pageKey: string | undefined = previewPageKey.value || undefined
+  if (!pageKey && currentPageRouteName.value) {
+    pageKey = getPageKeyByRouteName(currentPageRouteName.value)
+  }
+
+  const pages = config.pages
+  if (!pages || Object.keys(pages).length === 0 || !pageKey) {
     styleEl.textContent = ''
     return
   }
 
-  const rules: string[] = []
+  const pageConfig = pages[pageKey]
+  if (!pageConfig || !pageConfig.overrides) {
+    styleEl.textContent = ''
+    return
+  }
 
-  for (const [pageKey, pageConfig] of Object.entries(pages)) {
-    if (!pageConfig.overrides) continue
-    const decls = buildInstanceDecls(pageConfig.overrides)
-    if (decls.length > 0) {
-      // 使用 :root[data-page-key="xxx"] 选择器，确保 teleported 到 body 的弹框也能继承
-      rules.push(`:root[data-page-key="${pageKey}"] {
-  ${decls.join('\n  ')}
-}`)
+  const overrides = pageConfig.overrides
+  const decls = buildInstanceDecls(overrides)
+  const newProps: { prop: string; globalValue: string }[] = []
+
+  // 4. 将页面级变量设到 :root inline style（覆盖全局值），并记录全局值用于恢复
+  for (const decl of decls) {
+    const match = decl.match(/^--([\w-]+):\s*(.+?);$/)
+    if (match) {
+      const prop = `--${match[1]}`
+      const pageValue = match[2].trim()
+      // 记录当前全局值（applyAppearanceToCss 设的 inline style）
+      const globalValue = root.style.getPropertyValue(prop)
+      newProps.push({ prop, globalValue })
+      // 用页面级值覆盖
+      root.style.setProperty(prop, pageValue)
     }
-    // 页面级 modal 背景图：注入伪元素规则（与实例级 buildModalBgLayerRules 等价）
-    if (pageConfig.overrides.modal?.background_image) {
-      rules.push(`/* page "${pageKey}" 的 modal 背景图层 */
+  }
+  lastPageOverrideProps = newProps
+
+  // 5. 处理 modal/card 背景图的 data 属性
+  if (overrides.modal?.background_image) {
+    root.setAttribute('data-modal-bg', 'on')
+  }
+  if (overrides.card?.background_image) {
+    root.setAttribute('data-card-bg', 'on')
+  }
+
+  // 6. 伪元素规则仍用 CSS 选择器（这些规则需要 !important 覆盖 global.css 的 display:none）
+  const rules: string[] = []
+  if (overrides.modal?.background_image) {
+    rules.push(`/* page "${pageKey}" 的 modal 背景图层 */
 :root[data-page-key="${pageKey}"] .n-modal {
   background: transparent !important;
   position: relative;
@@ -856,11 +915,15 @@ export function applyPageOverrides(config: AppearanceConfig) {
 :root[data-page-key="${pageKey}"] .n-modal > * {
   position: relative;
   z-index: 1;
+}
+/* 关闭按钮保持绝对定位 */
+:root[data-page-key="${pageKey}"] .n-modal .n-modal__close,
+:root[data-page-key="${pageKey}"] .n-dialog .n-dialog__close {
+  position: absolute !important;
 }`)
-    }
-    // 页面级 card 背景图：注入伪元素规则（与实例级 buildCardBgLayerRules 等价）
-    if (pageConfig.overrides.card?.background_image) {
-      rules.push(`/* page "${pageKey}" 的 card 背景图层 */
+  }
+  if (overrides.card?.background_image) {
+    rules.push(`/* page "${pageKey}" 的 card 背景图层 */
 :root[data-page-key="${pageKey}"] .n-card {
   background: transparent !important;
   backdrop-filter: none !important;
@@ -897,7 +960,6 @@ export function applyPageOverrides(config: AppearanceConfig) {
   position: relative;
   z-index: 1;
 }`)
-    }
   }
 
   styleEl.textContent = rules.join('\n\n')

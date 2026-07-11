@@ -408,19 +408,23 @@ export interface CustomizablePageMeta {
  */
 export const CUSTOMIZABLE_PAGES = {
   'subscription':      { label: '订阅与下载',     description: 'RSS 订阅与下载管理页面',               routeName: 'Subscription' },
-  'organizer':         { label: '整理与重命名',   description: '整理重命名、规则管理、任务配置页面',   routeName: 'Organizer' },
+  'organizer':         { label: '整理重命名',     description: '整理重命名、规则管理、任务配置页面',   routeName: 'Organizer' },
   'organize-history':  { label: '整理历史',       description: '整理历史记录页面',                     routeName: 'OrganizeHistory' },
   'tasks':             { label: '任务中心',       description: '任务管理与日志页面',                   routeName: 'TaskHistory' },
   'strm':              { label: '虚拟 STRM 库',   description: 'STRM 虚拟库管理页面',                  routeName: 'StrmGenerator' },
   'calendar':          { label: '追剧日历',       description: '番剧追剧日历页面',                     routeName: 'Calendar' },
-  'cache':             { label: '缓存管理',       description: '缓存记录管理页面',                     routeName: 'Cache' },
-  'tmdb-full':         { label: 'TMDB 元数据',    description: 'TMDB 元数据管理页面',                  routeName: 'TmdbFullData' },
   'database':          { label: '系统数据中心',   description: '数据中心（元数据/二级分类/ID映射/维护）', routeName: 'Database' },
   'external-control':  { label: '外部控制',       description: 'API 外部控制页面',                     routeName: 'ExternalControl' },
   'jackett-search':    { label: 'Jackett 搜索',   description: 'Jackett 索引搜索页面',                 routeName: 'JackettSearch' },
   'settings':          { label: '系统设置',       description: '系统设置页面（含下载客户端等）',       routeName: 'Settings' },
   'file-browser':      { label: '文件浏览',       description: '文件浏览与单文件识别页面',             routeName: 'FileBrowser' },
   'usage-guide':       { label: '规则说明',       description: '使用指南与规则说明页面',               routeName: 'UsageGuide' },
+  'home':              { label: '识别调试台',     description: '番剧识别调试页面',                     routeName: 'Home' },
+  'appearance':        { label: '外观设置',       description: '外观自定义设置页面',                   routeName: 'Appearance' },
+  'explore':           { label: '探索',           description: 'TMDB 推荐/发现/搜索页面',              routeName: 'Explore' },
+  'tmdb-detail':       { label: 'TMDB 详情',     description: 'TMDB 卡片详情页面',                    routeName: 'TmdbDetail' },
+  'bangumi-detail':    { label: 'Bangumi 详情',  description: 'Bangumi 卡片详情页面',                 routeName: 'BangumiDetail' },
+  'tmdb-person-detail':{ label: 'TMDB 人物详情', description: 'TMDB 人物详情页面',                    routeName: 'TmdbPersonDetail' },
 } as const
 
 export type CustomizablePageKey = keyof typeof CUSTOMIZABLE_PAGES
@@ -443,10 +447,12 @@ const APPEARANCE_KEY_PAGE_MAP: Record<string, CustomizablePageKey[]> = {
   'rule-preview-modal':           ['subscription'],
   'subscription-edit-modal':      ['subscription'],
   'subscription-detail-modal':    ['subscription'],
+  'subscription-help-modal':      ['subscription'],
   'subscription-template-modal':  ['subscription'],
   'bangumi-quick-subscribe-modal':['subscription'],
   'priority-rule-modal':          ['subscription'],
   'rss-detect-manager-modal':     ['subscription'],
+  'rss-detect-modal':             ['subscription'],
   'jackett-fill-modal':           ['subscription'],
   'subscription-card':            ['subscription'],
   'feed-card':                    ['subscription'],
@@ -477,16 +483,16 @@ const APPEARANCE_KEY_PAGE_MAP: Record<string, CustomizablePageKey[]> = {
   'calendar-modal':               ['calendar'],
   'track-card':                   ['calendar'],
 
-  // ===== 缓存管理（CacheViewDesktop） =====
-  'cache-modal':                  ['cache'],
+  // ===== 系统数据中心（DatabaseViewDesktop，含子 tab：缓存管理/元数据等） =====
+  'cache-modal':                  ['database'],
 
   // ===== 文件浏览（FileBrowserViewDesktop） =====
   'manual-organize-modal':        ['file-browser'],
   'recognition-modal':            ['file-browser'],
 
   // ===== 系统数据中心（DatabaseViewDesktop，含子 tab） =====
-  'tmdb-full-data-modal':         ['database', 'tmdb-full'],
-  'tmdb-data-card':               ['database', 'tmdb-full'],
+  'tmdb-full-data-modal':         ['database'],
+  'tmdb-data-card':               ['database'],
   'classifier-edit-modal':        ['database'],
   'secondary-rule-card':          ['database'],
   'user-mapping-modal':           ['database'],
