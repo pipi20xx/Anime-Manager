@@ -551,7 +551,7 @@ defineExpose({ currentInstanceOverrides, instanceCount, clearPageOverrides })
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('input', 'height')" @update:checked="v => toggleFieldOverride('input', 'height', v)">高度</n-checkbox>
               <div v-if="isFieldOverridden('input', 'height')" class="instance-field__control">
-                <n-slider :value="getFieldValue('input', 'height')" :min="36" :max="72" :step="2" @update:value="v => setFieldValue('input', 'height', v)" />
+                <n-slider :value="getFieldValue('input', 'height')" :min="20" :max="72" :step="2" @update:value="v => setFieldValue('input', 'height', v)" />
                 <n-tag size="small" type="info">{{ getFieldValue('input', 'height') }}px</n-tag>
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.input.height }}px</div>
@@ -617,7 +617,7 @@ defineExpose({ currentInstanceOverrides, instanceCount, clearPageOverrides })
             <div class="instance-field">
               <n-checkbox :checked="isFieldOverridden('search', 'height')" @update:checked="v => toggleFieldOverride('search', 'height', v)">高度</n-checkbox>
               <div v-if="isFieldOverridden('search', 'height')" class="instance-field__control">
-                <n-slider :value="getFieldValue('search', 'height')" :min="32" :max="60" :step="2" @update:value="v => setFieldValue('search', 'height', v)" />
+                <n-slider :value="getFieldValue('search', 'height')" :min="20" :max="60" :step="2" @update:value="v => setFieldValue('search', 'height', v)" />
                 <n-tag size="small" type="info">{{ getFieldValue('search', 'height') }}px</n-tag>
               </div>
               <div v-else class="instance-field__hint">继承全局: {{ form.search.height }}px</div>

@@ -394,8 +394,8 @@ export interface CustomizablePageMeta {
   label: string
   /** 详细描述 */
   description: string
-  /** 对应的 Vue Router 路由名称 */
-  routeName: string
+  /** 对应的 Vue Router 路由名称（全局组件无路由，留空） */
+  routeName?: string
 }
 
 /**
@@ -425,6 +425,7 @@ export const CUSTOMIZABLE_PAGES = {
   'tmdb-detail':       { label: 'TMDB 详情',     description: 'TMDB 卡片详情页面',                    routeName: 'TmdbDetail' },
   'bangumi-detail':    { label: 'Bangumi 详情',  description: 'Bangumi 卡片详情页面',                 routeName: 'BangumiDetail' },
   'tmdb-person-detail':{ label: 'TMDB 人物详情', description: 'TMDB 人物详情页面',                    routeName: 'TmdbPersonDetail' },
+  '__global__':        { label: '全局组件',       description: '不属于特定页面的全局弹框与卡片组件' },
 } as const
 
 export type CustomizablePageKey = keyof typeof CUSTOMIZABLE_PAGES
@@ -513,7 +514,7 @@ const APPEARANCE_KEY_PAGE_MAP: Record<string, CustomizablePageKey[]> = {
   'settings-guide-modal':         ['usage-guide'],
 
   // ===== 全局组件（MainLayout，不绑定特定页面） =====
-  'log-console-modal':            [],
+  'log-console-modal':            ['__global__'],
 }
 
 /** 获取外观 key 所属的所有可自定义页面 key（支持多页面） */
@@ -542,7 +543,7 @@ export const customizablePageOptions = Object.entries(CUSTOMIZABLE_PAGES).map(([
 /** 根据路由名称获取可自定义页面 key */
 export function getPageKeyByRouteName(routeName: string): CustomizablePageKey | undefined {
   for (const [key, meta] of Object.entries(CUSTOMIZABLE_PAGES)) {
-    if (meta.routeName === routeName) return key as CustomizablePageKey
+    if ('routeName' in meta && meta.routeName === routeName) return key as CustomizablePageKey
   }
   return undefined
 }

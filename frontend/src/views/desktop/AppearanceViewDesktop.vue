@@ -490,7 +490,7 @@ const formatFileSize = (size: number) => {
             <div class="form-row">
               <div class="form-label">高度 <n-tag size="small" type="info">{{ form.input.height }}px</n-tag></div>
               <div class="form-control">
-                <n-slider v-model:value="form.input.height" :min="36" :max="72" :step="2" @update:value="preview" />
+                <n-slider v-model:value="form.input.height" :min="20" :max="72" :step="2" @update:value="preview" />
               </div>
             </div>
             <div class="form-row">
@@ -528,7 +528,7 @@ const formatFileSize = (size: number) => {
             <div class="form-row">
               <div class="form-label">高度 <n-tag size="small" type="info">{{ form.search.height }}px</n-tag></div>
               <div class="form-control">
-                <n-slider v-model:value="form.search.height" :min="32" :max="60" :step="2" @update:value="preview" />
+                <n-slider v-model:value="form.search.height" :min="20" :max="60" :step="2" @update:value="preview" />
               </div>
             </div>
             <div class="form-row">
