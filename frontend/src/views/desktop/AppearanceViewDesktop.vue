@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import {
   NCard, NSlider, NColorPicker, NButton, NSpace, NUpload, NImage,
   NSpin, NSelect, useMessage, NDivider, NPopconfirm, NTag, NSwitch,
@@ -15,6 +15,7 @@ import { getButtonStyle } from '../../composables/useButtonStyles'
 import { useAppearanceConfigIO } from '../../composables/useAppearanceConfigIO'
 import {
   appearanceConfig,
+  appearanceLoaded,
   saveAppearanceConfig,
   resetAppearanceConfig,
   applyAppearanceToCss
@@ -39,6 +40,29 @@ const form = reactive<AppearanceConfig>({
   instances: JSON.parse(JSON.stringify(appearanceConfig.value.instances || {})),
   pages: JSON.parse(JSON.stringify(appearanceConfig.value.pages || {})),
 })
+
+/** 从全局 appearanceConfig 同步到本地 form（处理异步加载场景） */
+function syncFormFromGlobal() {
+  Object.assign(form.global, appearanceConfig.value.global)
+  Object.assign(form.modal, appearanceConfig.value.modal)
+  Object.assign(form.card, appearanceConfig.value.card)
+  Object.assign(form.tabs, appearanceConfig.value.tabs)
+  Object.assign(form.input, appearanceConfig.value.input)
+  Object.assign(form.search, appearanceConfig.value.search)
+  Object.assign(form.list, appearanceConfig.value.list)
+  Object.assign(form.button, appearanceConfig.value.button)
+  form.instances = JSON.parse(JSON.stringify(appearanceConfig.value.instances || {}))
+  form.pages = JSON.parse(JSON.stringify(appearanceConfig.value.pages || {}))
+}
+
+// 如果外观配置异步加载完成，同步到 form（仅在首次加载时同步，避免覆盖用户编辑）
+let formSynced = false
+watch(appearanceLoaded, (loaded) => {
+  if (loaded && !formSynced) {
+    syncFormFromGlobal()
+    formSynced = true
+  }
+}, { immediate: true })
 
 // ============= 实例级自定义相关 =============
 // 已迁移至 ./appearance/InstanceCustomizationPanel.vue
@@ -95,16 +119,7 @@ const handleSave = async () => {
 const handleReset = async () => {
   try {
     await resetAppearanceConfig()
-    Object.assign(form.global, appearanceConfig.value.global)
-    Object.assign(form.modal, appearanceConfig.value.modal)
-    Object.assign(form.card, appearanceConfig.value.card)
-    Object.assign(form.tabs, appearanceConfig.value.tabs)
-    Object.assign(form.input, appearanceConfig.value.input)
-    Object.assign(form.search, appearanceConfig.value.search)
-    Object.assign(form.list, appearanceConfig.value.list)
-    Object.assign(form.button, appearanceConfig.value.button)
-    form.instances = JSON.parse(JSON.stringify(appearanceConfig.value.instances || {}))
-    form.pages = JSON.parse(JSON.stringify(appearanceConfig.value.pages || {}))
+    syncFormFromGlobal()
     message.success('已恢复默认设置')
   } catch (e: any) {
     message.error('重置失败')

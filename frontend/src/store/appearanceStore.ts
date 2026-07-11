@@ -267,16 +267,20 @@ export function applyAppearanceToCss(config: AppearanceConfig) {
     root.style.setProperty('--btn-text-bg-pressed', button.text_bg_pressed)
     root.style.setProperty('--btn-warning-color', button.warning_color)
     root.style.setProperty('--btn-danger-color', button.danger_color)
+    root.setAttribute('data-btn-custom', 'on')
   } else {
-    root.style.setProperty('--btn-border-radius', '8px')
-    root.style.setProperty('--btn-height-medium', '32px')
-    root.style.setProperty('--btn-height-small', '32px')
-    root.style.setProperty('--btn-height-tiny', '32px')
-    root.style.setProperty('--btn-text-color', 'var(--n-primary-color)')
-    root.style.setProperty('--btn-text-bg-hover', 'rgba(59, 130, 246, 0.1)')
-    root.style.setProperty('--btn-text-bg-pressed', 'rgba(59, 130, 246, 0.15)')
-    root.style.setProperty('--btn-warning-color', '#F59E0B')
-    root.style.setProperty('--btn-danger-color', '#EF4444')
+    // 未启用时：移除 inline style 变量，让 global.css 的 :root 默认值生效
+    // 同时移除 data-btn-custom，让 ghost/quaternary 按钮保留 Naive UI 默认主题色
+    root.style.removeProperty('--btn-border-radius')
+    root.style.removeProperty('--btn-height-medium')
+    root.style.removeProperty('--btn-height-small')
+    root.style.removeProperty('--btn-height-tiny')
+    root.style.removeProperty('--btn-text-color')
+    root.style.removeProperty('--btn-text-bg-hover')
+    root.style.removeProperty('--btn-text-bg-pressed')
+    root.style.removeProperty('--btn-warning-color')
+    root.style.removeProperty('--btn-danger-color')
+    root.removeAttribute('data-btn-custom')
   }
 
   // === 实例级覆盖 ===
@@ -811,8 +815,87 @@ export function applyPageOverrides(config: AppearanceConfig) {
     if (!pageConfig.overrides) continue
     const decls = buildInstanceDecls(pageConfig.overrides)
     if (decls.length > 0) {
-      rules.push(`[data-page-key="${pageKey}"] {
+      // 使用 :root[data-page-key="xxx"] 选择器，确保 teleported 到 body 的弹框也能继承
+      rules.push(`:root[data-page-key="${pageKey}"] {
   ${decls.join('\n  ')}
+}`)
+    }
+    // 页面级 modal 背景图：注入伪元素规则（与实例级 buildModalBgLayerRules 等价）
+    if (pageConfig.overrides.modal?.background_image) {
+      rules.push(`/* page "${pageKey}" 的 modal 背景图层 */
+:root[data-page-key="${pageKey}"] .n-modal {
+  background: transparent !important;
+  position: relative;
+  overflow: hidden;
+}
+:root[data-page-key="${pageKey}"] .n-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-modal-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-modal-bg-overlay-opacity, 0))),
+    var(--app-modal-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+:root[data-page-key="${pageKey}"] .n-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-modal-blur, none);
+  -webkit-backdrop-filter: var(--app-modal-blur, none);
+  background: color-mix(in srgb, var(--app-modal-bg) var(--app-modal-bg-opacity-pct, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+:root[data-page-key="${pageKey}"] .n-modal > * {
+  position: relative;
+  z-index: 1;
+}`)
+    }
+    // 页面级 card 背景图：注入伪元素规则（与实例级 buildCardBgLayerRules 等价）
+    if (pageConfig.overrides.card?.background_image) {
+      rules.push(`/* page "${pageKey}" 的 card 背景图层 */
+:root[data-page-key="${pageKey}"] .n-card {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  position: relative;
+  overflow: hidden;
+}
+:root[data-page-key="${pageKey}"] .n-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, var(--app-card-bg-overlay-opacity, 0)), rgba(0, 0, 0, var(--app-card-bg-overlay-opacity, 0))),
+    var(--app-card-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+:root[data-page-key="${pageKey}"] .n-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: var(--app-card-blur, none);
+  -webkit-backdrop-filter: var(--app-card-blur, none);
+  background: color-mix(in srgb, var(--app-surface-card) var(--app-card-bg-opacity, 100%), transparent);
+  z-index: 0;
+  pointer-events: none;
+  display: block !important;
+}
+:root[data-page-key="${pageKey}"] .n-card > * {
+  position: relative;
+  z-index: 1;
 }`)
     }
   }

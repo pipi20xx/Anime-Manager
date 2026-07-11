@@ -783,15 +783,18 @@ input, textarea, select, button {
 }
 
 /* Popconfirm 按钮 - 使用统一的按钮外观变量 */
-/* 取消按钮（默认样式） */
+/* 取消按钮（蓝底白字，与确定按钮一致） */
 .n-popconfirm .n-popconfirm__action .n-button:not(.n-button--primary-type) {
-  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
-  color: var(--btn-text-color, var(--n-primary-color)) !important;
+  background: #3B82F6 !important;
+  color: #ffffff !important;
   border: none !important;
   border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-popconfirm .n-popconfirm__action .n-button:not(.n-button--primary-type):hover {
-  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+  background: #2563EB !important;
+}
+.n-popconfirm .n-popconfirm__action .n-button:not(.n-button--primary-type):active {
+  background: #1D4ED8 !important;
 }
 
 /* 确定按钮（主要样式） */
@@ -909,15 +912,18 @@ input, textarea, select, button {
 }
 
 /* Dialog 按钮 - 使用统一的按钮外观变量 */
-/* Dialog 取消按钮（ghost） */
+/* Dialog 取消按钮（蓝底白字，与确定按钮一致） */
 .n-dialog .n-dialog__action .n-button--ghost {
-  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
-  color: var(--btn-text-color, var(--n-primary-color)) !important;
+  background: #3B82F6 !important;
+  color: #ffffff !important;
   border: none !important;
   border-radius: var(--btn-border-radius, 8px) !important;
 }
 .n-dialog .n-dialog__action .n-button--ghost:hover {
-  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+  background: #2563EB !important;
+}
+.n-dialog .n-dialog__action .n-button--ghost:active {
+  background: #1D4ED8 !important;
 }
 
 /* Dialog 确定按钮（primary） */
@@ -1104,33 +1110,68 @@ input, textarea, select, button {
  * 透明底色 + 主题色文字 + hover/pressed 淡色底
  * ============================================ */
 
-/* ghost 按钮圆角 + 文字颜色 */
+/* ghost 按钮圆角（始终生效） */
 .n-button--ghost {
   border-radius: var(--btn-border-radius, 8px) !important;
-  color: var(--btn-text-color, var(--n-primary-color)) !important;
 }
-.n-button--ghost:hover {
-  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
+/* ghost 按钮颜色：仅在按钮外观启用时覆盖，未启用时保留 Naive UI 默认主题色 */
+:root[data-btn-custom="on"] .n-button--primary-type.n-button--ghost,
+:root[data-btn-custom="on"] .n-button--default-type.n-button--ghost {
+  color: var(--btn-text-color) !important;
 }
-.n-button--ghost:active {
-  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+:root[data-btn-custom="on"] .n-button--error-type.n-button--ghost {
+  color: var(--btn-danger-color) !important;
 }
-.n-button--ghost * {
+:root[data-btn-custom="on"] .n-button--warning-type.n-button--ghost {
+  color: var(--btn-warning-color) !important;
+}
+:root[data-btn-custom="on"] .n-button--primary-type.n-button--ghost:hover,
+:root[data-btn-custom="on"] .n-button--default-type.n-button--ghost:hover {
+  background: var(--btn-text-bg-hover) !important;
+}
+:root[data-btn-custom="on"] .n-button--primary-type.n-button--ghost:active,
+:root[data-btn-custom="on"] .n-button--default-type.n-button--ghost:active {
+  background: var(--btn-text-bg-pressed) !important;
+}
+:root[data-btn-custom="on"] .n-button--error-type.n-button--ghost:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+:root[data-btn-custom="on"] .n-button--error-type.n-button--ghost:active {
+  background: rgba(239, 68, 68, 0.15) !important;
+}
+:root[data-btn-custom="on"] .n-button--warning-type.n-button--ghost:hover {
+  background: rgba(245, 158, 11, 0.1) !important;
+}
+:root[data-btn-custom="on"] .n-button--warning-type.n-button--ghost:active {
+  background: rgba(245, 158, 11, 0.15) !important;
+}
+:root[data-btn-custom="on"] .n-button--ghost * {
   color: inherit !important;
 }
 
-/* quaternary 按钮圆角 + 文字颜色 */
+/* quaternary 按钮圆角（始终生效） */
 .n-button--quaternary {
   border-radius: var(--btn-border-radius, 8px) !important;
-  color: var(--btn-text-color, var(--n-primary-color)) !important;
 }
-.n-button--quaternary:hover {
-  background: var(--btn-text-bg-hover, rgba(59, 130, 246, 0.1)) !important;
+:root[data-btn-custom="on"] .n-button--primary-type.n-button--quaternary,
+:root[data-btn-custom="on"] .n-button--default-type.n-button--quaternary {
+  color: var(--btn-text-color) !important;
 }
-.n-button--quaternary:active {
-  background: var(--btn-text-bg-pressed, rgba(59, 130, 246, 0.15)) !important;
+:root[data-btn-custom="on"] .n-button--error-type.n-button--quaternary {
+  color: var(--btn-danger-color) !important;
 }
-.n-button--quaternary * {
+:root[data-btn-custom="on"] .n-button--warning-type.n-button--quaternary {
+  color: var(--btn-warning-color) !important;
+}
+:root[data-btn-custom="on"] .n-button--primary-type.n-button--quaternary:hover,
+:root[data-btn-custom="on"] .n-button--default-type.n-button--quaternary:hover {
+  background: var(--btn-text-bg-hover) !important;
+}
+:root[data-btn-custom="on"] .n-button--primary-type.n-button--quaternary:active,
+:root[data-btn-custom="on"] .n-button--default-type.n-button--quaternary:active {
+  background: var(--btn-text-bg-pressed) !important;
+}
+:root[data-btn-custom="on"] .n-button--quaternary * {
   color: inherit !important;
 }
 

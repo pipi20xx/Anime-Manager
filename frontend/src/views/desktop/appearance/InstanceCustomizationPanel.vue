@@ -235,17 +235,32 @@ function enableFieldOverride(category: keyof AppearanceInstanceOverrides, field:
 function clearFieldOverride(category: keyof AppearanceInstanceOverrides, field: string): void {
   const ov = getOverridesObject()
   if (!ov || !ov[category]) return
+
+  // 删除字段
   delete (ov[category] as Record<string, any>)[field]
+
   // 如果该分区已无任何覆盖，删除整个分区对象
   if (Object.keys(ov[category] as object).length === 0) {
     delete (ov as any)[category]
   }
+
   // 实例级模式：如果该实例已无任何覆盖，删除整个实例
   if (!isPageOverridesMode.value && selectedInstanceKey.value) {
     if (Object.keys(ov).length === 0) {
       delete props.form.instances![selectedInstanceKey.value]
     }
   }
+
+  // 页面级模式：清理空的 overrides
+  if (isPageOverridesMode.value && props.pageOverridesKey) {
+    const pageConfig = props.form.pages![props.pageOverridesKey]
+    if (pageConfig?.overrides && Object.keys(pageConfig.overrides).length === 0) {
+      // 用新对象替换，确保 Vue 响应式追踪到变化
+      props.form.pages![props.pageOverridesKey] = { ...pageConfig }
+      delete (props.form.pages![props.pageOverridesKey] as any).overrides
+    }
+  }
+
   notifyChange()
 }
 
@@ -298,7 +313,7 @@ function clearPageOverrides(): void {
 }
 
 /** 页面级模式：判断是否显示某个分类 tab */
-const PAGE_OVERRIDE_CATEGORIES = ['input', 'search', 'tabs', 'list', 'button', 'text'] as const
+const PAGE_OVERRIDE_CATEGORIES = ['modal', 'card', 'input', 'search', 'tabs', 'list', 'button', 'text'] as const
 function hasCategory(cat: string): boolean {
   if (isPageOverridesMode.value) return PAGE_OVERRIDE_CATEGORIES.includes(cat as any)
   if (!selectedInstanceKey.value) return false
