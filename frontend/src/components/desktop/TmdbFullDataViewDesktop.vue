@@ -457,7 +457,7 @@ onBeforeUnmount(cleanupObserver)
               <div class="fd-info-grid">
                 <div class="fd-info-item">
                   <span class="fd-info-label">TMDB ID</span>
-                  <span class="fd-info-value">{{ editForm.id }}</span>
+                  <span class="fd-info-value fd-link" @click="openUrl(`https://www.themoviedb.org/${editForm.type}/${editForm.id}`)">{{ editForm.id }}</span>
                 </div>
                 <div v-if="fullData.release_date || fullData.first_air_date" class="fd-info-item">
                   <span class="fd-info-label">首播日期</span>
@@ -496,7 +496,7 @@ onBeforeUnmount(cleanupObserver)
                   <span class="fd-info-value">{{ translateLanguage(fullData.original_language) }}</span>
                 </div>
                 <div v-if="fullData.homepage" class="fd-info-item">
-                  <span class="fd-info-label">主页</span>
+                  <span class="fd-info-label">官网</span>
                   <span class="fd-info-value fd-link" @click="openUrl(fullData.homepage)">访问</span>
                 </div>
               </div>
