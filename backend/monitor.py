@@ -411,7 +411,7 @@ class MonitorManager:
         try:
             await start_task(task_id, "BangumiData同步", "BangumiData条目表自动同步")
             
-            from recognition_engine.bangumi_data_service import bangumi_data_service
+            from recognition.data_provider.bangumi.service import bangumi_data_service
             
             should, reason = await bangumi_data_service.should_sync()
             if not should:
@@ -801,7 +801,7 @@ class MonitorManager:
             bgm_last_run = None
             bgm_interval_str = "7 天" if bgm_enabled else "已禁用"
             try:
-                from recognition_engine.bangumi_data_service import bangumi_data_service
+                from recognition.data_provider.bangumi.service import bangumi_data_service
                 bgm_status = await bangumi_data_service.get_sync_status()
                 bgm_last_run = bgm_status.get("last_sync_time")
                 bgm_count = bgm_status.get("mapping_count")

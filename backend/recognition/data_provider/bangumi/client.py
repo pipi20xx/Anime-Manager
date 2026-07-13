@@ -89,7 +89,7 @@ class BangumiProvider:
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
 
-        from recognition_engine.bangumi_data_service import bangumi_data_service
+        from .service import bangumi_data_service
 
         if await bangumi_data_service.is_long_ended(subject_id):
             raw_cache = await bangumi_data_service.get_raw_cache(subject_id)
@@ -120,7 +120,7 @@ class BangumiProvider:
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
 
-        from recognition_engine.bangumi_data_service import bangumi_data_service
+        from .service import bangumi_data_service
 
         params = {"subject_id": subject_id, "type": episode_type, "limit": 100, "offset": 0}
 
@@ -153,7 +153,7 @@ class BangumiProvider:
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
 
-        from recognition_engine.bangumi_data_service import bangumi_data_service
+        from .service import bangumi_data_service
 
         if await bangumi_data_service.is_long_ended(subject_id):
             raw_cache = await bangumi_data_service.get_raw_cache(subject_id)
@@ -295,7 +295,7 @@ class BangumiProvider:
 
             # 批量查询播出时间
             all_bgm_ids = [i.get("id") for i in items if i.get("id")]
-            from recognition_engine.bangumi_data_service import bangumi_data_service
+            from .service import bangumi_data_service
             broadcast_map = await bangumi_data_service.get_broadcast_times(all_bgm_ids)
 
             for item in items:
@@ -359,7 +359,7 @@ class BangumiProvider:
             for i in day_item.get('items', []):
                 if i.get('id'):
                     all_bgm_ids.append(i['id'])
-        from recognition_engine.bangumi_data_service import bangumi_data_service
+        from .service import bangumi_data_service
         broadcast_map = await bangumi_data_service.get_broadcast_times(all_bgm_ids)
 
         today_idx = datetime.datetime.today().weekday() + 1
@@ -403,7 +403,7 @@ class BangumiProvider:
         """
         import datetime as _dt
         import os
-        from recognition_engine.bangumi_data_service import bangumi_data_service
+        from .service import bangumi_data_service
 
         cache_key = "bangumi:calendar_local"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
@@ -723,7 +723,7 @@ class BangumiProvider:
         
         if bgm_id:
             try:
-                from recognition_engine.bangumi_data_service import bangumi_data_service
+                from .service import bangumi_data_service
                 mapping = await bangumi_data_service.lookup(bgm_id)
                 if mapping:
                     _log(f"┃ [BangumiData] 📋 命中 BangumiData 表: BGM:{bgm_id} -> TMDB:{mapping['tmdb_id']} ({mapping['media_type']})")
