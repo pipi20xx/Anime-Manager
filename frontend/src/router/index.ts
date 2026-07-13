@@ -31,11 +31,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/HomeView.vue')
   },
   {
-    path: '/cache',
-    name: 'Cache',
-    component: () => import('../views/desktop/CacheViewDesktop.vue')
-  },
-  {
     path: '/settings',
     name: 'Settings',
     component: () => import('../components/desktop/SettingsViewDesktop.vue')

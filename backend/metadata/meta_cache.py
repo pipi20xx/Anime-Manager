@@ -180,6 +180,23 @@ class MetaCacheManager:
             return result.rowcount
 
     @staticmethod
+    async def get_all_fingerprints() -> List[Dict[str, Any]]:
+        """获取所有指纹记录"""
+        async with db.session_scope():
+            stmt = select(SeriesFingerprint)
+            items = await db.all(SeriesFingerprint, stmt)
+            return [item.model_dump() for item in items]
+
+    @staticmethod
+    async def delete_fingerprint(fingerprint: str) -> bool:
+        """删除单个指纹记录"""
+        async with db.session_scope() as session:
+            stmt = delete(SeriesFingerprint).where(SeriesFingerprint.fingerprint == fingerprint)
+            result = await session.execute(stmt)
+            await session.commit()
+            return result.rowcount > 0
+
+    @staticmethod
     async def clear_fingerprints() -> int:
         async with db.session_scope() as session:
             stmt = delete(SeriesFingerprint)

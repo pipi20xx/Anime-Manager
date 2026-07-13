@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import { 
-  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, useDialog
+import { ref } from 'vue'
+import {
+  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, useDialog, useMessage
 } from 'naive-ui'
 import {
   CleaningServicesOutlined as CleanIcon,
-  StorageOutlined as DbIcon
+  StorageOutlined as DbIcon,
+  AutoFixHighOutlined as SmartIcon
 } from '@vicons/material'
 import { useMaintenance } from '../../composables/components/useMaintenance'
 
 const dialog = useDialog()
+const message = useMessage()
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
+
+const fingerprintLoading = ref(false)
 
 const handleTruncateWithConfirm = (tableName: string) => {
   dialog.error({
@@ -17,6 +23,48 @@ const handleTruncateWithConfirm = (tableName: string) => {
     positiveText: '确认清空',
     negativeText: '取消',
     onPositiveClick: () => handleTruncate(tableName)
+  })
+}
+
+const clearFingerprints = () => {
+  dialog.warning({
+    title: '确认清空智能记忆',
+    content: '这将删除所有智能记忆缓存。识别速度可能会暂时变慢，但不会影响已刮削的数据。',
+    positiveText: '清空记忆',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      fingerprintLoading.value = true
+      try {
+        const res = await fetch(`${API_BASE}/api/cache/clear_fingerprints`, { method: 'POST' })
+        const data = await res.json()
+        message.success(data.message)
+      } finally {
+        fingerprintLoading.value = false
+      }
+    }
+  })
+}
+
+const cleanupInvalidFingerprints = () => {
+  dialog.info({
+    title: '智能清理无效记忆',
+    content: '将清理过于简单、缺乏区分度的指纹记录（如只有季集模式的记录），保留有效的记忆。',
+    positiveText: '智能清理',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      fingerprintLoading.value = true
+      try {
+        const res = await fetch(`${API_BASE}/api/cache/cleanup_invalid_fingerprints`, { method: 'POST' })
+        const data = await res.json()
+        if (data.status === 'success') {
+          message.success(data.message)
+        } else {
+          message.error('清理失败')
+        }
+      } finally {
+        fingerprintLoading.value = false
+      }
+    }
   })
 }
 
@@ -29,7 +77,7 @@ const {
 } = useMaintenance()
 
 const getTagStyle = (count: number) => {
-  return count > 0 
+  return count > 0
     ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }
     : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }
 }
@@ -37,6 +85,29 @@ const getTagStyle = (count: number) => {
 
 <template>
   <div class="maintenance-manager">
+    <!-- 智能记忆管理 -->
+    <n-card bordered size="small" class="fingerprint-card" style="margin-bottom: 20px;">
+      <template #header>
+        <div class="card-header">
+          <n-icon size="18"><SmartIcon /></n-icon>
+          <span>智能记忆管理</span>
+        </div>
+      </template>
+      <n-alert type="info" style="margin-bottom: 16px;">
+        智能记忆用于加速重复文件的识别。无效记录（如只有季集模式的简单指纹）可能导致不同剧集误匹配。
+      </n-alert>
+      <n-space>
+        <n-button type="info" secondary :loading="fingerprintLoading" @click="cleanupInvalidFingerprints">
+          <template #icon><n-icon><SmartIcon /></n-icon></template>
+          智能清理无效记忆
+        </n-button>
+        <n-button type="warning" secondary :loading="fingerprintLoading" @click="clearFingerprints">
+          <template #icon><n-icon><CleanIcon /></n-icon></template>
+          清空全部记忆
+        </n-button>
+      </n-space>
+    </n-card>
+
     <n-alert type="warning" title="危险区域" style="margin-bottom: 20px;">
       以下操作将永久删除数据库表中的所有数据（TRUNCATE）。执行后无法撤销，请务必确认操作目标。
     </n-alert>
@@ -81,6 +152,8 @@ const getTagStyle = (count: number) => {
 
 <style scoped>
 .maintenance-manager { width: 100%; }
+.fingerprint-card { background: var(--app-surface-card-mixed); }
+.card-header { display: flex; align-items: center; gap: 8px; color: var(--n-primary-color); font-weight: 600; }
 .schema-group { margin-bottom: 32px; }
 .group-header { 
   display: flex; 
