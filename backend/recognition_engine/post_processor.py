@@ -30,6 +30,9 @@ class PostProcessor:
 
         if not meta_obj.begin_episode:
             raw_ep = info_dict.get("episode_number")
+            # [Debug] 记录关键变量状态
+            v_logs.append(f"[Debug] raw_ep={raw_ep}, type={type(raw_ep).__name__ if raw_ep is not None else 'None'}")
+            
             if isinstance(raw_ep, list): 
                 # Anitopy 识别到了多个数字，执行安全检查
                 if len(raw_ep) >= 2:
@@ -52,7 +55,8 @@ class PostProcessor:
                     raw_ep = raw_ep[0]
 
             if not meta_obj.begin_episode:
-                val, debug4 = TagExtractor.validate_episode(raw_ep, processed_title)
+                # [Fix] 使用原始文件名进行集数校验，而不是清洗后的标题
+                val, debug4 = TagExtractor.validate_episode(raw_ep, input_name)
                 meta_obj.begin_episode = val
                 v_logs.extend(debug4)
 

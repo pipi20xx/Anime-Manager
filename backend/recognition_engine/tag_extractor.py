@@ -93,12 +93,20 @@ class TagExtractor:
     @staticmethod
     def validate_episode(ep_val: Any, filename: str) -> Tuple[Optional[Union[int, float]], List[str]]:
         if ep_val is None: return None, []
+        if not filename: return None, []  # 文件名为空时直接返回
+        
         try:
-            val_str = str(ep_val[0] if isinstance(ep_val, list) else ep_val)
+            # [Fix] 正确处理列表、字符串、数字类型
+            if isinstance(ep_val, list):
+                val_str = str(ep_val[0]) if ep_val else ""
+            elif isinstance(ep_val, (int, float)):
+                val_str = str(int(ep_val) if isinstance(ep_val, float) and ep_val.is_integer() else ep_val)
+            else:
+                val_str = str(ep_val)
+            
             # 处理浮点集数 (如 24.5)
             if "." in val_str:
                 num_val = float(val_str)
-                # 如果是整数浮点 (如 24.0)，转回 int
                 if num_val.is_integer():
                     num_val = int(num_val)
             else:
@@ -109,8 +117,70 @@ class TagExtractor:
                 if not re.search(rf"(?i)(EP|第|E|episode|#)\s*0*{val_str}", filename):
                     return None, [f"[规则][内置] 集数误报拦截: {val_str}"]
             
+            # 智能集数校验：检测文件名中是否有更可靠的集数模式
+            tail_ep = TagExtractor._extract_tail_episode(filename)
+            if tail_ep is not None and tail_ep != num_val:
+                return tail_ep, [f"[规则][内置] 尾部集数优先: E{tail_ep} (覆盖内核返回的 E{num_val})"]
+            
             return num_val, [f"[规则][内置] 集数校验通过: E{num_val}"]
-        except: return None, []
+        except Exception as e:
+            import traceback
+            return None, [f"[规则][内置] 集数校验异常: {str(e)}"]
+
+    @staticmethod
+    def _extract_tail_episode(filename: str) -> Optional[int]:
+        """
+        从文件名中提取明确的集数模式，用于覆盖 Anitopy 可能的误判。
+        优先级：S数字E数字 > E数字 > [数字] > 第X集/话 > - 数字
+        
+        返回最明确的有效集数。
+        """
+        # 移除扩展名
+        name_no_ext = re.sub(r'\.\w{2,4}$', '', filename)
+        
+        # 【最高优先级】标准季集格式：S01E21, S1E21
+        # 这种格式最明确，应该无条件优先
+        s_e_match = re.search(r'S(\d{1,2})E(\d{1,4})', name_no_ext, re.IGNORECASE)
+        if s_e_match:
+            return int(s_e_match.group(2))
+        
+        # 【次高优先级】独立集数格式：E21, EP21, Episode 21
+        # 必须有明确的边界，防止匹配到标题中的单词
+        e_match = re.search(r'(?:^|[\s\-_\.\[\(])E(?:P|isode)?(\d{1,4})(?:[\s\-_\.\]\)]|$)', name_no_ext, re.IGNORECASE)
+        if e_match:
+            return int(e_match.group(1))
+        
+        # 【新增】方括号集数格式：[09], [25]
+        # 常见于字幕组命名：[制作组][FAIRY_TAIL 100_YEARS_QUEST][09]
+        # 策略：找到所有 [纯数字] 的方括号，取最后一个作为候选
+        bracket_ep_matches = re.findall(r'\[(\d{1,4})\]', name_no_ext)
+        if bracket_ep_matches:
+            candidate = int(bracket_ep_matches[-1])
+            # 排除分辨率数字（1080, 720, 480, 2160）
+            if candidate not in [1080, 720, 480, 2160, 360, 576]:
+                # 合理集数范围：1-500
+                if 1 <= candidate <= 500:
+                    return candidate
+        
+        # 【中等优先级】中文格式：第21集, 第21话
+        cn_match = re.search(r'第\s*(\d{1,4})\s*[集话回話]', name_no_ext)
+        if cn_match:
+            return int(cn_match.group(1))
+        
+        # 【较低优先级】连字符格式：Title - 25
+        # 这种格式容易误判（如制作组 -PorterRAWS），需要严格校验
+        dash_match = re.search(r'\s+-\s+(\d{1,4})\s*(?:[\[\(\{]|$)', name_no_ext)
+        if dash_match:
+            ep = int(dash_match.group(1))
+            # 排除明显的制作组特征（如 -PorterRAWS, -ANE）
+            suffix_context = name_no_ext[dash_match.end():].strip()
+            if suffix_context and re.match(r'^[A-Z]{2,}', suffix_context):
+                # 后面是全大写字母，可能是制作组，跳过
+                pass
+            else:
+                return ep
+        
+        return None
 
     @staticmethod
     def extract_episode(text: str, filename_context: str = "") -> Tuple[Optional[int], List[str]]:
