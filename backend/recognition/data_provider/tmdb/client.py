@@ -50,6 +50,9 @@ class TMDBProvider:
 
         async with httpx.AsyncClient(timeout=10, proxy=self.proxy) as client:
             try:
+                # [DEBUG] 记录实际发送的请求 URL（构建请求对象查看编码后的URL）
+                debug_request = client.build_request('GET', full_url, params=params)
+                _log(f"┃   [DEBUG] 实际请求URL: {debug_request.url}")
                 resp = await client.get(full_url, params=params)
                 if resp.status_code == 200: return resp.json(), True
                 
@@ -316,14 +319,20 @@ class TMDBProvider:
         """
         cache_key = f"tmdb:search:{media_type}:{lang}:{query}:{year or ''}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
-        if cached: return cached, True
+        if cached:
+            # [DEBUG] 记录缓存命中
+            if hasattr(logs, "log"): logs.log(f"┃   [DEBUG] TMDB缓存命中: query='{query}'")
+            return cached, True
 
-        params = {"query": query, "include_adult": "false", "language": lang}
+        params = {"query": query, "include_adult": "true", "language": lang}
         
         if year and media_type == "movie":
             params["year"] = year
         
         data, success = await self._fetch(f"/search/{media_type}", params, logs=logs)
+        if logs and data:
+            result_count = len(data.get("results", []))
+            if hasattr(logs, "log"): logs.log(f"┃   [DEBUG] 搜索返回 {result_count} 个结果")
         if not success:
             return [], False
         
@@ -354,7 +363,7 @@ class TMDBProvider:
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached, True
 
-        params = {"query": query, "include_adult": "false", "language": lang}
+        params = {"query": query, "include_adult": "true", "language": lang}
         
         data, success = await self._fetch("/search/multi", params, logs=logs)
         if not success:
@@ -377,6 +386,7 @@ class TMDBProvider:
         orig_queries = TMDBMatcher.prepare_queries(original_cn_name) if original_cn_name and original_cn_name != cn_name else []
 
         _log(f"┃ [TMDB-Smart] 🚀 启动定向搜索策略...")
+        _log(f"┃   [DEBUG] cn_name='{cn_name}', cn_queries[0]='{cn_queries[0] if cn_queries else 'N/A'}'")
         
         merged_candidates = []
         seen_ids = set()
@@ -629,6 +639,8 @@ class TMDBProvider:
             targets.append(re.sub(r"[^\w]", "", original_cn_name).upper())
         if en_name: targets.append(re.sub(r"[^\w]", "", en_name).upper())
         if cn_queries and len(cn_queries) > 1: targets.append(re.sub(r"[^\w]", "", cn_queries[1]).upper())
+        # [DEBUG] 记录 targets 构建过程
+        # _log(f"┃   [DEBUG] _build_match_targets: cn_name='{cn_name}' -> targets[0]='{targets[0] if targets else 'N/A'}'")
         return targets
 
     async def get_person_details(self, person_id: str, logs: Any = None) -> Optional[Dict]:
