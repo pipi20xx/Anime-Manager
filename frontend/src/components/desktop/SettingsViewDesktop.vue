@@ -92,24 +92,6 @@ const privilegedRemoteText = computed({
   get() { return arrayToText(config.remote_privileged_urls) },
   set(v) { config.remote_privileged_urls = textToArray(v) }
 })
-
-/* ========== 客户端类型颜色映射 ========== */
-const clientTypeColors: Record<string, string> = {
-  'qbittorrent': '#1565c0',  // 深蓝色
-  'cd2': '#2e7d32',          // 深绿色
-}
-
-const getClientTypeColor = (type: string) => {
-  return clientTypeColors[type] || '#37474f'
-}
-
-const getClientTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    'qbittorrent': 'qBittorrent',
-    'cd2': 'CloudDrive2'
-  }
-  return labels[type] || type
-}
 </script>
 
 <template>
@@ -509,12 +491,7 @@ const getClientTypeLabel = (type: string) => {
                       </n-icon>
                       {{ client.name }}
                     </div>
-                    <div class="client-meta">
-                      <n-tag size="small" round :bordered="false" :style="{ color: '#fff', backgroundColor: getClientTypeColor(client.type) }">
-                        {{ getClientTypeLabel(client.type) }}
-                      </n-tag>
-                      <span class="client-url">{{ client.url }}</span>
-                    </div>
+                    <div class="client-meta">{{ client.type }} | {{ client.url }}</div>
                     <div v-if="client.version" class="client-version">
                       <n-tag size="small" :bordered="false" :style="{ color: '#fff', backgroundColor: '#2e7d32' }">{{ client.version }}</n-tag>
                       <span v-if="client.last_test_time" class="test-time">{{ client.last_test_time }}</span>
@@ -773,8 +750,7 @@ const getClientTypeLabel = (type: string) => {
   flex-direction: column;
 }
 .client-card .client-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
-.client-card .client-meta { display: flex; align-items: center; gap: 8px; min-height: 22px; }
-.client-card .client-meta .client-url { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.client-card .client-meta { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .client-card .client-version { margin-top: auto; padding-top: 8px; display: flex; align-items: center; gap: 8px; }
 .client-card .test-time { font-size: 11px; color: var(--text-tertiary); }
 .empty-clients { padding: 40px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-medium); border-radius: 8px; }
