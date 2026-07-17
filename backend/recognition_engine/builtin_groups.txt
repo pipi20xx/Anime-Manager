@@ -11,6 +11,7 @@ Lilith-Raws
 Raws-Maji
 Kamigami
 Ohys-Raws
+Nix-Raws
 Yui-Raws
 Sakura-Raws
 Hikari-Raws

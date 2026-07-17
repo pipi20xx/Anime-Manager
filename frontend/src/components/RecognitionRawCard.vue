@@ -4,11 +4,11 @@
  *
  * 本地解析元数据卡片，通过 CSS 适配移动端
  */
-import { NCard, NTag, NIcon, NDivider } from 'naive-ui'
+import { NCard, NIcon, NDivider } from 'naive-ui'
 import { StorageOutlined as LocalIcon } from '@vicons/material'
 import { useRecognitionRaw } from '../composables/components/useRecognitionRaw'
 
-const { raw, tags, safeGet } = useRecognitionRaw()
+const { raw, safeGet } = useRecognitionRaw()
 </script>
 
 <template>
@@ -48,17 +48,17 @@ const { raw, tags, safeGet } = useRecognitionRaw()
           <span class="rs-label">音频编码</span>
           <span class="rs-value info">{{ safeGet(raw.audio_encode) }}</span>
         </div>
-      </div>
-
-      <n-divider dashed style="margin: 12px 0" />
-
-      <div class="raw-tags-section">
-        <div class="section-mini-title">解析到的标签</div>
-        <div class="raw-tags-cloud">
-          <n-tag v-for="tag in tags" :key="String(tag)" size="tiny" round :bordered="false" :style="{ color: '#fff', backgroundColor: '#616161', borderColor: 'transparent' }">
-            {{ String(tag) }}
-          </n-tag>
-          <div v-if="tags.length === 0" class="no-tags">未提取到额外标签</div>
+        <div class="rs-item">
+          <span class="rs-label">视频特效</span>
+          <span class="rs-value">{{ safeGet(raw.video_effect) }}</span>
+        </div>
+        <div class="rs-item">
+          <span class="rs-label">字幕语言</span>
+          <span class="rs-value">{{ safeGet(raw.subtitle_lang) }}</span>
+        </div>
+        <div class="rs-item">
+          <span class="rs-label">发布平台</span>
+          <span class="rs-value warning">{{ safeGet(raw.resource_platform) }}</span>
         </div>
       </div>
     </div>
@@ -84,9 +84,6 @@ const { raw, tags, safeGet } = useRecognitionRaw()
 .rs-value.success { color: var(--n-primary-color); }
 .rs-value.info { color: var(--n-success-color); }
 
-.section-mini-title { font-size: var(--text-xs); font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: var(--space-2); }
-.raw-tags-cloud { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.no-tags { font-size: var(--text-xs); color: var(--text-tertiary); font-style: italic; }
 .local-icon { color: var(--n-primary-color); }
 
 /* === 移动端适配: 规格 2 列网格 === */
@@ -99,6 +96,5 @@ const { raw, tags, safeGet } = useRecognitionRaw()
     gap: var(--space-2);
   }
   .rs-item { font-size: var(--text-xs); }
-  .section-mini-title { font-size: var(--text-2xs); }
 }
 </style>
