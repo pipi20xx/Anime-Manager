@@ -101,7 +101,15 @@ def core_recognize(
                 if sp_raw_alt != sp_raw and re.search(pattern_alt, processed_title):
                     processed_title = re.sub(pattern_alt, " ", processed_title, count=1)
                     sp_logs.append(f"┣ [Shield] 特权集数已从标题中剥离 (格式转换): {sp_raw_alt}")
-        
+
+        # 剥离特权制作组
+        if sp_group:
+            group_pattern = rf'\[{re.escape(sp_group)}\]'
+            if re.search(group_pattern, processed_title, re.IGNORECASE):
+                processed_title = re.sub(group_pattern, " ", processed_title, flags=re.IGNORECASE)
+                processed_title = re.sub(r"\s+", " ", processed_title).strip()
+                sp_logs.append(f"┣ [Shield] 特权制作组已从标题中剥离: {sp_group}")
+
         sp_logs.append(f"清洗后结果: {processed_title}")
         logger_stub.debug_out("STEP 1.5: 特权提取 (标题 + 集数)", sp_logs)
     else:
