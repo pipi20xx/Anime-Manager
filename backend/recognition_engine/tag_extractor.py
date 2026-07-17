@@ -446,5 +446,5 @@ class TagExtractor:
         if final_label == "简日内封": final_label = "简日双语" # 习惯用法
         if final_label == "繁日内封": final_label = "繁日双语"
         
-        logs.append(f"[规则][规范化] 字幕语言: {final_label}")
+        logs.append(f"[规则][内置] 字幕语言: {final_label}")
         return final_label, logs

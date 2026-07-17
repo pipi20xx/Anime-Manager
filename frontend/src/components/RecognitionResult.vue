@@ -3,14 +3,15 @@
  * RecognitionResult - 统一识别结果展示
  *
  * 通过 CSS 媒体查询自动适配:
- * - 桌面: FinalCard 在上, RawCard + TmdbCard 并排
- * - 移动: 三张卡片纵向堆叠
+ * - 桌面: FinalCard 在上, RawCard + TmdbCard 并排, RulesCard 在下
+ * - 移动: 卡片纵向堆叠
  */
 import { NEmpty } from 'naive-ui'
 import { recognitionState } from '../store/recognitionStore'
 import RecognitionFinalCard from './RecognitionFinalCard.vue'
 import RecognitionRawCard from './RecognitionRawCard.vue'
 import RecognitionTmdbCard from './RecognitionTmdbCard.vue'
+import RecognitionRulesCard from './RecognitionRulesCard.vue'
 </script>
 
 <template>
@@ -25,6 +26,7 @@ import RecognitionTmdbCard from './RecognitionTmdbCard.vue'
         <RecognitionRawCard />
         <RecognitionTmdbCard />
       </div>
+      <RecognitionRulesCard />
     </div>
   </div>
 </template>

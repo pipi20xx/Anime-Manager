@@ -375,7 +375,7 @@ def core_recognize(
     # [NEW] 输出 STEP 2.5 屏蔽后的最终结果
     s_logs.append(f"清洗后结果: {processed_title}")
     
-    if s_logs: logger_stub.debug_out("STEP 2.5: 规格预处理与噪声屏蔽", s_logs)
+    if s_logs: logger_stub.debug_out("STEP 2.5: 规格提取与规范化预处理", s_logs)
 
     # --- STEP 3: 内核解析 ---
     current_logs.append(f"┃")

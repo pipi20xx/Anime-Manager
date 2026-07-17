@@ -295,7 +295,7 @@ class PostProcessor:
         
         # [Sync] 来源同步
         if meta_obj.resource_type:
-            debug6.append(f"┣ [介质] 继承自预处理: {meta_obj.resource_type}")
+            debug6.append(f"┣ [介质来源] 继承自预处理: {meta_obj.resource_type}")
         else:
             source_val, d6_s = TagExtractor.extract_source(input_name)
             if source_val:
@@ -303,7 +303,7 @@ class PostProcessor:
                 debug6.extend(d6_s)
             else:
                 meta_obj.resource_type = to_str(info_dict.get("source"))
-                if meta_obj.resource_type: debug6.append(f"┣ [介质] 同步自内核: {meta_obj.resource_type}")
+                if meta_obj.resource_type: debug6.append(f"┣ [介质来源] 同步自内核: {meta_obj.resource_type}")
 
         # [Sync] 分辨率同步
         if meta_obj.resource_pix:
@@ -319,7 +319,7 @@ class PostProcessor:
         
         # [Sync] 视频编码同步
         if meta_obj.video_encode:
-            debug6.append(f"┣ [视频] 继承自预处理: {meta_obj.video_encode}")
+            debug6.append(f"┣ [视频编码] 继承自预处理: {meta_obj.video_encode}")
         else:
             v_code, d6_v = TagExtractor.extract_video_encode(input_name)
             if v_code:
@@ -327,11 +327,11 @@ class PostProcessor:
                 debug6.extend(d6_v)
             else:
                 meta_obj.video_encode = to_str(info_dict.get("video_term") or info_dict.get("video_codec"))
-                if meta_obj.video_encode: debug6.append(f"┣ [视频] 同步自内核: {meta_obj.video_encode}")
+                if meta_obj.video_encode: debug6.append(f"┣ [视频编码] 同步自内核: {meta_obj.video_encode}")
 
         # [Sync] 音频编码同步
         if meta_obj.audio_encode:
-            debug6.append(f"┣ [音频] 继承自预处理: {meta_obj.audio_encode}")
+            debug6.append(f"┣ [音频编码] 继承自预处理: {meta_obj.audio_encode}")
         else:
             a_code, d6_a = TagExtractor.extract_audio_encode(input_name)
             if a_code:
@@ -339,24 +339,24 @@ class PostProcessor:
                 debug6.extend(d6_a)
             else:
                 meta_obj.audio_encode = to_str(info_dict.get("audio_term") or info_dict.get("audio_codec"))
-                if meta_obj.audio_encode: debug6.append(f"┣ [音频] 同步自内核: {meta_obj.audio_encode}")
+                if meta_obj.audio_encode: debug6.append(f"┣ [音频编码] 同步自内核: {meta_obj.audio_encode}")
         
         # [Sync] 动态范围与字幕
         if meta_obj.video_effect:
-            debug6.append(f"┣ [特效] 继承自预处理: {meta_obj.video_effect}")
+            debug6.append(f"┣ [视频特效] 继承自预处理: {meta_obj.video_effect}")
         else:
             meta_obj.video_effect, d6_e = TagExtractor.extract_dynamic_range(input_name)
             if d6_e: debug6.extend(d6_e)
-        
+
         if meta_obj.subtitle_lang:
-            debug6.append(f"┣ [字幕] 继承自预处理: {meta_obj.subtitle_lang}")
+            debug6.append(f"┣ [字幕语言] 继承自预处理: {meta_obj.subtitle_lang}")
         else:
             meta_obj.subtitle_lang, d6_sub = TagExtractor.extract_subtitle_lang(input_name)
             if d6_sub: debug6.extend(d6_sub)
-        
+
         # [Sync] 发布平台同步
         if meta_obj.resource_platform:
-            debug6.append(f"┣ [平台] 继承自预处理: {meta_obj.resource_platform}")
+            debug6.append(f"┣ [发布平台] 继承自预处理: {meta_obj.resource_platform}")
         else:
             platform_val, d6_plat = TagExtractor.extract_platform(input_name)
             if platform_val:
