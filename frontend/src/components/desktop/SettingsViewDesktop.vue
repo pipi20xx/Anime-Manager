@@ -58,39 +58,39 @@ function textToArray(val: string) {
 }
 
 const noiseLocalText = computed({
-  get() { return arrayToText(config.custom_noise_words) },
-  set(v) { config.custom_noise_words = textToArray(v) }
+  get() { return arrayToText(config.value.custom_noise_words) },
+  set(v) { config.value.custom_noise_words = textToArray(v) }
 })
 const noiseRemoteText = computed({
-  get() { return arrayToText(config.remote_noise_urls) },
-  set(v) { config.remote_noise_urls = textToArray(v) }
+  get() { return arrayToText(config.value.remote_noise_urls) },
+  set(v) { config.value.remote_noise_urls = textToArray(v) }
 })
 
 const groupLocalText = computed({
-  get() { return arrayToText(config.custom_release_groups) },
-  set(v) { config.custom_release_groups = textToArray(v) }
+  get() { return arrayToText(config.value.custom_release_groups) },
+  set(v) { config.value.custom_release_groups = textToArray(v) }
 })
 const groupRemoteText = computed({
-  get() { return arrayToText(config.remote_group_urls) },
-  set(v) { config.remote_group_urls = textToArray(v) }
+  get() { return arrayToText(config.value.remote_group_urls) },
+  set(v) { config.value.remote_group_urls = textToArray(v) }
 })
 
 const renderLocalText = computed({
-  get() { return arrayToText(config.custom_render_words) },
-  set(v) { config.custom_render_words = textToArray(v) }
+  get() { return arrayToText(config.value.custom_render_words) },
+  set(v) { config.value.custom_render_words = textToArray(v) }
 })
 const renderRemoteText = computed({
-  get() { return arrayToText(config.remote_render_urls) },
-  set(v) { config.remote_render_urls = textToArray(v) }
+  get() { return arrayToText(config.value.remote_render_urls) },
+  set(v) { config.value.remote_render_urls = textToArray(v) }
 })
 
 const privilegedLocalText = computed({
-  get() { return arrayToText(config.custom_privileged_rules) },
-  set(v) { config.custom_privileged_rules = textToArray(v) }
+  get() { return arrayToText(config.value.custom_privileged_rules) },
+  set(v) { config.value.custom_privileged_rules = textToArray(v) }
 })
 const privilegedRemoteText = computed({
-  get() { return arrayToText(config.remote_privileged_urls) },
-  set(v) { config.remote_privileged_urls = textToArray(v) }
+  get() { return arrayToText(config.value.remote_privileged_urls) },
+  set(v) { config.value.remote_privileged_urls = textToArray(v) }
 })
 </script>
 
