@@ -12,23 +12,12 @@ def _is_chinese(text: str) -> bool:
     return False
 
 def _split_title(title: str) -> list:
+    """按 / 分割特权标题，返回所有有效部分用于逐个搜索"""
     if not title or '/' not in title:
         return [title] if title else []
-    
+
     parts = [p.strip() for p in title.split('/') if p.strip()]
-    if len(parts) < 2:
-        return parts
-    
-    cn_titles = [p for p in parts if _is_chinese(p)]
-    en_titles = [p for p in parts if not _is_chinese(p)]
-    
-    result = []
-    if cn_titles:
-        result.append(cn_titles[0])
-    if en_titles:
-        result.append(en_titles[0])
-    
-    return result if result else parts
+    return parts
 
 def _clean_privileged_title(title: str) -> str:
     if not title:
