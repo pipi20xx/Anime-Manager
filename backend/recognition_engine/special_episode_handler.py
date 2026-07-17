@@ -144,18 +144,20 @@ class SpecialEpisodeHandler:
                     # 校验标题有效性
                     if not title or len(title) < 2:
                         continue
-                    
+
                     # 记录日志 - 使用规则描述
                     rule_desc = desc if desc else "特权规则"
                     if "tmdbid" in extra_meta:
                         rule_desc += f" (TMDB ID: {extra_meta['tmdbid']})"
                     if "type" in extra_meta:
                         rule_desc += f" (类型: {extra_meta['type']})"
-                    
+
                     logs.append(f"[规则][特权] {rule_desc}命中")
                     if group_name:
                         logs.append(f"┣ 字幕组: {group_name}")
                     logs.append(f"┣ 标题: {title}")
+                    if "s" in extra_meta:
+                        logs.append(f"┣ 季数: {extra_meta['s']}")
                     if episode is not None:
                         logs.append(f"┣ 集数: {episode}")
                     else:
