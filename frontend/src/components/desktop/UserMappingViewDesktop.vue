@@ -6,18 +6,18 @@ import {
 } from 'naive-ui'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
-  AddOutlined as AddIcon, 
-  EditOutlined as EditIcon, 
-  DeleteOutlined as DeleteIcon,
-  DownloadOutlined as ImportIcon,
-  UploadOutlined as ExportIcon,
-  LabelOutlined as LabelIcon,
-  BusinessOutlined as CompanyIcon,
-  TagOutlined as KeywordIcon,
-  LanguageOutlined as LanguageIcon,
-  PublicOutlined as CountryIcon,
-  SearchOutlined as SearchIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  PencilSquareIcon as EditIcon,
+  TrashIcon as DeleteIcon,
+  ArrowDownTrayIcon as ImportIcon,
+  ArrowUpTrayIcon as ExportIcon,
+  TagIcon as LabelIcon,
+  BuildingOfficeIcon as CompanyIcon,
+  TagIcon as KeywordIcon,
+  LanguageIcon,
+  GlobeAltIcon as CountryIcon,
+  MagnifyingGlassIcon as SearchIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../AppTextField.vue'
 import AppSearchField from '../AppSearchField.vue'
 import { useUserMapping, type MappingItem } from '../../composables/views/useUserMapping'

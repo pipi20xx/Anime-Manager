@@ -10,10 +10,10 @@ import {
   NSwitch, NDynamicTags
 } from 'naive-ui'
 import {
-  SearchOutlined as SearchIcon,
-  PlayArrowOutlined as PlayIcon,
-  TuneOutlined as TuneIcon
-} from '@vicons/material'
+  MagnifyingGlassIcon as SearchIcon,
+  PlayIcon,
+  AdjustmentsHorizontalIcon as TuneIcon
+} from '@heroicons/vue/24/outline'
 import { useManualOrganizeModal } from '../../composables/components/useManualOrganizeModal'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

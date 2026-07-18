@@ -2,7 +2,9 @@
 import { 
   NForm, NFormItem, NSelect, NButton, NSpace, NGrid, NGi, NDivider, NIcon
 } from 'naive-ui'
-import { SaveOutlined as SaveIcon } from '@vicons/material'
+import {
+  CheckIcon as SaveIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'

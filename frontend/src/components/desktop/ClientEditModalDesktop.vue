@@ -4,9 +4,9 @@ import {
   NButton, NIcon, NAlert, NSwitch
 } from 'naive-ui'
 import {
-  SaveOutlined as SaveIcon,
-  CloudUploadOutlined as TestIcon,
-} from '@vicons/material'
+  CheckIcon as SaveIcon,
+  CloudArrowUpIcon as TestIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'

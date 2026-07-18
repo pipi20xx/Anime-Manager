@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { NSelect, NIcon } from 'naive-ui'
-import { ExpandMoreOutlined, ExpandLessOutlined } from '@vicons/material'
+import {
+  ChevronDownIcon as ExpandMoreOutlined,
+  ChevronUpIcon as ExpandLessOutlined
+} from '@heroicons/vue/24/outline'
 import { appearanceConfig } from '../store/appearanceStore'
 import { isDarkMode } from '../store/themeStore'
 

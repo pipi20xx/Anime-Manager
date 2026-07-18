@@ -3,10 +3,10 @@ import {
   NImage, NTag, NIcon, NScrollbar, NTabs, NTabPane, NSkeleton
 } from 'naive-ui'
 import {
-  StarOutlined as StarIcon,
-  CalendarMonthOutlined as CalendarIcon,
-  ScheduleOutlined as ScheduleIcon
-} from '@vicons/material'
+  StarIcon,
+  CalendarDaysIcon,
+  ClockIcon as ScheduleIcon
+} from '@heroicons/vue/24/outline'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useRecommend } from '../../../composables/explore/useRecommend'

@@ -8,12 +8,14 @@ import {
   NDivider, useDialog
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  StarOutlined as StarIcon,
-  StarFilled as StarFilledIcon,
-  EditOutlined as EditIcon,
-  DeleteOutlined as DeleteIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  StarIcon,
+  PencilSquareIcon as EditIcon,
+  TrashIcon as DeleteIcon
+} from '@heroicons/vue/24/outline'
+import {
+  StarIcon as StarFilledIcon
+} from '@heroicons/vue/24/solid'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useSubscriptionTemplates } from '../../composables/components/useSubscriptionTemplates'

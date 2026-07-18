@@ -7,11 +7,11 @@ import {
   NSwitch, NTag, NIcon, useDialog
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  EditOutlined as EditIcon,
-  DeleteOutlined as DeleteIcon,
-  PlayArrowOutlined as PlayIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  PencilSquareIcon as EditIcon,
+  TrashIcon as DeleteIcon,
+  PlayIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../AppTextField.vue'
 import { useHealthCheck } from '../../composables/useHealthCheck'
 import type { HealthCheckConfig } from '../../api/health'

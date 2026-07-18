@@ -5,13 +5,13 @@ import {
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton
 } from 'naive-ui'
 import {
-  StarOutlined as StarIcon,
-  CalendarMonthOutlined as DateIcon,
-  LinkOutlined as LinkIcon,
-  PersonOutlined as PersonIcon,
-  MovieOutlined as MovieIcon,
-  ArrowBackOutlined as BackIcon
-} from '@vicons/material'
+  StarIcon,
+  CalendarDaysIcon as DateIcon,
+  LinkIcon,
+  UserIcon as PersonIcon,
+  FilmIcon as MovieIcon,
+  ArrowLeftIcon as BackIcon
+} from '@heroicons/vue/24/outline'
 import { useMessage } from 'naive-ui'
 
 const route = useRoute()

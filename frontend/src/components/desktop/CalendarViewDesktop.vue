@@ -11,15 +11,15 @@ import {
   NSwitch, NDatePicker, NCard, NGrid, NGi, NImage
 } from 'naive-ui'
 import {
-  CalendarMonthOutlined as CalendarIcon,
-  ChevronLeftOutlined as PrevIcon,
-  ChevronRightOutlined as NextIcon,
-  ImportExportOutlined as ImportIcon,
-  DeleteOutlined as DeleteIcon,
-  RefreshOutlined as RefreshIcon,
-  NotificationsActiveOutlined as NotifyIcon,
-  SendOutlined as SendIcon
-} from '@vicons/material'
+  CalendarDaysIcon,
+  ChevronLeftIcon as PrevIcon,
+  ChevronRightIcon as NextIcon,
+  ArrowsRightLeftIcon as ImportIcon,
+  TrashIcon as DeleteIcon,
+  ArrowPathIcon as RefreshIcon,
+  BellIcon as NotifyIcon,
+  PaperAirplaneIcon as SendIcon
+} from '@heroicons/vue/24/outline'
 import { useCalendar } from '../../composables/views/useCalendar'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { openTmdbDetail } from '../../store/navigationStore'

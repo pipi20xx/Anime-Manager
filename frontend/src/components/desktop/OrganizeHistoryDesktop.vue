@@ -4,18 +4,18 @@ import {
   NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard, useDialog
 } from 'naive-ui'
 import {
-  HistoryOutlined as HistoryIcon,
-  DeleteOutlined as DeleteIcon,
-  SearchOutlined as SearchIcon,
-  FolderOutlined as FolderIcon,
-  ArrowForwardOutlined as ArrowIcon,
-  AccessTimeOutlined as TimeIcon,
-  StorageOutlined as SizeIcon,
-  DoneAllOutlined as SuccessIcon,
-  ErrorOutlineOutlined as ErrorIcon,
-  KeyboardDoubleArrowDownOutlined as MoreIcon,
-  ReplayOutlined as RetryIcon
-} from '@vicons/material'
+  ClockIcon as HistoryIcon,
+  TrashIcon as DeleteIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  FolderIcon,
+  ArrowRightIcon as ArrowIcon,
+  ClockIcon as TimeIcon,
+  ServerIcon as SizeIcon,
+  CheckBadgeIcon as SuccessIcon,
+  ExclamationCircleIcon as ErrorIcon,
+  ChevronDoubleDownIcon as MoreIcon,
+  ArrowPathIcon as RetryIcon
+} from '@heroicons/vue/24/outline'
 import AppSearchField from '../../components/AppSearchField.vue'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'

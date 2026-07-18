@@ -6,9 +6,9 @@ import {
   NSpin, NCheckbox, NInput, NTag, useDialog
 } from 'naive-ui'
 import {
-  SaveOutlined as SaveIcon,
-  DeleteOutlined as DeleteIcon
-} from '@vicons/material'
+  CheckIcon as SaveIcon,
+  TrashIcon as DeleteIcon
+} from '@heroicons/vue/24/outline'
 import ClientEditModal from './ClientEditModalDesktop.vue'
 import HealthCheckManager from './HealthCheckManagerDesktop.vue'
 import EmbyConfig from '../../components/EmbyConfig.vue'

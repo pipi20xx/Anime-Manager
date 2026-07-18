@@ -16,7 +16,9 @@ import {
   NCard, NSpace, NImage, NIcon, NScrollbar, NFormItem,
   NDivider, NTabs, NTabPane
 } from 'naive-ui'
-import { TuneOutlined as TuneIcon } from '@vicons/material'
+import {
+  AdjustmentsHorizontalIcon as TuneIcon
+} from '@heroicons/vue/24/outline'
 import RecognitionLogsView from './desktop/RecognitionLogsDesktop.vue'
 import RecognitionResult from '../components/RecognitionResult.vue'
 import { useHome } from '../composables/views/useHome'

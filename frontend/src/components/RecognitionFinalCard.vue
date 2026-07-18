@@ -5,7 +5,9 @@
  * 最终识别结论卡片，通过 CSS 媒体查询适配移动端
  */
 import { NCard, NIcon, NImage } from 'naive-ui'
-import { FlagOutlined as FinalIcon } from '@vicons/material'
+import {
+  FlagIcon as FinalIcon
+} from '@heroicons/vue/24/outline'
 import { useRecognitionFinal } from '../composables/components/useRecognitionFinal'
 
 const {

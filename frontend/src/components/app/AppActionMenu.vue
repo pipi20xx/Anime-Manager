@@ -25,7 +25,9 @@ import { NDropdown, NDrawer, NDrawerContent, NIcon, NButton } from 'naive-ui'
 import { useIsMobile } from '../../composables/useIsMobile'
 import { useBackClose } from '../../composables/useBackClose'
 import { getButtonStyle, type ButtonStyleKey } from '../../composables/useButtonStyles'
-import { MoreVertOutlined as DefaultMoreIcon } from '@vicons/material'
+import {
+  EllipsisVerticalIcon as DefaultMoreIcon
+} from '@heroicons/vue/24/outline'
 
 export interface ActionMenuItem {
   key: string

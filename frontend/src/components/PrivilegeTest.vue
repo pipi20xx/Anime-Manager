@@ -6,11 +6,11 @@ import {
   NList, NListItem, NThing, NScrollbar, NTooltip
 } from 'naive-ui'
 import {
-  SecurityOutlined as ShieldIcon,
-  BugReportOutlined as BugIcon,
-  RefreshOutlined as RefreshIcon,
-  InputOutlined as LoadIcon
-} from '@vicons/material'
+  ShieldCheckIcon as ShieldIcon,
+  BugAntIcon as BugIcon,
+  ArrowPathIcon as RefreshIcon,
+  ArrowDownTrayIcon as LoadIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from './AppTextField.vue'
 
 const props = defineProps<{

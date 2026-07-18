@@ -5,15 +5,15 @@ import {
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton, NSpin
 } from 'naive-ui'
 import {
-  StarOutlined as StarIcon,
-  CalendarMonthOutlined as DateIcon,
-  LinkOutlined as LinkIcon,
-  PersonOutlined as CastIcon,
-  ExpandMoreOutlined as ExpandIcon,
-  RefreshOutlined as LoadingIcon,
-  CheckCircleOutlined,
-  ArrowBackOutlined as BackIcon
-} from '@vicons/material'
+  StarIcon,
+  CalendarDaysIcon as DateIcon,
+  LinkIcon,
+  UserIcon as CastIcon,
+  ChevronDownIcon as ExpandIcon,
+  ArrowPathIcon as LoadingIcon,
+  CheckCircleIcon as CheckCircleOutlined,
+  ArrowLeftIcon as BackIcon
+} from '@heroicons/vue/24/outline'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch, openTmdbPersonDetail } from '../../store/navigationStore'
 import { STATUS_MAP } from '../../composables/useTmdbDisplayMaps'

@@ -8,22 +8,22 @@ import {
   useDialog
 } from 'naive-ui'
 import {
-  ArrowUpwardOutlined as UpIcon,
-  RefreshOutlined as RefreshIcon,
-  ChevronRightOutlined as NextIcon,
-  DriveFileMoveOutlined as OrganizeIcon,
-  DescriptionOutlined as FileIcon,
-  ContentCopyOutlined as CopyIcon,
-  ContentPasteOutlined as PasteIcon,
-  DeleteOutlined as DeleteIcon,
-  InfoOutlined as InfoIcon,
-  LinkOutlined as PathIcon,
-  ContentCutOutlined as CutIcon,
-  StarOutlineOutlined as StarIcon,
-  StarOutlined as StarFilledIcon,
-  FolderOpenOutlined as FolderOpenIcon,
-  DriveFileMoveOutlined as GoToIcon
-} from '@vicons/material'
+  ArrowUpIcon as UpIcon,
+  ArrowPathIcon as RefreshIcon,
+  ChevronRightIcon as NextIcon,
+  FolderArrowDownIcon as OrganizeIcon,
+  DocumentIcon as FileIcon,
+  Square2StackIcon as CopyIcon,
+  ClipboardDocumentIcon as PasteIcon,
+  TrashIcon as DeleteIcon,
+  InformationCircleIcon as InfoIcon,
+  LinkIcon as PathIcon,
+  ScissorsIcon as CutIcon,
+  StarIcon,
+  StarIcon as StarFilledIcon,
+  FolderOpenIcon,
+  FolderArrowDownIcon as GoToIcon
+} from '@heroicons/vue/24/outline'
 
 import ManualOrganizeModal from '../../components/desktop/ManualOrganizeModalDesktop.vue'
 import RecognitionModal from '../../components/desktop/RecognitionModalDesktop.vue'

@@ -7,13 +7,13 @@ import {
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
 import {
-  HistoryOutlined as LogIcon,
-  DeleteSweepOutlined as ClearIcon,
-  RefreshOutlined as RefreshIcon,
-  FileDownloadOutlined as ExportIcon,
-  SearchOutlined as SearchIcon,
-  TerminalOutlined as TerminalIcon
-} from '@vicons/material'
+  ClockIcon as LogIcon,
+  TrashIcon as ClearIcon,
+  ArrowPathIcon as RefreshIcon,
+  ArrowDownTrayIcon as ExportIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  CommandLineIcon as TerminalIcon
+} from '@heroicons/vue/24/outline'
 import LogConsoleModal from '../../components/desktop/LogConsoleModalDesktop.vue'
 import { useSystemLogs } from '../../composables/views/useSystemLogs'
 import { getButtonStyle } from '../../composables/useButtonStyles'

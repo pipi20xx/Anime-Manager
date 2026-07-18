@@ -11,16 +11,16 @@ import {
   NTabs, NTabPane, NCollapse, NCollapseItem
 } from 'naive-ui'
 import {
-  DeleteOutlined as DeleteIcon,
-  SearchOutlined as SearchIcon,
-  CloudSyncOutlined as SytmdbIcon,
-  AddOutlined as AddIcon,
-  RefreshOutlined as RefreshIcon,
-  StarOutlined as StarIcon,
-  CalendarMonthOutlined as DateIcon,
-  PersonOutlined as PersonIcon,
-  CodeOutlined as CodeIcon
-} from '@vicons/material'
+  TrashIcon as DeleteIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  CloudIcon as SytmdbIcon,
+  PlusIcon as AddIcon,
+  ArrowPathIcon as RefreshIcon,
+  StarIcon,
+  CalendarDaysIcon as DateIcon,
+  UserIcon as PersonIcon,
+  CodeBracketIcon as CodeIcon
+} from '@heroicons/vue/24/outline'
 import { useTmdbData } from '../../composables/views/useTmdbData'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { STATUS_MAP } from '../../composables/useTmdbDisplayMaps'

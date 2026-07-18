@@ -7,12 +7,12 @@ import {
 import AppSelectField from './AppSelectField.vue'
 import AppGlassModal from './AppGlassModal.vue'
 import {
-  SearchOutlined as SearchIcon,
-  ErrorOutlineOutlined as ErrorIcon,
-  DownloadOutlined as DownloadIcon,
-  StopCircleOutlined as StopIcon,
-  PlayCircleOutlineOutlined as StartIcon
-} from '@vicons/material'
+  MagnifyingGlassIcon as SearchIcon,
+  ExclamationCircleIcon as ErrorIcon,
+  ArrowDownTrayIcon as DownloadIcon,
+  StopCircleIcon as StopIcon,
+  PlayCircleIcon as StartIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps({
   show: Boolean,

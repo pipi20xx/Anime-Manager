@@ -6,7 +6,9 @@
  */
 import { computed } from 'vue'
 import { NCard, NIcon, NScrollbar } from 'naive-ui'
-import { RuleOutlined as RuleIcon } from '@vicons/material'
+import {
+  ScaleIcon as RuleIcon
+} from '@heroicons/vue/24/outline'
 import { recognitionState } from '../store/recognitionStore'
 
 // 过滤出规则相关的日志行

@@ -5,7 +5,10 @@ import {
 } from 'naive-ui'
 import AppSelectField from '../../components/AppSelectField.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
-import { SearchOutlined as SearchIcon, CloudDownloadOutlined as DownloadIcon } from '@vicons/material'
+import {
+  MagnifyingGlassIcon as SearchIcon,
+  CloudArrowDownIcon as DownloadIcon
+} from '@heroicons/vue/24/outline'
 import { searchKeyword } from '../../store/navigationStore'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

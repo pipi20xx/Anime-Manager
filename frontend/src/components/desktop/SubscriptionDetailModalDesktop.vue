@@ -6,11 +6,11 @@ import {
   useDialog, useMessage
 } from 'naive-ui'
 import {
-  DeleteSweepOutlined as ClearIcon,
-  LiveTvOutlined as TvIcon,
-  MovieOutlined as MovieIcon,
-  HistoryOutlined as HistoryIcon
-} from '@vicons/material'
+  TrashIcon as ClearIcon,
+  TvIcon,
+  FilmIcon as MovieIcon,
+  ClockIcon as HistoryIcon
+} from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
 const props = defineProps<{

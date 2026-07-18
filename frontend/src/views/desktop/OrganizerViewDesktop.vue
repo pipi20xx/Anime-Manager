@@ -4,15 +4,16 @@ import {
   NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  DeleteOutlined as DeleteIcon,
-  SaveOutlined as SaveIcon,
-  PlayArrowOutlined as PlayIcon,
-  ContentCopyOutlined as CopyIcon,
-  BoltOutlined as BoltIcon,
-  AccessTimeOutlined as ScheduleIcon,
-  StopOutlined as StopIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  TrashIcon as DeleteIcon,
+  CheckIcon as SaveIcon,
+  PlayIcon,
+  Square2StackIcon as CopyIcon,
+  EyeIcon,
+  ClockIcon as ScheduleIcon,
+  StopIcon,
+  DocumentTextIcon as LogIcon
+} from '@heroicons/vue/24/outline'
 import draggable from 'vuedraggable'
 
 import RuleEditModal from '../../components/RuleEditModal.vue'
@@ -131,8 +132,8 @@ onUnmounted(stopBgTaskPolling)
             </n-space>
             <n-space align="center">
               <span style="font-size: var(--text-sm); color: var(--text-tertiary)">已处理: {{ task.processed }}</span>
-              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="viewTaskLog(task.task_id)">
-                查看日志
+              <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewTaskLog(task.task_id)">
+                <template #icon><n-icon><LogIcon /></n-icon></template>
               </n-button>
               <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="stopBackgroundTask(task.task_id)">
                 <template #icon><n-icon><StopIcon /></n-icon></template>
@@ -150,8 +151,8 @@ onUnmounted(stopBgTaskPolling)
               <span style="font-size: var(--text-sm); color: var(--text-tertiary)">处理: {{ task.processed }}</span>
             </n-space>
             <n-space align="center">
-              <n-button v-bind="getButtonStyle('secondary')" size="small" @click="viewTaskLog(task.task_id)">
-                查看日志
+              <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewTaskLog(task.task_id)">
+                <template #icon><n-icon><LogIcon /></n-icon></template>
               </n-button>
               <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteBackgroundTask(task.task_id)">
                 <template #icon><n-icon><DeleteIcon /></n-icon></template>
@@ -249,7 +250,7 @@ onUnmounted(stopBgTaskPolling)
                             :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
                             @click.stop="toggleTaskMonitor(task, 'incremental')"
                           >
-                            <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><BoltIcon /></n-icon></template>
+                            <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><EyeIcon /></n-icon></template>
                           </n-button>
                         </template>
                         实时监控: {{ (task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode)) ? '开启 (' + (task.incremental_mode || task.monitor_mode || 'realtime') + ')' : '关闭' }} (点击切换)

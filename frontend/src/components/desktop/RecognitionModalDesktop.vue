@@ -12,11 +12,11 @@ import {
   SuccessIcon, SearchIcon, TuneIcon, RenameIcon
 } from '../../assets/icons' // Assuming icons might be centralized or re-import here
 import {
-  CheckCircleOutlined as CheckIcon,
-  SearchOutlined as SearchBtnIcon,
-  BuildOutlined as BuildIcon,
-  DriveFileMoveOutlined as DriveIcon
-} from '@vicons/material' // Direct import for simplicity in this file
+  CheckCircleIcon as CheckIcon,
+  MagnifyingGlassIcon as SearchBtnIcon,
+  WrenchIcon as BuildIcon,
+  FolderArrowDownIcon as DriveIcon
+} from '@heroicons/vue/24/outline' // Direct import for simplicity in this file
 
 import { useRecognitionModal } from '../../composables/components/useRecognitionModal'
 import { getButtonStyle } from '../../composables/useButtonStyles'

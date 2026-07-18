@@ -9,15 +9,15 @@ import {
 } from 'naive-ui'
 import AppTextField from './AppTextField.vue'
 import {
-  ApiOutlined as ApiIcon,
-  ContentCopyOutlined as CopyIcon,
-  LinkOutlined as WebhookIcon,
-  HistoryOutlined as LogIcon,
-  SettingsOutlined as SettingIcon,
-  DescriptionOutlined as DocIcon,
-  VpnKeyOutlined as KeyIcon,
-  CloseOutlined as CloseIcon
-} from '@vicons/material'
+  CommandLineIcon as ApiIcon,
+  Square2StackIcon as CopyIcon,
+  LinkIcon as WebhookIcon,
+  ClockIcon as LogIcon,
+  Cog6ToothIcon as SettingIcon,
+  DocumentIcon as DocIcon,
+  KeyIcon,
+  XMarkIcon as CloseIcon
+} from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../composables/useButtonStyles'
 import { docsTheme } from '../store/themeStore'
 

@@ -126,11 +126,11 @@ import {
   NThing, NSwitch, NFormItem, NAlert, NModal, NText, NList,
   NListItem, NSpin, NTag, NEmpty, NDivider
 } from 'naive-ui'
-import { 
-  KeyOutlined as KeyIcon,
-  VerifiedUserOutlined as ShieldIcon,
-  DevicesOutlined as DeviceIcon
-} from '@vicons/material'
+import {
+  KeyIcon,
+  ShieldCheckIcon as ShieldIcon,
+  DevicePhoneMobileIcon as DeviceIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../../components/AppTextField.vue'
 import AppGlassModal from '../../components/AppGlassModal.vue'
 import axios from 'axios'

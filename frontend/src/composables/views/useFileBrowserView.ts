@@ -1,11 +1,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
 import {
-  FolderOpenOutlined as FolderIcon,
-  VideoFileOutlined as VideoIcon,
-  DescriptionOutlined as FileIcon,
-  SubtitlesOutlined as SubIcon
-} from '@vicons/material'
+  FolderOpenIcon as FolderIcon,
+  VideoCameraIcon as VideoIcon,
+  DocumentIcon as FileIcon,
+  ChatBubbleBottomCenterTextIcon as SubIcon
+} from '@heroicons/vue/24/outline'
 
 // Types
 export interface FileItem { name: string; path: string; is_dir: boolean; size: number; mtime: number; extension: string; }

@@ -4,10 +4,10 @@ import {
   NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, useDialog, useMessage
 } from 'naive-ui'
 import {
-  CleaningServicesOutlined as CleanIcon,
-  StorageOutlined as DbIcon,
-  AutoFixHighOutlined as SmartIcon
-} from '@vicons/material'
+  SparklesIcon as CleanIcon,
+  ServerIcon as DbIcon,
+  SparklesIcon as SmartIcon
+} from '@heroicons/vue/24/outline'
 import { useMaintenance } from '../../composables/components/useMaintenance'
 
 const dialog = useDialog()

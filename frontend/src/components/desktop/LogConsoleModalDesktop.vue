@@ -6,13 +6,15 @@ import {
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
-  TerminalRound as TerminalIcon,
-  PauseCircleRound as PauseIcon,
-  PlayCircleRound as PlayIcon,
-  DeleteSweepRound as ClearIcon,
-  VerticalAlignBottomRound as ScrollIcon,
-  OpenInNewRound as OpenIcon
-} from '@vicons/material'
+  TrashIcon as ClearIcon,
+  ArrowDownIcon as ScrollIcon,
+  ArrowTopRightOnSquareIcon as OpenIcon
+} from '@heroicons/vue/24/outline'
+import {
+  CommandLineIcon as TerminalIcon,
+  PauseCircleIcon as PauseIcon,
+  PlayCircleIcon as PlayIcon
+} from '@heroicons/vue/24/solid'
 import { useLogConsole } from '../../composables/components/useLogConsole'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

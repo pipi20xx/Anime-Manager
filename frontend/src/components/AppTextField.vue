@@ -2,9 +2,9 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { NIcon } from 'naive-ui'
 import {
-  VisibilityOutlined as EyeOpenIcon,
-  VisibilityOffOutlined as EyeClosedIcon
-} from '@vicons/material'
+  EyeIcon as EyeOpenIcon,
+  EyeSlashIcon as EyeClosedIcon
+} from '@heroicons/vue/24/outline'
 
 const props = withDefaults(defineProps<{
   value: string | number | null

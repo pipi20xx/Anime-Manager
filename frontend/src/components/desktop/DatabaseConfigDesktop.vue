@@ -4,9 +4,9 @@ import {
   NForm, NFormItem, NGrid, NGi, NIcon, NAlert, NDivider, NTag
 } from 'naive-ui'
 import {
-  CableOutlined as ConnectIcon,
-  SaveOutlined as SaveIcon
-} from '@vicons/material'
+  LinkIcon as ConnectIcon,
+  CheckIcon as SaveIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../AppTextField.vue'
 import { useDatabaseConfig } from '../../composables/components/useDatabaseConfig'
 import { getButtonStyle } from '../../composables/useButtonStyles'

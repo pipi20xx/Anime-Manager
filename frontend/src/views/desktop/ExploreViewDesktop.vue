@@ -3,10 +3,10 @@ import { computed } from 'vue'
 import { useRouter, useRoute, RouterView } from 'vue-router'
 import { NTabs, NTabPane, NIcon } from 'naive-ui'
 import {
-  RecommendOutlined as RecommendIcon,
-  ExploreOutlined as ExploreIcon,
-  SearchOutlined as SearchIcon
-} from '@vicons/material'
+  StarIcon as RecommendIcon,
+  GlobeAltIcon as ExploreIcon,
+  MagnifyingGlassIcon as SearchIcon
+} from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()

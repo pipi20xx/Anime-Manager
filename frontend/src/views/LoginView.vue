@@ -66,11 +66,11 @@ import { ref, reactive } from 'vue'
 import { 
   NCard, NForm, NFormItem, NButton, NIcon, NH2, NText, useMessage 
 } from 'naive-ui'
-import { 
-  LockOpenOutlined as LockIcon,
-  PersonOutlined as UserIcon,
-  KeyOutlined as KeyIcon
-} from '@vicons/material'
+import {
+  LockOpenIcon as LockIcon,
+  UserIcon,
+  KeyIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../components/AppTextField.vue'
 import axios from 'axios'
 import { loginSuccess } from '../store/navigationStore'

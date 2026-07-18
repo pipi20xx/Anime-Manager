@@ -5,17 +5,17 @@ import {
   NPopconfirm, useMessage, NImage, NDropdown, NTooltip, useDialog
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  DeleteOutlined as DeleteIcon,
-  EditOutlined as EditIcon,
-  SearchOutlined as SearchIcon,
-  HistoryOutlined as HistoryIcon,
-  MoreVertOutlined as MoreIcon,
-  SettingsSuggestOutlined as TemplateIcon,
-  FlashOnOutlined as FlashIcon,
-  LayersOutlined as LayersIcon,
-  AutoAwesomeOutlined as UpgradeIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  TrashIcon as DeleteIcon,
+  PencilSquareIcon as EditIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  ClockIcon as HistoryIcon,
+  EllipsisVerticalIcon as MoreIcon,
+  Cog6ToothIcon as TemplateIcon,
+  BoltIcon as FlashIcon,
+  RectangleStackIcon as LayersIcon,
+  SparklesIcon as UpgradeIcon
+} from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../composables/useButtonStyles'
 import { pendingSubscription } from '../store/navigationStore'
 import SubscriptionEditModal from './desktop/SubscriptionEditModalDesktop.vue'

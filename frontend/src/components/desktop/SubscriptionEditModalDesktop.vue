@@ -9,7 +9,9 @@ import {
   NSpace, NGrid, NGi, NSwitch, NImage, NInputGroup,
   NScrollbar, NDivider, NIcon
 } from 'naive-ui'
-import { SearchOutlined as SearchIcon } from '@vicons/material'
+import {
+  MagnifyingGlassIcon as SearchIcon
+} from '@heroicons/vue/24/outline'
 import { useSubscriptionEdit } from '../../composables/modals/useSubscriptionEdit'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

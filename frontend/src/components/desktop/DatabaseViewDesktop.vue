@@ -13,10 +13,10 @@ import TmdbFullDataView from './TmdbFullDataViewDesktop.vue'
 import SecondaryRuleView from './SecondaryRuleViewDesktop.vue'
 import UserMappingView from './UserMappingViewDesktop.vue'
 import {
-  PlayArrowOutlined as RunIcon,
-  RefreshOutlined as RefreshIcon,
-  DeleteOutlined as DeleteIcon
-} from '@vicons/material'
+  PlayIcon as RunIcon,
+  ArrowPathIcon as RefreshIcon,
+  TrashIcon as DeleteIcon
+} from '@heroicons/vue/24/outline'
 import { useDatabase } from '../../composables/views/useDatabase'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { useDragScroll } from '../../composables/useDragScroll'

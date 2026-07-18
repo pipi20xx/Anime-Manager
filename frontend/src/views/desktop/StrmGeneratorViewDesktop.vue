@@ -4,14 +4,14 @@ import {
   NCard, NSpace, NButton, NIcon, NEmpty, NTooltip
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  PlayArrowOutlined as RunIcon,
-  DeleteOutlined as DeleteIcon,
-  VideoLibraryOutlined as LinkIcon,
-  ContentCopyOutlined as CopyIcon,
-  BoltOutlined as BoltIcon,
-  AccessTimeOutlined as ScheduleIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  PlayIcon as RunIcon,
+  TrashIcon as DeleteIcon,
+  FilmIcon as LinkIcon,
+  Square2StackIcon as CopyIcon,
+  EyeIcon,
+  ClockIcon as ScheduleIcon
+} from '@heroicons/vue/24/outline'
 
 const syncModeMap: Record<string, string> = {
   local: '本地文件扫描',
@@ -89,7 +89,7 @@ onMounted(fetchTasks)
                     :type="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? 'info' : 'primary'"
                     @click.stop="toggleTaskMonitor(task, 'incremental')"
                   >
-                    <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><BoltIcon /></n-icon></template>
+                    <template #icon><n-icon :color="task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode) ? undefined : 'var(--text-primary)'"><EyeIcon /></n-icon></template>
                   </n-button>
                 </template>
                 实时监控: {{ (task.incremental_enabled || ['realtime', 'polling'].includes(task.monitor_mode)) ? '开启 (' + (task.incremental_mode || task.monitor_mode || 'realtime') + ')' : '关闭' }} (点击切换)

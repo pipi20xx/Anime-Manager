@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { NIcon } from 'naive-ui'
-import { SearchOutlined as SearchIcon, CloseOutlined } from '@vicons/material'
+import {
+  MagnifyingGlassIcon as SearchIcon,
+  XMarkIcon as CloseOutlined
+} from '@heroicons/vue/24/outline'
 
 const props = withDefaults(defineProps<{
   value?: string

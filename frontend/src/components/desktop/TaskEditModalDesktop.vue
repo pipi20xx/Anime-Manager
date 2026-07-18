@@ -6,8 +6,8 @@ import {
   NRadioGroup, NRadioButton, NSwitch
 } from 'naive-ui'
 import {
-  FolderOpenOutlined as FolderIcon
-} from '@vicons/material'
+  FolderOpenIcon as FolderIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import FilePickerModal from '../FilePickerModal.vue'

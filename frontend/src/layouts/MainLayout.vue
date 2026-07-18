@@ -17,26 +17,29 @@ import {
 } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
-  MovieOutlined as MovieIcon,
-  FolderOutlined as FileIcon,
-  DriveFileMoveOutlined as OrganizeIcon,
-  RssFeedOutlined as RssIcon,
-  LinkOutlined as LinkIcon,
-  HistoryOutlined as LogIcon,
-  SettingsOutlined as SettingIcon,
-  MenuBookOutlined as GuideIcon,
-  ApiOutlined as ApiIcon,
-  PaletteOutlined as ThemeIcon,
-  TableChartOutlined as DbIcon,
-  SearchOutlined as SearchIcon,
-  CalendarMonthOutlined as CalendarIcon,
-  AssignmentOutlined as TaskIcon,
-  TerminalOutlined as ConsoleIcon,
-  MenuOutlined as HamburgerIcon,
-  PersonOutlined as ProfileIcon,
-  ExitToAppOutlined as LogoutIcon,
-  ArrowBackOutlined as ArrowBackIcon
-} from '@vicons/material'
+  FilmIcon as MovieIcon,
+  FolderIcon as FileIcon,
+  FolderArrowDownIcon as OrganizeIcon,
+  RssIcon as RssIcon,
+  LinkIcon as LinkIcon,
+  ClockIcon as LogIcon,
+  Cog6ToothIcon as SettingIcon,
+  BookOpenIcon as GuideIcon,
+  GlobeAltIcon as ApiIcon,
+  PaintBrushIcon as ThemeIcon,
+  CircleStackIcon as DbIcon,
+  MagnifyingGlassIcon as SearchIcon,
+  CalendarDaysIcon as CalendarIcon,
+  ClipboardDocumentListIcon as TaskIcon,
+  DocumentTextIcon as ConsoleIcon,
+  Bars3Icon as HamburgerIcon,
+  UserIcon as ProfileIcon,
+  ArrowLeftOnRectangleIcon as LogoutIcon,
+  ArrowLeftIcon as ArrowBackIcon,
+  SunIcon as SunIcon,
+  MoonIcon as MoonIcon,
+  BeakerIcon as DebugIcon
+} from '@heroicons/vue/24/outline'
 
 // Views - 不再需要导入，使用路由
 import { useRouter, useRoute } from 'vue-router'
@@ -234,13 +237,13 @@ const bottomNavItems = [
   { key: 'Explore', label: '首页', icon: MovieIcon },
   { key: 'Calendar', label: '日历', icon: CalendarIcon },
   { key: 'Subscription', label: '订阅', icon: RssIcon },
-  { key: 'Home', label: '控制台', icon: ConsoleIcon },
+  { key: 'Home', label: '控制台', icon: DebugIcon },
 ]
 
 // "更多"面板的网格功能列表 (包含所有功能, 使用原始图标组件)
 const gridMenuItems = [
   { label: '首页', key: 'Explore', icon: MovieIcon },
-  { label: '控制台', key: 'Home', icon: ConsoleIcon },
+  { label: '控制台', key: 'Home', icon: DebugIcon },
   { label: 'Jackett 搜索', key: 'JackettSearch', icon: SearchIcon },
   { label: '追剧日历', key: 'Calendar', icon: CalendarIcon },
   { label: '文件浏览', key: 'FileBrowser', icon: FileIcon },
@@ -371,12 +374,8 @@ const handlePanelModalAction = (callback: () => void) => {
             >
               <template #icon>
                 <n-icon>
-                  <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5M2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1m18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1m0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1M5.99 4.58a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41zm12.37 12.37a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0c.39-.39.39-1.03 0-1.41zm1.06-10.96a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0zM7.05 18.36a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0z"/>
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M9 2c-1.05 0-2.05.16-3 .46c1.06.39 1.86 1.27 2.15 2.38A6.01 6.01 0 0 1 9 4c3.31 0 6 2.69 6 6s-2.69 6-6 6s-6-2.69-6-6c0-.6.09-1.18.25-1.73c-.87.33-1.54.99-1.93 1.85C1.16 11.95 1 12.95 1 14c0 4.42 3.58 8 8 8s8-3.58 8-8s-3.58-8-8-8"/>
-                  </svg>
+                  <SunIcon v-if="isDarkMode" />
+                  <MoonIcon v-else />
                 </n-icon>
               </template>
             </n-button>
@@ -388,7 +387,7 @@ const handlePanelModalAction = (callback: () => void) => {
               @click="router.push({ name: 'Home' })"
               title="识别调试台"
             >
-              <template #icon><n-icon><MovieIcon /></n-icon></template>
+              <template #icon><n-icon><DebugIcon /></n-icon></template>
             </n-button>
 
             <n-button 
@@ -511,17 +510,13 @@ const handlePanelModalAction = (callback: () => void) => {
           <div class="panel-footer">
             <div class="panel-footer-item" @click="handlePanelClose(); toggleThemeMode();">
               <n-icon size="24" :color="isDarkMode ? 'var(--n-primary-color)' : 'var(--text-secondary)'">
-                <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5s5-2.24 5-5s-2.24-5-5-5M2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1m18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1m0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1M5.99 4.58a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41zm12.37 12.37a.996.996 0 0 0-1.41 0a.996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0c.39-.39.39-1.03 0-1.41zm1.06-10.96a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0zM7.05 18.36a.996.996 0 0 0 0-1.41a.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0z"/>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M9 2c-1.05 0-2.05.16-3 .46c1.06.39 1.86 1.27 2.15 2.38A6.01 6.01 0 0 1 9 4c3.31 0 6 2.69 6 6s-2.69 6-6 6s-6-2.69-6-6c0-.6.09-1.18.25-1.73c-.87.33-1.54.99-1.93 1.85C1.16 11.95 1 12.95 1 14c0 4.42 3.58 8 8 8s8-3.58 8-8s-3.58-8-8-8"/>
-                </svg>
+                <SunIcon v-if="isDarkMode" />
+                <MoonIcon v-else />
               </n-icon>
               <span>{{ isDarkMode ? '夜间' : '日间' }}</span>
             </div>
             <div class="panel-footer-item" @click="handlePanelAction('Home')">
-              <n-icon size="24"><MovieIcon /></n-icon>
+              <n-icon size="24"><DebugIcon /></n-icon>
               <span>控制台</span>
             </div>
             <div class="panel-footer-item" @click="handlePanelAction('Settings')">

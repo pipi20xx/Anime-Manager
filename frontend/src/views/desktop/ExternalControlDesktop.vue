@@ -9,11 +9,11 @@ import {
 import AppTextField from '../../components/AppTextField.vue'
 import AppGlassModal from '../../components/AppGlassModal.vue'
 import {
-  ContentCopyOutlined as CopyIcon,
-  DescriptionOutlined as DocIcon,
-  VisibilityOutlined as EyeOpenIcon,
-  VisibilityOffOutlined as EyeClosedIcon
-} from '@vicons/material'
+  Square2StackIcon as CopyIcon,
+  DocumentIcon as DocIcon,
+  EyeIcon as EyeOpenIcon,
+  EyeSlashIcon as EyeClosedIcon
+} from '@heroicons/vue/24/outline'
 import { useExternalControl } from '../../composables/views/useExternalControl'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { isDarkMode } from '../../store/themeStore'

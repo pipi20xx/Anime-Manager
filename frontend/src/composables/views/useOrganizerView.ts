@@ -1,6 +1,11 @@
 import { ref, watch, onMounted, onUnmounted, h } from 'vue'
 import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
-import { DeleteOutlined, PreviewOutlined, PlayArrowOutlined, CloseOutlined } from '@vicons/material'
+import {
+  TrashIcon as DeleteOutlined,
+  EyeIcon as PreviewOutlined,
+  PlayIcon as PlayArrowOutlined,
+  XMarkIcon as CloseOutlined
+} from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../useButtonStyles'
 import { useGroupedLogs } from '../useGroupedLogs'
 

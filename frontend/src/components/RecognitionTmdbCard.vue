@@ -5,7 +5,9 @@
  * TMDB 原始详情卡片，通过 CSS 适配移动端
  */
 import { NCard, NIcon, NImage, NTag } from 'naive-ui'
-import { CloudQueueOutlined as RemoteIcon } from '@vicons/material'
+import {
+  CloudIcon as RemoteIcon
+} from '@heroicons/vue/24/outline'
 import { useRecognitionTmdb } from '../composables/components/useRecognitionTmdb'
 
 const { tmdb, getImg } = useRecognitionTmdb()

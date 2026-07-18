@@ -8,11 +8,11 @@ import {
   NIcon, NGrid, NGi, NEmpty, NDivider,
   NForm, NFormItem, NInputNumber, useDialog
 } from 'naive-ui'
-import { 
-  AddOutlined as AddIcon,
-  DeleteOutlined as DeleteIcon,
-  DragHandleOutlined as DragIcon
-} from '@vicons/material'
+import {
+  PlusIcon as AddIcon,
+  TrashIcon as DeleteIcon,
+  Bars2Icon as DragIcon
+} from '@heroicons/vue/24/outline'
 import draggable from 'vuedraggable'
 import { usePriorityRules } from '../../composables/components/usePriorityRules'
 import { getButtonStyle } from '../../composables/useButtonStyles'

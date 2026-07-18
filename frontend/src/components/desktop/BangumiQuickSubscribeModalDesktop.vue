@@ -8,8 +8,8 @@ import {
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import {
-  FlashOnOutlined as FlashIcon
-} from '@vicons/material'
+  BoltIcon as FlashIcon
+} from '@heroicons/vue/24/outline'
 import { useBangumiQuickSub } from '../../composables/components/useBangumiQuickSub'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 

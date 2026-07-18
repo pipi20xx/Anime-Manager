@@ -5,13 +5,13 @@ import {
   NImage, NSpace, NTag, NButton, NIcon, NScrollbar, NSkeleton
 } from 'naive-ui'
 import {
-  StarOutlined as StarIcon,
-  CalendarMonthOutlined as DateIcon,
-  PersonOutlined as CastIcon,
-  CompareArrowsOutlined as MatchIcon,
-  ArrowBackOutlined as BackIcon,
-  LiveTvOutlined as EpisodeIcon
-} from '@vicons/material'
+  StarIcon,
+  CalendarDaysIcon as DateIcon,
+  UserIcon as CastIcon,
+  ArrowsRightLeftIcon as MatchIcon,
+  ArrowLeftIcon as BackIcon,
+  TvIcon as EpisodeIcon
+} from '@heroicons/vue/24/outline'
 import { useMessage } from 'naive-ui'
 import { navigateToSubscription, triggerGlobalSearch, openTmdbDetail } from '../../store/navigationStore'
 

@@ -7,7 +7,9 @@ import {
   NSpace, NFormItem, NSwitch, 
   NButton, NSelect, NInputNumber, NDivider, NIcon, NTooltip, useMessage
 } from 'naive-ui'
-import { HelpOutlineOutlined as HelpIcon } from '@vicons/material'
+import {
+  QuestionMarkCircleIcon as HelpIcon
+} from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{

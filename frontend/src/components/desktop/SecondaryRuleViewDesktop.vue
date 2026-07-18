@@ -4,12 +4,12 @@ import {
   NSwitch, NGrid, NGi, NText, NCard, useDialog
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  DeleteOutlined as DeleteIcon,
-  DragIndicatorOutlined as DragIcon,
-  CloudDownloadOutlined as ExportIcon,
-  CloudUploadOutlined as ImportIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  TrashIcon as DeleteIcon,
+  Bars2Icon as DragIcon,
+  CloudArrowDownIcon as ExportIcon,
+  CloudArrowUpIcon as ImportIcon
+} from '@heroicons/vue/24/outline'
 import ClassifierEditModal from './ClassifierEditModalDesktop.vue'
 import { useSecondaryRule } from '../../composables/views/useSecondaryRule'
 import { getButtonStyle } from '../../composables/useButtonStyles'

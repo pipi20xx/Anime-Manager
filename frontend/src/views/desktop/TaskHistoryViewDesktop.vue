@@ -2,11 +2,12 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane } from 'naive-ui'
 import {
-  DeleteOutlined as DeleteIcon,
-  VisibilityOutlined as ViewIcon,
-  ClearAllOutlined as ClearIcon,
-  KeyboardDoubleArrowDownOutlined as MoreIcon
-} from '@vicons/material'
+  TrashIcon as DeleteIcon,
+  EyeIcon as ViewIcon,
+  XMarkIcon as ClearIcon,
+  ChevronDoubleDownIcon as MoreIcon,
+  DocumentTextIcon as LogIcon
+} from '@heroicons/vue/24/outline'
 import AppGlassModal from '../../components/AppGlassModal.vue'
 import AppSearchField from '../../components/AppSearchField.vue'
 import { useTaskHistory } from '../../composables/views/useTaskHistory'
@@ -139,8 +140,8 @@ onUnmounted(() => {
             <span v-else class="meta-item">处理 {{ task.processed }} 项</span>
           </div>
           <div class="task-actions">
-            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="fetchTaskDetail(task.task_id)">
-              查看日志
+            <n-button v-bind="getButtonStyle('icon')" size="small" @click="fetchTaskDetail(task.task_id)">
+              <template #icon><n-icon><LogIcon /></n-icon></template>
             </n-button>
             <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
               <template #icon><n-icon><DeleteIcon /></n-icon></template>

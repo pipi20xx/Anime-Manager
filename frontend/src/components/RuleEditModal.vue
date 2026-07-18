@@ -5,8 +5,8 @@ import {
   NIcon, NGrid, NGi, NButton
 } from 'naive-ui'
 import {
-  CodeOutlined as VariableIcon
-} from '@vicons/material'
+  CodeBracketIcon as VariableIcon
+} from '@heroicons/vue/24/outline'
 import AppTextField from './AppTextField.vue'
 import AppGlassModal from './AppGlassModal.vue'
 import { getButtonStyle } from '../composables/useButtonStyles'

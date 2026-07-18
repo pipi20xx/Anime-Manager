@@ -5,7 +5,9 @@
  * 本地解析元数据卡片，通过 CSS 适配移动端
  */
 import { NCard, NIcon, NDivider } from 'naive-ui'
-import { StorageOutlined as LocalIcon } from '@vicons/material'
+import {
+  ServerIcon as LocalIcon
+} from '@heroicons/vue/24/outline'
 import { useRecognitionRaw } from '../composables/components/useRecognitionRaw'
 
 const { raw, safeGet } = useRecognitionRaw()

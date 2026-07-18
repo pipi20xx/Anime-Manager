@@ -5,11 +5,11 @@ import {
   NScrollbar, NIcon, NProgress, NSpace, NButton
 } from 'naive-ui'
 import {
-  CheckCircleOutlined as SuccessIcon,
-  ErrorOutlineOutlined as ErrorIcon,
-  FastForwardOutlined as SkipIcon,
-  PlayArrowOutlined as PlayIcon
-} from '@vicons/material'
+  CheckCircleIcon as SuccessIcon,
+  ExclamationCircleIcon as ErrorIcon,
+  ForwardIcon as SkipIcon,
+  PlayIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   show: boolean

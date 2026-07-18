@@ -5,10 +5,10 @@ import {
   NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip, useDialog
 } from 'naive-ui'
 import {
-  AddOutlined as AddIcon,
-  DeleteOutlined as DeleteIcon,
-  ContentCopyOutlined as CopyIcon
-} from '@vicons/material'
+  PlusIcon as AddIcon,
+  TrashIcon as DeleteIcon,
+  Square2StackIcon as CopyIcon
+} from '@heroicons/vue/24/outline'
 
 import FeedEditModal from '../../components/FeedEditModal.vue'
 import RssRuleModal from '../../components/RssRuleModal.vue'

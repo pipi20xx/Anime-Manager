@@ -4,9 +4,9 @@ import {
 } from 'naive-ui'
 import AppSelectField from '../../../components/AppSelectField.vue'
 import {
-  FilterAltOutlined as FilterIcon,
-  StarOutlined as StarIcon
-} from '@vicons/material'
+  FunnelIcon as FilterIcon,
+  StarIcon
+} from '@heroicons/vue/24/outline'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import TmdbCard from '../../../components/TmdbCard.vue'
 import { useDiscovery } from '../../../composables/explore/useDiscovery'

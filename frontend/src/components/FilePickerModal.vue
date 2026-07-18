@@ -5,10 +5,10 @@ import {
   NButton, NScrollbar, NList, NListItem, NIcon, NSpace
 } from 'naive-ui'
 import {
-  FolderOpenOutlined as FolderIcon,
-  InsertDriveFileOutlined as FileIcon,
-  ArrowUpwardOutlined as UpIcon
-} from '@vicons/material'
+  FolderOpenIcon as FolderIcon,
+  DocumentIcon as FileIcon,
+  ArrowUpIcon as UpIcon
+} from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../composables/useButtonStyles'
 
 const props = defineProps<{
