@@ -411,7 +411,19 @@ onMounted(() => {
         role="dialog"
         aria-modal="true"
       >
-        <n-descriptions label-placement="left" bordered :column="1">
+        <n-descriptions
+          label-placement="left"
+          bordered
+          :column="1"
+          :style="{
+            '--n-th-color': 'transparent',
+            '--n-th-color-modal': 'transparent',
+            '--n-th-color-popover': 'transparent',
+            '--n-td-color': 'transparent',
+            '--n-td-color-modal': 'transparent',
+            '--n-td-color-popover': 'transparent'
+          }"
+        >
           <n-descriptions-item label="名称">{{ fileInfo?.name }}</n-descriptions-item>
           <n-descriptions-item label="路径">{{ fileInfo?.path }}</n-descriptions-item>
           <n-descriptions-item label="类型">{{ fileInfo?.is_dir ? '文件夹' : '文件' }}</n-descriptions-item>
