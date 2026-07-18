@@ -335,7 +335,7 @@ onBeforeUnmount(cleanupObserver)
 
     <!-- 卡片网格 -->
     <div class="cards-container">
-      <n-spin :show="browserLoading">
+      <n-spin :show="browserLoading && browserData.length === 0">
         <n-grid v-if="browserData.length > 0" :x-gap="10" :y-gap="10" cols="3 600:5 900:6 1200:8 1600:9">
           <n-gi v-for="item in browserData" :key="item.tmdb_id">
             <AppGlassCard appearance-key="tmdb-data-card" hoverable class="meta-card" content-style="padding: 0;" :bordered="true">
