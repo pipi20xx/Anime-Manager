@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 from sqlmodel import select, and_
@@ -204,9 +205,9 @@ class SubscriptionMatcher:
                                 try:
                                     if _emby_type == "剧集":
                                         if _emby_season is not None and _emby_episode:
-                                            _emby_exists = _emby_client.check_episode_exists(_emby_tmdb, _emby_season, _emby_episode)
+                                            _emby_exists = await asyncio.to_thread(_emby_client.check_episode_exists, _emby_tmdb, _emby_season, _emby_episode)
                                     elif _emby_type == "电影":
-                                        _emby_exists = _emby_client.check_movie_exists(_emby_tmdb)
+                                        _emby_exists = await asyncio.to_thread(_emby_client.check_movie_exists, _emby_tmdb)
                                 finally:
                                     await _cleanup()
 
@@ -256,7 +257,8 @@ class SubscriptionMatcher:
                                             description=entry.get('description'),
                                             feed_id=db_item.feed_id,
                                             download_client_id=None,
-                                            info_hash=None
+                                            info_hash=None,
+                                            state="EmbyExists"
                                         )
                                         await RssManager.add_history(_emby_hist)
                                 else:
@@ -464,9 +466,9 @@ class SubscriptionMatcher:
                                 try:
                                     exists_in_emby = False
                                     if m_type == "tv":
-                                        exists_in_emby = emby_client.check_episode_exists(tmdb_id, season, episode)
+                                        exists_in_emby = await asyncio.to_thread(emby_client.check_episode_exists, tmdb_id, season, episode)
                                     elif m_type == "movie":
-                                        exists_in_emby = emby_client.check_movie_exists(tmdb_id)
+                                        exists_in_emby = await asyncio.to_thread(emby_client.check_movie_exists, tmdb_id)
                                 finally:
                                     await cleanup()
                                 if exists_in_emby:
@@ -481,7 +483,8 @@ class SubscriptionMatcher:
                                             guid=guid, title=title,
                                             description=entry.get('description'),
                                             feed_id=db_item.feed_id,
-                                            download_client_id=None, info_hash=None
+                                            download_client_id=None, info_hash=None,
+                                            state="EmbyExists"
                                         )
                                         await RssManager.add_history(history)
 

@@ -139,7 +139,6 @@ class SubscriptionManager:
                 existing_ep.info_hash = info_hash
                 existing_ep.download_at = datetime.now()
                 existing_ep.quality_score = quality_score
-                existing_ep.profile_id = profile_id
                 await db.save(existing_ep, audit=False)
             else:
                 # 插入模式
@@ -151,8 +150,7 @@ class SubscriptionManager:
                     title=title,
                     info_hash=info_hash, 
                     download_at=datetime.now(),
-                    quality_score=quality_score,
-                    profile_id=profile_id
+                    quality_score=quality_score
                 )
                 await db.save(ep, audit=False)
 

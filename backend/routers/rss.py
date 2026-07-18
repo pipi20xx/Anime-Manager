@@ -454,7 +454,12 @@ async def get_all_rule_history(
         result = []
         for h in history_list:
             data = h.model_dump(mode='json')
-            data['rule_name'] = rule_map.get(h.rule_id, f"Rule #{h.rule_id}") if h.rule_id else "手动记录"
+            if h.rule_id:
+                data['rule_name'] = rule_map.get(h.rule_id, f"Rule #{h.rule_id}")
+            elif h.state == "EmbyExists":
+                data['rule_name'] = "Emby库中已存在"
+            else:
+                data['rule_name'] = "手动记录"
             data['link'] = item_map.get(h.guid)
             result.append(data)
 
