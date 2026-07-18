@@ -106,7 +106,11 @@ class RssManager:
             # 逻辑优化：
             # - 如果存在与当前 rule_id 完全匹配的记录 -> True
             # - 如果存在 rule_id 为空的记录 (手动标记/全局记录) -> True (代表手动屏蔽了该资源，所有规则都应跳过)
-            stmt = select(DownloadHistory).where(DownloadHistory.guid == guid)
+            # - 失败记录 (state=Failed) 不算已下载，交给 fail_count 累加 + 黑名单 控制重试与拉黑
+            stmt = select(DownloadHistory).where(
+                DownloadHistory.guid == guid,
+                DownloadHistory.state != "Failed"
+            )
             
             if rule_id is not None:
                 # 只有当记录的 rule_id 匹配，或者记录的 rule_id 为空(手动)时，才算已下载

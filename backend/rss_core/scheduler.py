@@ -252,7 +252,7 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                                 await db.save(bl_entry)
                                 logger.info(f"🚫 资源 {entry_title} 失败 {existing.fail_count} 次，已加入黑名单")
                                 if task_id:
-                                    await log_task(task_id, f"    🚫 [{rule.name}] 失败 {existing.fail_count} 次，已拉黑: {entry_title}")
+                                    await log_task(task_id, f"    🚫 [{rule.name}] 失败 {existing.fail_count} 次，已拉黑: {entry_title} - {error_msg}")
                         else:
                             fail_history = DownloadHistory(
                                 guid=guid,
@@ -268,7 +268,7 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                             await RssManager.add_history(fail_history)
                             logger.info(f"❌ 下载失败 (1/{max_fail_count}): {entry_title} - {error_msg}")
                             if task_id:
-                                await log_task(task_id, f"    ❌ [{rule.name}] 下载失败 (1/{max_fail_count}): {entry_title}")
+                                await log_task(task_id, f"    ❌ [{rule.name}] 下载失败 (1/{max_fail_count}): {entry_title} - {error_msg}")
                         break
             
             if not is_new_for_any_rule:

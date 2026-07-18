@@ -546,6 +546,8 @@ class SubscriptionMatcher:
                     else:
                         logger.error(f"订阅匹配成功但推送失败: {title} - {error_msg}")
                         log_audit("订阅", "推送失败", f"订阅 '{sub.title}' 推送至客户端失败: {title}", level="ERROR")
+                        if task_id:
+                            await log_task(task_id, f"    ❌ [{sub.title}] 推送失败: {title} - {error_msg}", "ERROR")
                         
                         from datetime import datetime
                         config = ConfigManager.get_config()
@@ -567,6 +569,8 @@ class SubscriptionMatcher:
                                 )
                                 await db.save(bl_entry)
                                 logger.info(f"🚫 资源 {title} 失败 {existing.fail_count} 次，已加入黑名单")
+                                if task_id:
+                                    await log_task(task_id, f"    🚫 [{sub.title}] 失败 {existing.fail_count} 次，已拉黑: {title} - {error_msg}")
                         else:
                             fail_history = DownloadHistory(
                                 guid=guid,
@@ -578,6 +582,8 @@ class SubscriptionMatcher:
                             )
                             await RssManager.add_history(fail_history)
                             logger.info(f"❌ 下载失败 (1/{max_fail_count}): {title} - {error_msg}")
+                            if task_id:
+                                await log_task(task_id, f"    ❌ [{sub.title}] 下载失败 (1/{max_fail_count}): {title} - {error_msg}")
         
         if task_id and skipped_count > 0:
             await log_task(task_id, f"    ⏩ 跳过 {skipped_count} 个已下载/黑名单订阅资源")
