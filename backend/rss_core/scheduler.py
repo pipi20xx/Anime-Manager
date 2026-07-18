@@ -215,7 +215,6 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                         client_name = client.name if client else "未知下载器"
                         
                         if task_id:
-                            from task_history import log_task
                             await log_task(task_id, f"📌 [{rule.name}] → {entry_title} -> {client_name}")
 
                         await NotificationManager.push_rule_push_notification(
