@@ -720,11 +720,12 @@ function buildModalBgLayerRules(key: string): string {
   position: relative;
   z-index: 1;
 }
-/* 关闭按钮保持绝对定位 */
+/* 关闭按钮保持绝对定位，且需要比其他子元素(z-index:1)更高的 z-index */
 [data-app-instance="${key}"].n-modal .n-modal__close,
 [data-app-instance="${key}"] .n-modal .n-modal__close,
 [data-app-instance="${key}"] .n-dialog .n-dialog__close {
   position: absolute !important;
+  z-index: 2 !important;
 }`
 }
 
@@ -818,9 +819,10 @@ function buildDialogBgLayerRules(key: string): string {
   position: relative;
   z-index: 1;
 }
-/* 关闭按钮保持绝对定位 */
+/* 关闭按钮保持绝对定位，且需要比其他子元素(z-index:1)更高的 z-index */
 [data-app-instance="${key}"] .n-dialog .n-dialog__close {
   position: absolute !important;
+  z-index: 2 !important;
 }`
 }
 
@@ -1038,10 +1040,11 @@ export function applyPageOverrides(config: AppearanceConfig) {
   position: relative;
   z-index: 1;
 }
-/* 关闭按钮保持绝对定位 */
+/* 关闭按钮保持绝对定位，且需要比其他子元素(z-index:1)更高的 z-index */
 :root[data-page-key="${pageKey}"] .n-modal .n-modal__close,
 :root[data-page-key="${pageKey}"] .n-dialog .n-dialog__close {
   position: absolute !important;
+  z-index: 2 !important;
 }`)
   }
   if (overrides.dialog?.background_image) {
@@ -1082,6 +1085,7 @@ export function applyPageOverrides(config: AppearanceConfig) {
 }
 :root[data-page-key="${pageKey}"] .n-dialog .n-dialog__close {
   position: absolute !important;
+  z-index: 2 !important;
 }`)
   }
   if (overrides.card?.background_image) {

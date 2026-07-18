@@ -4,7 +4,6 @@ import {
   NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, useDialog, useMessage
 } from 'naive-ui'
 import {
-  SparklesIcon as CleanIcon,
   ServerIcon as DbIcon,
   SparklesIcon as SmartIcon
 } from '@heroicons/vue/24/outline'
@@ -98,11 +97,9 @@ const getTagStyle = (count: number) => {
       </n-alert>
       <n-space>
         <n-button type="info" secondary :loading="fingerprintLoading" @click="cleanupInvalidFingerprints">
-          <template #icon><n-icon><SmartIcon /></n-icon></template>
           智能清理无效记忆
         </n-button>
         <n-button type="warning" secondary :loading="fingerprintLoading" @click="clearFingerprints">
-          <template #icon><n-icon><CleanIcon /></n-icon></template>
           清空全部记忆
         </n-button>
       </n-space>
@@ -138,7 +135,6 @@ const getTagStyle = (count: number) => {
                   :loading="maintenanceLoading[table.name]"
                   @click="handleTruncateWithConfirm(table.name)"
                 >
-                  <template #icon><n-icon><CleanIcon /></n-icon></template>
                   清空数据
                 </n-button>
               </div>
