@@ -168,7 +168,7 @@ onBeforeUnmount(cleanupObserver)
         </n-button>
         <n-popconfirm @positive-click="handleClearCache" positive-text="确定清空" negative-text="取消">
           <template #trigger>
-            <n-button v-bind="getButtonStyle('text')" size="small" style="color: var(--n-error-color);">清空所有记录</n-button>
+            <n-button v-bind="getButtonStyle('text')" size="small" style="color: var(--n-error-color);">清空识别缓存</n-button>
           </template>
           此操作将清空所有 RSS 源的条目记录，包括识别结果、下载状态等全部数据。下次刷新时将重新抓取并识别所有条目，确定要继续吗？
         </n-popconfirm>

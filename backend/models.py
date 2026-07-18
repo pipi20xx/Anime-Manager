@@ -149,6 +149,19 @@ class Blacklist(SQLModel, table=True):
     reason: Optional[str] = Field(default="stalled")
     created_at: datetime = Field(default_factory=datetime.now)
 
+class TmdbBlocklist(SQLModel, table=True):
+    """TMDB 主动屏蔽列表：用户手动填入 tmdb_id + 类型，识别命中后标记已下载，跳过下载规则/追剧订阅"""
+    __tablename__ = "tmdb_blocklist"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "TMDB屏蔽列表"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    tmdb_id: str = Field(index=True)
+    media_type: str = Field(default="tv")  # tv / movie
+    title: Optional[str] = None  # 备注名，方便用户识别
+    reason: Optional[str] = None  # 屏蔽原因
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
 class Subscription(SQLModel, table=True):
     __tablename__ = "subscriptions"
     __table_args__ = {"schema": get_public_schema()}

@@ -184,9 +184,11 @@ onBeforeUnmount(cleanupObserver)
                   ? { color: '#fff', backgroundColor: '#2e7d32', borderRadius: '12px' }
                   : item.state === 'EmbyExists'
                     ? { color: '#fff', backgroundColor: '#0288d1', borderRadius: '12px' }
-                    : { color: '#fff', backgroundColor: '#c62828', borderRadius: '12px' }"
+                    : item.state === 'TmdbBlocked'
+                      ? { color: '#fff', backgroundColor: '#6b21a8', borderRadius: '12px' }
+                      : { color: '#fff', backgroundColor: '#c62828', borderRadius: '12px' }"
               >
-                {{ item.state === 'Success' ? '成功' : item.state === 'EmbyExists' ? '已存在' : '失败' }}
+                {{ item.state === 'Success' ? '成功' : item.state === 'EmbyExists' ? '已存在' : item.state === 'TmdbBlocked' ? 'TMDB屏蔽' : '失败' }}
               </n-tag>
             </div>
             <span class="card-index">#{{ index + 1 }}</span>

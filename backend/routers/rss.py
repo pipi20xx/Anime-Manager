@@ -458,6 +458,8 @@ async def get_all_rule_history(
                 data['rule_name'] = rule_map.get(h.rule_id, f"Rule #{h.rule_id}")
             elif h.state == "EmbyExists":
                 data['rule_name'] = "Emby库中已存在"
+            elif h.state == "TmdbBlocked":
+                data['rule_name'] = "TMDB屏蔽列表"
             else:
                 data['rule_name'] = "手动记录"
             data['link'] = item_map.get(h.guid)

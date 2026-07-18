@@ -186,9 +186,76 @@ class SubscriptionMatcher:
                         except Exception:
                             pass
 
+                    # TMDB 主动屏蔽检查（全局，不受订阅源开关控制）：
+                    # 用户手动填入 tmdb_id + 类型，识别命中后直接标记已下载，
+                    # 阻止后续追剧订阅与下载规则处理；标记 state=TmdbBlocked 以区别于 Emby。
+                    _tmdb_blocked = False
+                    if final_result.get("tmdb_id"):
+                        _block_tmdb = final_result.get("tmdb_id")
+                        _block_type = final_result.get("category")
+                        _block_season = final_result.get("season")
+                        _block_episode = final_result.get("episode")
+                        async with db.session_scope():
+                            from models import TmdbBlocklist
+                            _block_stmt = select(TmdbBlocklist).where(
+                                TmdbBlocklist.tmdb_id == str(_block_tmdb),
+                                TmdbBlocklist.media_type == ("tv" if _block_type == "剧集" else "movie")
+                            )
+                            _block_entry = await db.first(TmdbBlocklist, _block_stmt)
+                        if _block_entry:
+                            _tmdb_blocked = True
+                            logger.debug(f"TMDB屏蔽列表命中: {final_result.get('title')} (tmdb_id={_block_tmdb})")
+                            if task_id:
+                                from task_history import log_task as _log_task
+                                await _log_task(task_id, f"🚫 TMDB屏蔽列表命中，标记已下载: {final_result.get('title')} S{_block_season}E{_block_episode}")
+                            # 标记订阅已下载 + 写下载历史，阻止追剧订阅与下载规则重复处理
+                            async with db.session_scope():
+                                from models import Subscription
+                                _sub_stmt = select(Subscription).where(
+                                    Subscription.tmdb_id == str(_block_tmdb),
+                                    Subscription.media_type == ("tv" if _block_type == "剧集" else "movie"),
+                                    Subscription.enabled == True
+                                )
+                                _block_subs = await db.all(Subscription, _sub_stmt)
+                                for _block_sub in _block_subs:
+                                    if _block_type == "剧集":
+                                        try:
+                                            _ep_num = int(_block_episode)
+                                            if _block_sub.season != 0 and _block_sub.season != _block_season:
+                                                continue
+                                            if _block_sub.start_episode > 0 and _ep_num < _block_sub.start_episode:
+                                                continue
+                                            if _block_sub.end_episode > 0 and _ep_num > _block_sub.end_episode:
+                                                continue
+                                        except:
+                                            continue
+                                        await SubscriptionManager.add_subscribed_episode(
+                                            _block_sub.tmdb_id, _block_sub.media_type, _block_season, _ep_num,
+                                            title=f"TMDB屏蔽列表: {title}"
+                                        )
+                                        if _block_sub.end_episode > 0:
+                                            await SubscriptionManager.check_and_complete_subscription(_block_sub.id)
+                                    elif _block_type == "电影":
+                                        await SubscriptionManager.add_subscribed_episode(
+                                            _block_sub.tmdb_id, _block_sub.media_type, 0, 0,
+                                            title=f"TMDB屏蔽列表: {title}"
+                                        )
+                            from models import DownloadHistory
+                            async with db.session_scope():
+                                _block_hist = DownloadHistory(
+                                    guid=guid,
+                                    title=title,
+                                    description=entry.get('description'),
+                                    feed_id=db_item.feed_id,
+                                    download_client_id=None,
+                                    info_hash=None,
+                                    state="TmdbBlocked"
+                                )
+                                await RssManager.add_history(_block_hist)
+
                     # Emby 库存在检查（受订阅源开关控制）：开启时若 Emby 已有则标记已下载，
                     # 阻止后续追剧订阅与下载规则重复处理；未命中或开关关闭则放行。
-                    if feed_check_emby and final_result.get("tmdb_id"):
+                    if not _tmdb_blocked and feed_check_emby and final_result.get("tmdb_id"):
                         from emby_client import get_emby_client
                         from emby_index_service import wrap_emby_with_index
                         from task_history import log_task as _log_task
@@ -321,6 +388,13 @@ class SubscriptionMatcher:
             
             if await RssManager.is_blacklisted(guid, title=title):
                 logger.debug(f"订阅模块：跳过黑名单条目: {title}")
+                skipped_count += 1
+                continue
+
+            # 已下载（含 TMDB 屏蔽/Emby 标记，state!=Failed）也跳过，避免追剧订阅重复处理；
+            # 失败记录不计入（is_downloaded 已排除 Failed），不影响失败重试
+            if await RssManager.is_downloaded(guid, title=title):
+                logger.debug(f"订阅模块：跳过已下载条目: {title}")
                 skipped_count += 1
                 continue
             

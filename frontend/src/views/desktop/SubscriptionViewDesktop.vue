@@ -15,6 +15,7 @@ import RssRuleModal from '../../components/RssRuleModal.vue'
 import AggregatedFeedItemsModalDesktop from '../../components/desktop/AggregatedFeedItemsModalDesktop.vue'
 import AggregatedRuleHistoryModalDesktop from '../../components/desktop/AggregatedRuleHistoryModalDesktop.vue'
 import RulePreviewModal from '../../components/desktop/RulePreviewModalDesktop.vue'
+import TmdbBlocklistModal from '../../components/desktop/TmdbBlocklistModalDesktop.vue'
 import SubscriptionManager from '../../components/SubscriptionManager.vue'
 import { useSubscriptionView } from '../../composables/views/useSubscriptionView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -51,6 +52,8 @@ const {
 const showAggregatedModal = ref(false)
 // 聚合下载记录弹窗
 const showRuleHistoryModal = ref(false)
+// TMDB 屏蔽列表弹窗
+const showTmdbBlocklistModal = ref(false)
 
 // 通过 client id 查询下载器名称
 const clientNameMap = computed(() => {
@@ -126,6 +129,9 @@ onMounted(fetchData)
             </n-button>
             <n-button v-bind="getButtonStyle('primary')" size="small" @click="openAddFeed">
               新增订阅源
+            </n-button>
+            <n-button v-bind="getButtonStyle('secondary')" size="small" @click="showTmdbBlocklistModal = true">
+              TMDB屏蔽管理
             </n-button>
           </n-space>
         </div>
@@ -271,6 +277,10 @@ onMounted(fetchData)
       v-model:show="showPreviewModal"
       :rule-data="previewRuleData"
       :clients="clients"
+    />
+
+    <TmdbBlocklistModal
+      v-model:show="showTmdbBlocklistModal"
     />
 
   </div>
