@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, useDialog } from 'naive-ui'
 import {
   TrashIcon as DeleteIcon,
   EyeIcon as ViewIcon,
@@ -35,6 +35,18 @@ const {
   getTaskStats,
   moduleOptions
 } = useTaskHistory()
+
+const dialog = useDialog()
+
+const handleDeleteTask = (taskId: string) => {
+  dialog.warning({
+    title: '确认删除',
+    content: '确定要删除这条任务历史记录吗？',
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteTask(taskId)
+  })
+}
 
 const scrollTarget = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
@@ -143,7 +155,7 @@ onUnmounted(() => {
             <n-button v-bind="getButtonStyle('icon')" size="small" @click="fetchTaskDetail(task.task_id)">
               <template #icon><n-icon><LogIcon /></n-icon></template>
             </n-button>
-            <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteTask(task.task_id)">
+            <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteTask(task.task_id)">
               <template #icon><n-icon><DeleteIcon /></n-icon></template>
             </n-button>
           </div>

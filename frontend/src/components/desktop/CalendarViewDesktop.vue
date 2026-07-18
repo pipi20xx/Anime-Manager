@@ -82,6 +82,16 @@ const {
   clearExpiredSubjects
 } = useCalendar()
 
+const handleClearExpired = () => {
+  dialog.warning({
+    title: '确认清理',
+    content: '确定要清理所有已过期的追踪项吗？',
+    positiveText: '确定清理',
+    negativeText: '取消',
+    onPositiveClick: () => clearExpiredSubjects()
+  })
+}
+
 const selectedDate = ref<number>(Date.now())
 
 const handleDateChange = (timestamp: number) => {
@@ -283,7 +293,7 @@ const handleCardEditSave = async (id: number) => {
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px">
             <span style="font-size: 12px; color: var(--text-tertiary)">共 {{ trackingList.length }} 个追踪项</span>
             <n-space :size="8">
-              <n-button size="small" @click="clearExpiredSubjects">
+              <n-button size="small" @click="handleClearExpired">
                 清理过期
               </n-button>
               <n-button type="primary" size="small" @click="refreshAllSubjects">

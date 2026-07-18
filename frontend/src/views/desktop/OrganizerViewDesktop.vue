@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, computed } from 'vue'
 import { 
-  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText
+  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText, useDialog
 } from 'naive-ui'
 import {
   PlusIcon as AddIcon,
@@ -26,6 +26,18 @@ import { getButtonStyle } from '../../composables/useButtonStyles'
 import { usePWA } from '../../composables/usePWA'
 
 const { isMobile } = usePWA()
+
+const dialog = useDialog()
+
+const handleDeleteBackgroundTask = (taskId: string) => {
+  dialog.warning({
+    title: '确认删除',
+    content: '确定要删除这条后台任务记录吗？',
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: () => deleteBackgroundTask(taskId)
+  })
+}
 
 const {
   API_BASE,
@@ -154,7 +166,7 @@ onUnmounted(stopBgTaskPolling)
               <n-button v-bind="getButtonStyle('icon')" size="small" @click="viewTaskLog(task.task_id)">
                 <template #icon><n-icon><LogIcon /></n-icon></template>
               </n-button>
-              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="deleteBackgroundTask(task.task_id)">
+              <n-button v-bind="getButtonStyle('iconDanger')" size="small" @click="handleDeleteBackgroundTask(task.task_id)">
                 <template #icon><n-icon><DeleteIcon /></n-icon></template>
               </n-button>
             </n-space>

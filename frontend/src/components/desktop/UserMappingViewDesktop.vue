@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, h, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
-import { 
-  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NSpin
+import {
+  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NSpin, useDialog
 } from 'naive-ui'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
@@ -83,6 +83,8 @@ watch(activeType, (newType) => {
   }
 })
 
+const dialog = useDialog()
+
 const showModal = ref(false)
 const editingItem = ref<MappingItem | null>(null)
 const isNewItem = ref(false)
@@ -128,17 +130,25 @@ const handleSave = async () => {
 }
 
 const handleDelete = async (id: number | string) => {
-  if (activeType.value === 'genre') {
-    await deleteGenreMapping(Number(id))
-  } else if (activeType.value === 'company') {
-    await deleteCompanyMapping(Number(id))
-  } else if (activeType.value === 'keyword') {
-    await deleteKeywordMapping(Number(id))
-  } else if (activeType.value === 'language') {
-    await deleteLanguageMapping(String(id))
-  } else {
-    await deleteCountryMapping(String(id))
-  }
+  dialog.warning({
+    title: '确认删除',
+    content: '确定要删除这条映射记录吗？',
+    positiveText: '确定删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      if (activeType.value === 'genre') {
+        await deleteGenreMapping(Number(id))
+      } else if (activeType.value === 'company') {
+        await deleteCompanyMapping(Number(id))
+      } else if (activeType.value === 'keyword') {
+        await deleteKeywordMapping(Number(id))
+      } else if (activeType.value === 'language') {
+        await deleteLanguageMapping(String(id))
+      } else {
+        await deleteCountryMapping(String(id))
+      }
+    }
+  })
 }
 
 const handleImport = async () => {

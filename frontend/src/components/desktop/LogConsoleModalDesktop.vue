@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import {
-  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NSelect, NSpin
+  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NSelect, NSpin, useDialog
 } from 'naive-ui'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
@@ -43,6 +43,18 @@ const {
   clearConsole,
   openFullLog
 } = useLogConsole()
+
+const dialog = useDialog()
+
+const handleClearConsole = () => {
+  dialog.warning({
+    title: '确认清空',
+    content: '确定要清空当前控制台日志吗？',
+    positiveText: '确定清空',
+    negativeText: '取消',
+    onPositiveClick: () => clearConsole()
+  })
+}
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
@@ -100,7 +112,7 @@ watch(() => props.show, (newVal) => {
               <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="openFullLog">
                 查看导出
               </n-button>
-              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="clearConsole">
+              <n-button v-bind="getButtonStyle('secondary')" size="tiny" @click="handleClearConsole">
                 清空
               </n-button>
             </n-space>

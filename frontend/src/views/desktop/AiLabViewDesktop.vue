@@ -3,7 +3,7 @@ import AppTextField from '../../components/AppTextField.vue'
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NInput, NDivider, 
-  NTag, useMessage, NAlert, NText, NSwitch, NSlider,
+  NTag, useMessage, useDialog, NAlert, NText, NSwitch, NSlider,
   NCollapse, NCollapseItem, NForm, NFormItem, NEmpty,
   NTabs, NTabPane, NList, NListItem, NThing,
   NSpin, NRadioGroup, NRadioButton, NCode
@@ -25,6 +25,7 @@ const props = defineProps<{
 }>()
 
 const message = useMessage()
+const dialog = useDialog()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
 const activeTab = ref('chat')
@@ -381,7 +382,15 @@ const scrollToBottom = () => {
 }
 
 const clearChat = () => {
-  chatMessages.value = []
+  dialog.warning({
+    title: '确认清空',
+    content: '确定要清空所有对话记录吗？',
+    positiveText: '确定清空',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      chatMessages.value = []
+    }
+  })
 }
 
 const getEventColor = (event: ToolCallEvent) => {
