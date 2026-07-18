@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
   NButton, NSpace, NTag, NSpin, NEmpty, NImage,
@@ -24,6 +24,7 @@ const emit = defineEmits(['update:show'])
 const loading = ref(false)
 const episodes = ref<any[]>([])
 const selectedEpisode = ref<{ season: number, episode: number } | null>(null)
+const episodesScrollRef = ref<HTMLElement | null>(null)
 const dialog = useDialog()
 const message = useMessage()
 
@@ -94,6 +95,22 @@ const isEpisodePushed = (season: number, episode: number) => {
   return episodes.value.some(e => e.season === season && e.episode === episode)
 }
 
+// 最新入库的集数（已推送记录中 download_at 最新的那一集）
+const latestEpisode = computed(() => {
+  if (!episodes.value.length) return null
+  let latest: any = null
+  let latestTime = -Infinity
+  for (const e of episodes.value) {
+    const t = new Date(e.download_at).getTime()
+    if (!isNaN(t) && t > latestTime) {
+      latestTime = t
+      latest = e
+    }
+  }
+  if (!latest) return null
+  return { season: latest.season, episode: latest.episode }
+})
+
 // 选中集的推送记录
 const selectedRecords = computed(() => {
   if (!selectedEpisode.value) return []
@@ -146,8 +163,68 @@ const formatEpisode = (row: any): string => {
   return `S${row.season}E${row.episode}`
 }
 
+// 鼠标左键按住拖动横向滑动（桌面端模拟移动端手势）
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartScrollLeft = ref(0)
+const dragMoved = ref(false)
+
+const onScrollMouseDown = (e: MouseEvent) => {
+  const container = episodesScrollRef.value
+  if (!container || e.button !== 0) return // 仅响应左键
+  isDragging.value = true
+  dragMoved.value = false
+  dragStartX.value = e.pageX
+  dragStartScrollLeft.value = container.scrollLeft
+  document.addEventListener('mousemove', onDocMouseMove)
+  document.addEventListener('mouseup', onDocMouseUp)
+}
+
+const onDocMouseMove = (e: MouseEvent) => {
+  if (!isDragging.value) return
+  const container = episodesScrollRef.value
+  if (!container) return
+  const delta = e.pageX - dragStartX.value
+  if (Math.abs(delta) > 5) dragMoved.value = true // 移动超过阈值视为拖拽
+  container.scrollLeft = dragStartScrollLeft.value - delta
+}
+
+const onDocMouseUp = () => {
+  if (!isDragging.value) return
+  isDragging.value = false
+  document.removeEventListener('mousemove', onDocMouseMove)
+  document.removeEventListener('mouseup', onDocMouseUp)
+}
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousemove', onDocMouseMove)
+  document.removeEventListener('mouseup', onDocMouseUp)
+})
+
 const selectEpisode = (season: number, episode: number) => {
+  // 拖拽产生的点击不触发选中
+  if (dragMoved.value) {
+    dragMoved.value = false
+    return
+  }
   selectedEpisode.value = { season, episode }
+}
+
+// 滚动到指定集数（居中显示在可视区域）
+const scrollToEpisode = (season: number, episode: number) => {
+  nextTick(() => {
+    const container = episodesScrollRef.value
+    if (!container) return
+    const target = container.querySelector(
+      `[data-ep-key="${season}-${episode}"]`
+    ) as HTMLElement | null
+    if (!target) return
+    const containerRect = container.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
+    const offset = targetRect.left - containerRect.left -
+      (containerRect.width - targetRect.width) / 2
+    container.scrollBy({ left: offset, behavior: 'smooth' })
+  })
 }
 
 const fetchEpisodes = async () => {
@@ -159,6 +236,17 @@ const fetchEpisodes = async () => {
     const res = await fetch(`${props.apiBase}/api/subscriptions/${props.sub.id}/episodes`)
     const data = await res.json()
     episodes.value = Array.isArray(data) ? data : []
+    // 默认定位到最新入库的集数
+    const latest = latestEpisode.value
+    if (latest) {
+      selectedEpisode.value = { season: latest.season, episode: latest.episode }
+      scrollToEpisode(latest.season, latest.episode)
+    } else if (episodeRange.value.length > 0) {
+      // 暂无推送记录时，默认选中第一集并定位
+      const first = episodeRange.value[0]
+      selectedEpisode.value = { season: first.season, episode: first.episode }
+      scrollToEpisode(first.season, first.episode)
+    }
   } catch (e) {
     console.error('获取推送记录失败', e)
   } finally {
@@ -265,43 +353,52 @@ watch(() => props.show, (newVal) => {
           </div>
         </div>
 
-        <!-- 主体内容区 -->
+        <!-- 主体内容区 - 上下布局 -->
         <div class="main-section">
-          <!-- 左侧集数列表 -->
-          <div class="episodes-panel">
-            <div class="panel-title">集数</div>
-            <div class="episodes-grid" v-if="episodeRange.length > 0">
-              <div
-                v-for="ep in episodeRange"
-                :key="`${ep.season}-${ep.episode}`"
-                class="episode-card"
-                :class="{
-                  'is-selected': selectedEpisode?.season === ep.season && selectedEpisode?.episode === ep.episode,
-                  'is-pushed': isEpisodePushed(ep.season, ep.episode)
-                }"
-                @click="selectEpisode(ep.season, ep.episode)"
-              >
-                <div class="episode-card-badge">E{{ String(ep.episode).padStart(2, '0') }}</div>
-                <div class="episode-card-title">第 {{ ep.episode }} 集</div>
-                <n-tag
-                  size="tiny"
-                  round
-                  :bordered="false"
-                  :style="isEpisodePushed(ep.season, ep.episode)
-                    ? { color: '#fff', backgroundColor: '#2e7d32' }
-                    : { color: 'var(--text-muted)', backgroundColor: 'var(--app-surface-inner)' }"
-                >
-                  {{ isEpisodePushed(ep.season, ep.episode) ? '已推送' : '待推送' }}
-                </n-tag>
+          <!-- 顶部集数横向滑动条 -->
+          <div
+            class="episodes-panel"
+            v-if="!isMovie && episodeRange.length > 0"
+          >
+            <div class="panel-header">
+              <div class="panel-title">
+                <n-icon size="16"><TvIcon /></n-icon>
+                <span>集数 {{ episodeRangeLabel }}</span>
+              </div>
+              <div class="panel-count">
+                共 {{ totalEpisodes }} 集 · 已推送 {{ pushedCount }} 集
+                <span class="panel-hint">可横向滑动浏览，默认定位至最新入库</span>
               </div>
             </div>
-            <div v-else-if="isMovie" class="movie-only">
-              <n-icon size="48" :component="MovieIcon" />
-              <div>电影订阅</div>
+
+            <div
+              class="episodes-scroll"
+              :class="{ 'is-dragging': isDragging }"
+              ref="episodesScrollRef"
+              @mousedown="onScrollMouseDown"
+            >
+              <div class="episodes-track">
+                <div
+                  v-for="ep in episodeRange"
+                  :key="`${ep.season}-${ep.episode}`"
+                  :data-ep-key="`${ep.season}-${ep.episode}`"
+                  class="episode-card"
+                  :class="{
+                    'is-selected': selectedEpisode?.season === ep.season && selectedEpisode?.episode === ep.episode,
+                    'is-pushed': isEpisodePushed(ep.season, ep.episode)
+                  }"
+                  @click="selectEpisode(ep.season, ep.episode)"
+                >
+                  <div class="episode-card-badge">E{{ ep.episode }}</div>
+                  <div class="episode-card-status">
+                    {{ isEpisodePushed(ep.season, ep.episode) ? '已推送' : '待推送' }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 右侧推送记录 -->
+          <!-- 下方推送记录 -->
           <div class="records-panel">
             <div class="panel-header">
               <div class="panel-title">
@@ -329,8 +426,10 @@ watch(() => props.show, (newVal) => {
                     :key="item.id || item.download_at"
                     class="record-item"
                   >
-                    <div class="record-title">{{ item.title || '（未命名资源）' }}</div>
-                    <div class="record-time">{{ formatDateTime(item.download_at) }}</div>
+                    <div class="record-content">
+                      <div class="record-title">{{ item.title || '（未命名资源）' }}</div>
+                      <div class="record-time">{{ formatDateTime(item.download_at) }}</div>
+                    </div>
                     <n-tag
                       v-if="item.quality_score && item.quality_score > 0"
                       size="tiny"
@@ -518,33 +617,35 @@ watch(() => props.show, (newVal) => {
   transition: width 0.4s ease;
 }
 
-/* 主体内容区 */
+/* 主体内容区 - 上下布局 */
 .main-section {
   display: flex;
-  gap: 20px;
+  flex-direction: column;
+  gap: 16px;
   min-height: 420px;
 }
 
+/* 集数横向滑动面板 */
 .episodes-panel {
-  width: 260px;
-  flex-shrink: 0;
   background: var(--app-surface-inner);
   border: 1px solid var(--app-border-light);
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
-.records-panel {
-  flex: 1;
-  background: var(--app-surface-inner);
-  border: 1px solid var(--app-border-light);
-  border-radius: 12px;
-  padding: 16px;
+.panel-header {
   display: flex;
-  flex-direction: column;
-  min-width: 0;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panel-header .panel-title {
+  margin-bottom: 0;
 }
 
 .panel-title {
@@ -563,45 +664,90 @@ watch(() => props.show, (newVal) => {
   font-weight: normal;
 }
 
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.panel-header .panel-title {
-  margin-bottom: 0;
-}
-
 .panel-count {
   font-size: 12px;
   color: var(--text-muted);
-}
-
-/* 集数网格 */
-.episodes-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-right: 4px;
-}
-
-.episode-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+}
+
+.panel-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding-left: 8px;
+  border-left: 1px solid var(--app-border-light);
+}
+
+/* 集数横向滚动容器 */
+.episodes-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 4px 2px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--app-border-light) transparent;
+  cursor: grab;
+  user-select: none;
+}
+
+/* 拖拽中：禁用过渡与 hover 偏移，避免卡片跳动 */
+.episodes-scroll.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+.episodes-scroll.is-dragging .episode-card:hover {
+  transform: none;
+  border-color: var(--app-border-light);
+}
+
+.episodes-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.episodes-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.episodes-scroll::-webkit-scrollbar-thumb {
+  background: var(--app-border-light);
+  border-radius: 4px;
+}
+
+.episodes-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--n-primary-color);
+}
+
+.episodes-track {
+  display: flex;
+  gap: 8px;
+  padding: 2px;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* 集数卡片 - 紧凑横向布局 */
+.episode-card {
+  flex-shrink: 0;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
   border-radius: 10px;
   background: var(--app-surface-card-mixed);
   border: 1px solid var(--app-border-light);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  user-select: none;
 }
 
 .episode-card:hover {
   border-color: var(--n-primary-color);
-  transform: translateX(2px);
+  transform: translateY(-2px);
 }
 
 .episode-card.is-selected {
@@ -615,12 +761,12 @@ watch(() => props.show, (newVal) => {
 }
 
 .episode-card-badge {
-  width: 40px;
-  height: 40px;
+  min-width: 56px;
+  padding: 4px 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(187, 134, 252, 0.15);
   color: var(--n-primary-color);
   font-size: 12px;
@@ -633,32 +779,42 @@ watch(() => props.show, (newVal) => {
   color: #fff;
 }
 
-.episode-card-title {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
+.episode-card-status {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
-.movie-only {
+.episode-card.is-pushed .episode-card-status {
+  color: #2e7d32;
+}
+
+.episode-card.is-selected .episode-card-status {
+  color: var(--n-primary-color);
+  font-weight: 600;
+}
+
+/* 推送记录面板 */
+.records-panel {
   flex: 1;
+  background: var(--app-surface-inner);
+  border: 1px solid var(--app-border-light);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: var(--text-muted);
-  font-size: 14px;
+  min-width: 0;
+  min-height: 340px;
 }
 
-/* 右侧记录列表 */
 .records-list {
+  flex: 1;
+  overflow-y: auto;
   padding-right: 4px;
 }
 
 .record-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px;
   border-radius: 10px;
@@ -678,6 +834,7 @@ watch(() => props.show, (newVal) => {
   font-size: 11px;
   font-weight: 600;
   font-family: monospace;
+  margin-top: 1px;
 }
 
 .record-content {
@@ -689,10 +846,10 @@ watch(() => props.show, (newVal) => {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .record-time {
