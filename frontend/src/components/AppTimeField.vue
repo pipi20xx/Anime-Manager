@@ -180,6 +180,12 @@ function hexToRgba(hex: string, alpha: number): string {
   color: var(--text-muted);
 }
 
+/* 时钟图标容器：与右边框保持间距，避免贴边 */
+.app-time-field__picker :deep(.n-input .n-input__suffix) {
+  margin-right: 10px;
+  margin-left: 4px;
+}
+
 .app-time-field__label {
   position: absolute;
   left: 16px;

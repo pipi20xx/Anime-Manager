@@ -154,28 +154,49 @@ const goToToday = () => {
 }
 
 // 输入框外观 themeOverrides - 跟随「输入框外观」设置
-// 用于 NDatePicker / NInput / NInputNumber 等原生 Naive UI 输入组件
-// NInput 直接接收平铺字段；NDatePicker / NInputNumber 内部嵌套 Input，需用 peers 结构
+// 用于 NDatePicker 内部的 Input 组件
+// 参考 AppTimeField 实现：从组件自身 DOM 读取 CSS 变量，支持实例级覆盖
+const datePickerRef = ref<HTMLElement | null>(null)
+
 const inputThemeOverrides = computed(() => {
-  // 依赖 isDarkMode 确保主题切换时重算
+  // 依赖 isDarkMode 和 appearanceConfig 确保主题/配置切换时重算
   const _dark = isDarkMode.value
-  const cfg = appearanceConfig.value.input
-  const rootStyle = getComputedStyle(document.documentElement)
-  const baseColor = rootStyle.getPropertyValue('--app-surface-card').trim()
-  const alpha = cfg.enabled ? cfg.bg_opacity : 1
-  const rgba = hexToRgba(baseColor, alpha)
-  const radius = `${cfg.enabled ? cfg.border_radius : 8}px`
-  // 保留 Naive UI 原生边框视觉：普通 / hover / focus 三态
-  const border = '1px solid var(--border-medium)'
-  const borderHover = '1px solid var(--text-muted)'
-  const borderFocus = '1px solid var(--n-primary-color)'
+  const _cfg = appearanceConfig.value.input
+  // 从组件自身 DOM 读取继承的 CSS 变量，支持实例级覆盖
+  const el = datePickerRef.value
+  const style = el ? getComputedStyle(el) : getComputedStyle(document.documentElement)
+  // 背景色 + 透明度（Naive UI 不支持 color-mix()，需 JS 预计算 rgba）
+  const baseColor = style.getPropertyValue('--input-bg').trim() ||
+    style.getPropertyValue('--app-surface-card').trim()
+  const bgOpacityRaw = style.getPropertyValue('--input-bg-opacity').trim()
+  const bgOpacity = bgOpacityRaw ? parseFloat(bgOpacityRaw) / 100 :
+    (_cfg.enabled ? _cfg.bg_opacity : 1)
+  const rgba = hexToRgba(baseColor, bgOpacity)
+  // 圆角
+  const radiusRaw = style.getPropertyValue('--input-border-radius').trim()
+  const radius = radiusRaw || `${_cfg.enabled ? _cfg.border_radius : 8}px`
+  // 边框 - 使用可配置的 --input-border-* 变量（而非硬编码 --border-medium）
+  const borderColor = style.getPropertyValue('--input-border-color').trim()
+  const borderWidth = style.getPropertyValue('--input-border-width').trim() || '1px'
+  const borderStyle = style.getPropertyValue('--input-border-style').trim() || 'solid'
+  const border = borderColor
+    ? `${borderWidth} ${borderStyle} ${borderColor}`
+    : `${borderWidth} ${borderStyle} var(--border-medium)`
+  // 文字颜色
+  const textColor = style.getPropertyValue('--input-text-color').trim()
+  // 阴影
+  const boxShadowRaw = style.getPropertyValue('--input-shadow').trim()
   return {
     color: rgba,
     colorFocus: rgba,
     border,
-    borderHover,
-    borderFocus,
-    borderRadius: radius
+    borderHover: '1px solid var(--text-muted)',
+    borderFocus: '1px solid var(--n-primary-color)',
+    borderRadius: radius,
+    boxShadow: boxShadowRaw && boxShadowRaw !== 'none' ? boxShadowRaw : undefined,
+    textColor: textColor || 'var(--text-primary)',
+    placeholderColor: textColor || 'var(--text-muted)',
+    caretColor: textColor || 'var(--text-primary)'
   }
 })
 
@@ -225,15 +246,15 @@ const handleCardEditSave = async (id: number) => {
       </div>
 
       <n-space align="center">
-        <n-date-picker
-          v-model:value="selectedDate"
-          type="date"
-          :clearable="false"
-          :theme-overrides="inputPeerThemeOverrides"
-          style="width: 160px"
-          size="small"
-          @update:value="handleDateChange"
-        />
+        <div ref="datePickerRef" class="date-picker-wrapper">
+          <n-date-picker
+            v-model:value="selectedDate"
+            type="date"
+            :clearable="false"
+            :theme-overrides="inputPeerThemeOverrides"
+            @update:value="handleDateChange"
+          />
+        </div>
         <n-button v-bind="getButtonStyle('secondary')" size="small" @click="showManageModal = true">
           追踪管理
         </n-button>
@@ -832,6 +853,73 @@ const handleCardEditSave = async (id: number) => {
 .switch-row { display: flex; align-items: center; gap: 8px; }
 .switch-row__label { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
 .switch-row__desc { font-size: 12px; color: var(--text-tertiary); }
+
+/* 日期选择器 - 完全参考 AppTimeField 实现，跟随输入框外观（高度/圆角/边框/背景/模糊） */
+.date-picker-wrapper {
+  display: inline-flex;
+  align-items: center;
+  width: 180px;
+  height: var(--input-height, 56px);
+  border: var(--input-border);
+  border-radius: var(--input-border-radius, 8px);
+  background: color-mix(in srgb, var(--input-bg) var(--input-bg-opacity, 100%), transparent);
+  backdrop-filter: var(--input-blur, none);
+  box-shadow: var(--input-shadow, none);
+  transition: border-color 0.2s;
+  overflow: hidden;
+}
+.date-picker-wrapper :deep(.n-date-picker) {
+  width: 100%;
+  height: 100%;
+}
+.date-picker-wrapper:hover {
+  border-color: var(--text-muted);
+}
+.date-picker-wrapper:focus-within {
+  border-color: var(--n-primary-color);
+}
+/* 强制内部 n-input 撑满容器高度，隐藏其自带边框（边框由 wrapper 控制）*/
+.date-picker-wrapper :deep(.n-input) {
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+}
+.date-picker-wrapper :deep(.n-input .n-input-wrapper) {
+  height: 100% !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.date-picker-wrapper :deep(.n-input .n-input__input) {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 36px 0 16px !important;
+  font-size: 14px;
+  color: var(--input-text-color, var(--text-primary));
+}
+.date-picker-wrapper :deep(.n-input .n-input__input-el),
+.date-picker-wrapper :deep(.n-input .n-input__placeholder) {
+  align-self: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: auto !important;
+  line-height: 24px !important;
+}
+.date-picker-wrapper :deep(.n-input__border),
+.date-picker-wrapper :deep(.n-input__state-border) {
+  display: none;
+}
+.date-picker-wrapper :deep(.n-input .n-base-icon) {
+  color: var(--text-muted);
+}
+/* 日历图标容器：与右边框保持间距，避免贴边 */
+.date-picker-wrapper :deep(.n-input .n-input__suffix) {
+  margin-right: 10px;
+  margin-left: 4px;
+}
+.date-picker-wrapper :deep(.n-input.n-input--focus) {
+  background: transparent !important;
+}
 
 /* 响应式布局 */
 @media (max-width: 900px) {
