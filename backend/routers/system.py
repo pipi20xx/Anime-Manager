@@ -355,7 +355,11 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
                 return None
         cached = await asyncio.to_thread(_read_cache)
         if cached and _is_valid_image(cached):
-            return Response(content=cached, media_type="image/jpeg")
+            return Response(
+                content=cached,
+                media_type="image/jpeg",
+                headers={"Cache-Control": "public, max-age=604800"},
+            )
         # 缓存文件损坏/非图片，删除后重新下载
         try:
             os.remove(local_file)
@@ -374,7 +378,11 @@ async def get_tmdb_image(path: str = Query(..., description="TMDB 图片路径 (
             resp = await client.get(tmdb_url)
             if resp.status_code == 200 and _is_valid_image(resp.content):
                 await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
-                return Response(content=resp.content, media_type="image/jpeg")
+                return Response(
+                    content=resp.content,
+                    media_type="image/jpeg",
+                    headers={"Cache-Control": "public, max-age=604800"},
+                )
             else:
                 print(f"[IMG PROXY ERROR] Failed to download {tmdb_url}: {resp.status_code}")
                 raise HTTPException(status_code=404, detail="TMDB 图片未找到")
@@ -412,7 +420,11 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
                 return None
         cached = await asyncio.to_thread(_read_cache)
         if cached and _is_valid_image(cached):
-            return Response(content=cached, media_type="image/jpeg")
+            return Response(
+                content=cached,
+                media_type="image/jpeg",
+                headers={"Cache-Control": "public, max-age=604800"},
+            )
         # 缓存文件损坏/非图片，删除后重新下载
         try:
             os.remove(local_file)
@@ -430,7 +442,11 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
                 resp = await client.get(url, headers=headers)
                 if resp.status_code == 200 and _is_valid_image(resp.content):
                     await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
-                    return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/jpeg"))
+                    return Response(
+                        content=resp.content,
+                        media_type=resp.headers.get("content-type", "image/jpeg"),
+                        headers={"Cache-Control": "public, max-age=604800"},
+                    )
                 elif resp.status_code == 404:
                     break # 没必要重试
             except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError) as e:

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { defineProps } from 'vue'
-import { NImage } from 'naive-ui'
+import { ref } from 'vue'
 
 const props = defineProps<{
   item: any
@@ -10,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits(['click'])
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
+const imgError = ref(false)
 
 const getImg = (path: string) => {
   if (!path) return ''
@@ -30,13 +30,14 @@ const getImg = (path: string) => {
 <template>
   <div class="tmdb-card" @click="emit('click', item)">
     <div class="poster-wrapper">
-      <n-image 
-        :src="getImg(item.poster_path)" 
-        object-fit="cover" 
-        lazy 
-        preview-disabled 
-        fallback-src="/favicon.svg" 
+      <img
+        v-if="!imgError"
+        :src="getImg(item.poster_path)"
+        loading="lazy"
+        decoding="async"
+        @error="imgError = true"
       />
+      <img v-else src="/favicon.svg" />
       <!-- Badges overlay for TMDB style -->
       <div class="rating-badge" v-if="item.vote_average > 0">
          {{ item.vote_average.toFixed(1) }}
@@ -62,6 +63,9 @@ const getImg = (path: string) => {
   min-width: 0;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  /* 跳过不可见内容的渲染，大幅减少切换时的渲染开销 */
+  content-visibility: auto;
+  contain-intrinsic-size: 225px;
 }
 .tmdb-card:hover {
   transform: translateY(-5px);
@@ -80,11 +84,10 @@ const getImg = (path: string) => {
   box-shadow: var(--shadow-md);
   margin-bottom: var(--space-2);
 }
-.poster-wrapper :deep(.n-image) { width: 100%; height: 100%; display: flex; }
-.poster-wrapper :deep(img) { 
-  width: 100% !important; 
-  height: 100% !important; 
-  object-fit: cover !important; 
+.poster-wrapper img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
 }
 
 .rating-badge { 

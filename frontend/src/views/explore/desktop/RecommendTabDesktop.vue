@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import {
-  NImage, NTag, NIcon, NScrollbar, NTabs, NTabPane, NSkeleton
+  NIcon, NScrollbar, NTabs, NTabPane, NSkeleton
 } from 'naive-ui'
 import {
-  StarIcon,
   CalendarDaysIcon,
   ClockIcon as ScheduleIcon
 } from '@heroicons/vue/24/outline'
@@ -16,7 +15,6 @@ const {
   currentDayTab,
   currentScheduleTab,
   isSubscribed,
-  getPoster,
   openDetail,
   openBangumi
 } = useRecommend()
@@ -32,18 +30,15 @@ const scheduleTabLabel = (day: any) => {
 
 <template>
   <div class="recommend-tab">
-      <div v-if="exploreData.loading && exploreData.trending.length === 0" style="padding: var(--space-5)">
-         <n-skeleton height="400px" style="border-radius: var(--radius-xl); margin-bottom: var(--m-6)" />
-         <n-skeleton text :repeat="2" />
-      </div>
-
-      <template v-else>
         <!-- Bangumi Calendar -->
         <div class="section-header" style="margin-top: var(--m-8)">
             <div class="section-title"><n-icon><CalendarIcon /></n-icon> 每日放送 (Bangumi)</div>
         </div>
         <div class="calendar-box">
-            <n-tabs type="line" animated v-model:value="currentDayTab" justify-content="space-evenly">
+            <div v-if="exploreData.calendar.length === 0" class="section-loading">
+                <n-skeleton v-for="i in 6" :key="i" class="skeleton-card" />
+            </div>
+            <n-tabs v-else type="line" v-model:value="currentDayTab" justify-content="space-evenly" display-directive="if">
                 <n-tab-pane v-for="day in exploreData.calendar" :key="day.weekday.en" :name="day.weekday.en" :tab="day.weekday.cn">
                     <div class="calendar-grid">
                         <BangumiCard
@@ -63,7 +58,10 @@ const scheduleTabLabel = (day: any) => {
             <div class="section-title"><n-icon><ScheduleIcon /></n-icon> 播出时间表</div>
         </div>
         <div class="calendar-box">
-            <n-tabs type="line" animated v-model:value="currentScheduleTab" justify-content="space-evenly">
+            <div v-if="exploreData.schedule.length === 0" class="section-loading">
+                <n-skeleton v-for="i in 6" :key="i" class="skeleton-card" />
+            </div>
+            <n-tabs v-else type="line" v-model:value="currentScheduleTab" justify-content="space-evenly" display-directive="if">
                 <n-tab-pane v-for="day in exploreData.schedule" :key="day.date" :name="day.date" :tab="scheduleTabLabel(day)">
                     <div class="calendar-grid">
                         <BangumiCard
@@ -82,10 +80,13 @@ const scheduleTabLabel = (day: any) => {
         <div class="section-header" style="margin-top: var(--m-8)">
             <div class="section-title">TMDB 热门动画电影</div>
         </div>
-        <n-scrollbar x-scrollable style="padding-bottom: var(--space-5);">
+        <div v-if="exploreData.movies.length === 0" class="section-loading-h">
+            <n-skeleton v-for="i in 6" :key="i" class="skeleton-card-h" />
+        </div>
+        <n-scrollbar v-else x-scrollable style="padding-bottom: var(--space-5);">
             <div class="media-scroller">
                 <TmdbCard 
-                    v-for="m in exploreData.movies" 
+                    v-for="m in exploreData.movies.slice(0, 12)" 
                     :key="m.id" 
                     :item="m" 
                     :is-subscribed="isSubscribed(m)" 
@@ -99,10 +100,13 @@ const scheduleTabLabel = (day: any) => {
         <div class="section-header" style="margin-top: var(--space-3)">
             <div class="section-title">TMDB 热门动画</div>
         </div>
-        <n-scrollbar x-scrollable style="padding-bottom: var(--space-5);">
+        <div v-if="exploreData.tv.length === 0" class="section-loading-h">
+            <n-skeleton v-for="i in 6" :key="i" class="skeleton-card-h" />
+        </div>
+        <n-scrollbar v-else x-scrollable style="padding-bottom: var(--space-5);">
             <div class="media-scroller">
                 <TmdbCard 
-                    v-for="t in exploreData.tv" 
+                    v-for="t in exploreData.tv.slice(0, 12)" 
                     :key="t.id" 
                     :item="t" 
                     :is-subscribed="isSubscribed(t)" 
@@ -111,7 +115,6 @@ const scheduleTabLabel = (day: any) => {
                 />
             </div>
         </n-scrollbar>
-      </template>
   </div>
 </template>
 
@@ -123,7 +126,19 @@ const scheduleTabLabel = (day: any) => {
   background: transparent;
   padding: 0; margin-bottom: var(--m-6);
 }
-.calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-5); margin-top: var(--space-4); }
+
+/* 强制禁用 n-tab-pane 过渡：非激活项直接 display:none，激活项无 transform */
+.calendar-box :deep(.n-tab-pane) {
+  transition: none !important;
+  transform: none !important;
+}
+.calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-5); margin-top: var(--space-4); animation: tab-fade-in 0.15s ease; }
+
+/* Section Loading 占位 */
+.section-loading { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-5); margin-top: var(--space-4); }
+.skeleton-card { height: 210px; border-radius: var(--radius-xl); }
+.section-loading-h { display: flex; gap: var(--space-5); padding: var(--m-1); }
+.skeleton-card-h { min-width: 150px; width: 150px; height: 225px; border-radius: var(--radius-xl); }
 
 /* Section Common */
 .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--m-4); padding: 0 var(--m-1); }
@@ -134,4 +149,9 @@ const scheduleTabLabel = (day: any) => {
 .media-scroller { display: flex; gap: var(--space-5); padding: var(--m-1); }
 .media-card { min-width: 150px; width: 150px; cursor: pointer; transition: transform var(--transition-fast); display: flex; flex-direction: column; }
 .media-card:hover { transform: translateY(-6px); }
+
+@keyframes tab-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>

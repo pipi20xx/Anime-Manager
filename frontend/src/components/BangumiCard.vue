@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { defineProps } from 'vue'
-import { NImage } from 'naive-ui'
+import { ref } from 'vue'
 
 const props = defineProps<{
   item: any
@@ -8,6 +7,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['click'])
+
+const imgError = ref(false)
 
 // 处理图片 URL (兼容 http/https 和 403 代理)
 const getImg = (path: string) => {
@@ -27,13 +28,14 @@ const getImg = (path: string) => {
 <template>
   <div class="bgm-card" @click="emit('click', item)">
     <div class="bgm-cover">
-      <n-image
+      <img
+        v-if="!imgError"
         :src="getImg(item.image || item.poster_path)"
-        object-fit="cover"
-        lazy
-        preview-disabled
-        fallback-src="/favicon.svg"
+        loading="lazy"
+        decoding="async"
+        @error="imgError = true"
       />
+      <img v-else src="/favicon.svg" />
       <div class="bgm-sub-badge" v-if="isSubscribed">已订阅</div>
     </div>
     <div class="bgm-info">
@@ -57,7 +59,7 @@ const getImg = (path: string) => {
 <style scoped>
 .bgm-card {
   background: transparent;
-  transition: all var(--transition-normal);
+  transition: transform var(--transition-normal);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -65,6 +67,9 @@ const getImg = (path: string) => {
   min-width: 0;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  /* 跳过不可见内容的渲染，大幅减少 tab 切换时的渲染开销 */
+  content-visibility: auto;
+  contain-intrinsic-size: 210px;
 }
 .bgm-card:hover {
   transform: translateY(-6px);
@@ -86,11 +91,10 @@ const getImg = (path: string) => {
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-light);
 }
-.bgm-cover :deep(.n-image) { width: 100%; height: 100%; display: flex; }
-.bgm-cover :deep(img) { 
-  width: 100% !important; 
-  height: 100% !important; 
-  object-fit: cover !important; 
+.bgm-cover img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
 }
 
 .bgm-info { flex-grow: 1; display: flex; flex-direction: column; padding: 0 2px; }

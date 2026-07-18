@@ -1,9 +1,7 @@
-import { reactive, ref, onMounted } from 'vue'
-import { useMessage } from 'naive-ui'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { openTmdbDetail, openBangumiDetail } from '../../store/navigationStore'
 
 export function useRecommend() {
-  const message = useMessage()
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
   const exploreData = reactive({
@@ -30,57 +28,95 @@ export function useRecommend() {
     }
   }
 
+  // 用 computed 缓存 Set，避免每张卡片每次渲染都遍历订阅列表
+  const subscribedBgmIds = computed(() => {
+    const ids = new Set<string>()
+    const titles = new Set<string>()
+    for (const sub of exploreData.subscriptions) {
+      if (sub.bangumi_id) ids.add(String(sub.bangumi_id))
+      if (sub.title) titles.add(sub.title)
+    }
+    return { ids, titles }
+  })
+
+  const subscribedTmdbIds = computed(() => {
+    const ids = new Set<string>()
+    for (const sub of exploreData.subscriptions) {
+      if (sub.tmdb_id) ids.add(String(sub.tmdb_id))
+    }
+    return ids
+  })
+
   const isSubscribed = (item: any, source: 'tmdb' | 'bangumi' = 'tmdb') => {
       if (source === 'tmdb') {
-          return exploreData.subscriptions.some((sub: any) => String(sub.tmdb_id) === String(item.id))
+          return subscribedTmdbIds.value.has(String(item.id))
       } else {
-          if (exploreData.subscriptions.some((sub: any) => sub.bangumi_id && String(sub.bangumi_id) === String(item.id))) {
-              return true
-          }
+          if (subscribedBgmIds.value.ids.has(String(item.id))) return true
           const title = item.title || item.name
           const orig = item.original_title || item.name
-          return exploreData.subscriptions.some((sub: any) => 
-              sub.title === title || sub.title === orig
-          )
+          return subscribedBgmIds.value.titles.has(title) || subscribedBgmIds.value.titles.has(orig)
       }
+  }
+
+  // 各区块独立加载，谁先返回谁先显示（流式渲染）
+  const fetchTrending = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/tmdb/trending`)
+      if (res.ok) exploreData.trending = (await res.json()).results || []
+    } catch (e) { console.error("Fetch trending failed", e) }
+  }
+
+  const fetchMovies = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/tmdb/popular/movie`)
+      if (res.ok) exploreData.movies = (await res.json()).results || []
+    } catch (e) { console.error("Fetch movies failed", e) }
+  }
+
+  const fetchTv = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/tmdb/popular/tv`)
+      if (res.ok) exploreData.tv = (await res.json()).results || []
+    } catch (e) { console.error("Fetch tv failed", e) }
+  }
+
+  const fetchCalendar = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/bangumi/calendar`)
+      if (res.ok) {
+        const calData = await res.json()
+        exploreData.calendar = calData.data || []
+        const todayItem = exploreData.calendar.find((d: any) => d.is_today)
+        currentDayTab.value = todayItem?.weekday.en || exploreData.calendar[0]?.weekday.en || ""
+      }
+    } catch (e) { console.error("Fetch calendar failed", e) }
+  }
+
+  const fetchSchedule = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/bangumi/calendar_local`)
+      if (res.ok) {
+        const schedData = await res.json()
+        exploreData.schedule = schedData.data || []
+        const todayItem = exploreData.schedule.find((d: any) => d.is_today)
+        currentScheduleTab.value = todayItem?.date || exploreData.schedule[0]?.date || ""
+      }
+    } catch (e) { console.error("Fetch schedule failed", e) }
   }
 
   const fetchExploreData = async () => {
     exploreData.loading = true
-    try {
-      const [trendRes, movieRes, tvRes, calRes, schedRes] = await Promise.all([
-        fetch(`${API_BASE}/api/tmdb/trending`),
-        fetch(`${API_BASE}/api/tmdb/popular/movie`),
-        fetch(`${API_BASE}/api/tmdb/popular/tv`),
-        fetch(`${API_BASE}/api/bangumi/calendar`),
-        fetch(`${API_BASE}/api/bangumi/calendar_local`)
-      ])
-
-      if (trendRes.ok) exploreData.trending = (await trendRes.json()).results || []
-      if (movieRes.ok) exploreData.movies = (await movieRes.json()).results || []
-      if (tvRes.ok) exploreData.tv = (await tvRes.json()).results || []
-
-      if (calRes.ok) {
-          const calData = await calRes.json()
-          exploreData.calendar = calData.data || []
-          const todayItem = exploreData.calendar.find((d: any) => d.is_today)
-          if (todayItem) currentDayTab.value = todayItem.weekday.en
-      }
-
-      if (schedRes.ok) {
-          const schedData = await schedRes.json()
-          exploreData.schedule = schedData.data || []
-          const todayItem = exploreData.schedule.find((d: any) => d.is_today)
-          if (todayItem) currentScheduleTab.value = todayItem.date
-      }
-
-      await fetchSubscriptions()
-    } catch (e) {
-      console.error("Explore fetch failed", e)
-      message.error("获取数据部分失败")
-    } finally {
-      exploreData.loading = false
-    }
+    // 订阅列表独立加载，到位后角标自动响应式更新
+    fetchSubscriptions()
+    // 各区块并行发起、独立填充，互不阻塞
+    await Promise.allSettled([
+      fetchTrending(),
+      fetchMovies(),
+      fetchTv(),
+      fetchCalendar(),
+      fetchSchedule(),
+    ])
+    exploreData.loading = false
   }
 
   const getImg = (path: string) => {
