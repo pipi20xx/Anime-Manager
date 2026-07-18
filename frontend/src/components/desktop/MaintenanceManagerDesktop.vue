@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import {
-  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, useDialog, useMessage
+  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, NStatistic, useDialog, useMessage
 } from 'naive-ui'
 import {
-  ServerIcon as DbIcon,
-  SparklesIcon as SmartIcon
+  ServerIcon as DbIcon
 } from '@heroicons/vue/24/outline'
 import { useMaintenance } from '../../composables/components/useMaintenance'
 
@@ -67,6 +66,96 @@ const cleanupInvalidFingerprints = () => {
   })
 }
 
+// ============ Emby 索引同步 & BangumiData 同步 ============
+interface ServiceStatus {
+  id: string
+  name: string
+  type: 'scheduler' | 'thread'
+  enabled: boolean
+  running: boolean
+  interval: string
+  next_run: string | null
+  last_run: string | null
+  description: string
+}
+
+const services = ref<ServiceStatus[]>([])
+const embySyncLoading = ref(false)
+const bgmSyncLoading = ref(false)
+
+const embyService = computed(() => services.value.find(s => s.id === 'emby_index_sync') || null)
+const bgmService = computed(() => services.value.find(s => s.id === 'bgm_mapping_sync') || null)
+
+const fetchServices = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/system/services`)
+    if (res.ok) {
+      const data = await res.json()
+      services.value = data.services || []
+    }
+  } catch (e) {
+    console.error('获取服务状态失败', e)
+  }
+}
+
+const formatTime = (isoString: string | null): string => {
+  if (!isoString) return '—'
+  try {
+    const date = new Date(isoString)
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return '—'
+  }
+}
+
+// 从 description 解析当前条目数（格式："...（当前 N 条）"）
+const parseCount = (desc: string | undefined): number | null => {
+  if (!desc) return null
+  const match = desc.match(/当前\s*(\d+)\s*条/)
+  return match ? parseInt(match[1], 10) : null
+}
+
+const handleEmbySync = async () => {
+  embySyncLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/api/tmdb/emby/sync-index`, { method: 'POST' })
+    const data = await res.json()
+    if (res.ok && data.status === 'success') {
+      message.success(`Emby 索引同步完成，共 ${data.count} 条`)
+      await fetchServices()
+    } else {
+      message.error(data.detail || 'Emby 索引同步失败')
+    }
+  } catch (e) {
+    message.error('请求失败')
+  } finally {
+    embySyncLoading.value = false
+  }
+}
+
+const handleBgmSync = async () => {
+  bgmSyncLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/api/bangumi/mapping/sync?force=true`, { method: 'POST' })
+    const data = await res.json()
+    if (res.ok && data.success) {
+      message.success(data.message || `BangumiData 同步完成，共 ${data.count} 条`)
+      await fetchServices()
+    } else {
+      message.error(data.message || data.detail || 'BangumiData 同步失败')
+    }
+  } catch (e) {
+    message.error('请求失败')
+  } finally {
+    bgmSyncLoading.value = false
+  }
+}
+
 const {
   loading,
   maintenanceLoading,
@@ -80,6 +169,10 @@ const getTagStyle = (count: number) => {
     ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }
     : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }
 }
+
+onMounted(() => {
+  fetchServices()
+})
 </script>
 
 <template>
@@ -88,7 +181,6 @@ const getTagStyle = (count: number) => {
     <n-card bordered size="small" class="fingerprint-card" style="margin-bottom: 20px;">
       <template #header>
         <div class="card-header">
-          <n-icon size="18"><SmartIcon /></n-icon>
           <span>智能记忆管理</span>
         </div>
       </template>
@@ -103,6 +195,50 @@ const getTagStyle = (count: number) => {
           清空全部记忆
         </n-button>
       </n-space>
+    </n-card>
+
+    <!-- Emby 索引同步 -->
+    <n-card bordered size="small" class="sync-card" style="margin-bottom: 20px;">
+      <template #header>
+        <div class="card-header">
+          <span>Emby 索引同步</span>
+        </div>
+      </template>
+      <n-alert type="info" style="margin-bottom: 16px;">
+        同步 Emby 库索引以加速 TMDB ID 查询。建议在 Emby 媒体库有较大变动后手动触发一次同步。
+      </n-alert>
+      <div class="sync-status-row">
+        <div class="sync-stats">
+          <n-statistic label="当前条目数" :value="parseCount(embyService?.description) ?? '—'" />
+          <n-statistic label="上次同步" :value="formatTime(embyService?.last_run ?? null)" />
+          <n-statistic label="下次同步" :value="formatTime(embyService?.next_run ?? null)" />
+        </div>
+        <n-button type="primary" :loading="embySyncLoading" @click="handleEmbySync">
+          立即同步
+        </n-button>
+      </div>
+    </n-card>
+
+    <!-- BangumiData 同步 -->
+    <n-card bordered size="small" class="sync-card" style="margin-bottom: 20px;">
+      <template #header>
+        <div class="card-header">
+          <span>BangumiData 同步</span>
+        </div>
+      </template>
+      <n-alert type="info" style="margin-bottom: 16px;">
+        同步 BangumiData 条目表用于番剧识别。数据源为 bangumi-data 项目，包含 Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射。
+      </n-alert>
+      <div class="sync-status-row">
+        <div class="sync-stats">
+          <n-statistic label="当前条目数" :value="parseCount(bgmService?.description) ?? '—'" />
+          <n-statistic label="上次同步" :value="formatTime(bgmService?.last_run ?? null)" />
+          <n-statistic label="下次同步" :value="formatTime(bgmService?.next_run ?? null)" />
+        </div>
+        <n-button type="primary" :loading="bgmSyncLoading" @click="handleBgmSync">
+          立即同步
+        </n-button>
+      </div>
     </n-card>
 
     <n-alert type="warning" title="危险区域" style="margin-bottom: 20px;">
@@ -148,7 +284,7 @@ const getTagStyle = (count: number) => {
 
 <style scoped>
 .maintenance-manager { width: 100%; }
-.fingerprint-card { background: var(--app-surface-card-mixed); }
+.fingerprint-card, .sync-card { background: var(--app-surface-card-mixed); }
 .card-header { display: flex; align-items: center; gap: 8px; color: var(--n-primary-color); font-weight: 600; }
 .schema-group { margin-bottom: 32px; }
 .group-header { 
@@ -195,4 +331,19 @@ const getTagStyle = (count: number) => {
   line-height: 1.4;
 }
 .actions { margin-top: auto; padding-top: 16px; }
+
+/* 同步卡片状态行 */
+.sync-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.sync-stats {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
 </style>
