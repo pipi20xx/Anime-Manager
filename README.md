@@ -22,6 +22,7 @@
 - **TMDB 黑名单**: 支持 TMDB 条目黑名单，避免错误匹配
 - **识别日志追踪**: 完整的识别流程记录，支持查看和重试
 - **批量识别**: 支持批量识别处理，提升效率
+- **实时日志流**: WebSocket 推送识别过程中的实时日志，无需等待任务完成即可查看进度
 
 ### 📡 RSS 订阅与自动化下载
 - **多源订阅**: 支持多个 RSS 订阅源管理
@@ -58,6 +59,7 @@
 - **二级分类**: 灵活的元数据分类规则（Classifier）
 - **快速搜索**: 基于索引的模糊搜索
 - **数据库管理**: 可视化数据库表结构查看、SQL 查询、数据清理
+- **智能维护中心**: 表按风险等级分组（缓存/配置/核心），显示磁盘占用，分级确认保护核心数据
 
 ### 📅 日历追踪
 - **Bangumi 集成**: 支持从 Bangumi 导入番剧
@@ -70,6 +72,7 @@
 - **通知推送**: Telegram 通知集成，支持启动通知、异常告警
 - **定时任务**: 基于 APScheduler 的后台定时任务调度
 - **文件监控**: 基于 Watchdog 的文件变动监控
+- **WebSocket 事件系统**: 单例模式共享连接，心跳检测与自动重连，实时推送任务状态、服务状态、缓存预热进度等事件，替代前端轮询
 
 ### 🤖 AI 智能助手
 - **多模型支持**: 支持 OpenAI、Ollama 等 AI 模型接入
@@ -135,6 +138,7 @@
 - **Recognition**: 自研识别内核 + Anitopy + AI Integration
 - **Auth**: JWT (python-jose) + bcrypt + pyotp (2FA)
 - **gRPC**: CloudDrive2 客户端通信
+- **WebSocket**: 原生 FastAPI WebSocket + asyncio.Queue 发布-订阅模式，支持心跳检测与断线重连
 
 ### 前端 (Frontend)
 - **Framework**: Vue 3 (Composition API) + TypeScript
@@ -328,11 +332,13 @@ Anime-Manager/
 │   ├── notification.py             # Telegram 通知
 │   ├── monitor.py                  # 文件监控 & 定时任务
 │   ├── logger.py                   # 日志系统 & WebSocket 广播
+│   ├── event_broadcaster.py        # 通用事件 WebSocket 推送中心
 │   ├── emby_client.py              # Emby 客户端
 │   ├── emby_index_service.py       # Emby 媒体库索引服务
 │   ├── init_user.py                # 初始化默认用户
 │   ├── migrate_subs.py             # 订阅数据迁移
 │   ├── entrypoint.sh               # Docker 入口脚本
+│   ├── task_history.py             # 任务历史管理
 │   │
 │   ├── routers/                    # API 路由
 │   │   ├── recognition.py          # 识别接口
@@ -493,7 +499,8 @@ Anime-Manager/
 │   │   │   ├── components/         # 组件逻辑
 │   │   │   ├── explore/            # 探索逻辑
 │   │   │   ├── modals/             # 弹窗逻辑
-│   │   │   └── views/              # 视图逻辑
+│   │   │   ├── views/              # 视图逻辑
+│   │   │   └── useEventStream.ts   # WebSocket 事件流（单例模式 + 心跳重连）
 │   │   ├── store/                  # Pinia 状态管理
 │   │   │   ├── appearanceStore.ts  # 外观状态
 │   │   │   ├── navigationStore.ts  # 导航状态
