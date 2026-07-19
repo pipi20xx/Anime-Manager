@@ -201,7 +201,7 @@ onBeforeUnmount(cleanupObserver)
           </div>
 
           <div class="card-tags">
-            <n-tag v-if="item.fail_reason" size="small" round :bordered="false" style="color: var(--n-error-color); background: rgba(198, 40, 40, 0.15);">
+            <n-tag v-if="item.fail_reason" size="small" round :bordered="false" style="color: #fff; background: #c62828; border-radius: 12px;">
               {{ item.fail_reason }}
             </n-tag>
             <n-tag v-if="item.download_client_id" size="small" round :bordered="false" style="color: #fff; background: #0d47a1; border-radius: 12px;">
