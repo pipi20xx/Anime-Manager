@@ -69,7 +69,7 @@
 ### 🔧 系统管理
 - **多下载客户端**: 支持 qBittorrent、CloudDrive2 等多种下载器
 - **日志控制台**: WebSocket 实时推送系统日志
-- **通知推送**: Telegram 通知集成，支持启动通知、异常告警
+- **通知推送**: 规范化分层通知系统（数据层 / 渲染层 / 发送层），覆盖下载、整理、订阅、STRM、系统等全事件通知，Telegram 推送与 Bot 交互
 - **定时任务**: 基于 APScheduler 的后台定时任务调度
 - **文件监控**: 基于 Watchdog 的文件变动监控
 - **WebSocket 事件系统**: 单例模式共享连接，心跳检测与自动重连，实时推送任务状态、服务状态、缓存预热进度等事件，替代前端轮询
@@ -139,6 +139,7 @@
 - **Auth**: JWT (python-jose) + bcrypt + pyotp (2FA)
 - **gRPC**: CloudDrive2 客户端通信
 - **WebSocket**: 原生 FastAPI WebSocket + asyncio.Queue 发布-订阅模式，支持心跳检测与断线重连
+- **Notification**: 分层通知架构（数据层 / 渲染层 / 发送层），Telegram Bot API 推送，事件驱动与可扩展设计
 
 ### 前端 (Frontend)
 - **Framework**: Vue 3 (Composition API) + TypeScript
@@ -329,7 +330,6 @@ Anime-Manager/
 │   ├── database.py                 # 数据库连接
 │   ├── models.py                   # 数据模型 (SQLModel)
 │   ├── auth_utils.py               # 认证工具 (JWT/2FA)
-│   ├── notification.py             # Telegram 通知
 │   ├── monitor.py                  # 文件监控 & 定时任务
 │   ├── logger.py                   # 日志系统 & WebSocket 广播
 │   ├── event_broadcaster.py        # 通用事件 WebSocket 推送中心
@@ -339,6 +339,19 @@ Anime-Manager/
 │   ├── migrate_subs.py             # 订阅数据迁移
 │   ├── entrypoint.sh               # Docker 入口脚本
 │   ├── task_history.py             # 任务历史管理
+│   ├── telegram_bot.py             # Telegram Bot 交互（轮询模式）
+│   ├── subscription_notifier.py    # 订阅播出提醒
+│   ├── run_migration.py            # 数据库迁移脚本
+│   │
+│   ├── notification/               # 通知系统（数据与表现分离）
+│   │   ├── __init__.py             # 包导出
+│   │   ├── models.py               # 通知数据对象 & 事件/优先级枚举
+│   │   ├── renderer.py             # 渲染器（Notification → HTML）
+│   │   ├── notifier.py             # Telegram 发送器
+│   │   └── manager.py              # 通知管理器（业务唯一入口）
+│   │
+│   ├── utils/                      # 通用工具
+│   │   └── hash_calculator.py      # 文件哈希计算
 │   │
 │   ├── routers/                    # API 路由
 │   │   ├── recognition.py          # 识别接口
@@ -480,6 +493,7 @@ Anime-Manager/
 │   │   │   │   ├── TaskHistoryViewDesktop.vue  # 任务历史
 │   │   │   │   ├── JackettSearchViewDesktop.vue# Jackett 搜索
 │   │   │   │   ├── ExternalControlDesktop.vue  # 外部控制
+│   │   │   │   ├── FileHashesViewDesktop.vue   # 文件哈希
 │   │   │   │   ├── UsageGuideDesktop.vue       # 使用指南
 │   │   │   │   ├── BangumiDetailViewDesktop.vue# Bangumi 详情
 │   │   │   │   ├── TmdbDetailViewDesktop.vue   # TMDB 详情
@@ -488,7 +502,8 @@ Anime-Manager/
 │   │   │   ├── explore/desktop/    # 探索子页面
 │   │   │   │   ├── DiscoveryTabDesktop.vue     # 发现
 │   │   │   │   ├── ScheduleTabDesktop.vue      # 播出时间表
-│   │   │   │   └── SearchTabDesktop.vue        # 搜索
+│   │   │   │   ├── SearchTabDesktop.vue        # 搜索
+│   │   │   │   └── SeasonalTabDesktop.vue      # 当季番剧
 │   │   │   └── settings/           # 设置页
 │   │   │       ├── AccountTab.vue              # 账户设置
 │   │   │       └── ServiceStatusTab.vue        # 服务状态
