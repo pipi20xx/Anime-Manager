@@ -119,6 +119,12 @@ async def clear_all_subscriptions(background_tasks: BackgroundTasks):
             await asyncio.sleep(0.1) # 给数据库和网络一点喘息时间
 
         log_audit("订阅", "全量清空", f"后台任务已完成，共清理 {len(sub_ids)} 条记录")
+        # WS 推送：通知前端订阅列表已变更
+        try:
+            from event_broadcaster import EventBroadcaster
+            await EventBroadcaster.broadcast_subscriptions_changed({"action": "clear_all", "count": len(sub_ids)})
+        except Exception:
+            pass
 
     background_tasks.add_task(perform_clear)
     log_audit("订阅", "清空启动", "用户触发了全量清空，后台任务已启动")

@@ -36,7 +36,6 @@ export function useOrganizerView() {
   const isSwitchingBackground = ref(false)
 
   const backgroundTasks = ref<any[]>([])
-  let bgTaskPollTimer: ReturnType<typeof setInterval> | null = null
   let _unsubscribeEvents: (() => void) | null = null
 
   // WebSocket 事件流：实时接收后台任务状态推送，替代轮询
@@ -137,11 +136,6 @@ export function useOrganizerView() {
       _unsubscribeEvents = null
     }
     unsubscribeLogStream()
-    // 兼容：清理可能残留的旧定时器
-    if (bgTaskPollTimer) {
-      clearInterval(bgTaskPollTimer)
-      bgTaskPollTimer = null
-    }
   }
 
   // --- Data Actions ---

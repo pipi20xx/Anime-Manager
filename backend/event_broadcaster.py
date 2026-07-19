@@ -73,3 +73,13 @@ class EventBroadcaster:
     async def broadcast_task_log(cls, task_id: str, log_entry: Any):
         """推送单条实时任务日志（任务运行中）"""
         await cls.broadcast("task_log", {"task_id": task_id, "log": log_entry})
+
+    @classmethod
+    async def broadcast_warmup_progress(cls, status: Any):
+        """推送 Bangumi 缓存预热进度"""
+        await cls.broadcast("warmup_progress", status)
+
+    @classmethod
+    async def broadcast_subscriptions_changed(cls, data: Any = None):
+        """推送订阅列表变更通知"""
+        await cls.broadcast("subscriptions_changed", data)

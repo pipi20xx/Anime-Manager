@@ -782,6 +782,14 @@ class BangumiDataItemService:
                     f"[BangumiData] 🔥 预热进度: {p['done']}/{p['total']} "
                     f"(成功 {p['success']} | 跳过 {p['skipped']} | 失败 {p['failed']})"
                 )
+                # WS 推送进度
+                try:
+                    from event_broadcaster import EventBroadcaster
+                    await EventBroadcaster.broadcast_warmup_progress(
+                        BangumiDataItemService.get_warmup_status()
+                    )
+                except Exception:
+                    pass
 
             p = BangumiDataItemService._warmup_progress
             logger.info(
@@ -800,6 +808,14 @@ class BangumiDataItemService:
         finally:
             BangumiDataItemService._warmup_running = False
             BangumiDataItemService._warmup_progress["finished_at"] = datetime.now().isoformat()
+            # WS 推送最终状态
+            try:
+                from event_broadcaster import EventBroadcaster
+                await EventBroadcaster.broadcast_warmup_progress(
+                    BangumiDataItemService.get_warmup_status()
+                )
+            except Exception:
+                pass
 
     @staticmethod
     def get_warmup_status() -> Dict[str, Any]:

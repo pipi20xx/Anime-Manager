@@ -7,6 +7,7 @@ import {
   ServerIcon as DbIcon
 } from '@heroicons/vue/24/outline'
 import { useMaintenance } from '../../composables/components/useMaintenance'
+import { useEventStream } from '../../composables/useEventStream'
 
 const dialog = useDialog()
 const message = useMessage()
@@ -159,7 +160,9 @@ const handleBgmSync = async () => {
 // ============ Bangumi Subject 缓存预热 ============
 const bgmWarmupLoading = ref(false)
 const bgmWarmupStatus = ref<{ running: boolean; progress: any }>({ running: false, progress: {} })
-let warmupTimer: ReturnType<typeof setInterval> | null = null
+
+const { on: onEvent } = useEventStream()
+let _unsubscribeWarmup: (() => void) | null = null
 
 const warmupPercent = computed(() => {
   const p = bgmWarmupStatus.value.progress
@@ -173,30 +176,31 @@ const fetchWarmupStatus = async () => {
     if (res.ok) {
       const data = await res.json()
       bgmWarmupStatus.value = data
-      // 任务结束时停止轮询并提示
-      if (!data.running && bgmWarmupLoading.value) {
-        stopWarmupPolling()
-        bgmWarmupLoading.value = false
-        const p = data.progress || {}
-        if (p.success !== undefined) {
-          message.success(`预热完成: 成功 ${p.success} | 跳过 ${p.skipped || 0} | 失败 ${p.failed || 0}`)
-        }
-      }
     }
   } catch (e) {
     console.error('获取预热状态失败', e)
   }
 }
 
-const startWarmupPolling = () => {
-  if (warmupTimer) clearInterval(warmupTimer)
-  warmupTimer = setInterval(fetchWarmupStatus, 2000)
+const subscribeWarmupProgress = () => {
+  if (!_unsubscribeWarmup) {
+    _unsubscribeWarmup = onEvent('warmup_progress', (data: any) => {
+      bgmWarmupStatus.value = data
+      if (!data.running && bgmWarmupLoading.value) {
+        bgmWarmupLoading.value = false
+        const p = data.progress || {}
+        if (p.success !== undefined) {
+          message.success(`预热完成: 成功 ${p.success} | 跳过 ${p.skipped || 0} | 失败 ${p.failed || 0}`)
+        }
+      }
+    })
+  }
 }
 
-const stopWarmupPolling = () => {
-  if (warmupTimer) {
-    clearInterval(warmupTimer)
-    warmupTimer = null
+const unsubscribeWarmupProgress = () => {
+  if (_unsubscribeWarmup) {
+    _unsubscribeWarmup()
+    _unsubscribeWarmup = null
   }
 }
 
@@ -213,7 +217,7 @@ const handleBgmWarmup = () => {
         const data = await res.json()
         if (res.ok && data.success) {
           message.info('预热任务已在后台启动')
-          startWarmupPolling()
+          subscribeWarmupProgress()
         } else {
           message.error(data.message || '启动预热失败')
           bgmWarmupLoading.value = false
@@ -242,17 +246,17 @@ const getTagStyle = (count: number) => {
 
 onMounted(() => {
   fetchServices()
-  // 检查是否有正在运行的预热任务（页面刷新后恢复轮询）
+  subscribeWarmupProgress()
+  // 检查是否有正在运行的预热任务（页面刷新后恢复状态）
   fetchWarmupStatus().then(() => {
     if (bgmWarmupStatus.value.running) {
       bgmWarmupLoading.value = true
-      startWarmupPolling()
     }
   })
 })
 
 onUnmounted(() => {
-  stopWarmupPolling()
+  unsubscribeWarmupProgress()
 })
 </script>
 

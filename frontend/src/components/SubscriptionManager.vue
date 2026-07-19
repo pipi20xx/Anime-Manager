@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, onUnmounted, h } from 'vue'
 import {
   NCard, NSpace, NButton, NIcon, NGrid, NGi, NEmpty,
   NPopconfirm, useMessage, NImage, NDropdown, NTooltip, useDialog
@@ -18,6 +18,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../composables/useButtonStyles'
 import { pendingSubscription } from '../store/navigationStore'
+import { useEventStream } from '../composables/useEventStream'
 import SubscriptionEditModal from './desktop/SubscriptionEditModalDesktop.vue'
 import JackettFillModal from './JackettFillModal.vue'
 import SubscriptionDetailModal from './desktop/SubscriptionDetailModalDesktop.vue'
@@ -33,6 +34,8 @@ const props = defineProps<{
 const message = useMessage()
 const dialog = useDialog()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
+const { on: onEvent } = useEventStream()
+let _unsubscribeSubs: (() => void) | null = null
 
 const subscriptions = ref<any[]>([])
 const loading = ref(false)
@@ -210,18 +213,6 @@ const clearAllSubscriptions = async () => {
     if (res.ok) {
       const data = await res.json()
       message.info(data.message || '已在后台启动清空任务')
-      
-      // [NEW] 开启进度轮询，直到列表变空
-      const pollTimer = setInterval(async () => {
-        await fetchSubscriptions()
-        if (subscriptions.value.length === 0) {
-          clearInterval(pollTimer)
-          message.success('所有订阅已清理完毕')
-        }
-      }, 1500)
-      
-      // 60秒安全兜底，防止意外无限轮询
-      setTimeout(() => clearInterval(pollTimer), 60000)
     }
   } catch (e) {
     message.error('操作失败')
@@ -231,6 +222,13 @@ const clearAllSubscriptions = async () => {
 onMounted(() => {
   fetchProfiles()
   fetchSubscriptions()
+  // 订阅 WS 事件：订阅列表变更时自动刷新
+  _unsubscribeSubs = onEvent('subscriptions_changed', (data: any) => {
+    fetchSubscriptions()
+    if (data?.action === 'clear_all') {
+      message.success(`所有订阅已清理完毕（共 ${data.count} 个）`)
+    }
+  })
   if (pendingSubscription.value) {
     const data = pendingSubscription.value
     pendingSubscription.value = null // Clear it
@@ -259,6 +257,13 @@ onMounted(() => {
     }
     isNew.value = true
     showEditModal.value = true
+  }
+})
+
+onUnmounted(() => {
+  if (_unsubscribeSubs) {
+    _unsubscribeSubs()
+    _unsubscribeSubs = null
   }
 })
 </script>
