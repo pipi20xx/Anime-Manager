@@ -393,6 +393,146 @@ class BangumiProvider:
         return resp_data
 
     @staticmethod
+    async def get_seasonal_anime(year: int, season: str, logs: Any = None) -> Dict:
+        """
+        基于本地 bangumi_data_item 表，按季度返回该季番剧列表。
+        - quarter: WINTER(1-3月) / SPRING(4-6月) / SUMMER(7-9月) / FALL(10-12月)
+        - 筛选依据：优先使用 broadcast 字段，fallback 到 begin 字段，
+          年月落在该季度月份范围内
+        - 海报/评分/集数/标签按需从 subject 详情补全（有 7 天缓存）
+        - 结果按开播日期升序排序
+        """
+        import datetime as _dt
+        import asyncio
+        from .service import bangumi_data_service
+
+        season = (season or "").upper()
+        season_month_map = {
+            "WINTER": (1, 2, 3),
+            "SPRING": (4, 5, 6),
+            "SUMMER": (7, 8, 9),
+            "FALL": (10, 11, 12),
+        }
+        months = season_month_map.get(season)
+        if not months:
+            return {"status": "error", "message": f"未知季度: {season}", "data": []}
+
+        cache_key = f"bangumi:seasonal:{year}:{season}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached:
+            return cached
+
+        # 1. 查询本季番剧：broadcast 或 begin 任一非空
+        from database import db
+        from models import BangumiDataItem
+        from sqlmodel import select
+        from sqlalchemy import or_
+
+        try:
+            async with db.session_scope():
+                stmt = select(BangumiDataItem).where(
+                    BangumiDataItem.media_type == "tv",
+                    or_(BangumiDataItem.broadcast != None, BangumiDataItem.begin != None),
+                )
+                result = await db.session.execute(stmt)
+                rows = result.scalars().all()
+        except Exception as e:
+            if logs:
+                _l = logs.log if hasattr(logs, "log") else (lambda m: logs.append(m) if isinstance(logs, list) else None)
+                _l(f"┃ [BGM] ⚠️ 查询 seasonal 番剧失败: {e}")
+            return {"status": "error", "message": str(e), "data": []}
+
+        # 2. 按 broadcast（fallback begin）日期过滤到指定季度
+        season_items: List[Dict] = []
+        for row in rows:
+            info = bangumi_data_service._parse_broadcast_info(row.broadcast, row.begin, row.end)
+            # 优先 broadcast，fallback 到 begin
+            raw_date = row.broadcast or row.begin
+            if not raw_date:
+                continue
+            try:
+                dt_str = str(raw_date).strip()
+                if dt_str.startswith("R/"):
+                    dt_str = dt_str[2:].split("/")[0]
+                if dt_str.endswith("Z"):
+                    dt_str = dt_str[:-1] + "+00:00"
+                air_dt = datetime.datetime.fromisoformat(dt_str)
+                if air_dt.tzinfo is None:
+                    air_dt = air_dt.replace(tzinfo=_dt.timezone.utc)
+                if air_dt.year != year or air_dt.month not in months:
+                    continue
+            except Exception:
+                continue
+
+            season_items.append({
+                "id": row.bgm_id,
+                "title": row.title_cn or row.title,
+                "original_title": row.title,
+                "begin": row.begin,
+                "end": row.end,
+                "broadcast": row.broadcast,
+                "broadcast_time": info["time_str"],
+                "is_ended": info["is_ended"],
+                "air_date": air_dt.strftime("%Y-%m-%d"),
+                "air_timestamp": air_dt.timestamp(),
+            })
+
+        # 3. 并发补全海报、评分、集数、标签（带 7 天缓存）
+        bgm_ids = [it["id"] for it in season_items]
+        if bgm_ids:
+            semaphore = asyncio.Semaphore(5)
+
+            async def fetch_detail(bgm_id: int):
+                async with semaphore:
+                    try:
+                        for _ in range(2):
+                            detail = await BangumiProvider.get_subject_details(bgm_id, logs=logs)
+                            if detail:
+                                return bgm_id, detail
+                            await asyncio.sleep(1)
+                    except Exception:
+                        pass
+                    return bgm_id, None
+
+            detail_results = await asyncio.gather(*[fetch_detail(bid) for bid in bgm_ids])
+            detail_map = {bid: detail for bid, detail in detail_results}
+
+            for it in season_items:
+                detail = detail_map.get(it["id"])
+                if detail:
+                    it["image"] = detail.get("poster_path")
+                    it["rating"] = detail.get("vote_average")
+                    it["total_episodes"] = detail.get("total_episodes")
+                    it["tags"] = detail.get("tags") or []
+                    it["genres"] = detail.get("genres") or []
+                    if detail.get("title"):
+                        it["title"] = detail["title"]
+                    if detail.get("original_title"):
+                        it["original_title"] = detail["original_title"]
+                else:
+                    it["image"] = None
+                    it["rating"] = None
+                    it["total_episodes"] = 0
+                    it["tags"] = []
+                    it["genres"] = []
+
+        # 4. 按开播日期升序排序
+        season_items.sort(key=lambda it: it.get("air_timestamp") or 0)
+
+        # 5. 计算季度元数据
+        season_cn_map = {"WINTER": "冬季", "SPRING": "春季", "SUMMER": "夏季", "FALL": "秋季"}
+        resp_data = {
+            "status": "success",
+            "year": year,
+            "season": season,
+            "season_cn": season_cn_map.get(season, season),
+            "count": len(season_items),
+            "data": season_items,
+        }
+        await MetaCacheManager.set_discover_cache(cache_key, resp_data, expire_hours=24)
+        return resp_data
+
+    @staticmethod
     async def get_calendar_from_local(logs: Any = None) -> Dict:
         """
         基于 bangumi_data_item 表生成本地日历（不调用 BGM /calendar API）。

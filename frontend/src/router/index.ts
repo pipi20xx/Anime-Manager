@@ -14,6 +14,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../views/explore/desktop/ScheduleTabDesktop.vue')
       },
       {
+        path: '/explore/seasonal',
+        name: 'ExploreSeasonal',
+        component: () => import('../views/explore/desktop/SeasonalTabDesktop.vue')
+      },
+      {
         path: '/explore/discover',
         name: 'ExploreDiscover',
         component: () => import('../views/explore/desktop/DiscoveryTabDesktop.vue')

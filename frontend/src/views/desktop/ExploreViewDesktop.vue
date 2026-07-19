@@ -5,7 +5,8 @@ import { NTabs, NTabPane, NIcon } from 'naive-ui'
 import {
   StarIcon as RecommendIcon,
   GlobeAltIcon as ExploreIcon,
-  MagnifyingGlassIcon as SearchIcon
+  MagnifyingGlassIcon as SearchIcon,
+  CalendarDaysIcon as SeasonalIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -14,6 +15,7 @@ const route = useRoute()
 const currentTab = computed({
   get: () => {
     const name = route.name as string
+    if (name?.includes('Seasonal')) return 'seasonal'
     if (name?.includes('Recommend')) return 'recommend'
     if (name?.includes('Discover')) return 'discover'
     if (name?.includes('Search')) return 'search'
@@ -22,6 +24,7 @@ const currentTab = computed({
   set: (value: string) => {
     const routeMap: Record<string, string> = {
       recommend: 'ExploreRecommend',
+      seasonal: 'ExploreSeasonal',
       discover: 'ExploreDiscover',
       search: 'ExploreSearch'
     }
@@ -38,8 +41,16 @@ const currentTab = computed({
           type="line"
           animated
           class="custom-tabs"
-          style="width: 420px"
+          style="width: 560px"
        >
+         <n-tab-pane name="seasonal" tab="季度番剧表">
+            <template #tab>
+               <div class="tab-label">
+                  <n-icon size="18"><SeasonalIcon /></n-icon>
+                  <span>季度番剧表</span>
+               </div>
+            </template>
+         </n-tab-pane>
          <n-tab-pane name="recommend" tab="播出时间表">
             <template #tab>
                <div class="tab-label">

@@ -22,6 +22,18 @@ async def get_calendar_local():
     """
     return await BangumiProvider.get_calendar_from_local()
 
+@router.get("/seasonal", summary="获取季度番剧列表（基于 bangumi_data_item 表）")
+async def get_seasonal(year: int, season: str):
+    """
+    基于本地 bangumi_data_item 表按季度返回番剧列表。
+    - year: 年份，如 2026
+    - season: 季度 WINTER / SPRING / SUMMER / FALL
+    - 筛选依据：begin 字段年月落在该季度月份范围
+    - 海报/评分/集数/标签按需从 subject 详情获取（带 7 天缓存）
+    - 结果按播出星期升序、再按播出时间排序
+    """
+    return await BangumiProvider.get_seasonal_anime(year=year, season=season)
+
 @router.get("/calendar/full", summary="获取增强版追剧日历")
 async def get_calendar_full():
     """
