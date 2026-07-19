@@ -1,6 +1,6 @@
 # 🌸 番剧管家 (Anime Manager)
 
-[![Version](https://img.shields.io/badge/Version-2.3.4-blue?style=flat-square)](./VERSION)
+[![Version](https://img.shields.io/badge/Version-2.3.5-blue?style=flat-square)](./VERSION)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Vue3](https://img.shields.io/badge/Frontend-Vue%203-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
