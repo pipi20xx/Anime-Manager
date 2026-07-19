@@ -389,7 +389,7 @@ async def startup_event():
             logger.warning(f"[Emby索引] 初始化失败: {e}")
 
         try:
-            from notification import NotificationManager
+            from notification import notification_manager
             from clients.cd2_monitor import CD2TransferMonitor
             
             config = ConfigManager.get_config()
@@ -414,7 +414,7 @@ async def startup_event():
                 "errors": startup_errors
             }
             
-            await NotificationManager.push_startup_notification(status_info)
+            await notification_manager.notify_startup(status_info)
         except Exception as e:
             logger.warning(f"发送启动通知失败: {e}")
 

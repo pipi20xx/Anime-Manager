@@ -15,7 +15,7 @@ from rss_core.subscription_manager import SubscriptionManager
 from rss_core.subscription_matcher import SubscriptionMatcher
 from .matcher import Matcher
 from logger import log_audit
-from notification import NotificationManager
+from notification import notification_manager
 from task_history import start_task, log_task, finish_task
 
 logger = logging.getLogger("RssScheduler")
@@ -217,7 +217,7 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                         if task_id:
                             await log_task(task_id, f"📌 [{rule.name}] → {entry_title} -> {client_name}")
 
-                        await NotificationManager.push_rule_push_notification(
+                        await notification_manager.notify_rule_matched(
                             title=entry_title,
                             rule_name=rule.name,
                             client_name=client_name
@@ -367,7 +367,7 @@ async def check_stalled_downloads():
                         logger.error(f"删除死种失败: {e}")
                         await log_task(task_id, f"❌ 删除失败: {name} - {str(e)}", "ERROR")
                     
-                    await NotificationManager.push_client_error_notification(name, client.name, f"该资源被判定为死种 (超时 {elapsed_minutes:.1f}m 未完成)，已自动清理并重置订阅。")
+                    await notification_manager.notify_client_error(name, client.name, f"该资源被判定为死种 (超时 {elapsed_minutes:.1f}m 未完成)，已自动清理并重置订阅。")
 
             if stalled_count == 0:
                 await log_task(task_id, f"✅ {client.name}: 未发现死种")

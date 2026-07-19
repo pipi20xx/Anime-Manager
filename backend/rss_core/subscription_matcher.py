@@ -10,7 +10,7 @@ from rss_core.manager import RssManager
 from rss_core.matcher import Matcher
 from logger import log_audit
 from database import db
-from notification import NotificationManager
+from notification import notification_manager
 from task_history import log_task
 import re
 
@@ -608,7 +608,7 @@ class SubscriptionMatcher:
                             action_icon = "🔄" if is_upgrade else "📺"
                             await log_task(task_id, f"    {action_icon} [{sub.title}] → {title}")
                         
-                        await NotificationManager.push_sub_push_notification(
+                        await notification_manager.notify_sub_matched(
                             sub=sub,
                             item=db_item 
                         )

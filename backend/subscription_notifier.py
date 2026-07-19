@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from sqlmodel import select
 from database import db
 from models import Subscription, CalendarSubject, SubscribedEpisode
-from notification import NotificationManager
+from notification import notification_manager
 from recognition.data_provider.tmdb.client import TMDBProvider
 from logger import log_audit
 
@@ -171,31 +171,15 @@ class SubscriptionNotifier:
     async def _send_new_episode_notification(sub: Subscription, ep_info: Dict) -> bool:
         """发送新集通知"""
         try:
-            ep_num = ep_info.get("episode")
-            ep_title = ep_info.get("title", f"第{ep_num}集")
-            air_date = ep_info.get("air_date", "")
+            sent = await notification_manager.notify_episode_aired(sub, ep_info)
             
-            season_str = f"S{sub.season:02d}" if sub.season else ""
-            ep_str = f"E{ep_num:02d}"
-            
-            msg = (
-                f"🎬 <b>新集播出提醒</b>\n\n"
-                f"📺 <b>番剧：</b>{sub.title}\n"
-                f"🔢 <b>集数：</b>{season_str}{ep_str}\n"
-                f"📝 <b>标题：</b>{ep_title}\n"
-                f"📅 <b>日期：</b>{air_date}\n"
-            )
-            
-            if sub.poster_path:
-                poster_url = NotificationManager._get_tmdb_image_url(sub.poster_path)
-                success, _, _ = await NotificationManager.send_telegram_message(msg, photo_url=poster_url)
-            else:
-                success, _, _ = await NotificationManager.send_telegram_message(msg)
-            
-            if success:
+            if sent:
+                ep_num = ep_info.get("episode")
+                season_str = f"S{sub.season:02d}" if sub.season else ""
+                ep_str = f"E{ep_num:02d}"
                 log_audit("订阅提醒", "通知发送", f"{sub.title} {season_str}{ep_str}")
             
-            return success
+            return sent
             
         except Exception as e:
             logger.error(f"[订阅提醒] 发送通知失败: {e}")
@@ -256,16 +240,7 @@ class SubscriptionNotifier:
             logger.info("[订阅提醒] 今日无订阅番剧播出")
             return
         
-        lines = ["📅 <b>今日番剧播出</b>\n"]
-        
-        for item in today_airing:
-            season_str = f"S{item['season']:02d}" if item.get('season') else ""
-            ep_str = f"E{item['episode']:02d}"
-            lines.append(f"🎬 {item['title']} {season_str}{ep_str}")
-            lines.append(f"   └ {item['ep_title']}\n")
-        
-        msg = "\n".join(lines)
-        await NotificationManager.send_telegram_message(msg)
+        await notification_manager.notify_daily_summary(today_airing)
         log_audit("订阅提醒", "每日摘要", f"共 {len(today_airing)} 部番剧今日播出")
 
 

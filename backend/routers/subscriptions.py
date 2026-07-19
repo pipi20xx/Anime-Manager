@@ -15,7 +15,7 @@ from logger import log_audit
 from database import db
 import logging
 logger = logging.getLogger(__name__)
-from notification import NotificationManager
+from notification import notification_manager
 from sqlmodel import select, delete, and_, or_, update
 
 router = APIRouter(tags=["追剧订阅管理"])
@@ -86,7 +86,7 @@ async def save_subscription(sub: Subscription):
     if is_new:
         logger.info(f"✅ 订阅创建成功: 《{sub.title}》(ID={getattr(res, 'id', None)}, {season_ep})")
         log_audit("订阅", "创建", f"已创建订阅: 《{sub.title}》(ID={getattr(res, 'id', None)}, TMDB={sub.tmdb_id} {season_ep})")
-        await NotificationManager.push_sub_add_notification(sub)
+        await notification_manager.notify_sub_added(sub)
     else:
         logger.info(f"✅ 订阅更新成功: 《{sub.title}》(ID={sub.id}, {season_ep})")
         log_audit("订阅", "更新", f"已更新订阅: 《{sub.title}》(ID={sub.id}, {season_ep})")
@@ -113,7 +113,7 @@ async def clear_all_subscriptions(background_tasks: BackgroundTasks):
                 sub = await db.get(Subscription, sid)
                 if sub:
                     title = sub.title
-                    await NotificationManager.push_sub_del_notification(sub)
+                    await notification_manager.notify_sub_deleted(sub)
                     await db.delete(sub)
                     logger.info(f"已清理订阅项: {title}")
             await asyncio.sleep(0.1) # 给数据库和网络一点喘息时间
@@ -144,7 +144,7 @@ async def delete_subscription(sub_id: int):
             _season_ep = f"S{sub.season}" + (f" {_ep_range}" if _ep_range else "")
             logger.info(f"🗑️ 删除订阅: 《{sub.title}》(ID={sub_id}, TMDB={sub.tmdb_id} {_season_ep})")
             # 在删除前发送包含完整元数据的通知
-            await NotificationManager.push_sub_del_notification(sub)
+            await notification_manager.notify_sub_deleted(sub)
             await SubscriptionManager.delete_subscription(sub_id)
             log_audit("订阅", "删除", f"已删除订阅: 《{sub.title}》(ID={sub_id})")
         else:
@@ -351,7 +351,7 @@ async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str =
                 await _log(f"成功补全推送: {title}", l_type="hit")
 
                 # [Notify]
-                await NotificationManager.push_sub_push_notification(
+                await notification_manager.notify_sub_matched(
                     sub=sub,
                     item=final
                 )
@@ -370,7 +370,7 @@ async def run_sub_fill_logic(sub: Subscription, logger_func=None, indexer: str =
     if await check_is_completed():
         log_audit("订阅", "自动完结", f"检测到订阅 '{sub.title}' 已全部完成，自动清理任务")
         # [Notify]
-        await NotificationManager.push_sub_complete_notification(sub)
+        await notification_manager.notify_sub_completed(sub)
         async with db.session_scope():
             await db.delete(sub)
 

@@ -8,7 +8,6 @@ from .engine import StrmTaskEngine
 from .scanners import TreeFileScanner, ListScanner
 from .constants import VIDEO_EXTENSIONS, META_EXTENSIONS
 from logger import log_audit
-from notification import NotificationManager
 
 class TreeSyncManager:
     """

@@ -13,7 +13,7 @@ from database import db
 from sqlmodel import text
 
 from logger import log_audit
-from notification import NotificationManager
+from notification import notification_manager
 from rss_core.scheduler import check_stalled_downloads
 
 router = APIRouter(prefix="/api/system", tags=["系统管理"])
@@ -465,8 +465,7 @@ async def test_telegram_notification():
     """
     发送一条测试消息到配置的 Telegram 机器人。
     """
-    msg = "<b>🔔 测试通知</b>\n\n您的 Telegram 机器人配置成功！"
-    success, error = await NotificationManager.send_telegram_message(msg)
+    success, error = await notification_manager.notify_test()
     if success:
         return {"status": "success", "message": "测试消息已发送"}
     else:

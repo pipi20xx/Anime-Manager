@@ -3,7 +3,7 @@ import logging
 import asyncio
 import httpx
 from config_manager import ConfigManager
-from notification import NotificationManager
+from notification import notification_manager
 from .base_client import BaseClient
 from .qbittorrent import QBClient
 from .cd2 import CD2Client
@@ -83,7 +83,7 @@ class ClientManager:
             log_audit("下载", "推送成功", f"任务已发送至客户端 {client.name}: {url}", details=url)
         else:
             log_audit("下载", "推送失败", f"客户端 {client.name} 返回错误: {msg} (URL: {url})", level="ERROR", details=url)
-            await NotificationManager.push_client_error_notification(url, client.name, msg)
+            await notification_manager.notify_client_error(url, client.name, msg)
             
         return success, msg
 

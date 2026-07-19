@@ -8,7 +8,7 @@ import uuid
 from strm.strm_generator import StrmGenerator
 from config_manager import ConfigManager
 from logger import log_audit
-from notification import NotificationManager
+from notification import notification_manager
 from task_history import start_task, log_task, finish_task
 
 router = APIRouter(prefix="/api/webhook", tags=["Webhook 回调"])
@@ -149,7 +149,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
                 else:
                     await log_task(task_id_ref, f"  ⚠️ 未知返回类型: {type(r)}", "WARN")
             if valid_results:
-                await NotificationManager.push_webhook_strm_notification(valid_results)
+                await notification_manager.notify_strm_webhook(valid_results)
         except Exception as e:
             await log_task(task_id_ref, f"❌ 处理异常: {str(e)}", "ERROR")
             log_audit("CD2联动", "处理异常", f"执行 STRM 任务时发生错误: {e}", level="ERROR")
@@ -217,7 +217,7 @@ async def emby_webhook(request: Request):
     if event == "library.new":
         log_audit("Webhook", "Emby入库", f"收到新媒体入库通知: {item_title}")
         # 异步执行通知，不阻塞响应
-        asyncio.create_task(NotificationManager.push_library_new_notification(payload))
+        asyncio.create_task(notification_manager.notify_library_new(payload))
         return {"status": "success", "action": "notification_sent"}
 
     # 处理深度删除事件 (deep.delete)
@@ -225,7 +225,7 @@ async def emby_webhook(request: Request):
         description = payload.get("Description", "")
         log_audit("Webhook", "Emby深度删除", f"收到深度删除通知: {item_title}")
         # 异步执行删除通知
-        asyncio.create_task(NotificationManager.push_emby_delete_notification(payload))
+        asyncio.create_task(notification_manager.notify_emby_deleted(payload))
         return {"status": "success", "action": "delete_notification_sent"}
 
     # 处理其他删除事件格式
@@ -239,7 +239,7 @@ async def emby_webhook(request: Request):
         if delete_items:
             log_audit("Webhook", "Emby删除", f"收到删除通知，共 {len(delete_items)} 项")
             # 异步执行删除通知
-            asyncio.create_task(NotificationManager.push_emby_delete_notification(delete_items))
+            asyncio.create_task(notification_manager.notify_emby_deleted(delete_items))
             return {"status": "success", "action": "delete_notification_sent"}
 
     return {"status": "ignored", "event": event}

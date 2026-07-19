@@ -46,14 +46,20 @@ class ConfigManager:
             "bot_token": "",
             "chat_id": "",
             "enabled": False,
+            # 渲染样式：minimal | default | detailed（仅对无专属排版的通用通知生效）
+            "style": "default",
             "notify_on_sub_add": True,
             "notify_on_sub_del": True,
             "notify_on_sub_push": True,
             "notify_on_rule_push": True,
             "notify_on_organize": True,
+            "notify_on_organize_error": True,
             "notify_on_strm_finish": True,
+            "notify_on_strm_link": True,
             "notify_on_sub_complete": True,
-            "notify_on_library_new": True
+            "notify_on_library_new": True,
+            "notify_on_client_error": True,
+            "notify_on_startup": True
         },
         "anime_priority": True,
         "offline_priority": True,

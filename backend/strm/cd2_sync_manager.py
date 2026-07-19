@@ -14,7 +14,6 @@ from .engine import StrmTaskEngine
 from .scanners import ListScanner
 from clients.cd2 import CD2Client
 from logger import log_audit
-from notification import NotificationManager
 
 logger = logging.getLogger("CD2SyncManager")
 

@@ -3,7 +3,7 @@ from sqlmodel import select
 from datetime import datetime
 from database import get_session, db
 from models import HealthCheckConfig
-from notification import NotificationManager
+from notification import notification_manager
 from logger import log_audit
 import logging
 import os
@@ -102,7 +102,7 @@ async def run_single_check(config_id: int):
 
         # 4. 如果检测失败，发送通知
         if status != "OK":
-            await NotificationManager.push_health_check_notification(
+            await notification_manager.notify_health_check(
                 config.name, status, config.file_path
             )
 

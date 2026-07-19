@@ -181,7 +181,7 @@ async def one_click_subscribe(subject_id: int, template_id: Optional[int] = None
     from rss_core.subscription_manager import SubscriptionManager
     from clients.manager import ClientManager
     from models import Subscription, SubscriptionTemplate
-    from notification import NotificationManager
+    from notification import notification_manager
     from database import db
     from sqlmodel import select
 
@@ -239,7 +239,7 @@ async def one_click_subscribe(subject_id: int, template_id: Optional[int] = None
 
     # 4. 保存订阅
     await SubscriptionManager.save_subscription(sub)
-    await NotificationManager.push_sub_add_notification(sub)
+    await notification_manager.notify_sub_added(sub)
     
     # 集数范围: E1-12 / E1+ / 空（电影）
     _start_ep = sub.start_episode or 0

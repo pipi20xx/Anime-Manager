@@ -376,7 +376,7 @@ async def subscribe_by_bangumi_id(bangumi_id: int) -> ToolResult:
         from rss_core.subscription_manager import SubscriptionManager
         from clients.manager import ClientManager
         from models import Subscription, SubscriptionTemplate
-        from notification import NotificationManager
+        from notification import notification_manager
         from database import db
         from config_manager import ConfigManager
         from sqlmodel import select
@@ -463,7 +463,7 @@ async def subscribe_by_bangumi_id(bangumi_id: int) -> ToolResult:
         result = await SubscriptionManager.save_subscription(sub)
         
         try:
-            await NotificationManager.push_sub_add_notification(result)
+            await notification_manager.notify_sub_added(result)
         except:
             pass
         

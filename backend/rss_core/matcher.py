@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Tuple, Optional
 from models import Rule
 from clients.manager import ClientManager
 from logger import log_audit
-from notification import NotificationManager
+from notification import notification_manager
 
 logger = logging.getLogger(__name__)
 
@@ -167,17 +167,17 @@ class Matcher:
             if link.startswith('magnet:'):
                 success, msg = await asyncio.to_thread(client.add_torrent, link, is_file=False, **kwargs)
                 if not success:
-                    await NotificationManager.push_client_push_error(title, client.name, msg)
+                    await notification_manager.notify_client_push_failed(title, client.name, msg)
                     return False, None, msg
             else:
                 success, content, error_msg = await Matcher._download_torrent_file(link, title, guid)
                 if not success:
-                    await NotificationManager.push_torrent_download_error(title, link, error_msg, is_fallback)
+                    await notification_manager.notify_torrent_download_failed(title, link, error_msg, is_fallback)
                     return False, None, error_msg
                 
                 success, msg = await asyncio.to_thread(client.add_torrent, content, is_file=True, **kwargs)
                 if not success:
-                    await NotificationManager.push_client_push_error(title, client.name, msg)
+                    await notification_manager.notify_client_push_failed(title, client.name, msg)
                     return False, None, msg
             
             if success:
@@ -228,5 +228,5 @@ class Matcher:
             if task_id:
                 from task_history import log_task as _log_task
                 await _log_task(task_id, f"❌ 推送异常: {title} - {str(e)}", "ERROR")
-            await NotificationManager.push_client_error_notification(download_link, client.name, str(e))
+            await notification_manager.notify_client_error(download_link, client.name, str(e))
             return False, None, str(e)

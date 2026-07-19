@@ -458,7 +458,7 @@ class MonitorManager:
             from database import db
             from models import CalendarSubject
             from sqlmodel import select
-            from notification import NotificationManager
+            from notification import notification_manager
             from datetime import datetime
 
             today_str = datetime.now().strftime("%Y-%m-%d")
@@ -474,7 +474,7 @@ class MonitorManager:
                     if any(ep.get("air_date") == today_str for ep in episodes):
                         airing_today.append(sub.model_dump())
                 
-                success, msg = await NotificationManager.push_daily_calendar_summary(airing_today)
+                success, msg = await notification_manager.notify_calendar_daily(airing_today)
                 
                 if success:
                     if airing_today:

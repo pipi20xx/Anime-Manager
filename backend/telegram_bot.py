@@ -5,7 +5,6 @@ import json
 import re
 from typing import Optional, Dict, List, Any
 from config_manager import ConfigManager
-from notification import NotificationManager
 from logger import log_audit
 
 logger = logging.getLogger("TelegramBot")

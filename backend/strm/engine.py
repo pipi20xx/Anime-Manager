@@ -5,7 +5,7 @@ import time
 import logging
 from typing import AsyncGenerator, Dict, Any, List, Set, Optional, Callable, Awaitable
 from logger import log_audit
-from notification import NotificationManager
+from notification import notification_manager
 from .processor import StrmProcessor
 from .constants import META_EXTENSIONS
 
@@ -201,7 +201,7 @@ class StrmTaskEngine:
         
         # 发送通知
         asyncio.create_task(
-            NotificationManager.push_strm_finish_notification(
+            notification_manager.notify_strm_finished(
                 self.config.get("name", "任务"), 
                 self.stats
             )

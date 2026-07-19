@@ -11,7 +11,7 @@ from .renamer import Renamer
 from config_manager import ConfigManager
 from clients.manager import ClientManager
 from .executor import FileExecutor
-from notification import NotificationManager
+from notification import notification_manager
 from utils.hash_calculator import HashCalculator, HashResult
 
 logger = logging.getLogger(__name__)
@@ -283,7 +283,7 @@ class FileProcessor:
                     )
                     await FileProcessor._save_history_force(history)
                     
-                    await NotificationManager.push_organize_error_notification(v_path, "识别失败 (无法获取 TMDB ID)")
+                    await notification_manager.notify_organize_failed(v_path, "识别失败 (无法获取 TMDB ID)")
                     
                 return [{"type": "skip", "skip_type": "recognition_failed", "source": v_path, "reason": "识别失败 (无 TMDB ID)"}]
 
@@ -592,7 +592,7 @@ class FileProcessor:
                             await FileExecutor._cleanup_empty_parents(source_parent, source_dir)
 
                         # [Notify]
-                        await NotificationManager.push_organize_notification(final)
+                        await notification_manager.notify_organize_complete(final)
 
                         # [Always Trigger] 使用模拟 Webhook 方式触发 STRM
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
@@ -837,13 +837,13 @@ class FileProcessor:
                             await FileExecutor._cleanup_empty_parents(source_parent, source_dir)
 
                         # [Notify]
-                        await NotificationManager.push_organize_notification(final)
+                        await notification_manager.notify_organize_complete(final)
                         if task.get("trigger_strm", False):
                             FileProcessor._trigger_strm_hook(new_abs_path, context)
                     else:
                         # [Notify Failure]
                         err_detail = FileExecutor.get_status_message(v_res)
-                        await NotificationManager.push_organize_error_notification(v_path, f"操作失败: {err_detail}")
+                        await notification_manager.notify_organize_failed(v_path, f"操作失败: {err_detail}")
 
         except Exception as e:
             err_msg = f"处理异常: {str(e)}"
@@ -852,7 +852,7 @@ class FileProcessor:
             
             # [Notify] Add failure notification for exceptions
             if not dry_run:
-                await NotificationManager.push_organize_error_notification(v_path, err_msg)
+                await notification_manager.notify_organize_failed(v_path, err_msg)
             
             results.append({"type": "error", "source": v_path, "message": str(e)})
         
@@ -936,7 +936,7 @@ class FileProcessor:
             # 1. 处理视频文件（生成 STRM）
             res = await StrmGenerator.process_single_file(file_path, task_config)
             if res.get("status") == "success":
-                await NotificationManager.push_strm_link_notification(
+                await notification_manager.notify_strm_link_created(
                     os.path.basename(file_path), 
                     task_config.get("name", "Unknown Task")
                 )
