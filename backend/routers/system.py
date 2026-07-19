@@ -475,34 +475,42 @@ async def test_telegram_notification():
 @router.get("/db/tables", summary="列出数据库表")
 async def get_db_tables():
     """
-    获取当前 PostgreSQL 数据库中所有的表名及行数。
+    获取当前 PostgreSQL 数据库中所有的表名、行数及磁盘占用。
+    行数使用精确 COUNT(*)，磁盘占用使用 pg_total_relation_size（含索引/TOAST）。
     """
     try:
         async with db.session_scope():
-            # 针对 PostgreSQL 优化：获取 public 和 metadata 下的真实用户表
+            # 一条 SQL 拿全表名 + 磁盘占用（快），行数用精确 COUNT（避免 reltuples 返回 -1）
             sql = """
-                SELECT n.nspname || '.' || c.relname as full_name
+                SELECT
+                    n.nspname || '.' || c.relname AS full_name,
+                    pg_total_relation_size(c.oid) AS total_bytes
                 FROM pg_catalog.pg_class c
                 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
                 WHERE n.nspname IN ('public', 'metadata')
                 AND c.relkind = 'r'
                 AND c.relname NOT LIKE 'pg_%'
-                AND c.relname NOT LIKE 'sql_%';
+                AND c.relname NOT LIKE 'sql_%'
+                ORDER BY total_bytes DESC;
             """
             tables_res = await db.execute(text(sql))
-            tables = [r[0] for r in tables_res.all()]
-            
             result = []
-            for t in tables:
+            for row in tables_res.all():
+                full_name = row[0]
+                total_bytes = int(row[1] or 0)
+                # 精确行数
+                parts = full_name.split(".")
+                safe_table_name = f'"{parts[0]}"."{parts[1]}"'
                 try:
-                    # 统计行数，使用双引号包裹 schema.table
-                    safe_table_name = f'"{t.split(".")[0]}"."{t.split(".")[1]}"'
                     count_res = await db.execute(text(f"SELECT COUNT(*) FROM {safe_table_name}"))
                     count = count_res.scalar()
-                    result.append({"name": t, "count": count})
-                except Exception as e:
-                    print(f"统计表 {t} 失败: {e}")
-                    continue
+                except Exception:
+                    count = 0
+                result.append({
+                    "name": full_name,
+                    "count": count,
+                    "size_bytes": total_bytes
+                })
             return {"status": "success", "tables": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"数据库查询失败: {e}")

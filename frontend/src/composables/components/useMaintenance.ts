@@ -1,10 +1,18 @@
 import { ref, onMounted, computed } from 'vue'
 import { useMessage } from 'naive-ui'
 
+export type TableCategory = 'cache' | 'config' | 'core'
+
+export interface DbTable {
+  name: string
+  count: number
+  size_bytes?: number
+}
+
 export function useMaintenance() {
   const message = useMessage()
   const loading = ref(false)
-  const tables = ref<{name: string, count: number}[]>([])
+  const tables = ref<DbTable[]>([])
   const maintenanceLoading = ref<Record<string, boolean>>({})
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
@@ -51,6 +59,96 @@ export function useMaintenance() {
     'public.emby_media_index': 'Emby 库索引（TMDB ID + 类型 + Emby 标题的快速查找表）'
   }
 
+  /**
+   * 表的语义分类：
+   * - cache: 缓存类，可放心清空（清了会自动重建/重新拉取）
+   * - config: 用户配置类，清空后需要重新配置
+   * - core: 核心数据类，清空后不可逆，需格外谨慎
+   */
+  const tableCategories: Record<string, TableCategory> = {
+    // ===== 缓存类（可放心清空） =====
+    'metadata.media_title_index': 'cache',
+    'metadata.bgm_archive': 'cache',
+    'metadata.ref_genres': 'cache',
+    'metadata.ref_companies': 'cache',
+    'metadata.ref_keywords': 'cache',
+    'public.discover_cache': 'cache',
+    'public.calendar_subjects': 'cache',
+    'public.emby_media_index': 'cache',
+    'public.system_logs': 'cache',
+    'public.feed_items': 'cache',
+    'public.download_history': 'cache',
+    'public.task_records': 'cache',
+    'public.organize_history': 'cache',
+    'public.bangumi_data_item': 'cache',
+    'public.subscribed_episodes': 'cache',
+
+    // ===== 配置类（清空需重新配置） =====
+    'metadata.recognition_corrections': 'config',
+    'metadata.user_genre_mapping': 'config',
+    'metadata.user_company_mapping': 'config',
+    'metadata.user_keyword_mapping': 'config',
+    'metadata.user_language_mapping': 'config',
+    'metadata.user_country_mapping': 'config',
+    'public.feeds': 'config',
+    'public.filter_rules': 'config',
+    'public.rules': 'config',
+    'public.secondary_rules': 'config',
+    'public.quality_profiles': 'config',
+    'public.subscription_templates': 'config',
+    'public.blacklist': 'config',
+    'public.tmdb_blocklist': 'config',
+    'public.remote_rules': 'config',
+    'public.health_check_configs': 'config',
+    'public.rss_detect_tasks': 'config',
+    'public.strm_tasks': 'config',
+    'public.subscriptions': 'config',
+
+    // ===== 核心数据类（不可逆，危险） =====
+    'metadata.tmdb_deep_meta': 'core',
+    'public.bangumi_raw_cache': 'core',
+    'public.series_fingerprint': 'core',
+    'public.file_hashes': 'core',
+    'public.users': 'core',
+    'public.sessions': 'core'
+  }
+
+  /** 分类元信息：标签、颜色、文案 */
+  const categoryMeta: Record<TableCategory, { label: string; color: string; bg: string; desc: string }> = {
+    cache: {
+      label: '缓存',
+      color: '#2e7d32',
+      bg: 'rgba(46, 125, 50, 0.12)',
+      desc: '可放心清空，清空后会自动重建或重新拉取'
+    },
+    config: {
+      label: '配置',
+      color: '#f57c00',
+      bg: 'rgba(245, 124, 0, 0.12)',
+      desc: '清空后需要重新配置，请谨慎操作'
+    },
+    core: {
+      label: '核心',
+      color: '#c62828',
+      bg: 'rgba(198, 40, 40, 0.12)',
+      desc: '核心数据，清空后不可恢复，极度危险'
+    }
+  }
+
+  /** 获取表的分类，默认为 core（未知表按危险处理） */
+  const getCategory = (tableName: string): TableCategory => {
+    return tableCategories[tableName] || 'core'
+  }
+
+  /** 格式化磁盘占用大小 */
+  const formatSize = (bytes: number | undefined): string => {
+    if (!bytes || bytes <= 0) return '—'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+  }
+
   const fetchTables = async () => {
     loading.value = true
     try {
@@ -88,18 +186,29 @@ export function useMaintenance() {
     }
   }
 
+  /** 按语义分类分组（缓存 → 配置 → 核心），同组内按空间降序 */
   const groupedTables = computed(() => {
-    const groups: Record<string, typeof tables.value> = {
-      'metadata': [],
-      'public': []
+    const groups: Record<string, DbTable[]> = {
+      '缓存（可清空）': [],
+      '配置（需谨慎）': [],
+      '核心数据（危险）': []
+    }
+    const groupKey: Record<TableCategory, string> = {
+      cache: '缓存（可清空）',
+      config: '配置（需谨慎）',
+      core: '核心数据（危险）'
     }
     tables.value.forEach(t => {
-      const prefix = t.name.split('.')[0]
-      if (groups[prefix]) groups[prefix].push(t)
-      else groups['public'].push(t)
+      const cat = getCategory(t.name)
+      groups[groupKey[cat]].push(t)
     })
+    // 每组内按空间降序
+    Object.values(groups).forEach(g => g.sort((a, b) => (b.size_bytes || 0) - (a.size_bytes || 0)))
     return groups
   })
+
+  /** 分组顺序 */
+  const groupOrder = ['缓存（可清空）', '配置（需谨慎）', '核心数据（危险）']
 
   onMounted(fetchTables)
 
@@ -107,7 +216,11 @@ export function useMaintenance() {
     loading,
     maintenanceLoading,
     groupedTables,
+    groupOrder,
     tableDescriptions,
+    categoryMeta,
+    getCategory,
+    formatSize,
     fetchTables,
     handleTruncate
   }

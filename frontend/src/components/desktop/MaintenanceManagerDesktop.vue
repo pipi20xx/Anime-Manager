@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import {
-  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, NStatistic, NProgress, useDialog, useMessage
+  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NSpin, NStatistic, NProgress, useDialog, useMessage
 } from 'naive-ui'
 import {
   ServerIcon as DbIcon
@@ -14,16 +14,6 @@ const message = useMessage()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
 const fingerprintLoading = ref(false)
-
-const handleTruncateWithConfirm = (tableName: string) => {
-  dialog.error({
-    title: '危险操作',
-    content: `确认要清空数据库表 [${tableName}] 吗？此操作将永久删除表中所有数据，无法撤销。`,
-    positiveText: '确认清空',
-    negativeText: '取消',
-    onPositiveClick: () => handleTruncate(tableName)
-  })
-}
 
 const clearFingerprints = () => {
   dialog.warning({
@@ -247,14 +237,51 @@ const {
   loading,
   maintenanceLoading,
   groupedTables,
+  groupOrder,
   tableDescriptions,
+  categoryMeta,
+  getCategory,
+  formatSize,
   handleTruncate
 } = useMaintenance()
 
-const getTagStyle = (count: number) => {
-  return count > 0
-    ? { color: '#fff', backgroundColor: '#f57c00', borderColor: 'transparent' }
-    : { color: '#fff', backgroundColor: '#0288d1', borderColor: 'transparent' }
+/** 根据分类获取清空按钮类型 */
+const getTruncateButtonType = (tableName: string) => {
+  const cat = getCategory(tableName)
+  if (cat === 'cache') return 'warning'
+  if (cat === 'config') return 'error'
+  return 'error'
+}
+
+/** 核心数据表的二次确认 */
+const handleTruncateWithConfirm = (tableName: string) => {
+  const cat = getCategory(tableName)
+  const meta = categoryMeta[cat]
+  if (cat === 'core') {
+    dialog.error({
+      title: '⚠️ 极度危险操作',
+      content: `这是【${meta.label}】类表。${meta.desc}\n\n确认要清空数据库表 [${tableName}] 吗？此操作将永久删除表中所有数据，无法撤销。`,
+      positiveText: '我已知晓风险，确认清空',
+      negativeText: '取消',
+      onPositiveClick: () => handleTruncate(tableName)
+    })
+  } else if (cat === 'config') {
+    dialog.warning({
+      title: '危险操作',
+      content: `这是【${meta.label}】类表。${meta.desc}\n\n确认要清空数据库表 [${tableName}] 吗？`,
+      positiveText: '确认清空',
+      negativeText: '取消',
+      onPositiveClick: () => handleTruncate(tableName)
+    })
+  } else {
+    dialog.warning({
+      title: '确认清空',
+      content: `确认要清空数据库表 [${tableName}] 吗？此为缓存表，清空后会自动重建。`,
+      positiveText: '确认清空',
+      negativeText: '取消',
+      onPositiveClick: () => handleTruncate(tableName)
+    })
+  }
 }
 
 onMounted(() => {
@@ -362,41 +389,60 @@ onUnmounted(() => {
     </n-card>
 
     <n-alert type="warning" title="危险区域" style="margin-bottom: 20px;">
-      以下操作将永久删除数据库表中的所有数据（TRUNCATE）。执行后无法撤销，请务必确认操作目标。
+      以下操作将永久删除数据库表中的所有数据（TRUNCATE）。表已按风险等级分组：<b style="color: #2e7d32">缓存</b>可放心清空，<b style="color: #f57c00">配置</b>需谨慎，<b style="color: #c62828">核心</b>极度危险。
     </n-alert>
 
     <n-spin :show="loading">
-      <div v-for="(groupTables, schema) in groupedTables" :key="schema" class="schema-group">
-        <div class="group-header">
-          <n-icon size="20"><DbIcon /></n-icon>
-          <h3>命名空间: {{ schema.toUpperCase() }}</h3>
-        </div>
-        
-        <n-grid x-gap="12" y-gap="12" cols="1 s:2 m:3 l:4" responsive="screen">
-          <n-grid-item v-for="table in groupTables" :key="table.name">
-            <n-card bordered size="small" class="table-card" :data-app-instance="'maintenance-card'">
-              <div class="table-info">
-                <div class="table-name" :title="table.name">{{ table.name.split('.')[1] }}</div>
-                <div class="table-desc">{{ tableDescriptions[table.name] || '暂无说明' }}</div>
-                <n-tag size="small" round :bordered="false" :style="getTagStyle(table.count)" style="align-self: flex-start;">
-                  {{ table.count }} 行数据
-                </n-tag>
-              </div>
-              <div class="actions">
-                <n-button 
-                  block 
-                  secondary 
-                  type="error" 
-                  size="small"
-                  :loading="maintenanceLoading[table.name]"
-                  @click="handleTruncateWithConfirm(table.name)"
-                >
-                  清空数据
-                </n-button>
-              </div>
-            </n-card>
-          </n-grid-item>
-        </n-grid>
+      <div v-for="groupName in groupOrder" :key="groupName" class="schema-group">
+        <template v-if="groupedTables[groupName]?.length">
+          <div class="group-header">
+            <n-icon size="20"><DbIcon /></n-icon>
+            <h3>{{ groupName }}</h3>
+            <span class="group-count">{{ groupedTables[groupName].length }} 张表</span>
+          </div>
+
+          <n-grid x-gap="12" y-gap="12" cols="1 s:2 m:3 l:4" responsive="screen">
+            <n-grid-item v-for="table in groupedTables[groupName]" :key="table.name">
+              <n-card bordered size="small" class="table-card" :data-app-instance="'maintenance-card'">
+                <div class="table-info">
+                  <div class="table-name-row">
+                    <span class="table-name" :title="table.name">{{ table.name.split('.')[1] }}</span>
+                    <span
+                      class="category-badge"
+                      :style="{ color: categoryMeta[getCategory(table.name)].color, backgroundColor: categoryMeta[getCategory(table.name)].bg }"
+                    >
+                      {{ categoryMeta[getCategory(table.name)].label }}
+                    </span>
+                  </div>
+                  <div class="table-desc">{{ tableDescriptions[table.name] || '暂无说明' }}</div>
+                  <div class="table-stats">
+                    <div class="stat-cell">
+                      <span class="stat-label">行数</span>
+                      <span class="stat-value" :style="{ color: table.count > 0 ? '#f57c00' : '#0288d1' }">{{ table.count }}</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-cell">
+                      <span class="stat-label">占用</span>
+                      <span class="stat-value stat-size">{{ formatSize(table.size_bytes) }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="actions">
+                  <n-button
+                    block
+                    secondary
+                    :type="getTruncateButtonType(table.name)"
+                    size="small"
+                    :loading="maintenanceLoading[table.name]"
+                    @click="handleTruncateWithConfirm(table.name)"
+                  >
+                    清空数据
+                  </n-button>
+                </div>
+              </n-card>
+            </n-grid-item>
+          </n-grid>
+        </template>
       </div>
     </n-spin>
   </div>
@@ -417,6 +463,12 @@ onUnmounted(() => {
   color: var(--n-primary-color);
 }
 .group-header h3 { margin: 0; font-size: 16px; letter-spacing: 1px; }
+.group-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: normal;
+  margin-left: 4px;
+}
 
 .table-card {
   height: 100%;
@@ -439,11 +491,63 @@ onUnmounted(() => {
   gap: 8px;
   flex: 1;
 }
+.table-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .table-name {
   font-weight: bold;
   font-size: 14px;
   word-break: break-all;
   color: var(--n-primary-color);
+}
+.category-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+.table-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-top: auto;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-surface, rgba(0,0,0,0.03));
+}
+.stat-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  gap: 2px;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
+}
+.stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--code-font, 'JetBrains Mono', monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.stat-size {
+  color: var(--n-primary-color);
+}
+.stat-divider {
+  width: 1px;
+  background: var(--app-border-light, rgba(0,0,0,0.08));
+  flex-shrink: 0;
 }
 .table-desc {
   font-size: 12px;
