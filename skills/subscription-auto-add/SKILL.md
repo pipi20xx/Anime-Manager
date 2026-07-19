@@ -1,7 +1,10 @@
 ---
 name: subscription-auto-add
-version: 4
+version: 5
 description: 查看本季番剧列表并批量订阅。获取当季所有番剧，用户可输入数字快速订阅。
+tools:
+  - get_bangumi_calendar
+  - subscribe_by_bangumi_id
 ---
 
 # 本季番剧订阅

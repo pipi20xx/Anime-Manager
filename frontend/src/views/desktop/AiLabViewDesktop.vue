@@ -4,7 +4,7 @@ import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NInput, NDivider, 
   NTag, useMessage, useDialog, NAlert, NText, NSwitch, NSlider,
-  NCollapse, NCollapseItem, NForm, NFormItem, NEmpty,
+  NCollapse, NCollapseItem, NCollapseTransition, NForm, NFormItem, NEmpty,
   NTabs, NTabPane, NList, NListItem, NThing,
   NSpin, NRadioGroup, NRadioButton, NCode
 } from 'naive-ui'
@@ -79,6 +79,12 @@ const skills = ref<any[]>([])
 const tools = ref<any[]>([])
 const toolsLoading = ref(false)
 const skillsLoading = ref(false)
+
+const toolSearchQuery = ref('')
+const skillSearchQuery = ref('')
+const expandedSkillId = ref<string | null>(null)
+const skillDetail = ref<any>(null)
+const skillDetailLoading = ref(false)
 
 interface ToolCallEvent {
   type: string
@@ -229,6 +235,70 @@ const fetchSkills = async () => {
     console.error('加载技能失败', e)
   } finally {
     skillsLoading.value = false
+  }
+}
+
+const fetchSkillDetail = async (skillId: string) => {
+  skillDetailLoading.value = true
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/skills/${skillId}`, {
+      headers: getAuthHeaders()
+    })
+    if (res.ok) {
+      skillDetail.value = await res.json()
+    }
+  } catch (e) {
+    console.error('加载技能详情失败', e)
+  } finally {
+    skillDetailLoading.value = false
+  }
+}
+
+const toggleSkillExpand = async (skillId: string) => {
+  if (expandedSkillId.value === skillId) {
+    expandedSkillId.value = null
+    skillDetail.value = null
+  } else {
+    expandedSkillId.value = skillId
+    skillDetail.value = null
+    await fetchSkillDetail(skillId)
+  }
+}
+
+const toggleSkillEnabled = async (skill: any) => {
+  const newEnabled = !skill.enabled
+  skill.enabled = newEnabled
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/skills/${skill.id}/enabled`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ enabled: newEnabled })
+    })
+    if (res.ok) {
+      message.success(`技能已${newEnabled ? '启用' : '禁用'}`)
+    } else {
+      skill.enabled = !newEnabled
+      message.error('操作失败')
+    }
+  } catch (e) {
+    skill.enabled = !newEnabled
+    message.error('操作失败')
+  }
+}
+
+const reloadSkills = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/assistant/skills/reload`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    })
+    if (res.ok) {
+      const data = await res.json()
+      message.success(data.message)
+      await fetchSkills()
+    }
+  } catch (e) {
+    message.error('重载失败')
   }
 }
 
@@ -404,12 +474,44 @@ const getEventColor = (event: ToolCallEvent) => {
 
 const groupedTools = computed(() => {
   const groups: Record<string, any[]> = {}
+  const query = toolSearchQuery.value.toLowerCase().trim()
   for (const tool of tools.value) {
     const cat = tool.category || 'general'
+    if (query) {
+      const matchName = tool.name.toLowerCase().includes(query)
+      const matchDesc = (tool.description || '').toLowerCase().includes(query)
+      const matchCat = cat.toLowerCase().includes(query)
+      if (!matchName && !matchDesc && !matchCat) continue
+    }
     if (!groups[cat]) groups[cat] = []
     groups[cat].push(tool)
   }
   return groups
+})
+
+const filteredSkills = computed(() => {
+  const query = skillSearchQuery.value.toLowerCase().trim()
+  if (!query) return skills.value
+  return skills.value.filter(s => {
+    return (s.name || '').toLowerCase().includes(query) ||
+           (s.description || '').toLowerCase().includes(query) ||
+           (s.id || '').toLowerCase().includes(query) ||
+           (s.triggers || []).some((t: string) => t.toLowerCase().includes(query))
+  })
+})
+
+const getToolNameById = (name: string) => {
+  const t = tools.value.find(t => t.name === name)
+  return t ? t.description?.split('。')[0] || t.name : name
+}
+
+const toolCountInCategory = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const tool of tools.value) {
+    const cat = tool.category || 'general'
+    counts[cat] = (counts[cat] || 0) + 1
+  }
+  return counts
 })
 
 onMounted(() => {
@@ -516,32 +618,51 @@ onMounted(() => {
               <span class="card-title-text">可用工具 ({{ tools.length }})</span>
             </div>
           </template>
+          <template #header-extra>
+            <n-input
+              v-model:value="toolSearchQuery"
+              placeholder="搜索工具名称或描述..."
+              size="small"
+              clearable
+              style="width: 240px;"
+            />
+          </template>
           
           <n-spin :show="toolsLoading">
-            <n-collapse v-if="Object.keys(groupedTools).length > 0">
+            <n-collapse v-if="Object.keys(groupedTools).length > 0" default-expanded-names="媒体搜索">
               <n-collapse-item 
                 v-for="(toolList, category) in groupedTools" 
                 :key="category"
+                :name="category"
                 :title="`${category} (${toolList.length})`"
               >
                 <n-list bordered>
                   <n-list-item v-for="tool in toolList" :key="tool.name">
-                    <n-thing :title="tool.name" :description="tool.description">
-                      <template #header-extra>
-                        <n-tag size="small">{{ tool.parameters?.length || 0 }} 参数</n-tag>
+                    <n-thing>
+                      <template #header>
+                        <span class="tool-name">{{ tool.name }}</span>
                       </template>
-                      <div v-if="tool.parameters && tool.parameters.length > 0" class="tool-params">
-                        <n-tag v-for="p in tool.parameters" :key="p.name" size="small" :type="p.required ? 'info' : 'default'">
-                          {{ p.name }}
-                          <span v-if="p.required">*</span>
-                        </n-tag>
+                      <template #header-extra>
+                        <n-tag size="small" :type="tool.parameters?.length ? 'info' : 'default'">{{ tool.parameters?.length || 0 }} 参数</n-tag>
+                      </template>
+                      <template #description>
+                        <div class="tool-desc">{{ tool.description }}</div>
+                      </template>
+                      <div v-if="tool.parameters && tool.parameters.length > 0" class="tool-params-detail">
+                        <div v-for="p in tool.parameters" :key="p.name" class="param-row">
+                          <n-tag size="small" :type="p.required ? 'info' : 'default'">
+                            {{ p.name }}<span v-if="p.required">*</span>
+                          </n-tag>
+                          <span class="param-type">{{ p.type }}</span>
+                          <span class="param-desc">{{ p.description }}</span>
+                        </div>
                       </div>
                     </n-thing>
                   </n-list-item>
                 </n-list>
               </n-collapse-item>
             </n-collapse>
-            <n-empty v-else description="暂无工具" />
+            <n-empty v-else :description="toolSearchQuery ? '未找到匹配的工具' : '暂无工具'" />
           </n-spin>
         </n-card>
       </n-tab-pane>
@@ -553,22 +674,72 @@ onMounted(() => {
               <span class="card-title-text">可用技能 ({{ skills.length }})</span>
             </div>
           </template>
+          <template #header-extra>
+            <n-space>
+              <n-input
+                v-model:value="skillSearchQuery"
+                placeholder="搜索技能..."
+                size="small"
+                clearable
+                style="width: 200px;"
+              />
+              <n-button size="small" @click="reloadSkills" :loading="skillsLoading">重载技能</n-button>
+            </n-space>
+          </template>
           
           <n-spin :show="skillsLoading">
-            <n-list v-if="skills.length > 0" bordered>
-              <n-list-item v-for="skill in skills" :key="skill.id">
-                <n-thing :title="skill.name" :description="skill.description">
+            <n-list v-if="filteredSkills.length > 0" bordered hoverable>
+              <n-list-item v-for="skill in filteredSkills" :key="skill.id">
+                <n-thing>
+                  <template #header>
+                    <span class="skill-name" :class="{ 'skill-disabled': !skill.enabled }">{{ skill.name }}</span>
+                  </template>
                   <template #header-extra>
-                    <n-tag size="small">v{{ skill.version }}</n-tag>
+                    <n-space align="center" :size="8">
+                      <n-tag size="small">v{{ skill.version }}</n-tag>
+                      <n-tag v-if="skill.tools_needed && skill.tools_needed.length" size="small" type="info">
+                        {{ skill.tools_needed.length }} 工具
+                      </n-tag>
+                      <n-switch
+                        :value="skill.enabled"
+                        size="small"
+                        @update:value="toggleSkillEnabled(skill)"
+                      />
+                    </n-space>
+                  </template>
+                  <template #description>
+                    <div class="skill-desc" :class="{ 'skill-disabled': !skill.enabled }">{{ skill.description }}</div>
                   </template>
                   <div v-if="skill.triggers && skill.triggers.length > 0" class="skill-triggers">
                     <span class="trigger-label">触发词：</span>
                     <n-tag v-for="t in skill.triggers" :key="t" size="small" type="info">{{ t }}</n-tag>
                   </div>
+                  <div v-if="skill.tools_needed && skill.tools_needed.length > 0" class="skill-tools">
+                    <span class="trigger-label">关联工具：</span>
+                    <n-tag v-for="t in skill.tools_needed" :key="t" size="small" type="success">{{ t }}</n-tag>
+                  </div>
+                  <div class="skill-detail-toggle">
+                    <n-button text size="small" type="primary" @click="toggleSkillExpand(skill.id)">
+                      {{ expandedSkillId === skill.id ? '收起详情' : '查看详情' }}
+                    </n-button>
+                  </div>
+                  <n-collapse-transition :show="expandedSkillId === skill.id">
+                    <div class="skill-detail-content">
+                      <n-spin :show="skillDetailLoading" size="small">
+                        <div v-if="skillDetail && skillDetail.id === skill.id">
+                          <div class="skill-detail-meta">
+                            <span>路径：<code>{{ skillDetail.path }}</code></span>
+                          </div>
+                          <n-divider style="margin: 8px 0;" />
+                          <div class="markdown-body skill-markdown" v-html="renderMarkdown(skillDetail.content)"></div>
+                        </div>
+                      </n-spin>
+                    </div>
+                  </n-collapse-transition>
                 </n-thing>
               </n-list-item>
             </n-list>
-            <n-empty v-else description="暂无技能" />
+            <n-empty v-else :description="skillSearchQuery ? '未找到匹配的技能' : '暂无技能'" />
           </n-spin>
         </n-card>
       </n-tab-pane>
@@ -979,6 +1150,100 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 8px;
+}
+
+.tool-name {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tool-desc {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tool-params-detail {
+  margin-top: 8px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.param-type {
+  color: var(--n-primary-color);
+  font-family: monospace;
+  font-size: 12px;
+  min-width: 60px;
+}
+
+.param-desc {
+  color: var(--text-tertiary);
+  flex: 1;
+}
+
+.skill-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.skill-name.skill-disabled,
+.skill-desc.skill-disabled {
+  opacity: 0.5;
+}
+
+.skill-desc {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.skill-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.skill-detail-toggle {
+  margin-top: 8px;
+}
+
+.skill-detail-content {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+}
+
+.skill-detail-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.skill-detail-meta code {
+  font-family: monospace;
+  background: var(--app-surface-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.skill-markdown {
+  font-size: 13px;
+}
+
+.skill-markdown h1,
+.skill-markdown h2,
+.skill-markdown h3 {
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
 }
 
 .skill-triggers {

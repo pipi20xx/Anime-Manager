@@ -1,7 +1,11 @@
 ---
 name: recognize-failed-retry
-version: 1
+version: 2
 description: 智能重试识别失败的资源。分析失败原因（未知制作组、非标准命名、TMDB无匹配），并提供解决方案。
+tools:
+  - recognize_filename
+  - search_tmdb
+  - get_tmdb_detail
 ---
 
 # 识别失败智能重试

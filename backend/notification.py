@@ -12,25 +12,60 @@ class NotificationManager:
     @staticmethod
     def _get_tmdb_image_url(poster_path: str) -> str:
         """
-        将本地代理路径转换为 TMDB 完整 URL（用于 Telegram 等外部服务）
-        :param poster_path: 可能是本地代理路径如 /w500/abc.jpg 或完整 URL
-        :return: TMDB 完整 URL，使用 original 尺寸
+        将图片路径转换为公网可访问的完整 URL（用于 Telegram 等外部服务）。
+        处理以下格式：
+        - 完整 URL (http/https) → 直接返回
+        - TMDB 本地代理路径 /api/system/img?path=/w500/abc.jpg → 解码并拼成 TMDB 公网 URL
+        - Bangumi 本地代理路径 /api/system/bgm_img?url=https%3A%2F%2F... → 解码出原始 URL
+        - TMDB 原始路径 /abc.jpg 或 /w500/abc.jpg → 拼成 TMDB 公网 URL
+        :return: 公网可访问的图片 URL；无法识别时返回 None（只发文本通知）
         """
         if not poster_path:
             return None
+
+        from urllib.parse import parse_qs, urlparse, unquote
+
+        # 完整 URL，直接返回
         if poster_path.startswith("http"):
             return poster_path
-        
-        clean_path = poster_path
-        size_match = re.match(r"^/(w\d+|original)(/.*)$", poster_path)
-        if size_match:
-            clean_path = size_match.group(2)
-        
-        if not clean_path.startswith("/"):
-            clean_path = "/" + clean_path
-        
-        image_domain = ConfigManager.get_tmdb_image_domain()
-        return f"https://{image_domain}/t/p/original{clean_path}"
+
+        # TMDB 本地代理路径：/api/system/img?path=%2Fw500%2Fabc.jpg
+        # 解码出 path 参数，还原成 TMDB 原始路径，再拼公网 URL
+        if "/api/system/img" in poster_path:
+            parsed = urlparse(poster_path)
+            qs = parse_qs(parsed.query)
+            raw_path = qs.get("path", [None])[0]
+            if raw_path:
+                # 去掉尺寸前缀 /w500/xxx → /xxx
+                size_match = re.match(r"^/(w\d+|original)(/.*)$", raw_path)
+                clean_path = size_match.group(2) if size_match else raw_path
+                if not clean_path.startswith("/"):
+                    clean_path = "/" + clean_path
+                image_domain = ConfigManager.get_tmdb_image_domain()
+                return f"https://{image_domain}/t/p/original{clean_path}"
+            return None
+
+        # Bangumi 本地代理路径：/api/system/bgm_img?url=https%3A%2F%2F...
+        # 解码出原始 Bangumi 图片 URL，供 Telegram 直接下载
+        if "/api/system/bgm_img" in poster_path:
+            parsed = urlparse(poster_path)
+            qs = parse_qs(parsed.query)
+            raw_url = qs.get("url", [None])[0]
+            if raw_url and raw_url.startswith("http"):
+                return raw_url
+            return None
+
+        # TMDB 原始路径：/abc.jpg 或 /w500/abc.jpg
+        if poster_path.startswith("/") and not poster_path.startswith("/api"):
+            size_match = re.match(r"^/(w\d+|original)(/.*)$", poster_path)
+            clean_path = size_match.group(2) if size_match else poster_path
+            if not clean_path.startswith("/"):
+                clean_path = "/" + clean_path
+            image_domain = ConfigManager.get_tmdb_image_domain()
+            return f"https://{image_domain}/t/p/original{clean_path}"
+
+        # 无法识别的格式，跳过图片只发文本
+        return None
     
     @staticmethod
     async def send_telegram_message(text: str, photo_url: str = None, pin: bool = False):

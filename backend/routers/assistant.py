@@ -291,15 +291,8 @@ async def list_skills():
     from assistant.skill_engine import SkillEngine
     
     skills = []
-    for skill in SkillEngine.list_skills():
-        skills.append({
-            "id": skill.id,
-            "name": skill.name,
-            "version": skill.version,
-            "description": skill.description,
-            "triggers": skill.triggers,
-            "path": skill.path
-        })
+    for skill in SkillEngine.list_skills(include_disabled=True):
+        skills.append(skill.to_dict(include_content=False))
     
     return skills
 
@@ -313,15 +306,39 @@ async def get_skill(skill_id: str):
     if not skill:
         raise HTTPException(status_code=404, detail="技能不存在")
     
+    return skill.to_dict(include_content=True)
+
+@router.put("/skills/{skill_id}/enabled")
+async def set_skill_enabled(skill_id: str, request: Request):
+    """启用或禁用技能"""
+    init_assistant()
+    
+    from assistant.skill_engine import SkillEngine
+    
+    body = await request.json()
+    enabled = body.get("enabled")
+    if enabled is None:
+        raise HTTPException(status_code=400, detail="缺少 enabled 参数")
+    
+    success = SkillEngine.set_skill_enabled(skill_id, bool(enabled))
+    if not success:
+        raise HTTPException(status_code=404, detail="技能不存在")
+    
+    return {"success": True, "message": f"技能已{'启用' if enabled else '禁用'}"}
+
+@router.post("/skills/reload")
+async def reload_skills():
+    """重新加载所有技能（从文件系统）"""
+    init_assistant()
+    
+    from assistant.skill_engine import SkillEngine
+    
+    SkillEngine.reload()
+    
     return {
-        "id": skill.id,
-        "name": skill.name,
-        "version": skill.version,
-        "description": skill.description,
-        "content": skill.content,
-        "triggers": skill.triggers,
-        "tools_needed": skill.tools_needed,
-        "path": skill.path
+        "success": True,
+        "message": f"已重新加载 {len(SkillEngine.list_skills())} 个技能",
+        "count": len(SkillEngine.list_skills())
     }
 
 @router.post("/skills/{skill_id}/execute")

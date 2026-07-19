@@ -1,7 +1,11 @@
 ---
-name: 订阅智能添加
-version: 2
+name: subscribe-anime
+version: 3
 description: 当用户想要订阅某部番剧时，自动搜索并添加订阅
+tools:
+  - search_tmdb
+  - add_subscription
+  - get_tmdb_detail
 ---
 
 # 订阅智能添加技能

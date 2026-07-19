@@ -203,6 +203,7 @@ class Agent:
         self.on_tool_result: Optional[Callable] = None
         self.on_thinking: Optional[Callable] = None
         self._selected_tools: List = []
+        self.last_list_data: Optional[Dict] = None
         
     def _get_system_prompt(self, tools: List = None) -> str:
         tools_desc = ToolRegistry.get_compact_tools_description(tools) if tools else ""
@@ -220,6 +221,15 @@ class Agent:
 2. 工具调用后根据真实结果回答用户
 3. 主动完成任务，不要中间停顿等待确认
 4. 订阅时优先使用 search_tmdb 搜索，然后用 add_subscription 订阅
+
+## 关键规则：上下文编号选择
+当你的上一条回复包含带编号的列表（如番剧列表、搜索结果），用户回复数字时：
+- **必须根据列表编号执行对应操作**，不要调用 list_subscriptions
+- 番剧列表 → 调用 `subscribe_by_bangumi_id(bangumi_id=列表中对应编号的Bangumi ID)`
+- TMDB搜索结果 → 调用 `add_subscription(title=..., tmdb_id=..., media_type=..., season=...)`
+- 订阅列表 → 调用 `operate_subscription(index=..., action=...)`
+- 多个数字（如"1 3 5"）→ 逐个执行
+- **不要询问确认，直接执行！**
 
 ## 订阅列表格式
 ```
@@ -267,6 +277,17 @@ class Agent:
 - 工具调用失败时，向用户解释原因并提供替代方案
 - 保持回复简洁，但包含关键信息
 - 使用中文回复
+
+## 关键规则：上下文编号选择
+
+当你的上一条回复包含带编号的列表（如番剧列表、搜索结果、订阅列表），用户回复数字时：
+- **必须根据列表编号执行对应操作**，不要误解为查看订阅列表
+- 番剧列表 → 调用 `subscribe_by_bangumi_id(bangumi_id=列表中对应编号的Bangumi ID)`
+- TMDB搜索结果 → 调用 `add_subscription(title=..., tmdb_id=..., media_type=..., season=...)`
+- 订阅列表 → 调用 `operate_subscription(index=..., action=...)`
+- 多个数字（如"1 3 5"）→ 逐个执行
+- **不要询问确认，直接执行！**
+- 示例：你列出了20部番剧，用户输入"13"，你应调用 subscribe_by_bangumi_id 订阅第13部
 
 ## 交互格式规范
 
@@ -531,6 +552,7 @@ class Agent:
         self.history_manager.add({"role": "user", "content": user_message})
         
         self.iteration_count = 0
+        self.last_list_data = None
         
         while self.iteration_count < self.config.max_iterations:
             self.iteration_count += 1
@@ -595,6 +617,7 @@ class Agent:
                     }
                     
                     result = await self._execute_tool(tool_name, arguments)
+                    self._capture_list_data(result, tool_name)
                     
                     yield {
                         "type": "tool_result",
@@ -641,6 +664,7 @@ class Agent:
                 }
                 
                 result = await self._execute_tool(tool_name, arguments)
+                self._capture_list_data(result, tool_name)
                 
                 yield {
                     "type": "tool_result",
@@ -729,6 +753,97 @@ class Agent:
         
         return json.dumps(compact, ensure_ascii=False, default=str)
 
+    def _capture_list_data(self, result, tool_name: str = ""):
+        """
+        从工具结果中捕获可订阅的列表数据，供 TG Bot 等前端构建交互按钮。
+        仅当工具有 formatted_message 时才捕获（这类工具的输出会直接作为 Agent 的响应）。
+        """
+        if not result.success or not result.data:
+            return
+
+        # 只有带 formatted_message 的工具才会直接作为 Agent 响应返回
+        # 避免非列表工具（如 subscribe_by_bangumi_id）执行后残留旧的列表数据
+        if not result.formatted_message:
+            return
+
+        data = result.data
+        items = []
+        list_type = None
+
+        if isinstance(data, list) and len(data) > 0:
+            first = data[0]
+            if isinstance(first, dict):
+                if "bangumi_id" in first:
+                    list_type = "bangumi"
+                    for item in data:
+                        items.append({
+                            "id": item.get("bangumi_id"),
+                            "title": item.get("title", "未知"),
+                            "subtitle": self._format_item_subtitle(item, "bangumi"),
+                            "raw": item
+                        })
+                elif "tmdb_id" in first:
+                    list_type = "tmdb"
+                    for item in data:
+                        items.append({
+                            "id": item.get("tmdb_id"),
+                            "title": item.get("title", "未知"),
+                            "subtitle": self._format_item_subtitle(item, "tmdb"),
+                            "media_type": item.get("media_type", "tv"),
+                            "raw": item
+                        })
+        elif isinstance(data, dict) and "subscriptions" in data:
+            subs = data.get("subscriptions", [])
+            if subs and isinstance(subs[0], dict):
+                list_type = "subscription"
+                for idx, item in enumerate(subs):
+                    items.append({
+                        "id": item.get("id"),
+                        "index": item.get("index", idx + 1),
+                        "title": item.get("title", "未知"),
+                        "subtitle": self._format_item_subtitle(item, "subscription"),
+                        "enabled": item.get("enabled", True),
+                        "raw": item
+                    })
+
+        if list_type and items:
+            self.last_list_data = {
+                "type": list_type,
+                "items": items,
+                "tool_name": tool_name,
+                "total": len(items)
+            }
+            logger.debug(f"[Agent] 捕获列表数据: type={list_type}, count={len(items)}")
+
+    def _format_item_subtitle(self, item: Dict, list_type: str) -> str:
+        """格式化条目副标题"""
+        parts = []
+        if list_type == "bangumi":
+            rating = item.get("rating")
+            if rating:
+                parts.append(f"评分 {rating:.1f}")
+            eps = item.get("episodes")
+            if eps:
+                parts.append(f"{eps}集")
+        elif list_type == "tmdb":
+            rating = item.get("rating")
+            if rating:
+                parts.append(f"评分 {rating:.1f}")
+            year = item.get("year")
+            if year:
+                parts.append(year)
+            mt = item.get("media_type", "")
+            if mt:
+                parts.append("电影" if mt == "movie" else "剧集")
+        elif list_type == "subscription":
+            enabled = item.get("enabled")
+            if enabled is not None:
+                parts.append("✅启用" if enabled else "⏸️禁用")
+            season = item.get("season")
+            if season:
+                parts.append(f"S{season}")
+        return " | ".join(parts) if parts else ""
+
     async def run_simple(self, user_message: str) -> str:
         final_response = ""
         async for event in self.run(user_message):
@@ -782,6 +897,7 @@ class Agent:
         self.history_manager.add({"role": "user", "content": user_message})
         
         self.iteration_count = 0
+        self.last_list_data = None
         
         while self.iteration_count < self.config.max_iterations:
             self.iteration_count += 1
@@ -857,6 +973,7 @@ class Agent:
                     }
                     
                     result = await self._execute_tool(tool_name, arguments)
+                    self._capture_list_data(result, tool_name)
                     
                     yield {
                         "type": "tool_result",

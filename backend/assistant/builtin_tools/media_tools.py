@@ -478,7 +478,7 @@ async def discover_bangumi(
             return ToolResult(success=True, data=[], message="未找到符合条件的番剧")
         
         simplified = []
-        for item in items[:20]:
+        for item in items[:50]:
             rating = item.get("rating", {})
             simplified.append({
                 "bangumi_id": item.get("id"),
@@ -500,11 +500,13 @@ async def discover_bangumi(
         lines.append("| 编号 | 番剧名称 | 评分 | 集数 | Bangumi ID |")
         lines.append("|:----:|:---------|:----:|:----:|:----------:|")
         
-        for idx, item in enumerate(simplified, 1):
+        for idx, item in enumerate(simplified[:20], 1):
             rating_str = f"{item['rating']:.1f}" if item.get("rating") else "-"
             eps = item.get("episodes") or "-"
             lines.append(f"| {idx} | {item['title']} | {rating_str} | {eps} | {item['bangumi_id']} |")
         
+        if len(simplified) > 20:
+            lines.append(f"\n... 还有 {len(simplified) - 20} 部番剧未显示")
         lines.append(f"\n📊 共 {total} 部番剧，当前第 {page} 页")
         lines.append("\n💡 输入编号可订阅对应番剧")
         
@@ -575,14 +577,15 @@ async def discover_tmdb(
         total = result.get("total_results", 0)
         
         simplified = []
-        for item in items[:20]:
+        for item in items[:50]:
             simplified.append({
                 "tmdb_id": item.get("id"),
                 "title": item.get("title") or item.get("name"),
                 "year": (item.get("release_date") or item.get("first_air_date") or "")[:4],
                 "overview": (item.get("overview") or "")[:100],
                 "rating": item.get("vote_average"),
-                "poster_path": item.get("poster_path")
+                "poster_path": item.get("poster_path"),
+                "media_type": media_type
             })
         
         type_name = "电影" if media_type == "movie" else "剧集"
@@ -595,11 +598,13 @@ async def discover_tmdb(
         lines.append("| 编号 | 作品名称 | 年份 | 评分 | TMDB ID |")
         lines.append("|:----:|:---------|:----:|:----:|:--------:|")
         
-        for idx, item in enumerate(simplified, 1):
+        for idx, item in enumerate(simplified[:20], 1):
             rating_str = f"{item['rating']:.1f}" if item.get("rating") else "-"
             year_str = item.get("year") or "-"
             lines.append(f"| {idx} | {item['title']} | {year_str} | {rating_str} | {item['tmdb_id']} |")
         
+        if len(simplified) > 20:
+            lines.append(f"\n... 还有 {len(simplified) - 20} 部作品未显示")
         lines.append(f"\n📊 共 {total} 部作品，当前第 {page} 页")
         lines.append("\n💡 输入编号可订阅对应作品")
         

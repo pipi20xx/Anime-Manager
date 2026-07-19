@@ -1,7 +1,12 @@
 ---
 name: organize-failed-analyze
-version: 1
+version: 2
 description: 分析整理失败的原因并提供重试方案。检查文件路径、权限、目标目录等问题。
+tools:
+  - get_failed_organize_history
+  - get_organize_history
+  - list_organize_tasks
+  - start_organize
 ---
 
 # 整理失败分析

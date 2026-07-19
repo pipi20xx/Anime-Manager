@@ -216,122 +216,6 @@ async def operate_subscription(index: int, action: str) -> ToolResult:
 
 
 @tool(
-    name="delete_subscription_by_index",
-    description="按列表序号删除订阅。当用户查看订阅列表后输入「删除 1」「取消第2个」等时使用此工具。",
-    category="订阅管理",
-    parameters=[
-        {"name": "index", "type": "integer", "description": "订阅在列表中的序号（从1开始）", "required": True}
-    ]
-)
-async def delete_subscription_by_index(index: int) -> ToolResult:
-    try:
-        from rss_core.subscription_manager import SubscriptionManager
-        from database import db
-        from models import Subscription
-        from sqlmodel import select
-        
-        if index < 1:
-            return ToolResult(success=False, error="序号必须大于 0")
-        
-        async with db.session_scope():
-            stmt = select(Subscription)
-            subs = await db.all(Subscription, stmt)
-            
-            if not subs:
-                return ToolResult(success=False, error="当前没有订阅任务")
-            
-            if index > len(subs):
-                return ToolResult(success=False, error=f"序号 {index} 超出范围，当前共有 {len(subs)} 个订阅")
-            
-            sub = subs[index - 1]
-            sub_title = sub.title
-            await SubscriptionManager.delete_subscription(sub.id)
-        
-        return ToolResult(success=True, message=f"已删除订阅: {sub_title}")
-    except Exception as e:
-        logger.error(f"[Tool] delete_subscription_by_index 失败: {e}")
-        return ToolResult(success=False, error=str(e))
-
-
-@tool(
-    name="toggle_subscription_by_index",
-    description="按列表序号启用或禁用订阅。当用户查看订阅列表后输入「禁用 1」「启用第2个」等时使用此工具。",
-    category="订阅管理",
-    parameters=[
-        {"name": "index", "type": "integer", "description": "订阅在列表中的序号（从1开始）", "required": True},
-        {"name": "enabled", "type": "boolean", "description": "是否启用", "required": True}
-    ]
-)
-async def toggle_subscription_by_index(index: int, enabled: bool) -> ToolResult:
-    try:
-        from database import db
-        from models import Subscription
-        from sqlmodel import select
-        
-        if index < 1:
-            return ToolResult(success=False, error="序号必须大于 0")
-        
-        async with db.session_scope():
-            stmt = select(Subscription)
-            subs = await db.all(Subscription, stmt)
-            
-            if not subs:
-                return ToolResult(success=False, error="当前没有订阅任务")
-            
-            if index > len(subs):
-                return ToolResult(success=False, error=f"序号 {index} 超出范围，当前共有 {len(subs)} 个订阅")
-            
-            sub = subs[index - 1]
-            sub.enabled = enabled
-            await db.save(sub)
-        
-        status = "启用" if enabled else "禁用"
-        return ToolResult(success=True, message=f"已{status}订阅: {sub.title}")
-    except Exception as e:
-        logger.error(f"[Tool] toggle_subscription_by_index 失败: {e}")
-        return ToolResult(success=False, error=str(e))
-
-
-@tool(
-    name="delete_subscription_by_title",
-    description="通过标题删除订阅任务。当用户说「取消订阅 XXX」或「删除 XXX 的订阅」时使用此工具。",
-    category="订阅管理",
-    parameters=[
-        {"name": "title", "type": "string", "description": "订阅标题（支持模糊匹配）", "required": True}
-    ]
-)
-async def delete_subscription_by_title(title: str) -> ToolResult:
-    try:
-        from rss_core.subscription_manager import SubscriptionManager
-        from database import db
-        from models import Subscription
-        from sqlmodel import select
-        
-        async with db.session_scope():
-            stmt = select(Subscription).where(Subscription.title.ilike(f"%{title}%"))
-            subs = await db.all(Subscription, stmt)
-            
-            if not subs:
-                return ToolResult(success=False, error=f"未找到标题包含「{title}」的订阅")
-            
-            if len(subs) > 1:
-                titles = [s.title for s in subs]
-                return ToolResult(
-                    success=False,
-                    error=f"找到多个匹配的订阅，请指定更准确的标题：{', '.join(titles)}"
-                )
-            
-            sub = subs[0]
-            sub_title = sub.title
-            await SubscriptionManager.delete_subscription(sub.id)
-        
-        return ToolResult(success=True, message=f"已删除订阅: {sub_title}")
-    except Exception as e:
-        logger.error(f"[Tool] delete_subscription_by_title 失败: {e}")
-        return ToolResult(success=False, error=str(e))
-
-
-@tool(
     name="clear_all_subscriptions",
     description="清空所有订阅任务。当用户说「清空所有订阅」或「删除全部订阅」时使用此工具。",
     category="订阅管理",
@@ -513,27 +397,33 @@ async def subscribe_by_bangumi_id(bangumi_id: int) -> ToolResult:
                     data={"existing_id": existing.id}
                 )
         
-        tmdb_item = None
+        # TMDB 映射是订阅的硬性前提（与前端 one_click_subscribe 逻辑一致）
+        # 订阅系统依赖 tmdb_id 进行 RSS 匹配、集数追踪、日历同步，无 tmdb_id 的订阅无法工作
         config = ConfigManager.get_config()
         tmdb_key = config.get("tmdb_api_key")
         
-        if tmdb_key:
-            tmdb_item = await BangumiProvider.map_to_tmdb(bgm_item, tmdb_key, logs=None)
+        if not tmdb_key:
+            return ToolResult(
+                success=False,
+                error="未配置 TMDB API Key，无法建立映射。请先在设置中配置 TMDB API Key。"
+            )
+        
+        tmdb_item = await BangumiProvider.map_to_tmdb(bgm_item, tmdb_key, logs=None)
+        
+        if not tmdb_item:
+            return ToolResult(
+                success=False,
+                error=f"未能为《{bgm_title}》自动建立 TMDB 映射，无法订阅。该作品可能在 TMDB 中不存在或匹配度不足，请尝试手动搜索订阅。"
+            )
         
         season = extract_season_from_name(bgm_title)
         total_episodes = bgm_item.get('total_episodes') or 0
         
-        final_poster = bgm_item.get('poster_path')
-        tmdb_id = None
-        media_type = "tv"
-        year = None
-        
-        if tmdb_item:
-            tmdb_id = str(tmdb_item['id'])
-            media_type = tmdb_item.get('type', 'tv')
-            year = tmdb_item.get('year')
-            if tmdb_item.get('poster_path'):
-                final_poster = tmdb_item['poster_path']
+        # TMDB 映射成功，使用 TMDB 信息构建订阅
+        tmdb_id = str(tmdb_item['id'])
+        media_type = tmdb_item.get('type', 'tv')
+        year = tmdb_item.get('year')
+        final_poster = tmdb_item.get('poster_path') or bgm_item.get('poster_path')
         
         target_tmpl = None
         async with db.session_scope():
@@ -577,7 +467,7 @@ async def subscribe_by_bangumi_id(bangumi_id: int) -> ToolResult:
         except:
             pass
         
-        logger.info(f"[Tool] 一键订阅成功: {result.title}")
+        logger.info(f"[Tool] 一键订阅成功: {result.title} (TMDB:{tmdb_id})")
         
         return ToolResult(
             success=True,
