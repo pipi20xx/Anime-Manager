@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import {
-  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, NStatistic, useDialog, useMessage
+  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NTag, NSpin, NStatistic, NProgress, useDialog, useMessage
 } from 'naive-ui'
 import {
   ServerIcon as DbIcon
@@ -156,6 +156,76 @@ const handleBgmSync = async () => {
   }
 }
 
+// ============ Bangumi Subject 缓存预热 ============
+const bgmWarmupLoading = ref(false)
+const bgmWarmupStatus = ref<{ running: boolean; progress: any }>({ running: false, progress: {} })
+let warmupTimer: ReturnType<typeof setInterval> | null = null
+
+const warmupPercent = computed(() => {
+  const p = bgmWarmupStatus.value.progress
+  if (!p || !p.total) return 0
+  return Math.round((p.done / p.total) * 100)
+})
+
+const fetchWarmupStatus = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/bangumi/mapping/warmup/status`)
+    if (res.ok) {
+      const data = await res.json()
+      bgmWarmupStatus.value = data
+      // 任务结束时停止轮询并提示
+      if (!data.running && bgmWarmupLoading.value) {
+        stopWarmupPolling()
+        bgmWarmupLoading.value = false
+        const p = data.progress || {}
+        if (p.success !== undefined) {
+          message.success(`预热完成: 成功 ${p.success} | 跳过 ${p.skipped || 0} | 失败 ${p.failed || 0}`)
+        }
+      }
+    }
+  } catch (e) {
+    console.error('获取预热状态失败', e)
+  }
+}
+
+const startWarmupPolling = () => {
+  if (warmupTimer) clearInterval(warmupTimer)
+  warmupTimer = setInterval(fetchWarmupStatus, 2000)
+}
+
+const stopWarmupPolling = () => {
+  if (warmupTimer) {
+    clearInterval(warmupTimer)
+    warmupTimer = null
+  }
+}
+
+const handleBgmWarmup = () => {
+  dialog.warning({
+    title: '预热 Subject 缓存',
+    content: '将遍历所有 BangumiData 条目预热详情缓存：完结番剧写入永久缓存，所有番剧写入 7 天展示缓存。预热后访问季度番剧表/详情页可直接命中缓存。任务在后台执行，可能耗时较长，可通过实时日志查看进度。是否继续？',
+    positiveText: '开始预热',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      bgmWarmupLoading.value = true
+      try {
+        const res = await fetch(`${API_BASE}/api/bangumi/mapping/warmup?force=false`, { method: 'POST' })
+        const data = await res.json()
+        if (res.ok && data.success) {
+          message.info('预热任务已在后台启动')
+          startWarmupPolling()
+        } else {
+          message.error(data.message || '启动预热失败')
+          bgmWarmupLoading.value = false
+        }
+      } catch (e) {
+        message.error('请求失败')
+        bgmWarmupLoading.value = false
+      }
+    }
+  })
+}
+
 const {
   loading,
   maintenanceLoading,
@@ -172,6 +242,17 @@ const getTagStyle = (count: number) => {
 
 onMounted(() => {
   fetchServices()
+  // 检查是否有正在运行的预热任务（页面刷新后恢复轮询）
+  fetchWarmupStatus().then(() => {
+    if (bgmWarmupStatus.value.running) {
+      bgmWarmupLoading.value = true
+      startWarmupPolling()
+    }
+  })
+})
+
+onUnmounted(() => {
+  stopWarmupPolling()
 })
 </script>
 
@@ -235,9 +316,31 @@ onMounted(() => {
           <n-statistic label="上次同步" :value="formatTime(bgmService?.last_run ?? null)" />
           <n-statistic label="下次同步" :value="formatTime(bgmService?.next_run ?? null)" />
         </div>
-        <n-button type="primary" :loading="bgmSyncLoading" @click="handleBgmSync">
-          立即同步
-        </n-button>
+        <n-space>
+          <n-button type="primary" :loading="bgmSyncLoading" :disabled="bgmWarmupLoading" @click="handleBgmSync">
+            立即同步
+          </n-button>
+          <n-button type="info" secondary :loading="bgmWarmupLoading" :disabled="bgmSyncLoading" @click="handleBgmWarmup">
+            预热 Subject 缓存
+          </n-button>
+        </n-space>
+      </div>
+
+      <!-- 预热进度 -->
+      <div v-if="bgmWarmupLoading || (!bgmWarmupStatus.running && bgmWarmupStatus.progress?.total)" class="warmup-progress">
+        <div class="warmup-header">
+          <span class="warmup-label">Subject 缓存预热</span>
+          <span class="warmup-stats" v-if="bgmWarmupStatus.progress?.total">
+            {{ bgmWarmupStatus.progress.done }} / {{ bgmWarmupStatus.progress.total }}
+            （成功 {{ bgmWarmupStatus.progress.success }} | 跳过 {{ bgmWarmupStatus.progress.skipped || 0 }} | 失败 {{ bgmWarmupStatus.progress.failed || 0 }}）
+          </span>
+        </div>
+        <n-progress
+          type="line"
+          :percentage="warmupPercent"
+          :status="bgmWarmupStatus.running ? 'default' : (bgmWarmupStatus.progress?.failed ? 'warning' : 'success')"
+          :show-indicator="true"
+        />
       </div>
     </n-card>
 
@@ -345,5 +448,31 @@ onMounted(() => {
   align-items: center;
   gap: 32px;
   flex-wrap: wrap;
+}
+
+/* 预热进度 */
+.warmup-progress {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+.warmup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.warmup-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--n-primary-color);
+}
+.warmup-stats {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
 }
 </style>

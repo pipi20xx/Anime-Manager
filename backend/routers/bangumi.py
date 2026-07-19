@@ -303,6 +303,40 @@ async def sync_mapping(force: bool = False):
     log_audit("BangumiData", "同步", result.get("message", ""))
     return result
 
+@router.post("/mapping/warmup", summary="预热 Bangumi Subject 缓存")
+async def warmup_raw_cache(force: bool = False):
+    """
+    后台预热 Bangumi 原始缓存：遍历 bangumi_data_item 表所有 bgm_id，
+    逐一请求 /v0/subjects/{id} 并写入 bangumi_raw_cache（完结番剧永久缓存）。
+    任务在后台执行，立即返回，可通过 /mapping/warmup/status 查看进度。
+
+    :param force: True 时强制重新拉取（忽略已有缓存）
+    """
+    import asyncio
+    from recognition.data_provider.bangumi.service import bangumi_data_service, BangumiDataItemService
+
+    # 已在运行则拒绝
+    if BangumiDataItemService._warmup_running:
+        return {"success": False, "message": "预热任务正在运行中", "running": True}
+
+    # 后台执行，不阻塞响应
+    async def _run():
+        result = await bangumi_data_service.warmup_raw_cache(force=force)
+        log_audit("BangumiData", "缓存预热", result.get("message", ""))
+
+    asyncio.create_task(_run())
+    return {
+        "success": True,
+        "message": "预热任务已在后台启动，可通过实时日志或状态接口查看进度",
+        "running": True
+    }
+
+@router.get("/mapping/warmup/status", summary="查询缓存预热进度")
+async def warmup_status():
+    """查询 Bangumi Subject 缓存预热任务的运行状态和进度。"""
+    from recognition.data_provider.bangumi.service import BangumiDataItemService
+    return BangumiDataItemService.get_warmup_status()
+
 @router.get("/mapping/lookup/{bgm_id}", summary="查询映射")
 async def lookup_mapping(bgm_id: int):
     """

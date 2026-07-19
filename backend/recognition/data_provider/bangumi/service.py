@@ -694,5 +694,120 @@ class BangumiDataItemService:
         except Exception as e:
             logger.warning(f"[BangumiData] ⚠️ 保存原始缓存异常: {e}")
 
+    # ===== 缓存预热状态（模块级，跨请求保持） =====
+    _warmup_running: bool = False
+    _warmup_progress: Dict[str, Any] = {}
+
+    @staticmethod
+    async def warmup_raw_cache(force: bool = False) -> Dict[str, Any]:
+        """
+        预热 Bangumi 详情缓存：遍历 bangumi_data_item 表所有 bgm_id，
+        调用 get_subject_details 一次性填充两层缓存：
+          - bangumi_raw_cache（永久，仅完结番剧，由内部 _fetch_subject_raw 写入）
+          - discover_cache:detail（7天，加工后展示数据，所有番剧）
+
+        预热后访问季度番剧表/详情页时可直接命中 discover_cache:detail，连加工都省了。
+        内部带并发限制（5）和已缓存跳过逻辑（force=False 时跳过 7 天内已缓存的 ID）。
+
+        :param force: True 时强制重新拉取（忽略已有缓存）
+        :return: 任务状态
+        """
+        if BangumiDataItemService._warmup_running:
+            return {"success": False, "message": "预热任务正在运行中，请等待完成"}
+
+        BangumiDataItemService._warmup_running = True
+        BangumiDataItemService._warmup_progress = {
+            "total": 0, "done": 0, "success": 0, "skipped": 0, "failed": 0,
+            "current_id": None, "started_at": datetime.now().isoformat()
+        }
+
+        try:
+            # 1. 取出所有 bgm_id
+            async with db.session_scope():
+                from sqlalchemy import text
+                result = await db.session.execute(
+                    text("SELECT bgm_id FROM public.bangumi_data_item ORDER BY bgm_id")
+                )
+                all_ids: List[int] = [row[0] for row in result.fetchall() if row[0]]
+
+            total = len(all_ids)
+            BangumiDataItemService._warmup_progress["total"] = total
+            logger.info(f"[BangumiData] 🔥 开始预热 Subject 缓存，共 {total} 个 ID (force={force})")
+
+            if total == 0:
+                BangumiDataItemService._warmup_progress["done"] = 0
+                return {"success": True, "message": "bangumi_data_item 表为空，无需预热", "count": 0}
+
+            # 2. 延迟导入，避免循环依赖
+            from .client import BangumiProvider
+
+            # 3. 并发拉取（信号量限制为 5，与现有代码一致）
+            semaphore = asyncio.Semaphore(5)
+
+            async def _warmup_one(bgm_id: int):
+                async with semaphore:
+                    # 非强制模式：7天内已有 detail 缓存的跳过
+                    if not force:
+                        from metadata.meta_cache import MetaCacheManager
+                        existing = await MetaCacheManager.get_discover_cache(f"bangumi:detail:{bgm_id}")
+                        if existing:
+                            BangumiDataItemService._warmup_progress["skipped"] += 1
+                            BangumiDataItemService._warmup_progress["done"] += 1
+                            return
+
+                    BangumiDataItemService._warmup_progress["current_id"] = bgm_id
+                    try:
+                        # 调用统一入口 get_subject_details：
+                        #   完结番剧 → _fetch_subject_raw 写 bangumi_raw_cache(永久) → 加工写 discover_cache:detail(7天)
+                        #   未完结番剧 → _fetch_subject_raw 打API → 加工写 discover_cache:detail(7天)
+                        data = await BangumiProvider.get_subject_details(bgm_id)
+                        if data:
+                            BangumiDataItemService._warmup_progress["success"] += 1
+                        else:
+                            BangumiDataItemService._warmup_progress["failed"] += 1
+                    except Exception as e:
+                        logger.warning(f"[BangumiData] ⚠️ 预热 ID:{bgm_id} 失败: {e}")
+                        BangumiDataItemService._warmup_progress["failed"] += 1
+                    finally:
+                        BangumiDataItemService._warmup_progress["done"] += 1
+
+            # 分批处理，避免一次性创建过多协程（每批 50 个）
+            batch_size = 50
+            for i in range(0, total, batch_size):
+                batch = all_ids[i:i + batch_size]
+                await asyncio.gather(*[_warmup_one(bid) for bid in batch])
+                # 进度日志
+                p = BangumiDataItemService._warmup_progress
+                logger.info(
+                    f"[BangumiData] 🔥 预热进度: {p['done']}/{p['total']} "
+                    f"(成功 {p['success']} | 跳过 {p['skipped']} | 失败 {p['failed']})"
+                )
+
+            p = BangumiDataItemService._warmup_progress
+            logger.info(
+                f"[BangumiData] ✅ 预热完成: 共 {p['total']} 个 | "
+                f"成功 {p['success']} | 跳过 {p['skipped']} | 失败 {p['failed']}"
+            )
+            return {
+                "success": True,
+                "message": f"预热完成: 成功 {p['success']} | 跳过 {p['skipped']} | 失败 {p['failed']}",
+                "total": p["total"], "success_count": p["success"],
+                "skipped": p["skipped"], "failed": p["failed"]
+            }
+        except Exception as e:
+            logger.error(f"[BangumiData] ❌ 预热任务异常: {e}", exc_info=True)
+            return {"success": False, "message": f"预热任务异常: {e}"}
+        finally:
+            BangumiDataItemService._warmup_running = False
+            BangumiDataItemService._warmup_progress["finished_at"] = datetime.now().isoformat()
+
+    @staticmethod
+    def get_warmup_status() -> Dict[str, Any]:
+        """获取预热任务状态"""
+        return {
+            "running": BangumiDataItemService._warmup_running,
+            "progress": dict(BangumiDataItemService._warmup_progress),
+        }
+
 
 bangumi_data_service = BangumiDataItemService()
