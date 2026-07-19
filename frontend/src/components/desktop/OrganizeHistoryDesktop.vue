@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted, h } from 'vue'
 import { 
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard, useDialog
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard, NTooltip, useDialog
 } from 'naive-ui'
 import {
   ClockIcon as HistoryIcon,
@@ -14,9 +14,11 @@ import {
   CheckBadgeIcon as SuccessIcon,
   ExclamationCircleIcon as ErrorIcon,
   ChevronDoubleDownIcon as MoreIcon,
-  ArrowPathIcon as RetryIcon
+  ArrowPathIcon as RetryIcon,
+  DocumentTextIcon as LogIcon
 } from '@heroicons/vue/24/outline'
 import AppSearchField from '../../components/AppSearchField.vue'
+import AppGlassModal from '../../components/AppGlassModal.vue'
 import { useOrganizeHistory } from '../../composables/views/useOrganizeHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
@@ -33,7 +35,12 @@ const {
   isRetrying,
   clearAll,
   getActionLabel,
-  formatTime
+  formatTime,
+  showLogModal,
+  logDetail,
+  logLoading,
+  logDetailGroupedLogs,
+  viewTaskLog
 } = useOrganizeHistory()
 
 const dialog = useDialog()
@@ -116,6 +123,18 @@ const handleDelete = (item: any) => {
       deleteItem(item.id, deleteFile.value)
     }
   })
+}
+
+/** 日志弹框状态标签（与任务中心样式一致） */
+const getStatusTag = (status: string) => {
+  const map: Record<string, { color: string; bg: string; label: string }> = {
+    completed: { color: '#fff', bg: '#2e7d32', label: '完成' },
+    running: { color: '#fff', bg: '#0288d1', label: '运行中' },
+    error: { color: '#fff', bg: '#c62828', label: '错误' },
+    stopped: { color: '#fff', bg: '#f57c00', label: '已停止' },
+    skipped: { color: '#fff', bg: '#f57c00', label: '跳过' }
+  }
+  return map[status] || { color: '#fff', bg: '#616161', label: status }
 }
 </script>
 
@@ -229,6 +248,20 @@ const handleDelete = (item: any) => {
               </div>
             </div>
             <div class="delete-btn-wrapper">
+              <n-tooltip trigger="hover">
+                <template #trigger>
+                  <n-button
+                    v-bind="getButtonStyle('icon')"
+                    size="small"
+                    :disabled="!item.task_id"
+                    style="margin-right: 6px"
+                    @click="viewTaskLog(item.task_id)"
+                  >
+                    <template #icon><n-icon><LogIcon /></n-icon></template>
+                  </n-button>
+                </template>
+                {{ item.task_id ? '查看识别日志' : '该记录未关联识别日志（旧数据）' }}
+              </n-tooltip>
               <n-button
                 v-bind="getButtonStyle('iconPrimary')"
                 size="small"
@@ -264,6 +297,33 @@ const handleDelete = (item: any) => {
     <div v-else-if="!loading" class="empty-state">
       <n-empty description="暂无整理历史" />
     </div>
+
+    <!-- 识别日志查看弹框（复用任务中心「识别」日志样式） -->
+    <AppGlassModal appearance-key="task-history-modal" v-model:show="showLogModal" style="width: 960px;" title="识别日志">
+      <template #header-extra>
+        <n-tag v-if="logDetail" size="small" round :bordered="false" :style="{ color: getStatusTag(logDetail.status).color, backgroundColor: getStatusTag(logDetail.status).bg, borderColor: 'transparent' }">
+          {{ getStatusTag(logDetail.status).label }}
+        </n-tag>
+      </template>
+      <n-spin :show="logLoading">
+        <div v-if="logDetail" class="log-scroll-area">
+          <div class="log-container">
+            <div v-for="group in logDetailGroupedLogs" :key="group.groupTime" class="log-group">
+              <div class="log-group-time">{{ group.displayTime }}</div>
+              <div class="log-group-line"></div>
+              <div class="log-group-items">
+                <div v-for="(log, i) in group.logs" :key="i" class="log-line">
+                  <span class="log-time">{{ log.time }}</span>
+                  <span :class="['log-level', log.level.toLowerCase()]">{{ log.level }}</span>
+                  <span class="log-msg">{{ log.message }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <n-empty v-else-if="!logLoading" description="暂无日志" style="padding: 60px 0" />
+      </n-spin>
+    </AppGlassModal>
   </div>
 </template>
 
@@ -515,6 +575,75 @@ const handleDelete = (item: any) => {
 .detail-item { display: flex; align-items: center; gap: 6px; }
 .detail-item .label { color: var(--text-tertiary); }
 .delete-btn-wrapper { flex-shrink: 0; display: flex; align-items: center; }
+
+/* === 识别日志弹框样式（与任务中心日志样式保持一致） === */
+.log-container {
+  font-family: var(--code-font, 'JetBrains Mono', monospace);
+  font-size: 13px;
+  background: var(--app-surface-card-mixed);
+  border-radius: 8px;
+  padding: 12px;
+}
+.log-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--app-border-light);
+}
+.log-group:last-child { border-bottom: none; }
+.log-group-time {
+  color: var(--n-primary-color);
+  font-size: 12px;
+  min-width: 130px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  font-weight: 700;
+}
+.log-group-line {
+  width: 2px;
+  background-color: var(--n-primary-color);
+  border-radius: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 4px 0;
+  opacity: 0.6;
+}
+.log-group-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.log-line {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+.log-time { color: var(--text-tertiary); min-width: 75px; font-variant-numeric: tabular-nums; }
+.log-level {
+  min-width: 40px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.log-level.info { color: #52c41a; }
+.log-level.error { color: #ff4d4f; }
+.log-level.warning { color: #faad14; }
+.log-level.warn { color: #faad14; }
+.log-level.debug { color: #1890ff; }
+.log-msg { flex: 1; word-break: break-all; }
+
+/* === 移动端适配: 日志弹框 === */
+@media (max-width: 767px) {
+  .log-container { padding: 8px; font-size: 11px; }
+  .log-group { gap: 8px; padding: 4px 0; }
+  .log-group-time { min-width: 60px; font-size: 10px; }
+  .log-group-line { margin: 2px 0; }
+  .log-line { flex-wrap: wrap; gap: 4px; padding: 1px 0; }
+  .log-time { font-size: 10px; min-width: 0 !important; }
+  .log-level { font-size: 10px; min-width: 0 !important; }
+  .log-msg { font-size: 11px; flex: none !important; width: 100%; }
+}
 
 /* Compact Alert - 改成标签样式 */
 .compact-alert { display: inline-block; width: auto; max-width: 100%; }

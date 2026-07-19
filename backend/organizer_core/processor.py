@@ -278,7 +278,8 @@ class FileProcessor:
                         check_emby_exists=task.get("check_emby_exists", False),
                         calculate_hash=task.get("calculate_hash", False),
                         clean_empty_dir=task.get("clean_empty_dir", False),
-                        trigger_strm=task.get("trigger_strm", False)
+                        trigger_strm=task.get("trigger_strm", False),
+                        task_id=recog_task_id
                     )
                     await FileProcessor._save_history_force(history)
                     
@@ -342,7 +343,8 @@ class FileProcessor:
                                     check_emby_exists=task.get("check_emby_exists", False),
                                     calculate_hash=task.get("calculate_hash", False),
                                     clean_empty_dir=task.get("clean_empty_dir", False),
-                                    trigger_strm=task.get("trigger_strm", False)
+                                    trigger_strm=task.get("trigger_strm", False),
+                                    task_id=recog_task_id
                                 )
                                 await FileProcessor._save_history_force(history)
                             return [{"type": "skip", "skip_type": "emby_exists", "source": v_path, "reason": "Emby库中已存在"}]
@@ -507,7 +509,8 @@ class FileProcessor:
                             check_emby_exists=task.get("check_emby_exists", False),
                             calculate_hash=task.get("calculate_hash", False),
                             clean_empty_dir=task.get("clean_empty_dir", False),
-                            trigger_strm=task.get("trigger_strm", False)
+                            trigger_strm=task.get("trigger_strm", False),
+                            task_id=recog_task_id
                         )
                         await FileProcessor._save_history_force(history)
 
@@ -622,7 +625,8 @@ class FileProcessor:
                                 check_emby_exists=task.get("check_emby_exists", False),
                                 calculate_hash=task.get("calculate_hash", False),
                                 clean_empty_dir=task.get("clean_empty_dir", False),
-                                trigger_strm=task.get("trigger_strm", False)
+                                trigger_strm=task.get("trigger_strm", False),
+                                task_id=recog_task_id
                             )
                             # 按 source_path 去重后保存
                             stmt = select(OrganizeHistory).where(OrganizeHistory.source_path == v_path)
@@ -752,7 +756,8 @@ class FileProcessor:
                             check_emby_exists=task.get("check_emby_exists", False),
                             calculate_hash=task.get("calculate_hash", False),
                             clean_empty_dir=task.get("clean_empty_dir", False),
-                            trigger_strm=task.get("trigger_strm", False)
+                            trigger_strm=task.get("trigger_strm", False),
+                            task_id=recog_task_id
                         )
                         # 按 source_path 去重后保存
                         stmt = select(OrganizeHistory).where(OrganizeHistory.source_path == v_path)

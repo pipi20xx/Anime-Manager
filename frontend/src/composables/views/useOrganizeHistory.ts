@@ -1,5 +1,6 @@
 import { ref, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { useGroupedLogs } from '../useGroupedLogs'
 
 export function useOrganizeHistory() {
   const message = useMessage()
@@ -13,6 +14,12 @@ export function useOrganizeHistory() {
   const page = ref(0)
   const pageSize = ref(20)
   const hasMore = ref(true)
+
+  // 任务日志查看相关状态
+  const showLogModal = ref(false)
+  const logDetail = ref<any>(null)
+  const logLoading = ref(false)
+  const { groupedLogs: logDetailGroupedLogs } = useGroupedLogs(logDetail)
 
   const fetchData = async (isRefresh = false) => {
     if (loading.value) return
@@ -98,6 +105,39 @@ export function useOrganizeHistory() {
 
   const isRetrying = (id: number) => retryingIds.value.has(id)
 
+  /**
+   * 查看该历史记录关联的识别任务日志
+   * 与任务中心的「识别」日志复用同一份数据，通过 task_id 关联。
+   * 旧数据没有 task_id 字段时给出提示。
+   */
+  const viewTaskLog = async (taskId: string | null | undefined) => {
+    if (!taskId) {
+      message.warning('该记录未关联任务日志（旧数据不支持查看日志）')
+      return
+    }
+    logLoading.value = true
+    showLogModal.value = true
+    logDetail.value = null
+    try {
+      const res = await fetch(`${API_BASE}/api/task_history/${taskId}`)
+      if (res.status === 404) {
+        message.warning('关联的任务日志已被清理（任务中心会自动清理超过 30 天的记录）')
+        showLogModal.value = false
+        return
+      }
+      logDetail.value = await res.json()
+      if (!logDetail.value) {
+        message.error('未找到任务日志')
+        showLogModal.value = false
+      }
+    } catch (e) {
+      message.error('获取任务日志失败')
+      showLogModal.value = false
+    } finally {
+      logLoading.value = false
+    }
+  }
+
   const clearAll = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/organize/history/clear`, { method: 'DELETE' })
@@ -146,6 +186,11 @@ export function useOrganizeHistory() {
     isRetrying,
     clearAll,
     getActionLabel,
-    formatTime
+    formatTime,
+    showLogModal,
+    logDetail,
+    logLoading,
+    logDetailGroupedLogs,
+    viewTaskLog
   }
 }
