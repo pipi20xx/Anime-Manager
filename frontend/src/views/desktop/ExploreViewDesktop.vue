@@ -40,14 +40,14 @@ const currentTab = computed({
           class="custom-tabs"
           style="width: 420px"
        >
-          <n-tab-pane name="recommend" tab="推荐看板">
-             <template #tab>
-                <div class="tab-label">
-                   <n-icon size="18"><RecommendIcon /></n-icon>
-                   <span>推荐</span>
-                </div>
-             </template>
-          </n-tab-pane>
+         <n-tab-pane name="recommend" tab="播出时间表">
+            <template #tab>
+               <div class="tab-label">
+                  <n-icon size="18"><RecommendIcon /></n-icon>
+                  <span>播出时间表</span>
+               </div>
+            </template>
+         </n-tab-pane>
           <n-tab-pane name="discover" tab="探索索引">
              <template #tab>
                 <div class="tab-label">
@@ -69,9 +69,9 @@ const currentTab = computed({
 
     <div class="explore-content">
        <router-view v-slot="{ Component, route: r }">
-         <transition name="fade" mode="out-in">
+         <keep-alive>
            <component :is="Component" :key="r.fullPath" />
-         </transition>
+         </keep-alive>
        </router-view>
     </div>
   </div>
@@ -103,18 +103,4 @@ const currentTab = computed({
   width: 100%;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
 </style>

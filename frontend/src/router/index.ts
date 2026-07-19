@@ -11,7 +11,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/explore/recommend',
         name: 'ExploreRecommend',
-        component: () => import('../views/explore/desktop/RecommendTabDesktop.vue')
+        component: () => import('../views/explore/desktop/ScheduleTabDesktop.vue')
       },
       {
         path: '/explore/discover',

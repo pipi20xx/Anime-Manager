@@ -481,7 +481,7 @@ Anime-Manager/
 │   │   │   │   └── appearance/     # 外观定制面板
 │   │   │   ├── explore/desktop/    # 探索子页面
 │   │   │   │   ├── DiscoveryTabDesktop.vue     # 发现
-│   │   │   │   ├── RecommendTabDesktop.vue     # 推荐
+│   │   │   │   ├── ScheduleTabDesktop.vue      # 播出时间表
 │   │   │   │   └── SearchTabDesktop.vue        # 搜索
 │   │   │   └── settings/           # 设置页
 │   │   │       ├── AccountTab.vue              # 账户设置
