@@ -91,6 +91,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/desktop/TaskHistoryViewDesktop.vue')
   },
   {
+    path: '/file-hashes',
+    name: 'FileHashes',
+    component: () => import('../views/desktop/FileHashesViewDesktop.vue')
+  },
+  {
     path: '/jackett-search',
     name: 'JackettSearch',
     component: () => import('../views/desktop/JackettSearchViewDesktop.vue')

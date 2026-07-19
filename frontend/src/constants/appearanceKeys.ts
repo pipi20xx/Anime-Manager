@@ -252,6 +252,20 @@ export const APPEARANCE_KEYS = {
     categories: ['modal', 'dialog', 'input', 'search', 'tabs', 'card', 'list', 'button']
   },
 
+  // ===== 文件哈希 =====
+  'file-hashes-modal': {
+    label: '查看详情 → 文件哈希详情',
+    description: '文件哈希记录详情查看弹框（只读）',
+    page: '文件哈希记录',
+    categories: ['modal', 'dialog', 'input', 'search', 'tabs', 'card', 'list', 'button']
+  },
+  'file-hashes-template-settings': {
+    label: '文件哈希 → ED2K 链接命名模板',
+    description: 'ED2K 链接命名模板设置弹框（组合识别信息生成文件名）',
+    page: '文件哈希记录',
+    categories: ['modal', 'dialog', 'input', 'card', 'list', 'button']
+  },
+
   // ===== 卡片 =====
   'strm-task-card': {
     label: '虚拟 STRM 库 → STRM 任务卡片',
@@ -330,6 +344,12 @@ export const APPEARANCE_KEYS = {
     description: '任务中心页面中的任务列表卡片',
     page: '卡片',
     categories: ['card']
+  },
+  'file-hashes-card': {
+    label: '文件哈希记录 → 哈希记录卡片',
+    description: '文件哈希记录页面中的哈希记录列表卡片',
+    page: '卡片',
+    categories: ['card', 'list']
   },
   'secondary-rule-card': {
     label: '数据中心 → 二级分类规则 → 二级分类规则卡片',
@@ -411,6 +431,7 @@ export const CUSTOMIZABLE_PAGES = {
   'organizer':         { label: '整理重命名',     description: '整理重命名、规则管理、任务配置页面',   routeName: 'Organizer' },
   'organize-history':  { label: '整理历史',       description: '整理历史记录页面',                     routeName: 'OrganizeHistory' },
   'tasks':             { label: '任务中心',       description: '任务管理与日志页面',                   routeName: 'TaskHistory' },
+  'file-hashes':       { label: '文件哈希记录',   description: '文件 SHA1/ED2K 哈希与识别信息缓存页面（只读）', routeName: 'FileHashes' },
   'strm':              { label: '虚拟 STRM 库',   description: 'STRM 虚拟库管理页面',                  routeName: 'StrmGenerator' },
   'calendar':          { label: '追剧日历',       description: '番剧追剧日历页面',                     routeName: 'Calendar' },
   'database':          { label: '系统数据中心',   description: '数据中心（元数据/二级分类/ID映射/维护）', routeName: 'Database' },
@@ -475,6 +496,11 @@ const APPEARANCE_KEY_PAGE_MAP: Record<string, CustomizablePageKey[]> = {
 
   // ===== 任务中心（TaskHistoryViewDesktop） =====
   'task-history-card':            ['tasks'],
+
+  // ===== 文件哈希记录（FileHashesViewDesktop） =====
+  'file-hashes-modal':            ['file-hashes'],
+  'file-hashes-template-settings':['file-hashes'],
+  'file-hashes-card':             ['file-hashes'],
 
   // ===== 虚拟 STRM 库（StrmGeneratorViewDesktop） =====
   'strm-task-modal':              ['strm'],

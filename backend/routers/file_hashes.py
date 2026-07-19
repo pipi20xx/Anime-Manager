@@ -58,6 +58,7 @@ async def list_file_hashes(
     tmdb_id: Optional[str] = Query(None, description="按 TMDB ID 筛选"),
     media_type: Optional[str] = Query(None, description="按媒体类型筛选 (tv/movie)"),
     season: Optional[int] = Query(None, description="按季号筛选"),
+    team: Optional[str] = Query(None, description="按制作组筛选"),
     limit: int = Query(50, ge=1, le=500, description="每页数量"),
     offset: int = Query(0, ge=0, description="分页偏移量"),
     sort_by: str = Query("calculated_at", description="排序字段"),
@@ -79,6 +80,8 @@ async def list_file_hashes(
             filters.append(FileHash.media_type == media_type)
         if season is not None:
             filters.append(FileHash.season == season)
+        if team:
+            filters.append(FileHash.team == team)
 
         if q:
             pattern = f"%{q}%"
