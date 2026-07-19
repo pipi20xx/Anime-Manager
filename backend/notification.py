@@ -799,53 +799,64 @@ class NotificationManager:
         from datetime import datetime
         start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        # 获取版本号（延迟导入避免循环依赖，与系统其他位置保持一致）
+        try:
+            from main import __version__
+            version = __version__
+        except Exception:
+            version = "unknown"
+
         # ── 收集模块状态 ──
+        # 每个模块使用项目内一致的语义图标，统一用 · 作为项目符号
         modules = []
 
         # CD2 监控
         cd2_status = status_info.get("cd2_monitor", {})
         if cd2_status.get("enabled"):
             running = cd2_status.get("running", False)
-            icon = "🟢" if running else "🔴"
             label = "运行中" if running else "未启动"
             detail = ""
             if cd2_status.get("client"):
-                detail = f' <code>{cd2_status["client"]}</code>'
+                detail = f' · <code>{cd2_status["client"]}</code>'
+            # 运行中用 ☁️ 表征云盘；未运行改用 ⚠️ 突出异常
+            icon = "☁️" if running else "⚠️"
             modules.append((icon, "CD2 监控", label, detail))
 
         # 整理任务
         organize_tasks = status_info.get("organize_tasks", 0)
         if organize_tasks > 0:
-            modules.append(("🟢", "整理任务", f"{organize_tasks} 个", ""))
+            modules.append(("📂", "整理任务", f"{organize_tasks} 个", ""))
 
         # STRM 任务
         strm_tasks = status_info.get("strm_tasks", 0)
         if strm_tasks > 0:
-            modules.append(("🟢", "STRM 任务", f"{strm_tasks} 个", ""))
+            modules.append(("🎬", "STRM 任务", f"{strm_tasks} 个", ""))
 
         # RSS 订阅
         rss_feeds = status_info.get("rss_feeds", 0)
         if rss_feeds > 0:
-            modules.append(("🟢", "RSS 订阅", f"{rss_feeds} 个", ""))
+            modules.append(("📡", "RSS 订阅", f"{rss_feeds} 个", ""))
 
         # 定时任务
         scheduler_jobs = status_info.get("scheduler_jobs", 0)
         if scheduler_jobs > 0:
-            modules.append(("🟢", "定时任务", f"{scheduler_jobs} 个", ""))
+            modules.append(("⏰", "定时任务", f"{scheduler_jobs} 个", ""))
 
         # ── 构建 HTML 消息 ──
         lines = []
 
-        # 标题区 - 使用引用块风格
-        lines.append(f"<b>🚀 番剧管家 启动完成</b>")
-        lines.append(f"<blockquote>🕓 {start_time}</blockquote>")
+        # 标题区
+        lines.append("<b>🚀 番剧管家 启动完成</b>")
+        lines.append("──────────────────")
+        lines.append(f"🏷 <b>版本：</b><code>v{version}</code>")
+        lines.append(f"🕓 <b>时间：</b>{start_time}")
 
         # 模块状态列表
         if modules:
             lines.append("")
             lines.append("<b>📋 服务状态</b>")
             for icon, name, value, detail in modules:
-                lines.append(f"▪️ <b>{name}</b> — {value}{detail}")
+                lines.append(f"· {icon} <b>{name}</b> — {value}{detail}")
 
         # 错误/警告
         errors = status_info.get("errors", [])

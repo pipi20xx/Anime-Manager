@@ -1,6 +1,7 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, List
 from fastapi import APIRouter, HTTPException
 from recognition.data_provider.tmdb.client import TMDBProvider
 from tmdbmatefull.database import DEFAULT_GENRE_MAPPINGS, DEFAULT_COUNTRY_MAPPINGS, DEFAULT_LANGUAGE_MAPPINGS
@@ -34,6 +35,69 @@ def _get_emby_cache(key: str) -> Any:
 
 def _set_emby_cache(key: str, data: Any):
     _emby_cache[key] = (data, datetime.now() + _emby_cache_ttl)
+
+
+# ── TMDB 详情页季度集信息预热 ──────────────────────────────
+# 进入详情页时后台异步拉取所有季的集信息到 discover 缓存，
+# 用户点季集时直接命中缓存秒开，无需等待 TMDB 实时请求
+_tmdb_preheat_logger = logging.getLogger("TMDBPreheat")
+# 仅为近期已预热条目做内存级去重，避免短时间内重复触发；进程重启后自动清空
+_preheat_recent: Dict[str, datetime] = {}
+_preheat_recent_ttl = timedelta(minutes=10)
+# 限制并发请求数，避免一次性请求过多被 TMDB 限流
+_preheat_semaphore = asyncio.Semaphore(3)
+
+
+async def _preheat_season_episodes(tmdb_id: str, seasons: List[Dict]):
+    """
+    后台预热指定作品所有季的集信息到 discover 缓存。
+    - 应以 fire-and-forget 方式调用（asyncio.create_task），不阻塞主流程
+    - get_season_episodes 内部已有缓存检查，已缓存的季会直接跳过，不会重复请求 TMDB
+    - 全程吞掉异常，绝不影响主流程
+    """
+    # 短期去重：10 分钟内已预热过的直接跳过，避免频繁刷新触发重复任务
+    now = datetime.now()
+    recent_key = str(tmdb_id)
+    last = _preheat_recent.get(recent_key)
+    if last and now - last < _preheat_recent_ttl:
+        return
+    _preheat_recent[recent_key] = now
+
+    # 顺手清理过期的去重标记，避免内存无限增长
+    expired_keys = [k for k, v in _preheat_recent.items() if now - v > _preheat_recent_ttl * 6]
+    for k in expired_keys:
+        _preheat_recent.pop(k, None)
+
+    preheated = 0
+    skipped = 0
+    failed = 0
+    try:
+        provider = TMDBProvider()
+
+        async def _do_one(sn: int):
+            nonlocal preheated, skipped, failed
+            async with _preheat_semaphore:
+                try:
+                    # 命中缓存会立即返回；未命中才会真正请求 TMDB
+                    res = await provider.get_season_episodes(tmdb_id, sn)
+                    if res and res.get("episodes"):
+                        preheated += 1
+                    else:
+                        skipped += 1
+                except Exception as e:
+                    failed += 1
+                    _tmdb_preheat_logger.warning(f"[TMDB 预热] tmdb_id={tmdb_id} S{sn} 失败: {e}")
+
+        # 收集需要预热的季号（过滤掉无 season_number 的异常项）
+        season_numbers = [s.get("season_number") for s in seasons if s.get("season_number") is not None]
+        if season_numbers:
+            # return_exceptions=True 确保单个季失败不影响其他季
+            await asyncio.gather(*[_do_one(sn) for sn in season_numbers], return_exceptions=True)
+
+        log_audit("TMDB", "预热", f"季度集预热完成: tmdb_id={tmdb_id} 共 {len(season_numbers)} 季 (预热 {preheated}, 跳过 {skipped}, 失败 {failed})")
+    except Exception as e:
+        log_audit("TMDB", "预热", f"季度集预热异常: tmdb_id={tmdb_id} - {e}", level="WARN")
+
 
 @router.get("/trending", summary="获取动漫趋势")
 async def get_trending():
@@ -78,6 +142,12 @@ async def get_detail(media_type: str, tmdb_id: str):
             result["genres"] = [g if isinstance(g, str) else g.get("name", g) for g in result["genres"]]
 
     log_audit("TMDB", "详情", f"获取成功: {result.get('title')}", details="\n".join(logs))
+
+    # TV 类型：后台异步预热所有季的集信息，用户点季集时直接命中缓存秒开
+    # fire-and-forget，不阻塞详情接口返回；已缓存的季会自动跳过
+    if media_type == "tv" and isinstance(result.get("seasons"), list) and result["seasons"]:
+        asyncio.create_task(_preheat_season_episodes(tmdb_id, result["seasons"]))
+
     return result
 
 @router.get("/detail/{media_type}/{tmdb_id}/emby", summary="获取作品在Emby库中的状态")

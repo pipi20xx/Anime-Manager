@@ -11,7 +11,6 @@ import {
   ArrowTopRightOnSquareIcon as OpenIcon
 } from '@heroicons/vue/24/outline'
 import {
-  CommandLineIcon as TerminalIcon,
   PauseCircleIcon as PauseIcon,
   PlayCircleIcon as PlayIcon
 } from '@heroicons/vue/24/solid'
@@ -80,7 +79,6 @@ watch(() => props.show, (newVal) => {
       <template #header>
         <div class="console-header">
           <div class="d-flex align-center gap-2">
-            <n-icon size="20" style="color: var(--n-primary-color)"><TerminalIcon /></n-icon>
             <span class="title">{{ selectedDate ? `历史记录: ${selectedDate}` : '实时系统日志 (Live)' }}</span>
             <n-tag v-if="!selectedDate" size="small" round :bordered="false" :style="socketStatus === 'connected' ? { color: '#fff', backgroundColor: '#10B981', borderColor: 'transparent' } : { color: '#fff', backgroundColor: '#ef4444', borderColor: 'transparent' }">
               <template #icon>
@@ -159,7 +157,6 @@ watch(() => props.show, (newVal) => {
   align-items: center;
   padding: 10px 16px;
   background: transparent;
-  border-bottom: 1px solid var(--app-border-light);
   flex-shrink: 0;
 }
 .title { font-weight: bold; color: var(--text-primary); font-size: 14px; }
