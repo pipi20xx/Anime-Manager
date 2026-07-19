@@ -1,20 +1,15 @@
 import { reactive, ref, computed, onMounted } from 'vue'
-import { openTmdbDetail, openBangumiDetail } from '../../store/navigationStore'
+import { openBangumiDetail } from '../../store/navigationStore'
 
 export function useRecommend() {
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
   const exploreData = reactive({
-    trending: [] as any[],
-    movies: [] as any[],
-    tv: [] as any[],
-    calendar: [] as any[],
     schedule: [] as any[],
     subscriptions: [] as any[],
     loading: false
   })
 
-  const currentDayTab = ref("")
   const currentScheduleTab = ref("")
 
   const fetchSubscriptions = async () => {
@@ -58,40 +53,6 @@ export function useRecommend() {
       }
   }
 
-  // 各区块独立加载，谁先返回谁先显示（流式渲染）
-  const fetchTrending = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/tmdb/trending`)
-      if (res.ok) exploreData.trending = (await res.json()).results || []
-    } catch (e) { console.error("Fetch trending failed", e) }
-  }
-
-  const fetchMovies = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/tmdb/popular/movie`)
-      if (res.ok) exploreData.movies = (await res.json()).results || []
-    } catch (e) { console.error("Fetch movies failed", e) }
-  }
-
-  const fetchTv = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/tmdb/popular/tv`)
-      if (res.ok) exploreData.tv = (await res.json()).results || []
-    } catch (e) { console.error("Fetch tv failed", e) }
-  }
-
-  const fetchCalendar = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/bangumi/calendar`)
-      if (res.ok) {
-        const calData = await res.json()
-        exploreData.calendar = calData.data || []
-        const todayItem = exploreData.calendar.find((d: any) => d.is_today)
-        currentDayTab.value = todayItem?.weekday.en || exploreData.calendar[0]?.weekday.en || ""
-      }
-    } catch (e) { console.error("Fetch calendar failed", e) }
-  }
-
   const fetchSchedule = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/bangumi/calendar_local`)
@@ -110,10 +71,6 @@ export function useRecommend() {
     fetchSubscriptions()
     // 各区块并行发起、独立填充，互不阻塞
     await Promise.allSettled([
-      fetchTrending(),
-      fetchMovies(),
-      fetchTv(),
-      fetchCalendar(),
       fetchSchedule(),
     ])
     exploreData.loading = false
@@ -135,10 +92,6 @@ export function useRecommend() {
   const getPoster = (path: string) => getImg(path)
   const getBackdrop = (path: string) => getImg(path)
 
-  const openDetail = (item: any, type: string) => {
-      openTmdbDetail(item.id, type === 'movie' ? 'movie' : 'tv', item)
-  }
-
   const openBangumi = (bgmItem: any) => {
       openBangumiDetail(bgmItem.id, bgmItem)
   }
@@ -149,7 +102,6 @@ export function useRecommend() {
 
   return {
     exploreData,
-    currentDayTab,
     currentScheduleTab,
     fetchSubscriptions,
     isSubscribed,
@@ -157,7 +109,6 @@ export function useRecommend() {
     getImg,
     getPoster,
     getBackdrop,
-    openDetail,
     openBangumi
   }
 }

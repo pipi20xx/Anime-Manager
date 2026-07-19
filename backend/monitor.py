@@ -398,9 +398,7 @@ class MonitorManager:
                 tmdb = TMDBProvider(tmdb_key)
                 await tmdb.discover("tv", {"page": 1, "sort_by": "popularity.desc"})
                 await tmdb.discover("movie", {"page": 1, "sort_by": "popularity.desc"})
-                await tmdb.get_popular("tv")
-                await tmdb.get_popular("movie")
-                logger.info("[TMDB] 发现页 + 热门列表缓存预热完成")
+                logger.info("[TMDB] 发现页缓存预热完成")
         except Exception as e:
             logger.warning(f"[TMDB] 发现页缓存预热失败: {e}")
 
