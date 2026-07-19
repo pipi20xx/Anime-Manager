@@ -481,28 +481,28 @@ class NotificationManager:
         category = final_res.get("category", "未知")
         year = final_res.get("year", "")
         resolution = final_res.get("resolution", "")
+        source = final_res.get("source", "")
+        platform = final_res.get("platform", "")
+        origin_country = final_res.get("origin_country", "")
         team = final_res.get("team", "")
         poster_path = final_res.get("poster_path")
-        rating = final_res.get("vote_average")
         duration = final_res.get("duration", "未知")
         file_size = final_res.get("file_size", "未知")
-        file_count = final_res.get("file_count", 1)
 
         # 构造集数
         se_info = f"S{season:02d} E{episode}" if isinstance(season, int) else f"S{season} E{episode}"
         if category == "电影": se_info = ""
 
-        # 评分转换
-        rating_str = f"{rating:.1f}/10" if rating else "暂无评分"
-
         msg = (
             f"🎬 <b>{tmdb_title} ({year}) {se_info} 已入库</b>\n"
             f"📚 <b>类型：</b>{category}\n"
-            f"📊 <b>质量：</b>{resolution or '未知'}\n"
-            f"📂 <b>文件：</b>{file_count}个\n"
-            f"💾 <b>大小：</b>{file_size}\n"
             f"🆔 <b>影号：</b>{tmdb_id}\n"
+            f"🌍 <b>产地：</b>{origin_country or '未知'}\n"
+            f"📊 <b>质量：</b>{resolution or '未知'}\n"
+            f"💿 <b>介质：</b>{source or '未知'}\n"
+            f"📡 <b>平台：</b>{platform or '未知'}\n"
             f"👥 <b>组名：</b>{team or '未知'}\n"
+            f"💾 <b>大小：</b>{file_size}\n"
             f"⏱️ <b>用时：</b>{duration}\n\n"
             f"📄 <b>原始：</b><code>{file_name}</code>\n"
         )
