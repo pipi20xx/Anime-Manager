@@ -161,6 +161,7 @@ class BangumiDataItemService:
         movie_count = 0
         skipped_count = 0
         duplicate_count = 0
+        with_tmdb_count = 0
         seen_bgm_ids = set()
         
         for item in items:
@@ -216,7 +217,10 @@ class BangumiDataItemService:
                     except (ValueError, TypeError):
                         continue
             
-            if bgm_id and tmdb_id:
+            # 只要有 BGM ID 就写入（不再强制要求 TMDB ID），
+            # 无 TMDB 映射的条目也可用于每日放送、完结判断、播出星期等场景。
+            # 缺失的 tmdb_id 为 None，map_to_tmdb 命中后会自动走兜底算法匹配。
+            if bgm_id:
                 if bgm_id in seen_bgm_ids:
                     duplicate_count += 1
                     continue
@@ -230,7 +234,12 @@ class BangumiDataItemService:
                     if zh_hans:
                         title_cn = zh_hans[0]
                 
-                media_type = "movie" if tmdb_type == "movie" else "tv"
+                # 媒体类型：有 TMDB 映射时以 TMDB 类型为准，无映射时用 bangumi-data 顶层 type 兜底
+                if tmdb_id:
+                    media_type = "movie" if tmdb_type == "movie" else "tv"
+                    with_tmdb_count += 1
+                else:
+                    media_type = item.get("type", "tv")
                 
                 if media_type == "tv":
                     tv_count += 1
@@ -257,7 +266,8 @@ class BangumiDataItemService:
         logger.info(f"[BangumiData] 📊 解析完成:")
         logger.info(f"[BangumiData]    ├─ TV 剧集: {tv_count} 条")
         logger.info(f"[BangumiData]    ├─ 电影: {movie_count} 条")
-        logger.info(f"[BangumiData]    ├─ 跳过 (无映射): {skipped_count} 条")
+        logger.info(f"[BangumiData]    ├─ 含 TMDB 映射: {with_tmdb_count} 条")
+        logger.info(f"[BangumiData]    ├─ 跳过 (无 BGM ID): {skipped_count} 条")
         logger.info(f"[BangumiData]    └─ 去重 (重复BGM ID): {duplicate_count} 条")
         
         return mappings
@@ -291,44 +301,34 @@ class BangumiDataItemService:
             logger.error("[BangumiData] ❌ 同步失败: 解析结果为空")
             return {"success": False, "message": "解析映射数据为空"}
         
-        logger.info(f"[BangumiData] 💾 正在写入数据库 (分批处理)...")
+        logger.info(f"[BangumiData] 💾 正在写入数据库 (单事务清空重写)...")
         
         try:
+            from sqlalchemy import text
+            from sqlalchemy.dialects.postgresql import insert
+            
             batch_size = 1000
             total_written = 0
+            total_batches = (len(mappings) + batch_size - 1) // batch_size
             
-            for i in range(0, len(mappings), batch_size):
-                batch = mappings[i:i + batch_size]
-                batch_num = i // batch_size + 1
-                total_batches = (len(mappings) + batch_size - 1) // batch_size
+            # 单事务：TRUNCATE + 全量 INSERT，任一批次失败自动 rollback，旧数据保留。
+            # 注意：不要在 session_scope 内部中途 commit，否则 TRUNCATE 生效后失败会丢数据。
+            async with db.session_scope():
+                # 1. 清空旧数据（PG 的 TRUNCATE 是事务性的，rollback 后不生效）
+                await db.session.execute(
+                    text("TRUNCATE TABLE public.bangumi_data_item")
+                )
+                logger.info(f"[BangumiData]    ✂️ 已清空旧数据")
                 
-                logger.info(f"[BangumiData]    批次 {batch_num}/{total_batches}: 写入 {len(batch)} 条")
-                
-                async with db.session_scope():
-                    from sqlalchemy.dialects.postgresql import insert
-                    
+                # 2. 分批 INSERT（无冲突，已清空）
+                for i in range(0, len(mappings), batch_size):
+                    batch = mappings[i:i + batch_size]
+                    batch_num = i // batch_size + 1
+                    logger.info(f"[BangumiData]    批次 {batch_num}/{total_batches}: 写入 {len(batch)} 条")
                     stmt = insert(BangumiDataItem.__table__).values(batch)
-                    stmt = stmt.on_conflict_do_update(
-                        index_elements=["bgm_id"],
-                        set_={
-                            "tmdb_id": stmt.excluded.tmdb_id,
-                            "media_type": stmt.excluded.media_type,
-                            "mal_id": stmt.excluded.mal_id,
-                            "anilist_id": stmt.excluded.anilist_id,
-                            "anidb_id": stmt.excluded.anidb_id,
-                            "title": stmt.excluded.title,
-                            "title_cn": stmt.excluded.title_cn,
-                            "broadcast": stmt.excluded.broadcast,
-                            "begin": stmt.excluded.begin,
-                            "end": stmt.excluded.end,
-                            "raw_data": stmt.excluded.raw_data
-                        }
-                    )
-                    
                     await db.session.execute(stmt)
-                    await db.session.commit()
-                
-                total_written += len(batch)
+                    total_written += len(batch)
+                # session_scope 正常退出 → commit；异常 → rollback，TRUNCATE 失效，旧数据保留
             
             await BangumiDataItemService.save_sync_status(items_count, total_written)
             

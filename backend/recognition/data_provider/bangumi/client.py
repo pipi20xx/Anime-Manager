@@ -725,7 +725,9 @@ class BangumiProvider:
             try:
                 from .service import bangumi_data_service
                 mapping = await bangumi_data_service.lookup(bgm_id)
-                if mapping:
+                # 表中可能存在无 TMDB 映射的条目（仅有 BGM ID），这类条目不应走快速路径，
+                # 直接放行到下方兜底算法匹配。
+                if mapping and mapping.get('tmdb_id'):
                     _log(f"┃ [BangumiData] 📋 命中 BangumiData 表: BGM:{bgm_id} -> TMDB:{mapping['tmdb_id']} ({mapping['media_type']})")
                     tmdb = TMDBClient(tmdb_api_key)
                     details = await tmdb.get_details(str(mapping['tmdb_id']), mapping['media_type'], logs=logs)
