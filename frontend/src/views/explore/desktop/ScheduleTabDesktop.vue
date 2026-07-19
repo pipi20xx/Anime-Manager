@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { NSkeleton } from 'naive-ui'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import { useRecommend } from '../../../composables/explore/useRecommend'
@@ -19,9 +19,6 @@ const sectionRefs = ref<HTMLElement[]>([])
 const setSectionRef = (el: any, idx: number) => {
   if (el) sectionRefs.value[idx] = el as HTMLElement
 }
-
-// 导航条引用，用于计算吸顶高度做滚动偏移
-const navBarRef = ref<HTMLElement | null>(null)
 
 // 日期标签文案
 const dayLabel = (day: any) => {
@@ -64,24 +61,102 @@ const setupObserver = () => {
   sectionRefs.value.forEach(el => el && observer!.observe(el))
 }
 
+// ── 吸顶控制：sentinel + IntersectionObserver + position:fixed ──
+// 不依赖 CSS sticky（受祖先 overflow 限制会失效），用 JS 精确控制
+const sentinelRef = ref<HTMLElement | null>(null)
+const navBarRef = ref<HTMLElement | null>(null)
+const isPinned = ref(false)
+// 记录导航条正常状态下的位置/尺寸，fixed 时复用以精确对齐
+const navHeight = ref(0)
+const navLeft = ref(0)
+const navWidth = ref(0)
+let pinObserver: IntersectionObserver | null = null
+
+/** 读取导航条在正常流中的位置/尺寸（仅非 pinned 时调用） */
+const captureNavRect = () => {
+  if (!navBarRef.value || isPinned.value) return
+  const rect = navBarRef.value.getBoundingClientRect()
+  navHeight.value = rect.height
+  navLeft.value = rect.left
+  navWidth.value = rect.width
+}
+
+/** fixed 定位的 inline 样式：精确对齐原来的位置 */
+const navPinStyle = computed(() => {
+  if (!isPinned.value) return {}
+  return {
+    position: 'fixed',
+    top: '0px',
+    left: `${navLeft.value}px`,
+    width: `${navWidth.value}px`,
+    zIndex: '100'
+  } as Record<string, string>
+})
+
+/** 初始化吸顶监听：sentinel 滚出视口顶部 → pin */
+const setupPinObserver = () => {
+  if (pinObserver) pinObserver.disconnect()
+  if (!sentinelRef.value) return
+  captureNavRect()
+  pinObserver = new IntersectionObserver(
+    ([entry]) => {
+      // sentinel 的 top < 0 说明已滚出视口顶部 → 吸顶
+      const shouldPin = entry.boundingClientRect.top < 0
+      if (shouldPin && !isPinned.value) {
+        // pin 前先记录位置（此时 nav 还在正常流中）
+        captureNavRect()
+      }
+      isPinned.value = shouldPin
+    },
+    { threshold: 0 }
+  )
+  pinObserver.observe(sentinelRef.value)
+}
+
+/** 窗口尺寸变化（旋转屏幕等）时重新计算位置 */
+const onResize = () => {
+  // 先临时取消 pin 以读取正常流中的位置
+  const wasPinned = isPinned.value
+  isPinned.value = false
+  nextTick(() => {
+    captureNavRect()
+    if (wasPinned) {
+      // 重新判断是否需要 pin
+      if (sentinelRef.value) {
+        const r = sentinelRef.value.getBoundingClientRect()
+        isPinned.value = r.top < 0
+      }
+    }
+  })
+}
+
 // 数据加载完成后初始化
 watch(() => exploreData.schedule, async (sched) => {
   if (sched.length > 0) {
     activeDate.value = currentScheduleTab.value || sched[0]?.date || ''
     await nextTick()
     setupObserver()
+    setupPinObserver()
   }
 }, { immediate: true })
 
 onMounted(() => {
   if (exploreData.schedule.length > 0) {
     activeDate.value = currentScheduleTab.value || exploreData.schedule[0]?.date || ''
-    nextTick(() => setupObserver())
+    nextTick(() => {
+      setupObserver()
+      setupPinObserver()
+    })
   }
+  window.addEventListener('resize', onResize)
+  window.addEventListener('orientationchange', onResize)
 })
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
+  if (pinObserver) pinObserver.disconnect()
+  window.removeEventListener('resize', onResize)
+  window.removeEventListener('orientationchange', onResize)
 })
 </script>
 
@@ -92,10 +167,13 @@ onUnmounted(() => {
       <n-skeleton v-for="i in 6" :key="i" class="skeleton-card" />
     </div>
 
-    <!-- 主体：sticky 导航 + 长列表 -->
+    <!-- 主体：吸顶导航 + 长列表 -->
     <template v-else>
+      <!-- 吸顶哨兵：高度 0，仅用于检测何时需要 pin 导航条 -->
+      <div ref="sentinelRef" class="day-nav-sentinel"></div>
+
       <!-- 吸顶日期导航：单行紧凑布局 + 毛玻璃透明 -->
-      <div class="day-nav" ref="navBarRef">
+      <div class="day-nav" ref="navBarRef" :class="{ 'is-pinned': isPinned }" :style="navPinStyle">
         <button
           v-for="(day, idx) in exploreData.schedule"
           :key="day.date"
@@ -108,6 +186,9 @@ onUnmounted(() => {
           <span class="dn-count">{{ dayLabel(day).count }}</span>
         </button>
       </div>
+
+      <!-- 占位：nav 被 fixed 脱离文档流时撑住空间，防止内容上跳 -->
+      <div v-show="isPinned" class="day-nav-spacer" :style="{ height: navHeight + 'px' }"></div>
 
       <!-- 7 天内容纵向展开 -->
       <div class="schedule-stream">
@@ -146,9 +227,12 @@ onUnmounted(() => {
 .section-loading { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-5); margin-top: var(--space-4); }
 .skeleton-card { height: 210px; border-radius: var(--radius-xl); }
 
-/* 吸顶日期导航：单行紧凑 + 毛玻璃透明 */
+/* 吸顶哨兵：高度 0 的检测点 */
+.day-nav-sentinel { height: 0; }
+
+/* 吸顶日期导航：横向滚动 + 毛玻璃透明 */
 .day-nav {
-  position: sticky;
+  position: sticky; /* 桌面端 fallback；移动端由 JS fixed 接管 */
   top: 0;
   z-index: 10;
   display: flex;
@@ -161,15 +245,31 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
   border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--border-light) 50%, transparent);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.day-nav::-webkit-scrollbar { display: none; }
+
+/* pinned (fixed) 状态：贴满屏幕顶部，去掉圆角/边距与页面融合 */
+.day-nav.is-pinned {
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
 .day-nav-btn {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  min-width: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 4px;
+  padding: 8px 10px;
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
@@ -202,6 +302,9 @@ onUnmounted(() => {
   opacity: 0.95;
   background: rgba(255,255,255,0.25);
 }
+
+/* 占位符：nav fixed 时撑住空间 */
+.day-nav-spacer { width: 100%; }
 
 /* 长列表容器 */
 .schedule-stream { display: flex; flex-direction: column; gap: var(--space-8); }

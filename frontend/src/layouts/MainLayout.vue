@@ -417,6 +417,7 @@ const handlePanelModalAction = (callback: () => void) => {
     </n-layout-sider>
 
     <n-layout-content
+      :native-scrollbar="isMobile"
       :content-style="`padding: var(--space-4); padding-bottom: ${isMobile ? '90px' : 'var(--space-4)'}; min-height: 100vh; display: flex; flex-direction: column;`"
     >
       <!-- Mobile Top Bar -->

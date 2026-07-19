@@ -364,6 +364,7 @@
   .organizer-view,
   .file-browser-view,
   .jackett-search-view,
+  .explore-view-container,
   .explore-view,
   .ai-lab-view,
   .appearance-view,
@@ -569,6 +570,25 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* —— Explore 顶部 Tab 导航：移动端适配 ——
+     4 个带图标的标签 (季度番剧表/播出时间表/探索/搜索)
+     在窄屏上需要缩小字号、减小间距，超窄屏隐藏图标 */
+  .explore-view-container .explore-header {
+    padding: 8px 0 12px 0 !important;
+  }
+  .explore-view-container .custom-tabs {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  .explore-view-container .tab-label {
+    gap: 4px !important;
+    font-size: var(--text-sm) !important;
+  }
+  .explore-view-container .tab-label .n-icon {
+    font-size: 16px !important;
+  }
+
   /* —— 搜索栏：换行 —— */
   .search-bar {
     flex-wrap: wrap !important;
@@ -608,6 +628,18 @@
   .detail-group {
     flex-wrap: wrap !important;
     gap: 8px !important;
+  }
+}
+
+/* —— Explore 超窄屏 (≤380px)：隐藏 Tab 图标只留文字 ——
+   4 个标签 (季度番剧表/播出时间表/探索/搜索) 在超窄屏上
+   图标占用过多空间，隐藏后文字可完整显示 */
+@media (max-width: 380px) {
+  .explore-view-container .tab-label .n-icon {
+    display: none !important;
+  }
+  .explore-view-container .tab-label {
+    gap: 0 !important;
   }
 }
 
