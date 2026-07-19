@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, computed } from 'vue'
+import { onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText, useDialog
 } from 'naive-ui'
@@ -108,10 +108,21 @@ const getLogStatusStyle = (status: string) => {
 }
 
 onMounted(() => {
-  fetchConfig()
-  startBgTaskPolling()
+fetchConfig()
+startBgTaskPolling()
 })
 onUnmounted(stopBgTaskPolling)
+
+// 实时日志自动滚动到底部
+watch(logDetailGroupedLogs, async () => {
+if (showLogModal.value) {
+await nextTick()
+const scrollArea = document.querySelector('.log-scroll-area')
+if (scrollArea) {
+scrollArea.scrollTop = scrollArea.scrollHeight
+}
+}
+})
 </script>
 
 <template>

@@ -1,6 +1,7 @@
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 import { useGroupedLogs } from '../useGroupedLogs'
+import { useEventStream } from '../useEventStream'
 
 export function useTaskHistory() {
   const message = useMessage()
@@ -19,7 +20,11 @@ export function useTaskHistory() {
   const pageSize = ref(20)
   const hasMore = ref(true)
   
-  let pollTimer: ReturnType<typeof setInterval> | null = null
+  let _unsubscribeEvents: (() => void) | null = null
+  let _unsubscribeLogStream: (() => void) | null = null
+
+  // WebSocket 事件流：实时接收任务记录变更推送，替代轮询
+  const { on: onEvent } = useEventStream()
 
   const fetchData = async (isRefresh = false) => {
     if (loading.value) return
@@ -64,18 +69,47 @@ export function useTaskHistory() {
     fetchData(true)
   }
 
+  const subscribeTaskLogs = (taskId: string) => {
+    unsubscribeTaskLogs()
+    _unsubscribeLogStream = onEvent('task_log', (data: any) => {
+      if (data?.task_id === taskId && selectedTask.value) {
+        // 追加实时日志，触发响应式更新
+        const logs = [...(selectedTask.value.logs || []), data.log]
+        selectedTask.value = { ...selectedTask.value, logs }
+      }
+    })
+  }
+
+  const unsubscribeTaskLogs = () => {
+    if (_unsubscribeLogStream) {
+      _unsubscribeLogStream()
+      _unsubscribeLogStream = null
+    }
+  }
+
   const fetchTaskDetail = async (taskId: string) => {
     loading.value = true
     try {
       const res = await fetch(`${API_BASE}/api/task_history/${taskId}`)
       selectedTask.value = await res.json()
       showLogModal.value = true
+      // 任务运行中：订阅实时日志流
+      if (selectedTask.value?.status === 'running') {
+        subscribeTaskLogs(taskId)
+      }
     } catch (e) {
       message.error('获取任务详情失败')
     } finally {
       loading.value = false
     }
   }
+
+  // 弹窗关闭时取消日志流订阅
+  watch(showLogModal, (val) => {
+    if (!val) {
+      unsubscribeTaskLogs()
+    }
+  })
 
   const deleteTask = async (taskId: string) => {
     try {
@@ -105,14 +139,20 @@ export function useTaskHistory() {
 
   const startPolling = () => {
     fetchTasks()
-    pollTimer = setInterval(fetchTasks, 5000)
+    // 订阅 WS 事件：任务记录变更时刷新列表
+    if (!_unsubscribeEvents) {
+      _unsubscribeEvents = onEvent('task_record', () => {
+        fetchTasks()
+      })
+    }
   }
 
   const stopPolling = () => {
-    if (pollTimer) {
-      clearInterval(pollTimer)
-      pollTimer = null
+    if (_unsubscribeEvents) {
+      _unsubscribeEvents()
+      _unsubscribeEvents = null
     }
+    unsubscribeTaskLogs()
   }
 
   const getStatusTag = (status: string) => {

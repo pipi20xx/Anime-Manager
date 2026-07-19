@@ -28,6 +28,8 @@ const {
   fetchTaskDetail,
   deleteTask,
   cleanupTasks,
+  startPolling,
+  stopPolling,
   getStatusTag,
   getModuleIcon,
   formatTime,
@@ -89,8 +91,20 @@ watch(searchQuery, () => {
   fetchData(true)
 })
 
-onMounted(fetchTasks)
+// 实时日志自动滚动到底部
+watch(selectedTaskGroupedLogs, async () => {
+  if (showLogModal.value) {
+    await nextTick()
+    const scrollArea = document.querySelector('.log-scroll-area')
+    if (scrollArea) {
+      scrollArea.scrollTop = scrollArea.scrollHeight
+    }
+  }
+})
+
+onMounted(startPolling)
 onUnmounted(() => {
+  stopPolling()
   if (observer) observer.disconnect()
 })
 </script>

@@ -149,6 +149,12 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             "processed": 0,
             "started_at": datetime.now().isoformat()
         }
+        # 推送事件：后台任务列表变更
+        try:
+            from event_broadcaster import EventBroadcaster
+            await EventBroadcaster.broadcast_background_tasks(list(_background_tasks.values()))
+        except Exception:
+            pass
         await start_task(task_id, "整理", task_name)
         await log_task(task_id, f"🚀 开始执行整理任务: {task_name}")
         await log_task(task_id, f"📁 源: {task.get('source_dir')}")
@@ -170,6 +176,12 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
                     if status in ["success", "preview"]:
                         processed += 1
                         _background_tasks[task_id]["processed"] = processed
+                        # 推送进度更新
+                        try:
+                            from event_broadcaster import EventBroadcaster
+                            await EventBroadcaster.broadcast_background_tasks(list(_background_tasks.values()))
+                        except Exception:
+                            pass
                     elif status == "error":
                         errors += 1
                 elif data_type == "skip":
@@ -216,6 +228,13 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             await finish_task(task_id, "completed", processed, stats)
             logger.info(f"✨ [整理] 后台完成: {task_name} - 成功 {processed} | 跳过 {skipped} | 失败 {errors}")
         
+        # 推送事件：后台任务列表变更
+        try:
+            from event_broadcaster import EventBroadcaster
+            await EventBroadcaster.broadcast_background_tasks(list(_background_tasks.values()))
+        except Exception:
+            pass
+        
     except Exception as e:
         await log_task(task_id, f"❌ 任务异常终止: {str(e)}", "ERROR")
         if task_id in _background_tasks:
@@ -224,6 +243,13 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
         await finish_task(task_id, "error", processed)
         logger.error(f"✨ [整理] 后台异常: {str(e)}")
+        
+        # 推送事件：后台任务列表变更
+        try:
+            from event_broadcaster import EventBroadcaster
+            await EventBroadcaster.broadcast_background_tasks(list(_background_tasks.values()))
+        except Exception:
+            pass
 
 @router.post("/api/organize/start_background", summary="启动后台整理任务")
 async def start_background_organize(request: Request, task: Dict[str, Any] = Body(...), dry_run: bool = Query(True)):

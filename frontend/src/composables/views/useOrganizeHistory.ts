@@ -1,6 +1,7 @@
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 import { useGroupedLogs } from '../useGroupedLogs'
+import { useEventStream } from '../useEventStream'
 
 export function useOrganizeHistory() {
   const message = useMessage()
@@ -20,6 +21,11 @@ export function useOrganizeHistory() {
   const logDetail = ref<any>(null)
   const logLoading = ref(false)
   const { groupedLogs: logDetailGroupedLogs } = useGroupedLogs(logDetail)
+
+  // WebSocket 事件流：监听任务完成事件，自动刷新整理历史
+  const { on: onEvent } = useEventStream()
+  let _unsubscribeEvents: (() => void) | null = null
+  let _unsubscribeLogStream: (() => void) | null = null
 
   const fetchData = async (isRefresh = false) => {
     if (loading.value) return
@@ -130,6 +136,10 @@ export function useOrganizeHistory() {
         message.error('未找到任务日志')
         showLogModal.value = false
       }
+      // 任务运行中：订阅实时日志流
+      if (logDetail.value?.status === 'running') {
+        subscribeLogStream(taskId)
+      }
     } catch (e) {
       message.error('获取任务日志失败')
       showLogModal.value = false
@@ -137,6 +147,30 @@ export function useOrganizeHistory() {
       logLoading.value = false
     }
   }
+
+  const subscribeLogStream = (taskId: string) => {
+    unsubscribeLogStream()
+    _unsubscribeLogStream = onEvent('task_log', (data: any) => {
+      if (data?.task_id === taskId && logDetail.value) {
+        const logs = [...(logDetail.value.logs || []), data.log]
+        logDetail.value = { ...logDetail.value, logs }
+      }
+    })
+  }
+
+  const unsubscribeLogStream = () => {
+    if (_unsubscribeLogStream) {
+      _unsubscribeLogStream()
+      _unsubscribeLogStream = null
+    }
+  }
+
+  // 弹窗关闭时取消日志流订阅
+  watch(showLogModal, (val) => {
+    if (!val) {
+      unsubscribeLogStream()
+    }
+  })
 
   const clearAll = async () => {
     try {
@@ -171,7 +205,26 @@ export function useOrganizeHistory() {
     return timeStr.replace('T', ' ').split('.')[0]
   }
 
-  onMounted(fetchData)
+  onMounted(() => {
+    fetchData()
+    // 订阅 WS 事件：整理任务完成时自动刷新历史列表
+    if (!_unsubscribeEvents) {
+      _unsubscribeEvents = onEvent('task_record', (data: any) => {
+        // 只在整理任务完成时刷新，避免无关任务的频繁刷新
+        if (data?.action === 'finish' && data?.module === '整理') {
+          fetchData(true)
+        }
+      })
+    }
+  })
+
+  onUnmounted(() => {
+    if (_unsubscribeEvents) {
+      _unsubscribeEvents()
+      _unsubscribeEvents = null
+    }
+    unsubscribeLogStream()
+  })
 
   return {
     loading,

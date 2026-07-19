@@ -91,6 +91,17 @@ watch(statusFilter, () => {
   fetchData(true)
 })
 
+// 实时日志自动滚动到底部
+watch(logDetailGroupedLogs, async () => {
+  if (showLogModal.value) {
+    await nextTick()
+    const scrollArea = document.querySelector('.log-scroll-area')
+    if (scrollArea) {
+      scrollArea.scrollTop = scrollArea.scrollHeight
+    }
+  }
+})
+
 const handleRetry = (item: any) => {
   dialog.warning({
     title: '确认重试',

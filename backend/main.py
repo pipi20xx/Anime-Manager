@@ -244,6 +244,22 @@ async def websocket_logs(websocket: WebSocket):
     except (WebSocketDisconnect, RuntimeError):
         await LogBroadcaster.unregister(websocket)
 
+# --- WebSocket for Real-time Events (任务状态/服务状态推送，替代前端轮询) ---
+from event_broadcaster import EventBroadcaster
+
+@app.websocket("/ws/events")
+async def websocket_events(websocket: WebSocket):
+    await websocket.accept()
+    queue = EventBroadcaster.subscribe()
+    try:
+        while True:
+            msg = await queue.get()
+            await websocket.send_text(msg)
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
+        EventBroadcaster.unsubscribe(queue)
+
 # 2. Static Files & SPA Routing
 DIST_DIR = os.path.join(os.path.dirname(__file__), "dist")
 

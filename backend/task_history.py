@@ -18,19 +18,41 @@ async def start_task(task_id: str, module: str, name: str = None):
         await db.session.commit()
     _log_buffer[task_id] = []
 
+    # 推送事件：任务记录变更
+    try:
+        from event_broadcaster import EventBroadcaster
+        await EventBroadcaster.broadcast_task_record({
+            "task_id": task_id,
+            "module": module,
+            "name": name,
+            "status": "running",
+            "started_at": datetime.now().isoformat(),
+            "action": "start"
+        })
+    except Exception:
+        pass
+
 async def log_task(task_id: str, message: str, level: str = "INFO"):
     if task_id not in _log_buffer:
         _log_buffer[task_id] = []
     
-    logs = _log_buffer[task_id]
-    logs.append({
+    log_entry = {
         "time": datetime.now().strftime("%H:%M:%S.%f")[:-3],
         "level": level,
         "message": message
-    })
+    }
+    logs = _log_buffer[task_id]
+    logs.append(log_entry)
     
     if len(logs) > MAX_LOGS_PER_TASK:
         _log_buffer[task_id] = logs[-MAX_LOGS_PER_TASK:]
+
+    # 推送实时日志（只有有 WS 订阅者时才会实际发送）
+    try:
+        from event_broadcaster import EventBroadcaster
+        await EventBroadcaster.broadcast_task_log(task_id, log_entry)
+    except Exception:
+        pass
 
 async def finish_task(task_id: str, status: str, processed: int = 0, stats: Dict[str, Any] = None):
     logs = _log_buffer.pop(task_id, [])
@@ -49,6 +71,22 @@ async def finish_task(task_id: str, status: str, processed: int = 0, stats: Dict
                 record.stats = stats
             db.session.add(record)
             await db.session.commit()
+
+    # 推送事件：任务记录变更 + 服务状态
+    try:
+        from event_broadcaster import EventBroadcaster
+        await EventBroadcaster.broadcast_task_record({
+            "task_id": task_id,
+            "module": record.module if record else None,
+            "status": status,
+            "finished_at": datetime.now().isoformat(),
+            "processed": processed,
+            "action": "finish"
+        })
+        # 任务结束后顺带推送服务状态（因为服务状态页需要反映最新运行情况）
+        await EventBroadcaster.broadcast_services_status({"_refresh": True})
+    except Exception:
+        pass
 
 async def get_task_list(limit: int = 50, offset: int = 0, module: str = None, search: str = None) -> List[Dict]:
     async with db.session_scope(force_new=True):
@@ -80,6 +118,13 @@ async def get_task_detail(task_id: str) -> Optional[Dict]:
         record = result.scalar_one_or_none()
         if not record:
             return None
+
+        # 任务运行中：从内存缓冲读取实时日志（数据库中的 logs 此时还是空的）
+        if record.status == "running" and task_id in _log_buffer:
+            logs = _log_buffer[task_id]
+        else:
+            logs = record.logs or []
+
         return {
             "id": record.id,
             "task_id": record.task_id,
@@ -89,7 +134,7 @@ async def get_task_detail(task_id: str) -> Optional[Dict]:
             "started_at": record.started_at.isoformat() if record.started_at else None,
             "finished_at": record.finished_at.isoformat() if record.finished_at else None,
             "processed": record.processed,
-            "logs": record.logs or [],
+            "logs": logs,
             "stats": record.stats or {}
         }
 

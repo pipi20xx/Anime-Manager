@@ -15,26 +15,32 @@ async def get_system_status() -> ToolResult:
     try:
         import psutil
         import platform
+        import asyncio
         from datetime import datetime
 
-        boot_time = datetime.fromtimestamp(psutil.boot_time())
+        def _collect():
+            # cpu_percent(interval=None) 非阻塞，返回上次调用以来的 CPU 平均使用率
+            # 首次调用返回 0.0，属正常现象
+            boot_time = datetime.fromtimestamp(psutil.boot_time())
+            return {
+                "os": platform.system(),
+                "python_version": platform.python_version(),
+                "cpu_percent": psutil.cpu_percent(interval=None),
+                "memory": {
+                    "total": round(psutil.virtual_memory().total / (1024**3), 2),
+                    "used": round(psutil.virtual_memory().used / (1024**3), 2),
+                    "percent": psutil.virtual_memory().percent
+                },
+                "disk": {
+                    "total": round(psutil.disk_usage('/').total / (1024**3), 2),
+                    "used": round(psutil.disk_usage('/').used / (1024**3), 2),
+                    "percent": psutil.disk_usage('/').percent
+                },
+                "boot_time": str(boot_time)
+            }
 
-        status = {
-            "os": platform.system(),
-            "python_version": platform.python_version(),
-            "cpu_percent": psutil.cpu_percent(interval=1),
-            "memory": {
-                "total": round(psutil.virtual_memory().total / (1024**3), 2),
-                "used": round(psutil.virtual_memory().used / (1024**3), 2),
-                "percent": psutil.virtual_memory().percent
-            },
-            "disk": {
-                "total": round(psutil.disk_usage('/').total / (1024**3), 2),
-                "used": round(psutil.disk_usage('/').used / (1024**3), 2),
-                "percent": psutil.disk_usage('/').percent
-            },
-            "boot_time": str(boot_time)
-        }
+        # psutil 调用可能涉及系统调用，整体扔进线程池避免阻塞事件循环
+        status = await asyncio.to_thread(_collect)
 
         return ToolResult(success=True, data=status)
     except ImportError:

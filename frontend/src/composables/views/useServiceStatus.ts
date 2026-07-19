@@ -1,5 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { useEventStream } from '../useEventStream'
 
 interface ServiceStatus {
   id: string
@@ -70,6 +71,10 @@ export function useServiceStatus() {
   })
   
   let refreshTimer: ReturnType<typeof setInterval> | null = null
+  let _unsubscribeEvents: (() => void) | null = null
+
+  // WebSocket 事件流：实时接收服务状态变更推送，替代轮询
+  const { on: onEvent } = useEventStream()
 
   const fetchStatus = async () => {
     try {
@@ -84,10 +89,19 @@ export function useServiceStatus() {
 
   const startPolling = (interval: number = 5000) => {
     fetchStatus()
-    refreshTimer = setInterval(fetchStatus, interval)
+    // 订阅 WS 事件：服务状态变更时刷新
+    if (!_unsubscribeEvents) {
+      _unsubscribeEvents = onEvent('services_status', () => {
+        fetchStatus()
+      })
+    }
   }
 
   const stopPolling = () => {
+    if (_unsubscribeEvents) {
+      _unsubscribeEvents()
+      _unsubscribeEvents = null
+    }
     if (refreshTimer) {
       clearInterval(refreshTimer)
       refreshTimer = null

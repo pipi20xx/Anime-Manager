@@ -8,6 +8,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../useButtonStyles'
 import { useGroupedLogs } from '../useGroupedLogs'
+import { useEventStream } from '../useEventStream'
 
 export function useOrganizerView() {
   const message = useMessage()
@@ -36,12 +37,34 @@ export function useOrganizerView() {
 
   const backgroundTasks = ref<any[]>([])
   let bgTaskPollTimer: ReturnType<typeof setInterval> | null = null
+  let _unsubscribeEvents: (() => void) | null = null
+
+  // WebSocket 事件流：实时接收后台任务状态推送，替代轮询
+  const { on: onEvent } = useEventStream()
 
   const showLogModal = ref(false)
   const logDetail = ref<any>(null)
   const logLoading = ref(false)
+  let _unsubscribeLogStream: (() => void) | null = null
 
   const { groupedLogs: logDetailGroupedLogs } = useGroupedLogs(logDetail)
+
+  const subscribeLogStream = (taskId: string) => {
+    unsubscribeLogStream()
+    _unsubscribeLogStream = onEvent('task_log', (data: any) => {
+      if (data?.task_id === taskId && logDetail.value) {
+        const logs = [...(logDetail.value.logs || []), data.log]
+        logDetail.value = { ...logDetail.value, logs }
+      }
+    })
+  }
+
+  const unsubscribeLogStream = () => {
+    if (_unsubscribeLogStream) {
+      _unsubscribeLogStream()
+      _unsubscribeLogStream = null
+    }
+  }
 
   const viewTaskLog = async (taskId: string) => {
     logLoading.value = true
@@ -49,12 +72,23 @@ export function useOrganizerView() {
     try {
       const res = await fetch(`${API_BASE}/api/task_history/${taskId}`)
       logDetail.value = await res.json()
+      // 任务运行中：订阅实时日志流
+      if (logDetail.value?.status === 'running') {
+        subscribeLogStream(taskId)
+      }
     } catch (e) {
       message.error('获取任务日志失败')
     } finally {
       logLoading.value = false
     }
   }
+
+  // 弹窗关闭时取消日志流订阅
+  watch(showLogModal, (val) => {
+    if (!val) {
+      unsubscribeLogStream()
+    }
+  })
 
   const fetchBackgroundTasks = async () => {
     try {
@@ -86,12 +120,24 @@ export function useOrganizerView() {
   }
 
   const startBgTaskPolling = () => {
-    if (bgTaskPollTimer) return
+    // 首次加载：HTTP 请求获取当前完整列表
     fetchBackgroundTasks()
-    bgTaskPollTimer = setInterval(fetchBackgroundTasks, 3000)
+    // 订阅 WS 事件：后台任务状态变更时实时更新
+    if (!_unsubscribeEvents) {
+      _unsubscribeEvents = onEvent('background_tasks', (data) => {
+        backgroundTasks.value = data
+      })
+    }
   }
 
   const stopBgTaskPolling = () => {
+    // 取消 WS 事件订阅
+    if (_unsubscribeEvents) {
+      _unsubscribeEvents()
+      _unsubscribeEvents = null
+    }
+    unsubscribeLogStream()
+    // 兼容：清理可能残留的旧定时器
     if (bgTaskPollTimer) {
       clearInterval(bgTaskPollTimer)
       bgTaskPollTimer = null
