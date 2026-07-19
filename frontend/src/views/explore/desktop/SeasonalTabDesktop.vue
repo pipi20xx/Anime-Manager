@@ -3,8 +3,7 @@ import { computed } from 'vue'
 import { NEmpty, NSelect, NTag, NBackTop, NSkeleton } from 'naive-ui'
 import {
   ChevronLeftIcon,
-  ChevronRightIcon,
-  CalendarDaysIcon
+  ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 import BangumiCard from '../../../components/BangumiCard.vue'
 import { useSeasonal, type Season } from '../../../composables/explore/useSeasonal'
@@ -28,11 +27,6 @@ const yearSelectOptions = computed(() =>
   yearOptions.value.map(y => ({ label: `${y} 年`, value: y }))
 )
 
-// 标题
-const headerTitle = computed(
-  () => `${selectedYear.value} 年 ${SEASON_CN[selectedSeason.value]}新番`
-)
-
 const selectSeason = (s: Season) => {
   selectedSeason.value = s
 }
@@ -40,34 +34,26 @@ const selectSeason = (s: Season) => {
 
 <template>
   <div class="seasonal-tab">
-    <!-- 顶部控制栏：年份选择 + 季度切换 + 季度导航 -->
+    <!-- 顶部控制栏：年份导航（季度切换由下方标签完成，避免重复） -->
     <div class="control-bar">
-      <div class="control-left">
-        <button class="nav-arrow" @click="goToPrevSeason" title="上一季">
-          <ChevronLeftIcon class="icon" />
-        </button>
+      <button class="nav-arrow" @click="goToPrevSeason" title="上一季">
+        <ChevronLeftIcon class="icon" />
+      </button>
 
-        <div class="season-display">
-          <CalendarDaysIcon class="icon cal-icon" />
-          <span class="season-title">{{ headerTitle }}</span>
-          <span class="season-count" v-if="!data.loading">{{ data.count }} 部</span>
-        </div>
+      <n-select
+        v-model:value="selectedYear"
+        :options="yearSelectOptions"
+        size="small"
+        class="year-select"
+      />
 
-        <button class="nav-arrow" @click="goToNextSeason" title="下一季">
-          <ChevronRightIcon class="icon" />
-        </button>
+      <span class="season-count" v-if="!data.loading">{{ data.count }} 部</span>
 
-        <button class="current-btn" @click="goToCurrentSeason">本季</button>
-      </div>
+      <button class="nav-arrow" @click="goToNextSeason" title="下一季">
+        <ChevronRightIcon class="icon" />
+      </button>
 
-      <div class="control-right">
-        <n-select
-          v-model:value="selectedYear"
-          :options="yearSelectOptions"
-          size="small"
-          style="width: 120px"
-        />
-      </div>
+      <button class="current-btn" @click="goToCurrentSeason">本季</button>
     </div>
 
     <!-- 季度选择标签 -->
@@ -81,7 +67,7 @@ const selectSeason = (s: Season) => {
         class="season-tag"
         :type="selectedSeason === s ? 'primary' : 'default'"
       >
-        {{ SEASON_CN[s] }}新番
+        {{ SEASON_CN[s] }}番组
       </n-tag>
     </div>
 
@@ -121,23 +107,15 @@ const selectSeason = (s: Season) => {
   flex-direction: column;
 }
 
-/* 顶部控制栏 */
+/* 顶部控制栏：透明工具条，靠左排列，避免卡片包裹导致两边留白 */
 .control-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--app-surface-card-mixed);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-light);
-  margin-bottom: var(--space-3);
-}
-
-.control-left {
-  display: flex;
-  align-items: center;
+  justify-content: flex-start;
   gap: 10px;
+  padding: 4px 2px;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .nav-arrow {
@@ -146,6 +124,7 @@ const selectSeason = (s: Season) => {
   justify-content: center;
   width: 36px;
   height: 36px;
+  flex-shrink: 0;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-light);
   background: var(--bg-surface);
@@ -160,19 +139,12 @@ const selectSeason = (s: Season) => {
 }
 .nav-arrow .icon { width: 20px; height: 20px; }
 
-.season-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px;
+/* 年份下拉：固定宽度，不压缩 */
+.year-select {
+  width: 120px;
+  flex-shrink: 0;
 }
-.cal-icon { width: 20px; height: 20px; color: var(--n-primary-color); }
-.season-title {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
+
 .season-count {
   font-size: var(--text-sm);
   color: var(--text-tertiary);
@@ -180,6 +152,8 @@ const selectSeason = (s: Season) => {
   background: color-mix(in srgb, var(--n-primary-color) 10%, transparent);
   border-radius: 999px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .current-btn {
@@ -192,6 +166,8 @@ const selectSeason = (s: Season) => {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .current-btn:hover {
   background: var(--n-primary-color);
@@ -199,20 +175,24 @@ const selectSeason = (s: Season) => {
   border-color: var(--n-primary-color);
 }
 
-/* 季度标签栏 */
+/* 季度标签栏：横向滚动 */
 .season-tabs {
   display: flex;
   gap: 10px;
   margin-bottom: var(--space-5);
   padding: 4px 2px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.season-tabs::-webkit-scrollbar { display: none; }
 .season-tag {
   cursor: pointer;
   transition: all var(--transition-fast);
   padding: 8px 18px;
   font-size: var(--text-base);
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 /* 内容区 */
@@ -231,5 +211,55 @@ const selectSeason = (s: Season) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: var(--space-5);
+}
+
+/* ============ 移动端适配 ============ */
+@media (max-width: 767px) {
+  .control-bar {
+    padding: 4px 2px;
+    gap: 6px;
+  }
+
+  .nav-arrow {
+    width: 32px;
+    height: 32px;
+  }
+  .nav-arrow .icon { width: 18px; height: 18px; }
+
+  .year-select {
+    width: 112px;
+  }
+
+  .season-count {
+    font-size: var(--text-xs);
+    padding: 1px 8px;
+  }
+
+  .current-btn {
+    padding: 5px 10px;
+    font-size: var(--text-sm);
+  }
+
+  .season-tabs {
+    gap: 6px;
+    margin-bottom: var(--space-4);
+  }
+  .season-tag {
+    padding: 6px 14px;
+    font-size: var(--text-sm);
+  }
+}
+
+/* 超窄屏 (≤380px)：进一步压缩 */
+@media (max-width: 380px) {
+  .control-bar {
+    gap: 4px;
+  }
+  .year-select {
+    width: 104px;
+  }
+  .current-btn {
+    padding: 5px 8px;
+  }
 }
 </style>
