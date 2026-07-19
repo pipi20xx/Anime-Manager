@@ -312,7 +312,7 @@ async def check_stalled_downloads():
             if not isinstance(client, QBClient):
                 continue
             
-            torrents = client.get_torrents() 
+            torrents = await asyncio.to_thread(client.get_torrents) 
             if not torrents:
                 await log_task(task_id, f"📁 {client.name}: 无任务")
                 continue
@@ -359,7 +359,7 @@ async def check_stalled_downloads():
                         await session.commit()
 
                     try:
-                        client.delete_torrent(hash_str, delete_files=True)
+                        await asyncio.to_thread(client.delete_torrent, hash_str, delete_files=True)
                         stalled_count += 1
                         total_stalled += 1
                         await log_task(task_id, f"🗑️ 已删除: {name}")

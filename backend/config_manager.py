@@ -119,7 +119,65 @@ class ConfigManager:
             "database": "anime_pro_matcher"
         }
     }
-    
+
+    # --- 配置文件读取缓存（基于 mtime 的惰性缓存）---
+    # 缓存的是「从文件读出并和 DEFAULT_CONFIG 合并后」的 raw 配置，
+    # 不含环境变量覆盖（环境变量每次 get_config 都重新应用，保证实时性）。
+    # 这样既避免了每次 get_config 都同步读盘阻塞事件循环，
+    # 又能在配置文件被写入后（mtime 变化）自动失效。
+    _raw_cache: Optional[Dict] = None
+    _raw_cache_mtime: float = -1.0
+    _raw_cache_load_path: Optional[str] = None
+
+    @staticmethod
+    def _invalidate_cache():
+        """失效配置读取缓存（在配置文件被写入后调用）"""
+        ConfigManager._raw_cache = None
+        ConfigManager._raw_cache_mtime = -1.0
+        ConfigManager._raw_cache_load_path = None
+
+    @staticmethod
+    def _load_raw_config() -> Dict:
+        """
+        从文件读取配置并与 DEFAULT_CONFIG 合并。带基于 mtime 的缓存，
+        避免每次 get_config 都同步读盘阻塞事件循环。
+        """
+        load_path = CONFIG_PATH if os.path.exists(CONFIG_PATH) else (CONFIG_BAK_PATH if os.path.exists(CONFIG_BAK_PATH) else None)
+        if load_path is None:
+            # 首次启动，配置文件不存在，初始化之
+            ConfigManager.init_config()
+            load_path = CONFIG_PATH if os.path.exists(CONFIG_PATH) else None
+
+        try:
+            mtime = os.path.getmtime(load_path) if load_path else 0.0
+        except OSError:
+            mtime = 0.0
+
+        # 命中缓存：路径相同且 mtime 未变
+        if (ConfigManager._raw_cache is not None
+                and ConfigManager._raw_cache_load_path == load_path
+                and mtime == ConfigManager._raw_cache_mtime):
+            return copy.deepcopy(ConfigManager._raw_cache)
+
+        # 未命中：真正读盘
+        config = copy.deepcopy(ConfigManager.DEFAULT_CONFIG)
+        try:
+            if load_path:
+                with open(load_path, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                    for k, v in existing.items():
+                        if k in config and isinstance(v, dict) and isinstance(config[k], dict):
+                            config[k].update(v)
+                        else:
+                            config[k] = v
+        except Exception as e:
+            logger.error(f"加载配置文件失败: {e}")
+
+        ConfigManager._raw_cache = config
+        ConfigManager._raw_cache_mtime = mtime
+        ConfigManager._raw_cache_load_path = load_path
+        return copy.deepcopy(config)
+
     @staticmethod
     def _save_atomic(path: str, data: Any):
         """原子级写入文件，防止磁盘满导致文件损坏"""
@@ -136,6 +194,9 @@ class ConfigManager:
             # 同时保留一份备份
             if path == CONFIG_PATH:
                 shutil.copy2(path, CONFIG_BAK_PATH)
+
+            # 配置文件已变更，失效读取缓存
+            ConfigManager._invalidate_cache()
         except Exception as e:
             logger.error(f"Atomic save failed for {path}: {e}")
             if os.path.exists(tmp_path):
@@ -188,27 +249,13 @@ class ConfigManager:
 
     @staticmethod
     def get_config() -> Dict:
-        if not os.path.exists(CONFIG_PATH) and not os.path.exists(CONFIG_BAK_PATH):
-            ConfigManager.init_config()
-            
-        config = copy.deepcopy(ConfigManager.DEFAULT_CONFIG)
-        try:
-            load_path = CONFIG_PATH if os.path.exists(CONFIG_PATH) else (CONFIG_BAK_PATH if os.path.exists(CONFIG_BAK_PATH) else None)
-            if load_path:
-                with open(load_path, "r", encoding="utf-8") as f:
-                    existing = json.load(f)
-                    for k, v in existing.items():
-                        if k in config and isinstance(v, dict) and isinstance(config[k], dict):
-                            config[k].update(v)
-                        else:
-                            config[k] = v
-        except Exception as e:
-            logger.error(f"加载配置文件失败: {e}")
+        # 通过 _load_raw_config 拿到带 mtime 缓存的配置（避免每次读盘阻塞事件循环）
+        config = ConfigManager._load_raw_config()
 
-        # --- 环境变量强制覆盖逻辑 (优先级最高) ---
+        # --- 环境变量强制覆盖逻辑 (优先级最高，每次都应用以保证实时性) ---
         if "database" not in config:
             config["database"] = {}
-            
+
         db_conf = config["database"]
         # 显式读取环境变量，并自动去除可能存在的空格
         env_host = os.getenv("DB_HOST")
@@ -222,13 +269,13 @@ class ConfigManager:
         if env_user: db_conf["user"] = env_user.strip()
         if env_pass: db_conf["password"] = env_pass.strip()
         if env_name: db_conf["database"] = env_name.strip()
-        
+
         config["database"] = db_conf
-        
+
         # 确保 download_clients 始终是数组
         if not isinstance(config.get("download_clients"), list):
             config["download_clients"] = []
-        
+
         return config
 
     @staticmethod

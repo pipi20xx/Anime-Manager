@@ -36,7 +36,7 @@ async def list_files(request: FileListRequest):
     浏览服务器目录，返回文件和文件夹列表。
     """
     try:
-        data = FileExplorer.list_directory(request.path)
+        data = await asyncio.to_thread(FileExplorer.list_directory, request.path)
         return {"status": "success", "data": data}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="路径不存在")
@@ -48,7 +48,7 @@ async def list_files(request: FileListRequest):
 @router.post("/api/files/delete", summary="删除文件或目录")
 async def delete_file(request: FilePathRequest):
     try:
-        FileExplorer.delete_item(request.path)
+        await asyncio.to_thread(FileExplorer.delete_item, request.path)
         logger.debug(f"删除了: {request.path}")
         return {"status": "success"}
     except Exception as e:
@@ -57,7 +57,7 @@ async def delete_file(request: FilePathRequest):
 @router.post("/api/files/copy", summary="复制文件或目录")
 async def copy_file(request: FileOperationRequest):
     try:
-        FileExplorer.copy_item(request.src, request.dst)
+        await asyncio.to_thread(FileExplorer.copy_item, request.src, request.dst)
         logger.debug(f"从 {request.src} 复制到 {request.dst}")
         return {"status": "success"}
     except Exception as e:
@@ -66,7 +66,7 @@ async def copy_file(request: FileOperationRequest):
 @router.post("/api/files/move", summary="移动/重命名文件或目录")
 async def move_file(request: FileOperationRequest):
     try:
-        FileExplorer.move_item(request.src, request.dst)
+        await asyncio.to_thread(FileExplorer.move_item, request.src, request.dst)
         logger.debug(f"从 {request.src} 移动到 {request.dst}")
         return {"status": "success"}
     except Exception as e:
@@ -75,7 +75,7 @@ async def move_file(request: FileOperationRequest):
 @router.post("/api/files/info", summary="获取文件详情")
 async def get_file_info(request: FilePathRequest):
     try:
-        data = FileExplorer.get_file_info(request.path)
+        data = await asyncio.to_thread(FileExplorer.get_file_info, request.path)
         return {"status": "success", "data": data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -523,8 +523,8 @@ async def delete_organize_history(history_id: int, delete_file: bool = Query(Fal
                 # 仅尝试删除源路径（原始文件，适用于 copy/link 模式后的清理）
                 if history.source_path:
                     try:
-                        if os.path.exists(history.source_path):
-                            FileExplorer.delete_item(history.source_path)
+                        if await asyncio.to_thread(os.path.exists, history.source_path):
+                            await asyncio.to_thread(FileExplorer.delete_item, history.source_path)
                             logger.debug(f"通过历史记录删除了原始源文件: {history.source_path}")
                     except Exception as e:
                         logger.error(f"尝试删除源文件 {history.source_path} 时出错: {str(e)}")
@@ -596,7 +596,7 @@ async def _retry_history_runner(history_id: int, task_id: str):
         await log_task(task_id, f"🔁 开始重试整理: {source_path}")
 
         # 1. 检查源文件是否存在
-        if not os.path.exists(source_path):
+        if not await asyncio.to_thread(os.path.exists, source_path):
             await log_task(task_id, f"❌ 源文件不存在: {source_path}", "ERROR")
             await log_task(task_id, "（可能已被移动或删除，无法重试）", "WARN")
             await finish_task(task_id, "error")
@@ -702,7 +702,7 @@ async def retry_organize_history(history_id: int):
             title_hint = history.title or history.filename
 
         # 预检查：源文件必须存在（立即失败的场景）
-        if not os.path.exists(source_path):
+        if not await asyncio.to_thread(os.path.exists, source_path):
             return {
                 "success": False,
                 "message": f"源文件不存在: {source_path}（可能已被移动或删除）"

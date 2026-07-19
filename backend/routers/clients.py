@@ -9,6 +9,7 @@ from clients.cd2 import CD2Client
 from clients.jackett import JackettClient
 from logger import log_audit
 from monitor import MonitorManager
+import asyncio
 import requests
 
 router = APIRouter(tags=["下载与外部客户端"])
@@ -72,13 +73,13 @@ async def test_client(client_config: Dict[str, Any] = Body(...)):
     
     try:
         if ctype == 'qbittorrent':
-            client = QBClient(client_config)
+            client = await asyncio.to_thread(QBClient, client_config)
         elif ctype == 'cd2':
-            client = CD2Client(client_config)
+            client = await asyncio.to_thread(CD2Client, client_config)
         else:
             return {"success": False, "message": f"Unknown client type: {ctype}"}
         
-        return client.test_connection()
+        return await asyncio.to_thread(client.test_connection)
     except Exception as e:
         return {"success": False, "message": f"Test failed: {str(e)}"}
 

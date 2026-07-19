@@ -158,14 +158,14 @@ class Matcher:
             
             pre_hashes = set()
             try:
-                pre_torrents = client.get_torrents(filter='all')
+                pre_torrents = await asyncio.to_thread(client.get_torrents, filter='all')
                 pre_hashes = {t['hash'] for t in pre_torrents}
             except: pass
 
             display_type = "磁力链" if link.startswith('magnet:') else "种子文件"
             
             if link.startswith('magnet:'):
-                success, msg = client.add_torrent(link, is_file=False, **kwargs)
+                success, msg = await asyncio.to_thread(client.add_torrent, link, is_file=False, **kwargs)
                 if not success:
                     await NotificationManager.push_client_push_error(title, client.name, msg)
                     return False, None, msg
@@ -175,7 +175,7 @@ class Matcher:
                     await NotificationManager.push_torrent_download_error(title, link, error_msg, is_fallback)
                     return False, None, error_msg
                 
-                success, msg = client.add_torrent(content, is_file=True, **kwargs)
+                success, msg = await asyncio.to_thread(client.add_torrent, content, is_file=True, **kwargs)
                 if not success:
                     await NotificationManager.push_client_push_error(title, client.name, msg)
                     return False, None, msg
@@ -185,7 +185,7 @@ class Matcher:
                     try:
                         for _ in range(5):
                             await asyncio.sleep(2.0)
-                            post_torrents = client.get_torrents(filter='all')
+                            post_torrents = await asyncio.to_thread(client.get_torrents, filter='all')
                             post_hashes = {t['hash'] for t in post_torrents}
                             new_hashes = post_hashes - pre_hashes
                             if new_hashes:

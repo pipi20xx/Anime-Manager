@@ -272,11 +272,11 @@ async def startup_event():
     except Exception as e:
         logger.error(f"初始化本地数据中心失败: {e}")
 
-    ConfigManager.init_config()
+    await asyncio.to_thread(ConfigManager.init_config)
     
     try:
         from recognition_engine.builtin_group_loader import BuiltinGroupLoader
-        BuiltinGroupLoader.load()
+        await asyncio.to_thread(BuiltinGroupLoader.load)
     except Exception as e:
         logger.warning(f"加载内置制作组失败: {e}")
     
@@ -291,7 +291,7 @@ async def startup_event():
         
         try:
             from clients.cd2_helper import ensure_cd2_module
-            await MonitorManager._loop.run_in_executor(None, ensure_cd2_module)
+            await asyncio.to_thread(ensure_cd2_module)
         except Exception as e:
             logger.warning(f"CD2 预热跳过: {e}")
             startup_errors.append(f"CD2 模块预热失败")

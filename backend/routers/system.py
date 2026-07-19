@@ -751,11 +751,13 @@ async def stream_logs():
                 await asyncio.sleep(2)
         
         # Start by sending the last 20 lines for context
-        try:
+        def _read_tail():
             with open(log_path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-                for line in lines[-20:]:
-                    yield f"data: {line.strip()}\n\n"
+                return f.readlines()[-20:]
+        try:
+            tail_lines = await asyncio.to_thread(_read_tail)
+            for line in tail_lines:
+                yield f"data: {line.strip()}\n\n"
         except Exception:
             pass
 
@@ -842,7 +844,7 @@ async def get_raw_log(
     """
     log_path = "data/monitor.log" if type == "monitor" else "data/audit.log"
 
-    if not os.path.exists(log_path):
+    if not await asyncio.to_thread(os.path.exists, log_path):
         raise HTTPException(status_code=404, detail="日志文件未找到")
 
     if download:
@@ -854,10 +856,12 @@ async def get_raw_log(
 
     try:
         from itertools import islice
-        gen = reverse_line_generator(log_path)
-        start = (page - 1) * limit
-        end = start + limit
-        selected_lines = list(islice(gen, start, end))
+        def _read_page():
+            gen = reverse_line_generator(log_path)
+            start = (page - 1) * limit
+            end = start + limit
+            return list(islice(gen, start, end))
+        selected_lines = await asyncio.to_thread(_read_page)
         
         if not selected_lines and page > 1:
             return Response(content="--- [结束] 已无更多历史日志 ---", media_type="text/plain; charset=utf-8")
@@ -873,18 +877,19 @@ async def get_log_dates():
     返回 data/logs 目录下所有可用的日志日期。
     """
     log_dir = "data/logs"
-    if not os.path.exists(log_dir):
+    if not await asyncio.to_thread(os.path.exists, log_dir):
         return []
     
-    files = os.listdir(log_dir)
-    # 过滤出 YYYY-MM-DD.log 格式的文件
-    dates = []
-    for f in files:
-        if f.endswith(".log") and len(f) == 14: # 2023-10-27.log
-            dates.append(f.replace(".log", ""))
-    
-    dates.sort(reverse=True) # 最近的排在前面
-    return dates
+    def _list_dates():
+        files = os.listdir(log_dir)
+        # 过滤出 YYYY-MM-DD.log 格式的文件
+        dates = []
+        for f in files:
+            if f.endswith(".log") and len(f) == 14: # 2023-10-27.log
+                dates.append(f.replace(".log", ""))
+        dates.sort(reverse=True) # 最近的排在前面
+        return dates
+    return await asyncio.to_thread(_list_dates)
 
 @router.get("/logs/date/{date_str}", summary="获取特定日期的完整日志")
 async def get_log_by_date(
@@ -903,7 +908,7 @@ async def get_log_by_date(
         raise HTTPException(400, "无效的日期格式")
         
     path = os.path.join("data/logs", f"{date_str}.log")
-    if not os.path.exists(path):
+    if not await asyncio.to_thread(os.path.exists, path):
         raise HTTPException(404, "该日期的日志文件不存在")
         
     if download:
@@ -915,10 +920,12 @@ async def get_log_by_date(
 
     try:
         from itertools import islice
-        gen = reverse_line_generator(path)
-        start = (page - 1) * limit
-        end = start + limit
-        selected_lines = list(islice(gen, start, end))
+        def _read_page():
+            gen = reverse_line_generator(path)
+            start = (page - 1) * limit
+            end = start + limit
+            return list(islice(gen, start, end))
+        selected_lines = await asyncio.to_thread(_read_page)
         
         if not selected_lines and page > 1:
             return Response(content="--- [结束] 已无更多历史日志 ---", media_type="text/plain; charset=utf-8")
@@ -934,7 +941,7 @@ async def export_log_file(type: str = "monitor"):
     流式下载日志文件。采用倒序（最新在前）以对齐查看体验。
     """
     log_path = "data/monitor.log" if type == "monitor" else "data/audit.log"
-    if not os.path.exists(log_path):
+    if not await asyncio.to_thread(os.path.exists, log_path):
         raise HTTPException(status_code=404, detail="日志文件未找到")
     
     return StreamingResponse(

@@ -6,6 +6,7 @@
 import os
 import uuid
 import logging
+import asyncio
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from config_manager import ConfigManager
@@ -58,7 +59,7 @@ async def update_appearance_config(payload: dict):
 @router.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     """上传背景图片"""
-    _ensure_dir()
+    await asyncio.to_thread(_ensure_dir)
 
     # 校验扩展名
     ext = os.path.splitext(file.filename or "")[1].lower()
@@ -74,8 +75,10 @@ async def upload_image(file: UploadFile = File(...)):
     filename = f"{uuid.uuid4().hex}{ext}"
     filepath = os.path.join(APPEARANCE_DIR, filename)
 
-    with open(filepath, "wb") as f:
-        f.write(content)
+    def _write_file():
+        with open(filepath, "wb") as f:
+            f.write(content)
+    await asyncio.to_thread(_write_file)
 
     logger.info(f"外观图片已上传: {filename}")
     return {"success": True, "filename": filename}
@@ -85,7 +88,7 @@ async def upload_image(file: UploadFile = File(...)):
 async def get_image(filename: str):
     """读取背景图片"""
     filepath = os.path.join(APPEARANCE_DIR, filename)
-    if not os.path.exists(filepath):
+    if not await asyncio.to_thread(os.path.exists, filepath):
         raise HTTPException(status_code=404, detail="图片不存在")
     return FileResponse(filepath)
 
@@ -94,10 +97,10 @@ async def get_image(filename: str):
 async def delete_image(filename: str):
     """删除背景图片"""
     filepath = os.path.join(APPEARANCE_DIR, filename)
-    if not os.path.exists(filepath):
+    if not await asyncio.to_thread(os.path.exists, filepath):
         raise HTTPException(status_code=404, detail="图片不存在")
 
-    os.remove(filepath)
+    await asyncio.to_thread(os.remove, filepath)
 
     # 清理配置中对该图片的引用
     config = ConfigManager.get_config()
@@ -147,14 +150,17 @@ async def delete_image(filename: str):
 @router.get("/images")
 async def list_images():
     """列出所有已上传的背景图片"""
-    _ensure_dir()
-    images = []
-    for f in sorted(os.listdir(APPEARANCE_DIR)):
-        ext = os.path.splitext(f)[1].lower()
-        if ext in ALLOWED_EXTENSIONS:
-            filepath = os.path.join(APPEARANCE_DIR, f)
-            images.append({
-                "filename": f,
-                "size": os.path.getsize(filepath),
-            })
-    return images
+    await asyncio.to_thread(_ensure_dir)
+
+    def _list():
+        images = []
+        for f in sorted(os.listdir(APPEARANCE_DIR)):
+            ext = os.path.splitext(f)[1].lower()
+            if ext in ALLOWED_EXTENSIONS:
+                filepath = os.path.join(APPEARANCE_DIR, f)
+                images.append({
+                    "filename": f,
+                    "size": os.path.getsize(filepath),
+                })
+        return images
+    return await asyncio.to_thread(_list)
