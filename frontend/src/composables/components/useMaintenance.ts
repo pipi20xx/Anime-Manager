@@ -33,6 +33,7 @@ export function useMaintenance() {
     'public.secondary_rules': '自动分类与分库逻辑配置',
     'public.download_history': '下载器的任务执行历史',
     'public.blacklist': '识别排除黑名单关键词',
+    'public.tmdb_blocklist': 'TMDB 主动屏蔽列表（命中后跳过下载/追剧订阅）',
     'public.subscription_templates': '订阅预设模板',
     'public.discover_cache': '系统发现页（趋势/热门/搜索）的临时数据缓存',
     'public.remote_rules': '从远程 URL 同步下来的社区识别与清理规则',

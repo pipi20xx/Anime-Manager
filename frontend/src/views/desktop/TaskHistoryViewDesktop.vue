@@ -24,7 +24,6 @@ const {
   hasMore,
   fetchData,
   loadMore,
-  fetchTasks,
   fetchTaskDetail,
   deleteTask,
   cleanupTasks,
@@ -122,9 +121,6 @@ onUnmounted(() => {
           <n-tab-pane v-for="mod in moduleOptions.slice(1)" :key="mod" :name="mod" :tab="mod" />
         </n-tabs>
         <AppSearchField v-model:value="searchQuery" placeholder="搜索任务名称..." :loading="loading" style="width: 200px" />
-        <n-button v-bind="getButtonStyle('secondary')" @click="fetchTasks">
-          刷新
-        </n-button>
         <n-popconfirm 
           @positive-click="cleanupTasks"
           positive-text="确定"

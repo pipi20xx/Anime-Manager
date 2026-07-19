@@ -112,10 +112,6 @@ const handleRetry = (item: any) => {
   })
 }
 
-const handleRefresh = () => {
-  fetchData(true)
-}
-
 const handleDelete = (item: any) => {
   const deleteFile = ref(false)
   dialog.warning({
@@ -173,12 +169,9 @@ const getStatusTag = (status: string) => {
             </n-button>
           </template>
           确定要彻底删除所有整理记录吗？这不会影响磁盘上的文件。
-        </n-popconfirm>
-        <n-button v-bind="getButtonStyle('secondary')" @click="handleRefresh" :loading="loading">
-          刷新数据
-        </n-button>
-      </n-space>
-    </div>
+</n-popconfirm>
+</n-space>
+</div>
 
     <div v-if="history.length > 0" class="history-list">
         <n-card v-for="item in history" :key="item.id" class="history-item" data-app-instance="organize-history-card" hoverable :bordered="false">
