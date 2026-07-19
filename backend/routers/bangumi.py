@@ -96,9 +96,12 @@ async def match_tmdb(subject_id: int):
     import logging
     logger = logging.getLogger("BGM-Link")
 
+    logger.info(f"🔍 开始匹配 TMDB: Bangumi ID={subject_id}")
+
     # 1. 获取 BGM 详情
     bgm_item = await BangumiProvider.get_subject_details(subject_id)
     if not bgm_item:
+        logger.warning(f"❌ 匹配失败 Bangumi ID={subject_id}: 未获取到 Bangumi 条目")
         raise HTTPException(status_code=404, detail="Bangumi 条目未找到")
     
     config = ConfigManager.get_config()
@@ -174,9 +177,11 @@ async def one_click_subscribe(subject_id: int, template_id: Optional[int] = None
     import logging
     logger = logging.getLogger("BGM-Link")
     
+    logger.info(f"📌 开始订阅 Bangumi ID={subject_id}" + (f" (模板ID: {template_id})" if template_id else " (默认模板)"))
+    
     match_res = await match_tmdb(subject_id)
     if not match_res.get("success"):
-        logger.warning("自动建立映射失败，准备回退至手动设置")
+        logger.warning(f"❌ 订阅失败 Bangumi ID={subject_id}: 自动建立 TMDB 映射失败，将回退至手动设置")
         return {"success": False, "message": "匹配失败，请尝试手动添加"}
 
     # 2. 获取配置模板
@@ -224,8 +229,13 @@ async def one_click_subscribe(subject_id: int, template_id: Optional[int] = None
     await SubscriptionManager.save_subscription(sub)
     await NotificationManager.push_sub_add_notification(sub)
     
-    logger.info(f"✅ 一键订阅成功: {sub.title} (使用模板: {target_tmpl.name if target_tmpl else '系统默认'})")
-    log_audit("订阅", "一键订阅", f"已自动为 Bangumi:{subject_id} 创建订阅: {sub.title} S{sub.season}")
+    # 集数范围: E1-12 / E1+ / 空（电影）
+    _start_ep = sub.start_episode or 0
+    _end_ep = sub.end_episode or 0
+    _ep_range = f"E{_start_ep}-{_end_ep}" if _end_ep > 0 else (f"E{_start_ep}+" if _start_ep > 0 else "")
+    _season_ep = f"S{sub.season}" + (f" {_ep_range}" if _ep_range else "")
+    logger.info(f"✅ 一键订阅成功: {sub.title} ({_season_ep}, 使用模板: {target_tmpl.name if target_tmpl else '系统默认'})")
+    log_audit("订阅", "一键订阅", f"已自动为 Bangumi:{subject_id} 创建订阅: {sub.title} {_season_ep}")
 
     return {"success": True, "message": f"已成功订阅 {sub.title}"}
 
@@ -238,7 +248,11 @@ async def batch_subscribe(req: BatchSubRequest):
     """
     批量执行 Bangumi 订阅任务。
     """
+    import logging
+    logger = logging.getLogger("BGM-Link")
+    
     results = {"success": 0, "failed": 0, "details": []}
+    logger.info(f"📦 批量订阅开始，共 {len(req.subject_ids)} 个番剧" + (f" (模板ID: {req.template_id})" if req.template_id else " (默认模板)"))
     for sid in req.subject_ids:
         try:
             res = await one_click_subscribe(sid, template_id=req.template_id)
@@ -246,11 +260,14 @@ async def batch_subscribe(req: BatchSubRequest):
                 results["success"] += 1
             else:
                 results["failed"] += 1
+                logger.warning(f"❌ 批量订阅单项失败 Bangumi ID={sid}: {res.get('message')}")
             results["details"].append({"id": sid, "success": res.get("success"), "message": res.get("message")})
         except Exception as e:
             results["failed"] += 1
+            logger.error(f"❌ 批量订阅异常 Bangumi ID={sid}: {e}", exc_info=True)
             results["details"].append({"id": sid, "success": False, "message": str(e)})
     
+    logger.info(f"📦 批量订阅完成: 成功 {results['success']} 个, 失败 {results['failed']} 个")
     return results
 
 @router.get("/mapping/stats", summary="获取 BangumiData 表统计")

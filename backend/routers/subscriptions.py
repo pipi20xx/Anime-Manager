@@ -65,11 +65,32 @@ async def save_subscription(sub: Subscription):
     """
     # Determine if it's a new subscription or update
     is_new = sub.id is None
-    res = await SubscriptionManager.save_subscription(sub)
-    
+    media_label = "剧集" if sub.media_type == "tv" else "电影"
+    # 集数范围: E1-12 / E1+ / 空（电影）
+    start_ep = sub.start_episode or 0
+    end_ep = sub.end_episode or 0
+    ep_range = f"E{start_ep}-{end_ep}" if end_ep > 0 else (f"E{start_ep}+" if start_ep > 0 else "")
+    season_ep = f"S{sub.season}" + (f" {ep_range}" if ep_range else "")
+    logger.info(
+        f"{'📌 创建订阅' if is_new else '✏️ 更新订阅'}: 《{sub.title}》"
+        f" ({media_label} {season_ep}, TMDB={sub.tmdb_id}"
+        + (f", BGM={sub.bangumi_id}" if getattr(sub, 'bangumi_id', None) else "")
+        + ")"
+    )
+    try:
+        res = await SubscriptionManager.save_subscription(sub)
+    except Exception as e:
+        logger.error(f"❌ 订阅保存失败《{sub.title}》: {e}", exc_info=True)
+        raise
+
     if is_new:
+        logger.info(f"✅ 订阅创建成功: 《{sub.title}》(ID={getattr(res, 'id', None)}, {season_ep})")
+        log_audit("订阅", "创建", f"已创建订阅: 《{sub.title}》(ID={getattr(res, 'id', None)}, TMDB={sub.tmdb_id} {season_ep})")
         await NotificationManager.push_sub_add_notification(sub)
-    
+    else:
+        logger.info(f"✅ 订阅更新成功: 《{sub.title}》(ID={sub.id}, {season_ep})")
+        log_audit("订阅", "更新", f"已更新订阅: 《{sub.title}》(ID={sub.id}, {season_ep})")
+
     return res
 
 @router.delete("/subscriptions/clear_all", summary="清空所有订阅任务")
@@ -111,9 +132,17 @@ async def delete_subscription(sub_id: int):
     async with db.session_scope():
         sub = await db.get(Subscription, sub_id)
         if sub:
+            _start_ep = sub.start_episode or 0
+            _end_ep = sub.end_episode or 0
+            _ep_range = f"E{_start_ep}-{_end_ep}" if _end_ep > 0 else (f"E{_start_ep}+" if _start_ep > 0 else "")
+            _season_ep = f"S{sub.season}" + (f" {_ep_range}" if _ep_range else "")
+            logger.info(f"🗑️ 删除订阅: 《{sub.title}》(ID={sub_id}, TMDB={sub.tmdb_id} {_season_ep})")
             # 在删除前发送包含完整元数据的通知
             await NotificationManager.push_sub_del_notification(sub)
             await SubscriptionManager.delete_subscription(sub_id)
+            log_audit("订阅", "删除", f"已删除订阅: 《{sub.title}》(ID={sub_id})")
+        else:
+            logger.warning(f"🗑️ 删除订阅失败: ID={sub_id} 不存在")
     return {"success": True}
 
 @router.get("/subscriptions/{sub_id}/episodes", response_model=List[SubscribedEpisode], summary="获取已下载集数历史")
