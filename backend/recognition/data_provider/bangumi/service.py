@@ -173,7 +173,9 @@ class BangumiDataItemService:
             anidb_id = None
             
             for site in sites:
-                site_name = site.get("site", "")
+                # bangumi-data 项目中 site 名大小写不统一（如 "aniList" 为驼峰），
+                # 统一转小写比较，避免 anilist_id 永远提取不到的 bug。
+                site_name = site.get("site", "").lower()
                 site_id = site.get("id", "")
                 
                 if site_name == "bangumi":
