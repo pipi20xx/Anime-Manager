@@ -271,14 +271,10 @@ const detailSections = computed(() => {
             />
           </n-gi>
           <n-gi span="24 m:3">
-            <AppSelectField
+            <AppTextField
               v-model:value="filters.tmdb_id"
               label="TMDB ID"
               placeholder="按 TMDB ID 筛选"
-              clearable
-              filterable
-              tag
-              :options="[]"
             />
           </n-gi>
           <n-gi span="12 m:3">
@@ -403,9 +399,6 @@ const detailSections = computed(() => {
       size="huge"
     >
       <template #header-extra>
-        <n-tag v-if="selectedRecord" size="small" round :bordered="false" type="primary">
-          ID #{{ selectedRecord.id }}
-        </n-tag>
       </template>
 
       <div v-if="selectedRecord" class="detail-content">
@@ -775,12 +768,12 @@ const detailSections = computed(() => {
 
 /* 原始文件名（副标题） */
 .card-filename {
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
-  line-height: 1.4;
-  word-break: break-all;
-  margin-bottom: 8px;
-  font-family: var(--code-font, monospace);
+font-size: var(--text-sm);
+font-weight: 400;
+color: var(--text-secondary);
+line-height: 1.4;
+word-break: break-all;
+margin-bottom: 8px;
 }
 
 /* 属性标签 */
@@ -1049,7 +1042,7 @@ const detailSections = computed(() => {
   width: 110px;
   padding: 6px 10px;
   font-size: var(--text-sm);
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   background: var(--app-surface-list-mixed);
   border-right: var(--list-border-width, 1px) var(--list-border-style, solid) var(--list-border-color, var(--app-border-light));
   display: flex;
@@ -1068,15 +1061,9 @@ const detailSections = computed(() => {
   min-width: 0;
 }
 
-.kv-value.is-mono .value-text {
-  font-family: var(--code-font, monospace);
-  font-size: var(--text-xs);
-  word-break: break-all;
-  line-height: 1.5;
-}
-
 .kv-value .value-text {
   flex: 1;
+  font-weight: 400;
   word-break: break-all;
   line-height: 1.5;
 }
