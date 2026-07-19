@@ -71,9 +71,10 @@ export function useServiceStatus() {
   })
   
   let _unsubscribeEvents: (() => void) | null = null
+  let _unsubscribeReconnect: (() => void) | null = null
 
   // WebSocket 事件流：实时接收服务状态变更推送，替代轮询
-  const { on: onEvent } = useEventStream()
+  const { on: onEvent, onReconnect } = useEventStream()
 
   const fetchStatus = async () => {
     try {
@@ -94,12 +95,22 @@ export function useServiceStatus() {
         fetchStatus()
       })
     }
+    // 重连后重新拉取初始状态
+    if (!_unsubscribeReconnect) {
+      _unsubscribeReconnect = onReconnect(() => {
+        fetchStatus()
+      })
+    }
   }
 
   const stopPolling = () => {
     if (_unsubscribeEvents) {
       _unsubscribeEvents()
       _unsubscribeEvents = null
+    }
+    if (_unsubscribeReconnect) {
+      _unsubscribeReconnect()
+      _unsubscribeReconnect = null
     }
   }
 

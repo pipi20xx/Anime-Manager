@@ -161,8 +161,9 @@ const handleBgmSync = async () => {
 const bgmWarmupLoading = ref(false)
 const bgmWarmupStatus = ref<{ running: boolean; progress: any }>({ running: false, progress: {} })
 
-const { on: onEvent } = useEventStream()
+const { on: onEvent, onReconnect } = useEventStream()
 let _unsubscribeWarmup: (() => void) | null = null
+let _unsubscribeReconnect: (() => void) | null = null
 
 const warmupPercent = computed(() => {
   const p = bgmWarmupStatus.value.progress
@@ -195,12 +196,24 @@ const subscribeWarmupProgress = () => {
       }
     })
   }
+  // 重连后重新拉取预热状态
+  if (!_unsubscribeReconnect) {
+    _unsubscribeReconnect = onReconnect(() => {
+      fetchWarmupStatus().then(() => {
+        bgmWarmupLoading.value = bgmWarmupStatus.value.running
+      })
+    })
+  }
 }
 
 const unsubscribeWarmupProgress = () => {
   if (_unsubscribeWarmup) {
     _unsubscribeWarmup()
     _unsubscribeWarmup = null
+  }
+  if (_unsubscribeReconnect) {
+    _unsubscribeReconnect()
+    _unsubscribeReconnect = null
   }
 }
 

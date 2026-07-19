@@ -22,9 +22,10 @@ export function useTaskHistory() {
   
   let _unsubscribeEvents: (() => void) | null = null
   let _unsubscribeLogStream: (() => void) | null = null
+  let _unsubscribeReconnect: (() => void) | null = null
 
   // WebSocket 事件流：实时接收任务记录变更推送，替代轮询
-  const { on: onEvent } = useEventStream()
+  const { on: onEvent, onReconnect } = useEventStream()
 
   const fetchData = async (isRefresh = false) => {
     if (loading.value) return
@@ -145,12 +146,22 @@ export function useTaskHistory() {
         fetchTasks()
       })
     }
+    // 重连后重新拉取初始状态
+    if (!_unsubscribeReconnect) {
+      _unsubscribeReconnect = onReconnect(() => {
+        fetchTasks()
+      })
+    }
   }
 
   const stopPolling = () => {
     if (_unsubscribeEvents) {
       _unsubscribeEvents()
       _unsubscribeEvents = null
+    }
+    if (_unsubscribeReconnect) {
+      _unsubscribeReconnect()
+      _unsubscribeReconnect = null
     }
     unsubscribeTaskLogs()
   }

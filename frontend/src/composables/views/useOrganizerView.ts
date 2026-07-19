@@ -37,9 +37,10 @@ export function useOrganizerView() {
 
   const backgroundTasks = ref<any[]>([])
   let _unsubscribeEvents: (() => void) | null = null
+  let _unsubscribeReconnect: (() => void) | null = null
 
   // WebSocket 事件流：实时接收后台任务状态推送，替代轮询
-  const { on: onEvent } = useEventStream()
+  const { on: onEvent, onReconnect } = useEventStream()
 
   const showLogModal = ref(false)
   const logDetail = ref<any>(null)
@@ -127,6 +128,12 @@ export function useOrganizerView() {
         backgroundTasks.value = data
       })
     }
+    // 重连后重新拉取初始状态
+    if (!_unsubscribeReconnect) {
+      _unsubscribeReconnect = onReconnect(() => {
+        fetchBackgroundTasks()
+      })
+    }
   }
 
   const stopBgTaskPolling = () => {
@@ -134,6 +141,10 @@ export function useOrganizerView() {
     if (_unsubscribeEvents) {
       _unsubscribeEvents()
       _unsubscribeEvents = null
+    }
+    if (_unsubscribeReconnect) {
+      _unsubscribeReconnect()
+      _unsubscribeReconnect = null
     }
     unsubscribeLogStream()
   }

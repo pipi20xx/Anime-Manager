@@ -251,11 +251,33 @@ from event_broadcaster import EventBroadcaster
 async def websocket_events(websocket: WebSocket):
     await websocket.accept()
     queue = EventBroadcaster.subscribe()
+
+    async def receive_loop():
+        """接收客户端消息（处理 ping/pong 心跳）"""
+        try:
+            while True:
+                msg = await websocket.receive_text()
+                try:
+                    data = json.loads(msg)
+                    if data.get("type") == "ping":
+                        await websocket.send_text(json.dumps({"type": "pong"}))
+                except Exception:
+                    pass
+        except (WebSocketDisconnect, RuntimeError):
+            pass
+
+    async def send_loop():
+        """从广播队列读取消息并推送给客户端"""
+        try:
+            while True:
+                msg = await queue.get()
+                await websocket.send_text(msg)
+        except (WebSocketDisconnect, RuntimeError):
+            pass
+
     try:
-        while True:
-            msg = await queue.get()
-            await websocket.send_text(msg)
-    except (WebSocketDisconnect, RuntimeError):
+        await asyncio.gather(receive_loop(), send_loop())
+    except Exception:
         pass
     finally:
         EventBroadcaster.unsubscribe(queue)
