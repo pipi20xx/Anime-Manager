@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import {
-  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NSelect, NSpin, useDialog
+  NCard, NSpace, NButton, NIcon, NTag, NSwitch, NSelect, NSpin
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import AppSelectField from '../AppSelectField.vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
@@ -43,7 +44,7 @@ const {
   openFullLog
 } = useLogConsole()
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleClearConsole = () => {
   dialog.warning({

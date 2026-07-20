@@ -18,7 +18,8 @@
  */
 
 import { type Component } from 'vue'
-import { NPopconfirm, NButton, NIcon, useDialog } from 'naive-ui'
+import { NPopconfirm, NButton, NIcon } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import { useIsMobile } from '../../composables/useIsMobile'
 import { getButtonStyle, type ButtonStyleKey } from '../../composables/useButtonStyles'
 
@@ -54,7 +55,7 @@ const emit = defineEmits<{
 }>()
 
 const { isMobile } = useIsMobile()
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const triggerBtnStyle = getButtonStyle(props.buttonStyle)
 

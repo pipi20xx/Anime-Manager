@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted, h } from 'vue'
 import { 
-  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard, NTooltip, useDialog
+  NButton, NIcon, NTag, NInput, NPopconfirm, NEmpty, NSpace, NTabs, NTabPane, NAlert, NText, NCheckbox, NSpin, NDivider, NCard, NTooltip
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   ClockIcon as HistoryIcon,
   TrashIcon as DeleteIcon,
@@ -43,7 +44,7 @@ const {
   viewTaskLog
 } = useOrganizeHistory()
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const scrollTarget = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null

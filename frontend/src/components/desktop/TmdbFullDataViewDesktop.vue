@@ -7,9 +7,9 @@ import AppSearchField from '../AppSearchField.vue'
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import {
   NSpace, NButton, NIcon, NGrid, NGi, NImage,
-  NEmpty, NSpin, NForm, NFormItem, useDialog,
-  NTabs, NTabPane, NCollapse, NCollapseItem
+  NEmpty, NSpin, NForm, NFormItem, NTabs, NTabPane, NCollapse, NCollapseItem
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   TrashIcon as DeleteIcon,
   MagnifyingGlassIcon as SearchIcon,
@@ -98,7 +98,7 @@ const translateKeywordName = (keywordId: string | number, fallbackName: string) 
   return mapped || fallbackName || String(keywordId)
 }
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 const showRefreshModal = ref(false)
 const refreshForm = ref({
   olderThanDays: null as number | null,

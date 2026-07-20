@@ -2,8 +2,9 @@
 import { ref, onMounted, onUnmounted, h } from 'vue'
 import {
   NCard, NSpace, NButton, NIcon, NGrid, NGi, NEmpty,
-  NPopconfirm, useMessage, NImage, NDropdown, NTooltip, useDialog
+  NPopconfirm, useMessage, NImage, NDropdown, NTooltip
 } from 'naive-ui'
+import { useBackDialog } from '../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   TrashIcon as DeleteIcon,
@@ -32,7 +33,7 @@ const props = defineProps<{
 }>()
 
 const message = useMessage()
-const dialog = useDialog()
+const dialog = useBackDialog()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 const { on: onEvent } = useEventStream()
 let _unsubscribeSubs: (() => void) | null = null

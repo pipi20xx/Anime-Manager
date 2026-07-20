@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { 
-  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText, useDialog
+  NCard, NSpace, NButton, NIcon, NTabs, NTabPane, NTag, NTooltip, NProgress, NEmpty, NSpin, NDivider, NText
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   TrashIcon as DeleteIcon,
@@ -27,7 +28,7 @@ import { usePWA } from '../../composables/usePWA'
 
 const { isMobile } = usePWA()
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteBackgroundTask = (taskId: string) => {
   dialog.warning({

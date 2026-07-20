@@ -3,8 +3,9 @@ import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
   NButton, NSpace, NTag, NSpin, NEmpty, NImage,
-  useDialog, useMessage
+  useMessage
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   TrashIcon as ClearIcon,
   TvIcon,
@@ -25,7 +26,7 @@ const loading = ref(false)
 const episodes = ref<any[]>([])
 const selectedEpisode = ref<{ season: number, episode: number } | null>(null)
 const episodesScrollRef = ref<HTMLElement | null>(null)
-const dialog = useDialog()
+const dialog = useBackDialog()
 const message = useMessage()
 
 const isMovie = computed(() => props.sub?.media_type === 'movie')

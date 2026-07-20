@@ -3,15 +3,16 @@ import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NButton, NSpace, NSelect, NInput,
   NSpin, NEmpty, NTag, NDivider, NRadioGroup, NRadio,
-  NGrid, NGi, NDataTable, NSwitch, NAlert, useDialog
+  NGrid, NGi, NDataTable, NSwitch, NAlert
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import { h } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useRssDetect } from '../../composables/components/useRssDetect'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits(['update:show', 'finish'])

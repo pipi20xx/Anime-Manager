@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import AppGlassModal from '../AppGlassModal.vue'
 import AppGlassCard from '../AppGlassCard.vue'
-import { NButton, NSpace, NIcon, NEmpty, NInput, NSelect, useDialog } from 'naive-ui'
+import { NButton, NSpace, NIcon, NEmpty, NInput, NSelect } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import { PlusIcon as AddIcon, TrashIcon as DeleteIcon } from '@heroicons/vue/24/outline'
 import { useTmdbBlocklist } from '../../composables/components/useTmdbBlocklist'
 import { getButtonStyle } from '../../composables/useButtonStyles'
@@ -12,7 +13,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:show'])
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDelete = (item: any) => {
   dialog.warning({

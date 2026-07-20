@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import {
-  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NSpin, NStatistic, NProgress, useDialog, useMessage
+  NCard, NButton, NSpace, NIcon, NAlert, NGrid, NGridItem, NSpin, NStatistic, NProgress, useMessage
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   ServerIcon as DbIcon
 } from '@heroicons/vue/24/outline'
 import { useMaintenance } from '../../composables/components/useMaintenance'
 import { useEventStream } from '../../composables/useEventStream'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 const message = useMessage()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 

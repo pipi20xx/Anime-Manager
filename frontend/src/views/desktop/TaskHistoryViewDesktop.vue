@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane, useDialog } from 'naive-ui'
+import { NCard, NSpace, NTag, NButton, NIcon, NEmpty, NModal, NPopconfirm, NSpin, NDivider, NText, NTabs, NTabPane } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   TrashIcon as DeleteIcon,
   EyeIcon as ViewIcon,
@@ -37,7 +38,7 @@ const {
   moduleOptions
 } = useTaskHistory()
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteTask = (taskId: string) => {
   dialog.warning({

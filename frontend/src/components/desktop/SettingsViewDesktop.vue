@@ -3,8 +3,9 @@ import { computed } from 'vue'
 import { 
   NCard, NSpace, NButton, NIcon, NForm, NFormItem, 
   NDivider, NGrid, NGi, NSwitch, NTabs, NTabPane,
-  NSpin, NCheckbox, NInput, NTag, useDialog
+  NSpin, NCheckbox, NInput, NTag
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   CheckIcon as SaveIcon,
   TrashIcon as DeleteIcon
@@ -19,7 +20,7 @@ import ServiceStatusTab from '../../views/settings/ServiceStatusTab.vue'
 import { useSettings } from '../../composables/views/useSettings'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteClientWithConfirm = (client: any) => {
   dialog.warning({

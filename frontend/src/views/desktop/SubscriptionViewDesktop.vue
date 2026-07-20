@@ -2,8 +2,9 @@
 import { onMounted, ref, computed } from 'vue'
 import {
   NCard, NSpace, NButton, NIcon, NTabs, NTabPane,
-  NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip, useDialog
+  NTag, NPopconfirm, NGrid, NGi, NEmpty, NTooltip
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   TrashIcon as DeleteIcon,
@@ -63,7 +64,7 @@ const clientNameMap = computed(() => {
 })
 const getClientName = (id: string) => (id ? (clientNameMap.value[id] || '—') : '—')
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteFeed = (feed: any) => {
   dialog.warning({

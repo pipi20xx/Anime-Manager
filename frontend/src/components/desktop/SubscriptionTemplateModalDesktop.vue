@@ -5,8 +5,9 @@ import AppGlassModal from '../AppGlassModal.vue'
 import { 
   NDataTable, NButton, NSpace, NIcon, NForm, NFormItem, 
   NSelect, NSwitch, NGrid, NGi,
-  NDivider, useDialog
+  NDivider
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   StarIcon,
@@ -43,7 +44,7 @@ watch(() => props.show, (val) => {
   if (!val) showEdit.value = false
 })
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const columns = [
   { 

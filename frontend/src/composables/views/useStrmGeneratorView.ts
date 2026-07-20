@@ -1,9 +1,10 @@
 import { ref, onMounted } from 'vue'
-import { useMessage, useDialog } from 'naive-ui'
+import { useMessage } from 'naive-ui'
+import { useBackDialog } from '../useBackDialog'
 
 export function useStrmGeneratorView() {
   const message = useMessage()
-  const dialog = useDialog()
+  const dialog = useBackDialog()
   const tasks = ref<any[]>([])
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 

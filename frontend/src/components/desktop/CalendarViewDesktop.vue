@@ -6,10 +6,10 @@ import AppGlassCard from '../AppGlassCard.vue'
 import { ref, computed } from 'vue'
 import {
   NSpace, NIcon, NSpin, NText, NButton, NModal, NInput,
-  NAvatar, NTabs, NTabPane, useDialog,
-  NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup,
+  NAvatar, NTabs, NTabPane, NForm, NFormItem, NInputNumber, NTooltip, NDivider, NEmpty, NButtonGroup,
   NSwitch, NDatePicker, NCard, NGrid, NGi, NImage
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   CalendarDaysIcon,
   ChevronLeftIcon as PrevIcon,
@@ -27,7 +27,7 @@ import { appearanceConfig } from '../../store/appearanceStore'
 import { isDarkMode } from '../../store/themeStore'
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteSubject = (sub: any) => {
   dialog.warning({

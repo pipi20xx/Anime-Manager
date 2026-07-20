@@ -3,8 +3,9 @@ import { ref, onMounted, computed, h, nextTick, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NInput, NButton, 
-  NSpace, NDataTable, NIcon, NSelect, NTabs, NTabPane, NAlert, NPopover, useDialog
+  NSpace, NDataTable, NIcon, NSelect, NTabs, NTabPane, NAlert, NPopover
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import AppSelectField from '../AppSelectField.vue'
 import AppSearchField from '../AppSearchField.vue'
 import DatabaseConfig from './DatabaseConfigDesktop.vue'
@@ -21,7 +22,7 @@ import { useDatabase } from '../../composables/views/useDatabase'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import { useDragScroll } from '../../composables/useDragScroll'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const {
   activeTab,

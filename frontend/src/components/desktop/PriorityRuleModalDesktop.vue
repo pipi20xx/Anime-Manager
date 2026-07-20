@@ -6,8 +6,9 @@ import AppGlassCard from '../AppGlassCard.vue'
 import { 
   NTabs, NTabPane, NButton, NSpace, NSelect, NSwitch, 
   NIcon, NGrid, NGi, NEmpty, NDivider,
-  NForm, NFormItem, NInputNumber, useDialog
+  NForm, NFormItem, NInputNumber
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   TrashIcon as DeleteIcon,
@@ -23,7 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:show'])
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteProfileWithConfirm = (profile: any) => {
   dialog.warning({

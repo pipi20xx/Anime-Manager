@@ -1,5 +1,6 @@
 import { ref, watch, onMounted, onUnmounted, h } from 'vue'
-import { useMessage, useDialog, NButton, NIcon } from 'naive-ui'
+import { useMessage, NButton, NIcon } from 'naive-ui'
+import { useBackDialog } from '../useBackDialog'
 import {
   TrashIcon as DeleteOutlined,
   EyeIcon as PreviewOutlined,
@@ -12,7 +13,7 @@ import { useEventStream } from '../useEventStream'
 
 export function useOrganizerView() {
   const message = useMessage()
-  const dialog = useDialog()
+  const dialog = useBackDialog()
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
   const rules = ref<any[]>([])

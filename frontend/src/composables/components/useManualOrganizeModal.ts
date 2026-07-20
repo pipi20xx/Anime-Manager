@@ -1,9 +1,10 @@
 import { reactive, watch, h } from 'vue'
-import { useDialog, NButton } from 'naive-ui'
+import { NButton } from 'naive-ui'
+import { useBackDialog } from '../useBackDialog'
 import { getButtonStyle } from '../useButtonStyles'
 
 export function useManualOrganizeModal(props: any, emit: any) {
-  const dialog = useDialog()
+  const dialog = useBackDialog()
 
   const manualTask = reactive<any>({
     id: '',

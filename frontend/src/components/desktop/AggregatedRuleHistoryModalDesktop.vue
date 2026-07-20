@@ -2,14 +2,15 @@
 import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
-  NTag, NButton, NSpin, NEmpty, NDropdown, useDialog
+  NTag, NButton, NSpin, NEmpty, NDropdown
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import { useAggregatedRuleHistory } from '../../composables/modals/useAggregatedRuleHistory'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 import AppSearchField from '../AppSearchField.vue'
 import AppSelectField from '../AppSelectField.vue'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const props = defineProps<{
   show: boolean

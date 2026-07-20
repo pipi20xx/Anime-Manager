@@ -4,8 +4,9 @@ import { h } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import { 
   NCard, NSpace, NButton, NDataTable, NForm, NFormItem, 
-  NSwitch, NTag, NIcon, useDialog
+  NSwitch, NTag, NIcon
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   PencilSquareIcon as EditIcon,
@@ -17,7 +18,7 @@ import { useHealthCheck } from '../../composables/useHealthCheck'
 import type { HealthCheckConfig } from '../../api/health'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const {
   config, saveAll, loading, configs, showModal, editingConfig,

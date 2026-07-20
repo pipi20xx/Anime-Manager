@@ -8,12 +8,13 @@ import {
   NDataTable, NButton, NSpace,
   NSwitch, NTag, NEmpty, NAlert,
   NForm, NFormItem, NInput, NSelect,
-  NGrid, NGi, NDivider, useDialog
+  NGrid, NGi, NDivider
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import { useRssDetectManager } from '../../composables/components/useRssDetectManager'
 import { useBackClose } from '../../composables/useBackClose'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const props = defineProps<{
   show: boolean

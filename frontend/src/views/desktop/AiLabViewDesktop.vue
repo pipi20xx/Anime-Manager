@@ -3,11 +3,12 @@ import AppTextField from '../../components/AppTextField.vue'
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { 
   NCard, NSpace, NButton, NInput, NDivider, 
-  NTag, useMessage, useDialog, NAlert, NText, NSwitch, NSlider,
+  NTag, useMessage, NAlert, NText, NSwitch, NSlider,
   NCollapse, NCollapseItem, NCollapseTransition, NForm, NFormItem, NEmpty,
   NTabs, NTabPane, NList, NListItem, NThing,
   NSpin, NRadioGroup, NRadioButton, NCode
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import { marked } from 'marked'
 
 marked.setOptions({
@@ -25,7 +26,7 @@ const props = defineProps<{
 }>()
 
 const message = useMessage()
-const dialog = useDialog()
+const dialog = useBackDialog()
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
 const activeTab = ref('chat')

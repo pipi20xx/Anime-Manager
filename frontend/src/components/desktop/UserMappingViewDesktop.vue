@@ -2,8 +2,9 @@
 import { ref, computed, h, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import {
-  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NSpin, useDialog
+  NCard, NTabs, NTabPane, NDataTable, NButton, NSpace, NInput, NIcon, NForm, NFormItem, NTag, NEmpty, NStatistic, NGrid, NGi, NSpin
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import AppGlassModal from '../AppGlassModal.vue'
 import {
   PlusIcon as AddIcon,
@@ -83,7 +84,7 @@ watch(activeType, (newType) => {
   }
 })
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const showModal = ref(false)
 const editingItem = ref<MappingItem | null>(null)

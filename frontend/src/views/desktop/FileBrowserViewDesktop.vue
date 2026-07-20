@@ -4,9 +4,9 @@ import {
   NButton, NIcon, NBreadcrumb, NBreadcrumbItem,
   NList, NListItem, NSpace, NDivider,
   NDropdown, NModal, NCard, NDescriptions, NDescriptionsItem,
-  NInput, NText,
-  useDialog
+  NInput, NText
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   ArrowUpIcon as UpIcon,
   ArrowPathIcon as RefreshIcon,
@@ -84,7 +84,7 @@ const {
 useBackClose(showInfoModal)
 useBackClose(showGoToPathModal)
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 const showContextMenu = ref(false)
 const x = ref(0)
 const y = ref(0)

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { 
   NSpace, NButton, NIcon, NEmpty,
-  NSwitch, NGrid, NGi, NText, NCard, useDialog
+  NSwitch, NGrid, NGi, NText, NCard
 } from 'naive-ui'
+import { useBackDialog } from '../../composables/useBackDialog'
 import {
   PlusIcon as AddIcon,
   TrashIcon as DeleteIcon,
@@ -14,7 +15,7 @@ import ClassifierEditModal from './ClassifierEditModalDesktop.vue'
 import { useSecondaryRule } from '../../composables/views/useSecondaryRule'
 import { getButtonStyle } from '../../composables/useButtonStyles'
 
-const dialog = useDialog()
+const dialog = useBackDialog()
 
 const handleDeleteRuleWithConfirm = (index: number) => {
   const rule = rules.value[index]

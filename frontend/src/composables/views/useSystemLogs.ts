@@ -1,9 +1,10 @@
 import { ref, reactive, watch, onMounted } from 'vue'
-import { useMessage, useDialog } from 'naive-ui'
+import { useMessage } from 'naive-ui'
+import { useBackDialog } from '../useBackDialog'
 
 export function useSystemLogs() {
   const message = useMessage()
-  const dialog = useDialog()
+  const dialog = useBackDialog()
   const API_BASE = (import.meta.env.VITE_API_BASE as string) || ''
 
   const loading = ref(false)
