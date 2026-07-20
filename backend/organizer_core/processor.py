@@ -398,7 +398,11 @@ class FileProcessor:
             # [New] Calculate Hash before move (if enabled)
             hash_result: Optional[HashResult] = None
             if task.get("calculate_hash", False) and not dry_run:
-                await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
+                try:
+                    _size_mb = os.path.getsize(v_path) / 1024 / 1024
+                    await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file} ({_size_mb:.2f} MB)")
+                except Exception:
+                    await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
                 hash_result = await HashCalculator.calculate_hashes(v_path)
                 if hash_result:
                     await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
@@ -411,7 +415,11 @@ class FileProcessor:
                 if not dry_run:
                     # hash_only 模式下始终计算哈希（不受 calculate_hash 开关限制）
                     if not hash_result:
-                        await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
+                        try:
+                            _size_mb = os.path.getsize(v_path) / 1024 / 1024
+                            await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file} ({_size_mb:.2f} MB)")
+                        except Exception:
+                            await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
                         hash_result = await HashCalculator.calculate_hashes(v_path)
                         if hash_result:
                             await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
