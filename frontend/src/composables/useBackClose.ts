@@ -87,6 +87,86 @@ export function useBackLayer(onBack: () => void) {
 }
 
 /**
+ * 页面内导航层级 API（如文件浏览器目录导航）。
+ *
+ * 与 useBackClose/useBackLayer 共享全局栈，确保弹框优先于目录导航：
+ * 栈顶是弹框 → 后退关闭弹框；栈顶是目录导航 → 后退返回上一级目录。
+ *
+ * 支持多级导航（如 /a → /a/b → /a/b/c），通过 depth 计数器管理。
+ *
+ * @param onBack - 后退触发时的回调（如 fetchFiles(parentPath)）
+ * @returns { push, pop, clear } - push 进入更深层级，pop UI返回上一层，clear 清空历史（跳转）
+ */
+export function useBackNav(onBack: () => void) {
+  ensureGlobalListener()
+  let depth = 0
+  let handlerInStack = false
+
+  const handler = () => {
+    // popstate（真正的后退）：减少深度，深度归零时移出栈
+    depth--
+    if (depth <= 0) {
+      depth = 0
+      if (handlerInStack) {
+        handlerInStack = false
+        const idx = closeStack.indexOf(handler)
+        if (idx !== -1) closeStack.splice(idx, 1)
+      }
+    }
+    onBack()
+  }
+
+  /** 进入更深层级：pushState（首次同时入栈） */
+  const push = () => {
+    if (!handlerInStack) {
+      handlerInStack = true
+      closeStack.push(handler)
+    }
+    depth++
+    window.history.pushState({ fileNav: true }, '')
+  }
+
+  /** UI 主动返回上一层：消费一个 state + 回调 */
+  const pop = () => {
+    if (depth === 0) return false
+    depth--
+    consumeCount++
+    window.history.back()
+    if (depth === 0 && handlerInStack) {
+      handlerInStack = false
+      const idx = closeStack.indexOf(handler)
+      if (idx !== -1) closeStack.splice(idx, 1)
+    }
+    onBack()
+    return true
+  }
+
+  /** 跳转到无关路径：清空所有导航历史 */
+  const clear = () => {
+    if (depth > 0) {
+      consumeCount++
+      window.history.go(-depth)
+      depth = 0
+    }
+    if (handlerInStack) {
+      handlerInStack = false
+      const idx = closeStack.indexOf(handler)
+      if (idx !== -1) closeStack.splice(idx, 1)
+    }
+  }
+
+  onUnmounted(() => {
+    if (handlerInStack) {
+      handlerInStack = false
+      const idx = closeStack.indexOf(handler)
+      if (idx !== -1) closeStack.splice(idx, 1)
+    }
+  })
+
+  return { push, pop, clear, get depth() { return depth } }
+}
+
+/**
  * 高层 API：让一个 Ref<boolean> 控制的弹框/视图支持后退关闭。
  *
  * @param isOpen - 控制弹框/视图可见性的 boolean ref

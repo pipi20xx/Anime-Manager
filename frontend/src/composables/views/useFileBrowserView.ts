@@ -1,5 +1,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { useBackNav } from '../useBackClose'
 import {
   FolderOpenIcon as FolderIcon,
   VideoCameraIcon as VideoIcon,
@@ -62,6 +63,34 @@ export function useFileBrowserView() {
       }
     })
   })
+
+  // --- 目录导航历史管理（侧滑/侧键后退返回上一级目录）---
+  const { push: navPush, pop: navPop, clear: navClear } = useBackNav(() => {
+    // 后退回调：返回上一级目录（不触发 push/pop，仅加载文件）
+    if (parentPath.value) {
+      fetchFiles(parentPath.value)
+    }
+  })
+
+  /** 进入子目录（点击文件夹） */
+  const navigateTo = (path: string) => {
+    if (path === currentPath.value) return
+    navPush()
+    fetchFiles(path)
+  }
+
+  /** UI 返回上一级（点击返回按钮） */
+  const goUp = () => {
+    if (!parentPath.value) return
+    navPop()  // 内部会调用 onBack → fetchFiles(parentPath)
+  }
+
+  /** 跳转到任意路径（面包屑/收藏夹/前往路径，清空导航历史） */
+  const jumpTo = (path: string) => {
+    if (path === currentPath.value) return
+    navClear()
+    fetchFiles(path)
+  }
 
   // --- Core Browser Functions ---
   let skeletonTimer: ReturnType<typeof setTimeout> | null = null
@@ -250,20 +279,21 @@ export function useFileBrowserView() {
     }
   }
 
-  const goToPath = async (path: string) => {
-    if (!path || path.trim() === '') {
-      message.warning('请输入有效路径')
-      return
-    }
-    // 确保路径以 / 开头
-    let targetPath = path.trim()
-    if (!targetPath.startsWith('/')) {
-      targetPath = '/' + targetPath
-    }
-    await fetchFiles(targetPath)
-    showGoToPathModal.value = false
-    goToPathInput.value = ''
-  }
+const goToPath = async (path: string) => {
+if (!path || path.trim() === '') {
+message.warning('请输入有效路径')
+return
+}
+// 确保路径以 / 开头
+let targetPath = path.trim()
+if (!targetPath.startsWith('/')) {
+targetPath = '/' + targetPath
+}
+navClear()
+await fetchFiles(targetPath)
+showGoToPathModal.value = false
+goToPathInput.value = ''
+}
 
   // --- Recognition Actions ---
   const recognizeFile = async (item: FileItem, forcedParams: any = null) => {
@@ -501,6 +531,9 @@ export function useFileBrowserView() {
     showGoToPathModal,
     goToPathInput,
     fetchFiles,
+    navigateTo,
+    goUp,
+    jumpTo,
     deleteItem,
     copyToClipboard,
     pasteItem,

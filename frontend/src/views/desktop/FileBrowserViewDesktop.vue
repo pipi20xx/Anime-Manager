@@ -63,6 +63,9 @@ const {
   showGoToPathModal,
   goToPathInput,
   fetchFiles,
+  navigateTo,
+  goUp,
+  jumpTo,
   deleteItem,
   copyToClipboard,
   pasteItem,
@@ -175,7 +178,7 @@ const toggleCurrentFavorite = () => {
 }
 
 const handleFavoriteClick = (path: string) => {
-  fetchFiles(path)
+  jumpTo(path)
 }
 
 const formatSize = (bytes: number | null) => {
@@ -249,15 +252,15 @@ onMounted(() => {
         <div class="browser-toolbar">
           <n-space align="center" justify="space-between" class="w-100">
             <n-space align="center" size="large">
-              <n-button v-bind="getButtonStyle('icon')" :disabled="!parentPath || currentPath === '/'" @click="parentPath && fetchFiles(parentPath)">
+              <n-button v-bind="getButtonStyle('icon')" :disabled="!parentPath || currentPath === '/'" @click="goUp">
                 <template #icon><n-icon><UpIcon /></n-icon></template>
               </n-button>
               <n-breadcrumb>
-                <n-breadcrumb-item @click="fetchFiles('/')" style="cursor: pointer">根目录</n-breadcrumb-item>
+                <n-breadcrumb-item @click="jumpTo('/')" style="cursor: pointer">根目录</n-breadcrumb-item>
                 <n-breadcrumb-item 
                   v-for="part in breadcrumbParts" 
                   :key="part.path" 
-                  @click="fetchFiles(part.path)" 
+                  @click="jumpTo(part.path)" 
                   style="cursor: pointer"
                 >
                   {{ part.name }}
@@ -325,7 +328,7 @@ onMounted(() => {
               <n-list-item 
                 v-for="item in items" 
                 :key="item.path" 
-                @click="item.is_dir && fetchFiles(item.path)"
+                @click="item.is_dir && navigateTo(item.path)"
                 @contextmenu.stop="handleContextMenu($event, item)"
               >
                 <template #prefix>
