@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { openTmdbDetail, openBangumiDetail } from '../../store/navigationStore'
 
 export function useSearch() {
@@ -38,6 +38,11 @@ export function useSearch() {
       results.tmdb_movie = []
       results.tmdb_tv = []
       
+      // 记忆搜索关键词
+      if (keyword.value) {
+        localStorage.setItem('apm_explore_last_keyword', keyword.value)
+      }
+      
       try {
           await fetchSubscriptions()
           const res = await fetch(`${API_BASE}/api/explore/search?keyword=${encodeURIComponent(keyword.value || '')}`)
@@ -61,6 +66,15 @@ export function useSearch() {
   const openBangumi = (item: any) => {
       openBangumiDetail(item.id, item)
   }
+
+  // 恢复上次搜索状态
+  onMounted(() => {
+    const lastKeyword = localStorage.getItem('apm_explore_last_keyword')
+    if (lastKeyword) {
+      keyword.value = lastKeyword
+      doSearch()
+    }
+  })
 
   return {
     keyword,

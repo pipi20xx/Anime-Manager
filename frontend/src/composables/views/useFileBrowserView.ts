@@ -118,6 +118,8 @@ export function useFileBrowserView() {
         currentPath.value = data.data.current_path
         parentPath.value = data.data.parent_path
         items.value = data.data.items
+        // 记忆当前目录位置，下次进入时恢复
+        localStorage.setItem('apm_file_browser_last_path', data.data.current_path)
       }
     } catch (e) { message.error('加载失败') }
     finally {

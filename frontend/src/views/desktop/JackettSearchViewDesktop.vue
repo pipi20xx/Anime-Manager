@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { 
   NCard, NButton, NIcon, NSpace, NTag, NEmpty, NSpin, useMessage
 } from 'naive-ui'
@@ -30,7 +30,31 @@ onMounted(() => {
     keyword.value = searchKeyword.value
     handleSearch()
     searchKeyword.value = ''
+  } else {
+    // 恢复上次搜索状态
+    const lastKeyword = localStorage.getItem('apm_jackett_last_keyword')
+    const lastIndexer = localStorage.getItem('apm_jackett_last_indexer')
+    const lastClient = localStorage.getItem('apm_jackett_last_client')
+    if (lastIndexer) selectedIndexerId.value = lastIndexer
+    // client 需要等 fetchClients 完成后才能恢复（确保 id 有效）
+    if (lastKeyword) {
+      keyword.value = lastKeyword
+      // 延迟搜索，等 indexers/clients 加载完成
+      setTimeout(() => handleSearch(), 300)
+    }
   }
+})
+
+// 记忆搜索状态
+watch(keyword, (v) => {
+  if (v) localStorage.setItem('apm_jackett_last_keyword', v)
+  else localStorage.removeItem('apm_jackett_last_keyword')
+})
+watch(selectedIndexerId, (v) => {
+  if (v) localStorage.setItem('apm_jackett_last_indexer', v)
+})
+watch(selectedClientId, (v) => {
+  if (v) localStorage.setItem('apm_jackett_last_client', v)
 })
 
 const fetchIndexers = async () => {
@@ -48,7 +72,13 @@ const fetchClients = async () => {
     const res = await fetch(`${API_BASE}/api/clients`)
     clients.value = await res.json()
     if (clients.value.length > 0) {
-      selectedClientId.value = clients.value[0].id
+      // 恢复上次选择的客户端（确保 id 仍有效）
+      const lastClient = localStorage.getItem('apm_jackett_last_client')
+      if (lastClient && clients.value.some(c => c.id === lastClient)) {
+        selectedClientId.value = lastClient
+      } else {
+        selectedClientId.value = clients.value[0].id
+      }
     }
   } catch (e) {
     console.error('Failed to fetch clients', e)

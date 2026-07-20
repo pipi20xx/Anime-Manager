@@ -195,7 +195,9 @@ const textMutedColor = computed(() => {
 })
 
 onMounted(() => {
-  fetchFiles('/')
+  // 记忆上次打开的目录位置
+  const lastPath = localStorage.getItem('apm_file_browser_last_path')
+  fetchFiles(lastPath || '/')
   loadConfig()
 })
 </script>
