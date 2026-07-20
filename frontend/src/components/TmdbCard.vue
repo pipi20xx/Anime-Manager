@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LogoIcon from './LogoIcon.vue'
+import { logoColor } from '../store/themeStore'
 
 const props = defineProps<{
   item: any
@@ -37,7 +39,7 @@ const getImg = (path: string) => {
         decoding="async"
         @error="imgError = true"
       />
-      <img v-else src="/favicon.svg" />
+      <LogoIcon v-else :size="80" :color="logoColor" />
       <!-- Badges overlay for TMDB style -->
       <div class="rating-badge" v-if="item.vote_average > 0">
          {{ item.vote_average.toFixed(1) }}

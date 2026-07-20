@@ -459,7 +459,17 @@ class BangumiProvider:
                 air_dt = datetime.datetime.fromisoformat(dt_str)
                 if air_dt.tzinfo is None:
                     air_dt = air_dt.replace(tzinfo=_dt.timezone.utc)
-                if air_dt.year != year or air_dt.month not in months:
+                # 转换为 TZ 环境变量指定的本地时区，避免季度归属错位
+                # （如日本 07-01 00:30 播出 → UTC 06-30 16:30，不转会被误判为春季）
+                import os as _os
+                try:
+                    from zoneinfo import ZoneInfo as _ZI
+                except ImportError:
+                    _ZI = None
+                _tz_name = _os.environ.get("TZ", "Asia/Shanghai")
+                _tz = _ZI(_tz_name) if _ZI else _dt.timezone(_dt.timedelta(hours=8))
+                local_dt = air_dt.astimezone(_tz)
+                if local_dt.year != year or local_dt.month not in months:
                     continue
             except Exception:
                 continue
@@ -473,8 +483,8 @@ class BangumiProvider:
                 "broadcast": row.broadcast,
                 "broadcast_time": info["time_str"],
                 "is_ended": info["is_ended"],
-                "air_date": air_dt.strftime("%Y-%m-%d"),
-                "air_timestamp": air_dt.timestamp(),
+                "air_date": local_dt.strftime("%Y-%m-%d"),
+                "air_timestamp": local_dt.timestamp(),
             })
 
         # 3. 并发补全海报、评分、集数、标签（带 7 天缓存）

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LogoIcon from './LogoIcon.vue'
+import { logoColor } from '../store/themeStore'
 
 const props = defineProps<{
   item: any
@@ -35,7 +37,7 @@ const getImg = (path: string) => {
         decoding="async"
         @error="imgError = true"
       />
-      <img v-else src="/favicon.svg" />
+      <LogoIcon v-else :size="80" :color="logoColor" />
       <div class="bgm-sub-badge" v-if="isSubscribed">已订阅</div>
     </div>
     <div class="bgm-info">

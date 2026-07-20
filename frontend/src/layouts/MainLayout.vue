@@ -46,6 +46,7 @@ import {
 import { useRouter, useRoute } from 'vue-router'
 
 import LogConsoleModal from '../components/desktop/LogConsoleModalDesktop.vue'
+import LogoIcon from '../components/LogoIcon.vue'
 import ReloadPrompt from '../components/ReloadPrompt.vue'
 import { systemApi } from '../api/system'
 import { APP_VERSION } from '../version'
@@ -325,7 +326,7 @@ const handlePanelModalAction = (callback: () => void) => {
       <div class="logo-container">
         <n-space align="center" :size="10" :wrap="false">
           <div @click="router.push({ name: 'Explore' })" style="cursor: pointer; display: flex; align-items: center; gap: var(--space-2);">
-            <img src="/favicon.svg" alt="logo" style="width: 24px; height: 24px;" />
+            <LogoIcon :size="24" :color="logoColor" />
             <div v-if="!collapsed" class="logo-text">
               <span class="title" :style="{ color: logoColor }">番剧管家</span>
               <div class="version">v{{ APP_VERSION }}</div>
@@ -426,7 +427,7 @@ const handlePanelModalAction = (callback: () => void) => {
             <n-button v-else v-bind="getButtonStyle('icon')" size="small" @click="showMobileMenu = true" title="菜单">
               <template #icon><n-icon size="24"><HamburgerIcon /></n-icon></template>
             </n-button>
-            <img src="/favicon.svg" alt="logo" style="width: 22px; height: 22px;" />
+            <LogoIcon :size="22" :color="logoColor" />
             <div style="display: flex; flex-direction: column;">
               <span class="title" :style="{ color: logoColor, fontWeight: '800', lineHeight: '1.2' }">番剧管家</span>
               <span style="font-size: var(--text-2xs); opacity: var(--opacity-60); margin-top: -2px;">v{{ APP_VERSION }}</span>
@@ -477,7 +478,7 @@ const handlePanelModalAction = (callback: () => void) => {
         <!-- 顶部标题栏 -->
         <div class="full-panel-header">
           <div class="full-panel-title">
-            <img src="/favicon.svg" alt="logo" style="width: 22px; height: 22px;" />
+            <LogoIcon :size="22" :color="logoColor" />
             <span>全部功能</span>
           </div>
           <n-button v-bind="getButtonStyle('icon')" size="small" @click="handlePanelClose" class="full-panel-close">
