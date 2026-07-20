@@ -11,6 +11,7 @@ import {
   NGrid, NGi, NDivider, useDialog
 } from 'naive-ui'
 import { useRssDetectManager } from '../../composables/components/useRssDetectManager'
+import { useBackClose } from '../../composables/useBackClose'
 
 const dialog = useDialog()
 
@@ -26,8 +27,12 @@ const {
   openAdd, openEdit, saveTask, deleteTask, runTask, testRss, toggleEnabled, init
 } = useRssDetectManager()
 
+// 编辑视图也接入 history 后退：侧滑/侧键后退时先从编辑视图返回列表，再关闭弹框
+useBackClose(showEdit)
+
 watch(() => props.show, (val) => {
   if (val) init()
+  else showEdit.value = false  // 弹框关闭时重置编辑视图
 })
 
 const close = () => {

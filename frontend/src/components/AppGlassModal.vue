@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { NModal } from 'naive-ui'
+import { useBackClose } from '../composables/useBackClose'
 
 /**
  * AppGlassModal - 统一的Modal封装组件
@@ -10,6 +11,8 @@ import { NModal } from 'naive-ui'
  * - 自动应用蓝色边框和透明遮罩样式
  * - 支持 v-bind="$attrs" 透传所有外部属性
  * - 可选的毛玻璃内容区域支持
+ * - 内置 useBackClose：自动支持 Android 侧滑 / PC 鼠标侧键 / 浏览器后退
+ *   关闭当前弹框（通过 history.pushState 管理，嵌套弹框也安全）
  * 
  * 使用示例:
  * <AppGlassModal
@@ -100,6 +103,26 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:show'])
 
+// 内部 ref 与 props.show 双向同步，供 useBackClose 接管 history 管理
+const internalShow = ref(props.show)
+
+// 父组件 -> 内部
+watch(() => props.show, (val) => {
+  if (val !== internalShow.value) {
+    internalShow.value = val
+  }
+})
+
+// 内部 -> 父组件
+watch(internalShow, (val) => {
+  if (val !== props.show) {
+    emit('update:show', val)
+  }
+})
+
+// 接入 history 后退关闭弹框（侧滑/侧键/浏览器后退）
+useBackClose(internalShow)
+
 // 合并后的modal样式 - 使用CSS变量支持外观自定义
 const modalStyle = computed(() => ({
   maxWidth: '95vw',
@@ -108,8 +131,8 @@ const modalStyle = computed(() => ({
 
 <template>
   <n-modal
-    :show="show"
-    @update:show="val => emit('update:show', val)"
+    :show="internalShow"
+    @update:show="val => internalShow = val"
     preset="card"
     :style="modalStyle"
     v-bind="$attrs"

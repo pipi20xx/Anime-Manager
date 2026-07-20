@@ -30,6 +30,7 @@ import RecognitionModal from '../../components/desktop/RecognitionModalDesktop.v
 import ExecutionLogModal from '../../components/ExecutionLogModal.vue'
 import { useFileBrowserView } from '../../composables/views/useFileBrowserView'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { useBackClose } from '../../composables/useBackClose'
 
 const {
   API_BASE,
@@ -78,6 +79,10 @@ const {
   removeFavorite,
   goToPath
 } = useFileBrowserView()
+
+// 接入 history 后退关闭弹框（侧滑/侧键/浏览器后退）
+useBackClose(showInfoModal)
+useBackClose(showGoToPathModal)
 
 const dialog = useDialog()
 const showContextMenu = ref(false)

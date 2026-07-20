@@ -19,6 +19,7 @@ import {
   XMarkIcon as CloseIcon
 } from '@heroicons/vue/24/outline'
 import { getButtonStyle } from '../composables/useButtonStyles'
+import { useBackClose } from '../composables/useBackClose'
 import { docsTheme } from '../store/themeStore'
 
 const props = defineProps<{
@@ -111,6 +112,7 @@ const copyToClipboard = (text: string) => {
 }
 
 const showLogDetail = ref(false)
+useBackClose(showLogDetail)
 const currentLogDetail = ref('')
 
 const logColumns = [

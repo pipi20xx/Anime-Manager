@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { h } from 'vue'
+import { h, watch } from 'vue'
 import { dataTableThemeOverrides } from '../../store/appearanceStore'
 import AppGlassModal from '../AppGlassModal.vue'
 import { 
@@ -20,6 +20,7 @@ import AppTextField from '../AppTextField.vue'
 import AppSelectField from '../AppSelectField.vue'
 import { useSubscriptionTemplates } from '../../composables/components/useSubscriptionTemplates'
 import { getButtonStyle } from '../../composables/useButtonStyles'
+import { useBackClose } from '../../composables/useBackClose'
 
 const props = defineProps<{
   show: boolean
@@ -33,6 +34,14 @@ const {
   openAdd, openEdit, saveTemplate, deleteTemplate, setDefault,
   close
 } = useSubscriptionTemplates(props, emit)
+
+// 编辑视图也接入 history 后退：侧滑/侧键后退时先从编辑视图返回列表，再关闭弹框
+useBackClose(showEdit)
+
+// 弹框关闭时重置编辑视图
+watch(() => props.show, (val) => {
+  if (!val) showEdit.value = false
+})
 
 const dialog = useDialog()
 

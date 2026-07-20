@@ -117,10 +117,6 @@ const displayUsername = computed(() => {
   return username.value || '管理员'
 })
 
-import { useBackClose } from '../composables/useBackClose'
-
-// ... existing code ...
-
 // PWA 三态导航: desktop / mobile-browser / pwa-app
 const { isMobile, appMode } = usePWA()
 
@@ -134,11 +130,9 @@ function goBack() {
 }
 
 // --- History Management (Android Back Button Support) ---
-// ... (keep existing history logic) ...
+// LogConsoleModal 内部的 AppGlassModal 已通过 useBackClose 自动管理 history，
+// 无需在此重复调用。
 // ----------------------------------------------------
-
-// Apply Back Button support to Global Modals
-useBackClose(isLogConsoleOpen)
 
 const showMobileMenu = ref(false)
 
