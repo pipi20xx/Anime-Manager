@@ -155,6 +155,40 @@ export function useBackNav(onBack: () => void) {
     }
   }
 
+  /**
+   * 异步清理所有导航历史条目（供 onBeforeRouteLeave 使用）。
+   *
+   * 当通过导航栏离开文件浏览器时，组件卸载前 depth 个 pushState 条目会变成孤儿，
+   * 它们的 URL 与文件浏览器相同，会导致 Vue Router 在后续导航中卡死。
+   * 此函数在路由离开前调用 history.go(-depth) 消费这些条目，并等待 popstate 完成。
+   */
+  const cleanup = (): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      if (depth <= 0) {
+        if (handlerInStack) {
+          handlerInStack = false
+          const idx = closeStack.indexOf(handler)
+          if (idx !== -1) closeStack.splice(idx, 1)
+        }
+        resolve()
+        return
+      }
+      consumeCount++
+      const onPop = () => {
+        window.removeEventListener('popstate', onPop)
+        resolve()
+      }
+      window.addEventListener('popstate', onPop)
+      window.history.go(-depth)
+      depth = 0
+      if (handlerInStack) {
+        handlerInStack = false
+        const idx = closeStack.indexOf(handler)
+        if (idx !== -1) closeStack.splice(idx, 1)
+      }
+    })
+  }
+
   onUnmounted(() => {
     if (handlerInStack) {
       handlerInStack = false
@@ -163,7 +197,7 @@ export function useBackNav(onBack: () => void) {
     }
   })
 
-  return { push, pop, clear, get depth() { return depth } }
+  return { push, pop, clear, cleanup, get depth() { return depth } }
 }
 
 /**

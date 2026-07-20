@@ -1,5 +1,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useMessage } from 'naive-ui'
+import { onBeforeRouteLeave } from 'vue-router'
 import { useBackNav } from '../useBackClose'
 import {
   FolderOpenIcon as FolderIcon,
@@ -65,11 +66,16 @@ export function useFileBrowserView() {
   })
 
   // --- 目录导航历史管理（侧滑/侧键后退返回上一级目录）---
-  const { push: navPush, pop: navPop, clear: navClear } = useBackNav(() => {
+  const { push: navPush, pop: navPop, clear: navClear, cleanup: navCleanup } = useBackNav(() => {
     // 后退回调：返回上一级目录（不触发 push/pop，仅加载文件）
     if (parentPath.value) {
       fetchFiles(parentPath.value)
     }
+  })
+
+  // 离开文件浏览器路由前，清理所有导航历史条目，避免孤儿 pushState 导致 Vue Router 卡死
+  onBeforeRouteLeave(async () => {
+    await navCleanup()
   })
 
   /** 进入子目录（点击文件夹） */
