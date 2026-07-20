@@ -110,6 +110,9 @@ class ParserStage:
 
         ctx.log(f"🚀 --- [ANIME 深度审计流水线启动] ---")
         ctx.log(f"┃ [待处理条目]: {ctx.filename}")
+        # [NEW] 显示原始完整路径（若与待处理条目不同）
+        if ctx.original_input and ctx.original_input != ctx.filename:
+            ctx.log(f"┃ [原始路径]: {ctx.original_input}")
         ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 智能记忆[{p_fp}] | 搜索顺序[{p_off}] | BGM数据源优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
 
         # 1. 检查系列指纹 (Pre-match Acceleration)

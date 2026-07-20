@@ -237,7 +237,8 @@ class FileProcessor:
                 forced_tmdb_id=f_tmdb, 
                 forced_type=f_type, 
                 forced_season=f_season,
-                series_fingerprint=task.get("series_fingerprint", True)
+                series_fingerprint=task.get("series_fingerprint", True),
+                original_input_path=v_path
             )
             
             await FileProcessor._log_detail(task_id, f"📄 处理文件: {v_path}")

@@ -16,6 +16,9 @@ class RecognitionContext:
     """
     def __init__(self, filename: str, **kwargs):
         self.filename = filename
+        # [NEW] 保留原始输入路径，供日志展示完整路径（parser 会改写 self.filename）
+        # 优先使用调用方显式传入的 original_input_path（如绝对路径），否则回退到 filename
+        self.original_input = kwargs.get("original_input_path") or filename
         self.start_time = time.time()
         self.kwargs = kwargs
         
