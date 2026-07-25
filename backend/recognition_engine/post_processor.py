@@ -79,6 +79,13 @@ class PostProcessor:
             meta_obj.begin_season = int(info_dict.get("anime_season")[0] if isinstance(info_dict.get("anime_season"), list) else info_dict.get("anime_season"))
             v_logs.append(f"同步内核发现的季号: S{meta_obj.begin_season}")
         
+        # [Fix] 季号回捞：如果内核和独立探测均未识别到季号，从原始文件名的 SxxExx 格式中提取
+        if not meta_obj.begin_season:
+            s_e_match = re.search(r'S(\d{1,2})E\d{1,4}', input_name, re.IGNORECASE)
+            if s_e_match:
+                meta_obj.begin_season = int(s_e_match.group(1))
+                v_logs.append(f"┣ [规则][内置] 季号回捞(SxxExx): S{meta_obj.begin_season}")
+        
         # Call logger_stub only if it has the method
         if hasattr(logger_stub, "debug_out"):
             logger_stub.debug_out("STEP 4: 属性对撞与同步", v_logs)

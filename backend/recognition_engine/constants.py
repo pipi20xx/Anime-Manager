@@ -60,6 +60,8 @@ EPISODE_PATTERNS = [
 
 SEASON_PATTERNS = [
     r"(?i)\b([0-9]{1,2})(?:st|nd|rd|th)\b\s+Season",
+    # [Fix] 优先匹配 SxxExx 标准季集格式 (如 S10E08)，提取季号
+    r"(?i)(?<![a-zA-Z])S([0-9]{1,2})E[0-9]{1,4}",
     r"(?i)(?<![a-zA-Z])S([0-9]{1,2})(?![a-zA-Z0-9])",
     r"第([一二三四五六七八九十0-9]+)季",
     r"Season[ ]*([0-9]+)"
