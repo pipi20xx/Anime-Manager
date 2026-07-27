@@ -1,0 +1,44 @@
+# 前端热加载开发用 Compose
+#
+# 用法: docker compose -f docker-compose.frontend-dev.yml up
+#
+# 说明:
+#   - 后端 apm-backend: 本地构建，只运行后端 API
+#   - 前端 apm-frontend-dev: node 镜像挂载源码，Vite 热加载
+#   - 只改前端文件，无需重新构建，浏览器自动刷新
+#   - 访问 http://<你的IP>:5173
+#
+
+services:
+  apm-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apm-backend
+    volumes:
+      - ./data:/app/data
+      - /vol1/1000/NVME:/202nvme
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Shanghai
+      - DB_HOST=192.168.50.12
+      - DB_PORT=5433
+      - DB_USER=abc
+      - DB_PASS=123456
+      - DB_NAME=abc
+    restart: unless-stopped
+
+  apm-frontend-dev:
+    image: node:22-alpine
+    container_name: apm-frontend-dev
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+    ports:
+      - "5174:5173"   # Vite 开发服务器
+    environment:
+      - TZ=Asia/Shanghai
+    command: sh -c "npm config set registry https://repo.huaweicloud.com/repository/npm/ && npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - apm-backend
+    restart: unless-stopped

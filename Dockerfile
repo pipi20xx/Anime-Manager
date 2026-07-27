@@ -1,5 +1,5 @@
 # --- Stage 1: Frontend Build ---
-FROM node:18-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm config set registry https://repo.huaweicloud.com/repository/npm/ && \
@@ -7,8 +7,8 @@ RUN npm config set registry https://repo.huaweicloud.com/repository/npm/ && \
 COPY frontend/ ./
 RUN npm run build
 
-# Extract version from version.ts
-RUN sed -n "s/.*APP_VERSION\s*=\s*['\"]\([^'\"]*\).*/\1/p" src/version.ts > /app/VERSION
+# Extract version from package.json
+RUN sed -n 's/.*"version"\s*:\s*"\([^"]*\)".*/\1/p' package.json > /app/VERSION
 
 # --- Stage 2: Backend & Final Image ---
 FROM python:3.11-slim
