@@ -42,10 +42,10 @@ def get_engine():
         engine_kwargs = {
             "echo": False,
             "pool_pre_ping": True,
-            "pool_size": 100,           # 显著增加连接池，防止高并发识别时挂起
-            "max_overflow": 50,        # 允许更多溢出连接
-            "pool_recycle": 3600,
-            "pool_timeout": 60,        # 增加等待超时
+            "pool_size": 20,            # 适度连接池，避免超过 PG max_connections
+            "max_overflow": 10,         # 溢出连接上限 (总共最多 30)
+            "pool_recycle": 1800,       # 30 分钟回收，避免长连接泄漏
+            "pool_timeout": 30,          # 等待连接超时
             "connect_args": {
                 "command_timeout": 60,
                 "timeout": 60,

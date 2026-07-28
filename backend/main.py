@@ -14,6 +14,12 @@ from config_manager import ConfigManager
 class NoCacheStaticFiles(StaticFiles):
     """对入口文件和 PWA 相关文件禁用浏览器缓存，避免更新后不生效。"""
 
+    async def __call__(self, scope: Scope, receive, send):
+        # 跳过非 HTTP 请求 (如 WebSocket)，避免 AssertionError
+        if scope.get("type") != "http":
+            return
+        await super().__call__(scope, receive, send)
+
     async def get_response(self, path: str, scope: Scope):
         response = await super().get_response(path, scope)
         request_path = scope.get("path", "")
