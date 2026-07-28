@@ -27,9 +27,9 @@ const lightTheme = {
     'secondary-darken-1': '#4b5563',
     accent: '#4ecdc4',
     error: '#ef4444',
-    info: '#4ecdc4',
-    success: '#10b981',
-    warning: '#ff2d92',
+    info: '#1565C0',   /* 深靛蓝 — #4ecdc4 青绿在白底上对比度不足 */
+    success: '#1B8134',  /* 深森林绿 — #10b981 在白底 tonal 下太浅 */
+    warning: '#E65100',  /* 深橙色 — #ff2d92 品红不符合 warning 语义 */
   },
 }
 
@@ -47,9 +47,9 @@ const darkTheme = {
     'secondary-darken-1': '#6b7280',
     accent: '#4ecdc4',
     error: '#ff6b6b',
-    info: '#4ecdc4',
-    success: '#4ecdc4',
-    warning: '#ff2d92',
+    info: '#4ecdc4',   /* 青色 — Liquid Glass 标志色 */
+    success: '#4caf50',  /* 绿色 — 不应跟 info 同色 */
+    warning: '#FFB74D',  /* 琥珀色 — 符合 warning 暖色语义 */
   },
 }
 

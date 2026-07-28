@@ -1,0 +1,1161 @@
+/**
+ * cards.css — 统一卡片系统（媒体卡片/日历卡片/页面卡片）
+ * 从 global.css 拆分而来
+ */
+
+/* ============================================================
+ * 页面级样式 — 从 Vue scoped style 中提取
+ * 按页面/模块分组，全局统一管理
+ * ============================================================ */
+
+/* ── SubscriptionView 订阅管理 ── */
+.sub-search-results {
+  border: 1px solid rgba(var(--v-border-color), 0.12);
+  border-radius: 8px;
+  background: rgba(var(--v-theme-surface), 0.6);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.sub-search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
+  transition: background 0.15s ease;
+}
+.sub-search-result-item:last-child {
+  border-bottom: none;
+}
+.sub-search-result-item:hover {
+  background: rgba(var(--v-theme-primary), 0.06);
+}
+
+.sub-result-info {
+  flex: 1;
+  min-width: 0;
+}
+.sub-result-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.sub-result-sub {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  line-height: 1.4;
+}
+
+.sub-poster-preview {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--v-border-color), 0.12);
+  background: rgba(var(--v-theme-surface), 0.4);
+}
+
+.sub-switch-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── 订阅详情弹窗 ── */
+.sub-detail-episode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+}
+.sub-detail-episode-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sub-detail-episode-btn.pushed {
+  background: rgba(var(--v-theme-primary), 0.15);
+  color: rgb(var(--v-theme-primary));
+}
+.sub-detail-episode-btn.not-pushed {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  color: rgba(var(--v-theme-on-surface), 0.4);
+}
+.sub-detail-episode-btn:hover {
+  transform: scale(1.1);
+}
+
+/* ── Feed 条目列表 / 订阅源详情卡片 ── */
+.feed-item-card {
+  border: 1px solid rgba(var(--v-border-color), 0.08);
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+.feed-item-card:hover {
+  border-color: rgba(var(--v-theme-primary), 0.4);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ── OrganizerView 整理管理 ── */
+.org-config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.org-switch-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.org-hash-warning {
+  font-size: 11px;
+  color: rgb(var(--v-theme-error));
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin: 4px 0 8px 52px;
+}
+
+/* ── 执行日志 ── */
+.org-log-summary {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--v-border-color), 0.08);
+  background: rgba(var(--v-theme-surface), 0.4);
+}
+.org-log-container {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border-radius: 8px;
+  padding: 12px;
+}
+.org-log-line {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+}
+.org-log-line:last-child {
+  border-bottom: none;
+}
+.org-log-error {
+  background: rgba(var(--v-theme-error), 0.06);
+  color: rgb(var(--v-theme-error));
+}
+.org-log-warn {
+  background: rgba(var(--v-theme-warning), 0.06);
+  color: rgb(var(--v-theme-warning));
+}
+.org-log-time {
+  color: rgba(var(--v-theme-on-surface), 0.4);
+  min-width: 70px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.org-log-level {
+  min-width: 40px;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.org-log-level.info { color: #52c41a; }
+.org-log-level.error { color: #ff4d4f; }
+.org-log-level.warning, .org-log-level.warn { color: #faad14; }
+.org-log-level.debug { color: #1890ff; }
+.org-log-msg {
+  flex: 1;
+  word-break: break-all;
+}
+
+/* ── 任务中心条目 ── */
+.org-task-item {
+  padding: 10px 12px;
+  border: 1px solid rgba(var(--v-border-color), 0.08);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: background 0.15s ease;
+}
+.org-task-item:hover {
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+
+/* ── 整理历史条目 ── */
+.org-history-item {
+  border-radius: 12px !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.org-history-item:hover {
+  transform: translateY(-1px);
+}
+
+/* ── 整理历史：路径容器（源→目标 竖向布局） ── */
+.org-path-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+.org-path-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+}
+.org-path-label {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+.org-path-text {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+.org-path-target {
+  color: rgba(var(--v-theme-on-surface), 0.87);
+}
+.org-path-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+  border-top: 1px dashed rgba(var(--v-theme-on-surface), 0.08);
+  border-bottom: 1px dashed rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+.org-path-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── 规则预览结果 ── */
+.org-preview-result {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--v-border-color), 0.12);
+  background: rgba(var(--v-theme-primary), 0.04);
+}
+.org-preview-path {
+  font-size: 13px;
+  font-family: 'Menlo', 'Consolas', monospace;
+  word-break: break-all;
+  color: rgb(var(--v-theme-primary));
+  font-weight: 500;
+}
+
+/* ── 整理搜索框 ── */
+.org-search-field {
+  max-width: 260px;
+}
+
+/* ── 变量手册 (订阅/整理共用) ── */
+.variable-manual {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--v-border-color), 0.12);
+  background: rgba(var(--v-theme-surface), 0.4);
+}
+.variable-section {
+  margin-bottom: 16px;
+}
+.variable-section:last-child {
+  margin-bottom: 0;
+}
+.variable-section-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: rgb(var(--v-theme-primary));
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.12);
+}
+.variable-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  padding: 2px 0;
+}
+.variable-item code {
+  color: rgb(var(--v-theme-warning));
+  font-family: monospace;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(var(--v-border-color), 0.12);
+  background: rgba(var(--v-theme-surface), 0.6);
+  white-space: nowrap;
+}
+.variable-item span {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+/* ── FileBrowserView 文件浏览 ── */
+.file-list-item {
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+.file-list-item:last-child {
+  border-bottom: none;
+}
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.detail-label {
+  font-size: 13px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  font-weight: 600;
+  min-width: 70px;
+  flex-shrink: 0;
+}
+.detail-value {
+  flex: 1;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+/* ── StrmView STRM 生成 ── */
+/* ⚠️ DEPRECATED: 以下 .task-card / .info-row 系列已迁移至 §31 .manage-card__* 系列，新代码请使用新类名 */
+.task-card {
+  transition: transform 0.2s ease;
+}
+.task-card:hover {
+  transform: translateY(-4px);
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.info-label {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  font-weight: 600;
+  min-width: 64px;
+  flex-shrink: 0;
+}
+.info-value {
+  flex: 1;
+  font-size: 13px;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── GuideView 使用指南 ── */
+.guide-card {
+  height: 100%;
+  transition: transform 0.2s ease;
+}
+.guide-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ── CalendarView 日历 ── */
+.calendar-day-card {
+  height: 100%;
+}
+.calendar-today-card {
+  border: 2px solid rgb(var(--v-theme-primary));
+}
+.calendar-day-header {
+  text-align: center;
+}
+.calendar-today-header {
+  background: linear-gradient(to bottom, rgba(var(--v-theme-primary), 0.08), transparent);
+}
+.calendar-item:hover {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+/* ── 详情页共用 ── */
+.detail-backdrop {
+  width: 100%;
+  height: 320px;
+  background-size: cover;
+  background-position: center top;
+  position: relative;
+}
+.backdrop-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 60%, rgb(var(--v-theme-background)) 100%);
+}
+.detail-content {
+  position: relative;
+  z-index: 1;
+  margin-top: -80px;
+}
+
+/* ── 演员阵容横向滚动 ── */
+.cast-scroll {
+  scrollbar-width: thin;
+}
+.cast-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+}
+
+/* ============================================================
+ * §33. 统一媒体卡片 — Media Card (海报卡片)
+ *     含图片的番剧/电影/剧集等海报卡片统一定义
+ *     使用方式：<v-card class="glass-card media-card">
+ *
+ *     布局约定:
+ *     ┌──────────────────────────────┐
+ *     │ [TV]               ⭐ 8.5    │  ← .media-card__type   .media-card__rating
+ *     │                              │
+ *     │        海报图片 (2:3)         │  ← .media-card__poster
+ *     │                              │
+ *     ├──────────────────────────────┤
+ *     │      番剧名称（居中截断）      │  ← .media-card__title
+ *     │          2025               │  ← .media-card__year
+ *     └──────────────────────────────┘
+ *
+ *     网格使用:
+ *     <div class="media-card-grid">
+ *       <v-card class="glass-card media-card">...</v-card>
+ *     </div>
+ *     无需 v-row / v-col，断点由 CSS 统一管理。
+ * ============================================================ */
+
+/* ── 33a. 媒体卡片网格 (CSS Grid, 断点统一在此管理) ──
+ *   对齐 Vuetify 12栅格: cols=6→2列, sm=4→3列, md=3→4列, lg=2→6列, xl=1→12列
+ *   此处默认适中密度，各页面可按需覆盖                          ── */
+.media-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+@media (min-width: 600px)  { .media-card-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 960px)  { .media-card-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1264px) { .media-card-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 1904px) { .media-card-grid { grid-template-columns: repeat(8, 1fr); } }
+
+/* ── 33b. 媒体卡片主体 ── */
+.media-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.media-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ── 33b. 海报区域 ── */
+.media-card__poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+.media-card__poster .v-img {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── 33c. 类型标识 (左上角) ── */
+.media-card__type {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.media-card__type--bgm {
+  background: rgba(255, 152, 0, 0.85);
+  color: #fff;
+}
+.media-card__type--tmdb-movie {
+  background: rgba(33, 150, 243, 0.85);
+  color: #fff;
+}
+.media-card__type--tmdb-tv {
+  background: rgba(30, 136, 229, 0.85);
+  color: #fff;
+}
+
+/* ── 33d. 评分 (右上角) ── */
+.media-card__rating {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffd700;
+}
+
+/* ── 33e. 已订阅角标 ── */
+.media-card__sub-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  padding: 2px;
+  z-index: 2;
+}
+
+/* ── 33f. 卡片下方信息区 ── */
+.media-card__info {
+  padding: 8px 8px 10px;
+  text-align: center;
+}
+.media-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(var(--v-theme-on-surface), 0.87);
+}
+.media-card__year {
+  font-size: 11px;
+  color: rgba(var(--v-theme-on-surface), 0.5);
+  margin-top: 2px;
+}
+.media-card__subtitle {
+  font-size: 11px;
+  color: rgba(var(--v-theme-on-surface), 0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+/* ============================================================
+ * §34. 追剧日历卡片 — Calendar Track Card
+ *     与 .media-card 体系独立，因为含集数标签等额外信息
+ *     使用方式：<v-card class="glass-card track-card">
+ *
+ *     布局约定:
+ *     ┌──────────────────────────────┐
+ *     │                              │
+ *     │        海报图片 (2:3)         │  ← .track-card__poster
+ *     │                              │
+ *     ├──────────────────────────────┤
+ *     │      番剧名称（截断）         │  ← .track-card__title
+ *     │  [S1E1] [S1E2] [END]        │  ← 集数标签
+ *     └──────────────────────────────┘
+ *
+ *     网格使用:
+ *     <div class="track-card-grid">
+ *       <v-card class="glass-card track-card">...</v-card>
+ *     </div>
+ * ============================================================ */
+
+/* ── 34a. 追剧日历网格 ── */
+.track-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (min-width: 600px)  { .track-card-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 960px)  { .track-card-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1264px) { .track-card-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 1904px) { .track-card-grid { grid-template-columns: repeat(8, 1fr); } }
+
+/* ── 34b. 卡片主体 ── */
+.track-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.track-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ── 34c. 海报区域 (固定 2:3 比例) ── */
+.track-card__poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+.track-card__poster .v-img {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── 34d. 无海报时的占位符 ── */
+.track-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  font-size: 32px;
+  font-weight: 700;
+  color: rgba(var(--v-theme-on-surface), 0.2);
+}
+
+/* ── 34e. 信息区域 ── */
+.track-card__info {
+  padding: 10px 12px;
+  text-align: center;
+}
+.track-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 6px;
+}
+
+/* ============================================================
+ * §35. 追踪管理卡片 — Calendar Manage Card
+ *     用于追踪管理弹窗内的紧凑卡片网格
+ *     使用方式：<div class="cal-manage-grid">
+ *                 <v-card class="glass-card cal-manage-card">...</v-card>
+ *               </div>
+ * ============================================================ */
+
+/* ── 35a. 追踪管理网格 (弹窗内更紧凑) ── */
+.cal-manage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+@media (min-width: 600px)  { .cal-manage-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 960px)  { .cal-manage-grid { grid-template-columns: repeat(5, 1fr); } }
+
+/* ── 35b. 追踪管理卡片主体 ── */
+.cal-manage-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.cal-manage-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ── 35c. 海报区域 ── */
+.cal-manage-poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  overflow: hidden;
+}
+.cal-manage-poster .v-img {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+.cal-manage-card:hover .cal-manage-poster .v-img {
+  transform: scale(1.05);
+}
+
+/* ── 35d. 信息区 ── */
+.cal-manage-info {
+  padding: 6px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cal-manage-title {
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.cal-manage-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+.cal-manage-season {
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
+}
+.cal-manage-ep {
+  color: rgba(var(--v-theme-on-surface), 0.5);
+}
+.cal-manage-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ── 兼容旧 .sub-badge (逐步迁移) ── */
+.sub-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  padding: 2px;
+  z-index: 2;
+}
+
+/* ── SystemLogsTab 系统日志 ── */
+.log-container {
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+.log-line {
+  padding: 2px 4px;
+  border-radius: 2px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
+}
+.log-error {
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.06);
+}
+.log-warning {
+  color: rgb(var(--v-theme-warning));
+}
+.log-info {
+  color: rgba(var(--v-theme-on-surface), 0.8);
+}
+.log-debug {
+  color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+/* ── DatabaseTab 数据库 ── */
+.sql-result-box {
+  background: rgba(var(--v-theme-on-surface), 0.02);
+  border-radius: 8px;
+  max-height: 300px;
+  overflow: auto;
+  font-size: 12px;
+}
+
+/* ============================================================
+ * FileHashesView — 文件哈希记录
+ * ============================================================ */
+.hash-search-field {
+  max-width: 360px;
+  flex-grow: 1;
+}
+
+.hash-item-card {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  transition: all 0.2s ease;
+}
+
+.hash-item-card:hover {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border-color: rgba(var(--v-theme-on-surface), 0.12);
+}
+
+.hash-path {
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.hash-value {
+  font-family: monospace;
+  font-size: 12px;
+}
+
+/* ============================================================
+ * TaskHistoryView — 任务中心独立页面
+ * ============================================================ */
+.task-search-field {
+  max-width: 360px;
+  flex-grow: 1;
+}
+
+/* ============================================================
+ * DataCenterView — 数据中心
+ * ============================================================ */
+.dc-stat-card {
+  transition: transform 0.2s ease;
+}
+
+.dc-stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.dc-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  font-size: 14px;
+}
+
+.dc-detail-row:last-child {
+  border-bottom: none;
+}
+
+.dc-search-item {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  transition: all 0.2s ease;
+}
+
+.dc-search-item:hover {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border-color: rgba(var(--v-theme-on-surface), 0.12);
+}
+
+/* --- 数据库管理 --- */
+.dc-db-table-list {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.dc-db-table-item {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.dc-db-table-item:hover {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border-color: rgba(var(--v-theme-on-surface), 0.12);
+}
+
+.dc-db-table-item--active {
+  background: rgba(var(--v-theme-primary), 0.08);
+  border-color: rgba(var(--v-theme-primary), 0.3);
+}
+
+.dc-db-data-container {
+  overflow: hidden;
+}
+
+.dc-db-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.dc-db-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dc-db-table thead tr {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.dc-db-table th {
+  padding: 10px 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  text-align: left;
+}
+
+.dc-db-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-db-table tbody tr:hover {
+  background: rgba(var(--v-theme-on-surface), 0.03);
+}
+
+/* --- 哈希详情全值展示 --- */
+.hash-full-value {
+  font-family: monospace;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* --- 光标手型 --- */
+.cursor-pointer { cursor: pointer; }
+
+/* --- 筛选行最小高度 --- */
+.filter-row { min-height: 36px; }
+
+/* --- 多行文本截断 --- */
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+/* --- 分类徽章 --- */
+.category-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.5px; }
+
+/* --- 搜索结果列表 (订阅/整理共用) --- */
+.search-results-list {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  transition: background 0.15s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: rgba(var(--v-theme-primary), 0.06); }
+.search-result-info { flex: 1; min-width: 0; }
+.search-result-title { font-size: 14px; font-weight: 600; color: rgba(var(--v-theme-on-surface), 0.87); }
+.search-result-sub { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.5); margin-top: 2px; }
+
+/* --- 海报占位 (小尺寸) --- */
+.poster-placeholder-sm {
+  width: 50px; height: 75px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: rgba(var(--v-theme-on-surface), 0.3);
+}
+
+/* --- 配置区域 (整理/识别共用) --- */
+.config-section {
+  background: rgba(var(--v-theme-surface), 0.5);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+/* --- 区域标题 --- */
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- 开关行 --- */
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.switch-label {
+  font-weight: 500;
+  color: rgba(var(--v-theme-on-surface), 0.87);
+}
+.switch-desc {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+/* --- 表单标签最小宽度 (AppearanceView 等) --- */
+.label-min-w { min-width: 100px; }
+
+/* --- 搜索输入框 --- */
+.dc-search-input {
+  max-width: 360px;
+  flex-grow: 1;
+}
+
+/* ── STRM / 整理弹框: URL 预览框 ── */
+.preview-box {
+  background: rgb(var(--v-theme-surface-variant), 0.3);
+  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-height: 80px;
+  font-family: monospace;
+  font-size: 13px;
+  word-break: break-all;
+}
+.preview-content {
+  color: rgb(var(--v-theme-info));
+  font-family: monospace;
+  font-size: 13px;
+}
+.preview-sub {
+  font-family: var(--v-font-family, sans-serif);
+}
+
+/* ============================================================
+ * 详情卡片通用布局 — 订阅源详情 / 整理历史 等共用
+ * 使用方式：<div class="detail-card"> (外层) + .detail-card__main / .detail-card__aside
+ * ============================================================ */
+
+/* ── 详情卡片外层 (左右两栏) ── */
+.detail-card {
+  display: flex;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+/* ── 详情卡片左侧主内容 ── */
+.detail-card__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.detail-card__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.detail-card__tags-left {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+.detail-card__index {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.4);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+.detail-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.detail-card__desc {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.5);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-right: 48px;
+}
+.detail-card__tmdb-title {
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── 详情卡片右侧操作区 ── */
+.detail-card__aside {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 160px;
+}
+.detail-card__time {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.5);
+  font-family: monospace;
+  white-space: nowrap;
+}
+.detail-card__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ── 通用工具栏 (搜索+筛选+操作) ── */
+.list-toolbar {
+  margin-bottom: 16px;
+}
+.list-toolbar__filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.list-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-toolbar__total {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+/* ── 通用垂直列表容器 ── */
+.vertical-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+

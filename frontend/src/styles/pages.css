@@ -1,0 +1,341 @@
+/**
+ * pages.css — 页面级样式、代码块、布局、表单控件
+ * 从 global.css 拆分而来
+ */
+
+/* ============================================================
+ * 22. 页面级样式 — 从各 .vue scoped 迁移至此
+ *     以后改样式只改 global.css 即可，不用翻 .vue 文件
+ * ============================================================ */
+
+
+
+/* ── 日志终端 — LogTerminal / BangumiView 通用 ── */
+
+/* 容器 */
+.log-terminal {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0 0 24px 24px;
+
+  /* 统一滚动条 — 紫色半透明 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+.log-terminal::-webkit-scrollbar { width: 6px; }
+.log-terminal::-webkit-scrollbar-track { background: transparent; }
+.log-terminal::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.25); border-radius: 3px; }
+.log-terminal::-webkit-scrollbar-thumb:hover { background: rgba(168, 85, 247, 0.4); }
+
+.v-theme--light .log-terminal { background: rgba(0, 0, 0, 0.02); }
+.v-theme--dark .log-terminal { background: rgba(255, 255, 255, 0.02); }
+
+/* 日志行 */
+.log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 2px 4px;
+  border-radius: 8px;
+  transition: background 0.2s ease-out;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.log-entry:hover { background: rgba(255, 255, 255, 0.04); }
+.v-theme--light .log-entry:hover { background: rgba(0, 0, 0, 0.03); }
+
+/* 时间列 */
+.log-entry__time {
+  flex-shrink: 0;
+  font-size: 11px;
+  opacity: 0.45;
+  min-width: 56px;
+}
+
+/* 级别列 — Liquid Glass 强调色 */
+.log-entry__level {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 11px;
+  min-width: 48px;
+  letter-spacing: 0.02em;
+}
+
+/* 暗色模式级别色 — 青色/紫色系 */
+.log-entry__level[data-level="info"]    { color: #4ecdc4; }
+.log-entry__level[data-level="warn"],
+.log-entry__level[data-level="warning"]  { color: #FFB74D; }
+.log-entry__level[data-level="error"]    { color: #EF5350; }
+.log-entry__level[data-level="critical"] { color: #F48FB1; }
+.log-entry__level[data-level="debug"]    { color: rgba(255, 255, 255, 0.4); }
+.log-entry__level[data-level="success"]  { color: #81C784; }
+
+/* 亮色模式级别色 — 紫色系 */
+.v-theme--light .log-entry__level[data-level="info"]    { color: #7c3aed; }
+.v-theme--light .log-entry__level[data-level="warn"],
+.v-theme--light .log-entry__level[data-level="warning"]  { color: #E65100; }
+.v-theme--light .log-entry__level[data-level="error"]    { color: #C62828; }
+.v-theme--light .log-entry__level[data-level="critical"] { color: #AD1457; }
+.v-theme--light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
+.v-theme--light .log-entry__level[data-level="success"]  { color: #2E7D32; }
+
+/* 消息列 */
+.log-entry__msg {
+  flex: 1;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* 行级别着色 (ERROR / WARN 背景) */
+.log-entry--error { background: rgba(239, 83, 80, 0.06); }
+.log-entry--warn  { background: rgba(255, 183, 77, 0.05); }
+
+.v-theme--light .log-entry--error { background: rgba(198, 40, 40, 0.04); }
+.v-theme--light .log-entry--warn  { background: rgba(230, 81, 0, 0.04); }
+
+
+/* ── 登录页 — LoginView ── */
+.login-container {
+  background:
+    radial-gradient(ellipse 800px 600px at 85% 15%, rgba(168, 85, 247, 0.2) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 500px at 10% 85%, rgba(78, 205, 196, 0.2) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(255, 45, 146, 0.1) 0%, transparent 70%),
+    linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #0a0a1a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-light-wells {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 500px 400px at 80% 20%, rgba(78, 205, 196, 0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 15% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 300px 200px at 50% 50%, rgba(255, 45, 146, 0.06) 0%, transparent 70%);
+  animation: login-breathe 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes login-breathe {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ── Liquid Glass Avatar — DefaultLayout / LoginView ── */
+.liquid-avatar {
+  background: rgba(78, 205, 196, 0.15) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(78, 205, 196, 0.3) !important;
+  color: #4ecdc4 !important;
+  transition: all 0.5s ease-out;
+}
+
+.liquid-avatar:hover {
+  background: rgba(78, 205, 196, 0.25) !important;
+  border-color: rgba(78, 205, 196, 0.5) !important;
+  box-shadow: 0 0 16px rgba(78, 205, 196, 0.3) !important;
+}
+
+
+
+
+
+
+
+/* ============================================================
+ * 23. prefers-reduced-motion
+ * ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .login-light-wells {
+    animation: none;
+  }
+}
+
+
+
+
+/* ============================================================
+ * 27. 从各 .vue scoped 迁移的统一样式
+ *     去重合并，统一命名
+ * ============================================================ */
+
+/* ── 代码块 — 统一替代 .code-block / .json-code-wrapper / .json-viewer / .cmd-preview ── */
+.code-block {
+  background: rgba(0, 0, 0, 0.3);
+  color: #d4d4d4;
+  padding: 16px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0;
+  overflow-x: auto;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.v-theme--light .code-block {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.87);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* ── 代码块修饰类 — 用于 scrollable 弹窗内部，移除自身滚动避免双重滚动条 ── */
+.code-block--flat {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
+/* 代码块内行高亮 */
+.code-block code {
+  color: #7ec699;
+  font-family: inherit;
+  font-size: inherit;
+  white-space: nowrap;
+  display: block;
+}
+
+
+
+
+/* ── 布局样式 — DefaultLayout ── */
+.logo-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 12px;
+}
+.logo-header--rail {
+  flex-direction: column;
+  padding: 12px 8px;
+  gap: 6px;
+}
+.logo-text {
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
+.sidebar-version {
+  font-size: 10px;
+  opacity: 0.4;
+  user-select: none;
+  margin-top: 2px;
+}
+
+/* ── 过渡动画 ── */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+/* ============================================================
+ * 28. 表单控件高度统一 — 解决同行按钮/输入框/开关高度不一致
+ *
+ *     问题根因：Vuetify 4 各组件默认高度不同
+ *       v-text-field / v-select / v-autocomplete   density="compact" → 40px
+ *       v-btn   size="small"                       → 28px
+ *       v-btn   (default)                           → 36px
+ *       v-switch density="compact"                  → 40px
+ *
+ *     策略（不全局改按钮高度，仅在同行有表单控件时才对齐）：
+ *       1. .control-row 工具类 — 显式声明，行内所有控件强制 40px 等高
+ *       2. :has() 自动检测 — 水平 flex 行中同时有输入框/开关 + 按钮时，
+ *          按钮自动提升至 40px；单独按钮不受影响，保持 Vuetify 原生 28px
+ *       3. switch / checkbox / radio 的 label 垂直居中修复
+ *
+ *     浏览器支持：:has() — Chrome 105+ / Firefox 121+ / Safari 15.4+
+ * ============================================================ */
+
+/* ── 1. .control-row — 同行控件等高容器（显式使用）── */
+/*
+ * 用法：<div class="control-row"> … </div>
+ * 替代 <div class="d-flex align-center ga-3 flex-wrap">
+ * 行内所有 small/default 按钮强制 40px，与 compact 输入框完全等高。
+ */
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* control-row 内：small / default 非图标按钮 → 40px */
+.control-row .v-btn--size-small.v-btn--density-default:not(.v-btn--icon),
+.control-row .v-btn--size-default.v-btn--density-default:not(.v-btn--icon) {
+  height: 40px !important;
+}
+
+/* control-row 内：small / default 图标按钮 → 40×40px */
+.control-row .v-btn--icon.v-btn--size-small.v-btn--density-default,
+.control-row .v-btn--icon.v-btn--size-default.v-btn--density-default {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+/* control-row 紧凑变体：所有控件 36px（适合空间有限的工具栏）*/
+.control-row--tight {
+  gap: 8px;
+}
+
+.control-row--tight .v-btn--size-small.v-btn--density-default:not(.v-btn--icon),
+.control-row--tight .v-btn--size-default.v-btn--density-default:not(.v-btn--icon) {
+  height: 36px !important;
+}
+
+.control-row--tight .v-btn--icon.v-btn--size-small.v-btn--density-default,
+.control-row--tight .v-btn--icon.v-btn--size-default.v-btn--density-default {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+/* ── 2. :has() 自动检测 — flex 行中有表单控件时按钮自动对齐 ── */
+/*
+ * 当水平 flex 容器（.d-flex 且非 flex-column）内含输入框 / 开关 /
+ * 勾选框 / 单选框时，行内 small 按钮自动提升至 40px 对齐。
+ * 单独出现的按钮（不在含表单控件的 flex 行中）保持 Vuetify 原生 28px。
+ */
+
+/* 含表单控件的水平 flex 行 → small 非图标按钮 40px */
+.d-flex:not(.flex-column):not(.flex-column-reverse):has(.v-field, .v-switch, .v-checkbox, .v-radio)
+  .v-btn--size-small.v-btn--density-default:not(.v-btn--icon) {
+  height: 40px !important;
+}
+
+/* 含表单控件的水平 flex 行 → default 非图标按钮也统一 40px */
+.d-flex:not(.flex-column):not(.flex-column-reverse):has(.v-field, .v-switch, .v-checkbox, .v-radio)
+  .v-btn--size-default.v-btn--density-default:not(.v-btn--icon) {
+  height: 40px !important;
+}
+
+/* ── 3. switch / checkbox / radio 在 flex 行中对齐 ── */
+/* 确保 SelectionControl 的 label 与开关/勾选框垂直居中 */
+.v-switch .v-input__control,
+.v-checkbox .v-input__control,
+.v-radio .v-input__control {
+  align-items: center;
+}
+

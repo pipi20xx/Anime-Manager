@@ -4,7 +4,7 @@
 import { ref } from 'vue'
 
 interface ConfirmOptions {
-  title: string
+  title?: string
   content: string
   confirmText?: string
   cancelText?: string
@@ -23,7 +23,10 @@ const options = ref<ConfirmOptions>({
 let resolvePromise: ((value: boolean) => void) | null = null
 
 export function useConfirm() {
-  function confirm(opts: ConfirmOptions): Promise<boolean> {
+  function confirm(optsOrMsg: ConfirmOptions | string): Promise<boolean> {
+    const opts: ConfirmOptions = typeof optsOrMsg === 'string'
+      ? { title: '确认', content: optsOrMsg }
+      : optsOrMsg
     options.value = {
       confirmText: '确认',
       cancelText: '取消',

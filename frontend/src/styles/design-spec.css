@@ -1,0 +1,388 @@
+/**
+ * design-spec.css — Liquid Glass 设计规范补全
+ * 从 global.css 拆分而来
+ */
+
+/* ============================================================
+ * 29. Liquid Glass 统一设计规范补全
+ *
+ *     基于 Vuetify variant 体系（flat / tonal / text / outlined / icon）
+ *     补全以下场景的统一样式，确保全项目一致：
+ *
+ *     a. 按钮 — color 变体（primary/success/warning/error/default）在各 variant 下的 Liquid Glass 表现
+ *     b. 图标按钮 — 统一 hover / active 态
+ *     c. 搜索框 — 统一 .search-field 样式
+ *     d. 弹窗按钮区 — .dialog-actions 统一间距和对齐
+ *     e. 页面头部操作栏 — .page-actions 统一布局
+ *     f. 卡片操作栏 — .card-actions 统一间距
+ *     g. 开关行 — .switch-row-lg 带描述的开关行
+ *     h. 表单间距 — 弹窗内表单控件统一间距
+ *     i. filled / solo 输入框 — 补全 variant
+ *
+ *     使用规范：
+ *       页面头部按钮: <v-btn color="primary" variant="flat"> + <v-btn variant="tonal">
+ *       弹窗确认/取消: <v-btn color="primary" variant="flat"> + <v-btn variant="text">
+ *       删除操作: <v-btn color="error" variant="text">
+ *       卡片图标操作: <v-btn icon="..." size="x-small" variant="text">
+ *       新增按钮: <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus">
+ * ============================================================ */
+
+/* ── 29a. 按钮 — flat variant 按 color 分色 ── */
+
+/* flat + primary — 主要操作（保存/确认/提交） */
+.v-theme--dark .v-btn--variant-flat.v-btn--bg-primary,
+.v-theme--dark .v-btn--variant-flat.text-primary {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(78, 205, 196, 0.12)) !important;
+  color: white !important;
+  border: 1px solid rgba(78, 205, 196, 0.15) !important;
+}
+.v-theme--light .v-btn--variant-flat.v-btn--bg-primary,
+.v-theme--light .v-btn--variant-flat.text-primary {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(255, 45, 146, 0.1)) !important;
+  color: #7c3aed !important;
+  border: 1px solid rgba(124, 58, 237, 0.2) !important;
+}
+
+/* flat + success — 成功操作 */
+.v-theme--dark .v-btn--variant-flat.v-btn--bg-success {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(129, 199, 132, 0.12)) !important;
+  color: #81C784 !important;
+  border: 1px solid rgba(76, 175, 80, 0.2) !important;
+}
+.v-theme--light .v-btn--variant-flat.v-btn--bg-success {
+  background: rgba(76, 175, 80, 0.08) !important;
+  color: #2E7D32 !important;
+  border: 1px solid rgba(76, 175, 80, 0.2) !important;
+}
+
+/* flat + warning — 警告操作 */
+.v-theme--dark .v-btn--variant-flat.v-btn--bg-warning {
+  background: linear-gradient(135deg, rgba(255, 183, 77, 0.2), rgba(255, 152, 0, 0.12)) !important;
+  color: #FFB74D !important;
+  border: 1px solid rgba(255, 183, 77, 0.2) !important;
+}
+.v-theme--light .v-btn--variant-flat.v-btn--bg-warning {
+  background: rgba(255, 152, 0, 0.08) !important;
+  color: #E65100 !important;
+  border: 1px solid rgba(255, 152, 0, 0.2) !important;
+}
+
+/* flat + error — 危险操作 */
+.v-theme--dark .v-btn--variant-flat.v-btn--bg-error {
+  background: linear-gradient(135deg, rgba(239, 83, 80, 0.2), rgba(244, 143, 177, 0.12)) !important;
+  color: #EF5350 !important;
+  border: 1px solid rgba(239, 83, 80, 0.2) !important;
+}
+.v-theme--light .v-btn--variant-flat.v-btn--bg-error {
+  background: rgba(211, 47, 47, 0.06) !important;
+  color: #C62828 !important;
+  border: 1px solid rgba(211, 47, 47, 0.15) !important;
+}
+
+/* ── 29b. 按钮 — tonal variant 按 color 分色 ── */
+
+/* tonal + info */
+.v-theme--dark .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay {
+  background: rgba(66, 165, 245, 0.1) !important;
+}
+.v-theme--light .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay {
+  background: rgba(21, 101, 192, 0.08) !important;
+}
+
+/* tonal + warning */
+.v-theme--dark .v-btn--variant-tonal.v-btn--bg-warning .v-btn__overlay {
+  background: rgba(255, 183, 77, 0.1) !important;
+}
+.v-theme--light .v-btn--variant-tonal.v-btn--bg-warning .v-btn__overlay {
+  background: rgba(255, 152, 0, 0.08) !important;
+}
+
+/* tonal + error */
+.v-theme--dark .v-btn--variant-tonal.v-btn--bg-error .v-btn__overlay {
+  background: rgba(239, 83, 80, 0.1) !important;
+}
+.v-theme--light .v-btn--variant-tonal.v-btn--bg-error .v-btn__overlay {
+  background: rgba(211, 47, 47, 0.06) !important;
+}
+
+/* ── 29c. 图标按钮 — 统一 hover / active 态 ── */
+.v-btn--icon {
+  transition: all 0.3s ease-out !important;
+  border-radius: 50% !important;
+}
+.v-btn--icon:hover {
+  transform: scale(1.08);
+}
+.v-btn--icon:active {
+  transform: scale(0.95);
+}
+
+/* 暗色图标按钮 hover */
+.v-theme--dark .v-btn--icon.v-btn--variant-text:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+/* 亮色图标按钮 hover */
+.v-theme--light .v-btn--icon.v-btn--variant-text:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 图标按钮 + error color */
+.v-theme--dark .v-btn--icon.v-btn--bg-error:hover {
+  background: rgba(239, 83, 80, 0.1) !important;
+}
+.v-theme--light .v-btn--icon.v-btn--bg-error:hover {
+  background: rgba(211, 47, 47, 0.06) !important;
+}
+
+/* ── 29e. 搜索框 — 统一 .search-field 样式 ── */
+/*
+ * 使用方式：
+ *   <v-text-field class="search-field" prepend-inner-icon="mdi-magnify"
+ *     variant="outlined" density="compact" hide-details clearable placeholder="搜索..." />
+ */
+.search-field {
+  max-width: 360px;
+  flex-grow: 1;
+}
+.search-field .v-field {
+  border-radius: 20px !important;
+}
+.v-theme--dark .search-field .v-field {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+.v-theme--light .search-field .v-field {
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* 搜索框内嵌按钮时圆角适配 */
+.search-field .v-field .v-btn {
+  border-radius: 14px !important;
+}
+
+/* ── 29f. 弹窗按钮区 — .dialog-actions 统一间距和对齐 ── */
+/*
+ * 使用方式：
+ *   <v-card-actions class="dialog-actions">
+ *     <v-spacer />
+ *     <v-btn variant="text" @click="...">取消</v-btn>
+ *     <v-btn color="primary" variant="flat" @click="...">确认</v-btn>
+ *   </v-card-actions>
+ */
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px !important;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+.v-theme--dark .dialog-actions {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+.v-theme--light .dialog-actions {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ── 29g. 页面头部操作栏 — .page-actions ── */
+/*
+ * 使用方式：
+ *   <div class="app-page-header mb-6 d-flex align-center justify-space-between flex-wrap ga-3">
+ *     <div> <h1>标题</h1> <div>描述</div> </div>
+ *     <div class="page-actions">
+ *       <v-btn variant="tonal" color="warning">恢复默认</v-btn>
+ *       <v-btn color="primary" variant="flat" :loading="saving">保存设置</v-btn>
+ *     </div>
+ *   </div>
+ */
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── 29h. 卡片操作栏 — 统一 .card-actions ── */
+/*
+ * 使用方式：
+ *   <v-card-actions class="card-actions">
+ *     <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play">执行</v-btn>
+ *     <v-spacer />
+ *     <v-btn icon="mdi-pencil-outline" size="x-small" variant="text" />
+ *     <v-btn icon="mdi-delete-outline" size="x-small" variant="text" color="error" />
+ *   </v-card-actions>
+ */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px !important;
+}
+
+/* ── 29i. 开关行 — 带描述的开关行 .switch-row-lg ── */
+/*
+ * 使用方式：
+ *   <div class="switch-row-lg">
+ *     <v-switch v-model="val" density="compact" hide-details color="primary" />
+ *     <div>
+ *       <div class="switch-label">开关名称</div>
+ *       <div class="switch-desc">开关描述</div>
+ *     </div>
+ *   </div>
+ */
+.switch-row-lg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.switch-row-lg:last-child {
+  margin-bottom: 0;
+}
+
+/* ── 29j. 弹窗表单间距 — 统一 .form-section ── */
+/*
+ * 使用方式（弹窗内的表单）：
+ *   <v-card-text class="form-section">
+ *     <v-text-field ... class="mb-3" />
+ *     <v-select ... class="mb-3" />
+ *     <div class="switch-row-lg">...</div>
+ *   </v-card-text>
+ */
+.form-section .v-text-field,
+.form-section .v-select,
+.form-section .v-autocomplete,
+.form-section .v-combobox,
+.form-section .v-textarea {
+  margin-bottom: 12px;
+}
+.form-section .v-text-field:last-child,
+.form-section .v-select:last-child,
+.form-section .v-autocomplete:last-child,
+.form-section .v-combobox:last-child,
+.form-section .v-textarea:last-child {
+  margin-bottom: 0;
+}
+
+/* ── 29k. 输入框 variant 补全 — filled / solo ── */
+
+/* filled 输入框 — Liquid Glass */
+.v-theme--dark .v-field--variant-filled {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+.v-theme--light .v-field--variant-filled {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+
+/* solo 输入框 — Liquid Glass */
+.v-theme--dark .v-field--variant-solo {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+.v-theme--light .v-field--variant-solo {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* solo-filled 输入框 */
+.v-theme--dark .v-field--variant-solo-filled {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+}
+.v-theme--light .v-field--variant-solo-filled {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 16px !important;
+}
+
+/* ── 29l. 输入框 focus 态统一 — 所有 variant 的聚焦光环 ── */
+.v-theme--dark .v-field--focused {
+  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.15), 0 0 12px rgba(78, 205, 196, 0.08) !important;
+}
+.v-theme--light .v-field--focused {
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.12), 0 0 8px rgba(168, 85, 247, 0.06) !important;
+}
+
+/* ── 29m. 全局表单控件统一密度 — 弹窗/卡片内表单默认 compact ── */
+/* 弹窗内 v-card-text 的表单控件统一间距 */
+.v-dialog .v-card-text .v-text-field,
+.v-dialog .v-card-text .v-select,
+.v-dialog .v-card-text .v-autocomplete,
+.v-dialog .v-card-text .v-combobox,
+.v-dialog .v-card-text .v-textarea {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* ── 29n. 禁用态 — Liquid Glass 半透明 ── */
+.v-btn--disabled,
+.v-input--disabled {
+  opacity: 0.5 !important;
+}
+
+/* ── 29o. 按钮圆角统一 — 与 Liquid Glass 系统一致 ── */
+.v-btn {
+  border-radius: 12px !important;
+}
+.v-btn--icon {
+  border-radius: 50% !important;
+}
+.v-btn--size-x-small:not(.v-btn--icon) {
+  border-radius: 10px !important;
+}
+
+/* ── 29p. 搜索结果弹层 — Liquid Glass 统一 ── */
+/*
+ * 用于 HomeView / SubEditModal 等的搜索结果下拉
+ * 使用方式：<div class="search-results-box">
+ */
+.search-results-box {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 16px;
+  background: rgba(var(--v-theme-surface), 0.6);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+.v-theme--dark .search-results-box {
+  background: rgba(26, 26, 62, 0.9);
+  border-color: rgba(78, 205, 196, 0.12);
+}
+.v-theme--light .search-results-box {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(124, 58, 237, 0.12);
+}
+.search-results-box::-webkit-scrollbar { width: 6px; }
+.search-results-box::-webkit-scrollbar-track { background: transparent; }
+.search-results-box::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.25); border-radius: 3px; }
+
+/* ── 29q. 全局空状态 — 统一 .empty-state ── */
+/*
+ * 使用方式：
+ *   <div class="empty-state">
+ *     <v-icon size="64" color="primary" class="mb-4">mdi-xxx</v-icon>
+ *     <div class="text-h6 font-weight-medium">标题</div>
+ *     <div class="text-body-2 text-medium-emphasis mt-2">描述</div>
+ *   </div>
+ */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+/* ── 29r. 页面头部 — 统一 .app-page-header ── */
+.app-page-header {
+  min-height: 48px;
+}
+.app-page-header h1 {
+  line-height: 1.3;
+}
+.app-page-header .text-body-2 {
+  line-height: 1.4;
+}
+

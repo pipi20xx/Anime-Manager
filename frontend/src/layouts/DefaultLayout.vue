@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore, useSystemStore } from '@/stores'
 import { useNotification } from '@/composables'
@@ -9,21 +9,74 @@ const route = useRoute()
 const router = useRouter()
 const themeStore = useThemeStore()
 const systemStore = useSystemStore()
-const { notify, state: notifyState } = useNotification()
+const { state: notifyState } = useNotification()
 
 const appVersion = __APP_VERSION__ as string
 const drawer = ref(true)
 const rail = ref(false)
 const isMobile = ref(false)
 
-const navItems = [
-  { title: '首页', icon: 'mdi-home-outline', to: '/' },
+// 导航分组 — 与旧前端功能一一对应
+const navGroups = [
+  {
+    key: 'core',
+    label: '核心功能',
+    items: [
+      { title: '识别调试台', icon: 'mdi-head-cog-outline', to: '/' },
+      { title: '番剧探索', icon: 'mdi-compass-outline', to: '/explore' },
+      { title: '订阅管理', icon: 'mdi-rss', to: '/subscription' },
+      { title: '整理管理', icon: 'mdi-folder-sync-outline', to: '/organizer' },
+      { title: '追剧日历', icon: 'mdi-calendar-month-outline', to: '/calendar' },
+    ],
+  },
+  {
+    key: 'tools',
+    label: '工具',
+    items: [
+      { title: 'Jackett 搜索', icon: 'mdi-magnify-scan', to: '/jackett' },
+      { title: '文件浏览', icon: 'mdi-file-tree-outline', to: '/files' },
+      { title: 'STRM 生成', icon: 'mdi-link-variant', to: '/strm' },
+      { title: 'AI 实验室', icon: 'mdi-robot-outline', to: '/ai-lab' },
+    ],
+  },
+  {
+    key: 'data',
+    label: '数据中心',
+    items: [
+      { title: '数据总览', icon: 'mdi-database-outline', to: '/data-center' },
+      { title: '任务中心', icon: 'mdi-clipboard-list-outline', to: '/task-history' },
+      { title: '文件哈希', icon: 'mdi-fingerprint', to: '/file-hashes' },
+    ],
+  },
+  {
+    key: 'system',
+    label: '系统',
+    items: [
+      { title: '系统设置', icon: 'mdi-cog-outline', to: '/settings' },
+      { title: '外观设置', icon: 'mdi-palette-outline', to: '/appearance' },
+      { title: '使用指南', icon: 'mdi-book-open-page-variant-outline', to: '/guide' },
+    ],
+  },
 ]
 
+// 扁平化的导航项（用于查找当前标题）
+const allNavItems = navGroups.flatMap(g => g.items)
+
 const currentTitle = computed(() => {
-  const item = navItems.find(n => n.to === route.path)
+  const item = allNavItems.find(n => {
+    if (n.to === '/') return route.path === '/'
+    return route.path.startsWith(n.to)
+  })
   return item?.title ?? '番剧管家'
 })
+
+// 检查某个导航组是否应该高亮
+function isGroupActive(group: typeof navGroups[0]): boolean {
+  return group.items.some(item => {
+    if (item.to === '/') return route.path === '/'
+    return route.path.startsWith(item.to)
+  })
+}
 
 function handleLogout() {
   systemStore.logout()
@@ -34,6 +87,11 @@ function checkMobile() {
   isMobile.value = window.innerWidth < 960
   if (isMobile.value) drawer.value = false
 }
+
+// 路由变化时，移动端自动关闭抽屉
+watch(() => route.path, () => {
+  if (isMobile.value) drawer.value = false
+})
 
 onMounted(() => {
   checkMobile()
@@ -80,19 +138,30 @@ onUnmounted(() => {
 
       <v-divider />
 
-      <!-- 导航菜单 -->
-      <v-list density="compact" nav class="px-3 py-2 flex-grow-0 overflow-y-auto">
-        <v-list-item
-          v-for="item in navItems"
-          :key="item.to"
-          :prepend-icon="item.icon"
-          :title="item.title"
-          :to="item.to"
-          :value="item.to"
-          rounded="xl"
-          class="mb-1"
-          :exact="item.to === '/'"
-        />
+      <!-- 导航菜单分组 -->
+      <v-list density="compact" nav class="px-2 py-2 flex-grow-0 overflow-y-auto">
+        <template v-for="group in navGroups" :key="group.key">
+          <!-- 分组标题（非 rail 模式显示） -->
+          <div v-if="!rail || isMobile" class="nav-group-label">
+            <span class="text-caption text-medium-emphasis font-weight-medium text-uppercase tracking-wider">
+              {{ group.label }}
+            </span>
+          </div>
+
+          <v-list-item
+            v-for="item in group.items"
+            :key="item.to"
+            :prepend-icon="item.icon"
+            :title="item.title"
+            :to="item.to"
+            :value="item.to"
+            rounded="xl"
+            class="mb-1"
+            :exact="item.to === '/'"
+          />
+
+          <v-divider v-if="group.key !== 'system'" class="my-2 mx-2" />
+        </template>
       </v-list>
 
       <template #append>
@@ -126,6 +195,16 @@ onUnmounted(() => {
             {{ systemStore.isConnected ? '已连接' : '断开' }}
           </v-chip>
 
+          <!-- 系统日志 -->
+          <v-btn
+            variant="text"
+            density="comfortable"
+            size="small"
+            color="info"
+            icon="mdi-card-text-outline"
+            @click="systemStore.showLogModal = true"
+          />
+
           <!-- 主题切换 -->
           <v-btn
             variant="text"
@@ -155,7 +234,11 @@ onUnmounted(() => {
 
     <!-- 主内容 -->
     <v-main>
-      <router-view />
+      <router-view v-slot="{ Component, route: r }">
+        <keep-alive :include="[]">
+          <component :is="Component" :key="r.fullPath" />
+        </keep-alive>
+      </router-view>
     </v-main>
 
     <!-- 全局组件 -->

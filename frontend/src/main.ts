@@ -4,8 +4,8 @@ import vuetify from './plugins/vuetify'
 import App from './App.vue'
 import router from './router'
 
-// 全局样式
-import '@/styles/global.css'
+// 全局样式（按功能拆分）
+import '@/styles/index.css'
 
 const app = createApp(App)
 

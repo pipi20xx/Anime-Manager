@@ -94,6 +94,11 @@ export default defineConfig(({ command, mode }) => {
       host: '0.0.0.0',
       port: 5173,
       proxy: {
+        // 图片代理：不改 Origin，让浏览器原始 Host/Referer 保持一致，通过后端鉴权
+        '/api/system/img': { target: 'http://apm-backend:8000' },
+        '/api/system/bgm_img': { target: 'http://apm-backend:8000' },
+        '/api/appearance/image': { target: 'http://apm-backend:8000' },
+        // 其他 API：changeOrigin 保持原样
         '/api': { target: 'http://apm-backend:8000', changeOrigin: true },
         '/ws': { target: 'ws://apm-backend:8000', ws: true, changeOrigin: true },
         '/static': { target: 'http://apm-backend:8000', changeOrigin: true },

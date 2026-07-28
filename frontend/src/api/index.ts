@@ -1,0 +1,23 @@
+/**
+ * API 统一导出
+ */
+export { api, apiFetch } from './client'
+export { authApi } from './auth'
+export { exploreApi } from './explore'
+export { tmdbApi } from './tmdb'
+export { bangumiApi } from './bangumi'
+export { organizerApi } from './organizer'
+export { subscriptionApi } from './subscription'
+export { systemApi } from './system'
+export { appearanceApi } from './appearance'
+export { clientsApi } from './clients'
+export { configApi } from './config'
+export { cacheApi } from './cache'
+export { strmApi } from './strm'
+export { recognitionApi } from './recognition'
+export { taskHistoryApi } from './taskHistory'
+export { fileHashApi } from './fileHash'
+export { dataCenterApi } from './dataCenter'
+export { userMappingApi } from './userMapping'
+export { healthApi } from './health'
+export { calendarApi } from './calendar'

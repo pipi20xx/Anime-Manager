@@ -1,9 +1,18 @@
 /**
  * 系统全局 Store — 管理 WebSocket、登录状态、进度等
+ *
+ * WebSocket 连接到 /ws/events，支持事件类型订阅（替代前端轮询）。
+ * 内置心跳检测（30s ping）和断线重连后自动 re-fetch。
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ProgressData } from '@/types'
+
+// ===== 模块级单例：事件处理器注册表 =====
+/** eventType -> Set<handler> */
+const handlers = new Map<string, Set<(data: any) => void>>()
+/** 重连后回调 */
+const reconnectHandlers = new Set<() => void>()
 
 export const useSystemStore = defineStore('system', () => {
   // --- WebSocket 状态 ---
@@ -13,7 +22,12 @@ export const useSystemStore = defineStore('system', () => {
   const logs = ref<string[]>([])
 
   let socket: WebSocket | null = null
-  let reconnectTimer: ReturnType<typeof setInterval> | null = null
+  let logSocket: WebSocket | null = null
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let logReconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let retryCount = 0
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+  let lastMessageTime = Date.now()
 
   // --- 登录状态 ---
   const isLoggedIn = ref(!!(localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')))
@@ -30,57 +44,169 @@ export const useSystemStore = defineStore('system', () => {
            (dp.status === 'running' || dp.status === 'scanning')
   })
 
+  // --- 心跳 ---
+  function startHeartbeat() {
+    stopHeartbeat()
+    heartbeatTimer = setInterval(() => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        if (Date.now() - lastMessageTime > 60000) {
+          console.warn('[WS] 心跳超时，强制重连')
+          socket.close()
+          return
+        }
+        socket.send(JSON.stringify({ type: 'ping' }))
+      }
+    }, 30000)
+  }
+
+  function stopHeartbeat() {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer)
+      heartbeatTimer = null
+    }
+  }
+
+  // --- 指数退避重连 ---
+  function scheduleReconnect() {
+    if (reconnectTimer) return
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 15000)
+    retryCount++
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null
+      connect()
+    }, delay)
+  }
+
+  // --- 系统日志 WebSocket (/ws/system/logs) ---
+  function connectLogStream() {
+    if (logSocket) return
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = window.location.host
+    const logWsUrl = `${protocol}//${host}/ws/system/logs`
+
+    try {
+      logSocket = new WebSocket(logWsUrl)
+    } catch {
+      scheduleLogReconnect()
+      return
+    }
+
+    logSocket.onmessage = (event) => {
+      const msg = String(event.data)
+      if (msg) {
+        logs.value.push(msg)
+        if (logs.value.length > 2000) logs.value.shift()
+      }
+    }
+
+    logSocket.onclose = () => {
+      logSocket = null
+      if (isLoggedIn.value) {
+        scheduleLogReconnect()
+      }
+    }
+
+    logSocket.onerror = () => {
+      // onclose 会处理重连
+    }
+  }
+
+  function scheduleLogReconnect() {
+    if (logReconnectTimer) return
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 15000)
+    logReconnectTimer = setTimeout(() => {
+      logReconnectTimer = null
+      connectLogStream()
+    }, delay)
+  }
+
+  function disconnectLogStream() {
+    if (logSocket) {
+      logSocket.close()
+      logSocket = null
+    }
+    if (logReconnectTimer) {
+      clearTimeout(logReconnectTimer)
+      logReconnectTimer = null
+    }
+  }
+
   // --- WebSocket 方法 ---
   function connect() {
     if (socket) return
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
-    const wsUrl = `${protocol}//${host}/ws`
+    const wsUrl = `${protocol}//${host}/ws/events`
 
-    socket = new WebSocket(wsUrl)
+    try {
+      socket = new WebSocket(wsUrl)
+    } catch {
+      scheduleReconnect()
+      return
+    }
 
     socket.onopen = () => {
       isConnected.value = true
+      retryCount = 0
+      lastMessageTime = Date.now()
       if (reconnectTimer) {
-        clearInterval(reconnectTimer)
+        clearTimeout(reconnectTimer)
         reconnectTimer = null
       }
+      startHeartbeat()
+      // 重连后通知所有订阅者重新拉取数据
+      reconnectHandlers.forEach((fn) => {
+        try { fn() } catch (e) { console.error('[WS] reconnect handler error:', e) }
+      })
     }
 
+    // 同时连接系统日志流
+    connectLogStream()
+
     socket.onmessage = (event) => {
+      lastMessageTime = Date.now()
       try {
-        const payload = JSON.parse(event.data)
-        if (payload.type === 'progress') {
-          const task = payload.task
+        const msg = JSON.parse(event.data)
+        const { type, data } = msg
+
+        // 心跳响应
+        if (type === 'pong') return
+
+        // 兼容旧格式：progress
+        if (type === 'progress') {
+          const task = data?.task || msg.task
           if (task === 'scan') {
-            scanProgress.value = payload.data
+            scanProgress.value = data || msg.data
           } else if (task === 'download' || task === 'organize' || task === 'recognize') {
-            downloadProgress.value = payload.data
+            downloadProgress.value = data || msg.data
           }
-        } else if (payload.type === 'log') {
-          logs.value.push(payload.data)
-          if (logs.value.length > 2000) {
-            logs.value.shift()
-          }
+          return
+        }
+
+        // 通用事件分发：按 type 调用所有注册的 handler
+        if (type && handlers.has(type)) {
+          handlers.get(type)!.forEach((fn) => {
+            try { fn(data) } catch (e) { console.error('[WS] handler error:', e) }
+          })
         }
       } catch (e) {
-        console.error('WS Message Parse Error', e)
+        // 忽略非 JSON 消息
       }
     }
 
     socket.onclose = () => {
       isConnected.value = false
       socket = null
-      if (!reconnectTimer) {
-        reconnectTimer = setInterval(() => {
-          connect()
-        }, 5000)
+      stopHeartbeat()
+      if (isLoggedIn.value) {
+        scheduleReconnect()
       }
     }
 
-    socket.onerror = (err) => {
-      console.error('WebSocket Error', err)
+    socket.onerror = () => {
+      // onclose 会处理重连
     }
   }
 
@@ -90,14 +216,36 @@ export const useSystemStore = defineStore('system', () => {
       socket = null
     }
     if (reconnectTimer) {
-      clearInterval(reconnectTimer)
+      clearTimeout(reconnectTimer)
       reconnectTimer = null
     }
+    stopHeartbeat()
     isConnected.value = false
+    disconnectLogStream()
   }
 
   function clearLogs() {
     logs.value = []
+  }
+
+  // --- 事件订阅 ---
+  /** 订阅指定事件类型，返回取消订阅函数 */
+  function on(eventType: string, handler: (data: any) => void): () => void {
+    if (!handlers.has(eventType)) {
+      handlers.set(eventType, new Set())
+    }
+    handlers.get(eventType)!.add(handler)
+    return () => {
+      handlers.get(eventType)?.delete(handler)
+    }
+  }
+
+  /** 注册重连后回调（用于重新拉取初始状态） */
+  function onReconnect(handler: () => void): () => void {
+    reconnectHandlers.add(handler)
+    return () => {
+      reconnectHandlers.delete(handler)
+    }
   }
 
   // --- 登录方法 ---
@@ -129,6 +277,8 @@ export const useSystemStore = defineStore('system', () => {
     connect,
     disconnect,
     clearLogs,
+    on,
+    onReconnect,
     loginSuccess,
     logout,
   }

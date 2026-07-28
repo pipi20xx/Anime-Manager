@@ -1,0 +1,58 @@
+/**
+ * transitions.css — 全局过渡与功能性样式
+ * 从 global.css 拆分而来
+ */
+
+/* ============================================================
+ * 20. 全局过渡 — Liquid Glass 流体 500ms
+ * ============================================================ */
+.v-card,
+.v-btn,
+.v-list-item,
+.v-chip {
+  transition: all 0.5s ease-out !important;
+}
+
+/* ============================================================
+ * 21. 功能性样式
+ * ============================================================ */
+.v-tab .v-btn__content {
+  overflow: visible !important;
+}
+
+.content-scrollable {
+  height: var(--scrollable-height, calc(85vh - 250px));
+  max-height: var(--scrollable-max, 600px);
+  overflow-y: auto;
+}
+
+.v-card-text .v-text-field,
+.v-card-text .v-select,
+.v-card-text .v-textarea,
+.v-card-text .v-combobox,
+.v-card-text .v-autocomplete {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.v-card-text .v-input--persistent-hint {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* ── v-switch 对齐修复 ── */
+/* v-switch 的 .v-input__control 缺少 margin-inline（对比 v-slider 有 8px），
+   导致 switch 开关和 label 比上方 v-select / v-slider 偏左，超出卡片内容区 */
+.v-card-text .v-switch .v-input__control {
+  margin-inline: 8px;
+}
+
+.v-card-title + .v-card-text {
+  padding-top: 12px;
+}
+
+.v-window-item > .v-form > :first-child,
+.v-window-item > :first-child {
+  padding-top: 8px;
+}
+

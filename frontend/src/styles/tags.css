@@ -1,0 +1,198 @@
+/**
+ * tags.css — 元数据标签（Meta Tags）统一样式
+ *
+ * 供 FeedItemsModal、OrganizeHistoryTab 等多个页面复用。
+ * 修改标签颜色/字号/间距只需改此处，全局同步。
+ *
+ * 使用方式：
+ *   <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--season">S01E03</v-chip>
+ *   <a class="meta-tag meta-tag--tmdb" href="..." target="_blank">ID: 12345</a>
+ */
+
+/* ============================================================
+ * 1. 基础容器 — 标签行
+ * ============================================================ */
+.meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* ============================================================
+ * 2. 基础标签样式 — 通用
+ * ============================================================ */
+.meta-tag {
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 10px !important;
+}
+
+/* 让 v-chip 配合 meta-tag 统一尺寸 */
+.v-chip.meta-tag {
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  min-height: 20px !important;
+  padding: 0 8px !important;
+  border-radius: 10px !important;
+}
+
+.v-chip.meta-tag .v-chip__content {
+  font-size: 10px !important;
+}
+
+/* ============================================================
+ * 3. 语义色类别 — 每种元数据一个修饰符
+ * ============================================================ */
+
+/* --- 季集 (Season/Episode) — 蓝色系 --- */
+.meta-tag--season {
+  background: #1565c0 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--season {
+  background: #1976d2 !important;
+}
+
+/* --- 媒体类型 (Movie/TV) — 深蓝信息色 --- */
+.meta-tag--type {
+  background: #1565c0 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--type {
+  background: #1976d2 !important;
+}
+
+/* --- 分辨率 (Resolution) — 橙色系 --- */
+.meta-tag--resolution {
+  background: #e65100 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--resolution {
+  background: #ef6c00 !important;
+}
+
+/* --- 编码/特效/字幕 (Encode/Effect/Subtitle) — 橙色系 --- */
+.meta-tag--encode {
+  background: #e65100 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--encode {
+  background: #ef6c00 !important;
+}
+
+/* --- 字幕组 (Team) — 深蓝色 --- */
+.meta-tag--team {
+  background: #0d47a1 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--team {
+  background: #1565c0 !important;
+}
+
+/* --- 来源/平台 (Source/Platform) — 红色系 --- */
+.meta-tag--source {
+  background: #c62828 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--source {
+  background: #d32f2f !important;
+}
+
+/* --- TMDB ID 链接 — 绿色胶囊 --- */
+.meta-tag--tmdb {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  background: #2e7d32;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.meta-tag--tmdb:hover {
+  opacity: 0.85;
+}
+
+/* --- 已订阅 — 信息蓝 --- */
+.meta-tag--subscribed {
+  background: #0288d1 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--subscribed {
+  background: #039be5 !important;
+}
+
+/* --- 订阅已下载 — 成功绿 --- */
+.meta-tag--collected {
+  background: #2e7d32 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--collected {
+  background: #43a047 !important;
+}
+
+/* --- 未命中 — 警告色 (tonal) --- */
+.meta-tag--miss {
+  /* tonal 风格，不用实色 */
+  background: rgba(var(--v-theme-warning), 0.15) !important;
+  color: rgb(var(--v-theme-warning)) !important;
+}
+
+/* --- 转移方式 (Action Type) — 红色 --- */
+.meta-tag--action {
+  background: #c62828 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--action {
+  background: #d32f2f !important;
+}
+
+/* --- 文件大小 — 紫色 --- */
+.meta-tag--size {
+  background: #7b1fa2 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--size {
+  background: #8e24aa !important;
+}
+
+/* --- 时间戳 — 青色 --- */
+.meta-tag--time {
+  background: #00695c !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--time {
+  background: #00897b !important;
+}
+
+/* --- 下载状态 — 已下载绿 / 未下载灰 --- */
+.meta-tag--downloaded {
+  background: #2e7d32 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--downloaded {
+  background: #43a047 !important;
+}
+.meta-tag--not-downloaded {
+  background: #616161 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--not-downloaded {
+  background: #757575 !important;
+}
+
+/* --- 站点名 — 棕色系 --- */
+.meta-tag--feed {
+  background: #5d4037 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--feed {
+  background: #6d4c41 !important;
+}

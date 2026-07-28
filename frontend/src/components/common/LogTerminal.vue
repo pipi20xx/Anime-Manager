@@ -42,6 +42,21 @@ const filteredLogs = computed(() => {
   })
 })
 
+// 弹窗打开时自动滚动到底部
+watch(() => systemStore.showLogModal, async (val) => {
+  if (val) {
+    await nextTick()
+    logContainer.value?.scrollTo({ top: logContainer.value.scrollHeight })
+  }
+})
+
+// 切换筛选时也滚动到底部
+watch(logFilter, async () => {
+  await nextTick()
+  logContainer.value?.scrollTo({ top: logContainer.value.scrollHeight })
+})
+
+// 新日志到达时自动滚动
 watch(() => filteredLogs.value.length, async () => {
   if (autoScroll.value) {
     await nextTick()
@@ -55,7 +70,7 @@ function clearLogs() {
 </script>
 
 <template>
-  <GlassDialog v-model="systemStore.showLogModal" :max-width="900" :cancel-visible="false">
+  <GlassDialog v-model="systemStore.showLogModal" :max-width="900" :cancel-visible="false" :scrollable="false">
     <template #title>
       <v-icon start>mdi-card-text-outline</v-icon>
       系统日志
@@ -65,10 +80,10 @@ function clearLogs() {
           {{ opt.title }}
         </v-btn>
       </v-btn-toggle>
-      <v-btn variant="text" size="small" icon="mdi-delete-outline" @click="clearLogs" />
+      <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-delete-outline" @click="clearLogs">清空</v-btn>
       <v-btn variant="text" size="small" icon="mdi-close" @click="systemStore.showLogModal = false" />
     </template>
-    <div ref="logContainer" class="log-terminal" style="height: 500px;">
+    <div ref="logContainer" class="log-terminal">
       <div
         v-for="(entry, i) in filteredLogs"
         :key="i"

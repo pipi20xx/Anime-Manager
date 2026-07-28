@@ -204,11 +204,11 @@ class TMDBProvider:
         return resp_data
 
     async def get_subject_details(self, tmdb_id: str, media_type: str, logs: Any = None) -> Optional[Dict]:
-        cache_key = f"tmdb:detail:v4:{media_type}:{tmdb_id}"
+        cache_key = f"tmdb:detail:v6:{media_type}:{tmdb_id}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached: return cached
 
-        data, _ = await self._fetch(f"/{media_type}/{tmdb_id}", {"append_to_response": "credits,external_ids"}, logs=logs)
+        data, _ = await self._fetch(f"/{media_type}/{tmdb_id}", {"append_to_response": "credits,external_ids,images", "include_image_language": "en,null"}, logs=logs)
         if not data: return None
         
         cast_list = []
@@ -223,12 +223,25 @@ class TMDBProvider:
         external_ids = data.get("external_ids", {})
         imdb_id = external_ids.get("imdb_id") or data.get("imdb_id")
         
+        # 处理剧照/海报图片列表，代理路径
+        backdrops = []
+        for bd in (data.get("images") or {}).get("backdrops", [])[:20]:
+            backdrops.append({
+                "file_path": self._proxy_img(bd.get("file_path"), "w1280"),
+                "width": bd.get("width"),
+                "height": bd.get("height"),
+                "vote_average": bd.get("vote_average"),
+                "vote_count": bd.get("vote_count"),
+                "iso_639_1": bd.get("iso_639_1"),
+            })
+
         norm = TMDBMatcher.normalize(data, media_type_hint=media_type)
         norm["poster_path"] = self._proxy_img(norm["poster_path"], "w780")
         norm["backdrop_path"] = self._proxy_img(norm["backdrop_path"], "w1280")
         norm["genres"] = [g.get("name") for g in data.get("genres", [])]
         norm["tagline"] = data.get("tagline")
         norm["cast"] = cast_list
+        norm["backdrops"] = backdrops
         if imdb_id:
             norm["imdb_id"] = imdb_id
         

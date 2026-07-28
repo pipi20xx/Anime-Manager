@@ -1,0 +1,155 @@
+/**
+ * feedback.css — 反馈类组件（芯片/SnackBar/Alert/Expansion/Progress/Switch/Tooltip）
+ * 从 global.css 拆分而来
+ */
+
+/* ============================================================
+ * 13. 芯片 — Liquid Glass
+ * ============================================================ */
+.v-chip {
+  font-weight: 500;
+}
+
+/* x-small chip 太小，统一限制最小字号 */
+.v-chip--size-x-small {
+  font-size: 0.75rem !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+}
+
+.v-chip--size-x-small .v-chip__content {
+  font-size: 0.75rem !important;
+}
+
+.v-theme--dark .v-chip--variant-tonal {
+  backdrop-filter: blur(10px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(150%) !important;
+}
+
+/* ============================================================
+ * 14. SnackBar — Liquid Glass
+ * ============================================================ */
+.v-theme--light .v-snackbar {
+  background: rgba(30, 30, 40, 0.9) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+.v-theme--dark .v-snackbar {
+  background: rgba(30, 30, 60, 0.9) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ============================================================
+ * 15. Alert — Liquid Glass
+ * ============================================================ */
+.v-theme--light .v-alert--variant-tonal {
+  background: rgba(168, 85, 247, 0.06) !important;
+  border: none !important;
+}
+
+.v-theme--dark .v-alert--variant-tonal {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: none !important;
+}
+
+/* ============================================================
+ * 16. Expansion Panel — Liquid Glass
+ * ============================================================ */
+.v-theme--light .v-expansion-panel {
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  border-radius: 16px !important;
+}
+
+.v-theme--dark .v-expansion-panel {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+}
+
+.v-expansion-panel-text {
+  background: transparent !important;
+}
+
+/* ============================================================
+ * 17. Progress — Liquid Glass 青/紫
+ * ============================================================ */
+.v-theme--light .v-progress-linear__determinate {
+  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
+}
+
+.v-theme--dark .v-progress-linear__determinate {
+  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
+  box-shadow: 0 0 12px rgba(78, 205, 196, 0.4);
+}
+
+/* ============================================================
+ * 18. Switch — Liquid Glass
+ *     关闭状态：灰色滑轨 + 浅灰滑块（亮）/ 灰色滑块（暗）
+ *     开启状态：实色滑轨 + 白色滑块带光晕
+ * ============================================================ */
+
+/* ── 关闭状态（默认） ── */
+.v-theme--light .v-switch .v-switch__track {
+  background: rgba(0, 0, 0, 0.18) !important;
+  border-radius: 999px !important;
+}
+
+.v-theme--light .v-switch .v-switch__thumb {
+  background: #F5F5F5 !important;
+  border: 2px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.v-theme--dark .v-switch .v-switch__track {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+}
+
+.v-theme--dark .v-switch .v-switch__thumb {
+  background: #9E9E9E !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── 开启状态（.v-selection-control--dirty） ── */
+.v-theme--light .v-switch .v-selection-control--dirty .v-switch__track {
+  background: #9333EA !important;
+}
+
+.v-theme--light .v-switch .v-selection-control--dirty .v-switch__thumb {
+  background: #FFFFFF !important;
+  border: 2px solid rgba(147, 51, 234, 0.3) !important;
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.5) !important;
+}
+
+.v-theme--dark .v-switch .v-selection-control--dirty .v-switch__track {
+  background: #4ecdc4 !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.3) !important;
+}
+
+.v-theme--dark .v-switch .v-selection-control--dirty .v-switch__thumb {
+  background: #FFFFFF !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.5) !important;
+}
+
+/* ============================================================
+ * 19. Tooltip — Liquid Glass
+ * ============================================================ */
+.v-theme--light .v-tooltip .v-overlay__content {
+  background: rgba(30, 30, 40, 0.9) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+}
+
+.v-theme--dark .v-tooltip .v-overlay__content {
+  background: rgba(30, 30, 60, 0.92) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+}
+

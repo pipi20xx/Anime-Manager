@@ -1,0 +1,103 @@
+<script setup lang="ts">
+/**
+ * TmdbBlocklistModal — TMDB 屏蔽列表弹窗
+ */
+import { ref, computed, watch, reactive } from 'vue'
+import { subscriptionApi } from '@/api'
+import { useNotification, useConfirm } from '@/composables'
+
+const props = defineProps<{
+  show: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:show', v: boolean): void
+}>()
+
+const { success, error: showError } = useNotification()
+const { confirm } = useConfirm()
+
+const blocklist = ref<any[]>([])
+const loading = ref(false)
+const blockForm = reactive({ tmdb_id: '', media_type: 'tv' })
+
+watch(() => props.show, (v) => { if (v) fetchBlocklist() })
+
+async function fetchBlocklist() {
+  loading.value = true
+  try {
+    const data = await subscriptionApi.getTmdbBlocklist()
+    blocklist.value = Array.isArray(data) ? data : (data?.items || data?.data || [])
+  } catch { blocklist.value = [] }
+  finally { loading.value = false }
+}
+
+async function addBlockItem() {
+  if (!blockForm.tmdb_id) return
+  try {
+    await subscriptionApi.addTmdbBlocklistItem(blockForm)
+    success('已添加')
+    blockForm.tmdb_id = ''
+    fetchBlocklist()
+  } catch { showError('添加失败') }
+}
+
+async function removeBlockItem(id: number) {
+  const ok = await confirm({ title: '确认删除', content: '确定要删除此屏蔽条目吗？', confirmColor: 'error' })
+  if (!ok) return
+  try {
+    await subscriptionApi.removeTmdbBlocklistItem(id)
+    success('已删除')
+    fetchBlocklist()
+  } catch { showError('删除失败') }
+}
+</script>
+
+<template>
+  <v-dialog :model-value="show" max-width="640" scrollable @update:model-value="$emit('update:show', $event)">
+    <v-card class="glass-card">
+      <v-card-title class="pa-4 d-flex align-center">
+        <v-icon start color="error">mdi-shield-off-outline</v-icon>
+        TMDB 屏蔽列表
+      </v-card-title>
+      <v-divider />
+
+      <v-card-text class="pa-4">
+        <div class="text-body-2 text-medium-emphasis mb-4">
+          手动填入 TMDB ID 与类型，订阅源识别命中后直接标记已下载，跳过下载规则与追剧订阅。
+        </div>
+
+        <div class="d-flex ga-2 mb-4">
+          <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID" density="compact" hide-details variant="outlined" />
+          <v-select v-model="blockForm.media_type" label="类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" density="compact" hide-details variant="outlined" class="flex-shrink-0" />
+          <v-btn color="primary" variant="flat" @click="addBlockItem" prepend-icon="mdi-plus">添加</v-btn>
+        </div>
+
+        <v-skeleton-loader v-if="loading" type="list-item@5" />
+
+        <template v-else-if="blocklist.length > 0">
+          <div class="feed-item-card mb-2" v-for="item in blocklist" :key="item.id">
+            <div class="d-flex align-center justify-space-between">
+              <div>
+                <span class="font-weight-medium">TMDB {{ item.tmdb_id }}</span>
+                <v-chip size="x-small" variant="tonal" class="ml-2">{{ item.media_type === 'tv' ? '剧集' : '电影' }}</v-chip>
+                <span v-if="item.title" class="text-body-2 text-medium-emphasis ml-2">{{ item.title }}</span>
+              </div>
+              <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="removeBlockItem(item.id)">删除</v-btn>
+            </div>
+          </div>
+        </template>
+
+        <div v-else class="text-center pa-4">
+          <div class="text-body-2 text-medium-emphasis">屏蔽列表为空</div>
+        </div>
+      </v-card-text>
+
+      <v-divider />
+      <v-card-actions class="pa-4">
+        <v-spacer />
+        <v-btn variant="tonal" prepend-icon="mdi-close" @click="$emit('update:show', false)">关闭</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+</template>

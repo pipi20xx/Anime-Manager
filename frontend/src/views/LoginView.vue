@@ -27,6 +27,7 @@ async function handleLogin() {
   try {
     const res = await authApi.login(formValue)
     systemStore.loginSuccess(res.access_token, res.username)
+    systemStore.connect()
     success('登录成功')
     router.push('/')
   } catch (err: any) {

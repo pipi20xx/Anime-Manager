@@ -1,105 +1,46 @@
 /**
- * WebSocket 连接管理 composable
- * 自动重连、进度/日志消息分发
+ * WebSocket 事件订阅 composable
+ *
+ * 基于系统全局 Store 的单例 WebSocket 连接（/ws/events）。
+ * 支持按事件类型订阅，内置心跳检测和断线重连。
+ *
+ * 用法：
+ *   const { on, onReconnect, isConnected } = useWebSocket()
+ *   const unsub = on('task_record', (data) => { ... })
+ *   const unsubReconnect = onReconnect(() => { fetchInitialData() })
+ *   onUnmounted(() => { unsub(); unsubReconnect() })
  */
-import { ref, onUnmounted } from 'vue'
-import type { ProgressData } from '@/types'
+import { computed } from 'vue'
+import { useSystemStore } from '@/stores'
 
 export function useWebSocket() {
-  const isConnected = ref(false)
-  const scanProgress = ref<ProgressData>({ status: 'idle', current: 0, total: 0, message: '' })
-  const downloadProgress = ref<ProgressData>({ status: 'idle', current: 0, total: 0, message: '' })
-  const actorUpdateProgress = ref<ProgressData>({ status: 'idle', current: 0, total: 0, message: '' })
-  const logs = ref<string[]>([])
+  const systemStore = useSystemStore()
 
-  let socket: WebSocket | null = null
-  let reconnectTimer: ReturnType<typeof setInterval> | null = null
+  const isConnected = computed(() => systemStore.isConnected)
+
+  /** 订阅指定事件类型，返回取消订阅函数 */
+  function on(eventType: string, handler: (data: any) => void): () => void {
+    return systemStore.on(eventType, handler)
+  }
+
+  /** 注册重连后回调（用于重新拉取初始状态） */
+  function onReconnect(handler: () => void): () => void {
+    return systemStore.onReconnect(handler)
+  }
 
   function connect() {
-    if (socket) return
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
-    const wsUrl = `${protocol}//${host}/ws`
-
-    socket = new WebSocket(wsUrl)
-
-    socket.onopen = () => {
-      isConnected.value = true
-      if (reconnectTimer) {
-        clearInterval(reconnectTimer)
-        reconnectTimer = null
-      }
-    }
-
-    socket.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data)
-        if (payload.type === 'progress') {
-          const task = payload.task
-          if (task === 'scan') {
-            scanProgress.value = payload.data
-          } else if (task === 'download' || task === 'download_file' || task === 'import_collection' ||
-                     task === 'import_fixed_names' || task === 'import_actors' || task === 'update_actors_override' ||
-                     task === 'batch_poster' || task === 'batch_workflow') {
-            downloadProgress.value = payload.data
-          } else if (task === 'actor_update') {
-            actorUpdateProgress.value = payload.data
-          }
-        } else if (payload.type === 'log') {
-          logs.value.push(payload.data)
-          if (logs.value.length > 2000) {
-            logs.value.shift()
-          }
-        }
-      } catch (e) {
-        console.error('WS Message Parse Error', e)
-      }
-    }
-
-    socket.onclose = () => {
-      isConnected.value = false
-      socket = null
-      if (!reconnectTimer) {
-        reconnectTimer = setInterval(() => {
-          connect()
-        }, 5000)
-      }
-    }
-
-    socket.onerror = (err) => {
-      console.error('WebSocket Error', err)
-    }
+    systemStore.connect()
   }
 
   function disconnect() {
-    if (socket) {
-      socket.close()
-      socket = null
-    }
-    if (reconnectTimer) {
-      clearInterval(reconnectTimer)
-      reconnectTimer = null
-    }
-    isConnected.value = false
+    systemStore.disconnect()
   }
-
-  function clearLogs() {
-    logs.value = []
-  }
-
-  onUnmounted(() => {
-    disconnect()
-  })
 
   return {
     isConnected,
-    scanProgress,
-    downloadProgress,
-    actorUpdateProgress,
-    logs,
+    on,
+    onReconnect,
     connect,
     disconnect,
-    clearLogs,
   }
 }

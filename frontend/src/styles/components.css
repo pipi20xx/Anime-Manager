@@ -1,0 +1,581 @@
+/**
+ * components.css — Vuetify 组件 Liquid Glass 覆盖（卡片/对话框/下拉/Sheet/输入框/分割线/表格/标签页）
+ * 从 global.css 拆分而来
+ */
+
+/* ============================================================
+ * 4. 卡片 — Liquid Glass：半透明 + 模糊 + 饱和度 + 彩虹边框
+ * ============================================================ */
+
+/* 亮色模式 — 提升边框可见度（Vuetify 默认 0.06 太淡，白底上几乎看不见） */
+.v-theme--light {
+  --v-border-opacity: 0.14 !important;
+}
+
+/* 亮色卡片 */
+.v-theme--light .v-card {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.5s ease-out !important;
+  border-radius: 24px !important;
+}
+
+.v-theme--light .v-card--variant-elevated {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
+.v-theme--light .v-card--variant-outlined {
+  background: rgba(255, 255, 255, 0.55) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.v-theme--light .v-card--link:hover,
+.v-theme--light .v-card[link]:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1), 0 0 20px rgba(168, 85, 247, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+/* 暗色卡片 — Liquid Glass 核心 */
+.v-theme--dark .v-card {
+  background: rgba(255, 255, 255, 0.10) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  transition: all 0.5s ease-out !important;
+  border-radius: 24px !important;
+}
+
+.v-theme--dark .v-card--variant-elevated {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.v-theme--dark .v-card--variant-outlined {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.v-theme--dark .v-card--variant-tonal {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 卡片内部透明 */
+.v-card-text,
+.v-card-title,
+.v-card-actions,
+.v-card-item {
+  background: transparent !important;
+}
+
+/* ── 小型列表卡片 — 关闭 overflow:hidden，内容完整展示不被裁剪 ── */
+/* v-card 默认 overflow:hidden 会裁剪内容；列表卡片需要完整显示 */
+.list-card {
+  overflow: visible !important;
+  border-radius: 12px !important;
+}
+
+/* hover — 液态形变效果 */
+.v-theme--dark .v-card--link:hover,
+.v-theme--dark .v-card[link]:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 24px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+ * 5. 对话框 — Liquid Glass 弹窗
+ * ============================================================ */
+.v-dialog > .v-card {
+  border-radius: 24px !important;
+}
+
+.v-theme--light .v-dialog .v-card,
+.v-theme--light .v-overlay__content .v-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.v-theme--dark .v-dialog .v-card,
+.v-theme--dark .v-overlay__content .v-card {
+  background: rgba(20, 20, 50, 0.95) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(78, 205, 196, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 对话框遮罩 */
+.v-overlay__scrim {
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.v-theme--dark .v-overlay__scrim {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* ── 对话框内滚动条 — Liquid Glass 风格 ── */
+.v-dialog .v-card-text {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+.v-dialog .v-card-text::-webkit-scrollbar { width: 6px; }
+.v-dialog .v-card-text::-webkit-scrollbar-track { background: transparent; }
+.v-dialog .v-card-text::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.25);
+  border-radius: 3px;
+}
+.v-dialog .v-card-text::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+/* ============================================================
+ * 6. 下拉菜单 / Select / Autocomplete — Liquid Glass 菜单
+ * ============================================================ */
+
+/* ── 通用下拉面板（v-menu / v-select / v-autocomplete / v-combobox 共用） ── */
+
+/* 亮色下拉面板 — 实心白底 + 紫色边框，确保清晰可读 */
+.v-theme--light .v-overlay .v-list,
+.v-theme--light .v-menu .v-card,
+.v-theme--light .v-menu .v-list {
+  background: #FFFFFF !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(124, 58, 237, 0.18) !important;
+  border: none !important;
+  border-radius: 20px !important;
+}
+
+/* 亮色下拉列表项文字 */
+.v-theme--light .v-overlay .v-list .v-list-item-title {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* 暗色下拉面板 — 深蓝底 + 青色边框 */
+.v-theme--dark .v-overlay .v-list,
+.v-theme--dark .v-menu .v-card,
+.v-theme--dark .v-menu .v-list {
+  background: #1a1a3e !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(78, 205, 196, 0.18) !important;
+  border: none !important;
+  border-radius: 20px !important;
+}
+
+/* 暗色下拉列表项文字 */
+.v-theme--dark .v-overlay .v-list .v-list-item-title {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+/* ── 下拉列表项 — Liquid Glass hover / 选中 ── */
+
+/* 侧边栏导航列表保持透明（继承导航栏的毛玻璃背景） */
+.v-navigation-drawer .v-list {
+  background: transparent !important;
+}
+
+.v-theme--light .v-list-item:hover {
+  background: rgba(168, 85, 247, 0.06) !important;
+}
+
+.v-theme--light .v-list-item--active {
+  background: rgba(168, 85, 247, 0.1) !important;
+  color: #a855f7 !important;
+}
+
+.v-theme--dark .v-list-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.v-theme--dark .v-list-item--active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(78, 205, 196, 0.08)) !important;
+  color: #4ecdc4 !important;
+}
+
+.v-theme--dark .v-list-item--active .v-list-item-title {
+  text-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
+}
+
+/* ── 下拉菜单内容容器 — 圆角裁剪 + 滚动 ── */
+.v-menu .v-overlay__content {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.v-select .v-overlay__content,
+.v-autocomplete .v-overlay__content,
+.v-combobox .v-overlay__content {
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+/* 下拉面板内 list — 去掉默认 padding，用 item margin 替代 */
+.v-select .v-list,
+.v-autocomplete .v-list,
+.v-combobox .v-list,
+.v-menu .v-list {
+  padding: 6px !important;
+}
+
+/* ── 下拉列表项 — Liquid Glass 圆角 + 间距 ── */
+.v-select .v-list-item,
+.v-autocomplete .v-list-item,
+.v-combobox .v-list-item,
+.v-menu .v-list-item {
+  border-radius: 12px !important;
+  margin: 2px 0 !important;
+  min-height: 38px !important;
+  transition: all 0.2s ease-out !important;
+}
+
+/* 亮色下拉列表项 hover */
+.v-theme--light .v-select .v-list-item:hover,
+.v-theme--light .v-autocomplete .v-list-item:hover,
+.v-theme--light .v-combobox .v-list-item:hover,
+.v-theme--light .v-menu .v-list-item:hover {
+  background: rgba(168, 85, 247, 0.08) !important;
+}
+
+/* 亮色下拉列表项选中 */
+.v-theme--light .v-select .v-list-item--active,
+.v-theme--light .v-autocomplete .v-list-item--active,
+.v-theme--light .v-combobox .v-list-item--active,
+.v-theme--light .v-menu .v-list-item--active {
+  background: rgba(168, 85, 247, 0.12) !important;
+  color: #a855f7 !important;
+}
+
+/* 暗色下拉列表项 hover */
+.v-theme--dark .v-select .v-list-item:hover,
+.v-theme--dark .v-autocomplete .v-list-item:hover,
+.v-theme--dark .v-combobox .v-list-item:hover,
+.v-theme--dark .v-menu .v-list-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 暗色下拉列表项选中 */
+.v-theme--dark .v-select .v-list-item--active,
+.v-theme--dark .v-autocomplete .v-list-item--active,
+.v-theme--dark .v-combobox .v-list-item--active,
+.v-theme--dark .v-menu .v-list-item--active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(78, 205, 196, 0.1)) !important;
+  color: #4ecdc4 !important;
+}
+
+/* ── 下拉选中项的文字颜色（select 输入框内） ── */
+.v-theme--light .v-select .v-field__input,
+.v-theme--light .v-autocomplete .v-field__input,
+.v-theme--light .v-combobox .v-field__input {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.v-theme--dark .v-select .v-field__input,
+.v-theme--dark .v-autocomplete .v-field__input,
+.v-theme--dark .v-combobox .v-field__input {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ── 下拉箭头图标颜色 ── */
+.v-theme--light .v-select .v-field__append-inner .v-icon {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+.v-theme--dark .v-select .v-field__append-inner .v-icon {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.v-select .v-field__append-inner .v-icon {
+  transition: transform 0.3s ease-out !important;
+}
+
+.v-select--active .v-field__append-inner .v-icon {
+  transform: rotate(180deg) !important;
+}
+
+/* ── 自定义滚动条 — 下拉列表 ── */
+.v-select .v-list,
+.v-autocomplete .v-list,
+.v-combobox .v-list,
+.v-menu .v-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
+}
+
+.v-select .v-list::-webkit-scrollbar,
+.v-autocomplete .v-list::-webkit-scrollbar,
+.v-combobox .v-list::-webkit-scrollbar,
+.v-menu .v-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.v-select .v-list::-webkit-scrollbar-track,
+.v-autocomplete .v-list::-webkit-scrollbar-track,
+.v-combobox .v-list::-webkit-scrollbar-track,
+.v-menu .v-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.v-select .v-list::-webkit-scrollbar-thumb,
+.v-autocomplete .v-list::-webkit-scrollbar-thumb,
+.v-combobox .v-list::-webkit-scrollbar-thumb,
+.v-menu .v-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.25);
+  border-radius: 3px;
+}
+
+.v-select .v-list::-webkit-scrollbar-thumb:hover,
+.v-autocomplete .v-list::-webkit-scrollbar-thumb:hover,
+.v-combobox .v-list::-webkit-scrollbar-thumb:hover,
+.v-menu .v-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+/* ── Autocomplete / Combobox 输入态 ── */
+.v-theme--light .v-autocomplete .v-field--variant-outlined.v-field--focused,
+.v-theme--light .v-combobox .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.v-theme--dark .v-autocomplete .v-field--variant-outlined.v-field--focused,
+.v-theme--dark .v-combobox .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2), 0 0 20px rgba(168, 85, 247, 0.1) !important;
+}
+
+/* ── 多选 chips 在 select 内的样式 ── */
+.v-select .v-chip {
+  margin: 2px 4px 2px 0 !important;
+}
+
+.v-theme--light .v-select .v-chip--variant-tonal {
+  background: rgba(168, 85, 247, 0.1) !important;
+  color: #7c3aed !important;
+}
+
+.v-theme--dark .v-select .v-chip--variant-tonal {
+  background: rgba(78, 205, 196, 0.12) !important;
+  color: #4ecdc4 !important;
+}
+
+/* ============================================================
+ * 7. Sheet
+ * ============================================================ */
+.v-theme--light .v-sheet {
+  background: rgba(255, 255, 255, 0.65) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.v-theme--dark .v-sheet {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ============================================================
+ * 8. 输入框 — Liquid Glass 风格
+ * ============================================================ */
+.v-theme--light .v-field--variant-outlined {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+.v-theme--light .v-field--variant-outlined .v-field__outline__start,
+.v-theme--light .v-field--variant-outlined .v-field__outline__notch::before,
+.v-theme--light .v-field--variant-outlined .v-field__outline__notch::after,
+.v-theme--light .v-field--variant-outlined .v-field__outline__end {
+  border-color: rgba(124, 58, 237, 0.42) !important;
+}
+
+.v-theme--light .v-field--variant-outlined:hover .v-field__outline__start,
+.v-theme--light .v-field--variant-outlined:hover .v-field__outline__notch::before,
+.v-theme--light .v-field--variant-outlined:hover .v-field__outline__notch::after,
+.v-theme--light .v-field--variant-outlined:hover .v-field__outline__end {
+  border-color: rgba(124, 58, 237, 0.6) !important;
+}
+
+.v-theme--light .v-field--variant-outlined.v-field--focused .v-field__outline__start,
+.v-theme--light .v-field--variant-outlined.v-field--focused .v-field__outline__notch::before,
+.v-theme--light .v-field--variant-outlined.v-field--focused .v-field__outline__notch::after,
+.v-theme--light .v-field--variant-outlined.v-field--focused .v-field__outline__end {
+  border-color: #a855f7 !important;
+}
+
+.v-theme--light .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* 亮色输入框 — label 和文字确保清晰 */
+.v-theme--light .v-field .v-label {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.v-theme--light .v-field--focused .v-label {
+  color: #a855f7 !important;
+}
+
+.v-theme--light .v-field__input {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+.v-theme--light .v-input input,
+.v-theme--light .v-input textarea {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* 暗色输入框 — Liquid Glass */
+.v-theme--dark .v-field--variant-outlined {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+}
+
+.v-theme--dark .v-field--variant-outlined .v-field__outline__start,
+.v-theme--dark .v-field--variant-outlined .v-field__outline__notch::before,
+.v-theme--dark .v-field--variant-outlined .v-field__outline__notch::after,
+.v-theme--dark .v-field--variant-outlined .v-field__outline__end {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.v-theme--dark .v-field--variant-outlined:hover .v-field__outline__start,
+.v-theme--dark .v-field--variant-outlined:hover .v-field__outline__notch::before,
+.v-theme--dark .v-field--variant-outlined:hover .v-field__outline__notch::after,
+.v-theme--dark .v-field--variant-outlined:hover .v-field__outline__end {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline__start,
+.v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline__notch::before,
+.v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline__notch::after,
+.v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline__end {
+  border-color: #4ecdc4 !important;
+}
+
+.v-theme--dark .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2), 0 0 20px rgba(168, 85, 247, 0.1) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ============================================================
+ * 9. 分割线 — Liquid Glass 极淡
+ * ============================================================ */
+.v-theme--light .v-divider {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+.v-theme--dark .v-divider {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ============================================================
+ * 10. 表格
+ * ============================================================ */
+.v-theme--light .v-table {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.v-theme--dark .v-table {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.v-theme--light .v-table tr:hover {
+  background: rgba(168, 85, 247, 0.04) !important;
+}
+
+.v-theme--dark .v-table tr:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ============================================================
+ * 11. 标签页 — Liquid Glass 青/紫
+ *     注意：v-tabs 放在 v-card-text 内部（参考 PriorityRuleModal），
+ *     不要放在 v-card-title 和 v-card-text 之间，否则 overflow:hidden 会裁掉指示器。
+ * ============================================================ */
+
+.v-theme--light .v-tab--selected .v-tab__slider {
+  color: #a855f7 !important;
+}
+
+.v-theme--light .v-tab--selected {
+  color: #a855f7 !important;
+}
+
+.v-theme--dark .v-tab--selected .v-tab__slider {
+  color: #4ecdc4 !important;
+}
+
+.v-theme--dark .v-tab--selected {
+  color: #4ecdc4 !important;
+  text-shadow: 0 0 12px rgba(78, 205, 196, 0.3);
+}
+
+/* ============================================================
+ * 11b. 图标-文字对齐修复
+ *     Vuetify 3 中 MDI 图标字体与文本字体的行盒高度不一致，
+ *     导致 prepend-icon / append-icon 与文字垂直不对齐。
+ *     注意：不能用 line-height:1 压文字行高（会在缩放时子像素取整导致偏移），
+ *     正确做法是纯 flexbox 居中，不改变任何盒子的固有高度。
+ * ============================================================ */
+
+/* ── 按钮内图标与文字垂直居中 ── */
+.v-btn {
+  align-items: center !important;
+}
+
+.v-btn .v-btn__prepend,
+.v-btn .v-btn__append {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-btn .v-btn__content {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-btn .v-btn__prepend .v-icon,
+.v-btn .v-btn__append .v-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 列表项内图标与文字垂直居中 ── */
+.v-list-item .v-list-item__prepend,
+.v-list-item .v-list-item__append {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+/* ── 芯片内图标与文字垂直居中 ── */
+.v-chip .v-chip__prepend,
+.v-chip .v-chip__append {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-chip .v-chip__content {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+/* ── Alert / Banner 内图标对齐 ── */
+.v-alert .v-alert__prepend {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
