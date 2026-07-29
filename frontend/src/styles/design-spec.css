@@ -243,24 +243,36 @@
 /*
  * 使用方式（弹窗内的表单）：
  *   <v-card-text class="form-section">
- *     <v-text-field ... class="mb-3" />
- *     <v-select ... class="mb-3" />
+ *     <v-text-field ... />
+ *     <v-select ... />
+ *     <v-row dense><v-col><v-text-field ... /></v-col></v-row>
  *     <div class="switch-row-lg">...</div>
  *   </v-card-text>
+ *
+ * 注意：此规则特异性高于 29m 的全局 .v-dialog .v-card-text 规则，
+ *       确保使用 form-section 时间距为 16px 而非 4px。
+ *       v-row 之间也自动获得 8px 垂直间距。
  */
 .form-section .v-text-field,
 .form-section .v-select,
 .form-section .v-autocomplete,
 .form-section .v-combobox,
 .form-section .v-textarea {
-  margin-bottom: 12px;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
 }
-.form-section .v-text-field:last-child,
-.form-section .v-select:last-child,
-.form-section .v-autocomplete:last-child,
-.form-section .v-combobox:last-child,
-.form-section .v-textarea:last-child {
-  margin-bottom: 0;
+/* v-row 之间的垂直间距 */
+.form-section .v-row + .v-row {
+  margin-top: 4px;
+}
+/* form-section 内最后一个表单控件不需要底部间距 */
+.form-section > .v-text-field:last-child,
+.form-section > .v-select:last-child,
+.form-section > .v-autocomplete:last-child,
+.form-section > .v-combobox:last-child,
+.form-section > .v-textarea:last-child,
+.form-section > .v-row:last-child {
+  margin-bottom: 0 !important;
 }
 
 /* ── 29k. 输入框 variant 补全 — filled / solo ── */
@@ -305,15 +317,23 @@
   box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.12), 0 0 8px rgba(168, 85, 247, 0.06) !important;
 }
 
-/* ── 29m. 全局表单控件统一密度 — 弹窗/卡片内表单默认 compact ── */
-/* 弹窗内 v-card-text 的表单控件统一间距 */
+/* ── 29m. 全局表单控件统一密度 — 弹窗/卡片内表单默认间距 ── */
+/*
+ * 弹窗内 v-card-text 的表单控件统一间距（默认 8px）
+ * 若需更大间距，在 v-card-text 上添加 .form-section 类即可获得 16px 间距
+ * （.form-section 使用 !important 覆盖此规则）
+ */
 .v-dialog .v-card-text .v-text-field,
 .v-dialog .v-card-text .v-select,
 .v-dialog .v-card-text .v-autocomplete,
 .v-dialog .v-card-text .v-combobox,
 .v-dialog .v-card-text .v-textarea {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+/* 弹窗内连续 v-row 之间也加间距 */
+.v-dialog .v-card-text .v-row + .v-row {
   margin-top: 4px;
-  margin-bottom: 4px;
 }
 
 /* ── 29n. 禁用态 — Liquid Glass 半透明 ── */

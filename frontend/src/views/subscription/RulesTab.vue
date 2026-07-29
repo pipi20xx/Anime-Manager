@@ -11,7 +11,7 @@
 import { ref, onMounted } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import FeedItemsModal from './FeedItemsModal.vue'
+import DownloadHistoryModal from './DownloadHistoryModal.vue'
 
 defineOptions({ name: 'RulesTab' })
 
@@ -175,7 +175,7 @@ defineExpose({ fetchRules })
           <v-card-actions class="manage-card__actions">
             <v-spacer />
             <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-eye-outline" @click.stop="previewRule(rule)">预览</v-btn>
-            <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-content-copy" @click.stop="duplicateRule(rule)">复制</v-btn>
+            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-content-copy" @click.stop="duplicateRule(rule)">复制</v-btn>
             <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteRule(rule)">删除</v-btn>
           </v-card-actions>
         </v-card>
@@ -254,8 +254,8 @@ defineExpose({ fetchRules })
       </v-card>
     </v-dialog>
 
-    <!-- 下载记录弹窗（聚合条目浏览） -->
-    <FeedItemsModal v-model:show="showHistoryModal" :feeds="feeds" />
+    <!-- 下载记录弹窗 -->
+    <DownloadHistoryModal v-model:show="showHistoryModal" :feeds="feeds" />
   </div>
 </template>
 

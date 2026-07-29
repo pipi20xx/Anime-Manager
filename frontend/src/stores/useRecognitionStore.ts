@@ -29,25 +29,62 @@ export interface FinalResult {
   release_date?: string
   tmdb_id?: string | number
   platform?: string
+  secondary_category?: string
+  origin_country?: string
+  vote_average?: number
+  duration?: string
+  path?: string
+}
+
+export interface RawMeta {
+  cn_name?: string
+  en_name?: string
+  original_cn_name?: string
+  year?: string
+  type?: string
+  begin_season?: number
+  begin_episode?: string | number
+  end_episode?: string | number
+  resource_team?: string
+  resource_pix?: string
+  resource_type?: string
+  resource_platform?: string
+  video_encode?: string
+  video_effect?: string
+  audio_encode?: string
+  subtitle_lang?: string
+  forced_tmdbid?: string
+  is_batch?: boolean
+  tags?: string[]
+  processed_name?: string
+  privileged_title?: string
+}
+
+export interface TmdbMatch {
+  id?: string | number
+  title?: string
+  original_title?: string
+  type?: string
+  media_type?: string
+  category?: string
+  year?: string
+  release_date?: string
+  poster_path?: string
+  backdrop_path?: string
+  overview?: string
+  vote_average?: number
+  genres?: any[]
+  secondary_category?: string
+  origin_country?: string | string[]
+  source?: string
 }
 
 export interface RecognizeData {
   success: boolean
   logs: string[]
   final_result: FinalResult
-  raw_meta: {
-    cn_name?: string
-    en_name?: string
-    begin_season?: number
-    begin_episode?: string
-    resource_team?: string
-    resource_type?: string
-    resource_pix?: string
-    video_encode?: string
-    audio_encode?: string
-    tags?: string[]
-  }
-  tmdb_match?: any
+  raw_meta: RawMeta
+  tmdb_match?: TmdbMatch | null
 }
 
 export const useRecognitionStore = defineStore('recognition', () => {

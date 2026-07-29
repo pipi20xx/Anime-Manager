@@ -1,318 +1,106 @@
 <script setup lang="ts">
 /**
- * GuideView — 使用指南
+ * GuideView — 规则使用说明
  *
- * 功能:
- * - 全链路识别流水线说明
- * - 自定义识别词 / 特权规则 / 渲染词
- * - RSS 下载规则 / 追剧订阅
- * - STRM 虚拟库 / 数据中心
- * - 设置说明
+ * 直接加载 src/docs/ 下的 Markdown 文档，用 marked 运行时渲染。
+ * 标签页与旧前端完全一致。
  */
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { marked } from 'marked'
 
 defineOptions({ name: 'GuideView' })
 
-const activeTab = ref('pipeline')
+// 导入 Markdown 原始文本 (?raw 后缀由 Vite 内置支持)
+import settingsMd from '@/docs/settings-guide.md?raw'
+import pipelineMd from '@/docs/recognition-pipeline.md?raw'
+import recognitionMd from '@/docs/recognition-rules.md?raw'
+import privilegedMd from '@/docs/privileged-rules.md?raw'
+import renderMd from '@/docs/render-rules.md?raw'
+import rssMd from '@/docs/rss-rule-guide.md?raw'
+import subscriptionMd from '@/docs/subscription-guide.md?raw'
+import strmMd from '@/docs/strm-guide.md?raw'
+import dataCenterMd from '@/docs/data-center-guide.md?raw'
 
-// 识别流水线阶段
-const pipelineStages = [
-  {
-    icon: 'mdi-file-document-outline',
-    title: '1. 输入文件名',
-    desc: '系统接收文件名或完整路径作为输入',
-    detail: '支持番剧文件名、路径、合集名等多种格式。系统会自动提取文件名中的关键信息。',
-  },
-  {
-    icon: 'mdi-filter-outline',
-    title: '2. 预处理 — 识别词过滤',
-    desc: '使用自定义识别词规则清洗文件名',
-    detail: '识别词（Noise）用于从文件名中移除干扰信息，如发布站名、广告词等。支持正则表达式。',
-  },
-  {
-    icon: 'mdi-crown-outline',
-    title: '3. 特权提取',
-    desc: '优先使用特权规则提取关键信息',
-    detail: '特权规则（Privileged）可以优先从文件名中提取制作组、分辨率等关键信息，避免被普通解析覆盖。',
-  },
-  {
-    icon: 'mdi-brain',
-    title: '4. 智能解析',
-    desc: 'AI 引擎解析文件名中的番剧名、季号、集号等',
-    detail: '系统使用内置规则 + TMDB/Bangumi 数据库进行智能匹配，提取番剧名、季号、集号、分辨率、编码等信息。',
-  },
-  {
-    icon: 'mdi-palette-outline',
-    title: '5. 后处理 — 渲染词',
-    desc: '使用渲染词规则美化输出结果',
-    detail: '渲染词（Render）用于将解析结果转换为标准格式，如将 1080p 转为 FHD，将 4K 转为 UHD 等。',
-  },
-  {
-    icon: 'mdi-check-circle-outline',
-    title: '6. 最终结果',
-    desc: '输出完整的识别结果，包含 TMDB/Bangumi 映射',
-    detail: '最终结果包含番剧名、季号、集号、分辨率、制作组、TMDB ID、Bangumi ID 等完整信息。',
-  },
+// 预加载 docs 目录下所有图片，将相对路径映射为 Vite 解析后的 URL
+// 解决 Markdown 中 ./xxx.png 相对路径在浏览器中 404 的问题
+const docImages = import.meta.glob('@/docs/*.{png,jpg,jpeg,gif,svg,webp}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+
+// 构建 文件名 -> URL 映射
+const imageMap: Record<string, string> = {}
+for (const [path, url] of Object.entries(docImages)) {
+  const filename = path.split('/').pop() || ''
+  if (filename) imageMap[filename] = url
+}
+
+/**
+ * 将 Markdown 中的相对图片路径替换为 Vite 解析后的 URL
+ * 支持 ![alt](./xxx.png) 和 ![alt](xxx.png) 两种写法
+ */
+function resolveImagePaths(md: string): string {
+  return md.replace(/!\[([^\]]*)\]\((\.\/)?([^)]+)\)/g, (match, alt, _prefix, filename) => {
+    const url = imageMap[filename]
+    return url ? `![${alt}](${url})` : match
+  })
+}
+
+const activeTab = ref('settings')
+
+const tabs = [
+  { value: 'settings', label: '设置说明', icon: 'mdi-cog-outline', md: settingsMd },
+  { value: 'pipeline', label: '全链路识别流水线', icon: 'mdi-pipe', md: pipelineMd },
+  { value: 'recognition', label: '自定义识别词 (预处理)', icon: 'mdi-filter-outline', md: recognitionMd },
+  { value: 'privileged', label: '自定义特权规则 (优先提取)', icon: 'mdi-crown-outline', md: privilegedMd },
+  { value: 'render', label: '自定义渲染词 (后处理)', icon: 'mdi-palette-outline', md: renderMd },
+  { value: 'rss', label: '下载规则配置 (RSS)', icon: 'mdi-rss', md: rssMd },
+  { value: 'subscription', label: '追剧订阅配置 (TMDB)', icon: 'mdi-television-classic', md: subscriptionMd },
+  { value: 'strm', label: '虚拟库 (STRM)', icon: 'mdi-link-variant', md: strmMd },
+  { value: 'datacenter', label: '数据中心架构', icon: 'mdi-database-outline', md: dataCenterMd },
 ]
 
-// 识别词示例
-const noiseExamples = [
-  { pattern: '\\[某某字幕组\\]', desc: '屏蔽特定字幕组名', type: '正则' },
-  { pattern: '\\[1080P\\]', desc: '屏蔽分辨率标记', type: '正则' },
-  { pattern: 'www.example.com', desc: '屏蔽广告网址', type: '正则' },
-]
+// 配置 marked
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+})
 
-// 特权规则示例
-const privilegeExamples = [
-  { pattern: '(\\d{4})', field: 'year', desc: '提取年份', example: '[2024] → year: 2024' },
-  { pattern: '(1080[pi]|4K|720P)', field: 'resolution', desc: '提取分辨率', example: '1080P → resolution: 1080P' },
-  { pattern: '\\[(\\w+)\\]', field: 'team', desc: '提取制作组', example: '[SubGroup] → team: SubGroup' },
-]
+const currentTab = computed(() => tabs.find(t => t.value === activeTab.value))
 
-// 渲染词示例
-const renderExamples = [
-  { from: '1080p', to: 'FHD', desc: '统一高清格式标记' },
-  { from: '2160p', to: 'UHD', desc: '统一 4K 格式标记' },
-  { from: '720p', to: 'HD', desc: '统一标清格式标记' },
-]
+const renderedHtml = computed(() => {
+  if (!currentTab.value) return ''
+  return marked.parse(resolveImagePaths(currentTab.value.md)) as string
+})
 
-// RSS 规则说明
-const rssRuleFields = [
-  { field: 'name', desc: '规则名称', required: true },
-  { field: 'pattern', desc: '匹配模式（正则表达式）', required: true },
-  { field: 'priority', desc: '优先级（数字越小越优先）', required: false },
-  { field: 'target_path', desc: '下载目标路径', required: true },
-  { field: 'client_id', desc: '下载客户端 ID', required: true },
-  { field: 'enabled', desc: '是否启用', required: false },
-]
-
-// 变量手册
-const variableManual = [
-  { var: '{title}', desc: '番剧标题', example: '葬送的芙莉莲' },
-  { var: '{season}', desc: '季号（补零）', example: '01' },
-  { var: '{episode}', desc: '集号（补零）', example: '05' },
-  { var: '{resolution}', desc: '分辨率', example: '1080p' },
-  { var: '{team}', desc: '制作组', example: 'SubGroup' },
-  { var: '{year}', desc: '年份', example: '2024' },
-  { var: '{video_encode}', desc: '视频编码', example: 'x264' },
-  { var: '{audio_encode}', desc: '音频编码', example: 'AAC' },
-  { var: '{tmdb_id}', desc: 'TMDB ID', example: '226711' },
-  { var: '{bangumi_id}', desc: 'Bangumi ID', example: '384858' },
-]
+// 切换标签页时滚动到顶部
+watch(activeTab, () => {
+  const el = document.querySelector('.md-content-wrapper')
+  if (el) el.scrollTop = 0
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
     <!-- 页面头部 -->
     <div class="app-page-header mb-6">
-      <h1 class="text-h5 font-weight-bold">使用指南</h1>
+      <h1 class="text-h5 font-weight-bold">规则使用说明</h1>
       <div class="text-body-2 text-medium-emphasis mt-1">规则与正则指南</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
-      <v-tab value="pipeline">识别流水线</v-tab>
-      <v-tab value="noise">识别词</v-tab>
-      <v-tab value="privilege">特权规则</v-tab>
-      <v-tab value="render">渲染词</v-tab>
-      <v-tab value="rss">RSS 规则</v-tab>
-      <v-tab value="variables">变量手册</v-tab>
+    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs" show-arrows>
+      <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value">
+        <v-icon start size="18">{{ tab.icon }}</v-icon>
+        {{ tab.label }}
+      </v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
-      <!-- 识别流水线 -->
-      <v-window-item value="pipeline">
-        <v-row>
-          <v-col v-for="(stage, index) in pipelineStages" :key="index" cols="12" sm="6" md="4">
-            <v-card class="glass-card guide-card">
-              <v-card-text class="pa-4">
-                <div class="d-flex align-center ga-3 mb-3">
-                  <v-avatar color="primary" variant="tonal" size="40">
-                    <v-icon :icon="stage.icon" />
-                  </v-avatar>
-                  <div class="text-subtitle-2 font-weight-bold">{{ stage.title }}</div>
-                </div>
-                <div class="text-body-2 mb-2">{{ stage.desc }}</div>
-                <div class="text-caption text-medium-emphasis">{{ stage.detail }}</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-window-item>
-
-      <!-- 识别词 -->
-      <v-window-item value="noise">
-        <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2">
-            <v-icon start color="primary">mdi-filter-outline</v-icon>
-            自定义识别词 (预处理)
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-4">
-            <div class="text-body-2 mb-4">
-              识别词（Noise）用于在识别前从文件名中移除干扰信息。每行一条规则，支持正则表达式。
-              当文件名中包含干扰信息（如字幕组名、广告词、标记等）时，识别词可以在解析前将其清除，提高识别准确率。
-            </div>
-
-            <div class="text-subtitle-2 font-weight-medium mb-2">示例</div>
-            <v-table density="compact" class="bg-transparent">
-              <thead>
-                <tr>
-                  <th>模式</th>
-                  <th>说明</th>
-                  <th>类型</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in noiseExamples" :key="index">
-                  <td><code>{{ item.pattern }}</code></td>
-                  <td>{{ item.desc }}</td>
-                  <td><v-chip size="x-small" variant="tonal">{{ item.type }}</v-chip></td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </v-window-item>
-
-      <!-- 特权规则 -->
-      <v-window-item value="privilege">
-        <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2">
-            <v-icon start color="info">mdi-crown-outline</v-icon>
-            自定义特权规则 (优先提取)
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-4">
-            <div class="text-body-2 mb-4">
-              特权规则（Privileged）可以优先从文件名中提取特定字段信息。
-              当文件名包含多个可能匹配时，特权规则的结果会被优先采用。
-            </div>
-
-            <div class="text-subtitle-2 font-weight-medium mb-2">示例</div>
-            <v-table density="compact" class="bg-transparent">
-              <thead>
-                <tr>
-                  <th>模式</th>
-                  <th>提取字段</th>
-                  <th>说明</th>
-                  <th>效果</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in privilegeExamples" :key="index">
-                  <td><code>{{ item.pattern }}</code></td>
-                  <td><v-chip size="small" variant="tonal" color="primary">{{ item.field }}</v-chip></td>
-                  <td>{{ item.desc }}</td>
-                  <td class="text-caption">{{ item.example }}</td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </v-window-item>
-
-      <!-- 渲染词 -->
-      <v-window-item value="render">
-        <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2">
-            <v-icon start color="accent">mdi-palette-outline</v-icon>
-            自定义渲染词 (后处理)
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-4">
-            <div class="text-body-2 mb-4">
-              渲染词（Render）用于在识别完成后，将结果中的特定值替换为标准化格式。
-              例如将各种分辨率的写法统一为标准格式。
-            </div>
-
-            <div class="text-subtitle-2 font-weight-medium mb-2">示例</div>
-            <v-table density="compact" class="bg-transparent">
-              <thead>
-                <tr>
-                  <th>原始值</th>
-                  <th>渲染为</th>
-                  <th>说明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in renderExamples" :key="index">
-                  <td><code>{{ item.from }}</code></td>
-                  <td><v-chip size="small" variant="flat" color="primary">{{ item.to }}</v-chip></td>
-                  <td>{{ item.desc }}</td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </v-window-item>
-
-      <!-- RSS 规则 -->
-      <v-window-item value="rss">
-        <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2">
-            <v-icon start color="info">mdi-rss</v-icon>
-            RSS 下载规则配置
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-4">
-            <div class="text-body-2 mb-4">
-              RSS 下载规则用于自动监控 RSS 源并根据匹配条件自动下载番剧资源。
-              当新的 RSS 条目匹配规则时，系统会自动将下载任务发送到指定的下载客户端。
-            </div>
-
-            <div class="text-subtitle-2 font-weight-medium mb-2">字段说明</div>
-            <v-table density="compact" class="bg-transparent">
-              <thead>
-                <tr>
-                  <th>字段</th>
-                  <th>说明</th>
-                  <th>必填</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in rssRuleFields" :key="index">
-                  <td><code>{{ item.field }}</code></td>
-                  <td>{{ item.desc }}</td>
-                  <td>
-                    <v-icon v-if="item.required" size="16" color="info">mdi-check-circle</v-icon>
-                    <v-icon v-else size="16" color="grey">mdi-minus-circle-outline</v-icon>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card-text>
-        </v-card>
-      </v-window-item>
-
-      <!-- 变量手册 -->
-      <v-window-item value="variables">
-        <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2">
-            <v-icon start color="info">mdi-code-tags</v-icon>
-            变量手册
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-4">
-            <div class="text-body-2 mb-4">
-              以下变量可在重命名规则、路径模板等处使用，系统会自动替换为对应的值。
-            </div>
-
-            <v-table density="compact" class="bg-transparent">
-              <thead>
-                <tr>
-                  <th>变量</th>
-                  <th>说明</th>
-                  <th>示例值</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in variableManual" :key="index">
-                  <td><code>{{ item.var }}</code></td>
-                  <td>{{ item.desc }}</td>
-                  <td class="text-caption text-medium-emphasis">{{ item.example }}</td>
-                </tr>
-              </tbody>
-            </v-table>
+      <v-window-item v-for="tab in tabs" :key="tab.value" :value="tab.value">
+        <v-card class="glass-card" rounded="xl">
+          <v-card-text class="pa-6">
+            <div class="md-content" v-html="renderedHtml" />
           </v-card-text>
         </v-card>
       </v-window-item>
@@ -320,4 +108,161 @@ const variableManual = [
   </v-container>
 </template>
 
+<style scoped>
+.md-content {
+  line-height: 1.8;
+  max-width: 100%;
+  overflow-x: auto;
+}
 
+/* 标题样式 */
+.md-content :deep(h1) {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid rgba(var(--v-theme-primary), 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.md-content :deep(h2) {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: rgb(var(--v-theme-primary));
+}
+
+.md-content :deep(h3) {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.md-content :deep(h4) {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: rgb(var(--v-theme-info));
+}
+
+/* 段落 */
+.md-content :deep(p) {
+  margin-bottom: 1rem;
+}
+
+/* 列表 */
+.md-content :deep(ul),
+.md-content :deep(ol) {
+  padding-left: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.md-content :deep(li) {
+  margin-bottom: 0.4rem;
+}
+
+/* 引用块 */
+.md-content :deep(blockquote) {
+  border-left: 4px solid rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.06);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 1rem 0;
+}
+
+.md-content :deep(blockquote p) {
+  margin-bottom: 0.3rem;
+}
+
+.md-content :deep(blockquote p:last-child) {
+  margin-bottom: 0;
+}
+
+/* 表格 */
+.md-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  display: block;
+  overflow-x: auto;
+}
+
+.md-content :deep(th),
+.md-content :deep(td) {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.md-content :deep(th) {
+  background: rgba(var(--v-theme-primary), 0.08);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.md-content :deep(tr:nth-child(even)) {
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+
+/* 行内代码 */
+.md-content :deep(code) {
+  background: rgba(var(--v-theme-primary), 0.1);
+  color: rgb(var(--v-theme-primary));
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.85em;
+}
+
+/* 代码块 */
+.md-content :deep(pre) {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  line-height: 1.5;
+}
+
+.md-content :deep(pre code) {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+/* 链接 */
+.md-content :deep(a) {
+  color: rgb(var(--v-theme-primary));
+  text-decoration: none;
+}
+
+.md-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+/* 分割线 */
+.md-content :deep(hr) {
+  border: none;
+  height: 1px;
+  background: rgba(var(--v-theme-on-surface), 0.12);
+  margin: 2rem 0;
+}
+
+/* 粗体 */
+.md-content :deep(strong) {
+  font-weight: 700;
+  color: rgba(var(--v-theme-on-surface), 0.95);
+}
+
+/* 图片 */
+.md-content :deep(img) {
+  max-width: 80%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+</style>

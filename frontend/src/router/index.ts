@@ -114,18 +114,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/CalendarView.vue'),
       },
 
-      // === 外观设置 ===
-      {
-        path: '/appearance',
-        name: 'Appearance',
-        component: () => import('@/views/AppearanceView.vue'),
-      },
-
       // === AI 实验室 ===
       {
         path: '/ai-lab',
         name: 'AiLab',
         component: () => import('@/views/AiLabView.vue'),
+      },
+
+      // === 外部控制 ===
+      {
+        path: '/external-control',
+        name: 'ExternalControl',
+        component: () => import('@/views/ExternalControlView.vue'),
       },
 
       // === 使用指南 ===

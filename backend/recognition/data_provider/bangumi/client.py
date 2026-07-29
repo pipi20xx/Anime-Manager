@@ -321,6 +321,7 @@ class BangumiProvider:
                     "first_air_date": item.get("date"),
                     "media_type": "tv",
                     "source": "bangumi",
+                    "platform": item.get("platform") or "",
                     "broadcast_time": broadcast_map.get(bgm_id) if bgm_id else None
                 })
 
@@ -515,6 +516,7 @@ class BangumiProvider:
                     it["total_episodes"] = detail.get("total_episodes")
                     it["tags"] = detail.get("tags") or []
                     it["genres"] = detail.get("genres") or []
+                    it["platform"] = detail.get("platform") or ""
                     if detail.get("title"):
                         it["title"] = detail["title"]
                     if detail.get("original_title"):
@@ -525,6 +527,7 @@ class BangumiProvider:
                     it["total_episodes"] = 0
                     it["tags"] = []
                     it["genres"] = []
+                    it["platform"] = ""
 
         # 4. 按开播日期升序排序
         season_items.sort(key=lambda it: it.get("air_timestamp") or 0)
@@ -593,6 +596,8 @@ class BangumiProvider:
                                 if detail:
                                     item["image"] = detail.get("poster_path")
                                     item["rating"] = detail.get("vote_average") or item.get("rating")
+                                    if detail.get("platform"):
+                                        item["platform"] = detail["platform"]
                                     if detail.get("title"):
                                         item["title"] = detail["title"]
                                     if detail.get("original_title"):
@@ -667,6 +672,7 @@ class BangumiProvider:
                     if detail:
                         item["image"] = detail.get("poster_path")
                         item["rating"] = detail.get("vote_average")
+                        item["platform"] = detail.get("platform") or ""
                         # 用 BGM API 返回的 name_cn / name 覆盖本地表标题
                         if detail.get("title"):
                             item["title"] = detail["title"]
@@ -675,6 +681,7 @@ class BangumiProvider:
                     else:
                         item["image"] = None
                         item["rating"] = None
+                        item["platform"] = ""
 
         # 4. 按「今天起未来7天」生成日期分组
         today = _dt.date.today()

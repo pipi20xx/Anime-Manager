@@ -31,7 +31,7 @@ const activeTab = ref('basic')
       <div class="text-body-2 text-medium-emphasis mt-1">系统配置与选项</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
+    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
       <v-tab value="basic">
         <v-icon start size="18">mdi-cog-outline</v-icon>
         基础配置

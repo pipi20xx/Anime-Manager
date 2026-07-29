@@ -158,6 +158,12 @@ onMounted(() => {
             </v-img>
             <span v-if="item.platform" class="media-card__type media-card__type--bgm">{{ item.platform }}</span>
             <span v-if="item.rating" class="media-card__rating">⭐ {{ Number(item.rating).toFixed(1) }}</span>
+            <!-- 播出时间徽章 -->
+            <span v-if="item.broadcast_time === 'END'" class="media-card__broadcast media-card__broadcast--end">END</span>
+            <span v-else-if="item.broadcast_time" class="media-card__broadcast">
+              <v-icon size="10" style="color: inherit">mdi-clock-outline</v-icon>
+              {{ item.broadcast_time }}
+            </span>
           </div>
           <div class="media-card__info">
             <div class="media-card__title">{{ item.title || item.name_cn || item.name }}</div>

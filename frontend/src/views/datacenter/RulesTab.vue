@@ -27,7 +27,6 @@ const ruleForm = reactive({
   name: '',
   target: 'all',
   enabled: true,
-  priority: 0,
   criteria: {} as Record<string, any>,
 })
 
@@ -150,7 +149,7 @@ async function fetchRules() {
 }
 
 function resetRuleForm() {
-  ruleForm.id = undefined; ruleForm.name = ''; ruleForm.target = 'all'; ruleForm.enabled = true; ruleForm.priority = 0; ruleForm.criteria = {}
+  ruleForm.id = undefined; ruleForm.name = ''; ruleForm.target = 'all'; ruleForm.enabled = true; ruleForm.criteria = {}
   criteriaToFields({})
   // 清空搜索选项
   genreSearchOptions.value = []; companySearchOptions.value = []; keywordSearchOptions.value = []
@@ -161,7 +160,7 @@ function openAddRule() { resetRuleForm(); isNewRule.value = true; editingRuleInd
 function openEditRule(index: number) {
   resetRuleForm(); isNewRule.value = false; editingRuleIndex.value = index
   const raw = rules.value[index]
-  Object.assign(ruleForm, { id: raw.id, name: raw.name || '', target: raw.target || 'all', enabled: raw.enabled !== false, priority: raw.priority || 0, criteria: raw.criteria || {} })
+  Object.assign(ruleForm, { id: raw.id, name: raw.name || '', target: raw.target || 'all', enabled: raw.enabled !== false, criteria: raw.criteria || {} })
   criteriaToFields(raw.criteria || {})
   // 预加载已有选项，确保已选中的值能显示标签
   if (selectedGenreIds.value.length) searchGenres('')
@@ -278,19 +277,27 @@ defineExpose({ fetchRules })
           />
         </div>
 
-        <!-- 信息区 -->
+        <!-- 信息区：固定 3 行，不足用占位填充 -->
         <div class="manage-card__body">
           <div class="manage-card__info" v-for="line in getCriteriaLines(rule).slice(0, 3)" :key="line.label">
             <span class="manage-card__info-label">{{ line.label }}</span>
             <span class="manage-card__info-value" :title="line.value">{{ line.value }}</span>
           </div>
-          <div v-if="getCriteriaLines(rule).length === 0" class="manage-card__desc">无条件</div>
+          <!-- 无条件时占第 1 行 -->
+          <div v-if="getCriteriaLines(rule).length === 0" class="manage-card__info manage-card__info--unconditional">
+            <span class="manage-card__info-label">条件</span>
+            <span class="manage-card__info-value text-medium-emphasis">无条件</span>
+          </div>
+          <!-- 占位行补齐到 3 行 -->
+          <div v-for="n in Math.max(0, 3 - Math.max(getCriteriaLines(rule).length, 1))" :key="`ph-${n}`" class="manage-card__info manage-card__info--placeholder">
+            <span class="manage-card__info-label">&nbsp;</span>
+            <span class="manage-card__info-value">&nbsp;</span>
+          </div>
 
           <div class="manage-card__tags">
             <v-chip size="x-small" variant="tonal" color="info">
               {{ rule.target === 'movie' ? '电影' : rule.target === 'tv' ? '剧集' : '全部' }}
             </v-chip>
-            <v-chip size="x-small" variant="outlined">P{{ rule.priority ?? 0 }}</v-chip>
           </div>
         </div>
 
@@ -321,14 +328,7 @@ defineExpose({ fetchRules })
         <!-- 基础设置 -->
         <div class="text-subtitle-2 font-weight-bold text-primary mb-2">基础设置</div>
         <v-text-field v-model="ruleForm.name" label="分类名称 (对应二级文件夹名)" variant="outlined" density="compact" class="mb-3" />
-        <v-row dense>
-          <v-col cols="12" sm="6">
-            <v-select v-model="ruleForm.target" label="适用对象" :items="targetItems" variant="outlined" density="compact" class="mb-3" />
-          </v-col>
-          <v-col cols="12" sm="6">
-            <v-text-field v-model="ruleForm.priority" label="优先级" type="number" variant="outlined" density="compact" class="mb-3" />
-          </v-col>
-        </v-row>
+        <v-select v-model="ruleForm.target" label="适用对象" :items="targetItems" variant="outlined" density="compact" class="mb-3" />
         <v-switch v-model="ruleForm.enabled" label="启用" color="primary" density="compact" hide-details class="mb-3" />
 
         <v-divider class="my-3" />
@@ -444,3 +444,21 @@ defineExpose({ fetchRules })
 </template>
 
 <!-- scoped 样式已迁移至 global.css .manage-card / .info-badge -->
+<style scoped>
+/* 占位行 — 保持卡片高度一致 */
+.manage-card__info--placeholder {
+  visibility: hidden;
+}
+
+/* 固定信息区高度 — 3行固定高度，不足用占位填充 */
+:deep(.manage-card__body) {
+  min-height: 120px;
+}
+
+/* "无条件"占位也固定高度，与3行信息区一致 */
+:deep(.manage-card__desc) {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+}
+</style>

@@ -244,6 +244,67 @@
   margin-top: 2px;
 }
 
+/* ── Sticky Tabs — 页面级标签页吸顶固定 ── */
+/*
+ * 用法：在 <v-tabs> 上添加 class="sticky-tabs" 替代 class="mb-4"
+ * 效果：滚动时标签栏固定在顶部，内容从下方滑过
+ * 要求：v-tabs 的父级不能有 overflow:hidden（如 v-card），
+ *       仅适用于 tabs 直接放在 v-container 内的页面
+ */
+.sticky-tabs {
+  position: sticky;
+  /* 吸附到 app-bar 下方（--v-layout-top 由 Vuetify 布局系统注入到 v-main 上） */
+  top: var(--v-layout-top, 0px);
+  z-index: 200;
+  /* 液态玻璃半透明背景，内容滚动时透过模糊可见 */
+  background: rgba(var(--v-theme-surface), 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  /* 替代 mb-4，用 padding 避免滚动时内容透过间隙可见 */
+  margin-bottom: 0 !important;
+  padding-bottom: 12px;
+  padding-top: 4px;
+  /* 底部微弱阴影，增强层次感 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+/* 暗色主题: 页面背景是 #0a0a1a 渐变，surface 是 #0f0f2a，需匹配页面底色 */
+.v-theme--dark .sticky-tabs {
+  background: rgba(10, 10, 26, 0.85);
+}
+/* 亮色主题: 页面背景是 #F5F5FA，surface 是 #FFFFFF，需匹配页面底色 */
+.v-theme--light .sticky-tabs {
+  background: rgba(245, 245, 250, 0.88);
+}
+
+/* ── Sticky Sub Tabs — 双重吸顶内层导航 ── */
+/*
+ * 用法：在已有 sticky-tabs 外层吸顶的页面中，子页面的导航条添加 class="sticky-sub-tabs"
+ * 效果：内层导航条吸附在外层 sticky-tabs 下方，形成双重吸顶
+ * 原理：top = app-bar 高度 (--v-layout-top) + 外层 sticky-tabs 高度 (64px)
+ *       64px = v-tabs 默认高度 48px + sticky-tabs 的 padding (4px + 12px)
+ * 注意：若外层 v-tabs 使用了非默认 density（如 compact=36px），需同步调整 --sticky-offset
+ */
+.sticky-sub-tabs {
+  position: sticky;
+  top: calc(var(--v-layout-top, 0px) + var(--sticky-offset, 64px));
+  z-index: 199; /* 低于外层 sticky-tabs 的 z-index: 200 */
+  background: rgba(var(--v-theme-surface), 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  margin-bottom: 0 !important;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+/* 暗色主题: 匹配页面底色 */
+.v-theme--dark .sticky-sub-tabs {
+  background: rgba(10, 10, 26, 0.85);
+}
+/* 亮色主题: 匹配页面底色 */
+.v-theme--light .sticky-sub-tabs {
+  background: rgba(245, 245, 250, 0.88);
+}
+
 /* ── 过渡动画 ── */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.2s ease;

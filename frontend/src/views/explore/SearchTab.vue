@@ -167,6 +167,12 @@ onMounted(() => {
                 </v-img>
                 <span v-if="item.platform" class="media-card__type media-card__type--bgm">{{ item.platform }}</span>
                 <span v-if="item.vote_average || item.rating" class="media-card__rating">⭐ {{ Number(item.vote_average || item.rating).toFixed(1) }}</span>
+                <!-- 播出时间徽章 -->
+                <span v-if="item.broadcast_time === 'END'" class="media-card__broadcast media-card__broadcast--end">END</span>
+                <span v-else-if="item.broadcast_time" class="media-card__broadcast">
+                  <v-icon size="10" style="color: inherit">mdi-clock-outline</v-icon>
+                  {{ item.broadcast_time }}
+                </span>
                 <div v-if="isSubscribed(item, 'bangumi')" class="media-card__sub-badge">
                   <v-icon size="14" color="white">mdi-check-circle</v-icon>
                 </div>

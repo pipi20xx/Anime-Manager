@@ -17,7 +17,15 @@ export const subscriptionApi = {
   saveRule: (body: any) => api.post<any>('/api/rules', body),
   deleteRule: (id: number) => api.delete<any>(`/api/rules/${id}`),
   getRuleHistory: (ruleId: number) => api.get<any>(`/api/rules/${ruleId}/history`),
-  getAllRuleHistory: () => api.get<any>('/api/rules/history/all'),
+  getAllRuleHistory: (params?: { limit?: number; offset?: number; rule_ids?: string; keyword?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.limit) qs.set('limit', String(params.limit))
+    if (params?.offset) qs.set('offset', String(params.offset))
+    if (params?.rule_ids) qs.set('rule_ids', params.rule_ids)
+    if (params?.keyword) qs.set('keyword', params.keyword)
+    const q = qs.toString()
+    return api.get<any>(`/api/rules/history/all${q ? `?${q}` : ''}`)
+  },
 
   // --- Actions ---
   runNow: () => api.post<any>('/api/rss/run'),

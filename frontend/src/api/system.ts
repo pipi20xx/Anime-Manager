@@ -17,7 +17,7 @@ export const systemApi = {
   getHealth: () => api.get<any>('/api/system/health'),
 
   /** 获取系统日志 */
-  getLogs: (params?: { level?: string; limit?: number }) =>
+  getLogs: (params?: { module?: string; level?: string; limit?: number; offset?: number }) =>
     api.get<any>('/api/system/logs', { params }),
 
   /** 触发死种超时清理 */

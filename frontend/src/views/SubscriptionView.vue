@@ -54,13 +54,13 @@ function refreshCurrentTab() {
         <div class="text-body-2 text-medium-emphasis mt-1">RSS 自动化追番与资源监控</div>
       </div>
       <div class="d-flex ga-2 flex-wrap">
-        <v-btn variant="tonal" prepend-icon="mdi-refresh" :loading="syncing" @click="runNow">立即触发全量刷新</v-btn>
+        <v-btn variant="tonal" color="info" prepend-icon="mdi-refresh" :loading="syncing" @click="runNow">立即触发全量刷新</v-btn>
         <v-btn variant="tonal" prepend-icon="mdi-eraser" color="warning" @click="clearRecognitionCache">清空黑名单</v-btn>
       </div>
     </div>
 
     <!-- 标签切换 -->
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
+    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
       <v-tab value="subscriptions">追剧订阅</v-tab>
       <v-tab value="feeds">订阅源</v-tab>
       <v-tab value="rules">下载规则</v-tab>

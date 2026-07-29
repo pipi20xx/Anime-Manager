@@ -91,10 +91,6 @@ const selectedDateItems = computed(() => {
   return items
 })
 
-function goToToday() {
-  selectedDate.value = Date.now()
-}
-
 // 使用统一的 getImg 函数（自动附加 token 和处理代理路径）
 
 function openCardDetail(item: any) {
@@ -386,15 +382,6 @@ onMounted(() => {
         <div class="text-body-2 text-medium-emphasis mt-1">番剧播出时间追踪与订阅管理</div>
       </div>
       <div class="d-flex align-center ga-3">
-        <v-btn
-          variant="outlined"
-          density="compact"
-          prepend-icon="mdi-calendar-today"
-          @click="goToToday"
-          size="small"
-        >
-          今天
-        </v-btn>
         <v-text-field
           v-model="selectedDateStr"
           type="date"

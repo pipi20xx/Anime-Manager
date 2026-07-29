@@ -541,6 +541,37 @@
   z-index: 2;
 }
 
+/* ── 33e-2. 播出时间徽章 (海报底部居中) ── */
+/*
+ * 数据来源：后端 broadcast_time 字段
+ *   - "周一 00:30" 等字符串 → 显示时间文本
+ *   - "END" → 显示红色已完结徽章
+ *   - null/undefined → 不显示
+ */
+.media-card__broadcast {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.55);
+  color: #4ecdc4;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.media-card__broadcast--end {
+  background: rgba(239, 83, 80, 0.85);
+  color: #fff;
+}
+
 /* ── 33f. 卡片下方信息区 ── */
 .media-card__info {
   padding: 8px 8px 10px;

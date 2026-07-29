@@ -255,7 +255,7 @@ onMounted(() => {
       <div class="text-body-2 text-medium-emphasis mt-1">AI 语义解析与智能助手</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
+    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
       <v-tab value="chat">
         <v-icon start size="18">mdi-chat-outline</v-icon>
         AI 对话

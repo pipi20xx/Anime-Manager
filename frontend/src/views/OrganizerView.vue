@@ -122,7 +122,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 标签切换 -->
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
+    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
       <v-tab value="tasks">整理任务</v-tab>
       <v-tab value="rules">重命名规则</v-tab>
       <v-tab value="background">后台任务</v-tab>

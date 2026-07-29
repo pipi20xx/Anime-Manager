@@ -47,7 +47,7 @@ const tabs = [
 <template>
   <div class="explore-view">
     <!-- 标签导航 -->
-    <div class="explore-header d-flex justify-center py-4">
+    <div class="explore-header d-flex justify-center sticky-tabs">
       <v-tabs v-model="currentTab" align-tabs="center" color="primary" style="max-width: 560px">
         <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value">
           <v-icon start size="18">{{ tab.icon }}</v-icon>

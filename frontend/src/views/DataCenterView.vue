@@ -34,7 +34,7 @@ const activeTab = ref('metadata')
     </div>
 
     <!-- 标签切换 -->
-    <v-tabs v-model="activeTab" color="primary" class="mb-4">
+    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
       <v-tab value="metadata"><v-icon start size="18">mdi-image-multiple-outline</v-icon>元数据资产</v-tab>
       <v-tab value="rules"><v-icon start size="18">mdi-tag-multiple-outline</v-icon>二级分类规则</v-tab>
       <v-tab value="mapping"><v-icon start size="18">mdi-swap-horizontal</v-icon>ID映射管理</v-tab>

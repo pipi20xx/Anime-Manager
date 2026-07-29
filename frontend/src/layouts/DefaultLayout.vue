@@ -53,7 +53,7 @@ const navGroups = [
     label: '系统',
     items: [
       { title: '系统设置', icon: 'mdi-cog-outline', to: '/settings' },
-      { title: '外观设置', icon: 'mdi-palette-outline', to: '/appearance' },
+      { title: '外部控制', icon: 'mdi-api', to: '/external-control' },
       { title: '使用指南', icon: 'mdi-book-open-page-variant-outline', to: '/guide' },
     ],
   },

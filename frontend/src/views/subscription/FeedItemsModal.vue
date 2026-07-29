@@ -236,7 +236,7 @@ async function handleClearHistory() {
             <v-spacer />
             <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-delete-sweep-outline" @click="handleClearHistory">清除下载记录</v-btn>
             <v-btn variant="tonal" size="small" color="primary" prepend-icon="mdi-refresh" @click="handleRetryRecognition" :loading="loading">重试识别失败项</v-btn>
-            <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-cache-off" @click="handleClearCache">清空识别缓存</v-btn>
+            <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-database-remove-outline" @click="handleClearCache">清空识别缓存</v-btn>
           </div>
         </div>
 

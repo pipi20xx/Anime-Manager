@@ -196,3 +196,12 @@
 .v-theme--light .meta-tag--feed {
   background: #6d4c41 !important;
 }
+
+/* --- 原产地 — 棕色系 --- */
+.meta-tag--country {
+  background: #5d4037 !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--country {
+  background: #6d4c41 !important;
+}

@@ -322,6 +322,14 @@ onUnmounted(() => {
             </span>
             <!-- 右上角评分 -->
             <span v-if="item.vote_average" class="media-card__rating">⭐ {{ item.vote_average?.toFixed(1) }}</span>
+            <!-- 播出时间徽章 (仅 Bangumi 数据源) -->
+            <template v-if="filters.source === 'bangumi'">
+              <span v-if="item.broadcast_time === 'END'" class="media-card__broadcast media-card__broadcast--end">END</span>
+              <span v-else-if="item.broadcast_time" class="media-card__broadcast">
+                <v-icon size="10" style="color: inherit">mdi-clock-outline</v-icon>
+                {{ item.broadcast_time }}
+              </span>
+            </template>
             <!-- 已订阅角标 -->
             <div v-if="isSubscribed(item)" class="media-card__sub-badge">
               <v-icon size="14" color="white">mdi-check-circle</v-icon>

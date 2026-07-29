@@ -138,7 +138,7 @@ async function duplicateRule(index: number) {
           <v-card-actions class="manage-card__actions">
             <v-spacer />
             <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click.stop="openEditRule(index)">编辑</v-btn>
-            <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-content-copy" @click.stop="duplicateRule(index)">复制</v-btn>
+            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-content-copy" @click.stop="duplicateRule(index)">复制</v-btn>
             <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteRule(index)">删除</v-btn>
           </v-card-actions>
         </v-card>

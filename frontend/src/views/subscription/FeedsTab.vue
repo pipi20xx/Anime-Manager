@@ -115,7 +115,7 @@ defineExpose({ fetchFeeds })
     <!-- 操作栏 -->
     <div class="d-flex justify-end mb-4 ga-2 flex-wrap">
       <v-btn variant="tonal" size="small" prepend-icon="mdi-eye-outline" color="info" @click="showItemsModal = true">订阅源详情</v-btn>
-      <v-btn variant="tonal" size="small" prepend-icon="mdi-database-sync-outline" @click="syncJackettFeeds">同步 Jackett 源</v-btn>
+      <v-btn variant="tonal" size="small" prepend-icon="mdi-database-sync-outline" color="info" @click="syncJackettFeeds">同步 Jackett 源</v-btn>
       <v-btn variant="tonal" size="small" prepend-icon="mdi-shield-off-outline" color="error" @click="showTmdbBlocklist = true">TMDB屏蔽管理</v-btn>
       <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddFeed">新增订阅源</v-btn>
     </div>

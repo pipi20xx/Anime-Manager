@@ -272,9 +272,9 @@ defineExpose({ fetchSubscriptions })
     <div class="d-flex justify-end mb-4 ga-2 flex-wrap">
       <v-btn variant="tonal" color="error" size="small" prepend-icon="mdi-delete-sweep-outline" @click="clearAllSubscriptions">清空所有订阅</v-btn>
       <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-star-outline" @click="openQuickSub">Bangumi一键订阅</v-btn>
-      <v-btn variant="tonal" color="accent" size="small" prepend-icon="mdi-radar" @click="showRssDetectModal = true">自动RSS订阅管理</v-btn>
-      <v-btn variant="tonal" size="small" prepend-icon="mdi-cog-outline" @click="showPriorityModal = true">洗版规则</v-btn>
-      <v-btn variant="tonal" size="small" prepend-icon="mdi-file-document-outline" @click="showTemplateModal = true">订阅预设管理</v-btn>
+      <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-radar" @click="showRssDetectModal = true">自动RSS订阅管理</v-btn>
+      <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-cog-outline" @click="showPriorityModal = true">洗版规则</v-btn>
+      <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-file-document-outline" @click="showTemplateModal = true">订阅预设管理</v-btn>
       <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddSub">添加新订阅</v-btn>
     </div>
 

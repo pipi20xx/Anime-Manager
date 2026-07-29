@@ -220,32 +220,43 @@ onUnmounted(() => {
   <!-- 卡片网格 -->
   <v-skeleton-loader v-if="browserLoading && browserData.length === 0" type="card@6" />
 
-  <v-row v-else-if="browserData.length > 0">
-    <v-col v-for="item in browserData" :key="item.tmdb_id + item.media_type" cols="6" sm="6" md="3" lg="3" xl="2">
-      <div class="dc-meta-card" @click="openEdit(item)">
-        <div class="dc-meta-poster">
-          <v-img v-if="item.poster_path" :src="getImg(item.poster_path)" cover style="width:100%;height:100%" />
-          <div v-else class="dc-meta-poster-ph">
-            <v-icon size="36" :color="item.media_type === 'movie' ? 'error' : 'primary'">
-              {{ item.media_type === 'movie' ? 'mdi-movie-open-outline' : 'mdi-television-classic' }}
-            </v-icon>
-          </div>
-          <div class="dc-meta-type-badge" :class="item.media_type">{{ item.media_type === 'movie' ? '电影' : '剧集' }}</div>
+  <div v-else-if="browserData.length > 0" class="media-card-grid">
+    <v-card
+      v-for="item in browserData"
+      :key="item.tmdb_id + item.media_type"
+      class="glass-card media-card cursor-pointer"
+      @click="openEdit(item)"
+    >
+      <div class="media-card__poster">
+        <v-img
+          v-if="item.poster_path"
+          :src="getImg(item.poster_path)"
+          cover
+          class="rounded-t-xl"
+        >
+          <template #placeholder>
+            <v-skeleton-loader type="image" />
+          </template>
+        </v-img>
+        <div v-else class="media-card__poster-placeholder">
+          <v-icon size="36" :color="item.media_type === 'movie' ? 'error' : 'primary'">
+            {{ item.media_type === 'movie' ? 'mdi-movie-open-outline' : 'mdi-television-classic' }}
+          </v-icon>
         </div>
-        <div class="dc-meta-info">
-          <div class="dc-meta-title" :title="item.title || item.name">{{ item.title || item.name || '-' }}</div>
-          <div class="dc-meta-sub">
-            <span class="dc-meta-year">{{ item.first_air_date?.slice(0,4) || item.year || '-' }}</span>
-            <span class="dc-meta-id">ID: {{ item.tmdb_id }}</span>
-          </div>
-          <div class="dc-meta-actions">
-            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-refresh" :loading="refreshSingleId === String(item.tmdb_id)" @click.stop="refreshSingle(item)">刷新</v-btn>
-            <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteMetadata(item)">删除</v-btn>
-          </div>
-        </div>
+        <span class="media-card__type" :class="item.media_type === 'movie' ? 'media-card__type--tmdb-movie' : 'media-card__type--tmdb-tv'">
+          {{ item.media_type === 'movie' ? '电影' : '剧集' }}
+        </span>
       </div>
-    </v-col>
-  </v-row>
+      <div class="media-card__info">
+        <div class="media-card__title" :title="item.title || item.name">{{ item.title || item.name || '-' }}</div>
+        <div class="media-card__year">{{ item.first_air_date?.slice(0, 4) || item.year || '-' }}</div>
+      </div>
+      <div class="dc-meta-actions">
+        <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-refresh" :loading="refreshSingleId === String(item.tmdb_id)" @click.stop="refreshSingle(item)">刷新</v-btn>
+        <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteMetadata(item)">删除</v-btn>
+      </div>
+    </v-card>
+  </div>
 
   <div v-else class="text-center pa-8">
     <v-icon size="64" color="primary" class="mb-4">mdi-database-off-outline</v-icon>
@@ -480,27 +491,23 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 元数据卡片 */
-.dc-meta-card {
-  cursor: pointer;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+/* 海报占位符 */
+.media-card__poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-on-surface), 0.06);
 }
-.dc-meta-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
-.dc-meta-poster { position: relative; width: 100%; aspect-ratio: 2/3; background: rgba(var(--v-theme-on-surface),0.06); overflow: hidden; }
-.dc-meta-poster-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.dc-meta-type-badge { position: absolute; top: 4px; left: 4px; font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 4px; color: #fff; backdrop-filter: blur(8px); }
-.dc-meta-type-badge.movie { background: rgba(198,40,40,0.85); }
-.dc-meta-type-badge.tv { background: rgba(21,101,192,0.85); }
-.dc-meta-info { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 2px; }
-.dc-meta-title { font-weight: 700; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dc-meta-sub { display: flex; justify-content: space-between; font-size: 10px; color: rgba(var(--v-theme-on-surface),0.5); }
-.dc-meta-year { color: rgb(var(--v-theme-primary)); font-weight: 600; }
-.dc-meta-id { font-family: monospace; }
-.dc-meta-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+/* 卡片底部操作按钮 */
+.dc-meta-actions {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px 8px;
+  justify-content: center;
+}
 
 /* 无限滚动哨兵 */
 .dc-sentinel { min-height: 1px; }

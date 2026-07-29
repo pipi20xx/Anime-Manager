@@ -66,8 +66,8 @@ function openDetail(item: any) {
     </template>
 
     <template v-else>
-      <!-- 日期导航条 -->
-      <div class="day-nav d-flex ga-1 mb-4 overflow-x-auto">
+      <!-- 日期导航条 — 双重吸顶：吸附在外层 explore tabs 下方 -->
+      <div class="day-nav d-flex ga-1 overflow-x-auto sticky-sub-tabs">
         <v-chip
           v-for="day in schedule"
           :key="day.date"
@@ -107,6 +107,12 @@ function openDetail(item: any) {
                 </v-img>
                 <span v-if="item.platform" class="media-card__type media-card__type--bgm">{{ item.platform }}</span>
                 <span v-if="item.rating" class="media-card__rating">⭐ {{ Number(item.rating).toFixed(1) }}</span>
+                <!-- 播出时间徽章 -->
+                <span v-if="item.broadcast_time === 'END'" class="media-card__broadcast media-card__broadcast--end">END</span>
+                <span v-else-if="item.broadcast_time" class="media-card__broadcast">
+                  <v-icon size="10" style="color: inherit">mdi-clock-outline</v-icon>
+                  {{ item.broadcast_time }}
+                </span>
               </div>
               <div class="media-card__info">
                 <div class="media-card__title">{{ item.title || item.name_cn || item.name }}</div>
