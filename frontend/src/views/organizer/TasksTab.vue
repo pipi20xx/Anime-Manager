@@ -7,7 +7,7 @@
  */
 import { ref, reactive } from 'vue'
 import { organizerApi } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useDragSort } from '@/composables'
 import TaskEditModal from './TaskEditModal.vue'
 
 defineOptions({ name: 'TasksTab' })
@@ -25,6 +25,17 @@ const emit = defineEmits<{
   'update:tasks': [tasks: any[]]
   save: []
 }>()
+
+// 拖拽排序（不可变模式：通过 getter 获取列表，回调返回新数组）
+const { dragIndex, dragOverIndex, onDragStart, onDragOver, onDragEnd } = useDragSort(
+  () => props.tasks,
+  {
+    onSort: (newList) => {
+      emit('update:tasks', newList!)
+      emit('save')
+    },
+  },
+)
 
 // --- 任务编辑弹窗 ---
 const showTaskModal = ref(false)
@@ -247,8 +258,17 @@ async function requestRunTask(task: any) {
     </v-row>
 
     <v-row v-else-if="tasks.length > 0">
-      <v-col v-for="(task, index) in tasks" :key="task.id" cols="12" sm="6" md="4">
-        <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEditTask(index)">
+      <v-col
+        v-for="(task, index) in tasks"
+        :key="task.id"
+        cols="12" sm="6" md="4"
+        draggable="true"
+        :class="{ 'drag-sorting': dragIndex === index, 'drag-over': dragOverIndex === index }"
+        @dragstart="onDragStart(index, $event)"
+        @dragover="onDragOver(index, $event)"
+        @dragend="onDragEnd"
+      >
+        <v-card class="glass-card manage-card cursor-pointer" :class="{ 'hover-lift': dragIndex === -1 }" @click="dragIndex === -1 && openEditTask(index)">
           <!-- 标题行 -->
           <div class="manage-card__header">
             <div class="manage-card__title">{{ task.name }}</div>

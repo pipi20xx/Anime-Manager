@@ -406,3 +406,41 @@
   line-height: 1.4;
 }
 
+/* ============================================================
+ * 29s. Liquid Glass 卡片边框覆盖
+ *     .glass-card 使用彩虹折射边框 (::before)，移除 Vuetify 默认实体边框
+ *     必须用 .v-card.glass-card (0,2,0) 覆盖 components.css 的
+ *     .v-theme--xxx .v-card (0,2,0)，此文件在 components.css 之后加载
+ * ============================================================ */
+.v-card.glass-card,
+.v-card.glass-panel {
+  border: none !important;
+  border-radius: var(--glass-radius) !important;
+}
+
+/* ── variant-outlined 也需要移除边框（glass-card 已有彩虹边框） ── */
+.v-theme--dark .v-card--variant-outlined.glass-card,
+.v-theme--light .v-card--variant-outlined.glass-card {
+  border: none !important;
+  border-radius: var(--glass-radius) !important;
+}
+
+/* ============================================================
+ * 29t. 流体形变 — 圆角随交互产生液态变形
+ *     hover 时圆角从 24px → 28px，配合 transition 形成液态流动感
+ *     用 .v-card.glass-card:hover (0,2,1) 覆盖 components.css 的
+ *     .v-theme--xxx .v-card (0,2,0)
+ * ============================================================ */
+.v-card.glass-card:hover {
+  --glass-radius: 28px;
+  border-radius: 28px !important;
+}
+
+.glass-card:hover::before {
+  border-radius: 28px;
+}
+
+.glass-card:hover::after {
+  border-radius: 28px 28px 0 0;
+}
+

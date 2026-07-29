@@ -140,7 +140,7 @@ defineExpose({ fetchFeeds })
               <span class="manage-card__info-value" :title="feed.url">{{ feed.url }}</span>
             </div>
             <div class="manage-card__tags">
-              <v-chip v-if="feed.for_subscription" size="x-small" variant="tonal" color="primary">追剧</v-chip>
+              <v-chip v-if="feed.for_subscription" size="x-small" variant="tonal" color="info">追剧</v-chip>
               <v-chip v-if="feed.for_rules" size="x-small" variant="tonal" color="info">规则</v-chip>
               <v-chip v-if="feed.anime_priority" size="x-small" variant="tonal" color="info">动漫优先</v-chip>
             </div>

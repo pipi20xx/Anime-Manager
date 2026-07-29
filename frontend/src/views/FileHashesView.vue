@@ -12,12 +12,13 @@
  */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { fileHashApi } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useClipboard } from '@/composables'
 
 defineOptions({ name: 'FileHashesView' })
 
-const { success, error: showError, warning } = useNotification()
+const { success, error: showError, warning, info: showInfo } = useNotification()
 const { confirm } = useConfirm()
+const { copy: copyToClipboard } = useClipboard()
 
 // --- 列表数据 ---
 const hashList = ref<any[]>([])
@@ -65,6 +66,326 @@ const calculateForm = ref({
 
 // --- 高级筛选 ---
 const showAdvancedFilter = ref(false)
+
+// ========== ED2K 模板渲染 ==========
+const ED2K_TEMPLATE_KEY_TV = 'file_hashes_ed2k_template_tv'
+const ED2K_TEMPLATE_KEY_MOVIE = 'file_hashes_ed2k_template_movie'
+
+const defaultEd2kTemplates = {
+  tv: '{original_filename}.{ext}',
+  movie: '{original_filename}.{ext}',
+}
+
+const ed2kTemplatePresets = {
+  tv: [
+    { label: '原始文件名', icon: 'mdi-file-document-outline', desc: '保持原文件名', template: '{original_filename}.{ext}' },
+    { label: '标题+季集+制作组', icon: 'mdi-view-list-outline', desc: '标题年份+季集+制作组', template: '{title} ({year}) - S{season_02}E{episode_02} - {team}' },
+    { label: '标题+季集', icon: 'mdi-format-list-bulleted', desc: '标题年份+季集', template: '{title} ({year}) - S{season_02}E{episode_02}' },
+  ],
+  movie: [
+    { label: '原始文件名', icon: 'mdi-file-document-outline', desc: '保持原文件名', template: '{original_filename}.{ext}' },
+    { label: '标题+年份+制作组', icon: 'mdi-view-list-outline', desc: '标题年份+制作组', template: '{title} ({year}) - {team}' },
+    { label: '标题+年份', icon: 'mdi-format-list-bulleted', desc: '标题年份', template: '{title} ({year})' },
+  ],
+}
+
+const ed2kVariableGroups = [
+  {
+    title: '识别信息',
+    vars: {
+      '{title}': '标题',
+      '{year}': '年份',
+      '{season}': '季号',
+      '{season_02}': '季号补零 (01)',
+      '{episode}': '集数',
+      '{episode_02}': '集数补零 (01)',
+      '{resolution}': '分辨率',
+      '{team}': '制作组 (别名 {group})',
+      '{source}': '介质来源',
+      '{video_encode}': '视频编码',
+      '{audio_encode}': '音频编码',
+      '{video_effect}': '视频特效',
+      '{subtitle}': '字幕',
+      '{platform}': '发布平台',
+      '{release_date}': '发布日期 (别名 {date})',
+      '{tmdb_id}': 'TMDB ID',
+      '{secondary_category}': '二级分类',
+      '{origin_country}': '原产地',
+    },
+  },
+  {
+    title: '文件信息',
+    vars: {
+      '{original_filename}': '原始文件名 (不含后缀, 别名 {name})',
+      '{ext}': '文件后缀 (如 mkv)',
+    },
+  },
+]
+
+const ed2kTemplates = ref({
+  tv: localStorage.getItem(ED2K_TEMPLATE_KEY_TV) || defaultEd2kTemplates.tv,
+  movie: localStorage.getItem(ED2K_TEMPLATE_KEY_MOVIE) || defaultEd2kTemplates.movie,
+})
+
+const showTemplateSettings = ref(false)
+const activeTemplateTab = ref<'tv' | 'movie'>('tv')
+const templateDraft = ref({ tv: '', movie: '' })
+
+function isMovieRecord(record: any): boolean {
+  const raw = (record.media_type || '').toLowerCase()
+  return raw === 'movie' || raw === '电影'
+}
+
+function getTemplateForRecord(record: any): string {
+  return isMovieRecord(record) ? ed2kTemplates.value.movie : ed2kTemplates.value.tv
+}
+
+function extractExt(filename: string): string {
+  const idx = filename.lastIndexOf('.')
+  if (idx < 0 || idx === filename.length - 1) return ''
+  return filename.slice(idx + 1)
+}
+
+function renderEd2kFilename(record: any, template: string): string {
+  const season02 = (record.season !== null && record.season !== undefined)
+    ? String(record.season).padStart(2, '0')
+    : ''
+  const episode02 = (() => {
+    const ep = record.episode
+    if (!ep) return ''
+    if (String(ep).includes('-')) return String(ep)
+    const n = Number(ep)
+    return Number.isNaN(n) ? String(ep) : String(n).padStart(2, '0')
+  })()
+
+  const ext = extractExt(record.original_filename || '')
+
+  const vars: Record<string, string> = {
+    '{title}': record.title || '',
+    '{year}': record.year || '',
+    '{season}': (record.season !== null && record.season !== undefined) ? String(record.season) : '',
+    '{season_02}': season02,
+    '{episode}': record.episode || '',
+    '{episode_02}': episode02,
+    '{resolution}': record.resolution || '',
+    '{team}': record.team || '',
+    '{group}': record.team || '',
+    '{source}': record.source || '',
+    '{video_encode}': record.video_encode || '',
+    '{audio_encode}': record.audio_encode || '',
+    '{video_effect}': record.video_effect || '',
+    '{subtitle}': record.subtitle || '',
+    '{platform}': record.platform || '',
+    '{release_date}': record.release_date || '',
+    '{date}': record.release_date || '',
+    '{tmdb_id}': record.tmdb_id || '',
+    '{secondary_category}': record.secondary_category || '',
+    '{origin_country}': record.origin_country || '',
+    '{ext}': ext,
+    '{original_filename}': (record.original_filename || '').replace(/\.[^.]+$/, ''),
+    '{name}': (record.original_filename || '').replace(/\.[^.]+$/, ''),
+  }
+
+  let result = template
+  for (const [key, val] of Object.entries(vars)) {
+    result = result.replaceAll(key, val)
+  }
+
+  result = result.replace(/\(\s*\)/g, '').replace(/\[\s*\]/g, '')
+  result = result.replace(/\s{2,}/g, ' ').trim()
+  result = result.replace(/^[-\s]+|[-\s]+$/g, '')
+
+  if (!template.includes('{ext}') && ext) {
+    result = `${result}.${ext}`
+  }
+
+  return result || record.original_filename || ''
+}
+
+function rebuildEd2kLink(ed2kLink: string, newFilename: string): string {
+  if (!ed2kLink) return ed2kLink
+  const parts = ed2kLink.split('|')
+  if (parts.length >= 5 && parts[0] === 'ed2k://' && parts[1] === 'file') {
+    parts[2] = newFilename
+    return parts.join('|')
+  }
+  return ed2kLink
+}
+
+function renderEd2kLink(record: any): string {
+  if (!record.ed2k_link) return ''
+  const newFilename = renderEd2kFilename(record, getTemplateForRecord(record))
+  return rebuildEd2kLink(record.ed2k_link, newFilename)
+}
+
+function copyEd2kWithTemplate(record: any) {
+  const link = renderEd2kLink(record)
+  if (!link) { warning('该记录没有 ED2K 链接'); return }
+  copyToClipboard(link, 'ED2K 链接已复制')
+}
+
+function openTemplateSettings() {
+  templateDraft.value = {
+    tv: ed2kTemplates.value.tv,
+    movie: ed2kTemplates.value.movie,
+  }
+  showTemplateSettings.value = true
+}
+
+function handleSaveTemplate() {
+  ed2kTemplates.value = {
+    tv: templateDraft.value.tv.trim() || defaultEd2kTemplates.tv,
+    movie: templateDraft.value.movie.trim() || defaultEd2kTemplates.movie,
+  }
+  localStorage.setItem(ED2K_TEMPLATE_KEY_TV, ed2kTemplates.value.tv)
+  localStorage.setItem(ED2K_TEMPLATE_KEY_MOVIE, ed2kTemplates.value.movie)
+  success('ED2K 命名模板已保存')
+  showTemplateSettings.value = false
+}
+
+function handleResetTemplate() {
+  templateDraft.value[activeTemplateTab.value] = defaultEd2kTemplates[activeTemplateTab.value]
+}
+
+function applyPreset(template: string) {
+  templateDraft.value[activeTemplateTab.value] = template
+}
+
+const previewRecord = computed(() => {
+  const wantMovie = activeTemplateTab.value === 'movie'
+  const matched = hashList.value.find((r: any) => isMovieRecord(r) === wantMovie && r.ed2k_link)
+  return matched || detailItem.value || hashList.value[0] || null
+})
+
+const previewFilename = computed(() => {
+  if (!previewRecord.value) return '（暂无数据可预览）'
+  return renderEd2kFilename(previewRecord.value, templateDraft.value[activeTemplateTab.value])
+})
+
+const previewEd2kLink = computed(() => {
+  if (!previewRecord.value || !previewRecord.value.ed2k_link) return '（暂无数据可预览）'
+  const fn = renderEd2kFilename(previewRecord.value, templateDraft.value[activeTemplateTab.value])
+  return rebuildEd2kLink(previewRecord.value.ed2k_link, fn)
+})
+
+// ========== 导出 / 复制全部 ==========
+const exporting = ref(false)
+
+function downloadText(content: string, filename: string) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function timestamp(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+}
+
+function filterDescription(): string {
+  const parts: string[] = []
+  if (searchQuery.value) parts.push(`关键词="${searchQuery.value}"`)
+  if (filterTmdbId.value) parts.push(`TMDB ID=${filterTmdbId.value}`)
+  if (filterMediaType.value) parts.push(`类型=${filterMediaType.value}`)
+  if (filterSeason.value !== undefined) parts.push(`季号=${filterSeason.value}`)
+  if (filterTeam.value) parts.push(`制作组=${filterTeam.value}`)
+  return parts.length ? parts.join(', ') : '无（全部记录）'
+}
+
+async function fetchAllFiltered(): Promise<any[]> {
+  const PAGE = 500
+  const all: any[] = []
+  let off = 0
+  const MAX = 100000
+  while (off < MAX) {
+    const data = await fileHashApi.getList({
+      q: searchQuery.value || undefined,
+      media_type: filterMediaType.value,
+      tmdb_id: filterTmdbId.value || undefined,
+      season: filterSeason.value,
+      team: filterTeam.value || undefined,
+      limit: PAGE,
+      offset: off,
+      sort_by: sortBy.value,
+      sort_order: sortOrder.value,
+    })
+    const res = data as any
+    const batch = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+    all.push(...batch)
+    off += batch.length
+    if (batch.length < PAGE || all.length >= (res?.total || 0)) break
+  }
+  return all
+}
+
+async function exportEd2kLinks() {
+  if (hashTotal.value === 0) { warning('当前没有可导出的数据'); return }
+  exporting.value = true
+  try {
+    const all = await fetchAllFiltered()
+    const lines = all.map(r => renderEd2kLink(r)).filter(Boolean)
+    const header = `# 文件哈希 ED2K 链接导出\n# 导出时间: ${new Date().toLocaleString()}\n# 筛选条件: ${filterDescription()}\n# 共 ${lines.length} 条 (剧集模板: ${ed2kTemplates.value.tv} | 电影模板: ${ed2kTemplates.value.movie})\n\n`
+    downloadText(header + lines.join('\n') + '\n', `ed2k_links_${timestamp()}.txt`)
+    success(`已导出 ${lines.length} 条 ED2K 链接`)
+  } catch (e) {
+    showError('导出失败，请重试')
+  } finally {
+    exporting.value = false
+  }
+}
+
+async function copyAllEd2kLinks() {
+  if (hashTotal.value === 0) { warning('当前没有可复制的数据'); return }
+  exporting.value = true
+  try {
+    const all = await fetchAllFiltered()
+    const lines = all.map(r => renderEd2kLink(r)).filter(Boolean)
+    if (lines.length === 0) { warning('没有有效的 ED2K 链接'); return }
+    await copyToClipboard(lines.join('\n'), `已复制 ${lines.length} 条 ED2K 链接`)
+  } catch (e) {
+    showError('复制失败，请尝试导出 txt')
+  } finally {
+    exporting.value = false
+  }
+}
+
+async function exportFullInfo() {
+  if (hashTotal.value === 0) { warning('当前没有可导出的数据'); return }
+  exporting.value = true
+  try {
+    const all = await fetchAllFiltered()
+    const header = `# 文件哈希记录完整导出\n# 导出时间: ${new Date().toLocaleString()}\n# 筛选条件: ${filterDescription()}\n# 共 ${all.length} 条\n\n`
+    const body = all.map((r, i) => {
+      const se = (r.season !== null && r.season !== undefined) ? `S${String(r.season).padStart(2, '0')}` : ''
+      const ep = r.episode ? `E${r.episode}` : ''
+      return [
+        `[${i + 1}] ${r.title || r.original_filename} ${r.year ? `(${r.year})` : ''} ${[se, ep].filter(Boolean).join(' ')}`.trim(),
+        `    原始文件名: ${r.original_filename}`,
+        `    大小: ${formatFileSize(r.file_size)}`,
+        `    类型: ${r.media_type || '-'}`,
+        r.resolution ? `    分辨率: ${r.resolution}` : null,
+        r.team ? `    制作组: ${r.team}` : null,
+        r.tmdb_id ? `    TMDB ID: ${r.tmdb_id}` : null,
+        `    渲染ED2K: ${renderEd2kLink(r)}`,
+        `    原始ED2K: ${r.ed2k_link}`,
+        '',
+      ].filter(Boolean).join('\n')
+    }).join('\n')
+    downloadText(header + body, `file_hashes_${timestamp()}.txt`)
+    success(`已导出 ${all.length} 条完整记录`)
+  } catch (e) {
+    showError('导出失败，请重试')
+  } finally {
+    exporting.value = false
+  }
+}
 
 const hasMore = computed(() => hashList.value.length < hashTotal.value)
 
@@ -137,16 +458,6 @@ async function fetchHashList(append = false) {
 function searchHashes() {
   offset.value = 0
   fetchHashList(false)
-}
-
-function filterByMediaType(type?: string) {
-  filterMediaType.value = type
-  searchHashes()
-}
-
-function toggleSortOrder() {
-  sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
-  searchHashes()
 }
 
 function loadMore() {
@@ -237,10 +548,12 @@ function formatDate(dateStr: string | undefined): string {
 
 // --- 重置筛选 ---
 function resetFilters() {
+  filterMediaType.value = undefined
   filterTmdbId.value = ''
   filterTeam.value = ''
   filterSeason.value = undefined
   sortBy.value = 'calculated_at'
+  sortOrder.value = 'desc'
   searchHashes()
 }
 
@@ -262,14 +575,25 @@ onUnmounted(() => {
         <h1 class="text-h5 font-weight-bold">文件哈希记录</h1>
         <div class="text-body-2 text-medium-emphasis mt-1">共 {{ hashTotal }} 条 · SHA1 与 ED2K 哈希管理</div>
       </div>
-      <div class="page-actions">
-        <v-btn variant="tonal" color="info" prepend-icon="mdi-plus" @click="openCalculateModal">计算哈希</v-btn>
+      <div class="page-actions d-flex ga-2">
+        <v-menu>
+          <template #activator="{ props: menuProps }">
+            <v-btn variant="tonal" color="info" prepend-icon="mdi-download-outline" :loading="exporting" v-bind="menuProps">导出</v-btn>
+          </template>
+          <v-list density="compact" min-width="200">
+            <v-list-item prepend-icon="mdi-link-variant" title="导出 ED2K 链接 (txt)" @click="exportEd2kLinks" />
+            <v-list-item prepend-icon="mdi-content-copy" title="复制全部 ED2K 链接" @click="copyAllEd2kLinks" />
+            <v-divider />
+            <v-list-item prepend-icon="mdi-file-document-outline" title="导出完整信息 (txt)" @click="exportFullInfo" />
+          </v-list>
+        </v-menu>
+        <v-btn variant="tonal" color="info" prepend-icon="mdi-cog-outline" @click="openTemplateSettings">高级设置</v-btn>
       </div>
     </div>
 
     <!-- 搜索与筛选 -->
     <div class="list-toolbar">
-      <div class="list-toolbar__filters">
+      <div class="list-toolbar__filters d-flex align-center">
         <v-text-field
           v-model="searchQuery"
           placeholder="搜索文件名、标题、哈希、路径..."
@@ -281,21 +605,9 @@ onUnmounted(() => {
           class="search-field"
           @click:clear="searchQuery = ''; searchHashes()"
         />
-        <v-btn-toggle v-model="filterMediaType" mandatory density="compact" variant="outlined" divided>
-          <v-btn size="small" :value="undefined" @click="filterByMediaType()">全部</v-btn>
-          <v-btn size="small" value="tv" @click="filterByMediaType('tv')">剧集</v-btn>
-          <v-btn size="small" value="movie" @click="filterByMediaType('movie')">电影</v-btn>
-        </v-btn-toggle>
         <v-btn
           variant="tonal"
-          size="small"
-          :prepend-icon="sortOrder === 'desc' ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
-          @click="toggleSortOrder"
-        >
-          {{ sortOrder === 'desc' ? '最新' : '最早' }}
-        </v-btn>
-        <v-btn
-          variant="tonal"
+          color="info"
           size="small"
           :prepend-icon="showAdvancedFilter ? 'mdi-filter-remove-outline' : 'mdi-filter-outline'"
           @click="showAdvancedFilter = !showAdvancedFilter"
@@ -311,6 +623,21 @@ onUnmounted(() => {
         <v-card class="glass-card pa-4">
           <v-row dense>
             <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filterMediaType"
+                label="媒体类型"
+                :items="[
+                  { title: '全部', value: undefined },
+                  { title: '剧集', value: 'tv' },
+                  { title: '电影', value: 'movie' },
+                ]"
+                density="compact"
+                variant="outlined"
+                hide-details
+                clearable
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
               <v-text-field v-model="filterTmdbId" label="TMDB ID" density="compact" variant="outlined" hide-details clearable />
             </v-col>
             <v-col cols="12" sm="6" md="3">
@@ -319,6 +646,8 @@ onUnmounted(() => {
             <v-col cols="12" sm="6" md="3">
               <v-text-field v-model="filterSeason" label="季号" type="number" density="compact" variant="outlined" hide-details clearable />
             </v-col>
+          </v-row>
+          <v-row dense class="mt-2">
             <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="sortBy"
@@ -328,6 +657,19 @@ onUnmounted(() => {
                   { title: '文件大小', value: 'file_size' },
                   { title: '文件名', value: 'original_filename' },
                   { title: '标题', value: 'title' },
+                ]"
+                density="compact"
+                variant="outlined"
+                hide-details
+              />
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="sortOrder"
+                label="排序方向"
+                :items="[
+                  { title: '降序 (最新优先)', value: 'desc' },
+                  { title: '升序 (最早优先)', value: 'asc' },
                 ]"
                 density="compact"
                 variant="outlined"
@@ -415,6 +757,7 @@ onUnmounted(() => {
                   <v-icon size="10" class="mr-1">mdi-link-variant</v-icon>
                   <span style="font-family: monospace;">ED2K: {{ truncateHash(item.ed2k) }}</span>
                 </v-chip>
+                <v-btn v-if="item.ed2k_link" size="x-small" variant="tonal" color="info" prepend-icon="mdi-content-copy" @click.stop="copyEd2kWithTemplate(item)" title="复制 ED2K 链接（按模板渲染）">复制ED2K</v-btn>
               </div>
 
               <!-- 源路径 -->
@@ -548,6 +891,142 @@ onUnmounted(() => {
         <v-card-actions class="dialog-actions">
           <v-spacer />
           <v-btn variant="tonal" @click="showDetailModal = false">关闭</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 高级设置弹窗：ED2K 链接命名模板 -->
+    <v-dialog v-model="showTemplateSettings" max-width="700" scrollable>
+      <v-card class="glass-card">
+        <v-card-title class="pa-4 d-flex align-center">
+          <v-icon start color="primary">mdi-cog-outline</v-icon>
+          ED2K 链接命名模板
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showTemplateSettings = false" />
+        </v-card-title>
+        <v-divider />
+
+        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto;">
+          <!-- 说明 -->
+          <div class="text-body-2 text-medium-emphasis mb-4 pa-3" style="background: rgba(var(--v-theme-on-surface), 0.03); border-radius: 8px; line-height: 1.6;">
+            复制 ED2K 链接时，会根据记录的媒体类型自动选择对应模板组合识别信息生成新的文件名，替换链接中的文件名段。
+            变量用 <code class="text-warning">{}</code> 包裹，好比重命名规则。不含 <code class="text-warning">{ext}</code> 时自动补后缀。
+          </div>
+
+          <!-- 剧集 / 电影 双模板切换 -->
+          <v-tabs v-model="activeTemplateTab" color="primary" class="mb-3">
+            <v-tab value="tv">剧集模板</v-tab>
+            <v-tab value="movie">电影模板</v-tab>
+          </v-tabs>
+
+          <v-window v-model="activeTemplateTab">
+            <!-- 剧集模板 -->
+            <v-window-item value="tv">
+              <!-- 快捷预设 -->
+              <div class="text-subtitle-2 font-weight-medium text-primary mb-2">快捷预设</div>
+              <div class="d-flex flex-wrap ga-2 mb-3">
+                <v-btn
+                  v-for="preset in ed2kTemplatePresets.tv"
+                  :key="preset.template"
+                  variant="tonal"
+                  color="info"
+                  size="small"
+                  :prepend-icon="preset.icon"
+                  :class="{ 'v-btn--active': templateDraft.tv === preset.template }"
+                  @click="applyPreset(preset.template)"
+                >
+                  {{ preset.label }}
+                </v-btn>
+              </div>
+              <v-textarea
+                v-model="templateDraft.tv"
+                label="剧集命名模板"
+                variant="outlined"
+                density="compact"
+                :rows="2"
+                auto-grow
+                placeholder="{title} ({year}) - S{season_02}E{episode_02} - {team}"
+                style="font-family: monospace;"
+              />
+            </v-window-item>
+
+            <!-- 电影模板 -->
+            <v-window-item value="movie">
+              <div class="text-subtitle-2 font-weight-medium text-primary mb-2">快捷预设</div>
+              <div class="d-flex flex-wrap ga-2 mb-3">
+                <v-btn
+                  v-for="preset in ed2kTemplatePresets.movie"
+                  :key="preset.template"
+                  variant="tonal"
+                  color="info"
+                  size="small"
+                  :prepend-icon="preset.icon"
+                  :class="{ 'v-btn--active': templateDraft.movie === preset.template }"
+                  @click="applyPreset(preset.template)"
+                >
+                  {{ preset.label }}
+                </v-btn>
+              </div>
+              <v-textarea
+                v-model="templateDraft.movie"
+                label="电影命名模板"
+                variant="outlined"
+                density="compact"
+                :rows="2"
+                auto-grow
+                placeholder="{title} ({year}) - {team}"
+                style="font-family: monospace;"
+              />
+            </v-window-item>
+          </v-window>
+
+          <!-- 恢复默认按钮 -->
+          <div class="mt-2 mb-3">
+            <v-btn variant="text" size="small" prepend-icon="mdi-refresh" @click="handleResetTemplate">恢复当前类型默认</v-btn>
+          </div>
+
+          <!-- 实时预览 -->
+          <div class="pa-3 mb-3" style="background: rgba(var(--v-theme-on-surface), 0.03); border-radius: 8px;">
+            <div class="d-flex align-center ga-2 mb-2">
+              <span class="text-subtitle-2 font-weight-medium text-primary">实时预览</span>
+              <v-chip size="x-small" color="primary" variant="flat">{{ activeTemplateTab === 'tv' ? '剧集' : '电影' }}</v-chip>
+            </div>
+            <div class="text-body-2 mb-1">
+              <span class="text-medium-emphasis">渲染文件名：</span>
+              <code style="font-family: monospace;">{{ previewFilename }}</code>
+            </div>
+            <div class="text-body-2" style="word-break: break-all;">
+              <span class="text-medium-emphasis">完整 ED2K：</span>
+              <code style="font-family: monospace; color: rgb(var(--v-theme-success));">{{ previewEd2kLink }}</code>
+            </div>
+          </div>
+
+          <!-- 变量手册 -->
+          <v-expansion-panels>
+            <v-expansion-panel>
+              <v-expansion-panel-title>可用变量手册</v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <div v-for="g in ed2kVariableGroups" :key="g.title" class="mb-3">
+                  <div class="text-subtitle-2 font-weight-bold text-primary mb-2 pb-1" style="border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);">{{ g.title }}</div>
+                  <v-row dense>
+                    <v-col v-for="(desc, v) in g.vars" :key="v" cols="12" sm="6">
+                      <div class="d-flex align-center ga-2">
+                        <code style="font-family: monospace; background: rgba(var(--v-theme-on-surface), 0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ v }}</code>
+                        <span class="text-caption text-medium-emphasis">{{ desc }}</span>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </div>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </v-card-text>
+
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="tonal" prepend-icon="mdi-close" @click="showTemplateSettings = false">取消</v-btn>
+          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveTemplate">保存模板</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

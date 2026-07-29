@@ -1189,4 +1189,30 @@
   gap: 10px;
 }
 
+/* ============================================================
+ * §36. 拖拽排序 — Drag Sort
+ *     适用于 .manage-card 网格布局中的卡片拖拽重排
+ *     使用方式：<v-col draggable="true" :class="{ 'drag-sorting': ..., 'drag-over': ... }">
+ * ============================================================ */
+
+/* 拖拽中的卡片半透明 */
+.drag-sorting {
+  opacity: 0.5;
+}
+
+/* 拖拽悬停目标的虚线边框高亮 */
+.drag-over {
+  position: relative;
+}
+
+.drag-over::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px dashed rgb(var(--v-theme-primary));
+  border-radius: 26px;
+  pointer-events: none;
+  z-index: 1;
+}
+
 

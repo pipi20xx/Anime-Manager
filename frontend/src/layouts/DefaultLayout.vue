@@ -22,20 +22,20 @@ const navGroups = [
     key: 'core',
     label: '核心功能',
     items: [
-      { title: '识别调试台', icon: 'mdi-head-cog-outline', to: '/' },
       { title: '番剧探索', icon: 'mdi-compass-outline', to: '/explore' },
       { title: '订阅管理', icon: 'mdi-rss', to: '/subscription' },
       { title: '整理管理', icon: 'mdi-folder-sync-outline', to: '/organizer' },
-      { title: '追剧日历', icon: 'mdi-calendar-month-outline', to: '/calendar' },
+      { title: '链接同步', icon: 'mdi-link-variant', to: '/strm' },
     ],
   },
   {
     key: 'tools',
     label: '工具',
     items: [
-      { title: 'Jackett 搜索', icon: 'mdi-magnify-scan', to: '/jackett' },
+      { title: '识别测试', icon: 'mdi-head-cog-outline', to: '/' },
+      { title: '追剧日历', icon: 'mdi-calendar-month-outline', to: '/calendar' },
+      { title: '资源搜索', icon: 'mdi-magnify-scan', to: '/jackett' },
       { title: '文件浏览', icon: 'mdi-file-tree-outline', to: '/files' },
-      { title: 'STRM 生成', icon: 'mdi-link-variant', to: '/strm' },
       { title: 'AI 实验室', icon: 'mdi-robot-outline', to: '/ai-lab' },
     ],
   },
@@ -43,7 +43,7 @@ const navGroups = [
     key: 'data',
     label: '数据中心',
     items: [
-      { title: '数据总览', icon: 'mdi-database-outline', to: '/data-center' },
+      { title: '数据中心', icon: 'mdi-database-outline', to: '/data-center' },
       { title: '任务中心', icon: 'mdi-clipboard-list-outline', to: '/task-history' },
       { title: '文件哈希', icon: 'mdi-fingerprint', to: '/file-hashes' },
     ],
@@ -260,3 +260,17 @@ onUnmounted(() => {
     </v-snackbar>
   </v-app>
 </template>
+
+<style scoped>
+/* 导航项 — 图标与文字收紧间距 + 整体居中 */
+:deep(.v-navigation-drawer .v-list-item) {
+  display: flex;
+  justify-content: center;
+}
+
+/* 缩小图标与文字之间的默认 spacer（Vuetify 默认 32px） */
+:deep(.v-navigation-drawer .v-list-item__spacer) {
+  width: 8px !important;
+  min-width: 8px !important;
+}
+</style>

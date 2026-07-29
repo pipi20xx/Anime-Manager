@@ -39,14 +39,14 @@
   position: absolute;
   inset: 0;
   border-radius: 24px;
-  padding: 1px;
+  padding: 2px;
   background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #a855f7, #ff6b6b);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 .liquid-glass-card::after {
@@ -59,7 +59,17 @@
   border-radius: 24px 24px 0 0;
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12), transparent);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
+}
+
+/* 亮色主题 — liquid-glass-card 彩虹边框增强可见度 */
+.v-theme--light .liquid-glass-card::before {
+  background: linear-gradient(135deg, #7c3aed, #06b6d4, #a855f7, #ec4899);
+  padding: 2px;
+}
+
+.v-theme--light .liquid-glass-card::after {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), transparent);
 }
 
 
@@ -75,33 +85,152 @@
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* 兼容旧 class 名 */
+/* ── Glass Card — 流动玻璃面板（彩虹折射边框 + 顶部高光 + 多层深度） ──
+ *   注意：background / backdrop-filter / border / border-radius / box-shadow
+ *   由 components.css 的 .v-theme--xxx .v-card (特异性 0,2,0) 提供。
+ *   此处只设置 CSS 变量、布局属性和伪元素，避免死代码。
+ *   border / border-radius 覆盖见 design-spec.css §29s
+ */
 .glass-card {
+  --glass-radius: 24px;
   position: relative;
-  background: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 24px !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
-  transition: all 0.5s ease-out !important;
   overflow: hidden;
 }
 
+/* 彩虹折射边框 — 棱镜光谱渐变 (mask 技术实现边框) */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glass-radius);
+  padding: 2px;
+  background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #a855f7, #ff6b6b);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  transition: border-radius 0.5s ease-out;
+}
+
+/* 顶部高光层 — 玻璃反射 (第三层深度) */
+.glass-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12), transparent);
+  pointer-events: none;
+  z-index: 1;
+  transition: border-radius 0.5s ease-out;
+}
+
+/* 亮色主题 — 彩虹边框增强可见度 */
+.v-theme--light .glass-card::before {
+  background: linear-gradient(135deg, #7c3aed, #06b6d4, #a855f7, #ec4899);
+  padding: 2px;
+}
+
+/* 亮色主题 — 顶部高光增强 (白底需要更强反射) */
+.v-theme--light .glass-card::after {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), transparent);
+}
+
+/* 小型列表卡片 — 圆角适配 */
+.glass-card.list-card {
+  --glass-radius: 12px;
+}
+
+/* ── Glass Panel — 轻量玻璃面板（彩虹折射边框 + 顶部高光） ──
+ *   同 .glass-card，实体属性由 components.css 提供
+ */
 .glass-panel {
+  --glass-radius: 20px;
   position: relative;
-  background: rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(30px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 20px !important;
-  transition: all 0.5s ease-out !important;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glass-radius);
+  padding: 2px;
+  background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #a855f7, #ff6b6b);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.v-theme--light .glass-panel::before {
+  background: linear-gradient(135deg, #7c3aed, #06b6d4, #a855f7, #ec4899);
+  padding: 2px;
+}
+
+.v-theme--light .glass-panel::after {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), transparent);
 }
 
 .glass-btn {
   transition: all 0.5s ease-out !important;
+}
+
+/* ============================================================
+ * 0b. Liquid Glass 文字效果
+ * ============================================================ */
+
+/* ── 霓虹描边文字 — text-stroke 配合青色发光 ── */
+.text-neon {
+  -webkit-text-stroke: 1px rgba(78, 205, 196, 0.5);
+  text-shadow:
+    0 0 8px rgba(78, 205, 196, 0.4),
+    0 0 16px rgba(78, 205, 196, 0.2);
+}
+
+.v-theme--light .text-neon {
+  -webkit-text-stroke: 1px rgba(124, 58, 237, 0.4);
+  text-shadow:
+    0 0 8px rgba(168, 85, 247, 0.3),
+    0 0 16px rgba(168, 85, 247, 0.15);
+}
+
+/* ── 渐变填充文字 — 紫色到品红的渐变填充 + 3D阴影 ── */
+.text-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #ff2d94 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(168, 85, 247, 0.3));
+}
+
+.v-theme--light .text-gradient {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 3px rgba(124, 58, 237, 0.2));
 }
 
 

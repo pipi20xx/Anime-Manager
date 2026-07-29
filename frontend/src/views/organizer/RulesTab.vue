@@ -6,7 +6,7 @@
  * 操作: 添加 / 编辑 / 复制 / 删除
  */
 import { ref, reactive } from 'vue'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useDragSort } from '@/composables'
 import RuleEditModal from './RuleEditModal.vue'
 
 defineOptions({ name: 'RulesTab' })
@@ -23,6 +23,17 @@ const emit = defineEmits<{
   'update:rules': [rules: any[]]
   save: []
 }>()
+
+// 拖拽排序（不可变模式：通过 getter 获取列表，回调返回新数组）
+const { dragIndex, dragOverIndex, onDragStart, onDragOver, onDragEnd } = useDragSort(
+  () => props.rules,
+  {
+    onSort: (newList) => {
+      emit('update:rules', newList!)
+      emit('save')
+    },
+  },
+)
 
 // --- 规则编辑弹窗 ---
 const showRuleModal = ref(false)
@@ -112,8 +123,17 @@ async function duplicateRule(index: number) {
     </v-row>
 
     <v-row v-else-if="rules.length > 0">
-      <v-col v-for="(rule, index) in rules" :key="rule.id" cols="12" sm="6" md="4">
-        <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEditRule(index)">
+      <v-col
+        v-for="(rule, index) in rules"
+        :key="rule.id"
+        cols="12" sm="6" md="4"
+        draggable="true"
+        :class="{ 'drag-sorting': dragIndex === index, 'drag-over': dragOverIndex === index }"
+        @dragstart="onDragStart(index, $event)"
+        @dragover="onDragOver(index, $event)"
+        @dragend="onDragEnd"
+      >
+        <v-card class="glass-card manage-card cursor-pointer" :class="{ 'hover-lift': dragIndex === -1 }" @click="dragIndex === -1 && openEditRule(index)">
           <!-- 标题行 -->
           <div class="manage-card__header">
             <div class="manage-card__title">{{ rule.name }}</div>

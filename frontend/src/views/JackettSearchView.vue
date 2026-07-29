@@ -7,10 +7,12 @@
 import { ref, onMounted, watch } from 'vue'
 import { clientsApi, api } from '@/api'
 import { useNotification } from '@/composables'
+import { useNavigationStore } from '@/stores'
 
 defineOptions({ name: 'JackettSearchView' })
 
 const { success, error: showError, info: showInfo } = useNotification()
+const navStore = useNavigationStore()
 
 const keyword = ref('')
 const loading = ref(false)
@@ -105,6 +107,13 @@ watch(selectedClientId, (v) => {
 onMounted(() => {
   fetchClients()
   fetchIndexers()
+  // 优先使用从详情页传递过来的搜索关键词（仅填入，不自动搜索）
+  if (navStore.searchKeyword) {
+    keyword.value = navStore.searchKeyword
+    navStore.searchKeyword = '' // 消费后清空，避免下次进入仍填充
+    return
+  }
+  // 恢复上次搜索状态
   const lastKeyword = localStorage.getItem('apm_jackett_last_keyword')
   if (lastKeyword) {
     keyword.value = lastKeyword

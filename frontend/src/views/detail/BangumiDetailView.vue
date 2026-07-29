@@ -145,7 +145,7 @@ async function handleMatchTmdb() {
 
 /** 搜资源 — 跳转 Jackett 搜索页 */
 function handleSearchResource() {
-  const keyword = detail.value?.original_title || detail.value?.title || ''
+  const keyword = detail.value?.title || detail.value?.original_title || ''
   if (keyword) navStore.triggerGlobalSearch(keyword)
 }
 
@@ -279,13 +279,6 @@ onMounted(() => {
                 @click="handleSearchResource"
               >
                 搜资源
-              </v-btn>
-              <v-btn
-                variant="tonal"
-                prepend-icon="mdi-open-in-new"
-                @click="openExternal"
-              >
-                在 Bangumi 中查看
               </v-btn>
             </div>
 

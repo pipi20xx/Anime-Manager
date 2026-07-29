@@ -11,7 +11,7 @@
 import { ref, reactive, onMounted, onActivated } from 'vue'
 import { dataCenterApi } from '@/api'
 import { userMappingApi } from '@/api/userMapping'
-import { useNotification, useConfirm, downloadJson, useMappingCache } from '@/composables'
+import { useNotification, useConfirm, downloadJson, useMappingCache, useDragSort } from '@/composables'
 
 const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
@@ -19,6 +19,13 @@ const { mappingCache, fetchMappingCache, translateIds } = useMappingCache()
 
 const rules = ref<any[]>([])
 const rulesLoading = ref(false)
+
+// 拖拽排序
+const { dragIndex, dragOverIndex, onDragStart, onDragOver, onDragEnd } = useDragSort(rules, {
+  onSort: async () => {
+    try { await dataCenterApi.saveRules(rules.value) } catch (e) { showError('排序保存失败') }
+  },
+})
 const showRuleEditModal = ref(false)
 const isNewRule = ref(false)
 const editingRuleIndex = ref(-1)
@@ -257,8 +264,17 @@ defineExpose({ fetchRules })
   <v-skeleton-loader v-if="rulesLoading" type="card@3" />
 
   <v-row v-else-if="rules.length > 0">
-    <v-col v-for="(rule, index) in rules" :key="rule.id || index" cols="12" sm="6" md="4">
-      <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEditRule(index)">
+    <v-col
+      v-for="(rule, index) in rules"
+      :key="rule.id || index"
+      cols="12" sm="6" md="4"
+      draggable="true"
+      :class="{ 'drag-sorting': dragIndex === index, 'drag-over': dragOverIndex === index }"
+      @dragstart="onDragStart(index, $event)"
+      @dragover="onDragOver(index, $event)"
+      @dragend="onDragEnd"
+    >
+      <v-card class="glass-card manage-card cursor-pointer" :class="{ 'hover-lift': dragIndex === -1 }" @click="dragIndex === -1 && openEditRule(index)">
         <!-- 标题行 -->
         <div class="manage-card__header">
           <div class="d-flex align-center ga-2 manage-card__title">

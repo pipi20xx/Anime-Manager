@@ -204,7 +204,7 @@ function handleSubscribe() {
 function handleSearch() {
   if (!detail.value) return
   navStore.triggerGlobalSearch(
-    detail.value.original_title || detail.value.original_name || detail.value.title || detail.value.name
+    detail.value.title || detail.value.name || detail.value.original_title || detail.value.original_name
   )
 }
 
@@ -342,12 +342,6 @@ onMounted(() => {
               </v-btn>
               <v-btn variant="tonal" prepend-icon="mdi-magnify" @click="handleSearch">
                 搜资源
-              </v-btn>
-              <v-btn variant="tonal" prepend-icon="mdi-open-in-new" @click="openExternal">
-                TMDB
-              </v-btn>
-              <v-btn v-if="detail.imdb_id" variant="tonal" prepend-icon="mdi-open-in-new" @click="openImdb(detail.imdb_id)">
-                IMDb
               </v-btn>
             </div>
 
