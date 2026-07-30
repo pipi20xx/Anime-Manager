@@ -496,17 +496,18 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   line-height: 1.6;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 .media-card__type--bgm {
-  color: #fff;
+  color: #4ecdc4;
 }
 .media-card__type--tmdb-movie {
-  color: #fff;
+  color: #ff6b6b;
 }
 .media-card__type--tmdb-tv {
-  color: #fff;
+  color: #4ecdc4;
 }
 
 /* ── 33d. 评分 (右上角) ── */
@@ -520,6 +521,7 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1.4;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   color: #ffd700;
@@ -554,6 +556,7 @@
   font-weight: 600;
   line-height: 1.5;
   letter-spacing: 0.3px;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   color: #4ecdc4;
@@ -562,6 +565,7 @@
   gap: 3px;
 }
 .media-card__broadcast--end {
+  background: rgba(239, 83, 80, 0.85);
   color: #fff;
 }
 

@@ -28,10 +28,10 @@ const levelColors: Record<string, string> = {
 }
 
 const filterOptions = [
-  { title: '全部', value: 'all' },
-  { title: 'INFO', value: 'INFO' },
-  { title: 'WARNING', value: 'WARNING' },
-  { title: 'ERROR', value: 'ERROR' },
+  { title: '全部', value: 'all', color: '#ffffff' },
+  { title: 'INFO', value: 'INFO', color: '#4ecdc4' },
+  { title: 'WARNING', value: 'WARNING', color: '#FFB74D' },
+  { title: 'ERROR', value: 'ERROR', color: '#EF5350' },
 ]
 
 const filteredLogs = computed(() => {
@@ -67,6 +67,17 @@ watch(() => filteredLogs.value.length, async () => {
 function clearLogs() {
   systemStore.clearLogs()
 }
+
+// 根据日志内容判断级别并返回颜色
+function getLogColor(entry: string): string {
+  const upper = entry.toUpperCase()
+  if (upper.includes('CRITICAL')) return levelColors.CRITICAL
+  if (upper.includes('ERROR')) return levelColors.ERROR
+  if (upper.includes('WARNING')) return levelColors.WARNING
+  if (upper.includes('SUCCESS')) return levelColors.SUCCESS
+  if (upper.includes('DEBUG')) return levelColors.DEBUG
+  return levelColors.INFO
+}
 </script>
 
 <template>
@@ -76,8 +87,14 @@ function clearLogs() {
       系统日志
       <v-spacer />
       <v-btn-toggle v-model="logFilter" density="compact" variant="tonal" rounded="lg" class="mr-2">
-        <v-btn v-for="opt in filterOptions" :key="opt.value" :value="opt.value" size="small">
-          {{ opt.title }}
+        <v-btn 
+          v-for="opt in filterOptions" 
+          :key="opt.value" 
+          :value="opt.value" 
+          size="small"
+          :style="logFilter === opt.value ? { color: opt.color } : {}"
+        >
+          <span :style="{ color: opt.color }">{{ opt.title }}</span>
         </v-btn>
       </v-btn-toggle>
       <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-delete-outline" @click="clearLogs">清空</v-btn>
@@ -88,6 +105,7 @@ function clearLogs() {
         v-for="(entry, i) in filteredLogs"
         :key="i"
         class="log-entry"
+        :style="{ color: getLogColor(entry) }"
       >
         <span class="log-entry__msg">{{ entry }}</span>
       </div>

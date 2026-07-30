@@ -123,7 +123,13 @@
   border-radius: 16px !important;
 }
 
+.v-theme--dark .v-btn-toggle .v-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
 .v-theme--dark .v-btn-toggle .v-btn--active {
+  background: rgba(168, 85, 247, 0.3) !important;
+  color: #a855f7 !important;
   box-shadow: 0 0 10px rgba(78, 205, 196, 0.15) !important;
 }
 

@@ -190,7 +190,6 @@ function getConditions(rule: any) {
                   <!-- 标题行 -->
                   <div class="manage-card__header">
                     <div class="manage-card__title">{{ profile.name }}</div>
-                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteProfile(profile)">删除</v-btn>
                   </div>
 
                   <!-- 信息区 -->
@@ -214,6 +213,12 @@ function getConditions(rule: any) {
                       <span v-if="profile.rules_config.length > 3" class="text-caption text-medium-emphasis">+{{ profile.rules_config.length - 3 }}</span>
                     </div>
                   </div>
+
+                  <!-- 操作区 -->
+                  <div class="manage-card__actions">
+                    <v-spacer />
+                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteProfile(profile)">删除</v-btn>
+                  </div>
                 </v-card>
               </v-col>
             </v-row>
@@ -235,7 +240,6 @@ function getConditions(rule: any) {
                   <!-- 标题行 -->
                   <div class="manage-card__header">
                     <div class="manage-card__title">{{ rule.name }}</div>
-                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteRule(rule)">删除</v-btn>
                   </div>
 
                   <!-- 信息区 -->
@@ -244,6 +248,12 @@ function getConditions(rule: any) {
                       <span class="manage-card__info-label">{{ cond.label }}</span>
                       <span class="manage-card__info-value" :class="{ 'text-medium-emphasis font-italic': cond.empty }">{{ cond.value }}</span>
                     </div>
+                  </div>
+
+                  <!-- 操作区 -->
+                  <div class="manage-card__actions">
+                    <v-spacer />
+                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteRule(rule)">删除</v-btn>
                   </div>
                 </v-card>
               </v-col>

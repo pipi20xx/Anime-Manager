@@ -654,10 +654,11 @@ onMounted(() => {
                 size="small"
                 variant="tonal"
                 color="primary"
+                prepend-icon="mdi-head-cog-outline"
                 :loading="recognizingPath === item.path"
                 @click.stop="recognizeFile(item)"
               >
-                单文件识别
+                识别
               </v-btn>
               <v-icon v-else color="medium-emphasis">mdi-chevron-right</v-icon>
             </template>

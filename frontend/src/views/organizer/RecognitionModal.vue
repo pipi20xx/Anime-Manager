@@ -244,20 +244,22 @@ watch(() => props.modelValue, (newVal) => {
             </v-row>
 
             <!-- TMDB 快捷搜索 -->
-            <div class="d-flex ga-2 mb-2">
-              <v-text-field
-                v-model="testSearch.keyword"
-                placeholder="快捷搜索剧名找 ID..."
-                density="compact"
-                hide-details
-                variant="outlined"
-                prepend-inner-icon="mdi-magnify"
-                @keydown.enter="searchTmdbForTest"
-              />
-              <v-btn color="primary" variant="tonal" :loading="testSearch.loading" @click="searchTmdbForTest" size="small" style="align-self: center">
-                搜索
-              </v-btn>
-            </div>
+            <v-text-field
+              v-model="testSearch.keyword"
+              placeholder="快捷搜索剧名找 ID..."
+              density="compact"
+              hide-details
+              variant="outlined"
+              prepend-inner-icon="mdi-magnify"
+              @keydown.enter="searchTmdbForTest"
+              class="mb-2"
+            >
+              <template #append-inner>
+                <v-btn color="primary" variant="flat" size="small" :loading="testSearch.loading" @click="searchTmdbForTest">
+                  搜索
+                </v-btn>
+              </template>
+            </v-text-field>
 
             <!-- 搜索结果 -->
             <div v-if="testSearch.results.length > 0" class="search-results-list">
@@ -278,7 +280,7 @@ watch(() => props.modelValue, (newVal) => {
             </div>
 
             <!-- 开始识别按钮 -->
-            <v-btn color="primary" variant="flat" block size="small" class="mt-3" :loading="loading" @click="handleRecognize">
+            <v-btn color="primary" variant="flat" block size="small" class="mt-3" :loading="loading" prepend-icon="mdi-play-circle-outline" @click="handleRecognize">
               开始识别
             </v-btn>
           </div>
@@ -343,12 +345,12 @@ watch(() => props.modelValue, (newVal) => {
 
                 <!-- 文本信息 -->
                 <div class="text-rows">
-                  <div class="text-row"><span class="text-label">原产地:</span><span class="text-value">{{ data.final_result?.origin_country || '-' }}</span></div>
-                  <div class="text-row"><span class="text-label">字幕语言:</span><span class="text-value">{{ data.final_result?.subtitle || '无' }}</span></div>
-                  <div class="text-row"><span class="text-label">制作组:</span><span class="text-value team-value">{{ data.final_result?.team || '未知' }}</span></div>
-                  <div class="text-row"><span class="text-label">发布平台:</span><span class="text-value">{{ data.final_result?.platform || '-' }}</span></div>
-                  <div class="text-row"><span class="text-label">视频特效:</span><span class="text-value">{{ data.final_result?.video_effect || '-' }}</span></div>
-                  <div class="text-row"><span class="text-label">处理后名:</span><span class="text-value mono-value">{{ data.final_result?.processed_name }}</span></div>
+                  <div class="text-row"><span class="text-label">原产地</span><span class="text-value">{{ data.final_result?.origin_country || '-' }}</span></div>
+                  <div class="text-row"><span class="text-label">字幕语言</span><span class="text-value">{{ data.final_result?.subtitle || '无' }}</span></div>
+                  <div class="text-row"><span class="text-label">制作组</span><span class="text-value team-value">{{ data.final_result?.team || '未知' }}</span></div>
+                  <div class="text-row"><span class="text-label">发布平台</span><span class="text-value">{{ data.final_result?.platform || '-' }}</span></div>
+                  <div class="text-row"><span class="text-label">视频特效</span><span class="text-value">{{ data.final_result?.video_effect || '-' }}</span></div>
+                  <div class="text-row"><span class="text-label">处理后名</span><span class="text-value mono-value">{{ data.final_result?.processed_name }}</span></div>
                 </div>
               </div>
             </div>
@@ -402,7 +404,7 @@ watch(() => props.modelValue, (newVal) => {
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="emit('update:modelValue', false)">取消</v-btn>
-        <v-btn v-if="data" color="info" variant="tonal" :loading="isHashing" prepend-icon="mdi-hash" @click="calculateHash">
+        <v-btn v-if="data" color="info" variant="tonal" :loading="isHashing" prepend-icon="mdi-calculator" @click="calculateHash">
           计算哈希
         </v-btn>
         <v-btn v-if="data" color="primary" variant="flat" :loading="isRenaming" prepend-icon="mdi-rename-box" @click="emit('rename')">
@@ -477,10 +479,11 @@ watch(() => props.modelValue, (newVal) => {
 .info-label { font-size: 10px; color: rgba(var(--v-theme-on-surface), 0.4); text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
 .info-value { font-weight: bold; font-size: 14px; color: rgb(var(--v-theme-primary)); }
 
-.text-rows { font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
-.text-row { display: flex; gap: 12px; }
-.text-label { color: rgba(var(--v-theme-on-surface), 0.4); width: 70px; flex-shrink: 0; text-align: right; }
-.text-value { color: rgba(var(--v-theme-on-surface), 0.6); word-break: break-all; }
+.text-rows { font-size: 12px; display: flex; flex-direction: column; gap: 4px; font-family: monospace; }
+.text-row { display: flex; gap: 12px; align-items: baseline; padding: 2px 0; border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04); }
+.text-row:last-child { border-bottom: none; }
+.text-label { color: rgba(var(--v-theme-on-surface), 0.4); width: 70px; flex-shrink: 0; text-align: right; font-size: 11px; text-transform: uppercase; }
+.text-value { color: rgba(var(--v-theme-on-surface), 0.75); word-break: break-all; }
 .team-value { color: rgb(var(--v-theme-success)); font-weight: bold; }
 .mono-value { font-family: monospace; color: rgb(var(--v-theme-warning)); }
 

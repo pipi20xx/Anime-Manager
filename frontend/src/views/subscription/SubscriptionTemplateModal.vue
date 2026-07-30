@@ -161,6 +161,7 @@ async function setDefault(row: any) {
                   </div>
                 </v-card-text>
                 <v-card-actions class="pa-3 pt-0">
+                  <v-spacer />
                   <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(row)">编辑</v-btn>
                   <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTemplate(row)">删除</v-btn>
                 </v-card-actions>

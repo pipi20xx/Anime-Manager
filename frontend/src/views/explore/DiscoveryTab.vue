@@ -50,6 +50,7 @@ const filters = reactive({
 // --- 数据 ---
 const items = ref<any[]>([])
 const loading = ref(false)
+const error = ref<string | null>(null)
 const hasMore = ref(true)
 const subscriptions = ref<any[]>([])
 
@@ -88,11 +89,14 @@ function isSubscribed(item: any) {
   return subscriptions.value.some((s: any) => String(s.tmdb_id) === String(item.id))
 }
 
-async function fetchData(mode: 'replace' | 'append' = 'replace') {
+async function fetchData(mode: 'replace' | 'append' = 'replace', retryCount = 0) {
   if (loading.value) return
   if (mode === 'append' && !hasMore.value) return
 
   loading.value = true
+  if (mode === 'replace') error.value = null
+  const MAX_RETRIES = 3
+
   try {
     const params: Record<string, any> = {
       source: filters.source,
@@ -122,8 +126,17 @@ async function fetchData(mode: 'replace' | 'append' = 'replace') {
 
     const totalPages = Math.min(data?.total_pages || 0, 500)
     hasMore.value = filters.page < totalPages
-  } catch (e) {
-    showError('加载探索数据失败')
+  } catch (err: any) {
+    const errMsg = String(err?.message || err)
+    // 网络错误时自动重试（仅 replace 模式）
+    if (mode === 'replace' && retryCount < MAX_RETRIES - 1 &&
+        (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('timeout'))) {
+      console.log(`[Discovery] 请求失败，${retryCount + 1}/${MAX_RETRIES} 秒后重试...`)
+      await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
+      return fetchData(mode, retryCount + 1)
+    }
+    error.value = err?.message || '加载探索数据失败，请检查网络连接'
+    console.error('[Discovery] 加载失败:', err)
   } finally {
     loading.value = false
   }
@@ -300,6 +313,16 @@ onUnmounted(() => {
         <v-skeleton-loader v-for="i in 12" :key="i" type="card" />
       </div>
     </template>
+
+    <!-- 错误状态 -->
+    <div v-else-if="error && items.length === 0" class="text-center pa-12">
+      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
+      <div class="text-h6 mb-2">加载失败</div>
+      <div class="text-body-2 text-medium-emphasis mb-4">{{ error }}</div>
+      <v-btn color="primary" prepend-icon="mdi-refresh" @click="resetAndReload()">
+        重新加载
+      </v-btn>
+    </div>
 
     <!-- 卡片网格 -->
     <template v-else>

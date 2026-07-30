@@ -250,6 +250,7 @@ function formatDateTime(dateStr: string | null): string {
                     </div>
                   </v-card-text>
                   <v-card-actions class="pa-3 pt-0">
+                    <v-spacer />
                     <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="runTask(task.id)">执行</v-btn>
                     <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(task)">编辑</v-btn>
                     <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTask(task.id)">删除</v-btn>
@@ -276,8 +277,17 @@ function formatDateTime(dateStr: string | null): string {
                 </template>
               </v-text-field>
             </v-col>
-            <v-col cols="6"><v-text-field v-model="form.name" label="任务名称" variant="outlined" density="compact" placeholder="留空自动生成" /></v-col>
-            <v-col cols="6" class="d-flex align-center"><v-switch v-model="form.enabled" label="启用状态" color="primary" density="compact" hide-details /></v-col>
+            <v-col cols="12" sm="6"><v-text-field v-model="form.name" label="任务名称" variant="outlined" density="compact" placeholder="留空自动生成" /></v-col>
+          </v-row>
+
+          <!-- 启用状态开关单独一行 -->
+          <v-row dense class="mt-1">
+            <v-col cols="12">
+              <div class="d-flex align-center ga-3 py-1">
+                <v-switch v-model="form.enabled" label="启用状态" color="primary" density="compact" hide-details />
+                <span class="text-caption text-medium-emphasis">{{ form.enabled ? '任务将按计划自动执行' : '任务已暂停，不会自动执行' }}</span>
+              </div>
+            </v-col>
           </v-row>
 
           <v-divider class="my-3" />

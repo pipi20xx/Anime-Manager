@@ -27,6 +27,7 @@ const navStore = useNavigationStore()
 
 const detail = ref<any>(null)
 const loading = ref(false)
+const error = ref<string | null>(null)
 const recommendations = ref<any[]>([])
 const subscriptions = ref<any[]>([])
 const embyStatus = ref<any>(null)
@@ -105,17 +106,20 @@ function getEpisodeEmbyInfo(seasonNumber: number, episodeNumber: number): any {
   return embyData?.[episodeNumber] || null
 }
 
-async function fetchDetail() {
+async function fetchDetail(retryCount = 0) {
   const type = (route.params.type as string) || 'tv'
   const id = route.params.id as string
   if (!id) return
 
   loading.value = true
+  error.value = null
   // 重置状态
   expandedSeasons.value = new Set()
   seasonEpisodes.value = new Map()
   seasonEmbyInfo.value = new Map()
   embyStatus.value = null
+
+  const MAX_RETRIES = 3
 
   try {
     const [detailData, recData, subData] = await Promise.allSettled([
@@ -123,6 +127,19 @@ async function fetchDetail() {
       tmdbApi.getRecommendations(type, id),
       subscriptionApi.getSubscriptions(),
     ])
+
+    // 检查详情请求是否失败（网络错误）
+    if (detailData.status === 'rejected') {
+      const errMsg = String(detailData.reason)
+      // 网络错误才重试
+      if (retryCount < MAX_RETRIES - 1 && 
+          (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('timeout'))) {
+        console.log(`[TMDB Detail] 请求失败，${retryCount + 1}/${MAX_RETRIES} 秒后重试...`)
+        await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
+        return fetchDetail(retryCount + 1)
+      }
+      throw detailData.reason
+    }
 
     if (detailData.status === 'fulfilled') {
       detail.value = detailData.value
@@ -140,14 +157,17 @@ async function fetchDetail() {
     if (subData.status === 'fulfilled') {
       subscriptions.value = subData.value || []
     }
-  } catch {
-    showError('加载详情失败')
+  } catch (err: any) {
+    error.value = err?.message || '加载详情失败，请检查网络连接'
+    console.error('[TMDB Detail] 加载失败:', err)
   } finally {
     loading.value = false
   }
 }
 
-async function toggleSeason(seasonNumber: number) {
+const seasonErrors = ref<Map<string, string>>(new Map())
+
+async function toggleSeason(seasonNumber: number, retryCount = 0) {
   const key = String(seasonNumber)
   if (expandedSeasons.value.has(seasonNumber)) {
     expandedSeasons.value.delete(seasonNumber)
@@ -155,15 +175,31 @@ async function toggleSeason(seasonNumber: number) {
   }
 
   expandedSeasons.value.add(seasonNumber)
+  seasonErrors.value.delete(key)
 
   if (!seasonEpisodes.value.has(key) && detail.value?.id) {
     loadingSeasons.value.add(key)
+    const MAX_RETRIES = 3
+
     try {
       // 同时拉取 TMDB 集信息 + Emby 入库信息
       const [seasonData, embyData] = await Promise.allSettled([
         tmdbApi.getSeason(detail.value.id, seasonNumber),
         tmdbApi.getSeasonEmby(detail.value.id, seasonNumber),
       ])
+
+      // 检查季度数据请求是否失败
+      if (seasonData.status === 'rejected') {
+        const errMsg = String(seasonData.reason)
+        if (retryCount < MAX_RETRIES - 1 &&
+            (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('timeout'))) {
+          console.log(`[Season ${seasonNumber}] 请求失败，${retryCount + 1}/${MAX_RETRIES} 秒后重试...`)
+          await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
+          expandedSeasons.value.delete(seasonNumber)
+          return toggleSeason(seasonNumber, retryCount + 1)
+        }
+        throw seasonData.reason
+      }
 
       if (seasonData.status === 'fulfilled') {
         seasonEpisodes.value.set(key, seasonData.value)
@@ -172,12 +208,18 @@ async function toggleSeason(seasonNumber: number) {
       if (embyData.status === 'fulfilled') {
         seasonEmbyInfo.value.set(key, embyData.value?.episodes || {})
       }
-    } catch {
+    } catch (err: any) {
+      console.error(`[Season ${seasonNumber}] 加载失败:`, err)
+      seasonErrors.value.set(key, err?.message || '加载季度信息失败')
       seasonEpisodes.value.set(key, { episodes: [] })
     } finally {
       loadingSeasons.value.delete(key)
     }
   }
+}
+
+function getSeasonError(seasonNumber: number): string | undefined {
+  return seasonErrors.value.get(String(seasonNumber))
 }
 
 function getSeasonEpisodes(seasonNumber: number): any[] {
@@ -415,6 +457,14 @@ onMounted(() => {
                 <div v-if="loadingSeasons.has(String(season.season_number))" class="pa-4 text-center">
                   <v-progress-circular indeterminate size="24" color="primary" />
                 </div>
+                <!-- 季度加载错误 -->
+                <div v-else-if="getSeasonError(season.season_number)" class="pa-4 text-center">
+                  <v-icon size="32" color="error" class="mb-2">mdi-alert-circle-outline</v-icon>
+                  <div class="text-body-2 text-medium-emphasis mb-2">{{ getSeasonError(season.season_number) }}</div>
+                  <v-btn size="small" color="primary" variant="tonal" prepend-icon="mdi-refresh" @click.stop="toggleSeason(season.season_number)">
+                    重新加载
+                  </v-btn>
+                </div>
                 <template v-else>
                   <!-- 季度简介 -->
                   <div v-if="getSeasonInfo(season.season_number)?.overview" class="ep-season-overview mb-3">
@@ -513,10 +563,20 @@ onMounted(() => {
       </v-container>
     </template>
 
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="text-center pa-8">
+      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
+      <div class="text-h6 mb-2">加载失败</div>
+      <div class="text-body-2 text-medium-emphasis mb-4">{{ error }}</div>
+      <v-btn color="primary" prepend-icon="mdi-refresh" @click="fetchDetail()">
+        重新加载
+      </v-btn>
+    </div>
+
     <!-- 空状态 -->
     <div v-else class="text-center pa-8">
-      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
-      <div class="text-h6">加载失败</div>
+      <v-icon size="64" color="grey" class="mb-4">mdi-movie-off</v-icon>
+      <div class="text-h6">暂无数据</div>
     </div>
 
   </div>

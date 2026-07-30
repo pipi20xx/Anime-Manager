@@ -23,6 +23,7 @@ const navStore = useNavigationStore()
 const person = ref<any>(null)
 const credits = ref<any>(null)
 const loading = ref(false)
+const error = ref<string | null>(null)
 const activeCreditsTab = ref('cast')
 
 // 使用统一的 getImg 函数（自动附加 token 和处理代理路径）
@@ -31,16 +32,31 @@ function getPosterUrl(path: string): string {
   return getImg(path)
 }
 
-async function fetchPerson() {
+async function fetchPerson(retryCount = 0) {
   const id = route.params.id as string
   if (!id) return
 
   loading.value = true
+  error.value = null
+  const MAX_RETRIES = 3
+
   try {
     const [personData, creditsData] = await Promise.allSettled([
       tmdbApi.getPerson(id),
       tmdbApi.getPersonCredits(id),
     ])
+
+    // 检查人物详情请求是否失败
+    if (personData.status === 'rejected') {
+      const errMsg = String(personData.reason)
+      if (retryCount < MAX_RETRIES - 1 &&
+          (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('timeout'))) {
+        console.log(`[Person Detail] 请求失败，${retryCount + 1}/${MAX_RETRIES} 秒后重试...`)
+        await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)))
+        return fetchPerson(retryCount + 1)
+      }
+      throw personData.reason
+    }
 
     if (personData.status === 'fulfilled') {
       person.value = personData.value
@@ -48,8 +64,9 @@ async function fetchPerson() {
     if (creditsData.status === 'fulfilled') {
       credits.value = creditsData.value
     }
-  } catch (e) {
-    showError('加载人物详情失败')
+  } catch (err: any) {
+    error.value = err?.message || '加载人物详情失败，请检查网络连接'
+    console.error('[Person Detail] 加载失败:', err)
   } finally {
     loading.value = false
   }
@@ -262,10 +279,20 @@ onMounted(() => {
       </v-container>
     </template>
 
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="text-center pa-8">
+      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
+      <div class="text-h6 mb-2">加载失败</div>
+      <div class="text-body-2 text-medium-emphasis mb-4">{{ error }}</div>
+      <v-btn color="primary" prepend-icon="mdi-refresh" @click="fetchPerson()">
+        重新加载
+      </v-btn>
+    </div>
+
     <!-- 空状态 -->
     <div v-else class="text-center pa-8">
-      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
-      <div class="text-h6">加载失败</div>
+      <v-icon size="64" color="grey" class="mb-4">mdi-account-off</v-icon>
+      <div class="text-h6">暂无数据</div>
     </div>
   </div>
 </template>
