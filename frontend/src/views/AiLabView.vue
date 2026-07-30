@@ -255,24 +255,26 @@ onMounted(() => {
       <div class="text-body-2 text-medium-emphasis mt-1">AI 语义解析与智能助手</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
-      <v-tab value="chat">
-        <v-icon start size="18">mdi-chat-outline</v-icon>
-        AI 对话
-      </v-tab>
-      <v-tab value="config">
-        <v-icon start size="18">mdi-cog-outline</v-icon>
-        助手配置
-      </v-tab>
-      <v-tab value="skills">
-        <v-icon start size="18">mdi-lightning-bolt-outline</v-icon>
-        技能管理
-      </v-tab>
-      <v-tab value="telegram">
-        <v-icon start size="18">mdi-telegram</v-icon>
-        Telegram Bot
-      </v-tab>
-    </v-tabs>
+    <div class="sticky-tabs">
+      <v-tabs v-model="activeTab" color="primary">
+        <v-tab value="chat">
+          <v-icon start size="18">mdi-chat-outline</v-icon>
+          AI 对话
+        </v-tab>
+        <v-tab value="config">
+          <v-icon start size="18">mdi-cog-outline</v-icon>
+          助手配置
+        </v-tab>
+        <v-tab value="skills">
+          <v-icon start size="18">mdi-lightning-bolt-outline</v-icon>
+          技能管理
+        </v-tab>
+        <v-tab value="telegram">
+          <v-icon start size="18">mdi-telegram</v-icon>
+          Telegram Bot
+        </v-tab>
+      </v-tabs>
+    </div>
 
     <v-window v-model="activeTab">
       <!-- AI 对话 -->

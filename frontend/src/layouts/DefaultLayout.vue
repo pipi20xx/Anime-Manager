@@ -178,7 +178,7 @@ onUnmounted(() => {
     </v-navigation-drawer>
 
     <!-- 顶栏 -->
-    <v-app-bar elevation="0" density="comfortable" color="transparent">
+    <v-app-bar elevation="0" density="comfortable">
       <v-app-bar-nav-icon v-if="isMobile" @click="drawer = !drawer" />
       <v-app-bar-title class="font-weight-bold text-body-1">{{ currentTitle }}</v-app-bar-title>
 

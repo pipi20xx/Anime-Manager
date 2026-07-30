@@ -43,8 +43,12 @@
 /* ── v-switch 对齐修复 ── */
 /* v-switch 的 .v-input__control 缺少 margin-inline（对比 v-slider 有 8px），
    导致 switch 开关和 label 比上方 v-select / v-slider 偏左，超出卡片内容区 */
-.v-card-text .v-switch .v-input__control {
+.v-switch .v-input__control {
   margin-inline: 8px;
+}
+/* density="compact" 时 v-switch 上方多余空白，通过负 margin 收紧 */
+.v-switch.v-input--density-compact {
+  margin-top: -2px;
 }
 
 .v-card-title + .v-card-text {

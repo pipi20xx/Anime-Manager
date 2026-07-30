@@ -303,11 +303,11 @@ onMounted(() => {
             placeholder="例如: /NVME/docker2/clouddrive2-19798/medata/CloudDrive"
           />
 
-          <div v-if="form.type === 'cd2'" class="d-flex align-center ga-3 mb-3">
+          <div v-if="form.type === 'cd2'" class="switch-row-lg">
             <v-switch v-model="form.monitor_enabled" density="compact" hide-details color="primary" />
             <div>
-              <div class="text-body-2 font-weight-medium">后台传输监控</div>
-              <div class="text-caption text-medium-emphasis">开启后监控 CD2 传输任务完成状态，自动触发 STRM 文件生成</div>
+              <div class="switch-label">后台传输监控</div>
+              <div class="switch-desc">开启后监控 CD2 传输任务完成状态，自动触发 STRM 文件生成</div>
             </div>
           </div>
 
@@ -324,11 +324,11 @@ onMounted(() => {
             max="60"
           />
 
-          <div class="d-flex align-center ga-3 mb-3">
+          <div class="switch-row-lg">
             <v-switch v-model="form.is_default" density="compact" hide-details color="primary" />
             <div>
-              <div class="text-body-2 font-weight-medium">设为默认客户端</div>
-              <div class="text-caption text-medium-emphasis">开启后作为新增下载任务的默认下载器</div>
+              <div class="switch-label">设为默认客户端</div>
+              <div class="switch-desc">开启后作为新增下载任务的默认下载器</div>
             </div>
           </div>
 

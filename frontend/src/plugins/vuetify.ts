@@ -13,13 +13,13 @@ import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
 import 'vuetify/styles'
 
-// 亮色主题
+// 亮色主题 — 极简实色
 const lightTheme = {
   dark: false,
   colors: {
-    background: '#F0F0F5',
-    surface: '#FFFFFF',
-    'surface-variant': '#F5F5FA',
+    background: '#F5F5FA',  // 页面背景
+    surface: '#FFFFFF',      // 卡片/面板背景
+    'surface-variant': '#F8F8FC',
     'on-surface-variant': '#64748B',
     primary: '#a855f7',
     'primary-darken-1': '#9333EA',
@@ -27,19 +27,19 @@ const lightTheme = {
     'secondary-darken-1': '#4b5563',
     accent: '#4ecdc4',
     error: '#ef4444',
-    info: '#1565C0',   /* 深靛蓝 — #4ecdc4 青绿在白底上对比度不足 */
-    success: '#1B8134',  /* 深森林绿 — #10b981 在白底 tonal 下太浅 */
-    warning: '#E65100',  /* 深橙色 — #ff2d92 品红不符合 warning 语义 */
+    info: '#1565C0',
+    success: '#1B8134',
+    warning: '#E65100',
   },
 }
 
-// 暗色主题 — Liquid Glass 流动玻璃色系
+// 暗色主题 — 极简实色（background 与 surface 统一，消除色差）
 const darkTheme = {
   dark: true,
   colors: {
-    background: '#0a0a1a',
-    surface: '#0f0f2a',
-    'surface-variant': '#1a1a3e',
+    background: '#1a1a3e',  // 页面背景（与导航栏/顶栏/TAB栏统一）
+    surface: '#1a1a3e',      // 卡片/面板背景
+    'surface-variant': '#141432',
     'on-surface-variant': '#BFC2CE',
     primary: '#a855f7',
     'primary-darken-1': '#9333EA',
@@ -47,9 +47,9 @@ const darkTheme = {
     'secondary-darken-1': '#6b7280',
     accent: '#4ecdc4',
     error: '#ff6b6b',
-    info: '#4ecdc4',   /* 青色 — Liquid Glass 标志色 */
-    success: '#4caf50',  /* 绿色 — 不应跟 info 同色 */
-    warning: '#FFB74D',  /* 琥珀色 — 符合 warning 暖色语义 */
+    info: '#4ecdc4',
+    success: '#4caf50',
+    warning: '#FFB74D',
   },
 }
 

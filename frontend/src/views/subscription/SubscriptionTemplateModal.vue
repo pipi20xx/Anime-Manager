@@ -111,7 +111,7 @@ async function setDefault(row: any) {
 </script>
 
 <template>
-  <v-dialog :model-value="show" max-width="750" scrollable @update:model-value="$emit('update:show', $event)">
+  <v-dialog :model-value="show" max-width="850" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-file-document-outline</v-icon>
@@ -127,38 +127,46 @@ async function setDefault(row: any) {
             <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAdd">创建新预设</v-btn>
           </div>
 
-          <v-skeleton-loader v-if="loading" type="table" />
+          <v-skeleton-loader v-if="loading" type="card@3" />
 
-          <v-table v-else-if="templates.length > 0" density="compact" class="rounded-lg">
-            <thead>
-              <tr>
-                <th style="width:50px">默认</th>
-                <th>模板名称</th>
-                <th>分类</th>
-                <th>包含关键词</th>
-                <th style="width:100px">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in templates" :key="row.id">
-                <td class="text-center">
-                  <v-btn
-                    :icon="row.is_default ? 'mdi-star' : 'mdi-star-outline'"
-                    size="small" variant="text"
-                    :color="row.is_default ? 'warning' : 'grey'"
-                    @click="!row.is_default && setDefault(row)"
-                  />
-                </td>
-                <td class="font-weight-medium">{{ row.name }}</td>
-                <td>{{ row.category || '-' }}</td>
-                <td class="text-truncate" style="max-width:200px">{{ row.include_keywords || '-' }}</td>
-                <td>
+          <v-row v-else-if="templates.length > 0" dense>
+            <v-col v-for="row in templates" :key="row.id" cols="12" sm="6">
+              <v-card variant="outlined" class="rounded-xl h-100 d-flex flex-column">
+                <v-card-item class="pb-2">
+                  <div class="d-flex align-center ga-2">
+                    <v-btn
+                      :icon="row.is_default ? 'mdi-star' : 'mdi-star-outline'"
+                      size="small" variant="text"
+                      :color="row.is_default ? 'warning' : 'grey'"
+                      density="comfortable"
+                      @click="!row.is_default && setDefault(row)"
+                    />
+                    <v-card-title class="text-subtitle-1 font-weight-bold pa-0 flex-grow-1">{{ row.name }}</v-card-title>
+                  </div>
+                </v-card-item>
+                <v-card-text class="pt-0 flex-grow-1">
+                  <div class="d-flex flex-wrap ga-2 mb-2">
+                    <v-chip v-if="row.category" size="x-small" variant="tonal" color="primary" label>{{ row.category }}</v-chip>
+                    <v-chip v-if="row.is_default" size="x-small" variant="tonal" color="warning" label>默认</v-chip>
+                  </div>
+                  <div v-if="row.include_keywords" class="text-body-2 text-medium-emphasis">
+                    <v-icon size="14" class="mr-1">mdi-filter-variant</v-icon>{{ row.include_keywords }}
+                  </div>
+                  <div v-if="row.filter_res || row.filter_team || row.filter_codec" class="text-caption text-medium-emphasis mt-1">
+                    <span v-if="row.filter_res">{{ row.filter_res }}</span>
+                    <span v-if="row.filter_res && row.filter_team"> · </span>
+                    <span v-if="row.filter_team">{{ row.filter_team }}</span>
+                    <span v-if="(row.filter_res || row.filter_team) && row.filter_codec"> · </span>
+                    <span v-if="row.filter_codec">{{ row.filter_codec }}</span>
+                  </div>
+                </v-card-text>
+                <v-card-actions class="pa-3 pt-0">
                   <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(row)">编辑</v-btn>
                   <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTemplate(row)">删除</v-btn>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
 
           <div v-else class="text-center pa-6 text-medium-emphasis">暂无预设模板</div>
         </template>

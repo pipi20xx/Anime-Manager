@@ -94,14 +94,12 @@ function getBgmPoster(item: any): string {
 }
 
 onMounted(() => {
-  // 恢复上次搜索状态
+  // 恢复上次搜索关键词（仅填入，不自动搜索）
   const lastKeyword = localStorage.getItem('apm_explore_last_keyword')
   if (lastKeyword) {
     keyword.value = lastKeyword
-    doSearch()
   } else if (navStore.searchKeyword) {
     keyword.value = navStore.searchKeyword
-    doSearch()
   }
 })
 </script>

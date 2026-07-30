@@ -252,6 +252,7 @@ onMounted(() => {
               color="primary"
               variant="flat"
               block
+              prepend-icon="mdi-lock-reset"
               :loading="savingPwd"
               @click="handleUpdatePassword"
             >
@@ -270,10 +271,10 @@ onMounted(() => {
           </v-card-title>
           <v-divider />
           <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-4">
+            <div class="switch-row-lg">
               <div>
-                <div class="text-body-2 font-weight-medium">TOTP 动态验证码</div>
-                <div class="text-caption text-medium-emphasis">
+                <div class="switch-label">TOTP 动态验证码</div>
+                <div class="switch-desc">
                   {{ isOtpEnabled ? '状态：已保护 (推荐)' : '状态：未保护 (高风险)' }}
                 </div>
               </div>
@@ -317,10 +318,10 @@ onMounted(() => {
       <v-divider />
       <v-card-text class="pa-4">
         <!-- JWT 永不过期 -->
-        <div class="d-flex align-center justify-space-between mb-4">
+        <div class="switch-row-lg">
           <div>
-            <div class="text-body-2 font-weight-medium">JWT 令牌永不过期</div>
-            <div class="text-caption text-medium-emphasis">开启后登录令牌将不会自动过期（10年），关闭后为24小时自动过期</div>
+            <div class="switch-label">JWT 令牌永不过期</div>
+            <div class="switch-desc">开启后登录令牌将不会自动过期（10年），关闭后为24小时自动过期</div>
           </div>
           <v-switch
             :model-value="jwtNeverExpire"

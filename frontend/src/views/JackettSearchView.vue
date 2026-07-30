@@ -6,12 +6,13 @@
  */
 import { ref, onMounted, watch } from 'vue'
 import { clientsApi, api } from '@/api'
-import { useNotification } from '@/composables'
+import { useNotification, useConfirm } from '@/composables'
 import { useNavigationStore } from '@/stores'
 
 defineOptions({ name: 'JackettSearchView' })
 
 const { success, error: showError, info: showInfo } = useNotification()
+const { confirm } = useConfirm()
 const navStore = useNavigationStore()
 
 const keyword = ref('')
@@ -69,6 +70,12 @@ async function handleDownload(item: any) {
     showError('请先选择下载客户端')
     return
   }
+  const ok = await confirm({
+    title: '确认下载',
+    content: `确定要下载「${item.title}」吗？`,
+    confirmColor: 'primary',
+  })
+  if (!ok) return
   try {
     const data = await clientsApi.manualDownload({
       client_id: selectedClientId.value,
@@ -113,11 +120,10 @@ onMounted(() => {
     navStore.searchKeyword = '' // 消费后清空，避免下次进入仍填充
     return
   }
-  // 恢复上次搜索状态
+  // 恢复上次搜索关键词（仅填入，不自动搜索）
   const lastKeyword = localStorage.getItem('apm_jackett_last_keyword')
   if (lastKeyword) {
     keyword.value = lastKeyword
-    setTimeout(() => handleSearch(), 300)
   }
 })
 </script>
@@ -132,20 +138,24 @@ onMounted(() => {
     <!-- 搜索栏 -->
     <v-card class="glass-card mb-4">
       <v-card-text class="pa-4">
-        <v-row align="center">
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="keyword"
-              placeholder="输入动画名称、电影关键字..."
-              variant="outlined"
-              density="compact"
-              prepend-inner-icon="mdi-magnify"
-              hide-details
-              clearable
-              @keyup.enter="handleSearch"
-            />
-          </v-col>
-          <v-col cols="6" md="3">
+        <v-text-field
+          v-model="keyword"
+          placeholder="输入动画名称、电影关键字..."
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+          clearable
+          @keyup.enter="handleSearch"
+        >
+          <template #append-inner>
+            <v-btn color="primary" variant="flat" size="small" :loading="loading" @click="handleSearch">
+              搜索
+            </v-btn>
+          </template>
+        </v-text-field>
+        <v-row class="mt-2" align="center">
+          <v-col cols="6" md="6">
             <v-select
               v-model="selectedIndexerId"
               :items="indexers.map(i => ({ title: i.name, value: i.id }))"
@@ -155,7 +165,7 @@ onMounted(() => {
               hide-details
             />
           </v-col>
-          <v-col cols="6" md="3">
+          <v-col cols="6" md="6">
             <v-select
               v-if="clients.length > 0"
               v-model="selectedClientId"
@@ -167,11 +177,6 @@ onMounted(() => {
             />
           </v-col>
         </v-row>
-        <div class="mt-3">
-          <v-btn color="primary" variant="flat" :loading="loading" prepend-icon="mdi-magnify" @click="handleSearch">
-            搜索
-          </v-btn>
-        </div>
       </v-card-text>
     </v-card>
 

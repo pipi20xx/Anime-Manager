@@ -9,7 +9,7 @@
  */
 import { ref } from 'vue'
 import { subscriptionApi } from '@/api'
-import { useNotification } from '@/composables'
+import { useNotification, useConfirm } from '@/composables'
 import SubscriptionsTab from './subscription/SubscriptionsTab.vue'
 import FeedsTab from './subscription/FeedsTab.vue'
 import RulesTab from './subscription/RulesTab.vue'
@@ -17,6 +17,7 @@ import RulesTab from './subscription/RulesTab.vue'
 defineOptions({ name: 'SubscriptionView' })
 
 const { success, error: showError } = useNotification()
+const { confirm } = useConfirm()
 
 const activeTab = ref('subscriptions')
 const syncing = ref(false)
@@ -27,6 +28,8 @@ const feedsTabRef = ref<InstanceType<typeof FeedsTab> | null>(null)
 const rulesTabRef = ref<InstanceType<typeof RulesTab> | null>(null)
 
 async function runNow() {
+  const ok = await confirm({ title: '确认触发', content: '将立即触发所有订阅源的 RSS 全量刷新，可能产生较大负载，确定要继续吗？', confirmColor: 'info' })
+  if (!ok) return
   syncing.value = true
   try { await subscriptionApi.runNow(); success('已触发 RSS 刷新') }
   catch { showError('触发失败') }
@@ -34,6 +37,8 @@ async function runNow() {
 }
 
 async function clearRecognitionCache() {
+  const ok = await confirm({ title: '确认清空', content: '清空黑名单后，之前被识别引擎排除的条目将不再被屏蔽，可能导致已忽略的资源重新进入下载流程。确定要继续吗？', confirmColor: 'warning' })
+  if (!ok) return
   try { await subscriptionApi.clearRecognitionCache(); success('识别缓存已清除') }
   catch { showError('清除失败') }
 }
@@ -60,11 +65,13 @@ function refreshCurrentTab() {
     </div>
 
     <!-- 标签切换 -->
-    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
-      <v-tab value="subscriptions">追剧订阅</v-tab>
-      <v-tab value="feeds">订阅源</v-tab>
-      <v-tab value="rules">下载规则</v-tab>
-    </v-tabs>
+    <div class="sticky-tabs">
+      <v-tabs v-model="activeTab" color="primary">
+        <v-tab value="subscriptions">追剧订阅</v-tab>
+        <v-tab value="feeds">订阅源</v-tab>
+        <v-tab value="rules">下载规则</v-tab>
+      </v-tabs>
+    </div>
 
     <v-window v-model="activeTab">
       <v-window-item value="subscriptions">

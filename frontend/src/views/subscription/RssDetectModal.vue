@@ -215,33 +215,48 @@ function formatDateTime(dateStr: string | null): string {
           <v-skeleton-loader v-if="loading" type="card@2" />
 
           <template v-else-if="tasks.length > 0">
-            <div v-for="task in tasks" :key="task.id" class="detect-task-item mb-3">
-              <div class="d-flex align-center justify-space-between">
-                <div class="flex-grow-1 mr-3">
-                  <div class="d-flex align-center ga-2">
-                    <v-switch
-                      :model-value="task.enabled"
-                      density="compact"
-                      hide-details
-                      color="primary"
-                      @update:model-value="toggleEnabled(task)"
-                      @click.stop
-                    />
-                    <span class="text-body-1 font-weight-medium">{{ task.name || task.rss_url?.slice(0, 40) }}</span>
-                  </div>
-                  <div class="text-caption text-medium-emphasis mt-1 text-truncate">{{ task.rss_url }}</div>
-                  <div class="d-flex ga-3 mt-1 text-caption text-medium-emphasis">
-                    <span>间隔: {{ task.interval_minutes }}分钟</span>
-                    <span>上次运行: {{ formatDateTime(task.last_run_at) }}</span>
-                  </div>
-                </div>
-                <div class="d-flex ga-1 flex-shrink-0">
-                  <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="runTask(task.id)">执行</v-btn>
-                  <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(task)">编辑</v-btn>
-                  <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTask(task.id)">删除</v-btn>
-                </div>
-              </div>
-            </div>
+            <v-row dense>
+              <v-col v-for="task in tasks" :key="task.id" cols="12" sm="6">
+                <v-card variant="outlined" class="rounded-xl h-100 d-flex flex-column">
+                  <v-card-item class="pb-2">
+                    <div class="d-flex align-center ga-2">
+                      <v-switch
+                        :model-value="task.enabled"
+                        density="compact"
+                        hide-details
+                        color="primary"
+                        @update:model-value="toggleEnabled(task)"
+                        @click.stop
+                      />
+                      <v-card-title class="text-subtitle-1 font-weight-bold pa-0 flex-grow-1 text-truncate">
+                        {{ task.name || task.rss_url?.slice(0, 40) }}
+                      </v-card-title>
+                    </div>
+                  </v-card-item>
+                  <v-card-text class="pt-0 flex-grow-1">
+                    <div class="text-caption text-medium-emphasis text-truncate mb-2">
+                      <v-icon size="12" class="mr-1">mdi-rss</v-icon>{{ task.rss_url }}
+                    </div>
+                    <div class="d-flex flex-wrap ga-2">
+                      <v-chip size="x-small" variant="tonal" color="primary" label>
+                        <v-icon start size="12">mdi-timer-outline</v-icon>{{ task.interval_minutes }}分钟
+                      </v-chip>
+                      <v-chip size="x-small" variant="tonal" :color="task.enabled ? 'success' : 'grey'" label>
+                        {{ task.enabled ? '已启用' : '已禁用' }}
+                      </v-chip>
+                      <v-chip size="x-small" variant="tonal" color="info" label>
+                        <v-icon start size="12">mdi-clock-outline</v-icon>{{ formatDateTime(task.last_run_at) }}
+                      </v-chip>
+                    </div>
+                  </v-card-text>
+                  <v-card-actions class="pa-3 pt-0">
+                    <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="runTask(task.id)">执行</v-btn>
+                    <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(task)">编辑</v-btn>
+                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTask(task.id)">删除</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
           </template>
 
           <div v-else class="text-center pa-8">
@@ -255,9 +270,9 @@ function formatDateTime(dateStr: string | null): string {
         <template v-else>
           <v-row dense>
             <v-col cols="12">
-              <v-text-field v-model="form.rss_url" label="RSS 链接" variant="outlined" density="compact" class="mb-2">
-                <template #append>
-                  <v-btn color="primary" :loading="testing" size="small" variant="tonal" prepend-icon="mdi-connection" @click="testRss">测试</v-btn>
+              <v-text-field v-model="form.rss_url" label="RSS 链接" variant="outlined" density="compact" class="mb-2" hide-details>
+                <template #append-inner>
+                  <v-btn color="primary" :loading="testing" size="small" variant="tonal" prepend-icon="mdi-connection" @click="testRss" class="mr-n2">测试</v-btn>
                 </template>
               </v-text-field>
             </v-col>
@@ -359,8 +374,8 @@ function formatDateTime(dateStr: string | null): string {
       <v-divider />
       <v-card-actions class="pa-4">
         <template v-if="showEdit">
-          <v-btn variant="tonal" prepend-icon="mdi-arrow-left" @click="showEdit = false">返回列表</v-btn>
           <v-spacer />
+          <v-btn variant="tonal" prepend-icon="mdi-arrow-left" @click="showEdit = false">返回列表</v-btn>
           <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveTask">保存任务</v-btn>
         </template>
         <template v-else>

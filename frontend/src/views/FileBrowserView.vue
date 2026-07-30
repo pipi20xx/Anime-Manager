@@ -37,6 +37,9 @@ const clipboard = ref<{ item: any; mode: 'copy' | 'move' } | null>(null)
 // 上下文菜单
 const contextMenu = ref({ show: false, x: 0, y: 0, item: null as any })
 
+// 收藏夹抽屉
+const showFavDrawer = ref(false)
+
 // 信息 Modal
 const showInfoModal = ref(false)
 const fileInfo = ref<any>(null)
@@ -570,150 +573,151 @@ onMounted(() => {
       </v-btn>
     </div>
 
-    <!-- 主布局 -->
-    <v-row>
-      <!-- 收藏夹侧栏 -->
-      <v-col cols="12" md="3" lg="2">
-        <v-card class="glass-card">
-          <v-card-title class="pa-3 pb-1 d-flex align-center ga-2">
-            <v-icon size="18" color="primary">mdi-star-outline</v-icon>
-            <span class="text-subtitle-2 font-weight-bold">收藏夹</span>
-          </v-card-title>
-          <v-divider />
-          <v-list density="compact" class="pa-2">
-            <v-list-item
-              v-for="fav in favorites"
-              :key="fav.path"
-              density="compact"
-              rounded="lg"
-              :active="fav.path === currentPath"
-              @click="jumpTo(fav.path)"
-            >
-              <template #prepend>
-                <v-icon size="18" color="primary">mdi-folder-outline</v-icon>
-              </template>
-              <v-list-item-title class="text-body-2 text-truncate">{{ fav.name }}</v-list-item-title>
-              <template #append>
-                <v-btn
-                  icon="mdi-close"
-                  size="x-small"
-                  variant="text"
-                  density="compact"
-                  @click.stop="removeFavorite(fav.path)"
-                />
-              </template>
-            </v-list-item>
-            <v-list-item v-if="favorites.length === 0" disabled>
-              <v-list-item-title class="text-caption text-medium-emphasis">暂无收藏</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-card>
-      </v-col>
+    <!-- 主内容区（全宽） -->
+    <!-- 工具栏 -->
+    <v-card class="glass-card mb-3">
+      <div class="pa-3 d-flex align-center justify-space-between flex-wrap ga-2">
+        <!-- 面包屑 -->
+        <div class="d-flex align-center ga-2">
+          <v-btn icon="mdi-arrow-up" size="small" variant="tonal" :disabled="!parentPath" @click="goUp" />
+          <v-breadcrumbs :items="[{ title: '根目录', href: '/' }, ...breadcrumbParts.map(p => ({ title: p.name, href: p.path }))]" density="compact">
+            <template #divider>/</template>
+            <template #item="{ item: bItem }">
+              <v-breadcrumbs-item class="cursor-pointer text-body-2" @click="jumpTo(bItem.href || '')">
+                {{ bItem.title }}
+              </v-breadcrumbs-item>
+            </template>
+          </v-breadcrumbs>
+        </div>
 
-      <!-- 主内容区 -->
-      <v-col cols="12" md="9" lg="10">
-        <!-- 工具栏 -->
-        <v-card class="glass-card mb-3">
-          <div class="pa-3 d-flex align-center justify-space-between flex-wrap ga-2">
-            <!-- 面包屑 -->
-            <div class="d-flex align-center ga-2">
-              <v-btn icon="mdi-arrow-up" size="small" variant="tonal" :disabled="!parentPath" @click="goUp" />
-              <v-breadcrumbs :items="[{ title: '根目录', href: '/' }, ...breadcrumbParts.map(p => ({ title: p.name, href: p.path }))]" density="compact">
-                <template #divider>/</template>
-                <template #item="{ item: bItem }">
-                  <v-breadcrumbs-item class="cursor-pointer text-body-2" @click="jumpTo(bItem.href || '')">
-                    {{ bItem.title }}
-                  </v-breadcrumbs-item>
-                </template>
-              </v-breadcrumbs>
-            </div>
+        <!-- 操作按钮 -->
+        <div class="d-flex ga-1 flex-wrap">
+          <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-bookmark-box-multiple-outline" @click="showFavDrawer = true">
+            收藏夹
+            <v-badge v-if="favorites.length > 0" :content="favorites.length" color="primary" offset-x="-6" offset-y="0" inline />
+          </v-btn>
+          <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-content-copy" @click="copyPath(currentPath)">复制路径</v-btn>
+          <v-btn
+            size="small"
+            variant="tonal"
+            :prepend-icon="isCurrentFavorite() ? 'mdi-star' : 'mdi-star-outline'"
+            :color="isCurrentFavorite() ? 'warning' : 'primary'"
+            @click="toggleFavorite"
+          >
+            {{ isCurrentFavorite() ? '已收藏' : '收藏' }}
+          </v-btn>
+          <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-folder-marker" @click="showGoToModal = true">前往路径</v-btn>
+        </div>
+      </div>
+    </v-card>
 
-            <!-- 操作按钮 -->
-            <div class="d-flex ga-1">
-              <v-btn icon="mdi-content-copy" size="small" variant="text" @click="copyPath(currentPath)" title="复制当前路径" />
-              <v-btn
-                :icon="isCurrentFavorite() ? 'mdi-star' : 'mdi-star-outline'"
-                size="small"
-                variant="text"
-                :color="isCurrentFavorite() ? 'warning' : undefined"
-                @click="toggleFavorite"
-                title="收藏当前目录"
+    <!-- 文件列表 -->
+    <v-card class="glass-card file-list-card">
+      <!-- 加载进度条 -->
+      <div v-if="loading" class="loading-bar">
+        <div class="loading-bar-inner"></div>
+      </div>
+
+      <!-- 骨架屏 -->
+      <template v-if="showSkeleton">
+        <div class="pa-4">
+          <v-skeleton-loader v-for="i in 8" :key="i" type="list-item" class="mb-2" />
+        </div>
+      </template>
+
+      <!-- 文件列表 -->
+      <template v-else>
+        <v-list density="comfortable" class="pa-0" @contextmenu.prevent="handleContextMenu($event, null)">
+          <v-list-item
+            v-for="item in items"
+            :key="item.path"
+            class="file-list-item"
+            @click="item.is_dir && navigateTo(item.path)"
+            @contextmenu.prevent.stop="handleContextMenu($event, item)"
+          >
+            <template #prepend>
+              <v-icon
+                :icon="getFileIcon(item)"
+                :color="item.is_dir ? 'primary' : undefined"
+                size="20"
               />
-              <v-btn icon="mdi-folder-marker" size="small" variant="text" @click="showGoToModal = true" title="前往指定路径" />
-              <v-btn icon="mdi-refresh" size="small" variant="text" @click="fetchFiles()" title="刷新" />
-            </div>
-          </div>
-        </v-card>
+            </template>
 
-        <!-- 文件列表 -->
-        <v-card class="glass-card" style="position: relative; overflow: hidden">
-          <!-- 加载进度条 -->
-          <div v-if="loading" class="loading-bar">
-            <div class="loading-bar-inner"></div>
-          </div>
+            <v-list-item-title class="text-body-2 font-weight-medium">{{ item.name }}</v-list-item-title>
+            <v-list-item-subtitle class="text-caption text-medium-emphasis">
+              {{ formatSize(item.size) }} · {{ formatDate(item.mtime) }}
+            </v-list-item-subtitle>
 
-          <!-- 骨架屏 -->
-          <template v-if="showSkeleton">
-            <div class="pa-4">
-              <v-skeleton-loader v-for="i in 8" :key="i" type="list-item" class="mb-2" />
-            </div>
-          </template>
-
-          <!-- 文件列表 -->
-          <template v-else>
-            <v-list density="comfortable" class="pa-0" @contextmenu.prevent="handleContextMenu($event, null)">
-              <v-list-item
-                v-for="item in items"
-                :key="item.path"
-                class="file-list-item"
-                @click="item.is_dir && navigateTo(item.path)"
-                @contextmenu.prevent.stop="handleContextMenu($event, item)"
+            <template #append>
+              <v-btn
+                v-if="!item.is_dir"
+                size="small"
+                variant="tonal"
+                color="primary"
+                :loading="recognizingPath === item.path"
+                @click.stop="recognizeFile(item)"
               >
-                <template #prepend>
-                  <v-icon
-                    :icon="getFileIcon(item)"
-                    :color="item.is_dir ? 'primary' : undefined"
-                    size="20"
-                  />
-                </template>
+                单文件识别
+              </v-btn>
+              <v-icon v-else color="medium-emphasis">mdi-chevron-right</v-icon>
+            </template>
+          </v-list-item>
 
-                <v-list-item-title class="text-body-2 font-weight-medium">{{ item.name }}</v-list-item-title>
-                <v-list-item-subtitle class="text-caption text-medium-emphasis">
-                  {{ formatSize(item.size) }} · {{ formatDate(item.mtime) }}
-                </v-list-item-subtitle>
+          <v-list-item v-if="items.length === 0" disabled>
+            <v-list-item-title class="text-center text-body-2 text-medium-emphasis py-8">
+              当前目录为空
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </template>
 
-                <template #append>
-                  <v-btn
-                    v-if="!item.is_dir"
-                    size="small"
-                    variant="tonal"
-                    color="primary"
-                    :loading="recognizingPath === item.path"
-                    @click.stop="recognizeFile(item)"
-                  >
-                    单文件识别
-                  </v-btn>
-                  <v-icon v-else color="medium-emphasis">mdi-chevron-right</v-icon>
-                </template>
-              </v-list-item>
+      <!-- 底部信息 -->
+      <v-divider />
+      <div class="pa-3 text-caption text-medium-emphasis d-flex align-center ga-2">
+        <v-icon size="14">mdi-file-outline</v-icon>
+        共 {{ items.length }} 项内容
+      </div>
+    </v-card>
 
-              <v-list-item v-if="items.length === 0" disabled>
-                <v-list-item-title class="text-center text-body-2 text-medium-emphasis py-8">
-                  当前目录为空
-                </v-list-item-title>
-              </v-list-item>
-            </v-list>
+    <!-- 收藏夹抽屉 -->
+    <v-navigation-drawer v-model="showFavDrawer" location="left" width="280" temporary>
+      <div class="pa-3 d-flex align-center justify-space-between">
+        <div class="d-flex align-center ga-2">
+          <v-icon size="18" color="primary">mdi-star-outline</v-icon>
+          <span class="text-subtitle-2 font-weight-bold">收藏夹</span>
+        </div>
+        <v-btn icon="mdi-close" size="small" variant="text" @click="showFavDrawer = false" />
+      </div>
+      <v-divider />
+      <v-list density="compact" class="pa-2">
+        <v-list-item
+          v-for="fav in favorites"
+          :key="fav.path"
+          density="compact"
+          rounded="lg"
+          :active="fav.path === currentPath"
+          @click="jumpTo(fav.path); showFavDrawer = false"
+        >
+          <template #prepend>
+            <v-icon size="18" color="primary">mdi-folder-outline</v-icon>
           </template>
-
-          <!-- 底部信息 -->
-          <v-divider />
-          <div class="pa-3 text-caption text-medium-emphasis d-flex align-center ga-2">
-            <v-icon size="14">mdi-file-outline</v-icon>
-            共 {{ items.length }} 项内容
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
+          <v-list-item-title class="text-body-2 text-truncate">{{ fav.name }}</v-list-item-title>
+          <v-list-item-subtitle class="text-caption text-medium-emphasis text-truncate">{{ fav.path }}</v-list-item-subtitle>
+          <template #append>
+            <v-btn
+              icon="mdi-close"
+              size="x-small"
+              variant="text"
+              density="compact"
+              @click.stop="removeFavorite(fav.path)"
+            />
+          </template>
+        </v-list-item>
+        <v-list-item v-if="favorites.length === 0" disabled>
+          <v-list-item-title class="text-caption text-medium-emphasis">暂无收藏</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
 
     <!-- 右键菜单 -->
     <v-menu
@@ -760,33 +764,33 @@ onMounted(() => {
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4" v-if="fileInfo">
-          <div class="fb-detail-row">
-            <span class="fb-detail-label">名称</span>
-            <span class="fb-detail-value">{{ fileInfo.name }}</span>
+          <div class="kv-row">
+            <span class="kv-label">名称</span>
+            <span class="kv-value">{{ fileInfo.name }}</span>
           </div>
-          <div class="fb-detail-row">
-            <span class="fb-detail-label">路径</span>
-            <span class="detail-value font-monospace text-caption">{{ fileInfo.path }}</span>
+          <div class="kv-row">
+            <span class="kv-label">路径</span>
+            <span class="kv-value kv-value--mono text-caption">{{ fileInfo.path }}</span>
           </div>
-          <div class="fb-detail-row">
-            <span class="fb-detail-label">类型</span>
-            <span class="fb-detail-value">{{ fileInfo.is_dir ? '文件夹' : '文件' }}</span>
+          <div class="kv-row">
+            <span class="kv-label">类型</span>
+            <span class="kv-value">{{ fileInfo.is_dir ? '文件夹' : '文件' }}</span>
           </div>
-          <div v-if="!fileInfo.is_dir" class="fb-detail-row">
-            <span class="fb-detail-label">大小</span>
-            <span class="fb-detail-value">{{ formatSize(fileInfo.size) }}</span>
+          <div v-if="!fileInfo.is_dir" class="kv-row">
+            <span class="kv-label">大小</span>
+            <span class="kv-value">{{ formatSize(fileInfo.size) }}</span>
           </div>
-          <div class="fb-detail-row">
-            <span class="fb-detail-label">修改时间</span>
-            <span class="fb-detail-value">{{ formatDate(fileInfo.mtime) }}</span>
+          <div class="kv-row">
+            <span class="kv-label">修改时间</span>
+            <span class="kv-value">{{ formatDate(fileInfo.mtime) }}</span>
           </div>
-          <div v-if="fileInfo.ctime" class="fb-detail-row">
-            <span class="fb-detail-label">创建时间</span>
-            <span class="fb-detail-value">{{ formatDate(fileInfo.ctime) }}</span>
+          <div v-if="fileInfo.ctime" class="kv-row">
+            <span class="kv-label">创建时间</span>
+            <span class="kv-value">{{ formatDate(fileInfo.ctime) }}</span>
           </div>
-          <div v-if="fileInfo.mode" class="fb-detail-row">
-            <span class="fb-detail-label">权限</span>
-            <span class="detail-value font-monospace">{{ fileInfo.mode }}</span>
+          <div v-if="fileInfo.mode" class="kv-row">
+            <span class="kv-label">权限</span>
+            <span class="kv-value kv-value--mono">{{ fileInfo.mode }}</span>
           </div>
         </v-card-text>
         <v-divider />
@@ -861,4 +865,15 @@ onMounted(() => {
   </v-container>
 </template>
 
-<!-- scoped 样式已迁移至 global.css .loading-bar / .kv-row / .kv-label / .kv-value -->
+<style scoped>
+.file-list-card {
+  position: relative;
+  overflow: hidden;
+}
+.file-list-item :deep(.v-list-item__spacer) {
+  display: none !important;
+}
+.file-list-item :deep(.v-list-item__prepend) {
+  margin-inline-end: 8px !important;
+}
+</style>

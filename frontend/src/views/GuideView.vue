@@ -89,12 +89,14 @@ watch(activeTab, () => {
       <div class="text-body-2 text-medium-emphasis mt-1">规则与正则指南</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs" show-arrows>
-      <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value">
-        <v-icon start size="18">{{ tab.icon }}</v-icon>
-        {{ tab.label }}
-      </v-tab>
-    </v-tabs>
+    <div class="sticky-tabs">
+      <v-tabs v-model="activeTab" color="primary" show-arrows>
+        <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value">
+          <v-icon start size="18">{{ tab.icon }}</v-icon>
+          {{ tab.label }}
+        </v-tab>
+      </v-tabs>
+    </div>
 
     <v-window v-model="activeTab">
       <v-window-item v-for="tab in tabs" :key="tab.value" :value="tab.value">

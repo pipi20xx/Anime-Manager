@@ -188,24 +188,26 @@ onUnmounted(() => {
       <div class="text-body-2 text-medium-emphasis mt-1">API 管理与集成设置</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs px-2">
-      <v-tab value="keys">
-        <v-icon start size="18">mdi-key-outline</v-icon>
-        API 密钥
-      </v-tab>
-      <v-tab value="settings">
-        <v-icon start size="18">mdi-tune-vertical</v-icon>
-        设置
-      </v-tab>
-      <v-tab value="logs">
-        <v-icon start size="18">mdi-file-document-outline</v-icon>
-        访问日志
-      </v-tab>
-      <v-tab value="docs">
-        <v-icon start size="18">mdi-book-open-variant</v-icon>
-        API 文档
-      </v-tab>
-    </v-tabs>
+    <div class="sticky-tabs">
+      <v-tabs v-model="activeTab" color="primary">
+        <v-tab value="keys">
+          <v-icon start size="18">mdi-key-outline</v-icon>
+          API 密钥
+        </v-tab>
+        <v-tab value="settings">
+          <v-icon start size="18">mdi-tune-vertical</v-icon>
+          设置
+        </v-tab>
+        <v-tab value="logs">
+          <v-icon start size="18">mdi-file-document-outline</v-icon>
+          访问日志
+        </v-tab>
+        <v-tab value="docs">
+          <v-icon start size="18">mdi-book-open-variant</v-icon>
+          API 文档
+        </v-tab>
+      </v-tabs>
+    </div>
 
     <v-card class="glass-card" rounded="xl">
       <v-window v-model="activeTab">

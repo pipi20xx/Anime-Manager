@@ -16,6 +16,7 @@
 }
 
 .v-theme--light .v-btn--variant-flat:hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(255, 45, 146, 0.15)) !important;
   box-shadow: 0 0 16px rgba(168, 85, 247, 0.25) !important;
 }
 
@@ -41,14 +42,6 @@
 
 .v-theme--light .v-btn--variant-tonal:hover {
   box-shadow: 0 0 12px rgba(168, 85, 247, 0.15) !important;
-}
-
-.v-theme--dark .v-btn--variant-tonal .v-btn__overlay {
-  background: rgba(255, 255, 255, 0.06) !important;
-}
-
-.v-theme--dark .v-btn--variant-tonal:hover .v-btn__overlay {
-  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .v-theme--dark .v-btn--variant-tonal {
@@ -126,24 +119,17 @@
  * 12c. BtnToggle — Liquid Glass
  * ============================================================ */
 .v-theme--dark .v-btn-toggle {
-background: rgba(255, 255, 255, 0.05) !important;
-border: none !important;
-border-radius: 16px !important;
+  border: none !important;
+  border-radius: 16px !important;
 }
 
 .v-theme--dark .v-btn-toggle .v-btn--active {
-background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(78, 205, 196, 0.1)) !important;
-box-shadow: 0 0 10px rgba(78, 205, 196, 0.15) !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.15) !important;
 }
 
 .v-theme--light .v-btn-toggle {
-background: rgba(0, 0, 0, 0.03) !important;
-border: none !important;
-border-radius: 16px !important;
-}
-
-.v-theme--light .v-btn-toggle .v-btn--active {
-background: rgba(168, 85, 247, 0.1) !important;
+  border: none !important;
+  border-radius: 16px !important;
 }
 
 /* ============================================================
@@ -179,7 +165,6 @@ background: rgba(168, 85, 247, 0.1) !important;
  * 12f. Avatar — Liquid Glass
  * ============================================================ */
 .v-theme--dark .v-avatar--variant-tonal {
-  background: rgba(78, 205, 196, 0.12) !important;
   backdrop-filter: blur(20px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
 }
@@ -188,7 +173,6 @@ background: rgba(168, 85, 247, 0.1) !important;
  * 12g. Code 标签 — Liquid Glass
  * ============================================================ */
 code {
-  background: rgba(168, 85, 247, 0.1) !important;
   color: #4ecdc4 !important;
   padding: 2px 6px;
   border-radius: 6px;
@@ -196,7 +180,6 @@ code {
 }
 
 .v-theme--light code {
-  background: rgba(168, 85, 247, 0.06) !important;
   color: #7c3aed !important;
 }
 
@@ -204,7 +187,6 @@ code {
  * 12h. 亮色模式补丁 — Liquid Avatar / 媒体卡片
  * ============================================================ */
 .v-theme--light .liquid-avatar {
-  background: rgba(168, 85, 247, 0.1) !important;
   border-color: rgba(168, 85, 247, 0.2) !important;
   color: #a855f7 !important;
   backdrop-filter: blur(20px) saturate(150%) !important;
@@ -212,7 +194,6 @@ code {
 }
 
 .v-theme--light .liquid-avatar:hover {
-  background: rgba(168, 85, 247, 0.18) !important;
   border-color: rgba(168, 85, 247, 0.35) !important;
   box-shadow: 0 0 14px rgba(168, 85, 247, 0.2) !important;
 }

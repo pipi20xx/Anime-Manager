@@ -54,7 +54,7 @@ async function removeBlockItem(id: number) {
 </script>
 
 <template>
-  <v-dialog :model-value="show" max-width="640" scrollable @update:model-value="$emit('update:show', $event)">
+  <v-dialog :model-value="show" max-width="720" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="error">mdi-shield-off-outline</v-icon>
@@ -73,20 +73,33 @@ async function removeBlockItem(id: number) {
           <v-btn color="primary" variant="flat" @click="addBlockItem" prepend-icon="mdi-plus">添加</v-btn>
         </div>
 
-        <v-skeleton-loader v-if="loading" type="list-item@5" />
+        <v-skeleton-loader v-if="loading" type="card@3" />
 
-        <template v-else-if="blocklist.length > 0">
-          <div class="feed-item-card mb-2" v-for="item in blocklist" :key="item.id">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <span class="font-weight-medium">TMDB {{ item.tmdb_id }}</span>
-                <v-chip size="x-small" variant="tonal" class="ml-2">{{ item.media_type === 'tv' ? '剧集' : '电影' }}</v-chip>
-                <span v-if="item.title" class="text-body-2 text-medium-emphasis ml-2">{{ item.title }}</span>
-              </div>
-              <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="removeBlockItem(item.id)">删除</v-btn>
-            </div>
-          </div>
-        </template>
+        <v-row v-else-if="blocklist.length > 0" dense>
+          <v-col v-for="item in blocklist" :key="item.id" cols="12" sm="6">
+            <v-card variant="outlined" class="rounded-xl h-100 d-flex flex-column">
+              <v-card-item class="pb-2">
+                <div class="d-flex align-center ga-2">
+                  <v-icon color="error" size="20">mdi-shield-off-outline</v-icon>
+                  <v-card-title class="text-subtitle-1 font-weight-bold pa-0">TMDB {{ item.tmdb_id }}</v-card-title>
+                </div>
+              </v-card-item>
+              <v-card-text class="pt-0 flex-grow-1">
+                <div class="d-flex flex-wrap ga-2">
+                  <v-chip size="x-small" variant="tonal" :color="item.media_type === 'tv' ? 'primary' : 'info'" label>
+                    {{ item.media_type === 'tv' ? '剧集' : '电影' }}
+                  </v-chip>
+                </div>
+                <div v-if="item.title" class="text-body-2 text-medium-emphasis mt-2 text-truncate">
+                  <v-icon size="14" class="mr-1">mdi-text</v-icon>{{ item.title }}
+                </div>
+              </v-card-text>
+              <v-card-actions class="pa-3 pt-0">
+                <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="removeBlockItem(item.id)">删除</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
 
         <div v-else class="text-center pa-4">
           <div class="text-body-2 text-medium-emphasis">屏蔽列表为空</div>

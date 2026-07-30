@@ -143,7 +143,7 @@ async function saveConfig() {
 function getStatusInfo(status: string): { text: string; color: string } {
   if (status === 'OK') return { text: '正常', color: 'success' }
   if (status && status.startsWith('Failed')) return { text: '异常', color: 'error' }
-  if (status) return { text: status, color: 'warning' }
+  if (status && status !== 'Unknown') return { text: status, color: 'warning' }
   return { text: '未检测', color: 'grey' }
 }
 
@@ -166,90 +166,101 @@ onMounted(() => {
 <template>
   <div>
     <!-- 全局设置 -->
-    <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center justify-space-between">
-        <div class="d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">掉盘与 CK 失效检测</span>
-        </div>
-        <div class="d-flex ga-2">
-          <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-play" @click="checkAll">
-            立即检测全部
-          </v-btn>
-          <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-plus" @click="openAdd">
-            添加配置
-          </v-btn>
-        </div>
-      </v-card-title>
-      <v-divider />
-      <v-card-text class="pa-4">
-        <div class="text-body-2 text-medium-emphasis mb-4">
-          通过定时下载指定文件并与本地路径进行比对，用于监测硬盘是否掉线或下载源的 Cookie 是否失效。
-        </div>
+    <div class="d-flex align-center justify-space-between mb-3">
+      <div class="d-flex align-center ga-2">
+        <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>
+        <span class="text-subtitle-1 font-weight-bold">掉盘与 CK 失效检测</span>
+      </div>
+      <div class="d-flex ga-2">
+        <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-play" @click="checkAll">
+          立即检测全部
+        </v-btn>
+        <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-plus" @click="openAdd">
+          添加配置
+        </v-btn>
+      </div>
+    </div>
 
-        <div class="d-flex align-center ga-4 flex-wrap pa-3 rounded-lg mb-4" style="background: rgba(128,128,128,0.06)">
-          <div class="d-flex align-center ga-3">
-            <v-switch v-model="config.health_check_enabled" density="compact" hide-details color="primary" />
-            <span class="text-body-2 font-weight-medium">自动巡检</span>
-          </div>
-          <v-text-field
-            v-model="config.health_check_interval"
-            label="巡检频率 (分)"
-            type="number"
-            variant="outlined"
-            density="compact"
-            hide-details
-            min="1"
-            style="max-width: 160px"
-          />
-          <v-btn color="primary" variant="flat" size="small" :loading="saving" @click="saveAll">保存设置</v-btn>
-        </div>
+    <div class="text-body-2 text-medium-emphasis mb-4">
+      通过定时下载指定文件并与本地路径进行比对，用于监测硬盘是否掉线或下载源的 Cookie 是否失效。
+    </div>
 
-        <!-- 配置列表 -->
-        <div v-if="loading" class="d-flex justify-center pa-4">
-          <v-progress-circular indeterminate color="primary" size="24" />
+    <div class="d-flex align-center ga-4 flex-wrap mb-4">
+      <div class="switch-row-lg">
+        <v-switch v-model="config.health_check_enabled" density="compact" hide-details color="primary" />
+        <div>
+          <div class="switch-label">自动巡检</div>
+          <div class="switch-desc">定时检测硬盘掉线和 Cookie 失效</div>
         </div>
-        <v-table v-else-if="configs.length > 0" density="compact" class="bg-transparent">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>文件路径</th>
-              <th>远程 URL</th>
-              <th>状态</th>
-              <th>最后检查</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in configs" :key="item.id">
-              <td class="text-body-2 font-weight-medium">{{ item.name }}</td>
-              <td class="text-caption font-monospace">{{ item.file_path }}</td>
-              <td class="text-caption font-monospace">{{ item.file_url || '-' }}</td>
-              <td>
-                <v-chip size="x-small" :color="getStatusInfo(item.last_status).color" variant="tonal">
-                  {{ getStatusInfo(item.last_status).text }}
-                </v-chip>
-              </td>
-              <td class="text-caption">{{ formatDate(item.last_check) }}</td>
-              <td>
-                <div class="d-flex ga-1">
-                  <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="startCheck(item.id)">执行</v-btn>
-                  <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil" @click="openEdit(item)">编辑</v-btn>
-                  <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteConfig(item.id)">删除</v-btn>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-        <div v-else class="text-center text-medium-emphasis pa-8">
-          暂无检测配置，请点击右上角添加
-        </div>
-      </v-card-text>
-    </v-card>
+      </div>
+      <v-text-field
+        v-model="config.health_check_interval"
+        label="巡检频率 (分)"
+        type="number"
+        variant="outlined"
+        density="compact"
+        hide-details
+        min="1"
+        style="max-width: 160px"
+      />
+      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-content-save-outline" :loading="saving" @click="saveAll">保存设置</v-btn>
+    </div>
+
+    <!-- 配置列表 -->
+    <div v-if="loading" class="d-flex justify-center pa-4">
+      <v-progress-circular indeterminate color="primary" size="24" />
+    </div>
+    <div v-else-if="configs.length > 0" class="card-grid">
+      <v-card
+        v-for="item in configs"
+        :key="item.id"
+        class="glass-card"
+        :class="{
+          'service-card--running': item.enabled && item.last_status === 'OK',
+          'service-card--stopped': item.enabled && item.last_status && item.last_status !== 'OK',
+          'service-card--pending': item.enabled && !item.last_status,
+          'service-card--disabled': !item.enabled,
+        }"
+      >
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="d-flex align-center ga-2">
+                <span class="text-body-2 font-weight-bold">{{ item.name }}</span>
+                <v-chip v-if="!item.enabled" size="x-small" color="grey" variant="tonal">已禁用</v-chip>
+              </div>
+              <v-chip size="x-small" :color="getStatusInfo(item.last_status).color" variant="tonal">
+                {{ getStatusInfo(item.last_status).text }}
+              </v-chip>
+            </div>
+            <div class="d-flex flex-column ga-1 mb-3">
+              <div class="kv-row">
+                <span class="kv-label">文件路径</span>
+                <span class="kv-value kv-value--mono text-caption">{{ item.file_path }}</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">远程 URL</span>
+                <span class="kv-value kv-value--mono text-caption">{{ item.file_url || '-' }}</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-label">最后检查</span>
+                <span class="kv-value text-caption">{{ formatDate(item.last_check) }}</span>
+              </div>
+            </div>
+            <div class="d-flex ga-1">
+              <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="startCheck(item.id)">执行</v-btn>
+              <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil" @click="openEdit(item)">编辑</v-btn>
+              <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteConfig(item.id)">删除</v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+    </div>
+    <div v-else class="text-center text-medium-emphasis pa-8">
+      暂无检测配置，请点击右上角添加
+    </div>
 
     <!-- 编辑/添加弹窗 -->
     <v-dialog v-model="showModal" max-width="500">
-      <v-card>
+      <v-card class="glass-card">
         <v-card-title class="pa-4 d-flex align-center ga-2">
           <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>
           <span>健康检查配置</span>
@@ -283,9 +294,9 @@ onMounted(() => {
             hide-details
             placeholder="文件的直链 URL (包含 Cookie 或 Token)"
           />
-          <div class="d-flex align-center ga-3">
+          <div class="switch-row-lg">
             <v-switch v-model="editingConfig.enabled" density="compact" hide-details color="primary" />
-            <span class="text-body-2 font-weight-medium">启用检测</span>
+            <span class="switch-label">启用检测</span>
           </div>
         </v-card-text>
         <v-divider />

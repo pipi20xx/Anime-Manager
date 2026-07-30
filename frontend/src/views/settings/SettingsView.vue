@@ -31,32 +31,34 @@ const activeTab = ref('basic')
       <div class="text-body-2 text-medium-emphasis mt-1">系统配置与选项</div>
     </div>
 
-    <v-tabs v-model="activeTab" color="primary" class="sticky-tabs">
-      <v-tab value="basic">
-        <v-icon start size="18">mdi-cog-outline</v-icon>
-        基础配置
-      </v-tab>
-      <v-tab value="clients">
-        <v-icon start size="18">mdi-download-circle-outline</v-icon>
-        下载器管理
-      </v-tab>
-      <v-tab value="rules">
-        <v-icon start size="18">mdi-ruler-square</v-icon>
-        识别与订阅规则
-      </v-tab>
-      <v-tab value="account">
-        <v-icon start size="18">mdi-shield-account-outline</v-icon>
-        账号与安全
-      </v-tab>
-      <v-tab value="services">
-        <v-icon start size="18">mdi-server-outline</v-icon>
-        服务状态
-      </v-tab>
-      <v-tab value="health">
-        <v-icon start size="18">mdi-harddisk-remove</v-icon>
-        掉盘与失效检测
-      </v-tab>
-    </v-tabs>
+    <div class="sticky-tabs">
+      <v-tabs v-model="activeTab" color="primary">
+        <v-tab value="basic">
+          <v-icon start size="18">mdi-cog-outline</v-icon>
+          基础配置
+        </v-tab>
+        <v-tab value="clients">
+          <v-icon start size="18">mdi-download-circle-outline</v-icon>
+          下载器管理
+        </v-tab>
+        <v-tab value="rules">
+          <v-icon start size="18">mdi-ruler-square</v-icon>
+          识别与订阅规则
+        </v-tab>
+        <v-tab value="account">
+          <v-icon start size="18">mdi-shield-account-outline</v-icon>
+          账号与安全
+        </v-tab>
+        <v-tab value="services">
+          <v-icon start size="18">mdi-server-outline</v-icon>
+          服务状态
+        </v-tab>
+        <v-tab value="health">
+          <v-icon start size="18">mdi-harddisk-remove</v-icon>
+          掉盘与失效检测
+        </v-tab>
+      </v-tabs>
+    </div>
 
     <v-window v-model="activeTab">
       <v-window-item value="basic">

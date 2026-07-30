@@ -86,12 +86,10 @@
 .info-badge--accent {
   color: #4ecdc4;
   border-color: rgba(78, 205, 196, 0.2);
-  background: rgba(78, 205, 196, 0.06);
 }
 .v-theme--light .info-badge--accent {
   color: #7c3aed;
   border-color: rgba(124, 58, 237, 0.2);
-  background: rgba(124, 58, 237, 0.06);
 }
 
 /* ── 30e. 通用键值行 — 替代 .detail-row / .info-row / .fb-detail-row / .dc-detail-row ── */
@@ -129,15 +127,12 @@
   display: inline-block;
 }
 .status-dot--active {
-  background: #4caf50;
   box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
 }
 .status-dot--inactive {
-  background: #f44336;
   box-shadow: 0 0 6px rgba(244, 67, 54, 0.4);
 }
 .status-dot--pending {
-  background: #FFB74D;
   box-shadow: 0 0 6px rgba(255, 183, 77, 0.4);
 }
 
@@ -155,17 +150,54 @@
   border-radius: 8px;
 }
 
-/* ── 30h. 服务状态卡片 — 替代 ServiceStatusTab ── */
+/* ── 30h. 等高卡片网格 — 同行卡片等高 ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.card-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 960px)  { .card-grid { grid-template-columns: repeat(2, 1fr); } .card-grid--4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .card-grid { grid-template-columns: 1fr; } .card-grid--4 { grid-template-columns: 1fr; } }
+.card-grid > .v-card,
+.card-grid > .glass-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── 30i. 队列列表辅助 ── */
+.queue-divider {
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+.queue-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.queue-item {
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+.queue-item:last-child {
+  border-bottom: none;
+}
+.queue-item-index {
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── 30j. 服务状态卡片 ── */
 .service-card--running {
-  background: rgba(46, 125, 50, 0.08);
   border: 1px solid rgba(46, 125, 50, 0.2);
 }
 .service-card--stopped {
-  background: rgba(128, 128, 128, 0.04);
-  border: 1px solid rgba(128, 128, 128, 0.1);
+  border: 1px solid rgba(211, 47, 47, 0.25);
+}
+.service-card--pending {
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
 }
 .service-card--disabled {
-  background: rgba(128, 128, 128, 0.04);
   border: 1px solid rgba(128, 128, 128, 0.1);
   opacity: 0.6;
 }

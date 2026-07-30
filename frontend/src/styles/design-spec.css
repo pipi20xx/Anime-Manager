@@ -89,22 +89,6 @@
   background: rgba(21, 101, 192, 0.08) !important;
 }
 
-/* tonal + warning */
-.v-theme--dark .v-btn--variant-tonal.v-btn--bg-warning .v-btn__overlay {
-  background: rgba(255, 183, 77, 0.1) !important;
-}
-.v-theme--light .v-btn--variant-tonal.v-btn--bg-warning .v-btn__overlay {
-  background: rgba(255, 152, 0, 0.08) !important;
-}
-
-/* tonal + error */
-.v-theme--dark .v-btn--variant-tonal.v-btn--bg-error .v-btn__overlay {
-  background: rgba(239, 83, 80, 0.1) !important;
-}
-.v-theme--light .v-btn--variant-tonal.v-btn--bg-error .v-btn__overlay {
-  background: rgba(211, 47, 47, 0.06) !important;
-}
-
 /* ── 29c. 图标按钮 — 统一 hover / active 态 ── */
 .v-btn--icon {
   transition: all 0.3s ease-out !important;
@@ -115,23 +99,6 @@
 }
 .v-btn--icon:active {
   transform: scale(0.95);
-}
-
-/* 暗色图标按钮 hover */
-.v-theme--dark .v-btn--icon.v-btn--variant-text:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-}
-/* 亮色图标按钮 hover */
-.v-theme--light .v-btn--icon.v-btn--variant-text:hover {
-  background: rgba(0, 0, 0, 0.06) !important;
-}
-
-/* 图标按钮 + error color */
-.v-theme--dark .v-btn--icon.v-btn--bg-error:hover {
-  background: rgba(239, 83, 80, 0.1) !important;
-}
-.v-theme--light .v-btn--icon.v-btn--bg-error:hover {
-  background: rgba(211, 47, 47, 0.06) !important;
 }
 
 /* ── 29e. 搜索框 — 统一 .search-field 样式 ── */
@@ -146,12 +113,6 @@
 }
 .search-field .v-field {
   border-radius: 20px !important;
-}
-.v-theme--dark .search-field .v-field {
-  background: rgba(255, 255, 255, 0.04) !important;
-}
-.v-theme--light .search-field .v-field {
-  background: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* 搜索框内嵌按钮时圆角适配 */
@@ -220,15 +181,23 @@
 
 /* ── 29i. 开关行 — 带描述的开关行 .switch-row-lg ── */
 /*
- * 使用方式：
- *   <div class="switch-row-lg">
- *     <v-switch v-model="val" density="compact" hide-details color="primary" />
- *     <div>
- *       <div class="switch-label">开关名称</div>
- *       <div class="switch-desc">开关描述</div>
- *     </div>
- *   </div>
- */
+* 使用方式（两种布局）：
+*
+*   布局一：开关在前（简单标签）
+*   <div class="switch-row-lg">
+*     <v-switch v-model="val" density="compact" hide-details color="primary" />
+*     <span class="switch-label">开关名称</span>
+*   </div>
+*
+*   布局二：开关在后（带描述，推荐）
+*   <div class="switch-row-lg">
+*     <div>
+*       <div class="switch-label">开关名称</div>
+*       <div class="switch-desc">开关描述</div>
+*     </div>
+*     <v-switch v-model="val" density="compact" hide-details color="primary" />
+*   </div>
+*/
 .switch-row-lg {
   display: flex;
   align-items: center;
@@ -279,33 +248,27 @@
 
 /* filled 输入框 — Liquid Glass */
 .v-theme--dark .v-field--variant-filled {
-  background: rgba(255, 255, 255, 0.06) !important;
   border-radius: 16px 16px 0 0 !important;
 }
 .v-theme--light .v-field--variant-filled {
-  background: rgba(255, 255, 255, 0.7) !important;
   border-radius: 16px 16px 0 0 !important;
 }
 
 /* solo 输入框 — Liquid Glass */
 .v-theme--dark .v-field--variant-solo {
-  background: rgba(255, 255, 255, 0.06) !important;
   border-radius: 16px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 .v-theme--light .v-field--variant-solo {
-  background: rgba(255, 255, 255, 0.85) !important;
   border-radius: 16px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
 /* solo-filled 输入框 */
 .v-theme--dark .v-field--variant-solo-filled {
-  background: rgba(255, 255, 255, 0.08) !important;
   border-radius: 16px !important;
 }
 .v-theme--light .v-field--variant-solo-filled {
-  background: rgba(255, 255, 255, 0.9) !important;
   border-radius: 16px !important;
 }
 
@@ -361,7 +324,6 @@
 .search-results-box {
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   border-radius: 16px;
-  background: rgba(var(--v-theme-surface), 0.6);
   backdrop-filter: blur(20px) saturate(150%);
   -webkit-backdrop-filter: blur(20px) saturate(150%);
   max-height: 240px;
@@ -370,11 +332,9 @@
   scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
 }
 .v-theme--dark .search-results-box {
-  background: rgba(26, 26, 62, 0.9);
   border-color: rgba(78, 205, 196, 0.12);
 }
 .v-theme--light .search-results-box {
-  background: rgba(255, 255, 255, 0.92);
   border-color: rgba(124, 58, 237, 0.12);
 }
 .search-results-box::-webkit-scrollbar { width: 6px; }
@@ -442,5 +402,45 @@
 
 .glass-card:hover::after {
   border-radius: 28px 28px 0 0;
+}
+
+/* ============================================================
+ * 29u. Navigation Drawer & App Bar — Liquid Glass 磨砂玻璃
+ *     导航栏和顶栏使用半透明 + backdrop-filter 磨砂玻璃效果，
+ *     与页面背景融为一体，消除亮色模式下 surface(#FFF) 与
+ *     background(#F5F5FA) 的色差割裂感。
+ *     放在 design-spec.css (最后加载) 覆盖 Vuetify v-sheet 默认背景。
+ * ============================================================ */
+
+/* ── 亮色：半透明白 + 磨砂模糊 ── */
+.v-theme--light .v-navigation-drawer,
+.v-theme--light .v-app-bar {
+  background: rgba(245, 245, 250, 0.72) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+}
+
+.v-theme--light .v-navigation-drawer {
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.v-theme--light .v-app-bar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ── 暗色：半透明深蓝 + 磨砂模糊 ── */
+.v-theme--dark .v-navigation-drawer,
+.v-theme--dark .v-app-bar {
+  background: rgba(26, 26, 62, 0.72) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+}
+
+.v-theme--dark .v-navigation-drawer {
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.v-theme--dark .v-app-bar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
