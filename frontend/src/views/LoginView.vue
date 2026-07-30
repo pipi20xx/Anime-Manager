@@ -47,7 +47,7 @@ async function handleLogin() {
           <!-- 标题 -->
           <div class="text-center mb-6">
             <v-avatar class="liquid-avatar mb-4" size="64" rounded="xl">
-              <v-icon icon="mdi-animation-play" size="36" />
+              <img src="/favicon.svg" alt="番剧管家" class="app-logo" />
             </v-avatar>
             <h1 class="text-h5 font-weight-bold">番剧管家</h1>
             <p class="text-body-2 text-medium-emphasis mt-1">Anime Manager</p>
@@ -81,9 +81,25 @@ async function handleLogin() {
             >
               登 录
             </v-btn>
+
+            <!-- 默认账号说明 -->
+            <div class="text-center mt-4">
+              <v-chip size="small" variant="tonal" color="info" label>
+                <v-icon start size="14">mdi-information-outline</v-icon>
+                默认账号: admin / admin123
+              </v-chip>
+            </div>
           </v-form>
         </v-card>
       </v-container>
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+.app-logo {
+  width: 40px;
+  height: 40px;
+  color: rgb(var(--v-theme-primary));
+}
+</style>

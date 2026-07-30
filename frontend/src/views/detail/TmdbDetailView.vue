@@ -472,59 +472,57 @@ onMounted(() => {
                   </div>
 
                   <!-- 集列表 -->
-                  <div v-if="getSeasonEpisodes(season.season_number).length" class="ep-list">
-                    <div
+                  <v-list v-if="getSeasonEpisodes(season.season_number).length" density="compact">
+                    <v-list-item
                       v-for="ep in getSeasonEpisodes(season.season_number)"
                       :key="ep.episode"
-                      class="ep-item"
+                      class="px-0"
                     >
-                      <!-- 缩略图 -->
-                      <div class="ep-item__still">
-                        <v-img
-                          v-if="ep.still_path"
-                          :src="getPosterUrl(ep.still_path, 'w300')"
-                          cover
-                          class="rounded"
-                        />
-                        <div v-else class="ep-item__still-placeholder">
-                          <span>E{{ ep.episode }}</span>
-                        </div>
-                      </div>
+                      <template #prepend>
+                        <v-avatar rounded="lg" size="120" class="mr-3">
+                          <v-img
+                            v-if="ep.still_path"
+                            :src="getPosterUrl(ep.still_path, 'w300')"
+                            cover
+                          />
+                          <div v-else class="d-flex align-center justify-center bg-surface-variant w-100 h-100">
+                            <span class="text-h6 font-weight-bold text-medium-emphasis">E{{ ep.episode }}</span>
+                          </div>
+                        </v-avatar>
+                      </template>
 
-                      <!-- 内容 -->
-                      <div class="ep-item__content">
-                        <div class="ep-item__header">
-                          <div class="d-flex align-center ga-2 flex-wrap">
-                            <span class="ep-item__num">E{{ ep.episode }}</span>
-                            <span class="ep-item__name">{{ ep.name || '未命名' }}</span>
-                            <v-chip v-if="ep.episode_type === 'finale'" size="x-small" color="error" variant="tonal">本季大结局</v-chip>
-                            <v-chip v-else-if="ep.episode_type === 'mid_season'" size="x-small" color="warning" variant="tonal">季中结局</v-chip>
-                            <v-chip v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.exists" size="x-small" color="success" variant="tonal">
-                              <v-icon start size="12">mdi-check-circle</v-icon>
-                              已入库
-                            </v-chip>
-                          </div>
-                          <div class="d-flex ga-3 text-caption text-medium-emphasis">
-                            <span v-if="ep.vote_average" class="d-flex align-center ga-1">
-                              <v-icon size="12" color="warning">mdi-star</v-icon>
-                              {{ ep.vote_average.toFixed(1) }}
-                            </span>
-                            <span v-if="ep.runtime">{{ ep.runtime }}分钟</span>
-                            <span v-if="ep.air_date">{{ ep.air_date }}</span>
-                          </div>
-                        </div>
-                        <div v-if="ep.overview" class="ep-item__overview">{{ ep.overview }}</div>
-                        <!-- Emby 文件列表 -->
-                        <div v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.files?.length" class="ep-item__files">
-                          <div v-for="(file, idx) in getEpisodeEmbyInfo(season.season_number, ep.episode).files" :key="idx" class="ep-file">
-                            <v-icon size="12" class="mr-1">mdi-file</v-icon>
-                            <span class="ep-file__name">{{ file.name }}</span>
-                            <span v-if="file.size" class="ep-file__size"> · {{ formatFileSize(file.size) }}</span>
-                          </div>
+                      <v-list-item-title class="d-flex align-center ga-2 flex-wrap mb-1">
+                        <v-chip size="x-small" color="primary" variant="tonal" label>E{{ ep.episode }}</v-chip>
+                        <span class="font-weight-medium">{{ ep.name || '未命名' }}</span>
+                        <v-chip v-if="ep.episode_type === 'finale'" size="x-small" color="error" variant="tonal">本季大结局</v-chip>
+                        <v-chip v-else-if="ep.episode_type === 'mid_season'" size="x-small" color="warning" variant="tonal">季中结局</v-chip>
+                        <v-chip v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.exists" size="x-small" color="success" variant="tonal">
+                          <v-icon start size="12">mdi-check-circle</v-icon>
+                          已入库
+                        </v-chip>
+                      </v-list-item-title>
+
+                      <v-list-item-subtitle class="d-flex ga-3 text-caption mb-1">
+                        <span v-if="ep.vote_average" class="d-flex align-center ga-1">
+                          <v-icon size="12" color="warning">mdi-star</v-icon>
+                          {{ ep.vote_average.toFixed(1) }}
+                        </span>
+                        <span v-if="ep.runtime">{{ ep.runtime }}分钟</span>
+                        <span v-if="ep.air_date">{{ ep.air_date }}</span>
+                      </v-list-item-subtitle>
+
+                      <div v-if="ep.overview" class="text-body-2 text-medium-emphasis mb-2">{{ ep.overview }}</div>
+
+                      <!-- Emby 文件列表 -->
+                      <div v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.files?.length" class="bg-surface-variant rounded pa-2">
+                        <div v-for="(file, idx) in getEpisodeEmbyInfo(season.season_number, ep.episode).files" :key="idx" class="text-caption d-flex align-center">
+                          <v-icon size="12" class="mr-1">mdi-file</v-icon>
+                          <span class="text-medium-emphasis text-truncate">{{ file.name }}</span>
+                          <span v-if="file.size" class="text-disabled ml-1">· {{ formatFileSize(file.size) }}</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </v-list-item>
+                  </v-list>
                   <div v-else class="text-body-2 text-medium-emphasis pa-2">暂无集信息</div>
                 </template>
               </v-expansion-panel-text>
@@ -594,99 +592,14 @@ onMounted(() => {
   border-left: 3px solid rgb(var(--v-theme-primary));
 }
 
-/* ── 集列表 ── */
-.ep-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ep-item {
-  display: flex;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 8px;
-  transition: background 0.15s ease;
-}
-.ep-item:hover {
-  background: rgba(var(--v-theme-on-surface), 0.03);
-}
-
-/* 缩略图 */
-.ep-item__still {
-  width: 160px;
-  min-width: 160px;
-  aspect-ratio: 16 / 9;
-  border-radius: 6px;
-  overflow: hidden;
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  flex-shrink: 0;
-}
-.ep-item__still-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: rgba(var(--v-theme-on-surface), 0.3);
-  background: rgba(var(--v-theme-on-surface), 0.04);
-}
-
-/* 内容区 */
-.ep-item__content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.ep-item__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.ep-item__num {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgb(var(--v-theme-primary));
-  padding: 2px 6px;
-  background: rgba(var(--v-theme-primary), 0.1);
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-.ep-item__name {
+/* ── 季度简介 ── */
+.ep-season-overview {
   font-size: 13px;
-  font-weight: 600;
-}
-.ep-item__overview {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.55);
-  line-height: 1.5;
-}
-
-/* Emby 文件列表 */
-.ep-item__files {
-  margin-top: 4px;
-  padding: 6px 8px;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border-radius: 4px;
-}
-.ep-file {
-  font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
-  margin-bottom: 2px;
-}
-.ep-file:last-child {
-  margin-bottom: 0;
-}
-.ep-file__name {
   color: rgba(var(--v-theme-on-surface), 0.7);
-}
-.ep-file__size {
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border-radius: 8px;
+  border-left: 3px solid rgb(var(--v-theme-primary));
 }
 </style>

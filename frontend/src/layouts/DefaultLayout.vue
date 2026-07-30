@@ -119,7 +119,7 @@ onUnmounted(() => {
       <!-- Logo 区域 -->
       <div class="logo-header" :class="{ 'logo-header--rail': rail && !isMobile }">
         <v-avatar class="liquid-avatar" rounded="xl" size="40">
-          <v-icon icon="mdi-animation-play" size="24" />
+          <img src="/favicon.svg" alt="番剧管家" class="app-logo" />
         </v-avatar>
         <div v-if="!rail || isMobile" class="logo-text">
           <div class="text-subtitle-1 font-weight-bold liquid-glass-subtitle">番剧管家</div>
@@ -272,5 +272,11 @@ onUnmounted(() => {
 :deep(.v-navigation-drawer .v-list-item__spacer) {
   width: 8px !important;
   min-width: 8px !important;
+}
+
+.app-logo {
+  width: 28px;
+  height: 28px;
+  color: rgb(var(--v-theme-primary));
 }
 </style>
