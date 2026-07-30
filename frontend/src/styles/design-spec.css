@@ -428,12 +428,10 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-/* ── 暗色：半透明深蓝 + 磨砂模糊 ── */
+/* ── 暗色：纯色背景（与页面背景统一） ── */
 .v-theme--dark .v-navigation-drawer,
 .v-theme--dark .v-app-bar {
-  background: rgba(26, 26, 62, 0.72) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  background: #1a1a3e !important;
 }
 
 .v-theme--dark .v-navigation-drawer {

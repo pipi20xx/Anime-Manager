@@ -237,9 +237,7 @@
 }
 
 .v-theme--dark .sticky-tabs {
-  background: rgba(26, 26, 62, 0.72) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  background: #1a1a3e !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
@@ -278,9 +276,7 @@
 }
 
 .v-theme--dark .sticky-sub-tabs {
-  background: rgba(26, 26, 62, 0.72) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  background: #1a1a3e !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
 }
 
