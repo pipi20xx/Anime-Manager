@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
@@ -6,6 +7,9 @@ import { visualizer } from 'rollup-plugin-visualizer'
 import viteCompression from 'vite-plugin-compression'
 import AutoImport from 'unplugin-auto-import/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// 从 package.json 统一读取版本号，避免多处硬编码
+const pkgVersion = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8')).version
 
 export default defineConfig(({ command, mode }) => {
   const isAnalyze = mode === 'analyze'
@@ -83,7 +87,7 @@ export default defineConfig(({ command, mode }) => {
       isAnalyze && visualizer({ open: true, gzipSize: true, filename: 'dist/stats.html' }),
     ],
     define: {
-      __APP_VERSION__: JSON.stringify('3.0.1'),
+      __APP_VERSION__: JSON.stringify(pkgVersion),
     },
     resolve: {
       alias: {
