@@ -100,6 +100,7 @@ async function handleLogin() {
 .app-logo {
   width: 40px;
   height: 40px;
-  color: rgb(var(--v-theme-primary));
+  /* <img> 引入的 SVG 无法继承 currentColor，用 filter 着色 */
+  filter: brightness(0) saturate(100%) invert(47%) sepia(98%) saturate(1925%) hue-rotate(234deg) brightness(96%) contrast(96%);
 }
 </style>

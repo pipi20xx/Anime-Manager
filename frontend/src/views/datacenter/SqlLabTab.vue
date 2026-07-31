@@ -392,7 +392,7 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
 
   <!-- 空状态 -->
   <div v-else class="text-center pa-8">
-    <v-icon size="48" color="primary" class="mb-3">mdi-code-braces</v-icon>
+    <v-icon size="48" color="primary" class="mb-3">mdi-code-block-braces</v-icon>
     <div class="text-body-2 text-medium-emphasis">选择数据表或输入 SQL 查询</div>
   </div>
 

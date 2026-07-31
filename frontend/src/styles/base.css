@@ -120,15 +120,15 @@
   transition: border-radius 0.5s ease-out;
 }
 
-/* 亮色主题 — 彩虹边框增强可见度 */
+/* 亮色主题 — 彩虹边框增强可见度（用深色、高对比色替代偏白色） */
 .v-theme--light .glass-card::before {
-  background: linear-gradient(135deg, #7c3aed, #06b6d4, #a855f7, #ec4899);
+  background: linear-gradient(135deg, #7c3aed, #2563eb, #9333ea, #db2777);
   padding: 2px;
 }
 
-/* 亮色主题 — 顶部高光增强 */
+/* 亮色主题 — 顶部高光（用紫色高光替代白色，在白底上更可见） */
 .v-theme--light .glass-card::after {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.2), transparent);
 }
 
 /* 小型列表卡片 — 圆角适配 */
@@ -173,13 +173,15 @@
   z-index: 1;
 }
 
+/* 亮色主题 — 彩虹边框增强可见度（用深色、高对比色替代偏白色） */
 .v-theme--light .glass-panel::before {
-  background: linear-gradient(135deg, #7c3aed, #06b6d4, #a855f7, #ec4899);
+  background: linear-gradient(135deg, #7c3aed, #2563eb, #9333ea, #db2777);
   padding: 2px;
 }
 
+/* 亮色主题 — 顶部高光（用紫色高光替代白色） */
 .v-theme--light .glass-panel::after {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.15), transparent);
 }
 
 .glass-btn {

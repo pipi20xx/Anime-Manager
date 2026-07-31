@@ -118,7 +118,7 @@ const variableGroups = [
           <v-expansion-panel>
             <v-expansion-panel-title>
               <div class="d-flex align-center ga-2">
-                <v-icon size="18">mdi-code-braces</v-icon>
+                <v-icon size="18">mdi-code-block-braces</v-icon>
                 <span class="font-weight-medium">可用变量手册</span>
               </div>
             </v-expansion-panel-title>
