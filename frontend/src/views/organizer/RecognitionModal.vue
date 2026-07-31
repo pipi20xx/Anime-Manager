@@ -287,73 +287,105 @@ watch(() => props.modelValue, (newVal) => {
 
           <!-- 识别结果 -->
           <div v-if="data" class="result-section">
-            <!-- 海报 + 详情 -->
-            <div class="result-main-layout">
-              <div class="poster-box">
-                <v-img v-if="data.final_result?.poster_path" :src="getImg(data.final_result.poster_path)" width="120" class="poster-img rounded" cover />
-                <div v-else class="poster-placeholder">无海报</div>
-              </div>
-              <div class="details-box">
-                <div class="result-title">{{ data.final_result?.title }}</div>
-
-                <!-- 标签行 -->
-                <div class="tags-row">
-                  <v-chip v-if="data.final_result?.category" size="small" variant="tonal" color="primary">
-                    {{ data.final_result.category }}
-                  </v-chip>
-                  <v-chip v-if="data.final_result?.secondary_category" size="small" variant="tonal" color="info">
-                    🏷️ {{ data.final_result.secondary_category }}
-                  </v-chip>
-                  <a
-                    v-if="data.final_result?.tmdb_id && data.final_result.tmdb_id !== 'N/A'"
-                    :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`"
-                    target="_blank"
-                    class="tmdb-link"
-                  >
-                    TMDB: {{ data.final_result.tmdb_id }}
-                  </a>
-                  <span v-else class="tmdb-text">TMDB: {{ data.final_result?.tmdb_id || 'N/A' }}</span>
-                  <span v-if="data.final_result?.release_date" class="date-text">📅 {{ data.final_result.release_date }}</span>
-                </div>
-
-                <!-- 规格标签 -->
-                <div class="specs-row">
-                  <span v-if="data.final_result?.resolution" class="spec-badge">{{ data.final_result.resolution }}</span>
-                  <span v-if="data.final_result?.video_encode" class="spec-badge blue">{{ data.final_result.video_encode }}</span>
-                  <span v-if="data.final_result?.audio_encode" class="spec-badge blue">{{ data.final_result.audio_encode }}</span>
-                </div>
-
-                <!-- 信息网格 -->
-                <div class="info-grid">
-                  <div class="info-item">
-                    <div class="info-label">年份</div>
-                    <div class="info-value">{{ data.final_result?.year || '-' }}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">季号</div>
-                    <div class="info-value">{{ data.final_result?.season !== undefined ? 'S' + data.final_result.season : '-' }}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">集数</div>
-                    <div class="info-value">{{ data.final_result?.episode !== undefined ? 'E' + data.final_result.episode : '-' }}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">介质来源</div>
-                    <div class="info-value">{{ data.final_result?.source || '-' }}</div>
-                  </div>
-                </div>
-
-                <!-- 文本信息 -->
-                <div class="text-rows">
-                  <div class="text-row"><span class="text-label">原产地</span><span class="text-value">{{ data.final_result?.origin_country || '-' }}</span></div>
-                  <div class="text-row"><span class="text-label">字幕语言</span><span class="text-value">{{ data.final_result?.subtitle || '无' }}</span></div>
-                  <div class="text-row"><span class="text-label">制作组</span><span class="text-value team-value">{{ data.final_result?.team || '未知' }}</span></div>
-                  <div class="text-row"><span class="text-label">发布平台</span><span class="text-value">{{ data.final_result?.platform || '-' }}</span></div>
-                  <div class="text-row"><span class="text-label">视频特效</span><span class="text-value">{{ data.final_result?.video_effect || '-' }}</span></div>
-                  <div class="text-row"><span class="text-label">处理后名</span><span class="text-value mono-value">{{ data.final_result?.processed_name }}</span></div>
-                </div>
-              </div>
+            <div class="text-subtitle-1 font-weight-bold mb-3 d-flex align-center ga-2">
+              <v-icon color="primary" size="22">mdi-flag-checkered</v-icon>
+              最终识别结论
             </div>
+
+            <v-card variant="outlined" class="mb-4 pa-4 recog-final-card">
+              <v-row>
+                <!-- 海报 -->
+                <v-col v-if="data.final_result?.poster_path" cols="12" sm="3" md="2" class="d-flex justify-center">
+                  <v-img
+                    :src="getImg(data.final_result.poster_path)"
+                    cover
+                    rounded="xl"
+                    aspect-ratio="2/3"
+                    max-height="220"
+                    class="recog-poster"
+                  />
+                </v-col>
+                <!-- 详情 -->
+                <v-col cols="12" sm="9" md="10">
+                  <div class="d-flex align-center ga-2 flex-wrap">
+                    <div class="text-h6 font-weight-bold">{{ data.final_result?.title || '未知标题' }}</div>
+                    <v-chip v-if="data.final_result?.category" size="x-small" variant="flat" class="meta-tag meta-tag--type">
+                      {{ data.final_result.category === 'tv' ? '剧集' : data.final_result.category === 'movie' ? '电影' : data.final_result.category }}
+                    </v-chip>
+                  </div>
+
+                  <!-- 文本信息行 -->
+                  <div class="recog-text-rows mt-4">
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">季 / 集:</span>
+                      <v-chip v-if="data.final_result?.season !== undefined && data.final_result.season !== null || data.final_result?.episode" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+                        <template v-if="data.final_result?.season !== undefined && data.final_result.season !== null">S{{ String(data.final_result.season).padStart(2, '0') }}</template><template v-if="data.final_result?.episode">E{{ String(data.final_result.episode).padStart(2, '0') }}</template>
+                      </v-chip>
+                      <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">无</v-chip>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">TMDB ID:</span>
+                      <a v-if="data.final_result?.tmdb_id && data.final_result.tmdb_id !== 'N/A'" :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`" target="_blank" class="meta-tag meta-tag--tmdb">{{ data.final_result.tmdb_id }}</a>
+                      <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">N/A</v-chip>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">上映日期:</span>
+                      <v-chip v-if="data.final_result?.release_date" size="x-small" variant="flat" class="meta-tag meta-tag--time">{{ data.final_result.release_date }}</v-chip>
+                      <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">未知</v-chip>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">二级分类:</span>
+                      <v-chip v-if="data.final_result?.secondary_category && data.final_result.secondary_category !== '123'" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">{{ data.final_result.secondary_category }}</v-chip>
+                      <span v-else class="recog-text-value">{{ data.final_result?.secondary_category === '123' ? '未分类 (待修正)' : (data.final_result?.secondary_category || '-') }}</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">分辨率:</span>
+                      <v-chip v-if="data.final_result?.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ data.final_result.resolution }}</v-chip>
+                      <span v-else class="recog-text-value">-</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">视频编码:</span>
+                      <v-chip v-if="data.final_result?.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ data.final_result.video_encode }}</v-chip>
+                      <span v-else class="recog-text-value">-</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">音频编码:</span>
+                      <v-chip v-if="data.final_result?.audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ data.final_result.audio_encode }}</v-chip>
+                      <span v-else class="recog-text-value">-</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">原产地:</span>
+                      <v-chip v-if="data.final_result?.origin_country" size="x-small" variant="flat" class="meta-tag meta-tag--country">{{ data.final_result.origin_country }}</v-chip>
+                      <span v-else class="recog-text-value">-</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">字幕语言:</span>
+                      <v-chip v-if="data.final_result?.subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ data.final_result.subtitle }}</v-chip>
+                      <span v-else class="recog-text-value">无</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">制作组:</span>
+                      <v-chip v-if="data.final_result?.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ data.final_result.team }}</v-chip>
+                      <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--team">未知制作组</v-chip>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">发布平台:</span>
+                      <v-chip v-if="data.final_result?.platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ data.final_result.platform }}</v-chip>
+                      <span v-else class="recog-text-value">-</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">视频特效:</span>
+                      <v-chip v-if="data.final_result?.video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ data.final_result.video_effect }}</v-chip>
+                      <span v-else class="recog-text-value">-</span>
+                    </div>
+                    <div class="recog-text-row">
+                      <span class="recog-text-label">处理后名:</span>
+                      <span class="recog-text-value text-mono">{{ data.final_result?.processed_name || '-' }}</span>
+                    </div>
+                  </div>
+                </v-col>
+              </v-row>
+            </v-card>
 
             <!-- 重命名预览 -->
             <div class="preview-section">
@@ -437,55 +469,40 @@ watch(() => props.modelValue, (newVal) => {
 .strategy-label { font-size: 14px; font-weight: 600; color: rgba(var(--v-theme-on-surface), 0.87); margin-bottom: 2px; }
 .strategy-desc { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.5); line-height: 1.4; }
 
-/* 识别结果 */
-.result-main-layout { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; }
-.poster-box { flex-shrink: 0; }
-.poster-img { border-radius: 8px; }
-.poster-placeholder {
-  width: 120px; height: 180px;
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  border: 1px dashed rgba(var(--v-theme-on-surface), 0.15);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.3);
+/* 最终识别结论卡片 */
+.recog-final-card {
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
+  background: transparent !important;
 }
-.details-box { flex-grow: 1; min-width: 0; }
-.result-title { font-size: 20px; font-weight: bold; color: rgba(var(--v-theme-on-surface), 0.87); line-height: 1.3; margin-bottom: 8px; }
-
-.tags-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.tmdb-link { font-family: monospace; color: rgb(var(--v-theme-primary)); font-size: 11px; text-decoration: none; }
-.tmdb-link:hover { text-decoration: underline; }
-.tmdb-text { font-family: monospace; color: rgba(var(--v-theme-on-surface), 0.4); font-size: 11px; }
-.date-text { color: rgb(var(--v-theme-primary)); font-size: 12px; }
-
-.specs-row { display: flex; gap: 6px; margin-bottom: 12px; }
-.spec-badge {
-  padding: 1px 6px; border-radius: 4px; font-size: 10px;
-  background: rgba(var(--v-theme-surface), 0.8);
-  color: rgba(var(--v-theme-on-surface), 0.5);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+.recog-poster {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
-.spec-badge.blue { color: rgb(var(--v-theme-info)); border-color: rgba(var(--v-theme-info), 0.3); }
-
-.info-grid {
-  display: flex; border-radius: 6px; margin-bottom: 16px;
-  overflow: hidden; border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+/* 文本信息行 */
+.recog-text-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.info-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  padding: 8px 4px;
+.recog-text-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
 }
-.info-item:not(:last-child) { border-right: 1px solid rgba(var(--v-theme-on-surface), 0.08); }
-.info-label { font-size: 10px; color: rgba(var(--v-theme-on-surface), 0.4); text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
-.info-value { font-weight: bold; font-size: 14px; color: rgb(var(--v-theme-primary)); }
-
-.text-rows { font-size: 12px; display: flex; flex-direction: column; gap: 4px; font-family: monospace; }
-.text-row { display: flex; gap: 12px; align-items: baseline; padding: 2px 0; border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04); }
-.text-row:last-child { border-bottom: none; }
-.text-label { color: rgba(var(--v-theme-on-surface), 0.4); width: 70px; flex-shrink: 0; text-align: right; font-size: 11px; text-transform: uppercase; }
-.text-value { color: rgba(var(--v-theme-on-surface), 0.75); word-break: break-all; }
-.team-value { color: rgb(var(--v-theme-success)); font-weight: bold; }
-.mono-value { font-family: monospace; color: rgb(var(--v-theme-warning)); }
+.recog-text-label {
+  color: rgba(var(--v-theme-on-surface), 0.4);
+  width: 80px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.recog-text-value {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  word-break: break-all;
+}
+.text-mono {
+  font-family: monospace;
+  color: rgb(var(--v-theme-warning));
+}
 
 /* 预览 */
 .preview-section {

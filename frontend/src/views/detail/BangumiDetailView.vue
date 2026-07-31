@@ -223,7 +223,7 @@ onMounted(() => {
             </div>
 
             <!-- 标签 -->
-            <v-chip-group class="mt-3">
+            <v-chip-group class="mt-3" column>
               <v-chip v-if="detail.source === 'bangumi'" size="small" variant="tonal" color="info">
                 动画
               </v-chip>

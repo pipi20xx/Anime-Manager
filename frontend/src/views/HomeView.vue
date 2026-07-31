@@ -244,7 +244,7 @@ const filteredLogs = computed(() => {
                     最终识别结论
                   </div>
 
-                  <v-card variant="tonal" class="mb-4 pa-4 recog-final-card">
+                  <v-card variant="outlined" class="mb-4 pa-4 recog-final-card">
                     <v-row>
                       <!-- 海报 -->
                       <v-col v-if="finalData.poster_path" cols="12" sm="3" md="2" class="d-flex justify-center">
