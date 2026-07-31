@@ -18,17 +18,8 @@ const logContainer = ref<HTMLElement>()
 const logFilter = ref('all')
 const autoScroll = ref(true)
 
-const levelColors: Record<string, string> = {
-  INFO: '#4ecdc4',
-  WARNING: '#FFB74D',
-  ERROR: '#EF5350',
-  CRITICAL: '#F48FB1',
-  DEBUG: 'rgba(255,255,255,0.4)',
-  SUCCESS: '#81C784',
-}
-
 const filterOptions = [
-  { title: '全部', value: 'all', color: '#ffffff' },
+  { title: '全部', value: 'all' },
   { title: 'INFO', value: 'INFO', color: '#4ecdc4' },
   { title: 'WARNING', value: 'WARNING', color: '#FFB74D' },
   { title: 'ERROR', value: 'ERROR', color: '#EF5350' },
@@ -68,15 +59,20 @@ function clearLogs() {
   systemStore.clearLogs()
 }
 
-// 根据日志内容判断级别并返回颜色
-function getLogColor(entry: string): string {
+// 根据日志内容判断级别
+function getLogLevel(entry: string): string {
   const upper = entry.toUpperCase()
-  if (upper.includes('CRITICAL')) return levelColors.CRITICAL
-  if (upper.includes('ERROR')) return levelColors.ERROR
-  if (upper.includes('WARNING')) return levelColors.WARNING
-  if (upper.includes('SUCCESS')) return levelColors.SUCCESS
-  if (upper.includes('DEBUG')) return levelColors.DEBUG
-  return levelColors.INFO
+  if (upper.includes('CRITICAL')) return 'critical'
+  if (upper.includes('ERROR')) return 'error'
+  if (upper.includes('WARNING')) return 'warning'
+  if (upper.includes('SUCCESS')) return 'success'
+  if (upper.includes('DEBUG')) return 'debug'
+  return 'info'
+}
+
+// 根据级别返回 CSS class
+function getLogLevelClass(entry: string): string {
+  return `log-entry--${getLogLevel(entry)}`
 }
 </script>
 
@@ -92,9 +88,9 @@ function getLogColor(entry: string): string {
           :key="opt.value" 
           :value="opt.value" 
           size="small"
-          :style="logFilter === opt.value ? { color: opt.color } : {}"
+          :style="logFilter === opt.value && opt.color ? { color: opt.color } : {}"
         >
-          <span :style="{ color: opt.color }">{{ opt.title }}</span>
+          {{ opt.title }}
         </v-btn>
       </v-btn-toggle>
       <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-delete-outline" @click="clearLogs">清空</v-btn>
@@ -105,11 +101,12 @@ function getLogColor(entry: string): string {
         v-for="(entry, i) in filteredLogs"
         :key="i"
         class="log-entry"
-        :style="{ color: getLogColor(entry) }"
+        :class="getLogLevelClass(entry)"
       >
+        <span class="log-entry__level" :data-level="getLogLevel(entry)">{{ getLogLevel(entry) }}</span>
         <span class="log-entry__msg">{{ entry }}</span>
       </div>
-      <div v-if="!filteredLogs.length" class="text-center pa-8 text-medium-emphasis">
+      <div v-if="!filteredLogs.length" class="log-terminal__empty">
         暂无日志
       </div>
     </div>
