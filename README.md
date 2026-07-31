@@ -1,8 +1,9 @@
 # 🌸 番剧管家 (Anime Manager)
 
-[![Version](https://img.shields.io/badge/Version-2.4.3-blue?style=flat-square)](./VERSION)
+[![Version](https://img.shields.io/badge/Version-3.0.0-blue?style=flat-square)](./VERSION)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Vue3](https://img.shields.io/badge/Frontend-Vue%203-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
+[![Vuetify](https://img.shields.io/badge/UI-Vuetify%204-1867C0?style=flat-square&logo=vuetify)](https://vuetifyjs.com/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Deployment-Docker-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 
@@ -143,11 +144,14 @@
 
 ### 前端 (Frontend)
 - **Framework**: Vue 3 (Composition API) + TypeScript
-- **Bundler**: Vite 6
-- **UI/UX**: Naive UI 组件库 + Heroicons 图标，响应式布局支持移动端
-- **State**: Pinia
+- **Bundler**: Vite 8
+- **UI/UX**: Vuetify 4 组件库 + MDI 图标，Liquid Glass 流动玻璃设计语言，亮色/暗色主题
+- **State**: Pinia 4
 - **PWA**: vite-plugin-pwa 渐进式 Web 应用支持
-- **Markdown**: unplugin-vue-markdown 文档渲染支持
+- **Markdown**: marked 文档渲染支持
+- **Auto Import**: unplugin-auto-import 自动导入 Vue/Router/Pinia/VueUse API
+- **Compression**: vite-plugin-compression (gzip + brotli 双格式压缩)
+- **Utilities**: @vueuse/core、lodash-es、vuedraggable、sortablejs
 
 ---
 
@@ -263,7 +267,7 @@
    ```
 
    项目根目录已包含 `docker-compose.yml` 和 `Dockerfile`，采用多阶段构建：
-   - **Stage 1**: Node 18 构建前端
+   - **Stage 1**: Node 22 构建前端（Vite 8 + Vuetify 4）
    - **Stage 2**: Python 3.11 运行后端，挂载前端构建产物
 
 ---
@@ -409,6 +413,8 @@ Anime-Manager/
 │   │   ├── special_episode_handler.py  # 特别篇处理
 │   │   ├── batch_helper.py         # 批量处理
 │   │   ├── builtin_group_loader.py # 内置制作组加载
+│   │   ├── constants.py            # 常量定义
+│   │   ├── data_models.py          # 数据模型
 │   │   ├── bgm_matcher/            # Bangumi 匹配器
 │   │   └── tmdb_matcher/           # TMDB 匹配器
 │   │
@@ -473,62 +479,125 @@ Anime-Manager/
 │
 ├── frontend/                       # Vue 3 前端工程
 │   ├── src/
-│   │   ├── App.vue                 # 根组件
+│   │   ├── App.vue                 # 根组件（主题同步 + WebSocket 启动）
 │   │   ├── main.ts                 # 入口
-│   │   ├── version.ts              # 版本号
-│   │   ├── api/                    # API 请求层
+│   │   ├── api/                    # API 请求层（统一导出）
+│   │   │   ├── client.ts           # HTTP 客户端封装
+│   │   │   ├── auth.ts             # 认证 API
+│   │   │   ├── explore.ts          # 探索发现 API
+│   │   │   ├── tmdb.ts             # TMDB API
+│   │   │   ├── bangumi.ts          # Bangumi API
+│   │   │   ├── subscription.ts     # 订阅 API
+│   │   │   ├── organizer.ts        # 文件整理 API
+│   │   │   ├── strm.ts             # STRM 生成 API
+│   │   │   ├── recognition.ts      # 识别 API
+│   │   │   ├── system.ts           # 系统管理 API
+│   │   │   ├── clients.ts          # 下载客户端 API
+│   │   │   ├── config.ts           # 配置 API
+│   │   │   ├── dataCenter.ts       # 数据中心 API
+│   │   │   ├── calendar.ts         # 日历 API
+│   │   │   └── ...                 # 其他 API 模块
 │   │   ├── views/                  # 视图页面
 │   │   │   ├── HomeView.vue        # 首页
 │   │   │   ├── LoginView.vue       # 登录页
-│   │   │   ├── desktop/            # 桌面端视图
-│   │   │   │   ├── AiLabViewDesktop.vue        # AI 实验室
-│   │   │   │   ├── AppearanceViewDesktop.vue   # 外观定制
-│   │   │   │   ├── ExploreViewDesktop.vue      # 探索发现
-│   │   │   │   ├── FileBrowserViewDesktop.vue  # 文件浏览器
-│   │   │   │   ├── OrganizerViewDesktop.vue    # 文件整理
-│   │   │   │   ├── RecognitionLogsDesktop.vue  # 识别日志
-│   │   │   │   ├── StrmGeneratorViewDesktop.vue# STRM 生成
-│   │   │   │   ├── SubscriptionViewDesktop.vue # 订阅管理
-│   │   │   │   ├── SystemLogsViewDesktop.vue   # 系统日志
-│   │   │   │   ├── TaskHistoryViewDesktop.vue  # 任务历史
-│   │   │   │   ├── JackettSearchViewDesktop.vue# Jackett 搜索
-│   │   │   │   ├── ExternalControlDesktop.vue  # 外部控制
-│   │   │   │   ├── FileHashesViewDesktop.vue   # 文件哈希
-│   │   │   │   ├── UsageGuideDesktop.vue       # 使用指南
-│   │   │   │   ├── BangumiDetailViewDesktop.vue# Bangumi 详情
-│   │   │   │   ├── TmdbDetailViewDesktop.vue   # TMDB 详情
-│   │   │   │   ├── TmdbPersonDetailViewDesktop.vue  # TMDB 人物详情
-│   │   │   │   └── appearance/     # 外观定制面板
-│   │   │   ├── explore/desktop/    # 探索子页面
-│   │   │   │   ├── DiscoveryTabDesktop.vue     # 发现
-│   │   │   │   ├── ScheduleTabDesktop.vue      # 播出时间表
-│   │   │   │   ├── SearchTabDesktop.vue        # 搜索
-│   │   │   │   └── SeasonalTabDesktop.vue      # 当季番剧
+│   │   │   ├── AiLabView.vue       # AI 实验室
+│   │   │   ├── CalendarView.vue    # 日历追踪
+│   │   │   ├── DataCenterView.vue  # 数据中心
+│   │   │   ├── OrganizerView.vue   # 文件整理
+│   │   │   ├── SubscriptionView.vue# 订阅管理
+│   │   │   ├── StrmView.vue        # STRM 生成
+│   │   │   ├── ExploreView.vue     # 探索发现（路由容器）
+│   │   │   ├── FileBrowserView.vue # 文件浏览器
+│   │   │   ├── JackettSearchView.vue # Jackett 搜索
+│   │   │   ├── ExternalControlView.vue # 外部控制
+│   │   │   ├── FileHashesView.vue  # 文件哈希
+│   │   │   ├── TaskHistoryView.vue # 任务历史
+│   │   │   ├── GuideView.vue       # 使用指南
+│   │   │   ├── explore/            # 探索子页面
+│   │   │   │   ├── DiscoveryTab.vue     # 发现
+│   │   │   │   ├── ScheduleTab.vue      # 播出时间表
+│   │   │   │   ├── SearchTab.vue        # 搜索
+│   │   │   │   └── SeasonalTab.vue      # 当季番剧
+│   │   │   ├── subscription/       # 订阅子组件
+│   │   │   │   ├── SubscriptionsTab.vue  # 订阅列表
+│   │   │   │   ├── FeedsTab.vue          # 订阅源
+│   │   │   │   ├── RulesTab.vue          # 规则管理
+│   │   │   │   ├── SubEditModal.vue      # 订阅编辑弹窗
+│   │   │   │   ├── RssDetectModal.vue    # RSS 检测弹窗
+│   │   │   │   ├── PriorityRuleModal.vue # 优先级规则弹窗
+│   │   │   │   └── ...                   # 其他弹窗
+│   │   │   ├── organizer/          # 整理子组件
+│   │   │   │   ├── RulesTab.vue          # 整理规则
+│   │   │   │   ├── TasksTab.vue          # 整理任务
+│   │   │   │   ├── OrganizeHistoryTab.vue# 整理历史
+│   │   │   │   ├── BackgroundTasksTab.vue# 后台任务
+│   │   │   │   ├── RecognitionModal.vue  # 识别弹窗
+│   │   │   │   └── ...                   # 其他弹窗
+│   │   │   ├── datacenter/         # 数据中心子页面
+│   │   │   │   ├── MetadataTab.vue       # 元数据浏览
+│   │   │   │   ├── MappingTab.vue        # 用户映射
+│   │   │   │   ├── RulesTab.vue          # 分类规则
+│   │   │   │   ├── EngineConfigTab.vue   # 引擎配置
+│   │   │   │   ├── SqlLabTab.vue         # SQL 实验室
+│   │   │   │   └── MaintenanceTab.vue    # 智能维护
+│   │   │   ├── detail/             # 详情页
+│   │   │   │   ├── TmdbDetailView.vue       # TMDB 详情
+│   │   │   │   ├── BangumiDetailView.vue    # Bangumi 详情
+│   │   │   │   └── TmdbPersonDetailView.vue # TMDB 人物详情
 │   │   │   └── settings/           # 设置页
-│   │   │       ├── AccountTab.vue              # 账户设置
-│   │   │       └── ServiceStatusTab.vue        # 服务状态
+│   │   │       ├── SettingsView.vue        # 设置（路由容器）
+│   │   │       ├── AccountTab.vue          # 账户设置
+│   │   │       ├── BasicConfigTab.vue      # 基础配置
+│   │   │       ├── ClientManageTab.vue     # 客户端管理
+│   │   │       ├── HealthCheckTab.vue      # 健康检查
+│   │   │       ├── RulesConfigTab.vue      # 规则配置
+│   │   │       └── ServiceStatusTab.vue    # 服务状态
 │   │   ├── components/             # 可复用组件
-│   │   │   ├── desktop/            # 桌面端组件（28+ 模态框/面板）
-│   │   │   └── App*.vue            # 通用组件
-│   │   ├── composables/            # 组合式函数
-│   │   │   ├── components/         # 组件逻辑
-│   │   │   ├── explore/            # 探索逻辑
-│   │   │   ├── modals/             # 弹窗逻辑
-│   │   │   ├── views/              # 视图逻辑
-│   │   │   └── useEventStream.ts   # WebSocket 事件流（单例模式 + 心跳重连）
-│   │   ├── store/                  # Pinia 状态管理
-│   │   │   ├── appearanceStore.ts  # 外观状态
-│   │   │   ├── navigationStore.ts  # 导航状态
-│   │   │   ├── recognitionStore.ts # 识别状态
-│   │   │   └── themeStore.ts       # 主题状态
-│   │   ├── themes/                 # 主题配置
-│   │   ├── styles/                 # 全局样式
-│   │   ├── constants/              # 常量定义
+│   │   │   └── common/            # 公共组件
+│   │   │       ├── GlassDialog.vue       # 玻璃弹窗
+│   │   │       ├── ConfirmDialog.vue     # 确认对话框
+│   │   │       ├── LogTerminal.vue       # 日志终端
+│   │   │       ├── SecretField.vue       # 密钥字段
+│   │   │       ├── PasswordInput.vue     # 密码输入
+│   │   │       └── AppGlassCard.vue      # 玻璃卡片
+│   │   ├── composables/            # 组合式函数（扁平化）
+│   │   │   ├── useWebSocket.ts     # WebSocket 事件流（心跳重连）
+│   │   │   ├── useThemeStore.ts    # 主题状态（亮/暗切换）
+│   │   │   ├── useConfirm.ts       # 确认对话框
+│   │   │   ├── useNotification.ts  # 通知提示
+│   │   │   ├── useStorage.ts       # 本地/会话存储
+│   │   │   ├── useInfiniteScroll.ts# 无限滚动
+│   │   │   ├── useClipboard.ts     # 剪贴板
+│   │   │   ├── useDragScroll.ts    # 拖拽滚动
+│   │   │   ├── useDragSort.ts      # 拖拽排序
+│   │   │   └── useDataCenter.ts    # 数据中心工具函数
+│   │   ├── stores/                 # Pinia 状态管理
+│   │   │   ├── useSystemStore.ts   # 系统状态（认证/WebSocket）
+│   │   │   ├── useRecognitionStore.ts # 识别状态
+│   │   │   └── useNavigationStore.ts  # 导航状态
+│   │   ├── styles/                 # Liquid Glass 设计系统
+│   │   │   ├── index.css           # 样式入口（按功能引入）
+│   │   │   ├── base.css            # 重置/CSS变量/亮暗主题/工具类
+│   │   │   ├── components.css      # Vuetify 组件覆盖
+│   │   │   ├── buttons.css         # 按钮样式
+│   │   │   ├── feedback.css        # 反馈组件样式
+│   │   │   ├── transitions.css     # 过渡动画
+│   │   │   ├── pages.css           # 页面级样式
+│   │   │   ├── tags.css            # 元数据标签样式
+│   │   │   ├── cards.css           # 卡片系统
+│   │   │   ├── design-spec.css     # 设计规范补全
+│   │   │   ├── utilities.css       # 通用复用样式
+│   │   │   └── settings.scss       # Vuetify SASS 变量配置
+│   │   ├── plugins/                # 插件配置
+│   │   │   └── vuetify.ts          # Vuetify 主题与组件默认值
+│   │   ├── types/                  # TypeScript 类型定义
+│   │   ├── utils/                  # 工具函数
 │   │   ├── router/                 # 路由配置
 │   │   ├── layouts/                # 布局组件
+│   │   │   └── DefaultLayout.vue   # 默认布局
 │   │   └── docs/                   # 内置文档
 │   ├── public/                     # 静态资源 (PWA)
-│   └── scripts/                    # 构建脚本
+│   └── dist/                       # 构建产物
 │
 ├── skills/                         # AI 技能定义
 │   ├── discover-anime/             # 番剧/电影发现
