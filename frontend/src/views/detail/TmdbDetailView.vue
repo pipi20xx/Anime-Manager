@@ -268,7 +268,10 @@ function openPerson(personId: number) {
 }
 
 watch(() => route.params.id, () => {
-  if (route.params.id) fetchDetail()
+  if (route.params.id) {
+    window.scrollTo(0, 0)
+    fetchDetail()
+  }
 })
 
 onMounted(() => {

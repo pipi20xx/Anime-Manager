@@ -90,7 +90,10 @@ function calculateAge(birthday: string, deathday?: string): string {
 }
 
 watch(() => route.params.id, () => {
-  if (route.params.id) fetchPerson()
+  if (route.params.id) {
+    window.scrollTo(0, 0)
+    fetchPerson()
+  }
 })
 
 onMounted(() => {
