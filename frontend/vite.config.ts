@@ -11,7 +11,7 @@ export default defineConfig(({ command, mode }) => {
   const isAnalyze = mode === 'analyze'
 
   return {
-    base: command === 'build' ? '/static/' : '/',
+    base: '/',
     plugins: [
       vue(),
       vuetify({
