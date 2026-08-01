@@ -364,14 +364,17 @@ async def recalculate_item(request: dict):
     all_render = config.get("custom_render_words", []) + all_cached.get("render", [])
     
     from recognition.recognizer import MovieRecognizer
+    # [FIX] 不再硬编码 force_filename=True，改为使用完整路径进行路径锁定
+    # 如果 filename 是完整路径，直接使用它进行路径锁定；否则用 original_input_path 补全
+    full_path = request.get("full_path") or filename
     result_data, recog_logs = await MovieRecognizer.recognize_full(
-        filename, 
-        all_noise=all_noise, 
-        all_groups=all_groups, 
+        filename,
+        all_noise=all_noise,
+        all_groups=all_groups,
         api_key=config.get("tmdb_api_key", ""),
         anime_priority=task_config.get("anime_priority", True),
         all_render=all_render,
-        force_filename=True
+        original_input_path=full_path if full_path != filename else None
     )
     
     recog_task_id = None

@@ -21,7 +21,10 @@ class ParserStage:
             path_parts = [ctx.filename]
         else:
             raw_filename = os.path.basename(ctx.filename)
-            path_parts = ctx.filename.replace('\\', '/').split('/')
+            # [FIX] 路径锁定优先使用完整路径 (original_input)，确保能扫描到包含 tmdbid 的父目录
+            # 解决当整理任务的 source_dir 较深时 rel_input_path 过短导致路径锁定失效的问题
+            path_source = ctx.original_input if (ctx.original_input and len(ctx.original_input) > len(ctx.filename)) else ctx.filename
+            path_parts = path_source.replace('\\', '/').split('/')
 
         name_no_ext = os.path.splitext(raw_filename)[0]
         
