@@ -88,6 +88,29 @@ async def get_index_titles(tmdb_id: str, media_type: str) -> List[str]:
         return []
 
 
+async def get_index_entries(tmdb_id: str, media_type: str) -> List[Dict]:
+    """
+    从索引表中查找指定 TMDB ID + 类型的完整条目（含 emby_item_id）。
+    用于直接按 ID 获取 Emby 条目，跳过标题搜索。
+    media_type 为 Emby 内部类型: "Movie" 或 "Series"。
+    """
+    try:
+        async with DBService().session_scope() as session:
+            stmt = select(EmbyMediaIndex).where(
+                EmbyMediaIndex.tmdb_id == str(tmdb_id),
+                EmbyMediaIndex.media_type == media_type
+            )
+            result = await session.execute(stmt)
+            entries = result.scalars().all()
+            return [
+                {'emby_item_id': e.emby_item_id, 'title': e.title}
+                for e in entries
+            ]
+    except Exception as e:
+        logger.warning(f"索引查询失败 tmdb_id={tmdb_id}: {e}")
+        return []
+
+
 def _media_type_tmdb_to_emby(tmdb_media_type: str) -> str:
     """将各种 media_type 映射为 Emby 内部类型 ('Movie'/'Series')。"""
     return 'Movie' if tmdb_media_type in ('movie', '电影') else 'Series'
@@ -97,7 +120,12 @@ async def wrap_emby_with_index(emby, tmdb_id: str, media_type: str):
     """
     为 EmbyClient 设置索引上下文并返回清理回调。
     media_type 接受: "Movie"/"Series"/"movie"/"tv"/"剧集"/"电影"
-    
+
+    从索引表获取条目(含 emby_item_id 和 title)，供 search_by_tmdb_id:
+    - 优先用 emby_item_id 直查 GET /Items/{id}
+    - ID 失效(404)时用 title 做定向搜索自愈
+    - cleanup 时自动清理失效条目 + 回写自愈发现的新 ID
+
     用法:
         cleanup = await wrap_emby_with_index(emby, tmdb_id, media_type)
         try:
@@ -106,14 +134,21 @@ async def wrap_emby_with_index(emby, tmdb_id: str, media_type: str):
             await cleanup()
     """
     emby_type = _media_type_tmdb_to_emby(media_type)
-    titles = await get_index_titles(tmdb_id, emby_type)
-    if titles:
-        emby.set_index_context(titles)
+    entries = await get_index_entries(tmdb_id, emby_type)
+    if entries:
+        emby.set_index_context(entries)
 
     async def cleanup():
-        wb = emby.clear_index_context()
-        if wb:
-            await writeback_entries(wb)
+        result = emby.clear_index_context()
+        # 仅回写自愈发现的新条目，stale 条目留给全量同步清理
+        if result.get('recovered'):
+            recovered_entries = [{
+                'tmdb_id': r['tmdb_id'],
+                'media_type': r['media_type'],
+                'emby_item_id': r['new_emby_item_id'],
+                'title': r['title'],
+            } for r in result['recovered']]
+            await writeback_entries(recovered_entries)
 
     return cleanup
 

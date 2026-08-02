@@ -18,19 +18,30 @@ class EmbyClient:
             'Accept': 'application/json'
         })
         # 索引上下文 (由调用方在异步侧设置，同步侧读取)
-        self._index_titles: Optional[List[str]] = None
-        self._index_writeback: List[Dict] = []
+        self._index_entries: Optional[List[Dict]] = None  # [{'emby_item_id': str, 'title': str}]
+        self._stale_ids: List[str] = []       # ID 失效(404)的 emby_item_id
+        self._recovered: List[Dict] = []      # 自愈发现的新条目
 
-    def set_index_context(self, titles: List[str]):
-        """设置索引上下文，search_by_tmdb_id 将优先用这些标题搜索。"""
-        self._index_titles = titles
-        self._index_writeback = []
+    def set_index_context(self, entries: Optional[List[Dict]] = None):
+        """设置索引上下文。
+        entries: [{'emby_item_id': str, 'title': str}]
+        search_by_tmdb_id 将用 emby_item_id 直查；ID 失效时用 title 做定向搜索自愈。
+        """
+        self._index_entries = entries
+        self._stale_ids = []
+        self._recovered = []
 
-    def clear_index_context(self) -> List[Dict]:
-        """清除索引上下文并返回兜底遍历发现的需要回写的条目。"""
-        self._index_titles = None
-        result = list(self._index_writeback)
-        self._index_writeback = []
+    def clear_index_context(self) -> Dict:
+        """清除索引上下文，返回自愈信息供调用方清理/更新索引表。
+        返回: {'stale_ids': [...], 'recovered': [{'old_emby_item_id', 'new_emby_item_id', 'title', 'tmdb_id', 'media_type'}]}
+        """
+        result = {
+            'stale_ids': list(self._stale_ids),
+            'recovered': list(self._recovered),
+        }
+        self._index_entries = None
+        self._stale_ids = []
+        self._recovered = []
         return result
 
     def _make_request(self, method: str, endpoint: str, params: Optional[Dict] = None, data: Optional[Dict] = None) -> Optional[Dict]:
@@ -43,92 +54,95 @@ class EmbyClient:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            print(f"Emby API 请求失败: {e}")
+            logger.debug(f"Emby API 请求失败: {e}")
             return None
 
     def search_by_tmdb_id(self, tmdb_id: str, media_type: str = 'all',
-                          index_titles: Optional[List[str]] = None,
-                          on_items_matched: Optional[callable] = None) -> Optional[Dict]:
+                          index_item_ids: Optional[List[str]] = None) -> Optional[Dict]:
         """
         通过 TMDB ID 搜索 Emby 库。
-        - index_titles: 显式传入的索引标题 (优先级最高)
-        - 同时检查实例上下文 self._index_titles
-        - on_items_matched: 兜底遍历找到新条目时的立即回调
-        - 兜底发现也会收集到 self._index_writeback 中
+        优先用索引表中的 emby_item_id 直接 GET /Items/{id} 获取条目。
+        若 ID 已失效(404)，用索引中的 title 做定向搜索自愈，并记录新 ID 供回写。
+        索引无记录即视为未入库。
         """
-        # 合并参数和实例上下文的标题
-        titles = index_titles or []
-        if self._index_titles:
-            titles = list(set(titles + self._index_titles))
+        # 合并参数和实例上下文的条目
+        entries: List[Dict] = []
+        if index_item_ids:
+            entries = [{'emby_item_id': iid, 'title': ''} for iid in index_item_ids]
+        if self._index_entries:
+            existing_ids = {e['emby_item_id'] for e in entries if e.get('emby_item_id')}
+            for e in self._index_entries:
+                eid = e.get('emby_item_id', '')
+                if eid and eid not in existing_ids:
+                    entries.append(e)
+                    existing_ids.add(eid)
+                elif eid:
+                    # 补充 title（参数传入的可能没 title）
+                    for ex in entries:
+                        if ex['emby_item_id'] == eid and not ex.get('title'):
+                            ex['title'] = e.get('title', '')
 
-        new_items_for_index = []  # 兜底遍历时发现的新条目
+        # 索引无记录 = 未入库
+        if not entries:
+            logger.info(f"索引无记录: tmdb_id={tmdb_id} 视为未入库")
+            return {
+                'tmdb_id': tmdb_id,
+                'matched_items': [],
+                'total': 0
+            }
 
-        # 1. 优先走索引: 用标题搜索 → 比对 TMDB ID
-        if titles:
-            for title in titles:
-                search_result = self.search_by_title(title, media_type)
-                if not search_result or not search_result.get('Items'):
-                    continue
+        matched = []
+        for entry in entries:
+            item_id = entry.get('emby_item_id', '')
+            title = entry.get('title', '')
 
-                matched = []
-                for item in search_result['Items']:
-                    item_tmdb_id = (item.get('ProviderIds', {}) or {}).get('Tmdb')
-                    if item_tmdb_id and str(item_tmdb_id) == str(tmdb_id):
-                        if media_type == 'all' or item.get('Type', '').lower() == media_type.lower():
-                            matched.append(item)
+            # 1) ID 直查 (Emby 要求 User 上下文，否则 404)
+            endpoint = f'/Users/{self.user_id}/Items/{item_id}' if self.user_id else f'/Items/{item_id}'
+            item = self._make_request('GET', endpoint, params={
+                'Fields': 'ProviderIds,Path,MediaSources',
+                'EnableUserData': 'false'
+            })
 
-                if matched:
-                    logger.info(f"索引命中: tmdb_id={tmdb_id} 标题='{title}' 匹配 {len(matched)} 项")
-                    return {
-                        'tmdb_id': tmdb_id,
-                        'matched_items': matched,
-                        'total': len(matched)
-                    }
-            logger.info(f"索引未命中: tmdb_id={tmdb_id} 索引标题搜索后无匹配 (尝试了 {len(titles)} 个标题: {titles})")
+            if item:
+                item_tmdb_id = (item.get('ProviderIds', {}) or {}).get('Tmdb')
+                if item_tmdb_id and str(item_tmdb_id) == str(tmdb_id):
+                    if media_type == 'all' or item.get('Type', '').lower() == media_type.lower():
+                        matched.append(item)
+            else:
+                # 2) ID 失效(404)，记录 stale
+                self._stale_ids.append(item_id)
+                # 若有 title，尝试定向搜索自愈
+                if title:
+                    search_result = self.search_by_title(title, media_type)
+                    if search_result and search_result.get('Items'):
+                        for s_item in search_result['Items']:
+                            s_tmdb_id = (s_item.get('ProviderIds', {}) or {}).get('Tmdb')
+                            if s_tmdb_id and str(s_tmdb_id) == str(tmdb_id):
+                                if media_type == 'all' or s_item.get('Type', '').lower() == media_type.lower():
+                                    matched.append(s_item)
+                                    self._recovered.append({
+                                        'old_emby_item_id': item_id,
+                                        'new_emby_item_id': s_item.get('Id', ''),
+                                        'title': s_item.get('Name', title),
+                                        'tmdb_id': str(tmdb_id),
+                                        'media_type': s_item.get('Type', ''),
+                                    })
+                                    logger.info(f"索引自愈: tmdb_id={tmdb_id} ID {item_id}→{s_item.get('Id')} (title='{title}')")
+                                    break
+
+        if matched:
+            heal = f", 自愈 {len(self._recovered)} 个新ID" if self._recovered else ""
+            logger.info(f"索引命中: tmdb_id={tmdb_id} 匹配 {len(matched)} 项{heal}")
         else:
-            logger.info(f"索引未命中: tmdb_id={tmdb_id} 索引表中无此记录")
-
-        # 2. 兜底: 遍历整个 Emby 库
-        logger.info(f"执行兜底遍历: tmdb_id={tmdb_id}")
-        items = self._make_request('GET', '/Items', params={
-            'IncludeItemTypes': 'Movie,Series',
-            'Recursive': 'true',
-            'Fields': 'ProviderIds,Path,MediaSources',
-            'EnableUserData': 'false'
-        })
-
-        if not items or 'Items' not in items:
-            return None
-
-        matched_items = []
-        for item in items['Items']:
-            item_tmdb_id = (item.get('ProviderIds', {}) or {}).get('Tmdb')
-            if item_tmdb_id and str(item_tmdb_id) == str(tmdb_id):
-                if media_type == 'all' or item.get('Type', '').lower() == media_type.lower():
-                    matched_items.append(item)
-                    entry = {
-                        'tmdb_id': str(tmdb_id),
-                        'media_type': item.get('Type', ''),
-                        'emby_item_id': item.get('Id', ''),
-                        'title': item.get('Name', ''),
-                    }
-                    new_items_for_index.append(entry)
-
-        # 3. 回写索引
-        if new_items_for_index:
-            # 收集到实例上下文
-            self._index_writeback.extend(new_items_for_index)
-            # 同时调用显式回调
-            if on_items_matched:
-                try:
-                    on_items_matched(new_items_for_index)
-                except Exception as e:
-                    logger.warning(f"回写索引回调失败: {e}")
+            if self._stale_ids:
+                logger.info(f"索引条目失效且自愈未找到: tmdb_id={tmdb_id} stale_ids={self._stale_ids}（可能已被删除）")
+            else:
+                logger.info(f"索引有记录但TMDB ID不匹配: tmdb_id={tmdb_id}（索引数据可能有误）")
 
         return {
             'tmdb_id': tmdb_id,
-            'matched_items': matched_items,
-            'total': len(matched_items)
+            'matched_items': matched,
+            'total': len(matched)
         }
 
     def search_series_by_tmdb_id(self, tmdb_id: str) -> Optional[Dict]:
@@ -431,7 +445,8 @@ class EmbyClient:
             'IncludeItemTypes': 'Movie,Series',
             'Recursive': 'true',
             'Fields': 'ProviderIds',
-            'EnableUserData': 'false'
+            'EnableUserData': 'false',
+            'HasTmdbId': 'true'
         })
         if not result or 'Items' not in result:
             logger.warning("Emby fetch_all_items_brief: 未获取到任何条目")
