@@ -211,8 +211,8 @@ watch(activeTab, () => {
 
 /* 行内代码 */
 .md-content :deep(code) {
-  background: rgba(var(--v-theme-primary), 0.1);
-  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), 0.88);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -221,7 +221,8 @@ watch(activeTab, () => {
 
 /* 代码块 */
 .md-content :deep(pre) {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   padding: 16px;
   border-radius: 8px;
   overflow-x: auto;

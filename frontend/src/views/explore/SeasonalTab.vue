@@ -7,7 +7,7 @@
  * - 卡片网格展示
  * - 支持一键订阅
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { bangumiApi } from '@/api'
 import { useNotification } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
@@ -22,13 +22,19 @@ type Season = 'winter' | 'spring' | 'summer' | 'fall'
 const SEASON_CN: Record<Season, string> = { winter: '冬', spring: '春', summer: '夏', fall: '秋' }
 const SEASONS: Season[] = ['winter', 'spring', 'summer', 'fall']
 
+const SEASON_KEY = 'explore:seasonal:selection'
+
 const now = new Date()
 const currentYear = now.getFullYear()
 const currentMonth = now.getMonth() + 1
 const currentSeason: Season = SEASONS[Math.floor((currentMonth - 1) / 3)]
 
-const selectedYear = ref(currentYear)
-const selectedSeason = ref<Season>(currentSeason)
+// 从 localStorage 恢复上次选择，无则用当前季度
+const savedSel = (() => {
+  try { return JSON.parse(localStorage.getItem(SEASON_KEY) || '') } catch { return null }
+})()
+const selectedYear = ref(savedSel?.year ?? currentYear)
+const selectedSeason = ref<Season>(savedSel?.season ?? currentSeason)
 const items = ref<any[]>([])
 const loading = ref(false)
 const count = ref(0)
@@ -96,6 +102,14 @@ function openDetail(item: any) {
 
 onMounted(() => {
   fetchData()
+})
+
+// 持久化季度选择
+watch([selectedYear, selectedSeason], () => {
+  localStorage.setItem(SEASON_KEY, JSON.stringify({
+    year: selectedYear.value,
+    season: selectedSeason.value,
+  }))
 })
 </script>
 

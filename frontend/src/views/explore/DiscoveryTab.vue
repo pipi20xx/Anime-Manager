@@ -10,6 +10,8 @@
  * - 已订阅状态标记
  */
 import { ref, reactive, onMounted, onUnmounted, nextTick, watch } from 'vue'
+
+const STORAGE_KEY = 'explore:discovery:filters'
 import { exploreApi, subscriptionApi } from '@/api'
 import { useNotification } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
@@ -53,6 +55,9 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const hasMore = ref(true)
 const subscriptions = ref<any[]>([])
+
+// --- 持久化恢复标记 ---
+let _restoring = false
 
 // --- 无限滚动 ---
 const loadTrigger = ref<HTMLElement | null>(null)
@@ -164,6 +169,7 @@ function getPoster(item: any): string {
 
 // --- 筛选器变化监听 ---
 watch(() => filters.source, async () => {
+  if (_restoring) return
   filters.genre = null
   filters.language = null
   filters.year = null
@@ -174,15 +180,22 @@ watch(() => filters.source, async () => {
   await loadConfig()
   resetAndReload()
 })
-watch(() => filters.media_type, resetAndReload)
-watch(() => filters.genre, resetAndReload)
-watch(() => filters.year, resetAndReload)
-watch(() => filters.language, resetAndReload)
-watch(() => filters.subtype, resetAndReload)
-watch(() => filters.story_source, resetAndReload)
-watch(() => filters.region, resetAndReload)
-watch(() => filters.audience, resetAndReload)
-watch(() => filters.sort_by, resetAndReload)
+watch(() => filters.media_type, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.genre, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.year, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.language, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.subtype, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.story_source, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.region, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.audience, () => { if (!_restoring) resetAndReload() })
+watch(() => filters.sort_by, () => { if (!_restoring) resetAndReload() })
+
+// --- 持久化保存（排除 page） ---
+watch(filters, () => {
+  if (_restoring) return
+  const { page, ...toSave } = filters
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
+}, { deep: true })
 
 function setupObserver() {
   if (observer) observer.disconnect()
@@ -196,6 +209,26 @@ function setupObserver() {
 }
 
 onMounted(async () => {
+  // 恢复上次筛选状态
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    _restoring = true
+    try {
+      const s = JSON.parse(saved)
+      if (s.source) filters.source = s.source
+      if (s.media_type) filters.media_type = s.media_type
+      if (s.sort_by) filters.sort_by = s.sort_by
+      filters.genre = s.genre ?? null
+      filters.year = s.year ?? null
+      filters.language = s.language ?? null
+      filters.subtype = s.subtype ?? null
+      filters.story_source = s.story_source ?? null
+      filters.region = s.region ?? null
+      filters.audience = s.audience ?? null
+    } catch { /* */ }
+    await nextTick()
+    _restoring = false
+  }
   await loadConfig()
   await fetchSubscriptions()
   await fetchData('replace')
