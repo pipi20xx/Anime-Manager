@@ -10,7 +10,7 @@
  * - Telegram Bot 配置
  */
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
-import { apiFetch } from '@/api/client'
+import { api, apiFetch } from '@/api'
 import { configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { marked } from 'marked'
@@ -127,10 +127,7 @@ async function fetchConfig() {
 async function saveConfig() {
   saveLoading.value = true
   try {
-    await apiFetch('/api/assistant/config', {
-      method: 'POST',
-      body: assistantConfig,
-    })
+    await api.post('/api/assistant/config', assistantConfig)
     success('AI 配置已保存')
   } catch (e: any) {
     showError(e?.message || '保存失败')
@@ -141,10 +138,7 @@ async function saveConfig() {
 
 async function saveUseTools() {
   try {
-    await apiFetch('/api/assistant/config', {
-      method: 'POST',
-      body: { use_tools: assistantConfig.use_tools },
-    })
+    await api.post('/api/assistant/config', { use_tools: assistantConfig.use_tools })
     success(assistantConfig.use_tools ? '已启用工具模式' : '已切换为纯对话模式')
   } catch {
     // 非关键
@@ -252,10 +246,7 @@ async function toggleSkillEnabled(skill: any) {
   const newEnabled = !skill.enabled
   skill.enabled = newEnabled // 乐观更新
   try {
-    await apiFetch('/api/assistant/skills/' + skill.id + '/enabled', {
-      method: 'PUT',
-      body: { enabled: newEnabled },
-    })
+    await api.put('/api/assistant/skills/' + skill.id + '/enabled', { enabled: newEnabled })
     success('技能已' + (newEnabled ? '启用' : '禁用'))
   } catch (e: any) {
     skill.enabled = !newEnabled // 回滚
