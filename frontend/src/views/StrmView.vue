@@ -253,6 +253,13 @@ async function handleDuplicate(index: number) {
 }
 
 async function handleRun(taskId: string) {
+  const task = tasks.value.find((t: any) => t.id === taskId)
+  const taskName = task?.name || taskId
+  const ok = await confirm({
+    title: '确认执行',
+    content: `确定要立即执行 STRM 任务 "${taskName}" 吗？`,
+  })
+  if (!ok) return
   try {
     const data = await strmApi.runTask(taskId)
     if (data?.status === 'success') {
@@ -444,10 +451,12 @@ onMounted(() => {
     <!-- 编辑 Modal — Tab 分页，功能对齐全旧前端 -->
     <v-dialog v-model="showModal" max-width="800" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start>mdi-link-variant</v-icon>
-          {{ isNewTask ? '新建 STRM 任务' : '编辑 STRM 任务' }}
-        </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start>mdi-link-variant</v-icon>
+{{ isNewTask ? '新建 STRM 任务' : '编辑 STRM 任务' }}
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showModal = false" />
+</v-card-title>
         <v-divider />
         <v-card-text class="pa-0">
           <v-tabs v-model="activeTab" density="compact" color="primary">

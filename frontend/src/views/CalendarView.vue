@@ -744,6 +744,8 @@ onMounted(() => {
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon start color="primary">mdi-pencil</v-icon>
           {{ editBuffer.title ? `编辑 - ${editBuffer.title}` : '编辑追踪项' }}
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showEditModal = false" />
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">

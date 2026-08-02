@@ -75,10 +75,12 @@ const variableGroups = [
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="800" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start>mdi-form-textbox</v-icon>
-        {{ isNew ? '创建新规则' : '编辑重命名规则' }}
-      </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start>mdi-form-textbox</v-icon>
+{{ isNew ? '创建新规则' : '编辑重命名规则' }}
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="emit('update:modelValue', false)" />
+</v-card-title>
       <v-divider />
 
       <v-card-text class="pa-4">

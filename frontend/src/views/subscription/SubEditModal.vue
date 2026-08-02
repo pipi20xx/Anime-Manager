@@ -187,6 +187,8 @@ function handleSave() {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start>mdi-rss</v-icon>
         {{ isNew ? '新建订阅' : '编辑订阅' }}
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
       </v-card-title>
       <v-divider />
 

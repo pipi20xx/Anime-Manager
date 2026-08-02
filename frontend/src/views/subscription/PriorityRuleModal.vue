@@ -165,6 +165,8 @@ function getConditions(rule: any) {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-arrow-up-bold-circle-outline</v-icon>
         洗版规则管理
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
       </v-card-title>
       <v-divider />
 
@@ -273,7 +275,10 @@ function getConditions(rule: any) {
     <!-- Rule Editor -->
     <v-dialog v-model="showRuleEdit" max-width="700" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4">编辑基础规则</v-card-title>
+        <v-card-title class="pa-4 d-flex align-center">编辑基础规则
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showRuleEdit = false" />
+        </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" variant="outlined" density="compact" class="mb-3" />
@@ -303,7 +308,10 @@ function getConditions(rule: any) {
     <!-- Profile Editor -->
     <v-dialog v-model="showProfileEdit" max-width="700" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4">编辑洗版策略</v-card-title>
+        <v-card-title class="pa-4 d-flex align-center">编辑洗版策略
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showProfileEdit = false" />
+        </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="currentProfile.name" label="策略名称" placeholder="例如: 4K优先策略" variant="outlined" density="compact" class="mb-3" />

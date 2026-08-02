@@ -116,6 +116,8 @@ async function setDefault(row: any) {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-file-document-outline</v-icon>
         {{ showEdit ? (editModel.id ? '编辑订阅预设' : '新增订阅预设') : '订阅预设模板管理' }}
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
       </v-card-title>
       <v-divider />
 

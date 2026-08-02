@@ -277,9 +277,11 @@ onUnmounted(() => {
   <!-- 全量刷新弹窗 -->
   <v-dialog v-model="showRefreshModal" max-width="500">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-sync</v-icon>全量刷新设置
-      </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start color="primary">mdi-sync</v-icon>全量刷新设置
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showRefreshModal = false" />
+</v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
         <v-text-field v-model="refreshForm.older_than_days" label="更新时间筛选" type="number" placeholder="留空表示不限制" variant="outlined" density="compact" class="mb-3" hint="天前的数据" persistent-hint />
@@ -298,9 +300,11 @@ onUnmounted(() => {
   <!-- SYTMDB 同步弹窗 -->
   <v-dialog v-model="showSyncModal" max-width="500">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-sync-circle</v-icon>SYTMDB 同步
-      </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start color="primary">mdi-sync-circle</v-icon>SYTMDB 同步
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showSyncModal = false" />
+</v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
         <div class="text-body-2 text-medium-emphasis mb-3">从 SYTMDB 服务同步手动修正过的元数据快照。任务在后台执行，请通过实时日志查看进度。</div>
@@ -321,10 +325,12 @@ onUnmounted(() => {
   <!-- 编辑/新增元数据弹窗 -->
   <v-dialog v-model="showEditModal" max-width="900" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-pencil-outline</v-icon>
-        {{ isEditing ? '修正元数据' : '手动新增元数据' }}
-      </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start color="primary">mdi-pencil-outline</v-icon>
+{{ isEditing ? '修正元数据' : '手动新增元数据' }}
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showEditModal = false" />
+</v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
         <v-tabs v-model="editTab" density="compact" class="mb-4">

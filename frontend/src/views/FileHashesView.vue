@@ -1037,6 +1037,8 @@ onUnmounted(() => {
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon start color="info">mdi-plus</v-icon>
           计算单文件哈希
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showCalculateModal = false" />
         </v-card-title>
         <v-divider />
 

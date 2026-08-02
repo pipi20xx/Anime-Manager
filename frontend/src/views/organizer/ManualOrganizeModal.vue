@@ -3,7 +3,7 @@
  * ManualOrganizeModal — 手动整理当前目录弹窗
  *
  * 对标旧前端 ManualOrganizeModalDesktop，功能：
- * - 核心配置 Tab: 整理规则、目标目录、操作类型、强制元数据 + TMDB搜索
+ * - 核心配置 Tab: 重命名规则、目标目录、操作类型、强制元数据 + TMDB搜索
  * - 过滤规则 Tab: 处理间隔、忽略文件/目录正则
  * - 高级选项 Tab: 动漫优先/覆盖模式/联动STRM/清理空目录/忽略历史/重试失败/Emby检查/哈希计算/智能记忆
  * - 启动时弹出确认对话框选择"预览并手动执行"或"后台静默执行"
@@ -176,7 +176,7 @@ function handleRunBackground() {
 
             <v-select
               v-model="manualTask.rule_id"
-              label="整理规则"
+              label="重命名规则"
               :items="availableRules.map((r: any) => ({ title: r.name, value: r.id }))"
               density="compact"
               variant="outlined"
@@ -435,6 +435,8 @@ function handleRunBackground() {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-play</v-icon>
         启动整理任务
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="showConfirmDialog = false" />
       </v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
@@ -445,9 +447,8 @@ function handleRunBackground() {
       </v-card-text>
       <v-divider />
       <v-card-actions class="pa-4 d-flex ga-2">
-        <v-btn variant="tonal" prepend-icon="mdi-close" @click="showConfirmDialog = false">取消</v-btn>
         <v-spacer />
-        <v-btn color="info" variant="tonal" prepend-icon="mdi-background" @click="handleRunBackground">
+        <v-btn color="info" variant="tonal" prepend-icon="mdi-rocket-launch" @click="handleRunBackground">
           后台静默执行
         </v-btn>
         <v-btn color="primary" variant="flat" prepend-icon="mdi-eye-outline" @click="handleRun">

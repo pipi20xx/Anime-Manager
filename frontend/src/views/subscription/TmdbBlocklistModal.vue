@@ -59,6 +59,8 @@ async function removeBlockItem(id: number) {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="error">mdi-shield-off-outline</v-icon>
         TMDB 屏蔽列表
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
       </v-card-title>
       <v-divider />
 

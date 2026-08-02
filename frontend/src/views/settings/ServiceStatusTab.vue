@@ -283,12 +283,14 @@ onMounted(() => {
     <!-- 队列内容弹窗 -->
     <v-dialog v-model="queueModalVisible" max-width="800">
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center justify-space-between">
+        <v-card-title class="pa-4 d-flex align-center">
           <div class="d-flex align-center ga-2">
             <v-icon color="primary" size="20">mdi-format-list-bulleted</v-icon>
             <span>{{ queueModalData?.name }} - 队列内容</span>
           </div>
-          <v-chip size="small" color="info" variant="tonal">{{ queueModalData?.count || 0 }} 个文件</v-chip>
+          <v-chip size="small" color="info" variant="tonal" class="ml-2">{{ queueModalData?.count || 0 }} 个文件</v-chip>
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="queueModalVisible = false" />
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">

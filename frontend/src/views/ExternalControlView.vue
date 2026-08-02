@@ -468,10 +468,12 @@ onUnmounted(() => {
     <!-- 日志详情弹窗 -->
     <v-dialog v-model="showLogDetail" max-width="600">
       <v-card rounded="xl">
-        <v-card-title class="d-flex align-center">
-          <v-icon start color="primary">mdi-file-document-outline</v-icon>
-          请求详情
-        </v-card-title>
+<v-card-title class="d-flex align-center">
+<v-icon start color="primary">mdi-file-document-outline</v-icon>
+请求详情
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showLogDetail = false" />
+</v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
           <pre class="log-detail-pre">{{ currentLogDetail }}</pre>

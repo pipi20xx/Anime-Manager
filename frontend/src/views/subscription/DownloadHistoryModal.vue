@@ -179,6 +179,8 @@ const filteredItems = computed(() => {
         <v-icon start color="primary">mdi-history-download</v-icon>
         下载记录
         <v-chip size="small" variant="tonal" class="ml-3">{{ total }} 条</v-chip>
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
       </v-card-title>
       <v-divider />
 

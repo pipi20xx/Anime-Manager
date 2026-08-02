@@ -194,6 +194,8 @@ defineExpose({ fetchRules })
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon start>mdi-filter-outline</v-icon>
           {{ isNewRule ? '创建匹配规则' : '编辑匹配规则' }}
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showRuleModal = false" />
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
@@ -229,6 +231,8 @@ defineExpose({ fetchRules })
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon start color="primary">mdi-eye-outline</v-icon>
           规则预览 — {{ previewRuleData?.name }}
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showPreviewModal = false" />
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">

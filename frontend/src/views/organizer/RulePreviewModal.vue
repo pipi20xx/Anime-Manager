@@ -78,6 +78,8 @@ async function submitPreview() {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-eye-outline</v-icon>
         规则预览 — {{ ruleName }}
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="show = false" />
       </v-card-title>
       <v-divider />
 

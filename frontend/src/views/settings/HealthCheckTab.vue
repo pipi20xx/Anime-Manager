@@ -264,6 +264,8 @@ onMounted(() => {
         <v-card-title class="pa-4 d-flex align-center ga-2">
           <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>
           <span>健康检查配置</span>
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showModal = false" />
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">

@@ -122,6 +122,8 @@ async function cleanupTaskCenter() {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="info">mdi-clipboard-list-outline</v-icon>
         任务中心
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="show = false" />
       </v-card-title>
       <v-divider />
 

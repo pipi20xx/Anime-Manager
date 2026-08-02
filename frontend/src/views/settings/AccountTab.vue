@@ -390,10 +390,12 @@ onMounted(() => {
     <!-- 2FA 设置弹窗 -->
     <v-dialog v-model="showOtpSetup" max-width="400">
       <v-card>
-        <v-card-title class="pa-4 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-shield-check-outline</v-icon>
-          <span>设置双重身份验证</span>
-        </v-card-title>
+<v-card-title class="pa-4 d-flex align-center ga-2">
+<v-icon color="primary" size="20">mdi-shield-check-outline</v-icon>
+<span>设置双重身份验证</span>
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showOtpSetup = false" />
+</v-card-title>
         <v-divider />
         <v-card-text class="pa-4 text-center">
           <div class="text-body-2 mb-4">请使用验证器应用扫描下方二维码</div>

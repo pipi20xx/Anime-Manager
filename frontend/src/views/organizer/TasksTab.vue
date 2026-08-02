@@ -237,11 +237,12 @@ async function requestRunTask(task: any) {
     confirmText: '后台静默执行',
     cancelText: '预览并手动执行',
   })
-  if (ok) {
+  if (ok === true) {
     runTask(task, false)
-  } else {
+  } else if (ok === false) {
     runTask(task, true)
   }
+  // null = 用户点击 X 关闭，不执行任何操作
 }
 </script>
 

@@ -261,7 +261,10 @@ defineExpose({ fetchMappings, fetchRefCounts })
   <!-- 映射编辑弹窗 -->
   <v-dialog v-model="showMapModal" max-width="500">
     <v-card class="glass-card">
-      <v-card-title class="pa-4">{{ isNewMapItem ? '添加映射' : '编辑映射' }}</v-card-title>
+      <v-card-title class="pa-4 d-flex align-center">{{ isNewMapItem ? '添加映射' : '编辑映射' }}
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showMapModal = false" />
+</v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
         <template v-if="mapActiveType === 'genre'">

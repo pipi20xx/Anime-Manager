@@ -138,6 +138,8 @@ function historyStatusLabel(status: string): string {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-history</v-icon>
         整理历史
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="show = false" />
       </v-card-title>
       <v-divider />
 

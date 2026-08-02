@@ -27,10 +27,16 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [val: boolean]
   cancel: []
+  dismiss: []
 }>()
 
 function handleCancel() {
   emit('cancel')
+  emit('update:modelValue', false)
+}
+
+function handleDismiss() {
+  emit('dismiss')
   emit('update:modelValue', false)
 }
 </script>
@@ -47,6 +53,8 @@ function handleCancel() {
       <v-card-title v-if="title || $slots.title" class="pa-4 d-flex align-center">
         <v-icon v-if="icon" start>{{ icon }}</v-icon>
         <slot name="title">{{ title }}</slot>
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="handleDismiss" />
       </v-card-title>
 
       <v-divider v-if="title || $slots.title" />

@@ -204,6 +204,8 @@ async function handleClearHistory() {
       <v-card-title class="pa-4 d-flex align-center">
         <v-icon start color="primary">mdi-format-list-bulleted</v-icon>
         订阅源详情
+        <v-spacer />
+        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
       </v-card-title>
       <v-divider />
 

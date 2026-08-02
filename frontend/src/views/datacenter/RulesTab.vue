@@ -335,10 +335,12 @@ defineExpose({ fetchRules })
   <!-- 规则编辑弹窗 -->
   <v-dialog v-model="showRuleEditModal" max-width="800" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-tag-outline</v-icon>
-        {{ isNewRule ? '创建分类规则' : '编辑分类规则' }}
-      </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start color="primary">mdi-tag-outline</v-icon>
+{{ isNewRule ? '创建分类规则' : '编辑分类规则' }}
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showRuleEditModal = false" />
+</v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
         <!-- 基础设置 -->

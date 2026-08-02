@@ -29,6 +29,7 @@ const emit = defineEmits<{
   'update:modelValue': [val: boolean]
   recognize: [params: any]
   rename: []
+  repreview: [ruleId: string]
 }>()
 
 const { success, error: showError, warning } = useNotification()
@@ -158,6 +159,23 @@ function getLogClass(log: string): string {
   if (log.includes('📢') || log.includes('结论')) return 'log-i'
   return ''
 }
+
+// --- 重命名规则选择 ---
+const selectedRuleId = ref('')
+
+// 弹窗打开时默认选中第一条规则
+watch(() => props.modelValue, (newVal) => {
+  if (newVal && props.availableRules.length > 0) {
+    selectedRuleId.value = props.availableRules[0].id
+  }
+})
+
+// 切换规则时通知父组件重新预览
+watch(selectedRuleId, (newId) => {
+  if (newId && props.data) {
+    emit('repreview', newId)
+  }
+})
 
 // --- 识别 ---
 function handleRecognize() {
@@ -389,9 +407,19 @@ watch(() => props.modelValue, (newVal) => {
 
             <!-- 重命名预览 -->
             <div class="preview-section">
-              <div class="section-title">
+              <div class="d-flex align-center mb-2 ga-2">
                 <v-icon size="16" color="info">mdi-folder-sync-outline</v-icon>
-                重命名路径预览
+                <span class="text-subtitle-2 font-weight-bold">重命名路径预览</span>
+                <v-spacer />
+                <v-select
+                  v-model="selectedRuleId"
+                  :items="availableRules.map((r: any) => ({ title: r.name, value: r.id }))"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  style="max-width: 220px"
+                  label="重命名规则"
+                />
               </div>
               <div class="preview-path">{{ previewPath || (loading ? '正在计算...' : '无法生成预览') }}</div>
             </div>

@@ -408,6 +408,24 @@ async function recognizeFile(item: any, forcedParams: any = null) {
   }
 }
 
+// --- 重新预览（切换重命名规则时） ---
+async function handleRepreview(ruleId: string) {
+  if (!recognitionData.value) return
+  try {
+    const previewData = await organizerApi.renamePreview({
+      rule_id: ruleId,
+      result_data: recognitionData.value,
+    })
+    if (previewData?.status === 'success') {
+      previewPath.value = previewData.new_path
+    } else {
+      previewPath.value = '预览失败: ' + (previewData?.message || '规则不匹配')
+    }
+  } catch {
+    previewPath.value = '预览失败'
+  }
+}
+
 // --- 重命名 ---
 async function handleRename() {
   if (!selectedFile.value || !previewPath.value || previewPath.value.startsWith('预览失败')) {
@@ -759,10 +777,12 @@ onMounted(() => {
     <!-- 文件详情 Modal -->
     <v-dialog v-model="showInfoModal" max-width="500">
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start>mdi-information-outline</v-icon>
-          项目详情
-        </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start>mdi-information-outline</v-icon>
+项目详情
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showInfoModal = false" />
+</v-card-title>
         <v-divider />
         <v-card-text class="pa-4" v-if="fileInfo">
           <div class="kv-row">
@@ -805,10 +825,12 @@ onMounted(() => {
     <!-- 前往路径 Modal -->
     <v-dialog v-model="showGoToModal" max-width="500">
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start>mdi-folder-marker</v-icon>
-          前往指定路径
-        </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start>mdi-folder-marker</v-icon>
+前往指定路径
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showGoToModal = false" />
+</v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field
@@ -841,6 +863,7 @@ onMounted(() => {
       :available-rules="availableRules"
       @recognize="(params: any) => recognizeFile(selectedFile, params)"
       @rename="handleRename"
+      @repreview="handleRepreview"
     />
 
     <!-- 整理当前目录弹窗 -->

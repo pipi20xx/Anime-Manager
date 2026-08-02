@@ -168,6 +168,8 @@ defineExpose({ fetchFeeds })
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon start>mdi-rss</v-icon>
           {{ isNewFeed ? '添加 RSS 订阅源' : '编辑 RSS 订阅源' }}
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showFeedModal = false" />
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">

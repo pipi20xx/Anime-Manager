@@ -214,10 +214,12 @@ onMounted(() => {
     <!-- 编辑/添加客户端弹窗 -->
     <v-dialog v-model="showModal" max-width="600" scrollable>
       <v-card>
-        <v-card-title class="pa-4 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-download-circle-outline</v-icon>
-          <span>{{ isNewClient ? '添加下载器' : '编辑下载器' }}</span>
-        </v-card-title>
+<v-card-title class="pa-4 d-flex align-center ga-2">
+<v-icon color="primary" size="20">mdi-download-circle-outline</v-icon>
+<span>{{ isNewClient ? '添加下载器' : '编辑下载器' }}</span>
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showModal = false" />
+</v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
           <v-select

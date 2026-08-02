@@ -399,9 +399,11 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
   <!-- 行详情弹窗 -->
   <v-dialog v-model="showDbRowDetail" max-width="640" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-table-row</v-icon>行详情
-      </v-card-title>
+<v-card-title class="pa-4 d-flex align-center">
+<v-icon start color="primary">mdi-table-row</v-icon>行详情
+<v-spacer />
+<v-btn icon="mdi-close" variant="text" size="small" @click="showDbRowDetail = false" />
+</v-card-title>
       <v-divider />
       <v-card-text class="pa-4" v-if="dbRowDetailItem">
         <div class="dc-detail-row" v-for="(val, key) in dbRowDetailItem" :key="String(key)">
