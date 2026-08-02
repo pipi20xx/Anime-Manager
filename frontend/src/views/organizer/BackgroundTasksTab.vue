@@ -66,8 +66,8 @@ function openLogModal(taskId: string) {
       <v-col v-for="bgTask in backgroundTasks" :key="bgTask.task_id" cols="12" sm="6" md="4" lg="3">
         <v-card class="glass-card item-card fill-height">
           <v-card-text class="pb-0">
-            <div class="d-flex align-start justify-space-between mb-2">
-              <div class="text-subtitle-2 font-weight-bold text-truncate flex-grow-1 mr-2">{{ bgTask.task_id }}</div>
+            <div class="d-flex align-start justify-space-between mb-1">
+              <div class="text-subtitle-2 font-weight-bold text-truncate flex-grow-1 mr-2">{{ bgTask.name || bgTask.task_id }}</div>
               <v-chip
                 size="x-small"
                 :color="getStatusTag(bgTask.status).color"
@@ -76,16 +76,22 @@ function openLogModal(taskId: string) {
                 {{ getStatusTag(bgTask.status).label }}
               </v-chip>
             </div>
+            <div class="d-flex align-center ga-2 text-caption text-medium-emphasis">
+              <v-icon size="12">mdi-identifier</v-icon>
+              <span class="text-truncate">{{ bgTask.task_id }}</span>
+              <v-spacer />
+              <v-chip v-if="bgTask.dry_run" size="x-small" variant="tonal" color="warning">预览</v-chip>
+            </div>
           </v-card-text>
 
           <v-card-text class="pt-0 pb-2">
             <div v-if="bgTask.total" class="mb-2">
               <div class="d-flex justify-space-between text-caption text-medium-emphasis mb-1">
                 <span>进度</span>
-                <span>{{ bgTask.progress ?? 0 }} / {{ bgTask.total }}</span>
+                <span>{{ bgTask.processed ?? 0 }} / {{ bgTask.total }}</span>
               </div>
               <v-progress-linear
-                :model-value="bgTask.total ? ((bgTask.progress ?? 0) / bgTask.total) * 100 : 0"
+                :model-value="bgTask.total ? ((bgTask.processed ?? 0) / bgTask.total) * 100 : 0"
                 color="primary"
                 height="6"
                 rounded="pill"

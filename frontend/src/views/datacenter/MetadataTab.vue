@@ -212,8 +212,8 @@ onUnmounted(() => {
       clearable hide-details class="flex-grow-1" style="min-width: 200px"
       @keyup.enter="searchBrowse" @click:clear="browserSearch = ''; searchBrowse()"
     />
-    <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="showRefreshModal = true">全量刷新</v-btn>
-    <v-btn variant="tonal" prepend-icon="mdi-sync-circle" @click="showSyncModal = true">同步 SYTMDB</v-btn>
+    <v-btn color="warning" variant="tonal" prepend-icon="mdi-refresh" @click="showRefreshModal = true">全量刷新</v-btn>
+    <v-btn color="info" variant="tonal" prepend-icon="mdi-sync-circle" @click="showSyncModal = true">同步 SYTMDB</v-btn>
     <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="openCreate">手动新增</v-btn>
   </div>
 

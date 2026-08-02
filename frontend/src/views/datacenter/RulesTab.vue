@@ -256,8 +256,8 @@ defineExpose({ fetchRules })
 
 <template>
   <div class="d-flex justify-end mb-4 ga-2">
-    <v-btn variant="tonal" prepend-icon="mdi-upload-outline" @click="importRules">导入规则</v-btn>
-    <v-btn variant="tonal" prepend-icon="mdi-download-outline" @click="exportRules">导出规则</v-btn>
+    <v-btn color="info" variant="tonal" prepend-icon="mdi-upload-outline" @click="importRules">导入规则</v-btn>
+    <v-btn color="info" variant="tonal" prepend-icon="mdi-download-outline" @click="exportRules">导出规则</v-btn>
     <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="openAddRule">添加规则</v-btn>
   </div>
 

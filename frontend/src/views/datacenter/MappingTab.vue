@@ -213,9 +213,9 @@ defineExpose({ fetchMappings, fetchRefCounts })
     <div class="d-flex justify-space-between align-center mb-3 flex-wrap ga-2">
       <div class="text-subtitle-1 font-weight-bold">ID 映射管理</div>
       <div class="d-flex ga-2">
-        <v-btn variant="tonal" size="small" prepend-icon="mdi-download-outline" @click="handleExportMappings">导出备份</v-btn>
-        <v-btn variant="tonal" size="small" prepend-icon="mdi-upload-outline" :loading="mapFileImportLoading" @click="handleImportMappings">导入备份</v-btn>
-        <v-btn v-if="['genre','company','keyword'].includes(mapActiveType)" variant="tonal" size="small" prepend-icon="mdi-import" :loading="mapImportLoading" @click="handleImportFromRef">导入当前分类</v-btn>
+        <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-download-outline" @click="handleExportMappings">导出备份</v-btn>
+        <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-upload-outline" :loading="mapFileImportLoading" @click="handleImportMappings">导入备份</v-btn>
+        <v-btn v-if="['genre','company','keyword'].includes(mapActiveType)" color="info" variant="tonal" size="small" prepend-icon="mdi-import" :loading="mapImportLoading" @click="handleImportFromRef">导入当前分类</v-btn>
         <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddMapItem">添加映射</v-btn>
       </div>
     </div>

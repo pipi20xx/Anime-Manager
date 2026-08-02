@@ -290,27 +290,23 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
       @update:model-value="(val: string | null) => { if (val) selectTable(val); else clearQuery() }"
     />
 
-    <div class="d-flex ga-3 align-start">
-      <v-textarea
-        v-model="currentSql"
-        label="SQL 查询语句"
-        variant="outlined"
-        density="compact"
-        rows="2"
-        auto-grow
-        placeholder="SELECT * FROM public.file_hashes LIMIT 10"
-        hide-details
-        style="font-family: monospace"
-      />
-      <v-btn
-        color="primary"
-        variant="flat"
-        :loading="queryLoading"
-        prepend-icon="mdi-play"
-        @click="handleManualRun"
-        style="min-width: 80px"
-      >执行</v-btn>
-    </div>
+    <v-text-field
+      v-model="currentSql"
+      placeholder="输入 SQL 查询语句... (Ctrl+Enter 执行)"
+      prepend-inner-icon="mdi-database-search"
+      variant="outlined"
+      density="comfortable"
+      hide-details
+      clearable
+      style="font-family: monospace"
+      @keydown.ctrl.enter="handleManualRun"
+    >
+      <template #append-inner>
+        <v-btn color="primary" variant="flat" size="small" :loading="queryLoading" prepend-icon="mdi-play" @click="handleManualRun">
+          执行
+        </v-btn>
+      </template>
+    </v-text-field>
   </v-card>
 
   <!-- 执行结果 -->

@@ -73,7 +73,7 @@ onMounted(() => {
     </v-alert>
 
     <div class="d-flex justify-end ga-2">
-      <v-btn variant="tonal" prepend-icon="mdi-lan-connect" :loading="dbConfigTesting" @click="testDbConnection">测试连接</v-btn>
+      <v-btn color="info" variant="tonal" prepend-icon="mdi-lan-connect" :loading="dbConfigTesting" @click="testDbConnection">测试连接</v-btn>
       <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" :loading="dbConfigLoading" @click="saveDbConfig">保存并应用</v-btn>
     </div>
   </v-card>

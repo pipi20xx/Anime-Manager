@@ -150,6 +150,8 @@ async function cleanupInvalidFingerprints() {
 }
 
 async function handleEmbySync() {
+  const ok = await confirm({ title: 'Emby 索引同步', content: '将从 Emby 服务器拉取媒体库索引数据，可能需要一些时间。是否继续？' })
+  if (!ok) return
   embySyncLoading.value = true
   try {
     const data = await dataCenterApi.syncEmbyIndex() as any
@@ -159,6 +161,8 @@ async function handleEmbySync() {
 }
 
 async function handleBgmSync() {
+  const ok = await confirm({ title: 'BangumiData 同步', content: '将从 bangumi-data 项目拉取最新条目数据并更新本地数据库。是否继续？' })
+  if (!ok) return
   bgmSyncLoading.value = true
   try {
     const data = await bangumiApi.syncMapping(true) as any
