@@ -569,6 +569,16 @@
   color: #fff;
 }
 
+/* ── 33e-3. 无海报时的占位符 ── */
+.media-card__poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+}
+
 /* ── 33f. 卡片下方信息区 ── */
 .media-card__info {
   padding: 8px 8px 10px;
@@ -595,6 +605,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-top: 1px;
+}
+
+/* ── 33g. 卡片底部操作按钮区 ── */
+.media-card__actions {
+  display: flex;
+  gap: 4px;
+  padding: 0 8px 8px;
+  justify-content: center;
 }
 
 /* ============================================================
@@ -682,10 +700,11 @@
 }
 
 /* ============================================================
- * §35. 追踪管理卡片 — Calendar Manage Card
+ * §35. 追踪管理网格 — Calendar Manage Grid
  *     用于追踪管理弹窗内的紧凑卡片网格
+ *     卡片本体使用 §33 .media-card 体系，此处仅定义弹窗专用网格
  *     使用方式：<div class="cal-manage-grid">
- *                 <v-card class="glass-card cal-manage-card">...</v-card>
+ *                 <v-card class="glass-card media-card">...</v-card>
  *               </div>
  * ============================================================ */
 
@@ -697,68 +716,6 @@
 }
 @media (min-width: 600px)  { .cal-manage-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 960px)  { .cal-manage-grid { grid-template-columns: repeat(5, 1fr); } }
-
-/* ── 35b. 追踪管理卡片主体 ── */
-.cal-manage-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
-}
-.cal-manage-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-/* ── 35c. 海报区域 ── */
-.cal-manage-poster {
-  position: relative;
-  aspect-ratio: 2 / 3;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  overflow: hidden;
-}
-.cal-manage-poster .v-img {
-  width: 100%;
-  height: 100%;
-  transition: transform 0.3s ease;
-}
-.cal-manage-card:hover .cal-manage-poster .v-img {
-  transform: scale(1.05);
-}
-
-/* ── 35d. 信息区 ── */
-.cal-manage-info {
-  padding: 6px 8px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.cal-manage-title {
-  font-weight: 700;
-  font-size: 12px;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-.cal-manage-meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-}
-.cal-manage-season {
-  color: rgb(var(--v-theme-primary));
-  font-weight: 600;
-}
-.cal-manage-ep {
-  color: rgba(var(--v-theme-on-surface), 0.5);
-}
-.cal-manage-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
 
 /* ── 兼容旧 .sub-badge (逐步迁移) ── */
 .sub-badge {

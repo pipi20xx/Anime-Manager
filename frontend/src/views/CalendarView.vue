@@ -284,9 +284,14 @@ async function handleAddSubject() {
   }
 }
 
-async function refreshSubject(id: number) {
+async function refreshSubject(sub: any) {
+  const ok = await confirm({
+    title: '确认刷新',
+    content: `确定要刷新「${sub.title}」的放送数据吗？`,
+  })
+  if (!ok) return
   try {
-    const data = await calendarApi.refreshSubject(id)
+    const data = await calendarApi.refreshSubject(sub.id)
     if (data?.success) {
       success('已同步最新放送日期')
       fetchData()
@@ -493,45 +498,56 @@ onMounted(() => {
               <div class="d-flex justify-space-between align-center mb-3">
                 <span class="text-caption text-medium-emphasis">共 {{ trackingList.length }} 个追踪项</span>
                 <div class="d-flex ga-2">
-                  <v-btn variant="tonal" size="small" prepend-icon="mdi-broom" @click="clearExpiredSubjects">清理过期</v-btn>
+                  <v-btn color="warning" variant="tonal" size="small" prepend-icon="mdi-broom" @click="clearExpiredSubjects">清理过期</v-btn>
                   <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-refresh" @click="refreshAllSubjects">全部刷新</v-btn>
                 </div>
               </div>
 
               <div v-if="trackingList.length > 0" class="cal-manage-grid">
-                <v-card v-for="sub in trackingList" :key="sub.id" class="glass-card cal-manage-card cursor-pointer" @click="startEdit(sub)">
+                <v-card
+                  v-for="sub in trackingList"
+                  :key="sub.id"
+                  class="glass-card media-card cursor-pointer"
+                  @click="startEdit(sub)"
+                >
                   <!-- 海报 -->
-                  <div class="cal-manage-poster">
+                  <div class="media-card__poster">
                     <v-img
                       v-if="sub.poster_path"
                       :src="getImg(sub.poster_path)"
                       cover
+                      class="rounded-t-xl"
                     >
                       <template #placeholder>
                         <v-skeleton-loader type="image" />
                       </template>
                     </v-img>
-                    <div v-else class="track-card__placeholder">
-                      <span>{{ sub.title?.charAt(0) || '?' }}</span>
+                    <div v-else class="media-card__poster-placeholder">
+                      <v-icon size="36" color="primary">mdi-television-classic</v-icon>
                     </div>
+                    <span class="media-card__type media-card__type--tmdb-tv">S{{ sub.season }}</span>
                   </div>
                   <!-- 信息区 -->
-                  <div class="cal-manage-info">
-                    <div class="cal-manage-title" :title="sub.title">{{ sub.title }}</div>
-                    <div class="cal-manage-meta">
-                      <span class="cal-manage-season">S{{ sub.season }}</span>
-                      <span class="cal-manage-ep" :class="{ 'text-error': getEpisodeRange(sub.episodes_cache) === '无数据' }">{{ getEpisodeRange(sub.episodes_cache) }}</span>
-                      <div class="cal-manage-actions" @click.stop>
-                        <v-btn size="x-small" variant="tonal" color="info" icon="mdi-refresh" density="compact" @click="refreshSubject(sub.id)" />
-                        <v-btn size="x-small" variant="tonal" color="error" icon="mdi-delete-outline" density="compact" @click="deleteSubject(sub)" />
-                      </div>
+                  <div class="media-card__info">
+                    <div class="media-card__title" :title="sub.title">{{ sub.title }}</div>
+                    <div
+                      class="media-card__subtitle"
+                      :class="{ 'text-error': getEpisodeRange(sub.episodes_cache) === '无数据' }"
+                    >
+                      {{ getEpisodeRange(sub.episodes_cache) }}
                     </div>
+                  </div>
+                  <!-- 操作按钮 -->
+                  <div class="media-card__actions" @click.stop>
+                    <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-refresh" @click="refreshSubject(sub)">刷新</v-btn>
+                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteSubject(sub)">删除</v-btn>
                   </div>
                 </v-card>
               </div>
               <div v-else class="text-center pa-8">
-                <v-icon size="48" color="primary" class="mb-3">mdi-calendar-remove</v-icon>
-                <div class="text-body-2 text-medium-emphasis">暂无追踪条目</div>
+                <v-icon size="64" color="primary" class="mb-4">mdi-calendar-remove</v-icon>
+                <div class="text-h6 font-weight-medium">暂无追踪条目</div>
+                <div class="text-body-2 text-medium-emphasis mt-2">通过"从放送表导入"或"手动添加"添加追踪番剧</div>
               </div>
             </v-window-item>
 

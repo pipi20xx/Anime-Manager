@@ -9,6 +9,7 @@ import { ref, reactive } from 'vue'
 import { organizerApi } from '@/api'
 import { useNotification, useConfirm, useDragSort } from '@/composables'
 import TaskEditModal from './TaskEditModal.vue'
+import ExecutionLogModal from './ExecutionLogModal.vue'
 
 defineOptions({ name: 'TasksTab' })
 
@@ -217,16 +218,99 @@ async function toggleTaskMonitor(task: any, type: 'incremental' | 'scheduler') {
   }
 }
 
-async function runTask(task: any, dryRun = true) {
+// --- 任务执行（后台静默） ---
+async function runTaskBackground(task: any) {
   try {
-    const data = await organizerApi.startBackground(task, { dry_run: dryRun })
+    const data = await organizerApi.startBackground(task, { dry_run: false })
     if (data?.status === 'success') {
-      success(dryRun ? '预览任务已启动' : '任务已在后台启动')
+      success('任务已在后台启动')
     } else {
       showError('启动失败: ' + (data?.message || '未知错误'))
     }
   } catch (e: any) {
     showError('启动失败: ' + e.message)
+  }
+}
+
+// --- 任务执行（流式预览 + 手动提交） ---
+const showExecModal = ref(false)
+const isRunning = ref(false)
+const isDryRun = ref(true)
+const execLogs = ref<any[]>([])
+const scanningStatus = ref('')
+const currentTask = ref<any>(null)
+
+async function readStream(response: Response) {
+  const reader = response.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+    for (const line of lines) {
+      if (!line.trim()) continue
+      try {
+        const msg = JSON.parse(line)
+        if (msg.type === 'scan') {
+          scanningStatus.value = msg.path
+        } else if (['item', 'skip', 'error', 'start', 'info'].includes(msg.type)) {
+          execLogs.value.push(msg)
+        } else if (msg.type === 'finish') {
+          scanningStatus.value = ''
+          success(`预览完成: 处理了 ${msg.count} 个文件`)
+        }
+      } catch {}
+    }
+  }
+}
+
+async function runTaskPreview(task: any) {
+  currentTask.value = task
+  showExecModal.value = true
+  isDryRun.value = true
+  isRunning.value = true
+  execLogs.value = []
+  scanningStatus.value = ''
+
+  try {
+    const response = await organizerApi.streamAdhoc(task, { dry_run: true })
+    await readStream(response)
+  } catch {
+    showError('任务中断')
+  } finally {
+    isRunning.value = false
+  }
+}
+
+async function commitBatch() {
+  const commitItems = execLogs.value.filter(l => l.type === 'item' && l.status === 'success')
+  if (commitItems.length === 0) {
+    warning('没有可执行的项目')
+    return
+  }
+
+  isDryRun.value = false
+  isRunning.value = true
+  execLogs.value = []
+
+  try {
+    const response = await organizerApi.streamExecute({
+      items: commitItems,
+      conflict_mode: currentTask.value?.overwrite_mode ? 'overwrite' : 'skip',
+    })
+    if (response.ok) {
+      await readStream(response)
+      success('整理任务执行完毕')
+    } else {
+      showError('执行请求失败')
+    }
+  } catch {
+    showError('执行过程出错')
+  } finally {
+    isRunning.value = false
   }
 }
 
@@ -238,9 +322,9 @@ async function requestRunTask(task: any) {
     cancelText: '预览并手动执行',
   })
   if (ok === true) {
-    runTask(task, false)
+    runTaskBackground(task)
   } else if (ok === false) {
-    runTask(task, true)
+    runTaskPreview(task)
   }
   // null = 用户点击 X 关闭，不执行任何操作
 }
@@ -338,6 +422,17 @@ async function requestRunTask(task: any) {
       :task-form="taskForm"
       :rules="rules"
       @save="handleSaveTask"
+    />
+
+    <!-- 执行日志/预览弹窗 -->
+    <ExecutionLogModal
+      v-model="showExecModal"
+      :is-dry-run="isDryRun"
+      :is-running="isRunning"
+      :logs="execLogs"
+      :scanning-status="scanningStatus"
+      :target-dir="currentTask?.target_dir || ''"
+      @commit="commitBatch"
     />
   </div>
 </template>
