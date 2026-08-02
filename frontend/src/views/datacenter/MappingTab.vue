@@ -3,11 +3,13 @@
  * MappingTab — ID映射管理
  *
  * 功能: 流派/公司/关键词/语言/国家五大分类 CRUD + 从TMDB导入 + 导入导出备份
+ * 卡片网格布局，使用 manage-card 统一卡片体系
  */
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { userMappingApi } from '@/api'
 import { useNotification, useConfirm, downloadJson } from '@/composables'
 import AppGlassCard from '@/components/common/AppGlassCard.vue'
+import GlassDialog from '@/components/common/GlassDialog.vue'
 
 const { success, error: showError, info } = useNotification()
 const { confirm } = useConfirm()
@@ -191,6 +193,30 @@ const mapTotal = computed(() => {
   return mapMeta.keywordTotal
 })
 
+const typeLabels: Record<string, string> = {
+  genre: '流派', company: '公司', keyword: '关键词', language: '语言', country: '国家',
+}
+
+// 当前分页页码 (getter/setter)
+const currentPage = computed({
+  get() {
+    const t = mapActiveType.value
+    if (t === 'genre') return mapMeta.genrePage
+    if (t === 'language') return mapMeta.languagePage
+    if (t === 'country') return mapMeta.countryPage
+    if (t === 'company') return mapMeta.companyPage
+    return mapMeta.keywordPage
+  },
+  set(val: number) {
+    const t = mapActiveType.value
+    if (t === 'genre') mapMeta.genrePage = val
+    else if (t === 'language') mapMeta.languagePage = val
+    else if (t === 'country') mapMeta.countryPage = val
+    else if (t === 'company') mapMeta.companyPage = val
+    else mapMeta.keywordPage = val
+  },
+})
+
 onMounted(() => {
   fetchMappings()
   fetchRefCounts()
@@ -231,69 +257,95 @@ defineExpose({ fetchMappings, fetchRefCounts })
     <!-- 搜索 -->
     <v-text-field v-model="mapSearch[mapActiveType]" density="compact" variant="outlined" prepend-inner-icon="mdi-magnify" clearable hide-details class="mb-3" placeholder="搜索 ID 或名称..." @keyup.enter="refreshCurrentMappings" @click:clear="refreshCurrentMappings" />
 
-    <!-- 数据表 -->
-    <v-table density="compact" class="rounded" v-if="mapPaginatedData.length > 0">
-      <thead>
-        <tr>
-          <th>ID/代码</th>
-          <th>中文名称</th>
-          <th>英文名称</th>
-          <th v-if="mapActiveType === 'company'">国家</th>
-          <th style="width:100px">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in mapPaginatedData" :key="item.id || item.code">
-          <td class="font-weight-medium">{{ item.code || item.id }}</td>
-          <td>{{ item.name_zh || item.name || '-' }}</td>
-          <td>{{ item.name_en || '-' }}</td>
-          <td v-if="mapActiveType === 'company'">{{ item.country || '-' }}</td>
-          <td>
-            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEditMapItem(item)">编辑</v-btn>
-            <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="handleDeleteMap(item.code || item.id)">删除</v-btn>
-          </td>
-        </tr>
-      </tbody>
-    </v-table>
-    <div v-else class="text-center pa-6 text-body-2 text-medium-emphasis">暂无{{ mapActiveType === 'genre' ? '流派' : mapActiveType === 'company' ? '公司' : mapActiveType === 'keyword' ? '关键词' : mapActiveType === 'language' ? '语言' : '国家' }}映射</div>
+    <!-- 卡片网格 -->
+    <v-row v-if="mapLoading">
+      <v-col v-for="i in 6" :key="i" cols="12" sm="6" md="4">
+        <v-skeleton-loader type="card" />
+      </v-col>
+    </v-row>
+
+    <v-row v-else-if="mapPaginatedData.length > 0">
+      <v-col
+        v-for="item in mapPaginatedData"
+        :key="item.id || item.code"
+        cols="12" sm="6" md="4"
+      >
+        <v-card class="glass-card manage-card cursor-pointer hover-lift" @click="openEditMapItem(item)">
+          <!-- 标题行 -->
+          <div class="manage-card__header">
+            <div class="manage-card__title">{{ item.name_zh || item.name || '未命名' }}</div>
+            <v-chip size="x-small" variant="tonal" color="primary" class="manage-card__badge">
+              {{ item.code || item.id }}
+            </v-chip>
+          </div>
+
+          <!-- 信息区 -->
+          <div class="manage-card__body">
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">中文名</span>
+              <span class="manage-card__info-value" :title="item.name_zh || item.name || '-'">{{ item.name_zh || item.name || '-' }}</span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">英文名</span>
+              <span class="manage-card__info-value" :title="item.name_en || '-'">{{ item.name_en || '-' }}</span>
+            </div>
+            <div v-if="mapActiveType === 'company' && item.country" class="manage-card__info">
+              <span class="manage-card__info-label">国家</span>
+              <span class="manage-card__info-value">{{ item.country }}</span>
+            </div>
+          </div>
+
+          <v-divider />
+          <v-card-actions class="manage-card__actions">
+            <v-spacer />
+            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click.stop="openEditMapItem(item)">编辑</v-btn>
+            <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="handleDeleteMap(item.code || item.id)">删除</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <div v-else class="text-center pa-8">
+      <v-icon size="64" color="primary" class="mb-4">mdi-database-off-outline</v-icon>
+      <div class="text-h6 font-weight-medium">暂无{{ typeLabels[mapActiveType] }}映射</div>
+    </div>
+
+    <!-- 分页 -->
+    <div v-if="mapTotal > mapMeta.pageSize" class="d-flex justify-center mt-3">
+      <v-pagination
+        v-model="currentPage"
+        :length="Math.ceil(mapTotal / mapMeta.pageSize)"
+        :total-visible="7"
+        density="compact"
+      />
+    </div>
   </v-card>
 
   <!-- 映射编辑弹窗 -->
-  <v-dialog v-model="showMapModal" max-width="500">
-    <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">{{ isNewMapItem ? '添加映射' : '编辑映射' }}
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showMapModal = false" />
-</v-card-title>
-      <v-divider />
-      <v-card-text class="pa-4">
-        <template v-if="mapActiveType === 'genre'">
-          <v-text-field v-model="mapForm.id" label="ID" type="number" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.name_zh" label="中文名" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.name_en" label="英文名" variant="outlined" density="compact" class="mb-3" />
-        </template>
-        <template v-else-if="mapActiveType === 'company'">
-          <v-text-field v-model="mapForm.id" label="ID" type="number" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.name" label="名称" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.country" label="国家" variant="outlined" density="compact" class="mb-3" placeholder="如: JP, CN, US" />
-        </template>
-        <template v-else-if="mapActiveType === 'keyword'">
-          <v-text-field v-model="mapForm.id" label="ID" type="number" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.name_zh" label="中文名" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.name_en" label="英文名" variant="outlined" density="compact" class="mb-3" />
-        </template>
-        <template v-else>
-          <v-text-field v-model="mapForm.code" label="代码" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" :placeholder="mapActiveType === 'language' ? '如: ja, zh, en' : '如: JP, CN, US'" />
-          <v-text-field v-model="mapForm.name_zh" label="中文名" variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="mapForm.name_en" label="英文名" variant="outlined" density="compact" class="mb-3" />
-        </template>
-      </v-card-text>
-      <v-divider />
-      <v-card-actions class="pa-4">
-        <v-spacer />
-        <v-btn variant="tonal" prepend-icon="mdi-close" @click="showMapModal = false">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveMap">保存</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <GlassDialog v-model="showMapModal" :max-width="500" :scrollable="false" :cancel-visible="false" icon="mdi-swap-horizontal" :title="isNewMapItem ? '添加映射' : '编辑映射'">
+    <template v-if="mapActiveType === 'genre'">
+      <v-text-field v-model="mapForm.id" label="ID" type="number" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.name_zh" label="中文名" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.name_en" label="英文名" variant="outlined" density="compact" class="mb-3" />
+    </template>
+    <template v-else-if="mapActiveType === 'company'">
+      <v-text-field v-model="mapForm.id" label="ID" type="number" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.name" label="名称" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.country" label="国家" variant="outlined" density="compact" class="mb-3" placeholder="如: JP, CN, US" />
+    </template>
+    <template v-else-if="mapActiveType === 'keyword'">
+      <v-text-field v-model="mapForm.id" label="ID" type="number" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.name_zh" label="中文名" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.name_en" label="英文名" variant="outlined" density="compact" class="mb-3" />
+    </template>
+    <template v-else>
+      <v-text-field v-model="mapForm.code" label="代码" :disabled="!isNewMapItem" variant="outlined" density="compact" class="mb-3" :placeholder="mapActiveType === 'language' ? '如: ja, zh, en' : '如: JP, CN, US'" />
+      <v-text-field v-model="mapForm.name_zh" label="中文名" variant="outlined" density="compact" class="mb-3" />
+      <v-text-field v-model="mapForm.name_en" label="英文名" variant="outlined" density="compact" class="mb-3" />
+    </template>
+
+    <template #actions>
+      <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveMap">保存</v-btn>
+    </template>
+  </GlassDialog>
 </template>

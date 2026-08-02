@@ -31,12 +31,14 @@ const error = ref<string | null>(null)
 const recommendations = ref<any[]>([])
 const subscriptions = ref<any[]>([])
 const embyStatus = ref<any>(null)
+const embyLoading = ref(false)
 
 // 季度展开状态
 const expandedSeasons = ref<Set<number>>(new Set())
 const seasonEpisodes = ref<Map<string, any>>(new Map())
 const seasonEmbyInfo = ref<Map<string, any>>(new Map())
 const loadingSeasons = ref<Set<string>>(new Set())
+const loadingSeasonEmby = ref<Set<string>>(new Set())
 
 // 状态映射
 const STATUS_MAP: Record<string, string> = {
@@ -56,8 +58,6 @@ const isSubscribed = computed(() => {
     (sub: any) => String(sub.tmdb_id) === String(route.params.id)
   )
 })
-
-const isInLibrary = computed(() => embyStatus.value?.exists || false)
 
 // 从 backdrops 列表随机选一张，没有则回退到 backdrop_path
 const randomBackdrop = computed(() => {
@@ -117,7 +117,9 @@ async function fetchDetail(retryCount = 0) {
   expandedSeasons.value = new Set()
   seasonEpisodes.value = new Map()
   seasonEmbyInfo.value = new Map()
+  loadingSeasonEmby.value = new Set()
   embyStatus.value = null
+  embyLoading.value = true
 
   const MAX_RETRIES = 3
 
@@ -144,9 +146,12 @@ async function fetchDetail(retryCount = 0) {
     if (detailData.status === 'fulfilled') {
       detail.value = detailData.value
       // 后台异步获取 Emby 状态（不阻塞详情展示）
+      embyLoading.value = true
       tmdbApi.getEmbyStatus(type, id).then(data => {
         embyStatus.value = data
-      }).catch(() => {})
+      }).catch(() => {}).finally(() => {
+        embyLoading.value = false
+      })
     }
 
     if (recData.status === 'fulfilled') {
@@ -159,6 +164,7 @@ async function fetchDetail(retryCount = 0) {
     }
   } catch (err: any) {
     error.value = err?.message || '加载详情失败，请检查网络连接'
+    embyLoading.value = false
     console.error('[TMDB Detail] 加载失败:', err)
   } finally {
     loading.value = false
@@ -182,15 +188,12 @@ async function toggleSeason(seasonNumber: number, retryCount = 0) {
     const MAX_RETRIES = 3
 
     try {
-      // 同时拉取 TMDB 集信息 + Emby 入库信息
-      const [seasonData, embyData] = await Promise.allSettled([
-        tmdbApi.getSeason(detail.value.id, seasonNumber),
-        tmdbApi.getSeasonEmby(detail.value.id, seasonNumber),
-      ])
-
-      // 检查季度数据请求是否失败
-      if (seasonData.status === 'rejected') {
-        const errMsg = String(seasonData.reason)
+      // 先拉取 TMDB 集信息（立即可展示，不等 Emby）
+      let seasonData
+      try {
+        seasonData = await tmdbApi.getSeason(detail.value.id, seasonNumber)
+      } catch (err: any) {
+        const errMsg = String(err)
         if (retryCount < MAX_RETRIES - 1 &&
             (errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('timeout'))) {
           console.log(`[Season ${seasonNumber}] 请求失败，${retryCount + 1}/${MAX_RETRIES} 秒后重试...`)
@@ -198,16 +201,23 @@ async function toggleSeason(seasonNumber: number, retryCount = 0) {
           expandedSeasons.value.delete(seasonNumber)
           return toggleSeason(seasonNumber, retryCount + 1)
         }
-        throw seasonData.reason
+        throw err
       }
 
-      if (seasonData.status === 'fulfilled') {
-        seasonEpisodes.value.set(key, seasonData.value)
-      }
+      // TMDB 集信息就绪，立即展示
+      seasonEpisodes.value.set(key, seasonData)
 
-      if (embyData.status === 'fulfilled') {
-        seasonEmbyInfo.value.set(key, embyData.value?.episodes || {})
-      }
+      // 异步拉取 Emby 入库信息（不阻塞集列表展示）
+      loadingSeasonEmby.value.add(key)
+      tmdbApi.getSeasonEmby(detail.value.id, seasonNumber)
+        .then(data => {
+          seasonEmbyInfo.value.set(key, data?.episodes || {})
+        })
+        .catch(() => {})
+        .finally(() => {
+          loadingSeasonEmby.value.delete(key)
+        })
+
     } catch (err: any) {
       console.error(`[Season ${seasonNumber}] 加载失败:`, err)
       seasonErrors.value.set(key, err?.message || '加载季度信息失败')
@@ -325,9 +335,17 @@ onMounted(() => {
           <v-col cols="12" sm="9" md="10">
             <div class="d-flex align-center ga-2 flex-wrap">
               <div class="text-h4 font-weight-bold">{{ detail.title || detail.name }}</div>
-              <v-chip v-if="isInLibrary" size="small" color="success" variant="tonal">
+              <v-chip v-if="embyStatus?.exists" size="small" color="success" variant="tonal">
                 <v-icon start size="14">mdi-check-circle</v-icon>
                 已入库
+              </v-chip>
+              <v-chip v-else-if="embyLoading" size="small" color="primary" variant="tonal">
+                <v-progress-circular indeterminate size="12" width="2" class="mr-1" />
+                查询中
+              </v-chip>
+              <v-chip v-else size="small" color="grey" variant="tonal">
+                <v-icon start size="14">mdi-close-circle-outline</v-icon>
+                未入库
               </v-chip>
             </div>
             <div v-if="detail.original_title || detail.original_name" class="text-body-1 text-medium-emphasis mt-1">
@@ -448,6 +466,12 @@ onMounted(() => {
                       <v-chip v-if="getSeasonLibraryStatus(season.season_number)?.exists" size="x-small" color="success" variant="tonal">
                         已入库
                       </v-chip>
+                      <v-chip v-else-if="embyLoading" size="x-small" color="primary" variant="tonal">
+                        查询中
+                      </v-chip>
+                      <v-chip v-else-if="embyStatus" size="x-small" color="grey" variant="tonal">
+                        未入库
+                      </v-chip>
                     </div>
                     <div class="text-caption text-medium-emphasis">
                       {{ season.episode_count }} 集
@@ -472,6 +496,12 @@ onMounted(() => {
                   <!-- 季度简介 -->
                   <div v-if="getSeasonInfo(season.season_number)?.overview" class="ep-season-overview mb-3">
                     {{ getSeasonInfo(season.season_number).overview }}
+                  </div>
+
+                  <!-- Emby 入库状态查询中提示 -->
+                  <div v-if="loadingSeasonEmby.has(String(season.season_number))" class="d-flex align-center ga-2 mb-2 pa-2 emby-loading-hint">
+                    <v-progress-circular indeterminate size="14" width="2" color="primary" />
+                    <span class="text-caption text-medium-emphasis">正在查询 Emby 入库状态...</span>
                   </div>
 
                   <!-- 集列表 -->
@@ -508,6 +538,9 @@ onMounted(() => {
                               <v-chip v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.exists" size="x-small" color="success" variant="tonal">
                                 <v-icon start size="12">mdi-check-circle</v-icon>
                                 已入库
+                              </v-chip>
+                              <v-chip v-else-if="!loadingSeasonEmby.has(String(season.season_number)) && seasonEmbyInfo.has(String(season.season_number))" size="x-small" color="grey" variant="tonal">
+                                未入库
                               </v-chip>
                             </div>
 
@@ -618,5 +651,11 @@ onMounted(() => {
   background: rgba(var(--v-theme-on-surface), 0.04);
   border-radius: 6px;
   padding: 6px 8px;
+}
+
+/* ── Emby 查询中提示 ── */
+.emby-loading-hint {
+  background: rgba(var(--v-theme-primary), 0.06);
+  border-radius: 8px;
 }
 </style>

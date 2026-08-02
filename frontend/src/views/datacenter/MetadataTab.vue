@@ -400,9 +400,9 @@ onUnmounted(() => {
 
               <!-- 制作公司 -->
               <div v-if="fullData.production_companies?.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">制作公司</div>
+                <div class="dc-section-title">制作公司</div>
                 <div class="d-flex ga-3 flex-wrap">
-                  <div v-for="c in fullData.production_companies" :key="c.id" class="d-flex align-center ga-2 pa-2 rounded-lg" style="background:rgba(var(--v-theme-on-surface),0.05);border:1px solid rgba(var(--v-theme-on-surface),0.1)">
+                  <div v-for="c in fullData.production_companies" :key="c.id" class="dc-meta-box dc-meta-box--bordered d-flex align-center ga-2">
                     <v-img v-if="c.logo_path" :src="getImg(c.logo_path)" width="32" height="32" contain />
                     <div><div class="text-body-2 font-weight-medium">{{ c.name }}</div><div v-if="c.origin_country" class="text-caption text-medium-emphasis">{{ mappingCache.countries[c.origin_country.toUpperCase()] || c.origin_country }}</div></div>
                   </div>
@@ -411,9 +411,9 @@ onUnmounted(() => {
 
               <!-- 电视网络 -->
               <div v-if="fullData.networks?.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">电视网络</div>
+                <div class="dc-section-title">电视网络</div>
                 <div class="d-flex ga-3 flex-wrap">
-                  <div v-for="nw in fullData.networks" :key="nw.id" class="d-flex align-center ga-2 pa-2 rounded-lg" style="background:rgba(var(--v-theme-on-surface),0.05);border:1px solid rgba(var(--v-theme-on-surface),0.1)">
+                  <div v-for="nw in fullData.networks" :key="nw.id" class="dc-meta-box dc-meta-box--bordered d-flex align-center ga-2">
                     <v-img v-if="nw.logo_path" :src="getImg(nw.logo_path)" width="32" height="32" contain />
                     <div><div class="text-body-2 font-weight-medium">{{ nw.name }}</div></div>
                   </div>
@@ -422,17 +422,17 @@ onUnmounted(() => {
 
               <!-- 关键词 -->
               <div v-if="keywordList.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">关键词 ({{ keywordList.length }})</div>
+                <div class="dc-section-title">关键词 ({{ keywordList.length }})</div>
                 <div class="d-flex ga-1 flex-wrap"><v-chip v-for="k in keywordList" :key="k.id" size="small" variant="tonal" color="info">{{ k.name }}</v-chip></div>
               </div>
 
               <!-- 全语言标题 -->
               <div v-if="translationList.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">全语言标题 ({{ translationList.length }})</div>
+                <div class="dc-section-title">全语言标题 ({{ translationList.length }})</div>
                 <div class="d-flex flex-column ga-1">
-                  <div v-for="t in translationList" :key="`${t.country}-${t.lang}`" class="d-flex align-center ga-3 pa-2 rounded-lg" style="background:rgba(var(--v-theme-on-surface),0.05)">
+                  <div v-for="t in translationList" :key="`${t.country}-${t.lang}`" class="dc-meta-box d-flex align-center ga-3">
                     <v-chip size="x-small" variant="tonal" color="primary">{{ mappingCache.countries[t.country.toUpperCase()] || t.country }}</v-chip>
-                    <span v-if="t.lang" class="text-caption text-medium-emphasis" style="width:80px">{{ mappingCache.languages[t.lang.toLowerCase()] || t.lang }}</span>
+                    <span v-if="t.lang" class="text-caption text-medium-emphasis dc-meta-lang">{{ mappingCache.languages[t.lang.toLowerCase()] || t.lang }}</span>
                     <span class="text-body-2 font-weight-medium">{{ t.title }}</span>
                   </div>
                 </div>
@@ -440,9 +440,9 @@ onUnmounted(() => {
 
               <!-- 全语言别名 -->
               <div v-if="altTitleList.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">全语言别名 ({{ altTitleList.length }})</div>
+                <div class="dc-section-title">全语言别名 ({{ altTitleList.length }})</div>
                 <div class="d-flex flex-column ga-1">
-                  <div v-for="(a, i) in altTitleList" :key="i" class="d-flex align-center ga-3 pa-2 rounded-lg" style="background:rgba(var(--v-theme-on-surface),0.05)">
+                  <div v-for="(a, i) in altTitleList" :key="i" class="dc-meta-box d-flex align-center ga-3">
                     <v-chip size="x-small" variant="tonal" color="primary">{{ mappingCache.countries[a.country.toUpperCase()] || a.country || '—' }}</v-chip>
                     <span v-if="a.type" class="text-caption text-medium-emphasis">{{ a.type }}</span>
                     <span class="text-body-2 font-weight-medium">{{ a.title }}</span>
@@ -452,9 +452,9 @@ onUnmounted(() => {
 
               <!-- 演员 -->
               <div v-if="castList.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">演员 ({{ castList.length }})</div>
+                <div class="dc-section-title">演员 ({{ castList.length }})</div>
                 <div class="d-flex ga-2 flex-wrap">
-                  <div v-for="c in castList.slice(0, 20)" :key="c.id" class="text-center" style="width:80px">
+                  <div v-for="c in castList.slice(0, 20)" :key="c.id" class="text-center dc-cast-item">
                     <v-avatar size="60" rounded="lg">
                       <v-img v-if="c.profilePath" :src="getImg(c.profilePath)" cover />
                       <v-icon v-else size="36" color="grey">mdi-account</v-icon>
@@ -467,15 +467,15 @@ onUnmounted(() => {
 
               <!-- 季度信息 -->
               <div v-if="fullData.seasons?.length" class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold text-primary mb-2">季度信息</div>
+                <div class="dc-section-title">季度信息</div>
                 <div class="d-flex flex-column ga-2">
-                  <div v-for="s in fullData.seasons" :key="s.id" class="d-flex ga-3 pa-2 rounded-lg" style="background:rgba(var(--v-theme-on-surface),0.05)">
-                    <v-img v-if="s.poster_path" :src="getImg(s.poster_path)" width="40" height="60" cover style="border-radius:4px;flex-shrink:0" />
-                    <div v-else class="d-flex align-center justify-center" style="width:40px;height:60px;background:rgba(var(--v-theme-on-surface),0.08);border-radius:4px;flex-shrink:0"><span class="text-caption font-weight-bold">S{{ s.season_number }}</span></div>
+                  <div v-for="s in fullData.seasons" :key="s.id" class="dc-meta-box d-flex ga-3">
+                    <v-img v-if="s.poster_path" :src="getImg(s.poster_path)" width="40" height="60" cover class="dc-season-poster" />
+                    <div v-else class="dc-season-poster-placeholder d-flex align-center justify-center"><span class="text-caption font-weight-bold">S{{ s.season_number }}</span></div>
                     <div>
                       <div class="text-body-2 font-weight-medium">{{ s.name }}</div>
                       <div class="text-caption text-medium-emphasis">{{ s.episode_count }} 集<span v-if="s.air_date"> · {{ s.air_date }}</span></div>
-                      <div v-if="s.overview" class="text-caption text-medium-emphasis mt-1" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ s.overview }}</div>
+                      <div v-if="s.overview" class="text-caption text-medium-emphasis mt-1 dc-clamp-2">{{ s.overview }}</div>
                     </div>
                   </div>
                 </div>
@@ -519,8 +519,65 @@ onUnmounted(() => {
 .dc-sentinel { min-height: 1px; }
 
 /* 信息网格 */
-.dc-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 16px; padding: 16px; background: rgba(var(--v-theme-on-surface),0.04); border-radius: 12px; border: 1px solid rgba(var(--v-theme-on-surface),0.08); }
+.dc-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 16px;
+  padding: 0;
+}
 .dc-info-item { display: flex; align-items: center; gap: 6px; }
-.dc-info-label { font-size: 12px; color: rgba(var(--v-theme-on-surface),0.5); white-space: nowrap; }
+.dc-info-label { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.5); white-space: nowrap; }
 .dc-info-value { font-size: 13px; font-weight: 500; }
+
+/* 完整数据 — 区块标题 */
+.dc-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+  margin-bottom: 8px;
+}
+
+/* 完整数据 — 通用条目容器 */
+.dc-meta-box {
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+/* 完整数据 — 带边框变体 */
+.dc-meta-box--bordered {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+}
+
+/* 完整数据 — 语言标签宽度 */
+.dc-meta-lang {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+/* 完整数据 — 演员项 */
+.dc-cast-item {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+/* 完整数据 — 季度海报 */
+.dc-season-poster {
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.dc-season-poster-placeholder {
+  width: 40px;
+  height: 60px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* 完整数据 — 文本截断 2 行 */
+.dc-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 </style>

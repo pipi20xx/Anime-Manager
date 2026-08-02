@@ -84,6 +84,9 @@ class EmbyClient:
                         'matched_items': matched,
                         'total': len(matched)
                     }
+            logger.info(f"索引未命中: tmdb_id={tmdb_id} 索引标题搜索后无匹配 (尝试了 {len(titles)} 个标题: {titles})")
+        else:
+            logger.info(f"索引未命中: tmdb_id={tmdb_id} 索引表中无此记录")
 
         # 2. 兜底: 遍历整个 Emby 库
         logger.info(f"执行兜底遍历: tmdb_id={tmdb_id}")
