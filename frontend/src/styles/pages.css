@@ -139,19 +139,19 @@
 
 /* 亮色模式玻璃面板 */
 .v-theme--light .login-glass-panel {
-  background: rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.50) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   box-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* 暗色模式玻璃面板 */
 .v-theme--dark .login-glass-panel {
-  background: rgba(30, 30, 60, 0.65) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.7) !important;
 }
 
@@ -168,12 +168,12 @@
 
 /* 登录卡片内输入框 — 玻璃面板上的微底色 */
 .v-theme--light .login-glass-panel .v-field--variant-outlined {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.30);
   border-radius: 16px !important;
 }
 
 .v-theme--dark .login-glass-panel .v-field--variant-outlined {
-  background: rgba(30, 30, 60, 0.50);
+  background: rgba(30, 30, 60, 0.38);
   border-radius: 16px !important;
 }
 
@@ -193,13 +193,12 @@
 .liquid-avatar {
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(78, 205, 196, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   color: #4ecdc4 !important;
   transition: all 0.5s ease-out;
 }
 
 .liquid-avatar:hover {
-  border-color: rgba(78, 205, 196, 0.5) !important;
   box-shadow: 0 0 16px rgba(78, 205, 196, 0.3) !important;
 }
 
@@ -236,7 +235,7 @@
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   margin: 0;
   overflow-x: auto;
   max-height: 65vh;
@@ -245,7 +244,7 @@
 
 .v-theme--light .code-block {
   color: rgba(0, 0, 0, 0.87);
-  border-color: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* ── 代码块修饰类 — 用于 scrollable 弹窗内部，移除自身滚动避免双重滚动条 ── */
@@ -292,17 +291,17 @@
 
 /* ── Sticky Tabs — 和卡片一样的玻璃（0.45 + blur 10px） ── */
 .v-theme--light .sticky-tabs {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 .v-theme--dark .sticky-tabs {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* 关键：仅强制 v-tabs 内部子元素透明，防止 Vuetify 默认 surface 色叠加
@@ -333,17 +332,17 @@
 
 /* ── Sticky Sub Tabs — 和卡片一样 ── */
 .v-theme--light .sticky-sub-tabs {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 .v-theme--dark .sticky-sub-tabs {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* 仅内部子元素透明，sticky-sub-tabs 本身保持磨砂玻璃背景 */

@@ -10,7 +10,7 @@
 
 /* ── SubscriptionView 订阅管理 ── */
 .sub-search-results {
-  border: 1px solid rgba(var(--v-border-color), 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   background: transparent;
   max-height: 240px;
@@ -23,7 +23,7 @@
   gap: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
+  border-bottom: none;
   transition: background 0.15s ease;
 }
 .sub-search-result-item:last-child {
@@ -53,7 +53,7 @@
   align-items: center;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(var(--v-border-color), 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: transparent;
 }
 
@@ -95,7 +95,7 @@
 
 /* ── Feed 条目列表 / 订阅源详情卡片 ── */
 .feed-item-card {
-  border: 1px solid rgba(var(--v-border-color), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 12px;
   padding: 12px;
   transition: all 0.2s ease;
@@ -130,7 +130,7 @@
 .org-log-summary {
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(var(--v-border-color), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: transparent;
 }
 .org-log-container {
@@ -144,7 +144,7 @@
   display: flex;
   gap: 8px;
   padding: 3px 0;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  border-bottom: none;
 }
 .org-log-line:last-child {
   border-bottom: none;
@@ -181,7 +181,7 @@
 /* ── 任务中心条目 ── */
 .org-task-item {
   padding: 10px 12px;
-  border: 1px solid rgba(var(--v-border-color), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   margin-bottom: 8px;
   transition: background 0.15s ease;
@@ -203,7 +203,7 @@
 .org-path-container {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   overflow: hidden;
   background: rgba(var(--v-theme-on-surface), 0.02);
@@ -241,8 +241,8 @@
   align-items: center;
   justify-content: center;
   padding: 2px 0;
-  border-top: 1px dashed rgba(var(--v-theme-on-surface), 0.08);
-  border-bottom: 1px dashed rgba(var(--v-theme-on-surface), 0.08);
+  border-top: none;
+  border-bottom: none;
   background: rgba(var(--v-theme-on-surface), 0.02);
 }
 .org-path-truncate {
@@ -256,7 +256,7 @@
 .org-preview-result {
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid rgba(var(--v-border-color), 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(var(--v-theme-primary), 0.04);
 }
 .org-preview-path {
@@ -276,7 +276,7 @@
 .variable-manual {
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(var(--v-border-color), 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: transparent;
 }
 .variable-section {
@@ -305,7 +305,7 @@
   font-family: monospace;
   padding: 2px 4px;
   border-radius: 4px;
-  border: 1px solid rgba(var(--v-border-color), 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background: transparent;
   white-space: nowrap;
 }
@@ -383,7 +383,8 @@
   height: 100%;
 }
 .calendar-today-card {
-  border: 2px solid rgb(var(--v-theme-primary));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), 0.3);
 }
 .calendar-day-header {
   text-align: center;
@@ -774,7 +775,7 @@
   padding: 12px 16px;
   border-radius: 16px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: all 0.2s ease;
 }
 
@@ -829,7 +830,7 @@
   padding: 12px 16px;
   border-radius: 16px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: all 0.2s ease;
 }
 
@@ -848,7 +849,7 @@
   padding: 10px 14px;
   border-radius: 12px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   transition: all 0.2s ease;
   cursor: pointer;
   margin-bottom: 6px;
@@ -871,7 +872,7 @@
 .dc-db-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .dc-db-table {
@@ -912,7 +913,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   word-break: break-all;
   line-height: 1.5;
 }
@@ -937,7 +938,7 @@
 
 /* --- 搜索结果列表 (订阅/整理共用) --- */
 .search-results-list {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -970,7 +971,7 @@
   background: transparent;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* --- 区域标题 --- */
@@ -1009,7 +1010,7 @@
 /* ── STRM / 整理弹框: URL 预览框 ── */
 .preview-box {
   background: rgb(var(--v-theme-surface-variant), 0.3);
-  border: 1px solid rgb(var(--v-theme-on-surface), 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   padding: 12px 16px;
   min-height: 80px;

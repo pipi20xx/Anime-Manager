@@ -315,7 +315,7 @@ async function handleClearHistory() {
                   <template #activator="{ props: menuProps }">
                     <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-download" v-bind="menuProps">手动下载</v-btn>
                   </template>
-                  <v-list density="compact" min-width="150">
+                  <v-list density="compact" min-width="160">
                     <v-list-item v-for="c in clientOptions" :key="c.value" @click="handleDownload(item, c.value)">
                       <v-list-item-title>{{ c.title }}</v-list-item-title>
                     </v-list-item>

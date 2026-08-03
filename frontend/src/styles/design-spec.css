@@ -32,67 +32,67 @@
 /* flat + primary — 主要操作（保存/确认/提交） */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-primary,
 .v-theme--dark .v-btn--variant-flat.text-primary {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-primary,
 .v-theme--light .v-btn--variant-flat.text-primary {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #7c3aed !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* flat + success — 成功操作 */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-success {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #81C784 !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-success {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #2E7D32 !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* flat + warning — 警告操作 */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-warning {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #FFB74D !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-warning {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #E65100 !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* flat + error — 危险操作 */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-error {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #EF5350 !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-error {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #C62828 !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* ── 29b. 按钮 — tonal variant 按 color 分色 ── */
@@ -153,13 +153,6 @@
   justify-content: flex-end;
   gap: 8px;
   padding: 12px 16px !important;
-  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-}
-.v-theme--dark .dialog-actions {
-  border-top-color: rgba(255, 255, 255, 0.06);
-}
-.v-theme--light .dialog-actions {
-  border-top-color: rgba(0, 0, 0, 0.08);
 }
 
 /* ── 29g. 页面头部操作栏 — .page-actions ── */
@@ -267,27 +260,33 @@
 /* filled 输入框 — Liquid Glass */
 .v-theme--dark .v-field--variant-filled {
   border-radius: 16px 16px 0 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-field--variant-filled {
   border-radius: 16px 16px 0 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* solo 输入框 — Liquid Glass */
 .v-theme--dark .v-field--variant-solo {
   border-radius: 16px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-field--variant-solo {
   border-radius: 16px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* solo-filled 输入框 */
 .v-theme--dark .v-field--variant-solo-filled {
   border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .v-theme--light .v-field--variant-solo-filled {
   border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* ── 29l. 输入框 focus 态统一 — 所有 variant 的聚焦光环 ── */
@@ -340,7 +339,7 @@
  * 使用方式：<div class="search-results-box">
  */
 .search-results-box {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 16px;
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
@@ -348,12 +347,6 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
-}
-.v-theme--dark .search-results-box {
-  border-color: rgba(78, 205, 196, 0.12);
-}
-.v-theme--light .search-results-box {
-  border-color: rgba(124, 58, 237, 0.12);
 }
 .search-results-box::-webkit-scrollbar { width: 6px; }
 .search-results-box::-webkit-scrollbar-track { background: transparent; }
@@ -386,40 +379,18 @@
 
 /* ============================================================
  * 29s. Liquid Glass 卡片边框覆盖
- *     .glass-card 使用彩虹折射边框 (::before)，移除 Vuetify 默认实体边框
- *     必须用 .v-card.glass-card (0,2,0) 覆盖 components.css 的
- *     .v-theme--xxx .v-card (0,2,0)，此文件在 components.css 之后加载
+ *     glass-card / glass-panel 无边框
  * ============================================================ */
 .v-card.glass-card,
 .v-card.glass-panel {
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: var(--glass-radius) !important;
 }
 
-/* ── variant-outlined 也需要移除边框（glass-card 已有彩虹边框） ── */
 .v-theme--dark .v-card--variant-outlined.glass-card,
 .v-theme--light .v-card--variant-outlined.glass-card {
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: var(--glass-radius) !important;
-}
-
-/* ============================================================
- * 29t. 流体形变 — 圆角随交互产生液态变形
- *     hover 时圆角从 24px → 28px，配合 transition 形成液态流动感
- *     用 .v-card.glass-card:hover (0,2,1) 覆盖 components.css 的
- *     .v-theme--xxx .v-card (0,2,0)
- * ============================================================ */
-.v-card.glass-card:hover {
-  --glass-radius: 28px;
-  border-radius: 28px !important;
-}
-
-.glass-card:hover::before {
-  border-radius: 28px;
-}
-
-.glass-card:hover::after {
-  border-radius: 28px 28px 0 0;
 }
 
 /* ============================================================
@@ -434,37 +405,21 @@
 .v-theme--light .v-navigation-drawer,
 .v-theme--light .v-app-bar,
 .v-theme--light .v-toolbar {
-  background: rgba(255, 255, 255, 0.45) !important;
-  background-color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.v-theme--light .v-navigation-drawer {
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-
-.v-theme--light .v-app-bar {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* ── 暗色：和卡片一样的玻璃 ── */
 .v-theme--dark .v-navigation-drawer,
 .v-theme--dark .v-app-bar,
 .v-theme--dark .v-toolbar {
-  background: rgba(30, 30, 60, 0.50) !important;
-  background-color: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
-}
-
-.v-theme--dark .v-navigation-drawer {
-  border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
-}
-
-.v-theme--dark .v-app-bar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 

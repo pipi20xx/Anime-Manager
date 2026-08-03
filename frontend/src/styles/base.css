@@ -19,115 +19,29 @@
  * 0. Liquid Glass 工具类
  * ============================================================ */
 
-/* Liquid Glass 卡片 — 彩虹折射边框 + 玻璃面板 */
+/* Liquid Glass 卡片 — 玻璃面板（无边框） */
 .liquid-glass-card {
   position: relative;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: 24px !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
   transition: all 0.5s ease-out !important;
   overflow: hidden;
 }
 
-.liquid-glass-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  padding: 2px;
-  background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #a855f7, #ff6b6b);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.liquid-glass-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-radius: 24px 24px 0 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* 亮色主题 — liquid-glass-card 彩虹边框增强可见度 */
-.v-theme--light .liquid-glass-card::before {
-  background: linear-gradient(135deg, #7c3aed, #06b6d4, #a855f7, #ec4899);
-  padding: 2px;
-}
-
-.v-theme--light .liquid-glass-card::after {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
-}
 
 
 
 
-
-/* ── Glass Card — 流动玻璃面板（彩虹折射边框 + 顶部高光 + 多层深度） ──
- *   注意：background / backdrop-filter / border / border-radius / box-shadow
+/* ── Glass Card — 流动玻璃面板（无边框） ──
+ *   background / backdrop-filter / border-radius / box-shadow
  *   由 components.css 的 .v-theme--xxx .v-card (特异性 0,2,0) 提供。
- *   此处只设置 CSS 变量、布局属性和伪元素，避免死代码。
- *   border / border-radius 覆盖见 design-spec.css §29s
  */
 .glass-card {
   --glass-radius: 24px;
-  position: relative;
   overflow: hidden;
-}
-
-/* 彩虹折射边框 — 棱镜光谱渐变 (mask 技术实现边框) */
-.glass-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--glass-radius);
-  padding: 2px;
-  background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #a855f7, #ff6b6b);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  transition: border-radius 0.5s ease-out;
-}
-
-/* 顶部高光边 — 玻璃边缘反光 (不覆盖内容区，保留透感) */
-.glass-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-  pointer-events: none;
-  z-index: 1;
-  transition: border-radius 0.5s ease-out;
-}
-
-/* 亮色主题 — 彩虹边框增强可见度（用深色、高对比色替代偏白色） */
-.v-theme--light .glass-card::before {
-  background: linear-gradient(135deg, #7c3aed, #2563eb, #9333ea, #db2777);
-  padding: 2px;
-}
-
-/* 亮色主题 — 顶部高光（用紫色高光替代白色，在白底上更可见） */
-.v-theme--light .glass-card::after {
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.2), transparent);
 }
 
 /* 小型列表卡片 — 圆角适配 */
@@ -135,52 +49,10 @@
   --glass-radius: 12px;
 }
 
-/* ── Glass Panel — 轻量玻璃面板（彩虹折射边框 + 顶部高光） ──
- *   同 .glass-card，实体属性由 components.css 提供
- */
+/* ── Glass Panel — 轻量玻璃面板（无边框） ── */
 .glass-panel {
   --glass-radius: 20px;
-  position: relative;
   overflow: hidden;
-}
-
-.glass-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--glass-radius);
-  padding: 2px;
-  background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #a855f7, #ff6b6b);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.glass-panel::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* 亮色主题 — 彩虹边框增强可见度（用深色、高对比色替代偏白色） */
-.v-theme--light .glass-panel::before {
-  background: linear-gradient(135deg, #7c3aed, #2563eb, #9333ea, #db2777);
-  padding: 2px;
-}
-
-/* 亮色主题 — 顶部高光（用紫色高光替代白色） */
-.v-theme--light .glass-panel::after {
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.15), transparent);
 }
 
 .glass-btn {

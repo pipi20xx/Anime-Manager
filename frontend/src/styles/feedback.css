@@ -53,33 +53,33 @@
 .v-theme--light .v-alert--variant-tonal {
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 .v-theme--dark .v-alert--variant-tonal {
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* ============================================================
  * 16. Expansion Panel — Liquid Glass
  * ============================================================ */
 .v-theme--light .v-expansion-panel {
-  background: rgba(255, 255, 255, 0.45) !important;
-  background-color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: 16px !important;
 }
 
 .v-theme--dark .v-expansion-panel {
-  background: rgba(30, 30, 60, 0.50) !important;
-  background-color: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 16px !important;
 }
 
@@ -134,7 +134,7 @@
 
 .v-theme--dark .v-switch .v-switch__thumb {
   background: rgba(255, 255, 255, 0.7) !important;
-  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  border: 2px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
 }
 

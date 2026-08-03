@@ -9,88 +9,88 @@
 
 /* ── flat 按钮 — 玻璃面板 + 强调色渐变 ── */
 .v-theme--light .v-btn--variant-flat {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   color: #7c3aed !important;
   font-weight: 600;
   transition: all 0.3s ease !important;
 }
 
 .v-theme--light .v-btn--variant-flat:hover {
-  background: rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.40) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 .v-theme--dark .v-btn--variant-flat {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   color: white !important;
   font-weight: 600;
   transition: all 0.3s ease !important;
 }
 
 .v-theme--dark .v-btn--variant-flat:hover {
-  background: rgba(30, 30, 60, 0.60) !important;
+  background: rgba(30, 30, 60, 0.48) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* ── tonal 按钮 — 玻璃面板 ── */
 .v-theme--light .v-btn--variant-tonal {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   font-weight: 500;
   transition: all 0.3s ease !important;
 }
 
 .v-theme--light .v-btn--variant-tonal:hover {
-  background: rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.40) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 .v-theme--dark .v-btn--variant-tonal {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   font-weight: 500;
   transition: all 0.3s ease !important;
 }
 
 .v-theme--dark .v-btn--variant-tonal:hover {
-  background: rgba(30, 30, 60, 0.60) !important;
+  background: rgba(30, 30, 60, 0.48) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* ── outlined 按钮 — 玻璃面板 ── */
 .v-theme--light .v-btn--variant-outlined {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   transition: all 0.3s ease !important;
 }
 
 .v-theme--light .v-btn--variant-outlined:hover {
-  background: rgba(255, 255, 255, 0.55) !important;
+  background: rgba(255, 255, 255, 0.40) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 .v-theme--dark .v-btn--variant-outlined {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   transition: all 0.3s ease !important;
 }
 
 .v-theme--dark .v-btn--variant-outlined:hover {
-  background: rgba(30, 30, 60, 0.60) !important;
+  background: rgba(30, 30, 60, 0.48) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -144,7 +144,7 @@
  * 12c. BtnToggle — Liquid Glass
  * ============================================================ */
 .v-theme--dark .v-btn-toggle {
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 16px !important;
 }
 
@@ -159,7 +159,7 @@
 }
 
 .v-theme--light .v-btn-toggle {
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: 16px !important;
 }
 
@@ -218,14 +218,13 @@ code {
  * 12h. 亮色模式补丁 — Liquid Avatar / 媒体卡片
  * ============================================================ */
 .v-theme--light .liquid-avatar {
-  border-color: rgba(168, 85, 247, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   color: #a855f7 !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
 }
 
 .v-theme--light .liquid-avatar:hover {
-  border-color: rgba(168, 85, 247, 0.35) !important;
   box-shadow: 0 0 14px rgba(168, 85, 247, 0.2) !important;
 }
 

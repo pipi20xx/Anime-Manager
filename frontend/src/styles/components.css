@@ -7,28 +7,25 @@
  * 4. 卡片 — Liquid Glass：半透明 + 模糊 + 饱和度 + 彩虹边框
  * ============================================================ */
 
-/* 亮色模式 — 提升边框可见度（Vuetify 默认 0.06 太淡，白底上几乎看不见） */
-.v-theme--light {
-  --v-border-opacity: 0.14 !important;
-}
+/* 玻璃 UI：1px 白色半透明边框，靠半透明+模糊+阴影区分层级 */
 
 /* 亮色卡片 — 玻璃面板（参考 acg-glass.css: 0.45 + blur 10px） */
 .v-theme--light .v-card,
 .v-theme--light .v-card--variant-elevated,
 .v-theme--light .v-card--variant-flat,
 .v-theme--light .v-card--variant-tonal {
-  background: rgba(255, 255, 255, 0.45) !important;
-  background-color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
   transition: all 0.3s ease !important;
   border-radius: 16px !important;
 }
 
 .v-theme--light .v-card--variant-outlined {
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 .v-theme--light .v-card--link:hover,
@@ -42,18 +39,18 @@
 .v-theme--dark .v-card--variant-elevated,
 .v-theme--dark .v-card--variant-flat,
 .v-theme--dark .v-card--variant-tonal {
-  background: rgba(30, 30, 60, 0.50) !important;
-  background-color: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
   transition: all 0.3s ease !important;
   border-radius: 16px !important;
 }
 
 .v-theme--dark .v-card--variant-outlined {
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* 卡片内部 */
@@ -87,22 +84,22 @@
 /* 亮色弹窗 — 更实一点（参考 acg-glass.css: 0.65 + blur 12px） */
 .v-theme--light .v-dialog .v-card,
 .v-theme--light .v-overlay__content .v-card {
-  background: rgba(255, 255, 255, 0.65) !important;
-  background-color: rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.50) !important;
+  background-color: rgba(255, 255, 255, 0.50) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 .v-theme--dark .v-dialog .v-card,
 .v-theme--dark .v-overlay__content .v-card {
-  background: rgba(30, 30, 60, 0.65) !important;
-  background-color: rgba(30, 30, 60, 0.65) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  background-color: rgba(30, 30, 60, 0.50) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* 对话框遮罩 */
@@ -142,11 +139,11 @@
 .v-theme--light .v-overlay .v-list,
 .v-theme--light .v-menu .v-card,
 .v-theme--light .v-menu .v-list {
-  background: rgba(255, 255, 255, 0.65) !important;
+  background: rgba(255, 255, 255, 0.50) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.4) !important;
-  border: none !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: 20px !important;
 }
 
@@ -159,17 +156,28 @@
 .v-theme--dark .v-overlay .v-list,
 .v-theme--dark .v-menu .v-card,
 .v-theme--dark .v-menu .v-list {
-  background: rgba(30, 30, 60, 0.65) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
-  border: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 20px !important;
 }
 
 /* 暗色下拉列表项文字 */
 .v-theme--dark .v-overlay .v-list .v-list-item-title {
   color: rgba(255, 255, 255, 0.87) !important;
+}
+
+/* ── 弹窗内 v-menu 下拉面板 — 确保玻璃背景不被透明规则覆盖 ──
+ *   .v-dialog .v-card .v-card-text .v-list { transparent } 会让弹窗内所有 .v-list 变透明，
+ *   但 v-menu 的下拉内容是弹出层，应该有独立的玻璃背景。
+ *   用更高特异性的选择器覆盖透明规则。
+ */
+.v-dialog .v-card .v-card-text .v-overlay .v-list,
+.v-dialog .v-card .v-card-text .v-menu > .v-list {
+  background: inherit !important;
+  background-color: inherit !important;
 }
 
 /* ── 下拉列表项 — Liquid Glass hover / 选中 ── */
@@ -390,20 +398,20 @@
  * ============================================================ */
 /* 亮色 Sheet — 和卡片一样 */
 .v-theme--light .v-sheet {
-  background: rgba(255, 255, 255, 0.45) !important;
-  background-color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* 暗色 Sheet — 和卡片一样 */
 .v-theme--dark .v-sheet {
-  background: rgba(30, 30, 60, 0.50) !important;
-  background-color: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* ============================================================
@@ -411,21 +419,22 @@
  * ============================================================ */
 /* 亮色输入框 — 和卡片一样 */
 .v-theme--light .v-field--variant-outlined {
-  background: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
   border-radius: 16px !important;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 .v-theme--light .v-field--variant-outlined .v-field__outline {
-  --v-field-border-opacity: 0.4 !important;
+  --v-field-border-opacity: 0 !important;
 }
 
 .v-theme--light .v-field--variant-outlined:hover .v-field__outline {
-  --v-field-border-opacity: 0.55 !important;
+  --v-field-border-opacity: 0 !important;
 }
 
 .v-theme--light .v-field--variant-outlined.v-field--focused .v-field__outline {
-  --v-field-border-opacity: 1 !important;
+  --v-field-border-opacity: 0 !important;
   color: #a855f7 !important;
 }
 
@@ -453,20 +462,21 @@
 
 /* 暗色输入框 — 和卡片一样 */
 .v-theme--dark .v-field--variant-outlined {
-  background: rgba(30, 30, 60, 0.50) !important;
+  background: rgba(30, 30, 60, 0.38) !important;
   border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .v-theme--dark .v-field--variant-outlined .v-field__outline {
-  --v-field-border-opacity: 0.4 !important;
+  --v-field-border-opacity: 0 !important;
 }
 
 .v-theme--dark .v-field--variant-outlined:hover .v-field__outline {
-  --v-field-border-opacity: 0.55 !important;
+  --v-field-border-opacity: 0 !important;
 }
 
 .v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline {
-  --v-field-border-opacity: 1 !important;
+  --v-field-border-opacity: 0 !important;
   color: #4ecdc4 !important;
 }
 
