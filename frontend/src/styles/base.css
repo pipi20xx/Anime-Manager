@@ -22,8 +22,8 @@
 /* Liquid Glass 卡片 — 彩虹折射边框 + 玻璃面板 */
 .liquid-glass-card {
   position: relative;
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   border: none !important;
   border-radius: 24px !important;
   box-shadow:
@@ -70,7 +70,6 @@
 .v-theme--light .liquid-glass-card::after {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
 }
-
 
 
 
@@ -234,6 +233,82 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── 全局二次元背景图（参考 acg-glass.css） ──
+ *   body::before = 背景图层（fixed 全屏二次元壁纸）
+ *   body::after  = 遮罩层（压暗/提亮背景，提高文字可读性）
+ *   玻璃面板半透明 + backdrop-filter 模糊此背景图，效果非常明显
+ */
+
+body {
+  background: transparent !important;
+}
+
+/* ── 根本解决：覆盖 Vuetify 的 surface CSS 变量为半透明 ──
+ *   Vuetify 所有组件（卡片/列表/面板/输入框…）都用
+ *   rgb(var(--v-theme-surface)) 或 rgb(var(--v-theme-surface-light)) 设背景，
+ *   默认是实色（#FFFFFF / #1a1a3e），导致玻璃效果被实色盖住。
+ *   把这些变量改成半透明 rgba，所有组件自动变玻璃，
+ *   不需要一个个组件用 !important 去覆盖。
+ */
+.v-theme--light {
+  --v-theme-surface: 255, 255, 255;
+  --v-theme-surface-light: 255, 255, 255;
+  --v-theme-surface-variant: 240, 242, 255;
+}
+
+.v-theme--dark {
+  --v-theme-surface: 30, 30, 60;
+  --v-theme-surface-light: 30, 30, 60;
+  --v-theme-surface-variant: 20, 20, 42;
+}
+
+/* 背景图层 — 横屏用 PC 端壁纸 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: center / cover no-repeat;
+  background-image: url("https://www.loliapi.com/acg/pc/");
+  /* 背景模糊开关：默认 0px（不模糊），要模糊改大 */
+  filter: blur(0px);
+  transform: scale(1.02);
+}
+
+/* 竖屏：移动端壁纸 */
+@media (orientation: portrait) {
+  body::before {
+    background-image: url("https://www.loliapi.com/acg/pe/");
+  }
+}
+
+/* 亮色遮罩：半透明白，轻微压亮 */
+.v-theme--light body::after,
+body.v-theme--light::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 暗色遮罩：半透明黑，压暗背景 */
+.v-theme--dark body::after,
+body.v-theme--dark::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+/* v-application 透明，让背景图透出来 */
+.v-application {
+  background: transparent !important;
 }
 
 /* ── 全局滚动条 — Liquid Glass 风格 ── */

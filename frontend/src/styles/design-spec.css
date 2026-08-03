@@ -32,51 +32,67 @@
 /* flat + primary — 主要操作（保存/确认/提交） */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-primary,
 .v-theme--dark .v-btn--variant-flat.text-primary {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(78, 205, 196, 0.12)) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: white !important;
-  border: 1px solid rgba(78, 205, 196, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-primary,
 .v-theme--light .v-btn--variant-flat.text-primary {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(255, 45, 146, 0.1)) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #7c3aed !important;
-  border: 1px solid rgba(124, 58, 237, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 /* flat + success — 成功操作 */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-success {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(129, 199, 132, 0.12)) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #81C784 !important;
-  border: 1px solid rgba(76, 175, 80, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-success {
-  background: rgba(76, 175, 80, 0.08) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #2E7D32 !important;
-  border: 1px solid rgba(76, 175, 80, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 /* flat + warning — 警告操作 */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-warning {
-  background: linear-gradient(135deg, rgba(255, 183, 77, 0.2), rgba(255, 152, 0, 0.12)) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #FFB74D !important;
-  border: 1px solid rgba(255, 183, 77, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-warning {
-  background: rgba(255, 152, 0, 0.08) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #E65100 !important;
-  border: 1px solid rgba(255, 152, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 /* flat + error — 危险操作 */
 .v-theme--dark .v-btn--variant-flat.v-btn--bg-error {
-  background: linear-gradient(135deg, rgba(239, 83, 80, 0.2), rgba(244, 143, 177, 0.12)) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #EF5350 !important;
-  border: 1px solid rgba(239, 83, 80, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 .v-theme--light .v-btn--variant-flat.v-btn--bg-error {
-  background: rgba(211, 47, 47, 0.06) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   color: #C62828 !important;
-  border: 1px solid rgba(211, 47, 47, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 /* ── 29b. 按钮 — tonal variant 按 color 分色 ── */
@@ -94,9 +110,11 @@
   transition: all 0.3s ease-out !important;
   border-radius: 50% !important;
 }
+
 .v-btn--icon:hover {
   transform: scale(1.08);
 }
+
 .v-btn--icon:active {
   transform: scale(0.95);
 }
@@ -324,8 +342,8 @@
 .search-results-box {
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   border-radius: 16px;
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
   max-height: 240px;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -412,12 +430,15 @@
  *     放在 design-spec.css (最后加载) 覆盖 Vuetify v-sheet 默认背景。
  * ============================================================ */
 
-/* ── 亮色：半透明白 + 磨砂模糊 ── */
+/* ── 亮色：和卡片一样的玻璃（0.45 + blur 10px） ── */
 .v-theme--light .v-navigation-drawer,
-.v-theme--light .v-app-bar {
-  background: rgba(245, 245, 250, 0.72) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+.v-theme--light .v-app-bar,
+.v-theme--light .v-toolbar {
+  background: rgba(255, 255, 255, 0.45) !important;
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .v-theme--light .v-navigation-drawer {
@@ -428,17 +449,22 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-/* ── 暗色：纯色背景（与页面背景统一） ── */
+/* ── 暗色：和卡片一样的玻璃 ── */
 .v-theme--dark .v-navigation-drawer,
-.v-theme--dark .v-app-bar {
-  background: #1a1a3e !important;
+.v-theme--dark .v-app-bar,
+.v-theme--dark .v-toolbar {
+  background: rgba(30, 30, 60, 0.50) !important;
+  background-color: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
 .v-theme--dark .v-navigation-drawer {
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 .v-theme--dark .v-app-bar {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 

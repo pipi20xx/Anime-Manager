@@ -22,8 +22,8 @@
   padding: 12px 16px;
   border-radius: 8px;
 
-  /* 半透明面板背景，跟随主题 surface */
-  background: rgba(var(--v-theme-surface), 0.5);
+  /* 透明，继承父元素的玻璃背景 */
+  background: transparent;
 
   /* 统一滚动条 */
   scrollbar-width: thin;
@@ -127,43 +127,72 @@
 }
 
 
-/* ── 登录页 — LoginView ── */
-.login-container {
-  background:
-    radial-gradient(ellipse 800px 600px at 85% 15%, rgba(168, 85, 247, 0.2) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 500px at 10% 85%, rgba(78, 205, 196, 0.2) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(255, 45, 146, 0.1) 0%, transparent 70%),
-    linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #0a0a1a 100%);
-  position: relative;
-  overflow: hidden;
+/* ── 登录页 — 玻璃面板 ──
+ *   全局背景图由 base.css 的 body::before / body::after 提供
+ *   此处只定义登录卡片的玻璃面板样式
+ */
+
+/* ── 登录卡片 — 强化玻璃面板 ──
+ *   在 .glass-card 彩虹折射边框基础上，增加半透明底色 + 磨砂模糊
+ *   参考 acg-glass.css 的 #login-page #form 玻璃面板方案
+ */
+
+/* 亮色模式玻璃面板 */
+.v-theme--light .login-glass-panel {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.5) !important;
 }
 
-.login-light-wells {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 500px 400px at 80% 20%, rgba(78, 205, 196, 0.15) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 300px at 15% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 70%),
-    radial-gradient(ellipse 300px 200px at 50% 50%, rgba(255, 45, 146, 0.06) 0%, transparent 70%);
-  animation: login-breathe 8s ease-in-out infinite alternate;
-  pointer-events: none;
+/* 暗色模式玻璃面板 */
+.v-theme--dark .login-glass-panel {
+  background: rgba(30, 30, 60, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.7) !important;
 }
 
-@keyframes login-breathe {
-  0% { opacity: 0.6; }
-  100% { opacity: 1; }
+/* 登录卡片内文字 — 玻璃半透明背景下提升对比度 */
+.v-theme--light .login-glass-panel .text-h5,
+.v-theme--light .login-glass-panel .text-body-2 {
+  color: rgba(0, 0, 0, 0.87);
 }
 
-.login-card {
-  position: relative;
-  z-index: 1;
+.v-theme--dark .login-glass-panel .text-h5,
+.v-theme--dark .login-glass-panel .text-body-2 {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* 登录卡片内输入框 — 玻璃面板上的微底色 */
+.v-theme--light .login-glass-panel .v-field--variant-outlined {
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 16px !important;
+}
+
+.v-theme--dark .login-glass-panel .v-field--variant-outlined {
+  background: rgba(30, 30, 60, 0.50);
+  border-radius: 16px !important;
+}
+
+/* 登录按钮 — 玻璃面板上的醒目渐变 */
+.v-theme--light .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(168, 85, 247, 0.75)) !important;
+  color: #fff !important;
+}
+
+.v-theme--dark .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(78, 205, 196, 0.35)) !important;
+  color: #fff !important;
 }
 
 
 /* ── Liquid Glass Avatar — DefaultLayout / LoginView ── */
 .liquid-avatar {
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
   border: 1px solid rgba(78, 205, 196, 0.3) !important;
   color: #4ecdc4 !important;
   transition: all 0.5s ease-out;
@@ -178,8 +207,6 @@
 
 
 
-
-
 /* ============================================================
  * 23. prefers-reduced-motion
  * ============================================================ */
@@ -188,10 +215,6 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .login-light-wells {
-    animation: none;
   }
 }
 
@@ -228,7 +251,7 @@
 /* ── 代码块修饰类 — 用于 scrollable 弹窗内部，移除自身滚动避免双重滚动条 ── */
 .code-block--flat {
   max-height: none !important;
-  overflow-y: visible !important;
+  overflow-y: visible !!important;
 }
 
 /* 代码块内行高亮 */
@@ -267,17 +290,19 @@
   margin-top: 2px;
 }
 
-/* ── Sticky Tabs — Liquid Glass 磨砂玻璃 ── */
+/* ── Sticky Tabs — 和卡片一样的玻璃（0.45 + blur 10px） ── */
 .v-theme--light .sticky-tabs {
-  background: rgba(245, 245, 250, 0.72) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 .v-theme--dark .sticky-tabs {
-  background: #1a1a3e !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 /* 关键：仅强制 v-tabs 内部子元素透明，防止 Vuetify 默认 surface 色叠加
@@ -306,17 +331,19 @@
   }
 }
 
-/* ── Sticky Sub Tabs — Liquid Glass 磨砂玻璃 ── */
+/* ── Sticky Sub Tabs — 和卡片一样 ── */
 .v-theme--light .sticky-sub-tabs {
-  background: rgba(245, 245, 250, 0.72) !important;
-  backdrop-filter: blur(24px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 .v-theme--dark .sticky-sub-tabs {
-  background: #1a1a3e !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 /* 仅内部子元素透明，sticky-sub-tabs 本身保持磨砂玻璃背景 */

@@ -12,9 +12,16 @@
   --v-border-opacity: 0.14 !important;
 }
 
-/* 亮色卡片 */
-.v-theme--light .v-card {
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+/* 亮色卡片 — 玻璃面板（参考 acg-glass.css: 0.45 + blur 10px） */
+.v-theme--light .v-card,
+.v-theme--light .v-card--variant-elevated,
+.v-theme--light .v-card--variant-flat,
+.v-theme--light .v-card--variant-tonal {
+  background: rgba(255, 255, 255, 0.45) !important;
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
   transition: all 0.3s ease !important;
   border-radius: 16px !important;
@@ -30,9 +37,16 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* 暗色卡片 */
-.v-theme--dark .v-card {
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+/* 暗色卡片 — 玻璃面板 */
+.v-theme--dark .v-card,
+.v-theme--dark .v-card--variant-elevated,
+.v-theme--dark .v-card--variant-flat,
+.v-theme--dark .v-card--variant-tonal {
+  background: rgba(30, 30, 60, 0.50) !important;
+  background-color: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
   transition: all 0.3s ease !important;
   border-radius: 16px !important;
@@ -70,20 +84,25 @@
   border-radius: 24px !important;
 }
 
+/* 亮色弹窗 — 更实一点（参考 acg-glass.css: 0.65 + blur 12px） */
 .v-theme--light .v-dialog .v-card,
 .v-theme--light .v-overlay__content .v-card {
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 .v-theme--dark .v-dialog .v-card,
 .v-theme--dark .v-overlay__content .v-card {
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(78, 205, 196, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(30, 30, 60, 0.65) !important;
+  background-color: rgba(30, 30, 60, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 /* 对话框遮罩 */
@@ -119,11 +138,14 @@
 
 /* ── 通用下拉面板（v-menu / v-select / v-autocomplete / v-combobox 共用） ── */
 
-/* 亮色下拉面板 */
+/* 亮色下拉面板 — 和弹窗一样实（参考 acg-glass.css: 0.65 + blur 10px） */
 .v-theme--light .v-overlay .v-list,
 .v-theme--light .v-menu .v-card,
 .v-theme--light .v-menu .v-list {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(124, 58, 237, 0.18) !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.4) !important;
   border: none !important;
   border-radius: 20px !important;
 }
@@ -133,11 +155,14 @@
   color: rgba(0, 0, 0, 0.87) !important;
 }
 
-/* 暗色下拉面板 */
+/* 暗色下拉面板 — 玻璃化 */
 .v-theme--dark .v-overlay .v-list,
 .v-theme--dark .v-menu .v-card,
 .v-theme--dark .v-menu .v-list {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(78, 205, 196, 0.18) !important;
+  background: rgba(30, 30, 60, 0.65) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
   border: none !important;
   border-radius: 20px !important;
 }
@@ -152,6 +177,64 @@
 /* 侧边栏导航列表保持透明（继承导航栏的毛玻璃背景） */
 .v-navigation-drawer .v-list {
   background: transparent !important;
+}
+
+/* v-list 默认有实色 surface 背景，改成透明让卡片的玻璃背景透出 */
+.v-list {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* v-list-item 的 elevated/flat variant 默认也是实色 surface，改成透明 */
+.v-list-item--variant-elevated,
+.v-list-item--variant-flat {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ── 所有卡片内部元素强制透明，避免实色叠在玻璃卡片上 ──
+ *   v-card 有玻璃背景，内部所有子组件必须是透明的，
+ *   否则实色子组件会盖住卡片的玻璃效果
+ */
+.v-card .v-card-text,
+.v-card .v-card-item,
+.v-card .v-card-title,
+.v-card .v-card-actions,
+.v-card .v-card-text .v-expansion-panel-title,
+.v-card .v-card-text .v-expansion-panel-text,
+.v-card .v-card-text .v-list,
+.v-card .v-card-text .v-list-item,
+.v-card .v-card-text .v-sheet {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* 卡片内的折叠面板 — 透明背景（继承卡片的玻璃），加淡边框区分 */
+.v-card .v-card-text .v-expansion-panel {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 弹窗内的卡片也同理 */
+.v-dialog .v-card .v-card-text,
+.v-dialog .v-card .v-card-item,
+.v-dialog .v-card .v-card-title,
+.v-dialog .v-card .v-card-actions,
+.v-dialog .v-card .v-card-text .v-expansion-panel-title,
+.v-dialog .v-card .v-card-text .v-expansion-panel-text,
+.v-dialog .v-card .v-card-text .v-list,
+.v-dialog .v-card .v-card-text .v-list-item {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.v-dialog .v-card .v-card-text .v-expansion-panel {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .v-theme--light .v-list-item--active {
@@ -305,20 +388,32 @@
 /* ============================================================
  * 7. Sheet
  * ============================================================ */
+/* 亮色 Sheet — 和卡片一样 */
 .v-theme--light .v-sheet {
-  border-color: rgba(0, 0, 0, 0.12) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
 }
 
+/* 暗色 Sheet — 和卡片一样 */
 .v-theme--dark .v-sheet {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(30, 30, 60, 0.50) !important;
+  background-color: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
 /* ============================================================
  * 8. 输入框 — Liquid Glass 风格
  * ============================================================ */
+/* 亮色输入框 — 和卡片一样 */
 .v-theme--light .v-field--variant-outlined {
+  background: rgba(255, 255, 255, 0.45) !important;
   border-radius: 16px !important;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
 .v-theme--light .v-field--variant-outlined .v-field__outline {
@@ -356,8 +451,9 @@
   color: rgba(0, 0, 0, 0.87) !important;
 }
 
-/* 暗色输入框 — Liquid Glass */
+/* 暗色输入框 — 和卡片一样 */
 .v-theme--dark .v-field--variant-outlined {
+  background: rgba(30, 30, 60, 0.50) !important;
   border-radius: 16px !important;
 }
 

@@ -39,11 +39,10 @@ async function handleLogin() {
 </script>
 
 <template>
-  <v-app>
-    <div class="glass-grain" />
+  <v-app class="login-app">
     <v-main>
       <v-container fluid class="fill-height d-flex align-center justify-center">
-        <v-card class="glass-card pa-8" max-width="420" width="100%">
+        <v-card class="glass-card login-glass-panel pa-8" max-width="420" width="100%">
           <!-- 标题 -->
           <div class="text-center mb-6">
             <v-avatar class="liquid-avatar mb-4" size="64" rounded="xl">
@@ -102,5 +101,14 @@ async function handleLogin() {
   height: 40px;
   /* <img> 引入的 SVG 无法继承 currentColor，用 filter 着色 */
   filter: brightness(0) saturate(100%) invert(47%) sepia(98%) saturate(1925%) hue-rotate(234deg) brightness(96%) contrast(96%);
+}
+
+/* 登录页输入框 — 在玻璃面板上增加微底色，提升可读性 */
+:deep(.v-field--variant-outlined .v-field__outline) {
+  --v-field-border-opacity: 0.5 !important;
+}
+
+:deep(.v-field--variant-outlined.v-field--focused .v-field__outline) {
+  --v-field-border-opacity: 1 !important;
 }
 </style>

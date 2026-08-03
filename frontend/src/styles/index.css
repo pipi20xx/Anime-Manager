@@ -1,6 +1,15 @@
 /**
  * index.css — Liquid Glass 设计系统入口
  * 按功能从 global.css 拆分，按依赖顺序引入
+ *
+ * Vuetify v4 使用 @layer 层级体系（vuetify-core → vuetify-components → ...）
+ * 自定义样式不放入任何 @layer，根据 CSS 规范：
+ *   无 layer 的样式优先级 天然高于 @layer 内的样式
+ * 所以自定义样式天然能覆盖 Vuetify 的 @layer vuetify-components 样式。
+ * 配合 !important 进一步保证覆盖。
+ *
+ * 关键：vuetify/styles 必须在此文件之前加载（见 main.ts import 顺序），
+ * 确保 @layer 声明先于自定义样式生效。
  */
 
 /* 1. 基础：重置、CSS变量、亮/暗主题、工具类 */
