@@ -51,12 +51,46 @@ async def delete_template(tmpl_id: int):
             await db.delete(tmpl)
     return {"success": True}
 
-@router.get("/subscriptions", response_model=List[Subscription], summary="获取订阅任务列表")
+@router.get("/subscriptions", summary="获取订阅任务列表")
 async def get_subscriptions(enabled_only: bool = False):
     """
     返回系统当前的全部追剧订阅任务。支持仅查看已启用的任务。
+    每条订阅附带 pushed_count（已推送去重集数）字段。
     """
-    return await SubscriptionManager.get_subscriptions(enabled_only)
+    subs = await SubscriptionManager.get_subscriptions(enabled_only)
+    # 批量查询所有已推送集数
+    result = []
+    async with db.session_scope():
+        for sub in subs:
+            sub_dict = sub.model_dump()
+            # 查询该订阅已推送的去重集数
+            if sub.media_type == "tv":
+                stmt = (
+                    select(SubscribedEpisode.season, SubscribedEpisode.episode)
+                    .where(
+                        SubscribedEpisode.tmdb_id == sub.tmdb_id,
+                        SubscribedEpisode.media_type == "tv",
+                        SubscribedEpisode.season == sub.season,
+                    )
+                    .distinct()
+                )
+                ep_result = await db.session.execute(stmt)
+                pushed = len(ep_result.all())
+            else:
+                # 电影: 只要有推送记录就算1
+                stmt = (
+                    select(SubscribedEpisode.id)
+                    .where(
+                        SubscribedEpisode.tmdb_id == sub.tmdb_id,
+                        SubscribedEpisode.media_type == "movie",
+                    )
+                    .limit(1)
+                )
+                ep_result = await db.session.execute(stmt)
+                pushed = 1 if ep_result.first() else 0
+            sub_dict["pushed_count"] = pushed
+            result.append(sub_dict)
+    return result
 
 @router.post("/subscriptions", summary="保存/更新订阅任务")
 async def save_subscription(sub: Subscription):

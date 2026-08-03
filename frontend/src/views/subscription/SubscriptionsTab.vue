@@ -288,14 +288,32 @@ defineExpose({ fetchSubscriptions })
             <v-img
               v-if="sub.poster_path"
               :src="getImg(sub.poster_path)"
-              cover aspect-ratio="2/3"
+              cover
               class="rounded-t"
             />
             <div v-else class="sub-poster-placeholder d-flex align-center justify-center">
               <v-icon size="40" color="grey">mdi-television-classic</v-icon>
             </div>
-            <!-- 状态指示灯 -->
-            <div class="sub-status-dot" :class="sub.enabled !== false ? 'active' : 'inactive'" />
+            <!-- 类型/集数标识 -->
+            <div class="sub-type-badge">
+              <template v-if="sub.media_type === 'tv'">TV</template>
+              <template v-else>电影</template>
+            </div>
+            <!-- 集数范围标识 -->
+            <div v-if="sub.media_type === 'tv'" class="sub-ep-badge">
+              S{{ sub.season === 0 ? 'All' : sub.season }} · E{{ sub.start_episode || 1 }}{{ sub.end_episode > 0 ? '-' + sub.end_episode : '+' }}
+            </div>
+            <!-- 启用状态角标 -->
+            <div class="sub-status-badge" :class="sub.enabled !== false ? 'active' : 'inactive'">
+              {{ sub.enabled !== false ? '启用' : '未启用' }}
+            </div>
+            <!-- 已推送角标 -->
+            <div v-if="sub.media_type === 'tv'" class="sub-pushed-badge">
+              <v-icon size="12" class="mr-1">mdi-send-outline</v-icon>{{ sub.pushed_count ?? 0 }}/{{ sub.end_episode > 0 ? sub.end_episode - (sub.start_episode || 1) + 1 : '?' }}
+            </div>
+            <div v-else-if="sub.pushed_count > 0" class="sub-pushed-badge">
+              <v-icon size="12" class="mr-1">mdi-check-circle-outline</v-icon>已推送
+            </div>
             <!-- 洗版标签 -->
             <div v-if="getUpgradeStatus(sub)" class="sub-upgrade-tag">
               <v-icon size="12" :color="getUpgradeStatus(sub)?.allowed ? 'primary' : 'grey'">mdi-arrow-up-bold</v-icon>
@@ -304,17 +322,12 @@ defineExpose({ fetchSubscriptions })
 
           <!-- 信息区 -->
           <div class="pa-2">
-            <div class="text-body-2 font-weight-bold text-truncate" :title="sub.title">{{ sub.title }}</div>
-            <div class="d-flex align-center justify-space-between mt-1">
-              <span v-if="sub.media_type === 'tv'" class="text-caption text-primary font-weight-medium">
-                S{{ sub.season === 0 ? 'All' : sub.season }} · E{{ sub.start_episode || 1 }}{{ sub.end_episode > 0 ? '-' + sub.end_episode : '+' }}
-              </span>
-              <span v-else class="text-caption text-medium-emphasis">{{ sub.year || '电影' }}</span>
-
+            <div class="d-flex align-center">
+              <div class="text-body-2 font-weight-bold text-truncate flex-grow-1" :title="sub.title">{{ sub.title }}</div>
               <!-- 更多菜单 -->
               <v-menu>
                 <template #activator="{ props: menuProps }">
-                  <v-btn icon="mdi-dots-vertical" size="x-small" variant="text" v-bind="menuProps" @click.stop />
+                  <v-btn icon="mdi-dots-vertical" size="x-small" variant="text" v-bind="menuProps" @click.stop class="flex-shrink-0" />
                 </template>
                 <v-list density="compact" min-width="160">
                   <v-list-item prepend-icon="mdi-magnify" @click.stop="openFill(sub)">搜寻补全缺失集数</v-list-item>
@@ -494,30 +507,65 @@ defineExpose({ fetchSubscriptions })
 }
 .sub-poster-box {
   position: relative;
-  aspect-ratio: 2/3;
   background: rgba(var(--v-theme-on-surface), 0.04);
 }
 .sub-poster-placeholder {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 2/3;
   background: rgba(var(--v-theme-on-surface), 0.04);
 }
-.sub-status-dot {
+.sub-type-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  top: 6px;
+  left: 6px;
   z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #4ecdc4;
 }
-.sub-status-dot.active {
-  background: #4caf50;
-  box-shadow: 0 0 6px rgba(76,175,80,0.6);
+.sub-ep-badge {
+  position: absolute;
+  top: 32px;
+  left: 6px;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgb(var(--v-theme-primary));
 }
-.sub-status-dot.inactive {
-  background: #f44336;
-  box-shadow: 0 0 6px rgba(244,67,54,0.4);
+.sub-status-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.sub-status-badge.active {
+  color: #4caf50;
+}
+.sub-status-badge.inactive {
+  color: #f44336;
 }
 .sub-upgrade-tag {
   position: absolute;
@@ -528,5 +576,24 @@ defineExpose({ fetchSubscriptions })
   padding: 2px 6px;
   border-radius: 4px;
   z-index: 2;
+}
+.sub-pushed-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgb(var(--v-theme-primary));
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 </style>

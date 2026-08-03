@@ -298,7 +298,6 @@ defineExpose({ fetchMappings, fetchRefCounts })
           <v-divider />
           <v-card-actions class="manage-card__actions">
             <v-spacer />
-            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click.stop="openEditMapItem(item)">编辑</v-btn>
             <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="handleDeleteMap(item.code || item.id)">删除</v-btn>
           </v-card-actions>
         </v-card>

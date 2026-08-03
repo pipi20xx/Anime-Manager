@@ -179,12 +179,50 @@ defineExpose({ fetchFeeds })
           <v-text-field v-model="feedForm.exclude_keywords" label="前置排除词 (可选)" variant="outlined" density="compact" class="mb-4" />
 
           <div class="text-subtitle-2 font-weight-medium mb-3">自动监控设置</div>
-          <v-switch v-model="feedForm.enabled" color="primary" density="compact" hide-details label="全局监控" class="mb-1" />
-          <v-switch v-model="feedForm.for_subscription" color="primary" density="compact" hide-details label="追剧订阅" class="mb-1" />
-          <v-switch v-model="feedForm.for_rules" color="primary" density="compact" hide-details label="下载规则" class="mb-1" />
-          <v-switch v-model="feedForm.anime_priority" color="primary" density="compact" hide-details label="动漫优先" class="mb-1" />
-          <v-switch v-model="feedForm.check_emby_exists" color="primary" density="compact" hide-details label="Emby 检查" class="mb-1" />
-          <v-switch v-model="feedForm.batch_enhance" color="primary" density="compact" hide-details label="副标题合集提取" />
+          <div class="d-flex flex-column ga-3">
+            <div class="switch-row">
+              <v-switch v-model="feedForm.enabled" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">全局监控</div>
+                <div class="switch-desc">启用后定时轮询此 RSS 源，拉取最新资源条目</div>
+              </div>
+            </div>
+            <div class="switch-row">
+              <v-switch v-model="feedForm.for_subscription" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">追剧订阅</div>
+                <div class="switch-desc">将抓取到的条目与已追剧的番剧进行匹配，自动下载新集</div>
+              </div>
+            </div>
+            <div class="switch-row">
+              <v-switch v-model="feedForm.for_rules" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">下载规则</div>
+                <div class="switch-desc">将抓取到的条目与自定义下载规则匹配，命中后自动添加下载</div>
+              </div>
+            </div>
+            <div class="switch-row">
+              <v-switch v-model="feedForm.anime_priority" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">动漫优先</div>
+                <div class="switch-desc">识别时优先使用动漫专用策略，提高番剧识别准确率</div>
+              </div>
+            </div>
+            <div class="switch-row">
+              <v-switch v-model="feedForm.check_emby_exists" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">Emby 检查</div>
+                <div class="switch-desc">检测 Emby 媒体库是否已存在该资源，存在则跳过下载</div>
+              </div>
+            </div>
+            <div class="switch-row">
+              <v-switch v-model="feedForm.batch_enhance" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">副标题合集提取</div>
+                <div class="switch-desc">从 RSS 条目副标题中提取合集信息，增强多集识别能力</div>
+              </div>
+            </div>
+          </div>
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">

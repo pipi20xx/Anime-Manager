@@ -401,7 +401,6 @@ async function requestRunTask(task: any) {
           <v-card-actions class="manage-card__actions">
             <v-spacer />
             <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play-outline" @click.stop="requestRunTask(task)">执行</v-btn>
-            <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click.stop="openEditTask(index)">编辑</v-btn>
             <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-content-copy" @click.stop="duplicateTask(index)">复制</v-btn>
             <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteTask(index)">删除</v-btn>
           </v-card-actions>
