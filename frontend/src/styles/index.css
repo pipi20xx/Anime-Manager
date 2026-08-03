@@ -41,3 +41,6 @@
 
 /* 10. 通用复用：hover-lift/config-row/kv-row/管理卡片/按钮规范 */
 @import './utilities.css';
+
+/* 11. 玻璃主题切换：液态玻璃覆盖样式（html.glass-theme-liquid 激活） */
+@import './glass-themes.css';

@@ -1,0 +1,613 @@
+/**
+ * glass-themes.css — 玻璃主题切换系统
+ *
+ * 两套玻璃视觉风格，通过 <html> 上的 class 切换：
+ *   html.glass-theme-acg     → 二次元壁纸 + 毛玻璃（默认，样式在 base.css / components.css 中）
+ *   html.glass-theme-liquid  → 液态玻璃：CSS 渐变背景 + 折射带 + 弧光 + 弹簧动效
+ *
+ * ⚠️ 变量作用域：
+ *   --lg-* 变量全部设在 html.glass-theme-liquid 上（配合 .glass-dark / .glass-light），
+ *   因为 body / body::before / body::after 是 .v-application 的父级，
+ *   CSS 变量只往下传不往上传 —— 设在 .v-theme--dark 上 body 读不到。
+ *
+ * 参考：Apple WWDC25「Meet Liquid Glass」与 HIG Materials 章节
+ */
+
+/* ================================================================
+ * 液态玻璃 — CSS 变量（全部在 html 级别，body 能读到）
+ * ================================================================ */
+
+html.glass-theme-liquid {
+  --lg-blur: 22px;
+  --lg-sat: 190%;
+  --lg-r-pill: 999px;
+  --lg-spring: cubic-bezier(.34, 1.42, .64, 1);
+  --lg-ease: cubic-bezier(.32, .72, 0, 1);
+
+  /* 折射带：上下亮、左右暗 —— 光从上方进入玻璃，侧面法线朝外接不到光。
+     上缘偏冷、下缘偏暖 —— 蓝光折射角大，先于红光离开玻璃。 */
+  --lg-rim:
+      inset 0 1px 0 var(--lg-spec-top),
+      inset 0 -1px 0 var(--lg-spec-bottom),
+      inset 0 8px 16px -9px var(--lg-fringe-cool),
+      inset 0 -8px 16px -9px var(--lg-fringe-warm),
+      inset 10px 0 20px -15px var(--lg-spec-side),
+      inset -10px 0 20px -15px var(--lg-spec-side);
+
+  --lg-rim-sm:
+      inset 0 1px 0 var(--lg-spec-top),
+      inset 0 -1px 0 var(--lg-spec-bottom),
+      inset 0 4px 7px -5px var(--lg-fringe-cool),
+      inset 0 -4px 7px -5px var(--lg-fringe-warm),
+      inset 5px 0 9px -8px var(--lg-spec-side),
+      inset -5px 0 9px -8px var(--lg-spec-side);
+}
+
+/* ---------- 浅色（html.glass-light 由 App.vue 设置） ---------- */
+html.glass-theme-liquid.glass-light {
+  --lg-bg-page: #C6CFEE;  /* 中调蓝灰底色：白面板压在白墙上没有透明度可言 */
+
+  --lg-sheen: rgba(255, 255, 255, .50);
+  --lg-spec-top: rgba(255, 255, 255, .95);
+  --lg-spec-bottom: rgba(255, 255, 255, .45);
+  --lg-spec-side: rgba(22, 24, 42, .07);
+  --lg-fringe-cool: rgba(150, 220, 255, .55);
+  --lg-fringe-warm: rgba(255, 190, 220, .40);
+  --lg-shadow: 0 10px 34px -12px rgba(31, 38, 135, .30), 0 2px 8px -4px rgba(31, 38, 135, .18);
+  --lg-shadow-lift: 0 20px 48px -14px rgba(31, 38, 135, .38), 0 4px 12px -6px rgba(31, 38, 135, .22);
+
+  /* mesh 色块 */
+  --lg-mesh-1: rgba(84, 80, 235, .80);
+  --lg-mesh-2: rgba(255, 64, 160, .66);
+  --lg-mesh-3: rgba(20, 205, 200, .70);
+  --lg-mesh-4: rgba(255, 165, 40, .58);
+  --lg-mesh-5: rgba(120, 90, 245, .52);
+  --lg-grid: rgba(255, 255, 255, .38);
+
+  /* 边框：亮色模式用深色半透明（白边在亮色背景上隐形） */
+  --lg-border: rgba(0, 0, 0, 0.10);
+  --lg-border-strong: rgba(0, 0, 0, 0.14);
+}
+
+/* ---------- 深色（html.glass-dark 由 App.vue 设置） ---------- */
+html.glass-theme-liquid.glass-dark {
+  --lg-bg-page: #07090F;  /* 近黑深蓝，让 mesh 色块有深色衬托 */
+
+  --lg-sheen: rgba(255, 255, 255, .16);
+  --lg-spec-top: rgba(255, 255, 255, .55);
+  --lg-spec-bottom: rgba(255, 255, 255, .22);
+  --lg-spec-side: rgba(0, 0, 0, .3);
+  --lg-fringe-cool: rgba(120, 200, 255, .40);
+  --lg-fringe-warm: rgba(255, 140, 190, .28);
+  --lg-shadow: 0 12px 38px -12px rgba(0, 0, 0, .7), 0 2px 8px -4px rgba(0, 0, 0, .5);
+  --lg-shadow-lift: 0 22px 54px -14px rgba(0, 0, 0, .8), 0 4px 14px -6px rgba(0, 0, 0, .55);
+
+  --lg-mesh-1: rgba(84, 80, 245, .72);
+  --lg-mesh-2: rgba(224, 50, 200, .58);
+  --lg-mesh-3: rgba(10, 210, 200, .50);
+  --lg-mesh-4: rgba(255, 110, 60, .42);
+  --lg-mesh-5: rgba(110, 70, 240, .40);
+  --lg-grid: rgba(255, 255, 255, .10);
+
+  /* 边框：深色模式用浅色半透明 */
+  --lg-border: rgba(255, 255, 255, 0.08);
+  --lg-border-strong: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Vuetify 组件变量（设在 .v-theme--xxx 上，给 .v-application 内的组件用） ---------- */
+html.glass-theme-liquid .v-theme--light {
+  --v-theme-primary: 94, 92, 230;
+  --v-theme-surface: 255, 255, 255;
+  --v-theme-surface-light: 255, 255, 255;
+  --v-theme-background: 198, 207, 238;
+}
+
+html.glass-theme-liquid .v-theme--dark {
+  --v-theme-primary: 125, 122, 255;
+  --v-theme-surface: 28, 30, 52;
+  --v-theme-surface-light: 28, 30, 52;
+  --v-theme-background: 7, 9, 15;
+}
+
+
+/* ================================================================
+ * 背景：覆盖 base.css 的二次元壁纸，换成 mesh 渐变 + 细网格
+ * ================================================================ */
+
+/* body 本身要有底色 */
+html.glass-theme-liquid body {
+  background: var(--lg-bg-page) !important;
+}
+
+/* 色块层：五团高饱和色，糊开之后是液态玻璃的底色来源 */
+html.glass-theme-liquid body::before {
+  background-image: none !important;
+  filter: none !important;
+  transform: none !important;
+  z-index: -50 !important;
+  inset: -20% !important;
+  background-image:
+      radial-gradient(46% 52% at 10% 12%, var(--lg-mesh-1), transparent 70%),
+      radial-gradient(44% 50% at 92% 8%, var(--lg-mesh-2), transparent 68%),
+      radial-gradient(52% 56% at 82% 88%, var(--lg-mesh-3), transparent 70%),
+      radial-gradient(46% 50% at 14% 92%, var(--lg-mesh-4), transparent 66%),
+      radial-gradient(50% 44% at 50% 48%, var(--lg-mesh-5), transparent 72%) !important;
+  background-color: var(--lg-bg-page) !important;
+  filter: blur(26px) !important;
+  animation: lg-drift-a 47s ease-in-out infinite alternate !important;
+}
+
+/* 细网格层：玻璃靠「把背后的细节抹掉」被认出来的 */
+html.glass-theme-liquid body::after {
+  background: none !important;
+  z-index: -49 !important;
+  inset: -20% !important;
+  pointer-events: none !important;
+  background-image:
+      repeating-linear-gradient(0deg, var(--lg-grid) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(90deg, var(--lg-grid) 0 1px, transparent 1px 22px) !important;
+  animation: lg-drift-b 71s ease-in-out infinite alternate !important;
+}
+
+@keyframes lg-drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(6%, 4%, 0) scale(1.18) rotate(6deg); }
+}
+
+@keyframes lg-drift-b {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(22px, 22px, 0); }
+}
+
+
+/* ================================================================
+ * 卡片：折射带 + 弧光 + 可见边框 + 悬浮上移
+ * ================================================================ */
+
+html.glass-theme-liquid .v-card,
+html.glass-theme-liquid .v-card--variant-elevated,
+html.glass-theme-liquid .v-card--variant-flat,
+html.glass-theme-liquid .v-card--variant-tonal {
+  position: relative !important;
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 22px !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow) !important;
+  transition: box-shadow .32s var(--lg-ease), transform .32s var(--lg-spring) !important;
+}
+
+html.glass-theme-liquid.glass-light .v-card,
+html.glass-theme-liquid.glass-light .v-card--variant-elevated,
+html.glass-theme-liquid.glass-light .v-card--variant-flat,
+html.glass-theme-liquid.glass-light .v-card--variant-tonal {
+  background: rgba(255, 255, 255, .40) !important;
+  background-color: rgba(255, 255, 255, .40) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-card,
+html.glass-theme-liquid.glass-dark .v-card--variant-elevated,
+html.glass-theme-liquid.glass-dark .v-card--variant-flat,
+html.glass-theme-liquid.glass-dark .v-card--variant-tonal {
+  background: rgba(28, 30, 52, .44) !important;
+  background-color: rgba(28, 30, 52, .44) !important;
+}
+
+/* 顶缘弧光 */
+html.glass-theme-liquid .v-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(150% 42px at 50% -8px,
+      var(--lg-sheen) 0%, transparent 72%);
+}
+
+/* 卡片内容压在弧光之上 */
+html.glass-theme-liquid .v-card-text,
+html.glass-theme-liquid .v-card-title,
+html.glass-theme-liquid .v-card-actions,
+html.glass-theme-liquid .v-card-item {
+  position: relative;
+  z-index: 1;
+}
+
+/* 卡片 hover 上浮 */
+html.glass-theme-liquid .v-card--link:hover,
+html.glass-theme-liquid .v-card[link]:hover,
+html.glass-theme-liquid .hover-lift:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow-lift) !important;
+}
+
+
+/* ================================================================
+ * 按钮：胶囊形 + 弹簧形变 + 弧光
+ * v-tab 不是 v-btn，不受这些样式影响
+ * ================================================================ */
+
+html.glass-theme-liquid .v-btn {
+  border-radius: var(--lg-r-pill) !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim-sm), var(--lg-shadow) !important;
+  transition: transform .34s var(--lg-spring),
+              background-color .2s var(--lg-ease),
+              box-shadow .28s var(--lg-ease),
+              color .2s var(--lg-ease) !important;
+  border: 1px solid var(--lg-border) !important;
+}
+
+/* 按钮顶缘弧光 */
+html.glass-theme-liquid .v-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(140% 15px at 50% -3px,
+      var(--lg-sheen) 0%, transparent 72%);
+}
+
+html.glass-theme-liquid .v-btn__content,
+html.glass-theme-liquid .v-btn__prepend,
+html.glass-theme-liquid .v-btn__append {
+  position: relative;
+  z-index: 1;
+}
+
+/* hover 上浮 */
+html.glass-theme-liquid .v-btn:hover {
+  transform: translateY(-1px) !important;
+}
+
+/* 按下弹簧 */
+html.glass-theme-liquid .v-btn:active {
+  transform: scale(.95) !important;
+  transition-duration: .08s !important;
+}
+
+/* 圆形按钮不胶囊 */
+html.glass-theme-liquid .v-btn--icon {
+  border-radius: 50% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 主按钮 */
+html.glass-theme-liquid .v-btn--variant-flat.v-btn--color-primary,
+html.glass-theme-liquid .v-btn--variant-flat.text-primary {
+  box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .45),
+      inset 0 -1px 0 rgba(255, 255, 255, .15),
+      0 10px 28px -10px rgb(var(--v-theme-primary)) !important;
+}
+
+
+/* ================================================================
+ * 输入框：胶囊玻璃
+ * components.css 给 outlined 设了 rgba(255,255,255,0.30) / rgba(30,30,60,0.38)，
+ * 液态玻璃模式下统一覆盖为和卡片一致的玻璃底色
+ * ================================================================ */
+
+html.glass-theme-liquid .v-field--variant-outlined {
+  border-radius: var(--lg-r-pill) !important;
+  border: 1px solid var(--lg-border) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  box-shadow: var(--lg-rim-sm), 0 2px 10px -6px rgba(31, 38, 135, .3) !important;
+  transition: box-shadow .24s var(--lg-ease), background-color .24s var(--lg-ease) !important;
+}
+
+/* 亮色：白玻璃底 */
+html.glass-theme-liquid.glass-light .v-field--variant-outlined {
+  background: rgba(255, 255, 255, .40) !important;
+  background-color: rgba(255, 255, 255, .40) !important;
+}
+
+/* 暗色：深蓝玻璃底 */
+html.glass-theme-liquid.glass-dark .v-field--variant-outlined {
+  background: rgba(28, 30, 52, .44) !important;
+  background-color: rgba(28, 30, 52, .44) !important;
+}
+
+/* textarea 用大圆角而非胶囊 */
+html.glass-theme-liquid .v-textarea .v-field--variant-outlined {
+  border-radius: 22px !important;
+}
+
+/* hover：底色微亮 */
+html.glass-theme-liquid.glass-light .v-field--variant-outlined:hover {
+  background: rgba(255, 255, 255, .52) !important;
+  background-color: rgba(255, 255, 255, .52) !important;
+}
+html.glass-theme-liquid.glass-dark .v-field--variant-outlined:hover {
+  background: rgba(28, 30, 52, .56) !important;
+  background-color: rgba(28, 30, 52, .56) !important;
+}
+
+/* 聚焦光圈 */
+html.glass-theme-liquid .v-field--variant-outlined.v-field--focused {
+  box-shadow:
+      var(--lg-rim-sm),
+      0 0 0 2px rgba(var(--v-theme-primary), .45),
+      0 4px 16px -8px rgb(var(--v-theme-primary)) !important;
+}
+
+
+/* ================================================================
+ * 弹窗 / 对话框
+ * ================================================================ */
+
+html.glass-theme-liquid .v-dialog .v-overlay__content .v-card,
+html.glass-theme-liquid .v-dialog .v-overlay__content {
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 22px !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow-lift) !important;
+}
+
+/* 弹窗遮罩 */
+html.glass-theme-liquid .v-overlay__scrim {
+  background: rgba(24, 28, 58, .34) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-overlay__scrim {
+  background: rgba(2, 3, 10, .58) !important;
+}
+
+
+/* ================================================================
+ * 芯片 / 标签
+ * ================================================================ */
+
+html.glass-theme-liquid .v-chip {
+  border-radius: var(--lg-r-pill) !important;
+  border: 1px solid var(--lg-border) !important;
+  backdrop-filter: blur(8px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
+  box-shadow: var(--lg-rim-sm) !important;
+}
+
+
+/* ================================================================
+ * 下拉 / 菜单 popper
+ * components.css 给下拉面板设了 rgba(255,255,255,0.50) / rgba(30,30,60,0.50)，
+ * 液态玻璃模式下覆盖为和卡片一致的玻璃底色 + 液态圆角
+ * ================================================================ */
+
+html.glass-theme-liquid .v-menu .v-overlay__content,
+html.glass-theme-liquid .v-select .v-overlay__content,
+html.glass-theme-liquid .v-autocomplete .v-overlay__content {
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 22px !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow) !important;
+}
+
+/* 亮色下拉面板背景 */
+html.glass-theme-liquid.glass-light .v-overlay .v-list,
+html.glass-theme-liquid.glass-light .v-menu .v-card,
+html.glass-theme-liquid.glass-light .v-menu .v-list {
+  background: rgba(255, 255, 255, .52) !important;
+  background-color: rgba(255, 255, 255, .52) !important;
+}
+
+/* 暗色下拉面板背景 */
+html.glass-theme-liquid.glass-dark .v-overlay .v-list,
+html.glass-theme-liquid.glass-dark .v-menu .v-card,
+html.glass-theme-liquid.glass-dark .v-menu .v-list {
+  background: rgba(28, 30, 52, .56) !important;
+  background-color: rgba(28, 30, 52, .56) !important;
+}
+
+/* 下拉列表项 — 液态玻璃 hover / active */
+html.glass-theme-liquid .v-select .v-list-item,
+html.glass-theme-liquid .v-autocomplete .v-list-item,
+html.glass-theme-liquid .v-combobox .v-list-item,
+html.glass-theme-liquid .v-menu .v-list-item {
+  border-radius: 14px !important;
+  margin: 2px 4px !important;
+  transition: background-color .2s var(--lg-ease) !important;
+}
+
+/* hover：半透明高亮 */
+html.glass-theme-liquid.glass-light .v-menu .v-list-item:hover {
+  background: rgba(0, 0, 0, .06) !important;
+  background-color: rgba(0, 0, 0, .06) !important;
+}
+html.glass-theme-liquid.glass-dark .v-menu .v-list-item:hover {
+  background: rgba(255, 255, 255, .08) !important;
+  background-color: rgba(255, 255, 255, .08) !important;
+}
+
+/* active 选中：primary 色调 */
+html.glass-theme-liquid.glass-light .v-menu .v-list-item--active {
+  background: rgba(var(--v-theme-primary), .12) !important;
+  background-color: rgba(var(--v-theme-primary), .12) !important;
+}
+html.glass-theme-liquid.glass-dark .v-menu .v-list-item--active {
+  background: rgba(var(--v-theme-primary), .18) !important;
+  background-color: rgba(var(--v-theme-primary), .18) !important;
+}
+
+
+/* ================================================================
+ * 侧边栏 / 顶栏 — 透明，无模糊层，直接浮在 mesh 背景上
+ * design-spec.css 给它们设了半透明背景 + blur，液态玻璃模式下全部覆盖掉
+ * ================================================================ */
+
+html.glass-theme-liquid .v-navigation-drawer,
+html.glass-theme-liquid .v-app-bar,
+html.glass-theme-liquid .v-toolbar {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+
+/* ================================================================
+ * 全局边框修复
+ * components.css / buttons.css / feedback.css 里大量白色边框，
+ * 用 --lg-border 统一覆盖（亮色=深色半透明，暗色=浅色半透明）
+ * ================================================================ */
+
+html.glass-theme-liquid .v-sheet,
+html.glass-theme-liquid .v-expansion-panel,
+html.glass-theme-liquid .v-alert--variant-tonal,
+html.glass-theme-liquid .v-btn-toggle,
+html.glass-theme-liquid .v-card--variant-outlined,
+html.glass-theme-liquid .liquid-avatar,
+html.glass-theme-liquid .sub-search-results,
+html.glass-theme-liquid .sub-poster-preview,
+html.glass-theme-liquid .feed-item-card {
+  border-color: var(--lg-border) !important;
+}
+
+/* 弹窗内下拉面板边框 */
+html.glass-theme-liquid .v-overlay .v-list,
+html.glass-theme-liquid .v-menu .v-card,
+html.glass-theme-liquid .v-menu .v-list {
+  border-color: var(--lg-border) !important;
+}
+
+
+/* ================================================================
+ * Sticky Tabs / Sub Tabs — 移除底色，直接透明
+ * pages.css 给 .sticky-tabs / .sticky-sub-tabs 设了半透明背景 + 模糊 + 底边框，
+ * 液态玻璃模式下不需要这一层，让 TAB 行直接浮在 mesh 背景上
+ * ================================================================ */
+
+html.glass-theme-liquid .sticky-tabs,
+html.glass-theme-liquid .sticky-sub-tabs {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
+}
+
+/* v-tab 选中下划线（slider）—— 液态玻璃模式不需要 */
+html.glass-theme-liquid .v-tab__slider {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+
+/* ================================================================
+ * 滚动条
+ * ================================================================ */
+
+html.glass-theme-liquid ::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+html.glass-theme-liquid ::-webkit-scrollbar-thumb {
+  border-radius: var(--lg-r-pill) !important;
+  border: 3px solid transparent !important;
+  background-clip: content-box !important;
+}
+
+
+/* ================================================================
+ * 登录页
+ * ================================================================ */
+
+html.glass-theme-liquid .login-glass-panel {
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 28px !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow-lift) !important;
+}
+
+html.glass-theme-liquid .login-glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(150% 42px at 50% -8px,
+      var(--lg-sheen) 0%, transparent 72%);
+}
+
+
+/* ================================================================
+ * 字体：SF 系统栈，收紧字距（不用 !important，避免影响 v-tab 等组件尺寸）
+ * ================================================================ */
+
+html.glass-theme-liquid {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+  "Segoe UI Variable Display", "Segoe UI", "PingFang SC", "HarmonyOS Sans SC",
+  "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+html.glass-theme-liquid h1,
+html.glass-theme-liquid h2,
+html.glass-theme-liquid h3,
+html.glass-theme-liquid .v-card-title {
+  font-weight: 600;
+  letter-spacing: -.018em;
+}
+
+
+/* ================================================================
+ * 性能优化
+ * ================================================================ */
+
+/* 小屏降模糊 */
+@media (max-width: 768px) {
+  html.glass-theme-liquid {
+    --lg-blur: 10px;
+  }
+}
+
+/* 系统开了「减少透明度」 */
+@media (prefers-reduced-transparency: reduce) {
+  html.glass-theme-liquid {
+    --lg-blur: 0px;
+    --lg-rim: inset 0 0 0 1px var(--lg-border-strong);
+    --lg-rim-sm: inset 0 0 0 1px var(--lg-border-strong);
+    --lg-sheen: transparent;
+  }
+
+  html.glass-theme-liquid.glass-light {
+    --lg-bg-page: #E8EBF5;
+  }
+
+  html.glass-theme-liquid.glass-dark {
+    --lg-bg-page: #1A1B2E;
+  }
+}
+
+/* 减少动画 */
+@media (prefers-reduced-motion: reduce) {
+  html.glass-theme-liquid body::before,
+  html.glass-theme-liquid body::after {
+    animation: none !important;
+  }
+
+  html.glass-theme-liquid .v-card,
+  html.glass-theme-liquid .v-btn {
+    transition: background-color .2s linear, color .2s linear !important;
+  }
+
+  html.glass-theme-liquid .v-card:hover,
+  html.glass-theme-liquid .v-btn:hover,
+  html.glass-theme-liquid .v-btn:active {
+    transform: none !important;
+  }
+}

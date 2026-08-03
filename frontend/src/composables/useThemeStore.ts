@@ -1,8 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export type GlassTheme = 'acg' | 'liquid'
+
 export const useThemeStore = defineStore('theme', () => {
   const isDarkMode = ref(localStorage.getItem('theme_mode') === 'light' ? false : true)
+
+  // 玻璃主题：'acg' = 二次元壁纸毛玻璃，'liquid' = 液态玻璃
+  const glassTheme = ref<GlassTheme>(
+    (localStorage.getItem('glass_theme') as GlassTheme) || 'acg'
+  )
 
   function toggleDarkMode() {
     isDarkMode.value = !isDarkMode.value
@@ -14,5 +21,15 @@ export const useThemeStore = defineStore('theme', () => {
     localStorage.setItem('theme_mode', isDark ? 'dark' : 'light')
   }
 
-  return { isDarkMode, toggleDarkMode, setDarkMode }
+  function toggleGlassTheme() {
+    glassTheme.value = glassTheme.value === 'acg' ? 'liquid' : 'acg'
+    localStorage.setItem('glass_theme', glassTheme.value)
+  }
+
+  function setGlassTheme(theme: GlassTheme) {
+    glassTheme.value = theme
+    localStorage.setItem('glass_theme', theme)
+  }
+
+  return { isDarkMode, glassTheme, toggleDarkMode, setDarkMode, toggleGlassTheme, setGlassTheme }
 })

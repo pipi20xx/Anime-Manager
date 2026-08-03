@@ -205,15 +205,35 @@ onUnmounted(() => {
             @click="systemStore.showLogModal = true"
           />
 
-          <!-- 主题切换 -->
-          <v-btn
-            variant="text"
-            density="comfortable"
-            size="small"
-            :color="themeStore.isDarkMode ? 'warning' : 'info'"
-            :icon="themeStore.isDarkMode ? 'mdi-white-balance-sunny' : 'mdi-weather-night'"
-            @click="themeStore.toggleDarkMode()"
-          />
+          <!-- 深色/浅色切换 -->
+          <v-tooltip text="深色 / 浅色" location="bottom">
+            <template #activator="{ props: tooltipProps }">
+              <v-btn
+                v-bind="tooltipProps"
+                variant="text"
+                density="comfortable"
+                size="small"
+                :color="themeStore.isDarkMode ? 'warning' : 'info'"
+                :icon="themeStore.isDarkMode ? 'mdi-white-balance-sunny' : 'mdi-weather-night'"
+                @click="themeStore.toggleDarkMode()"
+              />
+            </template>
+          </v-tooltip>
+
+          <!-- 玻璃主题切换：ACG 毛玻璃 / 液态玻璃 -->
+          <v-tooltip :text="themeStore.glassTheme === 'acg' ? '当前: ACG 毛玻璃 → 切换到液态玻璃' : '当前: 液态玻璃 → 切换到 ACG 毛玻璃'" location="bottom">
+            <template #activator="{ props: tooltipProps }">
+              <v-btn
+                v-bind="tooltipProps"
+                variant="text"
+                density="comfortable"
+                size="small"
+                :color="themeStore.glassTheme === 'acg' ? 'secondary' : 'accent'"
+                :icon="themeStore.glassTheme === 'acg' ? 'mdi-image-multiple' : 'mdi-layers-outline'"
+                @click="themeStore.toggleGlassTheme()"
+              />
+            </template>
+          </v-tooltip>
 
           <!-- 用户菜单 -->
           <v-menu>
