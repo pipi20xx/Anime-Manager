@@ -138,8 +138,8 @@ onMounted(() => {
 
           <!-- 信息 -->
           <v-col cols="12" sm="9" md="10">
-            <div class="text-h4 font-weight-bold">{{ person.name }}</div>
-            <div v-if="person.known_for_department" class="text-body-1 text-medium-emphasis mt-1">
+            <h1 class="page-title text-h4 font-weight-bold">{{ person.name }}</h1>
+            <div v-if="person.known_for_department" class="page-subtitle text-body-1 mt-1">
               {{ person.known_for_department === 'Acting' ? '演员' : person.known_for_department === 'Directing' ? '导演' : person.known_for_department }}
             </div>
 
@@ -162,16 +162,16 @@ onMounted(() => {
                 <v-icon start size="16">mdi-map-marker-outline</v-icon>
                 {{ person.place_of_birth }}
               </v-chip>
-              <v-chip v-if="person.popularity" size="small" variant="outlined">
+              <v-chip v-if="person.popularity" size="small" variant="tonal" color="primary">
                 热度 {{ person.popularity?.toFixed(1) }}
               </v-chip>
             </v-chip-group>
 
             <!-- 别名 -->
             <div v-if="person.also_known_as?.length" class="mt-3">
-              <div class="text-subtitle-2 font-weight-medium mb-1">别名</div>
+              <div class="section-title text-subtitle-2 font-weight-medium mb-1">别名</div>
               <div class="d-flex flex-wrap ga-1">
-                <v-chip v-for="name in person.also_known_as.slice(0, 8)" :key="name" size="small" variant="outlined">
+                <v-chip v-for="name in person.also_known_as.slice(0, 8)" :key="name" size="small" variant="tonal" color="primary">
                   {{ name }}
                 </v-chip>
               </div>
@@ -179,8 +179,8 @@ onMounted(() => {
 
             <!-- 简介 -->
             <div v-if="person.biography" class="mt-4">
-              <div class="text-subtitle-2 font-weight-medium mb-1">简介</div>
-              <div class="text-body-2">{{ person.biography }}</div>
+              <div class="section-title text-subtitle-2 font-weight-medium mb-1">简介</div>
+              <div class="page-subtitle text-body-2">{{ person.biography }}</div>
             </div>
             <div v-else class="mt-4">
               <div class="text-body-2 text-medium-emphasis">暂无中文简介</div>

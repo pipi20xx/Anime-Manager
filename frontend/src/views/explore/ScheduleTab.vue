@@ -86,10 +86,10 @@ function openDetail(item: any) {
       <!-- 番剧卡片网格 -->
       <template v-for="day in schedule" :key="day.date">
         <div v-show="activeDate === day.date || !activeDate" class="day-section">
-          <div class="text-subtitle-2 font-weight-bold mb-3">
+          <div class="section-title text-subtitle-2 font-weight-bold mb-3">
             {{ day.weekday?.cn || '' }}
-            <span v-if="day.label" class="text-medium-emphasis">（{{ day.label }}）</span>
-            <span class="text-caption text-medium-emphasis ml-2">{{ day.date }}</span>
+            <span v-if="day.label">（{{ day.label }}）</span>
+            <span class="text-caption ml-2">{{ day.date }}</span>
           </div>
 
           <div class="media-card-grid">

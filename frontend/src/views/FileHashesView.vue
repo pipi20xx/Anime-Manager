@@ -572,8 +572,8 @@ onUnmounted(() => {
     <!-- 页面头部 -->
     <div class="app-page-header mb-6 d-flex align-center justify-space-between flex-wrap ga-3">
       <div>
-        <h1 class="text-h5 font-weight-bold">文件哈希记录</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">共 {{ hashTotal }} 条 · SHA1 与 ED2K 哈希管理</div>
+        <h1 class="page-title text-h5 font-weight-bold">文件哈希记录</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">共 {{ hashTotal }} 条 · SHA1 与 ED2K 哈希管理</div>
       </div>
       <div class="page-actions d-flex ga-2">
         <v-menu>

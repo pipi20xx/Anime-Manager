@@ -377,6 +377,79 @@
   line-height: 1.4;
 }
 
+/* ── 29r-0. 页面标题 — .page-title ──
+ *   专用于页面头部 h1 标题文字，可独立控制颜色/样式。
+ *   默认紫色主题，白边描边在任何背景下保持高可读性。
+ *
+ *   使用方式：
+ *     <h1 class="page-title text-h5 font-weight-bold">标题</h1>
+ *
+ *   修改颜色：只需改 --page-title-color 变量即可
+ */
+.page-title {
+  /* 紫色主题色 — 修改此变量即可全局换色 */
+  --page-title-color: #a855f7;
+
+  color: var(--page-title-color) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6);
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.5),
+    0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* ── 29r-1. 页面副标题 — .page-subtitle ──
+ *   专用于页面头部副标题文字，可独立控制颜色/样式。
+ *   默认紫色主题，白边描边在任何背景下保持高可读性。
+ *
+ *   使用方式：
+ *     <div class="app-page-header ...">
+ *       <div>
+ *         <h1>标题</h1>
+ *         <div class="page-subtitle text-body-2 mt-1">副标题描述</div>
+ *       </div>
+ *     </div>
+ *
+ *   修改颜色：只需改 --page-subtitle-color 变量即可
+ */
+.page-subtitle {
+  /* 紫色主题色 — 修改此变量即可全局换色 */
+  --page-subtitle-color: #a855f7;
+
+  color: var(--page-subtitle-color) !important;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+/* ── 29r-2. 区段标题 — .section-title ──
+ *   用于页面内分区标题（如日历的"周二（今天）2026-08-04"），
+ *   与 page-title 共享紫色+白边发光风格，字号更小。
+ *
+ *   使用方式：
+ *     <div class="section-title text-subtitle-2 font-weight-bold">
+ *       周二 <span>（今天）</span>
+ *       <span class="text-caption ml-2">2026-08-04</span>
+ *     </div>
+ *
+ *   修改颜色：只需改 --section-title-color 变量即可
+ */
+.section-title {
+  /* 紫色主题色 — 修改此变量即可全局换色 */
+  --section-title-color: #a855f7;
+
+  color: var(--section-title-color) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.25);
+}
+
 /* ============================================================
  * 29s. Liquid Glass 卡片边框覆盖
  *     glass-card / glass-panel 无边框

@@ -184,8 +184,8 @@ onUnmounted(() => {
   <v-container fluid class="pa-4 pa-md-6">
     <!-- 页面头部 -->
     <div class="app-page-header mb-6">
-      <h1 class="text-h5 font-weight-bold">外部控制</h1>
-      <div class="text-body-2 text-medium-emphasis mt-1">API 管理与集成设置</div>
+      <h1 class="page-title text-h5 font-weight-bold">外部控制</h1>
+      <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">API 管理与集成设置</div>
     </div>
 
     <div class="sticky-tabs">

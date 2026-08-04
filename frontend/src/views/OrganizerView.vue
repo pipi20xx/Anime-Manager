@@ -116,8 +116,8 @@ onUnmounted(() => {
     <!-- 页面头部 -->
     <div class="app-page-header mb-6">
       <div>
-        <h1 class="text-h5 font-weight-bold">整理管理</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">文件重命名规则与整理任务管理</div>
+        <h1 class="page-title text-h5 font-weight-bold">整理管理</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">文件重命名规则与整理任务管理</div>
       </div>
     </div>
 

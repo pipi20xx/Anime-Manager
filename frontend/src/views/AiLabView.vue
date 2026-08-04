@@ -472,8 +472,8 @@ onMounted(() => {
     <!-- 页面头部 -->
     <div class="app-page-header mb-6 d-flex align-center justify-space-between">
       <div>
-        <h1 class="text-h5 font-weight-bold">AI 实验室</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">AI 语义解析与智能助手</div>
+        <h1 class="page-title text-h5 font-weight-bold">AI 实验室</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">AI 语义解析与智能助手</div>
       </div>
       <div class="d-flex align-center ga-3">
         <v-switch

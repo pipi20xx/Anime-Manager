@@ -220,8 +220,8 @@ onMounted(() => {
 
           <!-- 信息 -->
           <v-col cols="12" sm="9" md="10">
-            <div class="text-h4 font-weight-bold">{{ detail.title }}</div>
-            <div v-if="detail.original_title && detail.original_title !== detail.title" class="text-body-1 text-medium-emphasis mt-1">
+            <h1 class="page-title text-h4 font-weight-bold">{{ detail.title }}</h1>
+            <div v-if="detail.original_title && detail.original_title !== detail.title" class="page-subtitle text-body-1 mt-1">
               {{ detail.original_title }}
             </div>
 
@@ -287,8 +287,8 @@ onMounted(() => {
 
             <!-- 简介 -->
             <div v-if="detail.overview" class="mt-4">
-              <div class="text-subtitle-2 font-weight-medium mb-1">简介</div>
-              <div class="text-body-2" style="line-height: 1.8">{{ detail.overview }}</div>
+              <div class="section-title text-subtitle-2 font-weight-medium mb-1">简介</div>
+              <div class="page-subtitle text-body-2" style="line-height: 1.8">{{ detail.overview }}</div>
             </div>
 
             <!-- 分类标签 -->
@@ -311,7 +311,8 @@ onMounted(() => {
                 v-for="tag in detail.tags.slice(0, 15)"
                 :key="tag.name || tag"
                 size="small"
-                variant="outlined"
+                variant="tonal"
+                color="primary"
                 class="mr-1 mb-1"
               >
                 {{ tag.name || tag }}
@@ -323,42 +324,47 @@ onMounted(() => {
 
         <!-- 角色信息 -->
         <div v-if="detail.cast?.length" class="mt-8">
-          <div class="text-subtitle-1 font-weight-bold mb-3">
+          <div class="section-title text-subtitle-1 font-weight-bold mb-3">
             <v-icon start size="small">mdi-account-group</v-icon>
             角色与声优
           </div>
-          <div class="cast-scroll d-flex ga-4 overflow-x-auto pb-2">
-            <div
+          <div class="cast-card-grid">
+            <v-card
               v-for="c in detail.cast.slice(0, 20)"
               :key="c.character"
-              class="cast-card flex-shrink-0 text-center"
-              style="min-width: 90px; width: 90px"
+              class="glass-card media-card cursor-pointer"
+              variant="flat"
             >
-              <v-avatar size="64" rounded="circle" class="mb-2">
+              <div class="media-card__poster">
                 <v-img
                   v-if="c.image"
                   :src="getImg(c.image)"
                   cover
-                />
-                <v-icon v-else icon="mdi-account" size="32" color="grey" />
-              </v-avatar>
-              <div class="text-body-2 font-weight-medium text-truncate" style="max-width: 90px">
-                {{ c.character }}
+                  class="rounded-t-xl"
+                >
+                  <template #placeholder>
+                    <v-skeleton-loader type="image" />
+                  </template>
+                </v-img>
+                <div v-else class="cast-card__placeholder">
+                  <v-icon icon="mdi-account" size="36" />
+                </div>
               </div>
-              <div class="text-caption text-medium-emphasis text-truncate" style="max-width: 90px">
-                {{ c.actor }}
+              <div class="media-card__info">
+                <div class="media-card__title">{{ c.character }}</div>
+                <div v-if="c.actor" class="media-card__subtitle">{{ c.actor }}</div>
               </div>
-            </div>
+            </v-card>
           </div>
         </div>
 
         <!-- 章节列表 -->
         <div class="mt-8">
           <div class="d-flex align-center justify-space-between mb-3">
-            <div class="text-subtitle-1 font-weight-bold">
+            <div class="section-title text-subtitle-1 font-weight-bold">
               <v-icon start size="small">mdi-television-classic</v-icon>
               章节列表
-              <span v-if="episodesTotal" class="text-caption text-medium-emphasis font-weight-normal ml-2">（共 {{ episodesTotal }} 集）</span>
+              <span v-if="episodesTotal" class="text-caption font-weight-normal ml-2">（共 {{ episodesTotal }} 集）</span>
             </div>
             <v-btn
               v-if="episodes.length > 24"
@@ -377,10 +383,11 @@ onMounted(() => {
 
           <!-- 章节列表 -->
           <div v-else-if="episodes.length > 0" class="episode-list">
-            <div
+            <v-card
               v-for="ep in (showAllEpisodes ? episodes : episodes.slice(0, 24))"
               :key="ep.id || ep.sort"
-              class="episode-item"
+              class="glass-card episode-item"
+              variant="flat"
             >
               <div class="ep-number">
                 <span class="ep-num-main">{{ ep.ep ?? ep.sort }}</span>
@@ -403,7 +410,7 @@ onMounted(() => {
                 </div>
                 <div v-if="ep.desc" class="ep-desc">{{ ep.desc }}</div>
               </div>
-            </div>
+            </v-card>
           </div>
 
           <div v-else class="text-center pa-4 text-medium-emphasis text-body-2">暂无章节信息</div>
@@ -411,7 +418,7 @@ onMounted(() => {
 
         <!-- 关联条目 -->
         <div v-if="detail.related?.length" class="mt-8">
-          <div class="text-subtitle-1 font-weight-bold mb-3">关联条目</div>
+          <div class="section-title text-subtitle-1 font-weight-bold mb-3">关联条目</div>
           <div class="media-card-grid">
             <v-card
               v-for="item in detail.related.slice(0, 12)"
@@ -452,10 +459,6 @@ onMounted(() => {
   min-height: 100%;
 }
 
-.cast-card {
-  text-align: center;
-}
-
 .episode-list {
   display: flex;
   flex-direction: column;
@@ -466,12 +469,12 @@ onMounted(() => {
   display: flex;
   gap: 14px;
   padding: 10px 12px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 8px;
-  transition: border-color 0.15s;
+  border-radius: 12px !important;
+  transition: border-color 0.15s, box-shadow 0.3s ease;
 }
 .episode-item:hover {
-  border-color: rgba(var(--v-theme-primary), 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(var(--v-theme-primary), 0.4) !important;
 }
 
 .ep-number {
@@ -481,8 +484,8 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border-radius: 6px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border-radius: 8px;
   padding: 6px 4px;
 }
 .ep-num-main {

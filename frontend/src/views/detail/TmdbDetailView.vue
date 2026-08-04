@@ -334,7 +334,7 @@ onMounted(() => {
           <!-- 信息 -->
           <v-col cols="12" sm="9" md="10">
             <div class="d-flex align-center ga-2 flex-wrap">
-              <div class="text-h4 font-weight-bold">{{ detail.title || detail.name }}</div>
+              <h1 class="page-title text-h4 font-weight-bold">{{ detail.title || detail.name }}</h1>
               <v-chip v-if="embyStatus?.exists" size="small" color="success" variant="tonal">
                 <v-icon start size="14">mdi-check-circle</v-icon>
                 已入库
@@ -348,10 +348,10 @@ onMounted(() => {
                 未入库
               </v-chip>
             </div>
-            <div v-if="detail.original_title || detail.original_name" class="text-body-1 text-medium-emphasis mt-1">
+            <div v-if="detail.original_title || detail.original_name" class="page-subtitle text-body-1 mt-1">
               {{ detail.original_title || detail.original_name }}
             </div>
-            <div v-if="detail.tagline" class="text-body-2 font-italic mt-1" style="opacity: 0.7">
+            <div v-if="detail.tagline" class="page-subtitle text-body-2 font-italic mt-1">
               "{{ detail.tagline }}"
             </div>
 
@@ -377,10 +377,10 @@ onMounted(() => {
               <v-chip v-if="detail.runtime" size="small" variant="tonal">
                 {{ formatMinutes(detail.runtime) }}
               </v-chip>
-              <v-chip v-if="detail.original_language_zh" size="small" variant="outlined">
+              <v-chip v-if="detail.original_language_zh" size="small" variant="tonal" color="primary">
                 {{ detail.original_language_zh }}
               </v-chip>
-              <v-chip v-if="detail.origin_country_zh?.length" size="small" variant="outlined">
+              <v-chip v-if="detail.origin_country_zh?.length" size="small" variant="tonal" color="primary">
                 {{ detail.origin_country_zh.join(' / ') }}
               </v-chip>
             </v-chip-group>
@@ -410,43 +410,49 @@ onMounted(() => {
 
             <!-- 简介 -->
             <div v-if="detail.overview" class="mt-4">
-              <div class="text-subtitle-2 font-weight-medium mb-1">简介</div>
-              <div class="text-body-2" style="line-height: 1.6">{{ detail.overview }}</div>
+              <div class="section-title text-subtitle-2 font-weight-medium mb-1">简介</div>
+              <div class="page-subtitle text-body-2" style="line-height: 1.6">{{ detail.overview }}</div>
             </div>
           </v-col>
         </v-row>
 
         <!-- 演员阵容 -->
         <div v-if="detail.cast?.length" class="mt-8">
-          <div class="text-subtitle-1 font-weight-bold mb-3">演员阵容</div>
-          <div class="cast-scroll d-flex ga-3 overflow-x-auto pb-2">
-            <div
+          <div class="section-title text-subtitle-1 font-weight-bold mb-3">演员阵容</div>
+          <div class="cast-card-grid">
+            <v-card
               v-for="c in detail.cast.slice(0, 20)"
               :key="c.id || c.actor"
-              class="cast-card flex-shrink-0 cursor-pointer"
+              class="glass-card media-card cursor-pointer"
+              variant="flat"
               @click="openPerson(c.id)"
             >
-              <v-avatar size="64" rounded="lg" class="mb-2">
+              <div class="media-card__poster">
                 <v-img
                   v-if="c.image"
                   :src="c.image"
                   cover
-                />
-                <v-icon v-else icon="mdi-account" size="32" color="grey" />
-              </v-avatar>
-              <div class="text-body-2 font-weight-medium text-center text-truncate" style="max-width: 80px">
-                {{ c.actor }}
+                  class="rounded-t-xl"
+                >
+                  <template #placeholder>
+                    <v-skeleton-loader type="image" />
+                  </template>
+                </v-img>
+                <div v-else class="cast-card__placeholder">
+                  <v-icon icon="mdi-account" size="36" />
+                </div>
               </div>
-              <div v-if="c.character" class="text-caption text-medium-emphasis text-center text-truncate" style="max-width: 80px">
-                {{ c.character }}
+              <div class="media-card__info">
+                <div class="media-card__title">{{ c.actor }}</div>
+                <div v-if="c.character" class="media-card__subtitle">{{ c.character }}</div>
               </div>
-            </div>
+            </v-card>
           </div>
         </div>
 
         <!-- 季度列表 (TV) -->
         <div v-if="detail.seasons?.length" class="mt-8">
-          <div class="text-subtitle-1 font-weight-bold mb-3">季度信息</div>
+          <div class="section-title text-subtitle-1 font-weight-bold mb-3">季度信息</div>
           <v-expansion-panels variant="accordion" class="mb-4">
             <v-expansion-panel
               v-for="season in detail.seasons.filter((s: any) => s.season_number > 0)"
@@ -509,7 +515,7 @@ onMounted(() => {
                     <v-card
                       v-for="ep in getSeasonEpisodes(season.season_number)"
                       :key="ep.episode"
-                      variant="outlined"
+                      variant="tonal"
                       rounded="lg"
                     >
                       <v-row no-gutters>
@@ -577,7 +583,7 @@ onMounted(() => {
 
         <!-- 推荐内容 -->
         <div v-if="recommendations.length > 0" class="mt-8">
-          <div class="text-subtitle-1 font-weight-bold mb-3">推荐内容</div>
+          <div class="section-title text-subtitle-1 font-weight-bold mb-3">推荐内容</div>
           <div class="media-card-grid">
             <v-card v-for="item in recommendations.slice(0, 12)" :key="item.id" class="glass-card media-card cursor-pointer" @click="openRecommendation(item)">
               <div class="media-card__poster">

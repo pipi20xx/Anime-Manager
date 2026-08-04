@@ -583,8 +583,8 @@ onMounted(() => {
     <!-- 页面头部 -->
     <div class="app-page-header mb-4 d-flex align-center justify-space-between flex-wrap ga-3">
       <div>
-        <h1 class="text-h5 font-weight-bold">文件浏览</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">文件资源管理器</div>
+        <h1 class="page-title text-h5 font-weight-bold">文件浏览</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">文件资源管理器</div>
       </div>
       <v-btn color="primary" variant="flat" prepend-icon="mdi-folder-sync-outline" @click="showManualModal = true">
         整理当前目录

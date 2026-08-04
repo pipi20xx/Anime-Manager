@@ -358,8 +358,8 @@ onUnmounted(() => {
     <!-- 页面头部 -->
     <div class="app-page-header mb-6 d-flex align-center justify-space-between flex-wrap ga-3">
       <div>
-        <h1 class="text-h5 font-weight-bold">任务中心</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">任务执行历史与日志</div>
+        <h1 class="page-title text-h5 font-weight-bold">任务中心</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">任务执行历史与日志</div>
       </div>
       <div class="d-flex ga-2 align-center">
         <v-btn variant="tonal" color="warning" prepend-icon="mdi-broom" @click="cleanupTasks">清理旧记录</v-btn>

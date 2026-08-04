@@ -28,8 +28,8 @@ const activeTab = ref('metadata')
     <!-- 页面头部 -->
     <div class="app-page-header mb-6">
       <div>
-        <h1 class="text-h5 font-weight-bold">数据中心</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">高性能 PostgreSQL 引擎与超级元数据资产管理</div>
+        <h1 class="page-title text-h5 font-weight-bold">数据中心</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">高性能 PostgreSQL 引擎与超级元数据资产管理</div>
       </div>
     </div>
 

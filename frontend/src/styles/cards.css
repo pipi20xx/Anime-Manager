@@ -617,6 +617,47 @@
 }
 
 /* ============================================================
+ * §33h. 演员卡片 — Cast Card
+ *     复用 media-card 体系（poster + info），仅增加网格与人物占位符
+ *     使用方式：<v-card class="glass-card media-card cursor-pointer">
+ *                 <div class="media-card__poster">...</div>
+ *                 <div class="media-card__info">...</div>
+ *               </v-card>
+ *
+ *     布局约定（与 media-card 一致，2:3 海报比例）:
+ *     ┌────────────┐
+ *     │   照片区    │  aspect-ratio 2:3，与海报相同
+ *     │  (2:3)     │
+ *     ├────────────┤
+ *     │  演员名    │  居中、粗体、单行截断
+ *     │  角色名    │  居中、灰色、单行截断
+ *     └────────────┘
+ * ============================================================ */
+
+/* ── 演员卡片网格（比媒体卡片更密，列数更多） ── */
+.cast-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (min-width: 600px)  { .cast-card-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 960px)  { .cast-card-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 1264px) { .cast-card-grid { grid-template-columns: repeat(8, 1fr); } }
+
+/* ── 无照片时的演员占位符（复用 media-card__poster-placeholder） ── */
+.cast-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgba(var(--v-theme-on-surface), 0.3);
+}
+
+/* ============================================================
  * §34. 追剧日历卡片 — Calendar Track Card
  *     与 .media-card 体系独立，因为含集数标签等额外信息
  *     使用方式：<v-card class="glass-card track-card">

@@ -55,8 +55,8 @@ function refreshCurrentTab() {
     <!-- 页面头部 -->
     <div class="app-page-header mb-6 d-flex align-center justify-space-between flex-wrap ga-3">
       <div>
-        <h1 class="text-h5 font-weight-bold">订阅管理</h1>
-        <div class="text-body-2 text-medium-emphasis mt-1">RSS 自动化追番与资源监控</div>
+        <h1 class="page-title text-h5 font-weight-bold">订阅管理</h1>
+        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">RSS 自动化追番与资源监控</div>
       </div>
       <div class="d-flex ga-2 flex-wrap">
         <v-btn variant="tonal" color="info" prepend-icon="mdi-refresh" :loading="syncing" @click="runNow">立即触发全量刷新</v-btn>

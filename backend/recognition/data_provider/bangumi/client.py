@@ -56,9 +56,15 @@ class BangumiProvider:
         return None
 
     @staticmethod
-    def _proxy_img(url: str) -> str:
+    def _proxy_img(url: str, size: str = "") -> str:
         """
         将 Bangumi 图片链接转换为本地代理链接
+        size: 可选，强制替换图片尺寸路径段
+              "large" → /pic/*/l/
+              "common" → /pic/*/c/
+              "small" → /pic/*/s/
+              "grid" → /pic/*/g/  (默认缩略图)
+              "" → 不替换，保持原始尺寸
         """
         if not url: return ""
         # 强制 HTTPS
@@ -67,6 +73,11 @@ class BangumiProvider:
         
         # 已经是本地代理或相对路径则不处理
         if url.startswith("/"): return url
+
+        # 强制替换尺寸路径段：/pic/(poster|crt|cover)/g/ → /pic/{type}/l/
+        if size:
+            import re
+            url = re.sub(r'/pic/(poster|crt|cover)/[lgscm]/', f'/pic/\\1/{size[0].lower()}/', url)
         
         # 编码 URL 参数
         from urllib.parse import quote
@@ -738,7 +749,7 @@ class BangumiProvider:
                 cast.append({
                     "character": char.get("name"),
                     "actor": actors[0].get("name") if actors else "未知",
-                    "image": BangumiProvider._proxy_img(char.get("images", {}).get("grid") or "")
+                    "image": BangumiProvider._proxy_img(char.get("images", {}).get("large") or char.get("images", {}).get("common") or char.get("images", {}).get("grid") or "", size="large")
                 })
 
         # 3. 标签与图片处理

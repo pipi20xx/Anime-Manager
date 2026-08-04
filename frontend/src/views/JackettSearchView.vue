@@ -131,8 +131,8 @@ onMounted(() => {
 <template>
   <v-container fluid class="pa-4 pa-md-6">
     <div class="app-page-header mb-6">
-      <h1 class="text-h5 font-weight-bold">Jackett 搜索</h1>
-      <div class="text-body-2 text-medium-emphasis mt-1">全网资源聚合搜索与下载</div>
+      <h1 class="page-title text-h5 font-weight-bold">Jackett 搜索</h1>
+      <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">全网资源聚合搜索与下载</div>
     </div>
 
     <!-- 搜索栏 -->
