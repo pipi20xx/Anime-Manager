@@ -278,14 +278,16 @@ defineExpose({ fetchHistory })
             <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--time" v-if="item.processed_at">
               {{ formatTime(item.processed_at) }}
             </v-chip>
-            <a
+            <v-chip
               v-if="item.tmdb_id"
               :href="getTmdbUrl(item)"
               target="_blank"
+              size="x-small"
+              variant="flat"
               class="meta-tag meta-tag--tmdb"
             >
               TMDB: {{ item.tmdb_id }}
-            </a>
+            </v-chip>
           </div>
           <div class="d-flex align-center ga-1 flex-shrink-0">
             <v-btn v-if="item.task_id" size="small" variant="tonal" color="info" prepend-icon="mdi-file-document-outline" @click="viewTaskLog(item)">日志</v-btn>

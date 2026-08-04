@@ -82,19 +82,18 @@ function getLogLevelClass(entry: string): string {
       <v-icon start>mdi-card-text-outline</v-icon>
       系统日志
       <v-spacer />
-      <v-btn-toggle v-model="logFilter" density="compact" variant="tonal" rounded="lg" class="mr-2">
-        <v-btn 
-          v-for="opt in filterOptions" 
-          :key="opt.value" 
-          :value="opt.value" 
-          size="small"
+      <v-btn-toggle v-model="logFilter" density="compact" variant="tonal" rounded="lg" class="mr-2 align-self-center">
+        <v-btn
+          v-for="opt in filterOptions"
+          :key="opt.value"
+          :value="opt.value"
+          density="compact"
           :style="logFilter === opt.value && opt.color ? { color: opt.color } : {}"
         >
           {{ opt.title }}
         </v-btn>
       </v-btn-toggle>
-      <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-delete-outline" @click="clearLogs">清空</v-btn>
-      <v-btn variant="text" size="small" icon="mdi-close" @click="systemStore.showLogModal = false" />
+      <v-btn variant="tonal" density="compact" color="error" prepend-icon="mdi-delete-outline" class="clear-log-btn" @click="clearLogs">清空</v-btn>
     </template>
     <div ref="logContainer" class="log-terminal">
       <div
@@ -112,3 +111,9 @@ function getLogLevelClass(entry: string): string {
     </div>
   </GlassDialog>
 </template>
+
+<style scoped>
+.clear-log-btn {
+  height: 32px !important;
+}
+</style>

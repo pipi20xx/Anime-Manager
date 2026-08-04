@@ -186,9 +186,9 @@ function getConditions(rule: any) {
 
             <v-skeleton-loader v-if="loading" type="card@3" />
 
-            <v-row v-else-if="profiles.length > 0">
-              <v-col v-for="profile in profiles" :key="profile.id" cols="12" sm="6">
-                <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEditProfile(profile)">
+            <v-row v-else-if="profiles.length > 0" dense>
+              <v-col v-for="profile in profiles" :key="profile.id" cols="12" sm="6" class="d-flex">
+                <v-card class="glass-card manage-card hover-lift cursor-pointer flex-grow-1" @click="openEditProfile(profile)">
                   <!-- 标题行 -->
                   <div class="manage-card__header">
                     <div class="manage-card__title">{{ profile.name }}</div>
@@ -236,9 +236,9 @@ function getConditions(rule: any) {
 
             <v-skeleton-loader v-if="loading" type="card@3" />
 
-            <v-row v-else-if="rules.length > 0">
-              <v-col v-for="rule in rules" :key="rule.id" cols="12" sm="6">
-                <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEditRule(rule)">
+            <v-row v-else-if="rules.length > 0" dense>
+              <v-col v-for="rule in rules" :key="rule.id" cols="12" sm="6" class="d-flex">
+                <v-card class="glass-card manage-card hover-lift cursor-pointer flex-grow-1" @click="openEditRule(rule)">
                   <!-- 标题行 -->
                   <div class="manage-card__header">
                     <div class="manage-card__title">{{ rule.name }}</div>

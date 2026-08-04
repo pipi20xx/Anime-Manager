@@ -6,7 +6,7 @@
  *
  * 使用方式：
  *   <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--season">S01E03</v-chip>
- *   <a class="meta-tag meta-tag--tmdb" href="..." target="_blank">ID: 12345</a>
+ *   <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--tmdb" href="..." target="_blank">ID: 12345</v-chip>
  */
 
 /* ============================================================
@@ -101,23 +101,13 @@
   background: #d32f2f !important;
 }
 
-/* --- TMDB ID 链接 — 绿色胶囊 --- */
+/* --- TMDB ID 链接 — 绿色 --- */
 .meta-tag--tmdb {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 8px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #fff;
-  background: #2e7d32;
-  border-radius: 10px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  background: #2e7d32 !important;
+  color: #fff !important;
 }
-.meta-tag--tmdb:hover {
-  opacity: 0.85;
+.v-theme--light .meta-tag--tmdb {
+  background: #43a047 !important;
 }
 
 /* --- 已订阅 — 信息蓝 --- */

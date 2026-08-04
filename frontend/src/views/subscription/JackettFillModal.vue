@@ -14,7 +14,7 @@ import { useNotification } from '@/composables'
 
 const props = defineProps<{
   show: boolean
-  subId: number | null
+  subId: number | null | undefined
   subTitle: string
 }>()
 

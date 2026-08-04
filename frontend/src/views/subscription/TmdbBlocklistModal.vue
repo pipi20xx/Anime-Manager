@@ -69,10 +69,10 @@ async function removeBlockItem(id: number) {
           手动填入 TMDB ID 与类型，订阅源识别命中后直接标记已下载，跳过下载规则与追剧订阅。
         </div>
 
-        <div class="d-flex ga-2 mb-4">
-          <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID" density="compact" hide-details variant="outlined" />
-          <v-select v-model="blockForm.media_type" label="类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" density="compact" hide-details variant="outlined" class="flex-shrink-0" />
-          <v-btn color="primary" variant="flat" @click="addBlockItem" prepend-icon="mdi-plus">添加</v-btn>
+        <div class="d-flex ga-2 mb-4 add-btn-row align-center">
+          <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID" density="compact" hide-details variant="outlined" style="min-width: 120px" />
+          <v-select v-model="blockForm.media_type" label="类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" density="compact" hide-details variant="outlined" style="min-width: 100px; max-width: 120px" />
+          <v-btn color="primary" variant="flat" density="compact" @click="addBlockItem" prepend-icon="mdi-plus">添加</v-btn>
         </div>
 
         <v-skeleton-loader v-if="loading" type="card@3" />
@@ -116,3 +116,10 @@ async function removeBlockItem(id: number) {
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+/* 让添加按钮高度和 compact 输入框对齐 */
+.add-btn-row .v-btn {
+  block-size: 40px;
+}
+</style>

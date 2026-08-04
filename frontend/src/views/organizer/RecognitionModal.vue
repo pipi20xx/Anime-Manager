@@ -343,7 +343,7 @@ watch(() => props.modelValue, (newVal) => {
                     </div>
                     <div class="recog-text-row">
                       <span class="recog-text-label">TMDB ID:</span>
-                      <a v-if="data.final_result?.tmdb_id && data.final_result.tmdb_id !== 'N/A'" :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`" target="_blank" class="meta-tag meta-tag--tmdb">{{ data.final_result.tmdb_id }}</a>
+                      <v-chip v-if="data.final_result?.tmdb_id && data.final_result.tmdb_id !== 'N/A'" :href="`https://www.themoviedb.org/${data.final_result.category?.includes('电影') ? 'movie' : 'tv'}/${data.final_result.tmdb_id}`" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">{{ data.final_result.tmdb_id }}</v-chip>
                       <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">N/A</v-chip>
                     </div>
                     <div class="recog-text-row">

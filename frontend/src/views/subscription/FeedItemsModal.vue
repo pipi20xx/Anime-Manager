@@ -277,7 +277,7 @@ async function handleClearHistory() {
 
                 <!-- 识别结果标签 -->
                 <template v-if="item.recognition_done && item.tmdb_id">
-                  <a :href="getTmdbUrl(item)" target="_blank" class="meta-tag meta-tag--tmdb">ID: {{ item.tmdb_id }}</a>
+                  <v-chip :href="getTmdbUrl(item)" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">ID: {{ item.tmdb_id }}</v-chip>
                   <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--type">{{ getMediaTypeLabel(item.media_type) }}</v-chip>
                   <v-chip v-if="item.media_type === 'tv'" size="x-small" variant="flat" class="meta-tag meta-tag--season">
                     S{{ item.season || 1 }} E{{ item.episode || '-' }}

@@ -277,7 +277,7 @@ const filteredLogs = computed(() => {
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">TMDB ID:</span>
-                            <a v-if="tmdbUrl" :href="tmdbUrl" target="_blank" class="meta-tag meta-tag--tmdb">{{ finalData.tmdb_id }}</a>
+                            <v-chip v-if="tmdbUrl" :href="tmdbUrl" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">{{ finalData.tmdb_id }}</v-chip>
                             <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">N/A</v-chip>
                           </div>
                           <div class="recog-text-row">

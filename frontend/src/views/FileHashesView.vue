@@ -621,7 +621,7 @@ onUnmounted(() => {
     <v-expand-transition>
       <div v-if="showAdvancedFilter" class="mb-4">
         <v-card class="glass-card pa-4">
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="filterMediaType"
@@ -647,7 +647,7 @@ onUnmounted(() => {
               <v-text-field v-model="filterSeason" label="季号" type="number" density="compact" variant="outlined" hide-details clearable />
             </v-col>
           </v-row>
-          <v-row dense class="mt-2">
+          <v-row density="compact" class="mt-2">
             <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="sortBy"
@@ -757,7 +757,7 @@ onUnmounted(() => {
                   <v-icon size="10" class="mr-1">mdi-link-variant</v-icon>
                   <span style="font-family: monospace;">ED2K: {{ truncateHash(item.ed2k) }}</span>
                 </v-chip>
-                <v-btn v-if="item.ed2k_link" size="x-small" variant="tonal" color="info" prepend-icon="mdi-content-copy" @click.stop="copyEd2kWithTemplate(item)" title="复制 ED2K 链接（按模板渲染）">复制ED2K</v-btn>
+                <v-btn v-if="item.ed2k_link" size="x-small" variant="tonal" color="info" class="meta-tag-copy-btn" @click.stop="copyEd2kWithTemplate(item)" title="复制 ED2K 链接（按模板渲染）"><v-icon size="10" start>mdi-content-copy</v-icon>复制ED2K</v-btn>
               </div>
 
               <!-- 源路径 -->
@@ -769,15 +769,17 @@ onUnmounted(() => {
             <!-- 右侧操作区 -->
             <div class="detail-card__aside">
               <!-- TMDB ID -->
-              <a
+              <v-chip
                 v-if="item.tmdb_id"
                 class="meta-tag meta-tag--tmdb"
                 :href="`https://www.themoviedb.org/${item.media_type || 'tv'}/${item.tmdb_id}`"
                 target="_blank"
+                size="x-small"
+                variant="flat"
                 @click.stop
               >
                 TMDB: {{ item.tmdb_id }}
-              </a>
+              </v-chip>
               <span v-else class="detail-card__time" style="opacity: 0.3;">—</span>
               <div class="detail-card__time">{{ formatDate(item.calculated_at) }}</div>
             </div>
@@ -1008,7 +1010,7 @@ onUnmounted(() => {
               <v-expansion-panel-text>
                 <div v-for="g in ed2kVariableGroups" :key="g.title" class="mb-3">
                   <div class="text-subtitle-2 font-weight-bold text-primary mb-2 pb-1" style="border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);">{{ g.title }}</div>
-                  <v-row dense>
+                  <v-row density="compact">
                     <v-col v-for="(desc, v) in g.vars" :key="v" cols="12" sm="6">
                       <div class="d-flex align-center ga-2">
                         <code style="font-family: monospace; background: rgba(var(--v-theme-on-surface), 0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ v }}</code>
@@ -1049,18 +1051,18 @@ onUnmounted(() => {
             <v-icon size="16" color="primary">mdi-information-outline</v-icon>
             基本信息
           </div>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.tmdb_id" label="TMDB ID" variant="outlined" density="compact" /></v-col>
             <v-col cols="12" sm="6">
               <v-select v-model="calculateForm.media_type" label="媒体类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" variant="outlined" density="compact" />
             </v-col>
           </v-row>
           <v-text-field v-model="calculateForm.title" label="标题" variant="outlined" density="compact" />
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.season" label="季号" type="number" variant="outlined" density="compact" /></v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.episode" label="集号" variant="outlined" density="compact" /></v-col>
           </v-row>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.year" label="年份" variant="outlined" density="compact" placeholder="如: 2024" /></v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.secondary_category" label="二级分类" variant="outlined" density="compact" placeholder="如: 动画/日常" /></v-col>
           </v-row>
@@ -1070,23 +1072,23 @@ onUnmounted(() => {
             <v-icon size="16" color="primary">mdi-tag-multiple-outline</v-icon>
             识别信息 (可选)
           </div>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.resolution" label="分辨率" variant="outlined" density="compact" placeholder="如: 1080P" /></v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.team" label="制作组" variant="outlined" density="compact" /></v-col>
           </v-row>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.video_encode" label="视频编码" variant="outlined" density="compact" placeholder="如: x265" /></v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.audio_encode" label="音频编码" variant="outlined" density="compact" placeholder="如: AAC" /></v-col>
           </v-row>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.video_effect" label="视频特效" variant="outlined" density="compact" placeholder="如: HDR" /></v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.source" label="介质来源" variant="outlined" density="compact" placeholder="如: WEB-DL" /></v-col>
           </v-row>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.subtitle" label="字幕语言" variant="outlined" density="compact" /></v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.platform" label="发布平台" variant="outlined" density="compact" /></v-col>
           </v-row>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="6"><v-text-field v-model="calculateForm.origin_country" label="原产地" variant="outlined" density="compact" placeholder="如: JP" /></v-col>
           </v-row>
 
@@ -1106,3 +1108,26 @@ onUnmounted(() => {
     </v-dialog>
   </v-container>
 </template>
+
+<style scoped>
+/* 复制ED2K按钮与旁边的meta-tag芯片对齐 */
+.meta-tag-copy-btn {
+  min-height: 20px !important;
+  height: auto !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 10px !important;
+}
+.meta-tag-copy-btn .v-btn__content {
+  font-size: 10px !important;
+  gap: 4px;
+}
+.meta-tag-copy-btn .v-icon {
+  font-size: 10px !important;
+  height: 10px !important;
+  width: 10px !important;
+  margin-inline: 0 !important;
+}
+</style>
