@@ -1,46 +1,57 @@
 /**
- * index.css — Liquid Glass 设计系统入口
- * 按功能从 global.css 拆分，按依赖顺序引入
+ * index.css — 设计系统入口
  *
- * Vuetify v4 使用 @layer 层级体系（vuetify-core → vuetify-components → ...）
- * 自定义样式不放入任何 @layer，根据 CSS 规范：
- *   无 layer 的样式优先级 天然高于 @layer 内的样式
- * 所以自定义样式天然能覆盖 Vuetify 的 @layer vuetify-components 样式。
- * 配合 !important 进一步保证覆盖。
+ * 架构：
+ *   1. base.css        → 纯基础：重置、容器透明、Vuetify 变量
+ *   2. components.css  → 纯结构：组件布局、间距、圆角
+ *   3. buttons.css     → 纯结构：按钮圆角、按下态
+ *   4. feedback.css    → 纯结构：芯片尺寸
+ *   5. transitions.css → 纯结构：全局过渡
+ *   6. pages.css       → 纯结构：页面布局、表单等高
+ *   7. tags.css        → 元数据标签结构
+ *   8. cards.css       → 卡片系统结构
+ *   9. design-spec.css → 设计规范结构：间距、布局
+ *  10. utilities.css   → 通用复用结构
+ * 11. theme-acg.css   → ACG 视觉风格（html.glass-theme-acg 激活）
+ * 12. glass-themes.css → 液态玻璃视觉风格（html.glass-theme-liquid 激活）
  *
- * 关键：vuetify/styles 必须在此文件之前加载（见 main.ts import 顺序），
- * 确保 @layer 声明先于自定义样式生效。
+ * 规则：1-10 只放结构，不放颜色/背景/模糊/边框/阴影。
+ *       11-12 只放视觉风格，通过 html.glass-theme-xxx 前缀隔离。
+ *       两个主题完全独立，互不覆盖，只有选中的才生效。
  */
 
-/* 1. 基础：重置、CSS变量、亮/暗主题、工具类 */
+/* 1. 基础：重置、CSS变量、容器透明 */
 @import './base.css';
 
-/* 2. Vuetify组件覆盖：卡片/对话框/下拉/Sheet/输入框/分割线/表格/标签页 */
+/* 2. Vuetify组件结构覆盖 */
 @import './components.css';
 
-/* 3. 按钮：Liquid Glass按钮 + Checkbox/Radio/BtnToggle/Slider/Avatar/Code标签 */
+/* 3. 按钮结构 */
 @import './buttons.css';
 
-/* 4. 反馈组件：芯片/SnackBar/Alert/Expansion/Progress/Switch/Tooltip */
+/* 4. 反馈组件结构 */
 @import './feedback.css';
 
-/* 5. 过渡动画与功能性样式 */
+/* 5. 过渡动画 */
 @import './transitions.css';
 
-/* 6. 页面级样式：日志终端/代码块/布局/表单控件等 */
+/* 6. 页面级结构 */
 @import './pages.css';
 
-/* 7. 元数据标签：季集/类型/分辨率/编码/字幕组/来源等统一样式 */
+/* 7. 元数据标签 */
 @import './tags.css';
 
-/* 8. 卡片系统：媒体卡片/日历卡片/页面专属卡片 */
+/* 8. 卡片系统 */
 @import './cards.css';
 
-/* 9. 设计规范补全：按钮variant/搜索框/弹窗/表单等 */
+/* 9. 设计规范结构 */
 @import './design-spec.css';
 
-/* 10. 通用复用：hover-lift/config-row/kv-row/管理卡片/按钮规范 */
+/* 10. 通用复用结构 */
 @import './utilities.css';
 
-/* 11. 玻璃主题切换：液态玻璃覆盖样式（html.glass-theme-liquid 激活） */
+/* 11. ACG 主题视觉风格（html.glass-theme-acg 激活） */
+@import './theme-acg.css';
+
+/* 12. 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
 @import './glass-themes.css';

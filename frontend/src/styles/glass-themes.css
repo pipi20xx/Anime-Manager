@@ -1,9 +1,8 @@
 /**
- * glass-themes.css — 玻璃主题切换系统
+ * glass-themes.css — 液态玻璃主题
  *
- * 两套玻璃视觉风格，通过 <html> 上的 class 切换：
- *   html.glass-theme-liquid  → 液态玻璃：CSS 渐变背景 + 折射带 + 弧光 + 弹簧动效（默认）
- *   html.glass-theme-acg     → 二次元壁纸 + 毛玻璃
+ * 通过 html.glass-theme-liquid 激活，只有选中液态玻璃主题时才生效。
+ * 与 ACG 主题（theme-acg.css，html.glass-theme-acg）完全独立，互不覆盖。
  *
  * ⚠️ 变量作用域：
  *   --lg-* 变量全部设在 html.glass-theme-liquid 上（配合 .glass-dark / .glass-light），
@@ -111,7 +110,7 @@ html.glass-theme-liquid .v-theme--dark {
 
 
 /* ================================================================
- * 背景：覆盖 base.css 的二次元壁纸，换成 mesh 渐变 + 细网格
+ * 背景：mesh 渐变 + 细网格
  * ================================================================ */
 
 /* body 本身要有底色 */
@@ -292,7 +291,7 @@ html.glass-theme-liquid .v-btn--variant-flat.text-primary {
 /* ================================================================
  * 输入框：胶囊玻璃
  * components.css 给 outlined 设了 rgba(255,255,255,0.30) / rgba(30,30,60,0.38)，
- * 液态玻璃模式下统一覆盖为和卡片一致的玻璃底色
+ * 液态玻璃模式下的玻璃底色
  * ================================================================ */
 
 html.glass-theme-liquid .v-field--variant-outlined {
@@ -380,7 +379,7 @@ html.glass-theme-liquid .v-chip {
 /* ================================================================
  * 下拉 / 菜单 popper
  * components.css 给下拉面板设了 rgba(255,255,255,0.50) / rgba(30,30,60,0.50)，
- * 液态玻璃模式下覆盖为和卡片一致的玻璃底色 + 液态圆角
+ * 液态玻璃模式下的玻璃底色 + 液态圆角
  * ================================================================ */
 
 html.glass-theme-liquid .v-menu .v-overlay__content,
@@ -442,7 +441,7 @@ html.glass-theme-liquid.glass-dark .v-menu .v-list-item--active {
 
 /* ================================================================
  * 侧边栏 / 顶栏 — 透明，无模糊层，直接浮在 mesh 背景上
- * design-spec.css 给它们设了半透明背景 + blur，液态玻璃模式下全部覆盖掉
+ * 液态玻璃模式下导航栏/顶栏透明，无模糊层
  * ================================================================ */
 
 html.glass-theme-liquid .v-navigation-drawer,
@@ -489,18 +488,153 @@ html.glass-theme-liquid .v-menu .v-list {
 
 
 /* ================================================================
- * 滚动条
+ * 滚动条 — 全局 + 细分区域
+ * 注意：不用 html.glass-theme-liquid ::-webkit-scrollbar 这样的通配，
+ * 否则所有后代元素的滚动容器都会出现滚动条，造成弹窗内双滚动条
  * ================================================================ */
 
-html.glass-theme-liquid ::-webkit-scrollbar {
-  width: 10px !important;
-  height: 10px !important;
+/* 全局 */
+html.glass-theme-liquid,
+html.glass-theme-liquid body,
+html.glass-theme-liquid .v-main,
+html.glass-theme-liquid .v-main__scroller {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
 }
 
-html.glass-theme-liquid ::-webkit-scrollbar-thumb {
-  border-radius: var(--lg-r-pill) !important;
-  border: 3px solid transparent !important;
-  background-clip: content-box !important;
+html.glass-theme-liquid.glass-dark,
+html.glass-theme-liquid.glass-dark body,
+html.glass-theme-liquid.glass-dark .v-main,
+html.glass-theme-liquid.glass-dark .v-main__scroller {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+html.glass-theme-liquid body::-webkit-scrollbar,
+html.glass-theme-liquid .v-main::-webkit-scrollbar,
+html.glass-theme-liquid .v-main__scroller::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html.glass-theme-liquid body::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-main::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-main__scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.glass-theme-liquid body::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-main::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-main__scroller::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-dark);
+  border-radius: var(--lg-r-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+html.glass-theme-liquid body::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-main::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-main__scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--el-color-primary);
+  border-radius: var(--lg-r-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+/* 侧边导航 */
+html.glass-theme-liquid .v-navigation-drawer,
+html.glass-theme-liquid .v-navigation-drawer .v-navigation-drawer__content,
+html.glass-theme-liquid .v-navigation-drawer .v-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+html.glass-theme-liquid .v-navigation-drawer::-webkit-scrollbar,
+html.glass-theme-liquid .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar,
+html.glass-theme-liquid .v-navigation-drawer .v-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+html.glass-theme-liquid .v-navigation-drawer::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-navigation-drawer .v-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.glass-theme-liquid .v-navigation-drawer::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-navigation-drawer .v-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: var(--lg-r-pill);
+}
+
+html.glass-theme-liquid .v-navigation-drawer::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-navigation-drawer .v-list::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--v-theme-primary));
+}
+
+/* 弹窗内部 — 只在弹窗自己滚动时显示滚动条 */
+html.glass-theme-liquid .v-dialog .v-card-text {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+html.glass-theme-liquid .v-dialog .v-card-text::-webkit-scrollbar { width: 6px; }
+html.glass-theme-liquid .v-dialog .v-card-text::-webkit-scrollbar-track { background: transparent; }
+html.glass-theme-liquid .v-dialog .v-card-text::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+html.glass-theme-liquid .v-dialog .v-card-text::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--v-theme-primary));
+}
+
+/* 弹窗内含 log-terminal 时，隐藏 v-card-text 的滚动条，只留 log-terminal 的 */
+html.glass-theme-liquid .v-dialog .v-card-text:has(.log-terminal) {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+}
+
+html.glass-theme-liquid .v-dialog .v-card-text:has(.log-terminal)::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* 下拉面板 */
+html.glass-theme-liquid .v-select .v-list,
+html.glass-theme-liquid .v-autocomplete .v-list,
+html.glass-theme-liquid .v-combobox .v-list,
+html.glass-theme-liquid .v-menu .v-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+html.glass-theme-liquid .v-select .v-list::-webkit-scrollbar,
+html.glass-theme-liquid .v-autocomplete .v-list::-webkit-scrollbar,
+html.glass-theme-liquid .v-combobox .v-list::-webkit-scrollbar,
+html.glass-theme-liquid .v-menu .v-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+html.glass-theme-liquid .v-select .v-list::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-autocomplete .v-list::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-combobox .v-list::-webkit-scrollbar-track,
+html.glass-theme-liquid .v-menu .v-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.glass-theme-liquid .v-select .v-list::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-autocomplete .v-list::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-combobox .v-list::-webkit-scrollbar-thumb,
+html.glass-theme-liquid .v-menu .v-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+html.glass-theme-liquid .v-select .v-list::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-autocomplete .v-list::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-combobox .v-list::-webkit-scrollbar-thumb:hover,
+html.glass-theme-liquid .v-menu .v-list::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--v-theme-primary));
 }
 
 
@@ -544,6 +678,617 @@ html.glass-theme-liquid h3,
 html.glass-theme-liquid .v-card-title {
   font-weight: 600;
   letter-spacing: -.018em;
+}
+
+
+/* ================================================================
+ * Tab 标签页：胶囊玻璃 + 弧光
+ * ================================================================ */
+
+html.glass-theme-liquid .v-tabs .v-slide-group,
+html.glass-theme-liquid .v-tabs .v-slide-group__wrapper,
+html.glass-theme-liquid .v-tabs .v-slide-group__content {
+  background: transparent !important;
+}
+
+html.glass-theme-liquid .v-tab__slider {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+html.glass-theme-liquid .v-tab {
+  position: relative;
+  border-radius: var(--lg-r-pill) !important;
+  border: 1px solid var(--lg-border) !important;
+  backdrop-filter: blur(8px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
+  box-shadow: var(--lg-rim-sm) !important;
+  transition: background-color .2s var(--lg-ease), color .2s var(--lg-ease), box-shadow .28s var(--lg-ease) !important;
+}
+
+/* Tab 顶缘弧光 */
+html.glass-theme-liquid .v-tab::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(140% 15px at 50% -3px,
+      var(--lg-sheen) 0%, transparent 72%);
+}
+
+/* 亮色 Tab */
+html.glass-theme-liquid.glass-light .v-tab {
+  background: rgba(255, 255, 255, .40) !important;
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+html.glass-theme-liquid.glass-light .v-tab--selected {
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-liquid.glass-light .v-tab:not(.v-tab--selected):hover {
+  color: rgb(var(--v-theme-primary)) !important;
+  background: rgba(255, 255, 255, .52) !important;
+}
+
+/* 暗色 Tab */
+html.glass-theme-liquid.glass-dark .v-tab {
+  background: rgba(28, 30, 52, .44) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-tab--selected {
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-tab:not(.v-tab--selected):hover {
+  color: rgb(var(--v-theme-primary)) !important;
+  background: rgba(28, 30, 52, .56) !important;
+}
+
+/* 筛选芯片 */
+html.glass-theme-liquid .filter-bar .v-chip .v-chip__overlay,
+html.glass-theme-liquid .filter-bar .v-chip .v-chip__underlay {
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+html.glass-theme-liquid .filter-bar .v-chip {
+  border-radius: var(--lg-r-pill) !important;
+  border: 1px solid var(--lg-border) !important;
+  backdrop-filter: blur(8px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(170%) !important;
+  box-shadow: var(--lg-rim-sm) !important;
+  transition: background-color .2s var(--lg-ease), color .2s var(--lg-ease), box-shadow .28s var(--lg-ease) !important;
+  --v-hover-opacity: 0 !important;
+  --v-focus-opacity: 0 !important;
+  --v-activated-opacity: 0 !important;
+}
+
+html.glass-theme-liquid.glass-light .filter-bar .v-chip {
+  background: rgba(255, 255, 255, .40) !important;
+}
+
+html.glass-theme-liquid.glass-light .filter-bar .v-chip--variant-flat,
+html.glass-theme-liquid.glass-light .filter-bar .v-chip.bg-primary {
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-liquid.glass-light .filter-bar .v-chip--variant-outlined {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+html.glass-theme-liquid.glass-dark .filter-bar .v-chip {
+  background: rgba(28, 30, 52, .44) !important;
+}
+
+html.glass-theme-liquid.glass-dark .filter-bar .v-chip--variant-flat,
+html.glass-theme-liquid.glass-dark .filter-bar .v-chip.bg-primary {
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-liquid.glass-dark .filter-bar .v-chip--variant-outlined {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+
+/* ================================================================
+ * Sheet / Expansion Panel — 完整玻璃背景
+ * ================================================================ */
+
+html.glass-theme-liquid .v-sheet {
+  background: rgba(255, 255, 255, .40) !important;
+  background-color: rgba(255, 255, 255, .40) !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow) !important;
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 22px !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-sheet {
+  background: rgba(28, 30, 52, .44) !important;
+  background-color: rgba(28, 30, 52, .44) !important;
+}
+
+html.glass-theme-liquid .v-expansion-panel {
+  background: rgba(255, 255, 255, .40) !important;
+  background-color: rgba(255, 255, 255, .40) !important;
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow) !important;
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 22px !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-expansion-panel {
+  background: rgba(28, 30, 52, .44) !important;
+  background-color: rgba(28, 30, 52, .44) !important;
+}
+
+
+/* ================================================================
+ * Alert / SnackBar — 玻璃效果
+ * ================================================================ */
+
+html.glass-theme-liquid .v-alert--variant-tonal {
+  backdrop-filter: blur(10px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
+  border: 1px solid var(--lg-border) !important;
+}
+
+html.glass-theme-liquid .v-snackbar {
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
+  box-shadow: var(--lg-rim), var(--lg-shadow) !important;
+}
+
+
+/* ================================================================
+ * Switch / Checkbox / Radio / Slider / Progress / BtnToggle
+ * ================================================================ */
+
+/* Switch */
+html.glass-theme-liquid .v-switch .v-switch__track {
+  border-radius: 999px !important;
+}
+
+html.glass-theme-liquid.glass-light .v-switch .v-switch__track {
+  background: rgba(0, 0, 0, 0.08) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-switch .v-switch__track {
+  background: rgba(255, 255, 255, 0.10) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-liquid .v-switch .v-selection-control--dirty .v-switch__track {
+  background: rgb(var(--v-theme-primary)) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-liquid .v-switch .v-switch__thumb {
+  background: #fff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Checkbox / Radio */
+html.glass-theme-liquid .v-checkbox .v-selection-control--dirty .v-icon,
+html.glass-theme-liquid .v-radio .v-selection-control--dirty .v-icon {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* Slider */
+html.glass-theme-liquid .v-slider .v-slider-track {
+  background: rgba(255, 255, 255, 0.10) !important;
+}
+
+html.glass-theme-liquid.glass-light .v-slider .v-slider-track {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.glass-theme-liquid .v-slider .v-slider-track__fill {
+  background: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-liquid .v-slider .v-slider-thumb__surface {
+  background: #fff !important;
+  box-shadow: 0 0 6px rgba(var(--v-theme-primary), 0.35) !important;
+}
+
+/* Progress */
+html.glass-theme-liquid .v-progress-linear__determinate {
+  background: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-liquid .v-progress-circular__overlay {
+  stroke: rgb(var(--v-theme-primary)) !important;
+}
+
+/* BtnToggle */
+html.glass-theme-liquid .v-btn-toggle {
+  border: 1px solid var(--lg-border) !important;
+  border-radius: var(--lg-r-pill) !important;
+}
+
+html.glass-theme-liquid .v-btn-toggle .v-btn--active {
+  background: rgba(var(--v-theme-primary), 0.15) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+
+/* ================================================================
+ * 分割线 / 导航激活色 / 页面标题 / hover-lift / 代码块
+ * ================================================================ */
+
+/* 分割线 */
+html.glass-theme-liquid.glass-light .v-divider {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-divider {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* 导航激活色 */
+html.glass-theme-liquid .v-navigation-drawer .v-list-item--active .v-list-item-title {
+  font-weight: 600;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-liquid .v-navigation-drawer .v-list-item--active .v-icon {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-liquid .v-navigation-drawer .v-list-item--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: rgb(var(--v-theme-primary));
+}
+
+/* 页面标题 — 液态玻璃下是普通文字 */
+html.glass-theme-liquid .page-title {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-liquid .page-subtitle {
+  color: rgb(var(--v-theme-primary)) !important;
+  font-weight: 500;
+}
+
+html.glass-theme-liquid .section-title {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* hover-lift */
+html.glass-theme-liquid .hover-lift:hover {
+  box-shadow: var(--lg-rim), var(--lg-shadow-lift) !important;
+  transform: translateY(-2px);
+}
+
+/* 代码块 */
+html.glass-theme-liquid code {
+  color: rgb(var(--v-theme-primary)) !important;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+html.glass-theme-liquid .code-block {
+  border: 1px solid var(--lg-border) !important;
+}
+
+html.glass-theme-liquid .code-block code {
+  color: #7ec699;
+}
+
+/* 日志终端 */
+html.glass-theme-liquid .log-terminal {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+html.glass-theme-liquid .log-terminal::-webkit-scrollbar { width: 6px; }
+html.glass-theme-liquid .log-terminal::-webkit-scrollbar-track { background: transparent; }
+html.glass-theme-liquid .log-terminal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+html.glass-theme-liquid .log-terminal::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--v-theme-primary));
+}
+
+/* 搜索结果框 */
+html.glass-theme-liquid .search-results-box {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+html.glass-theme-liquid .search-results-box::-webkit-scrollbar { width: 6px; }
+html.glass-theme-liquid .search-results-box::-webkit-scrollbar-track { background: transparent; }
+html.glass-theme-liquid .search-results-box::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+html.glass-theme-liquid .log-entry__level[data-level="info"]    { color: #5E5CE6; }
+html.glass-theme-liquid .log-entry__level[data-level="warn"],
+html.glass-theme-liquid .log-entry__level[data-level="warning"]  { color: #FF9F0A; }
+html.glass-theme-liquid .log-entry__level[data-level="error"]    { color: #FF375F; }
+html.glass-theme-liquid .log-entry__level[data-level="critical"] { color: #F48FB1; }
+html.glass-theme-liquid .log-entry__level[data-level="debug"]    { color: rgba(255, 255, 255, 0.35); }
+html.glass-theme-liquid .log-entry__level[data-level="success"]  { color: #30D158; }
+
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="info"]    { color: #5E5CE6; }
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="warn"],
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="warning"]  { color: #c2410c; }
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="error"]    { color: #b91c1c; }
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="critical"] { color: #9d174d; }
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
+html.glass-theme-liquid.glass-light .log-entry__level[data-level="success"]  { color: #15803d; }
+
+
+/* ================================================================
+ * 输入框其他变体 + label / 文字色
+ * ================================================================ */
+
+/* filled */
+html.glass-theme-liquid .v-field--variant-filled {
+  border-radius: var(--lg-r-pill) var(--lg-r-pill) 0 0 !important;
+  border: 1px solid var(--lg-border) !important;
+  border-bottom: 1px solid var(--lg-border) !important;
+}
+
+/* solo / solo-filled */
+html.glass-theme-liquid .v-field--variant-solo,
+html.glass-theme-liquid .v-field--variant-solo-filled {
+  border-radius: var(--lg-r-pill) !important;
+  border: 1px solid var(--lg-border) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  box-shadow: var(--lg-rim-sm), 0 2px 10px -6px rgba(31, 38, 135, .3) !important;
+}
+
+html.glass-theme-liquid.glass-light .v-field--variant-solo,
+html.glass-theme-liquid.glass-light .v-field--variant-solo-filled {
+  background: rgba(255, 255, 255, .40) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-field--variant-solo,
+html.glass-theme-liquid.glass-dark .v-field--variant-solo-filled {
+  background: rgba(28, 30, 52, .44) !important;
+}
+
+/* 输入框 outline 隐藏 */
+html.glass-theme-liquid .v-field--variant-outlined .v-field__outline,
+html.glass-theme-liquid .v-field--variant-outlined:hover .v-field__outline,
+html.glass-theme-liquid .v-field--variant-outlined.v-field--focused .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+}
+
+/* label */
+html.glass-theme-liquid.glass-light .v-field .v-label {
+  color: rgba(0, 0, 0, 0.50) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-field .v-label {
+  color: rgba(255, 255, 255, 0.50) !important;
+}
+
+html.glass-theme-liquid .v-field--focused .v-label {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* 输入文字色 */
+html.glass-theme-liquid.glass-light .v-field__input,
+html.glass-theme-liquid.glass-light .v-input input,
+html.glass-theme-liquid.glass-light .v-input textarea {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-field__input,
+html.glass-theme-liquid.glass-dark .v-input input,
+html.glass-theme-liquid.glass-dark .v-input textarea {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
+
+/* 全局 focus 光环 */
+html.glass-theme-liquid .v-field--focused {
+  box-shadow:
+      var(--lg-rim-sm),
+      0 0 0 2px rgba(var(--v-theme-primary), .45),
+      0 4px 16px -8px rgb(var(--v-theme-primary)) !important;
+}
+
+
+/* ================================================================
+ * 下拉框文字色 / 箭头色 / 选中色 / 多选 chips
+ * ================================================================ */
+
+/* 列表项文字 */
+html.glass-theme-liquid.glass-light .v-overlay .v-list .v-list-item-title {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-overlay .v-list .v-list-item-title {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
+
+/* 下拉列表项选中 */
+html.glass-theme-liquid .v-list-item--active {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-liquid .v-select .v-list-item--active,
+html.glass-theme-liquid .v-autocomplete .v-list-item--active,
+html.glass-theme-liquid .v-combobox .v-list-item--active,
+html.glass-theme-liquid .v-menu .v-list-item--active {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* 下拉面板输入框文字 */
+html.glass-theme-liquid.glass-light .v-select .v-field__input,
+html.glass-theme-liquid.glass-light .v-autocomplete .v-field__input,
+html.glass-theme-liquid.glass-light .v-combobox .v-field__input {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-select .v-field__input,
+html.glass-theme-liquid.glass-dark .v-autocomplete .v-field__input,
+html.glass-theme-liquid.glass-dark .v-combobox .v-field__input {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
+
+/* 下拉箭头颜色 */
+html.glass-theme-liquid.glass-light .v-select .v-field__append-inner .v-icon {
+  color: rgba(0, 0, 0, 0.40) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-select .v-field__append-inner .v-icon {
+  color: rgba(255, 255, 255, 0.50) !important;
+}
+
+/* 多选 chips */
+html.glass-theme-liquid .v-select .v-chip--variant-tonal {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* Autocomplete / Combobox 聚焦 */
+html.glass-theme-liquid .v-autocomplete .v-field--variant-outlined.v-field--focused,
+html.glass-theme-liquid .v-combobox .v-field--variant-outlined.v-field--focused {
+  box-shadow:
+      var(--lg-rim-sm),
+      0 0 0 2px rgba(var(--v-theme-primary), .45),
+      0 4px 16px -8px rgb(var(--v-theme-primary)) !important;
+}
+
+/* Tooltip */
+html.glass-theme-liquid .v-tooltip .v-overlay__content {
+  backdrop-filter: blur(10px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
+}
+
+/* Avatar */
+html.glass-theme-liquid .v-avatar--variant-tonal {
+  backdrop-filter: blur(10px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
+}
+
+html.glass-theme-liquid .liquid-avatar {
+  backdrop-filter: blur(10px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
+  border: 1px solid var(--lg-border) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  transition: all .5s ease-out;
+}
+
+html.glass-theme-liquid .liquid-avatar:hover {
+  box-shadow: 0 0 16px rgba(var(--v-theme-primary), 0.3) !important;
+}
+
+/* 登录页内部输入框 */
+html.glass-theme-liquid .login-glass-panel .v-field--variant-outlined {
+  border-radius: var(--lg-r-pill) !important;
+  border: 1px solid var(--lg-border) !important;
+}
+
+html.glass-theme-liquid.glass-light .login-glass-panel .v-field--variant-outlined {
+  background: rgba(255, 255, 255, .40) !important;
+}
+
+html.glass-theme-liquid.glass-dark .login-glass-panel .v-field--variant-outlined {
+  background: rgba(28, 30, 52, .44) !important;
+}
+
+/* 登录页文字色 */
+html.glass-theme-liquid.glass-light .login-glass-panel .text-h5,
+html.glass-theme-liquid.glass-light .login-glass-panel .text-body-2 {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+html.glass-theme-liquid.glass-dark .login-glass-panel .text-h5,
+html.glass-theme-liquid.glass-dark .login-glass-panel .text-body-2 {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* 登录按钮 */
+html.glass-theme-liquid .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  background: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
+  box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .45),
+      inset 0 -1px 0 rgba(255, 255, 255, .15),
+      0 10px 28px -10px rgb(var(--v-theme-primary)) !important;
+}
+
+/* 搜索结果框 */
+html.glass-theme-liquid .search-results-box {
+  border: 1px solid var(--lg-border) !important;
+  backdrop-filter: blur(10px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
+}
+
+html.glass-theme-liquid .sub-search-results {
+  border: 1px solid var(--lg-border) !important;
+}
+
+/* 禁用态 */
+html.glass-theme-liquid .v-btn--disabled,
+html.glass-theme-liquid .v-input--disabled {
+  opacity: 0.5 !important;
+}
+
+/* 图标按钮 */
+html.glass-theme-liquid .v-btn--icon {
+  transition: transform .3s ease-out !important;
+  border-radius: 50% !important;
+}
+
+html.glass-theme-liquid .v-btn--icon:hover {
+  transform: scale(1.08);
+}
+
+html.glass-theme-liquid .v-btn--icon:active {
+  transform: scale(0.95);
+}
+
+/* 芯片尺寸 */
+html.glass-theme-liquid .v-chip {
+  font-weight: 500;
+}
+
+html.glass-theme-liquid .v-chip--size-x-small {
+  font-size: 0.75rem !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+}
+
+html.glass-theme-liquid .v-chip--size-x-small .v-chip__content {
+  font-size: 0.75rem !important;
+}
+
+/* 弹窗内下拉面板 — 继承弹窗背景 */
+html.glass-theme-liquid .v-dialog .v-card .v-card-text .v-overlay .v-list,
+html.glass-theme-liquid .v-dialog .v-card .v-card-text .v-menu > .v-list {
+  background: inherit !important;
+  background-color: inherit !important;
+}
+
+/* 弹窗圆角 */
+html.glass-theme-liquid .v-dialog > .v-card {
+  border-radius: 22px !important;
 }
 
 

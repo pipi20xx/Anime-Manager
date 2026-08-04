@@ -1,0 +1,1591 @@
+/**
+ * theme-acg.css — ACG 主题：二次元壁纸 + 毛玻璃
+ *
+ * 通过 html.glass-theme-acg 激活，只有选中 ACG 主题时才生效。
+ * 所有"看起来怎么样"的规则都在这里：
+ *   - 背景图（二次元壁纸 + 遮罩）
+ *   - 组件视觉（背景色、模糊、边框、阴影、颜色）
+ *   - 滚动条样式
+ *   - 导航激活色
+ *   - 文字效果（霓虹、渐变）
+ *   - 按钮/卡片/输入框/弹窗/芯片等所有组件的颜色和视觉
+ *
+ * 液态玻璃主题在 glass-themes.css 中定义，使用 html.glass-theme-liquid 前缀。
+ * 两个主题完全独立，互不覆盖，只有选中的才生效。
+ */
+
+
+/* ================================================================
+ * 1. 背景图 — 二次元壁纸 + 遮罩
+ * ================================================================ */
+
+/* 壁纸 — 结构属性（content/position/inset/z-index）在 base.css 中定义 */
+html.glass-theme-acg body::before {
+  background: center / cover no-repeat;
+  background-image: url("https://www.loliapi.com/acg/pc/");
+  filter: blur(0px);
+  transform: scale(1.02);
+}
+
+/* 竖屏：移动端壁纸 */
+@media (orientation: portrait) {
+  html.glass-theme-acg body::before {
+    background-image: url("https://www.loliapi.com/acg/pe/");
+  }
+}
+
+/* 亮色遮罩 — 结构属性在 base.css 中定义 */
+html.glass-theme-acg .v-theme--light body::after,
+html.glass-theme-acg body.v-theme--light::after {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 暗色遮罩 — 结构属性在 base.css 中定义 */
+html.glass-theme-acg .v-theme--dark body::after,
+html.glass-theme-acg body.v-theme--dark::after {
+  background: rgba(0, 0, 0, 0.24);
+}
+
+
+/* ================================================================
+ * 2. 滚动条
+ * ================================================================ */
+
+/* 全局 */
+html.glass-theme-acg,
+html.glass-theme-acg body,
+html.glass-theme-acg .v-main,
+html.glass-theme-acg .v-main__scroller {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+html.glass-theme-acg ::-webkit-scrollbar,
+html.glass-theme-acg body::-webkit-scrollbar,
+html.glass-theme-acg .v-main::-webkit-scrollbar,
+html.glass-theme-acg .v-main__scroller::-webkit-scrollbar { width: 8px; }
+
+html.glass-theme-acg ::-webkit-scrollbar-track,
+html.glass-theme-acg body::-webkit-scrollbar-track,
+html.glass-theme-acg .v-main::-webkit-scrollbar-track,
+html.glass-theme-acg .v-main__scroller::-webkit-scrollbar-track { background: transparent; }
+
+html.glass-theme-acg ::-webkit-scrollbar-thumb,
+html.glass-theme-acg body::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-main::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-main__scroller::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.25);
+  border-radius: 4px;
+}
+
+html.glass-theme-acg ::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg body::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-main::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-main__scroller::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+/* 侧边导航 */
+html.glass-theme-acg .v-navigation-drawer,
+html.glass-theme-acg .v-navigation-drawer .v-navigation-drawer__content,
+html.glass-theme-acg .v-navigation-drawer .v-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+html.glass-theme-acg .v-navigation-drawer::-webkit-scrollbar,
+html.glass-theme-acg .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar,
+html.glass-theme-acg .v-navigation-drawer .v-list::-webkit-scrollbar { width: 6px; }
+
+html.glass-theme-acg .v-navigation-drawer::-webkit-scrollbar-track,
+html.glass-theme-acg .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-track,
+html.glass-theme-acg .v-navigation-drawer .v-list::-webkit-scrollbar-track { background: transparent; }
+
+html.glass-theme-acg .v-navigation-drawer::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-navigation-drawer .v-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.25);
+  border-radius: 3px;
+}
+
+html.glass-theme-acg .v-navigation-drawer::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-navigation-drawer .v-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+
+/* ================================================================
+ * 3. 导航激活色
+ * ================================================================ */
+
+/* 亮色 */
+html.glass-theme-acg .v-theme--light .v-navigation-drawer .v-list-item--active .v-list-item-title {
+  font-weight: 600;
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-navigation-drawer .v-list-item--active .v-icon {
+  color: #a855f7 !important;
+}
+
+/* 暗色 */
+html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item {
+  border-radius: 16px !important;
+  transition: all 0.5s ease-out !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active {
+  box-shadow: inset 0 0 0 1px rgba(78, 205, 196, 0.2) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active .v-list-item-title {
+  font-weight: 600;
+  color: #4ecdc4 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active .v-icon {
+  color: #4ecdc4 !important;
+}
+
+/* 激活项指示条 */
+html.glass-theme-acg .v-navigation-drawer .v-list-item--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+}
+
+
+/* ================================================================
+ * 4. 文字效果
+ * ================================================================ */
+
+/* 霓虹描边 */
+html.glass-theme-acg .text-neon {
+  -webkit-text-stroke: 1px rgba(78, 205, 196, 0.5);
+  text-shadow:
+    0 0 8px rgba(78, 205, 196, 0.4),
+    0 0 16px rgba(78, 205, 196, 0.2);
+}
+
+html.glass-theme-acg .v-theme--light .text-neon {
+  -webkit-text-stroke: 1px rgba(124, 58, 237, 0.4);
+  text-shadow:
+    0 0 8px rgba(168, 85, 247, 0.3),
+    0 0 16px rgba(168, 85, 247, 0.15);
+}
+
+/* 渐变填充 */
+html.glass-theme-acg .text-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #ff2d94 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(168, 85, 247, 0.3));
+}
+
+html.glass-theme-acg .v-theme--light .text-gradient {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 3px rgba(124, 58, 237, 0.2));
+}
+
+/* Code 标签 */
+html.glass-theme-acg code {
+  color: #4ecdc4 !important;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+html.glass-theme-acg .v-theme--light code {
+  color: #7c3aed !important;
+}
+
+
+/* ================================================================
+ * 5. 卡片 — 毛玻璃视觉
+ * ================================================================ */
+
+/* 亮色 */
+html.glass-theme-acg .v-theme--light .v-card,
+html.glass-theme-acg .v-theme--light .v-card--variant-elevated,
+html.glass-theme-acg .v-theme--light .v-card--variant-flat,
+html.glass-theme-acg .v-theme--light .v-card--variant-tonal {
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s ease !important;
+  border-radius: 16px !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-card--variant-outlined {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-card--link:hover,
+html.glass-theme-acg .v-theme--light .v-card[link]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 暗色 */
+html.glass-theme-acg .v-theme--dark .v-card,
+html.glass-theme-acg .v-theme--dark .v-card--variant-elevated,
+html.glass-theme-acg .v-theme--dark .v-card--variant-flat,
+html.glass-theme-acg .v-theme--dark .v-card--variant-tonal {
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.3s ease !important;
+  border-radius: 16px !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-card--variant-outlined {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-card--link:hover,
+html.glass-theme-acg .v-theme--dark .v-card[link]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 小型列表卡片 */
+html.glass-theme-acg .list-card {
+  overflow: visible !important;
+  border-radius: 12px !important;
+}
+
+/* glass-card / glass-panel 边框 */
+html.glass-theme-acg .v-card.glass-card,
+html.glass-theme-acg .v-card.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: var(--glass-radius) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-card--variant-outlined.glass-card,
+html.glass-theme-acg .v-theme--light .v-card--variant-outlined.glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: var(--glass-radius) !important;
+}
+
+/* Liquid Glass 卡片工具类 */
+html.glass-theme-acg .liquid-glass-card {
+  position: relative;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  transition: all 0.5s ease-out !important;
+  overflow: hidden;
+}
+
+
+/* ================================================================
+ * 6. 弹窗 / 对话框
+ * ================================================================ */
+
+html.glass-theme-acg .v-dialog > .v-card {
+  border-radius: 24px !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-dialog .v-card,
+html.glass-theme-acg .v-theme--light .v-overlay__content .v-card {
+  background: rgba(255, 255, 255, 0.50) !important;
+  background-color: rgba(255, 255, 255, 0.50) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-dialog .v-card,
+html.glass-theme-acg .v-theme--dark .v-overlay__content .v-card {
+  background: rgba(30, 30, 60, 0.50) !important;
+  background-color: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 弹窗内下拉面板 — 继承弹窗背景 */
+html.glass-theme-acg .v-dialog .v-card .v-card-text .v-overlay .v-list,
+html.glass-theme-acg .v-dialog .v-card .v-card-text .v-menu > .v-list {
+  background: inherit !important;
+  background-color: inherit !important;
+}
+
+/* 遮罩 */
+html.glass-theme-acg .v-overlay__scrim {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-overlay__scrim {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* 弹窗内滚动条 */
+html.glass-theme-acg .v-dialog .v-card-text {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+html.glass-theme-acg .v-dialog .v-card-text::-webkit-scrollbar { width: 6px; }
+html.glass-theme-acg .v-dialog .v-card-text::-webkit-scrollbar-track { background: transparent; }
+html.glass-theme-acg .v-dialog .v-card-text::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.25);
+  border-radius: 3px;
+}
+html.glass-theme-acg .v-dialog .v-card-text::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+
+/* ================================================================
+ * 7. 下拉菜单 / Select / Autocomplete
+ * ================================================================ */
+
+/* 亮色 */
+html.glass-theme-acg .v-theme--light .v-overlay .v-list,
+html.glass-theme-acg .v-theme--light .v-menu .v-card,
+html.glass-theme-acg .v-theme--light .v-menu .v-list {
+  background: rgba(255, 255, 255, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 20px !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-overlay .v-list .v-list-item-title {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* 暗色 */
+html.glass-theme-acg .v-theme--dark .v-overlay .v-list,
+html.glass-theme-acg .v-theme--dark .v-menu .v-card,
+html.glass-theme-acg .v-theme--dark .v-menu .v-list {
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 20px !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-overlay .v-list .v-list-item-title {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+/* 下拉列表项选中 */
+html.glass-theme-acg .v-theme--light .v-list-item--active {
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-list-item--active {
+  color: #4ecdc4 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-select .v-list-item--active,
+html.glass-theme-acg .v-theme--light .v-autocomplete .v-list-item--active,
+html.glass-theme-acg .v-theme--light .v-combobox .v-list-item--active,
+html.glass-theme-acg .v-theme--light .v-menu .v-list-item--active {
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-select .v-list-item--active,
+html.glass-theme-acg .v-theme--dark .v-autocomplete .v-list-item--active,
+html.glass-theme-acg .v-theme--dark .v-combobox .v-list-item--active,
+html.glass-theme-acg .v-theme--dark .v-menu .v-list-item--active {
+  color: #4ecdc4 !important;
+}
+
+/* 下拉面板输入框文字 */
+html.glass-theme-acg .v-theme--light .v-select .v-field__input,
+html.glass-theme-acg .v-theme--light .v-autocomplete .v-field__input,
+html.glass-theme-acg .v-theme--light .v-combobox .v-field__input {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-select .v-field__input,
+html.glass-theme-acg .v-theme--dark .v-autocomplete .v-field__input,
+html.glass-theme-acg .v-theme--dark .v-combobox .v-field__input {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 下拉箭头颜色 */
+html.glass-theme-acg .v-theme--light .v-select .v-field__append-inner .v-icon {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-select .v-field__append-inner .v-icon {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 多选 chips */
+html.glass-theme-acg .v-theme--light .v-select .v-chip--variant-tonal {
+  color: #7c3aed !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-select .v-chip--variant-tonal {
+  color: #4ecdc4 !important;
+}
+
+/* Autocomplete / Combobox 聚焦 */
+html.glass-theme-acg .v-theme--light .v-autocomplete .v-field--variant-outlined.v-field--focused,
+html.glass-theme-acg .v-theme--light .v-combobox .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-autocomplete .v-field--variant-outlined.v-field--focused,
+html.glass-theme-acg .v-theme--dark .v-combobox .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2), 0 0 20px rgba(168, 85, 247, 0.1) !important;
+}
+
+/* 下拉滚动条 */
+html.glass-theme-acg .v-select .v-list,
+html.glass-theme-acg .v-autocomplete .v-list,
+html.glass-theme-acg .v-combobox .v-list,
+html.glass-theme-acg .v-menu .v-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
+}
+
+html.glass-theme-acg .v-select .v-list::-webkit-scrollbar,
+html.glass-theme-acg .v-autocomplete .v-list::-webkit-scrollbar,
+html.glass-theme-acg .v-combobox .v-list::-webkit-scrollbar,
+html.glass-theme-acg .v-menu .v-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+html.glass-theme-acg .v-select .v-list::-webkit-scrollbar-track,
+html.glass-theme-acg .v-autocomplete .v-list::-webkit-scrollbar-track,
+html.glass-theme-acg .v-combobox .v-list::-webkit-scrollbar-track,
+html.glass-theme-acg .v-menu .v-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html.glass-theme-acg .v-select .v-list::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-autocomplete .v-list::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-combobox .v-list::-webkit-scrollbar-thumb,
+html.glass-theme-acg .v-menu .v-list::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.25);
+  border-radius: 3px;
+}
+
+html.glass-theme-acg .v-select .v-list::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-autocomplete .v-list::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-combobox .v-list::-webkit-scrollbar-thumb:hover,
+html.glass-theme-acg .v-menu .v-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+
+/* ================================================================
+ * 8. Sheet
+ * ================================================================ */
+
+html.glass-theme-acg .v-theme--light .v-sheet {
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-sheet {
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+
+/* ================================================================
+ * 9. 输入框
+ * ================================================================ */
+
+/* outlined */
+html.glass-theme-acg .v-theme--light .v-field--variant-outlined {
+  background: rgba(255, 255, 255, 0.30) !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-outlined .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-outlined:hover .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-outlined.v-field--focused .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-field--variant-outlined {
+  background: rgba(30, 30, 60, 0.38) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-field--variant-outlined .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-field--variant-outlined:hover .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-field--variant-outlined.v-field--focused .v-field__outline {
+  --v-field-border-opacity: 0 !important;
+  color: #4ecdc4 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2), 0 0 20px rgba(168, 85, 247, 0.1) !important;
+}
+
+/* label 和文字 */
+html.glass-theme-acg .v-theme--light .v-field .v-label {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--focused .v-label {
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field__input {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-input input,
+html.glass-theme-acg .v-theme--light .v-input textarea {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* filled */
+html.glass-theme-acg .v-theme--dark .v-field--variant-filled {
+  border-radius: 16px 16px 0 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-filled {
+  border-radius: 16px 16px 0 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* solo */
+html.glass-theme-acg .v-theme--dark .v-field--variant-solo {
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-solo {
+  border-radius: 16px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* solo-filled */
+html.glass-theme-acg .v-theme--dark .v-field--variant-solo-filled {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--variant-solo-filled {
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 全局 focus 光环 */
+html.glass-theme-acg .v-theme--dark .v-field--focused {
+  box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.15), 0 0 12px rgba(78, 205, 196, 0.08) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-field--focused {
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.12), 0 0 8px rgba(168, 85, 247, 0.06) !important;
+}
+
+
+/* ================================================================
+ * 10. 分割线
+ * ================================================================ */
+
+html.glass-theme-acg .v-theme--light .v-divider {
+  border-color: rgba(0, 0, 0, 0.10) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-divider {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+
+/* ================================================================
+ * 11. 标签页 (Tabs)
+ * ================================================================ */
+
+html.glass-theme-acg .v-tabs .v-slide-group,
+html.glass-theme-acg .v-tabs .v-slide-group__wrapper,
+html.glass-theme-acg .v-tabs .v-slide-group__content {
+  background: transparent !important;
+}
+
+html.glass-theme-acg .v-tab__slider {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* 亮色 tab */
+html.glass-theme-acg .v-theme--light .v-tab {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-tab--selected {
+  color: #7c3aed !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-tab:not(.v-tab--selected) {
+  color: rgba(0, 0, 0, 0.50) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-tab:not(.v-tab--selected):hover {
+  color: rgba(124, 58, 237, 0.7) !important;
+}
+
+/* 暗色 tab */
+html.glass-theme-acg .v-theme--dark .v-tab {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-tab--selected {
+  color: #4ecdc4 !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-tab:not(.v-tab--selected) {
+  color: rgba(255, 255, 255, 0.50) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-tab:not(.v-tab--selected):hover {
+  color: rgba(78, 205, 196, 0.7) !important;
+}
+
+/* 筛选 chip */
+html.glass-theme-acg .filter-bar .v-chip .v-chip__overlay,
+html.glass-theme-acg .filter-bar .v-chip .v-chip__underlay {
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+html.glass-theme-acg .filter-bar .v-chip {
+  border-radius: 999px !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+  --v-hover-opacity: 0 !important;
+  --v-focus-opacity: 0 !important;
+  --v-activated-opacity: 0 !important;
+}
+
+html.glass-theme-acg .v-theme--light .filter-bar .v-chip {
+  background: rgba(255, 255, 255, 0.30) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.glass-theme-acg .v-theme--light .filter-bar .v-chip--variant-flat,
+html.glass-theme-acg .v-theme--light .filter-bar .v-chip.bg-primary {
+  color: #7c3aed !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-acg .v-theme--light .filter-bar .v-chip--variant-outlined {
+  color: rgba(0, 0, 0, 0.50) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .filter-bar .v-chip {
+  background: rgba(30, 30, 60, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .filter-bar .v-chip--variant-flat,
+html.glass-theme-acg .v-theme--dark .filter-bar .v-chip.bg-primary {
+  color: #4ecdc4 !important;
+  font-weight: 600 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .filter-bar .v-chip--variant-outlined {
+  color: rgba(255, 255, 255, 0.50) !important;
+}
+
+
+/* ================================================================
+ * 12. 按钮
+ * ================================================================ */
+
+/* flat */
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #7c3aed !important;
+  font-weight: 600;
+  transition: all 0.3s ease !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat:hover {
+  background: rgba(255, 255, 255, 0.40) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  font-weight: 600;
+  transition: all 0.3s ease !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat:hover {
+  background: rgba(30, 30, 60, 0.48) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* tonal */
+html.glass-theme-acg .v-theme--light .v-btn--variant-tonal {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  font-weight: 500;
+  transition: all 0.3s ease !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-tonal:hover {
+  background: rgba(255, 255, 255, 0.40) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  font-weight: 500;
+  transition: all 0.3s ease !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal:hover {
+  background: rgba(30, 30, 60, 0.48) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* outlined */
+html.glass-theme-acg .v-theme--light .v-btn--variant-outlined {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s ease !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-outlined:hover {
+  background: rgba(255, 255, 255, 0.40) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn--variant-outlined {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  transition: all 0.3s ease !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn--variant-outlined:hover {
+  background: rgba(30, 30, 60, 0.48) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* flat + primary */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.v-btn--bg-primary,
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.text-primary {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat.v-btn--bg-primary,
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat.text-primary {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #7c3aed !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* flat + success */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.v-btn--bg-success {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #81C784 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat.v-btn--bg-success {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #2E7D32 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* flat + warning */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.v-btn--bg-warning {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #FFB74D !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat.v-btn--bg-warning {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #E65100 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* flat + error */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.v-btn--bg-error {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #EF5350 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat.v-btn--bg-error {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  color: #C62828 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* tonal + info */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay {
+  background: rgba(66, 165, 245, 0.1) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay {
+  background: rgba(21, 101, 192, 0.08) !important;
+}
+
+/* 图标按钮 */
+html.glass-theme-acg .v-btn--icon {
+  transition: all 0.3s ease-out !important;
+  border-radius: 50% !important;
+}
+
+html.glass-theme-acg .v-btn--icon:hover {
+  transform: scale(1.08);
+}
+
+html.glass-theme-acg .v-btn--icon:active {
+  transform: scale(0.95);
+}
+
+/* 禁用态 */
+html.glass-theme-acg .v-btn--disabled,
+html.glass-theme-acg .v-input--disabled {
+  opacity: 0.5 !important;
+}
+
+
+/* ================================================================
+ * 13. Checkbox / Radio / BtnToggle / Slider / Avatar
+ * ================================================================ */
+
+/* Checkbox */
+html.glass-theme-acg .v-theme--dark .v-checkbox .v-selection-control--dirty .v-checkbox-btn__icon {
+  color: #4ecdc4 !important;
+  text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
+}
+
+html.glass-theme-acg .v-theme--dark .v-checkbox .v-selection-control--dirty .v-icon {
+  color: #4ecdc4 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-checkbox .v-selection-control--dirty .v-checkbox-btn__icon {
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-checkbox .v-selection-control--dirty .v-icon {
+  color: #a855f7 !important;
+}
+
+/* Radio */
+html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control--dirty .v-radio-btn__icon {
+  color: #4ecdc4 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control--dirty .v-icon {
+  color: #4ecdc4 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-radio .v-selection-control--dirty .v-radio-btn__icon {
+  color: #a855f7 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-radio .v-selection-control--dirty .v-icon {
+  color: #a855f7 !important;
+}
+
+/* BtnToggle */
+html.glass-theme-acg .v-theme--dark .v-btn-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn-toggle .v-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-btn-toggle .v-btn--active {
+  background: rgba(168, 85, 247, 0.3) !important;
+  color: #a855f7 !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.15) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-btn-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 16px !important;
+}
+
+/* Slider */
+html.glass-theme-acg .v-theme--dark .v-slider .v-slider-track {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-slider .v-slider-track__fill {
+  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
+  box-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
+}
+
+html.glass-theme-acg .v-theme--dark .v-slider .v-slider-thumb__surface {
+  background: white !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.4) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-slider .v-slider-track__fill {
+  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
+}
+
+/* ProgressCircular */
+html.glass-theme-acg .v-theme--dark .v-progress-circular__overlay {
+  stroke: #4ecdc4 !important;
+  filter: drop-shadow(0 0 4px rgba(78, 205, 196, 0.3));
+}
+
+/* Avatar */
+html.glass-theme-acg .v-theme--dark .v-avatar--variant-tonal {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+html.glass-theme-acg .v-theme--light .liquid-avatar {
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #a855f7 !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+html.glass-theme-acg .v-theme--light .liquid-avatar:hover {
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.2) !important;
+}
+
+
+/* ================================================================
+ * 14. 反馈组件（芯片/SnackBar/Alert/Expansion/Progress/Switch/Tooltip）
+ * ================================================================ */
+
+/* 芯片 */
+html.glass-theme-acg .v-chip {
+  font-weight: 500;
+}
+
+html.glass-theme-acg .v-chip--size-x-small {
+  font-size: 0.75rem !important;
+  min-height: 24px !important;
+  padding: 0 8px !important;
+}
+
+html.glass-theme-acg .v-chip--size-x-small .v-chip__content {
+  font-size: 0.75rem !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-chip--variant-tonal {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-chip--variant-tonal {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+/* SnackBar */
+html.glass-theme-acg .v-theme--light .v-snackbar {
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-snackbar {
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Alert */
+html.glass-theme-acg .v-theme--light .v-alert--variant-tonal {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-alert--variant-tonal {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Expansion Panel */
+html.glass-theme-acg .v-theme--light .v-expansion-panel {
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 16px !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-expansion-panel {
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+}
+
+/* Progress */
+html.glass-theme-acg .v-theme--light .v-progress-linear__determinate {
+  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-progress-linear__determinate {
+  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
+  box-shadow: 0 0 12px rgba(78, 205, 196, 0.4);
+}
+
+/* Switch */
+html.glass-theme-acg .v-theme--light .v-switch .v-switch__track {
+  border-radius: 999px !important;
+  background: rgba(0, 0, 0, 0.12) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-switch .v-switch__thumb {
+  background: #fff !important;
+  border: 2px solid rgba(0, 0, 0, 0.18) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-switch .v-switch__track {
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-switch .v-switch__thumb {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 2px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-switch .v-selection-control--dirty .v-switch__track {
+  background: rgb(var(--v-theme-primary)) !important;
+  opacity: 1 !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-switch .v-selection-control--dirty .v-switch__thumb {
+  background: #fff !important;
+  border: 2px solid rgba(147, 51, 234, 0.3) !important;
+  box-shadow: 0 0 8px rgba(147, 51, 234, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-switch .v-selection-control--dirty .v-switch__track {
+  background: rgb(var(--v-theme-primary)) !important;
+  opacity: 1 !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.3) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-switch .v-selection-control--dirty .v-switch__thumb {
+  background: #fff !important;
+  box-shadow: 0 0 10px rgba(78, 205, 196, 0.5) !important;
+}
+
+/* Tooltip */
+html.glass-theme-acg .v-theme--light .v-tooltip .v-overlay__content {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-tooltip .v-overlay__content {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+}
+
+
+/* ================================================================
+ * 15. 导航栏 / 顶栏 — 毛玻璃
+ * ================================================================ */
+
+html.glass-theme-acg .v-theme--light .v-navigation-drawer,
+html.glass-theme-acg .v-theme--light .v-app-bar,
+html.glass-theme-acg .v-theme--light .v-toolbar {
+  background: rgba(255, 255, 255, 0.30) !important;
+  background-color: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-navigation-drawer,
+html.glass-theme-acg .v-theme--dark .v-app-bar,
+html.glass-theme-acg .v-theme--dark .v-toolbar {
+  background: rgba(30, 30, 60, 0.38) !important;
+  background-color: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+
+/* ================================================================
+ * 16. 登录页
+ * ================================================================ */
+
+html.glass-theme-acg .v-theme--light .login-glass-panel {
+  background: rgba(255, 255, 255, 0.50) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .login-glass-panel {
+  background: rgba(30, 30, 60, 0.50) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.7) !important;
+}
+
+html.glass-theme-acg .v-theme--light .login-glass-panel .text-h5,
+html.glass-theme-acg .v-theme--light .login-glass-panel .text-body-2 {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+html.glass-theme-acg .v-theme--dark .login-glass-panel .text-h5,
+html.glass-theme-acg .v-theme--dark .login-glass-panel .text-body-2 {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+html.glass-theme-acg .v-theme--light .login-glass-panel .v-field--variant-outlined {
+  background: rgba(255, 255, 255, 0.30);
+  border-radius: 16px !important;
+}
+
+html.glass-theme-acg .v-theme--dark .login-glass-panel .v-field--variant-outlined {
+  background: rgba(30, 30, 60, 0.38);
+  border-radius: 16px !important;
+}
+
+html.glass-theme-acg .v-theme--light .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(168, 85, 247, 0.75)) !important;
+  color: #fff !important;
+}
+
+html.glass-theme-acg .v-theme--dark .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(78, 205, 196, 0.35)) !important;
+  color: #fff !important;
+}
+
+/* Liquid Glass Avatar */
+html.glass-theme-acg .liquid-avatar {
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #4ecdc4 !important;
+  transition: all 0.5s ease-out;
+}
+
+html.glass-theme-acg .liquid-avatar:hover {
+  box-shadow: 0 0 16px rgba(78, 205, 196, 0.3) !important;
+}
+
+html.glass-theme-acg .glass-btn {
+  transition: all 0.5s ease-out !important;
+}
+
+
+/* ================================================================
+ * 17. 页面级 — 日志终端 / 代码块
+ * ================================================================ */
+
+html.glass-theme-acg .log-terminal {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+html.glass-theme-acg .log-terminal::-webkit-scrollbar { width: 6px; }
+html.glass-theme-acg .log-terminal::-webkit-scrollbar-track { background: transparent; }
+html.glass-theme-acg .log-terminal::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.25); border-radius: 3px; }
+html.glass-theme-acg .log-terminal::-webkit-scrollbar-thumb:hover { background: rgba(168, 85, 247, 0.4); }
+
+html.glass-theme-acg .log-entry__level[data-level="info"]    { color: #4ecdc4; }
+html.glass-theme-acg .log-entry__level[data-level="warn"],
+html.glass-theme-acg .log-entry__level[data-level="warning"]  { color: #FFB74D; }
+html.glass-theme-acg .log-entry__level[data-level="error"]    { color: #EF5350; }
+html.glass-theme-acg .log-entry__level[data-level="critical"] { color: #F48FB1; }
+html.glass-theme-acg .log-entry__level[data-level="debug"]    { color: rgba(255, 255, 255, 0.4); }
+html.glass-theme-acg .log-entry__level[data-level="success"]  { color: #81C784; }
+
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="info"]    { color: #0d9488; }
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="warn"],
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="warning"]  { color: #c2410c; }
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="error"]    { color: #b91c1c; }
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="critical"] { color: #9d174d; }
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.38); }
+html.glass-theme-acg .v-theme--light .log-entry__level[data-level="success"]  { color: #15803d; }
+
+html.glass-theme-acg .log-entry--error,
+html.glass-theme-acg .log-entry--critical {
+  background: rgba(239, 83, 80, 0.08);
+}
+
+html.glass-theme-acg .log-entry--error:hover,
+html.glass-theme-acg .log-entry--critical:hover {
+  background: rgba(239, 83, 80, 0.14);
+}
+
+html.glass-theme-acg .log-entry--warning {
+  background: rgba(255, 183, 77, 0.06);
+}
+
+html.glass-theme-acg .log-entry--warning:hover {
+  background: rgba(255, 183, 77, 0.12);
+}
+
+html.glass-theme-acg .v-theme--light .log-entry--error,
+html.glass-theme-acg .v-theme--light .log-entry--critical {
+  background: rgba(239, 83, 80, 0.06);
+}
+
+html.glass-theme-acg .v-theme--light .log-entry--warning {
+  background: rgba(255, 183, 77, 0.06);
+}
+
+/* 代码块 */
+html.glass-theme-acg .code-block {
+  color: #d4d4d4;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+html.glass-theme-acg .v-theme--light .code-block {
+  color: rgba(0, 0, 0, 0.87);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+html.glass-theme-acg .code-block code {
+  color: #7ec699;
+}
+
+/* 搜索结果 */
+html.glass-theme-acg .search-results-box {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+}
+
+html.glass-theme-acg .search-results-box::-webkit-scrollbar { width: 6px; }
+html.glass-theme-acg .search-results-box::-webkit-scrollbar-track { background: transparent; }
+html.glass-theme-acg .search-results-box::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.25); border-radius: 3px; }
+
+html.glass-theme-acg .sub-search-results {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* hover-lift 悬浮效果 */
+html.glass-theme-acg .v-theme--dark .hover-lift:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(168, 85, 247, 0.12) !important;
+}
+
+html.glass-theme-acg .v-theme--light .hover-lift:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 12px rgba(168, 85, 247, 0.08) !important;
+}
+
+/* 页面标题 */
+html.glass-theme-acg .page-title {
+  --page-title-color: #a855f7;
+  color: var(--page-title-color) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6);
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.5),
+    0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+html.glass-theme-acg .page-subtitle {
+  --page-subtitle-color: #a855f7;
+  color: var(--page-subtitle-color) !important;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+html.glass-theme-acg .section-title {
+  --section-title-color: #a855f7;
+  color: var(--section-title-color) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.25);
+}
+
+
+/* ================================================================
+ * 18. 原版修复补充（对照 acg-glass.css 修复1~9）
+ * ================================================================ */
+
+/* 修复3：v-loading / loading 遮罩 — 默认半透明白/黑会盖成白板/黑板 */
+html.glass-theme-acg .v-skeleton-loader,
+html.glass-theme-acg .v-overlay--active .v-overlay__scrim {
+  backdrop-filter: blur(3px) !important;
+  -webkit-backdrop-filter: blur(3px) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-overlay--active .v-overlay__scrim {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-overlay--active .v-overlay__scrim {
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 修复4：壁纸上控件可见性 — Checkbox/Radio 未选态 */
+html.glass-theme-acg .v-theme--light .v-checkbox .v-selection-control .v-icon,
+html.glass-theme-acg .v-theme--light .v-radio .v-selection-control .v-icon {
+  color: rgba(120, 130, 145, 0.65) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-checkbox .v-selection-control .v-icon,
+html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control .v-icon {
+  color: rgba(150, 158, 172, 0.55) !important;
+}
+
+/* Switch 关闭态轨道要够深，壁纸上才看得见 */
+html.glass-theme-acg .v-theme--light .v-switch:not(.v-selection-control--dirty) .v-switch__track {
+  background: rgba(120, 130, 145, 0.45) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-switch:not(.v-selection-control--dirty) .v-switch__track {
+  background: rgba(150, 158, 172, 0.35) !important;
+}
+
+/* 修复5/6：标签/Alert/芯片 — 用 color-mix 保留类型色相的半透明 */
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+  /* 芯片：保留类型色相 */
+  html.glass-theme-acg .v-theme--light .v-chip--variant-tonal {
+    background-color: color-mix(in srgb, currentColor 18%, rgba(255, 255, 255, 0.30)) !important;
+    border-color: color-mix(in srgb, currentColor 35%, transparent) !important;
+  }
+
+  html.glass-theme-acg .v-theme--dark .v-chip--variant-tonal {
+    background-color: color-mix(in srgb, currentColor 18%, rgba(30, 30, 60, 0.38)) !important;
+    border-color: color-mix(in srgb, currentColor 35%, transparent) !important;
+  }
+
+  /* Alert：保留类型色相 */
+  html.glass-theme-acg .v-theme--light .v-alert--variant-tonal {
+    background-color: color-mix(in srgb, currentColor 14%, rgba(255, 255, 255, 0.30)) !important;
+  }
+
+  html.glass-theme-acg .v-theme--dark .v-alert--variant-tonal {
+    background-color: color-mix(in srgb, currentColor 14%, rgba(30, 30, 60, 0.38)) !important;
+  }
+
+  /* SnackBar：保留类型色相 */
+  html.glass-theme-acg .v-theme--light .v-snackbar {
+    background-color: color-mix(in srgb, currentColor 16%, rgba(255, 255, 255, 0.50)) !important;
+  }
+
+  html.glass-theme-acg .v-theme--dark .v-snackbar {
+    background-color: color-mix(in srgb, currentColor 16%, rgba(30, 30, 60, 0.50)) !important;
+  }
+}
+
+/* 修复8：表格 hover 行 — 壁纸上不会闪白杠 */
+html.glass-theme-acg .v-theme--light .v-table .v-table__wrapper tr:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-table .v-table__wrapper tr:hover {
+  background: rgba(30, 30, 60, 0.45) !important;
+}
+
+html.glass-theme-acg .v-theme--light .v-data-table__tr:hover,
+html.glass-theme-acg .v-theme--light .v-data-table .v-data-table__tr:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-data-table__tr:hover,
+html.glass-theme-acg .v-theme--dark .v-data-table .v-data-table__tr:hover {
+  background: rgba(30, 30, 60, 0.45) !important;
+}
+
+/* 表格表头 */
+html.glass-theme-acg .v-theme--light .v-table thead tr,
+html.glass-theme-acg .v-theme--light .v-data-table thead tr {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-table thead tr,
+html.glass-theme-acg .v-theme--dark .v-data-table thead tr {
+  background: rgba(30, 30, 60, 0.30) !important;
+}
+
+/* 表格整体透明 */
+html.glass-theme-acg .v-table,
+html.glass-theme-acg .v-data-table {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* 修复9：面板半透明时文字对比度 */
+html.glass-theme-acg .v-theme--light .v-field .v-label {
+  color: rgba(0, 0, 0, 0.60) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-field .v-label {
+  color: rgba(255, 255, 255, 0.60) !important;
+}
+
+/* 暗色 Checkbox 选中发光 */
+html.glass-theme-acg .v-theme--dark .v-checkbox .v-selection-control--dirty .v-icon {
+  text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
+}
+
+/* 暗色 Radio 选中发光 */
+html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control--dirty .v-icon {
+  text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
+}
+
+/* 亮色 BtnToggle active */
+html.glass-theme-acg .v-theme--light .v-btn-toggle .v-btn--active {
+  background: rgba(168, 85, 247, 0.3) !important;
+  color: #7c3aed !important;
+}
+
+/* 亮色 Slider track */
+html.glass-theme-acg .v-theme--light .v-slider .v-slider-track {
+  background: rgba(0, 0, 0, 0.10) !important;
+}
+
+/* 亮色 ProgressCircular */
+html.glass-theme-acg .v-theme--light .v-progress-circular__overlay {
+  stroke: #a855f7 !important;
+}
+
+/* 暗色 ProgressLinear glow */
+html.glass-theme-acg .v-theme--dark .v-progress-linear__determinate {
+  box-shadow: 0 0 12px rgba(78, 205, 196, 0.4);
+}
+
+/* 芯片 border 统一 */
+html.glass-theme-acg .v-theme--light .v-chip {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-chip {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+
+/* ================================================================
+ * 19. prefers-reduced-motion
+ * ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

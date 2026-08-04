@@ -1,129 +1,56 @@
 /**
- * base.css — 基础、主题、工具类
- * 从 global.css 拆分而来
- */
-
-/**
- * 全局样式 — Apple Liquid Glass 设计系统
+ * base.css — 纯基础：重置、CSS 变量、容器透明
  *
- * 流动玻璃：半透明 + 高斯模糊 + 饱和度增强 + 彩虹折射边框 + 流体动画
- * 霓虹描边文字：text-stroke 配合青色发光
- * 渐变填充文字：紫色到品红的渐变填充 + 3D阴影
- * 彩虹折射边缘：棱镜光谱渐变
- * 流体形变：圆角随交互产生液态变形
- * 多层深度：3+ 层玻璃堆叠
- * 高饱和度：backdrop-saturate-180
+ * 只放"不管哪个主题都需要"的基础规则：
+ *   - 字体平滑
+ *   - body / .v-application 透明（让背景层透出）
+ *   - Vuetify surface 变量（半透明基值，主题文件可覆盖）
+ *   - 中间层容器透明
+ *   - 组件内部透明（卡片/弹窗内的子组件）
+ *   - 表单控件间距
+ *   - 功能性布局类
+ *
+ * 不放任何视觉风格（颜色/背景/模糊/边框/阴影/滚动条样式），
+ * 那些全部放在 theme-acg.css / glass-themes.css 里。
  */
 
 /* ============================================================
- * 0. Liquid Glass 工具类
- * ============================================================ */
-
-/* Liquid Glass 卡片 — 玻璃面板（无边框） */
-.liquid-glass-card {
-  position: relative;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  border-radius: 24px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-  transition: all 0.5s ease-out !important;
-  overflow: hidden;
-}
-
-
-
-
-
-/* ── Glass Card — 流动玻璃面板（无边框） ──
- *   background / backdrop-filter / border-radius / box-shadow
- *   由 components.css 的 .v-theme--xxx .v-card (特异性 0,2,0) 提供。
- */
-.glass-card {
-  --glass-radius: 24px;
-  overflow: hidden;
-}
-
-/* 小型列表卡片 — 圆角适配 */
-.glass-card.list-card {
-  --glass-radius: 12px;
-}
-
-/* ── Glass Panel — 轻量玻璃面板（无边框） ── */
-.glass-panel {
-  --glass-radius: 20px;
-  overflow: hidden;
-}
-
-.glass-btn {
-  transition: all 0.5s ease-out !important;
-}
-
-/* ============================================================
- * 0b. Liquid Glass 文字效果
- * ============================================================ */
-
-/* ── 霓虹描边文字 — text-stroke 配合青色发光 ── */
-.text-neon {
-  -webkit-text-stroke: 1px rgba(78, 205, 196, 0.5);
-  text-shadow:
-    0 0 8px rgba(78, 205, 196, 0.4),
-    0 0 16px rgba(78, 205, 196, 0.2);
-}
-
-.v-theme--light .text-neon {
-  -webkit-text-stroke: 1px rgba(124, 58, 237, 0.4);
-  text-shadow:
-    0 0 8px rgba(168, 85, 247, 0.3),
-    0 0 16px rgba(168, 85, 247, 0.15);
-}
-
-/* ── 渐变填充文字 — 紫色到品红的渐变填充 + 3D阴影 ── */
-.text-gradient {
-  background: linear-gradient(135deg, #a855f7 0%, #ff2d94 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(168, 85, 247, 0.3));
-}
-
-.v-theme--light .text-gradient {
-  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  filter: drop-shadow(0 2px 3px rgba(124, 58, 237, 0.2));
-}
-
-
-
-/* ============================================================
- * 1. 全局基础
+ * 1. 全局重置
  * ============================================================ */
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── 全局二次元背景图（参考 acg-glass.css） ──
- *   body::before = 背景图层（fixed 全屏二次元壁纸）
- *   body::after  = 遮罩层（压暗/提亮背景，提高文字可读性）
- *   玻璃面板半透明 + backdrop-filter 模糊此背景图，效果非常明显
- */
-
 body {
   background: transparent !important;
 }
 
-/* ── 根本解决：覆盖 Vuetify 的 surface CSS 变量为半透明 ──
- *   Vuetify 所有组件（卡片/列表/面板/输入框…）都用
- *   rgb(var(--v-theme-surface)) 或 rgb(var(--v-theme-surface-light)) 设背景，
- *   默认是实色（#FFFFFF / #1a1a3e），导致玻璃效果被实色盖住。
- *   把这些变量改成半透明 rgba，所有组件自动变玻璃，
- *   不需要一个个组件用 !important 去覆盖。
- */
+/* 背景/遮罩层基础结构 —— 主题文件负责填充视觉内容（背景图、颜色） */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  z-index: -2;
+}
+
+body::after {
+  z-index: -1;
+}
+
+.v-application {
+  background: transparent !important;
+}
+
+/* ============================================================
+ * 2. Vuetify surface 变量 — 半透明基值
+ * 主题文件可覆盖这些变量来改变全局底色
+ * ============================================================ */
 .v-theme--light {
   --v-theme-surface: 255, 255, 255;
   --v-theme-surface-light: 255, 255, 255;
@@ -136,101 +63,9 @@ body {
   --v-theme-surface-variant: 20, 20, 42;
 }
 
-/* 背景图层 — 横屏用 PC 端壁纸 */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background: center / cover no-repeat;
-  background-image: url("https://www.loliapi.com/acg/pc/");
-  /* 背景模糊开关：默认 0px（不模糊），要模糊改大 */
-  filter: blur(0px);
-  transform: scale(1.02);
-}
-
-/* 竖屏：移动端壁纸 */
-@media (orientation: portrait) {
-  body::before {
-    background-image: url("https://www.loliapi.com/acg/pe/");
-  }
-}
-
-/* 亮色遮罩：半透明白，轻微压亮 */
-.v-theme--light body::after,
-body.v-theme--light::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* 暗色遮罩：半透明黑，压暗背景 */
-.v-theme--dark body::after,
-body.v-theme--dark::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: rgba(0, 0, 0, 0.24);
-}
-
-/* v-application 透明，让背景图透出来 */
-.v-application {
-  background: transparent !important;
-}
-
-/* ── 全局滚动条 — Liquid Glass 风格 ── */
-html, body, .v-main, .v-main__scroller {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
-}
-
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-.v-main::-webkit-scrollbar,
-.v-main__scroller::-webkit-scrollbar { width: 8px; }
-
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track,
-.v-main::-webkit-scrollbar-track,
-.v-main__scroller::-webkit-scrollbar-track { background: transparent; }
-
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-.v-main::-webkit-scrollbar-thumb,
-.v-main__scroller::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.25);
-  border-radius: 4px;
-}
-
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover,
-.v-main::-webkit-scrollbar-thumb:hover,
-.v-main__scroller::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 85, 247, 0.4);
-}
-
 /* ============================================================
- * 2. 亮色主题 — 导航项激活色
+ * 3. 中间层容器透明
  * ============================================================ */
-.v-theme--light .v-navigation-drawer .v-list-item--active .v-list-item-title {
-  font-weight: 600;
-  color: #a855f7 !important;
-}
-
-.v-theme--light .v-navigation-drawer .v-list-item--active .v-icon {
-  color: #a855f7 !important;
-}
-
-/* ============================================================
- * 3. 暗色主题 — 导航项激活色
- * ============================================================ */
-
-/* 中间层容器全部透明，让 v-application 的背景透过来 */
 .v-main,
 .v-container,
 .v-row,
@@ -244,62 +79,182 @@ body::-webkit-scrollbar-thumb:hover,
   background: transparent !important;
 }
 
-/* 侧边栏导航项 — Liquid Glass 风格 */
-.v-theme--dark .v-navigation-drawer .v-list-item {
-  border-radius: 16px !important;
-  transition: all 0.5s ease-out !important;
+/* ============================================================
+ * 4. 组件内部透明
+ * 卡片/弹窗内的子组件必须透明，否则实色会盖住玻璃效果
+ * ============================================================ */
+
+/* 卡片内部 */
+.v-card-text,
+.v-card-title,
+.v-card-actions,
+.v-card-item {
+  background: transparent !important;
 }
 
-.v-theme--dark .v-navigation-drawer .v-list-item--active {
-  box-shadow: inset 0 0 0 1px rgba(78, 205, 196, 0.2) !important;
+.v-card .v-card-text,
+.v-card .v-card-item,
+.v-card .v-card-title,
+.v-card .v-card-actions,
+.v-card .v-card-text .v-expansion-panel-title,
+.v-card .v-card-text .v-expansion-panel-text,
+.v-card .v-card-text .v-list,
+.v-card .v-card-text .v-list-item,
+.v-card .v-card-text .v-sheet {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
-.v-theme--dark .v-navigation-drawer .v-list-item--active .v-list-item-title {
-  font-weight: 600;
-  color: #4ecdc4 !important;
+.v-card .v-card-text .v-expansion-panel {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
-.v-theme--dark .v-navigation-drawer .v-list-item--active .v-icon {
-  color: #4ecdc4 !important;
+/* 弹窗内部 */
+.v-dialog .v-card .v-card-text,
+.v-dialog .v-card .v-card-item,
+.v-dialog .v-card .v-card-title,
+.v-dialog .v-card .v-card-actions,
+.v-dialog .v-card .v-card-text .v-expansion-panel-title,
+.v-dialog .v-card .v-card-text .v-expansion-panel-text,
+.v-dialog .v-card .v-card-text .v-list,
+.v-dialog .v-card .v-card-text .v-list-item {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
-/* 激活项指示条 — 细线，不发光 */
-.v-navigation-drawer .v-list-item--active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 25%;
-  bottom: 25%;
-  width: 2px;
-  border-radius: 0 2px 2px 0;
+.v-dialog .v-card .v-card-text .v-expansion-panel {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
-/* ── 侧边导航栏滚动条 — Liquid Glass 风格 ── */
-.v-navigation-drawer,
-.v-navigation-drawer .v-navigation-drawer__content,
+/* 折叠面板内容/标题 */
+.v-expansion-panel-text {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.v-expansion-panel-title {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* 列表 */
+.v-list {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.v-list-item--variant-elevated,
+.v-list-item--variant-flat {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 .v-navigation-drawer .v-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(168, 85, 247, 0.25) transparent;
+  background: transparent !important;
 }
 
-.v-navigation-drawer::-webkit-scrollbar,
-.v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar,
-.v-navigation-drawer .v-list::-webkit-scrollbar { width: 6px; }
-
-.v-navigation-drawer::-webkit-scrollbar-track,
-.v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-track,
-.v-navigation-drawer .v-list::-webkit-scrollbar-track { background: transparent; }
-
-.v-navigation-drawer::-webkit-scrollbar-thumb,
-.v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb,
-.v-navigation-drawer .v-list::-webkit-scrollbar-thumb {
-  background: rgba(168, 85, 247, 0.25);
-  border-radius: 3px;
+/* ============================================================
+ * 5. 卡片工具类 — 纯结构
+ * ============================================================ */
+.glass-card {
+  --glass-radius: 24px;
+  overflow: hidden;
 }
 
-.v-navigation-drawer::-webkit-scrollbar-thumb:hover,
-.v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb:hover,
-.v-navigation-drawer .v-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 85, 247, 0.4);
+.glass-card.list-card {
+  --glass-radius: 12px;
 }
 
+.glass-panel {
+  --glass-radius: 20px;
+  overflow: hidden;
+}
+
+/* ============================================================
+ * 6. 表单控件间距 — 纯结构
+ * ============================================================ */
+.v-card-text .v-text-field,
+.v-card-text .v-select,
+.v-card-text .v-textarea,
+.v-card-text .v-combobox,
+.v-card-text .v-autocomplete {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.v-card-text .v-input--persistent-hint {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.v-switch .v-input__control {
+  margin-inline: 8px;
+}
+
+.v-switch.v-input--density-compact {
+  margin-top: -2px;
+}
+
+.v-card-title + .v-card-text {
+  padding-top: 12px;
+}
+
+.v-window-item > .v-form > :first-child,
+.v-window-item > :first-child {
+  padding-top: 8px;
+}
+
+/* ============================================================
+ * 7. 按钮内图标与文字垂直居中 — 纯结构
+ * ============================================================ */
+.v-btn {
+  align-items: center !important;
+}
+
+.v-btn .v-btn__prepend,
+.v-btn .v-btn__append {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-btn .v-btn__content {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-btn .v-btn__prepend .v-icon,
+.v-btn .v-btn__append .v-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.v-list-item .v-list-item__prepend,
+.v-list-item .v-list-item__append {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-chip .v-chip__prepend,
+.v-chip .v-chip__append {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-chip .v-chip__content {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.v-alert .v-alert__prepend {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}

@@ -1,38 +1,29 @@
 /**
- * utilities.css — 通用复用样式、管理卡片、按钮类型规范
- * 从 global.css 拆分而来
+ * utilities.css — 通用复用纯结构
+ *
+ * 只放布局、间距等结构规则。
+ * 所有视觉风格在 theme-acg.css 里。
  */
+
 
 /* ============================================================
- * 30. 从各 .vue scoped 提取的通用复用样式
- *     统一管理卡片悬浮、策略行、加载条等可复用模式
- *     原 .vue scoped 中的同名样式可删除，改用这些全局类
+ * 通用卡片悬浮
  * ============================================================ */
 
-/* ── 30a. 通用卡片悬浮效果 — 替代各 scoped .rule-card / .feed-card / .sub-card / .client-card ── */
-/*
- * 使用方式：<v-card class="glass-card hover-lift">
- * 原 .vue 中 .rule-card / .feed-card / .sub-card / .client-card 的悬浮效果统一迁移至此
- */
 .hover-lift {
   cursor: pointer;
   transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
 }
+
 .hover-lift:hover {
   transform: translateY(-3px);
 }
-.v-theme--dark .hover-lift:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(168, 85, 247, 0.12) !important;
-}
-.v-theme--light .hover-lift:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 12px rgba(168, 85, 247, 0.08) !important;
-}
 
-/* ── 30b. 策略/配置行 — 替代 .strategy-row / .detect-task-item 等 ── */
-/*
- * 使用方式：<div class="config-row">
- * 原 .vue 中 .strategy-row / .detect-task-item / .org-config-row 统一迁移至此
- */
+
+/* ============================================================
+ * 配置行
+ * ============================================================ */
+
 .config-row {
   display: flex;
   align-items: center;
@@ -43,12 +34,17 @@
   border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
   transition: border-color 0.2s, background 0.2s;
 }
+
 .config-row:hover {
   border-color: rgba(var(--v-theme-primary), 0.3);
   background: rgba(var(--v-theme-on-surface), 0.05);
 }
 
-/* ── 30c. 加载进度条 — 替代 FileBrowserView .loading-bar ── */
+
+/* ============================================================
+ * 加载进度条
+ * ============================================================ */
+
 .loading-bar {
   position: absolute;
   top: 0;
@@ -59,6 +55,7 @@
   overflow: hidden;
   background: rgba(var(--v-theme-primary), 0.15);
 }
+
 .loading-bar-inner {
   height: 100%;
   width: 40%;
@@ -66,13 +63,18 @@
   border-radius: 0 4px 4px 0;
   animation: loading-slide 1.2s ease-in-out infinite;
 }
+
 @keyframes loading-slide {
   0% { transform: translateX(-100%); }
   50% { transform: translateX(150%); }
   100% { transform: translateX(350%); }
 }
 
-/* ── 30d. 信息标签 — 替代 .spec-badge / .dc-rule-badge / .category-badge ── */
+
+/* ============================================================
+ * 信息标签
+ * ============================================================ */
+
 .info-badge {
   font-family: monospace;
   font-size: 11px;
@@ -83,25 +85,33 @@
   color: rgb(var(--v-theme-primary));
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
+
 .info-badge--accent {
   color: #4ecdc4;
   border-color: rgba(78, 205, 196, 0.2);
 }
+
 .v-theme--light .info-badge--accent {
   color: #7c3aed;
   border-color: rgba(124, 58, 237, 0.2);
 }
 
-/* ── 30e. 通用键值行 — 替代 .detail-row / .info-row / .fb-detail-row / .dc-detail-row ── */
+
+/* ============================================================
+ * 键值行
+ * ============================================================ */
+
 .kv-row {
   display: flex;
   gap: 12px;
   padding: 6px 0;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
+
 .kv-row:last-child {
   border-bottom: none;
 }
+
 .kv-label {
   font-weight: 600;
   font-size: 12px;
@@ -109,34 +119,47 @@
   min-width: 70px;
   flex-shrink: 0;
 }
+
 .kv-value {
   flex: 1;
   font-size: 13px;
   color: rgba(var(--v-theme-on-surface), 0.87);
   word-break: break-all;
 }
+
 .kv-value--mono {
   font-family: monospace;
 }
 
-/* ── 30f. 状态点 — 替代 .sub-status-dot ── */
+
+/* ============================================================
+ * 状态点
+ * ============================================================ */
+
 .status-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
+
 .status-dot--active {
   box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
 }
+
 .status-dot--inactive {
   box-shadow: 0 0 6px rgba(244, 67, 54, 0.4);
 }
+
 .status-dot--pending {
   box-shadow: 0 0 6px rgba(255, 183, 77, 0.4);
 }
 
-/* ── 30g. 海报占位 — 替代 .sub-poster-placeholder / .poster-placeholder / .poster-placeholder-sm ── */
+
+/* ============================================================
+ * 海报占位
+ * ============================================================ */
+
 .poster-placeholder {
   background: rgba(var(--v-theme-on-surface), 0.04);
   display: flex;
@@ -145,22 +168,37 @@
   color: rgba(var(--v-theme-on-surface), 0.3);
   font-size: 12px;
 }
+
 .poster-placeholder--dashed {
   border: 1px dashed rgba(var(--v-theme-on-surface), 0.15);
   border-radius: 8px;
 }
 
-/* ── 30h. 等高卡片网格 — 同行卡片等高 ── */
+
+/* ============================================================
+ * 卡片网格
+ * ============================================================ */
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
+
 .card-grid--4 {
   grid-template-columns: repeat(4, 1fr);
 }
-@media (max-width: 960px)  { .card-grid { grid-template-columns: repeat(2, 1fr); } .card-grid--4 { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px)  { .card-grid { grid-template-columns: 1fr; } .card-grid--4 { grid-template-columns: 1fr; } }
+
+@media (max-width: 960px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .card-grid--4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .card-grid--4 { grid-template-columns: 1fr; }
+}
+
 .card-grid > .v-card,
 .card-grid > .glass-card {
   display: flex;
@@ -168,41 +206,60 @@
   height: 100%;
 }
 
-/* ── 30i. 队列列表辅助 ── */
+
+/* ============================================================
+ * 队列列表辅助
+ * ============================================================ */
+
 .queue-divider {
   border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
+
 .queue-scroll {
   max-height: 60vh;
   overflow-y: auto;
 }
+
 .queue-item {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
+
 .queue-item:last-child {
   border-bottom: none;
 }
+
 .queue-item-index {
   min-width: 32px;
   text-align: right;
 }
 
-/* ── 30j. 服务状态卡片 ── */
+
+/* ============================================================
+ * 服务状态卡片
+ * ============================================================ */
+
 .service-card--running {
   border: 1px solid rgba(46, 125, 50, 0.2);
 }
+
 .service-card--stopped {
   border: 1px solid rgba(211, 47, 47, 0.25);
 }
+
 .service-card--pending {
   border: 1px solid rgba(var(--v-theme-primary), 0.2);
 }
+
 .service-card--disabled {
   border: 1px solid rgba(128, 128, 128, 0.1);
   opacity: 0.6;
 }
 
-/* ── 30i. 哈希警告 — 替代 .org-hash-warning / .hash-warning ── */
+
+/* ============================================================
+ * 哈希警告 / 禁用提示
+ * ============================================================ */
+
 .hash-warning-inline {
   font-size: 11px;
   color: rgb(var(--v-theme-error));
@@ -212,49 +269,32 @@
   margin-top: 4px;
 }
 
-/* ── 30j. 禁用提示 — 替代 .inactive-hint ── */
 .inactive-hint {
   color: rgba(var(--v-theme-on-surface), 0.3);
   font-style: italic;
 }
 
+
 /* ============================================================
- * §31. 统一管理卡片 — Manage Card
- *     不含图片的配置/任务/规则等管理卡片统一定义
- *     使用方式：<v-card class="glass-card manage-card">
- *
- *     布局约定:
- *     ┌──────────────────────────────┐
- *     │  标题行 (标题 + 状态chip)      │  ← .manage-card__header
- *     ├──────────────────────────────┤
- *     │  信息区 (键值/描述/标签)        │  ← .manage-card__body
- *     │                              │
- *     ├──────────────────────────────┤
- *     │  操作按钮区                    │  ← .manage-card__actions
- *     └──────────────────────────────┘
- *
- *     网格规范:
- *     - 桌面端: v-col cols="12" sm="6" md="4"
- *     - 三列等宽，每列最小 280px
- *     - 卡片最小高度 180px，确保信息完整展示
+ * 管理卡片
  * ============================================================ */
 
-/* ── 31a. 管理卡片主体 ── */
 .manage-card {
   min-height: 180px;
   display: flex;
   flex-direction: column;
 }
+
 .manage-card > .v-card-text,
 .manage-card > .v-card-title {
   flex-shrink: 0;
 }
+
 .manage-card > .v-card-text:last-child,
 .manage-card > .v-card-actions {
   margin-top: auto;
 }
 
-/* ── 31b. 管理卡片标题行 ── */
 .manage-card__header {
   display: flex;
   align-items: center;
@@ -262,6 +302,7 @@
   gap: 8px;
   padding: 14px 16px 6px;
 }
+
 .manage-card__title {
   font-size: 14px;
   font-weight: 700;
@@ -272,11 +313,11 @@
   flex: 1;
   min-width: 0;
 }
+
 .manage-card__badge {
   flex-shrink: 0;
 }
 
-/* ── 31c. 管理卡片信息区 ── */
 .manage-card__body {
   padding: 4px 16px 8px;
   flex: 1;
@@ -285,6 +326,7 @@
   gap: 4px;
   overflow: hidden;
 }
+
 .manage-card__info {
   display: flex;
   align-items: baseline;
@@ -293,6 +335,7 @@
   line-height: 1.6;
   min-height: 18px;
 }
+
 .manage-card__info-label {
   color: rgba(var(--v-theme-on-surface), 0.45);
   font-weight: 600;
@@ -300,6 +343,7 @@
   min-width: 48px;
   flex-shrink: 0;
 }
+
 .manage-card__info-value {
   color: rgba(var(--v-theme-on-surface), 0.87);
   overflow: hidden;
@@ -308,6 +352,7 @@
   flex: 1;
   min-width: 0;
 }
+
 .manage-card__desc {
   font-size: 12px;
   color: rgba(var(--v-theme-on-surface), 0.5);
@@ -318,7 +363,6 @@
   overflow: hidden;
 }
 
-/* ── 31d. 管理卡片标签组 ── */
 .manage-card__tags {
   display: flex;
   gap: 4px;
@@ -326,7 +370,6 @@
   margin-top: 4px;
 }
 
-/* ── 31e. 管理卡片操作区 ── */
 .manage-card__actions {
   display: flex;
   align-items: center;
@@ -334,54 +377,20 @@
   padding: 6px 8px !important;
   min-height: 40px;
 }
+
 .manage-card__actions .v-btn {
   flex-shrink: 0;
 }
 
-/* ── 31f. 管理卡片网格列宽 ── */
-/*
- * 在模板中使用:
- * <v-col cols="12" sm="6" md="4">
- * 即可，无需额外 class
- */
-
-/* ── 31g. 管理卡片内的 Switch 行 ── */
 .manage-card__switch-row {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 2px 0;
 }
+
 .manage-card__switch-label {
   font-size: 12px;
   color: rgba(var(--v-theme-on-surface), 0.7);
   white-space: nowrap;
 }
-
-/* ============================================================
- * §32. 统一按钮类型规范 — Button Variant / Color 标准
- *
- *     所有按钮必须遵循以下 variant + color 组合，
- *     确保视觉一致性和操作语义清晰。
- *
- *     ┌─────────────────────┬──────────────────────┬────────────────────┐
- *     │  语义                │  variant + color      │  示例               │
- *     ├─────────────────────┼──────────────────────┼────────────────────┤
- *     │  主要操作 (保存/确认) │  flat + primary       │  保存、确认、提交    │
- *     │  新增操作            │  flat + primary       │  新建、添加、创建    │
- *     │  次要操作 (执行/搜索) │  tonal + primary      │  执行、搜索、测试    │
- *     │  信息操作 (预览/查看) │  tonal + info         │  预览、查看详情      │
- *     │  警告操作 (清理/清空) │  tonal + warning      │  清理过期、清空黑名单│
- *     │  危险操作 (删除/重置) │  tonal + error        │  删除、清空记录      │
- *     │  取消/关闭/返回      │  tonal (无color)      │  取消、关闭、返回    │
- *     │  中性操作 (复制/导出) │  tonal (无color)      │  复制、导出、导入    │
- *     │  切换操作 (开关)      │  text (图标按钮)      │  监控开关、定时开关  │
- *     │  确认+危险(确认删除)  │  flat + error         │  确认删除、清空所有  │
- *     └─────────────────────┴──────────────────────┴────────────────────┘
- *
- *     关键规则:
- *     ❌ variant="text" 只用于图标切换按钮（如监控开关）
- *     ✅ 取消/关闭按钮统一用 variant="tonal"（带底色）
- *     ✅ 删除按钮统一用 variant="tonal" color="error"（带红色底色）
- *     ✅ 卡片内小按钮统一用 size="small"
- * ============================================================ */

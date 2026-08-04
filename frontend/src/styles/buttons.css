@@ -1,232 +1,24 @@
 /**
- * buttons.css — 按钮及相关控件（Checkbox/Radio/BtnToggle/Slider/Avatar/Code标签）
- * 从 global.css 拆分而来
+ * buttons.css — 按钮纯结构
+ *
+ * 按下缩放、圆角统一。
+ * 所有视觉风格在 theme-acg.css 里。
  */
 
-/* ============================================================
- * 12. 按钮 — Liquid Glass
- * ============================================================ */
-
-/* ── flat 按钮 — 玻璃面板 + 强调色渐变 ── */
-.v-theme--light .v-btn--variant-flat {
-  background: rgba(255, 255, 255, 0.30) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  color: #7c3aed !important;
-  font-weight: 600;
-  transition: all 0.3s ease !important;
-}
-
-.v-theme--light .v-btn--variant-flat:hover {
-  background: rgba(255, 255, 255, 0.40) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-}
-
-.v-theme--dark .v-btn--variant-flat {
-  background: rgba(30, 30, 60, 0.38) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: white !important;
-  font-weight: 600;
-  transition: all 0.3s ease !important;
-}
-
-.v-theme--dark .v-btn--variant-flat:hover {
-  background: rgba(30, 30, 60, 0.48) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* ── tonal 按钮 — 玻璃面板 ── */
-.v-theme--light .v-btn--variant-tonal {
-  background: rgba(255, 255, 255, 0.30) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  font-weight: 500;
-  transition: all 0.3s ease !important;
-}
-
-.v-theme--light .v-btn--variant-tonal:hover {
-  background: rgba(255, 255, 255, 0.40) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-}
-
-.v-theme--dark .v-btn--variant-tonal {
-  background: rgba(30, 30, 60, 0.38) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  font-weight: 500;
-  transition: all 0.3s ease !important;
-}
-
-.v-theme--dark .v-btn--variant-tonal:hover {
-  background: rgba(30, 30, 60, 0.48) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* ── outlined 按钮 — 玻璃面板 ── */
-.v-theme--light .v-btn--variant-outlined {
-  background: rgba(255, 255, 255, 0.30) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  transition: all 0.3s ease !important;
-}
-
-.v-theme--light .v-btn--variant-outlined:hover {
-  background: rgba(255, 255, 255, 0.40) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-}
-
-.v-theme--dark .v-btn--variant-outlined {
-  background: rgba(30, 30, 60, 0.38) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  transition: all 0.3s ease !important;
-}
-
-.v-theme--dark .v-btn--variant-outlined:hover {
-  background: rgba(30, 30, 60, 0.48) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* ── 按钮按下态 — 液态压缩 ── */
+/* 按下态 */
 .v-btn:active {
   transform: scale(0.98);
 }
 
-/* ============================================================
- * 12b. Checkbox / Radio — Liquid Glass
- * ============================================================ */
-
-/* ── Checkbox — 暗色选中状态 ── */
-.v-theme--dark .v-checkbox .v-selection-control--dirty .v-checkbox-btn__icon {
-  color: #4ecdc4 !important;
-  text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
+/* 圆角统一 */
+.v-btn {
+  border-radius: 12px !important;
 }
 
-.v-theme--dark .v-checkbox .v-selection-control--dirty .v-icon {
-  color: #4ecdc4 !important;
+.v-btn--icon {
+  border-radius: 50% !important;
 }
 
-/* ── Checkbox — 亮色选中状态 ── */
-.v-theme--light .v-checkbox .v-selection-control--dirty .v-checkbox-btn__icon {
-  color: #a855f7 !important;
+.v-btn--size-x-small:not(.v-btn--icon) {
+  border-radius: 10px !important;
 }
-
-.v-theme--light .v-checkbox .v-selection-control--dirty .v-icon {
-  color: #a855f7 !important;
-}
-
-/* ── Radio — 暗色选中状态 ── */
-.v-theme--dark .v-radio .v-selection-control--dirty .v-radio-btn__icon {
-  color: #4ecdc4 !important;
-}
-
-.v-theme--dark .v-radio .v-selection-control--dirty .v-icon {
-  color: #4ecdc4 !important;
-}
-
-/* ── Radio — 亮色选中状态 ── */
-.v-theme--light .v-radio .v-selection-control--dirty .v-radio-btn__icon {
-  color: #a855f7 !important;
-}
-
-.v-theme--light .v-radio .v-selection-control--dirty .v-icon {
-  color: #a855f7 !important;
-}
-
-/* ============================================================
- * 12c. BtnToggle — Liquid Glass
- * ============================================================ */
-.v-theme--dark .v-btn-toggle {
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  border-radius: 16px !important;
-}
-
-.v-theme--dark .v-btn-toggle .v-btn {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-
-.v-theme--dark .v-btn-toggle .v-btn--active {
-  background: rgba(168, 85, 247, 0.3) !important;
-  color: #a855f7 !important;
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.15) !important;
-}
-
-.v-theme--light .v-btn-toggle {
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  border-radius: 16px !important;
-}
-
-/* ============================================================
- * 12d. Slider — Liquid Glass
- * ============================================================ */
-.v-theme--dark .v-slider .v-slider-track {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.v-theme--dark .v-slider .v-slider-track__fill {
-  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
-  box-shadow: 0 0 8px rgba(78, 205, 196, 0.3);
-}
-
-.v-theme--dark .v-slider .v-slider-thumb__surface {
-  background: white !important;
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.4) !important;
-}
-
-.v-theme--light .v-slider .v-slider-track__fill {
-  background: linear-gradient(90deg, #a855f7, #4ecdc4) !important;
-}
-
-/* ============================================================
- * 12e. ProgressCircular — Liquid Glass
- * ============================================================ */
-.v-theme--dark .v-progress-circular__overlay {
-  stroke: #4ecdc4 !important;
-  filter: drop-shadow(0 0 4px rgba(78, 205, 196, 0.3));
-}
-
-/* ============================================================
- * 12f. Avatar — Liquid Glass
- * ============================================================ */
-.v-theme--dark .v-avatar--variant-tonal {
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-}
-
-/* ============================================================
- * 12g. Code 标签 — Liquid Glass
- * ============================================================ */
-code {
-  color: #4ecdc4 !important;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 0.85em;
-}
-
-.v-theme--light code {
-  color: #7c3aed !important;
-}
-
-/* ============================================================
- * 12h. 亮色模式补丁 — Liquid Avatar / 媒体卡片
- * ============================================================ */
-.v-theme--light .liquid-avatar {
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  color: #a855f7 !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-}
-
-.v-theme--light .liquid-avatar:hover {
-  box-shadow: 0 0 14px rgba(168, 85, 247, 0.2) !important;
-}
-
-
-
