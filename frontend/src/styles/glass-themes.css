@@ -352,14 +352,20 @@ html.glass-theme-liquid .v-dialog .v-overlay__content {
   box-shadow: var(--lg-rim), var(--lg-shadow-lift) !important;
 }
 
-/* 弹窗遮罩 */
-html.glass-theme-liquid .v-overlay__scrim {
+/* 弹窗遮罩（仅对话框需要全屏遮罩，snackbar / menu 等不需要） */
+html.glass-theme-liquid .v-dialog > .v-overlay__scrim {
   background: rgba(24, 28, 58, .34) !important;
   opacity: 1 !important;
 }
 
-html.glass-theme-liquid.glass-dark .v-overlay__scrim {
+html.glass-theme-liquid.glass-dark .v-dialog > .v-overlay__scrim {
   background: rgba(2, 3, 10, .58) !important;
+}
+
+/* snackbar / menu 等非对话框 overlay 的 scrim 隐藏 */
+html.glass-theme-liquid .v-overlay:not(.v-dialog) > .v-overlay__scrim {
+  background: transparent !important;
+  opacity: 0 !important;
 }
 
 
@@ -802,7 +808,7 @@ html.glass-theme-liquid.glass-dark .filter-bar .v-chip--variant-outlined {
  * Sheet / Expansion Panel — 完整玻璃背景
  * ================================================================ */
 
-html.glass-theme-liquid .v-sheet {
+html.glass-theme-liquid .v-sheet:not(.v-snackbar__wrapper) {
   background: rgba(255, 255, 255, .40) !important;
   background-color: rgba(255, 255, 255, .40) !important;
   backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
@@ -812,7 +818,7 @@ html.glass-theme-liquid .v-sheet {
   border-radius: 22px !important;
 }
 
-html.glass-theme-liquid.glass-dark .v-sheet {
+html.glass-theme-liquid.glass-dark .v-sheet:not(.v-snackbar__wrapper) {
   background: rgba(28, 30, 52, .44) !important;
   background-color: rgba(28, 30, 52, .44) !important;
 }
@@ -843,10 +849,13 @@ html.glass-theme-liquid .v-alert--variant-tonal {
   border: 1px solid var(--lg-border) !important;
 }
 
-html.glass-theme-liquid .v-snackbar {
+/* SnackBar — 只给通知框本身（.v-snackbar__wrapper）加玻璃效果，
+   不给全屏容器 .v-snackbar 加 backdrop-filter，否则会模糊整个屏幕。
+   背景色暂不覆盖，等通知系统统一化后再主题化。 */
+html.glass-theme-liquid .v-snackbar__wrapper {
   backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
-  box-shadow: var(--lg-rim), var(--lg-shadow) !important;
+  box-shadow: var(--lg-rim-sm), var(--lg-shadow) !important;
 }
 
 
