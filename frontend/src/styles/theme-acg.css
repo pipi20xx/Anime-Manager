@@ -332,15 +332,21 @@ html.glass-theme-acg .v-dialog .v-card .v-card-text .v-menu > .v-list {
   background-color: inherit !important;
 }
 
-/* 遮罩 */
-html.glass-theme-acg .v-overlay__scrim {
+/* 遮罩（仅对话框需要） */
+html.glass-theme-acg .v-dialog > .v-overlay__scrim {
   backdrop-filter: blur(4px) !important;
   -webkit-backdrop-filter: blur(4px) !important;
 }
 
-html.glass-theme-acg .v-theme--dark .v-overlay__scrim {
+html.glass-theme-acg .v-theme--dark .v-dialog > .v-overlay__scrim {
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* snackbar / menu 等非对话框 overlay 的 scrim 隐藏 */
+html.glass-theme-acg .v-overlay:not(.v-dialog) > .v-overlay__scrim {
+  background: transparent !important;
+  opacity: 0 !important;
 }
 
 /* 弹窗内滚动条 */
@@ -504,7 +510,7 @@ html.glass-theme-acg .v-menu .v-list::-webkit-scrollbar-thumb:hover {
  * 8. Sheet
  * ================================================================ */
 
-html.glass-theme-acg .v-theme--light .v-sheet {
+html.glass-theme-acg .v-theme--light .v-sheet:not(.v-snackbar__wrapper) {
   background: rgba(255, 255, 255, 0.30) !important;
   background-color: rgba(255, 255, 255, 0.30) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
@@ -512,7 +518,7 @@ html.glass-theme-acg .v-theme--light .v-sheet {
   border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
-html.glass-theme-acg .v-theme--dark .v-sheet {
+html.glass-theme-acg .v-theme--dark .v-sheet:not(.v-snackbar__wrapper) {
   background: rgba(30, 30, 60, 0.38) !important;
   background-color: rgba(30, 30, 60, 0.38) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
@@ -657,6 +663,11 @@ html.glass-theme-acg .v-tabs .v-slide-group,
 html.glass-theme-acg .v-tabs .v-slide-group__wrapper,
 html.glass-theme-acg .v-tabs .v-slide-group__content {
   background: transparent !important;
+}
+
+/* 胶囊形 Tab 之间留间隔 */
+html.glass-theme-acg .v-tabs .v-slide-group__content {
+  gap: 8px !important;
 }
 
 html.glass-theme-acg .v-tab__slider {
@@ -1081,17 +1092,35 @@ html.glass-theme-acg .v-theme--light .v-chip--variant-tonal {
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
 }
 
-/* SnackBar */
-html.glass-theme-acg .v-theme--light .v-snackbar {
+/* SnackBar — 通知框玻璃主题化 */
+html.glass-theme-acg .v-theme--light .v-snackbar__wrapper {
+  background: rgba(255, 255, 255, 0.50) !important;
+  background-color: rgba(255, 255, 255, 0.50) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 14px !important;
 }
 
-html.glass-theme-acg .v-theme--dark .v-snackbar {
+html.glass-theme-acg .v-theme--light .v-snackbar__wrapper,
+html.glass-theme-acg .v-theme--light .v-snackbar__wrapper .v-btn {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-snackbar__wrapper {
+  background: rgba(30, 30, 60, 0.50) !important;
+  background-color: rgba(30, 30, 60, 0.50) !important;
   backdrop-filter: blur(12px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 14px !important;
+}
+
+html.glass-theme-acg .v-theme--dark .v-snackbar__wrapper,
+html.glass-theme-acg .v-theme--dark .v-snackbar__wrapper .v-btn {
+  color: rgba(255, 255, 255, 0.90) !important;
 }
 
 /* Alert */
@@ -1426,16 +1455,16 @@ html.glass-theme-acg .section-title {
 
 /* 修复3：v-loading / loading 遮罩 — 默认半透明白/黑会盖成白板/黑板 */
 html.glass-theme-acg .v-skeleton-loader,
-html.glass-theme-acg .v-overlay--active .v-overlay__scrim {
+html.glass-theme-acg .v-dialog.v-overlay--active > .v-overlay__scrim {
   backdrop-filter: blur(3px) !important;
   -webkit-backdrop-filter: blur(3px) !important;
 }
 
-html.glass-theme-acg .v-theme--light .v-overlay--active .v-overlay__scrim {
+html.glass-theme-acg .v-theme--light .v-dialog.v-overlay--active > .v-overlay__scrim {
   background: rgba(255, 255, 255, 0.35) !important;
 }
 
-html.glass-theme-acg .v-theme--dark .v-overlay--active .v-overlay__scrim {
+html.glass-theme-acg .v-theme--dark .v-dialog.v-overlay--active > .v-overlay__scrim {
   background: rgba(0, 0, 0, 0.45) !important;
 }
 
@@ -1482,11 +1511,11 @@ html.glass-theme-acg .v-theme--dark .v-switch:not(.v-selection-control--dirty) .
   }
 
   /* SnackBar：保留类型色相 */
-  html.glass-theme-acg .v-theme--light .v-snackbar {
+  html.glass-theme-acg .v-theme--light .v-snackbar__wrapper {
     background-color: color-mix(in srgb, currentColor 16%, rgba(255, 255, 255, 0.50)) !important;
   }
 
-  html.glass-theme-acg .v-theme--dark .v-snackbar {
+  html.glass-theme-acg .v-theme--dark .v-snackbar__wrapper {
     background-color: color-mix(in srgb, currentColor 16%, rgba(30, 30, 60, 0.50)) !important;
   }
 }

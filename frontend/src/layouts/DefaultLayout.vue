@@ -2,15 +2,12 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore, useSystemStore } from '@/stores'
-import { useNotification } from '@/composables'
-import { ConfirmDialog, LogTerminal } from '@/components/common'
+import { ConfirmDialog, LogTerminal, AppNotification } from '@/components/common'
 
 const route = useRoute()
 const router = useRouter()
 const themeStore = useThemeStore()
 const systemStore = useSystemStore()
-const { state: notifyState } = useNotification()
-
 const appVersion = __APP_VERSION__ as string
 const drawer = ref(true)
 const rail = ref(false)
@@ -265,19 +262,8 @@ onUnmounted(() => {
     <LogTerminal />
     <ConfirmDialog />
 
-    <!-- 全局通知 SnackBar -->
-    <v-snackbar
-      v-model="notifyState.show"
-      :color="notifyState.color"
-      :timeout="notifyState.timeout"
-      location="top right"
-    >
-      <div v-if="notifyState.title" class="font-weight-bold mb-1">{{ notifyState.title }}</div>
-      {{ notifyState.message }}
-      <template #actions>
-        <v-btn variant="text" icon="mdi-close" size="small" @click="notifyState.show = false" />
-      </template>
-    </v-snackbar>
+    <!-- 全局通知 -->
+    <AppNotification />
   </v-app>
 </template>
 

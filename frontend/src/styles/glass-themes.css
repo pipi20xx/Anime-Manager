@@ -697,6 +697,11 @@ html.glass-theme-liquid .v-tabs .v-slide-group__content {
   background: transparent !important;
 }
 
+/* 胶囊形 Tab 之间留间隔 */
+html.glass-theme-liquid .v-tabs .v-slide-group__content {
+  gap: 8px !important;
+}
+
 html.glass-theme-liquid .v-tab__slider {
   display: none !important;
   opacity: 0 !important;
@@ -849,13 +854,35 @@ html.glass-theme-liquid .v-alert--variant-tonal {
   border: 1px solid var(--lg-border) !important;
 }
 
-/* SnackBar — 只给通知框本身（.v-snackbar__wrapper）加玻璃效果，
-   不给全屏容器 .v-snackbar 加 backdrop-filter，否则会模糊整个屏幕。
-   背景色暂不覆盖，等通知系统统一化后再主题化。 */
+/* SnackBar — 通知框玻璃主题化 */
 html.glass-theme-liquid .v-snackbar__wrapper {
   backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
   -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) !important;
   box-shadow: var(--lg-rim-sm), var(--lg-shadow) !important;
+  border: 1px solid var(--lg-border) !important;
+  border-radius: 14px !important;
+}
+
+/* 亮色：白玻璃底 + 深色文字 */
+html.glass-theme-liquid.glass-light .v-snackbar__wrapper {
+  background: rgba(255, 255, 255, .65) !important;
+  background-color: rgba(255, 255, 255, .65) !important;
+}
+
+html.glass-theme-liquid.glass-light .v-snackbar__wrapper,
+html.glass-theme-liquid.glass-light .v-snackbar__wrapper .v-btn {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/* 暗色：深蓝玻璃底 + 浅色文字 */
+html.glass-theme-liquid.glass-dark .v-snackbar__wrapper {
+  background: rgba(28, 30, 52, .72) !important;
+  background-color: rgba(28, 30, 52, .72) !important;
+}
+
+html.glass-theme-liquid.glass-dark .v-snackbar__wrapper,
+html.glass-theme-liquid.glass-dark .v-snackbar__wrapper .v-btn {
+  color: rgba(255, 255, 255, 0.90) !important;
 }
 
 
