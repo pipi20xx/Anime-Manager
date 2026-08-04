@@ -698,45 +698,47 @@ onMounted(() => {
       </div>
     </v-card>
 
-    <!-- 收藏夹抽屉 -->
-    <v-navigation-drawer v-model="showFavDrawer" location="left" width="280" temporary>
-      <div class="pa-3 d-flex align-center justify-space-between">
-        <div class="d-flex align-center ga-2">
-          <v-icon size="18" color="primary">mdi-star-outline</v-icon>
-          <span class="text-subtitle-2 font-weight-bold">收藏夹</span>
+    <!-- 收藏夹弹窗 -->
+    <v-dialog v-model="showFavDrawer" max-width="360" transition="dialog-slide-transition">
+      <v-card class="glass-card" rounded="xl">
+        <div class="pa-3 d-flex align-center justify-space-between">
+          <div class="d-flex align-center ga-2">
+            <v-icon size="18" color="primary">mdi-star-outline</v-icon>
+            <span class="section-title text-subtitle-2 font-weight-bold">收藏夹</span>
+          </div>
+          <v-btn icon="mdi-close" size="small" variant="text" @click="showFavDrawer = false" />
         </div>
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showFavDrawer = false" />
-      </div>
-      <v-divider />
-      <v-list density="compact" class="pa-2">
-        <v-list-item
-          v-for="fav in favorites"
-          :key="fav.path"
-          density="compact"
-          rounded="lg"
-          :active="fav.path === currentPath"
-          @click="jumpTo(fav.path); showFavDrawer = false"
-        >
-          <template #prepend>
-            <v-icon size="18" color="primary">mdi-folder-outline</v-icon>
-          </template>
-          <v-list-item-title class="text-body-2 text-truncate">{{ fav.name }}</v-list-item-title>
-          <v-list-item-subtitle class="text-caption text-medium-emphasis text-truncate">{{ fav.path }}</v-list-item-subtitle>
-          <template #append>
-            <v-btn
-              icon="mdi-close"
-              size="x-small"
-              variant="text"
-              density="compact"
-              @click.stop="removeFavorite(fav.path)"
-            />
-          </template>
-        </v-list-item>
-        <v-list-item v-if="favorites.length === 0" disabled>
-          <v-list-item-title class="text-caption text-medium-emphasis">暂无收藏</v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
+        <v-divider />
+        <v-list density="compact" class="pa-2" max-height="60vh">
+          <v-list-item
+            v-for="fav in favorites"
+            :key="fav.path"
+            density="compact"
+            rounded="lg"
+            :active="fav.path === currentPath"
+            @click="jumpTo(fav.path); showFavDrawer = false"
+          >
+            <template #prepend>
+              <v-icon size="18" color="primary">mdi-folder-outline</v-icon>
+            </template>
+            <v-list-item-title class="text-body-2 text-truncate">{{ fav.name }}</v-list-item-title>
+            <v-list-item-subtitle class="text-caption text-medium-emphasis text-truncate">{{ fav.path }}</v-list-item-subtitle>
+            <template #append>
+              <v-btn
+                icon="mdi-close"
+                size="x-small"
+                variant="text"
+                density="compact"
+                @click.stop="removeFavorite(fav.path)"
+              />
+            </template>
+          </v-list-item>
+          <v-list-item v-if="favorites.length === 0" disabled>
+            <v-list-item-title class="text-caption text-medium-emphasis">暂无收藏</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-dialog>
 
     <!-- 右键菜单 -->
     <v-menu

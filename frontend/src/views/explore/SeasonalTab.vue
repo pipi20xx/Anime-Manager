@@ -104,12 +104,13 @@ onMounted(() => {
   fetchData()
 })
 
-// 持久化季度选择
+// 持久化季度选择 + 切换时刷新数据
 watch([selectedYear, selectedSeason], () => {
   localStorage.setItem(SEASON_KEY, JSON.stringify({
     year: selectedYear.value,
     season: selectedSeason.value,
   }))
+  fetchData()
 })
 </script>
 
@@ -134,18 +135,11 @@ watch([selectedYear, selectedSeason], () => {
 
     <!-- 季度选择标签 -->
     <div class="d-flex ga-2 mb-4">
-      <v-chip
-        v-for="s in SEASONS"
-        :key="s"
-        :color="selectedSeason === s ? 'primary' : undefined"
-        :variant="selectedSeason === s ? 'flat' : 'outlined'"
-        size="small"
-        label
-        class="cursor-pointer"
-        @click="selectedSeason = s; fetchData()"
-      >
-        {{ SEASON_CN[s] }}
-      </v-chip>
+      <v-tabs v-model="selectedSeason" density="compact">
+        <v-tab v-for="s in SEASONS" :key="s" :value="s">
+          {{ SEASON_CN[s] }}
+        </v-tab>
+      </v-tabs>
     </div>
 
     <!-- 加载骨架屏 -->

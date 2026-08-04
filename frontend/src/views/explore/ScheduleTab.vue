@@ -68,19 +68,16 @@ function openDetail(item: any) {
     <template v-else>
       <!-- 日期导航条 — 双重吸顶：吸附在外层 explore tabs 下方 -->
       <div class="day-nav d-flex ga-1 overflow-x-auto sticky-sub-tabs">
-        <v-chip
-          v-for="day in schedule"
-          :key="day.date"
-          :color="activeDate === day.date ? 'primary' : undefined"
-          :variant="activeDate === day.date ? 'flat' : 'text'"
-          size="small"
-          label
-          class="flex-shrink-0 cursor-pointer"
-          @click="activeDate = day.date"
-        >
-          {{ day.weekday?.cn || day.date }}
-          <span v-if="day.items?.length" class="ml-1 text-caption">({{ day.items.length }})</span>
-        </v-chip>
+        <v-tabs v-model="activeDate" density="compact">
+          <v-tab
+            v-for="day in schedule"
+            :key="day.date"
+            :value="day.date"
+          >
+            {{ day.weekday?.cn || day.date }}
+            <span v-if="day.items?.length" class="ml-1 text-caption">({{ day.items.length }})</span>
+          </v-tab>
+        </v-tabs>
       </div>
 
       <!-- 番剧卡片网格 -->

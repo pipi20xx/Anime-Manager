@@ -2,8 +2,8 @@
  * glass-themes.css — 玻璃主题切换系统
  *
  * 两套玻璃视觉风格，通过 <html> 上的 class 切换：
- *   html.glass-theme-acg     → 二次元壁纸 + 毛玻璃（默认，样式在 base.css / components.css 中）
- *   html.glass-theme-liquid  → 液态玻璃：CSS 渐变背景 + 折射带 + 弧光 + 弹簧动效
+ *   html.glass-theme-liquid  → 液态玻璃：CSS 渐变背景 + 折射带 + 弧光 + 弹簧动效（默认）
+ *   html.glass-theme-acg     → 二次元壁纸 + 毛玻璃
  *
  * ⚠️ 变量作用域：
  *   --lg-* 变量全部设在 html.glass-theme-liquid 上（配合 .glass-dark / .glass-light），
@@ -483,26 +483,9 @@ html.glass-theme-liquid .v-menu .v-list {
 }
 
 
-/* ================================================================
- * Sticky Tabs / Sub Tabs — 移除底色，直接透明
- * pages.css 给 .sticky-tabs / .sticky-sub-tabs 设了半透明背景 + 模糊 + 底边框，
- * 液态玻璃模式下不需要这一层，让 TAB 行直接浮在 mesh 背景上
- * ================================================================ */
+/* sticky-tabs / sticky-sub-tabs 背景已全局透明化（pages.css），无需额外覆盖 */
 
-html.glass-theme-liquid .sticky-tabs,
-html.glass-theme-liquid .sticky-sub-tabs {
-  background: transparent !important;
-  background-color: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-bottom: none !important;
-}
-
-/* v-tab 选中下划线（slider）—— 液态玻璃模式不需要 */
-html.glass-theme-liquid .v-tab__slider {
-  display: none !important;
-  opacity: 0 !important;
-}
+/* v-tab 选中下划线（slider）—— 全局已在 components.css 隐藏 */
 
 
 /* ================================================================

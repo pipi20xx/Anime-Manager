@@ -250,7 +250,7 @@
 /* ── 代码块修饰类 — 用于 scrollable 弹窗内部，移除自身滚动避免双重滚动条 ── */
 .code-block--flat {
   max-height: none !important;
-  overflow-y: visible !!important;
+  overflow-y: visible !important;
 }
 
 /* 代码块内行高亮 */
@@ -289,23 +289,16 @@
   margin-top: 2px;
 }
 
-/* ── Sticky Tabs — 和卡片一样的玻璃（0.45 + blur 10px） ── */
-.v-theme--light .sticky-tabs {
-  background: rgba(255, 255, 255, 0.30) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+/* ── Sticky Tabs — 透明背景，tab 按钮自带胶囊高亮 ── */
+.sticky-tabs {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
 }
 
-.v-theme--dark .sticky-tabs {
-  background: rgba(30, 30, 60, 0.38) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-/* 关键：仅强制 v-tabs 内部子元素透明，防止 Vuetify 默认 surface 色叠加
- * 注意：不要把 .sticky-tabs 本身设为透明，它需要保持磨砂玻璃背景 */
+/* 关键：仅强制 v-tabs 内部子元素透明，防止 Vuetify 默认 surface 色叠加 */
 .sticky-tabs .v-tabs__container,
 .sticky-tabs .v-slide-group,
 .sticky-tabs .v-slide-group__wrapper,
@@ -317,35 +310,29 @@
   position: sticky;
   top: var(--v-layout-top, 0px);
   z-index: 200;
-  margin: 0 -16px 16px !important;
-  padding: 4px 16px 12px;
+  margin: 0 0 16px !important;
+  padding: 4px 0 12px;
 }
 
 @media (min-width: 960px) {
   .sticky-tabs {
-    margin-left: -24px !important;
-    margin-right: -24px !important;
-    padding-left: 24px;
-    padding-right: 24px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
-/* ── Sticky Sub Tabs — 和卡片一样 ── */
-.v-theme--light .sticky-sub-tabs {
-  background: rgba(255, 255, 255, 0.30) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+/* ── Sticky Sub Tabs — 透明背景，同主 tabs ── */
+.sticky-sub-tabs {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: none !important;
 }
 
-.v-theme--dark .sticky-sub-tabs {
-  background: rgba(30, 30, 60, 0.38) !important;
-  backdrop-filter: blur(10px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-/* 仅内部子元素透明，sticky-sub-tabs 本身保持磨砂玻璃背景 */
+/* 仅内部子元素透明 */
 .sticky-sub-tabs .v-tabs__container,
 .sticky-sub-tabs .v-slide-group,
 .sticky-sub-tabs .v-slide-group__wrapper,
@@ -357,16 +344,16 @@
   position: sticky;
   top: calc(var(--v-layout-top, 0px) + var(--sticky-offset, 64px));
   z-index: 199;
-  margin: 0 -16px 12px !important;
-  padding: 8px 16px;
+  margin: 0 0 12px !important;
+  padding: 8px 0;
 }
 
 @media (min-width: 960px) {
   .sticky-sub-tabs {
-    margin-left: -24px !important;
-    margin-right: -24px !important;
-    padding-left: 24px;
-    padding-right: 24px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 

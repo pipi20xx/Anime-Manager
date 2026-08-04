@@ -243,10 +243,10 @@ onUnmounted(() => {
 <template>
   <div class="discovery-tab pa-4">
     <!-- 筛选栏 -->
-    <div class="filter-bar mb-6 pa-4 rounded-lg" style="background: rgba(var(--v-theme-on-surface), 0.03); border: 1px solid rgba(var(--v-theme-on-surface), 0.06);">
+    <div class="filter-bar mb-6 pa-4 glass-card">
       <!-- 数据源 -->
       <div class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">数据源</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">数据源</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.source === 'tmdb' ? 'primary' : undefined" :variant="filters.source === 'tmdb' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.source = 'tmdb'">TMDB (全球)</v-chip>
           <v-chip :color="filters.source === 'bangumi' ? 'primary' : undefined" :variant="filters.source === 'bangumi' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.source = 'bangumi'">Bangumi (番剧)</v-chip>
@@ -255,7 +255,7 @@ onUnmounted(() => {
 
       <!-- TMDB 类型 -->
       <div v-if="filters.source === 'tmdb'" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">类型</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">类型</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.media_type === 'tv' ? 'primary' : undefined" :variant="filters.media_type === 'tv' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.media_type = 'tv'">剧集 (TV)</v-chip>
           <v-chip :color="filters.media_type === 'movie' ? 'primary' : undefined" :variant="filters.media_type === 'movie' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.media_type = 'movie'">剧场版 (Movie)</v-chip>
@@ -264,7 +264,7 @@ onUnmounted(() => {
 
       <!-- Bangumi 分类 -->
       <div v-if="filters.source === 'bangumi' && config.bangumi_types.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">分类</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">分类</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.subtype === null ? 'primary' : undefined" :variant="filters.subtype === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.subtype = null">全部</v-chip>
           <v-chip v-for="t in config.bangumi_types" :key="t.id" :color="filters.subtype === t.id ? 'primary' : undefined" :variant="filters.subtype === t.id ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.subtype = t.id">{{ t.name }}</v-chip>
@@ -273,7 +273,7 @@ onUnmounted(() => {
 
       <!-- TMDB 语言 -->
       <div v-if="filters.source === 'tmdb' && config.languages.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">语言</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">语言</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.language === null ? 'primary' : undefined" :variant="filters.language === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.language = null">全部</v-chip>
           <v-chip v-for="l in config.languages" :key="l.value" :color="filters.language === l.value ? 'primary' : undefined" :variant="filters.language === l.value ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.language = l.value">{{ l.label }}</v-chip>
@@ -282,7 +282,7 @@ onUnmounted(() => {
 
       <!-- Bangumi 地区 -->
       <div v-if="filters.source === 'bangumi' && config.bangumi_regions.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">地区</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">地区</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.region === null ? 'primary' : undefined" :variant="filters.region === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.region = null">全部</v-chip>
           <v-chip v-for="r in config.bangumi_regions" :key="r.id" :color="filters.region === r.id ? 'primary' : undefined" :variant="filters.region === r.id ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.region = r.id">{{ r.name }}</v-chip>
@@ -291,7 +291,7 @@ onUnmounted(() => {
 
       <!-- Bangumi 来源 -->
       <div v-if="filters.source === 'bangumi' && config.bangumi_sources.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">来源</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">来源</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.story_source === null ? 'primary' : undefined" :variant="filters.story_source === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.story_source = null">全部</v-chip>
           <v-chip v-for="s in config.bangumi_sources" :key="s.id" :color="filters.story_source === s.id ? 'primary' : undefined" :variant="filters.story_source === s.id ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.story_source = s.id">{{ s.name }}</v-chip>
@@ -300,7 +300,7 @@ onUnmounted(() => {
 
       <!-- Bangumi 受众 -->
       <div v-if="filters.source === 'bangumi' && config.bangumi_audiences.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">受众</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">受众</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.audience === null ? 'primary' : undefined" :variant="filters.audience === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.audience = null">全部</v-chip>
           <v-chip v-for="a in config.bangumi_audiences" :key="a.id" :color="filters.audience === a.id ? 'primary' : undefined" :variant="filters.audience === a.id ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.audience = a.id">{{ a.name }}</v-chip>
@@ -309,7 +309,7 @@ onUnmounted(() => {
 
       <!-- 标签/流派 -->
       <div v-if="config.genres.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">{{ filters.source === 'bangumi' ? '标签' : '流派' }}</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">{{ filters.source === 'bangumi' ? '标签' : '流派' }}</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.genre === null ? 'primary' : undefined" :variant="filters.genre === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.genre = null">全部</v-chip>
           <v-chip v-for="g in config.genres" :key="g.id" :color="filters.genre === String(g.id) ? 'primary' : undefined" :variant="filters.genre === String(g.id) ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.genre = String(g.id)">{{ g.name }}</v-chip>
@@ -318,7 +318,7 @@ onUnmounted(() => {
 
       <!-- 年份 -->
       <div v-if="config.years.length > 0" class="filter-row d-flex align-center mb-3">
-        <div class="filter-label text-caption font-weight-bold text-medium-emphasis mr-3" style="width: 48px; flex-shrink: 0;">年份</div>
+        <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">年份</div>
         <div class="d-flex ga-1 flex-wrap">
           <v-chip :color="filters.year === null ? 'primary' : undefined" :variant="filters.year === null ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.year = null">全部</v-chip>
           <v-chip v-for="y in config.years" :key="y" :color="filters.year === y ? 'primary' : undefined" :variant="filters.year === y ? 'flat' : 'outlined'" size="small" label class="cursor-pointer" @click="filters.year = y">{{ y }}</v-chip>
@@ -326,7 +326,8 @@ onUnmounted(() => {
       </div>
 
       <!-- 排序 + 结果数 -->
-      <div class="d-flex align-center justify-space-between mt-4 pt-3" style="border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);">
+      <v-divider class="my-4" />
+      <div class="d-flex align-center justify-space-between">
         <v-select
           v-model="filters.sort_by"
           label="排序方式"
@@ -412,5 +413,3 @@ onUnmounted(() => {
     </template>
   </div>
 </template>
-
-

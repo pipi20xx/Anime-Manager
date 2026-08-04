@@ -6,9 +6,9 @@ export type GlassTheme = 'acg' | 'liquid'
 export const useThemeStore = defineStore('theme', () => {
   const isDarkMode = ref(localStorage.getItem('theme_mode') === 'light' ? false : true)
 
-  // 玻璃主题：'acg' = 二次元壁纸毛玻璃，'liquid' = 液态玻璃
+  // 玻璃主题：'acg' = 二次元壁纸毛玻璃，'liquid' = 液态玻璃（默认）
   const glassTheme = ref<GlassTheme>(
-    (localStorage.getItem('glass_theme') as GlassTheme) || 'acg'
+    (localStorage.getItem('glass_theme') as GlassTheme) || 'liquid'
   )
 
   function toggleDarkMode() {

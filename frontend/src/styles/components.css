@@ -513,42 +513,121 @@
   background: transparent !important;
 }
 
-/* ── 选中态：文字变色 + slider 颜色 ── */
+/* ── 全局 tab：毛玻璃胶囊，选中仅文字变色 ── */
 
-/* 亮色：紫色 */
+/* 隐藏 slider 下划线 */
+.v-tab__slider {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* 全局 tab 胶囊过渡 */
+.v-tab {
+  border-radius: 999px !important;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* ── 亮色：毛玻璃胶囊 ── */
+.v-theme--light .v-tab {
+  background: rgba(255, 255, 255, 0.30) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
 .v-theme--light .v-tab--selected {
   color: #7c3aed !important;
   font-weight: 600 !important;
 }
-.v-theme--light .v-tab--selected .v-tab__slider {
-  background: #a855f7 !important;
-  opacity: 1 !important;
+
+.v-theme--light .v-tab:not(.v-tab--selected) {
+  color: rgba(0, 0, 0, 0.50) !important;
 }
 
-/* 暗色：青色 */
+.v-theme--light .v-tab:not(.v-tab--selected):hover {
+  color: rgba(124, 58, 237, 0.7) !important;
+}
+
+/* ── 暗色：毛玻璃胶囊 ── */
+.v-theme--dark .v-tab {
+  background: rgba(30, 30, 60, 0.38) !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10) !important;
+}
+
 .v-theme--dark .v-tab--selected {
   color: #4ecdc4 !important;
   font-weight: 600 !important;
 }
-.v-theme--dark .v-tab--selected .v-tab__slider {
-  background: #4ecdc4 !important;
-  opacity: 1 !important;
-}
 
-/* ── 非选中态 ── */
-.v-theme--light .v-tab:not(.v-tab--selected) {
-  color: rgba(0, 0, 0, 0.42) !important;
-}
 .v-theme--dark .v-tab:not(.v-tab--selected) {
   color: rgba(255, 255, 255, 0.50) !important;
 }
 
-/* ── hover 态 ── */
-.v-theme--light .v-tab:not(.v-tab--selected):hover {
-  color: rgba(124, 58, 237, 0.7) !important;
-}
 .v-theme--dark .v-tab:not(.v-tab--selected):hover {
   color: rgba(78, 205, 196, 0.7) !important;
+}
+
+/* ============================================================
+ * 11a. 筛选 chip — 毛玻璃胶囊，与 tab 统一
+ *     .filter-bar 内的 v-chip 统一为胶囊样式，
+ *     选中仅文字变色，不换背景。
+ *     液态玻璃模式下由 glass-themes.css 统管，此处用 :not 排除。
+ * ============================================================ */
+
+/* 清除 Vuetify overlay/underlay 底色 */
+.filter-bar .v-chip .v-chip__overlay,
+.filter-bar .v-chip .v-chip__underlay {
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+/* ACG 主题：毛玻璃胶囊基础 */
+html:not(.glass-theme-liquid) .filter-bar .v-chip {
+  border-radius: 999px !important;
+  backdrop-filter: blur(10px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+  --v-hover-opacity: 0 !important;
+  --v-focus-opacity: 0 !important;
+  --v-activated-opacity: 0 !important;
+}
+
+/* 亮色 */
+html:not(.glass-theme-liquid) .v-theme--light .filter-bar .v-chip {
+  background: rgba(255, 255, 255, 0.30) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+html:not(.glass-theme-liquid) .v-theme--light .filter-bar .v-chip--variant-flat,
+html:not(.glass-theme-liquid) .v-theme--light .filter-bar .v-chip.bg-primary {
+  color: #7c3aed !important;
+  font-weight: 600 !important;
+}
+
+html:not(.glass-theme-liquid) .v-theme--light .filter-bar .v-chip--variant-outlined {
+  color: rgba(0, 0, 0, 0.50) !important;
+}
+
+/* 暗色 */
+html:not(.glass-theme-liquid) .v-theme--dark .filter-bar .v-chip {
+  background: rgba(30, 30, 60, 0.38) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10) !important;
+}
+
+html:not(.glass-theme-liquid) .v-theme--dark .filter-bar .v-chip--variant-flat,
+html:not(.glass-theme-liquid) .v-theme--dark .filter-bar .v-chip.bg-primary {
+  color: #4ecdc4 !important;
+  font-weight: 600 !important;
+}
+
+html:not(.glass-theme-liquid) .v-theme--dark .filter-bar .v-chip--variant-outlined {
+  color: rgba(255, 255, 255, 0.50) !important;
 }
 
 /* ============================================================
