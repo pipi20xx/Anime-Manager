@@ -161,6 +161,18 @@ class TagExtractor:
                 # 合理集数范围：1-500
                 if 1 <= candidate <= 500:
                     return candidate
+
+        # 【增强】方括号混合集数格式：[13_OVA], [12end], [12End], [01_副标题]
+        # 匹配以数字开头但含非数字后缀的方括号内容
+        # 解决 \b 边界问题导致 OVA/end 等后缀无法被清洗，进而 Anitopy 无法识别集数的问题
+        bracket_mixed_matches = re.findall(r'\[(\d{1,4})[^\]\d]', name_no_ext)
+        if bracket_mixed_matches:
+            candidate = int(bracket_mixed_matches[-1])
+            # 排除分辨率数字（1080, 720, 480, 2160）
+            if candidate not in [1080, 720, 480, 2160, 360, 576]:
+                # 合理集数范围：1-500
+                if 1 <= candidate <= 500:
+                    return candidate
         
         # 【中等优先级】中文格式：第21集, 第21话
         cn_match = re.search(r'第\s*(\d{1,4})\s*[集话回話]', name_no_ext)

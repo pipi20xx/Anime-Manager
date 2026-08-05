@@ -164,6 +164,19 @@ class TitleCleaner:
                 debug_logs.append(f"[规则][内置] 清除干扰词: {nw}")
                 temp = re.sub(nw, " ", temp, flags=re.I)
         
+        # [NEW] 方括号集数格式归一化: [13_OVA] → [13], [12end] → [12], [01_副标题] → [01]
+        # 解决 \b 边界问题: 当 OVA/end 紧跟在 _ 或数字后面时，\b 无法匹配，导致这些后缀无法被 NOISE_WORDS 清除
+        # 进而 Anitopy 将 [13_OVA] 中的 OVA 识别为 anime_type，导致 13 无法被识别为集数
+        bracket_norm_patterns = [
+            (r'\[(\d{1,4})[_\s][^\]]*\]', r'[\1]'),           # [13_OVA], [01_副标题], [12 end]
+            (r'\[(\d{1,4})(?:[eE][nN][dD]|[fF][iI][nN])\]', r'[\1]'),  # [12end], [12End], [12FIN]
+        ]
+        for pat, repl in bracket_norm_patterns:
+            match = re.search(pat, temp)
+            if match:
+                debug_logs.append(f"[规则][内置] 方括号集数归一化: {match.group(0)} -> {re.sub(pat, repl, match.group(0))}")
+                temp = re.sub(pat, repl, temp)
+        
         # [NEW] 强制清洗装饰性符号 (★, ☆, ■, ◆, ●, etc.)
         temp = re.sub(r"[★☆■□◆◇●○•]", " ", temp)
         
