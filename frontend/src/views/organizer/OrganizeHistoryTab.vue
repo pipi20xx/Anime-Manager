@@ -314,6 +314,4 @@ defineExpose({ fetchHistory })
   </div>
 </template>
 
-<style scoped>
-/* 所有样式已移至全局 CSS: cards.css (卡片/路径/日志) / tags.css (元数据标签) */
-</style>
+</script>

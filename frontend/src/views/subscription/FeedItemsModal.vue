@@ -351,6 +351,4 @@ async function handleClearHistory() {
   </v-dialog>
 </template>
 
-<style scoped>
-/* 所有样式已移至全局 CSS: cards.css / tags.css */
-</style>
+</script>

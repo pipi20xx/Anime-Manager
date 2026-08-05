@@ -238,7 +238,7 @@ defineExpose({ fetchRules })
         <v-card-text class="pa-4">
           <v-skeleton-loader v-if="previewLoading" type="list-item@5" />
           <template v-else-if="previewItems.length > 0">
-            <div v-for="item in previewItems" :key="item.guid || item.link || item.title" class="feed-item-card mb-2">
+            <v-card v-for="item in previewItems" :key="item.guid || item.link || item.title" class="glass-card hover-lift pa-3 mb-2" variant="flat">
               <div class="d-flex align-start justify-space-between">
                 <div class="flex-grow-1 mr-2">
                   <div class="text-body-2 font-weight-medium">{{ item.raw_title || item.title }}</div>
@@ -246,7 +246,7 @@ defineExpose({ fetchRules })
                 </div>
                 <v-chip size="x-small" variant="tonal" color="info">匹配</v-chip>
               </div>
-            </div>
+            </v-card>
           </template>
           <div v-else class="text-center pa-6 text-medium-emphasis">未匹配到任何条目</div>
         </v-card-text>

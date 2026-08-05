@@ -217,9 +217,10 @@ function formatDateTime(dateStr: string | null): string {
           <template v-else-if="tasks.length > 0">
             <v-row dense>
               <v-col v-for="task in tasks" :key="task.id" cols="12" sm="6">
-                <v-card variant="outlined" class="rounded-xl h-100 d-flex flex-column">
-                  <v-card-item class="pb-2">
-                    <div class="d-flex align-center ga-2">
+                <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEdit(task)">
+                  <!-- 标题行 -->
+                  <div class="manage-card__header">
+                    <div class="d-flex align-center ga-2 flex-grow-1 min-width-0">
                       <v-switch
                         :model-value="task.enabled"
                         density="compact"
@@ -228,32 +229,34 @@ function formatDateTime(dateStr: string | null): string {
                         @update:model-value="toggleEnabled(task)"
                         @click.stop
                       />
-                      <v-card-title class="text-subtitle-1 font-weight-bold pa-0 flex-grow-1 text-truncate">
-                        {{ task.name || task.rss_url?.slice(0, 40) }}
-                      </v-card-title>
+                      <div class="manage-card__title">{{ task.name || task.rss_url?.slice(0, 40) }}</div>
                     </div>
-                  </v-card-item>
-                  <v-card-text class="pt-0 flex-grow-1">
-                    <div class="text-caption text-medium-emphasis text-truncate mb-2">
-                      <v-icon size="12" class="mr-1">mdi-rss</v-icon>{{ task.rss_url }}
+                    <v-chip size="x-small" variant="tonal" :color="task.enabled ? 'success' : 'grey'" class="manage-card__badge">
+                      {{ task.enabled ? '已启用' : '已禁用' }}
+                    </v-chip>
+                  </div>
+
+                  <!-- 信息区 -->
+                  <div class="manage-card__body">
+                    <div class="manage-card__info">
+                      <span class="manage-card__info-label">地址</span>
+                      <span class="manage-card__info-value" :title="task.rss_url">{{ task.rss_url }}</span>
                     </div>
-                    <div class="d-flex flex-wrap ga-2">
+                    <div class="manage-card__tags">
                       <v-chip size="x-small" variant="tonal" color="primary" label>
                         <v-icon start size="12">mdi-timer-outline</v-icon>{{ task.interval_minutes }}分钟
-                      </v-chip>
-                      <v-chip size="x-small" variant="tonal" :color="task.enabled ? 'success' : 'grey'" label>
-                        {{ task.enabled ? '已启用' : '已禁用' }}
                       </v-chip>
                       <v-chip size="x-small" variant="tonal" color="info" label>
                         <v-icon start size="12">mdi-clock-outline</v-icon>{{ formatDateTime(task.last_run_at) }}
                       </v-chip>
                     </div>
-                  </v-card-text>
-                  <v-card-actions class="pa-3 pt-0">
+                  </div>
+
+                  <v-divider />
+                  <v-card-actions class="manage-card__actions">
                     <v-spacer />
-                    <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="runTask(task.id)">执行</v-btn>
-                    <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(task)">编辑</v-btn>
-                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTask(task.id)">删除</v-btn>
+                    <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click.stop="runTask(task.id)">执行</v-btn>
+                    <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteTask(task.id)">删除</v-btn>
                   </v-card-actions>
                 </v-card>
               </v-col>

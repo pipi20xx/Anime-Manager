@@ -691,7 +691,7 @@ onMounted(() => {
                 <div class="text-subtitle-2 font-weight-bold mb-2">
                   {{ category }} ({{ toolList.length }})
                 </div>
-                <div v-for="tool in toolList" :key="tool.name" class="tool-row mb-2 pa-3 rounded-lg">
+                <v-card v-for="tool in toolList" :key="tool.name" class="glass-card hover-lift mb-2 pa-3" variant="flat">
                   <div class="d-flex align-center justify-space-between mb-1">
                     <span class="font-mono font-weight-bold text-body-2">{{ tool.name }}</span>
                     <v-chip size="x-small" variant="tonal" :color="tool.parameters?.length ? 'primary' : 'default'">
@@ -708,7 +708,7 @@ onMounted(() => {
                       <span class="text-medium-emphasis">{{ p.description }}</span>
                     </div>
                   </div>
-                </div>
+                </v-card>
               </div>
             </template>
 
@@ -1358,13 +1358,7 @@ onMounted(() => {
 
 /* 工具列表行 */
 .tool-row {
-  background: rgba(var(--v-theme-surface-variant), 0.15);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   transition: background 0.2s;
-}
-
-.tool-row:hover {
-  background: rgba(var(--v-theme-surface-variant), 0.25);
 }
 
 /* 技能 Markdown */
@@ -1376,8 +1370,6 @@ onMounted(() => {
 .info-block {
   padding: 12px 16px;
   border-radius: 8px;
-  background: rgba(var(--v-theme-surface-variant), 0.15);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 
 .info-label {

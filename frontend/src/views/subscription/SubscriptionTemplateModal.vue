@@ -133,39 +133,47 @@ async function setDefault(row: any) {
 
           <v-row v-else-if="templates.length > 0" dense>
             <v-col v-for="row in templates" :key="row.id" cols="12" sm="6">
-              <v-card variant="outlined" class="rounded-xl h-100 d-flex flex-column">
-                <v-card-item class="pb-2">
-                  <div class="d-flex align-center ga-2">
+              <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEdit(row)">
+                <!-- 标题行 -->
+                <div class="manage-card__header">
+                  <div class="d-flex align-center ga-1 flex-grow-1 min-width-0">
                     <v-btn
                       :icon="row.is_default ? 'mdi-star' : 'mdi-star-outline'"
                       size="small" variant="text"
                       :color="row.is_default ? 'warning' : 'grey'"
                       density="comfortable"
-                      @click="!row.is_default && setDefault(row)"
+                      @click.stop="!row.is_default && setDefault(row)"
                     />
-                    <v-card-title class="text-subtitle-1 font-weight-bold pa-0 flex-grow-1">{{ row.name }}</v-card-title>
+                    <div class="manage-card__title">{{ row.name }}</div>
                   </div>
-                </v-card-item>
-                <v-card-text class="pt-0 flex-grow-1">
-                  <div class="d-flex flex-wrap ga-2 mb-2">
+                  <v-chip v-if="row.is_default" size="x-small" variant="tonal" color="warning" class="manage-card__badge">默认</v-chip>
+                </div>
+
+                <!-- 信息区 -->
+                <div class="manage-card__body">
+                  <div class="manage-card__tags">
                     <v-chip v-if="row.category" size="x-small" variant="tonal" color="primary" label>{{ row.category }}</v-chip>
-                    <v-chip v-if="row.is_default" size="x-small" variant="tonal" color="warning" label>默认</v-chip>
                   </div>
-                  <div v-if="row.include_keywords" class="text-body-2 text-medium-emphasis">
-                    <v-icon size="14" class="mr-1">mdi-filter-variant</v-icon>{{ row.include_keywords }}
+                  <div v-if="row.include_keywords" class="manage-card__info">
+                    <span class="manage-card__info-label">关键词</span>
+                    <span class="manage-card__info-value" :title="row.include_keywords">{{ row.include_keywords }}</span>
                   </div>
-                  <div v-if="row.filter_res || row.filter_team || row.filter_codec" class="text-caption text-medium-emphasis mt-1">
-                    <span v-if="row.filter_res">{{ row.filter_res }}</span>
-                    <span v-if="row.filter_res && row.filter_team"> · </span>
-                    <span v-if="row.filter_team">{{ row.filter_team }}</span>
-                    <span v-if="(row.filter_res || row.filter_team) && row.filter_codec"> · </span>
-                    <span v-if="row.filter_codec">{{ row.filter_codec }}</span>
+                  <div v-if="row.filter_res || row.filter_team || row.filter_codec" class="manage-card__info">
+                    <span class="manage-card__info-label">筛选</span>
+                    <span class="manage-card__info-value">
+                      <span v-if="row.filter_res">{{ row.filter_res }}</span>
+                      <span v-if="row.filter_res && row.filter_team"> · </span>
+                      <span v-if="row.filter_team">{{ row.filter_team }}</span>
+                      <span v-if="(row.filter_res || row.filter_team) && row.filter_codec"> · </span>
+                      <span v-if="row.filter_codec">{{ row.filter_codec }}</span>
+                    </span>
                   </div>
-                </v-card-text>
-                <v-card-actions class="pa-3 pt-0">
+                </div>
+
+                <v-divider />
+                <v-card-actions class="manage-card__actions">
                   <v-spacer />
-                  <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil-outline" @click="openEdit(row)">编辑</v-btn>
-                  <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteTemplate(row)">删除</v-btn>
+                  <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteTemplate(row)">删除</v-btn>
                 </v-card-actions>
               </v-card>
             </v-col>

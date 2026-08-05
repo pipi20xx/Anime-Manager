@@ -126,7 +126,7 @@ watch(() => props.logs?.length, () => {
 
       <!-- 流式整理模式 -->
       <v-card-text v-if="isStreamMode" class="pa-0" style="max-height: 65vh; overflow-y: auto" ref="logContainerRef">
-        <div class="log-stream-box">
+        <v-card class="glass-card" variant="flat">
           <table class="stream-table">
             <thead>
               <tr>
@@ -262,9 +262,7 @@ watch(() => props.logs?.length, () => {
 <style scoped>
 /* 流式整理模式 */
 .log-stream-box {
-  background: rgba(var(--v-theme-surface), 0.5);
   border-radius: 0;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .stream-table {

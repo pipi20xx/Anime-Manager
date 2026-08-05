@@ -286,18 +286,18 @@ watch(() => props.show, (val) => {
               </div>
 
               <div class="d-flex ga-3 mb-3">
-                <div class="detail-stat-card">
-                  <div class="detail-stat-label">已推送</div>
-                  <div class="detail-stat-value text-primary">{{ pushedCount }}/{{ totalEpisodes }}</div>
-                </div>
-                <div class="detail-stat-card">
-                  <div class="detail-stat-label">总集数</div>
-                  <div class="detail-stat-value text-primary" style="font-family: monospace; font-size: 18px;">{{ episodeRangeLabel }}</div>
-                </div>
-                <div class="detail-stat-card">
-                  <div class="detail-stat-label">完成度</div>
-                  <div class="detail-stat-value text-primary">{{ progressPercent }}%</div>
-                </div>
+                <v-card class="glass-card pa-3 text-center flex-1" variant="flat">
+                  <div class="text-caption text-medium-emphasis">已推送</div>
+                  <div class="text-h6 font-weight-bold text-primary">{{ pushedCount }}/{{ totalEpisodes }}</div>
+                </v-card>
+                <v-card class="glass-card pa-3 text-center flex-1" variant="flat">
+                  <div class="text-caption text-medium-emphasis">总集数</div>
+                  <div class="text-h6 font-weight-bold text-primary" style="font-family: monospace; font-size: 18px;">{{ episodeRangeLabel }}</div>
+                </v-card>
+                <v-card class="glass-card pa-3 text-center flex-1" variant="flat">
+                  <div class="text-caption text-medium-emphasis">完成度</div>
+                  <div class="text-h6 font-weight-bold text-primary">{{ progressPercent }}%</div>
+                </v-card>
               </div>
 
               <v-progress-linear
@@ -312,7 +312,7 @@ watch(() => props.show, (val) => {
           </div>
 
           <!-- 集数横向滑动条 -->
-          <div v-if="!isMovie && episodeRange.length > 0" class="detail-episodes-panel">
+          <v-card v-if="!isMovie && episodeRange.length > 0" class="glass-card pa-4 mb-4" variant="flat">
             <div class="d-flex justify-space-between align-center mb-2">
               <div class="text-subtitle-2 font-weight-medium d-flex align-center ga-2">
                 <v-icon size="16">mdi-television-classic</v-icon>
@@ -349,10 +349,10 @@ watch(() => props.show, (val) => {
                 </div>
               </div>
             </div>
-          </div>
+          </v-card>
 
           <!-- 推送记录 -->
-          <div class="detail-records-panel">
+          <v-card class="glass-card pa-4" variant="flat">
             <div class="d-flex justify-space-between align-center mb-2">
               <div class="text-subtitle-2 font-weight-medium d-flex align-center ga-2">
                 <v-icon size="16">mdi-history</v-icon>
@@ -369,37 +369,37 @@ watch(() => props.show, (val) => {
             <div class="detail-records-list">
               <template v-if="selectedEpisode">
                 <div v-if="selectedRecords.length > 0">
-                  <div v-for="item in selectedRecords" :key="item.id || item.download_at" class="detail-record-item">
-                    <div class="detail-record-content">
+                  <v-card v-for="item in selectedRecords" :key="item.id || item.download_at" class="glass-card hover-lift pa-3 mb-2 d-flex align-start ga-3" variant="flat">
+                    <div class="flex-1 min-width-0">
                       <div class="text-body-2 font-weight-medium">{{ item.title || '（未命名资源）' }}</div>
                       <div class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatDateTime(item.download_at) }}</div>
                     </div>
                     <v-chip v-if="item.quality_score && item.quality_score > 0" size="x-small" variant="tonal" color="brown">
                       分数 {{ item.quality_score }}
                     </v-chip>
-                  </div>
+                  </v-card>
                 </div>
                 <div v-else class="text-center pa-6 text-medium-emphasis text-body-2">该集暂无推送记录</div>
               </template>
               <template v-else>
                 <div v-if="sortedEpisodes.length > 0">
-                  <div v-for="item in sortedEpisodes" :key="`${item.season}-${item.episode}-${item.id || item.download_at}`" class="detail-record-item">
+                  <v-card v-for="item in sortedEpisodes" :key="`${item.season}-${item.episode}-${item.id || item.download_at}`" class="glass-card hover-lift pa-3 mb-2 d-flex align-start ga-3" variant="flat">
                     <v-chip size="x-small" variant="flat" color="primary" class="flex-shrink-0" style="font-family: monospace;">
                       {{ formatEpisode(item) }}
                     </v-chip>
-                    <div class="detail-record-content">
+                    <div class="flex-1 min-width-0">
                       <div class="text-body-2 font-weight-medium">{{ item.title || '（未命名资源）' }}</div>
                       <div class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatDateTime(item.download_at) }}</div>
                     </div>
                     <v-chip v-if="item.quality_score && item.quality_score > 0" size="x-small" variant="tonal" color="brown">
                       分数 {{ item.quality_score }}
                     </v-chip>
-                  </div>
+                  </v-card>
                 </div>
                 <div v-else class="text-center pa-6 text-medium-emphasis text-body-2">暂无推送记录</div>
               </template>
             </div>
-          </div>
+          </v-card>
         </template>
       </v-card-text>
 
@@ -414,7 +414,7 @@ watch(() => props.show, (val) => {
 </template>
 
 <style scoped>
-/* 顶部信息区 */
+/* 顶部信息区 — 布局 */
 .detail-header {
   display: flex;
   gap: 20px;
@@ -440,32 +440,8 @@ watch(() => props.show, (val) => {
   flex-direction: column;
   min-width: 0;
 }
-.detail-stat-card {
-  flex: 1;
-  text-align: center;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-.detail-stat-label {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  margin-bottom: 4px;
-}
-.detail-stat-value {
-  font-size: 22px;
-  font-weight: 700;
-}
 
-/* 集数横向滑动面板 */
-.detail-episodes-panel {
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-}
+/* 集数横向滑动 — 交互逻辑 */
 .detail-episodes-scroll {
   overflow-x: auto;
   overflow-y: hidden;
@@ -540,30 +516,9 @@ watch(() => props.show, (val) => {
   font-weight: 600;
 }
 
-/* 推送记录面板 */
-.detail-records-panel {
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 12px;
-  padding: 16px;
-  min-height: 200px;
-}
+/* 推送记录列表 — 滚动容器 */
 .detail-records-list {
   max-height: 400px;
   overflow-y: auto;
-}
-.detail-record-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  background: rgba(var(--v-theme-on-surface), 0.02);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-  margin-bottom: 8px;
-}
-.detail-record-content {
-  flex: 1;
-  min-width: 0;
 }
 </style>

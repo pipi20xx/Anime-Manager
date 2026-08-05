@@ -187,7 +187,7 @@ onMounted(() => {
 
     <template v-else>
       <div v-if="results.length > 0" class="d-flex flex-column ga-3">
-        <v-card v-for="item in results" :key="item.guid" class="glass-card">
+        <v-card v-for="item in results" :key="item.guid" class="glass-card hover-lift" variant="flat">
           <v-card-text class="pa-4">
             <div class="d-flex align-start justify-space-between ga-3">
               <div class="flex-grow-1 min-width-0">

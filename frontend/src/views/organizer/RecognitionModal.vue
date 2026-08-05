@@ -219,7 +219,7 @@ watch(() => props.modelValue, (newVal) => {
 
             <!-- 策略开关 -->
             <div class="strategy-grid mb-4">
-              <div
+              <v-card
                 v-for="item in [
                   { key: 'anime_priority', title: '动漫识别优化', desc: '开启后提升动画匹配精度，过滤同名真人剧' },
                   { key: 'offline_priority', title: '本地数据中心', desc: '优先碰撞本地数据库，实现毫秒级离线匹配' },
@@ -230,14 +230,15 @@ watch(() => props.modelValue, (newVal) => {
                   { key: 'batch_enhancement', title: '合集识别增强', desc: '支持解析 01-12 等合集，自动计算集数区间' },
                 ]"
                 :key="item.key"
-                class="strategy-row"
+                class="glass-card pa-3 d-flex align-center justify-space-between"
+                variant="flat"
               >
                 <div class="strategy-info">
                   <div class="strategy-label">{{ item.title }}</div>
                   <div class="strategy-desc">{{ item.desc }}</div>
                 </div>
                 <v-switch v-model="forcedParams[item.key]" density="compact" color="primary" hide-details />
-              </div>
+              </v-card>
             </div>
 
             <!-- 强制参数 -->
@@ -310,7 +311,7 @@ watch(() => props.modelValue, (newVal) => {
               最终识别结论
             </div>
 
-            <v-card variant="outlined" class="mb-4 pa-4 recog-final-card">
+            <v-card variant="flat" class="glass-card mb-4 pa-4">
               <v-row>
                 <!-- 海报 -->
                 <v-col v-if="data.final_result?.poster_path" cols="12" sm="3" md="2" class="d-flex justify-center">
@@ -406,7 +407,7 @@ watch(() => props.modelValue, (newVal) => {
             </v-card>
 
             <!-- 重命名预览 -->
-            <div class="preview-section">
+            <v-card class="glass-card pa-3 mb-3" variant="flat">
               <div class="d-flex align-center mb-2 ga-2">
                 <v-icon size="16" color="info">mdi-folder-sync-outline</v-icon>
                 <span class="text-subtitle-2 font-weight-bold">重命名路径预览</span>
@@ -422,10 +423,10 @@ watch(() => props.modelValue, (newVal) => {
                 />
               </div>
               <div class="preview-path">{{ previewPath || (loading ? '正在计算...' : '无法生成预览') }}</div>
-            </div>
+            </v-card>
 
             <!-- 哈希结果 -->
-            <div v-if="hashResult" class="hash-section">
+            <v-card v-if="hashResult" class="glass-card pa-3 mb-3" variant="flat">
               <div class="section-title" style="color: rgb(var(--v-theme-success))">
                 <v-icon size="16" color="success">mdi-check-circle-outline</v-icon>
                 哈希已计算并入库
@@ -435,7 +436,7 @@ watch(() => props.modelValue, (newVal) => {
                 <div class="hash-row"><span class="hash-label">ED2K</span><span class="hash-value mono">{{ hashResult.ed2k }}</span></div>
                 <div class="hash-row"><span class="hash-label">ED2K链接</span><span class="hash-value mono" style="font-size: 11px">{{ hashResult.ed2k_link }}</span></div>
               </div>
-            </div>
+            </v-card>
 
             <!-- 审计日志 -->
             <v-expansion-panels v-if="data.logs?.length" class="mt-3">
@@ -483,25 +484,11 @@ watch(() => props.modelValue, (newVal) => {
   gap: 8px;
 }
 
-.strategy-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(var(--v-theme-surface), 0.6);
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-}
 
 .strategy-info { min-width: 0; }
 .strategy-label { font-size: 14px; font-weight: 600; color: rgba(var(--v-theme-on-surface), 0.87); margin-bottom: 2px; }
 .strategy-desc { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.5); line-height: 1.4; }
 
-/* 最终识别结论卡片 */
-.recog-final-card {
-  border: 1px solid rgba(var(--v-theme-primary), 0.2);
-  background: transparent !important;
-}
 .recog-poster {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -532,25 +519,12 @@ watch(() => props.modelValue, (newVal) => {
   color: rgb(var(--v-theme-warning));
 }
 
-/* 预览 */
-.preview-section {
-  background: rgba(var(--v-theme-surface), 0.5);
-  padding: 14px; border-radius: 12px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
 .preview-path {
   font-family: monospace; font-size: 13px;
   color: rgba(var(--v-theme-on-surface), 0.87);
   word-break: break-all; padding: 8px 0;
 }
 
-/* 哈希 */
-.hash-section {
-  background: rgba(var(--v-theme-surface), 0.5);
-  padding: 14px; border-radius: 12px;
-  border: 1px solid rgba(var(--v-theme-success), 0.3);
-  margin-top: 12px;
-}
 .hash-info { display: flex; flex-direction: column; gap: 4px; }
 .hash-row { display: flex; gap: 8px; align-items: baseline; }
 .hash-label { font-size: 11px; color: rgba(var(--v-theme-on-surface), 0.4); width: 60px; flex-shrink: 0; text-align: right; }
@@ -559,8 +533,7 @@ watch(() => props.modelValue, (newVal) => {
 
 /* 审计日志 */
 .audit-log-box {
-  padding: 12px; border-radius: 8px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  padding: 12px;
   font-family: monospace; font-size: 12px; line-height: 1.6;
 }
 .recog-log-line { display: flex; gap: 8px; border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04); padding: 2px 0; }

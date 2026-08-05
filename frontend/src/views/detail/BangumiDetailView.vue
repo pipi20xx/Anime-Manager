@@ -385,7 +385,7 @@ onMounted(() => {
             <v-card
               v-for="ep in (showAllEpisodes ? episodes : episodes.slice(0, 24))"
               :key="ep.id || ep.sort"
-              class="glass-card episode-item"
+              class="glass-card hover-lift episode-item"
               variant="flat"
             >
               <div class="ep-number">
@@ -469,11 +469,6 @@ onMounted(() => {
   gap: 14px;
   padding: 10px 12px;
   border-radius: 12px !important;
-  transition: border-color 0.15s, box-shadow 0.3s ease;
-}
-.episode-item:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-  border-color: rgba(var(--v-theme-primary), 0.4) !important;
 }
 
 .ep-number {
@@ -545,5 +540,13 @@ onMounted(() => {
   padding-top: 4px;
   border-top: 1px dashed rgba(var(--v-theme-on-surface), 0.08);
   margin-top: 2px;
+}
+
+/* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色 */
+:deep(.v-chip--variant-tonal.text-primary) {
+  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+}
+:deep(.v-chip--variant-tonal.text-primary .v-chip__underlay) {
+  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
 }
 </style>

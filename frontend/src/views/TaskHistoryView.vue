@@ -396,7 +396,7 @@ onUnmounted(() => {
 
     <template v-else-if="tasks.length > 0">
       <div v-for="task in tasks" :key="task.task_id" class="mb-3">
-        <v-card class="glass-card th-task-card">
+        <v-card class="glass-card hover-lift th-task-card">
           <v-card-text class="pb-0">
             <div class="d-flex align-center justify-space-between mb-2">
               <div class="d-flex align-center ga-2 flex-grow-1" style="min-width: 0">
@@ -495,9 +495,6 @@ onUnmounted(() => {
 <style scoped>
 .th-task-card {
   transition: all 0.2s ease;
-}
-.th-task-card:hover {
-  border-color: rgb(var(--v-theme-primary)) !important;
 }
 
 .th-log-container {

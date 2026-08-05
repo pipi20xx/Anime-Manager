@@ -282,7 +282,7 @@ defineExpose({ fetchSubscriptions })
 
     <v-row v-else-if="subscriptions.length > 0">
       <v-col v-for="sub in subscriptions" :key="sub.id" cols="6" sm="6" md="3" lg="3" xl="2">
-        <v-card class="glass-card sub-card" @click="openEditSub(sub)">
+        <v-card class="glass-card hover-lift sub-card" @click="openEditSub(sub)">
           <!-- 海报 -->
           <div class="sub-poster-box">
             <v-img
@@ -427,8 +427,8 @@ defineExpose({ fetchSubscriptions })
               />
             </v-col>
             <v-col cols="12" sm="3" class="d-flex align-center ga-2">
-              <v-btn size="small" variant="tonal" prepend-icon="mdi-select-all" @click="selectAll">全选</v-btn>
-              <v-btn size="small" variant="tonal" prepend-icon="mdi-select-off" @click="selectedQuickIds = []">取消全选</v-btn>
+              <v-btn variant="tonal" prepend-icon="mdi-select-all" height="40" @click="selectAll">全选</v-btn>
+              <v-btn variant="tonal" prepend-icon="mdi-select-off" height="40" @click="selectedQuickIds = []">取消全选</v-btn>
             </v-col>
           </v-row>
 
@@ -498,12 +498,7 @@ defineExpose({ fetchSubscriptions })
 <style scoped>
 .sub-card {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
-}
-.sub-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 .sub-poster-box {
   position: relative;

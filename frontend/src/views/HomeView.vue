@@ -244,7 +244,7 @@ const filteredLogs = computed(() => {
                     最终识别结论
                   </div>
 
-                  <v-card variant="outlined" class="mb-4 pa-4 recog-final-card">
+                  <v-card variant="flat" class="glass-card mb-4 pa-4">
                     <v-row>
                       <!-- 海报 -->
                       <v-col v-if="finalData.poster_path" cols="12" sm="3" md="2" class="d-flex justify-center">
@@ -360,7 +360,7 @@ const filteredLogs = computed(() => {
                   <v-row class="mb-4">
                     <!-- 本地解析元数据 -->
                     <v-col cols="12" md="6">
-                      <v-card variant="outlined" class="sub-card h-100">
+                      <v-card variant="flat" class="glass-card sub-card h-100">
                         <v-card-title class="text-subtitle-2 font-weight-bold pa-3 d-flex align-center ga-2">
                           <v-icon color="primary" size="18">mdi-server</v-icon>
                           本地解析元数据
@@ -494,7 +494,7 @@ const filteredLogs = computed(() => {
                           </div>
                         </v-card-text>
                       </v-card>
-                      <v-card v-else variant="outlined" class="sub-card h-100 d-flex align-center justify-center" min-height="120">
+                      <v-card v-else variant="flat" class="glass-card sub-card h-100 d-flex align-center justify-center" min-height="120">
                         <div class="text-center pa-4">
                           <v-icon size="32" color="medium-emphasis" class="mb-2">mdi-cloud-off-outline</v-icon>
                           <div class="text-body-2 text-medium-emphasis">未匹配到 TMDB 数据</div>
@@ -504,7 +504,7 @@ const filteredLogs = computed(() => {
                   </v-row>
 
                   <!-- ========== 规则应用日志 ========== -->
-                  <v-card v-if="parsedRuleLogs.length > 0" variant="outlined" class="mb-4">
+                  <v-card v-if="parsedRuleLogs.length > 0" variant="flat" class="glass-card mb-4">
                     <v-card-title class="text-subtitle-2 font-weight-bold pa-3 d-flex align-center ga-2">
                       <v-icon color="primary" size="18">mdi-scale-balance</v-icon>
                       规则应用日志
@@ -681,10 +681,6 @@ const filteredLogs = computed(() => {
   background: rgba(var(--v-theme-primary), 0.06);
 }
 
-/* ===== 最终识别结论卡片 ===== */
-.recog-final-card {
-  border: 1px solid rgba(var(--v-theme-primary), 0.2);
-}
 .recog-poster {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -717,11 +713,6 @@ const filteredLogs = computed(() => {
 .recog-filename {
   font-size: 11px;
   opacity: 0.7;
-}
-
-/* ===== 子卡片通用 ===== */
-.sub-card {
-  border-radius: 12px;
 }
 
 /* ===== 本地解析元数据 ===== */
@@ -891,10 +882,6 @@ const filteredLogs = computed(() => {
 
 /* ===== 审计日志 Tab (全屏) ===== */
 .audit-log-full {
-  background: rgba(var(--v-theme-on-surface), 0.02);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 8px;
-  padding: 12px;
   font-family: monospace;
   font-size: 12px;
   line-height: 1.6;
@@ -954,9 +941,7 @@ const filteredLogs = computed(() => {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(var(--v-theme-surface), 0.6);
   border-radius: 10px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.06);
   transition: all 0.2s;
 }
 .pref-item:hover {

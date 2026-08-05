@@ -642,7 +642,6 @@ onMounted(() => {
   color: rgba(var(--v-theme-on-surface), 0.7);
   line-height: 1.6;
   padding: 10px 12px;
-  background: rgba(var(--v-theme-on-surface), 0.03);
   border-radius: 8px;
   border-left: 3px solid rgb(var(--v-theme-primary));
 }
@@ -658,14 +657,20 @@ onMounted(() => {
 
 /* ── Emby 文件列表 ── */
 .ep-files {
-  background: rgba(var(--v-theme-on-surface), 0.04);
   border-radius: 6px;
   padding: 6px 8px;
 }
 
 /* ── Emby 查询中提示 ── */
 .emby-loading-hint {
-  background: rgba(var(--v-theme-primary), 0.06);
   border-radius: 8px;
+}
+
+/* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色 */
+:deep(.v-chip--variant-tonal.text-primary) {
+  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+}
+:deep(.v-chip--variant-tonal.text-primary .v-chip__underlay) {
+  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
 }
 </style>

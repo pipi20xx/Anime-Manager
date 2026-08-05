@@ -188,7 +188,7 @@ watch(() => props.show, (val) => {
 
       <v-card-text class="pa-4">
         <!-- 控制区 -->
-        <div class="fill-control-panel mb-4">
+        <v-card class="glass-card pa-3 mb-4" variant="flat">
           <div class="d-flex align-center justify-space-between mb-3">
             <v-select
               v-model="selectedIndexerId"
@@ -229,10 +229,10 @@ watch(() => props.show, (val) => {
             rounded="pill"
             :stream="isRunning"
           />
-        </div>
+        </v-card>
 
         <!-- 日志区 -->
-        <div v-if="logs.length > 0" class="fill-log-box" ref="logContainerRef">
+        <v-card v-if="logs.length > 0" class="glass-card pa-2" variant="flat" ref="logContainerRef">
           <div v-for="(log, idx) in logs" :key="idx" class="fill-log-item">
             <v-icon size="14" :color="getLogColor(log.type)" class="mr-2 flex-shrink-0">
               {{ getLogIcon(log.type) }}
@@ -248,7 +248,7 @@ watch(() => props.show, (val) => {
               ]"
             >{{ log.message }}</span>
           </div>
-        </div>
+        </v-card>
 
         <!-- 空状态 -->
         <div v-else class="text-center pa-8">
@@ -267,20 +267,6 @@ watch(() => props.show, (val) => {
 </template>
 
 <style scoped>
-.fill-control-panel {
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-.fill-log-box {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 8px;
-  background: rgba(var(--v-theme-on-surface), 0.02);
-  max-height: 400px;
-  overflow-y: auto;
-  padding: 8px;
-}
 .fill-log-item {
   display: flex;
   align-items: flex-start;
