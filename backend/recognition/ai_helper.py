@@ -59,6 +59,10 @@ class AIHelper:
 
 分析技巧:
 - 文件名中的标题可能是错误/不完整的，需要推断真实标题
+- 文件名可能使用多种括号格式: [字幕组][标题][集数_副标题][规格] 或 [字幕组] 标题 - 集数 [规格]
+- 集数可能藏在标题括号内: [12_逃避的终点] 表示 episode=12
+- 中英混合标题需拆分: "命运-奇异赝品_Fate／strange Fake" → chinese_name="命运-奇异赝品", real_title="Fate/strange Fake"
+- 全角斜杠／应转换为半角/作为TMDB标题
 - "小鲨鱼去郊游剧场版" → real_title: "Odekake Kozame", original_name: "おでかけ子ザメ", media_type: "movie"
 - "章鱼噼的原罪" 是网剧/短篇动画，media_type: "tv"
 - 剧场版、电影版 → media_type: "movie"
@@ -89,6 +93,8 @@ class AIHelper:
             {"role": "assistant", "content": '{"real_title":"Odekake Kozame","original_name":"おでかけ子ザメ","chinese_name":"小鲨鱼去郊游","alternative_titles":["Eiga Odekake Kozame"],"media_type":"movie","season":null,"episode":null,"confidence":0.85}'},
             {"role": "user", "content": "[SubGroup] 葬送的芙莉蓮 - 12 [1080p].mkv"},
             {"role": "assistant", "content": '{"real_title":"Frieren: Beyond Journey\'s End","original_name":"Sousou no Frieren","chinese_name":"葬送的芙莉莲","alternative_titles":["Frieren"],"media_type":"tv","season":1,"episode":12,"confidence":0.95}'},
+            {"role": "user", "content": "[阿特拉斯字幕组·雪原市出差所][命运-奇异赝品_Fate／strange Fake][12_逃避的终点][简繁日内封PGS][日语配音版_Japanese Dub][Web-DL Remux][1080p AVC AAC]"},
+            {"role": "assistant", "content": '{"real_title":"Fate/strange Fake","original_name":"Fate/strange Fake","chinese_name":"命运-奇异赝品","alternative_titles":["Fate strange Fake"],"media_type":"tv","season":1,"episode":12,"confidence":0.92}'},
             {"role": "user", "content": context}
         ]
 
