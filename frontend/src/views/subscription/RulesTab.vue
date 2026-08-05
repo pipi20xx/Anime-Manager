@@ -39,6 +39,7 @@ const previewLoading = ref(false)
 const showHistoryModal = ref(false)
 
 const clientNameMap = ref<Record<string, string>>({})
+const feedNameMap = ref<Record<string, string>>({})
 
 async function fetchRules() {
   loading.value = true
@@ -51,15 +52,38 @@ async function fetchRules() {
     rules.value = ruleData || []
     feeds.value = feedData || []
     clients.value = clientData || []
-    const map: Record<string, string> = {}
-    clients.value.forEach(c => { map[c.id] = c.name })
-    clientNameMap.value = map
+    const cMap: Record<string, string> = {}
+    clients.value.forEach(c => { cMap[c.id] = c.name })
+    clientNameMap.value = cMap
+    const fMap: Record<string, string> = {}
+    feeds.value.forEach((f: any) => { fMap[String(f.id)] = f.title || f.url || `Feed #${f.id}` })
+    feedNameMap.value = fMap
   } catch { showError('加载数据失败') }
   finally { loading.value = false }
 }
 
+/** 仅刷新订阅源列表，用于弹窗打开时确保数据最新 */
+async function refreshFeeds() {
+  try {
+    const feedData = await subscriptionApi.getFeeds()
+    feeds.value = feedData || []
+    const fMap: Record<string, string> = {}
+    feeds.value.forEach((f: any) => { fMap[String(f.id)] = f.title || f.url || `Feed #${f.id}` })
+    feedNameMap.value = fMap
+  } catch { /* 静默失败，保留旧数据 */ }
+}
+
+function getTargetFeedNames(targetFeeds: string | undefined | null): string {
+  if (!targetFeeds) return '全部源'
+  const ids = String(targetFeeds).split(',').filter(Boolean)
+  if (ids.length === 0) return '全部源'
+  const names = ids.map(id => feedNameMap.value[id] || `#${id}`)
+  return names.join(', ')
+}
+
 // --- CRUD ---
-function openAddRule() {
+async function openAddRule() {
+  await refreshFeeds()
   isNewRule.value = true
   ruleForm.value = {
     name: '', enabled: true, must_contain: '', must_not_contain: '',
@@ -70,7 +94,8 @@ function openAddRule() {
   showRuleModal.value = true
 }
 
-function openEditRule(rule: any) {
+async function openEditRule(rule: any) {
+  await refreshFeeds()
   isNewRule.value = false
   ruleForm.value = { ...rule }
   if (rule.target_feeds) {
@@ -169,6 +194,22 @@ defineExpose({ fetchRules })
               <span class="manage-card__info-label">路径</span>
               <span class="manage-card__info-value" :title="rule.save_path">{{ rule.save_path || '默认' }}</span>
             </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">作用范围</span>
+              <span class="manage-card__info-value" :title="getTargetFeedNames(rule.target_feeds)">{{ getTargetFeedNames(rule.target_feeds) }}</span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">分类</span>
+              <span class="manage-card__info-value" :title="rule.category">{{ rule.category || '无' }}</span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">标签</span>
+              <span class="manage-card__info-value" :title="rule.tags">{{ rule.tags || '无' }}</span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">下载方式</span>
+              <span class="manage-card__info-value">{{ rule.paused ? '添加后暂停' : '自动开始' }}</span>
+            </div>
           </div>
 
           <v-divider />
@@ -239,13 +280,8 @@ defineExpose({ fetchRules })
           <v-skeleton-loader v-if="previewLoading" type="list-item@5" />
           <template v-else-if="previewItems.length > 0">
             <v-card v-for="item in previewItems" :key="item.guid || item.link || item.title" class="glass-card hover-lift pa-3 mb-2" variant="flat">
-              <div class="d-flex align-start justify-space-between">
-                <div class="flex-grow-1 mr-2">
-                  <div class="text-body-2 font-weight-medium">{{ item.raw_title || item.title }}</div>
-                  <div v-if="item.description" class="text-caption text-medium-emphasis mt-1 text-truncate">{{ item.description }}</div>
-                </div>
-                <v-chip size="x-small" variant="tonal" color="info">匹配</v-chip>
-              </div>
+              <div class="text-body-2 font-weight-medium">{{ item.raw_title || item.title }}</div>
+              <div v-if="item.description" class="text-caption text-medium-emphasis mt-1 text-truncate">{{ item.description }}</div>
             </v-card>
           </template>
           <div v-else class="text-center pa-6 text-medium-emphasis">未匹配到任何条目</div>

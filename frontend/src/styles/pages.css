@@ -1,14 +1,30 @@
 /**
- * pages.css — 页面级纯结构
- *
- * 只放布局、间距等结构规则。
- * 所有视觉风格在 theme-acg.css 里。
- */
+* pages.css — 页面级纯结构
+*
+* 只放布局、间距等结构规则。
+* 所有视觉风格在 theme-acg.css 里。
+*/
 
 
 /* ============================================================
- * 日志终端 — 结构
- * ============================================================ */
+* 隐藏 CloudDrive2 浏览器扩展注入的元素
+* CD2 扩展会向页面中的资源链接旁注入 "重复" 徽章和右键菜单，
+* 这些元素不属于项目本身，会干扰 UI 布局，统一隐藏。
+* ============================================================ */
+
+.cd-offline-repeat,
+.cd-offline-menu,
+.cd-offline-menu * {
+display: none !important;
+visibility: hidden !important;
+opacity: 0 !important;
+pointer-events: none !important;
+}
+
+
+/* ============================================================
+* 日志终端 — 结构
+* ============================================================ */
 
 .log-terminal {
 font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;

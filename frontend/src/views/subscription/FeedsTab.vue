@@ -139,10 +139,41 @@ defineExpose({ fetchFeeds })
               <span class="manage-card__info-label">地址</span>
               <span class="manage-card__info-value" :title="feed.url">{{ feed.url }}</span>
             </div>
-            <div class="manage-card__tags">
-              <v-chip v-if="feed.for_subscription" size="x-small" variant="tonal" color="info">追剧</v-chip>
-              <v-chip v-if="feed.for_rules" size="x-small" variant="tonal" color="info">规则</v-chip>
-              <v-chip v-if="feed.anime_priority" size="x-small" variant="tonal" color="info">动漫优先</v-chip>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">全局监控</span>
+              <span class="manage-card__info-value">
+                <v-chip size="x-small" :color="feed.enabled !== false ? 'success' : 'grey'" variant="tonal">{{ feed.enabled !== false ? '已启用' : '未启用' }}</v-chip>
+              </span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">追剧订阅</span>
+              <span class="manage-card__info-value">
+                <v-chip size="x-small" :color="feed.for_subscription ? 'success' : 'grey'" variant="tonal">{{ feed.for_subscription ? '已启用' : '未启用' }}</v-chip>
+              </span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">下载规则</span>
+              <span class="manage-card__info-value">
+                <v-chip size="x-small" :color="feed.for_rules ? 'success' : 'grey'" variant="tonal">{{ feed.for_rules ? '已启用' : '未启用' }}</v-chip>
+              </span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">动漫优先</span>
+              <span class="manage-card__info-value">
+                <v-chip size="x-small" :color="feed.anime_priority ? 'success' : 'grey'" variant="tonal">{{ feed.anime_priority ? '已启用' : '未启用' }}</v-chip>
+              </span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">Emby 检查</span>
+              <span class="manage-card__info-value">
+                <v-chip size="x-small" :color="feed.check_emby_exists ? 'success' : 'grey'" variant="tonal">{{ feed.check_emby_exists ? '已启用' : '未启用' }}</v-chip>
+              </span>
+            </div>
+            <div class="manage-card__info">
+              <span class="manage-card__info-label">副标题合集提取</span>
+              <span class="manage-card__info-value">
+                <v-chip size="x-small" :color="feed.batch_enhance ? 'success' : 'grey'" variant="tonal">{{ feed.batch_enhance ? '已启用' : '未启用' }}</v-chip>
+              </span>
             </div>
           </div>
 
