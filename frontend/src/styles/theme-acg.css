@@ -122,11 +122,11 @@ html.glass-theme-acg .v-navigation-drawer .v-list::-webkit-scrollbar-thumb:hover
 /* 亮色 */
 html.glass-theme-acg .v-theme--light .v-navigation-drawer .v-list-item--active .v-list-item-title {
   font-weight: 600;
-  color: #a855f7 !important;
+  color: #1976d2 !important;
 }
 
 html.glass-theme-acg .v-theme--light .v-navigation-drawer .v-list-item--active .v-icon {
-  color: #a855f7 !important;
+  color: #1976d2 !important;
 }
 
 /* 暗色 */
@@ -136,16 +136,16 @@ html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item {
 }
 
 html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active {
-  box-shadow: inset 0 0 0 1px rgba(78, 205, 196, 0.2) !important;
+  box-shadow: inset 0 0 0 1px rgba(66, 165, 245, 0.2) !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active .v-list-item-title {
   font-weight: 600;
-  color: #4ecdc4 !important;
+  color: #42a5f5 !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active .v-icon {
-  color: #4ecdc4 !important;
+  color: #42a5f5 !important;
 }
 
 /* 激活项指示条 */
@@ -677,15 +677,15 @@ html.glass-theme-acg .v-tab__slider {
 
 /* 亮色 tab */
 html.glass-theme-acg .v-theme--light .v-tab {
-  background: rgba(255, 255, 255, 0.30) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
 html.glass-theme-acg .v-theme--light .v-tab--selected {
-  color: #7c3aed !important;
+  color: #1976d2 !important;
   font-weight: 600 !important;
 }
 
@@ -694,20 +694,20 @@ html.glass-theme-acg .v-theme--light .v-tab:not(.v-tab--selected) {
 }
 
 html.glass-theme-acg .v-theme--light .v-tab:not(.v-tab--selected):hover {
-  color: rgba(124, 58, 237, 0.7) !important;
+  color: rgba(25, 118, 210, 0.7) !important;
 }
 
 /* 暗色 tab */
 html.glass-theme-acg .v-theme--dark .v-tab {
-  background: rgba(30, 30, 60, 0.38) !important;
+  background: rgba(30, 30, 60, 0.58) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10) !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-tab--selected {
-  color: #4ecdc4 !important;
+  color: #42a5f5 !important;
   font-weight: 600 !important;
 }
 
@@ -716,7 +716,7 @@ html.glass-theme-acg .v-theme--dark .v-tab:not(.v-tab--selected) {
 }
 
 html.glass-theme-acg .v-theme--dark .v-tab:not(.v-tab--selected):hover {
-  color: rgba(78, 205, 196, 0.7) !important;
+  color: rgba(66, 165, 245, 0.7) !important;
 }
 
 /* 筛选 chip */
@@ -744,7 +744,7 @@ html.glass-theme-acg .v-theme--light .filter-bar .v-chip {
 
 html.glass-theme-acg .v-theme--light .filter-bar .v-chip--variant-flat,
 html.glass-theme-acg .v-theme--light .filter-bar .v-chip.bg-primary {
-  color: #7c3aed !important;
+  color: #1976d2 !important;
   font-weight: 600 !important;
 }
 
@@ -775,61 +775,61 @@ html.glass-theme-acg .v-theme--dark .filter-bar .v-chip--variant-outlined {
 
 /* flat */
 html.glass-theme-acg .v-theme--light .v-btn--variant-flat {
-  background: rgba(255, 255, 255, 0.30) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  color: #7c3aed !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  color: #1976d2 !important;
   font-weight: 600;
   transition: all 0.3s ease !important;
 }
 
 html.glass-theme-acg .v-theme--light .v-btn--variant-flat:hover {
-  background: rgba(255, 255, 255, 0.40) !important;
+  background: rgba(255, 255, 255, 0.68) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-btn--variant-flat {
-  background: rgba(30, 30, 60, 0.38) !important;
+  background: rgba(30, 30, 60, 0.58) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: white !important;
   font-weight: 600;
   transition: all 0.3s ease !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-btn--variant-flat:hover {
-  background: rgba(30, 30, 60, 0.48) !important;
+  background: rgba(30, 30, 60, 0.70) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* tonal */
 html.glass-theme-acg .v-theme--light .v-btn--variant-tonal {
-  background: rgba(255, 255, 255, 0.30) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
   font-weight: 500;
   transition: all 0.3s ease !important;
 }
 
 html.glass-theme-acg .v-theme--light .v-btn--variant-tonal:hover {
-  background: rgba(255, 255, 255, 0.40) !important;
+  background: rgba(255, 255, 255, 0.68) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal {
-  background: rgba(30, 30, 60, 0.38) !important;
+  background: rgba(30, 30, 60, 0.58) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   font-weight: 500;
   transition: all 0.3s ease !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal:hover {
-  background: rgba(30, 30, 60, 0.48) !important;
+  background: rgba(30, 30, 60, 0.70) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -860,23 +860,27 @@ html.glass-theme-acg .v-theme--dark .v-btn--variant-outlined:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* flat + primary */
+/* flat + primary — 注意：Vuetify flat 按钮的 class 是 bg-primary，不是 v-btn--bg-primary */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.bg-primary,
 html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.v-btn--bg-primary,
 html.glass-theme-acg .v-theme--dark .v-btn--variant-flat.text-primary {
-  background: rgba(30, 30, 60, 0.38) !important;
+  background: rgba(30, 30, 60, 0.58) !important;
+  background-color: rgba(30, 30, 60, 0.58) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #42a5f5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+html.glass-theme-acg .v-theme--light .v-btn--variant-flat.bg-primary,
 html.glass-theme-acg .v-theme--light .v-btn--variant-flat.v-btn--bg-primary,
 html.glass-theme-acg .v-theme--light .v-btn--variant-flat.text-primary {
-  background: rgba(255, 255, 255, 0.30) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  background-color: rgba(255, 255, 255, 0.55) !important;
   backdrop-filter: blur(10px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
-  color: #7c3aed !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #1976d2 !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
 }
 
 /* flat + success */
@@ -930,13 +934,15 @@ html.glass-theme-acg .v-theme--light .v-btn--variant-flat.v-btn--bg-error {
   border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
-/* tonal + info */
-html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay {
-  background: rgba(66, 165, 245, 0.1) !important;
+/* tonal + info — 提高 overlay 不透明度 */
+html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay,
+html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal.text-info .v-btn__overlay {
+  background: rgba(66, 165, 245, 0.22) !important;
 }
 
-html.glass-theme-acg .v-theme--light .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay {
-  background: rgba(21, 101, 192, 0.08) !important;
+html.glass-theme-acg .v-theme--light .v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay,
+html.glass-theme-acg .v-theme--light .v-btn--variant-tonal.text-info .v-btn__overlay {
+  background: rgba(21, 101, 192, 0.18) !important;
 }
 
 /* 图标按钮 */
@@ -1010,9 +1016,9 @@ html.glass-theme-acg .v-theme--dark .v-btn-toggle .v-btn {
 }
 
 html.glass-theme-acg .v-theme--dark .v-btn-toggle .v-btn--active {
-  background: rgba(168, 85, 247, 0.3) !important;
-  color: #a855f7 !important;
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.15) !important;
+  background: rgba(66, 165, 245, 0.3) !important;
+  color: #42a5f5 !important;
+  box-shadow: 0 0 10px rgba(66, 165, 245, 0.15) !important;
 }
 
 html.glass-theme-acg .v-theme--light .v-btn-toggle {
@@ -1092,6 +1098,76 @@ html.glass-theme-acg .v-theme--light .v-chip--variant-tonal {
   -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
 }
 
+/* 详情页内 chip 改为黑色文字 + 白色描边（仅限 TMDB详情/BGM详情/人物详情） */
+html.glass-theme-acg .tmdb-detail-view .v-chip,
+html.glass-theme-acg .tmdb-detail-view .v-chip .v-chip__content,
+html.glass-theme-acg .bangumi-detail-view .v-chip,
+html.glass-theme-acg .bangumi-detail-view .v-chip .v-chip__content,
+html.glass-theme-acg .person-detail-view .v-chip,
+html.glass-theme-acg .person-detail-view .v-chip .v-chip__content {
+  color: #1a1a1a !important;
+  font-weight: 600 !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* 详情页内按钮改为黑色文字 + 白色边框（仅限 TMDB详情/BGM详情） */
+html.glass-theme-acg .tmdb-detail-view .v-btn,
+html.glass-theme-acg .bangumi-detail-view .v-btn {
+  color: #1a1a1a !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+html.glass-theme-acg .tmdb-detail-view .v-btn .v-icon,
+html.glass-theme-acg .bangumi-detail-view .v-btn .v-icon {
+  color: #1a1a1a !important;
+}
+
+/* 覆盖详情页内 bg-primary / text-primary 按钮的全局蓝色 */
+html.glass-theme-acg .tmdb-detail-view .v-btn--variant-flat.bg-primary,
+html.glass-theme-acg .tmdb-detail-view .v-btn--variant-flat.v-btn--bg-primary,
+html.glass-theme-acg .tmdb-detail-view .v-btn--variant-flat.text-primary,
+html.glass-theme-acg .bangumi-detail-view .v-btn--variant-flat.bg-primary,
+html.glass-theme-acg .bangumi-detail-view .v-btn--variant-flat.v-btn--bg-primary,
+html.glass-theme-acg .bangumi-detail-view .v-btn--variant-flat.text-primary {
+  color: #1a1a1a !important;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+}
+
+html.glass-theme-acg .tmdb-detail-view .v-btn--variant-tonal.text-info,
+html.glass-theme-acg .tmdb-detail-view .v-btn--variant-tonal.v-btn--bg-info,
+html.glass-theme-acg .bangumi-detail-view .v-btn--variant-tonal.text-info,
+html.glass-theme-acg .bangumi-detail-view .v-btn--variant-tonal.v-btn--bg-info {
+  color: #1a1a1a !important;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+}
+
+/* 追剧日历日期选择器 + 季度番剧表年份下拉 — 黑色文字 + 白色边框 */
+html.glass-theme-acg .calendar-view .v-field,
+html.glass-theme-acg .seasonal-tab .v-field {
+  color: #1a1a1a !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+}
+
+html.glass-theme-acg .calendar-view .v-field .v-field__input,
+html.glass-theme-acg .calendar-view .v-field .v-label,
+html.glass-theme-acg .seasonal-tab .v-field .v-field__input,
+html.glass-theme-acg .seasonal-tab .v-field .v-label {
+  color: #1a1a1a !important;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+}
+
+html.glass-theme-acg .calendar-view .v-field .v-icon,
+html.glass-theme-acg .seasonal-tab .v-field .v-icon {
+  color: #1a1a1a !important;
+}
+
 /* SnackBar — 通知框玻璃主题化 */
 html.glass-theme-acg .v-theme--light .v-snackbar__wrapper {
   background: rgba(255, 255, 255, 0.50) !important;
@@ -1165,51 +1241,34 @@ html.glass-theme-acg .v-theme--dark .v-progress-linear__determinate {
   box-shadow: 0 0 12px rgba(78, 205, 196, 0.4);
 }
 
-/* Switch */
-html.glass-theme-acg .v-theme--light .v-switch .v-switch__track {
+/* Switch — 参照液态玻璃主题的极简风格 */
+html.glass-theme-acg .v-switch .v-switch__track {
   border-radius: 999px !important;
-  background: rgba(0, 0, 0, 0.12) !important;
   opacity: 1 !important;
 }
 
-html.glass-theme-acg .v-theme--light .v-switch .v-switch__thumb {
-  background: #fff !important;
-  border: 2px solid rgba(0, 0, 0, 0.18) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+html.glass-theme-acg .v-theme--light .v-switch .v-switch__track {
+  background: rgba(120, 130, 145, 0.45) !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-switch .v-switch__track {
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  opacity: 1 !important;
+  background: rgba(150, 158, 172, 0.35) !important;
 }
 
-html.glass-theme-acg .v-theme--dark .v-switch .v-switch__thumb {
-  background: rgba(255, 255, 255, 0.7) !important;
-  border: 2px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
-}
-
-html.glass-theme-acg .v-theme--light .v-switch .v-selection-control--dirty .v-switch__track {
-  background: rgb(var(--v-theme-primary)) !important;
-  opacity: 1 !important;
-}
-
-html.glass-theme-acg .v-theme--light .v-switch .v-selection-control--dirty .v-switch__thumb {
+html.glass-theme-acg .v-switch .v-switch__thumb {
   background: #fff !important;
-  border: 2px solid rgba(147, 51, 234, 0.3) !important;
-  box-shadow: 0 0 8px rgba(147, 51, 234, 0.5) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 开启态 */
+html.glass-theme-acg .v-theme--light .v-switch .v-selection-control--dirty .v-switch__track {
+  background: #a855f7 !important;
+  opacity: 1 !important;
 }
 
 html.glass-theme-acg .v-theme--dark .v-switch .v-selection-control--dirty .v-switch__track {
-  background: rgb(var(--v-theme-primary)) !important;
+  background: #4ecdc4 !important;
   opacity: 1 !important;
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.3) !important;
-}
-
-html.glass-theme-acg .v-theme--dark .v-switch .v-selection-control--dirty .v-switch__thumb {
-  background: #fff !important;
-  box-shadow: 0 0 10px rgba(78, 205, 196, 0.5) !important;
 }
 
 /* Tooltip */
@@ -1290,12 +1349,12 @@ html.glass-theme-acg .v-theme--dark .login-glass-panel .v-field--variant-outline
 }
 
 html.glass-theme-acg .v-theme--light .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(168, 85, 247, 0.75)) !important;
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.85), rgba(66, 165, 245, 0.75)) !important;
   color: #fff !important;
 }
 
 html.glass-theme-acg .v-theme--dark .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(78, 205, 196, 0.35)) !important;
+  background: linear-gradient(135deg, rgba(66, 165, 245, 0.6), rgba(78, 205, 196, 0.35)) !important;
   color: #fff !important;
 }
 
@@ -1415,37 +1474,37 @@ html.glass-theme-acg .v-theme--light .hover-lift:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 12px rgba(168, 85, 247, 0.08) !important;
 }
 
-/* 页面标题 */
+/* 页面标题 — 黑色文字 + 白色描边 */
 html.glass-theme-acg .page-title {
-  --page-title-color: #a855f7;
+  --page-title-color: #1a1a1a;
   color: var(--page-title-color) !important;
   paint-order: stroke fill;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6);
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.85);
   text-shadow:
-    0 0 4px rgba(255, 255, 255, 0.5),
-    0 0 10px rgba(255, 255, 255, 0.3);
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 8px rgba(255, 255, 255, 0.4);
 }
 
 html.glass-theme-acg .page-subtitle {
-  --page-subtitle-color: #a855f7;
+  --page-subtitle-color: #1a1a1a;
   color: var(--page-subtitle-color) !important;
   font-weight: 500;
   letter-spacing: 0.01em;
   paint-order: stroke fill;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.8);
   text-shadow:
-    0 0 3px rgba(255, 255, 255, 0.45),
-    0 0 8px rgba(255, 255, 255, 0.25);
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 6px rgba(255, 255, 255, 0.35);
 }
 
 html.glass-theme-acg .section-title {
-  --section-title-color: #a855f7;
+  --section-title-color: #1a1a1a;
   color: var(--section-title-color) !important;
   paint-order: stroke fill;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.8);
   text-shadow:
-    0 0 3px rgba(255, 255, 255, 0.45),
-    0 0 8px rgba(255, 255, 255, 0.25);
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 6px rgba(255, 255, 255, 0.35);
 }
 
 
@@ -1477,15 +1536,6 @@ html.glass-theme-acg .v-theme--light .v-radio .v-selection-control .v-icon {
 html.glass-theme-acg .v-theme--dark .v-checkbox .v-selection-control .v-icon,
 html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control .v-icon {
   color: rgba(150, 158, 172, 0.55) !important;
-}
-
-/* Switch 关闭态轨道要够深，壁纸上才看得见 */
-html.glass-theme-acg .v-theme--light .v-switch:not(.v-selection-control--dirty) .v-switch__track {
-  background: rgba(120, 130, 145, 0.45) !important;
-}
-
-html.glass-theme-acg .v-theme--dark .v-switch:not(.v-selection-control--dirty) .v-switch__track {
-  background: rgba(150, 158, 172, 0.35) !important;
 }
 
 /* 修复5/6：标签/Alert/芯片 — 用 color-mix 保留类型色相的半透明 */
@@ -1578,8 +1628,8 @@ html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control--dirty .v-icon
 
 /* 亮色 BtnToggle active */
 html.glass-theme-acg .v-theme--light .v-btn-toggle .v-btn--active {
-  background: rgba(168, 85, 247, 0.3) !important;
-  color: #7c3aed !important;
+  background: rgba(25, 118, 210, 0.3) !important;
+  color: #1976d2 !important;
 }
 
 /* 亮色 Slider track */

@@ -393,9 +393,13 @@ onMounted(() => {
             </div>
 
             <!-- ID 信息 + 外部链接 -->
-            <div class="mt-3 d-flex ga-4 flex-wrap align-center text-caption">
-              <span><span class="text-medium-emphasis">TMDB ID:</span> <span class="font-weight-medium cursor-pointer" style="color: rgb(var(--v-theme-primary))" @click="openExternal">{{ detail.id }}</span></span>
-              <span v-if="detail.imdb_id"><span class="text-medium-emphasis">IMDb ID:</span> <span class="font-weight-medium cursor-pointer" style="color: rgb(var(--v-theme-primary))" @click="openImdb(detail.imdb_id)">{{ detail.imdb_id }}</span></span>
+            <div class="mt-3 d-flex ga-2 flex-wrap align-center">
+              <v-chip size="small" variant="tonal" color="info">
+                <span class="cursor-pointer" @click="openExternal">TMDB ID: {{ detail.id }}</span>
+              </v-chip>
+              <v-chip v-if="detail.imdb_id" size="small" variant="tonal" color="info">
+                <span class="cursor-pointer" @click="openImdb(detail.imdb_id)">IMDb ID: {{ detail.imdb_id }}</span>
+              </v-chip>
             </div>
 
             <!-- 操作按钮 -->

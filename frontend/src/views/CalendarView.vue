@@ -379,7 +379,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-container fluid class="pa-4 pa-md-6">
+  <v-container fluid class="pa-4 pa-md-6 calendar-view">
     <!-- 页面头部 -->
     <div class="app-page-header mb-6 d-flex align-center justify-space-between">
       <div>

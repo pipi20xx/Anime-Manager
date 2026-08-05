@@ -240,10 +240,9 @@ onMounted(() => {
               <v-chip v-if="detail.vote_average" size="small" variant="tonal" color="info">
                 ⭐ {{ detail.vote_average.toFixed(1) }}
               </v-chip>
-              <span class="text-caption text-medium-emphasis d-flex align-center ml-2">
-                Bangumi ID
-                <span class="text-primary cursor-pointer ml-1 text-decoration-underline" @click="openExternal">{{ bangumiId }}</span>
-              </span>
+              <v-chip size="small" variant="tonal" color="info">
+                <span class="cursor-pointer" @click="openExternal">Bangumi ID: {{ bangumiId }}</span>
+              </v-chip>
             </v-chip-group>
 
             <!-- 评分分布 -->
