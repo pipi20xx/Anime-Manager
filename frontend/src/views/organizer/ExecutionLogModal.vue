@@ -182,7 +182,7 @@ watch(() => props.logs?.length, () => {
             <v-icon size="40" color="primary" class="mb-2">mdi-check-circle-outline</v-icon>
             <div class="text-body-2">没有需要处理的文件</div>
           </div>
-        </div>
+        </v-card>
       </v-card-text>
 
       <!-- 任务历史模式 -->

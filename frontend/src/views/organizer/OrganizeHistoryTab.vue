@@ -313,5 +313,3 @@ defineExpose({ fetchHistory })
     <ExecutionLogModal v-model="showLogModal" :task-id="logTaskId" />
   </div>
 </template>
-
-</script>

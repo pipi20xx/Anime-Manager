@@ -350,5 +350,3 @@ async function handleClearHistory() {
     </v-card>
   </v-dialog>
 </template>
-
-</script>
