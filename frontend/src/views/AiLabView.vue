@@ -28,6 +28,21 @@ const activeTab = ref('chat')
 const configLoading = ref(false)
 const saveLoading = ref(false)
 
+// --- AI 介入测试 ---
+const fallbackFilename = ref('')
+const fallbackCurrentTitle = ref('')
+const fallbackCurrentEpisode = ref<number | null>(null)
+const fallbackLoading = ref(false)
+const fallbackResult = ref<any>(null)
+
+const fallbackExamples = [
+  '[LoliHouse] Spy x Family - 13 [1080p].mkv',
+  '[mirufans] 小鲨鱼去郊游剧场版 都市的朋友 [1080p].mkv',
+  '[SubGroup] 葬送的芙莉蓮 - 12 [1080p].mkv',
+  '[ANi] 無職轉生～到了異世界就拿出真本事～II - 05 [1080p][Bilibili].mkv',
+  '[VCB-Studio] 鬼滅の刃 / Kimetsu no Yaiba [01][1080p][x265 10bit FLAC].mkv',
+]
+
 // --- 认证头 ---
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
@@ -459,6 +474,45 @@ function getEventLabel(event: ToolCallEvent): string {
   }
 }
 
+// --- AI 介入测试 ---
+async function runFallbackTest() {
+  if (!fallbackFilename.value.trim() || fallbackLoading.value) return
+  fallbackLoading.value = true
+  fallbackResult.value = null
+  try {
+    const body: any = { filename: fallbackFilename.value.trim() }
+    if (fallbackCurrentTitle.value.trim()) body.current_title = fallbackCurrentTitle.value.trim()
+    if (fallbackCurrentEpisode.value) body.current_episode = fallbackCurrentEpisode.value
+    const data = await apiFetch<any>('/api/ai/fallback-test', { method: 'POST', body })
+    fallbackResult.value = data
+    if (data.status === 'success') {
+      success('AI 推断成功')
+    }
+  } catch (e: any) {
+    fallbackResult.value = { status: 'error', message: e?.message || '请求失败' }
+  } finally {
+    fallbackLoading.value = false
+  }
+}
+
+function getConfidenceColor(conf: number): string {
+  if (conf >= 0.8) return 'success'
+  if (conf >= 0.5) return 'warning'
+  return 'error'
+}
+
+function getMediaTypeIcon(type?: string): string {
+  if (type === 'movie') return 'mdi-movie'
+  if (type === 'tv') return 'mdi-television'
+  return 'mdi-help-circle-outline'
+}
+
+function getMediaTypeLabel(type?: string): string {
+  if (type === 'movie') return '电影 / 剧场版'
+  if (type === 'tv') return '剧集 / 番剧'
+  return '未知'
+}
+
 onMounted(() => {
   fetchConfig()
   fetchTelegramConfig()
@@ -505,6 +559,10 @@ onMounted(() => {
         <v-tab value="config">
           <v-icon start size="18">mdi-cog-outline</v-icon>
           助手配置
+        </v-tab>
+        <v-tab value="fallback-test">
+          <v-icon start size="18">mdi-robot-excited-outline</v-icon>
+          AI 介入测试
         </v-tab>
         <v-tab value="telegram">
           <v-icon start size="18">mdi-send-circle-outline</v-icon>
@@ -841,6 +899,288 @@ onMounted(() => {
         </v-card>
       </v-window-item>
 
+      <!-- AI 介入测试 -->
+      <v-window-item value="fallback-test">
+        <v-card class="glass-card mb-4">
+          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
+            <v-icon color="primary" size="20">mdi-robot-excited-outline</v-icon>
+            <span class="text-subtitle-1 font-weight-bold">AI 智能介入测试</span>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-4">
+            <div class="text-body-2 text-medium-emphasis mb-4">
+              输入文件名，让 AI 推断真实标题。此功能模拟识别失败后 AI 介入猜测标题的行为，仅测试 AI 推断能力，不涉及 TMDB/Bangumi 搜索。
+            </div>
+
+            <!-- 输入区 -->
+            <v-text-field
+              v-model="fallbackFilename"
+              placeholder="输入文件名，如 [LoliHouse] Spy x Family - 13 [1080p].mkv"
+              density="comfortable"
+              variant="outlined"
+              hide-details
+              class="mb-3"
+              :loading="fallbackLoading"
+              :disabled="fallbackLoading"
+              prepend-inner-icon="mdi-file-search-outline"
+              @keydown.enter="runFallbackTest"
+            />
+
+            <!-- 高级参数 -->
+            <v-expansion-panels class="mb-3">
+              <v-expansion-panel title="高级参数（可选）">
+                <v-expansion-panel-text>
+                  <v-text-field
+                    v-model="fallbackCurrentTitle"
+                    placeholder="当前解析出的标题（可选，辅助 AI 判断）"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    class="mb-3"
+                  />
+                  <v-text-field
+                    v-model.number="fallbackCurrentEpisode"
+                    placeholder="当前解析出的集数（可选）"
+                    type="number"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                  />
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+
+            <!-- 示例 -->
+            <div class="d-flex align-center flex-wrap ga-2 mb-4">
+              <span class="text-caption text-medium-emphasis">示例：</span>
+              <v-chip
+                v-for="(ex, i) in fallbackExamples"
+                :key="i"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+                @click="fallbackFilename = ex"
+                style="cursor: pointer"
+              >
+                {{ ex.length > 30 ? ex.slice(0, 30) + '...' : ex }}
+              </v-chip>
+            </div>
+
+            <!-- 测试按钮 -->
+            <div class="d-flex ga-2 mb-4">
+              <v-btn
+                color="primary"
+                variant="flat"
+                prepend-icon="mdi-robot"
+                :loading="fallbackLoading"
+                :disabled="!fallbackFilename.trim()"
+                @click="runFallbackTest"
+              >
+                发送给 AI
+              </v-btn>
+              <v-btn
+                variant="tonal"
+                prepend-icon="mdi-eraser"
+                :disabled="fallbackLoading"
+                @click="fallbackFilename = ''; fallbackCurrentTitle = ''; fallbackCurrentEpisode = null; fallbackResult = null"
+              >
+                清空
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- 结果展示 -->
+        <v-progress-linear v-if="fallbackLoading" indeterminate color="primary" class="mb-4" />
+
+        <v-card v-if="fallbackResult" class="glass-card">
+          <v-card-title class="pa-4 pb-2 d-flex align-center justify-space-between">
+            <div class="d-flex align-center ga-2">
+              <v-icon
+                :color="fallbackResult.status === 'success' ? 'success' : 'error'"
+                size="24"
+              >
+                {{ fallbackResult.status === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+              </v-icon>
+              <span class="text-subtitle-1 font-weight-bold">
+                {{ fallbackResult.status === 'success' ? 'AI 推断结果' : '测试失败' }}
+              </span>
+            </div>
+            <v-chip v-if="fallbackResult.elapsed != null" size="small" variant="tonal" color="info">
+              <v-icon start size="14">mdi-timer-outline</v-icon>
+              {{ fallbackResult.elapsed }}s
+            </v-chip>
+          </v-card-title>
+          <v-divider />
+
+          <!-- 成功结果 -->
+          <v-card-text v-if="fallbackResult.status === 'success'" class="pa-4">
+            <!-- 核心信息卡片 -->
+            <v-row class="mb-4">
+              <v-col cols="12" sm="6" md="4">
+                <div class="info-block">
+                  <div class="info-label">🎯 真实标题</div>
+                  <div class="info-value">{{ fallbackResult.result?.real_title || '-' }}</div>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="info-block">
+                  <div class="info-label">📝 原名</div>
+                  <div class="info-value">{{ fallbackResult.result?.original_name || '-' }}</div>
+                </div>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <div class="info-block">
+                  <div class="info-label">🇨🇳 中文名</div>
+                  <div class="info-value">{{ fallbackResult.result?.chinese_name || '-' }}</div>
+                </div>
+              </v-col>
+            </v-row>
+
+            <!-- 媒体类型 & 置信度 & 季集信息 -->
+            <v-row class="mb-4">
+              <v-col cols="6" sm="3">
+                <div class="d-flex align-center ga-2">
+                  <v-icon size="20" color="primary">
+                    {{ getMediaTypeIcon(fallbackResult.result?.media_type) }}
+                  </v-icon>
+                  <div>
+                    <div class="text-caption text-medium-emphasis">媒体类型</div>
+                    <div class="text-body-2 font-weight-medium">
+                      {{ getMediaTypeLabel(fallbackResult.result?.media_type) }}
+                    </div>
+                  </div>
+                </div>
+              </v-col>
+              <v-col cols="6" sm="3">
+                <div class="d-flex align-center ga-2">
+                  <v-icon size="20" color="primary">mdi-numeric</v-icon>
+                  <div>
+                    <div class="text-caption text-medium-emphasis">季号</div>
+                    <div class="text-body-2 font-weight-medium">
+                      {{ fallbackResult.result?.season != null ? 'S' + fallbackResult.result.season : '-' }}
+                    </div>
+                  </div>
+                </div>
+              </v-col>
+              <v-col cols="6" sm="3">
+                <div class="d-flex align-center ga-2">
+                  <v-icon size="20" color="primary">mdi-play-box-outline</v-icon>
+                  <div>
+                    <div class="text-caption text-medium-emphasis">集数</div>
+                    <div class="text-body-2 font-weight-medium">
+                      {{ fallbackResult.result?.episode != null ? 'E' + fallbackResult.result.episode : '-' }}
+                    </div>
+                  </div>
+                </div>
+              </v-col>
+              <v-col cols="6" sm="3">
+                <div class="d-flex align-center ga-2">
+                  <v-icon size="20" :color="getConfidenceColor(fallbackResult.result?.confidence || 0)">
+                    mdi-gauge
+                  </v-icon>
+                  <div>
+                    <div class="text-caption text-medium-emphasis">置信度</div>
+                    <v-chip
+                      size="x-small"
+                      :color="getConfidenceColor(fallbackResult.result?.confidence || 0)"
+                      variant="tonal"
+                    >
+                      {{ ((fallbackResult.result?.confidence || 0) * 100).toFixed(0) }}%
+                    </v-chip>
+                  </div>
+                </div>
+              </v-col>
+            </v-row>
+
+            <!-- 备选标题 -->
+            <div v-if="fallbackResult.result?.alternative_titles?.length" class="mb-4">
+              <div class="text-caption text-medium-emphasis mb-2">📋 备选标题</div>
+              <div class="d-flex flex-wrap ga-2">
+                <v-chip
+                  v-for="(alt, i) in fallbackResult.result.alternative_titles"
+                  :key="i"
+                  size="small"
+                  variant="tonal"
+                  color="info"
+                >
+                  {{ alt }}
+                </v-chip>
+              </div>
+            </div>
+
+            <!-- 搜索变体预览 -->
+            <div class="mb-4">
+              <div class="text-caption text-medium-emphasis mb-2">🔍 将用于搜索的标题顺序</div>
+              <div class="d-flex flex-column ga-1">
+                <div
+                  v-for="(title, i) in [
+                    fallbackResult.result?.original_name,
+                    fallbackResult.result?.chinese_name,
+                    fallbackResult.result?.real_title,
+                    ...(fallbackResult.result?.alternative_titles || [])
+                  ].filter(Boolean).filter((v, idx, arr) => arr.indexOf(v) === idx)"
+                  :key="i"
+                  class="d-flex align-center ga-2 pa-2 rounded"
+                  style="background: rgba(var(--v-theme-surface-variant), 0.15)"
+                >
+                  <v-chip size="x-small" variant="flat" color="primary">{{ i + 1 }}</v-chip>
+                  <span class="text-body-2 font-mono">{{ title }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 原始 JSON -->
+            <details>
+              <summary class="text-caption text-primary cursor-pointer mb-2">查看原始 JSON 响应</summary>
+              <pre class="pa-3 rounded text-caption" style="background: rgba(0,0,0,0.06); overflow-x: auto; max-height: 300px;">{{ JSON.stringify(fallbackResult.result, null, 2) }}</pre>
+            </details>
+          </v-card-text>
+
+          <!-- 错误信息 -->
+          <v-card-text v-else class="pa-4">
+            <v-alert type="error" variant="tonal" class="mb-3">
+              {{ fallbackResult.message || '未知错误' }}
+            </v-alert>
+
+            <!-- 调试信息 -->
+            <div v-if="fallbackResult.debug" class="mt-3">
+              <div class="text-caption text-medium-emphasis mb-2">🔧 调试信息</div>
+              <div class="d-flex flex-column ga-2">
+                <div class="d-flex align-center ga-2">
+                  <span class="text-body-2 text-medium-emphasis" style="min-width: 120px">AI 可用性</span>
+                  <v-chip size="x-small" :color="fallbackResult.debug.is_available ? 'success' : 'error'" variant="tonal">
+                    {{ fallbackResult.debug.is_available ? '✅ 可用' : '❌ 不可用' }}
+                  </v-chip>
+                </div>
+                <div class="d-flex align-center ga-2">
+                  <span class="text-body-2 text-medium-emphasis" style="min-width: 120px">介入开关</span>
+                  <v-chip size="x-small" :color="fallbackResult.debug.is_fallback_enabled ? 'success' : 'default'" variant="tonal">
+                    {{ fallbackResult.debug.is_fallback_enabled ? '已开启' : '未开启' }}
+                  </v-chip>
+                </div>
+                <div class="d-flex align-center ga-2">
+                  <span class="text-body-2 text-medium-emphasis" style="min-width: 120px">模型</span>
+                  <code class="text-caption">{{ fallbackResult.debug.model || '-' }}</code>
+                </div>
+                <div class="d-flex align-center ga-2">
+                  <span class="text-body-2 text-medium-emphasis" style="min-width: 120px">API 地址</span>
+                  <code class="text-caption">{{ fallbackResult.debug.base_url || '-' }}</code>
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- 空状态 -->
+        <v-card v-if="!fallbackResult && !fallbackLoading" class="glass-card">
+          <v-card-text class="pa-8 text-center">
+            <v-icon size="48" color="primary" class="mb-3">mdi-robot-outline</v-icon>
+            <div class="text-body-1 text-medium-emphasis">输入文件名后点击「发送给 AI」开始测试</div>
+          </v-card-text>
+        </v-card>
+      </v-window-item>
+
       <!-- Telegram Bot -->
       <v-window-item value="telegram">
         <v-card class="glass-card">
@@ -1030,6 +1370,34 @@ onMounted(() => {
 /* 技能 Markdown */
 .skill-markdown {
   font-size: 13px;
+}
+
+/* AI 介入测试 - 信息块 */
+.info-block {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-surface-variant), 0.15);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.info-label {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.font-mono {
+  font-family: monospace;
 }
 
 .skill-markdown :deep(h1),

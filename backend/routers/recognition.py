@@ -15,6 +15,11 @@ class AiTestRequest(BaseModel):
     custom_regex: Optional[str] = None
     group_index: Optional[int] = 1
 
+class AiFallbackTestRequest(BaseModel):
+    filename: str
+    current_title: Optional[str] = None
+    current_episode: Optional[int] = None
+
 class RecognizeRequest(BaseModel):
     filename: str
     force_filename: bool = False
@@ -188,6 +193,62 @@ async def test_ai_parsing(request: AiTestRequest):
     except Exception as e:
         log_audit("AI", "测试崩溃", str(e), level="ERROR")
         return {"status": "error", "message": str(e)}
+
+@router.post("/api/ai/fallback-test", summary="AI 智能介入测试")
+async def test_ai_fallback(request: AiFallbackTestRequest):
+    """
+    测试 AI 智能介入功能：输入文件名，让 AI 推断真实标题，返回完整推断结果。
+    不涉及 TMDB/Bangumi 搜索，仅测试 AI 的标题猜测能力。
+    """
+    filename = request.filename
+    if not filename:
+        raise HTTPException(status_code=400, detail="文件名不能为空")
+
+    log_audit("AI", "介入测试", f"开始 AI 智能介入测试: {filename}")
+
+    ai = AIHelper()
+
+    debug_info = {
+        "is_available": ai.is_available(),
+        "is_fallback_enabled": ai.is_fallback_enabled(),
+        "model": ai.ai_config.get("openai_model", ""),
+        "base_url": ai.ai_config.get("openai_base_url", ""),
+    }
+
+    if not ai.is_available():
+        log_audit("AI", "介入测试失败", "AI 引擎不可用", level="ERROR")
+        return {
+            "status": "error",
+            "message": "AI 引擎不可用，请先在「AI 实验室 → 助手配置」中配置 base_url 和 model",
+            "debug": debug_info,
+        }
+
+    try:
+        import time as _time
+        start = _time.time()
+        result = ai.guess_title_variants(filename, request.current_title, request.current_episode)
+        elapsed = round(_time.time() - start, 2)
+
+        if not result:
+            return {
+                "status": "error",
+                "message": "AI 未返回有效结果（可能是模型无响应或 JSON 解析失败，请检查后端日志）",
+                "debug": debug_info,
+                "elapsed": elapsed,
+            }
+
+        log_audit("AI", "介入测试成功",
+                   f"真实标题: {result.get('real_title')}, 置信度: {result.get('confidence', 0)}")
+
+        return {
+            "status": "success",
+            "result": result,
+            "debug": debug_info,
+            "elapsed": elapsed,
+        }
+    except Exception as e:
+        log_audit("AI", "介入测试崩溃", str(e), level="ERROR")
+        return {"status": "error", "message": str(e), "debug": debug_info}
 
 @router.post("/api/privilege/test", summary="特权集数锁定测试")
 async def test_privilege_lock(request: AiTestRequest):
