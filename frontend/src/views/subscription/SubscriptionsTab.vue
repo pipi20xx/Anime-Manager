@@ -281,8 +281,8 @@ defineExpose({ fetchSubscriptions })
     <v-skeleton-loader v-if="loading" type="card@4" />
 
     <v-row v-else-if="subscriptions.length > 0">
-      <v-col v-for="sub in subscriptions" :key="sub.id" cols="6" sm="6" md="3" lg="3" xl="2">
-        <v-card class="glass-card hover-lift sub-card" @click="openEditSub(sub)">
+      <v-col v-for="sub in subscriptions" :key="sub.id" cols="6" sm="6" md="3" lg="3" xl="2" class="d-flex">
+        <v-card class="glass-card hover-lift sub-card w-100" @click="openEditSub(sub)">
           <!-- 海报 -->
           <div class="sub-poster-box">
             <v-img
@@ -499,14 +499,17 @@ defineExpose({ fetchSubscriptions })
 .sub-card {
   cursor: pointer;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .sub-poster-box {
   position: relative;
+  aspect-ratio: 2/3;
   background: rgba(var(--v-theme-on-surface), 0.04);
 }
 .sub-poster-placeholder {
   width: 100%;
-  aspect-ratio: 2/3;
+  height: 100%;
   background: rgba(var(--v-theme-on-surface), 0.04);
 }
 .sub-type-badge {

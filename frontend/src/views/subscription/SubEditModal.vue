@@ -219,10 +219,11 @@ function handleSave() {
 
         <!-- TMDB 搜索 -->
         <div class="mb-3">
-          <div class="d-flex ga-2 mb-2">
-            <v-text-field v-model="searchQuery" placeholder="搜索 TMDB..." variant="outlined" density="compact" hide-details @keyup.enter="handleSearch" />
-            <v-btn variant="tonal" prepend-icon="mdi-magnify" :loading="searchLoading" @click="handleSearch">搜索</v-btn>
-          </div>
+          <v-text-field v-model="searchQuery" placeholder="搜索 TMDB..." variant="outlined" density="compact" hide-details @keyup.enter="handleSearch">
+            <template #append-inner>
+              <v-btn variant="tonal" prepend-icon="mdi-magnify" :loading="searchLoading" @click="handleSearch">搜索</v-btn>
+            </template>
+          </v-text-field>
 <div v-if="searchResults.length > 0" class="sub-search-results">
 <div v-for="item in searchResults" :key="item.id" class="sub-search-result-item" @click="selectSearchResult(item)">
               <span class="font-weight-medium">{{ item.title || item.name }}</span>
