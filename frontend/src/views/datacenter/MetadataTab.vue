@@ -32,6 +32,22 @@ const editForm = reactive<Record<string, any>>({
 // --- 单条刷新 ---
 const refreshSingleId = ref<string | null>(null)
 
+// --- 原始 JSON 折叠 ---
+const showRawJson = ref(false)
+
+// --- 状态映射 ---
+const STATUS_MAP: Record<string, string> = {
+  'Returning Series': '连载中',
+  'Ended': '已完结',
+  'Canceled': '已取消',
+  'Pilot': '试播',
+  'In Production': '制作中',
+  'Planned': '计划中',
+  'Released': '已上映',
+  'Post Production': '后期制作',
+  'Rumored': '传闻中',
+}
+
 // --- SYTMDB 同步弹窗 ---
 const showSyncModal = ref(false)
 const syncForm = reactive({
@@ -50,6 +66,7 @@ const refreshForm = reactive({
 watch(showEditModal, (val) => {
   if (val) {
     editTab.value = 'edit'
+    showRawJson.value = false
     fetchMappingCache()
   }
 })
@@ -364,7 +381,7 @@ onUnmounted(() => {
                     <v-chip v-if="fullData.vote_average" size="small" variant="tonal" color="info">★ {{ fullData.vote_average.toFixed(1) }}</v-chip>
                     <v-chip v-if="fullData.vote_count" size="small" variant="tonal">{{ fullData.vote_count }} 人评分</v-chip>
                     <v-chip v-if="fullData.release_date || fullData.first_air_date" size="small" variant="tonal">{{ fullData.release_date || fullData.first_air_date }}</v-chip>
-                    <v-chip v-if="fullData.status" size="small" variant="tonal" color="info">{{ fullData.status }}</v-chip>
+                    <v-chip v-if="fullData.status" size="small" variant="tonal" color="info">{{ STATUS_MAP[fullData.status] || fullData.status }}</v-chip>
                     <v-chip v-if="fullData.adult" size="small" variant="tonal" color="error">R18</v-chip>
                   </div>
                 </div>
@@ -453,15 +470,33 @@ onUnmounted(() => {
               <!-- 演员 -->
               <div v-if="castList.length" class="mb-4">
                 <div class="dc-section-title">演员 ({{ castList.length }})</div>
-                <div class="d-flex ga-2 flex-wrap">
-                  <div v-for="c in castList.slice(0, 20)" :key="c.id" class="text-center dc-cast-item">
-                    <v-avatar size="60" rounded="lg">
-                      <v-img v-if="c.profilePath" :src="getImg(c.profilePath)" cover />
-                      <v-icon v-else size="36" color="grey">mdi-account</v-icon>
-                    </v-avatar>
-                    <div class="text-caption font-weight-medium mt-1 text-truncate">{{ c.name }}</div>
-                    <div v-if="c.character" class="text-caption text-medium-emphasis text-truncate">{{ c.character }}</div>
-                  </div>
+                <div class="cast-card-grid">
+                  <v-card
+                    v-for="c in castList.slice(0, 20)"
+                    :key="c.id || c.name"
+                    class="glass-card media-card"
+                    variant="flat"
+                  >
+                    <div class="media-card__poster">
+                      <v-img
+                        v-if="c.profilePath"
+                        :src="getImg(c.profilePath)"
+                        cover
+                        class="rounded-t-xl"
+                      >
+                        <template #placeholder>
+                          <v-skeleton-loader type="image" />
+                        </template>
+                      </v-img>
+                      <div v-else class="cast-card__placeholder">
+                        <v-icon icon="mdi-account" size="36" />
+                      </div>
+                    </div>
+                    <div class="media-card__info">
+                      <div class="media-card__title">{{ c.name }}</div>
+                      <div v-if="c.character" class="media-card__subtitle">{{ c.character }}</div>
+                    </div>
+                  </v-card>
                 </div>
               </div>
 
@@ -481,8 +516,18 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <v-empty-state v-else title="暂无完整数据" text="请执行刷新以从 TMDB 获取" />
             </template>
+
+            <!-- 原始 JSON 展示 -->
+            <div v-if="fullData" class="mb-4">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="dc-section-title mb-0">原始 JSON 数据</div>
+                <v-btn size="small" variant="tonal" color="info" :prepend-icon="showRawJson ? 'mdi-chevron-up' : 'mdi-chevron-down'" @click="showRawJson = !showRawJson">{{ showRawJson ? '收起' : '展开' }}</v-btn>
+              </div>
+              <pre v-if="showRawJson" class="dc-json-viewer">{{ JSON.stringify(fullData, null, 2) }}</pre>
+            </div>
+
+            <v-empty-state v-else title="暂无完整数据" text="请执行刷新以从 TMDB 获取" />
           </v-window-item>
         </v-window>
       </v-card-text>
@@ -554,12 +599,6 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 完整数据 — 演员项 */
-.dc-cast-item {
-  width: 80px;
-  flex-shrink: 0;
-}
-
 /* 完整数据 — 季度海报 */
 .dc-season-poster {
   border-radius: 4px;
@@ -579,5 +618,21 @@ onUnmounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* 完整数据 — 原始 JSON 查看器 */
+.dc-json-viewer {
+  max-height: 500px;
+  overflow: auto;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
 }
 </style>
