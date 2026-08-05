@@ -469,6 +469,22 @@ html.glass-theme-liquid .v-toolbar {
   border: none !important;
 }
 
+/* 移动端 temporary 导航栏需要不透明背景，否则全透明看到下层内容 */
+@media (max-width: 959px) {
+  html.glass-theme-liquid.glass-light .v-navigation-drawer--temporary {
+    background: rgba(255, 255, 255, 0.92) !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html.glass-theme-liquid.glass-dark .v-navigation-drawer--temporary {
+    background: rgba(15, 17, 27, 0.92) !important;
+    background-color: rgba(15, 17, 27, 0.92) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
 
 /* ================================================================
  * 全局边框修复
@@ -1371,5 +1387,230 @@ html.glass-theme-liquid .v-dialog > .v-card {
   html.glass-theme-liquid .v-btn:hover,
   html.glass-theme-liquid .v-btn:active {
     transform: none !important;
+  }
+}
+
+/* ================================================================
+ * 移动端深度性能优化
+ * 移动端 GPU/CPU 算力有限，大量 backdrop-filter + 持续动画 + 多层
+ * inset box-shadow 是卡顿主因。此区块统一降级，不影响桌面端。
+ * ================================================================ */
+@media (max-width: 960px) {
+  /* 1. 进一步降低模糊半径 + 简化阴影 */
+  html.glass-theme-liquid {
+    --lg-blur: 6px;
+    --lg-sat: 150%;
+    --lg-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.15);
+    --lg-shadow-lift: 0 4px 12px -6px rgba(0, 0, 0, 0.2);
+  }
+
+  /* 2. 简化折射带：6 层 inset → 1 层边框 */
+  html.glass-theme-liquid {
+    --lg-rim: inset 0 0 0 1px var(--lg-border-strong);
+    --lg-rim-sm: inset 0 0 0 1px var(--lg-border-strong);
+    --lg-sheen: transparent;
+  }
+
+  /* 3. 停止背景动画，去掉背景 blur */
+  html.glass-theme-liquid body::before {
+    filter: none !important;
+    animation: none !important;
+  }
+  html.glass-theme-liquid body::after {
+    animation: none !important;
+  }
+
+  /* 4. 卡片：去掉 backdrop-filter，用纯色半透明背景代替 */
+  html.glass-theme-liquid .v-card,
+  html.glass-theme-liquid .v-card--variant-elevated,
+  html.glass-theme-liquid .v-card--variant-flat,
+  html.glass-theme-liquid .v-card--variant-tonal {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html.glass-theme-liquid.glass-light .v-card,
+  html.glass-theme-liquid.glass-light .v-card--variant-elevated,
+  html.glass-theme-liquid.glass-light .v-card--variant-flat,
+  html.glass-theme-liquid.glass-light .v-card--variant-tonal {
+    background: rgba(255, 255, 255, 0.72) !important;
+    background-color: rgba(255, 255, 255, 0.72) !important;
+  }
+  html.glass-theme-liquid.glass-dark .v-card,
+  html.glass-theme-liquid.glass-dark .v-card--variant-elevated,
+  html.glass-theme-liquid.glass-dark .v-card--variant-flat,
+  html.glass-theme-liquid.glass-dark .v-card--variant-tonal {
+    background: rgba(28, 30, 52, 0.72) !important;
+    background-color: rgba(28, 30, 52, 0.72) !important;
+  }
+
+  /* 5. 按钮：去掉 backdrop-filter 和弧光伪元素 */
+  html.glass-theme-liquid .v-btn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html.glass-theme-liquid .v-btn::before {
+    display: none !important;
+  }
+
+  /* 6. 输入框 / 弹窗 / 其他组件：去掉 backdrop-filter */
+  html.glass-theme-liquid .v-text-field .v-field,
+  html.glass-theme-liquid .v-textarea .v-field,
+  html.glass-theme-liquid .v-select .v-field,
+  html.glass-theme-liquid .v-combobox .v-field,
+  html.glass-theme-liquid .v-autocomplete .v-field,
+  html.glass-theme-liquid .v-dialog .v-overlay__content,
+  html.glass-theme-liquid .v-dialog > .v-card,
+  html.glass-theme-liquid .v-overlay .v-overlay__content,
+  html.glass-theme-liquid .v-menu .v-overlay__content,
+  html.glass-theme-liquid .v-expansion-panel,
+  html.glass-theme-liquid .v-alert,
+  html.glass-theme-liquid .v-chip,
+  html.glass-theme-liquid .v-tooltip .v-overlay__content {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* 7. Tab：去掉 backdrop-filter 和弧光伪元素 */
+  html.glass-theme-liquid .v-tab {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html.glass-theme-liquid .v-tab::after {
+    display: none !important;
+  }
+
+  /* 8. hover/active 变形效果在移动端无意义，去掉 */
+  html.glass-theme-liquid .v-card:hover,
+  html.glass-theme-liquid .v-btn:hover,
+  html.glass-theme-liquid .v-btn:active,
+  html.glass-theme-liquid .v-tab:hover,
+  html.glass-theme-liquid .hover-lift:hover {
+    transform: none !important;
+  }
+
+  /* 9. 弹窗进出场动画在移动端简化为淡入淡出，避免 transform + 半透明背景叠加闪烁 */
+  html.glass-theme-liquid .dialog-transition-enter-active,
+  html.glass-theme-liquid .dialog-transition-leave-active {
+    transition: opacity .15s ease !important;
+  }
+  html.glass-theme-liquid .dialog-transition-enter-from,
+  html.glass-theme-liquid .dialog-transition-leave-to {
+    opacity: 0 !important;
+    transform: none !important;
+  }
+
+  /* 10. Tab 滑动指示器动画简化 */
+  html.glass-theme-liquid .v-tabs .v-slide-group__prev,
+  html.glass-theme-liquid .v-tabs .v-slide-group__next,
+  html.glass-theme-liquid .v-tabs .v-slide-group__content {
+    transition: none !important;
+  }
+
+  /* 11. 移动端全局去掉所有非必要 transition，只保留颜色渐变 */
+  html.glass-theme-liquid .v-card,
+  html.glass-theme-liquid .v-card--variant-elevated,
+  html.glass-theme-liquid .v-card--variant-flat,
+  html.glass-theme-liquid .v-card--variant-tonal {
+    transition: none !important;
+  }
+  html.glass-theme-liquid .v-btn,
+  html.glass-theme-liquid .v-btn--icon {
+    transition: background-color .15s ease, color .15s ease !important;
+  }
+  html.glass-theme-liquid .v-field {
+    transition: background-color .15s ease !important;
+  }
+  html.glass-theme-liquid .v-tab {
+    transition: background-color .15s ease, color .15s ease !important;
+  }
+  html.glass-theme-liquid .v-chip {
+    transition: none !important;
+  }
+  html.glass-theme-liquid .v-list-item {
+    transition: background-color .15s ease !important;
+  }
+
+  /* 12. 弹窗内的 v-card 移除 box-shadow 动画，避免弹窗打开时阴影渐变闪烁 */
+  html.glass-theme-liquid .v-dialog .v-card,
+  html.glass-theme-liquid .v-dialog .v-overlay__content {
+    box-shadow: var(--lg-rim) !important;
+    transition: none !important;
+  }
+
+  /* 13. 通配兜底：一次性清除所有剩余 backdrop-filter（v-sheet / v-snackbar /
+   *     v-alert / v-avatar / liquid-avatar / search-results-box / login-panel /
+   *     v-field--variant-solo-filled 等零散组件） */
+  html.glass-theme-liquid * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* 14. 图标按钮的 scale 变换在移动端容易触发重绘，改为纯颜色过渡 */
+  html.glass-theme-liquid .v-btn--icon {
+    transition: background-color .15s ease, color .15s ease !important;
+  }
+  html.glass-theme-liquid .v-btn--icon:hover,
+  html.glass-theme-liquid .v-btn--icon:active {
+    transform: none !important;
+  }
+
+  /* 15. liquid-avatar 的 transition: all 极其昂贵，替换为最小集 */
+  html.glass-theme-liquid .liquid-avatar {
+    transition: background-color .15s ease, color .15s ease !important;
+  }
+  html.glass-theme-liquid .liquid-avatar:hover {
+    box-shadow: none !important;
+  }
+
+  /* 16. v-expansion-panel 展开动画在移动端简化 */
+  html.glass-theme-liquid .v-expansion-panel {
+    transition: none !important;
+  }
+  html.glass-theme-liquid .v-expansion-panel-title,
+  html.glass-theme-liquid .v-expansion-panel-text {
+    transition: none !important;
+  }
+
+  /* 17. v-navigation-drawer 滑动过渡在移动端简化为无 */
+  html.glass-theme-liquid .v-navigation-drawer {
+    transition: none !important;
+  }
+
+  /* 18. v-list / v-list-item 活跃指示器动画去掉 */
+  html.glass-theme-liquid .v-list-item::before {
+    display: none !important;
+  }
+
+  /* 19. 搜索结果框去掉 backdrop-filter 后给一个纯色半透明背景 */
+  html.glass-theme-liquid.glass-light .search-results-box {
+    background: rgba(255, 255, 255, 0.88) !important;
+  }
+  html.glass-theme-liquid.glass-dark .search-results-box {
+    background: rgba(28, 30, 52, 0.88) !important;
+  }
+
+  /* 20. 登录面板去掉 backdrop-filter 后给纯色背景 */
+  html.glass-theme-liquid.glass-light .login-glass-panel {
+    background: rgba(255, 255, 255, 0.72) !important;
+  }
+  html.glass-theme-liquid.glass-dark .login-glass-panel {
+    background: rgba(28, 30, 52, 0.72) !important;
+  }
+
+  /* 21. v-sheet / v-snackbar / v-alert 纯色兜底 */
+  html.glass-theme-liquid.glass-light .v-sheet:not(.v-snackbar__wrapper),
+  html.glass-theme-liquid.glass-light .v-alert--variant-tonal {
+    background: rgba(255, 255, 255, 0.72) !important;
+  }
+  html.glass-theme-liquid.glass-dark .v-sheet:not(.v-snackbar__wrapper),
+  html.glass-theme-liquid.glass-dark .v-alert--variant-tonal {
+    background: rgba(28, 30, 52, 0.72) !important;
+  }
+
+  /* 22. 将 contain 属性加到主要滚动容器，帮助浏览器隔离重绘区域 */
+  html.glass-theme-liquid .v-card,
+  html.glass-theme-liquid .v-list,
+  html.glass-theme-liquid .v-dialog .v-overlay__content {
+    contain: layout paint style;
   }
 }

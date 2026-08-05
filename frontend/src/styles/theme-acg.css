@@ -1668,3 +1668,171 @@ html.glass-theme-acg .v-theme--dark .v-chip {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* ================================================================
+ * 20. 移动端深度性能优化
+ * 移动端 GPU/CPU 算力有限，大量 backdrop-filter + transition: all
+ * + 多层 box-shadow 是卡顿主因。此区块统一降级，不影响桌面端。
+ * 策略与 glass-themes.css 中液态玻璃主题的移动端优化保持一致。
+ * ================================================================ */
+@media (max-width: 960px) {
+
+  /* 1. 通配兜底：一次性清除所有 backdrop-filter */
+  html.glass-theme-acg * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* 2. 背景图去掉 filter，减少合成层 */
+  html.glass-theme-acg body::before {
+    filter: none !important;
+  }
+
+  /* 3. 卡片：去掉 blur 后提升不透明度，保证可读性 */
+  html.glass-theme-acg .v-theme--light .v-card,
+  html.glass-theme-acg .v-theme--light .v-card--variant-tonal,
+  html.glass-theme-acg .v-theme--light .liquid-glass-card {
+    background: rgba(255, 255, 255, 0.82) !important;
+    background-color: rgba(255, 255, 255, 0.82) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-card,
+  html.glass-theme-acg .v-theme--dark .v-card--variant-tonal,
+  html.glass-theme-acg .v-theme--dark .liquid-glass-card {
+    background: rgba(30, 30, 60, 0.82) !important;
+    background-color: rgba(30, 30, 60, 0.82) !important;
+  }
+
+  /* 4. 弹窗 / 菜单 / 下拉：提升不透明度 */
+  html.glass-theme-acg .v-theme--light .v-overlay__content .v-card,
+  html.glass-theme-acg .v-theme--light .v-menu .v-card,
+  html.glass-theme-acg .v-theme--light .v-menu .v-list {
+    background: rgba(255, 255, 255, 0.92) !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-overlay__content .v-card,
+  html.glass-theme-acg .v-theme--dark .v-menu .v-card,
+  html.glass-theme-acg .v-theme--dark .v-menu .v-list {
+    background: rgba(30, 30, 60, 0.92) !important;
+    background-color: rgba(30, 30, 60, 0.92) !important;
+  }
+
+  /* 5. v-sheet 提升不透明度 */
+  html.glass-theme-acg .v-theme--light .v-sheet:not(.v-snackbar__wrapper) {
+    background: rgba(255, 255, 255, 0.82) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-sheet:not(.v-snackbar__wrapper) {
+    background: rgba(30, 30, 60, 0.82) !important;
+  }
+
+  /* 6. Tab 提升不透明度 */
+  html.glass-theme-acg .v-theme--light .v-tab {
+    background: rgba(255, 255, 255, 0.82) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-tab {
+    background: rgba(30, 30, 60, 0.82) !important;
+  }
+
+  /* 7. 按钮提升不透明度 */
+  html.glass-theme-acg .v-theme--light .v-btn--variant-flat,
+  html.glass-theme-acg .v-theme--light .v-btn--variant-tonal {
+    background: rgba(255, 255, 255, 0.82) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-btn--variant-flat,
+  html.glass-theme-acg .v-theme--dark .v-btn--variant-tonal {
+    background: rgba(30, 30, 60, 0.82) !important;
+  }
+  html.glass-theme-acg .v-theme--light .v-btn--variant-outlined {
+    background: rgba(255, 255, 255, 0.72) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-btn--variant-outlined {
+    background: rgba(30, 30, 60, 0.72) !important;
+  }
+
+  /* 8. 全局 transition: all → 最小集，避免重排 */
+  html.glass-theme-acg .v-card,
+  html.glass-theme-acg .liquid-glass-card,
+  html.glass-theme-acg .v-sheet,
+  html.glass-theme-acg .v-expansion-panel,
+  html.glass-theme-acg .v-chip {
+    transition: none !important;
+  }
+  html.glass-theme-acg .v-btn,
+  html.glass-theme-acg .v-btn--icon,
+  html.glass-theme-acg .v-tab,
+  html.glass-theme-acg .v-list-item {
+    transition: background-color .15s ease, color .15s ease !important;
+  }
+  html.glass-theme-acg .v-field {
+    transition: background-color .15s ease !important;
+  }
+
+  /* 9. hover/active 变形效果在移动端去掉 */
+  html.glass-theme-acg .v-card:hover,
+  html.glass-theme-acg .v-btn:hover,
+  html.glass-theme-acg .v-btn:active,
+  html.glass-theme-acg .v-tab:hover,
+  html.glass-theme-acg .v-btn--icon:hover,
+  html.glass-theme-acg .v-btn--icon:active {
+    transform: none !important;
+  }
+
+  /* 10. 弹窗进出场动画简化为纯 opacity 淡入淡出 */
+  html.glass-theme-acg .dialog-transition-enter-active,
+  html.glass-theme-acg .dialog-transition-leave-active {
+    transition: opacity .15s ease !important;
+  }
+  html.glass-theme-acg .dialog-transition-enter-from,
+  html.glass-theme-acg .dialog-transition-leave-to {
+    opacity: 0 !important;
+    transform: none !important;
+  }
+
+  /* 11. Tab 滑动指示器动画去掉 */
+  html.glass-theme-acg .v-tabs .v-slide-group__prev,
+  html.glass-theme-acg .v-tabs .v-slide-group__next,
+  html.glass-theme-acg .v-tabs .v-slide-group__content {
+    transition: none !important;
+  }
+
+  /* 12. v-navigation-drawer 滑动过渡去掉 */
+  html.glass-theme-acg .v-navigation-drawer {
+    transition: none !important;
+  }
+
+  /* 13. v-list-item 伪元素动画去掉 */
+  html.glass-theme-acg .v-list-item::before {
+    display: none !important;
+  }
+
+  /* 14. v-expansion-panel 展开动画去掉 */
+  html.glass-theme-acg .v-expansion-panel-title,
+  html.glass-theme-acg .v-expansion-panel-text {
+    transition: none !important;
+  }
+
+  /* 15. 弹窗内 v-card 移除 box-shadow 动画 */
+  html.glass-theme-acg .v-dialog .v-card,
+  html.glass-theme-acg .v-dialog .v-overlay__content {
+    transition: none !important;
+  }
+
+  /* 16. 输入框提升不透明度 */
+  html.glass-theme-acg .v-theme--light .v-field,
+  html.glass-theme-acg .v-theme--light .v-field--variant-solo-filled,
+  html.glass-theme-acg .v-theme--light .v-field--variant-outlined {
+    background: rgba(255, 255, 255, 0.82) !important;
+  }
+  html.glass-theme-acg .v-theme--dark .v-field,
+  html.glass-theme-acg .v-theme--dark .v-field--variant-solo-filled,
+  html.glass-theme-acg .v-theme--dark .v-field--variant-outlined {
+    background: rgba(30, 30, 60, 0.82) !important;
+  }
+
+  /* 17. contain 属性隔离重绘区域 */
+  html.glass-theme-acg .v-card,
+  html.glass-theme-acg .v-list,
+  html.glass-theme-acg .v-dialog .v-overlay__content {
+    contain: layout paint style;
+  }
+}
