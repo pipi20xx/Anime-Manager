@@ -61,10 +61,28 @@ async def get_documentation(request: Request, theme: str = "cyan", token: str = 
     border_color = "rgba(0,0,0,0.1)" if is_light else "rgba(255,255,255,0.1)"
     subtle_text = "rgba(0,0,0,0.6)" if is_light else "rgba(255,255,255,0.6)"
 
-    # 自动授权脚本
+    # 自动授权脚本：拦截 fetch 自动注入 token + Swagger UI 授权
     auth_js = ""
+    openapi_url_with_token = "/api/system/openapi.json"
     if token:
+        openapi_url_with_token = f"/api/system/openapi.json?token={token}"
         auth_js = f"""
+        // 拦截 fetch，对同源 /api 请求自动附加 Authorization 头
+        (function() {{
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options) {{
+                options = options || {{}};
+                const urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : String(url));
+                if (urlStr.startsWith('/api') || urlStr.includes('/api/system/openapi')) {{
+                    options.headers = options.headers || {{}};
+                    if (!options.headers['Authorization'] && !options.headers['authorization']) {{
+                        options.headers['Authorization'] = 'Bearer {token}';
+                    }}
+                }}
+                return originalFetch.call(this, url, options);
+            }};
+        }})();
+        // Swagger UI 授权注入
         setTimeout(function() {{
             if (window.ui) {{
                 window.ui.authActions.authorize({{
@@ -225,7 +243,7 @@ async def get_documentation(request: Request, theme: str = "cyan", token: str = 
     
     from fastapi.openapi.docs import get_swagger_ui_html
     response = get_swagger_ui_html(
-        openapi_url="/api/system/openapi.json", 
+        openapi_url=openapi_url_with_token, 
         title="番剧管家 API 文档",
         swagger_js_url="https://cdn.staticfile.net/swagger-ui/5.9.0/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.staticfile.net/swagger-ui/5.9.0/swagger-ui.css",

@@ -125,7 +125,7 @@ async def api_audit_middleware(request: Request, call_next):
 
     is_authenticated = False
     
-    if path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth") or path == "/api/system/openapi.json":
+    if path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth"):
         is_authenticated = True
     
     elif "/api/system/img" in path or "/api/system/bgm_img" in path or "/api/appearance/image" in path:
