@@ -46,28 +46,29 @@ class AIHelper:
         return self._guess_title_variants_openai(filename, current_title, current_episode)
 
     def _get_fallback_system_prompt(self) -> str:
-        return """你是影视剧数据库专家。根据文件名推断TMDB真实标题。
+        return """你是影视剧数据库专家，精通中日英三语的影视动画作品名。根据用户给出的文件名，推断该文件对应的 TMDB 真实标题。
 
-输出JSON格式:
-{"real_title":"TMDB真实标题(简洁)","original_name":"日文/英文原名","chinese_name":"中文译名","alternative_titles":["其他可能标题"],"media_type":"tv","season":null,"episode":null,"confidence":0.9}
+输出格式：只输出一个 JSON 对象，不要输出任何其他文字。
+
+{"real_title":"","original_name":"","chinese_name":"","alternative_titles":[],"media_type":"tv","season":null,"episode":null,"confidence":0.9}
 
 字段说明:
-- real_title: TMDB上的真实标题，简洁准确
-- original_name: 作品原始名称(日文/英文)
+- real_title: TMDB 上的官方标题（英文/罗马音），简洁准确，用于直接搜索 TMDB
+- original_name: 作品原始名称（日文原名或英文原名）
 - chinese_name: 中文官方译名
-- media_type: 作品类型，"tv"(剧集/番剧) 或 "movie"(电影/剧场版)
+- alternative_titles: 其他可能的标题（罗马音、缩写、别名等），用于辅助搜索
+- media_type: "tv"（剧集/番剧/有集数的）或 "movie"（电影/剧场版）
+- season: 季数（整数或 null，不确定时填 null）
+- episode: 集数（整数或 null，不确定时填 null）
+- confidence: 置信度 0~1
 
-分析技巧:
-- 文件名中的标题可能是错误/不完整的，需要推断真实标题
-- 文件名可能使用多种括号格式: [字幕组][标题][集数_副标题][规格] 或 [字幕组] 标题 - 集数 [规格]
-- 集数可能藏在标题括号内: [12_逃避的终点] 表示 episode=12
-- 中英混合标题需拆分: "命运-奇异赝品_Fate／strange Fake" → chinese_name="命运-奇异赝品", real_title="Fate/strange Fake"
-- 全角斜杠／应转换为半角/作为TMDB标题
-- "小鲨鱼去郊游剧场版" → real_title: "Odekake Kozame", original_name: "おでかけ子ザメ", media_type: "movie"
-- "章鱼噼的原罪" 是网剧/短篇动画，media_type: "tv"
-- 剧场版、电影版 → media_type: "movie"
-- 番剧、连续剧、有集数的 → media_type: "tv"
-- 只输出JSON"""
+关键规则:
+- 文件名可能包含字幕组、分辨率、编码等无关信息，需要剥离
+- 标题可能是中文译名、罗马音、英文或混合，需要推断出 TMDB 上的标准标题
+- 全角字符（如／）应转换为半角（/）
+- 剧场版、电影版、劇場版 → media_type: "movie"
+- 番剧、连续剧、TV 系列、有集数标记 → media_type: "tv"
+- 如果提供了已识别的标题或集数信息，作为参考但不一定正确"""
 
     def _guess_title_variants_openai(self, filename: str, current_title: str = None, current_episode: int = None) -> Optional[Dict[str, Any]]:
         base_url = self.ai_config.get("openai_base_url", "")
@@ -81,21 +82,17 @@ class AIHelper:
         else:
             target_url = f"{base_url.rstrip('/')}/chat/completions"
 
-        context = filename
+        # 构建用户消息：文件名 + 可选的已知信息
+        parts = [f"文件名: {filename}"]
         if current_title:
-            context = f"{filename} (标题: {current_title})"
+            parts.append(f"已识别标题（可能不准确，仅供参考）: {current_title}")
         if current_episode:
-            context = f"{context[:-1]}, 集数: {current_episode})" if current_title else f"{filename} (集数: {current_episode})"
+            parts.append(f"已识别集数（可能不准确，仅供参考）: {current_episode}")
+        user_content = "\n".join(parts)
 
         messages = [
             {"role": "system", "content": self._get_fallback_system_prompt()},
-            {"role": "user", "content": "[mirufans] 小鲨鱼去郊游剧场版 都市的朋友 [1080p].mkv"},
-            {"role": "assistant", "content": '{"real_title":"Odekake Kozame","original_name":"おでかけ子ザメ","chinese_name":"小鲨鱼去郊游","alternative_titles":["Eiga Odekake Kozame"],"media_type":"movie","season":null,"episode":null,"confidence":0.85}'},
-            {"role": "user", "content": "[SubGroup] 葬送的芙莉蓮 - 12 [1080p].mkv"},
-            {"role": "assistant", "content": '{"real_title":"Frieren: Beyond Journey\'s End","original_name":"Sousou no Frieren","chinese_name":"葬送的芙莉莲","alternative_titles":["Frieren"],"media_type":"tv","season":1,"episode":12,"confidence":0.95}'},
-            {"role": "user", "content": "[阿特拉斯字幕组·雪原市出差所][命运-奇异赝品_Fate／strange Fake][12_逃避的终点][简繁日内封PGS][日语配音版_Japanese Dub][Web-DL Remux][1080p AVC AAC]"},
-            {"role": "assistant", "content": '{"real_title":"Fate/strange Fake","original_name":"Fate/strange Fake","chinese_name":"命运-奇异赝品","alternative_titles":["Fate strange Fake"],"media_type":"tv","season":1,"episode":12,"confidence":0.92}'},
-            {"role": "user", "content": context}
+            {"role": "user", "content": user_content}
         ]
 
         payload = {
