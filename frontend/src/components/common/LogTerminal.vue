@@ -77,7 +77,7 @@ function getLogLevelClass(entry: string): string {
 </script>
 
 <template>
-  <GlassDialog v-model="systemStore.showLogModal" :max-width="900" :cancel-visible="false" :scrollable="false">
+  <GlassDialog v-model="systemStore.showLogModal" :max-width="900" :cancel-visible="false">
     <template #title>
       <v-icon start>mdi-card-text-outline</v-icon>
       系统日志

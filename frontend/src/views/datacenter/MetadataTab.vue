@@ -48,13 +48,6 @@ const STATUS_MAP: Record<string, string> = {
   'Rumored': '传闻中',
 }
 
-// --- SYTMDB 同步弹窗 ---
-const showSyncModal = ref(false)
-const syncForm = reactive({
-  address: localStorage.getItem('sytmdb_address') || '',
-  token: localStorage.getItem('sytmdb_token') || '',
-})
-
 // --- 全量刷新弹窗 ---
 const showRefreshModal = ref(false)
 const refreshForm = reactive({
@@ -166,17 +159,13 @@ async function refreshSingle(item: any) {
 }
 
 async function handleSyncSytmdb() {
+  const ok = await confirm({
+    title: '确认同步 SYTMDB',
+    content: '将从 SYTMDB 服务同步手动修正过的元数据快照，使用系统设置中配置的地址和 Token。任务在后台执行，请通过实时日志查看进度。',
+  })
+  if (!ok) return
   info('同步任务已启动，请查看实时日志了解进度')
   try { await dataCenterApi.syncSytmdb({}) } catch (e: any) { showError(e?.message || '启动同步失败') }
-}
-
-async function runSyncSytmdb() {
-  if (!syncForm.address) { warning('请输入 SYTMDB 地址'); return }
-  localStorage.setItem('sytmdb_address', syncForm.address)
-  localStorage.setItem('sytmdb_token', syncForm.token)
-  showSyncModal.value = false
-  info('同步任务已启动，请查看实时日志了解进度')
-  try { await dataCenterApi.syncSytmdb({ address: syncForm.address, token: syncForm.token }) } catch (e: any) { showError(e?.message || '启动同步失败') }
 }
 
 function handleExecuteRefresh() {
@@ -230,7 +219,7 @@ onUnmounted(() => {
       @keyup.enter="searchBrowse" @click:clear="browserSearch = ''; searchBrowse()"
     />
     <v-btn color="warning" variant="tonal" prepend-icon="mdi-refresh" @click="showRefreshModal = true">全量刷新</v-btn>
-    <v-btn color="info" variant="tonal" prepend-icon="mdi-sync-circle" @click="showSyncModal = true">同步 SYTMDB</v-btn>
+    <v-btn color="info" variant="tonal" prepend-icon="mdi-sync-circle" @click="handleSyncSytmdb">同步 SYTMDB</v-btn>
     <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="openCreate">手动新增</v-btn>
   </div>
 
@@ -310,31 +299,6 @@ onUnmounted(() => {
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="showRefreshModal = false">取消</v-btn>
         <v-btn color="primary" variant="flat" prepend-icon="mdi-refresh" @click="handleExecuteRefresh">开始刷新</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-
-  <!-- SYTMDB 同步弹窗 -->
-  <v-dialog v-model="showSyncModal" max-width="500">
-    <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start color="primary">mdi-sync-circle</v-icon>SYTMDB 同步
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showSyncModal = false" />
-</v-card-title>
-      <v-divider />
-      <v-card-text class="pa-4">
-        <div class="text-body-2 text-medium-emphasis mb-3">从 SYTMDB 服务同步手动修正过的元数据快照。任务在后台执行，请通过实时日志查看进度。</div>
-        <v-text-field v-model="syncForm.address" label="SYTMDB 地址 (IP:Port)" variant="outlined" density="compact" class="mb-3" placeholder="如: 192.168.1.100:8121" />
-        <v-text-field v-model="syncForm.token" label="API Token (可选)" variant="outlined" density="compact" class="mb-3" />
-        <div class="text-caption text-medium-emphasis">如留空将使用系统设置中配置的 SYTMDB 地址。</div>
-      </v-card-text>
-      <v-divider />
-      <v-card-actions class="pa-4">
-        <v-btn variant="tonal" prepend-icon="mdi-cog-sync-outline" @click="() => { handleSyncSytmdb(); showSyncModal = false }">使用系统配置同步</v-btn>
-        <v-spacer />
-        <v-btn variant="tonal" prepend-icon="mdi-close" @click="showSyncModal = false">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-sync" @click="runSyncSytmdb">同步</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

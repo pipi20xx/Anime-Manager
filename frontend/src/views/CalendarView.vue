@@ -128,6 +128,15 @@ const subscriptionNotifyConfig = ref({
 const isTestingPush = ref(false)
 const importingBatch = ref(false)
 
+// 已导入的 bangumi ID 集合（用于从放送表导入时标记已导入项）
+const importedIds = computed(() => {
+  const ids = new Set<number>()
+  trackingList.value.forEach((t: any) => {
+    if (t.bgm_id) ids.add(t.bgm_id)
+  })
+  return ids
+})
+
 // --- 方法 ---
 async function fetchData() {
   loading.value = true
@@ -212,6 +221,12 @@ async function testCalendarPush() {
 }
 
 async function handleAutoImport(bgmItem: any) {
+  const ok = await confirm({
+    title: '确认导入',
+    content: `确定要导入《${bgmItem.title}》到追踪日历吗？`,
+    confirmColor: 'primary',
+  })
+  if (!ok) return
   info(`正在为《${bgmItem.title}》同步数据...`)
   try {
     const data = await calendarApi.importBangumi(bgmItem.id)
@@ -559,23 +574,28 @@ onMounted(() => {
                   导入全周番剧
                 </v-btn>
               </div>
-              <v-row>
-                <v-col v-for="day in bangumiRaw" :key="day.weekday.id" cols="12" sm="6" md="4" lg="3">
-                  <div class="text-subtitle-2 font-weight-bold mb-2">周{{ ['日','一','二','三','四','五','六'][day.weekday.id] }}</div>
-                  <div
-                    v-for="item in day.items"
-                    :key="item.id"
-                    class="discover-item d-flex align-center ga-2 pa-2 rounded-lg cursor-pointer mb-1"
-                    @click="handleAutoImport(item)"
-                  >
-                    <v-avatar size="32" rounded="sm">
-                      <v-img v-if="item.image" :src="item.image" />
-                      <v-icon v-else icon="mdi-television" size="16" />
-                    </v-avatar>
-                    <span class="text-body-2 text-truncate">{{ item.title }}</span>
+              <template v-if="bangumiRaw.length > 0">
+                <div v-for="day in bangumiRaw" :key="day.weekday.id" class="mb-4">
+                  <div class="text-subtitle-2 font-weight-bold mb-2 text-primary">
+                    周{{ ['日','一','二','三','四','五','六'][day.weekday.id] }}
                   </div>
-                </v-col>
-              </v-row>
+                  <v-chip-group column>
+                    <v-chip
+                      v-for="item in day.items"
+                      :key="item.id"
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                      :disabled="importedIds.has(item.id)"
+                      @click="handleAutoImport(item)"
+                    >
+                      {{ item.title }}
+                      <v-icon v-if="importedIds.has(item.id)" end size="x-small" color="success">mdi-check-circle</v-icon>
+                    </v-chip>
+                  </v-chip-group>
+                </div>
+              </template>
+              <div v-else class="text-center pa-6 text-medium-emphasis">暂无放送表数据</div>
             </v-window-item>
 
             <!-- 手动添加 -->

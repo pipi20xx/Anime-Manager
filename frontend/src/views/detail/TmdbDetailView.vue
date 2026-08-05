@@ -567,10 +567,10 @@ onMounted(() => {
 
                             <!-- Emby 文件列表 -->
                             <div v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.files?.length" class="ep-files">
-                              <div v-for="(file, idx) in getEpisodeEmbyInfo(season.season_number, ep.episode).files" :key="idx" class="text-caption d-flex align-center">
-                                <v-icon size="12" class="mr-1">mdi-file</v-icon>
-                                <span class="text-medium-emphasis text-truncate">{{ file.name }}</span>
-                                <span v-if="file.size" class="text-disabled ml-1">· {{ formatFileSize(file.size) }}</span>
+                              <div v-for="(file, idx) in getEpisodeEmbyInfo(season.season_number, ep.episode).files" :key="idx" class="text-caption d-flex align-center ep-file-row">
+                                <v-icon size="12" class="mr-1 flex-shrink-0">mdi-file</v-icon>
+                                <span class="text-medium-emphasis text-truncate ep-file-name">{{ file.name }}</span>
+                                <span v-if="file.size" class="text-disabled ml-1 flex-shrink-0 ep-file-size">· {{ formatFileSize(file.size) }}</span>
                               </div>
                             </div>
                           </div>
@@ -642,6 +642,7 @@ onMounted(() => {
   color: rgba(var(--v-theme-on-surface), 0.7);
   line-height: 1.6;
   padding: 10px 12px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
   border-radius: 8px;
   border-left: 3px solid rgb(var(--v-theme-primary));
 }
@@ -657,12 +658,26 @@ onMounted(() => {
 
 /* ── Emby 文件列表 ── */
 .ep-files {
+  background: rgba(var(--v-theme-on-surface), 0.04);
   border-radius: 6px;
   padding: 6px 8px;
 }
 
+/* ── Emby 文件行：文件名截断，文件大小不换行 ── */
+.ep-file-row {
+  min-width: 0;
+}
+.ep-file-name {
+  flex: 1;
+  min-width: 0;
+}
+.ep-file-size {
+  white-space: nowrap;
+}
+
 /* ── Emby 查询中提示 ── */
 .emby-loading-hint {
+  background: rgba(var(--v-theme-primary), 0.06);
   border-radius: 8px;
 }
 
