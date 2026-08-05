@@ -381,6 +381,14 @@ html.glass-theme-liquid .v-chip {
   box-shadow: var(--lg-rim-sm) !important;
 }
 
+/* tonal chip 默认文字色：白天黑/夜晚白，不用 primary 蓝紫色 */
+html.glass-theme-liquid .v-chip--variant-tonal.text-primary {
+  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+}
+html.glass-theme-liquid .v-chip--variant-tonal.text-primary .v-chip__underlay {
+  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
+}
+
 
 /* ================================================================
  * 下拉 / 菜单 popper
@@ -994,18 +1002,9 @@ html.glass-theme-liquid .v-navigation-drawer .v-list-item--active::before {
   background: rgb(var(--v-theme-primary));
 }
 
-/* 页面标题 — 液态玻璃下是普通文字 */
-html.glass-theme-liquid .page-title {
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
+/* 页面标题 — 液态玻璃下使用默认文字色，不强制着色 */
 html.glass-theme-liquid .page-subtitle {
-  color: rgb(var(--v-theme-primary)) !important;
   font-weight: 500;
-}
-
-html.glass-theme-liquid .section-title {
-  color: rgb(var(--v-theme-primary)) !important;
 }
 
 /* hover-lift */
@@ -1016,7 +1015,6 @@ html.glass-theme-liquid .hover-lift:hover {
 
 /* 代码块 */
 html.glass-theme-liquid code {
-  color: rgb(var(--v-theme-primary)) !important;
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 0.85em;
