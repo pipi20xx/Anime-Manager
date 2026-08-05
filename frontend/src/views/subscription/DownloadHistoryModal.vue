@@ -218,7 +218,7 @@ const filteredItems = computed(() => {
 
         <!-- 记录列表 -->
         <div v-else-if="filteredItems.length > 0" class="d-flex flex-column ga-2">
-          <div v-for="(item, index) in filteredItems" :key="item.guid || item.id" class="feed-item-card">
+          <v-card v-for="(item, index) in filteredItems" :key="item.guid || item.id" class="glass-card hover-lift pa-3" variant="flat">
             <!-- 第一行：标签 + 序号 -->
             <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
               <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
@@ -295,7 +295,7 @@ const filteredItems = computed(() => {
                 >删除</v-btn>
               </div>
             </div>
-          </div>
+          </v-card>
 
           <!-- 无限滚动哨兵 -->
           <div ref="sentinelRef" style="height: 1px" />
