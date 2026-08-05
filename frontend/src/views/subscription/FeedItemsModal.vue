@@ -245,72 +245,69 @@ async function handleClearHistory() {
         <v-skeleton-loader v-if="loading && items.length === 0" type="list-item@8" />
 
         <!-- 条目列表 -->
-        <div v-else-if="items.length > 0" class="vertical-list">
-          <div v-for="(item, index) in items" :key="item.guid" class="feed-item-card detail-card">
-            <!-- 左侧主内容 -->
-            <div class="detail-card__main">
-              <!-- 第一行：标签 + 序号 -->
-              <div class="detail-card__top-row">
-                <div class="detail-card__tags-left">
-                  <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--feed">{{ item.feed_name || '-' }}</v-chip>
-                  <v-chip size="x-small" variant="flat" :class="['meta-tag', item.is_downloaded ? 'meta-tag--downloaded' : 'meta-tag--not-downloaded']">
-                    {{ item.is_downloaded ? '已下载' : '未下载' }}
-                  </v-chip>
-                  <span v-if="item.tmdb_title" class="detail-card__tmdb-title">🎯 {{ item.tmdb_title }}</span>
-                </div>
-                <span class="detail-card__index">#{{ index + 1 }}</span>
+        <div v-else-if="items.length > 0" class="d-flex flex-column ga-2">
+          <div v-for="(item, index) in items" :key="item.guid" class="feed-item-card">
+            <!-- 第一行：标签 + 序号 -->
+            <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
+              <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
+                <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--feed">{{ item.feed_name || '-' }}</v-chip>
+                <v-chip size="x-small" variant="flat" :class="['meta-tag', item.is_downloaded ? 'meta-tag--downloaded' : 'meta-tag--not-downloaded']">
+                  {{ item.is_downloaded ? '已下载' : '未下载' }}
+                </v-chip>
+                <span v-if="item.tmdb_title" class="text-caption font-weight-bold" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;">🎯 {{ item.tmdb_title }}</span>
               </div>
-
-              <!-- 标题 -->
-              <div class="detail-card__title">{{ item.raw_title || item.title }}</div>
-
-              <!-- 描述 -->
-              <div v-if="cleanDescription(item.description)" class="detail-card__desc">
-                {{ cleanDescription(item.description) }}
-              </div>
-
-              <!-- 元数据 Tags -->
-              <div class="meta-tags">
-                <!-- 订阅状态标签 -->
-                <v-chip v-if="item.in_subscription" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">已订阅</v-chip>
-                <v-chip v-if="item.episode_collected" size="x-small" variant="flat" class="meta-tag meta-tag--collected">订阅已下载</v-chip>
-
-                <!-- 识别结果标签 -->
-                <template v-if="item.recognition_done && item.tmdb_id">
-                  <v-chip :href="getTmdbUrl(item)" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">ID: {{ item.tmdb_id }}</v-chip>
-                  <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--type">{{ getMediaTypeLabel(item.media_type) }}</v-chip>
-                  <v-chip v-if="item.media_type === 'tv'" size="x-small" variant="flat" class="meta-tag meta-tag--season">
-                    S{{ item.season || 1 }} E{{ item.episode || '-' }}
-                  </v-chip>
-                </template>
-                <v-chip v-else-if="item.recognition_done" size="x-small" variant="tonal" class="meta-tag meta-tag--miss">未命中</v-chip>
-
-                <!-- 字幕组 -->
-                <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ item.team }}</v-chip>
-
-                <!-- 来源/平台 -->
-                <v-chip v-if="item.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ item.source }}</v-chip>
-                <v-chip v-if="item.platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ item.platform }}</v-chip>
-
-                <!-- 分辨率 -->
-                <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ item.resolution }}</v-chip>
-
-                <!-- 视频特效/编码 -->
-                <v-chip v-if="item.video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.video_effect }}</v-chip>
-                <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.video_encode }}</v-chip>
-
-                <!-- 音频编码 -->
-                <v-chip v-if="item.audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.audio_encode }}</v-chip>
-
-                <!-- 字幕 -->
-                <v-chip v-if="item.subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.subtitle }}</v-chip>
-              </div>
+              <span class="text-caption text-medium-emphasis flex-shrink-0" style="font-family: monospace;">#{{ index + 1 }}</span>
             </div>
 
-            <!-- 右侧操作区 -->
-            <div class="detail-card__aside">
-              <div class="detail-card__time">{{ formatPubDate(item.pub_date) }}</div>
-              <div class="detail-card__actions">
+            <!-- 标题 -->
+            <div class="text-subtitle-2 font-weight-bold mt-2" style="word-break: break-all;">{{ item.raw_title || item.title }}</div>
+
+            <!-- 描述 -->
+            <div v-if="cleanDescription(item.description)" class="text-caption text-medium-emphasis mt-1" style="word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ cleanDescription(item.description) }}
+            </div>
+
+            <!-- 元数据 Tags -->
+            <div class="meta-tags mt-2">
+              <!-- 订阅状态标签 -->
+              <v-chip v-if="item.in_subscription" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">已订阅</v-chip>
+              <v-chip v-if="item.episode_collected" size="x-small" variant="flat" class="meta-tag meta-tag--collected">订阅已下载</v-chip>
+
+              <!-- 识别结果标签 -->
+              <template v-if="item.recognition_done && item.tmdb_id">
+                <v-chip :href="getTmdbUrl(item)" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">ID: {{ item.tmdb_id }}</v-chip>
+                <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--type">{{ getMediaTypeLabel(item.media_type) }}</v-chip>
+                <v-chip v-if="item.media_type === 'tv'" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+                  S{{ item.season || 1 }} E{{ item.episode || '-' }}
+                </v-chip>
+              </template>
+              <v-chip v-else-if="item.recognition_done" size="x-small" variant="tonal" class="meta-tag meta-tag--miss">未命中</v-chip>
+
+              <!-- 字幕组 -->
+              <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ item.team }}</v-chip>
+
+              <!-- 来源/平台 -->
+              <v-chip v-if="item.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ item.source }}</v-chip>
+              <v-chip v-if="item.platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ item.platform }}</v-chip>
+
+              <!-- 分辨率 -->
+              <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ item.resolution }}</v-chip>
+
+              <!-- 视频特效/编码 -->
+              <v-chip v-if="item.video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.video_effect }}</v-chip>
+              <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.video_encode }}</v-chip>
+
+              <!-- 音频编码 -->
+              <v-chip v-if="item.audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.audio_encode }}</v-chip>
+
+              <!-- 字幕 -->
+              <v-chip v-if="item.subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.subtitle }}</v-chip>
+            </div>
+
+            <!-- 底部：时间 + 操作 -->
+            <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-2">
+              <span class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatPubDate(item.pub_date) }}</span>
+              <div class="d-flex align-center ga-1 flex-shrink-0">
                 <v-menu v-if="clientOptions.length > 0">
                   <template #activator="{ props: menuProps }">
                     <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-download" v-bind="menuProps">手动下载</v-btn>

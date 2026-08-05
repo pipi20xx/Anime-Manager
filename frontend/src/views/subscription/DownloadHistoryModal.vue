@@ -217,72 +217,71 @@ const filteredItems = computed(() => {
         <v-skeleton-loader v-if="loading && items.length === 0" type="list-item@8" />
 
         <!-- 记录列表 -->
-        <div v-else-if="filteredItems.length > 0" class="vertical-list">
-          <div v-for="(item, index) in filteredItems" :key="item.guid || item.id" class="feed-item-card detail-card">
-            <!-- 左侧主内容 -->
-            <div class="detail-card__main">
-              <!-- 第一行：标签 + 序号 -->
-              <div class="detail-card__top-row">
-                <div class="detail-card__tags-left">
-                  <!-- 状态标签 -->
-                  <v-chip size="x-small" variant="flat" :class="['meta-tag', getStateInfo(item.state).tagClass]">
-                    {{ getStateInfo(item.state).label }}
-                  </v-chip>
-                  <!-- 规则名标签 -->
-                  <v-chip v-if="item.rule_name" size="x-small" variant="flat" :class="['meta-tag', getRuleNameTagClass(item.rule_name)]">
-                    {{ item.rule_name }}
-                  </v-chip>
-                  <!-- 站点名 -->
-                  <v-chip v-if="item.feed_id" size="x-small" variant="flat" class="meta-tag meta-tag--feed">
-                    {{ feedNameMap[item.feed_id] || `Feed #${item.feed_id}` }}
-                  </v-chip>
-                  <!-- 下载器 -->
-                  <v-chip v-if="item.download_client_id" size="x-small" variant="flat" class="meta-tag meta-tag--source">
-                    {{ item.download_client_id }}
-                  </v-chip>
-                  <!-- 失败次数 -->
-                  <v-chip v-if="item.fail_count && item.fail_count > 0" size="x-small" variant="flat" class="meta-tag meta-tag--not-downloaded">
-                    失败 ×{{ item.fail_count }}
-                  </v-chip>
-                </div>
-                <span class="detail-card__index">#{{ index + 1 }}</span>
-              </div>
-
-              <!-- 标题 -->
-              <div class="detail-card__title">
-                <a v-if="item.link" :href="item.link" target="_blank" style="color: inherit; text-decoration: none;">
-                  {{ item.title }}
-                </a>
-                <span v-else>{{ item.title }}</span>
-              </div>
-
-              <!-- 描述 -->
-              <div v-if="cleanDescription(item.description)" class="detail-card__desc">
-                {{ cleanDescription(item.description) }}
-              </div>
-
-              <!-- 失败原因 -->
-              <div v-if="item.fail_reason" class="text-caption text-error mt-1" style="line-height: 1.4;">
-                <v-icon size="12" class="mr-1">mdi-alert-circle-outline</v-icon>
-                {{ item.fail_reason }}
-              </div>
-
-              <!-- 元数据行 -->
-              <div class="meta-tags" style="margin-top: 4px;">
-                <!-- info_hash -->
-                <v-chip v-if="item.info_hash" size="x-small" variant="flat" class="meta-tag meta-tag--size">
-                  <span style="font-family: monospace; max-width: 120px; overflow: hidden; text-overflow: ellipsis; display: inline-block;">{{ item.info_hash }}</span>
+        <div v-else-if="filteredItems.length > 0" class="d-flex flex-column ga-2">
+          <div v-for="(item, index) in filteredItems" :key="item.guid || item.id" class="feed-item-card">
+            <!-- 第一行：标签 + 序号 -->
+            <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
+              <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
+                <!-- 状态标签 -->
+                <v-chip size="x-small" variant="flat" :class="['meta-tag', getStateInfo(item.state).tagClass]">
+                  {{ getStateInfo(item.state).label }}
+                </v-chip>
+                <!-- 规则名标签 -->
+                <v-chip v-if="item.rule_name" size="x-small" variant="flat" :class="['meta-tag', getRuleNameTagClass(item.rule_name)]">
+                  {{ item.rule_name }}
+                </v-chip>
+                <!-- 站点名 -->
+                <v-chip v-if="item.feed_id" size="x-small" variant="flat" class="meta-tag meta-tag--feed">
+                  {{ feedNameMap[item.feed_id] || `Feed #${item.feed_id}` }}
+                </v-chip>
+                <!-- 下载器 -->
+                <v-chip v-if="item.download_client_id" size="x-small" variant="flat" class="meta-tag meta-tag--source">
+                  {{ item.download_client_id }}
+                </v-chip>
+                <!-- 失败次数 -->
+                <v-chip v-if="item.fail_count && item.fail_count > 0" size="x-small" variant="flat" class="meta-tag meta-tag--not-downloaded">
+                  失败 ×{{ item.fail_count }}
                 </v-chip>
               </div>
+              <span class="text-caption text-medium-emphasis flex-shrink-0" style="font-family: monospace;">#{{ index + 1 }}</span>
             </div>
 
-            <!-- 右侧操作区 -->
-            <div class="detail-card__aside">
-              <div class="detail-card__time">{{ formatTime(item.created_at) }}</div>
-              <div v-if="item.updated_at && formatTime(item.updated_at) !== formatTime(item.created_at)" class="detail-card__time" style="opacity: 0.6;">
-                更新: {{ formatTime(item.updated_at) }}
+            <!-- 标题 -->
+            <div class="text-subtitle-2 font-weight-bold mt-2" style="word-break: break-all;">
+              <a v-if="item.link" :href="item.link" target="_blank" style="color: inherit; text-decoration: none;">
+                {{ item.title }}
+              </a>
+              <span v-else>{{ item.title }}</span>
+            </div>
+
+            <!-- 描述 -->
+            <div v-if="cleanDescription(item.description)" class="text-caption text-medium-emphasis mt-1" style="word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ cleanDescription(item.description) }}
+            </div>
+
+            <!-- 失败原因 -->
+            <div v-if="item.fail_reason" class="text-caption text-error mt-1" style="line-height: 1.4;">
+              <v-icon size="12" class="mr-1">mdi-alert-circle-outline</v-icon>
+              {{ item.fail_reason }}
+            </div>
+
+            <!-- 元数据行 -->
+            <div class="meta-tags mt-1">
+              <!-- info_hash -->
+              <v-chip v-if="item.info_hash" size="x-small" variant="flat" class="meta-tag meta-tag--size">
+                <span style="font-family: monospace; max-width: 120px; overflow: hidden; text-overflow: ellipsis; display: inline-block;">{{ item.info_hash }}</span>
+              </v-chip>
+            </div>
+
+            <!-- 底部：时间 + 操作 -->
+            <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-2">
+              <div class="d-flex flex-column ga-1">
+                <span class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatTime(item.created_at) }}</span>
+                <span v-if="item.updated_at && formatTime(item.updated_at) !== formatTime(item.created_at)" class="text-caption text-medium-emphasis" style="font-family: monospace; opacity: 0.6;">
+                  更新: {{ formatTime(item.updated_at) }}
+                </span>
               </div>
-              <div class="detail-card__actions">
+              <div class="d-flex align-center ga-1 flex-shrink-0">
                 <v-btn
                   v-if="item.link"
                   size="small" variant="tonal" color="info"

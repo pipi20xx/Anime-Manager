@@ -1068,95 +1068,6 @@
   font-family: var(--v-font-family, sans-serif);
 }
 
-/* ============================================================
- * 详情卡片通用布局 — 订阅源详情 / 整理历史 等共用
- * 使用方式：<div class="detail-card"> (外层) + .detail-card__main / .detail-card__aside
- * ============================================================ */
-
-/* ── 详情卡片外层 (左右两栏) ── */
-.detail-card {
-  display: flex;
-  gap: 16px;
-  padding: 14px 16px;
-}
-
-/* ── 详情卡片左侧主内容 ── */
-.detail-card__main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.detail-card__top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.detail-card__tags-left {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  min-width: 0;
-  overflow: hidden;
-  flex: 1;
-}
-.detail-card__index {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.4);
-  font-family: monospace;
-  flex-shrink: 0;
-}
-.detail-card__title {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.5;
-  word-break: break-all;
-}
-.detail-card__desc {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  padding-right: 48px;
-}
-.detail-card__tmdb-title {
-  font-size: 12px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-}
-
-/* ── 详情卡片右侧操作区 ── */
-.detail-card__aside {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 160px;
-}
-.detail-card__time {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
-  font-family: monospace;
-  white-space: nowrap;
-}
-.detail-card__actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 /* ── 通用工具栏 (搜索+筛选+操作) ── */
 .list-toolbar {
   margin-bottom: 16px;
@@ -1166,6 +1077,7 @@
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .list-toolbar__actions {
   display: flex;
@@ -1177,11 +1089,12 @@
   color: rgba(var(--v-theme-on-surface), 0.6);
 }
 
-/* ── 通用垂直列表容器 ── */
-.vertical-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* ── 工具栏移动端：搜索框全宽 ── */
+@media (max-width: 600px) {
+  .list-toolbar__filters .search-field {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 /* ============================================================

@@ -689,86 +689,42 @@ onUnmounted(() => {
     <v-skeleton-loader v-if="loading && hashList.length === 0" type="card@6" />
 
     <template v-else-if="hashList.length > 0">
-      <div class="vertical-list">
+      <div class="d-flex flex-column ga-2">
         <v-card
           v-for="item in hashList"
           :key="item.id"
-          class="glass-card hover-lift"
+          class="glass-card hover-lift pa-4 cursor-pointer"
           @click="openDetail(item)"
         >
-          <div class="detail-card">
-            <!-- 左侧主内容 -->
-            <div class="detail-card__main">
-              <!-- 第一行：标签 -->
-              <div class="detail-card__top-row">
-                <div class="detail-card__tags-left">
-                  <!-- 媒体类型 -->
-                  <v-chip v-if="item.media_type" size="x-small" variant="flat" class="meta-tag meta-tag--type">
-                    {{ formatMediaType(item.media_type) }}
-                  </v-chip>
-                  <!-- 季集 -->
-                  <v-chip v-if="item.season" size="x-small" variant="flat" class="meta-tag meta-tag--season">
-                    S{{ String(item.season).padStart(2, '0') }}{{ item.episode ? 'E' + String(item.episode).padStart(2, '0') : '' }}
-                  </v-chip>
-                  <!-- 分辨率 -->
-                  <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">
-                    {{ item.resolution }}
-                  </v-chip>
-                  <!-- 制作组 -->
-                  <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">
-                    {{ item.team }}
-                  </v-chip>
-                  <!-- 视频编码 -->
-                  <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">
-                    {{ item.video_encode }}
-                  </v-chip>
-                  <!-- 介质来源 -->
-                  <v-chip v-if="item.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">
-                    {{ item.source }}
-                  </v-chip>
-                  <!-- 文件大小 -->
-                  <v-chip v-if="item.file_size" size="x-small" variant="flat" class="meta-tag meta-tag--size">
-                    {{ formatFileSize(item.file_size) }}
-                  </v-chip>
-                  <!-- 二级分类 -->
-                  <v-chip v-if="item.secondary_category" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">
-                    {{ item.secondary_category }}
-                  </v-chip>
-                </div>
-              </div>
-
-              <!-- 标题 -->
-              <div class="detail-card__title">
-                {{ item.title || item.original_filename || '-' }}
-              </div>
-
-              <!-- 文件名 (有标题时显示原始文件名) -->
-              <div v-if="item.original_filename && item.title" class="detail-card__desc">
-                {{ item.original_filename }}
-              </div>
-
-              <!-- 哈希值行 -->
-              <div class="meta-tags">
-                <v-chip v-if="item.sha1" size="x-small" variant="flat" class="meta-tag meta-tag--size" :title="item.sha1">
-                  <v-icon size="10" class="mr-1">mdi-fingerprint</v-icon>
-                  <span style="font-family: monospace;">SHA1: {{ truncateHash(item.sha1) }}</span>
-                </v-chip>
-                <v-chip v-if="item.ed2k" size="x-small" variant="flat" class="meta-tag meta-tag--encode" :title="item.ed2k">
-                  <v-icon size="10" class="mr-1">mdi-link-variant</v-icon>
-                  <span style="font-family: monospace;">ED2K: {{ truncateHash(item.ed2k) }}</span>
-                </v-chip>
-                <v-btn v-if="item.ed2k_link" size="x-small" variant="tonal" color="info" class="meta-tag-copy-btn" @click.stop="copyEd2kWithTemplate(item)" title="复制 ED2K 链接（按模板渲染）"><v-icon size="10" start>mdi-content-copy</v-icon>复制ED2K</v-btn>
-              </div>
-
-              <!-- 源路径 -->
-              <div v-if="item.source_path" class="detail-card__desc" style="font-family: monospace; padding-right: 0;" :title="item.source_path">
-                <v-icon size="12" class="mr-1">mdi-folder-outline</v-icon>{{ item.source_path }}
-              </div>
+          <!-- 第一行：标签 + 右侧时间 -->
+          <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
+            <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
+              <v-chip v-if="item.media_type" size="x-small" variant="flat" class="meta-tag meta-tag--type">
+                {{ formatMediaType(item.media_type) }}
+              </v-chip>
+              <v-chip v-if="item.season" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+                S{{ String(item.season).padStart(2, '0') }}{{ item.episode ? 'E' + String(item.episode).padStart(2, '0') : '' }}
+              </v-chip>
+              <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">
+                {{ item.resolution }}
+              </v-chip>
+              <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">
+                {{ item.team }}
+              </v-chip>
+              <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">
+                {{ item.video_encode }}
+              </v-chip>
+              <v-chip v-if="item.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">
+                {{ item.source }}
+              </v-chip>
+              <v-chip v-if="item.file_size" size="x-small" variant="flat" class="meta-tag meta-tag--size">
+                {{ formatFileSize(item.file_size) }}
+              </v-chip>
+              <v-chip v-if="item.secondary_category" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">
+                {{ item.secondary_category }}
+              </v-chip>
             </div>
-
-            <!-- 右侧操作区 -->
-            <div class="detail-card__aside">
-              <!-- TMDB ID -->
+            <div class="d-flex align-center ga-2 flex-shrink-0">
               <v-chip
                 v-if="item.tmdb_id"
                 class="meta-tag meta-tag--tmdb"
@@ -780,9 +736,36 @@ onUnmounted(() => {
               >
                 TMDB: {{ item.tmdb_id }}
               </v-chip>
-              <span v-else class="detail-card__time" style="opacity: 0.3;">—</span>
-              <div class="detail-card__time">{{ formatDate(item.calculated_at) }}</div>
+              <span class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatDate(item.calculated_at) }}</span>
             </div>
+          </div>
+
+          <!-- 标题 -->
+          <div class="text-subtitle-1 font-weight-bold mt-2" style="word-break: break-all;">
+            {{ item.title || item.original_filename || '-' }}
+          </div>
+
+          <!-- 文件名 (有标题时显示原始文件名) -->
+          <div v-if="item.original_filename && item.title" class="text-caption text-medium-emphasis mt-1" style="word-break: break-all;">
+            {{ item.original_filename }}
+          </div>
+
+          <!-- 哈希值行 -->
+          <div class="meta-tags mt-2">
+            <v-chip v-if="item.sha1" size="x-small" variant="flat" class="meta-tag meta-tag--size" :title="item.sha1">
+              <v-icon size="10" class="mr-1">mdi-fingerprint</v-icon>
+              <span style="font-family: monospace;">SHA1: {{ truncateHash(item.sha1) }}</span>
+            </v-chip>
+            <v-chip v-if="item.ed2k" size="x-small" variant="flat" class="meta-tag meta-tag--encode" :title="item.ed2k">
+              <v-icon size="10" class="mr-1">mdi-link-variant</v-icon>
+              <span style="font-family: monospace;">ED2K: {{ truncateHash(item.ed2k) }}</span>
+            </v-chip>
+            <v-btn v-if="item.ed2k_link" size="x-small" variant="tonal" color="info" class="meta-tag-copy-btn" @click.stop="copyEd2kWithTemplate(item)" title="复制 ED2K 链接（按模板渲染）"><v-icon size="10" start>mdi-content-copy</v-icon>复制ED2K</v-btn>
+          </div>
+
+          <!-- 源路径 -->
+          <div v-if="item.source_path" class="text-caption text-medium-emphasis mt-2" style="font-family: monospace; word-break: break-all;" :title="item.source_path">
+            <v-icon size="12" class="mr-1">mdi-folder-outline</v-icon>{{ item.source_path }}
           </div>
         </v-card>
       </div>
