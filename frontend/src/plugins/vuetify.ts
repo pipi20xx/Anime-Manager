@@ -1,11 +1,10 @@
 /**
  * Vuetify 插件配置
  *
- * 设计规范：Apple Liquid Glass — 流动玻璃设计语言
- * - 深色渐变背景，多层玻璃面板半透明 + 高斯模糊 + 饱和度增强
- * - 青色 #4ecdc4 为核心辅助色（霓虹描边）
- * - 品红 #ff2d92 为渐变填充色
- * - 紫色 #a855f7 为主强调色
+ * 默认主题：经典实色（classic）
+ * - 亮色：纯白底 + 紫色主强调色 #a855f7
+ * - 暗色：纯黑底 #121212 + 紫色主强调色 #a855f7
+ * - ACG / 液态玻璃主题通过 CSS 覆盖实现
  * - 图标：全部使用 MDI (@mdi/js)
  */
 import { createVuetify } from 'vuetify'
@@ -13,13 +12,13 @@ import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
 import 'vuetify/styles'
 
-// 亮色主题 — 极简实色
+// 亮色主题 — 经典实色
 const lightTheme = {
   dark: false,
   colors: {
-    background: '#F5F5FA',  // 页面背景
+    background: '#FFFFFF',  // 页面背景
     surface: '#FFFFFF',      // 卡片/面板背景
-    'surface-variant': '#F8F8FC',
+    'surface-variant': '#F5F5F5',
     'on-surface-variant': '#64748B',
     primary: '#a855f7',
     'primary-darken-1': '#9333EA',
@@ -33,13 +32,13 @@ const lightTheme = {
   },
 }
 
-// 暗色主题 — 极简实色（background 与 surface 统一，消除色差）
+// 暗色主题 — 经典实色（纯黑底）
 const darkTheme = {
   dark: true,
   colors: {
-    background: '#1a1a3e',  // 页面背景（与导航栏/顶栏/TAB栏统一）
-    surface: '#1a1a3e',      // 卡片/面板背景
-    'surface-variant': '#141432',
+    background: '#121212',  // 页面背景（纯黑）
+    surface: '#1E1E1E',      // 卡片/面板背景
+    'surface-variant': '#2C2C2C',
     'on-surface-variant': '#BFC2CE',
     primary: '#a855f7',
     'primary-darken-1': '#9333EA',

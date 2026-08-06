@@ -54,13 +54,13 @@ body::after {
 .v-theme--light {
   --v-theme-surface: 255, 255, 255;
   --v-theme-surface-light: 255, 255, 255;
-  --v-theme-surface-variant: 240, 242, 255;
+  --v-theme-surface-variant: 245, 245, 245;
 }
 
 .v-theme--dark {
-  --v-theme-surface: 30, 30, 60;
-  --v-theme-surface-light: 30, 30, 60;
-  --v-theme-surface-variant: 20, 20, 42;
+  --v-theme-surface: 30, 30, 30;
+  --v-theme-surface-light: 30, 30, 30;
+  --v-theme-surface-variant: 44, 44, 44;
 }
 
 /* ============================================================

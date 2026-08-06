@@ -12,12 +12,13 @@
  *   8. cards.css       → 卡片系统结构
  *   9. design-spec.css → 设计规范结构：间距、布局
  *  10. utilities.css   → 通用复用结构
- * 11. theme-acg.css   → ACG 视觉风格（html.glass-theme-acg 激活）
- * 12. glass-themes.css → 液态玻璃视觉风格（html.glass-theme-liquid 激活）
+ * 11. theme-acg.css     → ACG 视觉风格（html.glass-theme-acg 激活）
+ * 12. glass-themes.css   → 液态玻璃视觉风格（html.glass-theme-liquid 激活）
+ * 13. theme-classic.css  → 经典实色视觉风格（html.glass-theme-classic 激活）
  *
  * 规则：1-10 只放结构，不放颜色/背景/模糊/边框/阴影。
- *       11-12 只放视觉风格，通过 html.glass-theme-xxx 前缀隔离。
- *       两个主题完全独立，互不覆盖，只有选中的才生效。
+ *       11-13 只放视觉风格，通过 html.glass-theme-xxx 前缀隔离。
+ *       三个主题完全独立，互不覆盖，只有选中的才生效。
  */
 
 /* 1. 基础：重置、CSS变量、容器透明 */
@@ -55,3 +56,6 @@
 
 /* 12. 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
 @import './glass-themes.css';
+
+/* 13. 经典实色主题视觉风格（html.glass-theme-classic 激活） */
+@import './theme-classic.css';

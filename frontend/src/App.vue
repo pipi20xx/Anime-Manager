@@ -28,7 +28,7 @@ function applyDarkClass(isDark: boolean) {
 // 同步玻璃主题 class 到 <html>
 function applyGlassTheme(glassTheme: string) {
   const html = document.documentElement
-  html.classList.remove('glass-theme-acg', 'glass-theme-liquid')
+  html.classList.remove('glass-theme-acg', 'glass-theme-liquid', 'glass-theme-classic')
   html.classList.add(`glass-theme-${glassTheme}`)
 }
 

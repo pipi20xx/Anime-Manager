@@ -217,20 +217,45 @@ onUnmounted(() => {
             </template>
           </v-tooltip>
 
-          <!-- 玻璃主题切换：ACG 毛玻璃 / 液态玻璃 -->
-          <v-tooltip :text="themeStore.glassTheme === 'acg' ? '当前: ACG 毛玻璃 → 切换到液态玻璃' : '当前: 液态玻璃 → 切换到 ACG 毛玻璃'" location="bottom">
-            <template #activator="{ props: tooltipProps }">
+          <!-- 主题选择菜单 -->
+          <v-menu>
+            <template #activator="{ props: menuProps }">
               <v-btn
-                v-bind="tooltipProps"
+                v-bind="menuProps"
                 variant="text"
                 density="comfortable"
                 size="small"
-                :color="themeStore.glassTheme === 'acg' ? 'secondary' : 'accent'"
-                :icon="themeStore.glassTheme === 'acg' ? 'mdi-image-multiple' : 'mdi-layers-outline'"
-                @click="themeStore.toggleGlassTheme()"
+                :color="{ liquid: 'accent', acg: 'secondary', classic: 'primary' }[themeStore.glassTheme]"
+                :icon="{ liquid: 'mdi-layers-outline', acg: 'mdi-image-multiple', classic: 'mdi-contrast-box' }[themeStore.glassTheme]"
               />
             </template>
-          </v-tooltip>
+            <v-list density="compact" min-width="180" nav>
+              <v-list-item
+                prepend-icon="mdi-layers-outline"
+                title="液态玻璃"
+                subtitle="Apple 液态玻璃风格"
+                :active="themeStore.glassTheme === 'liquid'"
+                active-color="primary"
+                @click="themeStore.setGlassTheme('liquid')"
+              />
+              <v-list-item
+                prepend-icon="mdi-image-multiple"
+                title="ACG 毛玻璃"
+                subtitle="二次元壁纸 + 毛玻璃"
+                :active="themeStore.glassTheme === 'acg'"
+                active-color="primary"
+                @click="themeStore.setGlassTheme('acg')"
+              />
+              <v-list-item
+                prepend-icon="mdi-contrast-box"
+                title="经典实色"
+                subtitle="纯白/纯黑 最简风格"
+                :active="themeStore.glassTheme === 'classic'"
+                active-color="primary"
+                @click="themeStore.setGlassTheme('classic')"
+              />
+            </v-list>
+          </v-menu>
 
           <!-- 用户菜单 -->
           <v-menu>
