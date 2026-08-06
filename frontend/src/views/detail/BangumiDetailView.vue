@@ -334,11 +334,11 @@ onMounted(() => {
               class="glass-card media-card cursor-pointer"
               variant="flat"
             >
-              <div class="media-card__poster">
+              <div class="cast-card__poster">
                 <v-img
                   v-if="c.image"
                   :src="getImg(c.image)"
-                  cover
+                  contain
                   class="rounded-t-xl"
                 >
                   <template #placeholder>
