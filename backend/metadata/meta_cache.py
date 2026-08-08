@@ -156,6 +156,7 @@ class MetaCacheManager:
             existing = await db.first(SeriesFingerprint, stmt)
             if existing:
                 existing.tmdb_id = str(info.get("id") or info.get("tmdb_id"))
+                existing.type = str(info.get("type", "tv"))
                 existing.title = info.get("title")
                 existing.updated_at = datetime.now()
                 await db.save(existing, audit=False)
