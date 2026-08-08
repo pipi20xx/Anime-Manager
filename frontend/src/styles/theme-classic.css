@@ -155,12 +155,12 @@ html.glass-theme-classic .v-field--variant-outlined .v-field__outline {
 
 html.glass-theme-classic.glass-light .v-field--variant-outlined .v-field__outline {
   --v-field-border-opacity: 1 !important;
-  color: rgba(0, 0, 0, 0.24);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 html.glass-theme-classic.glass-dark .v-field--variant-outlined .v-field__outline {
   --v-field-border-opacity: 1 !important;
-  color: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* filled / solo */
@@ -170,7 +170,19 @@ html.glass-theme-classic .v-field--variant-solo-filled {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
-  border: none !important;
+  border-radius: 8px !important;
+}
+
+html.glass-theme-classic.glass-light .v-field--variant-filled,
+html.glass-theme-classic.glass-light .v-field--variant-solo,
+html.glass-theme-classic.glass-light .v-field--variant-solo-filled {
+  border: 1px solid rgba(0, 0, 0, 0.4) !important;
+}
+
+html.glass-theme-classic.glass-dark .v-field--variant-filled,
+html.glass-theme-classic.glass-dark .v-field--variant-solo,
+html.glass-theme-classic.glass-dark .v-field--variant-solo-filled {
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
 }
 
 html.glass-theme-classic.glass-light .v-field--variant-filled,
@@ -1129,30 +1141,68 @@ html.glass-theme-classic .v-card-title {
  * 这是给毛玻璃深色背景设计的，classic 主题下需要用合适的边框色替换
  * ================================================================ */
 
-/* 亮色：用浅灰色边框 */
+/* 亮色：用浅灰色边框 — 必须用完整 border 简写，否则 border:none 会导致 border-style/width 不恢复 */
+html.glass-theme-classic.glass-light .v-card,
+html.glass-theme-classic.glass-light .v-card--variant-outlined,
+html.glass-theme-classic.glass-light .v-card--variant-elevated,
+html.glass-theme-classic.glass-light .v-card--variant-flat,
+html.glass-theme-classic.glass-light .v-card--variant-tonal,
+html.glass-theme-classic.glass-light .v-sheet,
+html.glass-theme-classic.glass-light .v-expansion-panel,
+html.glass-theme-classic.glass-light .v-alert--variant-tonal,
+html.glass-theme-classic.glass-light .v-btn-toggle,
 html.glass-theme-classic.glass-light .sub-search-results,
 html.glass-theme-classic.glass-light .sub-poster-preview,
 html.glass-theme-classic.glass-light .feed-item-card,
 html.glass-theme-classic.glass-light .search-results-box,
-html.glass-theme-classic.glass-light .v-card--variant-outlined,
-html.glass-theme-classic.glass-light .v-sheet,
-html.glass-theme-classic.glass-light .v-expansion-panel,
-html.glass-theme-classic.glass-light .v-alert--variant-tonal,
-html.glass-theme-classic.glass-light .v-btn-toggle {
-  border-color: rgba(0, 0, 0, 0.10) !important;
+html.glass-theme-classic.glass-light .search-results-list,
+html.glass-theme-classic.glass-light .org-log-summary,
+html.glass-theme-classic.glass-light .org-task-item,
+html.glass-theme-classic.glass-light .org-path-container,
+html.glass-theme-classic.glass-light .org-preview-result,
+html.glass-theme-classic.glass-light .variable-manual,
+html.glass-theme-classic.glass-light .variable-item code,
+html.glass-theme-classic.glass-light .calendar-today-card,
+html.glass-theme-classic.glass-light .hash-item-card,
+html.glass-theme-classic.glass-light .dc-search-item,
+html.glass-theme-classic.glass-light .dc-db-table-item,
+html.glass-theme-classic.glass-light .dc-db-table-wrapper,
+html.glass-theme-classic.glass-light .hash-full-value,
+html.glass-theme-classic.glass-light .config-section,
+html.glass-theme-classic.glass-light .preview-box {
+  border: 1px solid rgba(0, 0, 0, 0.4) !important;
 }
 
 /* 暗色：用深灰色边框 */
+html.glass-theme-classic.glass-dark .v-card,
+html.glass-theme-classic.glass-dark .v-card--variant-outlined,
+html.glass-theme-classic.glass-dark .v-card--variant-elevated,
+html.glass-theme-classic.glass-dark .v-card--variant-flat,
+html.glass-theme-classic.glass-dark .v-card--variant-tonal,
+html.glass-theme-classic.glass-dark .v-sheet,
+html.glass-theme-classic.glass-dark .v-expansion-panel,
+html.glass-theme-classic.glass-dark .v-alert--variant-tonal,
+html.glass-theme-classic.glass-dark .v-btn-toggle,
 html.glass-theme-classic.glass-dark .sub-search-results,
 html.glass-theme-classic.glass-dark .sub-poster-preview,
 html.glass-theme-classic.glass-dark .feed-item-card,
 html.glass-theme-classic.glass-dark .search-results-box,
-html.glass-theme-classic.glass-dark .v-card--variant-outlined,
-html.glass-theme-classic.glass-dark .v-sheet,
-html.glass-theme-classic.glass-dark .v-expansion-panel,
-html.glass-theme-classic.glass-dark .v-alert--variant-tonal,
-html.glass-theme-classic.glass-dark .v-btn-toggle {
-  border-color: rgba(255, 255, 255, 0.10) !important;
+html.glass-theme-classic.glass-dark .search-results-list,
+html.glass-theme-classic.glass-dark .org-log-summary,
+html.glass-theme-classic.glass-dark .org-task-item,
+html.glass-theme-classic.glass-dark .org-path-container,
+html.glass-theme-classic.glass-dark .org-preview-result,
+html.glass-theme-classic.glass-dark .variable-manual,
+html.glass-theme-classic.glass-dark .variable-item code,
+html.glass-theme-classic.glass-dark .calendar-today-card,
+html.glass-theme-classic.glass-dark .hash-item-card,
+html.glass-theme-classic.glass-dark .dc-search-item,
+html.glass-theme-classic.glass-dark .dc-db-table-item,
+html.glass-theme-classic.glass-dark .dc-db-table-wrapper,
+html.glass-theme-classic.glass-dark .hash-full-value,
+html.glass-theme-classic.glass-dark .config-section,
+html.glass-theme-classic.glass-dark .preview-box {
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
 }
 
 
