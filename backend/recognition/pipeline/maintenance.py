@@ -13,7 +13,7 @@ class MaintenanceStage:
         
         # 1. 自动维护指纹库
         existing_fp = await ctx.cache_dao.get_fingerprint_match(ctx.filename, [])
-        if not existing_fp or str(existing_fp.get("id")) != m_id:
+        if not existing_fp or str(existing_fp.get("id")) != m_id or str(existing_fp.get("type")) != str(m_type):
             await ctx.cache_dao.save_fingerprint(
                 ctx.filename, ctx.tmdb_data, ctx.logs
             )
