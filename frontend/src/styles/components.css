@@ -1,62 +1,19 @@
 /**
  * components.css — Vuetify 组件结构覆盖
  *
- * 只放纯结构规则：布局、间距、圆角、滚动、内部透明。
- * 所有视觉风格（颜色/背景/模糊/边框/阴影）在 theme-acg.css 里。
+ * 只放纯结构规则：列表内边距等。
+ * 所有视觉风格（圆角、边框、背景、模糊、阴影、过渡）
+ * 由 tokens.css + visual.css 统一处理。
  */
 
 
 /* ============================================================
- * 下拉菜单 — 结构
+ * 下拉菜单 — 列表内边距（纯结构，visual.css 未覆盖）
  * ============================================================ */
-
-.v-menu .v-overlay__content {
-  border-radius: 20px !important;
-  overflow: hidden !important;
-}
-
-.v-select .v-overlay__content,
-.v-autocomplete .v-overlay__content,
-.v-combobox .v-overlay__content {
-  border-radius: 20px !important;
-  overflow: hidden !important;
-}
 
 .v-select .v-list,
 .v-autocomplete .v-list,
 .v-combobox .v-list,
 .v-menu .v-list {
   padding: 6px !important;
-}
-
-.v-select .v-list-item,
-.v-autocomplete .v-list-item,
-.v-combobox .v-list-item,
-.v-menu .v-list-item {
-  border-radius: 12px !important;
-  margin: 2px 0 !important;
-  min-height: 38px !important;
-  transition: all 0.2s ease-out !important;
-}
-
-.v-select .v-chip {
-  margin: 2px 4px 2px 0 !important;
-}
-
-.v-select .v-field__append-inner .v-icon {
-  transition: transform 0.3s ease-out !important;
-}
-
-.v-select--active .v-field__append-inner .v-icon {
-  transform: rotate(180deg) !important;
-}
-
-
-/* ============================================================
- * 标签页 — 结构
- * ============================================================ */
-
-.v-tab {
-  border-radius: 999px !important;
-  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
 }

@@ -1,46 +1,26 @@
 /**
  * theme-classic.css — 经典实色主题
  *
- * 通过 html.glass-theme-classic 激活，只有选中经典主题时才生效。
- * 最原始的视觉风格：白天白色底，夜晚纯黑底，无毛玻璃、无半透明、无模糊、无动画背景。
- * 组件使用 Vuetify 默认的 Material Design 实色样式。
- *
- * 与 ACG 主题（theme-acg.css，html.glass-theme-acg）
- * 和 液态玻璃主题（glass-themes.css，html.glass-theme-liquid）完全独立。
+ * 通过 html.glass-theme-classic 激活。
+ * 组件基础视觉由 tokens.css + visual.css 统一处理，
+ * 此文件只保留经典实色专属效果：
+ *   - Vuetify 主题变量
+ *   - 侧边栏/顶栏边框
+ *   - sticky-tabs 实色背景
+ *   - 下拉列表项紧凑布局
+ *   - 伪元素移除（::before / ::after）
+ *   - 自定义类边框色覆盖（cards.css 等中的白色边框 → 合适色）
+ *   - 详情页还原（移除 ACG 的黑色文字+白色描边）
+ *   - 输入框 focus 实色边框
+ *   - SnackBar 按钮颜色反转
+ *   - 日志终端配色
+ *   - 字体
+ *   - 移动端优化
  */
 
 
 /* ================================================================
- * 1. 背景 — 纯实色，无壁纸、无渐变、无动画
- * ================================================================ */
-
-html.glass-theme-classic body::before,
-html.glass-theme-classic body::after {
-  background: none !important;
-  background-image: none !important;
-  filter: none !important;
-  transform: none !important;
-  animation: none !important;
-  display: none !important;
-}
-
-/* 亮色：白色底 */
-html.glass-theme-classic.glass-light body {
-  background: #FFFFFF !important;
-}
-
-/* 暗色：纯黑底 */
-html.glass-theme-classic.glass-dark body {
-  background: #121212 !important;
-}
-
-html.glass-theme-classic .v-application {
-  background: transparent !important;
-}
-
-
-/* ================================================================
- * 2. Vuetify 组件变量 — 经典实色
+ * 1. Vuetify 组件变量
  * ================================================================ */
 
 html.glass-theme-classic .v-theme--light {
@@ -59,275 +39,51 @@ html.glass-theme-classic .v-theme--dark {
 
 
 /* ================================================================
- * 3. 卡片 — 纯实色，无模糊、无半透明
+ * 2. 侧边栏 / 顶栏 — 边框线
  * ================================================================ */
 
-html.glass-theme-classic .v-card,
-html.glass-theme-classic .v-card--variant-elevated,
-html.glass-theme-classic .v-card--variant-flat,
-html.glass-theme-classic .v-card--variant-tonal {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  border-radius: 12px !important;
+html.glass-theme-classic.glass-light .v-navigation-drawer {
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-html.glass-theme-classic.glass-light .v-card,
-html.glass-theme-classic.glass-light .v-card--variant-elevated,
-html.glass-theme-classic.glass-light .v-card--variant-flat,
-html.glass-theme-classic.glass-light .v-card--variant-tonal {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+html.glass-theme-classic.glass-dark .v-navigation-drawer {
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
-html.glass-theme-classic.glass-dark .v-card,
-html.glass-theme-classic.glass-dark .v-card--variant-elevated,
-html.glass-theme-classic.glass-dark .v-card--variant-flat,
-html.glass-theme-classic.glass-dark .v-card--variant-tonal {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+html.glass-theme-classic.glass-light .v-app-bar,
+html.glass-theme-classic.glass-light .v-toolbar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-/* 卡片 hover — 轻微阴影增强 */
-html.glass-theme-classic .v-card--link:hover,
-html.glass-theme-classic .hover-lift:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06) !important;
-  transform: translateY(-2px);
-}
-
-html.glass-theme-classic.glass-dark .v-card--link:hover,
-html.glass-theme-classic.glass-dark .hover-lift:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+html.glass-theme-classic.glass-dark .v-app-bar,
+html.glass-theme-classic.glass-dark .v-toolbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 
 /* ================================================================
- * 4. 按钮 — Material Design 实色
+ * 3. Sticky Tabs — 实色背景 + 边框
  * ================================================================ */
 
-html.glass-theme-classic .v-btn {
-  border-radius: 8px !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  -webkit-text-stroke: 0 !important;
+html.glass-theme-classic.glass-light .sticky-tabs,
+html.glass-theme-classic.glass-light .sticky-sub-tabs {
+  background: var(--am-surface-bg) !important;
+  background-color: var(--am-surface-bg) !important;
+  border-bottom: 1px solid var(--am-divider-color) !important;
 }
 
-html.glass-theme-classic .v-btn::before {
-  display: none !important;
-}
-
-html.glass-theme-classic .v-btn--icon {
-  border-radius: 50% !important;
+html.glass-theme-classic.glass-dark .sticky-tabs,
+html.glass-theme-classic.glass-dark .sticky-sub-tabs {
+  background: var(--am-body-bg) !important;
+  background-color: var(--am-body-bg) !important;
+  border-bottom: 1px solid var(--am-divider-color) !important;
 }
 
 
 /* ================================================================
- * 5. 输入框 — 实色背景，标准边框
+ * 4. 下拉列表项 — hover/active 背景
+ *    border-radius 和 margin 由 --am-list-item-* 令牌统一处理
  * ================================================================ */
-
-html.glass-theme-classic .v-field--variant-outlined {
-  border-radius: 8px !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-
-html.glass-theme-classic.glass-light .v-field--variant-outlined {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .v-field--variant-outlined {
-  background: #2C2C2C !important;
-  background-color: #2C2C2C !important;
-}
-
-/* outline 边框显示 */
-html.glass-theme-classic .v-field--variant-outlined .v-field__outline {
-  --v-field-border-opacity: 1 !important;
-}
-
-html.glass-theme-classic.glass-light .v-field--variant-outlined .v-field__outline {
-  --v-field-border-opacity: 1 !important;
-  color: rgba(0, 0, 0, 0.4);
-}
-
-html.glass-theme-classic.glass-dark .v-field--variant-outlined .v-field__outline {
-  --v-field-border-opacity: 1 !important;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-/* filled / solo */
-html.glass-theme-classic .v-field--variant-filled,
-html.glass-theme-classic .v-field--variant-solo,
-html.glass-theme-classic .v-field--variant-solo-filled {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  border-radius: 8px !important;
-}
-
-html.glass-theme-classic.glass-light .v-field--variant-filled,
-html.glass-theme-classic.glass-light .v-field--variant-solo,
-html.glass-theme-classic.glass-light .v-field--variant-solo-filled {
-  border: 1px solid rgba(0, 0, 0, 0.4) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-field--variant-filled,
-html.glass-theme-classic.glass-dark .v-field--variant-solo,
-html.glass-theme-classic.glass-dark .v-field--variant-solo-filled {
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-}
-
-html.glass-theme-classic.glass-light .v-field--variant-filled,
-html.glass-theme-classic.glass-light .v-field--variant-solo,
-html.glass-theme-classic.glass-light .v-field--variant-solo-filled {
-  background: #F5F5F5 !important;
-}
-
-html.glass-theme-classic.glass-dark .v-field--variant-filled,
-html.glass-theme-classic.glass-dark .v-field--variant-solo,
-html.glass-theme-classic.glass-dark .v-field--variant-solo-filled {
-  background: #2C2C2C !important;
-}
-
-/* label */
-html.glass-theme-classic.glass-light .v-field .v-label {
-  color: rgba(0, 0, 0, 0.50) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-field .v-label {
-  color: rgba(255, 255, 255, 0.50) !important;
-}
-
-/* 输入文字色 */
-html.glass-theme-classic.glass-light .v-field__input,
-html.glass-theme-classic.glass-light .v-input input,
-html.glass-theme-classic.glass-light .v-input textarea {
-  color: rgba(0, 0, 0, 0.87) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-field__input,
-html.glass-theme-classic.glass-dark .v-input input,
-html.glass-theme-classic.glass-dark .v-input textarea {
-  color: rgba(255, 255, 255, 0.90) !important;
-}
-
-
-/* ================================================================
- * 6. 弹窗 / 对话框
- * ================================================================ */
-
-html.glass-theme-classic .v-dialog .v-overlay__content .v-card,
-html.glass-theme-classic .v-dialog .v-overlay__content {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-dialog .v-overlay__content .v-card,
-html.glass-theme-classic.glass-dark .v-dialog .v-overlay__content {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-}
-
-html.glass-theme-classic.glass-light .v-dialog .v-overlay__content .v-card {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .v-dialog .v-overlay__content .v-card {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-}
-
-/* 弹窗遮罩 */
-html.glass-theme-classic .v-dialog > .v-overlay__scrim {
-  background: rgba(0, 0, 0, 0.32) !important;
-  opacity: 1 !important;
-}
-
-html.glass-theme-classic.glass-dark .v-dialog > .v-overlay__scrim {
-  background: rgba(0, 0, 0, 0.54) !important;
-}
-
-/* snackbar / menu 遮罩隐藏 */
-html.glass-theme-classic .v-overlay:not(.v-dialog) > .v-overlay__scrim {
-  background: transparent !important;
-  opacity: 0 !important;
-}
-
-
-/* ================================================================
- * 7. 芯片 / 标签
- * ================================================================ */
-
-html.glass-theme-classic .v-chip {
-  border-radius: 8px !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  -webkit-text-stroke: 0 !important;
-}
-
-/* tonal chip 文字色 */
-html.glass-theme-classic .v-chip--variant-tonal.text-primary {
-  color: rgba(var(--v-theme-on-surface), 0.88) !important;
-}
-
-html.glass-theme-classic .v-chip--variant-tonal.text-primary .v-chip__underlay {
-  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
-}
-
-
-/* ================================================================
- * 8. 下拉 / 菜单
- * ================================================================ */
-
-html.glass-theme-classic .v-menu .v-overlay__content,
-html.glass-theme-classic .v-select .v-overlay__content,
-html.glass-theme-classic .v-autocomplete .v-overlay__content {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-menu .v-overlay__content,
-html.glass-theme-classic.glass-dark .v-select .v-overlay__content,
-html.glass-theme-classic.glass-dark .v-autocomplete .v-overlay__content {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-}
-
-html.glass-theme-classic.glass-light .v-overlay .v-list,
-html.glass-theme-classic.glass-light .v-menu .v-card,
-html.glass-theme-classic.glass-light .v-menu .v-list {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .v-overlay .v-list,
-html.glass-theme-classic.glass-dark .v-menu .v-card,
-html.glass-theme-classic.glass-dark .v-menu .v-list {
-  background: #2C2C2C !important;
-  background-color: #2C2C2C !important;
-}
-
-/* 列表项 hover / active */
-html.glass-theme-classic .v-menu .v-list-item {
-  border-radius: 4px !important;
-  margin: 0 !important;
-}
 
 html.glass-theme-classic.glass-light .v-menu .v-list-item:hover {
   background: rgba(0, 0, 0, 0.04) !important;
@@ -341,565 +97,41 @@ html.glass-theme-classic .v-menu .v-list-item--active {
   background: rgba(var(--v-theme-primary), 0.12) !important;
 }
 
-/* 列表项文字 */
-html.glass-theme-classic.glass-light .v-overlay .v-list .v-list-item-title {
-  color: rgba(0, 0, 0, 0.87) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-overlay .v-list .v-list-item-title {
-  color: rgba(255, 255, 255, 0.90) !important;
-}
-
 
 /* ================================================================
- * 9. 侧边栏 / 顶栏
+ * 5. 伪元素移除 — 按钮 / Tab 弧光
  * ================================================================ */
 
-html.glass-theme-classic.glass-light .v-navigation-drawer {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-navigation-drawer {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-html.glass-theme-classic .v-navigation-drawer {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-
-html.glass-theme-classic.glass-light .v-app-bar,
-html.glass-theme-classic.glass-light .v-toolbar {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-app-bar,
-html.glass-theme-classic.glass-dark .v-toolbar {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-html.glass-theme-classic .v-app-bar,
-html.glass-theme-classic .v-toolbar {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-
-/* 移动端 temporary 导航栏 */
-@media (max-width: 959px) {
-  html.glass-theme-classic.glass-light .v-navigation-drawer--temporary {
-    background: #FFFFFF !important;
-    background-color: #FFFFFF !important;
-  }
-  html.glass-theme-classic.glass-dark .v-navigation-drawer--temporary {
-    background: #1E1E1E !important;
-    background-color: #1E1E1E !important;
-  }
-}
-
-
-/* ================================================================
- * 10. Sheet / Expansion Panel
- * ================================================================ */
-
-html.glass-theme-classic .v-sheet:not(.v-snackbar__wrapper) {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
-}
-
-html.glass-theme-classic.glass-light .v-sheet:not(.v-snackbar__wrapper) {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .v-sheet:not(.v-snackbar__wrapper) {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-}
-
-html.glass-theme-classic .v-expansion-panel {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-html.glass-theme-classic.glass-light .v-expansion-panel {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .v-expansion-panel {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-}
-
-
-/* ================================================================
- * 11. Alert / SnackBar
- * ================================================================ */
-
-html.glass-theme-classic .v-alert--variant-tonal {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-}
-
-html.glass-theme-classic .v-snackbar__wrapper {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  border-radius: 8px !important;
-}
-
-html.glass-theme-classic.glass-light .v-snackbar__wrapper {
-  background: #333333 !important;
-  background-color: #333333 !important;
-  color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .v-snackbar__wrapper {
-  background: #E0E0E0 !important;
-  background-color: #E0E0E0 !important;
-  color: #1A1A1A !important;
-}
-
-
-/* ================================================================
- * 12. Switch / Checkbox / Slider / Progress / BtnToggle
- * ================================================================ */
-
-html.glass-theme-classic .v-switch .v-switch__track {
-  border-radius: 999px !important;
-}
-
-html.glass-theme-classic.glass-light .v-switch .v-switch__track {
-  background: rgba(0, 0, 0, 0.12) !important;
-  opacity: 1 !important;
-}
-
-html.glass-theme-classic.glass-dark .v-switch .v-switch__track {
-  background: rgba(255, 255, 255, 0.14) !important;
-  opacity: 1 !important;
-}
-
-html.glass-theme-classic .v-switch .v-selection-control--dirty .v-switch__track {
-  background: rgb(var(--v-theme-primary)) !important;
-  opacity: 1 !important;
-}
-
-html.glass-theme-classic .v-switch .v-switch__thumb {
-  background: #fff !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
-}
-
-html.glass-theme-classic .v-slider .v-slider-track {
-  background: rgba(var(--v-theme-on-surface), 0.12) !important;
-}
-
-html.glass-theme-classic .v-slider .v-slider-track__fill {
-  background: rgb(var(--v-theme-primary)) !important;
-}
-
-html.glass-theme-classic .v-slider .v-slider-thumb__surface {
-  background: #fff !important;
-  box-shadow: 0 0 6px rgba(var(--v-theme-primary), 0.35) !important;
-}
-
-html.glass-theme-classic .v-progress-linear__determinate {
-  background: rgb(var(--v-theme-primary)) !important;
-}
-
-html.glass-theme-classic .v-progress-circular__overlay {
-  stroke: rgb(var(--v-theme-primary)) !important;
-}
-
-html.glass-theme-classic .v-btn-toggle {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12) !important;
-  border-radius: 8px !important;
-}
-
-html.glass-theme-classic .v-btn-toggle .v-btn--active {
-  background: rgba(var(--v-theme-primary), 0.15) !important;
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-
-/* ================================================================
- * 13. 分割线 / 导航激活色 / 页面标题
- * ================================================================ */
-
-html.glass-theme-classic.glass-light .v-divider {
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-divider {
-  border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* 导航激活色 */
-html.glass-theme-classic .v-navigation-drawer .v-list-item--active .v-list-item-title {
-  font-weight: 600;
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-html.glass-theme-classic .v-navigation-drawer .v-list-item--active .v-icon {
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-html.glass-theme-classic .v-navigation-drawer .v-list-item--active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 25%;
-  bottom: 25%;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: rgb(var(--v-theme-primary));
-}
-
-
-/* ================================================================
- * 14. Tab 标签页 — 标准 Material Design 实色
- * ================================================================ */
-
-/* Tab 容器透明（继承页面底色即可） */
-html.glass-theme-classic .v-tabs .v-slide-group,
-html.glass-theme-classic .v-tabs .v-slide-group__wrapper,
-html.glass-theme-classic .v-tabs .v-slide-group__content {
-  background: transparent !important;
-}
-
-html.glass-theme-classic .v-tabs .v-slide-group__content {
-  gap: 0 !important;
-}
-
-/* Tab 项 — 实色，无毛玻璃效果 */
-html.glass-theme-classic .v-tab {
-  border-radius: 0 !important;
-  border: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  -webkit-text-stroke: 0 !important;
+html.glass-theme-classic .v-btn::before {
+  display: none !important;
 }
 
 html.glass-theme-classic .v-tab::after {
   display: none !important;
 }
 
-/* Tab 文字色 */
-html.glass-theme-classic .v-tab {
-  color: rgba(var(--v-theme-on-surface), 0.60) !important;
-}
-
-html.glass-theme-classic .v-tab--selected {
-  color: rgb(var(--v-theme-primary)) !important;
-  font-weight: 600 !important;
-}
-
-html.glass-theme-classic .v-tab:not(.v-tab--selected):hover {
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-/* sticky-tabs / sticky-sub-tabs — 实色背景 */
-html.glass-theme-classic .sticky-tabs,
-html.glass-theme-classic .sticky-sub-tabs {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-bottom: none !important;
-}
-
-html.glass-theme-classic.glass-light .sticky-tabs,
-html.glass-theme-classic.glass-light .sticky-sub-tabs {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-}
-
-html.glass-theme-classic.glass-dark .sticky-tabs,
-html.glass-theme-classic.glass-dark .sticky-sub-tabs {
-  background: #121212 !important;
-  background-color: #121212 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-/* 筛选芯片 */
-html.glass-theme-classic .filter-bar .v-chip .v-chip__overlay,
-html.glass-theme-classic .filter-bar .v-chip .v-chip__underlay {
-  background: transparent !important;
-  opacity: 0 !important;
-}
-
-html.glass-theme-classic .filter-bar .v-chip {
-  border-radius: 8px !important;
-  border: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  -webkit-text-stroke: 0 !important;
-}
-
-
-/* ================================================================
- * 15. 边框修复 — 覆盖 components.css / buttons.css 中的白色边框
- * ================================================================ */
-
-html.glass-theme-classic .v-sheet,
-html.glass-theme-classic .v-expansion-panel,
-html.glass-theme-classic .v-alert--variant-tonal,
-html.glass-theme-classic .v-btn-toggle,
-html.glass-theme-classic .v-card--variant-outlined,
-html.glass-theme-classic .sub-search-results,
-html.glass-theme-classic .sub-poster-preview,
-html.glass-theme-classic .feed-item-card {
-  border-color: transparent !important;
-}
-
-html.glass-theme-classic .v-overlay .v-list,
-html.glass-theme-classic .v-menu .v-card,
-html.glass-theme-classic .v-menu .v-list {
-  border-color: transparent !important;
-}
-
-
-/* ================================================================
- * 16. 滚动条 — 简洁实色风格
- * ================================================================ */
-
-html.glass-theme-classic,
-html.glass-theme-classic body,
-html.glass-theme-classic .v-main,
-html.glass-theme-classic .v-main__scroller {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-surface), 0.18) transparent;
-}
-
-html.glass-theme-classic body::-webkit-scrollbar,
-html.glass-theme-classic .v-main::-webkit-scrollbar,
-html.glass-theme-classic .v-main__scroller::-webkit-scrollbar {
-  width: 8px;
-}
-
-html.glass-theme-classic body::-webkit-scrollbar-track,
-html.glass-theme-classic .v-main::-webkit-scrollbar-track,
-html.glass-theme-classic .v-main__scroller::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-html.glass-theme-classic body::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-main::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-main__scroller::-webkit-scrollbar-thumb {
-  background: rgba(var(--v-theme-on-surface), 0.18);
-  border-radius: 4px;
-}
-
-html.glass-theme-classic body::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-main::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-main__scroller::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--v-theme-on-surface), 0.32);
-}
-
-/* 侧边导航 */
-html.glass-theme-classic .v-navigation-drawer,
-html.glass-theme-classic .v-navigation-drawer .v-navigation-drawer__content,
-html.glass-theme-classic .v-navigation-drawer .v-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-surface), 0.14) transparent;
-}
-
-html.glass-theme-classic .v-navigation-drawer::-webkit-scrollbar,
-html.glass-theme-classic .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar,
-html.glass-theme-classic .v-navigation-drawer .v-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-html.glass-theme-classic .v-navigation-drawer::-webkit-scrollbar-track,
-html.glass-theme-classic .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-track,
-html.glass-theme-classic .v-navigation-drawer .v-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-html.glass-theme-classic .v-navigation-drawer::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-navigation-drawer .v-list::-webkit-scrollbar-thumb {
-  background: rgba(var(--v-theme-on-surface), 0.14);
-  border-radius: 3px;
-}
-
-html.glass-theme-classic .v-navigation-drawer::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-navigation-drawer .v-navigation-drawer__content::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-navigation-drawer .v-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--v-theme-on-surface), 0.28);
-}
-
-/* 弹窗内 */
-html.glass-theme-classic .v-dialog .v-card-text {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-surface), 0.14) transparent;
-}
-
-html.glass-theme-classic .v-dialog .v-card-text::-webkit-scrollbar { width: 6px; }
-html.glass-theme-classic .v-dialog .v-card-text::-webkit-scrollbar-track { background: transparent; }
-html.glass-theme-classic .v-dialog .v-card-text::-webkit-scrollbar-thumb {
-  background: rgba(var(--v-theme-on-surface), 0.14);
-  border-radius: 3px;
-}
-html.glass-theme-classic .v-dialog .v-card-text::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--v-theme-on-surface), 0.28);
-}
-
-/* 弹窗内含 log-terminal 时，隐藏 v-card-text 的滚动条 */
-html.glass-theme-classic .v-dialog .v-card-text:has(.log-terminal) {
-  overflow: hidden !important;
-  scrollbar-width: none !important;
-}
-
-html.glass-theme-classic .v-dialog .v-card-text:has(.log-terminal)::-webkit-scrollbar {
-  display: none !important;
-}
-
-/* 日志终端 */
-html.glass-theme-classic .log-terminal {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-surface), 0.14) transparent;
-}
-
-html.glass-theme-classic .log-terminal::-webkit-scrollbar { width: 6px; }
-html.glass-theme-classic .log-terminal::-webkit-scrollbar-track { background: transparent; }
-html.glass-theme-classic .log-terminal::-webkit-scrollbar-thumb {
-  background: rgba(var(--v-theme-on-surface), 0.14);
-  border-radius: 3px;
-}
-html.glass-theme-classic .log-terminal::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--v-theme-on-surface), 0.28);
-}
-
-/* 下拉面板 */
-html.glass-theme-classic .v-select .v-list,
-html.glass-theme-classic .v-autocomplete .v-list,
-html.glass-theme-classic .v-combobox .v-list,
-html.glass-theme-classic .v-menu .v-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-surface), 0.14) transparent;
-}
-
-html.glass-theme-classic .v-select .v-list::-webkit-scrollbar,
-html.glass-theme-classic .v-autocomplete .v-list::-webkit-scrollbar,
-html.glass-theme-classic .v-combobox .v-list::-webkit-scrollbar,
-html.glass-theme-classic .v-menu .v-list::-webkit-scrollbar { width: 6px; }
-
-html.glass-theme-classic .v-select .v-list::-webkit-scrollbar-track,
-html.glass-theme-classic .v-autocomplete .v-list::-webkit-scrollbar-track,
-html.glass-theme-classic .v-combobox .v-list::-webkit-scrollbar-track,
-html.glass-theme-classic .v-menu .v-list::-webkit-scrollbar-track { background: transparent; }
-
-html.glass-theme-classic .v-select .v-list::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-autocomplete .v-list::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-combobox .v-list::-webkit-scrollbar-thumb,
-html.glass-theme-classic .v-menu .v-list::-webkit-scrollbar-thumb {
-  background: rgba(var(--v-theme-on-surface), 0.14);
-  border-radius: 3px;
-}
-
-html.glass-theme-classic .v-select .v-list::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-autocomplete .v-list::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-combobox .v-list::-webkit-scrollbar-thumb:hover,
-html.glass-theme-classic .v-menu .v-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--v-theme-on-surface), 0.28);
-}
-
-/* 搜索结果框 */
-html.glass-theme-classic .search-results-box {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-surface), 0.14) transparent;
-}
-
-html.glass-theme-classic .search-results-box::-webkit-scrollbar { width: 6px; }
-html.glass-theme-classic .search-results-box::-webkit-scrollbar-track { background: transparent; }
-html.glass-theme-classic .search-results-box::-webkit-scrollbar-thumb {
-  background: rgba(var(--v-theme-on-surface), 0.14);
-  border-radius: 3px;
-}
-
-
-/* ================================================================
- * 17. 登录页
- * ================================================================ */
-
-html.glass-theme-classic .login-glass-panel {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1) !important;
-  border-radius: 16px !important;
-}
-
 html.glass-theme-classic .login-glass-panel::before {
   display: none !important;
 }
 
-html.glass-theme-classic.glass-light .login-glass-panel {
-  background: #FFFFFF !important;
-  background-color: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .login-glass-panel {
-  background: #1E1E1E !important;
-  background-color: #1E1E1E !important;
-}
-
-/* 登录页输入框 */
-html.glass-theme-classic .login-glass-panel .v-field--variant-outlined {
-  border-radius: 8px !important;
-  border: none !important;
-}
-
-html.glass-theme-classic.glass-light .login-glass-panel .v-field--variant-outlined {
-  background: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .login-glass-panel .v-field--variant-outlined {
-  background: #2C2C2C !important;
-}
-
-/* 登录页文字色 */
-html.glass-theme-classic.glass-light .login-glass-panel .text-h5,
-html.glass-theme-classic.glass-light .login-glass-panel .text-body-2 {
-  color: rgba(0, 0, 0, 0.87);
-}
-
-html.glass-theme-classic.glass-dark .login-glass-panel .text-h5,
-html.glass-theme-classic.glass-dark .login-glass-panel .text-body-2 {
-  color: rgba(255, 255, 255, 0.92);
-}
-
-/* 登录按钮 */
-html.glass-theme-classic .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
-  background: rgb(var(--v-theme-primary)) !important;
-  color: #fff !important;
-  box-shadow: none !important;
-}
-
 
 /* ================================================================
- * 18. 搜索结果框
+ * 6. 边框修复
+ *    --am-surface-border 已设为 0.4 透明度可见边框。
+ *    outlined 卡片和 filled/solo 输入框需要额外覆盖。
+ *    自定义容器边框由 --am-content-border 令牌处理（同为 0.4 透明度）。
  * ================================================================ */
 
+/* outlined 卡片 — 必须有可见边框 */
+html.glass-theme-classic.glass-light .v-card--variant-outlined {
+  border: 1px solid rgba(0, 0, 0, 0.4) !important;
+}
+
+html.glass-theme-classic.glass-dark .v-card--variant-outlined {
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 搜索结果框 / sub-search 无边框无模糊 */
 html.glass-theme-classic .search-results-box {
   border: none !important;
   backdrop-filter: none !important;
@@ -912,126 +144,9 @@ html.glass-theme-classic .sub-search-results {
 
 
 /* ================================================================
- * 19. 禁用态 / 图标按钮
+ * 7. 详情页还原 — 移除 ACG 的黑色文字+白色描边
  * ================================================================ */
 
-html.glass-theme-classic .v-btn--disabled,
-html.glass-theme-classic .v-input--disabled {
-  opacity: 0.5 !important;
-}
-
-html.glass-theme-classic .v-btn--icon {
-  border-radius: 50% !important;
-  transition: background-color .15s ease !important;
-}
-
-
-/* ================================================================
- * 20. 芯片尺寸
- * ================================================================ */
-
-html.glass-theme-classic .v-chip {
-  font-weight: 500;
-}
-
-html.glass-theme-classic .v-chip--size-x-small {
-  font-size: 0.75rem !important;
-  min-height: 24px !important;
-  padding: 0 8px !important;
-}
-
-html.glass-theme-classic .v-chip--size-x-small .v-chip__content {
-  font-size: 0.75rem !important;
-}
-
-
-/* ================================================================
- * 21. 弹窗内下拉面板
- * ================================================================ */
-
-html.glass-theme-classic .v-dialog .v-card .v-card-text .v-overlay .v-list,
-html.glass-theme-classic .v-dialog .v-card .v-card-text .v-menu > .v-list {
-  background: inherit !important;
-  background-color: inherit !important;
-}
-
-html.glass-theme-classic .v-dialog > .v-card {
-  border-radius: 12px !important;
-}
-
-
-/* ================================================================
- * 22. Tooltip / Avatar
- * ================================================================ */
-
-html.glass-theme-classic .v-tooltip .v-overlay__content {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-html.glass-theme-classic .v-avatar--variant-tonal {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-html.glass-theme-classic .liquid-avatar {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12) !important;
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-
-/* ================================================================
- * 23. 代码块 / 日志终端
- * ================================================================ */
-
-html.glass-theme-classic code {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.85em;
-}
-
-html.glass-theme-classic .code-block {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12) !important;
-}
-
-html.glass-theme-classic .code-block code {
-  color: #7ec699;
-}
-
-html.glass-theme-classic .log-entry__level[data-level="info"]    { color: #5E5CE6; }
-html.glass-theme-classic .log-entry__level[data-level="warn"],
-html.glass-theme-classic .log-entry__level[data-level="warning"]  { color: #FF9F0A; }
-html.glass-theme-classic .log-entry__level[data-level="error"]    { color: #FF375F; }
-html.glass-theme-classic .log-entry__level[data-level="critical"] { color: #F48FB1; }
-html.glass-theme-classic .log-entry__level[data-level="debug"]    { color: rgba(var(--v-theme-on-surface), 0.35); }
-html.glass-theme-classic .log-entry__level[data-level="success"]  { color: #30D158; }
-
-html.glass-theme-classic.glass-light .log-entry__level[data-level="info"]    { color: #5E5CE6; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="warn"],
-html.glass-theme-classic.glass-light .log-entry__level[data-level="warning"]  { color: #c2410c; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="error"]    { color: #b91c1c; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="critical"] { color: #9d174d; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="success"]  { color: #15803d; }
-
-
-/* ================================================================
- * 24. 页面标题
- * ================================================================ */
-
-html.glass-theme-classic .page-subtitle {
-  font-weight: 500;
-}
-
-
-/* ================================================================
- * 25. 详情页特殊样式覆盖
- * ACG 主题在详情页有黑色文字+白色描边的效果，classic 主题需要还原
- * ================================================================ */
-
-/* chip：使用默认 on-surface 色 */
 html.glass-theme-classic .tmdb-detail-view .v-chip,
 html.glass-theme-classic .tmdb-detail-view .v-chip .v-chip__content,
 html.glass-theme-classic .bangumi-detail-view .v-chip,
@@ -1044,7 +159,6 @@ html.glass-theme-classic .person-detail-view .v-chip .v-chip__content {
   text-shadow: none !important;
 }
 
-/* 按钮：使用默认样式 */
 html.glass-theme-classic .tmdb-detail-view .v-btn,
 html.glass-theme-classic .bangumi-detail-view .v-btn {
   color: inherit !important;
@@ -1058,7 +172,6 @@ html.glass-theme-classic .bangumi-detail-view .v-btn .v-icon {
   color: inherit !important;
 }
 
-/* 覆盖详情页内 bg-primary / text-primary 按钮的全局色 */
 html.glass-theme-classic .tmdb-detail-view .v-btn--variant-flat.bg-primary,
 html.glass-theme-classic .tmdb-detail-view .v-btn--variant-flat.v-btn--bg-primary,
 html.glass-theme-classic .tmdb-detail-view .v-btn--variant-flat.text-primary,
@@ -1077,7 +190,7 @@ html.glass-theme-classic .bangumi-detail-view .v-btn--variant-tonal.v-btn--bg-in
   -webkit-text-stroke: 0 !important;
 }
 
-/* 追剧日历 / 季度番剧表 下拉框 */
+/* 追剧日历 / 季度番剧表 下拉框还原 */
 html.glass-theme-classic .calendar-view .v-field,
 html.glass-theme-classic .seasonal-tab .v-field {
   color: inherit !important;
@@ -1085,174 +198,6 @@ html.glass-theme-classic .seasonal-tab .v-field {
   -webkit-text-stroke: 0 !important;
   text-shadow: none !important;
 }
-
-
-/* ================================================================
- * 26. 下拉框文字色 / 箭头色
- * ================================================================ */
-
-html.glass-theme-classic.glass-light .v-select .v-field__input,
-html.glass-theme-classic.glass-light .v-autocomplete .v-field__input,
-html.glass-theme-classic.glass-light .v-combobox .v-field__input {
-  color: rgba(0, 0, 0, 0.87) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-select .v-field__input,
-html.glass-theme-classic.glass-dark .v-autocomplete .v-field__input,
-html.glass-theme-classic.glass-dark .v-combobox .v-field__input {
-  color: rgba(255, 255, 255, 0.90) !important;
-}
-
-html.glass-theme-classic.glass-light .v-select .v-field__append-inner .v-icon {
-  color: rgba(0, 0, 0, 0.40) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-select .v-field__append-inner .v-icon {
-  color: rgba(255, 255, 255, 0.50) !important;
-}
-
-/* 多选 chips */
-html.glass-theme-classic .v-select .v-chip--variant-tonal {
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-
-/* ================================================================
- * 27. 字体 — 系统默认
- * ================================================================ */
-
-html.glass-theme-classic {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-}
-
-html.glass-theme-classic h1,
-html.glass-theme-classic h2,
-html.glass-theme-classic h3,
-html.glass-theme-classic .v-card-title {
-  font-weight: 600;
-  letter-spacing: normal;
-}
-
-
-/* ================================================================
- * 28. 全局边框色覆盖
- * cards.css / buttons.css / feedback.css 中大量使用 rgba(255,255,255,0.5) 白色边框
- * 这是给毛玻璃深色背景设计的，classic 主题下需要用合适的边框色替换
- * ================================================================ */
-
-/* 亮色：用浅灰色边框 — 必须用完整 border 简写，否则 border:none 会导致 border-style/width 不恢复 */
-html.glass-theme-classic.glass-light .v-card,
-html.glass-theme-classic.glass-light .v-card--variant-outlined,
-html.glass-theme-classic.glass-light .v-card--variant-elevated,
-html.glass-theme-classic.glass-light .v-card--variant-flat,
-html.glass-theme-classic.glass-light .v-card--variant-tonal,
-html.glass-theme-classic.glass-light .v-sheet,
-html.glass-theme-classic.glass-light .v-expansion-panel,
-html.glass-theme-classic.glass-light .v-alert--variant-tonal,
-html.glass-theme-classic.glass-light .v-btn-toggle,
-html.glass-theme-classic.glass-light .sub-search-results,
-html.glass-theme-classic.glass-light .sub-poster-preview,
-html.glass-theme-classic.glass-light .feed-item-card,
-html.glass-theme-classic.glass-light .search-results-box,
-html.glass-theme-classic.glass-light .search-results-list,
-html.glass-theme-classic.glass-light .org-log-summary,
-html.glass-theme-classic.glass-light .org-task-item,
-html.glass-theme-classic.glass-light .org-path-container,
-html.glass-theme-classic.glass-light .org-preview-result,
-html.glass-theme-classic.glass-light .variable-manual,
-html.glass-theme-classic.glass-light .variable-item code,
-html.glass-theme-classic.glass-light .calendar-today-card,
-html.glass-theme-classic.glass-light .hash-item-card,
-html.glass-theme-classic.glass-light .dc-search-item,
-html.glass-theme-classic.glass-light .dc-db-table-item,
-html.glass-theme-classic.glass-light .dc-db-table-wrapper,
-html.glass-theme-classic.glass-light .hash-full-value,
-html.glass-theme-classic.glass-light .config-section,
-html.glass-theme-classic.glass-light .preview-box {
-  border: 1px solid rgba(0, 0, 0, 0.4) !important;
-}
-
-/* 暗色：用深灰色边框 */
-html.glass-theme-classic.glass-dark .v-card,
-html.glass-theme-classic.glass-dark .v-card--variant-outlined,
-html.glass-theme-classic.glass-dark .v-card--variant-elevated,
-html.glass-theme-classic.glass-dark .v-card--variant-flat,
-html.glass-theme-classic.glass-dark .v-card--variant-tonal,
-html.glass-theme-classic.glass-dark .v-sheet,
-html.glass-theme-classic.glass-dark .v-expansion-panel,
-html.glass-theme-classic.glass-dark .v-alert--variant-tonal,
-html.glass-theme-classic.glass-dark .v-btn-toggle,
-html.glass-theme-classic.glass-dark .sub-search-results,
-html.glass-theme-classic.glass-dark .sub-poster-preview,
-html.glass-theme-classic.glass-dark .feed-item-card,
-html.glass-theme-classic.glass-dark .search-results-box,
-html.glass-theme-classic.glass-dark .search-results-list,
-html.glass-theme-classic.glass-dark .org-log-summary,
-html.glass-theme-classic.glass-dark .org-task-item,
-html.glass-theme-classic.glass-dark .org-path-container,
-html.glass-theme-classic.glass-dark .org-preview-result,
-html.glass-theme-classic.glass-dark .variable-manual,
-html.glass-theme-classic.glass-dark .variable-item code,
-html.glass-theme-classic.glass-dark .calendar-today-card,
-html.glass-theme-classic.glass-dark .hash-item-card,
-html.glass-theme-classic.glass-dark .dc-search-item,
-html.glass-theme-classic.glass-dark .dc-db-table-item,
-html.glass-theme-classic.glass-dark .dc-db-table-wrapper,
-html.glass-theme-classic.glass-dark .hash-full-value,
-html.glass-theme-classic.glass-dark .config-section,
-html.glass-theme-classic.glass-dark .preview-box {
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-}
-
-
-/* ================================================================
- * 29. Checkbox / Radio 选中色
- * ================================================================ */
-
-html.glass-theme-classic .v-checkbox .v-selection-control--dirty .v-icon,
-html.glass-theme-classic .v-radio .v-selection-control--dirty .v-icon {
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-
-/* ================================================================
- * 30. 输入框 focus — 实色边框高亮
- * ================================================================ */
-
-html.glass-theme-classic .v-field--variant-outlined.v-field--focused {
-  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)) !important;
-}
-
-html.glass-theme-classic .v-field--variant-outlined.v-field--focused .v-field__outline {
-  --v-field-border-opacity: 1 !important;
-  color: rgb(var(--v-theme-primary)) !important;
-}
-
-/* Autocomplete / Combobox 聚焦 */
-html.glass-theme-classic .v-autocomplete .v-field--variant-outlined.v-field--focused,
-html.glass-theme-classic .v-combobox .v-field--variant-outlined.v-field--focused {
-  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)) !important;
-}
-
-
-/* ================================================================
- * 31. SnackBar 按钮颜色
- * ================================================================ */
-
-html.glass-theme-classic.glass-light .v-snackbar__wrapper .v-btn {
-  color: rgba(255, 255, 255, 0.90) !important;
-}
-
-html.glass-theme-classic.glass-dark .v-snackbar__wrapper .v-btn {
-  color: rgba(0, 0, 0, 0.87) !important;
-}
-
-
-/* ================================================================
- * 32. 追剧日历 / 季度番剧表 下拉框文字色
- * ACG 主题对这些区域用了黑色文字+白色描边，classic 需要还原
- * ================================================================ */
 
 html.glass-theme-classic .calendar-view .v-field .v-field__input,
 html.glass-theme-classic .calendar-view .v-field .v-label,
@@ -1281,24 +226,125 @@ html.glass-theme-classic.glass-dark .seasonal-tab .v-field .v-icon {
 
 
 /* ================================================================
- * 33. prefers-reduced-motion
+ * 8. 输入框 focus — 实色边框高亮
  * ================================================================ */
 
-@media (prefers-reduced-motion: reduce) {
-  html.glass-theme-classic .hover-lift:hover {
-    transform: none !important;
-  }
+html.glass-theme-classic .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-classic .v-field--variant-outlined.v-field--focused .v-field__outline {
+  --v-field-border-opacity: 1 !important;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+html.glass-theme-classic .v-autocomplete .v-field--variant-outlined.v-field--focused,
+html.glass-theme-classic .v-combobox .v-field--variant-outlined.v-field--focused {
+  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)) !important;
+}
+
+/* filled / solo 边框 */
+html.glass-theme-classic.glass-light .v-field--variant-filled,
+html.glass-theme-classic.glass-light .v-field--variant-solo,
+html.glass-theme-classic.glass-light .v-field--variant-solo-filled {
+  border: 1px solid rgba(0, 0, 0, 0.4) !important;
+}
+
+html.glass-theme-classic.glass-dark .v-field--variant-filled,
+html.glass-theme-classic.glass-dark .v-field--variant-solo,
+html.glass-theme-classic.glass-dark .v-field--variant-solo-filled {
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
 }
 
 
 /* ================================================================
- * 34. 移动端优化
+ * 9. SnackBar 按钮颜色反转
+ * ================================================================ */
+
+html.glass-theme-classic.glass-light .v-snackbar__wrapper .v-btn {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
+
+html.glass-theme-classic.glass-dark .v-snackbar__wrapper .v-btn {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
+
+/* ================================================================
+ * 10. 登录按钮 — 无阴影
+ * ================================================================ */
+
+html.glass-theme-classic .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  background: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+html.glass-theme-classic.glass-light .login-glass-panel .v-field--variant-outlined {
+  background: #FFFFFF !important;
+}
+
+html.glass-theme-classic.glass-dark .login-glass-panel .v-field--variant-outlined {
+  background: #2C2C2C !important;
+}
+
+
+/* ================================================================
+ * 11. 日志终端配色
+ * ================================================================ */
+
+html.glass-theme-classic .log-entry__level[data-level="info"]    { color: #5E5CE6; }
+html.glass-theme-classic .log-entry__level[data-level="warn"],
+html.glass-theme-classic .log-entry__level[data-level="warning"]  { color: #FF9F0A; }
+html.glass-theme-classic .log-entry__level[data-level="error"]    { color: #FF375F; }
+html.glass-theme-classic .log-entry__level[data-level="critical"] { color: #F48FB1; }
+html.glass-theme-classic .log-entry__level[data-level="debug"]    { color: rgba(var(--v-theme-on-surface), 0.35); }
+html.glass-theme-classic .log-entry__level[data-level="success"]  { color: #30D158; }
+
+html.glass-theme-classic.glass-light .log-entry__level[data-level="info"]    { color: #5E5CE6; }
+html.glass-theme-classic.glass-light .log-entry__level[data-level="warn"],
+html.glass-theme-classic.glass-light .log-entry__level[data-level="warning"]  { color: #c2410c; }
+html.glass-theme-classic.glass-light .log-entry__level[data-level="error"]    { color: #b91c1c; }
+html.glass-theme-classic.glass-light .log-entry__level[data-level="critical"] { color: #9d174d; }
+html.glass-theme-classic.glass-light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
+html.glass-theme-classic.glass-light .log-entry__level[data-level="success"]  { color: #15803d; }
+
+
+/* ================================================================
+ * 12. 字体
+ * ================================================================ */
+
+html.glass-theme-classic {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+html.glass-theme-classic h1,
+html.glass-theme-classic h2,
+html.glass-theme-classic h3,
+html.glass-theme-classic .v-card-title {
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+html.glass-theme-classic .page-subtitle {
+  font-weight: 500;
+}
+
+
+/* ================================================================
+ * 13. 移动端优化
  * ================================================================ */
 
 @media (max-width: 960px) {
-  /* 移动端卡片 hover 不做位移 */
   html.glass-theme-classic .hover-lift:hover,
   html.glass-theme-classic .v-card--link:hover {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.glass-theme-classic .hover-lift:hover {
     transform: none !important;
   }
 }

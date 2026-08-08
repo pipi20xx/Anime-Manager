@@ -1,61 +1,96 @@
 /**
  * index.css — 设计系统入口
  *
- * 架构：
- *   1. base.css        → 纯基础：重置、容器透明、Vuetify 变量
- *   2. components.css  → 纯结构：组件布局、间距、圆角
- *   3. buttons.css     → 纯结构：按钮圆角、按下态
- *   4. feedback.css    → 纯结构：芯片尺寸
- *   5. transitions.css → 纯结构：全局过渡
- *   6. pages.css       → 纯结构：页面布局、表单等高
- *   7. tags.css        → 元数据标签结构
- *   8. cards.css       → 卡片系统结构
- *   9. design-spec.css → 设计规范结构：间距、布局
- *  10. utilities.css   → 通用复用结构
- * 11. theme-acg.css     → ACG 视觉风格（html.glass-theme-acg 激活）
- * 12. glass-themes.css   → 液态玻璃视觉风格（html.glass-theme-liquid 激活）
- * 13. theme-classic.css  → 经典实色视觉风格（html.glass-theme-classic 激活）
+ * 四层架构：
+ *   ┌─────────────────────────────────────────────────────────────┐
+ *   │ 第 1 层  基础 / 结构                                       │
+ *   │   base.css        — 重置、容器透明、Vuetify 变量           │
+ *   │   components.css  — 组件布局、间距                         │
+ *   │   buttons.css     — 按钮圆角、按下态                       │
+ *   │   feedback.css    — 芯片尺寸                               │
+ *   │   transitions.css — 全局过渡                               │
+ *   │   pages.css       — 页面布局、表单等高                      │
+ *   │   tags.css        — 元数据标签                             │
+ *   │   cards.css       — 卡片系统                               │
+ *   │   design-spec.css — 设计规范：间距、布局                   │
+ *   │   utilities.css   — 通用复用                               │
+ *   │                                                           │
+ *   │ 第 2 层  设计令牌（Design Tokens）                         │
+ *   │   tokens.css      — CSS 变量：颜色/模糊/边框/阴影/圆角     │
+ *   │                                                           │
+ *   │ 第 3 层  共享视觉规则                                      │
+ *   │   visual.css       — 统一组件视觉：背景/模糊/边框/阴影     │
+ *   │                                                           │
+ *   │ 第 4 层  主题覆盖                                          │
+ *   │   theme-acg.css     — ACG 专属（html.glass-theme-acg）     │
+ *   │   glass-themes.css   — 液态玻璃（html.glass-theme-liquid） │
+ *   │   theme-classic.css  — 经典实色（html.glass-theme-classic）│
+ *   └─────────────────────────────────────────────────────────────┘
  *
- * 规则：1-10 只放结构，不放颜色/背景/模糊/边框/阴影。
- *       11-13 只放视觉风格，通过 html.glass-theme-xxx 前缀隔离。
- *       三个主题完全独立，互不覆盖，只有选中的才生效。
+ * 规则：
+ *   第 1 层 只放结构，不放颜色/背景/模糊/边框/阴影。
+ *   第 2 层 只放变量声明，不放选择器规则。
+ *   第 3 层 不带主题前缀，通过 CSS 变量级联自动适配。
+ *   第 4 层 只放主题特有规则，通过 html.glass-theme-xxx 前缀隔离。
  */
 
-/* 1. 基础：重置、CSS变量、容器透明 */
+/* ═══════════════════════════════════════════════════════════════
+ * 第 1 层 — 基础 / 结构
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* 1.1 基础：重置、CSS 变量、容器透明 */
 @import './base.css';
 
-/* 2. Vuetify组件结构覆盖 */
+/* 1.2 Vuetify 组件结构覆盖 */
 @import './components.css';
 
-/* 3. 按钮结构 */
+/* 1.3 按钮结构 */
 @import './buttons.css';
 
-/* 4. 反馈组件结构 */
+/* 1.4 反馈组件结构 */
 @import './feedback.css';
 
-/* 5. 过渡动画 */
+/* 1.5 过渡动画 */
 @import './transitions.css';
 
-/* 6. 页面级结构 */
+/* 1.6 页面级结构 */
 @import './pages.css';
 
-/* 7. 元数据标签 */
+/* 1.7 元数据标签 */
 @import './tags.css';
 
-/* 8. 卡片系统 */
+/* 1.8 卡片系统 */
 @import './cards.css';
 
-/* 9. 设计规范结构 */
+/* 1.9 设计规范结构 */
 @import './design-spec.css';
 
-/* 10. 通用复用结构 */
+/* 1.10 通用复用结构 */
 @import './utilities.css';
 
-/* 11. ACG 主题视觉风格（html.glass-theme-acg 激活） */
+/* ═══════════════════════════════════════════════════════════════
+ * 第 2 层 — 设计令牌（Design Tokens）
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* 2.1 CSS 变量：颜色/模糊/边框/阴影/圆角/过渡 */
+@import './tokens.css';
+
+/* ═══════════════════════════════════════════════════════════════
+ * 第 3 层 — 共享视觉规则
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* 3.1 统一组件视觉：背景/模糊/边框/阴影（引用令牌） */
+@import './visual.css';
+
+/* ═══════════════════════════════════════════════════════════════
+ * 第 4 层 — 主题覆盖
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* 4.1 ACG 主题视觉风格（html.glass-theme-acg 激活） */
 @import './theme-acg.css';
 
-/* 12. 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
+/* 4.2 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
 @import './glass-themes.css';
 
-/* 13. 经典实色主题视觉风格（html.glass-theme-classic 激活） */
+/* 4.3 经典实色主题视觉风格（html.glass-theme-classic 激活） */
 @import './theme-classic.css';

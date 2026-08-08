@@ -11,7 +11,8 @@
  *   - 功能性布局类
  *
  * 不放任何视觉风格（颜色/背景/模糊/边框/阴影/滚动条样式），
- * 那些全部放在 theme-acg.css / glass-themes.css 里。
+ * 那些由 tokens.css（设计令牌）+ visual.css（共享视觉规则）统一处理，
+ * 主题专属效果由 theme-acg.css / glass-themes.css / theme-classic.css 处理。
  */
 
 /* ============================================================

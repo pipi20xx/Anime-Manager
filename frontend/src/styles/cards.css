@@ -10,50 +10,27 @@
 
 /* ── SubscriptionView 订阅管理 ── */
 .sub-search-results {
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   border-radius: 8px;
   background: transparent;
   max-height: 240px;
   overflow-y: auto;
 }
 
+/* sub-search-result-item 复用 §search-result-item 定义（见文件底部），此处仅覆盖无边框 */
 .sub-search-result-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  cursor: pointer;
   border-bottom: none;
-  transition: background 0.15s ease;
-}
-.sub-search-result-item:last-child {
-  border-bottom: none;
-}
-.sub-search-result-item:hover {
-  background: rgba(var(--v-theme-primary), 0.06);
 }
 
-.sub-result-info {
-  flex: 1;
-  min-width: 0;
-}
-.sub-result-title {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-.sub-result-sub {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  line-height: 1.4;
-}
+/* 注：sub-result-info / sub-result-title / sub-result-sub 已废弃，
+   统一使用 search-result-info / search-result-title / search-result-sub */
 
 .sub-poster-preview {
   display: flex;
   align-items: center;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   background: transparent;
 }
 
@@ -95,7 +72,7 @@
 
 /* ── Feed 条目列表 / 订阅源详情卡片 ── */
 .feed-item-card {
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   border-radius: 12px;
   padding: 12px;
   transition: all 0.2s ease;
@@ -130,7 +107,7 @@
 .org-log-summary {
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   background: transparent;
 }
 .org-log-container {
@@ -144,9 +121,6 @@
   display: flex;
   gap: 8px;
   padding: 3px 0;
-  border-bottom: none;
-}
-.org-log-line:last-child {
   border-bottom: none;
 }
 .org-log-error {
@@ -169,10 +143,7 @@
   text-transform: uppercase;
   flex-shrink: 0;
 }
-.org-log-level.info { color: #52c41a; }
-.org-log-level.error { color: #ff4d4f; }
-.org-log-level.warning, .org-log-level.warn { color: #faad14; }
-.org-log-level.debug { color: #1890ff; }
+/* org-log-level 颜色由 visual.css 统一处理 */
 .org-log-msg {
   flex: 1;
   word-break: break-all;
@@ -181,7 +152,7 @@
 /* ── 任务中心条目 ── */
 .org-task-item {
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   border-radius: 10px;
   margin-bottom: 8px;
   transition: background 0.15s ease;
@@ -203,7 +174,7 @@
 .org-path-container {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   border-radius: 8px;
   overflow: hidden;
   background: rgba(var(--v-theme-on-surface), 0.02);
@@ -256,7 +227,7 @@
 .org-preview-result {
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   background: rgba(var(--v-theme-primary), 0.04);
 }
 .org-preview-path {
@@ -276,7 +247,7 @@
 .variable-manual {
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   background: transparent;
 }
 .variable-section {
@@ -305,7 +276,7 @@
   font-family: monospace;
   padding: 2px 4px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   background: transparent;
   white-space: nowrap;
 }
@@ -383,7 +354,7 @@
   height: 100%;
 }
 .calendar-today-card {
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   box-shadow: 0 0 0 2px rgba(var(--v-theme-primary), 0.3);
 }
 .calendar-day-header {
@@ -497,18 +468,18 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   line-height: 1.6;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
 .media-card__type--bgm {
-  color: #4ecdc4;
+  color: var(--am-badge-accent);
 }
 .media-card__type--tmdb-movie {
-  color: #ff6b6b;
+  color: var(--am-badge-warm);
 }
 .media-card__type--tmdb-tv {
-  color: #4ecdc4;
+  color: var(--am-badge-accent);
 }
 
 /* ── 33d. 评分 (右上角) ── */
@@ -522,10 +493,10 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1.4;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: #ffd700;
+  color: var(--am-badge-rating-color);
 }
 
 /* ── 33e. 已订阅角标 ── */
@@ -557,16 +528,16 @@
   font-weight: 600;
   line-height: 1.5;
   letter-spacing: 0.3px;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: #4ecdc4;
+  color: var(--am-badge-accent);
   display: flex;
   align-items: center;
   gap: 3px;
 }
 .media-card__broadcast--end {
-  background: rgba(239, 83, 80, 0.85);
+  background: rgba(var(--v-theme-error), 0.85);
   color: #fff;
 }
 
@@ -829,7 +800,7 @@
   padding: 12px 16px;
   border-radius: 16px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   transition: all 0.2s ease;
 }
 
@@ -884,7 +855,7 @@
   padding: 12px 16px;
   border-radius: 16px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   transition: all 0.2s ease;
 }
 
@@ -903,7 +874,7 @@
   padding: 10px 14px;
   border-radius: 12px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   transition: all 0.2s ease;
   cursor: pointer;
   margin-bottom: 6px;
@@ -926,7 +897,7 @@
 .dc-db-table-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
 }
 
 .dc-db-table {
@@ -967,7 +938,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   background: rgba(var(--v-theme-on-surface), 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   word-break: break-all;
   line-height: 1.5;
 }
@@ -992,24 +963,30 @@
 
 /* --- 搜索结果列表 (订阅/整理共用) --- */
 .search-results-list {
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   border-radius: 8px;
   overflow: hidden;
 }
-.search-result-item {
+.search-result-item,
+.sub-search-result-item {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
   cursor: pointer;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-  transition: background 0.15s;
+  transition: background 0.15s ease;
+}
+/* sub-search-result-item 无分隔线 */
+.sub-search-result-item {
+  border-bottom: none;
 }
 .search-result-item:last-child { border-bottom: none; }
-.search-result-item:hover { background: rgba(var(--v-theme-primary), 0.06); }
+.search-result-item:hover,
+.sub-search-result-item:hover { background: rgba(var(--v-theme-primary), 0.06); }
 .search-result-info { flex: 1; min-width: 0; }
-.search-result-title { font-size: 14px; font-weight: 600; color: rgba(var(--v-theme-on-surface), 0.87); }
-.search-result-sub { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.5); margin-top: 2px; }
+.search-result-title { font-size: 14px; font-weight: 600; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.87); }
+.search-result-sub { font-size: 12px; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.5); margin-top: 2px; }
 
 /* --- 海报占位 (小尺寸) --- */
 .poster-placeholder-sm {
@@ -1025,7 +1002,7 @@
   background: transparent;
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
 }
 
 /* --- 区域标题 --- */
@@ -1064,7 +1041,7 @@
 /* ── STRM / 整理弹框: URL 预览框 ── */
 .preview-box {
   background: rgb(var(--v-theme-surface-variant), 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: var(--am-content-border);
   border-radius: 8px;
   padding: 12px 16px;
   min-height: 80px;

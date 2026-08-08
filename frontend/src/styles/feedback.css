@@ -1,17 +1,7 @@
 /**
  * feedback.css — 反馈组件纯结构
  *
- * 只放间距、尺寸等结构规则。
- * 所有视觉风格在 theme-acg.css 里。
+ * 此前定义的 .v-chip--size-x-small 尺寸规则已合并至
+ * visual.css §19（Chip Size），避免重复声明。
+ * 如需调整芯片尺寸，请统一在 visual.css 中修改。
  */
-
-/* 芯片尺寸 */
-.v-chip--size-x-small {
-  font-size: 0.75rem !important;
-  min-height: 24px !important;
-  padding: 0 8px !important;
-}
-
-.v-chip--size-x-small .v-chip__content {
-  font-size: 0.75rem !important;
-}
