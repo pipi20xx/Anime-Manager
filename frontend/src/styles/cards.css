@@ -1114,3 +1114,192 @@
 }
 
 
+/* ============================================================
+ * §37. AI 实验室 — 技能卡片 & Markdown 渲染
+ *     使用方式：<v-card class="glass-card skill-card">
+ *     内部结构复用 manage-card__* 体系
+ * ============================================================ */
+
+/* ── 37a. 技能卡片 ── */
+.skill-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.skill-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ── 37a-2. 工具卡片 ── */
+.tool-card {
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+.tool-card:hover {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+/* ── 37a-3. 工具搜索框 ── */
+.tool-search-field {
+  max-width: 300px;
+}
+
+/* ── 37a-4. 技能搜索框 ── */
+.skill-search-field {
+  max-width: 240px;
+}
+
+/* ── 37a-4. 工具参数类型标签 ── */
+.tool-param-type {
+  min-width: 60px;
+}
+
+/* ── 37b. 技能 Markdown 渲染区 ── */
+.skill-markdown {
+  font-size: 13px;
+}
+.skill-markdown h1,
+.skill-markdown h2,
+.skill-markdown h3 {
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* ── 37c. AI 介入测试 — 信息块 ── */
+.info-block {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border: var(--am-content-border);
+}
+.info-block .info-block__label {
+  font-size: 12px;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  margin-bottom: 4px;
+}
+.info-block .info-block__value {
+  font-size: 14px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* ── 37d. 对话气泡 ── */
+.user-bubble {
+  max-width: 80%;
+  white-space: pre-wrap;
+  background: rgb(var(--v-theme-primary));
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 12px;
+  line-height: 1.6;
+}
+
+.assistant-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  line-height: 1.6;
+}
+
+/* ── 37e. 工具调用事件 ── */
+.event-item {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(var(--v-theme-surface-variant), 0.2);
+  font-size: 13px;
+  border-left: 3px solid rgba(var(--v-theme-on-surface), 0.2);
+}
+.event-item.tool_call {
+  border-left-color: rgb(var(--v-theme-primary));
+}
+.event-item.tool_result {
+  border-left-color: rgb(var(--v-theme-success));
+}
+.event-item.tool_result:not(.success) {
+  border-left-color: rgb(var(--v-theme-error));
+}
+.event-item.skill {
+  border-left-color: rgb(var(--v-theme-info));
+}
+
+/* ── 37f. 工具列表行 ── */
+.tool-row {
+  transition: background 0.2s;
+}
+
+/* ── 37g. 通用 Markdown 渲染 ── */
+.markdown-body {
+  line-height: 1.7;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.markdown-body h1 { font-size: 1.4em; }
+.markdown-body h2 { font-size: 1.2em; }
+.markdown-body h3 { font-size: 1.1em; }
+.markdown-body p {
+  margin: 8px 0;
+}
+.markdown-body ul,
+.markdown-body ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+.markdown-body li {
+  margin: 4px 0;
+}
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  padding: 8px 12px;
+  text-align: left;
+}
+.markdown-body th {
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  font-weight: 600;
+}
+.markdown-body code {
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+.markdown-body pre {
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.markdown-body pre code {
+  background: none;
+  padding: 0;
+}
+.markdown-body blockquote {
+  border-left: 4px solid rgb(var(--v-theme-primary));
+  padding-left: 12px;
+  margin: 12px 0;
+  opacity: 0.8;
+}
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  margin: 16px 0;
+}
+.markdown-body strong {
+  font-weight: 600;
+}
+
+

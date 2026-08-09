@@ -506,6 +506,11 @@ defineExpose({ fetchSubscriptions })
   position: relative;
   aspect-ratio: 2/3;
   background: rgba(var(--v-theme-on-surface), 0.04);
+  overflow: hidden;
+}
+.sub-poster-box .v-img {
+  width: 100%;
+  height: 100%;
 }
 .sub-poster-placeholder {
   width: 100%;
@@ -523,10 +528,10 @@ defineExpose({ fetchSubscriptions })
   font-weight: 700;
   letter-spacing: 0.5px;
   line-height: 1.6;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: #4ecdc4;
+  color: var(--am-badge-accent);
 }
 .sub-ep-badge {
   position: absolute;
@@ -539,10 +544,10 @@ defineExpose({ fetchSubscriptions })
   font-weight: 600;
   letter-spacing: 0.3px;
   line-height: 1.5;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: rgb(var(--v-theme-primary));
+  color: #fff;
 }
 .sub-status-badge {
   position: absolute;
@@ -555,7 +560,7 @@ defineExpose({ fetchSubscriptions })
   font-weight: 700;
   letter-spacing: 0.3px;
   line-height: 1.5;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -586,10 +591,10 @@ defineExpose({ fetchSubscriptions })
   font-weight: 700;
   line-height: 1.5;
   letter-spacing: 0.3px;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--am-badge-overlay-bg);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  color: rgb(var(--v-theme-primary));
+  color: var(--am-badge-accent);
   display: flex;
   align-items: center;
   white-space: nowrap;

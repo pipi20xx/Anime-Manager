@@ -678,7 +678,7 @@ onMounted(() => {
               variant="outlined"
               hide-details
               prepend-inner-icon="mdi-magnify"
-              style="max-width: 300px"
+              class="tool-search-field"
             />
           </div>
           <v-divider />
@@ -691,7 +691,7 @@ onMounted(() => {
                 <div class="text-subtitle-2 font-weight-bold mb-2">
                   {{ category }} ({{ toolList.length }})
                 </div>
-                <v-card v-for="tool in toolList" :key="tool.name" class="glass-card hover-lift mb-2 pa-3" variant="flat">
+                <v-card v-for="tool in toolList" :key="tool.name" class="glass-card tool-card mb-2" variant="flat">
                   <div class="d-flex align-center justify-space-between mb-1">
                     <span class="font-mono font-weight-bold text-body-2">{{ tool.name }}</span>
                     <v-chip size="x-small" variant="tonal" :color="tool.parameters?.length ? 'primary' : 'default'">
@@ -704,7 +704,7 @@ onMounted(() => {
                       <v-chip size="x-small" :color="p.required ? 'primary' : 'default'" variant="flat">
                         {{ p.name }}<span v-if="p.required">*</span>
                       </v-chip>
-                      <span class="font-mono text-primary" style="min-width: 60px">{{ p.type }}</span>
+                      <span class="font-mono text-primary tool-param-type">{{ p.type }}</span>
                       <span class="text-medium-emphasis">{{ p.description }}</span>
                     </div>
                   </div>
@@ -735,7 +735,7 @@ onMounted(() => {
               variant="outlined"
               hide-details
               prepend-inner-icon="mdi-magnify"
-              style="max-width: 240px"
+              class="skill-search-field"
             />
             <v-btn
               size="small"
@@ -752,18 +752,19 @@ onMounted(() => {
             <v-progress-linear v-if="skillsLoading" indeterminate color="primary" class="mb-3" />
 
             <template v-else-if="filteredSkills.length > 0">
-              <v-card v-for="skill in filteredSkills" :key="skill.id" variant="tonal" class="mb-3">
-                <v-card-title class="pa-4 pb-2 d-flex align-center justify-space-between">
-                  <div class="d-flex align-center ga-3">
+              <v-card v-for="skill in filteredSkills" :key="skill.id" class="glass-card skill-card mb-3">
+                <!-- 标题行 -->
+                <div class="manage-card__header">
+                  <div class="d-flex align-center ga-3 manage-card__title">
                     <v-icon color="primary">mdi-lightning-bolt-outline</v-icon>
-                    <div>
-                      <div class="text-subtitle-2 font-weight-bold" :class="{ 'text-medium-emphasis': !skill.enabled }">
+                    <div class="d-flex flex-column">
+                      <span class="text-subtitle-2 font-weight-bold" :class="{ 'text-medium-emphasis': !skill.enabled }">
                         {{ skill.name || skill.id }}
-                      </div>
-                      <div v-if="skill.description" class="text-caption text-medium-emphasis">{{ skill.description }}</div>
+                      </span>
+                      <span v-if="skill.description" class="text-caption text-medium-emphasis manage-card__desc">{{ skill.description }}</span>
                     </div>
                   </div>
-                  <div class="d-flex align-center ga-2">
+                  <div class="d-flex align-center ga-2 manage-card__badge">
                     <v-chip v-if="skill.version" size="x-small" variant="tonal">v{{ skill.version }}</v-chip>
                     <v-chip v-if="skill.tools_needed?.length" size="x-small" variant="tonal" color="primary">
                       {{ skill.tools_needed.length }} 工具
@@ -776,20 +777,22 @@ onMounted(() => {
                       @update:model-value="toggleSkillEnabled(skill)"
                     />
                   </div>
-                </v-card-title>
+                </div>
 
-                <div v-if="skill.triggers?.length || skill.tools_needed?.length" class="px-4 pb-2">
-                  <div v-if="skill.triggers?.length" class="d-flex align-center flex-wrap ga-1 mb-1">
+                <!-- 标签区 -->
+                <div v-if="skill.triggers?.length || skill.tools_needed?.length" class="manage-card__body">
+                  <div v-if="skill.triggers?.length" class="manage-card__tags">
                     <span class="text-caption text-medium-emphasis">触发词：</span>
                     <v-chip v-for="t in skill.triggers" :key="t" size="x-small" variant="tonal" color="info">{{ t }}</v-chip>
                   </div>
-                  <div v-if="skill.tools_needed?.length" class="d-flex align-center flex-wrap ga-1">
+                  <div v-if="skill.tools_needed?.length" class="manage-card__tags">
                     <span class="text-caption text-medium-emphasis">关联工具：</span>
                     <v-chip v-for="t in skill.tools_needed" :key="t" size="x-small" variant="tonal" color="success">{{ t }}</v-chip>
                   </div>
                 </div>
 
-                <v-card-actions class="px-4">
+                <!-- 操作区 -->
+                <v-card-actions class="manage-card__actions">
                   <v-btn
                     size="small"
                     variant="text"
@@ -801,6 +804,7 @@ onMounted(() => {
                   </v-btn>
                 </v-card-actions>
 
+                <!-- 展开详情 -->
                 <v-expand-transition>
                   <div v-show="expandedSkillId === skill.id">
                     <v-divider />
@@ -1019,20 +1023,20 @@ onMounted(() => {
             <v-row class="mb-4">
               <v-col cols="12" sm="6" md="4">
                 <div class="info-block">
-                  <div class="info-label">🎯 真实标题</div>
-                  <div class="info-value">{{ fallbackResult.result?.real_title || '-' }}</div>
+                  <div class="info-block__label">🎯 真实标题</div>
+                  <div class="info-block__value">{{ fallbackResult.result?.real_title || '-' }}</div>
                 </div>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <div class="info-block">
-                  <div class="info-label">📝 原名</div>
-                  <div class="info-value">{{ fallbackResult.result?.original_name || '-' }}</div>
+                  <div class="info-block__label">📝 原名</div>
+                  <div class="info-block__value">{{ fallbackResult.result?.original_name || '-' }}</div>
                 </div>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <div class="info-block">
-                  <div class="info-label">🇨🇳 中文名</div>
-                  <div class="info-value">{{ fallbackResult.result?.chinese_name || '-' }}</div>
+                  <div class="info-block__label">🇨🇳 中文名</div>
+                  <div class="info-block__value">{{ fallbackResult.result?.chinese_name || '-' }}</div>
                 </div>
               </v-col>
             </v-row>
@@ -1223,180 +1227,4 @@ onMounted(() => {
   </v-container>
 </template>
 
-<style scoped>
-/* 对话气泡 */
-.user-bubble {
-  max-width: 80%;
-  white-space: pre-wrap;
-  background: rgb(var(--v-theme-primary));
-  color: #fff;
-  padding: 10px 16px;
-  border-radius: 12px;
-  line-height: 1.6;
-}
 
-.assistant-bubble {
-  max-width: 80%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: rgba(var(--v-theme-surface-variant), 0.3);
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  line-height: 1.6;
-}
-
-/* 工具调用事件 */
-.event-item {
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(var(--v-theme-surface-variant), 0.2);
-  font-size: 13px;
-  border-left: 3px solid rgba(var(--v-theme-on-surface), 0.2);
-}
-
-.event-item.tool_call {
-  border-left-color: rgb(var(--v-theme-primary));
-}
-
-.event-item.tool_result {
-  border-left-color: rgb(var(--v-theme-success));
-}
-
-.event-item.tool_result:not(.success) {
-  border-left-color: rgb(var(--v-theme-error));
-}
-
-.event-item.skill {
-  border-left-color: rgb(var(--v-theme-info));
-}
-
-/* Markdown 渲染 */
-.markdown-body {
-  line-height: 1.7;
-}
-
-.markdown-body :deep(h1),
-.markdown-body :deep(h2),
-.markdown-body :deep(h3) {
-  margin-top: 16px;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.markdown-body :deep(h1) { font-size: 1.4em; }
-.markdown-body :deep(h2) { font-size: 1.2em; }
-.markdown-body :deep(h3) { font-size: 1.1em; }
-
-.markdown-body :deep(p) {
-  margin: 8px 0;
-}
-
-.markdown-body :deep(ul),
-.markdown-body :deep(ol) {
-  margin: 8px 0;
-  padding-left: 24px;
-}
-
-.markdown-body :deep(li) {
-  margin: 4px 0;
-}
-
-.markdown-body :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 12px 0;
-}
-
-.markdown-body :deep(th),
-.markdown-body :deep(td) {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.markdown-body :deep(th) {
-  background: rgba(var(--v-theme-surface-variant), 0.3);
-  font-weight: 600;
-}
-
-.markdown-body :deep(code) {
-  background: rgba(var(--v-theme-surface-variant), 0.3);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.9em;
-}
-
-.markdown-body :deep(pre) {
-  background: rgba(var(--v-theme-surface-variant), 0.3);
-  padding: 12px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 12px 0;
-}
-
-.markdown-body :deep(pre code) {
-  background: none;
-  padding: 0;
-}
-
-.markdown-body :deep(blockquote) {
-  border-left: 4px solid rgb(var(--v-theme-primary));
-  padding-left: 12px;
-  margin: 12px 0;
-  opacity: 0.8;
-}
-
-.markdown-body :deep(hr) {
-  border: none;
-  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  margin: 16px 0;
-}
-
-.markdown-body :deep(strong) {
-  font-weight: 600;
-}
-
-/* 工具列表行 */
-.tool-row {
-  transition: background 0.2s;
-}
-
-/* 技能 Markdown */
-.skill-markdown {
-  font-size: 13px;
-}
-
-/* AI 介入测试 - 信息块 */
-.info-block {
-  padding: 12px 16px;
-  border-radius: 8px;
-}
-
-.info-label {
-  font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  margin-bottom: 4px;
-}
-
-.info-value {
-  font-size: 14px;
-  font-weight: 500;
-  word-break: break-all;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-.font-mono {
-  font-family: monospace;
-}
-
-.skill-markdown :deep(h1),
-.skill-markdown :deep(h2),
-.skill-markdown :deep(h3) {
-  margin-top: 12px;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-</style>
