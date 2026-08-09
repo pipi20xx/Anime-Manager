@@ -681,7 +681,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <v-btn variant="tonal" prepend-icon="mdi-send" :loading="isTestingPush" class="mb-4" @click="testCalendarPush">
+              <v-btn variant="tonal" color="primary" prepend-icon="mdi-send" :loading="isTestingPush" class="mb-4" @click="testCalendarPush">
                 发送测试播报
               </v-btn>
 

@@ -194,7 +194,7 @@ defineExpose({ fetchHistory })
         prepend-inner-icon="mdi-magnify"
         clearable
         hide-details
-        style="max-width: 260px"
+        class="org-search-field"
         @keyup.enter="searchHistory"
         @click:clear="historySearch = ''; searchHistory()"
       />
@@ -218,7 +218,7 @@ defineExpose({ fetchHistory })
       >
         <!-- 1. Header: Title + Meta Tags + Status -->
         <div class="d-flex align-center justify-space-between ga-2">
-          <div class="d-flex align-center ga-2 flex-wrap" style="min-width: 0; flex: 1;">
+          <div class="d-flex align-center ga-2 flex-wrap flex-grow-1 min-width-0">
             <span class="text-subtitle-1 font-weight-bold text-truncate">{{ item.title || item.filename || '-' }}</span>
             <span v-if="item.year" class="text-caption text-medium-emphasis">({{ item.year }})</span>
             <!-- 元数据 Tags -->
@@ -268,7 +268,7 @@ defineExpose({ fetchHistory })
 
         <!-- 3. Footer: Details + Actions -->
         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-3">
-          <div class="d-flex align-center ga-2 flex-wrap" style="min-width: 0;">
+          <div class="d-flex align-center ga-2 flex-wrap min-width-0">
             <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--action" v-if="item.action_type">
               {{ getActionLabel(item.action_type) }}
             </v-chip>

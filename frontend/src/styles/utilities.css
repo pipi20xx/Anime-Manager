@@ -400,3 +400,11 @@
 .font-mono {
   font-family: monospace;
 }
+
+.min-width-0 {
+  min-width: 0;
+}
+
+.word-break-all {
+  word-break: break-all;
+}

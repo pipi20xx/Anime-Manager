@@ -218,8 +218,7 @@ async function handleClearHistory() {
               placeholder="搜索资源标题或识别名..."
               prepend-inner-icon="mdi-magnify"
               density="compact" hide-details variant="outlined"
-              class="flex-grow-1"
-              style="max-width: 320px"
+              class="search-field"
               @keyup.enter="applyFilter"
             />
             <v-select
@@ -228,8 +227,7 @@ async function handleClearHistory() {
               multiple chips clearable
               density="compact" hide-details variant="outlined"
               placeholder="筛选站点"
-              class="flex-grow-1"
-              style="max-width: 320px"
+              class="search-field"
               @update:model-value="applyFilter"
             />
           </div>
@@ -246,24 +244,24 @@ async function handleClearHistory() {
 
         <!-- 条目列表 -->
         <div v-else-if="items.length > 0" class="d-flex flex-column ga-2">
-          <v-card v-for="(item, index) in items" :key="item.guid" class="glass-card hover-lift pa-3" variant="flat">
+          <v-card v-for="(item, index) in items" :key="item.guid" class="feed-item-card" variant="flat">
             <!-- 第一行：标签 + 序号 -->
             <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
-              <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
+              <div class="d-flex align-center ga-1 flex-wrap flex-grow-1 min-width-0">
                 <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--feed">{{ item.feed_name || '-' }}</v-chip>
                 <v-chip size="x-small" variant="flat" :class="['meta-tag', item.is_downloaded ? 'meta-tag--downloaded' : 'meta-tag--not-downloaded']">
                   {{ item.is_downloaded ? '已下载' : '未下载' }}
                 </v-chip>
-                <span v-if="item.tmdb_title" class="text-caption font-weight-bold" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;">🎯 {{ item.tmdb_title }}</span>
+                <span v-if="item.tmdb_title" class="text-caption font-weight-bold text-truncate flex-grow-1 min-width-0">🎯 {{ item.tmdb_title }}</span>
               </div>
-              <span class="text-caption text-medium-emphasis flex-shrink-0" style="font-family: monospace;">#{{ index + 1 }}</span>
+              <span class="text-caption text-medium-emphasis flex-shrink-0 font-mono">#{{ index + 1 }}</span>
             </div>
 
             <!-- 标题 -->
-            <div class="text-subtitle-2 font-weight-bold mt-2" style="word-break: break-all;">{{ item.raw_title || item.title }}</div>
+            <div class="text-subtitle-2 font-weight-bold mt-2 word-break-all">{{ item.raw_title || item.title }}</div>
 
             <!-- 描述 -->
-            <div v-if="cleanDescription(item.description)" class="text-caption text-medium-emphasis mt-1" style="word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            <div v-if="cleanDescription(item.description)" class="text-caption text-medium-emphasis mt-1 text-truncate-2">
               {{ cleanDescription(item.description) }}
             </div>
 
@@ -306,7 +304,7 @@ async function handleClearHistory() {
 
             <!-- 底部：时间 + 操作 -->
             <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-2">
-              <span class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatPubDate(item.pub_date) }}</span>
+              <span class="text-caption text-medium-emphasis font-mono">{{ formatPubDate(item.pub_date) }}</span>
               <div class="d-flex align-center ga-1 flex-shrink-0">
                 <v-menu v-if="clientOptions.length > 0">
                   <template #activator="{ props: menuProps }">

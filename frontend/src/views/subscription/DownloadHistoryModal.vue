@@ -193,8 +193,7 @@ const filteredItems = computed(() => {
               placeholder="搜索标题或描述..."
               prepend-inner-icon="mdi-magnify"
               density="compact" hide-details variant="outlined"
-              class="flex-grow-1"
-              style="max-width: 320px"
+              class="search-field"
               @keyup.enter="applyFilter"
             />
             <v-select
@@ -203,8 +202,7 @@ const filteredItems = computed(() => {
               multiple chips clearable
               density="compact" hide-details variant="outlined"
               placeholder="筛选站点"
-              class="flex-grow-1"
-              style="max-width: 320px"
+              class="search-field"
             />
           </div>
           <div class="list-toolbar__actions">
@@ -218,10 +216,10 @@ const filteredItems = computed(() => {
 
         <!-- 记录列表 -->
         <div v-else-if="filteredItems.length > 0" class="d-flex flex-column ga-2">
-          <v-card v-for="(item, index) in filteredItems" :key="item.guid || item.id" class="glass-card hover-lift pa-3" variant="flat">
+          <v-card v-for="(item, index) in filteredItems" :key="item.guid || item.id" class="feed-item-card" variant="flat">
             <!-- 第一行：标签 + 序号 -->
             <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
-              <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
+              <div class="d-flex align-center ga-1 flex-wrap flex-grow-1 min-width-0">
                 <!-- 状态标签 -->
                 <v-chip size="x-small" variant="flat" :class="['meta-tag', getStateInfo(item.state).tagClass]">
                   {{ getStateInfo(item.state).label }}
@@ -243,11 +241,11 @@ const filteredItems = computed(() => {
                   失败 ×{{ item.fail_count }}
                 </v-chip>
               </div>
-              <span class="text-caption text-medium-emphasis flex-shrink-0" style="font-family: monospace;">#{{ index + 1 }}</span>
+              <span class="text-caption text-medium-emphasis flex-shrink-0 font-mono">#{{ index + 1 }}</span>
             </div>
 
             <!-- 标题 -->
-            <div class="text-subtitle-2 font-weight-bold mt-2" style="word-break: break-all;">
+            <div class="text-subtitle-2 font-weight-bold mt-2 word-break-all">
               <a v-if="item.link" :href="item.link" target="_blank" style="color: inherit; text-decoration: none;">
                 {{ item.title }}
               </a>
@@ -255,7 +253,7 @@ const filteredItems = computed(() => {
             </div>
 
             <!-- 描述 -->
-            <div v-if="cleanDescription(item.description)" class="text-caption text-medium-emphasis mt-1" style="word-break: break-all; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            <div v-if="cleanDescription(item.description)" class="text-caption text-medium-emphasis mt-1 text-truncate-2">
               {{ cleanDescription(item.description) }}
             </div>
 
@@ -269,15 +267,15 @@ const filteredItems = computed(() => {
             <div class="meta-tags mt-1">
               <!-- info_hash -->
               <v-chip v-if="item.info_hash" size="x-small" variant="flat" class="meta-tag meta-tag--size">
-                <span style="font-family: monospace; max-width: 120px; overflow: hidden; text-overflow: ellipsis; display: inline-block;">{{ item.info_hash }}</span>
+                <span class="font-mono text-truncate" style="max-width: 120px; display: inline-block;">{{ item.info_hash }}</span>
               </v-chip>
             </div>
 
             <!-- 底部：时间 + 操作 -->
             <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-2">
               <div class="d-flex flex-column ga-1">
-                <span class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatTime(item.created_at) }}</span>
-                <span v-if="item.updated_at && formatTime(item.updated_at) !== formatTime(item.created_at)" class="text-caption text-medium-emphasis" style="font-family: monospace; opacity: 0.6;">
+                <span class="text-caption text-medium-emphasis font-mono">{{ formatTime(item.created_at) }}</span>
+                <span v-if="item.updated_at && formatTime(item.updated_at) !== formatTime(item.created_at)" class="text-caption text-medium-emphasis font-mono" style="opacity: 0.6;">
                   更新: {{ formatTime(item.updated_at) }}
                 </span>
               </div>

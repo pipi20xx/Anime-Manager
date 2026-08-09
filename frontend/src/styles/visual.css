@@ -440,6 +440,7 @@
 }
 
 /* flat + success */
+.v-btn--variant-flat.bg-success,
 .v-btn--variant-flat.v-btn--bg-success {
   background: var(--am-btn-success-bg) !important;
   backdrop-filter: var(--am-btn-blur) !important;
@@ -449,6 +450,7 @@
 }
 
 /* flat + warning */
+.v-btn--variant-flat.bg-warning,
 .v-btn--variant-flat.v-btn--bg-warning {
   background: var(--am-btn-warning-bg) !important;
   backdrop-filter: var(--am-btn-blur) !important;
@@ -458,6 +460,7 @@
 }
 
 /* flat + error */
+.v-btn--variant-flat.bg-error,
 .v-btn--variant-flat.v-btn--bg-error {
   background: var(--am-btn-error-bg) !important;
   backdrop-filter: var(--am-btn-blur) !important;
