@@ -47,7 +47,6 @@ const selectedLanguageCodes = ref<string[]>([])
 // 其他文本字段
 const criteriaTitle = ref('')
 const criteriaYear = ref('')
-const criteriaSecondaryCategory = ref('')
 
 // ===== 远程搜索选项 =====
 const genreSearchLoading = ref(false)
@@ -124,7 +123,6 @@ function criteriaToFields(criteria: Record<string, any>) {
   selectedLanguageCodes.value = splitIds(criteria.original_language)
   criteriaTitle.value = criteria.title || ''
   criteriaYear.value = criteria.year || ''
-  criteriaSecondaryCategory.value = criteria.secondary_category || ''
 }
 
 function fieldsToCriteria(): Record<string, any> {
@@ -136,7 +134,6 @@ function fieldsToCriteria(): Record<string, any> {
   if (selectedLanguageCodes.value.length) c.original_language = selectedLanguageCodes.value.join(',')
   if (criteriaTitle.value) c.title = criteriaTitle.value
   if (criteriaYear.value) c.year = criteriaYear.value
-  if (criteriaSecondaryCategory.value) c.secondary_category = criteriaSecondaryCategory.value
   return c
 }
 
@@ -226,18 +223,23 @@ async function importRules() {
 }
 
 // ===== 卡片展示 =====
-function getCriteriaLines(rule: any): { label: string; value: string }[] {
+const CRITERIA_FIELDS: { key: string; label: string; map?: 'genres' | 'companies' | 'keywords' | 'countries' | 'languages' }[] = [
+  { key: 'title', label: '标题' },
+  { key: 'genre_ids', label: '流派', map: 'genres' },
+  { key: 'company_ids', label: '公司', map: 'companies' },
+  { key: 'keyword_ids', label: '关键词', map: 'keywords' },
+  { key: 'origin_country', label: '国家', map: 'countries' },
+  { key: 'original_language', label: '语言', map: 'languages' },
+  { key: 'year', label: '年份' },
+]
+
+function getCriteriaLines(rule: any): { label: string; value: string; unrestricted: boolean }[] {
   const c = rule.criteria || {}
-  const lines: { label: string; value: string }[] = []
-  if (c.media_type) lines.push({ label: '适用', value: c.media_type === 'tv' ? '剧集' : c.media_type === 'movie' ? '电影' : '全部' })
-  if (c.title) lines.push({ label: '标题', value: c.title })
-  if (c.genre_ids) lines.push({ label: '流派', value: translateIds(c.genre_ids, 'genres') })
-  if (c.company_ids) lines.push({ label: '公司', value: translateIds(c.company_ids, 'companies') })
-  if (c.keyword_ids) lines.push({ label: '关键词', value: translateIds(c.keyword_ids, 'keywords') })
-  if (c.origin_country || c.country_codes) lines.push({ label: '国家', value: translateIds(c.origin_country || c.country_codes, 'countries') })
-  if (c.original_language) lines.push({ label: '语言', value: translateIds(c.original_language, 'languages') })
-  if (c.year) lines.push({ label: '年份', value: c.year })
-  return lines
+  return CRITERIA_FIELDS.map(({ key, label, map }) => {
+    const raw = key === 'origin_country' ? (c.origin_country || c.country_codes) : c[key]
+    const val = map ? translateIds(raw, map) : (raw || '')
+    return { label, value: val || '不限制', unrestricted: !val }
+  })
 }
 
 const targetItems = [
@@ -293,21 +295,11 @@ defineExpose({ fetchRules })
           />
         </div>
 
-        <!-- 信息区：固定 3 行，不足用占位填充 -->
+        <!-- 信息区：固定 7 个字段，空值显示「不限制」 -->
         <div class="manage-card__body">
-          <div class="manage-card__info" v-for="line in getCriteriaLines(rule).slice(0, 3)" :key="line.label">
+          <div class="manage-card__info" v-for="line in getCriteriaLines(rule)" :key="line.label">
             <span class="manage-card__info-label">{{ line.label }}</span>
-            <span class="manage-card__info-value" :title="line.value">{{ line.value }}</span>
-          </div>
-          <!-- 无条件时占第 1 行 -->
-          <div v-if="getCriteriaLines(rule).length === 0" class="manage-card__info manage-card__info--unconditional">
-            <span class="manage-card__info-label">条件</span>
-            <span class="manage-card__info-value text-medium-emphasis">无条件</span>
-          </div>
-          <!-- 占位行补齐到 3 行 -->
-          <div v-for="n in Math.max(0, 3 - Math.max(getCriteriaLines(rule).length, 1))" :key="`ph-${n}`" class="manage-card__info manage-card__info--placeholder">
-            <span class="manage-card__info-label">&nbsp;</span>
-            <span class="manage-card__info-value">&nbsp;</span>
+            <span class="manage-card__info-value" :class="{ 'text-medium-emphasis': line.unrestricted }" :title="line.value">{{ line.value }}</span>
           </div>
 
           <div class="manage-card__tags">
@@ -449,7 +441,6 @@ defineExpose({ fetchRules })
             <v-text-field v-model="criteriaYear" label="年份/范围" variant="outlined" density="compact" class="mb-3" placeholder="2024 或 2020-2025" />
           </v-col>
         </v-row>
-        <v-text-field v-model="criteriaSecondaryCategory" label="二级分类路径 (输出)" variant="outlined" density="compact" class="mb-3" placeholder="如: 动画/日常" />
       </v-card-text>
       <v-divider />
       <v-card-actions class="pa-4">
@@ -463,20 +454,8 @@ defineExpose({ fetchRules })
 
 <!-- scoped 样式已迁移至 global.css .manage-card / .info-badge -->
 <style scoped>
-/* 占位行 — 保持卡片高度一致 */
-.manage-card__info--placeholder {
-  visibility: hidden;
-}
-
-/* 固定信息区高度 — 3行固定高度，不足用占位填充 */
+/* 固定信息区高度 — 7 行固定，保证所有卡片高度一致 */
 :deep(.manage-card__body) {
-  min-height: 120px;
-}
-
-/* "无条件"占位也固定高度，与3行信息区一致 */
-:deep(.manage-card__desc) {
-  min-height: 54px;
-  display: flex;
-  align-items: center;
+  min-height: 180px;
 }
 </style>

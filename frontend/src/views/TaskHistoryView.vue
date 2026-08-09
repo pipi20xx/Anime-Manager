@@ -471,7 +471,6 @@ onUnmounted(() => {
         <v-card-text class="pa-4 log-scroll-area" style="max-height: 70vh; overflow-y: auto">
           <div v-if="selectedTask?.logs?.length" class="th-log-container">
             <div v-for="group in selectedTaskGroupedLogs" :key="group.groupTime" class="log-group">
-              <div class="log-group-time">{{ group.displayTime }}</div>
               <div class="log-group-line"></div>
               <div class="log-group-items">
                 <div v-for="(log, i) in group.logs" :key="i" class="log-line">
@@ -510,14 +509,6 @@ onUnmounted(() => {
 }
 .log-group:last-child {
   border-bottom: none;
-}
-.log-group-time {
-  color: rgb(var(--v-theme-primary));
-  font-size: 11px;
-  min-width: 130px;
-  flex-shrink: 0;
-  padding-top: 2px;
-  font-weight: 700;
 }
 .log-group-line {
   width: 2px;

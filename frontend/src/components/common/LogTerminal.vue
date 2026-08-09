@@ -33,6 +33,25 @@ const filteredLogs = computed(() => {
   })
 })
 
+// 解析单条日志: "18:13:09 | INFO  | 消息内容" → { time, level, message }
+function parseLog(raw: string): { raw: string; time: string; level: string; message: string } {
+  const m = raw.match(/^(\d{2}:\d{2}:\d{2})\s*\|\s*(\w+)\s*\|\s*(.*)$/)
+  if (m) return { raw, time: m[1], level: m[2].toLowerCase(), message: m[3] }
+  return { raw, time: '', level: getLogLevel(raw), message: raw }
+}
+
+// 按秒分组的日志
+const groupedLogs = computed(() => {
+  const parsed = filteredLogs.value.map(parseLog)
+  const groups = new Map<string, { raw: string; time: string; level: string; message: string }[]>()
+  for (const log of parsed) {
+    const key = log.time || '--:--:--'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(log)
+  }
+  return Array.from(groups.entries()).map(([key, logs]) => ({ key, logs }))
+})
+
 // 弹窗打开时自动滚动到底部
 watch(() => systemStore.showLogModal, async (val) => {
   if (val) {
@@ -96,14 +115,20 @@ function getLogLevelClass(entry: string): string {
       <v-btn variant="tonal" density="compact" color="error" prepend-icon="mdi-delete-outline" class="clear-log-btn" @click="clearLogs">清空</v-btn>
     </template>
     <div ref="logContainer" class="log-terminal">
-      <div
-        v-for="(entry, i) in filteredLogs"
-        :key="i"
-        class="log-entry"
-        :class="getLogLevelClass(entry)"
-      >
-        <span class="log-entry__level" :data-level="getLogLevel(entry)">{{ getLogLevel(entry) }}</span>
-        <span class="log-entry__msg">{{ entry }}</span>
+      <div v-for="group in groupedLogs" :key="group.key" class="log-group">
+        <div class="log-group-line"></div>
+        <div class="log-group-items">
+          <div
+            v-for="(log, i) in group.logs"
+            :key="i"
+            class="log-entry"
+            :class="`log-entry--${log.level}`"
+          >
+            <span v-if="log.time" class="log-entry__time">{{ log.time }}</span>
+            <span class="log-entry__level" :data-level="log.level">{{ log.level }}</span>
+            <span class="log-entry__msg">{{ log.message }}</span>
+          </div>
+        </div>
       </div>
       <div v-if="!filteredLogs.length" class="log-terminal__empty">
         暂无日志
@@ -115,5 +140,26 @@ function getLogLevelClass(entry: string): string {
 <style scoped>
 .clear-log-btn {
   height: 32px !important;
+}
+
+/* 按秒分组的竖条布局 */
+.log-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.log-group-line {
+  width: 2px;
+  background-color: rgb(var(--v-theme-primary));
+  border-radius: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 2px 0;
+  opacity: 0.4;
+}
+.log-group-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 </style>

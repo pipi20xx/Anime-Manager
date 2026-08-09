@@ -91,4 +91,8 @@ export const userMappingApi = {
   /** 导入用户映射 */
   importMappings: (data: any, mode?: 'append' | 'replace') =>
     api.post<any>('/api/user_mapping/import', data, { params: { mode: mode || 'append' } }),
+
+  /** 恢复内置默认映射数据 (清空当前数据后重写硬编码默认值) */
+  resetDefaults: (type?: string) =>
+    api.post<any>('/api/user_mapping/reset_defaults', undefined, { params: { type: type || 'all' } }),
 }

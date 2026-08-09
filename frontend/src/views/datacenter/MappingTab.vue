@@ -18,6 +18,7 @@ const mapActiveType = ref('genre')
 const mapLoading = ref(false)
 const mapImportLoading = ref(false)
 const mapFileImportLoading = ref(false)
+const resetDefaultsLoading = ref(false)
 
 const mapData = reactive({
   genres: [] as any[],
@@ -142,6 +143,34 @@ async function handleExportMappings() {
   } catch (e) { showError('导出失败') }
 }
 
+async function handleResetDefaults() {
+  const t = mapActiveType.value
+  const typeLabel = typeLabels[t]
+  const ok = await confirm({
+    title: '恢复内置默认数据',
+    content: `确定要将${typeLabel}映射恢复到内置默认值吗？当前${typeLabel}的所有数据将被清空并重置为硬编码默认值${t === 'company' ? '（公司无内置默认数据，将清空所有记录）' : ''}。`,
+    confirmColor: 'warning',
+  })
+  if (!ok) return
+  resetDefaultsLoading.value = true
+  try {
+    const data = await userMappingApi.resetDefaults(t) as any
+    if (data?.status === 'success') {
+      const r = data.restored || {}
+      const total = (r.genres || 0) + (r.companies || 0) + (r.keywords || 0) + (r.languages || 0) + (r.countries || 0)
+      success(`已恢复 ${total} 条默认数据`)
+      refreshCurrentMappings()
+      fetchRefCounts()
+    } else {
+      showError('恢复失败')
+    }
+  } catch (e) {
+    showError('恢复失败')
+  } finally {
+    resetDefaultsLoading.value = false
+  }
+}
+
 function handleImportMappings() {
   const input = document.createElement('input')
   input.type = 'file'; input.accept = '.json'
@@ -242,6 +271,7 @@ defineExpose({ fetchMappings, fetchRefCounts })
         <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-download-outline" @click="handleExportMappings">导出备份</v-btn>
         <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-upload-outline" :loading="mapFileImportLoading" @click="handleImportMappings">导入备份</v-btn>
         <v-btn v-if="['genre','company','keyword'].includes(mapActiveType)" color="info" variant="tonal" size="small" prepend-icon="mdi-import" :loading="mapImportLoading" @click="handleImportFromRef">导入当前分类</v-btn>
+        <v-btn color="warning" variant="tonal" size="small" prepend-icon="mdi-restore" :loading="resetDefaultsLoading" @click="handleResetDefaults">恢复默认</v-btn>
         <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddMapItem">添加映射</v-btn>
       </div>
     </div>

@@ -309,6 +309,24 @@ html.glass-theme-classic.glass-light .log-entry__level[data-level="critical"] { 
 html.glass-theme-classic.glass-light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
 html.glass-theme-classic.glass-light .log-entry__level[data-level="success"]  { color: #15803d; }
 
+html.glass-theme-classic .log-entry--error,
+html.glass-theme-classic .log-entry--critical {
+  background: rgba(255, 55, 95, 0.08);
+  border-radius: 4px;
+}
+html.glass-theme-classic .log-entry--warning {
+  background: rgba(255, 159, 10, 0.06);
+  border-radius: 4px;
+}
+
+html.glass-theme-classic.glass-light .log-entry--error,
+html.glass-theme-classic.glass-light .log-entry--critical {
+  background: rgba(185, 28, 28, 0.06);
+}
+html.glass-theme-classic.glass-light .log-entry--warning {
+  background: rgba(194, 65, 12, 0.06);
+}
+
 
 /* ================================================================
  * 12. 字体

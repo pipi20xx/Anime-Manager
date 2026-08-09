@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from database import db
 from tmdbmatefull.models import RefGenre, RefCompany, RefKeyword, UserGenreMapping, UserCompanyMapping, UserKeywordMapping, UserLanguageMapping, UserCountryMapping
-from tmdbmatefull.database import TmdbFullDB
+from tmdbmatefull.database import TmdbFullDB, DEFAULT_GENRE_MAPPINGS, DEFAULT_LANGUAGE_MAPPINGS, DEFAULT_COUNTRY_MAPPINGS, _load_keyword_mappings
 from recognition.renderer import refresh_mapping_cache
 
 router = APIRouter(prefix="/api/user_mapping", tags=["用户自定义映射"])
@@ -561,3 +561,68 @@ async def import_mappings(data: Dict[str, Any], mode: str = "append"):
     
     await refresh_mapping_cache()
     return {"status": "success", "imported": imported}
+
+
+@router.post("/reset_defaults", summary="恢复内置默认映射数据 (清空当前数据后重写硬编码默认值)")
+async def reset_defaults(type: str = "all"):
+    """
+    将指定类型的用户映射表恢复到内置硬编码默认值。
+    流派/国家/语言有 Python 硬编码默认值；关键词从 keywords.json 加载；
+    公司无内置默认数据，会清空。
+
+    type 可选: all / genre / company / keyword / language / country
+    """
+    from sqlalchemy import text as sa_text
+
+    restored = {"genres": 0, "companies": 0, "keywords": 0, "languages": 0, "countries": 0}
+
+    async with await TmdbFullDB.get_session() as session:
+        # 1. 清空目标表
+        tables_map = {
+            "genre": UserGenreMapping,
+            "company": UserCompanyMapping,
+            "keyword": UserKeywordMapping,
+            "language": UserLanguageMapping,
+            "country": UserCountryMapping,
+        }
+        if type == "all":
+            for tbl in tables_map.values():
+                await session.execute(sa_text(f"DELETE FROM {tbl.__table__.fullname}"))
+        else:
+            tbl = tables_map.get(type)
+            if tbl:
+                await session.execute(sa_text(f"DELETE FROM {tbl.__table__.fullname}"))
+        await session.commit()
+
+        # 2. 写入默认数据
+        if type in ("all", "genre"):
+            for item in DEFAULT_GENRE_MAPPINGS:
+                session.add(UserGenreMapping(**item))
+            await session.commit()
+            restored["genres"] = len(DEFAULT_GENRE_MAPPINGS)
+
+        if type in ("all", "language"):
+            for item in DEFAULT_LANGUAGE_MAPPINGS:
+                session.add(UserLanguageMapping(**item))
+            await session.commit()
+            restored["languages"] = len(DEFAULT_LANGUAGE_MAPPINGS)
+
+        if type in ("all", "country"):
+            for item in DEFAULT_COUNTRY_MAPPINGS:
+                session.add(UserCountryMapping(**item))
+            await session.commit()
+            restored["countries"] = len(DEFAULT_COUNTRY_MAPPINGS)
+
+        if type in ("all", "keyword"):
+            keyword_mappings = _load_keyword_mappings()
+            for item in keyword_mappings:
+                session.add(UserKeywordMapping(**item))
+            await session.commit()
+            restored["keywords"] = len(keyword_mappings)
+
+        # 公司无内置默认数据，仅清空
+        if type in ("all", "company"):
+            restored["companies"] = 0
+
+    await refresh_mapping_cache()
+    return {"status": "success", "restored": restored}
