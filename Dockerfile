@@ -2,7 +2,10 @@
 FROM node:22-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm config set registry https://repo.huaweicloud.com/repository/npm/ && \
+# 删除 lock 文件以避免 npm 可选依赖跨架构 bug (npm/cli#4828)
+# 锁文件在 x64 上生成时不含 arm64 的 @rolldown/binding 原生包
+RUN rm -f package-lock.json && \
+    npm config set registry https://repo.huaweicloud.com/repository/npm/ && \
     npm install --legacy-peer-deps
 COPY frontend/ ./
 RUN npm run build
