@@ -8,15 +8,12 @@
 
 /* ============================================================
  * 通用卡片悬浮
+ * 结构部分（cursor + transition），视觉效果（transform + box-shadow）
+ * 在 visual.css §16 中通过令牌统一处理
  * ============================================================ */
 
 .hover-lift {
   cursor: pointer;
-  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
-}
-
-.hover-lift:hover {
-  transform: translateY(-3px);
 }
 
 
