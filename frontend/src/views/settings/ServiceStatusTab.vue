@@ -257,20 +257,22 @@ onUnmounted(() => {
             :class="monitor.running ? 'service-card--running' : 'service-card--disabled'"
           >
             <v-card-text class="pa-4">
-              <div class="d-flex align-center justify-space-between mb-2">
-                <div class="d-flex align-center ga-2 flex-wrap">
-                  <v-chip size="x-small" color="info" variant="tonal">
+              <div class="d-flex align-center justify-space-between mb-1">
+                <div class="d-flex align-center ga-2 min-width-0 flex-1-1-auto">
+                  <v-chip size="x-small" color="info" variant="tonal" class="flex-shrink-0">
                     {{ monitor.type === 'organize' ? '整理' : 'STRM' }}
                   </v-chip>
-                  <span class="text-body-2 font-weight-bold">{{ monitor.name }}</span>
-                  <v-chip size="x-small" color="grey" variant="tonal">{{ monitor.mode }}</v-chip>
-                  <v-chip v-if="monitor.type === 'strm' && monitor.webhook_enabled" size="x-small" color="info" variant="tonal">接受联动</v-chip>
-                  <v-chip v-if="monitor.type === 'organize' && monitor.check_emby_exists" size="x-small" color="info" variant="tonal">Emby检查</v-chip>
-                  <v-chip v-if="monitor.type === 'organize' && monitor.calculate_hash" size="x-small" color="error" variant="tonal">哈希计算</v-chip>
+                  <span class="text-body-2 font-weight-bold text-truncate">{{ monitor.name }}</span>
                 </div>
-                <v-chip size="x-small" :color="getStatusColor(monitor)" variant="tonal">
+                <v-chip size="x-small" :color="getStatusColor(monitor)" variant="tonal" class="flex-shrink-0">
                   {{ getStatusTag(monitor).text }}
                 </v-chip>
+              </div>
+              <div class="d-flex align-center ga-1 flex-wrap mb-1">
+                <v-chip size="x-small" color="grey" variant="tonal">{{ monitor.mode }}</v-chip>
+                <v-chip v-if="monitor.type === 'strm' && monitor.webhook_enabled" size="x-small" color="info" variant="tonal">接受联动</v-chip>
+                <v-chip v-if="monitor.type === 'organize' && monitor.check_emby_exists" size="x-small" color="info" variant="tonal">Emby检查</v-chip>
+                <v-chip v-if="monitor.type === 'organize' && monitor.calculate_hash" size="x-small" color="error" variant="tonal">哈希计算</v-chip>
               </div>
               <div class="d-flex ga-4 mb-1">
                 <span class="text-caption text-medium-emphasis">源目录: <code>{{ monitor.source_dir || '-' }}</code></span>
