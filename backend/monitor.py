@@ -911,6 +911,7 @@ class MonitorManager:
         for task in strm_tasks:
             incremental_enabled = task.get("incremental_enabled", False)
             scheduler_enabled = task.get("scheduler_enabled", False)
+            webhook_enabled = task.get("webhook_enabled", False)
             old_mode = task.get("monitor_mode", "none")
             if old_mode in ["realtime", "polling"]:
                 incremental_enabled = True
@@ -923,19 +924,23 @@ class MonitorManager:
                 modes.append("实时监控")
             if scheduler_enabled:
                 modes.append("定时扫描")
+            if webhook_enabled and not incremental_enabled and not scheduler_enabled:
+                modes.append("Webhook联动")
+            elif webhook_enabled:
+                modes.append("Webhook联动")
             mode_str = " + ".join(modes) if modes else "未启用"
 
             monitors.append({
                 "id": task.get("id"),
                 "name": task.get("name", "未命名"),
                 "type": "strm",
-                "enabled": incremental_enabled or scheduler_enabled,
+                "enabled": incremental_enabled or scheduler_enabled or webhook_enabled,
                 "mode": mode_str,
                 "running": task.get("id") in MonitorManager._queues,
-                "source_dir": source_dir,
+                "source_dir": source_dir or "(Webhook 联动)",
                 "target_dir": task.get("target_dir") or task.get("target_path"),
                 "queue_size": MonitorManager._queues.get(task.get("id"), asyncio.Queue()).qsize() if task.get("id") in MonitorManager._queues else 0,
-                "webhook_enabled": task.get("webhook_enabled", False)
+                "webhook_enabled": webhook_enabled
             })
 
         # 获取规则统计
@@ -1075,11 +1080,18 @@ class MonitorManager:
                 elif old_mode == "scheduled":
                     scheduler_enabled = True
 
-            if not incremental_enabled and not scheduler_enabled:
+            # Webhook 联动也需要队列（仅 STRM 任务）
+            webhook_enabled = task.get("is_strm", False) and task.get("webhook_enabled", False)
+
+            if not incremental_enabled and not scheduler_enabled and not webhook_enabled:
                 continue
             
             source_dir = task.get("source_dir") or task.get("source_path")
-            if not source_dir: continue
+            # Webhook 联动模式可以没有 source_dir（靠 Webhook 推入路径），但实时监控/定时扫描必须有
+            if not source_dir and not webhook_enabled:
+                continue
+            if not source_dir:
+                source_dir = "(Webhook 联动)"
 
             # 初始化/复用 Worker 队列 (防止 reload 时冲掉旧任务)
             task_id = task.get("id")
