@@ -213,21 +213,99 @@
 }
 
 .queue-scroll {
-  max-height: 60vh;
+  max-height: 65vh;
   overflow-y: auto;
 }
 
-.queue-item {
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+/* ---- 队列进度条 ---- */
+.queue-bar-wrapper {
+  width: 100%;
+  height: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-.queue-item:last-child {
+.queue-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgb(var(--v-theme-warning)), rgb(var(--v-theme-warning), 0.5));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ---- 队列项行 ---- */
+.queue-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  transition: background 0.2s;
+}
+
+.queue-item-row:hover {
+  background: rgba(var(--v-theme-primary), 0.04);
+}
+
+.queue-item-row:last-child {
   border-bottom: none;
 }
 
-.queue-item-index {
-  min-width: 32px;
-  text-align: right;
+.queue-item-badge {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+.queue-item-badge--active {
+  background: rgba(var(--v-theme-primary), 0.15);
+  color: rgb(var(--v-theme-primary));
+  animation: queue-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes queue-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--v-theme-primary), 0.3); }
+  50% { box-shadow: 0 0 0 4px rgba(var(--v-theme-primary), 0); }
+}
+
+.queue-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-item-filename {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-dirpath {
+  font-size: 11px;
+  color: rgba(var(--v-theme-on-surface), 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: monospace;
+}
+
+.queue-item-status {
+  flex-shrink: 0;
+}
+
+.queue-item-status-icon {
+  flex-shrink: 0;
+  opacity: 0.4;
 }
 
 
