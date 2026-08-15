@@ -393,7 +393,22 @@ class NotificationRenderer:
     def _render_library_deleted(self, n: "Notification") -> str:
         d = n.data
         files = d.get("files", [])
-        msg = "Emby深度删除\n\n"
+        is_aggregated = d.get("is_aggregated", False)
+        total_count = d.get("total_count", len(files))
+        total_chunks = d.get("total_chunks", 1)
+        chunk_index = d.get("chunk_index", 1)
+
+        # 聚合模式：显示汇总信息
+        if is_aggregated:
+            header = f"🧹 <b>Emby 深度删除</b>\n"
+            if total_chunks > 1:
+                header += f"📊 共 {total_count} 个文件（第 {chunk_index}/{total_chunks} 批）\n\n"
+            else:
+                header += f"📊 共 {total_count} 个文件\n\n"
+        else:
+            header = "Emby深度删除\n\n"
+
+        msg = header
         for filename in files:
             msg += f"{filename}\n"
         msg += "\n─── 来自 Emby Webhook ───"

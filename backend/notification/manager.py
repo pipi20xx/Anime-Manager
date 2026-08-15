@@ -12,6 +12,7 @@
     await notification_manager.notify_sub_added(sub)
     ...
 """
+import asyncio
 import logging
 import os
 import re
@@ -25,6 +26,14 @@ from .renderer import NotificationRenderer, renderer as _shared_renderer
 from .notifier import TelegramNotifier
 
 logger = logging.getLogger("Notification")
+
+# ── Emby 深度删除通知聚合配置 ──
+# 聚合窗口（秒）：在此时间内收到的多条删除通知将被合并为一条发送
+EMBY_DELETE_AGGREGATE_WINDOW = 30
+# 单条消息最大文件数，超过则分多条发送（Telegram 消息长度限制 4096 字符）
+EMBY_DELETE_MAX_FILES_PER_MSG = 80
+# 缓冲区达到此阈值时立即发送，不再等待聚合窗口超时
+EMBY_DELETE_FLUSH_THRESHOLD = 80
 
 
 def _get_val(obj: Any, key: str, default: Any = None) -> Any:
@@ -47,6 +56,14 @@ class NotificationManager:
     # 可选：通过 init() 预置的常驻 notifier；默认 None，每次按配置动态构建，
     # 以保留「改配置即时生效」的行为。
     _notifier: Optional[TelegramNotifier] = None
+
+    # ── Emby 深度删除通知聚合状态 ──
+    # 累积的文件名缓冲区
+    _delete_buffer: List[str] = []
+    # 延迟刷新任务
+    _delete_flush_task: Optional[asyncio.Task] = None
+    # 用于保护缓冲区的异步锁
+    _delete_lock: asyncio.Lock = asyncio.Lock()
 
     # ════════════════════════════════════════════════════════
     # 初始化与底层构建
@@ -539,11 +556,85 @@ class NotificationManager:
         ))
 
     async def notify_emby_deleted(self, payload: Any) -> None:
-        """Emby 删除事件通知。"""
+        """Emby 删除事件通知（聚合发送版）。
+
+        将 30 秒内收到的多条删除通知合并为一条发送，
+        减少对 Telegram Bot API 的请求次数，避免消息刷屏。
+        缓冲区达到阈值时立即发送，不继续等待。
+        """
         if not self._tg_conf().get("enabled"):
             return
 
-        file_list = []
+        file_list = self._extract_deleted_files(payload)
+        if not file_list:
+            return
+
+        async with self._delete_lock:
+            self._delete_buffer.extend(file_list)
+            buf_len = len(self._delete_buffer)
+
+            # 缓冲区达到阈值 → 立即发送当前批次
+            if buf_len >= EMBY_DELETE_FLUSH_THRESHOLD:
+                # 取消正在等待的定时任务
+                if self._delete_flush_task is not None and not self._delete_flush_task.done():
+                    self._delete_flush_task.cancel()
+                    try:
+                        await self._delete_flush_task
+                    except asyncio.CancelledError:
+                        pass
+                # 立即刷出缓冲区
+                await self._flush_deleted_buffer()
+            else:
+                # 未达阈值：取消旧定时任务，重新计时 30 秒
+                if self._delete_flush_task is not None and not self._delete_flush_task.done():
+                    self._delete_flush_task.cancel()
+                    try:
+                        await self._delete_flush_task
+                    except asyncio.CancelledError:
+                        pass
+                # 启动新的延迟刷新任务
+                self._delete_flush_task = asyncio.create_task(self._delayed_flush_deleted())
+
+    async def _flush_deleted_buffer(self) -> None:
+        """将缓冲区中的文件列表合并发送，并清空缓冲区。
+
+        调用方须已持有 ``_delete_lock``。
+        """
+        if not self._delete_buffer:
+            return
+
+        # 去重并保持顺序
+        seen = set()
+        unique_files: List[str] = []
+        for f in self._delete_buffer:
+            if f not in seen:
+                seen.add(f)
+                unique_files.append(f)
+
+        total_count = len(unique_files)
+        self._delete_buffer.clear()
+        self._delete_flush_task = None
+
+        # 分批发送（防止单条消息过长）
+        for offset in range(0, total_count, EMBY_DELETE_MAX_FILES_PER_MSG):
+            chunk = unique_files[offset:offset + EMBY_DELETE_MAX_FILES_PER_MSG]
+            is_last_chunk = offset + EMBY_DELETE_MAX_FILES_PER_MSG >= total_count
+            await self.send(Notification(
+                event_type=NotificationEvent.LIBRARY_DELETED,
+                data={
+                    "files": chunk,
+                    "total_count": total_count,
+                    "chunk_index": offset // EMBY_DELETE_MAX_FILES_PER_MSG + 1,
+                    "total_chunks": (total_count + EMBY_DELETE_MAX_FILES_PER_MSG - 1) // EMBY_DELETE_MAX_FILES_PER_MSG,
+                    "is_aggregated": True,
+                    "is_last_chunk": is_last_chunk,
+                },
+            ))
+
+    @staticmethod
+    def _extract_deleted_files(payload: Any) -> List[str]:
+        """从 Emby Webhook payload 中提取被删除的文件名列表。"""
+        file_list: List[str] = []
         if isinstance(payload, dict) and payload.get("Event") == "deep.delete":
             description = payload.get("Description", "")
             if "Mount Paths:" in description:
@@ -561,14 +652,18 @@ class NotificationManager:
                     source_file = it.get("source_file", "")
                     if source_file:
                         file_list.append(os.path.basename(source_file))
+        return file_list
 
-        if not file_list:
+    async def _delayed_flush_deleted(self) -> None:
+        """等待聚合窗口超时后，将缓冲区中的文件列表合并发送。"""
+        try:
+            await asyncio.sleep(EMBY_DELETE_AGGREGATE_WINDOW)
+        except asyncio.CancelledError:
+            # 被新事件取消，不发送，等待下一次窗口
             return
 
-        await self.send(Notification(
-            event_type=NotificationEvent.LIBRARY_DELETED,
-            data={"files": file_list},
-        ))
+        async with self._delete_lock:
+            await self._flush_deleted_buffer()
 
     # ── 客户端错误 ──
 

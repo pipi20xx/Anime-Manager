@@ -70,9 +70,10 @@
 > ─── 来自 Emby Webhook ───
 > ```
 >
-> 深度删除通知：
+> 深度删除通知（30秒窗口内聚合发送）：
 > ```
-> Emby深度删除
+> 🧹 Emby 深度删除
+> 📊 共 3 个文件
 >
 > S01E02 - Kamen.Rider.ZEZTZ.S01E02.2025.1080p.Baha.WEB-DL.H.264.AAC-FROGWeb.mkv
 > S01E03 - Kamen.Rider.ZEZTZ.S01E03.2025.1080p.Baha.WEB-DL.H.264.AAC-FROGWeb.mkv
@@ -80,6 +81,7 @@
 >
 > ─── 来自 Emby Webhook ───
 > ```
+> 多条删除通知在 30 秒内会自动合并为一条发送，减少消息刷屏。
 
 ---
 
