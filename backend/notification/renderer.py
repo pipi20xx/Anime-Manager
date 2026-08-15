@@ -328,6 +328,60 @@ class NotificationRenderer:
 
     def _render_organize_complete(self, n: "Notification") -> str:
         d = n.data
+        is_aggregated = d.get("is_aggregated", False)
+
+        if is_aggregated:
+            return self._render_organize_aggregated(d)
+        return self._render_organize_single(d)
+
+    def _render_organize_aggregated(self, d: dict) -> str:
+        """聚合模式：同番剧多集入库合并显示。"""
+        tmdb_title = d.get("title", "Unknown")
+        year = d.get("year", "")
+        season = d.get("season", 1)
+        category = d.get("category", "未知")
+        tmdb_id = d.get("tmdb_id")
+        origin_country = d.get("origin_country", "") or "未知"
+        resolution = d.get("resolution", "") or "未知"
+        source = d.get("source", "") or "未知"
+        platform = d.get("platform", "") or "未知"
+        team = d.get("team", "") or "未知"
+        episodes = d.get("episodes", [])
+
+        # 构造集数范围
+        s_str = f"S{season:02d}" if isinstance(season, int) else f"S{season}"
+        ep_nums = sorted([e.get("episode", 0) for e in episodes])
+        if len(ep_nums) == 1:
+            ep_range = f"E{ep_nums[0]:02d}"
+        else:
+            ep_range = f"E{ep_nums[0]:02d}-E{ep_nums[-1]:02d}"
+
+        lines = [
+            f"🎬 <b>{tmdb_title} ({year}) {s_str}{ep_range} 已入库</b>\n"
+            f"📚 <b>类型：</b>{category}\n"
+            f"🆔 <b>影号：</b>{tmdb_id}\n"
+            f"🌍 <b>产地：</b>{origin_country}\n"
+            f"📊 <b>质量：</b>{resolution}\n"
+            f"💿 <b>介质：</b>{source}\n"
+            f"📡 <b>平台：</b>{platform}\n"
+            f"👥 <b>组名：</b>{team}\n"
+            f"📦 <b>入库：</b>{len(episodes)} 集\n"
+            f"──────────────────"
+        ]
+
+        # 逐集展示文件信息
+        for ep in episodes:
+            ep_num = ep.get("episode", 0)
+            ep_str = f"E{ep_num:02d}" if isinstance(ep_num, int) else f"E{ep_num}"
+            file_size = ep.get("file_size", "未知")
+            file_name = ep.get("filename", "")
+            lines.append(f"\n🔢 <b>{ep_str}</b> 💾 {file_size}")
+            lines.append(f"📄 <code>{file_name}</code>")
+
+        return "\n".join(lines)
+
+    def _render_organize_single(self, d: dict) -> str:
+        """单集入库显示（兼容旧格式）。"""
         tmdb_title = d.get("title", "Unknown")
         year = d.get("year", "")
         season = d.get("season", 1)

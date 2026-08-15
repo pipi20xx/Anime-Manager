@@ -35,6 +35,12 @@ EMBY_DELETE_MAX_FILES_PER_MSG = 80
 # 缓冲区达到此阈值时立即发送，不再等待聚合窗口超时
 EMBY_DELETE_FLUSH_THRESHOLD = 80
 
+# ── 整理入库通知聚合配置 ──
+# 聚合窗口（秒）：在此时间内收到的多条入库通知按番剧分组合并发送
+ORGANIZE_AGGREGATE_WINDOW = 30
+# 缓冲区达到此文件数时立即发送，不再等待聚合窗口超时
+ORGANIZE_FLUSH_THRESHOLD = 20
+
 
 def _get_val(obj: Any, key: str, default: Any = None) -> Any:
     """从 dict 或对象上取值，兼容两种数据形态。"""
@@ -64,6 +70,14 @@ class NotificationManager:
     _delete_flush_task: Optional[asyncio.Task] = None
     # 用于保护缓冲区的异步锁
     _delete_lock: asyncio.Lock = asyncio.Lock()
+
+    # ── 整理入库通知聚合状态 ──
+    # 按番剧分组的缓冲区: {group_key: {info, episodes: [final_res, ...]}}
+    _organize_buffer: Dict[str, Dict] = {}
+    # 延迟刷新任务
+    _organize_flush_task: Optional[asyncio.Task] = None
+    # 用于保护缓冲区的异步锁
+    _organize_lock: asyncio.Lock = asyncio.Lock()
 
     # ════════════════════════════════════════════════════════
     # 初始化与底层构建
@@ -392,32 +406,108 @@ class NotificationManager:
     # ── 整理 ──
 
     async def notify_organize_complete(self, final_res: dict) -> None:
-        """整理完成通知（全能美化版）。"""
+        """整理完成通知（聚合版）。
+
+        将 30 秒内收到的多条入库通知按番剧分组合并发送。
+        同一番剧的多集入库合并为一条消息，展示集数范围和文件列表。
+        缓冲区达到阈值时立即发送，不继续等待。
+        """
         if not self._tg_conf().get("notify_on_organize", True):
             return
 
-        photo_url = self.get_image_url(final_res.get("poster_path"))
+        async with self._organize_lock:
+            # 按番剧分组：以 tmdb_id + season 为 key
+            tmdb_id = final_res.get("tmdb_id") or final_res.get("title", "")
+            season = final_res.get("season", 1)
+            group_key = f"{tmdb_id}|S{season}"
 
-        await self.send(Notification(
-            event_type=NotificationEvent.ORGANIZE_COMPLETE,
-            data={
-                "title": final_res.get("title", "Unknown"),
-                "year": final_res.get("year", ""),
-                "season": final_res.get("season", 1),
+            group = self._organize_buffer.get(group_key)
+            if group is None:
+                # 首次出现：提取该番剧的公共信息
+                photo_url = self.get_image_url(final_res.get("poster_path"))
+                group = {
+                    "info": {
+                        "title": final_res.get("title", "Unknown"),
+                        "year": final_res.get("year", ""),
+                        "season": season,
+                        "tmdb_id": final_res.get("tmdb_id"),
+                        "category": final_res.get("category", "未知"),
+                        "origin_country": final_res.get("origin_country", ""),
+                        "resolution": final_res.get("resolution", ""),
+                        "source": final_res.get("source", ""),
+                        "platform": final_res.get("platform", ""),
+                        "team": final_res.get("team", ""),
+                    },
+                    "episodes": [],
+                    "photo_url": photo_url,
+                }
+                self._organize_buffer[group_key] = group
+
+            group["episodes"].append({
                 "episode": final_res.get("episode", 1),
-                "tmdb_id": final_res.get("tmdb_id"),
-                "category": final_res.get("category", "未知"),
-                "origin_country": final_res.get("origin_country", ""),
-                "resolution": final_res.get("resolution", ""),
-                "source": final_res.get("source", ""),
-                "platform": final_res.get("platform", ""),
-                "team": final_res.get("team", ""),
                 "file_size": final_res.get("file_size", "未知"),
                 "duration": final_res.get("duration", "未知"),
                 "filename": final_res.get("filename", "Unknown"),
-            },
-            image_url=photo_url,
-        ))
+            })
+
+            buf_count = sum(len(g["episodes"]) for g in self._organize_buffer.values())
+
+            # 缓冲区达到阈值 → 立即发送
+            if buf_count >= ORGANIZE_FLUSH_THRESHOLD:
+                if self._organize_flush_task is not None and not self._organize_flush_task.done():
+                    self._organize_flush_task.cancel()
+                    try:
+                        await self._organize_flush_task
+                    except asyncio.CancelledError:
+                        pass
+                await self._flush_organize_buffer()
+            else:
+                # 未达阈值：重置 30 秒计时
+                if self._organize_flush_task is not None and not self._organize_flush_task.done():
+                    self._organize_flush_task.cancel()
+                    try:
+                        await self._organize_flush_task
+                    except asyncio.CancelledError:
+                        pass
+                self._organize_flush_task = asyncio.create_task(self._delayed_flush_organize())
+
+    async def _flush_organize_buffer(self) -> None:
+        """将缓冲区中按番剧分组的入库通知发送，并清空缓冲区。
+
+        调用方须已持有 ``_organize_lock``。
+        """
+        if not self._organize_buffer:
+            return
+
+        groups = list(self._organize_buffer.values())
+        self._organize_buffer.clear()
+        self._organize_flush_task = None
+
+        for group in groups:
+            info = group["info"]
+            episodes = group["episodes"]
+            photo_url = group.get("photo_url")
+
+            await self.send(Notification(
+                event_type=NotificationEvent.ORGANIZE_COMPLETE,
+                data={
+                    **info,
+                    "episodes": episodes,
+                    "is_aggregated": True,
+                    "episode_count": len(episodes),
+                },
+                image_url=photo_url,
+            ))
+
+    async def _delayed_flush_organize(self) -> None:
+        """等待聚合窗口超时后发送缓冲区内容。"""
+        try:
+            await asyncio.sleep(ORGANIZE_AGGREGATE_WINDOW)
+        except asyncio.CancelledError:
+            return
+
+        async with self._organize_lock:
+            await self._flush_organize_buffer()
 
     async def notify_organize_failed(self, file_path: str, error_message: str) -> None:
         """整理执行异常通知。"""
