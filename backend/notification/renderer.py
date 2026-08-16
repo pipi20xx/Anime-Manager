@@ -348,20 +348,28 @@ class NotificationRenderer:
         team = d.get("team", "") or "未知"
         episodes = d.get("episodes", [])
 
-        # 构造集数范围
+        # 构造集数信息
         s_str = f"S{season:02d}" if isinstance(season, int) else f"S{season}"
         # [Fix] 集数可能是字符串 (如空串""或合集"1-12")，排序和格式化前需统一为 int
         def _safe_ep_num(val):
-            try: return int(val) if val is not None else 0
-            except (ValueError, TypeError): return 0
+            try:
+                return int(val) if val is not None else 0
+            except (ValueError, TypeError):
+                return 0
         ep_nums = sorted([_safe_ep_num(e.get("episode", 0)) for e in episodes])
+
+        # 判断是否连续：连续用 E01-E05 格式，不连续用 E01, E03, E05 格式
         if len(ep_nums) == 1:
-            ep_range = f"E{ep_nums[0]:02d}"
+            ep_display = f"E{ep_nums[0]:02d}"
+        elif len(ep_nums) == ep_nums[-1] - ep_nums[0] + 1:
+            # 连续
+            ep_display = f"E{ep_nums[0]:02d}-E{ep_nums[-1]:02d}"
         else:
-            ep_range = f"E{ep_nums[0]:02d}-E{ep_nums[-1]:02d}"
+            # 不连续：逐个列出
+            ep_display = ", ".join(f"E{n:02d}" for n in ep_nums)
 
         lines = [
-            f"🎬 <b>{tmdb_title} ({year}) {s_str}{ep_range} 已入库</b>\n"
+            f"🎬 <b>{tmdb_title} ({year}) {s_str}{ep_display} 已入库</b>\n"
             f"📚 <b>类型：</b>{category}\n"
             f"🆔 <b>影号：</b>{tmdb_id}\n"
             f"🌍 <b>产地：</b>{origin_country}\n"
@@ -373,10 +381,11 @@ class NotificationRenderer:
             f"──────────────────"
         ]
 
-        # 逐集展示文件信息
-        for ep in episodes:
-            ep_num = ep.get("episode", 0)
-            ep_str = f"E{ep_num:02d}" if isinstance(ep_num, int) else f"E{ep_num}"
+        # 逐集展示文件信息（按集数排序）
+        sorted_eps = sorted(episodes, key=lambda e: _safe_ep_num(e.get("episode", 0)))
+        for ep in sorted_eps:
+            ep_num = _safe_ep_num(ep.get("episode", 0))
+            ep_str = f"E{ep_num:02d}"
             file_size = ep.get("file_size", "未知")
             file_name = ep.get("filename", "")
             lines.append(f"\n🔢 <b>{ep_str}</b> 💾 {file_size}")
@@ -385,7 +394,7 @@ class NotificationRenderer:
         return "\n".join(lines)
 
     def _render_organize_single(self, d: dict) -> str:
-        """单集入库显示（兼容旧格式）。"""
+        """单集入库显示（电影 / 兼容旧格式）。"""
         tmdb_title = d.get("title", "Unknown")
         year = d.get("year", "")
         season = d.get("season", 1)
@@ -401,10 +410,19 @@ class NotificationRenderer:
         duration = d.get("duration", "未知")
         file_name = d.get("filename", "Unknown")
 
-        se_info = self._se_info(season, episode, category)
+        # 电影不显示 S/EXX
+        is_movie = category in ("电影", "movie")
+        if is_movie:
+            se_info = ""
+        else:
+            se_info = self._se_info(season, episode, category)
+
+        title_line = f"🎬 <b>{tmdb_title} ({year}) {se_info} 已入库</b>"
+        # 去除 se_info 为空时多余的空格
+        title_line = " ".join(title_line.split())
 
         return (
-            f"🎬 <b>{tmdb_title} ({year}) {se_info} 已入库</b>\n"
+            f"{title_line}\n"
             f"📚 <b>类型：</b>{category}\n"
             f"🆔 <b>影号：</b>{tmdb_id}\n"
             f"🌍 <b>产地：</b>{origin_country}\n"

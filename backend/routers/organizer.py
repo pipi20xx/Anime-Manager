@@ -15,6 +15,7 @@ from organizer_core.renamer import Renamer
 from organizer_core.organizer import Organizer
 from config_manager import ConfigManager
 from task_history import start_task, log_task, finish_task
+from notification import notification_manager
 
 router = APIRouter(tags=["整理重命名"])
 
@@ -215,6 +216,12 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
         if errors > 0: final_summary += f" | 失败 {errors}"
         await log_task(task_id, final_summary)
         
+        # 整理任务结束：主动 flush 入库通知缓冲区，确保最后的批次立即发送
+        try:
+            await notification_manager.flush_organize_buffer()
+        except Exception as e:
+            logger.warning(f"flush_organize_buffer 异常: {e}")
+        
         if task_id in Organizer._STOPPED_TASKS:
             Organizer._STOPPED_TASKS.discard(task_id)
             _background_tasks[task_id]["status"] = "stopped"
@@ -243,6 +250,12 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             _background_tasks[task_id]["finished_at"] = datetime.now().isoformat()
         await finish_task(task_id, "error", processed)
         logger.error(f"✨ [整理] 后台异常: {str(e)}")
+        
+        # 异常结束时也 flush 缓冲区
+        try:
+            await notification_manager.flush_organize_buffer()
+        except Exception:
+            pass
         
         # 推送事件：后台任务列表变更
         try:

@@ -37,7 +37,7 @@ EMBY_DELETE_FLUSH_THRESHOLD = 80
 
 # ── 整理入库通知聚合配置 ──
 # 聚合窗口（秒）：在此时间内收到的多条入库通知按番剧分组合并发送
-ORGANIZE_AGGREGATE_WINDOW = 30
+ORGANIZE_AGGREGATE_WINDOW = 60
 # 缓冲区达到此文件数时立即发送，不再等待聚合窗口超时
 ORGANIZE_FLUSH_THRESHOLD = 20
 
@@ -408,11 +408,18 @@ class NotificationManager:
     async def notify_organize_complete(self, final_res: dict) -> None:
         """整理完成通知（聚合版）。
 
-        将 30 秒内收到的多条入库通知按番剧分组合并发送。
+        将 60 秒内收到的多条入库通知按番剧分组合并发送。
         同一番剧的多集入库合并为一条消息，展示集数范围和文件列表。
+        电影不走聚合，直接独立发送。
         缓冲区达到阈值时立即发送，不继续等待。
         """
         if not self._tg_conf().get("notify_on_organize", True):
+            return
+
+        # 电影类型不聚合，直接独立发送
+        category = final_res.get("category", "")
+        if category in ("电影", "movie"):
+            await self._send_organize_single(final_res)
             return
 
         async with self._organize_lock:
@@ -462,7 +469,7 @@ class NotificationManager:
                         pass
                 await self._flush_organize_buffer()
             else:
-                # 未达阈值：重置 30 秒计时
+                # 未达阈值：重置倒计时
                 if self._organize_flush_task is not None and not self._organize_flush_task.done():
                     self._organize_flush_task.cancel()
                     try:
@@ -470,6 +477,30 @@ class NotificationManager:
                     except asyncio.CancelledError:
                         pass
                 self._organize_flush_task = asyncio.create_task(self._delayed_flush_organize())
+
+    async def _send_organize_single(self, final_res: dict) -> None:
+        """直接发送单条入库通知（电影等不聚合的类型）。"""
+        photo_url = self.get_image_url(final_res.get("poster_path"))
+        await self.send(Notification(
+            event_type=NotificationEvent.ORGANIZE_COMPLETE,
+            data={
+                "title": final_res.get("title", "Unknown"),
+                "year": final_res.get("year", ""),
+                "season": final_res.get("season", 1),
+                "episode": final_res.get("episode", 1),
+                "tmdb_id": final_res.get("tmdb_id"),
+                "category": final_res.get("category", "未知"),
+                "origin_country": final_res.get("origin_country", ""),
+                "resolution": final_res.get("resolution", ""),
+                "source": final_res.get("source", ""),
+                "platform": final_res.get("platform", ""),
+                "team": final_res.get("team", ""),
+                "file_size": final_res.get("file_size", "未知"),
+                "duration": final_res.get("duration", "未知"),
+                "filename": final_res.get("filename", "Unknown"),
+            },
+            image_url=photo_url,
+        ))
 
     async def _flush_organize_buffer(self) -> None:
         """将缓冲区中按番剧分组的入库通知发送，并清空缓冲区。
@@ -507,6 +538,20 @@ class NotificationManager:
             return
 
         async with self._organize_lock:
+            await self._flush_organize_buffer()
+
+    async def flush_organize_buffer(self) -> None:
+        """公开方法：立即发送缓冲区中的入库通知。
+
+        供整理任务结束时主动调用，确保不漏掉最后的批次。
+        """
+        async with self._organize_lock:
+            if self._organize_flush_task is not None and not self._organize_flush_task.done():
+                self._organize_flush_task.cancel()
+                try:
+                    await self._organize_flush_task
+                except asyncio.CancelledError:
+                    pass
             await self._flush_organize_buffer()
 
     async def notify_organize_failed(self, file_path: str, error_message: str) -> None:
