@@ -204,7 +204,7 @@ class NotificationRenderer:
         title = d.get("title", "")
         season = d.get("season", 1)
         media_type = d.get("media_type", "tv")
-        s_info = f" (S{season:02d})" if media_type == "tv" else ""
+        s_info = f" (S{season:02d})" if media_type == "tv" and isinstance(season, int) else (f" (S{season})" if media_type == "tv" and season else "")
         return (
             f"🎊 <b>订阅作品已完结</b>\n\n"
             f"🎬 <b>名称：</b>{title}{s_info}\n"
@@ -350,7 +350,11 @@ class NotificationRenderer:
 
         # 构造集数范围
         s_str = f"S{season:02d}" if isinstance(season, int) else f"S{season}"
-        ep_nums = sorted([e.get("episode", 0) for e in episodes])
+        # [Fix] 集数可能是字符串 (如空串""或合集"1-12")，排序和格式化前需统一为 int
+        def _safe_ep_num(val):
+            try: return int(val) if val is not None else 0
+            except (ValueError, TypeError): return 0
+        ep_nums = sorted([_safe_ep_num(e.get("episode", 0)) for e in episodes])
         if len(ep_nums) == 1:
             ep_range = f"E{ep_nums[0]:02d}"
         else:

@@ -175,8 +175,8 @@ class SubscriptionNotifier:
             
             if sent:
                 ep_num = ep_info.get("episode")
-                season_str = f"S{sub.season:02d}" if sub.season else ""
-                ep_str = f"E{ep_num:02d}"
+                season_str = f"S{sub.season:02d}" if isinstance(sub.season, int) and sub.season else ""
+                ep_str = f"E{ep_num:02d}" if isinstance(ep_num, int) else f"E{ep_num}"
                 log_audit("订阅提醒", "通知发送", f"{sub.title} {season_str}{ep_str}")
             
             return sent

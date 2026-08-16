@@ -562,7 +562,10 @@ class NotificationManager:
             s_num = item.get("ParentIndexNumber")
             e_num = item.get("IndexNumber")
             if s_num is not None and e_num is not None:
-                se_info = f"S{s_num:02d} E{e_num:02d}"
+                # [Fix] 防御: Emby 返回值可能是字符串，:02d 格式化需要 int
+                try: s_num, e_num = int(s_num), int(e_num)
+                except (ValueError, TypeError): pass
+                se_info = f"S{s_num:02d} E{e_num:02d}" if isinstance(s_num, int) and isinstance(e_num, int) else f"S{s_num} E{e_num}"
                 if episode_name:
                     se_info += f" {episode_name}"
 
@@ -834,7 +837,8 @@ class NotificationManager:
                         ep_info = f" - 第 {ep_num} 集{finale_tag}"
                         break
                 char = "└──" if i == len(subjects) - 1 else "├──"
-                lines.append(f"{char} <b>{title}</b> (S{season:02d}){ep_info}")
+                season_tag = f" (S{season:02d})" if isinstance(season, int) and season else (f" (S{season})" if season else "")
+                lines.append(f"{char} <b>{title}</b>{season_tag}{ep_info}")
 
         photo_url = None
         if len(subjects) == 1 and subjects[0].get("poster_path"):
@@ -883,7 +887,7 @@ class NotificationManager:
         air_date = ep_info.get("air_date", "")
 
         season = _get_val(sub, "season")
-        season_str = f"S{season:02d}" if season else ""
+        season_str = f"S{season:02d}" if isinstance(season, int) and season else ""
         ep_str = f"E{ep_num:02d}" if isinstance(ep_num, int) else f"E{ep_num}"
 
         photo_url = self.get_image_url(_get_val(sub, "poster_path"))
