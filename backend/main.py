@@ -111,10 +111,6 @@ async def api_audit_middleware(request: Request, call_next):
         return await call_next(request)
 
     config = ConfigManager.get_config()
-    
-    if not config.get("enable_api", True):
-        from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=403, content={"detail": "API access is disabled in settings."})
 
     expected_api_token = config.get("external_token")
     

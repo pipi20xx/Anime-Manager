@@ -29,7 +29,6 @@ const currentLogDetail = ref('')
 // 配置状态
 const config = ref<any>({
   external_token: '',
-  enable_api: true,
   api_logging: true,
 })
 
@@ -97,7 +96,6 @@ async function fetchConfig() {
     const data = await configApi.getConfig()
     config.value = {
       external_token: data.external_token || '',
-      enable_api: data.enable_api !== undefined ? data.enable_api : true,
       api_logging: data.api_logging !== undefined ? data.api_logging : true,
     }
     if (config.value.external_token) {
@@ -344,24 +342,6 @@ onUnmounted(() => {
             </p>
 
             <v-list class="bg-transparent rounded-lg" border>
-              <v-list-item>
-                <div class="d-flex align-center w-100">
-                  <div class="flex-grow-1">
-                    <div class="text-body-1 font-weight-medium">开放 API 访问</div>
-                    <div class="text-caption text-medium-emphasis">
-                      允许第三方客户端连接。关闭后所有外部 API 将失效。
-                    </div>
-                  </div>
-                  <v-switch
-                    v-model="config.enable_api"
-                    color="primary"
-                    hide-details
-                    density="compact"
-                    @update:model-value="saveConfig"
-                  />
-                </div>
-              </v-list-item>
-              <v-divider />
               <v-list-item>
                 <div class="d-flex align-center w-100">
                   <div class="flex-grow-1">

@@ -96,8 +96,7 @@ class ConfigManager:
         "sub_fill_interval": 12,
         "rule_auto_update": False,
         "rule_update_interval": 24,
-        "external_token": "", 
-        "enable_api": True,
+        "external_token": "",
         "api_logging": True,
         "jwt_never_expire": False, # JWT 令牌永不过期
         "stalled_timeout_minutes": 0, # 死种清理超时阈值（分钟），0为禁用
