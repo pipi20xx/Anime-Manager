@@ -102,7 +102,6 @@ html.glass-theme-liquid .v-theme--light {
 }
 
 html.glass-theme-liquid .v-theme--dark {
-  --v-theme-primary: 125, 122, 255;
   --v-theme-surface: 28, 30, 52;
   --v-theme-surface-light: 28, 30, 52;
   --v-theme-background: 7, 9, 15;

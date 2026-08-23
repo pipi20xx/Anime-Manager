@@ -4,7 +4,7 @@
  * 通过 html.glass-theme-acg 激活。
  * 组件视觉（背景/模糊/边框/阴影/圆角/滚动条等）由
  * tokens.css + visual.css 统一处理，此文件只保留 ACG 专属效果：
- *   - 导航栏暗色圆角项
+ *   - 导航栏圆角项（不分明暗）
  *   - 文字效果（霓虹、渐变）
  *   - 详情页黑色文字 + 白色描边
  *   - 页面标题描边效果
@@ -16,15 +16,16 @@
 
 
 /* ================================================================
- * 1. 导航栏 — 暗色圆角项 + 激活内边框
+ * 1. 导航栏 — 圆角项 + 激活内边框
+ *    结构不分明暗，颜色才分明暗
  * ================================================================ */
 
-html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item {
+html.glass-theme-acg .v-navigation-drawer .v-list-item {
   border-radius: 16px !important;
   transition: all 0.5s ease-out !important;
 }
 
-html.glass-theme-acg .v-theme--dark .v-navigation-drawer .v-list-item--active {
+html.glass-theme-acg .v-navigation-drawer .v-list-item--active {
   box-shadow: inset 0 0 0 1px rgba(66, 165, 245, 0.2) !important;
 }
 
@@ -231,29 +232,33 @@ html.glass-theme-acg .v-theme--light .log-entry--warning {
 
 /* ================================================================
  * 6. Checkbox / Radio 选中发光
+ *    发光效果不分明暗
  * ================================================================ */
 
-html.glass-theme-acg .v-theme--dark .v-checkbox .v-selection-control--dirty .v-icon {
+html.glass-theme-acg .v-checkbox .v-selection-control--dirty .v-icon {
   text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
 }
 
-html.glass-theme-acg .v-theme--dark .v-radio .v-selection-control--dirty .v-icon {
+html.glass-theme-acg .v-radio .v-selection-control--dirty .v-icon {
   text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
 }
 
 
 /* ================================================================
  * 7. 登录页按钮渐变
+ *    渐变颜色分明暗，结构不变
  * ================================================================ */
+
+html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
+  color: #fff !important;
+}
 
 html.glass-theme-acg .v-theme--light .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
   background: linear-gradient(135deg, rgba(25, 118, 210, 0.85), rgba(66, 165, 245, 0.75)) !important;
-  color: #fff !important;
 }
 
 html.glass-theme-acg .v-theme--dark .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
   background: linear-gradient(135deg, rgba(66, 165, 245, 0.6), rgba(78, 205, 196, 0.35)) !important;
-  color: #fff !important;
 }
 
 

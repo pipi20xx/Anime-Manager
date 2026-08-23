@@ -33,6 +33,8 @@ const lightTheme = {
 }
 
 // 暗色主题 — 经典实色（纯黑底）
+// 规则：强调色（primary/secondary/accent/error/info/success/warning）
+//       与 light 完全一致，只改 background/surface 明暗值
 const darkTheme = {
   dark: true,
   colors: {
@@ -42,13 +44,13 @@ const darkTheme = {
     'on-surface-variant': '#BFC2CE',
     primary: '#a855f7',
     'primary-darken-1': '#9333EA',
-    secondary: '#9ca3af',
-    'secondary-darken-1': '#6b7280',
+    secondary: '#6b7280',
+    'secondary-darken-1': '#4b5563',
     accent: '#4ecdc4',
-    error: '#ff6b6b',
-    info: '#4ecdc4',
-    success: '#4caf50',
-    warning: '#FFB74D',
+    error: '#ef4444',
+    info: '#1565C0',
+    success: '#1B8134',
+    warning: '#E65100',
   },
 }
 
