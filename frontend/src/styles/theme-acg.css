@@ -288,6 +288,37 @@ html.glass-theme-acg .v-system-bar {
   -webkit-backdrop-filter: var(--am-nav-blur) !important;
 }
 
+/* App Bar 内 text variant 按钮图标 — 暗色壁纸上提亮 */
+html.glass-theme-acg .v-app-bar .v-btn--variant-text .v-icon {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-primary .v-icon,
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-info .v-icon,
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-success .v-icon,
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-warning .v-icon,
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-error .v-icon,
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-secondary .v-icon,
+html.glass-theme-acg .v-app-bar .v-btn--variant-text.text-accent .v-icon {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+/* App Bar 标题文字 — 提亮 + 光晕 */
+html.glass-theme-acg .v-app-bar .v-app-bar-title {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.9), 0 0 3px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+/* App Bar 内 outlined chip — 提亮边框和文字 */
+html.glass-theme-acg .v-app-bar .v-chip--variant-outlined {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+html.glass-theme-acg .v-app-bar .v-chip--variant-outlined .v-icon {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+/* App Bar 内禁用态按钮 — 降低不透明度但仍可见 */
+html.glass-theme-acg .v-app-bar .v-btn--disabled .v-icon {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
 
 /* ================================================================
  * 1. 导航栏 — 圆角项 + 选中/未选中背景区分
@@ -774,7 +805,8 @@ html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
   html.glass-theme-acg .v-menu .v-list,
   html.glass-theme-acg .page-title,
   html.glass-theme-acg .page-subtitle,
-  html.glass-theme-acg .section-title {
+  html.glass-theme-acg .section-title,
+  html.glass-theme-acg .v-app-bar .v-app-bar-title {
     text-shadow: none !important;
   }
 }
