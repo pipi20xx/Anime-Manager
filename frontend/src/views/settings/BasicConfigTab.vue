@@ -7,6 +7,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { configApi, systemApi } from '@/api'
 import { useNotification } from '@/composables'
+import { PasswordInput } from '@/components/common'
 
 defineOptions({ name: 'BasicConfigTab' })
 
@@ -159,10 +160,9 @@ onMounted(() => {
       </v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
-        <v-text-field
+        <PasswordInput
           v-model="config.tmdb_api_key"
           label="TMDB API Key"
-          type="password"
           variant="outlined"
           density="compact"
           class="mb-2"
@@ -200,10 +200,9 @@ onMounted(() => {
       </v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
-        <v-text-field
+        <PasswordInput
           v-model="config.bangumi_token"
           label="BGM Token"
-          type="password"
           variant="outlined"
           density="compact"
           hide-details
@@ -235,10 +234,9 @@ onMounted(() => {
         />
         <div class="text-caption text-medium-emphasis mb-3">SYTMDB 服务地址，用于同步修正后的元数据</div>
 
-        <v-text-field
+        <PasswordInput
           v-model="config.sytmdb_token"
           label="API Token"
-          type="password"
           variant="outlined"
           density="compact"
           hide-details
@@ -324,20 +322,18 @@ onMounted(() => {
         />
         <div class="text-caption text-medium-emphasis mb-3">示例: http://192.168.50.12:9117/ (请确保包含端口号)</div>
 
-        <v-text-field
+        <PasswordInput
           v-model="config.jackett_api_key"
           label="API Key"
-          type="password"
           variant="outlined"
           density="compact"
           class="mb-3"
           hide-details
         />
 
-        <v-text-field
+        <PasswordInput
           v-model="config.jackett_password"
           label="管理密码"
-          type="password"
           variant="outlined"
           density="compact"
           hide-details
@@ -365,10 +361,9 @@ onMounted(() => {
         />
         <div class="text-caption text-medium-emphasis mb-3">Emby 服务器地址，包含端口号</div>
 
-        <v-text-field
+        <PasswordInput
           v-model="config.emby_api_key"
           label="API Key"
-          type="password"
           variant="outlined"
           density="compact"
           class="mb-1"
@@ -385,10 +380,9 @@ onMounted(() => {
           hide-details
         />
 
-        <v-text-field
+        <PasswordInput
           v-model="config.emby_password"
           label="密码"
-          type="password"
           variant="outlined"
           density="compact"
           class="mb-3"
@@ -414,10 +408,9 @@ onMounted(() => {
       </v-card-title>
       <v-divider />
       <v-card-text class="pa-4" v-if="(ensureTelegram(), true)">
-        <v-text-field
+        <PasswordInput
           v-model="config.telegram.bot_token"
           label="Bot Token"
-          type="password"
           variant="outlined"
           density="compact"
           class="mb-1"
@@ -427,10 +420,9 @@ onMounted(() => {
           从 @BotFather 获取的 Bot Token，用于发送消息。
         </a>
 
-        <v-text-field
+        <PasswordInput
           v-model="config.telegram.chat_id"
           label="Chat ID"
-          type="password"
           variant="outlined"
           density="compact"
           class="mb-1"

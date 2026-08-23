@@ -7,6 +7,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { PasswordInput } from '@/components/common'
 
 defineOptions({ name: 'ClientManageTab' })
 
@@ -262,21 +263,19 @@ onMounted(() => {
             placeholder="admin"
           />
 
-          <v-text-field
+          <PasswordInput
             v-model="form.password"
             label="密码"
-            type="password"
             variant="outlined"
             density="compact"
             class="mb-3"
             hide-details
           />
 
-          <v-text-field
+          <PasswordInput
             v-if="form.type === 'cd2'"
             v-model="form.api_token"
             label="API Token (选填)"
-            type="password"
             variant="outlined"
             density="compact"
             class="mb-3"

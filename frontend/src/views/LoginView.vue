@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api/auth'
+import { PasswordInput } from '@/components/common'
 import { useSystemStore } from '@/stores'
 import { useNotification } from '@/composables'
 
@@ -61,10 +62,9 @@ async function handleLogin() {
               autocomplete="username"
               class="mb-3"
             />
-            <v-text-field
+            <PasswordInput
               v-model="formValue.password"
               label="密码"
-              type="password"
               prepend-inner-icon="mdi-lock"
               autocomplete="current-password"
               class="mb-4"

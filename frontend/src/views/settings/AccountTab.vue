@@ -8,6 +8,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { authApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { useSystemStore } from '@/stores'
+import { PasswordInput } from '@/components/common'
 
 defineOptions({ name: 'AccountTab' })
 
@@ -221,28 +222,25 @@ onMounted(() => {
           </v-card-title>
           <v-divider />
           <v-card-text class="pa-4">
-            <v-text-field
+            <PasswordInput
               v-model="pwdForm.old_password"
               label="当前密码"
-              type="password"
               variant="outlined"
               density="compact"
               class="mb-3"
               hide-details
             />
-            <v-text-field
+            <PasswordInput
               v-model="pwdForm.new_password"
               label="新密码"
-              type="password"
               variant="outlined"
               density="compact"
               class="mb-3"
               hide-details
             />
-            <v-text-field
+            <PasswordInput
               v-model="confirmPassword"
               label="确认新密码"
-              type="password"
               variant="outlined"
               density="compact"
               class="mb-4"

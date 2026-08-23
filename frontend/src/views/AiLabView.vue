@@ -13,6 +13,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { api, apiFetch } from '@/api'
 import { configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { PasswordInput } from '@/components/common'
 import { marked } from 'marked'
 
 marked.setOptions({ breaks: true, gfm: true })
@@ -858,7 +859,7 @@ onMounted(() => {
             <v-text-field v-model="assistantConfig.base_url" label="API 地址" density="compact" class="mb-1" placeholder="如 http://localhost:11434" hide-details />
             <div class="text-caption text-medium-emphasis mb-3">Ollama 默认 http://localhost:11434，OpenAI 兼容接口填完整 v1 地址</div>
 
-            <v-text-field v-if="assistantConfig.provider === 'openai'" v-model="assistantConfig.api_key" label="API Key" type="password" density="compact" class="mb-3" hide-details />
+            <PasswordInput v-if="assistantConfig.provider === 'openai'" v-model="assistantConfig.api_key" label="API Key" density="compact" class="mb-3" hide-details />
 
             <v-text-field v-model="assistantConfig.model" label="模型名称" density="compact" hide-details placeholder="如 qwen2.5:7b 或 gpt-4o" />
           </v-card-text>

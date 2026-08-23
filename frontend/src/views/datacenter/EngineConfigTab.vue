@@ -7,6 +7,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { dataCenterApi, configApi } from '@/api'
 import { useNotification } from '@/composables'
+import { PasswordInput } from '@/components/common'
 
 const { success, error: showError } = useNotification()
 
@@ -64,7 +65,7 @@ onMounted(() => {
     </v-row>
     <v-row dense>
       <v-col cols="12" sm="6"><v-text-field v-model="dbConfig.user" label="用户名" variant="outlined" density="compact" class="mb-3" /></v-col>
-      <v-col cols="12" sm="6"><v-text-field v-model="dbConfig.password" label="密码" type="password" variant="outlined" density="compact" class="mb-3" /></v-col>
+      <v-col cols="12" sm="6"><PasswordInput v-model="dbConfig.password" label="密码" variant="outlined" density="compact" class="mb-3" /></v-col>
     </v-row>
     <v-text-field v-model="dbConfig.database" label="数据库名" variant="outlined" density="compact" class="mb-3" />
 
