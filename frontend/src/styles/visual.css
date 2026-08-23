@@ -398,7 +398,8 @@
   box-shadow: var(--am-btn-hover-shadow) !important;
 }
 
-.v-btn--variant-tonal {
+/* tonal 无 color — 用主题中性背景 */
+.v-btn--variant-tonal:not(.text-primary):not(.v-btn--bg-primary):not(.text-info):not(.v-btn--bg-info):not(.text-success):not(.v-btn--bg-success):not(.text-warning):not(.v-btn--bg-warning):not(.text-error):not(.v-btn--bg-error):not(.text-secondary):not(.v-btn--bg-secondary):not(.text-accent):not(.v-btn--bg-accent) {
   background: var(--am-btn-bg) !important;
   backdrop-filter: var(--am-btn-blur) !important;
   -webkit-backdrop-filter: var(--am-btn-blur) !important;
@@ -408,9 +409,57 @@
   transition: var(--am-transition) !important;
 }
 
-.v-btn--variant-tonal:hover {
+/* tonal 有 color — 只保留结构性样式，让 Vuetify 根据 color 计算 tonal 背景色 */
+.v-btn--variant-tonal.text-primary,
+.v-btn--variant-tonal.v-btn--bg-primary,
+.v-btn--variant-tonal.text-info,
+.v-btn--variant-tonal.v-btn--bg-info,
+.v-btn--variant-tonal.text-success,
+.v-btn--variant-tonal.v-btn--bg-success,
+.v-btn--variant-tonal.text-warning,
+.v-btn--variant-tonal.v-btn--bg-warning,
+.v-btn--variant-tonal.text-error,
+.v-btn--variant-tonal.v-btn--bg-error,
+.v-btn--variant-tonal.text-secondary,
+.v-btn--variant-tonal.v-btn--bg-secondary,
+.v-btn--variant-tonal.text-accent,
+.v-btn--variant-tonal.v-btn--bg-accent {
+  backdrop-filter: var(--am-btn-blur) !important;
+  -webkit-backdrop-filter: var(--am-btn-blur) !important;
+  border: var(--am-btn-border) !important;
+  border-radius: var(--am-btn-radius) !important;
+  font-weight: 500;
+  transition: var(--am-transition) !important;
+}
+
+/* tonal 无 color — hover 用主题背景 */
+.v-btn--variant-tonal:not(.text-primary):not(.v-btn--bg-primary):not(.text-info):not(.v-btn--bg-info):not(.text-success):not(.v-btn--bg-success):not(.text-warning):not(.v-btn--bg-warning):not(.text-error):not(.v-btn--bg-error):not(.text-secondary):not(.v-btn--bg-secondary):not(.text-accent):not(.v-btn--bg-accent):hover {
   background: var(--am-btn-hover-bg) !important;
   box-shadow: var(--am-btn-hover-shadow) !important;
+}
+
+/* tonal 有 color — hover 只加阴影，背景由 Vuetify 计算 */
+.v-btn--variant-tonal:hover {
+  box-shadow: var(--am-btn-hover-shadow) !important;
+}
+
+/* dark 模式下 tonal 按钮文字提亮 — 保持色相，混入白色提高亮度 */
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+  .v-theme--dark .v-btn--variant-tonal.text-info {
+    color: color-mix(in srgb, rgb(var(--v-theme-info)) 75%, white) !important;
+  }
+  .v-theme--dark .v-btn--variant-tonal.text-success {
+    color: color-mix(in srgb, rgb(var(--v-theme-success)) 75%, white) !important;
+  }
+  .v-theme--dark .v-btn--variant-tonal.text-warning {
+    color: color-mix(in srgb, rgb(var(--v-theme-warning)) 70%, white) !important;
+  }
+  .v-theme--dark .v-btn--variant-tonal.text-error {
+    color: color-mix(in srgb, rgb(var(--v-theme-error)) 75%, white) !important;
+  }
+  .v-theme--dark .v-btn--variant-tonal.text-primary {
+    color: color-mix(in srgb, rgb(var(--v-theme-primary)) 80%, white) !important;
+  }
 }
 
 .v-btn--variant-outlined {
@@ -467,12 +516,6 @@
   -webkit-backdrop-filter: var(--am-btn-blur) !important;
   color: var(--am-btn-error-color) !important;
   border: var(--am-btn-border) !important;
-}
-
-/* tonal + info — 提高 overlay 不透明度 */
-.v-btn--variant-tonal.v-btn--bg-info .v-btn__overlay,
-.v-btn--variant-tonal.text-info .v-btn__overlay {
-  background: rgba(var(--v-theme-info), 0.22) !important;
 }
 
 /* 图标按钮 */
