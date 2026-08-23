@@ -652,8 +652,8 @@
 }
 
 /* Checkbox/Radio 未选态 */
-.v-checkbox .v-selection-control .v-icon,
-.v-radio .v-selection-control .v-icon {
+.v-checkbox .v-selection-control:not(.v-selection-control--dirty) .v-icon,
+.v-radio .v-selection-control:not(.v-selection-control--dirty) .v-icon {
   color: var(--am-check-inactive-color) !important;
 }
 
