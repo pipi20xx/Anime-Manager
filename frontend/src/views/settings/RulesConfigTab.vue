@@ -292,7 +292,7 @@ onMounted(() => {
 
     <!-- 保存按钮 -->
     <div class="d-flex justify-end">
-      <v-btn color="primary" variant="flat" :loading="saving" @click="saveAll" prepend-icon="mdi-content-save-outline">
+      <v-btn variant="tonal" color="primary" :loading="saving" @click="saveAll" prepend-icon="mdi-content-save-outline">
         保存全部修改
       </v-btn>
     </div>

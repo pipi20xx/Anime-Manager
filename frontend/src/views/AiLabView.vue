@@ -644,8 +644,7 @@ onMounted(() => {
               class="flex-grow-1"
             />
             <v-btn
-              color="primary"
-              variant="flat"
+              variant="tonal" color="primary"
               icon="mdi-send"
               :loading="chatLoading"
               :disabled="!chatInput.trim()"
@@ -837,7 +836,7 @@ onMounted(() => {
       <!-- 助手配置 -->
       <v-window-item value="config">
         <div class="d-flex justify-end mb-4">
-          <v-btn color="primary" variant="flat" :loading="saveLoading" prepend-icon="mdi-content-save-outline" @click="saveConfig">
+          <v-btn variant="tonal" color="primary" :loading="saveLoading" prepend-icon="mdi-content-save-outline" @click="saveConfig">
             保存全部修改
           </v-btn>
         </div>
@@ -973,8 +972,7 @@ onMounted(() => {
             <!-- 测试按钮 -->
             <div class="d-flex ga-2 mb-4">
               <v-btn
-                color="primary"
-                variant="flat"
+                variant="tonal" color="primary"
                 prepend-icon="mdi-robot"
                 :loading="fallbackLoading"
                 :disabled="!fallbackFilename.trim()"
@@ -1219,7 +1217,7 @@ onMounted(() => {
           <v-divider />
           <v-card-actions class="pa-4">
             <v-spacer />
-            <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveTelegramConfig">保存配置</v-btn>
+            <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveTelegramConfig">保存配置</v-btn>
           </v-card-actions>
         </v-card>
       </v-window-item>

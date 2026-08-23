@@ -21,6 +21,9 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* 统一辅助文字透明度：与主文字（0.87）一致，避免副文字过暗 */
+  --v-medium-emphasis-opacity: 0.87;
+  --v-disabled-opacity: 0.5;
 }
 
 body {

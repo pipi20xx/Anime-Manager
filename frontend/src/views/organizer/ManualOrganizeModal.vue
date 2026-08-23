@@ -422,7 +422,7 @@ function handleRunBackground() {
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="emit('update:modelValue', false)">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-play" @click="handleConfirm">
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-play" @click="handleConfirm">
           启动整理任务
         </v-btn>
       </v-card-actions>
@@ -451,7 +451,7 @@ function handleRunBackground() {
         <v-btn color="info" variant="tonal" prepend-icon="mdi-rocket-launch" @click="handleRunBackground">
           后台静默执行
         </v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-eye-outline" @click="handleRun">
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-eye-outline" @click="handleRun">
           预览并手动执行
         </v-btn>
       </v-card-actions>

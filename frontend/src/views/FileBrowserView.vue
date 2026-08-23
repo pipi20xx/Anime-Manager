@@ -586,7 +586,7 @@ onMounted(() => {
         <h1 class="page-title text-h5 font-weight-bold">文件浏览</h1>
         <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">文件资源管理器</div>
       </div>
-      <v-btn color="primary" variant="flat" prepend-icon="mdi-folder-sync-outline" @click="showManualModal = true">
+      <v-btn variant="tonal" color="primary" prepend-icon="mdi-folder-sync-outline" @click="showManualModal = true">
         整理当前目录
       </v-btn>
     </div>
@@ -849,7 +849,7 @@ onMounted(() => {
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showGoToModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-arrow-right" @click="goToPath">前往</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-right" @click="goToPath">前往</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

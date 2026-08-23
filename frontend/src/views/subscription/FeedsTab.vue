@@ -117,7 +117,7 @@ defineExpose({ fetchFeeds })
       <v-btn variant="tonal" size="small" prepend-icon="mdi-eye-outline" color="info" @click="showItemsModal = true">订阅源详情</v-btn>
       <v-btn variant="tonal" size="small" prepend-icon="mdi-database-sync-outline" color="info" @click="syncJackettFeeds">同步 Jackett 源</v-btn>
       <v-btn variant="tonal" size="small" prepend-icon="mdi-shield-off-outline" color="error" @click="showTmdbBlocklist = true">TMDB屏蔽管理</v-btn>
-      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddFeed">新增订阅源</v-btn>
+      <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddFeed">新增订阅源</v-btn>
     </div>
 
     <v-skeleton-loader v-if="loading" type="card@3" />
@@ -259,7 +259,7 @@ defineExpose({ fetchFeeds })
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showFeedModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveFeed">保存</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="handleSaveFeed">保存</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

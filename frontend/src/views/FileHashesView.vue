@@ -679,7 +679,7 @@ onUnmounted(() => {
           </v-row>
           <div class="d-flex justify-end mt-3 ga-2">
             <v-btn variant="tonal" size="small" prepend-icon="mdi-refresh" @click="resetFilters">重置</v-btn>
-            <v-btn color="primary" variant="flat" size="small" @click="searchHashes">应用筛选</v-btn>
+            <v-btn variant="tonal" color="primary" size="small" @click="searchHashes">应用筛选</v-btn>
           </div>
         </v-card>
       </div>
@@ -974,7 +974,7 @@ onUnmounted(() => {
           <div class="pa-3 mb-3" style="background: rgba(var(--v-theme-on-surface), 0.03); border-radius: 8px;">
             <div class="d-flex align-center ga-2 mb-2">
               <span class="text-subtitle-2 font-weight-medium text-primary">实时预览</span>
-              <v-chip size="x-small" color="primary" variant="flat">{{ activeTemplateTab === 'tv' ? '剧集' : '电影' }}</v-chip>
+              <v-chip size="x-small" variant="tonal" color="primary">{{ activeTemplateTab === 'tv' ? '剧集' : '电影' }}</v-chip>
             </div>
             <div class="text-body-2 mb-1">
               <span class="text-medium-emphasis">渲染文件名：</span>
@@ -1011,7 +1011,7 @@ onUnmounted(() => {
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showTemplateSettings = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveTemplate">保存模板</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="handleSaveTemplate">保存模板</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -1085,7 +1085,7 @@ onUnmounted(() => {
         <v-card-actions class="dialog-actions">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showCalculateModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" :loading="calculateLoading" @click="submitCalculate">开始计算</v-btn>
+          <v-btn variant="tonal" color="primary" :loading="calculateLoading" @click="submitCalculate">开始计算</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

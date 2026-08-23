@@ -203,7 +203,7 @@ onMounted(() => {
         min="1"
         style="max-width: 160px"
       />
-      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-content-save-outline" :loading="saving" @click="saveAll">保存设置</v-btn>
+      <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-content-save-outline" :loading="saving" @click="saveAll">保存设置</v-btn>
     </div>
 
     <!-- 配置列表 -->
@@ -305,7 +305,7 @@ onMounted(() => {
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveConfig">提交保存</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveConfig">提交保存</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

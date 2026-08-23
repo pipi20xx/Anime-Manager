@@ -300,7 +300,7 @@ const actionTypeOptions = [
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="emit('update:modelValue', false)">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="emit('save')">保存任务配置</v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="emit('save')">保存任务配置</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

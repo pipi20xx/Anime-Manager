@@ -249,8 +249,7 @@ onMounted(() => {
               hide-details
             />
             <v-btn
-              color="primary"
-              variant="flat"
+              variant="tonal" color="primary"
               block
               prepend-icon="mdi-lock-reset"
               :loading="savingPwd"
@@ -415,7 +414,7 @@ onMounted(() => {
             hide-details
             class="mb-3"
           />
-          <v-btn color="primary" variant="flat" block prepend-icon="mdi-check" @click="confirmEnableOtp">确认开启</v-btn>
+          <v-btn variant="tonal" color="primary" block prepend-icon="mdi-check" @click="confirmEnableOtp">确认开启</v-btn>
         </v-card-text>
       </v-card>
     </v-dialog>

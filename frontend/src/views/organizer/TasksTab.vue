@@ -333,7 +333,7 @@ async function requestRunTask(task: any) {
 <template>
   <div>
     <div class="d-flex justify-end mb-4">
-      <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="openAddTask">添加任务</v-btn>
+      <v-btn variant="tonal" color="primary" prepend-icon="mdi-plus" @click="openAddTask">添加任务</v-btn>
     </div>
 
     <v-row v-if="loading">

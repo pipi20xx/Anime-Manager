@@ -220,7 +220,7 @@ onUnmounted(() => {
     />
     <v-btn color="warning" variant="tonal" prepend-icon="mdi-refresh" @click="showRefreshModal = true">全量刷新</v-btn>
     <v-btn color="info" variant="tonal" prepend-icon="mdi-sync-circle" @click="handleSyncSytmdb">同步 SYTMDB</v-btn>
-    <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="openCreate">手动新增</v-btn>
+    <v-btn variant="tonal" color="primary" prepend-icon="mdi-plus" @click="openCreate">手动新增</v-btn>
   </div>
 
   <!-- 卡片网格 -->
@@ -298,7 +298,7 @@ onUnmounted(() => {
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="showRefreshModal = false">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-refresh" @click="handleExecuteRefresh">开始刷新</v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-refresh" @click="handleExecuteRefresh">开始刷新</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -499,7 +499,7 @@ onUnmounted(() => {
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="showEditModal = false">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveMetadata">保存并固定</v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveMetadata">保存并固定</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

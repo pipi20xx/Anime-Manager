@@ -132,7 +132,7 @@
   color: rgb(var(--v-theme-warning));
 }
 .org-log-time {
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   min-width: 70px;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -194,7 +194,7 @@
   text-align: center;
   flex-shrink: 0;
   background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 .org-path-text {
   font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -202,7 +202,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 .org-path-target {
   color: rgba(var(--v-theme-on-surface), 0.87);
@@ -567,12 +567,12 @@
 }
 .media-card__year {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   margin-top: 2px;
 }
 .media-card__subtitle {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -986,7 +986,7 @@
 .sub-search-result-item:hover { background: rgba(var(--v-theme-primary), 0.06); }
 .search-result-info { flex: 1; min-width: 0; }
 .search-result-title { font-size: 14px; font-weight: 600; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.87); }
-.search-result-sub { font-size: 12px; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.5); margin-top: 2px; }
+.search-result-sub { font-size: 12px; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.87); margin-top: 2px; }
 
 /* --- 海报占位 (小尺寸) --- */
 .poster-placeholder-sm {
@@ -1026,7 +1026,7 @@
 }
 .switch-desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 /* --- 表单标签最小宽度 (AppearanceView 等) --- */

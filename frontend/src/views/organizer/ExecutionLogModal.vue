@@ -247,8 +247,7 @@ watch(() => props.logs?.length, () => {
         <v-btn v-if="!isStreamMode && taskId" variant="tonal" color="info" prepend-icon="mdi-refresh" @click="fetchLogDetail(taskId)">刷新</v-btn>
         <v-btn
           v-if="isStreamMode && !isRunning && isDryRun && (logs?.length ?? 0) > 0"
-          color="warning"
-          variant="flat"
+          variant="tonal" color="warning"
           prepend-icon="mdi-check-all"
           @click="emit('commit')"
         >

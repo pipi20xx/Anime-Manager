@@ -404,10 +404,10 @@ onMounted(() => {
 
             <!-- 操作按钮 -->
             <div class="mt-4 d-flex ga-2 flex-wrap">
-              <v-btn color="primary" variant="flat" prepend-icon="mdi-rss" @click="handleSubscribe">
+              <v-btn variant="tonal" color="primary" prepend-icon="mdi-rss" @click="handleSubscribe">
                 {{ isSubscribed ? '已订阅 · 编辑' : '快速订阅' }}
               </v-btn>
-              <v-btn variant="tonal" prepend-icon="mdi-magnify" @click="handleSearch">
+              <v-btn variant="tonal" color="primary" prepend-icon="mdi-magnify" @click="handleSearch">
                 搜资源
               </v-btn>
             </div>

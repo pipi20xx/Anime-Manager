@@ -82,120 +82,108 @@
 }
 
 /* ============================================================
- * 1. ACG 主题 — 二次元壁纸 + 毛玻璃
- *    html.glass-theme-acg 激活
+ * 1. ACG 主题 — 二次元壁纸 + 暗色毛玻璃
+ *    html.glass-theme-acg 激活（仅支持 dark 模式）
  * ============================================================ */
 
-/* ── 1a. ACG body 级（设在 html 上，body::before 能读到） ── */
+/* ── 1a. ACG 组件令牌（仅暗色） ── */
 html.glass-theme-acg {
+  /* Body */
   --am-body-bg: transparent;
   --am-body-before-bg: center / cover no-repeat;
   --am-body-before-image: url("https://www.loliapi.com/acg/pc/");
   --am-body-before-filter: blur(0px);
   --am-body-before-transform: scale(1.02);
-  --am-body-after-bg: rgba(255, 255, 255, 0.08);
-  --am-body-after-display: "";
-}
-
-html.glass-theme-acg.glass-dark {
   --am-body-after-bg: rgba(0, 0, 0, 0.24);
-}
+  --am-body-after-display: "";
 
-@media (orientation: portrait) {
-  html.glass-theme-acg {
-    --am-body-before-image: url("https://www.loliapi.com/acg/pe/");
-  }
-}
-
-/* ── 1b. ACG 亮色组件令牌 ── */
-html.glass-theme-acg .v-theme--light {
-  /* Surface */
-  --am-surface-bg: rgba(255, 255, 255, 0.3);
-  --am-surface-blur: blur(10px) saturate(180%);
-  --am-surface-border: 1px solid rgba(255, 255, 255, 0.5);
-  --am-surface-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  /* Surface — 纯透明，无背景色 */
+  --am-surface-bg: transparent;
+  --am-surface-blur: blur(1px) saturate(110%);
+  --am-surface-border: 1px solid rgba(255, 255, 255, 0.06);
+  --am-surface-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   --am-surface-radius: 16px;
-  --am-surface-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --am-surface-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 
-  /* Overlay */
-  --am-overlay-bg: rgba(255, 255, 255, 0.5);
-  --am-overlay-blur: blur(12px) saturate(180%);
-  --am-overlay-border: 1px solid rgba(255, 255, 255, 0.5);
-  --am-overlay-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+  /* Overlay — 弹窗/菜单/下拉：薄玻璃 */
+  --am-overlay-bg: rgba(20, 20, 40, 0.2);
+  --am-overlay-blur: blur(8px) saturate(140%);
+  --am-overlay-border: 1px solid rgba(255, 255, 255, 0.08);
+  --am-overlay-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   --am-overlay-radius: 20px;
   --am-dialog-radius: 24px;
   --am-menu-radius: 20px;
 
   /* Nav */
-  --am-nav-bg: rgba(255, 255, 255, 0.3);
-  --am-nav-blur: blur(10px) saturate(180%);
-  --am-nav-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-nav-bg: transparent;
+  --am-nav-blur: blur(1px) saturate(110%);
+  --am-nav-border: 1px solid rgba(255, 255, 255, 0.06);
   --am-nav-shadow: none;
 
   /* Field */
-  --am-field-bg: rgba(255, 255, 255, 0.3);
-  --am-field-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-field-bg: transparent;
+  --am-field-border: 1px solid rgba(255, 255, 255, 0.06);
   --am-field-radius: 16px;
   --am-field-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
   --am-field-focus-shadow:
-    0 0 0 3px rgba(var(--v-theme-primary), 0.15),
+    0 0 0 3px rgba(var(--v-theme-primary), 0.2),
     inset 0 1px 3px rgba(0, 0, 0, 0.04);
   --am-field-outline-opacity: 0;
   --am-field-focus-outline-color: rgb(var(--v-theme-primary));
 
   /* Button */
-  --am-btn-bg: rgba(255, 255, 255, 0.55);
-  --am-btn-blur: blur(10px) saturate(180%);
-  --am-btn-border: 1px solid rgba(255, 255, 255, 0.6);
+  --am-btn-bg: transparent;
+  --am-btn-blur: blur(1px) saturate(110%);
+  --am-btn-border: 1px solid rgba(255, 255, 255, 0.08);
   --am-btn-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   --am-btn-radius: 12px;
-  --am-btn-hover-bg: rgba(255, 255, 255, 0.68);
+  --am-btn-hover-bg: rgba(255, 255, 255, 0.12);
   --am-btn-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   --am-btn-font-weight: 600;
-  --am-btn-text-color: rgb(var(--v-theme-primary));
-  --am-btn-outlined-bg: rgba(255, 255, 255, 0.3);
-  --am-btn-outlined-hover-bg: rgba(255, 255, 255, 0.4);
+  --am-btn-text-color: rgba(255, 255, 255, 0.9);
+  --am-btn-outlined-bg: transparent;
+  --am-btn-outlined-hover-bg: rgba(255, 255, 255, 0.08);
 
   /* Tab */
-  --am-tab-bg: rgba(255, 255, 255, 0.55);
-  --am-tab-blur: blur(10px) saturate(180%);
-  --am-tab-border: 1px solid rgba(255, 255, 255, 0.6);
+  --am-tab-bg: transparent;
+  --am-tab-blur: blur(1px) saturate(110%);
+  --am-tab-border: 1px solid rgba(255, 255, 255, 0.08);
   --am-tab-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   --am-tab-radius: 999px;
   --am-tab-active-color: rgb(var(--v-theme-primary));
-  --am-tab-inactive-color: rgba(0, 0, 0, 0.5);
+  --am-tab-inactive-color: rgba(255, 255, 255, 0.5);
   --am-tab-hover-color: rgba(var(--v-theme-primary), 0.7);
   --am-tab-gap: 8px;
 
   /* Chip */
-  --am-chip-blur: blur(10px) saturate(180%);
-  --am-chip-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-chip-blur: blur(1px) saturate(110%);
+  --am-chip-border: 1px solid rgba(255, 255, 255, 0.08);
 
   /* Snackbar */
-  --am-snackbar-bg: rgba(255, 255, 255, 0.5);
-  --am-snackbar-blur: blur(12px) saturate(180%);
-  --am-snackbar-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-snackbar-bg: rgba(20, 20, 40, 0.15);
+  --am-snackbar-blur: blur(3px) saturate(110%);
+  --am-snackbar-border: 1px solid rgba(255, 255, 255, 0.06);
   --am-snackbar-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --am-snackbar-radius: 14px;
-  --am-snackbar-text: rgba(0, 0, 0, 0.87);
+  --am-snackbar-text: rgba(255, 255, 255, 0.9);
 
   /* Alert */
-  --am-alert-blur: blur(10px) saturate(180%);
-  --am-alert-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-alert-blur: blur(1px) saturate(110%);
+  --am-alert-border: 1px solid rgba(255, 255, 255, 0.08);
 
   /* Scrim */
   --am-scrim-blur: blur(4px);
-  --am-scrim-bg: rgba(255, 255, 255, 0.35);
+  --am-scrim-bg: rgba(0, 0, 0, 0.45);
 
   /* Divider */
-  --am-divider-color: rgba(0, 0, 0, 0.1);
+  --am-divider-color: rgba(255, 255, 255, 0.06);
 
   /* Text */
-  --am-label-color: rgba(0, 0, 0, 0.55);
+  --am-label-color: rgba(255, 255, 255, 0.9);
   --am-label-focus-color: rgb(var(--v-theme-primary));
-  --am-input-text: rgba(0, 0, 0, 0.87);
-  --am-dropdown-arrow: rgba(0, 0, 0, 0.4);
-  --am-list-title: rgba(0, 0, 0, 0.87);
+  --am-input-text: rgba(255, 255, 255, 0.9);
+  --am-dropdown-arrow: rgba(255, 255, 255, 0.5);
+  --am-list-title: rgba(255, 255, 255, 0.87);
 
   /* Nav Active */
   --am-nav-active-color: rgb(var(--v-theme-primary));
@@ -211,55 +199,56 @@ html.glass-theme-acg .v-theme--light {
   --am-scrollbar-hover: rgba(168, 85, 247, 0.4);
 
   /* Login */
-  --am-login-bg: rgba(255, 255, 255, 0.5);
-  --am-login-blur: blur(12px) saturate(180%);
-  --am-login-border: 1px solid rgba(255, 255, 255, 0.5);
-  --am-login-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.5);
+  --am-login-bg: rgba(20, 20, 40, 0.1);
+  --am-login-blur: blur(3px) saturate(110%);
+  --am-login-border: 1px solid rgba(255, 255, 255, 0.06);
+  --am-login-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.7);
   --am-login-radius: 24px;
 
   /* Switch */
-  --am-switch-track-bg: rgba(120, 130, 145, 0.45);
+  --am-switch-track-bg: rgba(150, 158, 172, 0.35);
   --am-switch-track-active-bg: rgb(var(--v-theme-primary));
 
   /* Checkbox / Radio */
   --am-check-active-color: rgb(var(--v-theme-primary));
-  --am-check-inactive-color: rgba(120, 130, 145, 0.65);
+  --am-check-inactive-color: rgba(150, 158, 172, 0.55);
 
   /* Slider */
-  --am-slider-track-bg: rgba(0, 0, 0, 0.1);
+  --am-slider-track-bg: rgba(255, 255, 255, 0.1);
   --am-slider-fill-bg: linear-gradient(90deg, #a855f7, #4ecdc4);
   --am-slider-thumb-shadow: 0 0 10px rgba(78, 205, 196, 0.4);
 
   /* Progress */
   --am-progress-fill-bg: linear-gradient(90deg, #a855f7, #4ecdc4);
   --am-progress-circular-stroke: rgb(var(--v-theme-primary));
+  --am-progress-glow: 0 0 12px rgba(78, 205, 196, 0.4);
 
   /* BtnToggle */
-  --am-btn-toggle-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-btn-toggle-border: 1px solid rgba(255, 255, 255, 0.08);
   --am-btn-toggle-radius: 16px;
-  --am-btn-toggle-active-bg: rgba(var(--v-theme-primary), 0.3);
+  --am-btn-toggle-active-bg: rgba(66, 165, 245, 0.3);
   --am-btn-toggle-active-color: rgb(var(--v-theme-primary));
 
   /* Tooltip */
-  --am-tooltip-blur: blur(10px) saturate(180%);
+  --am-tooltip-blur: blur(1px) saturate(110%);
 
   /* Avatar */
-  --am-avatar-blur: blur(10px) saturate(180%);
-  --am-avatar-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-avatar-blur: blur(1px) saturate(110%);
+  --am-avatar-border: 1px solid rgba(255, 255, 255, 0.08);
   --am-avatar-color: rgb(var(--v-theme-primary));
 
   /* Table */
-  --am-table-hover-bg: rgba(255, 255, 255, 0.35);
-  --am-table-header-bg: rgba(255, 255, 255, 0.25);
+  --am-table-hover-bg: rgba(255, 255, 255, 0.06);
+  --am-table-header-bg: transparent;
 
   /* Hover Lift */
   --am-hover-lift-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.1), 0 0 12px rgba(168, 85, 247, 0.08);
+    0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(168, 85, 247, 0.12);
 
   /* Code */
   --am-code-color: #7c3aed;
   --am-code-radius: 6px;
-  --am-code-block-color: rgba(0, 0, 0, 0.87);
+  --am-code-block-color: #d4d4d4;
   --am-code-block-border: 1px solid rgba(255, 255, 255, 0.5);
 
   /* List Item */
@@ -267,171 +256,30 @@ html.glass-theme-acg .v-theme--light {
   --am-list-item-margin: 2px 0;
 
   /* Filter Chip */
-  --am-filter-chip-bg: rgba(255, 255, 255, 0.3);
-  --am-filter-chip-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-filter-chip-bg: transparent;
+  --am-filter-chip-border: 1px solid rgba(255, 255, 255, 0.06);
   --am-filter-chip-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   --am-filter-chip-active-color: rgb(var(--v-theme-primary));
-  --am-filter-chip-outlined-color: rgba(0, 0, 0, 0.5);
+  --am-filter-chip-outlined-color: rgba(255, 255, 255, 0.5);
 
   /* Button Variants */
   --am-btn-primary-color: rgb(var(--v-theme-primary));
   --am-btn-success-color: rgb(var(--v-theme-success));
   --am-btn-warning-color: rgb(var(--v-theme-warning));
   --am-btn-error-color: rgb(var(--v-theme-error));
-  --am-btn-primary-bg: rgba(255, 255, 255, 0.55);
-  --am-btn-success-bg: rgba(255, 255, 255, 0.3);
-  --am-btn-warning-bg: rgba(255, 255, 255, 0.3);
-  --am-btn-error-bg: rgba(255, 255, 255, 0.3);
+  --am-btn-primary-bg: transparent;
+  --am-btn-success-bg: transparent;
+  --am-btn-warning-bg: transparent;
+  --am-btn-error-bg: transparent;
 
   /* Content Border */
-  --am-content-border: 1px solid rgba(255, 255, 255, 0.5);
+  --am-content-border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ── 1c. ACG 暗色组件覆盖 ── */
-/* 规则：只改颜色/透明度，不改结构（圆角/边框宽度/模糊量/阴影层数） */
-html.glass-theme-acg .v-theme--dark {
-  --am-surface-bg: rgba(30, 30, 60, 0.38);
-  --am-surface-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-surface-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --am-surface-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-
-  --am-overlay-bg: rgba(30, 30, 60, 0.5);
-  --am-overlay-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-overlay-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-
-  --am-nav-bg: rgba(30, 30, 60, 0.38);
-  --am-nav-border: 1px solid rgba(255, 255, 255, 0.15);
-
-  --am-field-bg: rgba(30, 30, 60, 0.38);
-  --am-field-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-field-focus-shadow:
-    0 0 0 3px rgba(var(--v-theme-primary), 0.2),
-    inset 0 1px 3px rgba(0, 0, 0, 0.04);
-
-  --am-btn-bg: rgba(30, 30, 60, 0.58);
-  --am-btn-border: 1px solid rgba(255, 255, 255, 0.2);
-  --am-btn-hover-bg: rgba(30, 30, 60, 0.7);
-  --am-btn-text-color: rgba(255, 255, 255, 0.9);
-  --am-btn-outlined-bg: rgba(30, 30, 60, 0.38);
-  --am-btn-outlined-hover-bg: rgba(30, 30, 60, 0.48);
-
-  --am-tab-bg: rgba(30, 30, 60, 0.58);
-  --am-tab-border: 1px solid rgba(255, 255, 255, 0.2);
-  --am-tab-inactive-color: rgba(255, 255, 255, 0.5);
-
-  --am-chip-border: 1px solid rgba(255, 255, 255, 0.15);
-
-  --am-snackbar-bg: rgba(30, 30, 60, 0.5);
-  --am-snackbar-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-snackbar-text: rgba(255, 255, 255, 0.9);
-
-  --am-alert-border: 1px solid rgba(255, 255, 255, 0.15);
-
-  --am-scrim-bg: rgba(0, 0, 0, 0.45);
-
-  --am-divider-color: rgba(255, 255, 255, 0.06);
-
-  --am-label-color: rgba(255, 255, 255, 0.6);
-  --am-input-text: rgba(255, 255, 255, 0.9);
-  --am-dropdown-arrow: rgba(255, 255, 255, 0.5);
-  --am-list-title: rgba(255, 255, 255, 0.87);
-
-  --am-login-bg: rgba(30, 30, 60, 0.5);
-  --am-login-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-login-shadow: 0 18px 42px -26px rgba(0, 0, 0, 0.7);
-
-  --am-switch-track-bg: rgba(150, 158, 172, 0.35);
-
-  --am-check-inactive-color: rgba(150, 158, 172, 0.55);
-
-  --am-slider-track-bg: rgba(255, 255, 255, 0.1);
-
-  --am-progress-glow: 0 0 12px rgba(78, 205, 196, 0.4);
-
-  --am-btn-toggle-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-btn-toggle-active-bg: rgba(66, 165, 245, 0.3);
-
-  --am-avatar-border: 1px solid rgba(255, 255, 255, 0.15);
-
-  --am-table-hover-bg: rgba(30, 30, 60, 0.45);
-  --am-table-header-bg: rgba(30, 30, 60, 0.3);
-
-  --am-hover-lift-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(168, 85, 247, 0.12);
-
-  --am-code-block-color: #d4d4d4;
-
-  --am-filter-chip-bg: rgba(30, 30, 60, 0.38);
-  --am-filter-chip-border: 1px solid rgba(255, 255, 255, 0.15);
-  --am-filter-chip-outlined-color: rgba(255, 255, 255, 0.5);
-
-  --am-btn-primary-bg: rgba(30, 30, 60, 0.58);
-  --am-btn-success-bg: rgba(30, 30, 60, 0.38);
-  --am-btn-warning-bg: rgba(30, 30, 60, 0.38);
-  --am-btn-error-bg: rgba(30, 30, 60, 0.38);
-
-  --am-content-border: 1px solid rgba(255, 255, 255, 0.15);
-
-  /* ── 以下从 light 继承（不分明暗的结构性变量） ── */
-  --am-alert-blur: blur(10px) saturate(180%);
-  --am-avatar-blur: blur(10px) saturate(180%);
-  --am-avatar-color: rgb(var(--v-theme-primary));
-  --am-btn-blur: blur(10px) saturate(180%);
-  --am-btn-error-color: rgb(var(--v-theme-error));
-  --am-btn-font-weight: 600;
-  --am-btn-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --am-btn-primary-color: rgb(var(--v-theme-primary));
-  --am-btn-radius: 12px;
-  --am-btn-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --am-btn-success-color: rgb(var(--v-theme-success));
-  --am-btn-toggle-active-color: rgb(var(--v-theme-primary));
-  --am-btn-toggle-radius: 16px;
-  --am-btn-warning-color: rgb(var(--v-theme-warning));
-  --am-check-active-color: rgb(var(--v-theme-primary));
-  --am-chip-blur: blur(10px) saturate(180%);
-  --am-code-block-border: 1px solid rgba(255, 255, 255, 0.5);
-  --am-code-color: #7c3aed;
-  --am-code-radius: 6px;
-  --am-dialog-radius: 24px;
-  --am-field-focus-outline-color: rgb(var(--v-theme-primary));
-  --am-field-outline-opacity: 0;
-  --am-field-radius: 16px;
-  --am-filter-chip-active-color: rgb(var(--v-theme-primary));
-  --am-filter-chip-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --am-label-focus-color: rgb(var(--v-theme-primary));
-  --am-list-active-color: rgb(var(--v-theme-primary));
-  --am-list-item-margin: 2px 0;
-  --am-list-item-radius: 12px;
-  --am-login-blur: blur(12px) saturate(180%);
-  --am-login-radius: 24px;
-  --am-menu-radius: 20px;
-  --am-nav-active-color: rgb(var(--v-theme-primary));
-  --am-nav-blur: blur(10px) saturate(180%);
-  --am-nav-indicator-bg: transparent;
-  --am-nav-indicator-radius: 0 2px 2px 0;
-  --am-nav-indicator-width: 2px;
-  --am-nav-shadow: none;
-  --am-overlay-blur: blur(12px) saturate(180%);
-  --am-overlay-radius: 20px;
-  --am-progress-circular-stroke: rgb(var(--v-theme-primary));
-  --am-progress-fill-bg: linear-gradient(90deg, #a855f7, #4ecdc4);
-  --am-scrim-blur: blur(4px);
-  --am-scrollbar-color: rgba(168, 85, 247, 0.25);
-  --am-scrollbar-hover: rgba(168, 85, 247, 0.4);
-  --am-slider-fill-bg: linear-gradient(90deg, #a855f7, #4ecdc4);
-  --am-slider-thumb-shadow: 0 0 10px rgba(78, 205, 196, 0.4);
-  --am-snackbar-blur: blur(12px) saturate(180%);
-  --am-snackbar-radius: 14px;
-  --am-snackbar-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --am-surface-blur: blur(10px) saturate(180%);
-  --am-switch-track-active-bg: rgb(var(--v-theme-primary));
-  --am-tab-active-color: rgb(var(--v-theme-primary));
-  --am-tab-blur: blur(10px) saturate(180%);
-  --am-tab-gap: 8px;
-  --am-tab-hover-color: rgba(var(--v-theme-primary), 0.7);
-  --am-tab-radius: 999px;
-  --am-tab-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --am-tooltip-blur: blur(10px) saturate(180%);
+@media (orientation: portrait) {
+  html.glass-theme-acg {
+    --am-body-before-image: url("https://www.loliapi.com/acg/pe/");
+  }
 }
 
 /* ============================================================
@@ -534,7 +382,7 @@ html.glass-theme-liquid .v-theme--light {
   --am-divider-color: rgba(0, 0, 0, 0.08);
 
   /* Text */
-  --am-label-color: rgba(0, 0, 0, 0.5);
+  --am-label-color: rgba(0, 0, 0, 0.87);
   --am-label-focus-color: rgb(var(--v-theme-primary));
   --am-input-text: rgba(0, 0, 0, 0.87);
   --am-dropdown-arrow: rgba(0, 0, 0, 0.4);
@@ -658,7 +506,7 @@ html.glass-theme-liquid .v-theme--dark {
 
   --am-divider-color: rgba(255, 255, 255, 0.06);
 
-  --am-label-color: rgba(255, 255, 255, 0.5);
+  --am-label-color: rgba(255, 255, 255, 0.9);
   --am-input-text: rgba(255, 255, 255, 0.9);
   --am-dropdown-arrow: rgba(255, 255, 255, 0.5);
   --am-list-title: rgba(255, 255, 255, 0.9);
@@ -869,7 +717,7 @@ html.glass-theme-classic .v-theme--light {
   --am-divider-color: rgba(0, 0, 0, 0.08);
 
   /* Text */
-  --am-label-color: rgba(0, 0, 0, 0.5);
+  --am-label-color: rgba(0, 0, 0, 0.87);
   --am-label-focus-color: rgb(var(--v-theme-primary));
   --am-input-text: rgba(0, 0, 0, 0.87);
   --am-dropdown-arrow: rgba(0, 0, 0, 0.4);
@@ -988,7 +836,7 @@ html.glass-theme-classic .v-theme--dark {
 
   --am-divider-color: rgba(255, 255, 255, 0.08);
 
-  --am-label-color: rgba(255, 255, 255, 0.5);
+  --am-label-color: rgba(255, 255, 255, 0.9);
   --am-input-text: rgba(255, 255, 255, 0.9);
   --am-dropdown-arrow: rgba(255, 255, 255, 0.5);
   --am-list-title: rgba(255, 255, 255, 0.9);

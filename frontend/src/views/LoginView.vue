@@ -73,8 +73,7 @@ async function handleLogin() {
               type="submit"
               :loading="loading"
               block
-              color="primary"
-              variant="flat"
+              variant="tonal" color="primary"
               size="large"
               rounded="xl"
             >

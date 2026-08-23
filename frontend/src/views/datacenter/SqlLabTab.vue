@@ -302,7 +302,7 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
       @keydown.ctrl.enter="handleManualRun"
     >
       <template #append-inner>
-        <v-btn color="primary" variant="flat" size="small" :loading="queryLoading" prepend-icon="mdi-play" @click="handleManualRun">
+        <v-btn variant="tonal" color="primary" size="small" :loading="queryLoading" prepend-icon="mdi-play" @click="handleManualRun">
           执行
         </v-btn>
       </template>

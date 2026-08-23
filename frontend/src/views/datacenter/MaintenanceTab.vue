@@ -266,7 +266,7 @@ onUnmounted(() => {
         <div><div class="text-caption text-medium-emphasis">上次同步</div><div class="text-body-2">{{ formatTime(embyService?.last_run ?? null) }}</div></div>
         <div><div class="text-caption text-medium-emphasis">下次同步</div><div class="text-body-2">{{ formatTime(embyService?.next_run ?? null) }}</div></div>
       </div>
-      <v-btn color="primary" variant="flat" prepend-icon="mdi-sync" :loading="embySyncLoading" @click="handleEmbySync">立即同步</v-btn>
+      <v-btn variant="tonal" color="primary" prepend-icon="mdi-sync" :loading="embySyncLoading" @click="handleEmbySync">立即同步</v-btn>
     </div>
   </v-card>
 
@@ -281,7 +281,7 @@ onUnmounted(() => {
         <div><div class="text-caption text-medium-emphasis">下次同步</div><div class="text-body-2">{{ formatTime(bgmService?.next_run ?? null) }}</div></div>
       </div>
       <div class="d-flex ga-2">
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-sync" :loading="bgmSyncLoading" :disabled="bgmWarmupLoading" @click="handleBgmSync">立即同步</v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-sync" :loading="bgmSyncLoading" :disabled="bgmWarmupLoading" @click="handleBgmSync">立即同步</v-btn>
         <v-btn variant="tonal" color="info" prepend-icon="mdi-fire" :loading="bgmWarmupLoading" :disabled="bgmSyncLoading" @click="handleBgmWarmup">预热 Subject 缓存</v-btn>
       </div>
     </div>

@@ -209,7 +209,7 @@ function formatDateTime(dateStr: string | null): string {
         <template v-if="!showEdit">
           <div class="d-flex justify-space-between align-center mb-4">
             <div class="text-body-2 text-medium-emphasis">配置 RSS 探测任务，系统会自动识别新番剧并创建订阅</div>
-            <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAdd">添加任务</v-btn>
+            <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAdd">添加任务</v-btn>
           </div>
 
           <v-skeleton-loader v-if="loading" type="card@2" />
@@ -389,7 +389,7 @@ function formatDateTime(dateStr: string | null): string {
         <template v-if="showEdit">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-arrow-left" @click="showEdit = false">返回列表</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveTask">保存任务</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveTask">保存任务</v-btn>
         </template>
         <template v-else>
           <v-spacer />

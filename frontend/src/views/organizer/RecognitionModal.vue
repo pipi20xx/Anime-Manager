@@ -274,7 +274,7 @@ watch(() => props.modelValue, (newVal) => {
               class="mb-2"
             >
               <template #append-inner>
-                <v-btn color="primary" variant="flat" size="small" :loading="testSearch.loading" @click="searchTmdbForTest">
+                <v-btn variant="tonal" color="primary" size="small" :loading="testSearch.loading" @click="searchTmdbForTest">
                   搜索
                 </v-btn>
               </template>
@@ -299,7 +299,7 @@ watch(() => props.modelValue, (newVal) => {
             </div>
 
             <!-- 开始识别按钮 -->
-            <v-btn color="primary" variant="flat" block size="small" class="mt-3" :loading="loading" prepend-icon="mdi-play-circle-outline" @click="handleRecognize">
+            <v-btn variant="tonal" color="primary" block size="small" class="mt-3" :loading="loading" prepend-icon="mdi-play-circle-outline" @click="handleRecognize">
               开始识别
             </v-btn>
           </div>
@@ -468,7 +468,7 @@ watch(() => props.modelValue, (newVal) => {
         <v-btn v-if="data" color="info" variant="tonal" :loading="isHashing" prepend-icon="mdi-calculator" @click="calculateHash">
           计算哈希
         </v-btn>
-        <v-btn v-if="data" color="primary" variant="flat" :loading="isRenaming" prepend-icon="mdi-rename-box" @click="emit('rename')">
+        <v-btn v-if="data" variant="tonal" color="primary" :loading="isRenaming" prepend-icon="mdi-rename-box" @click="emit('rename')">
           确认重命名
         </v-btn>
       </v-card-actions>

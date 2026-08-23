@@ -156,7 +156,7 @@ defineExpose({ fetchRules })
     <!-- 操作栏 -->
     <div class="d-flex justify-end mb-4 ga-2 flex-wrap">
       <v-btn variant="tonal" size="small" color="info" prepend-icon="mdi-history" @click="showHistoryModal = true">下载记录</v-btn>
-      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddRule">创建新规则</v-btn>
+      <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddRule">创建新规则</v-btn>
     </div>
 
     <v-skeleton-loader v-if="loading" type="card@3" />
@@ -261,7 +261,7 @@ defineExpose({ fetchRules })
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showRuleModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveRule">保存规则</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="handleSaveRule">保存规则</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

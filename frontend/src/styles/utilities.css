@@ -112,7 +112,7 @@
 .kv-label {
   font-weight: 600;
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   min-width: 70px;
   flex-shrink: 0;
 }
@@ -262,7 +262,7 @@
   font-size: 12px;
   font-weight: 700;
   background: rgba(var(--v-theme-on-surface), 0.08);
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 .queue-item-badge--active {
@@ -292,7 +292,7 @@
 
 .queue-item-dirpath {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -412,7 +412,7 @@
 }
 
 .manage-card__info-label {
-  color: rgba(var(--v-theme-on-surface), 0.45);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-weight: 600;
   white-space: nowrap;
   min-width: 48px;
@@ -430,7 +430,7 @@
 
 .manage-card__desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -466,7 +466,7 @@
 
 .manage-card__switch-label {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   white-space: nowrap;
 }
 

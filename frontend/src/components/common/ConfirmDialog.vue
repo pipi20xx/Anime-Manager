@@ -13,7 +13,7 @@ const { show, options, onConfirm, onCancel, onDismiss } = useConfirm()
   >
     {{ options.content }}
     <template #actions>
-      <v-btn :color="options.confirmColor" variant="flat" prepend-icon="mdi-check" @click="onConfirm">
+      <v-btn :color="options.confirmColor" variant="tonal" prepend-icon="mdi-check" @click="onConfirm">
         {{ options.confirmText }}
       </v-btn>
     </template>

@@ -272,7 +272,7 @@ defineExpose({ fetchMappings, fetchRefCounts })
         <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-upload-outline" :loading="mapFileImportLoading" @click="handleImportMappings">导入备份</v-btn>
         <v-btn v-if="['genre','company','keyword'].includes(mapActiveType)" color="info" variant="tonal" size="small" prepend-icon="mdi-import" :loading="mapImportLoading" @click="handleImportFromRef">导入当前分类</v-btn>
         <v-btn color="warning" variant="tonal" size="small" prepend-icon="mdi-restore" :loading="resetDefaultsLoading" @click="handleResetDefaults">恢复默认</v-btn>
-        <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddMapItem">添加映射</v-btn>
+        <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddMapItem">添加映射</v-btn>
       </div>
     </div>
 
@@ -374,7 +374,7 @@ defineExpose({ fetchMappings, fetchRefCounts })
     </template>
 
     <template #actions>
-      <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSaveMap">保存</v-btn>
+      <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="handleSaveMap">保存</v-btn>
     </template>
   </GlassDialog>
 </template>

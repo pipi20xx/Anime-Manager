@@ -410,7 +410,7 @@ onMounted(() => {
           hide-details
           style="max-width: 180px"
         />
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-format-list-bulleted" @click="showManageModal = true">
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-format-list-bulleted" @click="showManageModal = true">
           追踪管理
         </v-btn>
       </div>
@@ -484,7 +484,7 @@ onMounted(() => {
         <v-icon size="64" color="primary" class="mb-4">mdi-calendar-blank</v-icon>
         <div class="text-h6 font-weight-medium mb-2">还没有追踪任何番剧</div>
         <div class="text-body-2 text-medium-emphasis mb-4">点击"追踪管理"添加追踪番剧</div>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="showManageModal = true">添加追踪番剧</v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-plus" @click="showManageModal = true">添加追踪番剧</v-btn>
       </div>
     </template>
 
@@ -514,7 +514,7 @@ onMounted(() => {
                 <span class="text-caption text-medium-emphasis">共 {{ trackingList.length }} 个追踪项</span>
                 <div class="d-flex ga-2">
                   <v-btn color="warning" variant="tonal" size="small" prepend-icon="mdi-broom" @click="clearExpiredSubjects">清理过期</v-btn>
-                  <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-refresh" @click="refreshAllSubjects">全部刷新</v-btn>
+                  <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-refresh" @click="refreshAllSubjects">全部刷新</v-btn>
                 </div>
               </div>
 
@@ -570,7 +570,7 @@ onMounted(() => {
             <v-window-item value="discover">
               <div class="d-flex justify-space-between align-center mb-3">
                 <span class="text-caption text-medium-emphasis">点击下方番剧可自动同步至日历</span>
-                <v-btn color="primary" variant="flat" size="small" :loading="importingBatch" prepend-icon="mdi-download" @click="handleBatchImport">
+                <v-btn variant="tonal" color="primary" size="small" :loading="importingBatch" prepend-icon="mdi-download" @click="handleBatchImport">
                   导入全周番剧
                 </v-btn>
               </div>
@@ -632,7 +632,7 @@ onMounted(() => {
                 density="compact"
                 class="mb-3"
               />
-              <v-btn color="primary" variant="flat" block prepend-icon="mdi-plus" @click="handleAddSubject">保存追踪</v-btn>
+              <v-btn variant="tonal" color="primary" block prepend-icon="mdi-plus" @click="handleAddSubject">保存追踪</v-btn>
             </v-window-item>
 
             <!-- 推送设置 -->
@@ -804,7 +804,7 @@ onMounted(() => {
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showEditModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveEdit">保存</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveEdit">保存</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

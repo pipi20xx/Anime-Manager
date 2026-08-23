@@ -72,7 +72,7 @@ async function removeBlockItem(id: number) {
         <div class="d-flex ga-2 mb-4 add-btn-row align-center">
           <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID" density="compact" hide-details variant="outlined" style="min-width: 120px" />
           <v-select v-model="blockForm.media_type" label="类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" density="compact" hide-details variant="outlined" style="min-width: 100px; max-width: 120px" />
-          <v-btn color="primary" variant="flat" density="compact" @click="addBlockItem" prepend-icon="mdi-plus">添加</v-btn>
+          <v-btn variant="tonal" color="primary" density="compact" @click="addBlockItem" prepend-icon="mdi-plus">添加</v-btn>
         </div>
 
         <v-skeleton-loader v-if="loading" type="card@3" />

@@ -351,7 +351,7 @@ onMounted(() => {
           </v-btn>
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSave">保存配置</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="handleSave">保存配置</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

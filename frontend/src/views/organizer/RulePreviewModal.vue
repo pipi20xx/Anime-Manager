@@ -99,7 +99,7 @@ async function submitPreview() {
           class="mb-4"
         />
 
-        <v-btn color="primary" variant="flat" :loading="previewLoading" prepend-icon="mdi-play-outline" @click="submitPreview" block>
+        <v-btn variant="tonal" color="primary" :loading="previewLoading" prepend-icon="mdi-play-outline" @click="submitPreview" block>
           执行预览
         </v-btn>
 

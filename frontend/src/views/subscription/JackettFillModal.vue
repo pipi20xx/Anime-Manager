@@ -203,8 +203,7 @@ watch(() => props.show, (val) => {
             <div class="d-flex ga-2">
               <v-btn
                 v-if="!isRunning"
-                color="primary"
-                variant="flat"
+                variant="tonal" color="primary"
                 size="small"
                 prepend-icon="mdi-play"
                 :disabled="!subId"

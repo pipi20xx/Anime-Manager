@@ -132,8 +132,7 @@ const filteredLogs = computed(() => {
                   >
                     <template #append-inner>
                       <v-btn
-                        color="primary"
-                        variant="flat"
+                        variant="tonal" color="primary"
                         size="small"
                         :loading="store.loading"
                         @click="store.performRecognition()"

@@ -126,7 +126,7 @@ async function setDefault(row: any) {
         <template v-if="!showEdit">
           <div class="d-flex justify-space-between align-center mb-4">
             <div class="text-body-2 text-medium-emphasis">点击星标可将模板设为一键订阅时的默认配置</div>
-            <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAdd">创建新预设</v-btn>
+            <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAdd">创建新预设</v-btn>
           </div>
 
           <v-skeleton-loader v-if="loading" type="card@3" />
@@ -227,7 +227,7 @@ async function setDefault(row: any) {
         <v-spacer />
         <v-btn v-if="showEdit" variant="tonal" prepend-icon="mdi-arrow-left" @click="showEdit = false">返回列表</v-btn>
         <v-btn v-if="!showEdit" variant="tonal" prepend-icon="mdi-close" @click="$emit('update:show', false)">关闭</v-btn>
-        <v-btn v-if="showEdit" color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveTemplate">保存该预设</v-btn>
+        <v-btn v-if="showEdit" variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveTemplate">保存该预设</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

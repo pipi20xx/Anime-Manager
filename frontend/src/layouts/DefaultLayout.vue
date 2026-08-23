@@ -202,8 +202,8 @@ onUnmounted(() => {
             @click="systemStore.showLogModal = true"
           />
 
-          <!-- 深色/浅色切换 -->
-          <v-tooltip text="深色 / 浅色" location="bottom">
+          <!-- 深色/浅色切换（ACG 主题下禁用，仅支持暗色） -->
+          <v-tooltip :text="themeStore.glassTheme === 'acg' ? 'ACG 主题仅支持暗色模式' : '深色 / 浅色'" location="bottom">
             <template #activator="{ props: tooltipProps }">
               <v-btn
                 v-bind="tooltipProps"
@@ -212,6 +212,7 @@ onUnmounted(() => {
                 size="small"
                 :color="themeStore.isDarkMode ? 'warning' : 'info'"
                 :icon="themeStore.isDarkMode ? 'mdi-white-balance-sunny' : 'mdi-weather-night'"
+                :disabled="themeStore.glassTheme === 'acg'"
                 @click="themeStore.toggleDarkMode()"
               />
             </template>
@@ -241,7 +242,7 @@ onUnmounted(() => {
               <v-list-item
                 prepend-icon="mdi-image-multiple"
                 title="ACG 毛玻璃"
-                subtitle="二次元壁纸 + 毛玻璃"
+                subtitle="二次元壁纸 + 暗色毛玻璃"
                 :active="themeStore.glassTheme === 'acg'"
                 active-color="primary"
                 @click="themeStore.setGlassTheme('acg')"

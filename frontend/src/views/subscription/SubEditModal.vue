@@ -295,7 +295,7 @@ function handleSave() {
       <v-card-actions class="pa-4">
         <v-spacer />
         <v-btn variant="tonal" prepend-icon="mdi-close" @click="$emit('update:show', false)">取消</v-btn>
-        <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="handleSave">保存订阅</v-btn>
+        <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="handleSave">保存订阅</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

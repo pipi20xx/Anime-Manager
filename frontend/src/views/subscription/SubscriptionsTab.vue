@@ -275,7 +275,7 @@ defineExpose({ fetchSubscriptions })
       <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-radar" @click="showRssDetectModal = true">自动RSS订阅管理</v-btn>
       <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-cog-outline" @click="showPriorityModal = true">洗版规则</v-btn>
       <v-btn variant="tonal" color="info" size="small" prepend-icon="mdi-file-document-outline" @click="showTemplateModal = true">订阅预设管理</v-btn>
-      <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddSub">添加新订阅</v-btn>
+      <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddSub">添加新订阅</v-btn>
     </div>
 
     <v-skeleton-loader v-if="loading" type="card@4" />
@@ -486,7 +486,7 @@ defineExpose({ fetchSubscriptions })
           <div class="text-caption text-medium-emphasis">已选 {{ selectedQuickIds.length }} 个</div>
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showQuickSubModal = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-check" :loading="quickSubSubmitting" :disabled="selectedQuickIds.length === 0" @click="handleBatchSubscribe">
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-check" :loading="quickSubSubmitting" :disabled="selectedQuickIds.length === 0" @click="handleBatchSubscribe">
             确认批量订阅 ({{ selectedQuickIds.length }})
           </v-btn>
         </v-card-actions>

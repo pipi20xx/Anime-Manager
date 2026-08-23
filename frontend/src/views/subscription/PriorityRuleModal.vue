@@ -181,7 +181,7 @@ function getConditions(rule: any) {
           <v-window-item value="profiles">
             <div class="d-flex justify-space-between align-center mb-4">
               <div class="text-body-2 text-medium-emphasis">策略决定了洗版的优先顺序，越靠上的规则洗版优先级越高。</div>
-              <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddProfile">新建策略</v-btn>
+              <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddProfile">新建策略</v-btn>
             </div>
 
             <v-skeleton-loader v-if="loading" type="card@3" />
@@ -231,7 +231,7 @@ function getConditions(rule: any) {
           <v-window-item value="rules">
             <div class="d-flex justify-space-between align-center mb-4">
               <div class="text-body-2 text-medium-emphasis">"基础规则"是最小的规则单位，可以在策略中组合使用。</div>
-              <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-plus" @click="openAddRule">新建规则</v-btn>
+              <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddRule">新建规则</v-btn>
             </div>
 
             <v-skeleton-loader v-if="loading" type="card@3" />
@@ -300,7 +300,7 @@ function getConditions(rule: any) {
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showRuleEdit = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveRule">保存规则</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveRule">保存规则</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -347,7 +347,7 @@ function getConditions(rule: any) {
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showProfileEdit = false">取消</v-btn>
-          <v-btn color="primary" variant="flat" prepend-icon="mdi-content-save-outline" @click="saveProfile">保存策略</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveProfile">保存策略</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -133,7 +133,7 @@ onMounted(() => {
         @keydown.enter="doSearch()"
       >
         <template #append-inner>
-          <v-btn color="primary" variant="flat" size="small" :loading="loading" @click="doSearch()">
+          <v-btn variant="tonal" color="primary" size="small" :loading="loading" @click="doSearch()">
             搜索
           </v-btn>
         </template>

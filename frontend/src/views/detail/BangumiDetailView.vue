@@ -202,7 +202,7 @@ onMounted(() => {
       <v-container fluid class="pa-4 pa-md-6">
         <!-- 返回按钮 -->
         <div class="mb-4">
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-arrow-left" @click="router.back()">返回</v-btn>
+          <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-arrow-left" @click="router.back()">返回</v-btn>
         </div>
 
         <v-row>
@@ -259,8 +259,7 @@ onMounted(() => {
             <!-- 操作按钮 -->
             <div class="mt-4 d-flex ga-2 flex-wrap">
               <v-btn
-                color="primary"
-                variant="flat"
+                variant="tonal" color="primary"
                 prepend-icon="mdi-rss"
                 :disabled="isSubscribed"
                 @click="handleOneClickSubscribe"
@@ -269,6 +268,7 @@ onMounted(() => {
               </v-btn>
               <v-btn
                 variant="tonal"
+                color="primary"
                 prepend-icon="mdi-link-variant"
                 :loading="matchingTmdb"
                 @click="handleMatchTmdb"
@@ -277,6 +277,7 @@ onMounted(() => {
               </v-btn>
               <v-btn
                 variant="tonal"
+                color="primary"
                 prepend-icon="mdi-magnify"
                 @click="handleSearchResource"
               >
@@ -526,11 +527,12 @@ onMounted(() => {
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 11px;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgba(var(--v-theme-on-surface), 0.7);
 }
 .ep-status.aired {
-  color: rgb(var(--v-theme-success));
+  color: rgba(var(--v-theme-on-surface), 0.87);
+  background: rgba(var(--v-theme-on-surface), 0.1);
 }
 .ep-desc {
   font-size: 12px;

@@ -300,12 +300,14 @@
 
 /* filled */
 .v-field--variant-filled {
+  background: var(--am-field-bg) !important;
   border-radius: var(--am-field-radius) var(--am-field-radius) 0 0 !important;
   border: var(--am-field-border) !important;
 }
 
 /* solo */
 .v-field--variant-solo {
+  background: var(--am-field-bg) !important;
   border-radius: var(--am-field-radius) !important;
   box-shadow: var(--am-field-shadow) !important;
   border: var(--am-field-border) !important;
@@ -313,8 +315,24 @@
 
 /* solo-filled */
 .v-field--variant-solo-filled {
+  background: var(--am-field-bg) !important;
   border-radius: var(--am-field-radius) !important;
   border: var(--am-field-border) !important;
+}
+
+/* solo-inverted */
+.v-field--variant-solo-inverted {
+  background: var(--am-field-bg) !important;
+}
+
+/* underlined */
+.v-field--variant-underlined {
+  background: var(--am-field-bg) !important;
+}
+
+/* plain */
+.v-field--variant-plain {
+  background: var(--am-field-bg) !important;
 }
 
 /* Autocomplete / Combobox 聚焦 */
