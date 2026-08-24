@@ -22,8 +22,7 @@
  *   │   visual.css       — 统一组件视觉：背景/模糊/边框/阴影     │
  *   │                                                           │
  *   │ 第 4 层  主题覆盖                                          │
- *   │   glass-acg.scss  — ACG 玻璃材质（html.glass-theme-acg）     │
- *   │   theme-acg.css    — ACG 文字颜色/光晕（html.glass-theme-acg） │
+ *   │   glass-acg.scss     — ACG 玻璃主题统一（html.glass-theme-acg）│
  *   │   glass-themes.css   — 液态玻璃（html.glass-theme-liquid） │
  *   │   theme-classic.css  — 经典实色（html.glass-theme-classic）│
  *   └─────────────────────────────────────────────────────────────┘
@@ -87,18 +86,14 @@
  * 第 4 层 — 主题覆盖
  * ═══════════════════════════════════════════════════════════════ */
 
-/* 4.1 ACG 玻璃材质层 — 1:1 照搬 MoviePilot glass.scss（html.glass-theme-acg 激活）
- *     接管所有 background/backdrop-filter/border-color/box-shadow 属性。
+/* 4.1 ACG 玻璃主题统一 — 材质 + 文字颜色/光晕（html.glass-theme-acg 激活）
+ *     材质：1:1 照搬 MoviePilot glass.scss，接管 background/backdrop-filter/border-color/box-shadow。
+ *     文字：ACG 专属文字颜色、光晕效果。
  */
 @import '../glass/styles/glass-acg.scss';
 
-/* 4.2 ACG 主题文字颜色与光晕（html.glass-theme-acg 激活）
- *     只保留文字颜色、光晕等，不再覆盖材质属性。
- */
-@import '../glass/styles/theme-acg.css';
-
-/* 4.3 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
+/* 4.2 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
 @import '../glass/styles/glass-themes.css';
 
-/* 4.4 经典实色主题视觉风格（html.glass-theme-classic 激活） */
+/* 4.3 经典实色主题视觉风格（html.glass-theme-classic 激活） */
 @import './theme-classic.css';

@@ -9,7 +9,7 @@
  *   utils/        — 纯函数工具（无 Vue 依赖）
  *   rendering/    — WebGL 动力学引擎（fluid / ripple）
  *   components/   — Vue 组件
- *   styles/       — 玻璃主题样式（glass-acg.scss / theme-acg.css / glass-themes.css）
+ *   styles/       — 玻璃主题样式（glass-acg.scss / glass-themes.css）
  *
  * 外部依赖（由宿主项目提供）：
  *   - @/composables/useThemeStore     — 主题状态管理
