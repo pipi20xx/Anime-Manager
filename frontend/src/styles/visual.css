@@ -639,13 +639,29 @@
   box-shadow: var(--am-switch-thumb-shadow) !important;
 }
 
-/* Checkbox */
+/* Checkbox — 选中态：主题色实心方框 + 白色√
+   mdi-checkbox-marked 字体图标是单色的，color 同时控制方框和√。
+   方案：隐藏原图标，用 background 双层模拟——
+   底层主题色方框 + 上层白色√(mask)。 */
 .v-checkbox .v-selection-control--dirty .v-checkbox-btn__icon,
 .v-checkbox .v-selection-control--dirty .v-icon {
   color: var(--am-check-active-color) !important;
+  background-color: var(--am-check-active-color) !important;
+  border-radius: 2px;
+  position: relative;
 }
 
-/* Radio */
+/* 用伪元素叠加白色√ — 使用 MDI check 填充版 path */
+.v-checkbox .v-selection-control--dirty .v-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: #fff;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z'/%3E%3C/svg%3E") center / 75% 75% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z'/%3E%3C/svg%3E") center / 75% 75% no-repeat;
+}
+
+/* Radio — 选中态圆点用主题色 */
 .v-radio .v-selection-control--dirty .v-radio-btn__icon,
 .v-radio .v-selection-control--dirty .v-icon {
   color: var(--am-check-active-color) !important;

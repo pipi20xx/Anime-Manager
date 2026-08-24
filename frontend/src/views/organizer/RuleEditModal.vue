@@ -131,7 +131,7 @@ const variableGroups = [
                   <v-row density="compact">
                     <v-col v-for="(desc, variable) in group.vars" :key="variable" cols="12" sm="6">
                       <div class="variable-item">
-                        <code>{{ variable }}</code>
+                        <span>{{ variable }}</span>
                         <span>{{ desc }}</span>
                       </div>
                     </v-col>

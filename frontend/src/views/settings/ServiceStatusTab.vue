@@ -275,8 +275,8 @@ onUnmounted(() => {
                 <v-chip v-if="monitor.type === 'organize' && monitor.calculate_hash" size="x-small" color="error" variant="tonal">哈希计算</v-chip>
               </div>
               <div class="d-flex ga-4 mb-1">
-                <span class="text-caption text-medium-emphasis">源目录: <code>{{ monitor.source_dir || '-' }}</code></span>
-                <span class="text-caption text-medium-emphasis">目标: <code>{{ monitor.target_dir || '-' }}</code></span>
+                <span class="text-caption text-medium-emphasis">源目录: {{ monitor.source_dir || '-' }}</span>
+                <span class="text-caption text-medium-emphasis">目标: {{ monitor.target_dir || '-' }}</span>
               </div>
               <!-- 队列状态条 (始终显示) -->
               <div v-if="monitor.running" class="mt-2 pt-2 queue-divider">
@@ -447,3 +447,4 @@ onUnmounted(() => {
     </v-dialog>
   </div>
 </template>
+

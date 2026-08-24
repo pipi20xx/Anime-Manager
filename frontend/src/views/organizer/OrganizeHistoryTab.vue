@@ -198,12 +198,10 @@ defineExpose({ fetchHistory })
         @keyup.enter="searchHistory"
         @click:clear="historySearch = ''; searchHistory()"
       />
-      <v-btn-toggle v-model="historyStatusFilter" mandatory density="compact" variant="outlined" divided>
-        <v-btn size="small" value="all" @click="filterHistory()">全部</v-btn>
-        <v-btn size="small" value="success" @click="filterHistory('success')">成功</v-btn>
-        <v-btn size="small" value="failed" @click="filterHistory('failed')">失败</v-btn>
-        <v-btn size="small" value="skipped" @click="filterHistory('skipped')">跳过</v-btn>
-      </v-btn-toggle>
+      <v-chip :color="historyStatusFilter === 'all' ? 'primary' : undefined" :variant="historyStatusFilter === 'all' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory()">全部</v-chip>
+      <v-chip :color="historyStatusFilter === 'success' ? 'primary' : undefined" :variant="historyStatusFilter === 'success' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('success')">成功</v-chip>
+      <v-chip :color="historyStatusFilter === 'failed' ? 'primary' : undefined" :variant="historyStatusFilter === 'failed' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('failed')">失败</v-chip>
+      <v-chip :color="historyStatusFilter === 'skipped' ? 'primary' : undefined" :variant="historyStatusFilter === 'skipped' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('skipped')">跳过</v-chip>
       <v-spacer />
       <v-btn variant="tonal" color="error" size="small" prepend-icon="mdi-delete-sweep-outline" @click="clearAllHistory">清空历史</v-btn>
     </div>
@@ -313,3 +311,9 @@ defineExpose({ fetchHistory })
     <ExecutionLogModal v-model="showLogModal" :task-id="logTaskId" />
   </div>
 </template>
+
+<style scoped>
+.history-filter-chip {
+  height: 40px !important;
+}
+</style>

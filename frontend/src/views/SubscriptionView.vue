@@ -63,7 +63,7 @@ registerHeaderTab({
     {
       icon: 'mdi-refresh',
       text: '全量刷新',
-      variant: 'text',
+      variant: 'tonal',
       color: 'info',
       action: runNow,
       show: true,
@@ -72,7 +72,7 @@ registerHeaderTab({
     {
       icon: 'mdi-eraser',
       text: '清空黑名单',
-      variant: 'text',
+      variant: 'tonal',
       color: 'warning',
       action: clearRecognitionCache,
       show: true,
