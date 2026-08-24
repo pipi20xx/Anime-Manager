@@ -16,6 +16,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { organizerApi } from '@/api'
 import { useNotification } from '@/composables'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import { useSystemStore } from '@/stores'
 import TasksTab from './organizer/TasksTab.vue'
 import RulesTab from './organizer/RulesTab.vue'
@@ -109,28 +110,22 @@ onUnmounted(() => {
   if (wsUnsubscribe) wsUnsubscribe()
   if (refreshTimer) clearInterval(refreshTimer)
 })
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: [
+    { title: '整理任务', tab: 'tasks' },
+    { title: '重命名规则', tab: 'rules' },
+    { title: '后台任务', tab: 'background' },
+    { title: '整理历史', tab: 'history' },
+  ],
+  modelValue: activeTab,
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">整理管理</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">文件重命名规则与整理任务管理</div>
-      </div>
-    </div>
-
-    <!-- 标签切换 -->
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary">
-        <v-tab value="tasks">整理任务</v-tab>
-        <v-tab value="rules">重命名规则</v-tab>
-        <v-tab value="background">后台任务</v-tab>
-        <v-tab value="history">整理历史</v-tab>
-      </v-tabs>
-    </div>
-
     <v-window v-model="activeTab">
       <!-- ===== 整理任务 ===== -->
       <v-window-item value="tasks">

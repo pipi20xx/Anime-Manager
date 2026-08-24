@@ -13,6 +13,7 @@ import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { api, apiFetch } from '@/api'
 import { configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import { PasswordInput } from '@/components/common'
 import { marked } from 'marked'
 
@@ -520,58 +521,24 @@ onMounted(() => {
   fetchSkills()
   fetchTools()
 })
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: [
+    { title: 'AI 对话', icon: 'mdi-chat-outline', tab: 'chat' },
+    { title: '工具列表', icon: 'mdi-toolbox-outline', tab: 'tools' },
+    { title: '技能管理', icon: 'mdi-lightning-bolt-outline', tab: 'skills' },
+    { title: '助手配置', icon: 'mdi-cog-outline', tab: 'config' },
+    { title: 'AI 介入测试', icon: 'mdi-robot-excited-outline', tab: 'fallback-test' },
+    { title: 'Telegram Bot', icon: 'mdi-send-circle-outline', tab: 'telegram' },
+  ],
+  modelValue: activeTab,
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6 d-flex align-center justify-space-between">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">AI 实验室</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">AI 语义解析与智能助手</div>
-      </div>
-      <div class="d-flex align-center ga-3">
-        <v-switch
-          v-model="assistantConfig.use_tools"
-          density="compact"
-          hide-details
-          color="primary"
-          :label="assistantConfig.use_tools ? '工具模式' : '纯对话'"
-          @update:model-value="saveUseTools"
-        />
-        <v-chip color="primary" variant="tonal" size="small">Beta</v-chip>
-      </div>
-    </div>
-
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary">
-        <v-tab value="chat">
-          <v-icon start size="18">mdi-chat-outline</v-icon>
-          AI 对话
-        </v-tab>
-        <v-tab value="tools">
-          <v-icon start size="18">mdi-toolbox-outline</v-icon>
-          工具列表
-        </v-tab>
-        <v-tab value="skills">
-          <v-icon start size="18">mdi-lightning-bolt-outline</v-icon>
-          技能管理
-        </v-tab>
-        <v-tab value="config">
-          <v-icon start size="18">mdi-cog-outline</v-icon>
-          助手配置
-        </v-tab>
-        <v-tab value="fallback-test">
-          <v-icon start size="18">mdi-robot-excited-outline</v-icon>
-          AI 介入测试
-        </v-tab>
-        <v-tab value="telegram">
-          <v-icon start size="18">mdi-send-circle-outline</v-icon>
-          Telegram Bot
-        </v-tab>
-      </v-tabs>
-    </div>
-
     <v-window v-model="activeTab">
       <!-- AI 对话 -->
       <v-window-item value="chat">
@@ -885,7 +852,7 @@ onMounted(() => {
             <v-divider class="mb-4" />
 
             <div class="d-flex align-center ga-3 mb-4">
-              <v-switch v-model="assistantConfig.use_tools" density="compact" hide-details color="primary" />
+              <v-switch v-model="assistantConfig.use_tools" density="compact" hide-details color="primary" @update:model-value="saveUseTools" />
               <div>
                 <div class="text-body-2 font-weight-medium">启用工具调用</div>
                 <div class="text-caption text-medium-emphasis">允许 AI 调用系统工具执行实际操作</div>

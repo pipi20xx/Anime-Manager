@@ -10,6 +10,7 @@
  */
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 
 defineOptions({ name: 'ExploreView' })
 
@@ -42,20 +43,17 @@ const tabs = [
   { value: 'discover', title: '探索', icon: 'mdi-compass-outline' },
   { value: 'search', title: '搜索', icon: 'mdi-magnify' },
 ]
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: tabs.map(t => ({ title: t.title, icon: t.icon, tab: t.value })),
+  modelValue: currentTab,
+})
 </script>
 
 <template>
-  <div class="explore-view">
-    <!-- 标签导航 -->
-    <div class="explore-header d-flex justify-center sticky-tabs">
-      <v-tabs v-model="currentTab" align-tabs="center" color="primary" style="max-width: 560px">
-        <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value">
-          <v-icon start size="18">{{ tab.icon }}</v-icon>
-          {{ tab.title }}
-        </v-tab>
-      </v-tabs>
-    </div>
-
+  <div class="explore-view pa-4 pa-md-6">
     <!-- 子路由内容 -->
     <div class="explore-content">
       <router-view v-slot="{ Component, route: r }">

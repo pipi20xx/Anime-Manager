@@ -7,6 +7,7 @@
  */
 import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 
 defineOptions({ name: 'GuideView' })
 
@@ -79,25 +80,17 @@ watch(activeTab, () => {
   const el = document.querySelector('.md-content-wrapper')
   if (el) el.scrollTop = 0
 })
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: tabs.map(t => ({ title: t.label, icon: t.icon, tab: t.value })),
+  modelValue: activeTab,
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6">
-      <h1 class="page-title text-h5 font-weight-bold">规则使用说明</h1>
-      <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">规则与正则指南</div>
-    </div>
-
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary" show-arrows>
-        <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value">
-          <v-icon start size="18">{{ tab.icon }}</v-icon>
-          {{ tab.label }}
-        </v-tab>
-      </v-tabs>
-    </div>
-
     <v-window v-model="activeTab">
       <v-window-item v-for="tab in tabs" :key="tab.value" :value="tab.value">
         <v-card class="glass-card" rounded="xl">

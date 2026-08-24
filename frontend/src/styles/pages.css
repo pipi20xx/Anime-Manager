@@ -110,40 +110,11 @@ background: transparent;
 
 
 /* ============================================================
- * Sticky Tabs — 结构
+ * Sticky Tabs — 已迁移到顶栏
+ * Tab 现在通过 useDynamicHeaderTab 注册到顶栏内部渲染，
+ * 与顶栏共享玻璃材质和水纹效果，不再需要页面内 sticky-tabs。
+ * 保留 .sticky-sub-tabs 供页面内二级 Tab 使用。
  * ============================================================ */
-
-.sticky-tabs {
-  background: transparent !important;
-  background-color: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-bottom: none !important;
-}
-
-.sticky-tabs .v-tabs__container,
-.sticky-tabs .v-slide-group,
-.sticky-tabs .v-slide-group__wrapper,
-.sticky-tabs .v-slide-group__content {
-  background: transparent !important;
-}
-
-.sticky-tabs {
-  position: sticky;
-  top: var(--v-layout-top, 0px);
-  z-index: 200;
-  margin: 0 0 16px !important;
-  padding: 4px 0 12px;
-}
-
-@media (min-width: 960px) {
-  .sticky-tabs {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 0;
-    padding-right: 0;
-  }
-}
 
 .sticky-sub-tabs {
   background: transparent !important;

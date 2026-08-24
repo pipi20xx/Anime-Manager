@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent, nextTick, provide, isRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore, useSystemStore } from '@/stores'
 import { ConfirmDialog, LogTerminal, AppNotification } from '@/components/common'
 import { useGlassFixedShellBackplate } from '@/composables/useGlassFixedShellBackplate'
 import { usePagePresentationMotion } from '@/composables/usePagePresentationMotion'
+import type { DynamicHeaderTabItem, DynamicHeaderTabButton } from '@/composables/useDynamicHeaderTab'
 
 // 异步加载玻璃设置弹窗
 const GlassSettingsDialog = defineAsyncComponent(() => import('@/components/theme/GlassSettingsDialog.vue'))
@@ -133,6 +134,78 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
   pagePresentationMotion.cancel()
 })
+
+// ═══════════════════════════════════════════════════════════════
+// 动态顶栏 Tab — 页面通过 useDynamicHeaderTab 注册 Tab 到顶栏内部
+// 参照 MoviePilot 的做法，Tab 渲染在 <header> 内部，
+// 与顶栏共享玻璃材质和水纹效果。
+// ═══════════════════════════════════════════════════════════════
+
+interface DynamicHeaderTab {
+  items: DynamicHeaderTabItem[]
+  modelValue: string
+  appendButtons?: DynamicHeaderTabButton[]
+  routePath?: string
+  onUpdateModelValue?: (value: string) => void
+}
+
+const dynamicHeaderTab = ref<DynamicHeaderTab | null>(null)
+
+function registerDynamicHeaderTab(tab: DynamicHeaderTab) {
+  tab.routePath = route.path
+  dynamicHeaderTab.value = { ...tab }
+}
+
+function unregisterDynamicHeaderTab(routePath?: string) {
+  if (routePath && dynamicHeaderTab.value?.routePath !== routePath) return
+  dynamicHeaderTab.value = null
+}
+
+provide('registerDynamicHeaderTab', registerDynamicHeaderTab)
+provide('unregisterDynamicHeaderTab', unregisterDynamicHeaderTab)
+
+// 路由变化时清除不属于当前路由的 Tab
+watch(
+  () => route.path,
+  () => {
+    nextTick(() => {
+      if (dynamicHeaderTab.value && dynamicHeaderTab.value.routePath !== route.path) {
+        dynamicHeaderTab.value = null
+      }
+    })
+  },
+  { immediate: false },
+)
+
+const visibleTabItems = computed(() => {
+  if (!dynamicHeaderTab.value || dynamicHeaderTab.value.routePath !== route.path) return []
+  return dynamicHeaderTab.value.items
+})
+
+const hasDynamicHeaderTab = computed(() => visibleTabItems.value.length > 0)
+
+const visibleTabButtons = computed(() => {
+  if (!hasDynamicHeaderTab.value) return []
+  return (dynamicHeaderTab.value?.appendButtons ?? []).filter(button => {
+    const show = isRef(button.show) ? button.show.value : button.show
+    return show !== false
+  })
+})
+
+function handleTabChange(newValue: string) {
+  if (dynamicHeaderTab.value) {
+    dynamicHeaderTab.value.modelValue = newValue
+    dynamicHeaderTab.value.onUpdateModelValue?.(newValue)
+  }
+}
+
+function resolveButtonColor(button: DynamicHeaderTabButton) {
+  return isRef(button.color) ? button.color.value : (button.color ?? 'default')
+}
+
+function resolveButtonLoading(button: DynamicHeaderTabButton) {
+  return isRef(button.loading) ? button.loading.value : (button.loading ?? false)
+}
 </script>
 
 <template>
@@ -229,9 +302,58 @@ onUnmounted(() => {
     </v-navigation-drawer>
 
     <!-- 顶栏 —— 添加 layout-navbar class 供渲染器表面发现 -->
-    <v-app-bar elevation="0" density="comfortable" class="layout-navbar navbar-blur">
+    <v-app-bar
+      elevation="0"
+      density="comfortable"
+      class="layout-navbar navbar-blur"
+      :extension-height="hasDynamicHeaderTab ? 44 : undefined"
+    >
       <v-app-bar-nav-icon v-if="isMobile" @click="drawer = !drawer" />
       <v-app-bar-title class="font-weight-bold text-body-1">{{ currentTitle }}</v-app-bar-title>
+
+      <!-- 动态顶栏 Tab —— 通过 extension 插槽渲染在顶栏第二行，与顶栏共享玻璃材质和水纹效果 -->
+      <template #extension v-if="hasDynamicHeaderTab">
+        <div class="layout-dynamic-header-tab">
+          <div
+            v-for="item in visibleTabItems"
+            :key="item.tab"
+            class="header-tab"
+            :class="{ 'header-tab--active': dynamicHeaderTab!.modelValue === item.tab }"
+            @click="handleTabChange(item.tab)"
+          >
+            <v-icon v-if="item.icon" start size="18">{{ item.icon }}</v-icon>
+            <span>{{ item.title }}</span>
+          </div>
+          <!-- 附加按钮 -->
+          <v-spacer v-if="visibleTabButtons.length" />
+          <template v-for="button in visibleTabButtons" :key="button.icon">
+            <v-btn
+              v-if="button.text"
+              :prepend-icon="button.icon"
+              :variant="button.variant || 'text'"
+              :color="resolveButtonColor(button)"
+              :size="button.size || 'small'"
+              :class="button.class"
+              :loading="resolveButtonLoading(button)"
+              density="comfortable"
+              @click="button.action?.()"
+            >
+              {{ button.text }}
+            </v-btn>
+            <v-btn
+              v-else
+              :icon="button.icon"
+              :variant="button.variant || 'text'"
+              :color="resolveButtonColor(button)"
+              :size="button.size || 'small'"
+              :class="button.class"
+              :loading="resolveButtonLoading(button)"
+              density="comfortable"
+              @click="button.action?.()"
+            />
+          </template>
+        </div>
+      </template>
 
       <template #append>
         <div class="d-flex align-center ga-2">
@@ -385,5 +507,52 @@ onUnmounted(() => {
   height: 28px;
   /* <img> 引入的 SVG 无法继承 currentColor，用 filter 着色 */
   filter: brightness(0) saturate(100%) invert(47%) sepia(98%) saturate(1925%) hue-rotate(234deg) brightness(96%) contrast(96%);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * 动态顶栏 Tab — 参照 MoviePilot HeaderTab.vue
+ * Tab 渲染在顶栏内部，与顶栏共享玻璃材质。
+ * ═══════════════════════════════════════════════════════════════ */
+.layout-dynamic-header-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  padding-inline: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.layout-dynamic-header-tab::-webkit-scrollbar {
+  display: none;
+}
+
+.header-tab {
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  background-color: transparent;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.header-tab:hover:not(.header-tab--active) {
+  background-color: rgba(var(--v-theme-primary), 0.06);
+  color: rgba(var(--v-theme-on-surface), 1);
+}
+
+.header-tab--active {
+  color: rgb(var(--v-theme-primary));
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .header-tab:hover:not(.header-tab--active) {
+    background-color: transparent;
+  }
 }
 </style>

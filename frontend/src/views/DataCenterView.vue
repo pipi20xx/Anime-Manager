@@ -11,6 +11,7 @@
  * - MaintenanceTab: 维护中心
  */
 import { ref } from 'vue'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import MetadataTab from './datacenter/MetadataTab.vue'
 import RulesTab from './datacenter/RulesTab.vue'
 import MappingTab from './datacenter/MappingTab.vue'
@@ -21,30 +22,24 @@ import MaintenanceTab from './datacenter/MaintenanceTab.vue'
 defineOptions({ name: 'DataCenterView' })
 
 const activeTab = ref('metadata')
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: [
+    { title: '元数据资产', icon: 'mdi-image-multiple-outline', tab: 'metadata' },
+    { title: '二级分类规则', icon: 'mdi-tag-multiple-outline', tab: 'rules' },
+    { title: 'ID映射管理', icon: 'mdi-swap-horizontal', tab: 'mapping' },
+    { title: 'SQL 实验室', icon: 'mdi-code-block-braces', tab: 'sqllab' },
+    { title: '引擎配置', icon: 'mdi-database-cog-outline', tab: 'dbconfig' },
+    { title: '维护中心', icon: 'mdi-wrench-outline', tab: 'maintenance' },
+  ],
+  modelValue: activeTab,
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">数据中心</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">高性能 PostgreSQL 引擎与超级元数据资产管理</div>
-      </div>
-    </div>
-
-    <!-- 标签切换 -->
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary">
-        <v-tab value="metadata"><v-icon start size="18">mdi-image-multiple-outline</v-icon>元数据资产</v-tab>
-        <v-tab value="rules"><v-icon start size="18">mdi-tag-multiple-outline</v-icon>二级分类规则</v-tab>
-        <v-tab value="mapping"><v-icon start size="18">mdi-swap-horizontal</v-icon>ID映射管理</v-tab>
-        <v-tab value="sqllab"><v-icon start size="18">mdi-code-block-braces</v-icon>SQL 实验室</v-tab>
-        <v-tab value="dbconfig"><v-icon start size="18">mdi-database-cog-outline</v-icon>引擎配置</v-tab>
-        <v-tab value="maintenance"><v-icon start size="18">mdi-wrench-outline</v-icon>维护中心</v-tab>
-      </v-tabs>
-    </div>
-
     <v-window v-model="activeTab">
       <v-window-item value="metadata"><MetadataTab /></v-window-item>
       <v-window-item value="rules"><RulesTab /></v-window-item>

@@ -12,6 +12,7 @@
  * 7. 掉盘与失效检测 - 健康检查配置
  */
 import { ref } from 'vue'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import BasicConfigTab from './BasicConfigTab.vue'
 import ClientManageTab from './ClientManageTab.vue'
 import RulesConfigTab from './RulesConfigTab.vue'
@@ -22,44 +23,24 @@ import HealthCheckTab from './HealthCheckTab.vue'
 defineOptions({ name: 'SettingsView' })
 
 const activeTab = ref('basic')
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: [
+    { title: '基础配置', icon: 'mdi-cog-outline', tab: 'basic' },
+    { title: '下载器管理', icon: 'mdi-download-circle-outline', tab: 'clients' },
+    { title: '识别与订阅规则', icon: 'mdi-ruler-square', tab: 'rules' },
+    { title: '账号与安全', icon: 'mdi-shield-account-outline', tab: 'account' },
+    { title: '服务状态', icon: 'mdi-server-outline', tab: 'services' },
+    { title: '掉盘与失效检测', icon: 'mdi-harddisk-remove', tab: 'health' },
+  ],
+  modelValue: activeTab,
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <div class="app-page-header mb-6">
-      <h1 class="page-title text-h5 font-weight-bold">系统设置</h1>
-      <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">系统配置与选项</div>
-    </div>
-
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary">
-        <v-tab value="basic">
-          <v-icon start size="18">mdi-cog-outline</v-icon>
-          基础配置
-        </v-tab>
-        <v-tab value="clients">
-          <v-icon start size="18">mdi-download-circle-outline</v-icon>
-          下载器管理
-        </v-tab>
-        <v-tab value="rules">
-          <v-icon start size="18">mdi-ruler-square</v-icon>
-          识别与订阅规则
-        </v-tab>
-        <v-tab value="account">
-          <v-icon start size="18">mdi-shield-account-outline</v-icon>
-          账号与安全
-        </v-tab>
-        <v-tab value="services">
-          <v-icon start size="18">mdi-server-outline</v-icon>
-          服务状态
-        </v-tab>
-        <v-tab value="health">
-          <v-icon start size="18">mdi-harddisk-remove</v-icon>
-          掉盘与失效检测
-        </v-tab>
-      </v-tabs>
-    </div>
-
     <v-window v-model="activeTab">
       <v-window-item value="basic">
         <BasicConfigTab />

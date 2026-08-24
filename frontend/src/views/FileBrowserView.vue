@@ -580,12 +580,7 @@ onMounted(() => {
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-4 d-flex align-center justify-space-between flex-wrap ga-3">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">文件浏览</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">文件资源管理器</div>
-      </div>
+    <div class="d-flex justify-end mb-4">
       <v-btn variant="tonal" color="primary" prepend-icon="mdi-folder-sync-outline" @click="showManualModal = true">
         整理当前目录
       </v-btn>

@@ -11,6 +11,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { configApi, systemApi } from '@/api'
 import { useNotification, useClipboard } from '@/composables'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import { useThemeStore } from '@/stores'
 
 defineOptions({ name: 'ExternalControlView' })
@@ -176,37 +177,22 @@ onUnmounted(() => {
   if (heightTimer) clearInterval(heightTimer)
   window.removeEventListener('resize', adjustIframeHeight)
 })
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: [
+    { title: 'API 密钥', icon: 'mdi-key-outline', tab: 'keys' },
+    { title: '设置', icon: 'mdi-tune-vertical', tab: 'settings' },
+    { title: '访问日志', icon: 'mdi-file-document-outline', tab: 'logs' },
+    { title: 'API 文档', icon: 'mdi-book-open-variant', tab: 'docs' },
+  ],
+  modelValue: activeTab,
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6">
-      <h1 class="page-title text-h5 font-weight-bold">外部控制</h1>
-      <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">API 管理与集成设置</div>
-    </div>
-
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary">
-        <v-tab value="keys">
-          <v-icon start size="18">mdi-key-outline</v-icon>
-          API 密钥
-        </v-tab>
-        <v-tab value="settings">
-          <v-icon start size="18">mdi-tune-vertical</v-icon>
-          设置
-        </v-tab>
-        <v-tab value="logs">
-          <v-icon start size="18">mdi-file-document-outline</v-icon>
-          访问日志
-        </v-tab>
-        <v-tab value="docs">
-          <v-icon start size="18">mdi-book-open-variant</v-icon>
-          API 文档
-        </v-tab>
-      </v-tabs>
-    </div>
-
     <v-card class="glass-card" rounded="xl">
       <v-window v-model="activeTab">
         <!-- 板块 1: API 密钥 -->

@@ -395,12 +395,7 @@ onMounted(() => {
 
 <template>
   <v-container fluid class="pa-4 pa-md-6 calendar-view">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6 d-flex align-center justify-space-between">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">追剧日历</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">番剧播出时间追踪与订阅管理</div>
-      </div>
+    <div class="d-flex align-center justify-end mb-4">
       <div class="d-flex align-center ga-3">
         <v-text-field
           v-model="selectedDateStr"

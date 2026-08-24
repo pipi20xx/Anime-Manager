@@ -92,14 +92,6 @@ const filteredLogs = computed(() => {
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">识别调试台</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">文件名识别测试与结果查看</div>
-      </div>
-    </div>
-
     <!-- 响应式分栏 -->
     <v-row>
       <!-- 主区域 -->

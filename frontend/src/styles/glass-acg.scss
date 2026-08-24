@@ -239,15 +239,15 @@ html.glass-theme-acg {
     background-color: var(--glass-surface) !important;
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // 顶栏/导航栏（照搬 glass.scss 431-438 + 475-477）
-  // ═══════════════════════════════════════════════════════════════
-  .layout-navbar,
-  .v-app-bar,
-  .v-system-bar {
+// ═══════════════════════════════════════════════════════════════
+// 顶栏/导航栏（Tab 已迁入顶栏内部，无需单独选中 .sticky-tabs）
+// ═══════════════════════════════════════════════════════════════
+.layout-navbar,
+.v-app-bar,
+.v-system-bar {
     border-color: var(--glass-border-raised) !important;
-    -webkit-backdrop-filter: var(--glass-raised-backdrop-filter);
-    backdrop-filter: var(--glass-raised-backdrop-filter);
+    -webkit-backdrop-filter: var(--glass-raised-backdrop-filter) !important;
+    backdrop-filter: var(--glass-raised-backdrop-filter) !important;
     background-color: var(--glass-surface-raised) !important;
     background-image: var(--glass-sheen) !important;
     box-shadow: var(--glass-navbar-shadow) !important;
@@ -615,9 +615,9 @@ html.glass-theme-acg {
       .v-toolbar,
       .v-expansion-panel,
       .v-navigation-drawer,
-      .v-app-bar,
-      .layout-navbar
-    ) {
+.v-app-bar,
+.layout-navbar
+) {
       background-color: rgba(18, 28, 45, 94%) !important;
     }
   }
@@ -633,10 +633,10 @@ html.glass-theme-acg {
       .v-list,
       .v-toolbar,
       .v-navigation-drawer,
-      .v-app-bar,
-      .layout-navbar,
-      .v-overlay__content
-    ) {
+.v-app-bar,
+.layout-navbar,
+.v-overlay__content
+) {
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
       background-color: rgb(11, 19, 34) !important;
@@ -747,9 +747,9 @@ html.glass-theme-acg[data-glass-appearance='frosted']:is(
 // 渲染器 ready 后恢复导航栏和弹窗的 backdrop-filter
 html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass-renderer-state='ready']
   body.glass-theme-acg {
-  .layout-vertical-nav::before,
-  .layout-navbar {
-    -webkit-backdrop-filter: var(--glass-surface-backdrop-filter) !important;
+.layout-vertical-nav::before,
+.layout-navbar {
+-webkit-backdrop-filter: var(--glass-surface-backdrop-filter) !important;
     backdrop-filter: var(--glass-surface-backdrop-filter) !important;
   }
 
@@ -765,9 +765,9 @@ html.glass-theme-acg[data-glass-appearance='frosted']:is(
     [data-glass-quality='high']
   )[data-glass-renderer-state='ready']
   body.glass-theme-acg {
-  .layout-vertical-nav::before,
-  .layout-navbar {
-    -webkit-backdrop-filter: none !important;
+.layout-vertical-nav::before,
+.layout-navbar {
+-webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 }

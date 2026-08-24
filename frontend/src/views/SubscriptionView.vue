@@ -10,6 +10,7 @@
 import { ref } from 'vue'
 import { subscriptionApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import SubscriptionsTab from './subscription/SubscriptionsTab.vue'
 import FeedsTab from './subscription/FeedsTab.vue'
 import RulesTab from './subscription/RulesTab.vue'
@@ -48,31 +49,40 @@ function refreshCurrentTab() {
   else if (activeTab.value === 'feeds') feedsTabRef.value?.fetchFeeds()
   else if (activeTab.value === 'rules') rulesTabRef.value?.fetchRules()
 }
+
+// 注册动态顶栏 Tab
+const { registerHeaderTab } = useDynamicHeaderTab()
+registerHeaderTab({
+  items: [
+    { title: '追剧订阅', tab: 'subscriptions' },
+    { title: '订阅源', tab: 'feeds' },
+    { title: '下载规则', tab: 'rules' },
+  ],
+  modelValue: activeTab,
+  appendButtons: [
+    {
+      icon: 'mdi-refresh',
+      text: '全量刷新',
+      variant: 'text',
+      color: 'info',
+      action: runNow,
+      show: true,
+      loading: syncing,
+    },
+    {
+      icon: 'mdi-eraser',
+      text: '清空黑名单',
+      variant: 'text',
+      color: 'warning',
+      action: clearRecognitionCache,
+      show: true,
+    },
+  ],
+})
 </script>
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <!-- 页面头部 -->
-    <div class="app-page-header mb-6 d-flex align-center justify-space-between flex-wrap ga-3">
-      <div>
-        <h1 class="page-title text-h5 font-weight-bold">订阅管理</h1>
-        <div class="page-subtitle text-body-2 text-medium-emphasis mt-1">RSS 自动化追番与资源监控</div>
-      </div>
-      <div class="d-flex ga-2 flex-wrap">
-        <v-btn variant="tonal" color="info" prepend-icon="mdi-refresh" :loading="syncing" @click="runNow">立即触发全量刷新</v-btn>
-        <v-btn variant="tonal" prepend-icon="mdi-eraser" color="warning" @click="clearRecognitionCache">清空黑名单</v-btn>
-      </div>
-    </div>
-
-    <!-- 标签切换 -->
-    <div class="sticky-tabs">
-      <v-tabs v-model="activeTab" color="primary">
-        <v-tab value="subscriptions">追剧订阅</v-tab>
-        <v-tab value="feeds">订阅源</v-tab>
-        <v-tab value="rules">下载规则</v-tab>
-      </v-tabs>
-    </div>
-
     <v-window v-model="activeTab">
       <v-window-item value="subscriptions">
         <SubscriptionsTab ref="subscriptionsTabRef" />
@@ -84,6 +94,5 @@ function refreshCurrentTab() {
         <RulesTab ref="rulesTabRef" />
       </v-window-item>
     </v-window>
-
   </v-container>
 </template>
