@@ -218,7 +218,7 @@ function handleRunBackground() {
                 <v-icon size="16" color="info">mdi-tune-variant</v-icon>
                 强制元数据 (可选)
               </div>
-              <v-row dense class="mb-2">
+              <v-row density="compact" class="mb-2">
                 <v-col cols="4">
                   <v-text-field v-model="manualTask.forced_tmdb_id" label="TMDB ID" placeholder="TMDB ID" density="compact" hide-details variant="outlined" />
                 </v-col>

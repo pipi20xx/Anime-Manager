@@ -1,11 +1,12 @@
 /**
- * theme-acg.css — ACG 主题：二次元壁纸 + 暗色毛玻璃
+ * theme-acg.css — ACG 主题：文字颜色与光晕
  *
  * 仅支持 dark 模式（useThemeStore 切到 ACG 时自动锁定 dark）。
- * 组件视觉（背景/模糊/边框/阴影/圆角/滚动条等）由
- * tokens.css + visual.css 统一处理，此文件只保留 ACG 专属效果：
- *   - 水滴透明强制覆盖
- *   - 导航栏圆角项
+ * 材质属性（background/backdrop-filter/border-color/box-shadow）
+ * 已由 glass-acg.scss 1:1 照搬 MoviePilot glass.scss 统一接管。
+ * 此文件只保留 ACG 专属的文字颜色和光晕效果：
+ *   - Vuetify 变量修复（on-background 白色）
+ *   - 导航栏圆角项 + 选中/未选中文字区分
  *   - 文字光晕（暗色壁纸上的可读性）
  *   - 霓虹/渐变装饰文字
  *   - 详情页/日历组件文字光晕
@@ -13,86 +14,27 @@
  *   - 日志终端配色
  *   - Checkbox/Radio 选中发光
  *   - 登录页按钮渐变
- *   - 移动端性能降级
+ *   - 移动端性能降级（仅 transition/transform/text-shadow，不覆盖材质）
  */
 
 
 /* ================================================================
- * 0. 水滴透明 — 强制覆盖所有卡片/面板背景
- *    visual.css 通过 var(--am-surface-bg) !important 已覆盖，
- *    但 Vuetify @layer + 内联 style 可能在某些情况下仍然生效。
- *    此处用 html.glass-theme-acg 前缀（更高优先级）再次强制覆盖。
+ * 0. Vuetify 变量修复
+ *    Vuetify 的 text-medium-emphasis / text-high-emphasis 等 utility class
+ *    使用 --v-theme-on-background 而非 --v-theme-on-surface。
+ *    暗色主题中 background = #121212 (18,18,18)，几乎是黑色，
+ *    在透明背景上完全看不清。
+ *    直接覆盖为白色，所有引用 on-background 的 class 自动变为白色系。
  * ================================================================ */
 
-/* 根因修复：Vuetify 的 text-medium-emphasis / text-high-emphasis 等 utility class
-   使用 --v-theme-on-background 而非 --v-theme-on-surface。
-   暗色主题中 background = #121212 (18,18,18)，几乎是黑色，
-   在透明背景上完全看不清。
-   直接覆盖为白色，所有引用 on-background 的 class 自动变为白色系。 */
 html.glass-theme-acg {
   --v-theme-on-background: 255, 255, 255;
   --v-theme-background: 18, 18, 18;
 }
 
-/* 卡片 — 所有变体 */
-html.glass-theme-acg .v-card,
-html.glass-theme-acg .v-card.v-card--variant-elevated,
-html.glass-theme-acg .v-card.v-card--variant-flat,
-html.glass-theme-acg .v-card.v-card--variant-tonal {
-  background: var(--am-surface-bg) !important;
-  background-color: var(--am-surface-bg) !important;
-  backdrop-filter: var(--am-surface-blur) !important;
-  -webkit-backdrop-filter: var(--am-surface-blur) !important;
-}
-
-/* v-sheet */
-html.glass-theme-acg .v-sheet:not(.v-snackbar__wrapper) {
-  background: var(--am-surface-bg) !important;
-  background-color: var(--am-surface-bg) !important;
-  backdrop-filter: var(--am-surface-blur) !important;
-  -webkit-backdrop-filter: var(--am-surface-blur) !important;
-}
-
-/* 弹窗 / 菜单 — 弹窗内所有层都必须透明 */
-html.glass-theme-acg .v-dialog .v-card,
-html.glass-theme-acg .v-overlay__content .v-card,
-html.glass-theme-acg .v-menu .v-card,
-html.glass-theme-acg .v-menu .v-list,
-html.glass-theme-acg .v-dialog .v-card .v-card-text,
-html.glass-theme-acg .v-dialog .v-card .v-card-title,
-html.glass-theme-acg .v-dialog .v-card .v-card-actions,
-html.glass-theme-acg .v-dialog .v-card .v-window,
-html.glass-theme-acg .v-dialog .v-card .v-tabs,
-html.glass-theme-acg .v-dialog .v-card .v-window-item {
-  background: transparent !important;
-  background-color: transparent !important;
-}
-
-/* 弹窗本身用 overlay 变量做半透明外框 */
-html.glass-theme-acg .v-dialog > .v-overlay__scrim {
-  background: var(--am-scrim-bg) !important;
-}
-html.glass-theme-acg .v-dialog .v-card {
-  background: var(--am-overlay-bg) !important;
-  background-color: var(--am-overlay-bg) !important;
-  backdrop-filter: var(--am-overlay-blur) !important;
-  -webkit-backdrop-filter: var(--am-overlay-blur) !important;
-}
-
-/* 导航栏 */
-html.glass-theme-acg .v-navigation-drawer,
-html.glass-theme-acg .v-navigation-drawer__content {
-  background: var(--am-nav-bg) !important;
-  background-color: var(--am-nav-bg) !important;
-  backdrop-filter: var(--am-nav-blur) !important;
-  -webkit-backdrop-filter: var(--am-nav-blur) !important;
-}
-
-/* 按钮 (无 color 的 flat/tonal) — 深色底 + 白字 */
+/* 按钮 tonal — 文字颜色覆盖（材质由 glass-acg.scss 处理） */
 html.glass-theme-acg .v-btn.v-btn--variant-flat:not([class*="text-"]):not([class*="bg-"]),
 html.glass-theme-acg .v-btn.v-btn--variant-tonal:not([class*="text-"]):not([class*="bg-"]) {
-  background: rgba(30, 30, 50, 0.7) !important;
-  background-color: rgba(30, 30, 50, 0.7) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-flat:not([class*="text-"]):not([class*="bg-"]) .v-btn__content,
@@ -100,40 +42,33 @@ html.glass-theme-acg .v-btn.v-btn--variant-tonal:not([class*="text-"]):not([clas
   color: #fff !important;
 }
 
-/* 有 color 的 tonal 按钮 — 实色底 + 白字 */
+/* 有 color 的 tonal 按钮 — 白字 */
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-primary,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-primary {
-  background: rgb(var(--v-theme-primary)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-info,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-info {
-  background: rgb(var(--v-theme-info)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-success,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-success {
-  background: rgb(var(--v-theme-success)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-warning,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-warning {
-  background: rgb(var(--v-theme-warning)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-error,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-error {
-  background: rgb(var(--v-theme-error)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-secondary,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-secondary {
-  background: rgb(var(--v-theme-secondary)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.text-accent,
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-accent {
-  background: rgb(var(--v-theme-accent)) !important;
   color: #fff !important;
 }
 /* tonal 按钮内容文字统一白色 */
@@ -153,51 +88,39 @@ html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-secondary .v-btn__con
 html.glass-theme-acg .v-btn.v-btn--variant-tonal.v-btn--bg-accent .v-btn__content {
   color: #fff !important;
 }
-/* tonal 按钮 hover — 略微提亮 */
-html.glass-theme-acg .v-btn.v-btn--variant-tonal:hover {
-  filter: brightness(1.15);
-}
 
-/* tonal chip — 实色底 + 白字（和按钮统一风格） */
+/* tonal chip — 白字（材质由 glass-acg.scss 处理） */
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-primary,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-primary {
-  background: rgb(var(--v-theme-primary)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-info,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-info {
-  background: rgb(var(--v-theme-info)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-success,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-success {
-  background: rgb(var(--v-theme-success)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-warning,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-warning {
-  background: rgb(var(--v-theme-warning)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-error,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-error {
-  background: rgb(var(--v-theme-error)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-secondary,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-secondary {
-  background: rgb(var(--v-theme-secondary)) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-accent,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-accent {
-  background: rgb(var(--v-theme-accent)) !important;
   color: #fff !important;
 }
-/* grey tonal chip — 深灰底 + 白字 */
+/* grey tonal chip — 白字 */
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.text-grey,
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-grey {
-  background: rgba(80, 80, 90, 0.9) !important;
   color: #fff !important;
 }
 /* tonal chip 内容文字统一白色 */
@@ -219,29 +142,25 @@ html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-accent .v-chip_
 html.glass-theme-acg .v-chip.v-chip--variant-tonal.v-chip--color-grey .v-chip__content {
   color: #fff !important;
 }
-/* tonal chip 无 color — 深色底 + 白字 */
+/* tonal chip 无 color — 白字 */
 html.glass-theme-acg .v-chip.v-chip--variant-tonal:not([class*="text-"]):not([class*="v-chip--color-"]) {
-  background: rgba(30, 30, 50, 0.7) !important;
   color: #fff !important;
 }
 html.glass-theme-acg .v-chip.v-chip--variant-tonal:not([class*="text-"]):not([class*="v-chip--color-"]) .v-chip__content {
   color: #fff !important;
 }
 
-/* Tab — 选中态实色底+白字，未选中态半透明深色底+浅色文字 */
+/* Tab — 文字颜色（材质由 glass-acg.scss 处理） */
 html.glass-theme-acg .v-tab {
-  background: rgba(30, 30, 50, 0.5) !important;
   color: rgba(255, 255, 255, 0.7) !important;
-  border-radius: var(--am-tab-radius) !important;
 }
 html.glass-theme-acg .v-tab .v-tab__content,
 html.glass-theme-acg .v-tab .v-btn__content {
   color: inherit !important;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.7), 0 1px 1px rgba(0, 0, 0, 0.4);
 }
-/* 选中态 — 实色 primary 底 + 白字 */
+/* 选中态 — 白字 */
 html.glass-theme-acg .v-tab.v-tab--selected {
-  background: rgb(var(--v-theme-primary)) !important;
   color: #fff !important;
   font-weight: 600 !important;
 }
@@ -250,42 +169,9 @@ html.glass-theme-acg .v-tab.v-tab--selected .v-btn__content {
   color: #fff !important;
   text-shadow: none;
 }
-/* 未选中 hover — 提亮深色底 */
+/* 未选中 hover — 白字 */
 html.glass-theme-acg .v-tab:not(.v-tab--selected):hover {
-  background: rgba(50, 50, 80, 0.7) !important;
   color: #fff !important;
-}
-
-/* 输入框 — 所有变体 */
-html.glass-theme-acg .v-field,
-html.glass-theme-acg .v-field__field,
-html.glass-theme-acg .v-field__outline,
-html.glass-theme-acg .v-field--variant-outlined,
-html.glass-theme-acg .v-field--variant-filled,
-html.glass-theme-acg .v-field--variant-solo,
-html.glass-theme-acg .v-field--variant-solo-filled,
-html.glass-theme-acg .v-field--variant-solo-inverted,
-html.glass-theme-acg .v-field--variant-underlined,
-html.glass-theme-acg .v-field--variant-plain {
-  background: var(--am-field-bg) !important;
-  background-color: var(--am-field-bg) !important;
-}
-
-/* 折叠面板 */
-html.glass-theme-acg .v-expansion-panel {
-  background: var(--am-surface-bg) !important;
-  background-color: var(--am-surface-bg) !important;
-  backdrop-filter: var(--am-surface-blur) !important;
-  -webkit-backdrop-filter: var(--am-surface-blur) !important;
-}
-
-/* 底部栏 / App Bar */
-html.glass-theme-acg .v-app-bar,
-html.glass-theme-acg .v-system-bar {
-  background: var(--am-nav-bg) !important;
-  background-color: var(--am-nav-bg) !important;
-  backdrop-filter: var(--am-nav-blur) !important;
-  -webkit-backdrop-filter: var(--am-nav-blur) !important;
 }
 
 /* App Bar 内 text variant 按钮图标 — 暗色壁纸上提亮 */
@@ -321,15 +207,15 @@ html.glass-theme-acg .v-app-bar .v-btn--disabled .v-icon {
 
 
 /* ================================================================
- * 1. 导航栏 — 圆角项 + 选中/未选中背景区分
- *    选中态：半透明 primary 底 + 白字
- *    未选中态：半透明深色底 + 浅色文字
+ * 1. 导航栏 — 圆角项 + 选中/未选中文字区分
+ *    选中态文字：白色 + 加粗
+ *    未选中文字：浅色 + 光晕
+ *    材质（background/box-shadow）由 glass-acg.scss 处理。
  * ================================================================ */
 
 html.glass-theme-acg .v-navigation-drawer .v-list-item {
   border-radius: 16px !important;
   transition: all 0.3s ease-out !important;
-  background: rgba(30, 30, 50, 0.35) !important;
 }
 
 /* 未选中文字 — 浅色 + 光晕 */
@@ -340,22 +226,13 @@ html.glass-theme-acg .v-navigation-drawer .v-list-item .v-icon {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* 选中态 — 半透明 primary 底 + 白字 */
-html.glass-theme-acg .v-navigation-drawer .v-list-item--active {
-  background: rgba(var(--v-theme-primary), 0.25) !important;
-  box-shadow: inset 0 0 0 1px rgba(var(--v-theme-primary), 0.3) !important;
-}
+/* 选中态 — 白字 */
 html.glass-theme-acg .v-navigation-drawer .v-list-item--active .v-list-item-title {
   color: #fff !important;
   font-weight: 600 !important;
 }
 html.glass-theme-acg .v-navigation-drawer .v-list-item--active .v-icon {
   color: #fff !important;
-}
-
-/* 未选中 hover — 提亮深色底 */
-html.glass-theme-acg .v-navigation-drawer .v-list-item:not(.v-list-item--active):hover {
-  background: rgba(50, 50, 80, 0.5) !important;
 }
 
 
@@ -486,7 +363,6 @@ html.glass-theme-acg .person-detail-view .v-chip .v-chip__content {
 html.glass-theme-acg .tmdb-detail-view .v-btn,
 html.glass-theme-acg .bangumi-detail-view .v-btn {
   color: #f5f5f5 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   text-shadow:
     0 0 1px rgba(0, 0, 0, 0.8),
     0 0 3px rgba(0, 0, 0, 0.5),
@@ -548,7 +424,6 @@ html.glass-theme-acg a.text-primary:hover {
 html.glass-theme-acg .calendar-view .v-field,
 html.glass-theme-acg .seasonal-tab .v-field {
   color: #f5f5f5 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 html.glass-theme-acg .calendar-view .v-field .v-field__input,
@@ -648,59 +523,16 @@ html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
 
 
 /* ================================================================
- * 8. 移动端深度性能优化
+ * 8. 移动端性能优化
  *    移动端 GPU/CPU 算力有限，大量 backdrop-filter + transition: all
- *    + 多层 box-shadow 是卡顿主因。此区块统一降级，不影响桌面端。
+ *    + 多层 box-shadow 是卡顿主因。
+ *    此区块只降级 transition/transform/text-shadow，
+ *    材质属性（background/backdrop-filter/border/box-shadow）
+ *    由 glass-acg.scss 的 @supports / @media (prefers-reduced-transparency) 处理。
  * ================================================================ */
 @media (max-width: 960px) {
 
-  /* 1. 通配兜底：一次性清除所有 backdrop-filter */
-  html.glass-theme-acg * {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  /* 2. 背景图去掉 filter */
-  html.glass-theme-acg body::before {
-    filter: none !important;
-  }
-
-  /* 3. 卡片：去掉 blur 后提升不透明度 */
-  html.glass-theme-acg .v-card,
-  html.glass-theme-acg .v-card--variant-tonal,
-  html.glass-theme-acg .liquid-glass-card {
-    background: rgba(30, 30, 60, 0.82) !important;
-    background-color: rgba(30, 30, 60, 0.82) !important;
-  }
-
-  /* 4. 弹窗 / 菜单 / 下拉：提升不透明度 */
-  html.glass-theme-acg .v-overlay__content .v-card,
-  html.glass-theme-acg .v-menu .v-card,
-  html.glass-theme-acg .v-menu .v-list {
-    background: rgba(30, 30, 60, 0.92) !important;
-    background-color: rgba(30, 30, 60, 0.92) !important;
-  }
-
-  /* 5. v-sheet 提升不透明度 */
-  html.glass-theme-acg .v-sheet:not(.v-snackbar__wrapper) {
-    background: rgba(30, 30, 60, 0.82) !important;
-  }
-
-  /* 6. Tab 未选中态提升不透明度（选中态保持实色 primary） */
-  html.glass-theme-acg .v-tab:not(.v-tab--selected) {
-    background: rgba(30, 30, 60, 0.82) !important;
-  }
-
-  /* 7. 按钮提升不透明度 — 无 color 的 flat/tonal 按钮 */
-  html.glass-theme-acg .v-btn--variant-flat:not([class*="text-"]):not([class*="bg-"]),
-  html.glass-theme-acg .v-btn--variant-tonal:not([class*="text-"]):not([class*="bg-"]) {
-    background: rgba(30, 30, 60, 0.82) !important;
-  }
-  html.glass-theme-acg .v-btn--variant-outlined {
-    background: rgba(30, 30, 60, 0.72) !important;
-  }
-
-  /* 8. transition: all → 最小集 */
+  /* 1. transition: all → 最小集 */
   html.glass-theme-acg .v-card,
   html.glass-theme-acg .liquid-glass-card,
   html.glass-theme-acg .v-sheet,
@@ -718,7 +550,7 @@ html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
     transition: background-color .15s ease !important;
   }
 
-  /* 9. hover/active 变形去掉 */
+  /* 2. hover/active 变形去掉 */
   html.glass-theme-acg .v-card:hover,
   html.glass-theme-acg .v-btn:hover,
   html.glass-theme-acg .v-btn:active,
@@ -728,7 +560,7 @@ html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
     transform: none !important;
   }
 
-  /* 10. 弹窗动画简化 */
+  /* 3. 弹窗动画简化 */
   html.glass-theme-acg .dialog-transition-enter-active,
   html.glass-theme-acg .dialog-transition-leave-active {
     transition: opacity .15s ease !important;
@@ -739,50 +571,43 @@ html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
     transform: none !important;
   }
 
-  /* 11. Tab 滑动指示器去掉 */
+  /* 4. Tab 滑动指示器去掉 */
   html.glass-theme-acg .v-tabs .v-slide-group__prev,
   html.glass-theme-acg .v-tabs .v-slide-group__next,
   html.glass-theme-acg .v-tabs .v-slide-group__content {
     transition: none !important;
   }
 
-  /* 12. 导航滑动过渡去掉 */
+  /* 5. 导航滑动过渡去掉 */
   html.glass-theme-acg .v-navigation-drawer {
     transition: none !important;
   }
 
-  /* 13. list-item 伪元素动画去掉 */
+  /* 6. list-item 伪元素动画去掉 */
   html.glass-theme-acg .v-list-item::before {
     display: none !important;
   }
 
-  /* 14. expansion-panel 动画去掉 */
+  /* 7. expansion-panel 动画去掉 */
   html.glass-theme-acg .v-expansion-panel-title,
   html.glass-theme-acg .v-expansion-panel-text {
     transition: none !important;
   }
 
-  /* 15. 弹窗内 box-shadow 动画去掉 */
+  /* 8. 弹窗内 box-shadow 动画去掉 */
   html.glass-theme-acg .v-dialog .v-card,
   html.glass-theme-acg .v-dialog .v-overlay__content {
     transition: none !important;
   }
 
-  /* 16. 输入框提升不透明度 */
-  html.glass-theme-acg .v-field,
-  html.glass-theme-acg .v-field--variant-solo-filled,
-  html.glass-theme-acg .v-field--variant-outlined {
-    background: rgba(30, 30, 60, 0.82) !important;
-  }
-
-  /* 17. contain 隔离重绘 */
+  /* 9. contain 隔离重绘 */
   html.glass-theme-acg .v-card,
   html.glass-theme-acg .v-list,
   html.glass-theme-acg .v-dialog .v-overlay__content {
     contain: layout paint style;
   }
 
-  /* 18. 移动端卡片不透明度已提高，清除文字阴影 */
+  /* 10. 移动端清除文字阴影（性能消耗大） */
   html.glass-theme-acg .v-card,
   html.glass-theme-acg .v-sheet,
   html.glass-theme-acg .v-expansion-panel,

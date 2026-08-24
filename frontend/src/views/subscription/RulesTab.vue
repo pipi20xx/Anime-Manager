@@ -250,7 +250,7 @@ defineExpose({ fetchRules })
           <v-select v-model="ruleSelectedFeedIds" label="作用范围 (留空则监控所有源)" :items="feeds.map(f => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" class="mb-3" />
           <v-select v-model="ruleForm.target_client_id" label="指定下载器" :items="clients.map(c => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" class="mb-3" />
           <v-text-field v-model="ruleForm.save_path" label="保存路径" variant="outlined" density="compact" class="mb-3" />
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6"><v-text-field v-model="ruleForm.category" label="分类" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="ruleForm.tags" label="标签" variant="outlined" density="compact" /></v-col>
           </v-row>

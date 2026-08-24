@@ -256,7 +256,7 @@ defineExpose({ fetchMappings, fetchRefCounts })
 
 <template>
   <!-- 统计概览 -->
-  <v-row class="mb-4" dense>
+  <v-row class="mb-4" density="compact">
     <v-col cols="6" sm="4" md="2"><AppGlassCard title="流派" icon="mdi-tag-outline">{{ refCounts.ref?.genres || 0 }} / {{ refCounts.user?.genres || 0 }}</AppGlassCard></v-col>
     <v-col cols="6" sm="4" md="2"><AppGlassCard title="制作公司" icon="mdi-office-building-outline">{{ refCounts.ref?.companies || 0 }} / {{ refCounts.user?.companies || 0 }}</AppGlassCard></v-col>
     <v-col cols="6" sm="4" md="2"><AppGlassCard title="关键词" icon="mdi-tag-heart-outline">{{ refCounts.ref?.keywords || 0 }} / {{ refCounts.user?.keywords || 0 }}</AppGlassCard></v-col>

@@ -186,7 +186,7 @@ function getConditions(rule: any) {
 
             <v-skeleton-loader v-if="loading" type="card@3" />
 
-            <v-row v-else-if="profiles.length > 0" dense>
+            <v-row v-else-if="profiles.length > 0" density="compact">
               <v-col v-for="profile in profiles" :key="profile.id" cols="12" sm="6" class="d-flex">
                 <v-card class="glass-card manage-card hover-lift cursor-pointer flex-grow-1" @click="openEditProfile(profile)">
                   <!-- 标题行 -->
@@ -236,7 +236,7 @@ function getConditions(rule: any) {
 
             <v-skeleton-loader v-if="loading" type="card@3" />
 
-            <v-row v-else-if="rules.length > 0" dense>
+            <v-row v-else-if="rules.length > 0" density="compact">
               <v-col v-for="rule in rules" :key="rule.id" cols="12" sm="6" class="d-flex">
                 <v-card class="glass-card manage-card hover-lift cursor-pointer flex-grow-1" @click="openEditRule(rule)">
                   <!-- 标题行 -->
@@ -283,7 +283,7 @@ function getConditions(rule: any) {
         <v-card-text class="pa-4">
           <v-text-field v-model="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" variant="outlined" density="compact" class="mb-3" />
           <div class="text-subtitle-2 font-weight-medium mb-2">匹配条件 (留空表示不限制)</div>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6"><v-text-field v-model="currentRule.conditions.resolution" label="分辨率" placeholder="如: 4K, 1080P" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="currentRule.conditions.team" label="制作组" placeholder="如: LoliHouse" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="currentRule.conditions.source" label="介质来源" placeholder="如: Blu-ray" variant="outlined" density="compact" /></v-col>
@@ -315,7 +315,7 @@ function getConditions(rule: any) {
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="currentProfile.name" label="策略名称" placeholder="例如: 4K优先策略" variant="outlined" density="compact" class="mb-3" />
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6">
               <v-switch v-model="currentProfile.upgrade_allowed" color="primary" density="compact" hide-details label="允许洗版" />
             </v-col>

@@ -59,11 +59,11 @@ onMounted(() => {
     </v-alert>
 
     <div class="text-subtitle-2 font-weight-bold text-primary mb-3">PostgreSQL 核心引擎配置</div>
-    <v-row dense>
+    <v-row density="compact">
       <v-col cols="12" sm="8"><v-text-field v-model="dbConfig.host" label="主机地址" variant="outlined" density="compact" class="mb-3" /></v-col>
       <v-col cols="12" sm="4"><v-text-field v-model="dbConfig.port" label="端口" type="number" variant="outlined" density="compact" class="mb-3" /></v-col>
     </v-row>
-    <v-row dense>
+    <v-row density="compact">
       <v-col cols="12" sm="6"><v-text-field v-model="dbConfig.user" label="用户名" variant="outlined" density="compact" class="mb-3" /></v-col>
       <v-col cols="12" sm="6"><PasswordInput v-model="dbConfig.password" label="密码" variant="outlined" density="compact" class="mb-3" /></v-col>
     </v-row>

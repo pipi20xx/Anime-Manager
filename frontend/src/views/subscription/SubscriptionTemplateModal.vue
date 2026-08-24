@@ -131,7 +131,7 @@ async function setDefault(row: any) {
 
           <v-skeleton-loader v-if="loading" type="card@3" />
 
-          <v-row v-else-if="templates.length > 0" dense>
+          <v-row v-else-if="templates.length > 0" density="compact">
             <v-col v-for="row in templates" :key="row.id" cols="12" sm="6">
               <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEdit(row)">
                 <!-- 标题行 -->
@@ -187,7 +187,7 @@ async function setDefault(row: any) {
           <v-text-field v-model="editModel.name" label="预设名称" placeholder="例如: 默认动漫预设" variant="outlined" density="compact" class="mb-3" />
 
           <div class="text-subtitle-2 font-weight-medium mb-2">筛选条件</div>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6"><v-text-field v-model="editModel.filter_res" label="分辨率" placeholder="如: 1080P, 4K" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="editModel.filter_team" label="制作组" placeholder="如: LoliHouse" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, WEB-DL" variant="outlined" density="compact" /></v-col>
@@ -200,7 +200,7 @@ async function setDefault(row: any) {
 
           <v-divider class="my-3" />
 
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12"><v-text-field v-model="editModel.include_keywords" label="必须包含" placeholder="包含这些关键词才下载" variant="outlined" density="compact" /></v-col>
             <v-col cols="12"><v-text-field v-model="editModel.exclude_keywords" label="排除关键词" placeholder="包含这些关键词则跳过" variant="outlined" density="compact" /></v-col>
           </v-row>
@@ -208,7 +208,7 @@ async function setDefault(row: any) {
           <v-divider class="my-3" />
 
           <div class="text-subtitle-2 font-weight-medium mb-2">下载设置</div>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12"><v-text-field v-model="editModel.save_path" label="下载目录" placeholder="留空则使用客户端默认路径" variant="outlined" density="compact" /></v-col>
             <v-col cols="6">
               <v-select v-model="editModel.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" />

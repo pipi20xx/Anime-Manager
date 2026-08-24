@@ -232,7 +232,7 @@ function handleSave() {
           </div>
         </div>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="12" sm="6"><v-text-field v-model="form.tmdb_id" label="TMDB ID" variant="outlined" density="compact" /></v-col>
           <v-col cols="12" sm="6">
             <v-select v-model="form.media_type" label="媒体类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" variant="outlined" density="compact" />
@@ -246,7 +246,7 @@ function handleSave() {
 
         <!-- 筛选条件 -->
         <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">资源筛选</div>
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="6"><v-text-field v-model="form.filter_res" label="分辨率" variant="outlined" density="compact" /></v-col>
           <v-col cols="6"><v-text-field v-model="form.filter_team" label="制作组" variant="outlined" density="compact" /></v-col>
           <v-col cols="6"><v-text-field v-model="form.filter_source" label="介质来源" variant="outlined" density="compact" /></v-col>
@@ -257,14 +257,14 @@ function handleSave() {
           <v-col cols="6"><v-text-field v-model="form.filter_platform" label="发布平台" variant="outlined" density="compact" /></v-col>
         </v-row>
 
-        <v-row dense class="mt-2">
+        <v-row density="compact" class="mt-2">
           <v-col cols="6"><v-text-field v-model="form.include_keywords" label="必须包含" variant="outlined" density="compact" /></v-col>
           <v-col cols="6"><v-text-field v-model="form.exclude_keywords" label="排除关键词" variant="outlined" density="compact" /></v-col>
           <v-col cols="6"><v-text-field v-model="form.save_path" label="下载目录" variant="outlined" density="compact" /></v-col>
           <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" /></v-col>
         </v-row>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="6">
             <v-select v-model="form.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" />
           </v-col>
@@ -276,7 +276,7 @@ function handleSave() {
         <!-- 剧集信息 -->
         <template v-if="form.media_type === 'tv'">
           <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">剧集信息</div>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="4">
               <v-select v-model="form.season" label="订阅季度" :items="[{ title: '全部季度', value: 0 }, ...tmdbSeasons.map((s: any) => ({ title: `第${s.season_number}季(${s.episode_count}集)`, value: s.season_number }))]" variant="outlined" density="compact" />
             </v-col>
@@ -285,7 +285,7 @@ function handleSave() {
           </v-row>
         </template>
 
-        <v-row dense class="mt-3">
+        <v-row density="compact" class="mt-3">
           <v-col cols="6"><v-switch v-model="form.enabled" label="启用订阅" color="primary" density="compact" hide-details /></v-col>
           <v-col cols="6"><v-switch v-model="form.auto_fill" label="定时补全" color="primary" density="compact" hide-details /></v-col>
         </v-row>

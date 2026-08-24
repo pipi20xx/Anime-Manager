@@ -7,6 +7,7 @@ import { ref, watch } from 'vue'
 import { taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { getStatusTag } from '@/utils/taskStatus'
+import ExecutionLogModal from './ExecutionLogModal.vue'
 
 defineOptions({ name: 'TaskCenterModal' })
 

@@ -77,7 +77,7 @@ async function removeBlockItem(id: number) {
 
         <v-skeleton-loader v-if="loading" type="card@3" />
 
-        <v-row v-else-if="blocklist.length > 0" dense>
+        <v-row v-else-if="blocklist.length > 0" density="compact">
           <v-col v-for="item in blocklist" :key="item.id" cols="12" sm="6">
             <v-card variant="outlined" class="rounded-xl h-100 d-flex flex-column">
               <v-card-item class="pb-2">

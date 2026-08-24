@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore, useSystemStore } from '@/stores'
 import { ConfirmDialog, LogTerminal, AppNotification } from '@/components/common'
+import { useGlassFixedShellBackplate } from '@/composables/useGlassFixedShellBackplate'
+import { usePagePresentationMotion } from '@/composables/usePagePresentationMotion'
+
+// 异步加载玻璃设置弹窗
+const GlassSettingsDialog = defineAsyncComponent(() => import('@/components/theme/GlassSettingsDialog.vue'))
+// 异步加载 Fixed Shell Backplate 组件
+const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/components/theme/GlassFixedShellBackplate.vue'))
 
 const route = useRoute()
 const router = useRouter()
@@ -12,6 +19,27 @@ const appVersion = __APP_VERSION__ as string
 const drawer = ref(true)
 const rail = ref(false)
 const isMobile = ref(false)
+const showGlassSettings = ref(false)
+
+// 玻璃 Fixed Shell Backplate —— 从 App 层注入的壁纸槽位
+const fixedShellBackplate = useGlassFixedShellBackplate()
+const isACG = computed(() => themeStore.glassTheme === 'acg')
+const isOverlayNav = computed(() => isMobile.value)
+const isOverlayNavActive = computed(() => isMobile.value && drawer.value)
+
+// 页面呈现动画
+const pagePresentationMotion = usePagePresentationMotion()
+const layoutMainRef = ref<any>(null)
+
+function getLayoutMainEl(): HTMLElement | null {
+  const refValue = layoutMainRef.value
+  if (!refValue) return null
+  // Vuetify 组件实例的 $el 指向根 DOM 元素
+  if ('$el' in refValue) return (refValue.$el as HTMLElement) ?? null
+  // 原生 HTMLElement ref
+  if (refValue instanceof HTMLElement) return refValue
+  return null
+}
 
 // 导航分组 — 与旧前端功能一一对应
 const navGroups = [
@@ -85,9 +113,15 @@ function checkMobile() {
   if (isMobile.value) drawer.value = false
 }
 
-// 路由变化时，移动端自动关闭抽屉
+// 路由变化时，移动端自动关闭抽屉 + 触发页面呈现动画
 watch(() => route.path, () => {
   if (isMobile.value) drawer.value = false
+  // ACG 主题下触发页面呈现动画
+  if (isACG.value) {
+    nextTick(() => {
+      pagePresentationMotion.start(route.fullPath, getLayoutMainEl())
+    })
+  }
 })
 
 onMounted(() => {
@@ -97,6 +131,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  pagePresentationMotion.cancel()
 })
 </script>
 
@@ -104,7 +139,25 @@ onUnmounted(() => {
   <v-app>
     <div class="glass-grain" />
 
-    <!-- 侧边导航 -->
+    <!-- 玻璃 Fixed Shell Backplate —— 在固定导航栏后面渲染壁纸背板 -->
+    <GlassFixedShellBackplate
+      v-if="isACG && fixedShellBackplate.layers.value.length > 0"
+      :is-overlay-nav-active="isOverlayNavActive"
+      :is-overlay-nav="isOverlayNav"
+      :layers="fixedShellBackplate.layers.value"
+      :transition-duration-ms="fixedShellBackplate.transitionDurationMs"
+    />
+
+    <!-- 布局根容器 —— MP 使用 layout-wrapper 包裹全部内容，玻璃渲染器依赖此 class 发现固定表面 -->
+    <div
+      class="layout-wrapper layout-nav-type-vertical layout-navbar-fixed layout-content-width-fluid"
+      :class="{
+        'layout-overlay-nav': isMobile,
+        'layout-vertical-nav-collapsed': rail && !isMobile,
+        'layout-fixed-shell-backplate-active': isACG && fixedShellBackplate.layers.value.length > 0,
+      }"
+    >
+    <!-- 侧边导航 —— 添加 layout-vertical-nav class 供渲染器表面发现 -->
     <v-navigation-drawer
       v-model="drawer"
       :rail="rail && !isMobile"
@@ -112,6 +165,7 @@ onUnmounted(() => {
       :temporary="isMobile"
       width="256"
       rail-width="72"
+      :class="['layout-vertical-nav', { 'overlay-nav': isMobile }]"
     >
       <!-- Logo 区域 -->
       <div class="logo-header" :class="{ 'logo-header--rail': rail && !isMobile }">
@@ -174,8 +228,8 @@ onUnmounted(() => {
       </template>
     </v-navigation-drawer>
 
-    <!-- 顶栏 -->
-    <v-app-bar elevation="0" density="comfortable">
+    <!-- 顶栏 —— 添加 layout-navbar class 供渲染器表面发现 -->
+    <v-app-bar elevation="0" density="comfortable" class="layout-navbar navbar-blur">
       <v-app-bar-nav-icon v-if="isMobile" @click="drawer = !drawer" />
       <v-app-bar-title class="font-weight-bold text-body-1">{{ currentTitle }}</v-app-bar-title>
 
@@ -236,7 +290,7 @@ onUnmounted(() => {
                 title="液态玻璃"
                 subtitle="Apple 液态玻璃风格"
                 :active="themeStore.glassTheme === 'liquid'"
-                active-color="primary"
+                base-color="primary"
                 @click="themeStore.setGlassTheme('liquid')"
               />
               <v-list-item
@@ -244,7 +298,7 @@ onUnmounted(() => {
                 title="ACG 毛玻璃"
                 subtitle="二次元壁纸 + 暗色毛玻璃"
                 :active="themeStore.glassTheme === 'acg'"
-                active-color="primary"
+                base-color="primary"
                 @click="themeStore.setGlassTheme('acg')"
               />
               <v-list-item
@@ -252,8 +306,17 @@ onUnmounted(() => {
                 title="经典实色"
                 subtitle="纯白/纯黑 最简风格"
                 :active="themeStore.glassTheme === 'classic'"
-                active-color="primary"
+                base-color="primary"
                 @click="themeStore.setGlassTheme('classic')"
+              />
+              <v-divider class="my-2 mx-2" />
+              <v-list-item
+                prepend-icon="mdi-tune-variant"
+                title="玻璃材质设置"
+                subtitle="材质 / 质量 / 动态效果 / 参数"
+                :disabled="themeStore.glassTheme !== 'acg'"
+                base-color="primary"
+                @click="showGlassSettings = true"
               />
             </v-list>
           </v-menu>
@@ -275,13 +338,17 @@ onUnmounted(() => {
       </template>
     </v-app-bar>
 
-    <!-- 主内容 -->
-    <v-main>
-      <router-view v-slot="{ Component, route: r }">
-        <keep-alive :include="[]">
-          <component :is="Component" :key="r.fullPath" />
-        </keep-alive>
-      </router-view>
+    <!-- 主内容 —— 添加 layout-page-content / page-content-container 供渲染器发现滚动表面 -->
+    <v-main ref="layoutMainRef" class="layout-content-wrapper">
+      <main class="layout-page-content">
+        <section class="page-content-container">
+          <router-view v-slot="{ Component, route: r }">
+            <keep-alive :include="[]">
+              <component :is="Component" :key="r.fullPath" />
+            </keep-alive>
+          </router-view>
+        </section>
+      </main>
     </v-main>
 
     <!-- 全局组件 -->
@@ -290,6 +357,13 @@ onUnmounted(() => {
 
     <!-- 全局通知 -->
     <AppNotification />
+
+    <!-- 玻璃材质设置弹窗 -->
+    <GlassSettingsDialog
+      v-model="showGlassSettings"
+      @close="showGlassSettings = false"
+    />
+    </div><!-- /layout-wrapper -->
   </v-app>
 </template>
 

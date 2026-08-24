@@ -401,7 +401,7 @@ defineExpose({ fetchSubscriptions })
 
         <v-card-text class="pa-4">
           <!-- 工具栏 -->
-          <v-row class="mb-4" dense>
+          <v-row class="mb-4" density="compact">
             <v-col cols="12" sm="4">
               <v-select
                 v-model="quickSubTemplate"

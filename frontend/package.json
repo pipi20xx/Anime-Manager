@@ -12,19 +12,25 @@
     "analyze": "vite build --mode analyze"
   },
   "dependencies": {
-    "vue": "^3.5.40",
-    "pinia": "^4.0.2",
-    "vue-router": "^5.2.0",
-    "vuetify": "^4.1.5",
     "@mdi/js": "^7.4.47",
-    "webfontloader": "^1.6.28",
     "@vueuse/core": "^14.3.0",
-    "vuedraggable": "^4.1.0",
-    "sortablejs": "^1.15.7",
+    "lodash-es": "^4.17.21",
     "marked": "^12.0.0",
-    "lodash-es": "^4.17.21"
+    "pinia": "^4.0.2",
+    "sortablejs": "^1.15.7",
+    "three": "^0.185.1",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0",
+    "vue-i18n": "^11.0.0",
+    "vuedraggable": "^4.1.0",
+    "vuetify": "^4.1.5",
+    "webfontloader": "^1.6.28"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.7",
+    "@types/node": "^20.4.2",
+    "@types/sortablejs": "^1.15.8",
+    "@types/three": "^0.185.4",
     "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.64.0",
     "@vitejs/plugin-vue": "^6.0.8",
@@ -34,8 +40,8 @@
     "eslint-plugin-vue": "^10.10.0",
     "prettier": "^3.9.5",
     "rollup-plugin-visualizer": "^7.0.1",
-    "terser": "^5.49.0",
     "sass-embedded": "^1.89.0",
+    "terser": "^5.49.0",
     "typescript": "^5.9.3",
     "unplugin-auto-import": "^21.0.0",
     "vite": "^8.1.5",
@@ -44,9 +50,6 @@
     "vite-plugin-vuetify": "^2.1.3",
     "vue-tsc": "^3.3.7",
     "workbox-build": "^7.4.1",
-    "workbox-window": "^7.4.1",
-    "@types/lodash-es": "^4.17.7",
-    "@types/node": "^20.4.2",
-    "@types/sortablejs": "^1.15.8"
+    "workbox-window": "^7.4.1"
   }
 }

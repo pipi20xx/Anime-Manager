@@ -398,7 +398,7 @@ defineExpose({ fetchRules })
           class="mb-3"
         />
 
-        <v-row dense>
+        <v-row density="compact">
           <!-- 原始国家 — 多选 + 自定义输入 -->
           <v-col cols="12" sm="6">
             <v-autocomplete
@@ -433,7 +433,7 @@ defineExpose({ fetchRules })
           </v-col>
         </v-row>
 
-        <v-row dense>
+        <v-row density="compact">
           <v-col cols="12" sm="6">
             <v-text-field v-model="criteriaTitle" label="名称匹配" variant="outlined" density="compact" class="mb-3" placeholder="匹配标题关键词" />
           </v-col>

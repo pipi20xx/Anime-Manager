@@ -322,7 +322,7 @@ onUnmounted(() => {
         <v-window v-model="editTab">
           <!-- 编辑 -->
           <v-window-item value="edit">
-            <v-row dense>
+            <v-row density="compact">
               <v-col cols="12" sm="6"><v-text-field v-model="editForm.id" label="TMDB ID" variant="outlined" density="compact" :disabled="isEditing" class="mb-3" /></v-col>
               <v-col cols="12" sm="6"><v-select v-model="editForm.type" label="媒体类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" variant="outlined" density="compact" class="mb-3" /></v-col>
             </v-row>

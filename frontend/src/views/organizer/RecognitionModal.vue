@@ -242,7 +242,7 @@ watch(() => props.modelValue, (newVal) => {
             </div>
 
             <!-- 强制参数 -->
-            <v-row dense class="mb-2">
+            <v-row density="compact" class="mb-2">
               <v-col cols="3">
                 <v-text-field v-model="forcedParams.tmdb_id" label="TMDB ID" placeholder="TMDB ID" density="compact" hide-details variant="outlined" />
               </v-col>

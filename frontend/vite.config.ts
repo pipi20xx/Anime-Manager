@@ -92,6 +92,7 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        'vue-i18n': fileURLToPath(new URL('./src/shims/vue-i18n.ts', import.meta.url)),
       },
     },
     server: {

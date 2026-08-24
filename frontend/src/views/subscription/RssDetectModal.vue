@@ -215,7 +215,7 @@ function formatDateTime(dateStr: string | null): string {
           <v-skeleton-loader v-if="loading" type="card@2" />
 
           <template v-else-if="tasks.length > 0">
-            <v-row dense>
+            <v-row density="compact">
               <v-col v-for="task in tasks" :key="task.id" cols="12" sm="6">
                 <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEdit(task)">
                   <!-- 标题行 -->
@@ -272,7 +272,7 @@ function formatDateTime(dateStr: string | null): string {
 
         <!-- 编辑视图 -->
         <template v-else>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12">
               <v-text-field v-model="form.rss_url" label="RSS 链接" variant="outlined" density="compact" class="mb-2" hide-details>
                 <template #append-inner>
@@ -284,7 +284,7 @@ function formatDateTime(dateStr: string | null): string {
           </v-row>
 
           <!-- 启用状态开关单独一行 -->
-          <v-row dense class="mt-1">
+          <v-row density="compact" class="mt-1">
             <v-col cols="12">
               <div class="d-flex align-center ga-3 py-1">
                 <v-switch v-model="form.enabled" label="启用状态" color="primary" density="compact" hide-details />
@@ -295,7 +295,7 @@ function formatDateTime(dateStr: string | null): string {
 
           <v-divider class="my-3" />
 
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12">
               <v-select
                 v-model="form.template_id"
@@ -310,7 +310,7 @@ function formatDateTime(dateStr: string | null): string {
           </v-row>
 
           <template v-if="!form.template_id">
-            <v-row dense>
+            <v-row density="compact">
               <v-col cols="6"><v-text-field v-model="form.filter_res" label="分辨率" variant="outlined" density="compact" placeholder="如: 1080P, 4K" /></v-col>
               <v-col cols="6"><v-text-field v-model="form.filter_team" label="制作组" variant="outlined" density="compact" placeholder="如: LoliHouse, VCB-Studio" /></v-col>
               <v-col cols="6"><v-text-field v-model="form.filter_source" label="介质来源" variant="outlined" density="compact" placeholder="如: Blu-ray, WEB-DL" /></v-col>
@@ -324,7 +324,7 @@ function formatDateTime(dateStr: string | null): string {
 
           <v-divider class="my-3" />
 
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="6">
               <v-select
                 v-model="form.target_client_id"
