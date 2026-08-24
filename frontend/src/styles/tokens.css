@@ -91,7 +91,11 @@ html.glass-theme-acg {
   /* Body */
   --am-body-bg: transparent;
   --am-body-before-bg: center / cover no-repeat;
-  --am-body-before-image: url("https://www.loliapi.com/acg/pc/");
+  /* body::before 不再直接加载壁纸图片 —— 壁纸统一由 useGlassWallpaper
+     通过后端代理 /api/appearance/wallpaper_proxy 加载，避免 CORS 问题和
+     随机壁纸 API 的缓存不一致。--am-wallpaper-source 仅存储源 URL 供 JS 读取。 */
+  --am-body-before-image: none;
+  --am-wallpaper-source: https://www.loliapi.com/acg/pc/;
   --am-body-before-filter: blur(0px);
   --am-body-before-transform: scale(1.02);
   --am-body-after-bg: rgba(0, 0, 0, 0.24);
@@ -278,7 +282,7 @@ html.glass-theme-acg {
 
 @media (orientation: portrait) {
   html.glass-theme-acg {
-    --am-body-before-image: url("https://www.loliapi.com/acg/pe/");
+    --am-wallpaper-source: https://www.loliapi.com/acg/pe/;
   }
 }
 

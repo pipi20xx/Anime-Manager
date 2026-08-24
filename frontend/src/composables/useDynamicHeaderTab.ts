@@ -14,8 +14,8 @@ export interface DynamicHeaderTabButton {
   size?: string
   class?: string
   action?: () => void
-  show?: boolean | ComputedRef<boolean>
-  loading?: boolean | ComputedRef<boolean>
+  show?: boolean | ComputedRef<boolean> | Ref<boolean>
+  loading?: boolean | ComputedRef<boolean> | Ref<boolean>
 }
 
 interface DynamicHeaderTabConfig {
