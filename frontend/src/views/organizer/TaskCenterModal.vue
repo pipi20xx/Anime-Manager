@@ -139,7 +139,7 @@ async function cleanupTaskCenter() {
             prepend-inner-icon="mdi-magnify"
             clearable
             hide-details
-            class="org-search-field"
+            class="task-center-search-field"
             @keyup.enter="searchTaskCenter"
             @click:clear="taskCenterSearch = ''; searchTaskCenter()"
           />
@@ -201,3 +201,17 @@ async function cleanupTaskCenter() {
   <!-- 日志弹窗（放在外层，避免双滚动条） -->
   <ExecutionLogModal v-model="showLogModal" :task-id="logTaskId" />
 </template>
+
+<style scoped>
+.task-center-search-field {
+  max-width: 380px;
+}
+.task-center-search-field :deep(.v-field__input),
+.task-center-search-field :deep(input) {
+  text-align: center !important;
+}
+.task-center-search-field :deep(.v-label) {
+  width: 100% !important;
+  text-align: center !important;
+}
+</style>

@@ -378,7 +378,7 @@ onUnmounted(() => {
         density="compact"
         variant="outlined"
         hide-details
-        style="max-width: 160px"
+        class="task-filter-select"
         item-title="title"
         item-value="value"
       />
@@ -537,5 +537,21 @@ onUnmounted(() => {
 .log-msg {
   flex: 1;
   word-break: break-all;
+}
+.task-filter-select {
+  min-width: 140px;
+  max-width: 180px;
+}
+/* 选中文字居中 */
+.task-filter-select :deep(.v-field__input),
+.task-filter-select :deep(.v-select__selection),
+.task-filter-select :deep(.v-select__selection-text) {
+  width: 100% !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+/* 下拉菜单选项也居中 */
+.task-filter-select :deep(.v-list-item-title) {
+  text-align: center !important;
 }
 </style>
