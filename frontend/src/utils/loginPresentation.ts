@@ -1,4 +1,4 @@
-import type { GlassAppearance, GlassOpticalPreset } from '@/utils/glassOptics'
+import type { GlassAppearance, GlassOpticalPreset } from '@/glass'
 
 export type LoginVisualProfile = 'classic' | 'glass' | 'transparent'
 

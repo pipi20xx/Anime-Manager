@@ -44,13 +44,13 @@ import {
   type GlassOpticalSurfaceCandidate,
   type GlassOpticalSurfaceMode,
   type GlassOpticalSurfaceSlot,
-} from '@/utils/glassOptics'
+} from '../utils/glassOptics'
 import type { ThemeCustomizerGlassAppearance, ThemeCustomizerGlassDynamicsMode } from '@/composables/useThemeCustomizer'
 import {
   createGlassRippleDynamics,
   type GlassRippleDynamics,
   type GlassRippleQuality,
-} from '@/rendering/glass/glassRippleDynamics'
+} from '../rendering/glassRippleDynamics'
 import {
   createGlassFluidDynamics,
   GLASS_FLUID_FRAGMENT_SETUP,
@@ -59,8 +59,8 @@ import {
   GLASS_FLUID_FRAGMENT_SURFACE_SHAPE,
   GLASS_FLUID_FRAGMENT_TRAIL_AND_FIELD,
   type GlassFluidDynamics,
-} from '@/rendering/glass/glassFluidDynamics'
-import type { PagePresentationMotionReader } from '@/composables/usePagePresentationMotion'
+} from '../rendering/glassFluidDynamics'
+import type { PagePresentationMotionReader } from './usePagePresentationMotion'
 import { APP_ACTIVITY_SUSPEND_DELAY_MS } from '@/utils/appActivityLifecycle'
 import {
   analyzeGlassWallpaperTone,
@@ -68,7 +68,7 @@ import {
   loadGlassWallpaperTone,
   takeGlassWallpaperDecodedSource,
   type GlassWallpaperToneProfile,
-} from '@/utils/glassWallpaperTone'
+} from '../utils/glassWallpaperTone'
 
 export type GlassRendererState = 'fallback' | 'loading' | 'ready'
 export type GlassPresentationSpace = 'fixed' | 'scroll'

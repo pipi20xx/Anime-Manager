@@ -3,16 +3,18 @@ import { ref, watch, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useThemeStore, useSystemStore } from '@/stores'
-import { useGlassWallpaper } from '@/composables/useGlassWallpaper'
+import { useGlassWallpaper } from '@/glass'
 import { applyStoredThemeCustomizerAppearance } from '@/composables/useThemeCustomizer'
 import {
   isChromiumFixedShellBackplateBrowser,
   provideGlassFixedShellBackplate,
   shouldUseGlassFixedShellBackplate,
   type GlassFixedShellBackplateLayer,
-} from '@/composables/useGlassFixedShellBackplate'
+  DEFAULT_GLASS_WALLPAPER_TONE_PROFILE,
+  loadGlassWallpaperTone,
+  type GlassWallpaperToneProfile,
+} from '@/glass'
 import { createLoginBackgroundLayers, prepareLoginBackgroundLayer, activateLoginBackgroundLayer, settleLoginBackgroundLayers, type LoginBackgroundLayer } from '@/utils/loginPresentation'
-import { DEFAULT_GLASS_WALLPAPER_TONE_PROFILE, loadGlassWallpaperTone, type GlassWallpaperToneProfile } from '@/utils/glassWallpaperTone'
 
 const theme = useTheme()
 const themeStore = useThemeStore()
@@ -20,7 +22,7 @@ const systemStore = useSystemStore()
 const route = useRoute()
 
 // 玻璃光学层（异步加载，避免首屏阻塞）
-const GlassOpticalLayer = defineAsyncComponent(() => import('@/components/theme/GlassOpticalLayer.vue'))
+const GlassOpticalLayer = defineAsyncComponent(() => import('@/glass/components/GlassOpticalLayer.vue'))
 
 // 玻璃壁纸与光学设置
 const glass = useGlassWallpaper()

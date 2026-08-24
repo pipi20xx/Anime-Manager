@@ -1,8 +1,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useThemeStore } from '@/composables/useThemeStore'
 import { useEffectiveGlassSettings, applyStoredThemeCustomizerAppearance, themeCustomizerPrimaryColors } from '@/composables/useThemeCustomizer'
-import { normalizeThemeMaterialAccent } from '@/utils/glassColor'
-import { loadGlassWallpaperTone, DEFAULT_GLASS_WALLPAPER_TONE_PROFILE, type GlassWallpaperToneProfile } from '@/utils/glassWallpaperTone'
+import { normalizeThemeMaterialAccent } from '../utils/glassColor'
+import { loadGlassWallpaperTone, DEFAULT_GLASS_WALLPAPER_TONE_PROFILE, type GlassWallpaperToneProfile } from '../utils/glassWallpaperTone'
 import { useTheme } from 'vuetify'
 
 /**

@@ -8,7 +8,7 @@
 import { ref, computed, nextTick, watch } from 'vue'
 import { useSystemStore } from '@/stores'
 import { useNotification } from '@/composables'
-import GlassDialog from '@/components/common/GlassDialog.vue'
+import { GlassDialog } from '@/glass'
 
 const systemStore = useSystemStore()
 const { info, error: showError } = useNotification()

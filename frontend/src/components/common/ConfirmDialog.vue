@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useConfirm } from '@/composables'
-import GlassDialog from '@/components/common/GlassDialog.vue'
+import { GlassDialog } from '@/glass'
 
 const { show, options, onConfirm, onCancel, onDismiss } = useConfirm()
 </script>

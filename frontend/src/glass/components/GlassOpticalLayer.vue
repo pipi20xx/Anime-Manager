@@ -5,8 +5,8 @@ import type {
   ThemeCustomizerGlassDynamicsMode,
   ThemeCustomizerGlassQuality,
 } from '@/composables/useThemeCustomizer'
-import { useGlassMobilePresentation } from '@/composables/useGlassPresentationCapabilities'
-import { usePagePresentationMotion } from '@/composables/usePagePresentationMotion'
+import { useGlassMobilePresentation } from '../composables/useGlassPresentationCapabilities'
+import { usePagePresentationMotion } from '../composables/usePagePresentationMotion'
 import {
   createGlassWallpaperSourceCache,
   getGlassWallpaperPreparationKey,
@@ -14,7 +14,7 @@ import {
   useGlassOpticalInteractionSource,
   useGlassOpticalRenderer,
   type GlassRendererState,
-} from '@/composables/useGlassOpticalRenderer'
+} from '../composables/useGlassOpticalRenderer'
 
 const props = defineProps<{
   /** 当前玻璃材质，用于选择透明、色调或磨砂的光学参数。 */

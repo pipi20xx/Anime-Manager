@@ -90,15 +90,15 @@
 /* 4.1 ACG 玻璃材质层 — 1:1 照搬 MoviePilot glass.scss（html.glass-theme-acg 激活）
  *     接管所有 background/backdrop-filter/border-color/box-shadow 属性。
  */
-@import './glass-acg.scss';
+@import '../glass/styles/glass-acg.scss';
 
 /* 4.2 ACG 主题文字颜色与光晕（html.glass-theme-acg 激活）
  *     只保留文字颜色、光晕等，不再覆盖材质属性。
  */
-@import './theme-acg.css';
+@import '../glass/styles/theme-acg.css';
 
 /* 4.3 液态玻璃主题视觉风格（html.glass-theme-liquid 激活） */
-@import './glass-themes.css';
+@import '../glass/styles/glass-themes.css';
 
 /* 4.4 经典实色主题视觉风格（html.glass-theme-classic 激活） */
 @import './theme-classic.css';

@@ -3,14 +3,17 @@ import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent, nex
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore, useSystemStore } from '@/stores'
 import { ConfirmDialog, LogTerminal, AppNotification } from '@/components/common'
-import { useGlassFixedShellBackplate } from '@/composables/useGlassFixedShellBackplate'
-import { usePagePresentationMotion } from '@/composables/usePagePresentationMotion'
+import {
+  useGlassFixedShellBackplate,
+  usePagePresentationMotion,
+} from '@/glass'
 import type { DynamicHeaderTabItem, DynamicHeaderTabButton } from '@/composables/useDynamicHeaderTab'
 
 // 异步加载玻璃设置弹窗
-const GlassSettingsDialog = defineAsyncComponent(() => import('@/components/theme/GlassSettingsDialog.vue'))
+const GlassSettingsDialog = defineAsyncComponent(() => import('@/glass/components/GlassSettingsDialog.vue'))
 // 异步加载 Fixed Shell Backplate 组件
-const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/components/theme/GlassFixedShellBackplate.vue'))
+const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/glass/components/GlassFixedShellBackplate.vue'))
+
 
 const route = useRoute()
 const router = useRouter()

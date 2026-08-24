@@ -19,8 +19,8 @@ import {
   type GlassOpticalParameters,
   type GlassOpticalPreset,
   type GlassOpticalPresetOverrides,
-} from '@/utils/glassOptics'
-import { useGlassMobilePresentation } from '@/composables/useGlassPresentationCapabilities'
+} from '../utils/glassOptics'
+import { useGlassMobilePresentation } from '../composables/useGlassPresentationCapabilities'
 import { useDisplay } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 

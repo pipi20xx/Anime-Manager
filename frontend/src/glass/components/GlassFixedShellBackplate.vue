@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { GlassFixedShellBackplateLayer } from '@/composables/useGlassFixedShellBackplate'
+import type { GlassFixedShellBackplateLayer } from '../composables/useGlassFixedShellBackplate'
 
 interface Props {
   /** 移动端 overlay 导航当前是否可见。 */

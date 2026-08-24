@@ -7,7 +7,7 @@ import type {
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three'
-import type { GlassOpticalQuality } from '@/utils/glassOptics'
+import type { GlassOpticalQuality } from '../utils/glassOptics'
 
 type ThreeModule = typeof import('three')
 

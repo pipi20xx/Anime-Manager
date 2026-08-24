@@ -8,8 +8,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { userMappingApi } from '@/api'
 import { useNotification, useConfirm, downloadJson } from '@/composables'
-import AppGlassCard from '@/components/common/AppGlassCard.vue'
-import GlassDialog from '@/components/common/GlassDialog.vue'
+import { AppGlassCard, GlassDialog } from '@/glass'
 
 const { success, error: showError, info } = useNotification()
 const { confirm } = useConfirm()

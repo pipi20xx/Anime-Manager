@@ -14,8 +14,8 @@ import {
   type GlassOpticalParameters,
   type GlassOpticalPreset,
   type GlassOpticalPresetOverrides,
-} from '@/utils/glassOptics'
-import { normalizeThemeMaterialAccent } from '@/utils/glassColor'
+} from '@/glass'
+import { normalizeThemeMaterialAccent } from '@/glass'
 
 // ─── 类型定义 ───────────────────────────────────────────────
 
