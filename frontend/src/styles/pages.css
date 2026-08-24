@@ -132,10 +132,9 @@ background: transparent;
 }
 
 .sticky-sub-tabs {
-  position: sticky;
-  top: calc(var(--v-layout-top, 0px) + var(--sticky-offset, 64px));
+  position: static;
   z-index: 199;
-  margin: 0 0 12px !important;
+  margin: 0 0 20px !important;
   padding: 8px 0;
 }
 

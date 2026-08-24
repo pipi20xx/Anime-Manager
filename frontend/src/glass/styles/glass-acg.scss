@@ -284,12 +284,12 @@ html.glass-theme-acg {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 导航激活态（照搬 glass.scss 514-518）
+  // 导航激活态 — 透明背景 + primary 边框，文字用主题色
   // ═══════════════════════════════════════════════════════════════
   .v-navigation-drawer .v-list-item--active {
-    border: var(--glass-nav-active-border);
-    background: var(--glass-nav-active-background) !important;
-    box-shadow: var(--glass-nav-active-shadow) !important;
+    border: 1px solid rgba(var(--v-theme-primary), 48%);
+    background: transparent !important;
+    box-shadow: none !important;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -504,6 +504,25 @@ html.glass-theme-acg {
     background-color: rgba(var(--v-theme-error), 34%) !important;
   }
 
+  // ── flat variant + 语义色：选中态 ──
+  // 筛选栏已包在 v-card 玻璃容器内，选中态用主题色文字 + 光晕，
+  // 与 TAB 选中态风格一致，在磨砂背景上形成明确的层次区分。
+  .v-chip.v-chip--variant-flat.bg-primary,
+  .v-chip.v-chip--variant-flat.v-chip--color-primary {
+    border: 1px solid rgba(var(--v-theme-primary), 48%);
+    background-color: transparent !important;
+    color: rgb(var(--v-theme-primary)) !important;
+    box-shadow: none !important;
+  }
+  .v-chip.v-chip--variant-flat.bg-primary .v-chip__content,
+  .v-chip.v-chip--variant-flat.v-chip--color-primary .v-chip__content {
+    color: inherit !important;
+    text-shadow:
+      0 0 1px rgba(0, 0, 0, 0.9),
+      0 0 3px rgba(0, 0, 0, 0.6),
+      0 1px 1px rgba(0, 0, 0, 0.4);
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 表格（照搬 glass.scss 967-975）
   // ═══════════════════════════════════════════════════════════════
@@ -678,11 +697,8 @@ html.glass-theme-acg {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // Tabs 底线
+  // Tabs 底线 — 去掉，不需要分隔线
   // ═══════════════════════════════════════════════════════════════
-  .v-tabs:not(.v-tabs-pill).v-tabs--horizontal {
-    border-block-end: 1px solid var(--glass-border);
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // Alert
@@ -690,6 +706,36 @@ html.glass-theme-acg {
   .v-alert--variant-elevated,
   .v-alert--variant-flat {
     background: transparent !important;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 二级 Tab 容器内的 v-tabs — 玻璃化选中态
+  // sticky-sub-tabs 作为 v-card 玻璃容器，内部的 v-tabs
+  // 选中态用半透明 primary 底色 + 白字 + 圆角，去掉默认下划线指示器
+  // ═══════════════════════════════════════════════════════════════
+  .sticky-sub-tabs .v-tab {
+    border-radius: 999px;
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 4px 2px;
+    min-width: auto;
+  }
+
+  .sticky-sub-tabs .v-tab.v-tab--selected {
+    border: 1px solid rgba(var(--v-theme-primary), 52%);
+    background-color: rgba(var(--v-theme-primary), 56%) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+  }
+
+  .sticky-sub-tabs .v-tab:not(.v-tab--selected):hover {
+    background-color: rgba(255, 255, 255, 8%);
+  }
+
+  // 去掉默认下划线指示器
+  .sticky-sub-tabs .v-tabs-slider {
+    display: none !important;
   }
 }
 
@@ -944,7 +990,14 @@ html.glass-theme-acg .v-chip.v-chip--variant-tonal:not([class*="text-"]):not([cl
   color: #fff !important;
 }
 
-/* Tab — 文字颜色 */
+/* Tab — 文字颜色
+ * 非 sticky-sub-tabs 内的 v-tab：
+ *   未选中：浅白 + 光晕
+ *   选中：主题色（primary）+ 加粗，而非白色
+ *   hover：白色
+ * sticky-sub-tabs 内的 v-tab 选中态（primary 底色 + 白字）
+ *   由后续 .sticky-sub-tabs 规则块单独处理。
+ */
 html.glass-theme-acg .v-tab {
   color: rgba(255, 255, 255, 0.7) !important;
 }
@@ -953,19 +1006,40 @@ html.glass-theme-acg .v-tab .v-btn__content {
   color: inherit !important;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.7), 0 1px 1px rgba(0, 0, 0, 0.4);
 }
-/* 选中态 — 白字 */
+/* 选中态 — 主题色 + 光晕（在透明壁纸上保证可读性）*/
 html.glass-theme-acg .v-tab.v-tab--selected {
-  color: #fff !important;
+  color: rgb(var(--v-theme-primary)) !important;
   font-weight: 600 !important;
 }
 html.glass-theme-acg .v-tab.v-tab--selected .v-tab__content,
 html.glass-theme-acg .v-tab.v-tab--selected .v-btn__content {
-  color: #fff !important;
-  text-shadow: none;
+  color: inherit !important;
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.9),
+    0 0 3px rgba(0, 0, 0, 0.6),
+    0 1px 1px rgba(0, 0, 0, 0.4);
 }
 /* 未选中 hover — 白字 */
 html.glass-theme-acg .v-tab:not(.v-tab--selected):hover {
   color: #fff !important;
+}
+
+/* 顶栏动态 Tab（header-tab）— ACG 主题下文字提亮 + 光晕 */
+html.glass-theme-acg .header-tab {
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.7),
+    0 1px 1px rgba(0, 0, 0, 0.4);
+}
+html.glass-theme-acg .header-tab:hover:not(.header-tab--active) {
+  color: #fff !important;
+}
+html.glass-theme-acg .header-tab--active {
+  color: rgb(var(--v-theme-primary)) !important;
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.9),
+    0 0 3px rgba(0, 0, 0, 0.6),
+    0 1px 1px rgba(0, 0, 0, 0.4);
 }
 
 /* App Bar 内 text variant 按钮图标 — 暗色壁纸上提亮 */
@@ -1019,13 +1093,17 @@ html.glass-theme-acg .v-navigation-drawer .v-list-item .v-icon {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* 选中态 — 白字 */
+/* 选中态 — 主题色文字 + 光晕 */
 html.glass-theme-acg .v-navigation-drawer .v-list-item--active .v-list-item-title {
-  color: #fff !important;
+  color: rgb(var(--v-theme-primary)) !important;
   font-weight: 600 !important;
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.9),
+    0 0 3px rgba(0, 0, 0, 0.6),
+    0 1px 1px rgba(0, 0, 0, 0.4);
 }
 html.glass-theme-acg .v-navigation-drawer .v-list-item--active .v-icon {
-  color: #fff !important;
+  color: rgb(var(--v-theme-primary)) !important;
 }
 
 

@@ -243,7 +243,7 @@ onUnmounted(() => {
 <template>
   <div class="discovery-tab pa-4">
     <!-- 筛选栏 -->
-    <div class="filter-bar mb-6 pa-4 glass-card">
+    <v-card class="filter-bar mb-6 pa-4 glass-card" flat>
       <!-- 数据源 -->
       <div class="filter-row d-flex align-center mb-3">
         <div class="filter-label section-title mr-3" style="width: 48px; flex-shrink: 0;">数据源</div>
@@ -339,7 +339,7 @@ onUnmounted(() => {
         />
         <v-chip size="small" variant="tonal" color="primary">共 {{ items.length }} 条结果</v-chip>
       </div>
-    </div>
+    </v-card>
 
     <!-- 加载骨架屏 -->
     <template v-if="loading && items.length === 0">

@@ -66,8 +66,8 @@ function openDetail(item: any) {
     </template>
 
     <template v-else>
-      <!-- 日期导航条 — 双重吸顶：吸附在外层 explore tabs 下方 -->
-      <div class="day-nav d-flex ga-1 overflow-x-auto sticky-sub-tabs">
+      <!-- 日期导航条 -->
+      <div class="d-flex ga-2 mb-4">
         <v-tabs v-model="activeDate" density="compact">
           <v-tab
             v-for="day in schedule"

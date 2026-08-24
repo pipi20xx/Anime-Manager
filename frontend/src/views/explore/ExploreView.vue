@@ -53,7 +53,7 @@ registerHeaderTab({
 </script>
 
 <template>
-  <div class="explore-view pa-4 pa-md-6">
+  <div class="explore-view px-4 px-md-6 pb-4 pb-md-6">
     <!-- 子路由内容 -->
     <div class="explore-content">
       <router-view v-slot="{ Component, route: r }">

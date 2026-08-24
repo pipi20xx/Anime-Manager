@@ -101,17 +101,16 @@ function getLogLevelClass(entry: string): string {
       <v-icon start>mdi-card-text-outline</v-icon>
       系统日志
       <v-spacer />
-      <v-btn-toggle v-model="logFilter" density="compact" variant="tonal" rounded="lg" class="mr-2 align-self-center">
-        <v-btn
+      <v-tabs v-model="logFilter" density="compact" class="log-filter-tabs mr-2 align-self-center">
+        <v-tab
           v-for="opt in filterOptions"
           :key="opt.value"
           :value="opt.value"
-          density="compact"
           :style="logFilter === opt.value && opt.color ? { color: opt.color } : {}"
         >
           {{ opt.title }}
-        </v-btn>
-      </v-btn-toggle>
+        </v-tab>
+      </v-tabs>
       <v-btn variant="tonal" density="compact" color="error" prepend-icon="mdi-delete-outline" class="clear-log-btn" @click="clearLogs">清空</v-btn>
     </template>
     <div ref="logContainer" class="log-terminal">
@@ -140,6 +139,17 @@ function getLogLevelClass(entry: string): string {
 <style scoped>
 .clear-log-btn {
   height: 32px !important;
+}
+
+/* 日志筛选 tabs — 紧凑显示在标题栏 */
+.log-filter-tabs {
+  flex: 0 1 auto;
+  max-width: 360px;
+}
+.log-filter-tabs .v-tab {
+  min-width: auto;
+  padding: 0 12px;
+  text-transform: none;
 }
 
 /* 按秒分组的竖条布局 */
