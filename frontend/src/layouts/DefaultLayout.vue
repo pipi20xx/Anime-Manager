@@ -15,6 +15,8 @@ const GlassSettingsDialog = defineAsyncComponent(() => import('@/glass/component
 const PrimaryColorDialog = defineAsyncComponent(() => import('@/components/common/PrimaryColorDialog.vue'))
 // 异步加载圆角设置弹窗
 const BorderRadiusDialog = defineAsyncComponent(() => import('@/components/common/BorderRadiusDialog.vue'))
+// 异步加载阴影设置弹窗
+const ShadowDialog = defineAsyncComponent(() => import('@/components/common/ShadowDialog.vue'))
 // 异步加载 Fixed Shell Backplate 组件
 const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/glass/components/GlassFixedShellBackplate.vue'))
 
@@ -30,6 +32,7 @@ const isMobile = ref(false)
 const showGlassSettings = ref(false)
 const showPrimaryColorDialog = ref(false)
 const showBorderRadiusDialog = ref(false)
+const showShadowDialog = ref(false)
 
 // 玻璃 Fixed Shell Backplate —— 从 App 层注入的壁纸槽位
 const fixedShellBackplate = useGlassFixedShellBackplate()
@@ -456,6 +459,13 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 @click="showBorderRadiusDialog = true"
               />
               <v-list-item
+                prepend-icon="mdi-box-shadow"
+                title="阴影"
+                subtitle="无 / 轻微 / 默认 / 明显 / 夸张"
+                base-color="primary"
+                @click="showShadowDialog = true"
+              />
+              <v-list-item
                 prepend-icon="mdi-tune-variant"
                 title="玻璃材质设置"
                 subtitle="材质 / 质量 / 动态效果 / 参数"
@@ -519,6 +529,12 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
     <BorderRadiusDialog
       v-model="showBorderRadiusDialog"
       @close="showBorderRadiusDialog = false"
+    />
+
+    <!-- 阴影设置弹窗 -->
+    <ShadowDialog
+      v-model="showShadowDialog"
+      @close="showShadowDialog = false"
     />
     </div><!-- /layout-wrapper -->
   </v-app>

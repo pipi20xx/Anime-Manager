@@ -1040,3 +1040,141 @@ html[data-theme-radius='extra'] .v-theme--dark {
   --am-chip-radius: 16px;
   --am-code-radius: 12px;
 }
+
+/* ════════════════════════════════════════════════════════════════
+ * 全局阴影控制 — 由 useThemeCustomizer 的 shadow 设置驱动
+ * data-theme-shadow 属性由 applyThemeCustomizerRootSettings 写入。
+ *
+ * 档位说明：
+ *   none     — 无阴影（全部 none）
+ *   subtle   — 轻微阴影（极淡投影）
+ *   default  — 默认（不覆盖，保持各主题自身的阴影值）
+ *   prominent — 明显阴影
+ *   dramatic  — 夸张阴影
+ *
+ * 覆盖范围：卡片(surface)、弹窗(overlay)、按钮(btn)、Tab、
+ * 输入框(field)、折叠面板(panel)、snackbar、login、hover-lift、
+ * 筛选芯片(filter-chip)、开关/滑块拇指。
+ * ════════════════════════════════════════════════════════════════ */
+
+/* ── 无阴影 ── */
+html[data-theme-shadow='none'],
+html[data-theme-shadow='none'] .v-theme--light,
+html[data-theme-shadow='none'] .v-theme--dark {
+  --am-surface-shadow: none;
+  --am-surface-hover-shadow: none;
+  --am-overlay-shadow: none;
+  --am-panel-shadow: none;
+  --am-hover-lift-shadow: none;
+  --am-btn-shadow: none;
+  --am-btn-hover-shadow: none;
+  --am-tab-shadow: none;
+  --am-field-shadow: none;
+  --am-snackbar-shadow: none;
+  --am-login-shadow: none;
+  --am-filter-chip-shadow: none;
+  --am-switch-thumb-shadow: none;
+  --am-slider-thumb-shadow: none;
+
+  /* ACG 主题玻璃阴影 */
+  --glass-shadow: none;
+  --glass-shadow-raised: none;
+  --glass-shadow-hover: none;
+  --glass-navbar-shadow: none;
+
+  /* Liquid 主题液态阴影 */
+  --lg-shadow: none;
+  --lg-shadow-lift: none;
+}
+
+/* ── 轻微阴影 ── */
+html[data-theme-shadow='subtle'],
+html[data-theme-shadow='subtle'] .v-theme--light,
+html[data-theme-shadow='subtle'] .v-theme--dark {
+  --am-surface-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --am-surface-hover-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --am-overlay-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --am-panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --am-hover-lift-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --am-btn-shadow: none;
+  --am-btn-hover-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --am-tab-shadow: none;
+  --am-field-shadow: none;
+  --am-snackbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --am-login-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --am-filter-chip-shadow: none;
+  --am-switch-thumb-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --am-slider-thumb-shadow: none;
+
+  /* ACG */
+  --glass-shadow: 0 2px 8px rgba(3, 7, 18, 10%);
+  --glass-shadow-raised: 0 4px 12px rgba(3, 7, 18, 14%);
+  --glass-shadow-hover: 0 6px 16px rgba(3, 7, 18, 18%);
+  --glass-navbar-shadow: 0 1px 4px rgba(3, 7, 18, 8%);
+
+  /* Liquid */
+  --lg-shadow: 0 2px 8px -4px rgba(31, 38, 135, 0.12);
+  --lg-shadow-lift: 0 4px 12px -6px rgba(31, 38, 135, 0.16);
+}
+
+/* ── 默认：不覆盖，保持各主题自身的阴影值 ── */
+
+/* ── 明显阴影 ── */
+html[data-theme-shadow='prominent'],
+html[data-theme-shadow='prominent'] .v-theme--light,
+html[data-theme-shadow='prominent'] .v-theme--dark {
+  --am-surface-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  --am-surface-hover-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  --am-overlay-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  --am-panel-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  --am-hover-lift-shadow: 0 12px 32px rgba(0, 0, 0, 0.22), 0 0 20px rgba(var(--am-primary-rgb, var(--v-theme-primary)), 0.15);
+  --am-btn-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --am-btn-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  --am-tab-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --am-field-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --am-snackbar-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  --am-login-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  --am-filter-chip-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --am-switch-thumb-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --am-slider-thumb-shadow: 0 0 14px rgba(var(--v-theme-primary), 0.5);
+
+  /* ACG */
+  --glass-shadow: 0 14px 36px rgba(3, 7, 18, 32%), inset 0 1px 0 var(--glass-highlight, rgba(255, 255, 255, 6%)), inset 0 -1px 0 rgba(2, 6, 16, 14%);
+  --glass-shadow-raised: 0 20px 50px rgba(3, 7, 18, 40%), inset 0 1px 0 rgba(255, 255, 255, 24%), inset 0 -1px 0 rgba(2, 6, 16, 18%);
+  --glass-shadow-hover: 0 24px 56px rgba(3, 7, 18, 44%), inset 0 1px 0 rgba(255, 255, 255, 28%), inset 0 -1px 0 rgba(2, 6, 16, 18%);
+  --glass-navbar-shadow: 0 6px 20px rgba(3, 7, 18, 24%), inset 0 1px 0 rgba(255, 255, 255, 10%), inset 0 -1px 0 rgba(2, 6, 16, 12%);
+
+  /* Liquid */
+  --lg-shadow: 0 14px 42px -12px rgba(31, 38, 135, 0.38), 0 4px 12px -4px rgba(31, 38, 135, 0.22);
+  --lg-shadow-lift: 0 28px 60px -14px rgba(31, 38, 135, 0.46), 0 6px 16px -6px rgba(31, 38, 135, 0.28);
+}
+
+/* ── 夸张阴影 ── */
+html[data-theme-shadow='dramatic'],
+html[data-theme-shadow='dramatic'] .v-theme--light,
+html[data-theme-shadow='dramatic'] .v-theme--dark {
+  --am-surface-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+  --am-surface-hover-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+  --am-overlay-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --am-panel-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+  --am-hover-lift-shadow: 0 20px 48px rgba(0, 0, 0, 0.35), 0 0 28px rgba(var(--am-primary-rgb, var(--v-theme-primary)), 0.2);
+  --am-btn-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --am-btn-hover-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  --am-tab-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --am-field-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --am-snackbar-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --am-login-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  --am-filter-chip-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --am-switch-thumb-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  --am-slider-thumb-shadow: 0 0 20px rgba(var(--v-theme-primary), 0.6);
+
+  /* ACG */
+  --glass-shadow: 0 20px 48px rgba(3, 7, 18, 42%), inset 0 1px 0 var(--glass-highlight, rgba(255, 255, 255, 6%)), inset 0 -1px 0 rgba(2, 6, 16, 14%);
+  --glass-shadow-raised: 0 28px 64px rgba(3, 7, 18, 52%), inset 0 1px 0 rgba(255, 255, 255, 24%), inset 0 -1px 0 rgba(2, 6, 16, 18%);
+  --glass-shadow-hover: 0 32px 72px rgba(3, 7, 18, 56%), inset 0 1px 0 rgba(255, 255, 255, 28%), inset 0 -1px 0 rgba(2, 6, 16, 18%);
+  --glass-navbar-shadow: 0 10px 32px rgba(3, 7, 18, 32%), inset 0 1px 0 rgba(255, 255, 255, 10%), inset 0 -1px 0 rgba(2, 6, 16, 12%);
+
+  /* Liquid */
+  --lg-shadow: 0 20px 56px -12px rgba(31, 38, 135, 0.46), 0 6px 16px -4px rgba(31, 38, 135, 0.28);
+  --lg-shadow-lift: 0 36px 72px -14px rgba(31, 38, 135, 0.54), 0 8px 20px -6px rgba(31, 38, 135, 0.34);
+}

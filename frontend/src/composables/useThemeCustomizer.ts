@@ -25,6 +25,7 @@ export type ThemeCustomizerGlassQuality = 'balanced' | 'css' | 'high'
 export type ThemeCustomizerGlassSurfaceMode = 'card' | 'page'
 export type ThemeCustomizerLayout = 'collapsed' | 'horizontal' | 'vertical'
 export type ThemeCustomizerRadius = 'default' | 'extra' | 'large' | 'none' | 'small'
+export type ThemeCustomizerShadow = 'default' | 'dramatic' | 'none' | 'prominent' | 'subtle'
 export type ThemeCustomizerSkin = 'bordered' | 'default'
 export type ThemeCustomizerTheme = 'auto' | 'dark' | 'glass' | 'light' | 'purple' | 'transparent'
 
@@ -45,7 +46,7 @@ export interface ThemeCustomizerSettings {
   primaryColor: string
   radius: ThemeCustomizerRadius
   semiDarkMenu: boolean
-  shadow: string
+  shadow: ThemeCustomizerShadow
   skin: ThemeCustomizerSkin
   theme: ThemeCustomizerTheme
 }
@@ -96,6 +97,7 @@ const validGlassSurfaceModes: ThemeCustomizerGlassSurfaceMode[] = ['card', 'page
 const defaultGlassQuality: ThemeCustomizerGlassQuality = 'balanced'
 const validLayouts: ThemeCustomizerLayout[] = ['vertical', 'collapsed', 'horizontal']
 const validRadii: ThemeCustomizerRadius[] = ['none', 'small', 'default', 'large', 'extra']
+const validShadows: ThemeCustomizerShadow[] = ['none', 'subtle', 'default', 'prominent', 'dramatic']
 const validSkins: ThemeCustomizerSkin[] = ['default', 'bordered']
 const validThemes: ThemeCustomizerTheme[] = ['auto', 'light', 'dark', 'purple', 'transparent', 'glass']
 
@@ -153,7 +155,7 @@ function getDefaultThemeCustomizerSettings(): ThemeCustomizerSettings {
     primaryColor: defaultPrimaryColor,
     radius: 'default',
     semiDarkMenu: false,
-    shadow: '0',
+    shadow: 'default',
     skin: 'default',
     theme: 'glass',
   }
@@ -202,7 +204,9 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
 
   const primaryColor = isHexColor(raw.primaryColor) ? raw.primaryColor : defaults.primaryColor
   const semiDarkMenu = typeof raw.semiDarkMenu === 'boolean' ? raw.semiDarkMenu : defaults.semiDarkMenu
-  const shadow = typeof raw.shadow === 'string' ? raw.shadow : defaults.shadow
+  const shadow = validShadows.includes(raw.shadow as ThemeCustomizerShadow)
+    ? (raw.shadow as ThemeCustomizerShadow)
+    : defaults.shadow
 
   return {
     glassAppearance,
@@ -647,7 +651,7 @@ export function useThemeCustomizer() {
     return updateSettings({ theme })
   }
 
-  function setShadow(shadow: string) {
+  function setShadow(shadow: ThemeCustomizerShadow) {
     return updateSettings({ shadow })
   }
 
@@ -670,7 +674,7 @@ export function useThemeCustomizer() {
       primaryColor: defaultPrimaryColor,
       radius: 'default',
       semiDarkMenu: false,
-      shadow: '0',
+      shadow: 'default',
       skin: 'default',
       theme: 'glass',
     })
