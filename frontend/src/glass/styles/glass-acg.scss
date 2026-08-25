@@ -1023,7 +1023,7 @@ html.glass-theme-acg .v-chip.v-chip--variant-tonal:not([class*="text-"]):not([cl
  *   由后续 .sticky-sub-tabs 规则块单独处理。
  */
 html.glass-theme-acg .v-tab {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 html.glass-theme-acg .v-tab .v-tab__content,
 html.glass-theme-acg .v-tab .v-btn__content {
@@ -1050,7 +1050,7 @@ html.glass-theme-acg .v-tab:not(.v-tab--selected):hover {
 
 /* 顶栏动态 Tab（header-tab）— ACG 主题下文字提亮 + 光晕 */
 html.glass-theme-acg .header-tab {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
   text-shadow:
     0 0 2px rgba(0, 0, 0, 0.7),
     0 1px 1px rgba(0, 0, 0, 0.4);
@@ -1109,12 +1109,12 @@ html.glass-theme-acg .v-navigation-drawer .v-list-item {
   transition: all 0.3s ease-out !important;
 }
 
-/* 未选中文字 — 浅色 + 光晕 */
+/* 未选中文字 — 提亮至 0.85，保证在亮/暗壁纸上都可读 */
 html.glass-theme-acg .v-navigation-drawer .v-list-item .v-list-item-title {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 html.glass-theme-acg .v-navigation-drawer .v-list-item .v-icon {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 /* 选中态 — 主题色文字 + 光晕 */
