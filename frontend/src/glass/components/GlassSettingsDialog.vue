@@ -103,6 +103,7 @@ const appearanceOptions: Array<{
   value: ThemeCustomizerGlassAppearance
 }> = [
   { label: 'theme.glassAppearanceClear', value: 'clear' },
+  { label: 'theme.glassAppearanceTransparent', value: 'transparent' },
   { label: 'theme.glassAppearanceTinted', value: 'tinted' },
   { label: 'theme.glassAppearanceFrosted', value: 'frosted' },
 ]
@@ -163,7 +164,7 @@ function updateSurfaceMode(value: unknown) {
 
 /** 仅允许已实现的材质进入待保存设置。 */
 function updateAppearance(value: unknown) {
-  if (value !== 'clear' && value !== 'tinted' && value !== 'frosted') return
+  if (value !== 'clear' && value !== 'transparent' && value !== 'tinted' && value !== 'frosted') return
 
   draftAppearance.value = value
   applyPreset(activePreset.value)
@@ -703,7 +704,7 @@ onScopeDispose(cancelGlassPreview)
 
 .glass-settings-dialog__appearance {
   block-size: 42px !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .glass-settings-dialog__dynamics-mode {

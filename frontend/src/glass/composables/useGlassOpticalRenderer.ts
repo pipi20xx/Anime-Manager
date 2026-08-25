@@ -651,12 +651,17 @@ vec3 compressWallpaperLuminance(vec3 color, float wallpaperExposure) {
 
 vec3 toneMapWallpaper(vec3 color, vec2 uv, float wallpaperExposure) {
   float tinted = step(0.5, uAppearance) * (1.0 - step(1.5, uAppearance));
-  float frosted = step(1.5, uAppearance);
+  float frosted = step(1.5, uAppearance) * (1.0 - step(2.5, uAppearance));
+  float transparent = step(2.5, uAppearance);
   float exposure = mix(0.86, 0.85, tinted);
   exposure = mix(exposure, 0.82, frosted);
   float saturation = mix(0.82, 0.95, tinted);
   saturation = mix(saturation, 0.9, frosted);
   float contrast = mix(1.02, 1.0, frosted);
+  // transparent 材质不调整壁纸色调，保持原始视觉
+  exposure = mix(exposure, 0.86, transparent);
+  saturation = mix(saturation, 1.0, transparent);
+  contrast = mix(contrast, 1.0, transparent);
   vec3 normalized = compressWallpaperLuminance(color, wallpaperExposure);
   float luminance = dot(normalized, vec3(0.2126, 0.7152, 0.0722));
   vec3 mapped = mix(vec3(luminance), normalized, saturation);
@@ -669,6 +674,7 @@ vec3 toneMapWallpaper(vec3 color, vec2 uv, float wallpaperExposure) {
   vec2 radialDelta = (uv - vec2(0.5, 0.82)) / vec2(0.78, 1.0);
   float radialAbsorption = smoothstep(0.24, 0.92, length(radialDelta)) * mix(0.12, 0.14, tinted);
   radialAbsorption *= 1.0 - frosted;
+  radialAbsorption *= 1.0 - transparent;
   vec3 absorbed = mapped * (1.0 - linearAbsorption) * (1.0 - radialAbsorption);
   float transmissionResponse =
     pow(clamp(uTransmissionStrength, 0.0, 1.0), mix(0.9, 0.78, uQuality));
@@ -680,6 +686,8 @@ vec3 toneMapWallpaper(vec3 color, vec2 uv, float wallpaperExposure) {
     smoothstep(0.6, 0.96, uBackgroundVisibility);
   float frostedTransmissionScale = mix(0.42, 0.72, frostedTransparencyProgress);
   transmissionMaterialScale = mix(transmissionMaterialScale, frostedTransmissionScale, frosted);
+  // transparent 材质不缩射透射亮度
+  transmissionMaterialScale = mix(transmissionMaterialScale, 1.0, transparent);
   float highlightProtection = smoothstep(0.68, 0.92, luminance);
   vec3 transmissionReference = normalized;
   float referenceLift =
@@ -855,8 +863,11 @@ ${GLASS_FLUID_FRAGMENT_TRAIL_AND_FIELD}
   vec2 rippleRefraction =
     rippleGradient * mix(230.0, 335.0, uQuality) * uRippleDeformationStrength;
   rippleRefraction /= max(uPresentationSize, vec2(1.0));
-  float frosted = step(1.5, uAppearance);
+  float frosted = step(1.5, uAppearance) * (1.0 - step(2.5, uAppearance));
+  float transparent = step(2.5, uAppearance);
   float rippleAppearanceScale = uAppearance > 1.5 ? 1.25 : (uAppearance > 0.5 ? 0.86 : 0.72);
+  // transparent 材质使用与 clear 相同的折射尺度
+  rippleAppearanceScale = mix(rippleAppearanceScale, 0.72, transparent);
   rippleRefraction *= rippleAppearanceScale;
 
   for (int i = 0; i < 8; i++) {
@@ -974,10 +985,17 @@ ${GLASS_FLUID_FRAGMENT_SURFACE_REFRACTION}
   float clearVisibilityProgress = clamp((uBackgroundVisibility - 0.18) / 0.78, 0.0, 1.0);
   float clearBaseAlpha = mix(0.08, 0.34, clearVisibilityProgress);
   float materialAlpha = clearBaseAlpha * mix(1.0, 2.5, liquidPresence);
+  // transparent 材质：去除暗色底，但保留动态能量驱动的最小可见度，
+  // 使水纹折射和高光仍能被感知。
+  float transparentBaseAlpha = mix(0.04, 0.16, liquidPresence);
+  materialAlpha = mix(materialAlpha, transparentBaseAlpha, transparent);
   float proceduralEdgeAlpha = 0.14;
   float proceduralCausticAlpha = 0.075;
+  // transparent 材质移除边缘高光分割线
+  edgeHighlightMix = mix(edgeHighlightMix, 0.0, transparent);
+  proceduralEdgeAlpha = mix(proceduralEdgeAlpha, 0.0, transparent);
 
-  if (uAppearance > 1.5) {
+  if (uAppearance > 1.5 && uAppearance < 2.5) {
     highlight = vec3(0.94, 0.97, 1.0);
     edgeHighlightMix = 0.15;
     causticHighlightMix = 0.042;
@@ -985,7 +1003,7 @@ ${GLASS_FLUID_FRAGMENT_SURFACE_REFRACTION}
     materialAlpha = frostedBaseAlpha * mix(0.9, 1.0, liquidPresence);
     proceduralEdgeAlpha = 0.16;
     proceduralCausticAlpha = 0.045;
-  } else if (uAppearance > 0.5) {
+  } else if (uAppearance > 0.5 && uAppearance < 1.5) {
     highlight = mix(vec3(1.0), uTintColor, mix(0.28, 0.72, uTintDensity));
     edgeHighlightMix = 0.17;
     causticHighlightMix = 0.085;
@@ -1021,6 +1039,8 @@ ${GLASS_FLUID_FRAGMENT_SURFACE_REFRACTION}
     );
   float absorption =
     clamp(backlightAbsorption * mix(0.035, 0.075, frosted) * uReflectionStrength, 0.0, 0.14);
+  // transparent 材质不吸收背光，保持壁纸原始亮度
+  absorption *= 1.0 - transparent;
   refracted *= 1.0 - absorption;
   refracted = mix(refracted, highlight, reflectionMix);
   refracted += highlight * caustic * causticHighlightMix * uReflectionStrength * highlightBudget;
@@ -1029,6 +1049,8 @@ ${GLASS_FLUID_FRAGMENT_SURFACE_REFRACTION}
     float dynamicsPresence = max(materialEnergy, sharedMotionPresence * 0.36);
     float dynamicsAlpha =
       clamp(dynamicsPresence * mix(0.5, 0.72, uQuality) * mix(1.0, 1.12, frosted), 0.0, 0.82);
+    // transparent 材质在 dynamics-only 模式下提升动态可见度
+    dynamicsAlpha = mix(dynamicsAlpha, clamp(dynamicsAlpha + 0.12, 0.0, 0.88), transparent);
     gl_FragColor = vec4(refracted, dynamicsAlpha);
     return;
   }
@@ -1040,9 +1062,9 @@ ${GLASS_FLUID_FRAGMENT_SURFACE_REFRACTION}
         (
           materialAlpha +
           (
-            directionalReflection * 0.065 +
-            topPrism * 0.05 +
-            caustic * mix(0.028, 0.04, uQuality)
+            directionalReflection * mix(0.065, 0.0, transparent) +
+            topPrism * mix(0.05, 0.0, transparent) +
+            caustic * mix(mix(0.028, 0.04, uQuality), mix(0.04, 0.06, uQuality), transparent)
           ) *
             uReflectionStrength *
             highlightBudget
@@ -1218,6 +1240,7 @@ export function collectGlassOpticalRects(
 function getGlassAppearanceUniformValue(appearance: ThemeCustomizerGlassAppearance) {
   if (appearance === 'tinted') return 1
   if (appearance === 'frosted') return 2
+  if (appearance === 'transparent') return 3
 
   return 0
 }

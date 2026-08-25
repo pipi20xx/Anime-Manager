@@ -10,8 +10,9 @@ const messages = {
     theme: {
       glassSettings: '玻璃设置',
       glassAppearance: '材质',
-      glassAppearanceHint: '透明突出壁纸纹理，色调增加颜色覆盖，磨砂通过模糊扩散呈现更厚的玻璃质感。',
+      glassAppearanceHint: '透明突出壁纸纹理，完全透明去除暗色底使卡片无遮罩，色调增加颜色覆盖，磨砂通过模糊扩散呈现更厚的玻璃质感。',
       glassAppearanceClear: '透明',
+      glassAppearanceTransparent: '完全透明',
       glassAppearanceTinted: '色调',
       glassAppearanceFrosted: '磨砂',
       glassQuality: '质量',

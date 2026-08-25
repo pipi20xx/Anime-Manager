@@ -112,6 +112,24 @@ html.glass-theme-acg {
   background-color: #0b1322;
   color-scheme: dark;
 
+  // 完全透明材质：卡片无暗色底，仅保留极微弱的动态可见度
+  &[data-glass-appearance='transparent'] {
+    --glass-surface: rgba(11, 19, 34, calc(0.02 + var(--glass-surface-density, 0) * 0.04));
+    --glass-surface-soft: rgba(11, 19, 34, calc(0.02 + var(--glass-surface-density, 0) * 0.04));
+    --glass-surface-raised: rgba(11, 19, 34, calc(0.03 + var(--glass-surface-density, 0) * 0.08));
+    // 移除玻璃边缘分割线
+    --glass-border: transparent;
+    --glass-border-raised: transparent;
+    --glass-border-hover: transparent;
+    --glass-highlight: transparent;
+    --glass-sheen: none;
+    // 移除 inset 边缘线（box-shadow 中的 inset 1px / -1px 构成分割线）
+    --glass-shadow: 0 10px 28px rgba(3, 7, 18, 24%);
+    --glass-shadow-raised: 0 16px 40px rgba(3, 7, 18, 32%);
+    --glass-shadow-hover: 0 18px 44px rgba(3, 7, 18, 36%);
+    --glass-navbar-shadow: 0 3px 12px rgba(3, 7, 18, 18%);
+  }
+
   body {
     background-color: #0b1322;
     /* 壁纸背景层 —— 由 useGlassWallpaper 通过 CSS 变量动态设置 */
@@ -837,32 +855,9 @@ html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass
 
 // ═══════════════════════════════════════════════════════════════
 // 整页玻璃模式（data-glass-surface-mode='page'）
-// 渲染器 ready 后，整页作为单一玻璃表面，卡片不再持有独立 backdrop-filter。
-// 固定层（导航栏、弹窗）保留原生 backdrop 以维持层级隔离。
+// 渲染器 ready 后，整页作为单一玻璃表面。
+// 卡片和浮层保留各自 backdrop-filter 以维持弹框/表单可读性。
 // ═══════════════════════════════════════════════════════════════
-html.glass-theme-acg[data-glass-surface-mode='page']:is(
-    [data-glass-quality='balanced'],
-    [data-glass-quality='high']
-  )[data-glass-renderer-state='ready'] {
-  // 页面模式下卡片不再需要独立磨砂，canvas 覆盖整页
-  body.glass-theme-acg {
-    :where(
-      .app-surface:not(.no-blur),
-      .v-card:not(.no-blur, .bg-primary, .bg-success, .bg-info, .bg-warning, .bg-error),
-      .v-sheet:not(.no-blur, .bg-primary, .bg-success, .bg-info, .bg-warning, .bg-error),
-      .v-list,
-      .v-table
-    ) {
-      -webkit-backdrop-filter: none !important;
-      backdrop-filter: none !important;
-    }
-
-    // 嵌套卡片在页面模式下完全透明，由整页玻璃统一呈现
-    :where(.v-card, .v-sheet) :where(.app-surface, .v-card, .v-sheet, .v-list, .v-table) {
-      background-color: transparent !important;
-    }
-  }
-}
 
 // 登录页只保留内容保护表面
 html.glass-theme-acg body.glass-theme-acg {

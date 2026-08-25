@@ -19,7 +19,7 @@ import { normalizeThemeMaterialAccent } from '@/glass'
 
 // ─── 类型定义 ───────────────────────────────────────────────
 
-export type ThemeCustomizerGlassAppearance = 'clear' | 'frosted' | 'tinted'
+export type ThemeCustomizerGlassAppearance = 'clear' | 'frosted' | 'tinted' | 'transparent'
 export type ThemeCustomizerGlassDynamicsMode = 'fluid' | 'ripple' | 'off'
 export type ThemeCustomizerGlassQuality = 'balanced' | 'css' | 'high'
 export type ThemeCustomizerGlassSurfaceMode = 'card' | 'page'
@@ -88,7 +88,7 @@ export const themeCustomizerPrimaryColors = [
 ] as const
 
 const defaultPrimaryColor = themeCustomizerPrimaryColors[0].value
-const validGlassAppearances: ThemeCustomizerGlassAppearance[] = ['clear', 'tinted', 'frosted']
+const validGlassAppearances: ThemeCustomizerGlassAppearance[] = ['clear', 'tinted', 'frosted', 'transparent']
 const validGlassDynamicsModes: ThemeCustomizerGlassDynamicsMode[] = ['fluid', 'ripple', 'off']
 const validGlassPresets: GlassOpticalPreset[] = ['natural', 'glide', 'liquid']
 const validGlassQualities: ThemeCustomizerGlassQuality[] = ['css', 'balanced', 'high']
