@@ -19,6 +19,8 @@ const BorderRadiusDialog = defineAsyncComponent(() => import('@/components/commo
 const BorderDialog = defineAsyncComponent(() => import('@/components/common/BorderDialog.vue'))
 // 异步加载阴影设置弹窗
 const ShadowDialog = defineAsyncComponent(() => import('@/components/common/ShadowDialog.vue'))
+// 异步加载壁纸管理弹窗
+const WallpaperDialog = defineAsyncComponent(() => import('@/components/common/WallpaperDialog.vue'))
 // 异步加载 Fixed Shell Backplate 组件
 const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/glass/components/GlassFixedShellBackplate.vue'))
 
@@ -36,6 +38,7 @@ const showPrimaryColorDialog = ref(false)
 const showBorderRadiusDialog = ref(false)
 const showBorderDialog = ref(false)
 const showShadowDialog = ref(false)
+const showWallpaperDialog = ref(false)
 
 // 玻璃 Fixed Shell Backplate —— 从 App 层注入的壁纸槽位
 const fixedShellBackplate = useGlassFixedShellBackplate()
@@ -468,7 +471,13 @@ title="阴影"
 subtitle="无 / 轻微 / 默认 / 明显 / 夸张"
 @click="showShadowDialog = true"
 />
-              <v-list-item
+<v-list-item
+prepend-icon="mdi-wallpaper"
+title="壁纸管理"
+subtitle="API / 上传 / 自定义 URL"
+@click="showWallpaperDialog = true"
+/>
+<v-list-item
                 prepend-icon="mdi-tune-variant"
                 title="玻璃材质设置"
                 subtitle="材质 / 质量 / 动态效果 / 参数"
@@ -544,7 +553,13 @@ v-model="showBorderDialog"
 v-model="showShadowDialog"
 @close="showShadowDialog = false"
 />
-    </div><!-- /layout-wrapper -->
+
+<!-- 壁纸管理弹窗 -->
+<WallpaperDialog
+v-model="showWallpaperDialog"
+@close="showWallpaperDialog = false"
+/>
+</div><!-- /layout-wrapper -->
   </v-app>
 </template>
 

@@ -86,22 +86,20 @@ function isLightColor(hex: string): boolean {
     :fullscreen="display.smAndDown.value"
   >
     <VCard>
-      <VCardItem>
-        <VCardTitle>
-          <VIcon icon="mdi-palette" class="me-2" />
-          主题色
-        </VCardTitle>
+      <VCardTitle class="d-flex align-center pa-4">
+        <VIcon icon="mdi-palette" class="me-2" />
+        主题色
+        <VSpacer />
         <VBtn
           icon
           variant="text"
           size="small"
-          class="absolute right-3 top-3 z-10"
           aria-label="关闭"
           @click.stop="visible = false"
         >
           <VIcon icon="mdi-close" />
         </VBtn>
-      </VCardItem>
+      </VCardTitle>
       <VDivider />
 
       <VCardText class="primary-color-dialog__body">

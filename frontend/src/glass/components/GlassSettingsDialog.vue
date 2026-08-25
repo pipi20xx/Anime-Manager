@@ -340,23 +340,21 @@ onScopeDispose(cancelGlassPreview)
     scrollable
     :fullscreen="display.smAndDown.value"
   >
-    <VCard>
-      <VCardItem>
-        <VCardTitle>
-          <VIcon icon="mdi-blur-radial" class="me-2" />
-          {{ t('theme.glassSettings') }}
-        </VCardTitle>
-        <VBtn
-          icon
-          variant="text"
-          size="small"
-          class="absolute right-3 top-3 z-10"
-          aria-label="关闭"
-          @click.stop="visible = false"
-        >
-          <VIcon icon="mdi-close" />
-        </VBtn>
-      </VCardItem>
+<VCard>
+<VCardTitle class="d-flex align-center pa-4">
+<VIcon icon="mdi-blur-radial" class="me-2" />
+{{ t('theme.glassSettings') }}
+<VSpacer />
+<VBtn
+icon
+variant="text"
+size="small"
+aria-label="关闭"
+@click.stop="visible = false"
+>
+<VIcon icon="mdi-close" />
+</VBtn>
+</VCardTitle>
       <VDivider />
 
       <VCardText class="glass-settings-dialog__body">

@@ -120,22 +120,20 @@ const currentOption = computed(() => shadowOptions.find(o => o.value === current
     :fullscreen="display.smAndDown.value"
   >
     <VCard>
-      <VCardItem>
-        <VCardTitle>
-          <VIcon icon="mdi-box-shadow" class="me-2" />
-          阴影
-        </VCardTitle>
+      <VCardTitle class="d-flex align-center pa-4">
+        <VIcon icon="mdi-box-shadow" class="me-2" />
+        阴影
+        <VSpacer />
         <VBtn
           icon
           variant="text"
           size="small"
-          class="absolute right-3 top-3 z-10"
           aria-label="关闭"
           @click.stop="visible = false"
         >
           <VIcon icon="mdi-close" />
         </VBtn>
-      </VCardItem>
+      </VCardTitle>
       <VDivider />
 
       <VCardText class="shadow-dialog__body">
