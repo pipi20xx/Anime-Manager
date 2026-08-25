@@ -184,7 +184,7 @@ const currentOption = computed(() => radiusOptions.find(o => o.value === current
       <VCardActions class="radius-dialog__actions justify-center">
         <VBtn
           :slim="false"
-          variant="elevated"
+          variant="tonal"
           color="primary"
           prepend-icon="mdi-check"
           @click="visible = false"

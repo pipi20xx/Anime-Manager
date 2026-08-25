@@ -589,13 +589,13 @@ onScopeDispose(cancelGlassPreview)
 
       <VDivider />
       <VCardActions class="glass-settings-dialog__actions justify-center">
-        <VBtn :slim="false" variant="outlined" prepend-icon="mdi-refresh" class="me-2" @click="resetSettings">
+        <VBtn :slim="false" variant="tonal" prepend-icon="mdi-refresh" class="me-2" @click="resetSettings">
           {{ t('common.reset') }}
         </VBtn>
         <VBtn
           :slim="false"
           color="primary"
-          variant="elevated"
+          variant="tonal"
           prepend-icon="mdi-content-save"
           :loading="isSaving"
           @click="saveSettings"

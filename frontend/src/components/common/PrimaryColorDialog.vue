@@ -185,7 +185,7 @@ function isLightColor(hex: string): boolean {
       <VCardActions class="primary-color-dialog__actions justify-center">
         <VBtn
           :slim="false"
-          variant="elevated"
+          variant="tonal"
           color="primary"
           prepend-icon="mdi-check"
           @click="visible = false"
