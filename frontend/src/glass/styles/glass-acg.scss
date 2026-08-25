@@ -1432,9 +1432,22 @@ html.glass-theme-acg .v-radio .v-selection-control--dirty .v-icon {
 
 
 /* ================================================================
- * 7. 登录页按钮渐变
+ * 7. 登录页 — 卡片跟随 ACG 玻璃材质
+ *    visual.css 中 .login-glass-panel 用 !important + --am-login-* 变量，
+ *    但 ACG 主题未定义这些变量，会回落到 :root 默认值（不适合 ACG 主题）。
+ *    这里用 ACG 的 --glass-* 变量覆盖，使登录卡片与其他页面卡片一致。
  * ================================================================ */
 
+html.glass-theme-acg .login-glass-panel {
+  background-color: var(--glass-surface) !important;
+  background-image: var(--glass-sheen) !important;
+  -webkit-backdrop-filter: var(--glass-surface-backdrop-filter) !important;
+  backdrop-filter: var(--glass-surface-backdrop-filter) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* 登录页按钮渐变 */
 html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
   color: #fff !important;
   background: linear-gradient(135deg, rgba(66, 165, 245, 0.6), rgba(78, 205, 196, 0.35)) !important;
