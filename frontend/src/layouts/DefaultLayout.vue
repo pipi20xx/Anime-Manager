@@ -427,7 +427,6 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 title="液态玻璃"
                 subtitle="Apple 液态玻璃风格"
                 :active="themeStore.glassTheme === 'liquid'"
-                base-color="primary"
                 @click="themeStore.setGlassTheme('liquid')"
               />
               <v-list-item
@@ -435,7 +434,6 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 title="ACG 毛玻璃"
                 subtitle="二次元壁纸 + 暗色毛玻璃"
                 :active="themeStore.glassTheme === 'acg'"
-                base-color="primary"
                 @click="themeStore.setGlassTheme('acg')"
               />
               <v-list-item
@@ -443,7 +441,6 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 title="经典实色"
                 subtitle="纯白/纯黑 最简风格"
                 :active="themeStore.glassTheme === 'classic'"
-                base-color="primary"
                 @click="themeStore.setGlassTheme('classic')"
               />
               <v-divider class="my-2 mx-2" />
@@ -451,28 +448,24 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 prepend-icon="mdi-palette"
                 title="主题色"
                 subtitle="选择应用主色调"
-                base-color="primary"
                 @click="showPrimaryColorDialog = true"
               />
               <v-list-item
                 prepend-icon="mdi-border-radius"
                 title="圆角"
                 subtitle="无 / 小 / 默认 / 大 / 更大"
-                base-color="primary"
                 @click="showBorderRadiusDialog = true"
               />
 <v-list-item
 prepend-icon="mdi-border-all-variant"
 title="边框"
 subtitle="无 / 轻微 / 默认 / 明显 / 强边框"
-base-color="primary"
 @click="showBorderDialog = true"
 />
 <v-list-item
 prepend-icon="mdi-box-shadow"
 title="阴影"
 subtitle="无 / 轻微 / 默认 / 明显 / 夸张"
-base-color="primary"
 @click="showShadowDialog = true"
 />
               <v-list-item
@@ -480,7 +473,6 @@ base-color="primary"
                 title="玻璃材质设置"
                 subtitle="材质 / 质量 / 动态效果 / 参数"
                 :disabled="themeStore.glassTheme !== 'acg'"
-                base-color="primary"
                 @click="showGlassSettings = true"
               />
             </v-list>
