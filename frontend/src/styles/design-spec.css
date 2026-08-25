@@ -16,11 +16,11 @@
 }
 
 .search-field .v-field {
-  border-radius: 20px !important;
+  border-radius: var(--am-field-radius, 20px) !important;
 }
 
 .search-field .v-field .v-btn {
-  border-radius: 14px !important;
+  border-radius: var(--am-btn-radius, 14px) !important;
 }
 
 

@@ -13,6 +13,8 @@ import type { DynamicHeaderTabItem, DynamicHeaderTabButton } from '@/composables
 const GlassSettingsDialog = defineAsyncComponent(() => import('@/glass/components/GlassSettingsDialog.vue'))
 // 异步加载主题色设置弹窗
 const PrimaryColorDialog = defineAsyncComponent(() => import('@/components/common/PrimaryColorDialog.vue'))
+// 异步加载圆角设置弹窗
+const BorderRadiusDialog = defineAsyncComponent(() => import('@/components/common/BorderRadiusDialog.vue'))
 // 异步加载 Fixed Shell Backplate 组件
 const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/glass/components/GlassFixedShellBackplate.vue'))
 
@@ -27,6 +29,7 @@ const rail = ref(false)
 const isMobile = ref(false)
 const showGlassSettings = ref(false)
 const showPrimaryColorDialog = ref(false)
+const showBorderRadiusDialog = ref(false)
 
 // 玻璃 Fixed Shell Backplate —— 从 App 层注入的壁纸槽位
 const fixedShellBackplate = useGlassFixedShellBackplate()
@@ -446,6 +449,13 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 @click="showPrimaryColorDialog = true"
               />
               <v-list-item
+                prepend-icon="mdi-border-radius"
+                title="圆角"
+                subtitle="无 / 小 / 默认 / 大 / 更大"
+                base-color="primary"
+                @click="showBorderRadiusDialog = true"
+              />
+              <v-list-item
                 prepend-icon="mdi-tune-variant"
                 title="玻璃材质设置"
                 subtitle="材质 / 质量 / 动态效果 / 参数"
@@ -504,6 +514,12 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
       v-model="showPrimaryColorDialog"
       @close="showPrimaryColorDialog = false"
     />
+
+    <!-- 圆角设置弹窗 -->
+    <BorderRadiusDialog
+      v-model="showBorderRadiusDialog"
+      @close="showBorderRadiusDialog = false"
+    />
     </div><!-- /layout-wrapper -->
   </v-app>
 </template>
@@ -551,7 +567,7 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
 .header-tab {
   display: flex;
   align-items: center;
-  border-radius: 20px;
+  border-radius: var(--am-tab-radius, 20px);
   background-color: transparent;
   color: rgba(var(--v-theme-on-surface), 0.7);
   cursor: pointer;

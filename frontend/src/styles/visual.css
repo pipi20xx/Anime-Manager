@@ -562,6 +562,7 @@
 
 .v-chip {
   font-weight: 500;
+  border-radius: var(--am-chip-radius) !important;
 }
 
 .v-chip--variant-tonal {

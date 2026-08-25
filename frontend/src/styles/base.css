@@ -163,16 +163,16 @@ body::after {
  * 5. 卡片工具类 — 纯结构
  * ============================================================ */
 .glass-card {
-  --glass-radius: 24px;
+  --glass-radius: var(--am-surface-radius, 24px);
   overflow: hidden;
 }
 
 .glass-card.list-card {
-  --glass-radius: 12px;
+  --glass-radius: var(--am-surface-radius, 12px);
 }
 
 .glass-panel {
-  --glass-radius: 20px;
+  --glass-radius: var(--am-surface-radius, 20px);
   overflow: hidden;
 }
 

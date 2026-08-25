@@ -72,49 +72,50 @@ export default createVuetify({
   },
   defaults: {
     VCard: {
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-surface-radius) 统一控制
+      // 不在此设置 rounded，避免 Vuetify 的 .rounded-xl 工具类干扰
     },
     VBtn: {
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-btn-radius) 统一控制
       variant: 'tonal',
       density: 'default',
     },
     VChip: {
-      rounded: 'lg',
+      // 圆角由 visual.css 的 var(--am-chip-radius) 统一控制
       label: true,
     },
     VTextField: {
       variant: 'outlined',
       density: 'compact',
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-field-radius) 统一控制
       hideDetails: 'auto',
       persistentPlaceholder: true,
     },
     VSelect: {
       variant: 'outlined',
       density: 'compact',
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-field-radius) 统一控制
       hideDetails: 'auto',
       persistentPlaceholder: true,
     },
     VTextarea: {
       variant: 'outlined',
       density: 'compact',
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-field-radius) 统一控制
       hideDetails: 'auto',
       persistentPlaceholder: true,
     },
     VAutocomplete: {
       variant: 'outlined',
       density: 'compact',
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-field-radius) 统一控制
       hideDetails: 'auto',
       persistentPlaceholder: true,
     },
     VCombobox: {
       variant: 'outlined',
       density: 'compact',
-      rounded: 'xl',
+      // 圆角由 visual.css 的 var(--am-field-radius) 统一控制
       hideDetails: 'auto',
       persistentPlaceholder: true,
     },
