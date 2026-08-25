@@ -109,6 +109,15 @@ function isHexColor(color: unknown): color is string {
   return typeof color === 'string' && /^#[\da-f]{6}$/i.test(color)
 }
 
+/** 将 #RRGGBB 转为 "R, G, B" 字符串，供 CSS 变量使用。 */
+function hexToRgb(hex: string): string | undefined {
+  if (!isHexColor(hex)) return undefined
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r}, ${g}, ${b}`
+}
+
 function clampGlass(value: unknown, min: number, max: number, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
   return Math.min(max, Math.max(min, value))
@@ -308,6 +317,8 @@ export function applyThemeCustomizerRootSettings(
   const overlayClarityBlur = getGlassOverlayClarityBlur(settings.glassTransparencyStrength)
   const materialAccent =
     normalizeThemeMaterialAccent(settings.primaryColor) ?? normalizeThemeMaterialAccent(defaultPrimaryColor)!
+  /** 将 hex 主色转为 "R, G, B" 字符串，用于覆盖 --v-theme-primary 和自定义变量。 */
+  const primaryRgb = hexToRgb(settings.primaryColor) ?? hexToRgb(defaultPrimaryColor)!
   const applyGlassResponse = (element: HTMLElement) => {
     element.style.setProperty('--glass-background-visibility', String(materialResponse.backgroundVisibility))
     element.style.setProperty('--glass-frost-blur-scale', String(materialResponse.frostBlurScale))
@@ -319,6 +330,14 @@ export function applyThemeCustomizerRootSettings(
     element.style.setProperty('--glass-overlay-clarity-blur', `${overlayClarityBlur}px`)
     element.style.setProperty('--glass-material-accent-rgb', materialAccent.rgb)
   }
+
+  // ── 主题色应用 ──
+  // 主色不分白天/夜晚，统一写入 :root 的 --v-theme-primary 和 --am-primary-rgb，
+  // Vuetify 组件通过 CSS 变量继承自动响应。
+  // JS 侧的 Vuetify theme 对象同步由 App.vue 中 watch primaryColor 完成。
+  document.documentElement.style.setProperty('--v-theme-primary', primaryRgb)
+  document.documentElement.style.setProperty('--am-primary-rgb', primaryRgb)
+  document.documentElement.style.setProperty('--am-primary-hex', settings.primaryColor)
 
   document.documentElement.setAttribute('data-glass-appearance', settings.glassAppearance)
   document.documentElement.setAttribute('data-glass-quality', settings.glassQuality)

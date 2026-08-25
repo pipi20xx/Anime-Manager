@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useThemeStore, useSystemStore } from '@/stores'
 import { useGlassWallpaper } from '@/glass'
-import { applyStoredThemeCustomizerAppearance } from '@/composables/useThemeCustomizer'
+import { applyStoredThemeCustomizerAppearance, useThemeCustomizer } from '@/composables/useThemeCustomizer'
 import {
   isChromiumFixedShellBackplateBrowser,
   provideGlassFixedShellBackplate,
@@ -20,6 +20,7 @@ const theme = useTheme()
 const themeStore = useThemeStore()
 const systemStore = useSystemStore()
 const route = useRoute()
+const { settings: themeCustomizerSettings } = useThemeCustomizer()
 
 // 玻璃光学层（异步加载，避免首屏阻塞）
 const GlassOpticalLayer = defineAsyncComponent(() => import('@/glass/components/GlassOpticalLayer.vue'))
@@ -93,6 +94,14 @@ watch(() => themeStore.isDarkMode, (val) => {
 watch(() => themeStore.glassTheme, (val) => {
   applyGlassTheme(val)
 })
+
+// ── 主题色同步 ──
+// CSS 变量由 useThemeCustomizer.applyThemeCustomizerRootSettings 写入 :root，
+// 这里同步 Vuetify JS 侧的 theme 对象，确保 JS 逻辑（如 useTheme().current.value.colors.primary）也能读到最新值。
+watch(() => themeCustomizerSettings.value.primaryColor, (primaryColor) => {
+  theme.themes.value.light.colors.primary = primaryColor
+  theme.themes.value.dark.colors.primary = primaryColor
+}, { immediate: true })
 
 // ── 壁纸背景层管理 ──────────────────────────────────────────
 

@@ -94,8 +94,8 @@ html.glass-theme-liquid.glass-dark {
 }
 
 /* Vuetify 组件变量 */
+/* --v-theme-primary 不再在此硬编码，由 useThemeCustomizer 通过 primaryColor 统一管理 */
 html.glass-theme-liquid .v-theme--light {
-  --v-theme-primary: 94, 92, 230;
   --v-theme-surface: 255, 255, 255;
   --v-theme-surface-light: 255, 255, 255;
   --v-theme-background: 198, 207, 238;

@@ -47,7 +47,7 @@ async function handleLogin() {
           <!-- 标题 -->
           <div class="text-center mb-6">
             <v-avatar class="liquid-avatar mb-4" size="64" rounded="xl">
-              <img src="/favicon.svg" alt="番剧管家" class="app-logo" />
+              <div class="app-logo" role="img" aria-label="番剧管家" />
             </v-avatar>
             <h1 class="text-h5 font-weight-bold">番剧管家</h1>
             <p class="text-body-2 text-medium-emphasis mt-1">Anime Manager</p>
@@ -98,8 +98,10 @@ async function handleLogin() {
 .app-logo {
   width: 40px;
   height: 40px;
-  /* <img> 引入的 SVG 无法继承 currentColor，用 filter 着色 */
-  filter: brightness(0) saturate(100%) invert(47%) sepia(98%) saturate(1925%) hue-rotate(234deg) brightness(96%) contrast(96%);
+  /* 使用 mask 让 SVG 跟随主题色，不再用 filter hack 硬编码紫色 */
+  -webkit-mask: url('/favicon.svg') center / contain no-repeat;
+  mask: url('/favicon.svg') center / contain no-repeat;
+  background-color: rgb(var(--v-theme-primary));
 }
 
 /* 登录页输入框 — 在玻璃面板上增加微底色，提升可读性 */

@@ -11,6 +11,8 @@ import type { DynamicHeaderTabItem, DynamicHeaderTabButton } from '@/composables
 
 // 异步加载玻璃设置弹窗
 const GlassSettingsDialog = defineAsyncComponent(() => import('@/glass/components/GlassSettingsDialog.vue'))
+// 异步加载主题色设置弹窗
+const PrimaryColorDialog = defineAsyncComponent(() => import('@/components/common/PrimaryColorDialog.vue'))
 // 异步加载 Fixed Shell Backplate 组件
 const GlassFixedShellBackplate = defineAsyncComponent(() => import('@/glass/components/GlassFixedShellBackplate.vue'))
 
@@ -24,6 +26,7 @@ const drawer = ref(true)
 const rail = ref(false)
 const isMobile = ref(false)
 const showGlassSettings = ref(false)
+const showPrimaryColorDialog = ref(false)
 
 // 玻璃 Fixed Shell Backplate —— 从 App 层注入的壁纸槽位
 const fixedShellBackplate = useGlassFixedShellBackplate()
@@ -246,7 +249,7 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
       <!-- Logo 区域 -->
       <div class="logo-header" :class="{ 'logo-header--rail': rail && !isMobile }">
         <v-avatar class="liquid-avatar" rounded="xl" size="40">
-          <img src="/favicon.svg" alt="番剧管家" class="app-logo" />
+          <div class="app-logo" role="img" aria-label="番剧管家" />
         </v-avatar>
         <div v-if="!rail || isMobile" class="logo-text">
           <div class="text-subtitle-1 font-weight-bold liquid-glass-subtitle">番剧管家</div>
@@ -436,6 +439,13 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
               />
               <v-divider class="my-2 mx-2" />
               <v-list-item
+                prepend-icon="mdi-palette"
+                title="主题色"
+                subtitle="选择应用主色调"
+                base-color="primary"
+                @click="showPrimaryColorDialog = true"
+              />
+              <v-list-item
                 prepend-icon="mdi-tune-variant"
                 title="玻璃材质设置"
                 subtitle="材质 / 质量 / 动态效果 / 参数"
@@ -488,6 +498,12 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
       v-model="showGlassSettings"
       @close="showGlassSettings = false"
     />
+
+    <!-- 主题色设置弹窗 -->
+    <PrimaryColorDialog
+      v-model="showPrimaryColorDialog"
+      @close="showPrimaryColorDialog = false"
+    />
     </div><!-- /layout-wrapper -->
   </v-app>
 </template>
@@ -508,8 +524,10 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
 .app-logo {
   width: 28px;
   height: 28px;
-  /* <img> 引入的 SVG 无法继承 currentColor，用 filter 着色 */
-  filter: brightness(0) saturate(100%) invert(47%) sepia(98%) saturate(1925%) hue-rotate(234deg) brightness(96%) contrast(96%);
+  /* 使用 mask 让 SVG 跟随主题色，不再用 filter hack 硬编码紫色 */
+  -webkit-mask: url('/favicon.svg') center / contain no-repeat;
+  mask: url('/favicon.svg') center / contain no-repeat;
+  background-color: rgb(var(--v-theme-primary));
 }
 
 /* ═══════════════════════════════════════════════════════════════

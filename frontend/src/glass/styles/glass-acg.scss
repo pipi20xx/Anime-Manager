@@ -1225,12 +1225,12 @@ html.glass-theme-acg .text-neon {
 
 /* 渐变填充 */
 html.glass-theme-acg .text-gradient {
-  background: linear-gradient(135deg, #a855f7 0%, #ff2d94 100%);
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, #ff2d94 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(168, 85, 247, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(var(--v-theme-primary), 0.3));
 }
 
 

@@ -199,8 +199,8 @@ html.glass-theme-acg {
   --am-list-active-color: rgb(var(--v-theme-primary));
 
   /* Scrollbar color */
-  --am-scrollbar-color: rgba(168, 85, 247, 0.25);
-  --am-scrollbar-hover: rgba(168, 85, 247, 0.4);
+  --am-scrollbar-color: rgba(var(--am-primary-rgb, var(--v-theme-primary)), 0.25);
+  --am-scrollbar-hover: rgba(var(--am-primary-rgb, var(--v-theme-primary)), 0.4);
 
   /* Login */
   --am-login-bg: rgba(20, 20, 40, 0.1);
@@ -219,11 +219,11 @@ html.glass-theme-acg {
 
   /* Slider */
   --am-slider-track-bg: rgba(255, 255, 255, 0.1);
-  --am-slider-fill-bg: linear-gradient(90deg, #a855f7, #4ecdc4);
+  --am-slider-fill-bg: linear-gradient(90deg, rgb(var(--v-theme-primary)), #4ecdc4);
   --am-slider-thumb-shadow: 0 0 10px rgba(78, 205, 196, 0.4);
 
   /* Progress */
-  --am-progress-fill-bg: linear-gradient(90deg, #a855f7, #4ecdc4);
+  --am-progress-fill-bg: linear-gradient(90deg, rgb(var(--v-theme-primary)), #4ecdc4);
   --am-progress-circular-stroke: rgb(var(--v-theme-primary));
   --am-progress-glow: 0 0 12px rgba(78, 205, 196, 0.4);
 
@@ -247,7 +247,7 @@ html.glass-theme-acg {
 
   /* Hover Lift */
   --am-hover-lift-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(168, 85, 247, 0.12);
+    0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(var(--am-primary-rgb, var(--v-theme-primary)), 0.12);
 
   /* Code */
   --am-code-color: #7c3aed;

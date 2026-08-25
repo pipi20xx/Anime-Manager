@@ -2,8 +2,9 @@
  * Vuetify 插件配置
  *
  * 默认主题：经典实色（classic）
- * - 亮色：纯白底 + 紫色主强调色 #a855f7
- * - 暗色：纯黑底 #121212 + 紫色主强调色 #a855f7
+ * - 亮色：纯白底 + 主强调色
+ * - 暗色：纯黑底 #121212 + 主强调色
+ * - 主色调可通过主题定制器（PrimaryColorDialog）动态切换，不分白天/夜晚
  * - ACG / 液态玻璃主题通过 CSS 覆盖实现
  * - 图标：全部使用 MDI (@mdi/js)
  */
@@ -20,8 +21,8 @@ const lightTheme = {
     surface: '#FFFFFF',      // 卡片/面板背景
     'surface-variant': '#F5F5F5',
     'on-surface-variant': '#64748B',
-    primary: '#a855f7',
-    'primary-darken-1': '#9333EA',
+    primary: '#8D51F9',
+    'primary-darken-1': '#7C3AED',
     secondary: '#6b7280',
     'secondary-darken-1': '#4b5563',
     accent: '#4ecdc4',
@@ -42,8 +43,8 @@ const darkTheme = {
     surface: '#1E1E1E',      // 卡片/面板背景
     'surface-variant': '#2C2C2C',
     'on-surface-variant': '#BFC2CE',
-    primary: '#a855f7',
-    'primary-darken-1': '#9333EA',
+    primary: '#8D51F9',
+    'primary-darken-1': '#7C3AED',
     secondary: '#6b7280',
     'secondary-darken-1': '#4b5563',
     accent: '#4ecdc4',
