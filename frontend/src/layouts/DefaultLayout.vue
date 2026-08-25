@@ -15,6 +15,8 @@ const GlassSettingsDialog = defineAsyncComponent(() => import('@/glass/component
 const PrimaryColorDialog = defineAsyncComponent(() => import('@/components/common/PrimaryColorDialog.vue'))
 // 异步加载圆角设置弹窗
 const BorderRadiusDialog = defineAsyncComponent(() => import('@/components/common/BorderRadiusDialog.vue'))
+// 异步加载边框设置弹窗
+const BorderDialog = defineAsyncComponent(() => import('@/components/common/BorderDialog.vue'))
 // 异步加载阴影设置弹窗
 const ShadowDialog = defineAsyncComponent(() => import('@/components/common/ShadowDialog.vue'))
 // 异步加载 Fixed Shell Backplate 组件
@@ -32,6 +34,7 @@ const isMobile = ref(false)
 const showGlassSettings = ref(false)
 const showPrimaryColorDialog = ref(false)
 const showBorderRadiusDialog = ref(false)
+const showBorderDialog = ref(false)
 const showShadowDialog = ref(false)
 
 // 玻璃 Fixed Shell Backplate —— 从 App 层注入的壁纸槽位
@@ -458,13 +461,20 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 base-color="primary"
                 @click="showBorderRadiusDialog = true"
               />
-              <v-list-item
-                prepend-icon="mdi-box-shadow"
-                title="阴影"
-                subtitle="无 / 轻微 / 默认 / 明显 / 夸张"
-                base-color="primary"
-                @click="showShadowDialog = true"
-              />
+<v-list-item
+prepend-icon="mdi-border-all-variant"
+title="边框"
+subtitle="无 / 轻微 / 默认 / 明显 / 强边框"
+base-color="primary"
+@click="showBorderDialog = true"
+/>
+<v-list-item
+prepend-icon="mdi-box-shadow"
+title="阴影"
+subtitle="无 / 轻微 / 默认 / 明显 / 夸张"
+base-color="primary"
+@click="showShadowDialog = true"
+/>
               <v-list-item
                 prepend-icon="mdi-tune-variant"
                 title="玻璃材质设置"
@@ -525,17 +535,23 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
       @close="showPrimaryColorDialog = false"
     />
 
-    <!-- 圆角设置弹窗 -->
-    <BorderRadiusDialog
-      v-model="showBorderRadiusDialog"
-      @close="showBorderRadiusDialog = false"
-    />
+<!-- 圆角设置弹窗 -->
+<BorderRadiusDialog
+v-model="showBorderRadiusDialog"
+@close="showBorderRadiusDialog = false"
+/>
 
-    <!-- 阴影设置弹窗 -->
-    <ShadowDialog
-      v-model="showShadowDialog"
-      @close="showShadowDialog = false"
-    />
+<!-- 边框设置弹窗 -->
+<BorderDialog
+v-model="showBorderDialog"
+@close="showBorderDialog = false"
+/>
+
+<!-- 阴影设置弹窗 -->
+<ShadowDialog
+v-model="showShadowDialog"
+@close="showShadowDialog = false"
+/>
     </div><!-- /layout-wrapper -->
   </v-app>
 </template>

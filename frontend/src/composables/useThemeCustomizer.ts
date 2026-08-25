@@ -24,6 +24,7 @@ export type ThemeCustomizerGlassDynamicsMode = 'fluid' | 'ripple' | 'off'
 export type ThemeCustomizerGlassQuality = 'balanced' | 'css' | 'high'
 export type ThemeCustomizerGlassSurfaceMode = 'card' | 'page'
 export type ThemeCustomizerLayout = 'collapsed' | 'horizontal' | 'vertical'
+export type ThemeCustomizerBorder = 'default' | 'dramatic' | 'none' | 'prominent' | 'subtle'
 export type ThemeCustomizerRadius = 'default' | 'extra' | 'large' | 'none' | 'small'
 export type ThemeCustomizerShadow = 'default' | 'dramatic' | 'none' | 'prominent' | 'subtle'
 export type ThemeCustomizerSkin = 'bordered' | 'default'
@@ -42,6 +43,7 @@ export interface ThemeCustomizerSettings {
   glassTransmissionStrength: number
   glassTranslationStrength: number
   glassTransparencyStrength: number
+  border: ThemeCustomizerBorder
   layout: ThemeCustomizerLayout
   primaryColor: string
   radius: ThemeCustomizerRadius
@@ -96,6 +98,7 @@ const validGlassQualities: ThemeCustomizerGlassQuality[] = ['css', 'balanced', '
 const validGlassSurfaceModes: ThemeCustomizerGlassSurfaceMode[] = ['card', 'page']
 const defaultGlassQuality: ThemeCustomizerGlassQuality = 'balanced'
 const validLayouts: ThemeCustomizerLayout[] = ['vertical', 'collapsed', 'horizontal']
+const validBorders: ThemeCustomizerBorder[] = ['none', 'subtle', 'default', 'prominent', 'dramatic']
 const validRadii: ThemeCustomizerRadius[] = ['none', 'small', 'default', 'large', 'extra']
 const validShadows: ThemeCustomizerShadow[] = ['none', 'subtle', 'default', 'prominent', 'dramatic']
 const validSkins: ThemeCustomizerSkin[] = ['default', 'bordered']
@@ -151,6 +154,7 @@ export function getDefaultGlassCustomizerSettings(
 function getDefaultThemeCustomizerSettings(): ThemeCustomizerSettings {
   return {
     ...getDefaultGlassCustomizerSettings(),
+    border: 'default',
     layout: 'vertical',
     primaryColor: defaultPrimaryColor,
     radius: 'default',
@@ -185,6 +189,10 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
   const glassPreset = validGlassPresets.includes(raw.glassPreset as GlassOpticalPreset)
     ? (raw.glassPreset as GlassOpticalPreset)
     : defaults.glassPreset
+
+  const border = validBorders.includes(raw.border as ThemeCustomizerBorder)
+    ? (raw.border as ThemeCustomizerBorder)
+    : defaults.border
 
   const layout = validLayouts.includes(raw.layout as ThemeCustomizerLayout)
     ? (raw.layout as ThemeCustomizerLayout)
@@ -224,6 +232,7 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
     glassTransmissionStrength: clampGlass(raw.glassTransmissionStrength, 0, 100, defaults.glassTransmissionStrength),
     glassTranslationStrength: clampGlass(raw.glassTranslationStrength, 0, 100, defaults.glassTranslationStrength),
     glassTransparencyStrength: clampGlass(raw.glassTransparencyStrength, 0, 100, defaults.glassTransparencyStrength),
+    border,
     layout,
     primaryColor,
     radius,
@@ -300,6 +309,7 @@ function dispatchThemeCustomizerChange(settings: ThemeCustomizerSettings) {
 export function applyThemeCustomizerRootSettings(
   settings: Pick<
     ThemeCustomizerSettings,
+    | 'border'
     | 'glassAppearance'
     | 'glassQuality'
     | 'glassReflectionStrength'
@@ -359,6 +369,7 @@ export function applyThemeCustomizerRootSettings(
     String(getGlassOpticalCssTransmissionBrightness(settings.glassTransmissionStrength)),
   )
   applyGlassResponse(document.documentElement)
+  document.documentElement.setAttribute('data-theme-border', settings.border)
   document.documentElement.setAttribute('data-theme-layout', settings.layout)
   document.documentElement.setAttribute('data-theme-radius', settings.radius)
   document.documentElement.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
@@ -380,6 +391,7 @@ export function applyThemeCustomizerRootSettings(
     String(getGlassOpticalCssTransmissionBrightness(settings.glassTransmissionStrength)),
   )
   applyGlassResponse(document.body)
+  document.body.setAttribute('data-theme-border', settings.border)
   document.body.setAttribute('data-theme-layout', settings.layout)
   document.body.setAttribute('data-theme-radius', settings.radius)
   document.body.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
@@ -643,6 +655,10 @@ export function useThemeCustomizer() {
     return updateGlassPresetOverride({ transparency: normalizeGlassOpticalStrength(glassTransparencyStrength) })
   }
 
+  function setBorder(border: ThemeCustomizerBorder) {
+    return updateSettings({ border })
+  }
+
   function setRadius(radius: ThemeCustomizerRadius) {
     return updateSettings({ radius })
   }
@@ -670,6 +686,7 @@ export function useThemeCustomizer() {
   function resetSettings() {
     updateSettings({
       ...getDefaultGlassCustomizerSettings(),
+      border: 'default',
       layout: 'vertical',
       primaryColor: defaultPrimaryColor,
       radius: 'default',
@@ -692,6 +709,7 @@ export function useThemeCustomizer() {
   return {
     isCustomized: computed(() => !isDefaultThemeCustomizerSettings(settings.value)),
     resetSettings,
+    setBorder,
     setGlassAppearance,
     setGlassDeformationStrength,
     setGlassDynamicsMode,

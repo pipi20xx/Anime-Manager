@@ -1178,3 +1178,141 @@ html[data-theme-shadow='dramatic'] .v-theme--dark {
   --lg-shadow: 0 20px 56px -12px rgba(31, 38, 135, 0.46), 0 6px 16px -4px rgba(31, 38, 135, 0.28);
   --lg-shadow-lift: 0 36px 72px -14px rgba(31, 38, 135, 0.54), 0 8px 20px -6px rgba(31, 38, 135, 0.34);
 }
+
+/* ════════════════════════════════════════════════════════════════
+ * 全局边框控制 — 由 useThemeCustomizer 的 border 设置驱动
+ * data-theme-border 属性由 applyThemeCustomizerRootSettings 写入。
+ *
+ * 档位说明：
+ *   none      — 无边框（全部 none）
+ *   subtle    — 轻微边框（极淡描边）
+ *   default   — 默认（不覆盖，保持各主题自身的边框值）
+ *   prominent — 明显边框
+ *   dramatic  — 强边框（粗线 + 高对比度）
+ *
+ * 覆盖范围：卡片(surface)、弹窗(overlay)、导航(nav)、按钮(btn)、
+ * Tab、输入框(field)、芯片(chip)、snackbar、alert、login、
+ * btn-toggle、avatar、filter-chip、content-border。
+ * ════════════════════════════════════════════════════════════════ */
+
+/* ── 无边框 ── */
+html[data-theme-border='none'],
+html[data-theme-border='none'] .v-theme--light,
+html[data-theme-border='none'] .v-theme--dark {
+  --am-surface-border: none;
+  --am-overlay-border: none;
+  --am-nav-border: none;
+  --am-field-border: none;
+  --am-btn-border: none;
+  --am-tab-border: none;
+  --am-chip-border: none;
+  --am-snackbar-border: none;
+  --am-alert-border: none;
+  --am-login-border: none;
+  --am-btn-toggle-border: none;
+  --am-avatar-border: none;
+  --am-code-block-border: none;
+  --am-filter-chip-border: none;
+  --am-content-border: none;
+
+  /* ACG */
+  --glass-border: transparent;
+  --glass-border-raised: transparent;
+  --glass-border-hover: transparent;
+
+  /* Liquid */
+  --lg-border: transparent;
+  --lg-border-strong: transparent;
+}
+
+/* ── 轻微边框 ── */
+html[data-theme-border='subtle'],
+html[data-theme-border='subtle'] .v-theme--light,
+html[data-theme-border='subtle'] .v-theme--dark {
+  --am-surface-border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  --am-overlay-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-nav-border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  --am-field-border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  --am-btn-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-tab-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-chip-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-snackbar-border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  --am-alert-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-login-border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  --am-btn-toggle-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-avatar-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+  --am-code-block-border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  --am-filter-chip-border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  --am-content-border: 1px solid rgba(var(--v-theme-on-surface), 0.05);
+
+  /* ACG */
+  --glass-border: rgba(255, 255, 255, 0.03);
+  --glass-border-raised: rgba(255, 255, 255, 0.04);
+  --glass-border-hover: rgba(255, 255, 255, 0.06);
+
+  /* Liquid */
+  --lg-border: rgba(var(--v-theme-on-surface), 0.04);
+  --lg-border-strong: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+/* ── 默认：不覆盖，保持各主题自身的边框值 ── */
+
+/* ── 明显边框 ── */
+html[data-theme-border='prominent'],
+html[data-theme-border='prominent'] .v-theme--light,
+html[data-theme-border='prominent'] .v-theme--dark {
+  --am-surface-border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+  --am-overlay-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-nav-border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+  --am-field-border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+  --am-btn-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-tab-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-chip-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-snackbar-border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+  --am-alert-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-login-border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+  --am-btn-toggle-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-avatar-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+  --am-code-block-border: 1px solid rgba(var(--v-theme-on-surface), 0.3);
+  --am-filter-chip-border: 1px solid rgba(var(--v-theme-on-surface), 0.16);
+  --am-content-border: 1px solid rgba(var(--v-theme-on-surface), 0.18);
+
+  /* ACG */
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-raised: rgba(255, 255, 255, 0.18);
+  --glass-border-hover: rgba(255, 255, 255, 0.24);
+
+  /* Liquid */
+  --lg-border: rgba(var(--v-theme-on-surface), 0.14);
+  --lg-border-strong: rgba(var(--v-theme-on-surface), 0.2);
+}
+
+/* ── 强边框 ── */
+html[data-theme-border='dramatic'],
+html[data-theme-border='dramatic'] .v-theme--light,
+html[data-theme-border='dramatic'] .v-theme--dark {
+  --am-surface-border: 2px solid rgba(var(--v-theme-on-surface), 0.25);
+  --am-overlay-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-nav-border: 2px solid rgba(var(--v-theme-on-surface), 0.25);
+  --am-field-border: 2px solid rgba(var(--v-theme-on-surface), 0.25);
+  --am-btn-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-tab-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-chip-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-snackbar-border: 2px solid rgba(var(--v-theme-on-surface), 0.25);
+  --am-alert-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-login-border: 2px solid rgba(var(--v-theme-on-surface), 0.25);
+  --am-btn-toggle-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-avatar-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+  --am-code-block-border: 2px solid rgba(var(--v-theme-on-surface), 0.4);
+  --am-filter-chip-border: 2px solid rgba(var(--v-theme-on-surface), 0.25);
+  --am-content-border: 2px solid rgba(var(--v-theme-on-surface), 0.28);
+
+  /* ACG */
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-border-raised: rgba(255, 255, 255, 0.3);
+  --glass-border-hover: rgba(255, 255, 255, 0.38);
+
+  /* Liquid */
+  --lg-border: rgba(var(--v-theme-on-surface), 0.22);
+  --lg-border-strong: rgba(var(--v-theme-on-surface), 0.3);
+}

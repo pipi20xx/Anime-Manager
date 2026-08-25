@@ -1570,3 +1570,34 @@ html.glass-theme-acg[data-theme-shadow='dramatic'] {
   --glass-shadow-hover: 0 32px 72px rgba(3, 7, 18, 56%), inset 0 1px 0 rgba(255, 255, 255, 28%), inset 0 -1px 0 rgba(2, 6, 16, 18%);
   --glass-navbar-shadow: 0 10px 32px rgba(3, 7, 18, 32%), inset 0 1px 0 rgba(255, 255, 255, 10%), inset 0 -1px 0 rgba(2, 6, 16, 12%);
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ACG 主题边框预设覆盖
+// tokens.css 中的 html[data-theme-border='xxx'] 选择器在此主题下
+// 特异性不足以覆盖 html.glass-theme-acg 及透明材质的边框变量，
+// 因此需要组合选择器确保边框预设对 ACG 主题生效。
+// ═══════════════════════════════════════════════════════════════
+
+html.glass-theme-acg[data-theme-border='none'] {
+  --glass-border: transparent;
+  --glass-border-raised: transparent;
+  --glass-border-hover: transparent;
+}
+
+html.glass-theme-acg[data-theme-border='subtle'] {
+  --glass-border: rgba(255, 255, 255, 0.03);
+  --glass-border-raised: rgba(255, 255, 255, 0.04);
+  --glass-border-hover: rgba(255, 255, 255, 0.06);
+}
+
+html.glass-theme-acg[data-theme-border='prominent'] {
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-raised: rgba(255, 255, 255, 0.18);
+  --glass-border-hover: rgba(255, 255, 255, 0.24);
+}
+
+html.glass-theme-acg[data-theme-border='dramatic'] {
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-border-raised: rgba(255, 255, 255, 0.3);
+  --glass-border-hover: rgba(255, 255, 255, 0.38);
+}

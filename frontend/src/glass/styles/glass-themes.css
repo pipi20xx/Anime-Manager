@@ -789,3 +789,30 @@ html.glass-theme-liquid[data-theme-shadow='dramatic'] {
   --lg-shadow: 0 20px 56px -12px rgba(31, 38, 135, 0.46), 0 6px 16px -4px rgba(31, 38, 135, 0.28);
   --lg-shadow-lift: 0 36px 72px -14px rgba(31, 38, 135, 0.54), 0 8px 20px -6px rgba(31, 38, 135, 0.34);
 }
+
+/* ================================================================
+ * Liquid 主题边框预设覆盖
+ * tokens.css 中的 html[data-theme-border='xxx'] 选择器在此主题下
+ * 特异性可能不足以覆盖 html.glass-theme-liquid 直接定义的 --lg-border，
+ * 因此需要组合选择器确保边框预设对 Liquid 主题生效。
+ * ================================================================ */
+
+html.glass-theme-liquid[data-theme-border='none'] {
+  --lg-border: transparent;
+  --lg-border-strong: transparent;
+}
+
+html.glass-theme-liquid[data-theme-border='subtle'] {
+  --lg-border: rgba(var(--v-theme-on-surface), 0.04);
+  --lg-border-strong: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+html.glass-theme-liquid[data-theme-border='prominent'] {
+  --lg-border: rgba(var(--v-theme-on-surface), 0.14);
+  --lg-border-strong: rgba(var(--v-theme-on-surface), 0.2);
+}
+
+html.glass-theme-liquid[data-theme-border='dramatic'] {
+  --lg-border: rgba(var(--v-theme-on-surface), 0.22);
+  --lg-border-strong: rgba(var(--v-theme-on-surface), 0.3);
+}
