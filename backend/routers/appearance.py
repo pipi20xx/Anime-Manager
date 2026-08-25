@@ -8,8 +8,9 @@ import time
 import uuid
 import logging
 import asyncio
+import mimetypes
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
@@ -201,33 +202,17 @@ WALLPAPER_API_SOURCES = [
         "is_random": True,
     },
     {
-        "id": "loliapi_pc",
-        "name": "LoliAPI 综合 (横屏)",
-        "url": "https://www.loliapi.com/pc/",
-        "category": "general",
-        "orientation": "landscape",
-        "is_random": True,
-    },
-    {
-        "id": "loliapi_pe",
-        "name": "LoliAPI 综合 (竖屏)",
-        "url": "https://www.loliapi.com/pe/",
-        "category": "general",
-        "orientation": "portrait",
-        "is_random": True,
-    },
-    {
-        "id": "random_iisu",
-        "name": "Iisu 随机",
-        "url": "https://random.iisu.cn/",
+        "id": "loliapi_acg_auto",
+        "name": "LoliAPI ACG (双端自适应)",
+        "url": "https://www.loliapi.com/acg/",
         "category": "acg",
         "orientation": "any",
         "is_random": True,
     },
     {
-        "id": "dujin_org",
-        "name": "独鲸 API",
-        "url": "https://api.dujin.org/api.php",
+        "id": "loliapi_bg",
+        "name": "LoliAPI 随机二次元",
+        "url": "https://www.loliapi.com/bg/",
         "category": "acg",
         "orientation": "any",
         "is_random": True,
@@ -240,10 +225,6 @@ RANDOM_WALLPAPER_DOMAINS = {
     "loliapi.com",
     "www.loliapi.com",
     "api.loliapi.com",
-    "random.iisu.cn",
-    "api.dujin.org",
-    "img.xjh.me",
-    "random.52ecy.cn",
 }
 
 # 默认壁纸配置
@@ -375,6 +356,33 @@ async def list_wallpaper_uploads():
     return await asyncio.to_thread(_list)
 
 
+@router.get("/wallpaper/uploads/{filename}")
+async def get_wallpaper_upload(filename: str):
+    """读取已上传的壁纸图片"""
+    wallpaper_dir = os.path.join("data", "wallpaper")
+    filepath = os.path.join(wallpaper_dir, filename)
+    if not await asyncio.to_thread(os.path.exists, filepath):
+        raise HTTPException(status_code=404, detail="图片不存在")
+    def _read_file():
+        with open(filepath, "rb") as f:
+            return f.read()
+    content = await asyncio.to_thread(_read_file)
+    ext = os.path.splitext(filename)[1].lower()
+    ct = {
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".webp": "image/webp",
+        ".gif": "image/gif", ".bmp": "image/bmp",
+    }.get(ext, mimetypes.guess_type(filepath)[0] or "image/jpeg")
+    return Response(
+        content=content,
+        media_type=ct,
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
+
+
 @router.post("/wallpaper/upload")
 async def upload_wallpaper(file: UploadFile = File(...)):
     """上传壁纸图片到 data/wallpaper 目录"""
@@ -449,15 +457,26 @@ async def proxy_wallpaper(
     else:
         target_url = _resolve_wallpaper_target_url()
 
-    # 本地图片模式 —— 直接返回文件，不走代理
+    # 本地图片模式 —— 读取文件并返回，确保 CORS 头和 Content-Type 正确
     if target_url.startswith("local:"):
         filename = target_url[6:]
         wallpaper_dir = os.path.join("data", "wallpaper")
         filepath = os.path.join(wallpaper_dir, filename)
         if not await asyncio.to_thread(os.path.exists, filepath):
             raise HTTPException(status_code=404, detail="壁纸图片不存在")
-        return FileResponse(
-            filepath,
+        def _read_file():
+            with open(filepath, "rb") as f:
+                return f.read()
+        content = await asyncio.to_thread(_read_file)
+        ext = os.path.splitext(filename)[1].lower()
+        ct = {
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+            ".png": "image/png", ".webp": "image/webp",
+            ".gif": "image/gif", ".bmp": "image/bmp",
+        }.get(ext, mimetypes.guess_type(filepath)[0] or "image/jpeg")
+        return Response(
+            content=content,
+            media_type=ct,
             headers={
                 "Cache-Control": f"public, max-age={wp_config.get('cache_ttl', 30)}",
                 "Access-Control-Allow-Origin": "*",

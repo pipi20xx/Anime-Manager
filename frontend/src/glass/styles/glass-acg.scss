@@ -134,12 +134,31 @@ html.glass-theme-acg {
 
   body {
     background-color: #0b1322;
-    /* 壁纸背景层 —— 由 useGlassWallpaper 通过 CSS 变量动态设置 */
-    background-image: var(--glass-wallpaper-url, none);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
+
+    /* 壁纸背景层 —— 通过伪元素显示，避免 filter 影响子元素 */
+    &::before {
+      position: fixed;
+      z-index: 0;
+      inset: 0;
+      background-image: var(--glass-wallpaper-url, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      /* 亮度调节与 .background-container 保持一致 */
+      filter: brightness(var(--glass-wallpaper-brightness, 0.86)) saturate(0.95) contrast(1.02);
+      content: '';
+      pointer-events: none;
+
+      /* 暗色遮罩，与 .background-image::after 保持一致 */
+      &::after {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 50% 18%, transparent 24%, rgba(6, 10, 19, 12%) 100%),
+          linear-gradient(rgba(6, 10, 19, 10%) 0%, rgba(6, 10, 19, 30%) 100%);
+        content: '';
+      }
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════

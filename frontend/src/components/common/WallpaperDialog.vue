@@ -12,6 +12,7 @@
  */
 import { computed, ref, watch, onMounted } from 'vue'
 import { appearanceApi, type WallpaperConfig, type WallpaperApiSource, type WallpaperSourceType, type WallpaperUpload } from '@/api/appearance'
+import { useGlassWallpaper } from '@/glass'
 import { useDisplay } from 'vuetify'
 
 const props = withDefaults(
@@ -30,6 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const display = useDisplay()
+const glass = useGlassWallpaper()
 
 const visible = computed({
   get: () => props.modelValue,
@@ -140,6 +142,8 @@ async function saveConfig() {
   try {
     const res = await appearanceApi.updateConfig(config.value)
     config.value = res.config
+    // 递增全局刷新信号，触发 App.vue 重新加载壁纸
+    glass.wallpaperRefreshSignal.value++
     emit('changed')
   } catch (e) {
     console.error('保存壁纸配置失败', e)

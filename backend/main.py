@@ -121,10 +121,10 @@ async def api_audit_middleware(request: Request, call_next):
 
     is_authenticated = False
     
-    if path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth") or "/api/appearance/wallpaper_proxy" in path:
+    if path == "/api/system/login" or path.startswith("/api/webhook") or path.startswith("/api/auth") or "/api/appearance/wallpaper_proxy" in path or (request.method == "GET" and "/api/appearance/wallpaper/uploads/" in path):
         is_authenticated = True
     
-    elif "/api/system/img" in path or "/api/system/bgm_img" in path or "/api/appearance/image" in path or "/api/appearance/wallpaper/uploads/" in path:
+    elif request.method == "GET" and ("/api/system/img" in path or "/api/system/bgm_img" in path or "/api/appearance/image" in path):
         referer = request.headers.get("referer", "")
         host = request.headers.get("host", "")
         if host and host in referer:

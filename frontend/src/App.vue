@@ -205,6 +205,13 @@ watch(activeBackgroundImage, async (newUrl, oldUrl) => {
   }, BACKGROUND_CROSSFADE_DURATION_MS)
 }, { immediate: true })
 
+// 当 WallpaperDialog 保存配置后触发的全局刷新信号
+watch(() => glass.wallpaperRefreshSignal.value, (signal) => {
+  if (signal > 0) {
+    void glass.refreshWallpaper()
+  }
+})
+
 // 当登录状态变化时，确保壁纸层有正确的 URL
 watch(shouldUseGlassBackgroundTreatment, (shouldUse) => {
   if (shouldUse) {

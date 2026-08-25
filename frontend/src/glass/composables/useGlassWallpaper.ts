@@ -7,6 +7,12 @@ import { useTheme } from 'vuetify'
 import { appearanceApi, type WallpaperConfig, type WallpaperApiSource } from '@/api/appearance'
 
 /**
+ * 全局壁纸刷新信号 —— 递增后触发 App.vue 中的 watch 重新加载壁纸。
+ * WallpaperDialog 保存配置后递增此值，实现跨组件通信。
+ */
+const wallpaperRefreshSignal = ref(0)
+
+/**
  * 已知的随机壁纸 API 域名 —— URL 不变但每次请求返回不同图片。
  * 对这类源需要添加 cache-buster 让前端缓存和浏览器 HTTP 缓存失效，
  * 否则页面刷新后永远拿到同一张图。
@@ -15,10 +21,6 @@ const RANDOM_WALLPAPER_DOMAINS = new Set([
   'loliapi.com',
   'www.loliapi.com',
   'api.loliapi.com',
-  'random.iisu.cn',
-  'api.dujin.org',
-  'img.xjh.me',
-  'random.52ecy.cn',
 ])
 
 function isRandomWallpaperUrl(url: string): boolean {
@@ -86,8 +88,8 @@ export function useGlassWallpaper() {
   })
 
   // WebGL 使用的壁纸 URL —— 通过后端代理
-  // 不传 url 参数让后端自动从配置读取，随机源加 cache-buster
-  const wallpaperUrl = ref<string>('/api/appearance/wallpaper_proxy?_ts=' + Date.now())
+  // 初始为空，由 initDefaultWallpaper 或 refreshWallpaper 设置
+  const wallpaperUrl = ref<string>('')
   const previousWallpaperUrl = ref<string>('')
   const transitionStartedAt = ref<number>(0)
   const pendingWallpaperUrl = ref<string>('')
@@ -155,7 +157,7 @@ export function useGlassWallpaper() {
     // 随机源加 cache-buster，固定源不加
     const proxyUrl = isCurrentSourceRandom.value
       ? `/api/appearance/wallpaper_proxy?_ts=${Date.now()}`
-      : '/api/appearance/wallpaper_proxy'
+      : `/api/appearance/wallpaper_proxy?_v=${Date.now()}`
     if (proxyUrl === wallpaperUrl.value) return
     previousWallpaperUrl.value = wallpaperUrl.value
     wallpaperUrl.value = proxyUrl
@@ -186,6 +188,13 @@ export function useGlassWallpaper() {
     try {
       const result = await loadGlassWallpaperTone(proxyUrl)
       wallpaperToneProfile.value = result.profile
+      // 同步亮度 CSS 变量，确保登录页面（不渲染 .background-container）也能使用正确的亮度
+      const appearance = effectiveGlassSettings.value.glassAppearance
+      const materialExposure = appearance === 'frosted' ? 0.82 : appearance === 'tinted' ? 0.85 : 0.86
+      document.documentElement.style.setProperty(
+        '--glass-wallpaper-brightness',
+        String(materialExposure * result.profile.exposure),
+      )
     } catch {
       wallpaperToneProfile.value = DEFAULT_GLASS_WALLPAPER_TONE_PROFILE
     }
@@ -196,22 +205,16 @@ export function useGlassWallpaper() {
     if (defaultWallpaperInitialized) return
     defaultWallpaperInitialized = true
 
-    // 先用默认 URL 占位（带 cache-buster）
-    const initialProxyUrl = `/api/appearance/wallpaper_proxy?_ts=${Date.now()}`
-    wallpaperUrl.value = initialProxyUrl
-    syncWallpaperCssVar(initialProxyUrl)
-    void loadWallpaperTone(initialProxyUrl)
-
-    // 异步从后端加载配置（不阻塞页面渲染）
+    // 先从后端加载配置
     await loadWallpaperConfig()
 
-    // 加载配置后，如果当前源不是随机的，去掉 cache-buster
-    if (!isCurrentSourceRandom.value) {
-      const fixedUrl = '/api/appearance/wallpaper_proxy'
-      wallpaperUrl.value = fixedUrl
-      syncWallpaperCssVar(fixedUrl)
-      void loadWallpaperTone(fixedUrl)
-    }
+    // 根据配置构建正确的代理 URL
+    const proxyUrl = isCurrentSourceRandom.value
+      ? `/api/appearance/wallpaper_proxy?_ts=${Date.now()}`
+      : `/api/appearance/wallpaper_proxy?_v=${Date.now()}`
+    wallpaperUrl.value = proxyUrl
+    syncWallpaperCssVar(proxyUrl)
+    void loadWallpaperTone(proxyUrl)
   }
 
   // 当切换到 ACG 主题时，应用玻璃设置并初始化壁纸
@@ -258,5 +261,6 @@ export function useGlassWallpaper() {
     setWallpaperUrl,
     refreshWallpaper,
     loadWallpaperConfig,
+    wallpaperRefreshSignal,
   }
 }
