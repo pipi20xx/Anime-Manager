@@ -155,7 +155,7 @@ html.glass-theme-acg {
   --am-tab-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   --am-tab-radius: 999px;
   --am-tab-active-color: rgb(var(--v-theme-primary));
-  --am-tab-inactive-color: rgba(255, 255, 255, 0.85);
+  --am-tab-inactive-color: rgba(255, 255, 255, 0.9);
   --am-tab-hover-color: rgba(var(--v-theme-primary), 0.7);
   --am-tab-gap: 8px;
 
@@ -264,7 +264,7 @@ html.glass-theme-acg {
   --am-filter-chip-border: 1px solid rgba(255, 255, 255, 0.06);
   --am-filter-chip-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   --am-filter-chip-active-color: rgb(var(--v-theme-primary));
-  --am-filter-chip-outlined-color: rgba(255, 255, 255, 0.5);
+  --am-filter-chip-outlined-color: rgba(255, 255, 255, 0.85);
 
   /* Button Variants */
   --am-btn-primary-color: rgb(var(--v-theme-primary));

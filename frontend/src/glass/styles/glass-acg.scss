@@ -116,7 +116,8 @@ html.glass-theme-acg {
   &[data-glass-appearance='transparent'] {
     --glass-surface: rgba(11, 19, 34, calc(0.02 + var(--glass-surface-density, 0) * 0.04));
     --glass-surface-soft: rgba(11, 19, 34, calc(0.02 + var(--glass-surface-density, 0) * 0.04));
-    --glass-surface-raised: rgba(11, 19, 34, calc(0.03 + var(--glass-surface-density, 0) * 0.08));
+    // 顶栏/导航与页面表面保持同一亮度，避免 shell 比 content 更亮
+    --glass-surface-raised: rgba(11, 19, 34, calc(0.02 + var(--glass-surface-density, 0) * 0.04));
     // 移除玻璃边缘分割线
     --glass-border: transparent;
     --glass-border-raised: transparent;
@@ -127,7 +128,8 @@ html.glass-theme-acg {
     --glass-shadow: 0 10px 28px rgba(3, 7, 18, 24%);
     --glass-shadow-raised: 0 16px 40px rgba(3, 7, 18, 32%);
     --glass-shadow-hover: 0 18px 44px rgba(3, 7, 18, 36%);
-    --glass-navbar-shadow: 0 3px 12px rgba(3, 7, 18, 18%);
+    // 完全透明材质下移除顶栏阴影，保持与页面一致
+    --glass-navbar-shadow: none;
   }
 
   body {
@@ -588,11 +590,13 @@ html.glass-theme-acg {
 
   // ═══════════════════════════════════════════════════════════════
   // 过渡动效（照搬 glass.scss 91 + 807-809）
+  // transform 加入过渡列表，使 hover 上浮动画平滑（非 ACG 主题由 visual.css/cards.css 各自处理）
   // ═══════════════════════════════════════════════════════════════
   .v-card,
   .v-sheet:not(.v-snackbar__wrapper),
   .v-expansion-panel {
     transition:
+      transform var(--glass-motion),
       border-color var(--glass-motion),
       box-shadow var(--glass-motion),
       background-color var(--glass-motion) !important;
@@ -826,18 +830,9 @@ html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass
   }
 }
 
-// 磨砂顶栏在页面顶部不重复采样
-html.glass-theme-acg[data-glass-appearance='frosted']:is(
-    [data-glass-quality='balanced'],
-    [data-glass-quality='high']
-  )[data-glass-renderer-state='ready']
-  body.glass-theme-acg {
-.layout-vertical-nav::before,
-.layout-navbar {
--webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-}
+// 磨砂材质：顶栏/导航由 CSS backdrop-filter 提供磨砂基底，
+// fixed 渲染器仅叠加动态效果（水纹），不会重复采样壁纸。
+// 若在此关闭 backdrop-filter，顶栏内的 TAB 等区域将失去磨砂效果。
 
 // 滚动表面由原生 backdrop 持有壁纸基底；完整内容覆盖的排除子树不再采样。
 // 这是水纹效果的关键规则：渲染器 ready 后，标准表面和交互卡片使用原生磨砂基底，
@@ -1023,7 +1018,7 @@ html.glass-theme-acg .v-chip.v-chip--variant-tonal:not([class*="text-"]):not([cl
  *   由后续 .sticky-sub-tabs 规则块单独处理。
  */
 html.glass-theme-acg .v-tab {
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 html.glass-theme-acg .v-tab .v-tab__content,
 html.glass-theme-acg .v-tab .v-btn__content {
@@ -1050,7 +1045,7 @@ html.glass-theme-acg .v-tab:not(.v-tab--selected):hover {
 
 /* 顶栏动态 Tab（header-tab）— ACG 主题下文字提亮 + 光晕 */
 html.glass-theme-acg .header-tab {
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   text-shadow:
     0 0 2px rgba(0, 0, 0, 0.7),
     0 1px 1px rgba(0, 0, 0, 0.4);
@@ -1092,6 +1087,16 @@ html.glass-theme-acg .v-app-bar .v-chip--variant-outlined {
 html.glass-theme-acg .v-app-bar .v-chip--variant-outlined .v-icon {
   color: rgba(255, 255, 255, 0.85) !important;
 }
+
+/* 筛选栏 outlined chip（未选中）— 提亮边框和文字，保证在壁纸上可读 */
+html.glass-theme-acg .filter-bar .v-chip--variant-outlined {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+html.glass-theme-acg .filter-bar .v-chip--variant-outlined:hover {
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #fff !important;
+}
 /* App Bar 内禁用态按钮 — 降低不透明度但仍可见 */
 html.glass-theme-acg .v-app-bar .v-btn--disabled .v-icon {
   color: rgba(255, 255, 255, 0.35) !important;
@@ -1109,12 +1114,12 @@ html.glass-theme-acg .v-navigation-drawer .v-list-item {
   transition: all 0.3s ease-out !important;
 }
 
-/* 未选中文字 — 提亮至 0.85，保证在亮/暗壁纸上都可读 */
+/* 未选中文字 — 提亮至 0.9，保证在亮/暗壁纸上都可读 */
 html.glass-theme-acg .v-navigation-drawer .v-list-item .v-list-item-title {
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 html.glass-theme-acg .v-navigation-drawer .v-list-item .v-icon {
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 /* 选中态 — 主题色文字 + 光晕 */
