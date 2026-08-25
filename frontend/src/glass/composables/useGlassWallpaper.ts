@@ -116,6 +116,7 @@ export function useGlassWallpaper() {
   const opticalFlowStrength = computed(() => effectiveGlassSettings.value.glassFlowStrength)
   const opticalQuality = computed(() => effectiveGlassSettings.value.glassQuality)
   const opticalReflectionStrength = computed(() => effectiveGlassSettings.value.glassReflectionStrength)
+  const opticalSurfaceMode = computed(() => effectiveGlassSettings.value.glassSurfaceMode)
   const opticalTransparencyStrength = computed(() => effectiveGlassSettings.value.glassTransparencyStrength)
   const opticalTransmissionStrength = computed(() => effectiveGlassSettings.value.glassTransmissionStrength)
   const opticalTranslationStrength = computed(() => effectiveGlassSettings.value.glassTranslationStrength)
@@ -204,6 +205,7 @@ export function useGlassWallpaper() {
     opticalFlowStrength,
     opticalQuality,
     opticalReflectionStrength,
+    opticalSurfaceMode,
     opticalTransparencyStrength,
     opticalTransmissionStrength,
     opticalTranslationStrength,

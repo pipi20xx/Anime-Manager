@@ -22,6 +22,7 @@ import { normalizeThemeMaterialAccent } from '@/glass'
 export type ThemeCustomizerGlassAppearance = 'clear' | 'frosted' | 'tinted'
 export type ThemeCustomizerGlassDynamicsMode = 'fluid' | 'ripple' | 'off'
 export type ThemeCustomizerGlassQuality = 'balanced' | 'css' | 'high'
+export type ThemeCustomizerGlassSurfaceMode = 'card' | 'page'
 export type ThemeCustomizerLayout = 'collapsed' | 'horizontal' | 'vertical'
 export type ThemeCustomizerRadius = 'default' | 'extra' | 'large' | 'none' | 'small'
 export type ThemeCustomizerSkin = 'bordered' | 'default'
@@ -36,6 +37,7 @@ export interface ThemeCustomizerSettings {
   glassPresetOverrides: GlassOpticalPresetOverrides
   glassQuality: ThemeCustomizerGlassQuality
   glassReflectionStrength: number
+  glassSurfaceMode: ThemeCustomizerGlassSurfaceMode
   glassTransmissionStrength: number
   glassTranslationStrength: number
   glassTransparencyStrength: number
@@ -58,6 +60,7 @@ export type ThemeCustomizerGlassSettings = Pick<
   | 'glassPresetOverrides'
   | 'glassQuality'
   | 'glassReflectionStrength'
+  | 'glassSurfaceMode'
   | 'glassTransmissionStrength'
   | 'glassTranslationStrength'
   | 'glassTransparencyStrength'
@@ -89,6 +92,7 @@ const validGlassAppearances: ThemeCustomizerGlassAppearance[] = ['clear', 'tinte
 const validGlassDynamicsModes: ThemeCustomizerGlassDynamicsMode[] = ['fluid', 'ripple', 'off']
 const validGlassPresets: GlassOpticalPreset[] = ['natural', 'glide', 'liquid']
 const validGlassQualities: ThemeCustomizerGlassQuality[] = ['css', 'balanced', 'high']
+const validGlassSurfaceModes: ThemeCustomizerGlassSurfaceMode[] = ['card', 'page']
 const defaultGlassQuality: ThemeCustomizerGlassQuality = 'balanced'
 const validLayouts: ThemeCustomizerLayout[] = ['vertical', 'collapsed', 'horizontal']
 const validRadii: ThemeCustomizerRadius[] = ['none', 'small', 'default', 'large', 'extra']
@@ -126,6 +130,7 @@ export function getDefaultGlassCustomizerSettings(
     glassPresetOverrides: {},
     glassQuality: quality,
     glassReflectionStrength: glassParameters.reflection,
+    glassSurfaceMode: 'card',
     glassTransmissionStrength: glassParameters.transmission,
     glassTranslationStrength: glassParameters.translation,
     glassTransparencyStrength: glassParameters.transparency,
@@ -161,6 +166,10 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
   const glassQuality = validGlassQualities.includes(raw.glassQuality as ThemeCustomizerGlassQuality)
     ? (raw.glassQuality as ThemeCustomizerGlassQuality)
     : defaults.glassQuality
+
+  const glassSurfaceMode = validGlassSurfaceModes.includes(raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
+    ? (raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
+    : defaults.glassSurfaceMode
 
   const glassPreset = validGlassPresets.includes(raw.glassPreset as GlassOpticalPreset)
     ? (raw.glassPreset as GlassOpticalPreset)
@@ -198,6 +207,7 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
         : defaults.glassPresetOverrides,
     glassQuality,
     glassReflectionStrength: clampGlass(raw.glassReflectionStrength, 0, 100, defaults.glassReflectionStrength),
+    glassSurfaceMode,
     glassTransmissionStrength: clampGlass(raw.glassTransmissionStrength, 0, 100, defaults.glassTransmissionStrength),
     glassTranslationStrength: clampGlass(raw.glassTranslationStrength, 0, 100, defaults.glassTranslationStrength),
     glassTransparencyStrength: clampGlass(raw.glassTransparencyStrength, 0, 100, defaults.glassTransparencyStrength),
@@ -241,6 +251,7 @@ const effectiveGlassSettings = computed(() => ({
   glassQuality: glassPreviewState.value?.glassQuality ?? settingsState.value.glassQuality,
   glassReflectionStrength:
     glassPreviewState.value?.glassReflectionStrength ?? settingsState.value.glassReflectionStrength,
+  glassSurfaceMode: glassPreviewState.value?.glassSurfaceMode ?? settingsState.value.glassSurfaceMode,
   glassTransmissionStrength:
     glassPreviewState.value?.glassTransmissionStrength ?? settingsState.value.glassTransmissionStrength,
   glassTranslationStrength:
@@ -279,6 +290,7 @@ export function applyThemeCustomizerRootSettings(
     | 'glassAppearance'
     | 'glassQuality'
     | 'glassReflectionStrength'
+    | 'glassSurfaceMode'
     | 'glassTransmissionStrength'
     | 'glassTransparencyStrength'
     | 'layout'
@@ -310,6 +322,7 @@ export function applyThemeCustomizerRootSettings(
 
   document.documentElement.setAttribute('data-glass-appearance', settings.glassAppearance)
   document.documentElement.setAttribute('data-glass-quality', settings.glassQuality)
+  document.documentElement.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
   document.documentElement.style.setProperty(
     '--glass-reflection',
     String(normalizeGlassOpticalStrength(settings.glassReflectionStrength) / GLASS_OPTICAL_STRENGTH_MAX),
@@ -330,6 +343,7 @@ export function applyThemeCustomizerRootSettings(
   document.documentElement.setAttribute('data-theme-skin', settings.skin)
   document.body.setAttribute('data-glass-appearance', settings.glassAppearance)
   document.body.setAttribute('data-glass-quality', settings.glassQuality)
+  document.body.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
   document.body.style.setProperty(
     '--glass-reflection',
     String(normalizeGlassOpticalStrength(settings.glassReflectionStrength) / GLASS_OPTICAL_STRENGTH_MAX),
@@ -386,6 +400,7 @@ export function previewGlassSettings(patch: Partial<ThemeCustomizerGlassSettings
     glassPresetOverrides: previewSettings.glassPresetOverrides,
     glassQuality: previewSettings.glassQuality,
     glassReflectionStrength: previewSettings.glassReflectionStrength,
+    glassSurfaceMode: previewSettings.glassSurfaceMode,
     glassTransmissionStrength: previewSettings.glassTransmissionStrength,
     glassTranslationStrength: previewSettings.glassTranslationStrength,
     glassTransparencyStrength: previewSettings.glassTransparencyStrength,
@@ -432,6 +447,7 @@ export function isDefaultThemeCustomizerSettings(settings: ThemeCustomizerSettin
     settings.glassPreset === defaults.glassPreset &&
     settings.glassQuality === defaults.glassQuality &&
     settings.glassReflectionStrength === defaults.glassReflectionStrength &&
+    settings.glassSurfaceMode === defaults.glassSurfaceMode &&
     settings.glassTransmissionStrength === defaults.glassTransmissionStrength &&
     settings.glassTranslationStrength === defaults.glassTranslationStrength &&
     settings.glassTransparencyStrength === defaults.glassTransparencyStrength
@@ -537,6 +553,10 @@ export function useThemeCustomizer() {
 
   function setGlassDynamicsMode(glassDynamicsMode: ThemeCustomizerGlassDynamicsMode) {
     return updateSettings({ glassDynamicsMode })
+  }
+
+  function setGlassSurfaceMode(glassSurfaceMode: ThemeCustomizerGlassSurfaceMode) {
+    return updateSettings({ glassSurfaceMode })
   }
 
   function setGlassFlowStrength(glassFlowStrength: number) {
@@ -656,6 +676,7 @@ export function useThemeCustomizer() {
     setGlassPreset,
     setGlassQuality,
     setGlassReflectionStrength,
+    setGlassSurfaceMode,
     setGlassTransmissionStrength,
     setGlassTranslationStrength,
     setGlassTransparencyStrength,

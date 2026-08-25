@@ -45,7 +45,7 @@ import {
   type GlassOpticalSurfaceMode,
   type GlassOpticalSurfaceSlot,
 } from '../utils/glassOptics'
-import type { ThemeCustomizerGlassAppearance, ThemeCustomizerGlassDynamicsMode } from '@/composables/useThemeCustomizer'
+import type { ThemeCustomizerGlassAppearance, ThemeCustomizerGlassDynamicsMode, ThemeCustomizerGlassSurfaceMode } from '@/composables/useThemeCustomizer'
 import {
   createGlassRippleDynamics,
   type GlassRippleDynamics,
@@ -371,6 +371,8 @@ interface UseGlassOpticalRendererOptions {
   pageMotion?: PagePresentationMotionReader
   quality: MaybeRefOrGetter<GlassOpticalQuality>
   reflectionStrength?: MaybeRefOrGetter<number>
+  /** 玻璃表面模式：card 逐卡片收集，page 全屏单一表面。 */
+  surfaceMode?: MaybeRefOrGetter<ThemeCustomizerGlassSurfaceMode>
   previousWallpaperUrl?: MaybeRefOrGetter<string>
   /** 下一张壁纸可在提交切换前完成解码和 GPU 上传。 */
   pendingWallpaperUrl?: MaybeRefOrGetter<string>
@@ -1330,6 +1332,8 @@ export function useGlassOpticalRenderer(options: UseGlassOpticalRendererOptions)
   const presentationSpace = options.surfaceSpace ?? 'fixed'
   const usesDynamicsOnly = () =>
     presentationSpace === 'scroll' || (presentationSpace === 'fixed' && toValue(options.appearance) === 'frosted')
+  const getSurfaceMode = (): ThemeCustomizerGlassSurfaceMode => toValue(options.surfaceMode) ?? 'card'
+  const isPageSurfaceMode = () => getSurfaceMode() === 'page'
   const wallpaperSourceCache = options.wallpaperSourceCache ?? createGlassWallpaperSourceCache()
 
   /** 滚动期间由原生 backdrop 接管壁纸；稳定态恢复完整纹理折射与流体反馈。 */
@@ -2080,6 +2084,52 @@ export function useGlassOpticalRenderer(options: UseGlassOpticalRendererOptions)
 
   function updateSurfaceUniforms(timestamp = performance.now(), scheduleRender = true) {
     if (!resources) return
+
+    if (isPageSurfaceMode()) {
+      // page 模式：跳过 DOM 表面收集，使用全屏单一表面
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      const presentation = getCommittedPresentationSize()
+      const coordinateOffsetX = presentationSpace === 'scroll' ? window.scrollX : 0
+      const coordinateOffsetY = presentationSpace === 'scroll' ? window.scrollY : 0
+      const pageSurface: GlassOpticalSurfaceDescriptor = {
+        key: document.documentElement,
+        mode: 'dynamic',
+        rect: {
+          height: presentationSpace === 'scroll' ? presentation.height : viewportHeight,
+          radii: [0, 0, 0, 0] as GlassCornerRadii,
+          rank: 0,
+          width: presentationSpace === 'scroll' ? presentation.width : viewportWidth,
+          x: coordinateOffsetX,
+          y: coordinateOffsetY,
+        },
+      }
+      surfaceRegistry = [pageSurface]
+      interactionClipRegistry = []
+      interactionClipConstrainedOwners = new Set()
+      interactionClipMembershipDirty = false
+      availableSurfaces = [pageSurface]
+      const maxCount = viewportWidth <= 600 ? GLASS_OPTICAL_MAX_SURFACES_MOBILE : GLASS_OPTICAL_MAX_SURFACES_DESKTOP
+      surfaceSlots = reconcileGlassOpticalSurfaceSlots(
+        surfaceSlots,
+        availableSurfaces,
+        maxCount,
+        undefined,
+        undefined,
+      )
+      activeSurface = null
+      activeInteractionClip = null
+      outgoingSurface = null
+      interactionClips = []
+      // 不需要 ResizeObserver/MutationObserver 跟踪 DOM 元素
+      if (observedSurfaces.length > 0) {
+        observedSurfaces = []
+        observeResizeTargets()
+      }
+      writeSurfaceUniforms(timestamp)
+      if (scheduleRender) scheduleFrame()
+      return
+    }
 
     const viewportWidth = window.innerWidth
     const nextObservedSurfaces: HTMLElement[] = []
@@ -3233,6 +3283,8 @@ export function useGlassOpticalRenderer(options: UseGlassOpticalRendererOptions)
     }
 
     surfaceMutationObserver = new MutationObserver(mutations => {
+      // page 模式不依赖 DOM 表面收集，跳过所有 mutation 处理
+      if (isPageSurfaceMode()) return
       // Vuetify 可能在首个弹层打开时才创建容器，后续变更需要纳入同一个表面生命周期。
       observeMutationRoot(document.querySelector('.v-overlay-container'), true)
       if (!mutationTouchesOpticalSurface(mutations)) return
@@ -4201,6 +4253,23 @@ export function useGlassOpticalRenderer(options: UseGlassOpticalRendererOptions)
 
       resources.uniforms.uTintColor.value.set(tintColor)
       scheduleFrame()
+    },
+  )
+
+  watch(
+    () => toValue(options.surfaceMode ?? 'card'),
+    () => {
+      if (!resources) return
+
+      // 表面模式切换时清除旧表面状态并立即重建
+      interactionClipMembershipDirty = true
+      activeSurface = null
+      activeInteractionClip = null
+      outgoingSurface = null
+      surfaceSlots = []
+      observedSurfaces = []
+      observeResizeTargets()
+      updateSurfaceUniforms(performance.now())
     },
   )
 

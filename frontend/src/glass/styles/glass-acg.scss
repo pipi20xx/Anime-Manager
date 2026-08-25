@@ -835,6 +835,35 @@ html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 整页玻璃模式（data-glass-surface-mode='page'）
+// 渲染器 ready 后，整页作为单一玻璃表面，卡片不再持有独立 backdrop-filter。
+// 固定层（导航栏、弹窗）保留原生 backdrop 以维持层级隔离。
+// ═══════════════════════════════════════════════════════════════
+html.glass-theme-acg[data-glass-surface-mode='page']:is(
+    [data-glass-quality='balanced'],
+    [data-glass-quality='high']
+  )[data-glass-renderer-state='ready'] {
+  // 页面模式下卡片不再需要独立磨砂，canvas 覆盖整页
+  body.glass-theme-acg {
+    :where(
+      .app-surface:not(.no-blur),
+      .v-card:not(.no-blur, .bg-primary, .bg-success, .bg-info, .bg-warning, .bg-error),
+      .v-sheet:not(.no-blur, .bg-primary, .bg-success, .bg-info, .bg-warning, .bg-error),
+      .v-list,
+      .v-table
+    ) {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    // 嵌套卡片在页面模式下完全透明，由整页玻璃统一呈现
+    :where(.v-card, .v-sheet) :where(.app-surface, .v-card, .v-sheet, .v-list, .v-table) {
+      background-color: transparent !important;
+    }
+  }
+}
+
 // 登录页只保留内容保护表面
 html.glass-theme-acg body.glass-theme-acg {
   .login-card {
