@@ -330,7 +330,7 @@ onUnmounted(() => {
           </v-window-item>
 
           <!-- 完整数据展示 -->
-          <v-window-item value="fulldata">
+          <v-window-item value="fulldata" class="tmdb-detail-view">
             <template v-if="fullData">
               <!-- 头部：海报 + 基本信息 -->
               <div class="d-flex ga-4 mb-5">
@@ -404,7 +404,7 @@ onUnmounted(() => {
               <!-- 关键词 -->
               <div v-if="keywordList.length" class="mb-4">
                 <div class="dc-section-title">关键词 ({{ keywordList.length }})</div>
-                <div class="d-flex ga-1 flex-wrap"><v-chip v-for="k in keywordList" :key="k.id" size="small" variant="tonal" color="info">{{ k.name }}</v-chip></div>
+                <div class="d-flex ga-1 flex-wrap"><v-chip v-for="k in keywordList" :key="k.id" size="small" variant="tonal" color="primary">{{ k.name }}</v-chip></div>
               </div>
 
               <!-- 全语言标题 -->

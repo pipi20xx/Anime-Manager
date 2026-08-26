@@ -231,6 +231,51 @@ html.glass-theme-liquid .v-btn--variant-flat.text-primary {
       0 10px 28px -10px rgb(var(--v-theme-primary)) !important;
 }
 
+/* ================================================================
+ * tonal 按钮：语义色底 + 白字
+ * 参照 liquid-glass 参考CSS：primary 实色底+白字，其他语义色半透明底+白字
+ * ================================================================ */
+html.glass-theme-liquid .v-btn--variant-tonal.text-primary,
+html.glass-theme-liquid .v-btn--variant-tonal.v-btn--bg-primary {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
+}
+
+html.glass-theme-liquid .v-btn--variant-tonal.text-info,
+html.glass-theme-liquid .v-btn--variant-tonal.v-btn--bg-info {
+  background-color: rgba(var(--v-theme-info), 80%) !important;
+  color: #fff !important;
+}
+
+html.glass-theme-liquid .v-btn--variant-tonal.text-success,
+html.glass-theme-liquid .v-btn--variant-tonal.v-btn--bg-success {
+  background-color: rgba(var(--v-theme-success), 80%) !important;
+  color: #fff !important;
+}
+
+html.glass-theme-liquid .v-btn--variant-tonal.text-warning,
+html.glass-theme-liquid .v-btn--variant-tonal.v-btn--bg-warning {
+  background-color: rgba(var(--v-theme-warning), 80%) !important;
+  color: #fff !important;
+}
+
+html.glass-theme-liquid .v-btn--variant-tonal.text-error,
+html.glass-theme-liquid .v-btn--variant-tonal.v-btn--bg-error {
+  background-color: rgba(var(--v-theme-error), 80%) !important;
+  color: #fff !important;
+}
+
+html.glass-theme-liquid .v-btn--variant-tonal.text-secondary,
+html.glass-theme-liquid .v-btn--variant-tonal.v-btn--bg-secondary {
+  background-color: rgba(var(--v-theme-secondary), 80%) !important;
+  color: #fff !important;
+}
+
+/* tonal 无 color — 中性底 + 继承文字色 */
+html.glass-theme-liquid .v-btn--variant-tonal:not(.text-primary):not(.v-btn--bg-primary):not(.text-info):not(.v-btn--bg-info):not(.text-success):not(.v-btn--bg-success):not(.text-warning):not(.v-btn--bg-warning):not(.text-error):not(.v-btn--bg-error):not(.text-secondary):not(.v-btn--bg-secondary) {
+  color: inherit !important;
+}
+
 
 /* ================================================================
  * 输入框：hover 底色微亮
