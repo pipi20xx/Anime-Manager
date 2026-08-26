@@ -396,22 +396,6 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
             @click="systemStore.showLogModal = true"
           />
 
-          <!-- 深色/浅色切换（ACG 主题下禁用，仅支持暗色） -->
-          <v-tooltip :text="themeStore.glassTheme === 'acg' ? 'ACG 主题仅支持暗色模式' : '深色 / 浅色'" location="bottom">
-            <template #activator="{ props: tooltipProps }">
-              <v-btn
-                v-bind="tooltipProps"
-                variant="text"
-                density="comfortable"
-                size="small"
-                :color="themeStore.isDarkMode ? 'warning' : 'info'"
-                :icon="themeStore.isDarkMode ? 'mdi-white-balance-sunny' : 'mdi-weather-night'"
-                :disabled="themeStore.glassTheme === 'acg'"
-                @click="themeStore.toggleDarkMode()"
-              />
-            </template>
-          </v-tooltip>
-
           <!-- 主题选择菜单 -->
           <v-menu>
             <template #activator="{ props: menuProps }">
@@ -424,27 +408,44 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
                 :icon="{ liquid: 'mdi-layers-outline', acg: 'mdi-image-multiple', classic: 'mdi-contrast-box' }[themeStore.glassTheme]"
               />
             </template>
-            <v-list density="compact" min-width="180" nav>
+            <v-list density="compact" min-width="200" nav>
+              <!-- 液态玻璃 -->
               <v-list-item
-                prepend-icon="mdi-layers-outline"
-                title="液态玻璃"
+                prepend-icon="mdi-white-balance-sunny"
+                title="液态玻璃 · 白天"
                 subtitle="Apple 液态玻璃风格"
-                :active="themeStore.glassTheme === 'liquid'"
-                @click="themeStore.setGlassTheme('liquid')"
+                :active="themeStore.glassTheme === 'liquid' && !themeStore.isDarkMode"
+                @click="themeStore.setTheme('liquid', false)"
               />
+              <v-list-item
+                prepend-icon="mdi-weather-night"
+                title="液态玻璃 · 黑夜"
+                subtitle="Apple 液态玻璃风格"
+                :active="themeStore.glassTheme === 'liquid' && themeStore.isDarkMode"
+                @click="themeStore.setTheme('liquid', true)"
+              />
+              <!-- ACG 毛玻璃 -->
               <v-list-item
                 prepend-icon="mdi-image-multiple"
                 title="ACG 毛玻璃"
                 subtitle="二次元壁纸 + 暗色毛玻璃"
                 :active="themeStore.glassTheme === 'acg'"
-                @click="themeStore.setGlassTheme('acg')"
+                @click="themeStore.setTheme('acg', true)"
+              />
+              <!-- 经典 -->
+              <v-list-item
+                prepend-icon="mdi-white-balance-sunny"
+                title="经典 · 白天"
+                subtitle="纯白最简风格"
+                :active="themeStore.glassTheme === 'classic' && !themeStore.isDarkMode"
+                @click="themeStore.setTheme('classic', false)"
               />
               <v-list-item
-                prepend-icon="mdi-contrast-box"
-                title="经典实色"
-                subtitle="纯白/纯黑 最简风格"
-                :active="themeStore.glassTheme === 'classic'"
-                @click="themeStore.setGlassTheme('classic')"
+                prepend-icon="mdi-weather-night"
+                title="经典 · 黑夜"
+                subtitle="纯黑最简风格"
+                :active="themeStore.glassTheme === 'classic' && themeStore.isDarkMode"
+                @click="themeStore.setTheme('classic', true)"
               />
               <v-divider class="my-2 mx-2" />
               <v-list-item

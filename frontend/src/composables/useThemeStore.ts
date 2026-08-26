@@ -14,9 +14,6 @@ export const useThemeStore = defineStore('theme', () => {
     (localStorage.getItem('glass_theme') as GlassTheme) || 'classic'
   )
 
-  // 记住用户在非 ACG 主题时的明暗偏好，切离 ACG 时恢复
-  const savedDarkMode = ref<boolean | null>(null)
-
   /** ACG 主题强制 dark 模式 */
   const isACGForcedDark = () => glassTheme.value === 'acg'
 
@@ -40,25 +37,25 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   function setGlassTheme(theme: GlassTheme) {
-    // 切离 ACG 时恢复用户之前的明暗偏好
-    if (glassTheme.value === 'acg' && theme !== 'acg') {
-      if (savedDarkMode.value !== null) {
-        isDarkMode.value = savedDarkMode.value
-        localStorage.setItem('theme_mode', savedDarkMode.value ? 'dark' : 'light')
-        savedDarkMode.value = null
-      }
-    }
-
-    // 切到 ACG 时保存当前偏好并强制 dark
-    if (theme === 'acg' && glassTheme.value !== 'acg') {
-      savedDarkMode.value = isDarkMode.value
-      if (!isDarkMode.value) {
-        isDarkMode.value = true
-        localStorage.setItem('theme_mode', 'dark')
-      }
+    // 切到 ACG 时强制 dark
+    if (theme === 'acg' && !isDarkMode.value) {
+      isDarkMode.value = true
+      localStorage.setItem('theme_mode', 'dark')
     }
 
     glassTheme.value = theme
+    localStorage.setItem('glass_theme', theme)
+  }
+
+  /**
+   * 同时设置主题风格和明暗模式 —— 供主题菜单一次性选择组合主题。
+   * ACG 主题会自动强制 dark。
+   */
+  function setTheme(theme: GlassTheme, isDark: boolean) {
+    const effectiveDark = theme === 'acg' ? true : isDark
+    isDarkMode.value = effectiveDark
+    glassTheme.value = theme
+    localStorage.setItem('theme_mode', effectiveDark ? 'dark' : 'light')
     localStorage.setItem('glass_theme', theme)
   }
 
@@ -68,5 +65,5 @@ export const useThemeStore = defineStore('theme', () => {
     localStorage.setItem('theme_mode', 'dark')
   }
 
-  return { isDarkMode, glassTheme, toggleDarkMode, setDarkMode, toggleGlassTheme, setGlassTheme }
+  return { isDarkMode, glassTheme, toggleDarkMode, setDarkMode, toggleGlassTheme, setGlassTheme, setTheme }
 })
