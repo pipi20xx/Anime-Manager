@@ -115,7 +115,7 @@ registerHeaderTab({
   font-size: 1.6rem;
   font-weight: 800;
   margin-bottom: 1rem;
-  border-bottom: 2px solid rgba(var(--v-theme-primary), 0.2);
+  border-bottom: 2px solid rgba(var(--v-theme-on-surface), 0.12);
   padding-bottom: 0.5rem;
 }
 
@@ -124,7 +124,7 @@ registerHeaderTab({
   font-weight: 700;
   margin-top: 2rem;
   margin-bottom: 1rem;
-  color: rgb(var(--v-theme-primary));
+  color: rgba(var(--v-theme-on-surface), 0.95);
 }
 
 .md-content :deep(h3) {
@@ -139,7 +139,7 @@ registerHeaderTab({
   font-weight: 600;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
-  color: rgb(var(--v-theme-info));
+  color: rgba(var(--v-theme-on-surface), 0.88);
 }
 
 /* 段落 */
@@ -160,8 +160,8 @@ registerHeaderTab({
 
 /* 引用块 */
 .md-content :deep(blockquote) {
-  border-left: 4px solid rgb(var(--v-theme-primary));
-  background: rgba(var(--v-theme-primary), 0.06);
+  border-left: 4px solid rgba(var(--v-theme-on-surface), 0.2);
+  background: rgba(var(--v-theme-on-surface), 0.04);
   padding: 12px 16px;
   border-radius: 0 8px 8px 0;
   margin: 1rem 0;
@@ -193,7 +193,7 @@ registerHeaderTab({
 }
 
 .md-content :deep(th) {
-  background: rgba(var(--v-theme-primary), 0.08);
+  background: rgba(var(--v-theme-on-surface), 0.06);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -232,8 +232,8 @@ registerHeaderTab({
 
 /* 链接 */
 .md-content :deep(a) {
-  color: rgb(var(--v-theme-primary));
-  text-decoration: none;
+  color: rgb(var(--v-theme-info));
+  text-decoration: underline;
 }
 
 .md-content :deep(a:hover) {

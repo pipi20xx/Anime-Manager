@@ -250,7 +250,6 @@ html.glass-theme-acg {
     0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px rgba(var(--am-primary-rgb, var(--v-theme-primary)), 0.12);
 
   /* Code */
-  --am-code-color: #7c3aed;
   --am-code-radius: 6px;
   --am-code-block-color: #d4d4d4;
   --am-code-block-border: 1px solid rgba(255, 255, 255, 0.5);
@@ -451,7 +450,6 @@ html.glass-theme-liquid .v-theme--light {
   --am-hover-lift-shadow: var(--lg-rim), var(--lg-shadow-lift);
 
   /* Code */
-  --am-code-color: #5e5ce6;
   --am-code-radius: 6px;
   --am-code-block-color: rgba(0, 0, 0, 0.87);
   --am-code-block-border: 1px solid var(--lg-border);
@@ -558,7 +556,6 @@ html.glass-theme-liquid .v-theme--dark {
   --am-chip-border: 1px solid var(--lg-border);
   --am-code-block-border: 1px solid var(--lg-border);
   --am-code-block-color: rgba(0, 0, 0, 0.87);
-  --am-code-color: #5e5ce6;
   --am-code-radius: 6px;
   --am-content-border: 1px solid var(--lg-border);
   --am-dialog-radius: 22px;
@@ -787,7 +784,6 @@ html.glass-theme-classic .v-theme--light {
     0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
 
   /* Code */
-  --am-code-color: #5e5ce6;
   --am-code-radius: 4px;
   --am-code-block-color: rgba(0, 0, 0, 0.87);
   --am-code-block-border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
@@ -889,7 +885,6 @@ html.glass-theme-classic .v-theme--dark {
   --am-chip-border: none;
   --am-code-block-border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   --am-code-block-color: rgba(0, 0, 0, 0.87);
-  --am-code-color: #5e5ce6;
   --am-code-radius: 4px;
   --am-dialog-radius: 12px;
   --am-field-border: none;

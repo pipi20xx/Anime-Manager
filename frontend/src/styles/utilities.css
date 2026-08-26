@@ -88,11 +88,6 @@
   border-color: rgba(78, 205, 196, 0.2);
 }
 
-.v-theme--light .info-badge--accent {
-  color: var(--am-code-color);
-  border-color: rgba(124, 58, 237, 0.2);
-}
-
 
 /* ============================================================
  * 键值行

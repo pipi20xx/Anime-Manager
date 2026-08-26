@@ -949,7 +949,7 @@ const filteredLogs = computed(() => {
 }
 .pref-desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.9);
   line-height: 1.4;
   margin-top: 2px;
 }
