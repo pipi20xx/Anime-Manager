@@ -1359,12 +1359,16 @@ export function useGlassOpticalRenderer(options: UseGlassOpticalRendererOptions)
   const isPageSurfaceMode = () => getSurfaceMode() === 'page'
   const wallpaperSourceCache = options.wallpaperSourceCache ?? createGlassWallpaperSourceCache()
 
-  /** 滚动期间由原生 backdrop 接管壁纸；稳定态恢复完整纹理折射与流体反馈。 */
+  /**
+   * 滚动期间由原生 backdrop 接管壁纸；稳定态恢复完整纹理折射与流体反馈。
+   * page 模式下整页为单一 WebGL 表面，壁纸纹理是 GPU 纹理而非 DOM 采样，
+   * 滚动时无需降级，避免壁纸折射↔程序化反射的 alpha 跳变导致亮度闪烁。
+   */
   function syncWallpaperSamplingMode() {
     if (!resources) return
 
-    resources.uniforms.uHasWallpaperTexture.value =
-      activeHasWallpaperTexture && !(presentationSpace === 'scroll' && scrollWallpaperSamplingSuppressed) ? 1 : 0
+    const shouldSuppress = presentationSpace === 'scroll' && scrollWallpaperSamplingSuppressed && !isPageSurfaceMode()
+    resources.uniforms.uHasWallpaperTexture.value = activeHasWallpaperTexture && !shouldSuppress ? 1 : 0
   }
 
   function clearScrollPresentationRestoreTimer() {
