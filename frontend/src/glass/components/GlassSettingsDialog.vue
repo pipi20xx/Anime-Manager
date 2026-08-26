@@ -8,6 +8,7 @@ import {
   type ThemeCustomizerGlassDynamicsMode,
   type ThemeCustomizerGlassQuality,
   type ThemeCustomizerGlassSurfaceMode,
+  type ThemeCustomizerGlassWallpaperBrightnessMode,
 } from '@/composables/useThemeCustomizer'
 import {
   GLASS_OPTICAL_STRENGTH_MAX,
@@ -55,6 +56,8 @@ const draftSurfaceMode = ref<ThemeCustomizerGlassSurfaceMode>(settings.value.gla
 const draftTransmissionStrength = ref(settings.value.glassTransmissionStrength)
 const draftTranslationStrength = ref(settings.value.glassTranslationStrength)
 const draftTransparencyStrength = ref(settings.value.glassTransparencyStrength)
+const draftWallpaperBrightnessMode = ref<ThemeCustomizerGlassWallpaperBrightnessMode>(settings.value.glassWallpaperBrightnessMode)
+const draftWallpaperBrightness = ref(settings.value.glassWallpaperBrightness)
 const isSaving = ref(false)
 const usesRealtimeOptics = computed(() => draftQuality.value !== 'css')
 const showsDynamicsMode = computed(() => usesRealtimeOptics.value && !usesMobilePresentation.value)
@@ -91,6 +94,8 @@ watch(
       draftTransmissionStrength.value = settings.value.glassTransmissionStrength
       draftTranslationStrength.value = settings.value.glassTranslationStrength
       draftTransparencyStrength.value = settings.value.glassTransparencyStrength
+      draftWallpaperBrightnessMode.value = settings.value.glassWallpaperBrightnessMode
+      draftWallpaperBrightness.value = settings.value.glassWallpaperBrightness
     } else if (previous) {
       cancelGlassPreview()
     }
@@ -203,6 +208,8 @@ function previewDraftParameters() {
     glassTransmissionStrength: draftTransmissionStrength.value,
     glassTranslationStrength: draftTranslationStrength.value,
     glassTransparencyStrength: draftTransparencyStrength.value,
+    glassWallpaperBrightnessMode: draftWallpaperBrightnessMode.value,
+    glassWallpaperBrightness: draftWallpaperBrightness.value,
   })
 }
 
@@ -282,6 +289,20 @@ function updateTransmissionStrength(value: unknown) {
 function updateTransparencyStrength(value: unknown) {
   draftTransparencyStrength.value = normalizeGlassOpticalStrength(Array.isArray(value) ? value[0] : value)
   updateDraftPresetOverride()
+}
+
+/** 切换壁纸亮度模式（自动/手动），手动模式实时预览。 */
+function updateWallpaperBrightnessMode(value: unknown) {
+  if (value !== 'auto' && value !== 'manual') return
+  draftWallpaperBrightnessMode.value = value
+  previewDraftParameters()
+}
+
+/** 调整壁纸亮度值，实时预览。 */
+function updateWallpaperBrightness(value: unknown) {
+  const num = Array.isArray(value) ? value[0] : value
+  draftWallpaperBrightness.value = Math.min(1.2, Math.max(0.3, Number(num) || 0.86))
+  previewDraftParameters()
 }
 
 /** 删除当前组合覆盖并恢复该方案矩阵，不影响其他组合。 */
@@ -524,6 +545,34 @@ aria-label="关闭"
           />
           <p class="glass-settings-dialog__hint">
             {{ t('theme.glassMaterialStrengthHint') }}
+          </p>
+
+          <div class="glass-settings-dialog__slider-header glass-settings-dialog__slider-header--spaced">
+            <h3 class="glass-settings-dialog__label">壁纸亮度</h3>
+            <VBtn
+              variant="text"
+              size="x-small"
+              :color="draftWallpaperBrightnessMode === 'manual' ? 'primary' : 'default'"
+              @click="updateWallpaperBrightnessMode(draftWallpaperBrightnessMode === 'manual' ? 'auto' : 'manual')"
+            >
+              {{ draftWallpaperBrightnessMode === 'manual' ? '手动' : '自动' }}
+            </VBtn>
+          </div>
+          <VSlider
+            v-if="draftWallpaperBrightnessMode === 'manual'"
+            :model-value="draftWallpaperBrightness"
+            aria-label="壁纸亮度"
+            :min="0.3"
+            :max="1.2"
+            :step="0.01"
+            color="primary"
+            density="comfortable"
+            hide-details
+            thumb-label
+            @update:model-value="updateWallpaperBrightness"
+          />
+          <p class="glass-settings-dialog__hint">
+            自动模式下根据壁纸明暗自动计算亮度；手动模式可自行调节。
           </p>
 
           <div v-if="showsDynamicTuning" class="glass-settings-dialog__live-controls">

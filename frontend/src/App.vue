@@ -137,14 +137,21 @@ function getBackgroundLayerCrossOrigin(layer: LoginBackgroundLayer): 'anonymous'
 // 壁纸层样式
 function getBackgroundLayerStyle(layer: LoginBackgroundLayer) {
   const profile = backgroundToneProfiles.value[layer.url] ?? DEFAULT_GLASS_WALLPAPER_TONE_PROFILE
-  const appearance = glass.effectiveGlassSettings.value.glassAppearance
-  const materialExposure = appearance === 'frosted' ? 0.82 : appearance === 'tinted' ? 0.85 : 0.86
+  const settings = glass.effectiveGlassSettings.value
   const displayUrl = getBackgroundDisplayUrl(layer)
   const usesCorsImageElement = Boolean(getBackgroundLayerImageSource(layer))
 
+  let brightness: number
+  if (settings.glassWallpaperBrightnessMode === 'manual') {
+    brightness = settings.glassWallpaperBrightness
+  } else {
+    const materialExposure = settings.glassAppearance === 'frosted' ? 0.82 : settings.glassAppearance === 'tinted' ? 0.85 : 0.86
+    brightness = materialExposure * profile.exposure
+  }
+
   return {
     'backgroundImage': !usesCorsImageElement && displayUrl ? `url(${displayUrl})` : undefined,
-    '--glass-wallpaper-brightness': String(materialExposure * profile.exposure),
+    '--glass-wallpaper-brightness': String(brightness),
   }
 }
 

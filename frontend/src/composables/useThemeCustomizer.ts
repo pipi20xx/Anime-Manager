@@ -23,6 +23,7 @@ export type ThemeCustomizerGlassAppearance = 'clear' | 'frosted' | 'tinted' | 't
 export type ThemeCustomizerGlassDynamicsMode = 'fluid' | 'ripple' | 'off'
 export type ThemeCustomizerGlassQuality = 'balanced' | 'css' | 'high'
 export type ThemeCustomizerGlassSurfaceMode = 'card' | 'page'
+export type ThemeCustomizerGlassWallpaperBrightnessMode = 'auto' | 'manual'
 export type ThemeCustomizerLayout = 'collapsed' | 'horizontal' | 'vertical'
 export type ThemeCustomizerBorder = 'default' | 'dramatic' | 'none' | 'prominent' | 'subtle'
 export type ThemeCustomizerRadius = 'default' | 'extra' | 'large' | 'none' | 'small'
@@ -43,6 +44,8 @@ export interface ThemeCustomizerSettings {
   glassTransmissionStrength: number
   glassTranslationStrength: number
   glassTransparencyStrength: number
+  glassWallpaperBrightnessMode: ThemeCustomizerGlassWallpaperBrightnessMode
+  glassWallpaperBrightness: number
   border: ThemeCustomizerBorder
   layout: ThemeCustomizerLayout
   primaryColor: string
@@ -67,6 +70,8 @@ export type ThemeCustomizerGlassSettings = Pick<
   | 'glassTransmissionStrength'
   | 'glassTranslationStrength'
   | 'glassTransparencyStrength'
+  | 'glassWallpaperBrightnessMode'
+  | 'glassWallpaperBrightness'
 >
 
 // ─── 常量 ───────────────────────────────────────────────────
@@ -148,6 +153,8 @@ export function getDefaultGlassCustomizerSettings(
     glassTransmissionStrength: glassParameters.transmission,
     glassTranslationStrength: glassParameters.translation,
     glassTransparencyStrength: glassParameters.transparency,
+    glassWallpaperBrightnessMode: 'auto',
+    glassWallpaperBrightness: 0.86,
   }
 }
 
@@ -185,6 +192,8 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
   const glassSurfaceMode = validGlassSurfaceModes.includes(raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
     ? (raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
     : defaults.glassSurfaceMode
+  const glassWallpaperBrightnessMode = raw.glassWallpaperBrightnessMode === 'manual' ? 'manual' : 'auto'
+  const glassWallpaperBrightness = clampGlass(raw.glassWallpaperBrightness, 0.3, 1.2, defaults.glassWallpaperBrightness)
 
   const glassPreset = validGlassPresets.includes(raw.glassPreset as GlassOpticalPreset)
     ? (raw.glassPreset as GlassOpticalPreset)
@@ -232,6 +241,8 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
     glassTransmissionStrength: clampGlass(raw.glassTransmissionStrength, 0, 100, defaults.glassTransmissionStrength),
     glassTranslationStrength: clampGlass(raw.glassTranslationStrength, 0, 100, defaults.glassTranslationStrength),
     glassTransparencyStrength: clampGlass(raw.glassTransparencyStrength, 0, 100, defaults.glassTransparencyStrength),
+    glassWallpaperBrightnessMode,
+    glassWallpaperBrightness,
     border,
     layout,
     primaryColor,
@@ -280,6 +291,10 @@ const effectiveGlassSettings = computed(() => ({
     glassPreviewState.value?.glassTranslationStrength ?? settingsState.value.glassTranslationStrength,
   glassTransparencyStrength:
     glassPreviewState.value?.glassTransparencyStrength ?? settingsState.value.glassTransparencyStrength,
+  glassWallpaperBrightnessMode:
+    glassPreviewState.value?.glassWallpaperBrightnessMode ?? settingsState.value.glassWallpaperBrightnessMode,
+  glassWallpaperBrightness:
+    glassPreviewState.value?.glassWallpaperBrightness ?? settingsState.value.glassWallpaperBrightness,
 }))
 
 /** 提供当前实际生效的玻璃设置；临时预览优先于已持久化设置。 */
@@ -439,6 +454,8 @@ export function previewGlassSettings(patch: Partial<ThemeCustomizerGlassSettings
     glassTransmissionStrength: previewSettings.glassTransmissionStrength,
     glassTranslationStrength: previewSettings.glassTranslationStrength,
     glassTransparencyStrength: previewSettings.glassTransparencyStrength,
+    glassWallpaperBrightnessMode: previewSettings.glassWallpaperBrightnessMode,
+    glassWallpaperBrightness: previewSettings.glassWallpaperBrightness,
   }
   applyThemeCustomizerRootSettings({
     ...settingsState.value,
