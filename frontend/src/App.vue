@@ -54,31 +54,22 @@ function applyDarkClass(isDark: boolean) {
   html.classList.toggle('glass-light', !isDark)
 }
 
-// 同步玻璃主题 class 到 <html> 和 <body>
-// 同时设置 data-theme 属性，让 TS 文件和 CSS 选择器都能正确匹配
+// 同步玻璃主题 class 到 <html>（主题标识统一只挂 html，body 不再重复）
+// data-theme 属性仅供 usePagePresentationMotion 等 TS 逻辑读取，CSS 一律用 glass-theme-xxx class
 function applyGlassTheme(glassTheme: string) {
   const html = document.documentElement
-  const body = document.body
   html.classList.remove('glass-theme-acg', 'glass-theme-liquid', 'glass-theme-classic')
-  body.classList.remove('glass-theme-acg', 'glass-theme-liquid', 'glass-theme-classic')
   html.classList.add(`glass-theme-${glassTheme}`)
-  body.classList.add(`glass-theme-${glassTheme}`)
 
-  // 设置 data-theme 属性 —— MP 前端用 data-theme="glass"，AM 用 glass-theme-acg class
-  // 为了让 TS 文件中的 data-theme 检查和 CSS 中 html[data-theme='glass'] 选择器都能工作，
-  // ACG 主题时同时设置 data-theme="glass"
   if (glassTheme === 'acg') {
     html.setAttribute('data-theme', 'glass')
-    body.setAttribute('data-theme', 'glass')
     // 应用玻璃定制外观设置
     applyStoredThemeCustomizerAppearance()
   } else if (glassTheme === 'liquid') {
     html.setAttribute('data-theme', 'transparent')
-    body.setAttribute('data-theme', 'transparent')
   } else {
     // classic
     html.removeAttribute('data-theme')
-    body.removeAttribute('data-theme')
   }
 }
 

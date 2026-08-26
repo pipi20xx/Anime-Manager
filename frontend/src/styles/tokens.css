@@ -622,6 +622,7 @@ html.glass-theme-liquid .v-theme--dark {
 /* ── 3a. Classic body 级 ── */
 html.glass-theme-classic.glass-light {
   --am-body-bg: #ffffff;
+  --am-login-field-bg: #ffffff;
   --am-body-before-bg: none;
   --am-body-before-image: none;
   --am-body-before-filter: none;
@@ -632,6 +633,7 @@ html.glass-theme-classic.glass-light {
 
 html.glass-theme-classic.glass-dark {
   --am-body-bg: #121212;
+  --am-login-field-bg: #2c2c2c;
 }
 
 /* ── 3b. Classic 亮色组件令牌 ── */
@@ -942,6 +944,41 @@ html.glass-theme-classic .v-theme--dark {
   --am-tab-radius: 0;
   --am-tab-shadow: none;
   --am-tooltip-blur: none;
+}
+
+/* ============================================================
+ * 日志级别色 — 供 visual.css 的 .log-entry__level 统一消费。
+ * classic 与 liquid 共用一套值（亮暗两套），ACG 自成一套（恒暗色）。
+ * ============================================================ */
+
+html.glass-theme-classic,
+html.glass-theme-liquid {
+  /* 暗色值（默认） */
+  --am-log-info: #5e5ce6;
+  --am-log-warning: #ff9f0a;
+  --am-log-error: #ff375f;
+  --am-log-critical: #f48fb1;
+  --am-log-success: #30d158;
+  --am-log-debug: rgba(255, 255, 255, 0.35);
+}
+
+html.glass-theme-classic.glass-light,
+html.glass-theme-liquid.glass-light {
+  /* 亮色值（info 两态相同，无需覆盖） */
+  --am-log-warning: #c2410c;
+  --am-log-error: #b91c1c;
+  --am-log-critical: #9d174d;
+  --am-log-success: #15803d;
+  --am-log-debug: rgba(0, 0, 0, 0.35);
+}
+
+html.glass-theme-acg {
+  --am-log-info: #4ecdc4;
+  --am-log-warning: #ffb74d;
+  --am-log-error: #ef5350;
+  --am-log-critical: #f48fb1;
+  --am-log-success: #81c784;
+  --am-log-debug: rgba(255, 255, 255, 0.4);
 }
 
 /* ════════════════════════════════════════════════════════════════

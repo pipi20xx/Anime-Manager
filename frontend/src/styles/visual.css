@@ -863,11 +863,14 @@ code {
   border: var(--am-content-border);
 }
 
-/* Organizer 日志级别颜色（跨主题统一） */
-.org-log-level.info { color: #52c41a; }
-.org-log-level.error { color: #ff4d4f; }
-.org-log-level.warning, .org-log-level.warn { color: #faad14; }
-.org-log-level.debug { color: #1890ff; }
+/* 日志终端级别颜色 —— 令牌由 tokens.css 各主题块提供（classic/liquid 一套，ACG 一套） */
+.log-entry__level[data-level='info'] { color: var(--am-log-info); }
+.log-entry__level[data-level='warn'],
+.log-entry__level[data-level='warning'] { color: var(--am-log-warning); }
+.log-entry__level[data-level='error'] { color: var(--am-log-error); }
+.log-entry__level[data-level='critical'] { color: var(--am-log-critical); }
+.log-entry__level[data-level='debug'] { color: var(--am-log-debug); }
+.log-entry__level[data-level='success'] { color: var(--am-log-success); }
 
 .glass-btn {
   transition: all 0.5s ease-out !important;

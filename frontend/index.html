@@ -8,6 +8,40 @@
     <meta name="theme-color" content="#a855f7" />
     <meta name="description" content="Anime Manager - 全自动番剧识别与整理工具" />
 
+    <!-- 防主题闪烁：Vue 挂载前根据持久化主题给 <html> 打上主题 class。
+         逻辑需与 useThemeStore.readStoredAppTheme / App.vue 的 applyDarkClass 保持一致。 -->
+    <script>
+      ;(function () {
+        try {
+          var theme = localStorage.getItem('app_theme')
+          if (!theme) {
+            // 旧版双 key（glass_theme + theme_mode）迁移，ACG 恒为暗色
+            var legacyStyle = localStorage.getItem('glass_theme')
+            var dark = legacyStyle === 'acg' ? true : localStorage.getItem('theme_mode') !== 'light'
+            theme = legacyStyle === 'acg'
+              ? 'acg'
+              : (legacyStyle === 'liquid' ? 'liquid' : 'classic') + (dark ? '-dark' : '-light')
+          }
+          var styles = {
+            'classic-light': 'classic',
+            'classic-dark': 'classic',
+            'liquid-light': 'liquid',
+            'liquid-dark': 'liquid',
+            acg: 'acg',
+          }
+          var style = styles[theme]
+          if (!style) return
+          var root = document.documentElement
+          root.classList.add('glass-theme-' + style)
+          root.classList.add(
+            theme === 'classic-light' || theme === 'liquid-light' ? 'glass-light' : 'glass-dark',
+          )
+        } catch (e) {
+          /* localStorage 不可用时保持默认主题 */
+        }
+      })()
+    </script>
+
     <!-- Material Design Icons 字体 (MDI) - Vuetify mdi 图标集需要 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" />
     <title>番剧管家</title>

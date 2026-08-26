@@ -835,8 +835,8 @@ html.glass-theme-acg[data-glass-appearance='frosted']:is(
 }
 
 // 渲染器 ready 后恢复导航栏和弹窗的 backdrop-filter
-html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass-renderer-state='ready']
-  body.glass-theme-acg {
+html.glass-theme-acg:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass-renderer-state='ready']
+  body {
 .layout-vertical-nav::before,
 .layout-navbar {
 -webkit-backdrop-filter: var(--glass-surface-backdrop-filter) !important;
@@ -856,8 +856,8 @@ html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass
 // 滚动表面由原生 backdrop 持有壁纸基底；完整内容覆盖的排除子树不再采样。
 // 这是水纹效果的关键规则：渲染器 ready 后，标准表面和交互卡片使用原生磨砂基底，
 // 渲染器在其上叠加折射与交互动态（水纹）。
-html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass-renderer-state='ready']
-  body.glass-theme-acg {
+html.glass-theme-acg:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass-renderer-state='ready']
+  body {
   :is(
       [data-glass-optical-surface],
       .app-hover-lift-card
@@ -874,7 +874,7 @@ html:is([data-glass-quality='balanced'], [data-glass-quality='high'])[data-glass
 // ═══════════════════════════════════════════════════════════════
 
 // 登录页只保留内容保护表面
-html.glass-theme-acg body.glass-theme-acg {
+html.glass-theme-acg body {
   .login-card {
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.14),
@@ -1390,14 +1390,6 @@ html.glass-theme-acg .section-title {
 /* ================================================================
  * 5. 日志终端配色
  * ================================================================ */
-
-html.glass-theme-acg .log-entry__level[data-level="info"]    { color: #4ecdc4; }
-html.glass-theme-acg .log-entry__level[data-level="warn"],
-html.glass-theme-acg .log-entry__level[data-level="warning"]  { color: #FFB74D; }
-html.glass-theme-acg .log-entry__level[data-level="error"]    { color: #EF5350; }
-html.glass-theme-acg .log-entry__level[data-level="critical"] { color: #F48FB1; }
-html.glass-theme-acg .log-entry__level[data-level="debug"]    { color: rgba(255, 255, 255, 0.4); }
-html.glass-theme-acg .log-entry__level[data-level="success"]  { color: #81C784; }
 
 html.glass-theme-acg .log-entry--error,
 html.glass-theme-acg .log-entry--critical {

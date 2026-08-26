@@ -137,13 +137,6 @@
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
-.org-log-level {
-  min-width: 40px;
-  font-weight: 700;
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-/* org-log-level 颜色由 visual.css 统一处理 */
 .org-log-msg {
   flex: 1;
   word-break: break-all;

@@ -515,22 +515,6 @@ html.glass-theme-liquid .page-subtitle {
  * 日志终端配色
  * ================================================================ */
 
-html.glass-theme-liquid .log-entry__level[data-level="info"]    { color: #5E5CE6; }
-html.glass-theme-liquid .log-entry__level[data-level="warn"],
-html.glass-theme-liquid .log-entry__level[data-level="warning"]  { color: #FF9F0A; }
-html.glass-theme-liquid .log-entry__level[data-level="error"]    { color: #FF375F; }
-html.glass-theme-liquid .log-entry__level[data-level="critical"] { color: #F48FB1; }
-html.glass-theme-liquid .log-entry__level[data-level="debug"]    { color: rgba(255, 255, 255, 0.35); }
-html.glass-theme-liquid .log-entry__level[data-level="success"]  { color: #30D158; }
-
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="info"]    { color: #5E5CE6; }
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="warn"],
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="warning"]  { color: #c2410c; }
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="error"]    { color: #b91c1c; }
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="critical"] { color: #9d174d; }
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
-html.glass-theme-liquid.glass-light .log-entry__level[data-level="success"]  { color: #15803d; }
-
 html.glass-theme-liquid .log-entry--error,
 html.glass-theme-liquid .log-entry--critical {
   background: rgba(255, 55, 95, 0.08);

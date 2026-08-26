@@ -280,34 +280,14 @@ html.glass-theme-classic .login-glass-panel .v-btn--variant-flat.v-btn--bg-prima
   box-shadow: none !important;
 }
 
-html.glass-theme-classic.glass-light .login-glass-panel .v-field--variant-outlined {
-  background: #FFFFFF !important;
-}
-
-html.glass-theme-classic.glass-dark .login-glass-panel .v-field--variant-outlined {
-  background: #2C2C2C !important;
+html.glass-theme-classic .login-glass-panel .v-field--variant-outlined {
+  background: var(--am-login-field-bg) !important;
 }
 
 
 /* ================================================================
  * 11. 日志终端配色
  * ================================================================ */
-
-html.glass-theme-classic .log-entry__level[data-level="info"]    { color: #5E5CE6; }
-html.glass-theme-classic .log-entry__level[data-level="warn"],
-html.glass-theme-classic .log-entry__level[data-level="warning"]  { color: #FF9F0A; }
-html.glass-theme-classic .log-entry__level[data-level="error"]    { color: #FF375F; }
-html.glass-theme-classic .log-entry__level[data-level="critical"] { color: #F48FB1; }
-html.glass-theme-classic .log-entry__level[data-level="debug"]    { color: rgba(var(--v-theme-on-surface), 0.35); }
-html.glass-theme-classic .log-entry__level[data-level="success"]  { color: #30D158; }
-
-html.glass-theme-classic.glass-light .log-entry__level[data-level="info"]    { color: #5E5CE6; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="warn"],
-html.glass-theme-classic.glass-light .log-entry__level[data-level="warning"]  { color: #c2410c; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="error"]    { color: #b91c1c; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="critical"] { color: #9d174d; }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="debug"]    { color: rgba(0, 0, 0, 0.35); }
-html.glass-theme-classic.glass-light .log-entry__level[data-level="success"]  { color: #15803d; }
 
 html.glass-theme-classic .log-entry--error,
 html.glass-theme-classic .log-entry--critical {

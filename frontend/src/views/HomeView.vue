@@ -688,13 +688,13 @@ const filteredLogs = computed(() => {
   font-size: 13px;
 }
 .recog-text-label {
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   width: 80px;
   flex-shrink: 0;
   text-align: right;
 }
 .recog-text-value {
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.9);
   word-break: break-all;
 }
 .text-mono {
@@ -703,7 +703,7 @@ const filteredLogs = computed(() => {
 }
 .recog-filename {
   font-size: 11px;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 /* ===== 本地解析元数据 ===== */
@@ -714,7 +714,7 @@ const filteredLogs = computed(() => {
 }
 .raw-title-sub {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   font-style: italic;
   font-family: monospace;
   margin-top: 2px;
@@ -731,11 +731,11 @@ const filteredLogs = computed(() => {
   font-size: 13px;
 }
 .raw-spec-label {
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.8);
 }
 .raw-spec-value {
   font-weight: bold;
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.9);
 }
 
 /* ===== TMDB 原始详情 ===== */
@@ -750,7 +750,7 @@ const filteredLogs = computed(() => {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.3);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   border-radius: 8px;
   border: 1px dashed rgba(var(--v-theme-on-surface), 0.1);
 }
@@ -763,7 +763,7 @@ const filteredLogs = computed(() => {
 }
 .tmdb-meta-line {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -778,7 +778,7 @@ const filteredLogs = computed(() => {
 }
 .tmdb-overview-text {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -809,7 +809,7 @@ const filteredLogs = computed(() => {
   text-align: center;
 }
 .rule-log-content {
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.85);
   word-break: break-all;
 }
 .rule-log-item--privilege {
@@ -859,14 +859,14 @@ const filteredLogs = computed(() => {
   padding: 2px 0;
 }
 .audit-log-idx {
-  color: rgba(var(--v-theme-on-surface), 0.3);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   font-size: 10px;
   width: 24px;
   flex-shrink: 0;
   text-align: right;
 }
 .audit-log-text {
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.85);
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -887,14 +887,14 @@ const filteredLogs = computed(() => {
   padding: 2px 0;
 }
 .audit-log-idx-full {
-  color: rgba(var(--v-theme-on-surface), 0.3);
+  color: rgba(var(--v-theme-on-surface), 0.8);
   font-size: 10px;
   width: 32px;
   flex-shrink: 0;
   text-align: right;
 }
 .audit-log-text-full {
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.85);
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -918,7 +918,7 @@ const filteredLogs = computed(() => {
   font-weight: bold;
 }
 :deep(.log-normal) {
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.85);
 }
 
 /* ===== 偏好设置 ===== */

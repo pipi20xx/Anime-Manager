@@ -322,43 +322,42 @@ export function applyThemeCustomizerRootSettings(
     getGlassOpticalCssTransmissionBrightness(settings.glassTransmissionStrength),
   )
 
-  /** 将玻璃材质参数写入单个元素的 CSS 变量。 */
-  const applyGlassResponse = (element: HTMLElement) => {
-    element.style.setProperty('--glass-background-visibility', String(materialResponse.backgroundVisibility))
-    element.style.setProperty('--glass-frost-blur-scale', String(materialResponse.frostBlurScale))
-    element.style.setProperty('--glass-frost-detail-level', String(materialResponse.frostDetailLevel))
-    element.style.setProperty('--glass-surface-density', String(materialResponse.surfaceDensity))
-    element.style.setProperty('--glass-tint-density', String(materialResponse.tintDensity))
-    element.style.setProperty('--glass-blur-surface', `${frostBlur.surface}px`)
-    element.style.setProperty('--glass-blur-raised', `${frostBlur.raised}px`)
-    element.style.setProperty('--glass-overlay-clarity-blur', `${overlayClarityBlur}px`)
-    element.style.setProperty('--glass-material-accent-rgb', materialAccent.rgb)
+  /** 将玻璃材质参数写入根元素的 CSS 变量。 */
+  const root = document.documentElement
+  const applyGlassResponse = () => {
+    root.style.setProperty('--glass-background-visibility', String(materialResponse.backgroundVisibility))
+    root.style.setProperty('--glass-frost-blur-scale', String(materialResponse.frostBlurScale))
+    root.style.setProperty('--glass-frost-detail-level', String(materialResponse.frostDetailLevel))
+    root.style.setProperty('--glass-surface-density', String(materialResponse.surfaceDensity))
+    root.style.setProperty('--glass-tint-density', String(materialResponse.tintDensity))
+    root.style.setProperty('--glass-blur-surface', `${frostBlur.surface}px`)
+    root.style.setProperty('--glass-blur-raised', `${frostBlur.raised}px`)
+    root.style.setProperty('--glass-overlay-clarity-blur', `${overlayClarityBlur}px`)
+    root.style.setProperty('--glass-material-accent-rgb', materialAccent.rgb)
   }
 
   // ── 主题色应用 ──
   // 主色不分白天/夜晚，统一写入 :root 的 --v-theme-primary 和 --am-primary-rgb，
   // Vuetify 组件通过 CSS 变量继承自动响应。
   // JS 侧的 Vuetify theme 对象同步由 App.vue 中 watch primaryColor 完成。
-  document.documentElement.style.setProperty('--v-theme-primary', primaryRgb)
-  document.documentElement.style.setProperty('--am-primary-rgb', primaryRgb)
-  document.documentElement.style.setProperty('--am-primary-hex', settings.primaryColor)
+  root.style.setProperty('--v-theme-primary', primaryRgb)
+  root.style.setProperty('--am-primary-rgb', primaryRgb)
+  root.style.setProperty('--am-primary-hex', settings.primaryColor)
 
-  // 外观属性同时写到 <html> 和 <body>，两处的 CSS 选择器都能命中
-  for (const element of [document.documentElement, document.body]) {
-    element.setAttribute('data-glass-appearance', settings.glassAppearance)
-    element.setAttribute('data-glass-quality', settings.glassQuality)
-    element.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
-    element.style.setProperty('--glass-reflection', reflection)
-    element.style.setProperty('--glass-transmission', transmission)
-    element.style.setProperty('--glass-transmission-brightness', transmissionBrightness)
-    applyGlassResponse(element)
-    element.setAttribute('data-theme-border', settings.border)
-    element.setAttribute('data-theme-layout', settings.layout)
-    element.setAttribute('data-theme-radius', settings.radius)
-    element.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
-    element.setAttribute('data-theme-shadow', settings.shadow)
-    element.setAttribute('data-theme-skin', settings.skin)
-  }
+  // 外观属性统一只挂 <html>：CSS 选择器均为 html 前缀，变量经继承覆盖全文档
+  root.setAttribute('data-glass-appearance', settings.glassAppearance)
+  root.setAttribute('data-glass-quality', settings.glassQuality)
+  root.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
+  root.style.setProperty('--glass-reflection', reflection)
+  root.style.setProperty('--glass-transmission', transmission)
+  root.style.setProperty('--glass-transmission-brightness', transmissionBrightness)
+  applyGlassResponse()
+  root.setAttribute('data-theme-border', settings.border)
+  root.setAttribute('data-theme-layout', settings.layout)
+  root.setAttribute('data-theme-radius', settings.radius)
+  root.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
+  root.setAttribute('data-theme-shadow', settings.shadow)
+  root.setAttribute('data-theme-skin', settings.skin)
 }
 
 // ─── 持久化部分设置 ─────────────────────────────────────────
