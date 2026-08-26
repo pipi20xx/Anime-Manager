@@ -409,43 +409,44 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
               />
             </template>
             <v-list density="compact" min-width="200" nav>
+              <!-- 每个主题的明暗都是写死的，切换主题即整体切换 -->
               <!-- 液态玻璃 -->
               <v-list-item
                 prepend-icon="mdi-white-balance-sunny"
                 title="液态玻璃 · 白天"
                 subtitle="Apple 液态玻璃风格"
-                :active="themeStore.glassTheme === 'liquid' && !themeStore.isDarkMode"
-                @click="themeStore.setTheme('liquid', false)"
+                :active="themeStore.theme === 'liquid-light'"
+                @click="themeStore.setTheme('liquid-light')"
               />
               <v-list-item
                 prepend-icon="mdi-weather-night"
                 title="液态玻璃 · 黑夜"
                 subtitle="Apple 液态玻璃风格"
-                :active="themeStore.glassTheme === 'liquid' && themeStore.isDarkMode"
-                @click="themeStore.setTheme('liquid', true)"
+                :active="themeStore.theme === 'liquid-dark'"
+                @click="themeStore.setTheme('liquid-dark')"
               />
               <!-- ACG 毛玻璃 -->
               <v-list-item
                 prepend-icon="mdi-image-multiple"
                 title="ACG 毛玻璃"
                 subtitle="二次元壁纸 + 暗色毛玻璃"
-                :active="themeStore.glassTheme === 'acg'"
-                @click="themeStore.setTheme('acg', true)"
+                :active="themeStore.theme === 'acg'"
+                @click="themeStore.setTheme('acg')"
               />
               <!-- 经典 -->
               <v-list-item
                 prepend-icon="mdi-white-balance-sunny"
                 title="经典 · 白天"
                 subtitle="纯白最简风格"
-                :active="themeStore.glassTheme === 'classic' && !themeStore.isDarkMode"
-                @click="themeStore.setTheme('classic', false)"
+                :active="themeStore.theme === 'classic-light'"
+                @click="themeStore.setTheme('classic-light')"
               />
               <v-list-item
                 prepend-icon="mdi-weather-night"
                 title="经典 · 黑夜"
                 subtitle="纯黑最简风格"
-                :active="themeStore.glassTheme === 'classic' && themeStore.isDarkMode"
-                @click="themeStore.setTheme('classic', true)"
+                :active="themeStore.theme === 'classic-dark'"
+                @click="themeStore.setTheme('classic-dark')"
               />
               <v-divider class="my-2 mx-2" />
               <v-list-item

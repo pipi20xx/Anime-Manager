@@ -13,6 +13,8 @@ import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
 import 'vuetify/styles'
 
+import { isThemeDark, readStoredAppTheme } from '@/composables/useThemeStore'
+
 // 亮色主题 — 经典实色
 const lightTheme = {
   dark: false,
@@ -64,7 +66,7 @@ export default createVuetify({
     },
   },
   theme: {
-    defaultTheme: localStorage.getItem('theme_mode') === 'light' ? 'light' : 'dark',
+    defaultTheme: isThemeDark(readStoredAppTheme()) ? 'dark' : 'light',
     themes: {
       light: lightTheme,
       dark: darkTheme,

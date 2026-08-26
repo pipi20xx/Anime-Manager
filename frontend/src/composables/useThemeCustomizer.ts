@@ -29,7 +29,6 @@ export type ThemeCustomizerBorder = 'default' | 'dramatic' | 'none' | 'prominent
 export type ThemeCustomizerRadius = 'default' | 'extra' | 'large' | 'none' | 'small'
 export type ThemeCustomizerShadow = 'default' | 'dramatic' | 'none' | 'prominent' | 'subtle'
 export type ThemeCustomizerSkin = 'bordered' | 'default'
-export type ThemeCustomizerTheme = 'auto' | 'dark' | 'glass' | 'light' | 'purple' | 'transparent'
 
 export interface ThemeCustomizerSettings {
   glassAppearance: ThemeCustomizerGlassAppearance
@@ -53,7 +52,6 @@ export interface ThemeCustomizerSettings {
   semiDarkMenu: boolean
   shadow: ThemeCustomizerShadow
   skin: ThemeCustomizerSkin
-  theme: ThemeCustomizerTheme
 }
 
 export type ThemeCustomizerGlassSettings = Pick<
@@ -107,7 +105,6 @@ const validBorders: ThemeCustomizerBorder[] = ['none', 'subtle', 'default', 'pro
 const validRadii: ThemeCustomizerRadius[] = ['none', 'small', 'default', 'large', 'extra']
 const validShadows: ThemeCustomizerShadow[] = ['none', 'subtle', 'default', 'prominent', 'dramatic']
 const validSkins: ThemeCustomizerSkin[] = ['default', 'bordered']
-const validThemes: ThemeCustomizerTheme[] = ['auto', 'light', 'dark', 'purple', 'transparent', 'glass']
 
 // ─── 工具函数 ───────────────────────────────────────────────
 
@@ -131,6 +128,11 @@ function hexToRgb(hex: string): string | undefined {
 function clampGlass(value: unknown, min: number, max: number, fallback: number): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
   return Math.min(max, Math.max(min, value))
+}
+
+/** 枚举字段校验：非法值回退默认值 */
+function pickValid<T extends string>(raw: unknown, valid: readonly T[], fallback: T): T {
+  return valid.includes(raw as T) ? (raw as T) : fallback
 }
 
 // ─── 默认设置 ───────────────────────────────────────────────
@@ -168,7 +170,6 @@ function getDefaultThemeCustomizerSettings(): ThemeCustomizerSettings {
     semiDarkMenu: false,
     shadow: 'default',
     skin: 'default',
-    theme: 'glass',
   }
 }
 
@@ -177,53 +178,21 @@ function getDefaultThemeCustomizerSettings(): ThemeCustomizerSettings {
 function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>): ThemeCustomizerSettings {
   const defaults = getDefaultThemeCustomizerSettings()
 
-  const glassAppearance = validGlassAppearances.includes(raw.glassAppearance as ThemeCustomizerGlassAppearance)
-    ? (raw.glassAppearance as ThemeCustomizerGlassAppearance)
-    : defaults.glassAppearance
-
-  const glassDynamicsMode = validGlassDynamicsModes.includes(raw.glassDynamicsMode as ThemeCustomizerGlassDynamicsMode)
-    ? (raw.glassDynamicsMode as ThemeCustomizerGlassDynamicsMode)
-    : defaults.glassDynamicsMode
-
-  const glassQuality = validGlassQualities.includes(raw.glassQuality as ThemeCustomizerGlassQuality)
-    ? (raw.glassQuality as ThemeCustomizerGlassQuality)
-    : defaults.glassQuality
-
-  const glassSurfaceMode = validGlassSurfaceModes.includes(raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
-    ? (raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
-    : defaults.glassSurfaceMode
+  const glassAppearance = pickValid(raw.glassAppearance, validGlassAppearances, defaults.glassAppearance)
+  const glassDynamicsMode = pickValid(raw.glassDynamicsMode, validGlassDynamicsModes, defaults.glassDynamicsMode)
+  const glassQuality = pickValid(raw.glassQuality, validGlassQualities, defaults.glassQuality)
+  const glassSurfaceMode = pickValid(raw.glassSurfaceMode, validGlassSurfaceModes, defaults.glassSurfaceMode)
   const glassWallpaperBrightnessMode = raw.glassWallpaperBrightnessMode === 'manual' ? 'manual' : 'auto'
   const glassWallpaperBrightness = clampGlass(raw.glassWallpaperBrightness, 0.2, 1.5, defaults.glassWallpaperBrightness)
-
-  const glassPreset = validGlassPresets.includes(raw.glassPreset as GlassOpticalPreset)
-    ? (raw.glassPreset as GlassOpticalPreset)
-    : defaults.glassPreset
-
-  const border = validBorders.includes(raw.border as ThemeCustomizerBorder)
-    ? (raw.border as ThemeCustomizerBorder)
-    : defaults.border
-
-  const layout = validLayouts.includes(raw.layout as ThemeCustomizerLayout)
-    ? (raw.layout as ThemeCustomizerLayout)
-    : defaults.layout
-
-  const radius = validRadii.includes(raw.radius as ThemeCustomizerRadius)
-    ? (raw.radius as ThemeCustomizerRadius)
-    : defaults.radius
-
-  const skin = validSkins.includes(raw.skin as ThemeCustomizerSkin)
-    ? (raw.skin as ThemeCustomizerSkin)
-    : defaults.skin
-
-  const theme = validThemes.includes(raw.theme as ThemeCustomizerTheme)
-    ? (raw.theme as ThemeCustomizerTheme)
-    : defaults.theme
+  const glassPreset = pickValid(raw.glassPreset, validGlassPresets, defaults.glassPreset)
+  const border = pickValid(raw.border, validBorders, defaults.border)
+  const layout = pickValid(raw.layout, validLayouts, defaults.layout)
+  const radius = pickValid(raw.radius, validRadii, defaults.radius)
+  const skin = pickValid(raw.skin, validSkins, defaults.skin)
+  const shadow = pickValid(raw.shadow, validShadows, defaults.shadow)
 
   const primaryColor = isHexColor(raw.primaryColor) ? raw.primaryColor : defaults.primaryColor
   const semiDarkMenu = typeof raw.semiDarkMenu === 'boolean' ? raw.semiDarkMenu : defaults.semiDarkMenu
-  const shadow = validShadows.includes(raw.shadow as ThemeCustomizerShadow)
-    ? (raw.shadow as ThemeCustomizerShadow)
-    : defaults.shadow
 
   return {
     glassAppearance,
@@ -250,7 +219,6 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
     semiDarkMenu,
     shadow,
     skin,
-    theme,
   }
 }
 
@@ -348,6 +316,13 @@ export function applyThemeCustomizerRootSettings(
     normalizeThemeMaterialAccent(settings.primaryColor) ?? normalizeThemeMaterialAccent(defaultPrimaryColor)!
   /** 将 hex 主色转为 "R, G, B" 字符串，用于覆盖 --v-theme-primary 和自定义变量。 */
   const primaryRgb = hexToRgb(settings.primaryColor) ?? hexToRgb(defaultPrimaryColor)!
+  const reflection = String(normalizeGlassOpticalStrength(settings.glassReflectionStrength) / GLASS_OPTICAL_STRENGTH_MAX)
+  const transmission = String(getGlassOpticalTransmissionStrength(settings.glassTransmissionStrength))
+  const transmissionBrightness = String(
+    getGlassOpticalCssTransmissionBrightness(settings.glassTransmissionStrength),
+  )
+
+  /** 将玻璃材质参数写入单个元素的 CSS 变量。 */
   const applyGlassResponse = (element: HTMLElement) => {
     element.style.setProperty('--glass-background-visibility', String(materialResponse.backgroundVisibility))
     element.style.setProperty('--glass-frost-blur-scale', String(materialResponse.frostBlurScale))
@@ -368,50 +343,22 @@ export function applyThemeCustomizerRootSettings(
   document.documentElement.style.setProperty('--am-primary-rgb', primaryRgb)
   document.documentElement.style.setProperty('--am-primary-hex', settings.primaryColor)
 
-  document.documentElement.setAttribute('data-glass-appearance', settings.glassAppearance)
-  document.documentElement.setAttribute('data-glass-quality', settings.glassQuality)
-  document.documentElement.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
-  document.documentElement.style.setProperty(
-    '--glass-reflection',
-    String(normalizeGlassOpticalStrength(settings.glassReflectionStrength) / GLASS_OPTICAL_STRENGTH_MAX),
-  )
-  document.documentElement.style.setProperty(
-    '--glass-transmission',
-    String(getGlassOpticalTransmissionStrength(settings.glassTransmissionStrength)),
-  )
-  document.documentElement.style.setProperty(
-    '--glass-transmission-brightness',
-    String(getGlassOpticalCssTransmissionBrightness(settings.glassTransmissionStrength)),
-  )
-  applyGlassResponse(document.documentElement)
-  document.documentElement.setAttribute('data-theme-border', settings.border)
-  document.documentElement.setAttribute('data-theme-layout', settings.layout)
-  document.documentElement.setAttribute('data-theme-radius', settings.radius)
-  document.documentElement.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
-  document.documentElement.setAttribute('data-theme-shadow', settings.shadow)
-  document.documentElement.setAttribute('data-theme-skin', settings.skin)
-  document.body.setAttribute('data-glass-appearance', settings.glassAppearance)
-  document.body.setAttribute('data-glass-quality', settings.glassQuality)
-  document.body.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
-  document.body.style.setProperty(
-    '--glass-reflection',
-    String(normalizeGlassOpticalStrength(settings.glassReflectionStrength) / GLASS_OPTICAL_STRENGTH_MAX),
-  )
-  document.body.style.setProperty(
-    '--glass-transmission',
-    String(getGlassOpticalTransmissionStrength(settings.glassTransmissionStrength)),
-  )
-  document.body.style.setProperty(
-    '--glass-transmission-brightness',
-    String(getGlassOpticalCssTransmissionBrightness(settings.glassTransmissionStrength)),
-  )
-  applyGlassResponse(document.body)
-  document.body.setAttribute('data-theme-border', settings.border)
-  document.body.setAttribute('data-theme-layout', settings.layout)
-  document.body.setAttribute('data-theme-radius', settings.radius)
-  document.body.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
-  document.body.setAttribute('data-theme-shadow', settings.shadow)
-  document.body.setAttribute('data-theme-skin', settings.skin)
+  // 外观属性同时写到 <html> 和 <body>，两处的 CSS 选择器都能命中
+  for (const element of [document.documentElement, document.body]) {
+    element.setAttribute('data-glass-appearance', settings.glassAppearance)
+    element.setAttribute('data-glass-quality', settings.glassQuality)
+    element.setAttribute('data-glass-surface-mode', settings.glassSurfaceMode)
+    element.style.setProperty('--glass-reflection', reflection)
+    element.style.setProperty('--glass-transmission', transmission)
+    element.style.setProperty('--glass-transmission-brightness', transmissionBrightness)
+    applyGlassResponse(element)
+    element.setAttribute('data-theme-border', settings.border)
+    element.setAttribute('data-theme-layout', settings.layout)
+    element.setAttribute('data-theme-radius', settings.radius)
+    element.setAttribute('data-theme-semi-dark-menu', String(settings.semiDarkMenu))
+    element.setAttribute('data-theme-shadow', settings.shadow)
+    element.setAttribute('data-theme-skin', settings.skin)
+  }
 }
 
 // ─── 持久化部分设置 ─────────────────────────────────────────
@@ -680,10 +627,6 @@ export function useThemeCustomizer() {
     return updateSettings({ radius })
   }
 
-  function setTheme(theme: ThemeCustomizerTheme) {
-    return updateSettings({ theme })
-  }
-
   function setShadow(shadow: ThemeCustomizerShadow) {
     return updateSettings({ shadow })
   }
@@ -701,17 +644,7 @@ export function useThemeCustomizer() {
   }
 
   function resetSettings() {
-    updateSettings({
-      ...getDefaultGlassCustomizerSettings(),
-      border: 'default',
-      layout: 'vertical',
-      primaryColor: defaultPrimaryColor,
-      radius: 'default',
-      semiDarkMenu: false,
-      shadow: 'default',
-      skin: 'default',
-      theme: 'glass',
-    })
+    return updateSettings(getDefaultThemeCustomizerSettings())
   }
 
   onMounted(() => {
@@ -744,7 +677,6 @@ export function useThemeCustomizer() {
     setSemiDarkMenu,
     setShadow,
     setSkin,
-    setTheme,
     settings: readonly(settings),
   }
 }

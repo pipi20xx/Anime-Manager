@@ -86,13 +86,11 @@ applyTheme(themeStore.isDarkMode)
 applyDarkClass(themeStore.isDarkMode)
 applyGlassTheme(themeStore.glassTheme)
 
-watch(() => themeStore.isDarkMode, (val) => {
-  applyTheme(val)
-  applyDarkClass(val)
-})
-
-watch(() => themeStore.glassTheme, (val) => {
-  applyGlassTheme(val)
+// 主题 = 风格 + 写死的明暗，整体切换
+watch(() => themeStore.theme, () => {
+  applyTheme(themeStore.isDarkMode)
+  applyDarkClass(themeStore.isDarkMode)
+  applyGlassTheme(themeStore.glassTheme)
 })
 
 // ── 主题色同步 ──
