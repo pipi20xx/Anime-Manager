@@ -10,10 +10,15 @@
  *
  * 配置保存到后端 config.json 的 wallpaper 字段，持久化且跨设备同步。
  */
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { appearanceApi, type WallpaperConfig, type WallpaperApiSource, type WallpaperSourceType, type WallpaperUpload } from '@/api/appearance'
 import { useGlassWallpaper } from '@/glass'
 import { useDisplay } from 'vuetify'
+import {
+  persistPartialThemeCustomizerSettings,
+  useThemeCustomizer,
+  type ThemeCustomizerGlassWallpaperBrightnessMode,
+} from '@/composables/useThemeCustomizer'
 
 const props = withDefaults(
   defineProps<{
@@ -32,6 +37,42 @@ const emit = defineEmits<{
 
 const display = useDisplay()
 const glass = useGlassWallpaper()
+const { settings } = useThemeCustomizer()
+
+// ── 壁纸亮度 ──────────────────────────────────────────────
+
+const WALLPAPER_BRIGHTNESS_MIN = 0.2
+const WALLPAPER_BRIGHTNESS_MAX = 1.5
+
+const brightnessMode = ref<ThemeCustomizerGlassWallpaperBrightnessMode>(settings.value.glassWallpaperBrightnessMode)
+const brightnessValue = ref(settings.value.glassWallpaperBrightness)
+
+watch(
+  () => props.modelValue,
+  (value) => {
+    if (value) {
+      brightnessMode.value = settings.value.glassWallpaperBrightnessMode
+      brightnessValue.value = settings.value.glassWallpaperBrightness
+    }
+  },
+  { immediate: true },
+)
+
+function toggleBrightnessMode() {
+  const next: ThemeCustomizerGlassWallpaperBrightnessMode = brightnessMode.value === 'manual' ? 'auto' : 'manual'
+  brightnessMode.value = next
+  persistPartialThemeCustomizerSettings({ glassWallpaperBrightnessMode: next })
+}
+
+function updateBrightness(value: unknown) {
+  const num = Array.isArray(value) ? value[0] : value
+  brightnessValue.value = Math.min(WALLPAPER_BRIGHTNESS_MAX, Math.max(WALLPAPER_BRIGHTNESS_MIN, Number(num) || 0.86))
+  persistPartialThemeCustomizerSettings({
+    glassWallpaperBrightnessMode: 'manual',
+    glassWallpaperBrightness: brightnessValue.value,
+  })
+  brightnessMode.value = 'manual'
+}
 
 const visible = computed({
   get: () => props.modelValue,
@@ -376,6 +417,37 @@ watch(
             </div>
           </section>
 
+          <!-- 壁纸亮度 -->
+          <section>
+            <div class="wallpaper-dialog__slider-header">
+              <h3 class="wallpaper-dialog__label">壁纸亮度</h3>
+              <VBtn
+                variant="text"
+                size="x-small"
+                :color="brightnessMode === 'manual' ? 'primary' : 'default'"
+                @click="toggleBrightnessMode"
+              >
+                {{ brightnessMode === 'manual' ? '手动' : '自动' }}
+              </VBtn>
+            </div>
+            <VSlider
+              v-if="brightnessMode === 'manual'"
+              :model-value="brightnessValue"
+              aria-label="壁纸亮度"
+              :min="WALLPAPER_BRIGHTNESS_MIN"
+              :max="WALLPAPER_BRIGHTNESS_MAX"
+              :step="0.01"
+              color="primary"
+              density="comfortable"
+              hide-details
+              thumb-label
+              @update:model-value="updateBrightness"
+            />
+            <p class="wallpaper-dialog__hint">
+              自动模式下根据壁纸明暗自动计算亮度；手动模式可自行调节。
+            </p>
+          </section>
+
           <!-- 缓存时间 -->
           <section>
             <h3 class="wallpaper-dialog__label">缓存时间</h3>
@@ -445,6 +517,17 @@ watch(
   color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   font-size: 0.75rem;
   line-height: 1.45;
+}
+
+.wallpaper-dialog__slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  .wallpaper-dialog__label {
+    margin-block-end: 0;
+  }
 }
 
 .wallpaper-dialog__source-type {

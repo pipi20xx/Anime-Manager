@@ -193,7 +193,7 @@ function normalizeThemeCustomizerSettings(raw: Partial<ThemeCustomizerSettings>)
     ? (raw.glassSurfaceMode as ThemeCustomizerGlassSurfaceMode)
     : defaults.glassSurfaceMode
   const glassWallpaperBrightnessMode = raw.glassWallpaperBrightnessMode === 'manual' ? 'manual' : 'auto'
-  const glassWallpaperBrightness = clampGlass(raw.glassWallpaperBrightness, 0.3, 1.2, defaults.glassWallpaperBrightness)
+  const glassWallpaperBrightness = clampGlass(raw.glassWallpaperBrightness, 0.2, 1.5, defaults.glassWallpaperBrightness)
 
   const glassPreset = validGlassPresets.includes(raw.glassPreset as GlassOpticalPreset)
     ? (raw.glassPreset as GlassOpticalPreset)
