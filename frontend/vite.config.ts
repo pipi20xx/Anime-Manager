@@ -112,11 +112,16 @@ export default defineConfig(({ command, mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules/vuetify') || id.includes('node_modules/.vite/deps/vuetify')) return 'vuetify'
-            if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) return 'vue-vendor'
+          // Vite 8 使用 Rolldown，manualChunks 函数返回 undefined 会报错，对象形式则报 "is not a function"
+          // 改用 Rolldown 原生 advancedChunks.groups 配置，每个 group 用 name(字符串) + test(正则) 匹配
+          // 使用 as any 绕过 Vite 旧版 Rollup 类型定义中缺少 advancedChunks 的问题
+          advancedChunks: {
+            groups: [
+              { name: 'vuetify', test: /[\\/]node_modules[\\/](@?vuetify|vuetify)[\\/]/ },
+              { name: 'vue-vendor', test: /[\\/]node_modules[\\/](@?vue|vue-router|pinia|@vueuse)[\\/]/ },
+            ],
           },
-        },
+        } as any,
       },
       minify: true,
       cssMinify: false,
