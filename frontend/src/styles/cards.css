@@ -442,7 +442,7 @@
   aspect-ratio: 2 / 3;
   background: rgba(var(--v-theme-on-surface), 0.04);
   overflow: hidden;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--glass-radius, 12px);
 }
 .media-card__poster .v-img {
   width: 100%;
@@ -614,7 +614,7 @@
   aspect-ratio: 2 / 3;
   background: rgba(var(--v-theme-on-surface), 0.04);
   overflow: hidden;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--glass-radius, 12px);
 }
 .cast-card__poster .v-img {
   width: 100%;
@@ -683,7 +683,7 @@
   aspect-ratio: 2 / 3;
   background: rgba(var(--v-theme-on-surface), 0.04);
   overflow: hidden;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--glass-radius, 12px);
 }
 .track-card__poster .v-img {
   width: 100%;
@@ -900,7 +900,7 @@
 }
 
 .dc-db-table thead tr {
-  background: rgba(var(--v-theme-on-surface), 0.04);
+  background: transparent;
 }
 
 .dc-db-table th {

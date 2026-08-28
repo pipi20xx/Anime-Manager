@@ -367,7 +367,6 @@ onUnmounted(() => {
               v-if="getPoster(item)"
               :src="getPoster(item)"
               cover
-              class="rounded-t-xl"
             >
               <template #placeholder>
                 <v-skeleton-loader type="image" />

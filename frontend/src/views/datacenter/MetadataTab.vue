@@ -238,7 +238,6 @@ onUnmounted(() => {
           v-if="item.poster_path"
           :src="getImg(item.poster_path)"
           cover
-          class="rounded-t-xl"
         >
           <template #placeholder>
             <v-skeleton-loader type="image" />
@@ -444,9 +443,8 @@ onUnmounted(() => {
                     <div class="media-card__poster">
                       <v-img
                         v-if="c.profilePath"
-                        :src="getImg(c.profilePath)"
-                        cover
-                        class="rounded-t-xl"
+                      :src="getImg(c.profilePath)"
+                      cover
                       >
                         <template #placeholder>
                           <v-skeleton-loader type="image" />

@@ -429,7 +429,7 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
 .dc-db-table th {
   padding: 8px 12px; text-align: left; font-weight: 600;
   border-bottom: 2px solid rgba(var(--v-theme-on-surface),0.12); white-space: nowrap;
-  position: sticky; top: 0; background: rgb(var(--v-theme-surface)); z-index: 1;
+  position: sticky; top: 0; background: transparent; z-index: 1;
 }
 .dc-db-table td {
   padding: 6px 12px; border-bottom: 1px solid rgba(var(--v-theme-on-surface),0.06);

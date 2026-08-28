@@ -436,7 +436,6 @@ onMounted(() => {
               v-if="item.posterPath"
               :src="getImg(item.posterPath)"
               cover
-              class="rounded-t-xl"
             >
               <template #placeholder>
                 <v-skeleton-loader type="image" />
@@ -526,7 +525,6 @@ onMounted(() => {
                       v-if="sub.poster_path"
                       :src="getImg(sub.poster_path)"
                       cover
-                      class="rounded-t-xl"
                     >
                       <template #placeholder>
                         <v-skeleton-loader type="image" />

@@ -179,7 +179,6 @@ onMounted(() => {
                   v-if="getBgmPoster(item)"
                   :src="getBgmPoster(item)"
                   cover
-                  class="rounded-t-xl"
                 >
                   <template #placeholder>
                     <v-skeleton-loader type="image" />
@@ -219,7 +218,6 @@ onMounted(() => {
                 v-if="getTmdbPoster(item)"
                 :src="getTmdbPoster(item)"
                 cover
-                class="rounded-t-xl"
               >
                 <template #placeholder>
                   <v-skeleton-loader type="image" />
@@ -253,7 +251,6 @@ onMounted(() => {
                 v-if="getTmdbPoster(item)"
                 :src="getTmdbPoster(item)"
                 cover
-                class="rounded-t-xl"
               >
                 <template #placeholder>
                   <v-skeleton-loader type="image" />

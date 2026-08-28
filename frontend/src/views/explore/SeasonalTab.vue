@@ -158,7 +158,6 @@ watch([selectedYear, selectedSeason], () => {
               v-if="item.image"
               :src="getPoster(item.image)"
               cover
-              class="rounded-t-xl"
             >
               <template #placeholder>
                 <v-skeleton-loader type="image" />

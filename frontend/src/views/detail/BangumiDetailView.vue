@@ -340,7 +340,6 @@ onMounted(() => {
                   v-if="c.image"
                   :src="getImg(c.image)"
                   contain
-                  class="rounded-t-xl"
                 >
                   <template #placeholder>
                     <v-skeleton-loader type="image" />
@@ -431,7 +430,6 @@ onMounted(() => {
                   v-if="item.image"
                   :src="getImg(item.image)"
                   cover
-                  class="rounded-t-xl"
                 />
                 <span v-if="item.platform" class="media-card__type media-card__type--bgm">{{ item.platform }}</span>
               </div>
