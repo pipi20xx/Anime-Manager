@@ -130,6 +130,8 @@ function handleLogout() {
 function checkMobile() {
   isMobile.value = window.innerWidth < 960
   if (isMobile.value) drawer.value = false
+  // 窗口尺寸变化会影响 tab 条是否溢出，刷新提示状态
+  updateTabScrollState()
 }
 
 // 路由变化时，移动端自动关闭抽屉 + 触发页面呈现动画
@@ -216,6 +218,86 @@ function handleTabChange(newValue: string) {
     dynamicHeaderTab.value.onUpdateModelValue?.(newValue)
   }
 }
+
+// ── 顶栏 Tab 横向滚动 ──
+// 滚动条被隐藏（scrollbar-width: none），鼠标用户既看不到滚动条也无法拖动，
+// 手机端可触摸滑动，桌面端需要把纵向滚轮映射为横向滚动
+const headerTabScrollRef = ref<HTMLElement | null>(null)
+
+// ── 溢出提示状态：两侧是否还有未显示的 tab ──
+const canScrollTabLeft = ref(false)
+const canScrollTabRight = ref(false)
+
+function updateTabScrollState() {
+  const el = headerTabScrollRef.value
+  if (!el) {
+    canScrollTabLeft.value = false
+    canScrollTabRight.value = false
+    return
+  }
+  canScrollTabLeft.value = el.scrollLeft > 1
+  canScrollTabRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+}
+
+function handleHeaderTabWheel(e: WheelEvent) {
+  const el = headerTabScrollRef.value
+  if (!el || el.scrollWidth <= el.clientWidth) return
+  // 触控板的横向滑动交给浏览器原生处理
+  if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+  el.scrollLeft += e.deltaY
+  e.preventDefault()
+}
+
+// ── 鼠标左键按住拖动滚动（桌面端）──
+let headerTabDrag: { startX: number; startScrollLeft: number } | null = null
+let headerTabDragMoved = false
+
+function handleHeaderTabDragMove(e: PointerEvent) {
+  if (!headerTabDrag || !headerTabScrollRef.value) return
+  const dx = e.clientX - headerTabDrag.startX
+  // 位移超过阈值才算拖动，避免把轻微手抖当成拖拽
+  if (!headerTabDragMoved && Math.abs(dx) < 6) return
+  headerTabDragMoved = true
+  headerTabScrollRef.value.scrollLeft = headerTabDrag.startScrollLeft - dx
+}
+
+function handleHeaderTabDragEnd() {
+  headerTabDrag = null
+  window.removeEventListener('pointermove', handleHeaderTabDragMove)
+  window.removeEventListener('pointerup', handleHeaderTabDragEnd)
+}
+
+function handleHeaderTabPointerDown(e: PointerEvent) {
+  const el = headerTabScrollRef.value
+  // 只处理鼠标左键；触摸端走原生滑动；未溢出时无需拖动
+  if (e.button !== 0 || e.pointerType !== 'mouse' || !el || el.scrollWidth <= el.clientWidth) return
+  headerTabDragMoved = false
+  headerTabDrag = { startX: e.clientX, startScrollLeft: el.scrollLeft }
+  window.addEventListener('pointermove', handleHeaderTabDragMove)
+  window.addEventListener('pointerup', handleHeaderTabDragEnd)
+}
+
+// 拖动结束后的 click 会落在 tab 上，若是拖动产生的则吞掉，避免误切换
+function handleHeaderTabClickCapture(e: MouseEvent) {
+  if (headerTabDragMoved) {
+    e.preventDefault()
+    e.stopPropagation()
+    headerTabDragMoved = false
+  }
+}
+
+// 切换 tab / 进入页面时，把激活的 tab 滚入可视区域，并刷新溢出提示状态
+watch(
+  () => [dynamicHeaderTab.value?.modelValue, visibleTabItems.value.length] as const,
+  async () => {
+    await nextTick()
+    updateTabScrollState()
+    const el = headerTabScrollRef.value
+    if (!el) return
+    el.querySelector('.header-tab--active')
+      ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  },
+)
 
 function resolveButtonColor(button: DynamicHeaderTabButton) {
   return isRef(button.color) ? button.color.value : (button.color ?? 'default')
@@ -333,14 +415,38 @@ function resolveButtonLoading(button: DynamicHeaderTabButton) {
       <template #extension v-if="hasDynamicHeaderTab">
         <div class="layout-dynamic-header-tab">
           <div
-            v-for="item in visibleTabItems"
-            :key="item.tab"
-            class="header-tab"
-            :class="{ 'header-tab--active': dynamicHeaderTab!.modelValue === item.tab }"
-            @click="handleTabChange(item.tab)"
+            class="header-tab-wrap"
+            :class="{
+              'header-tab-wrap--left': canScrollTabLeft,
+              'header-tab-wrap--right': canScrollTabRight,
+            }"
           >
-            <v-icon v-if="item.icon" start size="18">{{ item.icon }}</v-icon>
-            <span>{{ item.title }}</span>
+            <div
+              ref="headerTabScrollRef"
+              class="header-tab-scroll"
+              @wheel="handleHeaderTabWheel"
+              @pointerdown="handleHeaderTabPointerDown"
+              @click.capture="handleHeaderTabClickCapture"
+              @scroll.passive="updateTabScrollState"
+            >
+              <div
+                v-for="item in visibleTabItems"
+                :key="item.tab"
+                class="header-tab"
+                :class="{ 'header-tab--active': dynamicHeaderTab!.modelValue === item.tab }"
+                @click="handleTabChange(item.tab)"
+              >
+                <v-icon v-if="item.icon" start size="18">{{ item.icon }}</v-icon>
+                <span>{{ item.title }}</span>
+              </div>
+            </div>
+            <!-- 溢出提示箭头：还有未显示的 tab 时出现 -->
+            <div v-if="canScrollTabLeft" class="header-tab-hint header-tab-hint--left">
+              <v-icon size="16">mdi-chevron-double-left</v-icon>
+            </div>
+            <div v-if="canScrollTabRight" class="header-tab-hint header-tab-hint--right">
+              <v-icon size="16">mdi-chevron-double-right</v-icon>
+            </div>
           </div>
           <!-- 附加按钮 -->
           <v-spacer v-if="visibleTabButtons.length" />
@@ -598,10 +704,88 @@ v-model="showWallpaperDialog"
   width: 100%;
   height: 100%;
   padding-inline: 16px;
+  /* toolbar 的 extension 是 flex 容器，flex 子项默认 min-width:auto 会拒绝收缩，
+     导致 tab 过多时整条溢出顶栏且内部 overflow 永远不生效，必须允许收缩 */
+  min-width: 0;
+}
+.header-tab-wrap {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* 溢出提示：有未显示 tab 的一侧出现渐隐 + 弹动箭头 */
+.header-tab-wrap::before,
+.header-tab-wrap::after {
+  position: absolute;
+  z-index: 1;
+  width: 32px;
+  height: 100%;
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.header-tab-wrap::before {
+  background: linear-gradient(to right, rgb(var(--v-theme-surface)), transparent);
+}
+.header-tab-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, rgb(var(--v-theme-surface)), transparent);
+}
+.header-tab-wrap--left::before {
+  opacity: 1;
+}
+.header-tab-wrap--right::after {
+  opacity: 1;
+}
+
+.header-tab-hint {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.header-tab-hint--left {
+  left: 2px;
+  animation: header-tab-hint-left 1.4s ease-in-out infinite;
+}
+.header-tab-hint--right {
+  right: 2px;
+  animation: header-tab-hint-right 1.4s ease-in-out infinite;
+}
+@keyframes header-tab-hint-left {
+  0%, 100% { transform: translateY(-50%) translateX(0); opacity: 0.5; }
+  50% { transform: translateY(-50%) translateX(-3px); opacity: 1; }
+}
+@keyframes header-tab-hint-right {
+  0%, 100% { transform: translateY(-50%) translateX(0); opacity: 0.5; }
+  50% { transform: translateY(-50%) translateX(3px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-tab-hint--left,
+  .header-tab-hint--right {
+    animation: none;
+  }
+}
+
+.header-tab-scroll {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow-x: auto;
   scrollbar-width: none;
+  user-select: none;
 }
-.layout-dynamic-header-tab::-webkit-scrollbar {
+.header-tab-scroll::-webkit-scrollbar {
   display: none;
 }
 
