@@ -724,7 +724,7 @@ onMounted(() => {
                 />
                 <div>
                   <span class="text-body-2">新集通知</span>
-                  <div class="text-caption text-medium-emphasis">检测到新集播出时发送通知</div>
+                  <div class="text-caption text-medium-emphasis">订阅番剧的新集播出后立即逐集提醒（仅提醒播出，与下载状态无关）</div>
                 </div>
               </div>
 
@@ -739,7 +739,7 @@ onMounted(() => {
                 />
                 <div>
                   <span class="text-body-2">每日摘要</span>
-                  <div class="text-caption text-medium-emphasis">每天推送订阅番剧播出摘要</div>
+                  <div class="text-caption text-medium-emphasis">每天在指定时间推送一条「今日有哪些订阅番剧播出」的清单，当天无播出则不推送</div>
                 </div>
               </div>
 
@@ -759,7 +759,7 @@ onMounted(() => {
               </div>
 
               <v-alert type="info" density="compact" variant="tonal">
-                订阅提醒会检查你订阅的番剧是否有新集播出，并通过 Telegram 发送通知。
+                订阅提醒只针对「追剧订阅」里启用的番剧：新集通知按集即时提醒播出，每日摘要每天定时汇总当日播出清单。通知通过 Telegram 发送，与「日历每日播报」（基于日历追踪条目）相互独立。
               </v-alert>
             </v-window-item>
           </v-window>
