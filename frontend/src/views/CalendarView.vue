@@ -404,6 +404,30 @@ async function clearExpiredSubjects() {
   }
 }
 
+async function clearAllSubjects() {
+  if (trackingList.value.length === 0) {
+    info('没有可清理的追踪项')
+    return
+  }
+  const ok = await confirm({
+    title: '确认清空',
+    content: `确定要清空全部 ${trackingList.value.length} 个追踪项吗？此操作不可恢复！`,
+    confirmColor: 'error',
+  })
+  if (!ok) return
+  try {
+    const data = await calendarApi.clearAllSubjects()
+    if (data?.success) {
+      success(data.message || '已清空全部追踪项')
+      fetchData()
+    } else {
+      showError(data?.message || '清空失败')
+    }
+  } catch (e) {
+    showError('清空失败')
+  }
+}
+
 function getEpisodeRange(episodes: any[]): string {
   if (!episodes || !Array.isArray(episodes) || episodes.length === 0) {
     return '无数据'
@@ -533,6 +557,7 @@ onMounted(() => {
               <div class="d-flex justify-space-between align-center mb-3">
                 <span class="text-caption text-medium-emphasis">共 {{ trackingList.length }} 个追踪项</span>
                 <div class="d-flex ga-2">
+                  <v-btn color="error" variant="tonal" size="small" prepend-icon="mdi-delete-sweep-outline" @click="clearAllSubjects">清理全部</v-btn>
                   <v-btn color="warning" variant="tonal" size="small" prepend-icon="mdi-broom" @click="clearExpiredSubjects">清理过期</v-btn>
                   <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-refresh" @click="refreshAllSubjects">全部刷新</v-btn>
                 </div>

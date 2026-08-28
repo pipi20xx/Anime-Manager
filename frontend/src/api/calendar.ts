@@ -41,6 +41,10 @@ export const calendarApi = {
   clearExpired: () =>
     api.delete<any>('/api/calendar/subjects/expired'),
 
+  /** 清空所有追踪项 */
+  clearAllSubjects: () =>
+    api.delete<any>('/api/calendar/subjects/all'),
+
   /** 从 Bangumi 放送表导入单个番剧 */
   importBangumi: (bgmId: string | number) =>
     api.post<any>(`/api/calendar/import_bangumi/${bgmId}`),

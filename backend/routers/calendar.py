@@ -163,6 +163,18 @@ async def delete_expired_subjects():
             "deleted_titles": []
         }
 
+@router.delete("/subjects/all", summary="清空所有追踪项")
+async def delete_all_subjects():
+    """删除全部日历追踪项。"""
+    async with db.session_scope():
+        stmt = select(CalendarSubject)
+        subjects = await db.all(CalendarSubject, stmt)
+        count = len(subjects)
+        for subject in subjects:
+            await db.delete(subject)
+    return {"success": True, "message": f"已清空 {count} 个追踪项", "deleted_count": count}
+
+
 @router.delete("/subjects/{subject_id}", summary="删除日历追踪项")
 async def delete_subject(subject_id: int):
     async with db.session_scope():
