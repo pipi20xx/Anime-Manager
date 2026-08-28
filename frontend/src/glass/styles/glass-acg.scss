@@ -830,6 +830,15 @@ html.glass-theme-acg:is(
   opacity: 1;
 }
 
+// 异步滚动期间只暂停 GPU 动态层；原生壁纸基底不发生材质切换。
+// 照搬 MP glass.scss 1555-1557。缺少此规则会导致滚动时 scroll canvas 仍然可见，
+// 与原生 backdrop-filter 叠加产生闪烁。
+// page 模式下 JS 不会设置 data-glass-scroll-presentation 属性，因此此规则不会生效。
+html[data-glass-scroll-presentation='native'][data-glass-renderer-state='ready']
+  .glass-optical-layer--scroll {
+  opacity: 0 !important;
+}
+
 // 光学档位先交由 renderer 接管标准表面；各材质在后续规则恢复必要的原生背板。
 html.glass-theme-acg:is(
     [data-glass-quality='balanced'],
