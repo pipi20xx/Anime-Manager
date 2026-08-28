@@ -115,6 +115,9 @@ const calendarConfig = ref({
   daily_push_enabled: false,
   push_time: '09:00',
   pin_message: false,
+  bgm_push_enabled: false,
+  bgm_push_time: '09:00',
+  bgm_pin_message: false,
 })
 
 const subscriptionNotifyConfig = ref({
@@ -126,6 +129,7 @@ const subscriptionNotifyConfig = ref({
 })
 
 const isTestingPush = ref(false)
+const isTestingBgmPush = ref(false)
 const importingBatch = ref(false)
 
 // 已导入的 bangumi ID 集合（用于从放送表导入时标记已导入项）
@@ -160,6 +164,9 @@ async function fetchData() {
         daily_push_enabled: configData.calendar_daily_push || false,
         push_time: configData.calendar_push_time || '09:00',
         pin_message: configData.calendar_pin_message || false,
+        bgm_push_enabled: configData.bgm_schedule_daily_push || false,
+        bgm_push_time: configData.bgm_schedule_push_time || '09:00',
+        bgm_pin_message: configData.bgm_schedule_pin_message || false,
       }
       subscriptionNotifyConfig.value = {
         enabled: configData.subscription_notify_enabled ?? true,
@@ -182,6 +189,9 @@ async function saveCalendarConfig() {
       calendar_daily_push: calendarConfig.value.daily_push_enabled,
       calendar_push_time: calendarConfig.value.push_time,
       calendar_pin_message: calendarConfig.value.pin_message,
+      bgm_schedule_daily_push: calendarConfig.value.bgm_push_enabled,
+      bgm_schedule_push_time: calendarConfig.value.bgm_push_time,
+      bgm_schedule_pin_message: calendarConfig.value.bgm_pin_message,
     })
     success('推送设置已更新')
   } catch (e) {
@@ -217,6 +227,22 @@ async function testCalendarPush() {
     showError('推送请求失败')
   } finally {
     isTestingPush.value = false
+  }
+}
+
+async function testBgmPush() {
+  isTestingBgmPush.value = true
+  try {
+    const data = await calendarApi.testBgmSchedulePush()
+    if (data?.success) {
+      success(data.message || '测试推送已发送')
+    } else {
+      showError(data?.message || '推送失败')
+    }
+  } catch (e) {
+    showError('推送请求失败')
+  } finally {
+    isTestingBgmPush.value = false
   }
 }
 
@@ -680,6 +706,60 @@ onMounted(() => {
 
               <v-alert type="info" density="compact" class="mb-6" variant="tonal">
                 系统将在设定时间通过 Telegram 推送今日播出清单。
+              </v-alert>
+
+              <v-divider class="my-4" />
+
+              <!-- BGM 放送表每日推送 -->
+              <div class="d-flex align-center ga-2 mb-4">
+                <v-icon color="primary">mdi-calendar-clock-outline</v-icon>
+                <span class="text-subtitle-1 font-weight-bold">BGM 放送表每日推送</span>
+              </div>
+
+              <div class="d-flex align-center ga-3 mb-3">
+                <v-switch
+                  v-model="calendarConfig.bgm_push_enabled"
+                  color="primary"
+                  hide-details
+                  density="compact"
+                  @update:model-value="saveCalendarConfig"
+                />
+                <span class="text-body-2">启用每日推送</span>
+              </div>
+
+              <div :style="{ opacity: calendarConfig.bgm_push_enabled ? 1 : 0.5 }" class="mb-3">
+                <v-text-field
+                  v-model="calendarConfig.bgm_push_time"
+                  label="推送时间"
+                  type="time"
+                  variant="outlined"
+                  density="compact"
+                  :disabled="!calendarConfig.bgm_push_enabled"
+                  @change="saveCalendarConfig"
+                />
+              </div>
+
+              <div class="d-flex align-center ga-3 mb-3" :style="{ opacity: calendarConfig.bgm_push_enabled ? 1 : 0.5 }">
+                <v-switch
+                  v-model="calendarConfig.bgm_pin_message"
+                  color="primary"
+                  hide-details
+                  density="compact"
+                  :disabled="!calendarConfig.bgm_push_enabled"
+                  @update:model-value="saveCalendarConfig"
+                />
+                <div>
+                  <span class="text-body-2">消息置顶</span>
+                  <div class="text-caption text-medium-emphasis">将放送表消息置顶显示</div>
+                </div>
+              </div>
+
+              <v-btn variant="tonal" color="primary" prepend-icon="mdi-send" :loading="isTestingBgmPush" class="mb-4" @click="testBgmPush">
+                发送测试推送
+              </v-btn>
+
+              <v-alert type="info" density="compact" class="mb-6" variant="tonal">
+                推送 BGM（Bangumi）「播出时间表」中当天放送的全部番剧清单（含播出时间与平台），数据与番剧探索页一致；与上面的每日播报不同，这里不限于你追踪的条目。
               </v-alert>
 
               <v-divider class="my-4" />

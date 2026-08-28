@@ -43,6 +43,7 @@ class NotificationRenderer:
         NotificationEvent.SYSTEM_WARNING: "🔔",
         NotificationEvent.CALENDAR_DAILY: "📅",
         NotificationEvent.DAILY_SUMMARY: "📅",
+        NotificationEvent.BGM_SCHEDULE_DAILY: "📺",
         NotificationEvent.TEST: "🔔",
         NotificationEvent.RAW: "📌",
     }
@@ -563,6 +564,14 @@ class NotificationRenderer:
             lines.append(f"🎬 {item.get('title', '未知')} {season_str}{ep_str}")
             lines.append(f"   └ {item.get('ep_title', '')}\n")
         return "\n".join(lines)
+
+    def _render_bgm_schedule_daily(self, n: "Notification") -> str:
+        """番剧探索放送表每日推送。"""
+        header = n.data.get("header", "")
+        lines = n.data.get("lines", [])
+        sections = [header]
+        sections.extend(lines)
+        return "\n".join(sections)
 
     def _render_system_startup(self, n: "Notification") -> str:
         d = n.data

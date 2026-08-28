@@ -309,7 +309,24 @@ class MonitorManager:
                 logger.info(f"[Calendar] 已开启每日播报，推送时间: {push_time}")
             except Exception as e:
                 logger.error(f"[Calendar] 每日播报设置解析失败: {e}")
-        
+
+        # 7.5 [BGM Schedule] BGM 放送表每日推送
+        if config.get("bgm_schedule_daily_push", False):
+            push_time = config.get("bgm_schedule_push_time", "09:00")
+            try:
+                hour, minute = map(int, push_time.split(':'))
+                MonitorManager._scheduler.add_job(
+                    MonitorManager._bgm_schedule_daily_push,
+                    'cron',
+                    hour=hour,
+                    minute=minute,
+                    id="bgm_schedule_daily_push_job",
+                    replace_existing=True
+                )
+                logger.info(f"[BGM放送表] 已开启每日推送，推送时间: {push_time}")
+            except Exception as e:
+                logger.error(f"[BGM放送表] 每日推送设置解析失败: {e}")
+
         # 8. [Subscription Notifier] 订阅智能提醒
         sub_notify_enabled = config.get("subscription_notify_enabled", True)
         if sub_notify_enabled:
@@ -487,6 +504,31 @@ class MonitorManager:
                     return False, msg
         except Exception as e:
             logger.error(f"[Calendar] 每日播报执行失败: {e}")
+            return False, str(e)
+
+    @staticmethod
+    async def _bgm_schedule_daily_push():
+        """BGM 放送表每日推送"""
+        try:
+            from recognition.data_provider.bangumi.client import BangumiProvider
+            from notification import notification_manager
+
+            data = await BangumiProvider.get_calendar_from_local()
+            days = data.get("data", []) if isinstance(data, dict) else []
+            today = next((d for d in days if d.get("is_today")), None)
+            items = today.get("items", []) if today else []
+            weekday_cn = today.get("weekday_cn", "") if today else ""
+
+            success, msg, _ = await notification_manager.notify_bgm_schedule(items, weekday_cn)
+
+            if success:
+                logger.info(f"[BGM放送表] 每日推送发送成功，今日共有 {len(items)} 部作品放送。")
+                return success, f"今日共有 {len(items)} 部作品放送"
+            else:
+                logger.error(f"[BGM放送表] 每日推送发送失败: {msg}")
+                return success, msg
+        except Exception as e:
+            logger.error(f"[BGM放送表] 每日推送执行失败: {e}")
             return False, str(e)
 
     @staticmethod
@@ -730,7 +772,21 @@ class MonitorManager:
                 "last_run": None,
                 "description": "每日定时推送今日更新的番剧"
             })
-            
+
+            # BGM 放送表每日推送
+            bgm_schedule_job = job_map.get("bgm_schedule_daily_push_job")
+            services.append({
+                "id": "bgm_schedule_daily_push",
+                "name": "BGM 放送表每日推送",
+                "type": "scheduler",
+                "enabled": config.get("bgm_schedule_daily_push", False),
+                "running": bgm_schedule_job is not None,
+                "interval": f"每日 {config.get('bgm_schedule_push_time', '09:00')}",
+                "next_run": bgm_schedule_job.next_run_time.isoformat() if bgm_schedule_job and bgm_schedule_job.next_run_time else None,
+                "last_run": None,
+                "description": "每日定时推送 BGM（番剧探索）的放送时间表"
+            })
+
             # 订阅智能提醒
             sub_notify_job = job_map.get("subscription_notifier_job")
             services.append({

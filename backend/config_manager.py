@@ -107,6 +107,9 @@ class ConfigManager:
         "calendar_daily_push": False,
         "calendar_push_time": "09:00",
         "calendar_pin_message": False,
+        "bgm_schedule_daily_push": False, # BGM 放送表每日推送
+        "bgm_schedule_push_time": "09:00", # BGM 放送表每日推送时间
+        "bgm_schedule_pin_message": False, # BGM 放送表推送消息置顶
         "subscription_notify_enabled": True, # 订阅智能提醒
         "subscription_notify_interval": 60, # 检查间隔（分钟）
         "subscription_notify_on_new_episode": True, # 新集播出时发送通知

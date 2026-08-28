@@ -52,4 +52,8 @@ export const calendarApi = {
   /** 测试推送播报 */
   testPush: () =>
     api.post<any>('/api/calendar/test_push'),
+
+  /** 测试推送BGM放送表 */
+  testBgmSchedulePush: () =>
+    api.post<any>('/api/calendar/test_bgm_schedule_push'),
 }

@@ -146,6 +146,20 @@ html.glass-theme-acg {
     --am-alert-blur: none;
     --am-avatar-blur: none;
     --am-tooltip-blur: none;
+
+    // 手机端（<960px）导航抽屉为覆盖式弹出，全透明会与页面混在一起无法辨认：
+    // 恢复为与弹窗一致的磨砂材质（overlay 材质在透明模式下未被置空）
+    @media (max-width: 959.98px) {
+      .layout-vertical-nav,
+      .v-navigation-drawer {
+        &::before {
+          -webkit-backdrop-filter: var(--glass-overlay-backdrop-filter);
+          backdrop-filter: var(--glass-overlay-backdrop-filter);
+          background-color: var(--glass-overlay-surface);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 35%);
+        }
+      }
+    }
   }
 
   body {

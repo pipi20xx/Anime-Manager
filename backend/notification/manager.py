@@ -915,6 +915,39 @@ class NotificationManager:
 
         return success, msg
 
+    async def notify_bgm_schedule(self, items: list, weekday_cn: str = "") -> Tuple[bool, str]:
+        """番剧探索放送表每日推送。"""
+        config = ConfigManager.get_config()
+        if not config.get("telegram", {}).get("enabled"):
+            return False, "disabled"
+
+        from datetime import datetime
+        import re
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        header = f"📺 <b>BGM 放送表 ({today_str} {weekday_cn})</b>\n"
+
+        lines = []
+        if not items:
+            lines.append("今天暂无放送番剧。")
+        else:
+            sorted_items = sorted(items, key=lambda x: str(x.get("broadcast_time") or "99:99"))
+            for i, item in enumerate(sorted_items):
+                title = item.get("title") or item.get("original_title") or "未知"
+                # broadcast_time 自带「周五 00:00」这类星期前缀，标题行已含星期，去掉避免重复
+                time_str = re.sub(r"^周[一二三四五六日]\s*", "", str(item.get("broadcast_time") or ""))
+                platform = item.get("platform") or ""
+                tail = f" · {time_str}" if time_str and time_str != "END" else ""
+                tail += f" · {platform}" if platform else ""
+                char = "└──" if i == len(sorted_items) - 1 else "├──"
+                lines.append(f"{char} <b>{title}</b>{tail}")
+
+        pin_message = config.get("bgm_schedule_pin_message", False)
+
+        return await self.send(Notification(
+            event_type=NotificationEvent.BGM_SCHEDULE_DAILY,
+            data={"header": header, "lines": lines},
+        ), pin=pin_message)
+
     async def notify_daily_summary(self, today_airing: list) -> None:
         """每日番剧播出摘要通知。"""
         if not today_airing:

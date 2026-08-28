@@ -61,6 +61,7 @@ class NotificationEvent(str, Enum):
     # ── 日历 / 摘要 ──
     CALENDAR_DAILY = "calendar_daily"                # 每日播出概览
     DAILY_SUMMARY = "daily_summary"                  # 每日番剧摘要
+    BGM_SCHEDULE_DAILY = "bgm_schedule_daily"        # 放送表每日推送
 
     # ── 其它 ──
     TEST = "test"                                    # 测试通知

@@ -15,7 +15,7 @@ import { useNavigationStore } from '@/stores'
 
 defineOptions({ name: 'ScheduleTab' })
 
-const { success, error: showError } = useNotification()
+const { error: showError } = useNotification()
 const navStore = useNavigationStore()
 
 interface ScheduleDay {

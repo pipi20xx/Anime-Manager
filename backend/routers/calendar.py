@@ -305,3 +305,20 @@ async def test_push():
             return {"success": False, "message": f"发送失败: {msg}"}
     except Exception as e:
         return {"success": False, "message": f"发送失败: {str(e)}"}
+
+
+@router.post("/test_bgm_schedule_push", summary="测试发送BGM放送表")
+async def test_bgm_schedule_push():
+    """
+    手动触发一次BGM放送表每日推送。
+    """
+    from monitor import MonitorManager
+    try:
+        success, msg = await MonitorManager._bgm_schedule_daily_push()
+        if success:
+            return {"success": True, "message": f"测试推送已发送，{msg}。"}
+        else:
+            return {"success": False, "message": f"发送失败: {msg}"}
+    except Exception as e:
+        return {"success": False, "message": f"发送失败: {str(e)}"}
+
