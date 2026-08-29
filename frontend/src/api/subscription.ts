@@ -41,6 +41,7 @@ export const subscriptionApi = {
   saveDetectTask: (body: any) => api.post<any>('/api/detect/tasks', body),
   previewDetect: (body: any) => api.post<any>('/api/detect/preview', body),
   detectAndSubscribe: (body: any) => api.post<any>('/api/detect/subscribe', body),
+  subscribeDetectShow: (body: any) => api.post<any>('/api/detect/subscribe-show', body),
   deleteDetectTask: (taskId: string) => api.delete<any>(`/api/detect/tasks/${taskId}`),
   runDetectTask: (taskId: string) => api.post<any>(`/api/detect/tasks/${taskId}/run`),
 

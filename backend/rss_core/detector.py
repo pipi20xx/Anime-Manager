@@ -222,12 +222,16 @@ class RssDetector:
                         "title": final.get("title") or re.split(r'[/\[]', entry["title"])[0].strip(),
                         "media_type": detail["media_type"],
                         "season": detail["season"],
-                        "year": None,
-                        "poster_path": None,
+                        "year": final.get("year"),
+                        "poster_path": final.get("poster_path"),
                         "entry_count": 0,
                         "matched_entry_count": 0,
                         "is_subscribed": existing_sub is not None
                     }
+                elif not show_map[tmdb_id]["poster_path"] and final.get("poster_path"):
+                    show_map[tmdb_id]["poster_path"] = final.get("poster_path")
+                    if not show_map[tmdb_id]["year"]:
+                        show_map[tmdb_id]["year"] = final.get("year")
 
                 show_map[tmdb_id]["entry_count"] += 1
                 if passed:
@@ -397,6 +401,86 @@ class RssDetector:
         log_audit("RSS探测", "完成", f"URL: {rss_url[:50]}... 新增{created}个，跳过{skipped}个")
         
         return result
+
+    @staticmethod
+    async def subscribe_show(
+        tmdb_id: str,
+        title: str,
+        media_type: str = "tv",
+        season: int = 1,
+        poster_path: Optional[str] = None,
+        year: Optional[str] = None,
+        filter_res: Optional[str] = None,
+        filter_team: Optional[str] = None,
+        target_client_id: Optional[str] = None,
+        save_path: Optional[str] = None,
+        category: str = "Anime",
+        auto_fill: bool = True,
+        **filter_kwargs
+    ) -> Dict[str, Any]:
+        """
+        从预览结果直接添加单个订阅（按 TMDB ID 去重，不重复创建）。
+        筛选规格由前端从预览条目明细中提取后传入，未传的字段回退到默认模板。
+        海报/年份优先使用预览识别结果，缺失时从 TMDB 现查兜底。
+        """
+        tmdb_id = str(tmdb_id)
+
+        async with db.session_scope():
+            existing = await db.first(
+                Subscription, select(Subscription).where(Subscription.tmdb_id == tmdb_id)
+            )
+        if existing:
+            return {"success": True, "created": False, "message": f"《{existing.title}》已存在订阅"}
+
+        if not poster_path:
+            try:
+                from recognition.data_provider.tmdb.client import TMDBProvider
+                details = await TMDBProvider().get_subject_details(tmdb_id, media_type or "tv")
+                if details:
+                    poster_path = details.get("poster_path") or poster_path
+                    if not year:
+                        date_val = details.get("release_date") or details.get("first_air_date") or ""
+                        year = str(date_val)[:4] or None
+            except Exception as e:
+                logger.warning(f"[RssDetector] 订阅海报查询失败: {tmdb_id} - {e}")
+
+        tmpl = None
+        async with db.session_scope():
+            stmt = select(SubscriptionTemplate).where(SubscriptionTemplate.is_default == True)
+            tmpl = await db.first(SubscriptionTemplate, stmt)
+
+        end_episode = await RssDetector._get_season_episode_count(tmdb_id, season)
+
+        sub = Subscription(
+            tmdb_id=tmdb_id,
+            media_type=media_type or "tv",
+            title=title,
+            year=year,
+            poster_path=poster_path,
+            season=season,
+            start_episode=1,
+            end_episode=end_episode,
+            enabled=True,
+            auto_fill=auto_fill,
+            target_client_id=target_client_id or (tmpl.target_client_id if tmpl else None),
+            save_path=save_path or (tmpl.save_path if tmpl else None),
+            category=category or (tmpl.category if tmpl else "Anime"),
+            filter_res=filter_res or (tmpl.filter_res if tmpl else None),
+            filter_team=filter_team or (tmpl.filter_team if tmpl else None),
+            filter_source=filter_kwargs.get("filter_source") or (tmpl.filter_source if tmpl else None),
+            filter_codec=filter_kwargs.get("filter_codec") or (tmpl.filter_codec if tmpl else None),
+            filter_audio=filter_kwargs.get("filter_audio") or (tmpl.filter_audio if tmpl else None),
+            filter_sub=filter_kwargs.get("filter_sub") or (tmpl.filter_sub if tmpl else None),
+            filter_effect=filter_kwargs.get("filter_effect") or (tmpl.filter_effect if tmpl else None),
+            filter_platform=filter_kwargs.get("filter_platform") or (tmpl.filter_platform if tmpl else None),
+        )
+
+        async with db.session_scope():
+            saved = await db.save(sub)
+
+        ep_info = f"S{season} E1-{end_episode}" if end_episode > 0 else f"S{season}"
+        log_audit("RSS探测", "预览订阅", f"已订阅: {saved.title} ({ep_info}) TMDB: {tmdb_id}")
+        return {"success": True, "created": True, "subscription_id": saved.id, "end_episode": end_episode}
 
     @staticmethod
     async def run_scheduled_tasks():

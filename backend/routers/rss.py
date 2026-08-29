@@ -745,6 +745,51 @@ async def detect_and_subscribe(req: DetectSubscribeRequest):
     
     return result
 
+class DetectSubscribeShowRequest(BaseModel):
+    tmdb_id: str
+    title: str
+    media_type: str = "tv"
+    season: int = 1
+    poster_path: Optional[str] = None
+    year: Optional[str] = None
+    filter_res: Optional[str] = None
+    filter_team: Optional[str] = None
+    filter_source: Optional[str] = None
+    filter_codec: Optional[str] = None
+    filter_audio: Optional[str] = None
+    filter_sub: Optional[str] = None
+    filter_effect: Optional[str] = None
+    filter_platform: Optional[str] = None
+    target_client_id: Optional[str] = None
+    save_path: Optional[str] = None
+    category: str = "Anime"
+    auto_fill: bool = True
+
+@router.post("/detect/subscribe-show", summary="从预览直接添加单个订阅")
+async def subscribe_show(req: DetectSubscribeShowRequest):
+    """按 TMDB ID 直接创建订阅（已存在则跳过），筛选规格来自预览条目明细"""
+    result = await RssDetector.subscribe_show(
+        tmdb_id=req.tmdb_id,
+        title=req.title,
+        media_type=req.media_type,
+        season=req.season,
+        poster_path=req.poster_path,
+        year=req.year,
+        filter_res=req.filter_res,
+        filter_team=req.filter_team,
+        filter_source=req.filter_source,
+        filter_codec=req.filter_codec,
+        filter_audio=req.filter_audio,
+        filter_sub=req.filter_sub,
+        filter_effect=req.filter_effect,
+        filter_platform=req.filter_platform,
+        target_client_id=req.target_client_id,
+        save_path=req.save_path,
+        category=req.category,
+        auto_fill=req.auto_fill,
+    )
+    return result
+
 @router.delete("/detect/tasks/{task_id}", summary="删除探测任务")
 async def delete_detect_task(task_id: int):
     """删除指定的 RSS 探测任务"""
