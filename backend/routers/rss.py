@@ -24,6 +24,8 @@ class DetectPreviewRequest(BaseModel):
     filter_sub: Optional[str] = None
     filter_effect: Optional[str] = None
     filter_platform: Optional[str] = None
+    include_keywords: Optional[str] = None
+    exclude_keywords: Optional[str] = None
 
 class DetectSubscribeRequest(BaseModel):
     rss_url: str
@@ -657,9 +659,11 @@ async def preview_rss_detect(req: DetectPreviewRequest):
         filter_audio=req.filter_audio,
         filter_sub=req.filter_sub,
         filter_effect=req.filter_effect,
-        filter_platform=req.filter_platform
+        filter_platform=req.filter_platform,
+        include_keywords=req.include_keywords,
+        exclude_keywords=req.exclude_keywords
     )
-    
+
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     

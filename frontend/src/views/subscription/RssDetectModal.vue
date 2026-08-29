@@ -173,6 +173,8 @@ async function testRss() {
       filter_sub: form.filter_sub,
       filter_effect: form.filter_effect,
       filter_platform: form.filter_platform,
+      include_keywords: form.include_keywords,
+      exclude_keywords: form.exclude_keywords,
     }
     const data = await subscriptionApi.previewDetect(config)
     testResult.value = data
@@ -344,42 +346,94 @@ function formatDateTime(dateStr: string | null): string {
           </v-row>
 
           <!-- 测试结果 -->
-          <template v-if="testResult && testResult.detected_shows?.length > 0">
+          <template v-if="testResult">
             <v-divider class="my-3" />
-            <div class="text-subtitle-2 font-weight-medium mb-2">
-              测试结果 — 识别到 {{ testResult.detected_shows.length }} 个番剧
+            <div class="text-subtitle-2 font-weight-medium mb-2">测试结果</div>
+            <div class="d-flex flex-wrap ga-2 mb-3">
+              <v-chip size="small" variant="tonal" label>总条目 {{ testResult.total_entries ?? 0 }}</v-chip>
+              <v-chip size="small" variant="tonal" color="info" label>识别成功 {{ testResult.recognized_count ?? 0 }}</v-chip>
+              <v-chip size="small" variant="tonal" color="error" label>识别失败 {{ testResult.failed_count ?? 0 }}</v-chip>
+              <v-chip size="small" variant="tonal" color="success" label>通过筛选 {{ testResult.filter_passed_count ?? 0 }}</v-chip>
             </div>
-            <v-alert type="success" variant="tonal" density="compact" class="mb-3">
-              其中 {{ testResult.detected_shows.filter((s: any) => !s.is_subscribed).length }} 个可订阅
-            </v-alert>
-            <v-table density="compact" class="rounded-lg">
-              <thead>
-                <tr>
-                  <th>番剧名称</th>
-                  <th>TMDB ID</th>
-                  <th>季度/集数</th>
-                  <th>条目数</th>
-                  <th>状态</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="show in testResult.detected_shows" :key="show.tmdb_id">
-                  <td>{{ show.title }}</td>
-                  <td>{{ show.tmdb_id }}</td>
-                  <td>
-                    <span class="text-caption">
-                      {{ show.total_episodes > 0 ? `S${show.season} E1-${show.total_episodes}` : `S${show.season}` }}
-                    </span>
-                  </td>
-                  <td>{{ show.entry_count }}</td>
-                  <td>
-                    <v-chip size="x-small" :color="show.is_subscribed ? 'warning' : 'success'" variant="tonal">
-                      {{ show.is_subscribed ? '已订阅' : '新发现' }}
-                    </v-chip>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
+
+            <template v-if="testResult.detected_shows?.length > 0">
+              <div class="text-caption text-medium-emphasis mb-1">识别到的番剧（{{ testResult.detected_shows.length }} 个）</div>
+              <v-table density="compact" class="rounded-lg">
+                <thead>
+                  <tr>
+                    <th>番剧名称</th>
+                    <th>TMDB ID</th>
+                    <th>季度/集数</th>
+                    <th>条目数</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="show in testResult.detected_shows" :key="show.tmdb_id">
+                    <td>{{ show.title }}</td>
+                    <td>{{ show.tmdb_id }}</td>
+                    <td>
+                      <span class="text-caption">
+                        {{ show.total_episodes > 0 ? `S${show.season} E1-${show.total_episodes}` : `S${show.season}` }}
+                      </span>
+                    </td>
+                    <td>
+                      <span :class="show.matched_entry_count < show.entry_count ? 'text-warning' : ''">
+                        {{ show.matched_entry_count ?? show.entry_count }}/{{ show.entry_count }}
+                      </span>
+                    </td>
+                    <td>
+                      <v-chip size="x-small" :color="show.is_subscribed ? 'warning' : 'success'" variant="tonal">
+                        {{ show.is_subscribed ? '已订阅' : '新发现' }}
+                      </v-chip>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </template>
+
+            <template v-if="testResult.entries?.length > 0">
+              <div class="text-caption text-medium-emphasis mt-4 mb-1">条目明细</div>
+              <div class="rounded-lg" style="max-height: 320px; overflow-y: auto; border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity))">
+                <v-table density="compact">
+                  <thead>
+                    <tr>
+                      <th>原始标题</th>
+                      <th>识别结果</th>
+                      <th>规格</th>
+                      <th>筛选</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(en, idx) in testResult.entries" :key="idx">
+                      <td style="max-width: 360px"><div class="text-truncate" :title="en.title">{{ en.title }}</div></td>
+                      <td>
+                        <template v-if="en.recognized">
+                          <div class="text-truncate" style="max-width: 220px">{{ en.tmdb_title }}</div>
+                          <span class="text-caption text-medium-emphasis">S{{ en.season }}{{ en.episode ? ` E${en.episode}` : '' }}</span>
+                        </template>
+                        <v-chip v-else size="x-small" color="error" variant="tonal">未识别</v-chip>
+                      </td>
+                      <td>
+                        <span class="text-caption">{{ [en.resolution, en.team, en.source].filter(Boolean).join(' · ') || '-' }}</span>
+                      </td>
+                      <td>
+                        <template v-if="en.recognized">
+                          <v-chip v-if="en.filter_passed" size="x-small" color="success" variant="tonal">通过</v-chip>
+                          <v-tooltip v-else location="top" max-width="320">
+                            <template #activator="{ props: tooltipProps }">
+                              <v-chip v-bind="tooltipProps" size="x-small" color="warning" variant="tonal">被过滤</v-chip>
+                            </template>
+                            {{ en.filter_reason }}
+                          </v-tooltip>
+                        </template>
+                        <span v-else class="text-caption text-medium-emphasis">-</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </div>
+            </template>
           </template>
         </template>
       </v-card-text>

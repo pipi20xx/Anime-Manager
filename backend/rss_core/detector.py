@@ -13,7 +13,7 @@ from models import (
 )
 from database import db
 from rss_core.manager import RssManager, normalize_guid
-from rss_core.subscription_matcher import SubscriptionMatcher
+from rss_core.subscription_manager import SubscriptionManager
 from recognition.recognizer import MovieRecognizer
 from clients.manager import ClientManager
 from logger import log_audit
@@ -69,14 +69,23 @@ class RssDetector:
         template_id: Optional[int] = None,
         filter_res: Optional[str] = None,
         filter_team: Optional[str] = None,
+        include_keywords: Optional[str] = None,
+        exclude_keywords: Optional[str] = None,
         **filter_kwargs
     ) -> Dict[str, Any]:
         """
         探测 RSS 并返回预览结果（不创建订阅）
-        
+
+        识别不再依赖 feed_items 表缓存：已落库的条目直接取缓存，
+        未落库的条目在内存中即时识别，因此任意 RSS 链接填入即可预览。
+        同时真正应用筛选条件（8 个 filter 字段 + 包含/排除关键词，
+        未填时回退到所选预设模板的对应字段），逐条给出通过/被过滤及原因。
+
         返回:
         {
             "total_entries": N,
+            "recognized_count": Y,
+            "filter_passed_count": W,
             "detected_shows": [
                 {
                     "tmdb_id": "12345",
@@ -86,69 +95,162 @@ class RssDetector:
                     "year": "2024",
                     "poster_path": "...",
                     "entry_count": 5,
+                    "matched_entry_count": 3,
                     "is_subscribed": false
                 },
                 ...
             ],
+            "entries": [ ... 每条条目的识别与筛选明细 ... ],
             "failed_entries": [...]
         }
         """
+        from config_manager import ConfigManager
+
         entries, error = await RssDetector.parse_rss(rss_url)
         if error:
             return {"error": error, "total_entries": 0, "detected_shows": []}
-        
+
         if not entries:
             return {"total_entries": 0, "detected_shows": [], "message": "RSS 源为空"}
-        
-        task_id = f"detect_{datetime.now().strftime('%H%M%S')}"
-        
-        recognized = await SubscriptionMatcher.recognize_items(entries, task_id=None)
-        
-        show_map: Dict[str, Dict] = {}
-        failed_titles = []
-        
-        for i, entry in enumerate(entries):
-            title = entry['title']
-            
+
+        # 筛选条件：请求参数优先，未填的字段回退到所选预设模板
+        tmpl = None
+        if template_id:
             async with db.session_scope():
-                item_stmt = select(FeedItem).where(FeedItem.guid == entry['guid'])
+                tmpl = await db.get(SubscriptionTemplate, template_id)
+        filter_cfg = Subscription(
+            tmdb_id="", title="",
+            include_keywords=include_keywords or (tmpl.include_keywords if tmpl else None),
+            exclude_keywords=exclude_keywords or (tmpl.exclude_keywords if tmpl else None),
+            filter_res=filter_res or (tmpl.filter_res if tmpl else None),
+            filter_team=filter_team or (tmpl.filter_team if tmpl else None),
+            filter_source=filter_kwargs.get("filter_source") or (tmpl.filter_source if tmpl else None),
+            filter_codec=filter_kwargs.get("filter_codec") or (tmpl.filter_codec if tmpl else None),
+            filter_audio=filter_kwargs.get("filter_audio") or (tmpl.filter_audio if tmpl else None),
+            filter_sub=filter_kwargs.get("filter_sub") or (tmpl.filter_sub if tmpl else None),
+            filter_effect=filter_kwargs.get("filter_effect") or (tmpl.filter_effect if tmpl else None),
+            filter_platform=filter_kwargs.get("filter_platform") or (tmpl.filter_platform if tmpl else None),
+        )
+
+        config = ConfigManager.get_config()
+        can_recognize = bool(config.get("tmdb_api_key"))
+        global_anime_prio = config.get("anime_priority", True)
+        bgm_prio = config.get("bangumi_priority", False)
+        bgm_failover = config.get("bangumi_failover", True)
+
+        entries_out: List[Dict] = []
+        show_map: Dict[str, Dict] = {}
+        failed_titles: List[str] = []
+
+        for entry in entries:
+            detail: Dict[str, Any] = {
+                "title": entry["title"],
+                "tmdb_id": None, "tmdb_title": None, "media_type": None,
+                "season": None, "episode": None,
+                "resolution": None, "team": None, "source": None,
+                "video_encode": None, "audio_encode": None,
+                "subtitle": None, "video_effect": None, "platform": None,
+                "recognized": False,
+                "filter_passed": False,
+                "filter_reason": "",
+                "is_subscribed": False,
+            }
+
+            final: Optional[Dict[str, Any]] = None
+
+            async with db.session_scope():
+                item_stmt = select(FeedItem).where(FeedItem.guid == entry["guid"])
                 item = await db.first(FeedItem, item_stmt)
-                
-                tmdb_id = None
-                if item and item.tmdb_id and item.tmdb_id != "None" and item.tmdb_id != "":
-                    tmdb_id = item.tmdb_id
-                
-                if not tmdb_id:
-                    failed_titles.append(title)
-                    continue
-                
+
+            if item and item.tmdb_id and item.tmdb_id not in ("", "None"):
+                # 已落库且识别过：直接取缓存，避免重复请求 TMDB
+                final = {
+                    "tmdb_id": item.tmdb_id, "title": item.tmdb_title,
+                    "category": "电影" if item.media_type == "movie" else "剧集",
+                    "season": item.season, "episode": item.episode,
+                    "resolution": item.resolution, "team": item.team,
+                    "source": item.source, "video_encode": item.video_encode,
+                    "audio_encode": item.audio_encode, "video_effect": item.video_effect,
+                    "subtitle": item.subtitle, "platform": item.platform,
+                }
+            elif can_recognize:
+                # 未落库/识别未成功：内存中即时识别（仅当已有落库条目时回写缓存）
+                try:
+                    result, _logs = await MovieRecognizer.recognize_full(
+                        entry["title"], force_filename=True,
+                        anime_priority=global_anime_prio, bangumi_priority=bgm_prio,
+                        bangumi_failover=bgm_failover,
+                        batch_enhancement=True,
+                        description=None
+                    )
+                    if result.get("success") and result.get("final_result"):
+                        final = result["final_result"]
+                        if item:
+                            await RssManager.update_item_recognition(item.id, final)
+                except Exception as e:
+                    logger.warning(f"[RssDetector] 预览识别失败: {entry['title'][:50]} - {e}")
+
+            if final and final.get("tmdb_id") and str(final.get("tmdb_id")) not in ("", "None"):
+                tmdb_id = str(final["tmdb_id"])
+                detail.update({
+                    "recognized": True,
+                    "tmdb_id": tmdb_id,
+                    "tmdb_title": final.get("title"),
+                    "media_type": "movie" if final.get("category") == "电影" else "tv",
+                    "season": final.get("season") or 1,
+                    "episode": str(final.get("episode")) if final.get("episode") is not None else None,
+                    "resolution": final.get("resolution"),
+                    "team": final.get("team"),
+                    "source": final.get("source"),
+                    "video_encode": final.get("video_encode"),
+                    "audio_encode": final.get("audio_encode"),
+                    "subtitle": final.get("subtitle"),
+                    "video_effect": final.get("video_effect"),
+                    "platform": final.get("platform"),
+                })
+                passed, reason = SubscriptionManager.check_subscription_filter(filter_cfg, final, entry["title"])
+                detail["filter_passed"] = passed
+                detail["filter_reason"] = reason
+
                 if tmdb_id not in show_map:
-                    sub_stmt = select(Subscription).where(Subscription.tmdb_id == tmdb_id)
-                    existing_sub = await db.first(Subscription, sub_stmt)
-                    
+                    async with db.session_scope():
+                        sub_stmt = select(Subscription).where(Subscription.tmdb_id == tmdb_id)
+                        existing_sub = await db.first(Subscription, sub_stmt)
+
                     show_map[tmdb_id] = {
                         "tmdb_id": tmdb_id,
-                        "title": item.tmdb_title or re.split(r'[/\[]', title)[0].strip(),
-                        "media_type": item.media_type or "tv",
-                        "season": item.season or 1,
+                        "title": final.get("title") or re.split(r'[/\[]', entry["title"])[0].strip(),
+                        "media_type": detail["media_type"],
+                        "season": detail["season"],
                         "year": None,
                         "poster_path": None,
                         "entry_count": 0,
+                        "matched_entry_count": 0,
                         "is_subscribed": existing_sub is not None
                     }
-                
+
                 show_map[tmdb_id]["entry_count"] += 1
-        
+                if passed:
+                    show_map[tmdb_id]["matched_entry_count"] += 1
+                detail["is_subscribed"] = show_map[tmdb_id]["is_subscribed"]
+            else:
+                failed_titles.append(entry["title"])
+
+            entries_out.append(detail)
+
         detected_shows = list(show_map.values())
-        
+
         for show in detected_shows:
             show["total_episodes"] = await RssDetector._get_season_episode_count(
                 show["tmdb_id"], show.get("season", 1)
             )
-        
+
         return {
             "total_entries": len(entries),
+            "recognized_count": sum(1 for d in entries_out if d["recognized"]),
+            "filter_passed_count": sum(1 for d in entries_out if d["filter_passed"]),
             "detected_shows": detected_shows,
+            "entries": entries_out,
             "failed_count": len(failed_titles),
             "failed_entries": failed_titles[:20]
         }
