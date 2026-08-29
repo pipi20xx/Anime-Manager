@@ -20,6 +20,7 @@ const { confirm } = useConfirm()
 const activeTab = ref('profiles')
 const rules = ref<any[]>([])
 const profiles = ref<any[]>([])
+const presets = ref<any[]>([])
 const loading = ref(false)
 
 // 编辑状态
@@ -52,12 +53,14 @@ watch(() => props.show, (val) => { if (val) init() })
 async function init() {
   loading.value = true
   try {
-    const [r, p] = await Promise.all([
+    const [r, p, ps] = await Promise.all([
       api.get<any[]>('/api/priority/rules'),
       api.get<any[]>('/api/priority/profiles'),
+      api.get<any[]>('/api/priority/rule-presets'),
     ])
     rules.value = r || []
     profiles.value = p || []
+    presets.value = ps || []
   } catch { showError('加载数据失败') }
   finally { loading.value = false }
 }
@@ -65,6 +68,14 @@ async function init() {
 // --- Rule CRUD ---
 function openAddRule() {
   currentRule.value = { name: '', conditions: { ...defaultCondition } }
+  showRuleEdit.value = true
+}
+
+function openRuleFromPreset(preset: any) {
+  currentRule.value = {
+    name: preset.name,
+    conditions: { ...defaultCondition, ...preset.conditions },
+  }
   showRuleEdit.value = true
 }
 
@@ -142,7 +153,11 @@ function moveRuleDown(index: number) {
 async function saveProfile() {
   if (!currentProfile.value.name) { warning('策略名称不能为空'); return }
   try {
-    await api.post('/api/priority/profiles', currentProfile.value)
+    // number 输入框的 model 值是字符串, 统一转数字后再提交
+    const payload = JSON.parse(JSON.stringify(currentProfile.value))
+    payload.cutoff_score = Number(payload.cutoff_score) || 0
+    for (const r of payload.rules_config || []) r.score = Number(r.score) || 0
+    await api.post('/api/priority/profiles', payload)
     success('策略保存成功')
     showProfileEdit.value = false
     init()
@@ -238,7 +253,20 @@ function getConditions(rule: any) {
           <v-window-item value="rules">
             <div class="d-flex justify-space-between align-center mb-4">
               <div class="text-body-2 text-medium-emphasis">"基础规则"是最小的规则单位，可以在策略中组合使用。</div>
-              <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddRule">新建规则</v-btn>
+              <div class="d-flex ga-2">
+                <v-menu>
+                  <template #activator="{ props: menuProps }">
+                    <v-btn v-bind="menuProps" variant="tonal" size="small" prepend-icon="mdi-flash-outline" :disabled="!presets.length">从预设新建</v-btn>
+                  </template>
+                  <v-list density="compact" slim>
+                    <v-list-item v-for="p in presets" :key="p.name" @click="openRuleFromPreset(p)">
+                      <v-list-item-title>{{ p.name }}</v-list-item-title>
+                      <v-list-item-subtitle>{{ p.description }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAddRule">新建规则</v-btn>
+              </div>
             </div>
 
             <v-skeleton-loader v-if="loading" type="card@3" />
@@ -322,9 +350,21 @@ function getConditions(rule: any) {
               <v-switch v-model="currentProfile.upgrade_allowed" color="primary" density="compact" hide-details label="允许洗版" />
             </v-col>
             <v-col cols="6">
-              <v-text-field v-model="currentProfile.cutoff_score" label="截止分值" type="number" :disabled="!currentProfile.upgrade_allowed" variant="outlined" density="compact" hint="达到此分值后停止洗版" persistent-hint />
+              <v-text-field v-model="currentProfile.cutoff_score" label="截止分值" type="number" :disabled="!currentProfile.upgrade_allowed" variant="outlined" density="compact" hint="已下载资源的得分达到此值后停止洗版" persistent-hint />
             </v-col>
           </v-row>
+
+          <v-alert density="compact" variant="tonal" :color="currentProfile.upgrade_allowed ? 'primary' : 'grey'" class="mb-4 mt-1">
+            <div v-if="currentProfile.upgrade_allowed">
+              <b>洗版已开启：</b>首次下载不限分值、直接下载，但会把该资源的得分记录下来作为后续比较基准
+              （按规则排序取第一条命中规则的分值，无规则命中记 0 分）。之后同一集/电影出现新资源时，
+              新资源得分高于已记录分值才会重新下载替换；已下载资源得分达到<b>截止分值</b>后不再洗版。
+            </div>
+            <div v-else>
+              <b>洗版已关闭：</b>每集/电影只下载一次，下载过的资源即使之后出现更高规格的版本也不会重复下载。
+              规则排序与分值仅在开启洗版后参与新旧资源比较，关闭时不产生任何影响。
+            </div>
+          </v-alert>
 
           <div class="text-subtitle-2 font-weight-medium mt-4 mb-2">洗版排序 (上方优先)</div>
           <div class="pa-3 rounded-lg" style="background: rgba(var(--v-theme-on-surface), 0.04);">
@@ -333,7 +373,7 @@ function getConditions(rule: any) {
               <v-btn icon="mdi-chevron-down" size="x-small" variant="text" :disabled="idx === currentProfile.rules_config.length - 1" @click="moveRuleDown(idx as number)" />
               <span class="text-primary font-weight-bold text-caption" style="min-width:20px">{{ (idx as number) + 1 }}</span>
               <span class="text-body-2 flex-grow-1">{{ r.name }}</span>
-              <v-text-field v-model="r.score" label="分值" type="number" variant="outlined" density="compact" hide-details style="max-width:80px" />
+              <v-text-field v-model="r.score" label="分值" type="number" variant="outlined" density="compact" hide-details style="max-width:100px" />
               <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-close" @click="removeRuleFromProfile(idx as number)">移除</v-btn>
             </div>
             <v-select

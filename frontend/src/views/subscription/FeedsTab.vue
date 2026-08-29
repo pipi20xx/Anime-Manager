@@ -95,6 +95,12 @@ function openFeedItems(feed?: any) {
 }
 
 async function syncJackettFeeds() {
+  const ok = await confirm({
+    title: '确认同步',
+    content: '将拉取 Jackett 的全部索引站并添加为订阅源（已存在的源会自动跳过），是否继续？',
+    confirmColor: 'primary',
+  })
+  if (!ok) return
   try {
     const data = await subscriptionApi.syncJackettFeeds()
     if (data?.success) { success(data.message || '同步成功'); fetchFeeds() }

@@ -6,11 +6,12 @@ from models import FilterRule, QualityProfile, Subscription, FeedItem
 from database import db
 from logger import log_audit
 from rss_core.field_options import get_static_options
+from rss_core.rule_presets import get_rule_presets
 
 router = APIRouter(tags=["洗版规则管理"])
 
 # ==========================================
-# 0. 字段选项
+# 0. 字段选项 & 预设
 # ==========================================
 
 @router.get("/priority/field-options", summary="获取洗版规则字段的规范值选项")
@@ -32,6 +33,10 @@ async def get_field_options():
         rows = (await db.execute(stmt)).all()
     options["team"] = [r[0] for r in rows]
     return options
+
+@router.get("/priority/rule-presets", summary="获取内置基础规则预设")
+async def get_rule_presets_api():
+    return get_rule_presets()
 
 # ==========================================
 # 1. 基础规则 (FilterRule) 管理
@@ -123,6 +128,17 @@ async def save_quality_profile(profile: QualityProfile):
         # 简单的校验 rules_config 格式
         if not isinstance(profile.rules_config, list):
              raise HTTPException(status_code=400, detail="规则配置必须是列表")
+
+        # 数值字段归一化: 前端 number 输入框可能传字符串, INTEGER 列/分值计算都要求 int
+        try:
+            profile.cutoff_score = int(profile.cutoff_score or 0)
+        except (TypeError, ValueError):
+            profile.cutoff_score = 0
+        for r in profile.rules_config or []:
+            try:
+                r["score"] = int(r.get("score") or 0)
+            except (TypeError, ValueError):
+                r["score"] = 0
 
         if profile.id:
             # 更新
