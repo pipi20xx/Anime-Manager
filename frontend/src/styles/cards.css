@@ -274,7 +274,7 @@
   white-space: nowrap;
 }
 .variable-item span {
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 /* ── FileBrowserView 文件浏览 ── */
@@ -292,7 +292,7 @@
 }
 .detail-label {
   font-size: 13px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-weight: 600;
   min-width: 70px;
   flex-shrink: 0;
@@ -319,7 +319,7 @@
 }
 .info-label {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-weight: 600;
   min-width: 64px;
   flex-shrink: 0;
@@ -1069,7 +1069,7 @@
 }
 .list-toolbar__total {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 /* ── 工具栏移动端：搜索框全宽 ── */
@@ -1167,7 +1167,7 @@
 }
 .info-block .info-block__label {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   margin-bottom: 4px;
 }
 .info-block .info-block__value {

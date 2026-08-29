@@ -637,7 +637,7 @@ onMounted(() => {
 /* ── 季度简介 ── */
 .ep-season-overview {
   font-size: 13px;
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   line-height: 1.6;
   padding: 10px 12px;
   background: rgba(var(--v-theme-on-surface), 0.03);

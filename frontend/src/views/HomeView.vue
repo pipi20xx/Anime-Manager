@@ -688,7 +688,7 @@ const filteredLogs = computed(() => {
   font-size: 13px;
 }
 .recog-text-label {
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   width: 80px;
   flex-shrink: 0;
   text-align: right;
@@ -699,11 +699,9 @@ const filteredLogs = computed(() => {
 }
 .text-mono {
   font-family: monospace;
-  color: rgb(var(--v-theme-warning));
 }
 .recog-filename {
   font-size: 11px;
-  opacity: 0.85;
 }
 
 /* ===== 本地解析元数据 ===== */
@@ -714,7 +712,7 @@ const filteredLogs = computed(() => {
 }
 .raw-title-sub {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-style: italic;
   font-family: monospace;
   margin-top: 2px;
@@ -731,7 +729,7 @@ const filteredLogs = computed(() => {
   font-size: 13px;
 }
 .raw-spec-label {
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 .raw-spec-value {
   font-weight: bold;
@@ -750,7 +748,7 @@ const filteredLogs = computed(() => {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   border-radius: 8px;
   border: 1px dashed rgba(var(--v-theme-on-surface), 0.1);
 }

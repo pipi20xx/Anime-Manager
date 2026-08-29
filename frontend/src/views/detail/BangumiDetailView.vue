@@ -489,7 +489,7 @@ onMounted(() => {
 }
 .ep-num-sort {
   font-size: 10px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   margin-top: 2px;
 }
 
@@ -512,7 +512,7 @@ onMounted(() => {
 }
 .ep-title-orig {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 .ep-meta {
   display: flex;
@@ -526,7 +526,7 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 11px;
   background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 .ep-status.aired {
   color: rgba(var(--v-theme-on-surface), 0.87);
@@ -534,7 +534,7 @@ onMounted(() => {
 }
 .ep-desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   line-height: 1.6;
   white-space: pre-line;
   padding-top: 4px;

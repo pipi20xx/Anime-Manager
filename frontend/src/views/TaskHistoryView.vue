@@ -524,7 +524,7 @@ onUnmounted(() => {
   padding: 2px 0;
 }
 .log-time {
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   min-width: 75px;
 }
 .log-level {

@@ -681,7 +681,7 @@
 }
 
 .v-btn-toggle .v-btn {
-  color: rgba(var(--v-theme-on-surface), 0.7) !important;
+  color: rgba(var(--v-theme-on-surface), 0.87) !important;
 }
 
 .v-btn-toggle .v-btn--active {

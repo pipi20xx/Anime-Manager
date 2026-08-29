@@ -748,7 +748,7 @@ v-model="showWallpaperDialog"
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -794,7 +794,7 @@ v-model="showWallpaperDialog"
   align-items: center;
   border-radius: var(--am-tab-radius, 20px);
   background-color: transparent;
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 600;

@@ -533,7 +533,7 @@ onUnmounted(() => {
   padding: 0;
 }
 .dc-info-item { display: flex; align-items: center; gap: 6px; }
-.dc-info-label { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.5); white-space: nowrap; }
+.dc-info-label { font-size: 12px; color: rgba(var(--v-theme-on-surface), 0.87); white-space: nowrap; }
 .dc-info-value { font-size: 13px; font-weight: 500; }
 
 /* 完整数据 — 区块标题 */

@@ -273,7 +273,7 @@ watch(() => props.logs?.length, () => {
 .stream-table th {
   text-align: left;
   padding: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   background: rgba(var(--v-theme-surface), 0.8);
   font-weight: 600;
@@ -282,7 +282,7 @@ watch(() => props.logs?.length, () => {
 .stream-table td {
   padding: 10px 12px;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 .source-cell {
@@ -292,7 +292,7 @@ watch(() => props.logs?.length, () => {
 
 .target-cell {
   font-family: monospace;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 .start-row {
