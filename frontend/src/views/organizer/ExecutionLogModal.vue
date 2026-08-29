@@ -273,7 +273,7 @@ watch(() => props.logs?.length, () => {
 .stream-table th {
   text-align: left;
   padding: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   background: rgba(var(--v-theme-surface), 0.8);
   font-weight: 600;
@@ -282,17 +282,17 @@ watch(() => props.logs?.length, () => {
 .stream-table td {
   padding: 10px 12px;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .source-cell {
   font-family: monospace;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .target-cell {
   font-family: monospace;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .start-row {

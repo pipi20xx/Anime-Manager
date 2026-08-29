@@ -249,7 +249,7 @@ function isLightColor(hex: string): boolean {
   }
 
   &--active {
-    border-color: rgba(var(--v-theme-on-surface), 0.8);
+    border-color: rgb(var(--v-theme-on-surface));
     box-shadow: 0 0 0 3px rgba(var(--v-theme-surface), 0.6), 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 }

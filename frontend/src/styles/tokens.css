@@ -692,7 +692,7 @@ html.glass-theme-classic .v-theme--light {
   --am-tab-shadow: none;
   --am-tab-radius: 0;
   --am-tab-active-color: rgb(var(--v-theme-primary));
-  --am-tab-inactive-color: rgba(var(--v-theme-on-surface), 0.6);
+  --am-tab-inactive-color: rgb(var(--v-theme-on-surface));
   --am-tab-hover-color: rgb(var(--v-theme-primary));
   --am-tab-gap: 0;
 
@@ -799,7 +799,7 @@ html.glass-theme-classic .v-theme--light {
   --am-filter-chip-border: none;
   --am-filter-chip-shadow: none;
   --am-filter-chip-active-color: rgb(var(--v-theme-primary));
-  --am-filter-chip-outlined-color: rgba(var(--v-theme-on-surface), 0.6);
+  --am-filter-chip-outlined-color: rgb(var(--v-theme-on-surface));
 
   /* Button Variants */
   --am-btn-primary-color: #fff;
@@ -897,7 +897,7 @@ html.glass-theme-classic .v-theme--dark {
   --am-filter-chip-active-color: rgb(var(--v-theme-primary));
   --am-filter-chip-bg: transparent;
   --am-filter-chip-border: none;
-  --am-filter-chip-outlined-color: rgba(var(--v-theme-on-surface), 0.6);
+  --am-filter-chip-outlined-color: rgb(var(--v-theme-on-surface));
   --am-filter-chip-shadow: none;
   --am-hover-lift-shadow:
     0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -940,7 +940,7 @@ html.glass-theme-classic .v-theme--dark {
   --am-tab-border: none;
   --am-tab-gap: 0;
   --am-tab-hover-color: rgb(var(--v-theme-primary));
-  --am-tab-inactive-color: rgba(var(--v-theme-on-surface), 0.6);
+  --am-tab-inactive-color: rgb(var(--v-theme-on-surface));
   --am-tab-radius: 0;
   --am-tab-shadow: none;
   --am-tooltip-blur: none;

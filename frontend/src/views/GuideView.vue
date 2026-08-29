@@ -124,7 +124,7 @@ registerHeaderTab({
   font-weight: 700;
   margin-top: 2rem;
   margin-bottom: 1rem;
-  color: rgba(var(--v-theme-on-surface), 0.95);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .md-content :deep(h3) {
@@ -139,7 +139,7 @@ registerHeaderTab({
   font-weight: 600;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
-  color: rgba(var(--v-theme-on-surface), 0.88);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* 段落 */
@@ -205,7 +205,7 @@ registerHeaderTab({
 /* 行内代码 */
 .md-content :deep(code) {
   background: rgba(var(--v-theme-on-surface), 0.08);
-  color: rgba(var(--v-theme-on-surface), 0.88);
+  color: rgb(var(--v-theme-on-surface));
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -251,7 +251,7 @@ registerHeaderTab({
 /* 粗体 */
 .md-content :deep(strong) {
   font-weight: 700;
-  color: rgba(var(--v-theme-on-surface), 0.95);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* 图片 */

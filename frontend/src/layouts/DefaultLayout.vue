@@ -748,7 +748,7 @@ v-model="showWallpaperDialog"
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -794,7 +794,7 @@ v-model="showWallpaperDialog"
   align-items: center;
   border-radius: var(--am-tab-radius, 20px);
   background-color: transparent;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 600;
@@ -805,7 +805,7 @@ v-model="showWallpaperDialog"
 
 .header-tab:hover:not(.header-tab--active) {
   background-color: rgba(var(--v-theme-primary), 0.06);
-  color: rgba(var(--v-theme-on-surface), 1);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .header-tab--active {

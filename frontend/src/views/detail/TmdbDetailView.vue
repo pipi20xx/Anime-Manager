@@ -637,7 +637,7 @@ onMounted(() => {
 /* ── 季度简介 ── */
 .ep-season-overview {
   font-size: 13px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   line-height: 1.6;
   padding: 10px 12px;
   background: rgba(var(--v-theme-on-surface), 0.03);
@@ -681,7 +681,7 @@ onMounted(() => {
 
 /* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色 */
 :deep(.v-chip--variant-tonal.text-primary) {
-  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
 }
 :deep(.v-chip--variant-tonal.text-primary .v-chip__underlay) {
   background-color: rgba(var(--v-theme-on-surface), 0.08) !important;

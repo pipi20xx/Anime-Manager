@@ -947,6 +947,9 @@ html.glass-theme-acg body {
 html.glass-theme-acg {
   --v-theme-on-background: 255, 255, 255;
   --v-theme-background: 18, 18, 18;
+  /* 文字不设亮度: 所有引用 on-surface 的文字一律纯白 */
+  --v-theme-on-surface: 255, 255, 255;
+  --v-theme-on-surface-variant: 255, 255, 255;
 }
 
 /* 按钮 tonal — 文字颜色覆盖 */
@@ -1232,20 +1235,21 @@ html.glass-theme-acg .text-caption {
     0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-/* 副文字/说明文字 — on-surface 是灰蓝色 #BFC2CE，在透明背景上偏暗，
-   改为纯白色，与主文字统一亮度 */
+/* 文字不设亮度 — 全部文字一律纯白满亮度, 层级只靠字号/字重区分 */
 html.glass-theme-acg .text-medium-emphasis {
-  color: rgba(255, 255, 255, 0.87) !important;
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
 }
 html.glass-theme-acg .text-disabled {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
 }
 
-/* 全局自定义开关行文字 (.switch-label/.switch-desc, 定义于 cards.css) —
-   原样式写死 on-surface 0.87, 在 ACG 下偏暗; 与 .text-medium-emphasis 同等处理 */
+/* 全局自定义开关行文字 (.switch-label/.switch-desc, 定义于 cards.css) */
 html.glass-theme-acg .switch-label,
 html.glass-theme-acg .switch-desc {
-  color: rgba(255, 255, 255, 0.87) !important;
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
   text-shadow:
     0 0 1px rgba(0, 0, 0, 1),
     0 0 4px rgba(0, 0, 0, 0.7),
@@ -1471,6 +1475,29 @@ html.glass-theme-acg .v-checkbox .v-selection-control--dirty .v-icon {
 
 html.glass-theme-acg .v-radio .v-selection-control--dirty .v-icon {
   text-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
+}
+
+/* ================================================================
+ * 6.5 Switch 未开启态 — 增强可见度
+ * 透明材质 + 全局去阴影时, Vuetify 默认的灰白滑块几乎隐形。
+ * 不依赖 box-shadow 落影: 用白色渐变滑块 + 深色描边 + 可见轨道,
+ * 加一层轻微落影作立体提示 (手动去阴影模式也会保留, 因为它是开关本体的一部分)。
+ * ================================================================ */
+
+html.glass-theme-acg .v-switch:not(.v-switch--disabled) .v-selection-control:not(.v-selection-control--dirty) {
+  .v-switch__track {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.30);
+  }
+
+  .v-switch__thumb {
+    background: linear-gradient(160deg, #FFFFFF 0%, #D9DEE8 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.20);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 1px 3px rgba(0, 0, 0, 0.35);
+  }
 }
 
 

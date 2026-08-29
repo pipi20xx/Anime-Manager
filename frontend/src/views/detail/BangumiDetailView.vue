@@ -489,7 +489,7 @@ onMounted(() => {
 }
 .ep-num-sort {
   font-size: 10px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   margin-top: 2px;
 }
 
@@ -512,7 +512,7 @@ onMounted(() => {
 }
 .ep-title-orig {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .ep-meta {
   display: flex;
@@ -526,15 +526,15 @@ onMounted(() => {
   border-radius: 4px;
   font-size: 11px;
   background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .ep-status.aired {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   background: rgba(var(--v-theme-on-surface), 0.1);
 }
 .ep-desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   line-height: 1.6;
   white-space: pre-line;
   padding-top: 4px;
@@ -544,7 +544,7 @@ onMounted(() => {
 
 /* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色 */
 :deep(.v-chip--variant-tonal.text-primary) {
-  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
 }
 :deep(.v-chip--variant-tonal.text-primary .v-chip__underlay) {
   background-color: rgba(var(--v-theme-on-surface), 0.08) !important;

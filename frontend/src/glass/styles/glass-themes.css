@@ -345,7 +345,7 @@ html.glass-theme-liquid.glass-dark .v-menu .v-list-item--active {
 
 /* tonal chip 文字色 */
 html.glass-theme-liquid .v-chip--variant-tonal.text-primary {
-  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
 }
 html.glass-theme-liquid .v-chip--variant-tonal.text-primary .v-chip__underlay {
   background-color: rgba(var(--v-theme-on-surface), 0.08) !important;

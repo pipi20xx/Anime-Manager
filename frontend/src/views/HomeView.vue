@@ -688,13 +688,13 @@ const filteredLogs = computed(() => {
   font-size: 13px;
 }
 .recog-text-label {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   width: 80px;
   flex-shrink: 0;
   text-align: right;
 }
 .recog-text-value {
-  color: rgba(var(--v-theme-on-surface), 0.9);
+  color: rgb(var(--v-theme-on-surface));
   word-break: break-all;
 }
 .text-mono {
@@ -708,11 +708,11 @@ const filteredLogs = computed(() => {
 .raw-title-main {
   font-weight: bold;
   font-size: 15px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .raw-title-sub {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   font-style: italic;
   font-family: monospace;
   margin-top: 2px;
@@ -729,11 +729,11 @@ const filteredLogs = computed(() => {
   font-size: 13px;
 }
 .raw-spec-label {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .raw-spec-value {
   font-weight: bold;
-  color: rgba(var(--v-theme-on-surface), 0.9);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ===== TMDB 原始详情 ===== */
@@ -748,7 +748,7 @@ const filteredLogs = computed(() => {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   border-radius: 8px;
   border: 1px dashed rgba(var(--v-theme-on-surface), 0.1);
 }
@@ -761,7 +761,7 @@ const filteredLogs = computed(() => {
 }
 .tmdb-meta-line {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgb(var(--v-theme-on-surface));
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -776,7 +776,7 @@ const filteredLogs = computed(() => {
 }
 .tmdb-overview-text {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgb(var(--v-theme-on-surface));
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -807,7 +807,7 @@ const filteredLogs = computed(() => {
   text-align: center;
 }
 .rule-log-content {
-  color: rgba(var(--v-theme-on-surface), 0.85);
+  color: rgb(var(--v-theme-on-surface));
   word-break: break-all;
 }
 .rule-log-item--privilege {
@@ -857,14 +857,14 @@ const filteredLogs = computed(() => {
   padding: 2px 0;
 }
 .audit-log-idx {
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgb(var(--v-theme-on-surface));
   font-size: 10px;
   width: 24px;
   flex-shrink: 0;
   text-align: right;
 }
 .audit-log-text {
-  color: rgba(var(--v-theme-on-surface), 0.85);
+  color: rgb(var(--v-theme-on-surface));
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -885,14 +885,14 @@ const filteredLogs = computed(() => {
   padding: 2px 0;
 }
 .audit-log-idx-full {
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgb(var(--v-theme-on-surface));
   font-size: 10px;
   width: 32px;
   flex-shrink: 0;
   text-align: right;
 }
 .audit-log-text-full {
-  color: rgba(var(--v-theme-on-surface), 0.85);
+  color: rgb(var(--v-theme-on-surface));
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -916,7 +916,7 @@ const filteredLogs = computed(() => {
   font-weight: bold;
 }
 :deep(.log-normal) {
-  color: rgba(var(--v-theme-on-surface), 0.85);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ===== 偏好设置 ===== */
@@ -943,11 +943,11 @@ const filteredLogs = computed(() => {
 .pref-label {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .pref-desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.9);
+  color: rgb(var(--v-theme-on-surface));
   line-height: 1.4;
   margin-top: 2px;
 }

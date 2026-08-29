@@ -506,7 +506,7 @@ watch(() => props.show, (val) => {
 }
 .detail-episode-status {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .detail-episode-card.is-pushed .detail-episode-status {
   color: #4caf50;

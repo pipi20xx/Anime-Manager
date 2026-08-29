@@ -153,7 +153,7 @@ html.glass-theme-classic .bangumi-detail-view .v-chip,
 html.glass-theme-classic .bangumi-detail-view .v-chip .v-chip__content,
 html.glass-theme-classic .person-detail-view .v-chip,
 html.glass-theme-classic .person-detail-view .v-chip .v-chip__content {
-  color: rgba(var(--v-theme-on-surface), 0.88) !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
   font-weight: 600 !important;
   -webkit-text-stroke: 0 !important;
   text-shadow: none !important;

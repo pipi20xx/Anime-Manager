@@ -64,7 +64,7 @@
 }
 .sub-detail-episode-btn.not-pushed {
   background: rgba(var(--v-theme-on-surface), 0.04);
-  color: rgba(var(--v-theme-on-surface), 0.4);
+  color: rgb(var(--v-theme-on-surface));
 }
 .sub-detail-episode-btn:hover {
   transform: scale(1.1);
@@ -132,7 +132,7 @@
   color: rgb(var(--v-theme-warning));
 }
 .org-log-time {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   min-width: 70px;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -187,7 +187,7 @@
   text-align: center;
   flex-shrink: 0;
   background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .org-path-text {
   font-family: 'JetBrains Mono', 'Consolas', monospace;
@@ -195,10 +195,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .org-path-target {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .org-path-divider {
   display: flex;
@@ -274,7 +274,7 @@
   white-space: nowrap;
 }
 .variable-item span {
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ── FileBrowserView 文件浏览 ── */
@@ -292,7 +292,7 @@
 }
 .detail-label {
   font-size: 13px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   font-weight: 600;
   min-width: 70px;
   flex-shrink: 0;
@@ -319,7 +319,7 @@
 }
 .info-label {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   font-weight: 600;
   min-width: 64px;
   flex-shrink: 0;
@@ -556,16 +556,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .media-card__year {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   margin-top: 2px;
 }
 .media-card__subtitle {
   font-size: 11px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -631,7 +631,7 @@
   justify-content: center;
   gap: 4px;
   background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgba(var(--v-theme-on-surface), 0.3);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ============================================================
@@ -700,7 +700,7 @@
   background: rgba(var(--v-theme-on-surface), 0.06);
   font-size: 32px;
   font-weight: 700;
-  color: rgba(var(--v-theme-on-surface), 0.2);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ── 34e. 信息区域 ── */
@@ -766,10 +766,10 @@
   color: rgb(var(--v-theme-warning));
 }
 .log-info {
-  color: rgba(var(--v-theme-on-surface), 0.8);
+  color: rgb(var(--v-theme-on-surface));
 }
 .log-debug {
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ── DatabaseTab 数据库 ── */
@@ -799,7 +799,7 @@
 
 .hash-item-card:hover {
   background: rgba(var(--v-theme-on-surface), 0.06);
-  border-color: rgba(var(--v-theme-on-surface), 0.12);
+  border-color: rgb(var(--v-theme-on-surface));
 }
 
 .hash-path {
@@ -854,7 +854,7 @@
 
 .dc-search-item:hover {
   background: rgba(var(--v-theme-on-surface), 0.06);
-  border-color: rgba(var(--v-theme-on-surface), 0.12);
+  border-color: rgb(var(--v-theme-on-surface));
 }
 
 /* --- 数据库管理 --- */
@@ -875,7 +875,7 @@
 
 .dc-db-table-item:hover {
   background: rgba(var(--v-theme-on-surface), 0.06);
-  border-color: rgba(var(--v-theme-on-surface), 0.12);
+  border-color: rgb(var(--v-theme-on-surface));
 }
 
 .dc-db-table-item--active {
@@ -978,8 +978,8 @@
 .search-result-item:hover,
 .sub-search-result-item:hover { background: rgba(var(--v-theme-primary), 0.06); }
 .search-result-info { flex: 1; min-width: 0; }
-.search-result-title { font-size: 14px; font-weight: 600; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.87); }
-.search-result-sub { font-size: 12px; line-height: 1.4; color: rgba(var(--v-theme-on-surface), 0.87); margin-top: 2px; }
+.search-result-title { font-size: 14px; font-weight: 600; line-height: 1.4; color: rgb(var(--v-theme-on-surface)); }
+.search-result-sub { font-size: 12px; line-height: 1.4; color: rgb(var(--v-theme-on-surface)); margin-top: 2px; }
 
 /* --- 海报占位 (小尺寸) --- */
 .poster-placeholder-sm {
@@ -987,7 +987,7 @@
   background: rgba(var(--v-theme-on-surface), 0.06);
   border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: rgba(var(--v-theme-on-surface), 0.3);
+  font-size: 11px; color: rgb(var(--v-theme-on-surface));
 }
 
 /* --- 配置区域 (整理/识别共用) --- */
@@ -1015,11 +1015,11 @@
 }
 .switch-label {
   font-weight: 500;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 .switch-desc {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* --- 表单标签最小宽度 (AppearanceView 等) --- */
@@ -1069,7 +1069,7 @@
 }
 .list-toolbar__total {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
 }
 
 /* ── 工具栏移动端：搜索框全宽 ── */
@@ -1167,7 +1167,7 @@
 }
 .info-block .info-block__label {
   font-size: 12px;
-  color: rgba(var(--v-theme-on-surface), 0.87);
+  color: rgb(var(--v-theme-on-surface));
   margin-bottom: 4px;
 }
 .info-block .info-block__value {
