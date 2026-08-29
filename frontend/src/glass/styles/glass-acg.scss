@@ -147,6 +147,22 @@ html.glass-theme-acg {
     --am-avatar-blur: none;
     --am-tooltip-blur: none;
 
+    // 边框一并隐藏: 卡片/弹层/导航/输入框/按钮/页签/chip/通知条
+    // (tokens.css 里 --am-*-border 在完全透明下仍会画出分割线, 这里全部置空)
+    --am-surface-border: none;
+    --am-overlay-border: none;
+    --am-nav-border: none;
+    --am-field-border: none;
+    --am-btn-border: none;
+    --am-tab-border: none;
+    --am-chip-border: none;
+    --am-snackbar-border: none;
+    --am-btn-toggle-border: none;
+    --am-avatar-border: none;
+    --app-surface-border: none;
+    --app-overlay-border: none;
+    --app-surface-border-width: 0px;
+
     // 手机端（<960px）导航抽屉为覆盖式弹出，全透明会与页面混在一起无法辨认：
     // 恢复磨砂材质，底色加深到 60% 保证亮色壁纸上文字仍可读
     @media (max-width: 959.98px) {
