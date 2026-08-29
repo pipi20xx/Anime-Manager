@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from sqlmodel import select, and_
 from models import Subscription, Rule, FeedItem, DownloadHistory, Feed, FilterRule, QualityProfile, SubscribedEpisode
 from recognition.recognizer import MovieRecognizer
+from rss_core.field_match import check_conditions
 from config_manager import ConfigManager
 from rss_core.subscription_manager import SubscriptionManager
 from rss_core.manager import RssManager
@@ -19,35 +20,16 @@ logger = logging.getLogger("SubscriptionMatcher")
 class SubscriptionMatcher:
     @staticmethod
     def _check_rule_match(item: Dict, rule: FilterRule) -> bool:
-        """检查条目是否符合某个 FilterRule (精确匹配)"""
+        """
+        检查条目是否符合某个 FilterRule。
+        媒体规格字段走 recognition_engine.field_match 的统一策略匹配,
+        这里只处理规则特有的 must_contain / must_not_contain 正则。
+        """
         c = rule.conditions
         if not c: return True
-        
-        def match_exact(rule_key, item_key):
-            """
-            辅助函数：精确匹配，支持逗号分隔。
-            例如 rule="WebDL, WebRip" vs item="WebDL" -> True
-            """
-            rule_val = c.get(rule_key)
-            if not rule_val: return True # 规则未定义该字段限制 -> Pass
-            
-            item_val = item.get(item_key)
-            if not item_val: return False # 规则有要求，但条目为空 -> Fail
-            
-            # 统一转小写比较
-            targets = [t.strip().lower() for t in rule_val.split(',') if t.strip()]
-            return str(item_val).strip().lower() in targets
 
-        # 1. 核心字段精确匹配
-        if not match_exact("resolution", "resolution"): return False
-        if not match_exact("source", "source"): return False
-        if not match_exact("team", "team"): return False
-        if not match_exact("video_encode", "video_encode"): return False
-        if not match_exact("audio_encode", "audio_encode"): return False
-        if not match_exact("video_effect", "video_effect"): return False
-        if not match_exact("subtitle", "subtitle"): return False
-        if not match_exact("platform", "platform"): return False
-        
+        if not check_conditions(c, item): return False
+
         # 优先使用原始标题进行正则匹配，如果不存在则回退到 tmdb_title
         match_title = item.get("rss_title") or item.get("title", "")
         

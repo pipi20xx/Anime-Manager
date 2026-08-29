@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlmodel import select, delete, and_, or_
 from models import Subscription, SubscribedEpisode, DownloadHistory
 from database import db
+from rss_core.field_match import match_field, FIELD_MATCH_STRATEGY
 
 logger = logging.getLogger("SubscriptionManager")
 
@@ -267,13 +268,13 @@ class SubscriptionManager:
             "filter_codec": "video_encode", "filter_audio": "audio_encode", "filter_sub": "subtitle",
             "filter_effect": "video_effect", "filter_platform": "platform"
         }
-        
+
         for sub_field, rec_field in field_map.items():
             required_val = getattr(sub, sub_field, None)
             if required_val and required_val.strip():
                 actual_val = final.get(rec_field)
-                allowed_vals = [v.strip().lower() for v in required_val.split(',') if v.strip()]
-                if not actual_val or str(actual_val).lower() not in allowed_vals:
+                # 统一走 field_match 的宽容匹配 (复合值/别名/声道后缀)
+                if not match_field(required_val, actual_val, FIELD_MATCH_STRATEGY[rec_field]):
                     return False, f"字段 {rec_field} 不匹配 (期待: {required_val}, 实际: {actual_val})"
-        
+
         return True, ""

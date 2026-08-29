@@ -9,6 +9,7 @@
 import { ref, computed, watch } from 'vue'
 import { api } from '@/api/client'
 import { useNotification, useConfirm } from '@/composables'
+import { FieldConditionSelect } from '@/components/common'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ (e: 'update:show', v: boolean): void }>()
@@ -33,6 +34,12 @@ const conditionLabels: Record<string, string> = {
   platform: '发布平台', team: '制作组',
   must_contain: '必须包含', must_not_contain: '不能包含',
 }
+
+// 规范值下拉字段 (选项来自 useFieldOptions, 可自由手输)
+const conditionFields = [
+  'resolution', 'team', 'source', 'video_encode',
+  'audio_encode', 'subtitle', 'video_effect', 'platform',
+]
 
 const defaultCondition = {
   resolution: null, source: null, video_encode: null,
@@ -284,16 +291,11 @@ function getConditions(rule: any) {
           <v-text-field v-model="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" variant="outlined" density="compact" class="mb-3" />
           <div class="text-subtitle-2 font-weight-medium mb-2">匹配条件 (留空表示不限制)</div>
           <v-row density="compact">
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.resolution" label="分辨率" placeholder="如: 4K, 1080P" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.team" label="制作组" placeholder="如: LoliHouse" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.source" label="介质来源" placeholder="如: Blu-ray" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.video_encode" label="视频编码" placeholder="如: H.265" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.audio_encode" label="音频编码" placeholder="如: FLAC" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.subtitle" label="字幕语言" placeholder="如: 简体内封" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.video_effect" label="视频特效" placeholder="如: HDR" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="currentRule.conditions.platform" label="发布平台" placeholder="如: Baha" variant="outlined" density="compact" /></v-col>
-            <v-col cols="12"><v-text-field v-model="currentRule.conditions.must_contain" label="必须包含" placeholder="包含这些关键词" variant="outlined" density="compact" /></v-col>
-            <v-col cols="12"><v-text-field v-model="currentRule.conditions.must_not_contain" label="不能包含" placeholder="包含这些关键词则排除" variant="outlined" density="compact" /></v-col>
+            <v-col v-for="f in conditionFields" :key="f" cols="12" sm="6">
+              <FieldConditionSelect v-model="currentRule.conditions[f]" :field="f" :label="conditionLabels[f]" />
+            </v-col>
+            <v-col cols="12"><v-text-field v-model="currentRule.conditions.must_contain" label="必须包含" placeholder="包含这些关键词 (支持正则)" variant="outlined" density="compact" /></v-col>
+            <v-col cols="12"><v-text-field v-model="currentRule.conditions.must_not_contain" label="不能包含" placeholder="包含这些关键词则排除 (支持正则)" variant="outlined" density="compact" /></v-col>
           </v-row>
         </v-card-text>
         <v-divider />

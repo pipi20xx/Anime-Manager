@@ -1,7 +1,12 @@
 import regex as re
 import cn2an
 from typing import Optional, Any, List, Tuple, Union
-from .constants import SEASON_PATTERNS, EPISODE_PATTERNS, CN_MAP, NOT_GROUPS, VIDEO_RE, PIX_RE, PLATFORM_RE, DYNAMIC_RANGE_RE, AUDIO_RE, SOURCE_RE
+from .constants import (
+    SEASON_PATTERNS, EPISODE_PATTERNS, CN_MAP, NOT_GROUPS,
+    VIDEO_RE, PIX_RE, PLATFORM_RE, DYNAMIC_RANGE_RE, AUDIO_RE, SOURCE_RE,
+    SOURCE_VALUE_MAP, PLATFORM_VALUE_MAP, VIDEO_ENCODE_RULES,
+    AUDIO_CODEC_RULES, DYNAMIC_RANGE_DEFS, SUB_LANG_FULL, SUB_TYPES,
+)
 
 class TagExtractor:
     @staticmethod
@@ -37,16 +42,9 @@ class TagExtractor:
 
         res = []
         seen = set()
-        mapping = {
-            "WEBRIP": "WebRip", "WEB-RIP": "WebRip", "WEBDL": "WEB-DL", "WEB-DL": "WEB-DL",
-            "BLURAY": "Blu-ray", "BD": "Blu-ray", "BLU": "Blu-ray",
-            "HDTV": "HDTV", "UHDTV": "UHDTV", "DVDRIP": "DVD-Rip", "BDRIP": "BD-Rip",
-            "REMUX": "Remux", "UHD": "UHD", "Pdtv": "PDTV", "Dvdscr": "DVD-SCR", "WEB": "WEB"
-        }
-
         for m in matches:
             upper_m = m.upper().replace("-", "")
-            final_val = mapping.get(upper_m, m)
+            final_val = SOURCE_VALUE_MAP.get(upper_m, m)
             if final_val not in seen:
                 res.append(final_val)
                 seen.add(final_val)
@@ -290,13 +288,7 @@ class TagExtractor:
         match = re.search(PLATFORM_RE, filename)
         if match:
             raw = match.group(0).lstrip('-')
-            mapping = {
-                "CR": "Crunchyroll", "NF": "Netflix", "AMZN": "Amazon", 
-                "ATVP": "AppleTV+", "DSNP": "Disney+", "iT": "iTunes", 
-                "LINETV": "LINE TV", "ABEMA": "AbemaTV", "IQ": "iQIYI", "IQIYI": "iQIYI"
-            }
-            upper_raw = raw.upper()
-            final_val = mapping.get(upper_raw, "iTunes" if raw == "iT" else ("Amazon" if upper_raw == "CRAMZN" else raw))
+            final_val = PLATFORM_VALUE_MAP.get(raw.upper(), raw)
             log_msg = f"[规则][内置] 发布平台: {raw}"
             if final_val != raw: log_msg += f" -> {final_val}"
             return final_val, [log_msg]
@@ -304,18 +296,15 @@ class TagExtractor:
 
     @staticmethod
     def extract_dynamic_range(filename: str) -> Tuple[Optional[str], List[str]]:
-        """[内置] 识别动态范围指标"""
+        """[内置] 识别动态范围指标 (组间独立叠加, 组内按优先级取第一个命中)"""
         matches = re.findall(DYNAMIC_RANGE_RE, filename)
         if not matches: return None, []
         found_tags = set(m.upper().replace(" ", "") for m in matches)
         res = []
-        if any(x in found_tags for x in ["DOVI", "DV", "DOLBYVISION"]): res.append("Dolby Vision")
-        if "HDR10+" in found_tags: res.append("HDR10+")
-        elif "HDR10" in found_tags: res.append("HDR10")
-        elif "HDR" in found_tags: res.append("HDR")
-        if "HLG" in found_tags: res.append("HLG")
-        if "IMAX" in found_tags: res.append("IMAX")
-        if "SDR" in found_tags: res.append("SDR")
+        for key_map, _ in DYNAMIC_RANGE_DEFS:
+            for k in key_map:
+                if k in found_tags:
+                    res.append(key_map[k]); break
         final_val = ".".join(res) if res else None
         if final_val: return final_val, [f"[规则][内置] 动态范围: {final_val}"]
         return None, []
@@ -351,19 +340,10 @@ class TagExtractor:
             final_tags, raw_log_parts, seen_combos = [], [], set()
             for m in matches:
                 codec_raw = m.group(1).upper().replace(".", "").replace("-", "").replace("_", "")
-                codec = codec_raw
-                if "ATMOS" in codec_raw: codec = "Dolby Atmos"
-                elif "DTSHDMA" in codec_raw or "DTSMA" in codec_raw: codec = "DTS-HD MA"
-                elif "DTSHD" in codec_raw: codec = "DTS-HD"
-                elif "EAC3" in codec_raw or "DDP" in codec_raw or "DD+" in codec_raw: codec = "E-AC-3"
-                elif "AC3" in codec_raw or "DD" == codec_raw: codec = "AC-3"
-                elif "TRUEHD" in codec_raw or "THD" in codec_raw: codec = "TrueHD"
-                elif "LPCM" in codec_raw or "PCM" in codec_raw: codec = "LPCM"
-                elif "DTS" == codec_raw: codec = "DTS"
-                elif "AAC" in codec_raw: codec = "AAC"
-                elif "FLAC" in codec_raw: codec = "FLAC"
-                elif "OPUS" in codec_raw: codec = "Opus"
-                elif "VORBIS" in codec_raw: codec = "Vorbis"
+                codec = None
+                for mode, key, val in AUDIO_CODEC_RULES:
+                    if (key == codec_raw) if mode == "eq" else (key in codec_raw):
+                        codec = val; break
                 channel_raw = m.group(2).lower().replace("_", "") if m.group(2) else ""
                 channel = ""
                 if "2ch" in channel_raw: channel = "2.0"
@@ -399,7 +379,11 @@ class TagExtractor:
         match = re.search(VIDEO_RE, filename)
         if match:
             raw = match.group(0).upper().replace(".", "").replace("-", "")
-            final_val = "H.265" if ("265" in raw or "HEVC" in raw) else ("H.264" if ("264" in raw or "AVC" in raw) else ("AV1" if "AV1" in raw else match.group(0).upper() if "MPEG" in raw else match.group(0)))
+            for keys, val in VIDEO_ENCODE_RULES:
+                if any(k in raw for k in keys):
+                    return val, [f"[规则][内置] 视频规格: {match.group(0)} -> {val}"]
+            # 未命中规则: MPEG 系整串大写, 其余保留原文写法 (如 Xvid/DivX)
+            final_val = match.group(0).upper() if "MPEG" in raw else match.group(0)
             return final_val, [f"[规则][内置] 视频规格: {match.group(0)} -> {final_val}"]
         return None, []
 
@@ -437,20 +421,19 @@ class TagExtractor:
         
         # 基础前缀判定：单语言用全称，多语言用简称
         if len(langs) == 1:
-            mapping = {"简": "简体", "繁": "繁体", "日": "日文", "英": "英文"}
-            base = mapping.get(langs[0], langs[0])
+            base = SUB_LANG_FULL.get(langs[0], langs[0])
         else:
             base = "".join(langs)
-        
+
         # 属性判定
         suffix = ""
-        if is_internal: suffix = "内封"
-        elif is_embedded: suffix = "内嵌"
-        elif is_external: suffix = "外挂"
-        elif is_dual: suffix = "双语"
+        if is_internal: suffix = SUB_TYPES[0]      # 内封
+        elif is_embedded: suffix = SUB_TYPES[1]    # 内嵌
+        elif is_external: suffix = SUB_TYPES[2]    # 外挂
+        elif is_dual: suffix = SUB_TYPES[3]        # 双语
         else:
             # 默认为内封 (常见于 WebRip/BDRip)
-            suffix = "内封" if ("RIP" in f_norm or "BD" in f_norm) else "内嵌"
+            suffix = SUB_TYPES[0] if ("RIP" in f_norm or "BD" in f_norm) else SUB_TYPES[1]
 
         final_label = f"{base}{suffix}"
         

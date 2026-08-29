@@ -10,6 +10,19 @@
 import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { FieldConditionSelect } from '@/components/common'
+
+// 筛选字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
+const filterFields = [
+  { key: 'filter_res', field: 'resolution', label: '分辨率' },
+  { key: 'filter_team', field: 'team', label: '制作组' },
+  { key: 'filter_source', field: 'source', label: '介质来源' },
+  { key: 'filter_codec', field: 'video_encode', label: '视频编码' },
+  { key: 'filter_audio', field: 'audio_encode', label: '音频编码' },
+  { key: 'filter_sub', field: 'subtitle', label: '字幕语言' },
+  { key: 'filter_effect', field: 'video_effect', label: '视频特效' },
+  { key: 'filter_platform', field: 'platform', label: '发布平台' },
+]
 
 const props = defineProps<{
   show: boolean
@@ -376,14 +389,9 @@ function formatDateTime(dateStr: string | null): string {
 
           <template v-if="!form.template_id">
             <v-row density="compact">
-              <v-col cols="6"><v-text-field v-model="form.filter_res" label="分辨率" variant="outlined" density="compact" placeholder="如: 1080P, 4K" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_team" label="制作组" variant="outlined" density="compact" placeholder="如: LoliHouse, VCB-Studio" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_source" label="介质来源" variant="outlined" density="compact" placeholder="如: Blu-ray, WEB-DL" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_codec" label="视频编码" variant="outlined" density="compact" placeholder="如: H.265, H.264" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_audio" label="音频编码" variant="outlined" density="compact" placeholder="如: FLAC, AAC" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_sub" label="字幕语言" variant="outlined" density="compact" placeholder="如: 简体内封, 繁日内嵌" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_effect" label="视频特效" variant="outlined" density="compact" placeholder="如: HDR10, Dolby Vision" /></v-col>
-              <v-col cols="6"><v-text-field v-model="form.filter_platform" label="发布平台" variant="outlined" density="compact" placeholder="如: Baha, Netflix" /></v-col>
+              <v-col v-for="f in filterFields" :key="f.key" cols="6">
+                <FieldConditionSelect v-model="(form as any)[f.key]" :field="f.field" :label="f.label" />
+              </v-col>
             </v-row>
           </template>
 

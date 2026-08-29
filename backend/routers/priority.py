@@ -1,12 +1,37 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Any, Optional
-from sqlmodel import select
+from sqlmodel import select, func, col
 
-from models import FilterRule, QualityProfile, Subscription
+from models import FilterRule, QualityProfile, Subscription, FeedItem
 from database import db
 from logger import log_audit
+from rss_core.field_options import get_static_options
 
 router = APIRouter(tags=["洗版规则管理"])
+
+# ==========================================
+# 0. 字段选项
+# ==========================================
+
+@router.get("/priority/field-options", summary="获取洗版规则字段的规范值选项")
+async def get_field_options():
+    """
+    封闭字段返回识别端归一化的规范值 (与 tag_extractor 输出同源),
+    team 为开放字段, 从已识别的 feed_items 中按出现频次聚合。
+    """
+    options = get_static_options()
+
+    async with db.session_scope():
+        stmt = (
+            select(FeedItem.team, func.count(col(FeedItem.id)))
+            .where(col(FeedItem.team).is_not(None))
+            .group_by(col(FeedItem.team))
+            .order_by(func.count(col(FeedItem.id)).desc())
+            .limit(100)
+        )
+        rows = (await db.execute(stmt)).all()
+    options["team"] = [r[0] for r in rows]
+    return options
 
 # ==========================================
 # 1. 基础规则 (FilterRule) 管理
