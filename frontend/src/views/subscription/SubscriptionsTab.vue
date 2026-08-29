@@ -289,7 +289,6 @@ defineExpose({ fetchSubscriptions })
               v-if="sub.poster_path"
               :src="getImg(sub.poster_path)"
               cover
-              class="rounded-t"
             />
             <div v-else class="sub-poster-placeholder d-flex align-center justify-center">
               <v-icon size="40" color="grey">mdi-television-classic</v-icon>
@@ -505,6 +504,8 @@ defineExpose({ fetchSubscriptions })
 .sub-poster-box {
   position: relative;
   aspect-ratio: 2/3;
+  /* 继承卡片的圆角设置: 四个角全部跟随主题圆角, 而不是只有顶部固定 12px */
+  border-radius: inherit;
   background: rgba(var(--v-theme-on-surface), 0.04);
   overflow: hidden;
 }

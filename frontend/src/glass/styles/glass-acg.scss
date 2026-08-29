@@ -760,11 +760,11 @@ html.glass-theme-acg {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 分隔线
+  // 分隔线 — 全局隐藏（含弹窗/导航/卡片），与液态玻璃主题保持一致：
+  // 玻璃卡片自带层次与留白，不需要分割线
   // ═══════════════════════════════════════════════════════════════
   .v-divider {
-    border-color: rgba(255, 255, 255, 10%);
-    opacity: 0.75;
+    display: none;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1239,6 +1239,18 @@ html.glass-theme-acg .text-medium-emphasis {
 }
 html.glass-theme-acg .text-disabled {
   color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 全局自定义开关行文字 (.switch-label/.switch-desc, 定义于 cards.css) —
+   原样式写死 on-surface 0.87, 在 ACG 下偏暗; 与 .text-medium-emphasis 同等处理 */
+html.glass-theme-acg .switch-label,
+html.glass-theme-acg .switch-desc {
+  color: rgba(255, 255, 255, 0.87) !important;
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 1),
+    0 0 4px rgba(0, 0, 0, 0.7),
+    0 0 10px rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 /* Alert tonal — Vuetify 用 currentColor 做文字和 underlay 底色，
