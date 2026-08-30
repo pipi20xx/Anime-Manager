@@ -90,10 +90,11 @@ function getStatusIcon(log: any): string {
   return 'mdi-alert-circle'
 }
 
+// 状态图标固定色值（圆形底 + 白色符号），不随白天/夜晚主题切换
 function getStatusColor(log: any): string {
-  if (log.status === 'success') return 'success'
-  if (log.type === 'skip' || log.status === 'skipped') return 'warning'
-  return 'error'
+  if (log.status === 'success') return '#1B8134'
+  if (log.type === 'skip' || log.status === 'skipped') return '#E65100'
+  return '#EF4444'
 }
 
 function isStartOrInfo(log: any): boolean {
@@ -256,6 +257,7 @@ watch(() => props.logs?.length, () => {
 .stream-table th {
   text-align: left;
   padding: 12px;
+  white-space: nowrap;
   color: rgb(var(--v-theme-on-surface));
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   font-weight: 600;
@@ -270,11 +272,13 @@ watch(() => props.logs?.length, () => {
 .source-cell {
   font-family: monospace;
   color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
 }
 
 .target-cell {
   font-family: monospace;
   color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
 }
 
 .start-msg {
