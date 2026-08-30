@@ -205,92 +205,83 @@ const actionTypeOptions = [
 
           <!-- 高级选项 -->
           <v-window-item value="advanced">
-            <div class="org-switch-group">
-              <v-switch v-model="taskForm.anime_priority" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">动漫优先</span>
-                    <span class="text-caption text-medium-emphasis ml-2">优先使用动漫识别策略</span>
-                  </div>
-                </template>
-              </v-switch>
+            <div class="d-flex flex-column ga-4">
+              <div class="switch-row">
+                <v-switch v-model="taskForm.anime_priority" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">动漫优先</div>
+                  <div class="switch-desc">优先使用动漫识别策略</div>
+                </div>
+              </div>
 
-              <v-switch v-model="taskForm.overwrite_mode" :disabled="taskForm.action_type === 'hash_only'" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">覆盖模式</span>
-                    <span class="text-caption text-medium-emphasis ml-2">目标已存在时允许覆盖</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.overwrite_mode" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">覆盖模式</div>
+                  <div class="switch-desc">目标已存在时允许覆盖</div>
+                </div>
+              </div>
 
-              <v-switch v-model="taskForm.trigger_strm" :disabled="taskForm.action_type === 'hash_only'" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">联动 STRM</span>
-                    <span class="text-caption text-medium-emphasis ml-2">整理后自动生成 STRM 文件</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.trigger_strm" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">联动 STRM</div>
+                  <div class="switch-desc">整理后自动生成 STRM 文件</div>
+                </div>
+              </div>
 
-              <v-switch v-model="taskForm.clean_empty_dir" :disabled="taskForm.action_type === 'hash_only'" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">清理空目录</span>
-                    <span class="text-caption text-medium-emphasis ml-2">整理后删除源目录中的空文件夹</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.clean_empty_dir" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">清理空目录</div>
+                  <div class="switch-desc">整理后删除源目录中的空文件夹</div>
+                </div>
+              </div>
 
-              <v-switch v-model="taskForm.ignore_history" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">忽略历史</span>
-                    <span class="text-caption text-medium-emphasis ml-2">跳过已成功整理的历史记录</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.ignore_history" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">忽略历史</div>
+                  <div class="switch-desc">跳过已成功整理的历史记录</div>
+                </div>
+              </div>
 
-              <v-switch v-model="taskForm.retry_failed" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">重试失败项</span>
-                    <span class="text-caption text-medium-emphasis ml-2">重新尝试之前识别失败的文件</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.retry_failed" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">重试失败项</div>
+                  <div class="switch-desc">重新尝试之前识别失败的文件</div>
+                </div>
+              </div>
 
-              <v-switch v-model="taskForm.check_emby_exists" :disabled="taskForm.action_type === 'hash_only'" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">Emby 检查</span>
-                    <span class="text-caption text-medium-emphasis ml-2">检测 Emby 库是否存在，存在则跳过</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.check_emby_exists" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">Emby 检查</div>
+                  <div class="switch-desc">检测 Emby 库是否存在，存在则跳过</div>
+                </div>
+              </div>
 
               <div>
-                <v-switch v-model="taskForm.calculate_hash" :disabled="taskForm.action_type === 'hash_only'" color="primary" density="compact" hide-details>
-                  <template #label>
-                    <div>
-                      <span class="font-weight-medium">哈希计算</span>
-                      <span class="text-caption text-medium-emphasis ml-2">整理时计算 SHA1 和 ED2K</span>
-                    </div>
-                  </template>
-                </v-switch>
+                <div class="switch-row">
+                  <v-switch v-model="taskForm.calculate_hash" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
+                  <div>
+                    <div class="switch-label">哈希计算</div>
+                    <div class="switch-desc">整理时计算 SHA1 和 ED2K</div>
+                  </div>
+                </div>
                 <div v-if="taskForm.calculate_hash && taskForm.action_type !== 'hash_only'" class="org-hash-warning">
                   ⚠️ 需要读取整个文件，云盘环境不建议开启
                 </div>
               </div>
 
-              <v-switch v-model="taskForm.series_fingerprint" color="primary" density="compact" hide-details>
-                <template #label>
-                  <div>
-                    <span class="font-weight-medium">智能记忆</span>
-                    <span class="text-caption text-medium-emphasis ml-2">自动记住系列特征，后续秒级识别</span>
-                  </div>
-                </template>
-              </v-switch>
+              <div class="switch-row">
+                <v-switch v-model="taskForm.series_fingerprint" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">智能记忆</div>
+                  <div class="switch-desc">自动记住系列特征，后续秒级识别</div>
+                </div>
+              </div>
             </div>
           </v-window-item>
         </v-window>

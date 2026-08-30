@@ -213,7 +213,7 @@ function handleRunBackground() {
             />
 
             <!-- 强制元数据 -->
-            <div class="forced-section">
+            <div class="config-section mb-4">
               <div class="section-title mb-3">
                 <v-icon size="16" color="info">mdi-tune-variant</v-icon>
                 强制元数据 (可选)
@@ -334,7 +334,7 @@ function handleRunBackground() {
 
           <!-- 高级选项 -->
           <div v-if="activeTab === 'advanced'">
-            <div class="advanced-list">
+            <div class="d-flex flex-column ga-4">
               <div class="switch-row">
                 <v-switch v-model="manualTask.anime_priority" density="compact" color="primary" hide-details />
                 <div>
@@ -396,7 +396,7 @@ function handleRunBackground() {
                 <div>
                   <div class="switch-label">哈希计算</div>
                   <div class="switch-desc">整理时计算 SHA1 和 ED2K 哈希值并记录<span v-if="manualTask.action_type === 'hash_only'" class="inactive-hint">（仅记录哈希模式下强制启用）</span></div>
-                  <div v-if="manualTask.action_type !== 'hash_only'" class="hash-warning">
+                  <div v-if="manualTask.action_type !== 'hash_only'" class="hash-warning-inline">
                     ⚠️ 警告：需要读取整个文件，云盘环境不建议开启
                   </div>
                 </div>

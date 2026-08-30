@@ -126,63 +126,50 @@ watch(() => props.logs?.length, () => {
 
       <!-- 流式整理模式 -->
       <v-card-text v-if="isStreamMode" class="pa-0" style="max-height: 65vh; overflow-y: auto" ref="logContainerRef">
-        <v-card class="glass-card" variant="flat">
-          <table class="stream-table">
-            <thead>
-              <tr>
-                <th>源文件</th>
-                <th width="60" class="text-center">状态</th>
-                <th>目标相对路径 / 原因</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(log, i) in logs"
-                :key="i"
-                :class="{
-                  'start-row': log.type === 'start',
-                  'stream-info-row': log.type === 'info',
-                }"
-              >
-                <td :colspan="isStartOrInfo(log) ? 3 : 1" class="source-cell">
-                  <template v-if="isStartOrInfo(log)">
-                    <v-icon
-                      size="16"
-                      :color="log.type === 'start' ? 'primary' : 'info'"
-                      class="mr-2"
-                    >
-                      {{ log.type === 'start' ? 'mdi-play' : 'mdi-skip-next' }}
-                    </v-icon>
-                    <span :class="log.type === 'start' ? 'start-msg' : 'info-msg'">{{ log.message }}</span>
-                  </template>
-                  <template v-else>
-                    {{ log.path || getFileName(log.source) }}
-                  </template>
-                </td>
-                <td v-if="!isStartOrInfo(log)" class="text-center">
-                  <v-icon size="18" :color="getStatusColor(log)">{{ getStatusIcon(log) }}</v-icon>
-                </td>
-                <td v-if="!isStartOrInfo(log)" class="target-cell">
-                  {{ getTargetDisplay(log) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="stream-table">
+          <thead>
+            <tr>
+              <th>源文件</th>
+              <th width="60" class="text-center">状态</th>
+              <th>目标相对路径 / 原因</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(log, i) in logs" :key="i">
+              <td :colspan="isStartOrInfo(log) ? 3 : 1" class="source-cell">
+                <template v-if="isStartOrInfo(log)">
+                  <v-icon size="16" class="mr-2">
+                    {{ log.type === 'start' ? 'mdi-play' : 'mdi-skip-next' }}
+                  </v-icon>
+                  <span :class="log.type === 'start' ? 'start-msg' : 'info-msg'">{{ log.message }}</span>
+                </template>
+                <template v-else>
+                  {{ log.path || getFileName(log.source) }}
+                </template>
+              </td>
+              <td v-if="!isStartOrInfo(log)" class="text-center">
+                <v-icon size="18" :color="getStatusColor(log)">{{ getStatusIcon(log) }}</v-icon>
+              </td>
+              <td v-if="!isStartOrInfo(log)" class="target-cell">
+                {{ getTargetDisplay(log) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          <!-- 运行中进度 -->
-          <div v-if="isRunning" class="pa-4">
-            <v-progress-linear indeterminate color="primary" />
-            <div v-if="scanningStatus" class="scanning-text mt-2">
-              正在扫描: {{ scanningStatus }}
-            </div>
+        <!-- 运行中进度 -->
+        <div v-if="isRunning" class="pa-4">
+          <v-progress-linear indeterminate color="primary" />
+          <div v-if="scanningStatus" class="scanning-text mt-2">
+            正在扫描: {{ scanningStatus }}
           </div>
+        </div>
 
-          <!-- 空状态 -->
-          <div v-if="logs?.length === 0 && !isRunning" class="text-center text-medium-emphasis pa-8">
-            <v-icon size="40" color="primary" class="mb-2">mdi-check-circle-outline</v-icon>
-            <div class="text-body-2">没有需要处理的文件</div>
-          </div>
-        </v-card>
+        <!-- 空状态 -->
+        <div v-if="logs?.length === 0 && !isRunning" class="text-center text-medium-emphasis pa-8">
+          <v-icon size="40" color="primary" class="mb-2">mdi-check-circle-outline</v-icon>
+          <div class="text-body-2">没有需要处理的文件</div>
+        </div>
       </v-card-text>
 
       <!-- 任务历史模式 -->
@@ -260,10 +247,6 @@ watch(() => props.logs?.length, () => {
 
 <style scoped>
 /* 流式整理模式 */
-.log-stream-box {
-  border-radius: 0;
-}
-
 .stream-table {
   width: 100%;
   border-collapse: collapse;
@@ -275,7 +258,6 @@ watch(() => props.logs?.length, () => {
   padding: 12px;
   color: rgb(var(--v-theme-on-surface));
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  background: rgba(var(--v-theme-surface), 0.8);
   font-weight: 600;
 }
 
@@ -295,22 +277,12 @@ watch(() => props.logs?.length, () => {
   color: rgb(var(--v-theme-on-surface));
 }
 
-.start-row {
-  background: rgba(var(--v-theme-primary), 0.06);
-}
-
-.stream-info-row {
-  background: rgba(var(--v-theme-info), 0.06);
-}
-
 .start-msg {
-  color: rgb(var(--v-theme-primary));
   font-weight: bold;
   margin-left: 8px;
 }
 
 .info-msg {
-  color: rgb(var(--v-theme-info));
   font-style: italic;
   margin-left: 8px;
 }

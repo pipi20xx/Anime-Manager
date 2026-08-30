@@ -49,9 +49,15 @@ async def strm_preview(config: StrmConfig):
     source_dir = config.source_path or "/data/media"
     sample_file = os.path.join(source_dir, "演示目录", "test.mkv")
     preview_content = StrmGenerator.calculate_strm_content(source_dir, sample_file, config.dict())
+
+    # 与 StrmProcessor.process_single_file 的落盘规则一致：目标目录 / 相对路径 / 同名 .strm
+    rel_path = os.path.relpath(sample_file, source_dir)
+    strm_path = os.path.join(config.target_path or "", os.path.splitext(rel_path)[0] + ".strm")
+
     return {
-        "status": "success", 
+        "status": "success",
         "sample_file": f"[虚拟示例] {sample_file}",
+        "strm_path": strm_path,
         "preview_content": preview_content
     }
 

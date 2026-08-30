@@ -9,7 +9,7 @@
  * - 切换实时监控/定时扫描
  * - 完整编辑表单 Modal（Tab 分页，功能对齐全旧前端）
  */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { strmApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 
@@ -324,7 +324,11 @@ let previewTimer: ReturnType<typeof setTimeout> | null = null
 function updatePreview() {
   if (previewTimer) clearTimeout(previewTimer)
   previewTimer = setTimeout(async () => {
-    if (!taskForm.source_path || !showModal.value) return
+    if (!showModal.value) return
+    if (!taskForm.source_path) {
+      previewData.value = null
+      return
+    }
     previewLoading.value = true
     try {
       const data = await strmApi.preview({
@@ -343,6 +347,12 @@ function updatePreview() {
     }
   }, 500)
 }
+
+// 核心设置中影响预览的字段变化时自动刷新
+watch(
+  () => [taskForm.source_path, taskForm.target_path, taskForm.content_prefix, taskForm.content_suffix, taskForm.url_encode],
+  () => updatePreview(),
+)
 
 onMounted(() => {
   fetchTasks()
@@ -455,7 +465,7 @@ onMounted(() => {
         <v-card-text class="pa-0">
           <v-tabs v-model="activeTab" density="compact" color="primary">
             <v-tab value="basic">核心设置</v-tab>
-            <v-tab value="automation">自动化与预览</v-tab>
+            <v-tab value="automation">自动化</v-tab>
             <v-tab value="filters">过滤规则</v-tab>
             <v-tab value="advanced">高级设置</v-tab>
           </v-tabs>
@@ -494,9 +504,28 @@ onMounted(() => {
               <v-alert v-if="taskForm.sync_mode === 'tree_file'" type="warning" density="compact" variant="tonal" class="mt-2">
                 目录树模式将解析您提供的文本文件内容来同步 STRM。
               </v-alert>
+
+              <v-divider class="my-4" />
+
+              <!-- 实时预览：生成路径 + STRM 内容 -->
+              <div class="d-flex align-center justify-space-between mb-2">
+                <span class="text-subtitle-2 font-weight-medium">实时 URL 预览</span>
+                <v-switch v-model="taskForm.url_encode" label="路径 URL 编码" density="compact" hide-details color="primary" class="mr-2" />
+              </div>
+              <div class="preview-box">
+                <v-progress-circular v-if="previewLoading" indeterminate size="24" color="primary" />
+                <template v-else-if="previewData">
+                  <div class="text-caption text-medium-emphasis">生成的 STRM 文件路径</div>
+                  <div class="kv-value--mono mb-2">{{ previewData.strm_path }}</div>
+                  <div class="text-caption text-medium-emphasis">STRM 内容 (URL)</div>
+                  <div class="kv-value--mono">{{ previewData.preview_content }}</div>
+                  <div class="text-caption text-medium-emphasis mt-2">基于文件: {{ previewData.sample_file }}</div>
+                </template>
+                <div v-else class="text-caption text-medium-emphasis">配置源目录以查看预览</div>
+              </div>
             </div>
 
-            <!-- === 自动化与预览 === -->
+            <!-- === 自动化 === -->
             <div v-show="activeTab === 'automation'">
               <v-row class="mb-4">
                 <v-col cols="12">
@@ -536,21 +565,6 @@ onMounted(() => {
                   </div>
                 </v-col>
               </v-row>
-
-              <v-divider class="my-4" />
-
-              <div class="d-flex align-center justify-space-between mb-2">
-                <span class="text-subtitle-2 font-weight-medium">实时 URL 预览</span>
-                <v-switch v-model="taskForm.url_encode" label="路径 URL 编码" density="compact" hide-details color="primary" class="mr-2" @update:model-value="updatePreview" />
-              </div>
-              <div class="preview-box">
-                <v-progress-circular v-if="previewLoading" indeterminate size="24" color="primary" />
-                <template v-else-if="previewData">
-                  <code class="preview-content">{{ previewData.preview_content }}</code>
-                  <div class="preview-sub text-caption text-medium-emphasis mt-1">基于文件: {{ previewData.sample_file }}</div>
-                </template>
-                <div v-else class="text-caption text-medium-emphasis">配置源目录以查看预览</div>
-              </div>
             </div>
 
             <!-- === 过滤规则 === -->
