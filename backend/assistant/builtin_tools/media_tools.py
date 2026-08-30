@@ -431,14 +431,14 @@ async def search_jackett(query: str, indexer: str = "") -> ToolResult:
 
 @tool(
     name="discover_bangumi",
-    description="按标签/类型发现番剧。支持按标签（如：百合、科幻、日常）、来源（漫画改、轻小说改）、年份等筛选。",
+    description="按标签/类型发现番剧。支持按标签（如：百合、科幻、日常）、来源（漫画改、轻小说改）、年份等筛选。支持 page 翻页：用户说「换一批/下一页」时用相同条件把 page+1 再调用一次。",
     category="媒体搜索",
     parameters=[
         {"name": "tag", "type": "string", "description": "标签/类型，如：百合、科幻、日常、热血、恋爱、搞笑、奇幻、冒险", "required": False},
         {"name": "source", "type": "string", "description": "来源类型，如：漫画改、轻小说改、游戏改、原创", "required": False},
         {"name": "year", "type": "string", "description": "年份，如：2024、2023", "required": False},
         {"name": "sort_by", "type": "string", "description": "排序方式：popularity.desc(热门)、match(最新)、vote_average.desc(评分)", "required": False},
-        {"name": "page", "type": "integer", "description": "页码，默认1", "required": False}
+        {"name": "page", "type": "integer", "description": "页码，默认1。「换一批/下一页」时传当前页码+1", "required": False}
     ]
 )
 async def discover_bangumi(
@@ -450,68 +450,70 @@ async def discover_bangumi(
 ) -> ToolResult:
     try:
         from recognition.data_provider.bangumi.client import BangumiProvider
-        
+
         params = {
             "sort_by": sort_by,
             "page": page
         }
-        
+
         if tag:
             params["with_genres"] = tag
         if source:
             params["source"] = source
         if year:
             params["year"] = year
-        
+
         result = await BangumiProvider.discover(params)
-        
+
         items = result.get("results", []) if result else []
         total = result.get("total_results", 0) if result else 0
-        
+
         if not items and tag:
             params_fallback = {"keyword": tag, "sort_by": sort_by, "page": page}
             result = await BangumiProvider.discover(params_fallback)
             items = result.get("results", []) if result else []
             total = result.get("total_results", 0) if result else 0
-        
+
         if not items:
             return ToolResult(success=True, data=[], message="未找到符合条件的番剧")
-        
+
         simplified = []
         for item in items[:50]:
-            rating = item.get("rating", {})
+            # Provider 返回 TMDB 风格的标准化字段（vote_average/release_date/poster_path）
             simplified.append({
                 "bangumi_id": item.get("id"),
                 "title": item.get("title"),
-                "summary": (item.get("summary") or "")[:100],
-                "rating": rating.get("score") if isinstance(rating, dict) else None,
-                "episodes": item.get("eps"),
-                "air_date": item.get("date"),
-                "image": item.get("images", {}).get("large") if item.get("images") else None
+                "summary": (item.get("overview") or "")[:100],
+                "rating": item.get("vote_average") or None,
+                "air_date": item.get("release_date") or item.get("first_air_date") or "",
+                "image": item.get("poster_path")
             })
-        
+
         filter_desc = []
         if tag: filter_desc.append(f"标签:{tag}")
         if source: filter_desc.append(f"来源:{source}")
         if year: filter_desc.append(f"年份:{year}")
         filter_str = "、".join(filter_desc) if filter_desc else "全部"
-        
+
         lines = [f"🔍 **番剧发现** ({filter_str})\n"]
-        lines.append("| 编号 | 番剧名称 | 评分 | 集数 | Bangumi ID |")
+        lines.append("| 编号 | 番剧名称 | 评分 | 年份 | Bangumi ID |")
         lines.append("|:----:|:---------|:----:|:----:|:----------:|")
-        
-        for idx, item in enumerate(simplified[:20], 1):
-            rating_str = f"{item['rating']:.1f}" if item.get("rating") else "-"
-            eps = item.get("episodes") or "-"
-            lines.append(f"| {idx} | {item['title']} | {rating_str} | {eps} | {item['bangumi_id']} |")
-        
+
+        # 编号跨页连续：第2页从21开始，保证「编号 → Bangumi ID」在多轮对话中唯一
+        start_no = (max(1, page) - 1) * 20
+        for idx, item in enumerate(simplified[:20], start_no + 1):
+            rating = item.get("rating")
+            rating_str = f"{rating:.1f}" if isinstance(rating, (int, float)) and rating > 0 else "-"
+            year_str = (item.get("air_date") or "")[:4] or "-"
+            lines.append(f"| {idx} | {item['title']} | {rating_str} | {year_str} | {item['bangumi_id']} |")
+
         if len(simplified) > 20:
             lines.append(f"\n... 还有 {len(simplified) - 20} 部番剧未显示")
         lines.append(f"\n📊 共 {total} 部番剧，当前第 {page} 页")
-        lines.append("\n💡 输入编号可订阅对应番剧")
-        
+        lines.append("\n💡 输入编号可订阅对应番剧；说「换一批」看下一页")
+
         formatted = "\n".join(lines)
-        
+
         return ToolResult(
             success=True,
             data=simplified,
@@ -597,16 +599,18 @@ async def discover_tmdb(
         lines = [f"🎬 **{filter_str}发现**\n"]
         lines.append("| 编号 | 作品名称 | 年份 | 评分 | TMDB ID |")
         lines.append("|:----:|:---------|:----:|:----:|:--------:|")
-        
-        for idx, item in enumerate(simplified[:20], 1):
+
+        # 编号跨页连续：第2页从21开始，保证「编号 → TMDB ID」在多轮对话中唯一
+        start_no = (max(1, page) - 1) * 20
+        for idx, item in enumerate(simplified[:20], start_no + 1):
             rating_str = f"{item['rating']:.1f}" if item.get("rating") else "-"
             year_str = item.get("year") or "-"
             lines.append(f"| {idx} | {item['title']} | {year_str} | {rating_str} | {item['tmdb_id']} |")
-        
+
         if len(simplified) > 20:
             lines.append(f"\n... 还有 {len(simplified) - 20} 部作品未显示")
         lines.append(f"\n📊 共 {total} 部作品，当前第 {page} 页")
-        lines.append("\n💡 输入编号可订阅对应作品")
+        lines.append("\n💡 输入编号可订阅对应作品；说「换一批」看下一页")
         
         formatted = "\n".join(lines)
         

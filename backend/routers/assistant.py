@@ -54,6 +54,7 @@ class ChatRequest(BaseModel):
     messages: List[ChatMessage]
     stream: bool = False
     use_tools: bool = True
+    skill_id: Optional[str] = None
 
 class ConfigUpdate(BaseModel):
     base_url: Optional[str] = None
@@ -104,21 +105,38 @@ async def update_config(config: ConfigUpdate):
 @router.post("/chat")
 async def chat(request: ChatRequest):
     init_assistant()
-    
+
     config = get_assistant_config()
-    
+
     if not config.get("base_url") or not config.get("model"):
         raise HTTPException(status_code=400, detail="请先配置模型地址和模型名称")
-    
+
     if not request.use_tools:
+        if request.stream:
+            return await _simple_chat_stream(request.messages, config)
         return await _simple_chat(request.messages, config)
-    
+
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
-    
+
     if request.stream:
-        return await _agent_chat_stream(messages, config)
+        return await _agent_chat_stream(messages, config, request.skill_id)
     else:
-        return await _agent_chat(messages, config)
+        return await _agent_chat(messages, config, request.skill_id)
+
+def _apply_skill_prompt(skill_id: Optional[str], user_message: str) -> str:
+    """指定技能时把技能 prompt 包装到用户消息前（与 /skills/{id}/execute 一致）"""
+    if not skill_id:
+        return user_message
+    try:
+        from assistant.skill_engine import SkillEngine
+        skill = SkillEngine.get_skill(skill_id)
+        if not skill:
+            return user_message
+        skill_prompt = SkillEngine.get_skill_prompt(skill_id)
+        return f"{skill_prompt}\n\n用户请求: {user_message}"
+    except Exception as e:
+        logger.warning(f"[Assistant] 包装技能提示词失败: {e}")
+        return user_message
 
 async def _simple_chat(messages: List[ChatMessage], config: Dict):
     import httpx
@@ -156,7 +174,81 @@ async def _simple_chat(messages: List[ChatMessage], config: Dict):
             raise HTTPException(status_code=response.status_code, detail=response.text)
         return response.json()
 
-async def _agent_chat(messages: List[Dict], config: Dict):
+async def _simple_chat_stream(messages: List[ChatMessage], config: Dict):
+    """纯对话模式（不走工具）的流式版本，事件类型与 Agent 保持一致"""
+    import httpx
+
+    base_url = config.get("base_url", "").strip().rstrip("/").rstrip(",")
+    target_url = f"{base_url}/v1/chat/completions" if "v1" not in base_url else f"{base_url}/chat/completions"
+
+    headers = {"Content-Type": "application/json"}
+    if config.get("provider") == "openai" and config.get("api_key"):
+        headers["Authorization"] = f"Bearer {config['api_key']}"
+
+    system_prompt = """你是番剧管家的智能助手，帮助用户管理动漫资源。
+
+你可以帮助用户：
+1. 分析识别失败的资源并提供解决方案
+2. 推荐订阅新番剧
+3. 解答关于番剧管家功能的问题
+4. 协助配置和优化系统
+
+请用中文回复，保持简洁友好。"""
+
+    full_messages = [{"role": "system", "content": system_prompt}]
+    full_messages.extend([{"role": m.role, "content": m.content} for m in messages])
+
+    payload = {
+        "model": config.get("model"),
+        "messages": full_messages,
+        "temperature": config.get("temperature", 0.7),
+        "max_tokens": config.get("max_tokens", 64) * 1000,
+        "stream": True,
+    }
+
+    async def generate():
+        final_content = ""
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                async with client.stream("POST", target_url, headers=headers, json=payload) as response:
+                    if response.status_code != 200:
+                        body = (await response.aread()).decode("utf-8", "ignore")
+                        yield f"data: {json.dumps({'type': 'error', 'message': body or f'请求失败 ({response.status_code})'}, ensure_ascii=False)}\n\n"
+                        return
+                    async for line in response.aiter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        data = line[5:].strip()
+                        if not data:
+                            continue
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                        except json.JSONDecodeError:
+                            continue
+                        choices = chunk.get("choices") or []
+                        delta = (choices[0].get("delta") or {}) if choices else {}
+                        piece = delta.get("content")
+                        if piece:
+                            final_content += piece
+                            yield f"data: {json.dumps({'type': 'stream', 'content': piece}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'type': 'response', 'content': final_content}, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            logger.error(f"[Assistant] 纯对话流式异常: {e}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+async def _agent_chat(messages: List[Dict], config: Dict, skill_id: Optional[str] = None):
     try:
         from assistant.agent import Agent, AgentConfig
     except ImportError as e:
@@ -184,6 +276,7 @@ async def _agent_chat(messages: List[Dict], config: Dict):
     agent = Agent(agent_config, messages=messages[:-1])
     
     user_message = messages[-1].get("content", "") if messages else ""
+    user_message = _apply_skill_prompt(skill_id, user_message)
     
     events = []
     final_content = ""
@@ -210,7 +303,7 @@ async def _agent_chat(messages: List[Dict], config: Dict):
         "events": events
     }
 
-async def _agent_chat_stream(messages: List[Dict], config: Dict):
+async def _agent_chat_stream(messages: List[Dict], config: Dict, skill_id: Optional[str] = None):
     from assistant.agent import Agent, AgentConfig
     
     agent_config = AgentConfig(
@@ -226,12 +319,14 @@ async def _agent_chat_stream(messages: List[Dict], config: Dict):
     agent = Agent(agent_config, messages=messages[:-1])
     
     user_message = messages[-1].get("content", "") if messages else ""
+    user_message = _apply_skill_prompt(skill_id, user_message)
     
     async def generate():
         try:
-            async for event in agent.run(user_message):
+            async for event in agent.run_stream(user_message):
                 yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
         except Exception as e:
+            logger.error(f"[Assistant] 流式对话异常: {e}", exc_info=True)
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False)}\n\n"
     
     return StreamingResponse(

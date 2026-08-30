@@ -14,14 +14,17 @@
   "dependencies": {
     "@mdi/js": "^7.4.47",
     "@vueuse/core": "^14.3.0",
+    "highlight.js": "^11.12.0",
     "lodash-es": "^4.17.21",
+    "markdown-it": "^15.0.1",
+    "markdown-it-link-attributes": "^4.0.1",
     "marked": "^12.0.0",
     "pinia": "^4.0.2",
     "sortablejs": "^1.15.7",
     "three": "^0.185.1",
     "vue": "^3.5.40",
-    "vue-router": "^5.2.0",
     "vue-i18n": "^11.0.0",
+    "vue-router": "^5.2.0",
     "vuedraggable": "^4.1.0",
     "vuetify": "^4.1.5",
     "webfontloader": "^1.6.28"

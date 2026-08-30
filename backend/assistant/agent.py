@@ -205,9 +205,22 @@ class Agent:
         self._selected_tools: List = []
         self.last_list_data: Optional[Dict] = None
         
+    def _get_context_text(self, max_chars: int = 600) -> str:
+        """
+        取上一轮助手回复的文本片段，供工具选择理解上下文。
+        场景：上一轮回复是带编号的列表（搜索结果/订阅列表/番剧列表），
+        用户回复"1"这类纯数字时，需要依据上一轮内容选出对应的操作工具。
+        """
+        for msg in reversed(self.history_manager.get_messages()):
+            if msg.get("role") == "assistant":
+                content = (msg.get("content") or "").strip()
+                if content:
+                    return content[:max_chars]
+        return ""
+
     def _get_system_prompt(self, tools: List = None) -> str:
         tools_desc = ToolRegistry.get_compact_tools_description(tools) if tools else ""
-        
+
         return f"""你是番剧管家的智能助手，负责动漫资源管理。
 
 ## 核心能力
@@ -222,6 +235,11 @@ class Agent:
 3. 主动完成任务，不要中间停顿等待确认
 4. 订阅时优先使用 search_tmdb 搜索，然后用 add_subscription 订阅
 
+## 结果真实性（最高优先级）
+- 只有实际调用了对应工具、且工具返回成功后，才能告诉用户操作已完成
+- 严禁未调用工具就声称"已订阅/已删除/已禁用/已整理/已下载"
+- 如果可用工具中没有完成操作所需的工具，或工具执行失败，如实告知用户，不要编造成功结果
+
 ## 关键规则：上下文编号选择
 当你的上一条回复包含带编号的列表（如番剧列表、搜索结果），用户回复数字时：
 - **必须根据列表编号执行对应操作**，不要调用 list_subscriptions
@@ -230,6 +248,12 @@ class Agent:
 - 订阅列表 → 调用 `operate_subscription(index=..., action=...)`
 - 多个数字（如"1 3 5"）→ 逐个执行
 - **不要询问确认，直接执行！**
+
+## 关键规则：列表翻页
+当你的上一条回复是发现/搜索得到的番剧或作品列表，用户说「换一批」「下一页」「还有吗」「继续」时：
+- 重新调用**上一次使用的同一个**发现工具（discover_bangumi / discover_tmdb），保持相同的标签/类型/排序条件，page 参数加 1
+- 禁止改用无关工具（如 get_bangumi_calendar），禁止重复返回同一页
+- 翻页后编号连续递增（第2页从21开始），用户回复编号时按表中的 ID 执行订阅
 
 ## 订阅列表格式
 ```
@@ -266,6 +290,12 @@ class Agent:
 3. **执行并反馈**：调用工具执行操作，向用户报告结果
 4. **迭代优化**：如果结果不满意，可以尝试其他方法
 
+## 结果真实性（最高优先级）
+
+- 只有实际调用了对应工具、且工具返回成功后，才能告诉用户操作已完成
+- 严禁未调用工具就声称"已订阅/已删除/已禁用/已整理/已下载"
+- 如果可用工具中没有完成操作所需的工具，或工具执行失败，如实告知用户原因，不要编造成功结果
+
 ## 重要规则
 
 - 工具调用后，你会在 tool 消息中收到真实的执行结果，请根据结果回答用户
@@ -288,6 +318,13 @@ class Agent:
 - 多个数字（如"1 3 5"）→ 逐个执行
 - **不要询问确认，直接执行！**
 - 示例：你列出了20部番剧，用户输入"13"，你应调用 subscribe_by_bangumi_id 订阅第13部
+
+## 关键规则：列表翻页
+
+当你的上一条回复是发现/搜索得到的番剧或作品列表，用户说「换一批」「下一页」「还有吗」「继续」时：
+- 重新调用**上一次使用的同一个**发现工具（discover_bangumi / discover_tmdb），保持相同的标签/类型/排序条件，page 参数加 1
+- 禁止改用无关工具（如 get_bangumi_calendar），禁止重复返回同一页
+- 翻页后编号连续递增（第2页从21开始），用户回复编号时按表中的 ID 执行订阅
 
 ## 交互格式规范
 
@@ -522,7 +559,9 @@ class Agent:
         skill_tools = matched_skill.tools_needed if matched_skill else None
         
         if self.config.enable_dynamic_tools:
-            self._selected_tools = ToolRegistry.select_tools_by_intent(user_message, skill_tools)
+            self._selected_tools = ToolRegistry.select_tools_by_intent(
+                user_message, skill_tools, self._get_context_text()
+            )
             system_prompt = self._get_system_prompt(self._selected_tools)
         else:
             self._selected_tools = []
@@ -867,7 +906,9 @@ class Agent:
         skill_tools = matched_skill.tools_needed if matched_skill else None
         
         if self.config.enable_dynamic_tools:
-            self._selected_tools = ToolRegistry.select_tools_by_intent(user_message, skill_tools)
+            self._selected_tools = ToolRegistry.select_tools_by_intent(
+                user_message, skill_tools, self._get_context_text()
+            )
             system_prompt = self._get_system_prompt(self._selected_tools)
         else:
             self._selected_tools = []

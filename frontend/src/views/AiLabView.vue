@@ -4,27 +4,23 @@
  *
  * 功能:
  * - AI 助手配置 (模型/温度/token/回退等)
- * - AI 对话 (SSE 流式，支持工具调用事件展示)
- * - 工具列表 (按分类分组、搜索)
- * - 技能管理 (搜索、启用/禁用、重载、详情查看)
+ * - AI 对话 (AiChatPanel：SSE 真流式、工具卡片、斜杠技能、历史持久化)
+ * - 工具列表 (按分类分组、搜索、测试运行)
+ * - 技能管理 (搜索、启用/禁用、重载、详情查看、跳转对话)
  * - Telegram Bot 配置
  */
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { api, apiFetch } from '@/api'
 import { configApi } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification } from '@/composables'
 import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import { PasswordInput } from '@/components/common'
-import { marked } from 'marked'
-
-marked.setOptions({ breaks: true, gfm: true })
+import AiChatPanel from '@/components/ai/AiChatPanel.vue'
+import { renderAiMarkdown } from '@/utils/aiMarkdown'
 
 defineOptions({ name: 'AiLabView' })
 
 const { success, error: showError } = useNotification()
-const { confirm } = useConfirm()
-
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || ''
 
 const activeTab = ref('chat')
 const configLoading = ref(false)
@@ -45,22 +41,9 @@ const fallbackExamples = [
   '[VCB-Studio] 鬼滅の刃 / Kimetsu no Yaiba [01][1080p][x265 10bit FLAC].mkv',
 ]
 
-// --- 认证头 ---
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return headers
-}
-
-// --- Markdown 渲染 ---
+// --- Markdown 渲染（AI 输出不可信，走 html:false 的安全渲染） ---
 function renderMarkdown(text: string): string {
-  if (!text) return ''
-  try {
-    return marked.parse(text) as string
-  } catch {
-    return text
-  }
+  return renderAiMarkdown(text || '')
 }
 
 // 助手配置
@@ -96,30 +79,95 @@ const skillDetail = ref<any>(null)
 const skillDetailLoading = ref(false)
 
 // --- 对话 ---
-interface ToolCallEvent {
-  type: string
-  tool_name?: string
-  arguments?: any
-  result?: any
-  success?: boolean
-  message?: string
-  content?: string
-  skill_id?: string
-  skill_name?: string
+const chatPanelRef = ref<InstanceType<typeof AiChatPanel> | null>(null)
+
+async function useSkillInChat(skill: { id: string; name?: string }) {
+  activeTab.value = 'chat'
+  // v-window 切换带过渡，等面板挂载好再注入技能（最多重试 ~0.5s）
+  for (let i = 0; i < 10; i++) {
+    await nextTick()
+    if (chatPanelRef.value) break
+    await new Promise(r => setTimeout(r, 50))
+  }
+  chatPanelRef.value?.useSkillInChat(skill)
 }
 
-interface ChatMessage {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  loading?: boolean
-  events?: ToolCallEvent[]
-  isStreaming?: boolean
+// --- 工具测试 ---
+const toolTestDialog = reactive<{
+  open: boolean
+  tool: any
+  values: Record<string, string>
+  loading: boolean
+  result: any
+  error: string
+}>({
+  open: false,
+  tool: null,
+  values: {},
+  loading: false,
+  result: null,
+  error: '',
+})
+
+function openToolTest(tool: any) {
+  toolTestDialog.tool = tool
+  toolTestDialog.values = {}
+  toolTestDialog.result = null
+  toolTestDialog.error = ''
+  toolTestDialog.open = true
 }
 
-const chatMessages = ref<ChatMessage[]>([])
-const chatInput = ref('')
-const chatLoading = ref(false)
-const chatContainer = ref<HTMLElement | null>(null)
+async function runToolTest() {
+  const tool = toolTestDialog.tool
+  if (!tool) return
+  const args: Record<string, unknown> = {}
+  for (const p of tool.parameters || []) {
+    const raw = (toolTestDialog.values[p.name] ?? '').trim()
+    if (!raw) {
+      if (p.required) {
+        toolTestDialog.error = `参数 ${p.name} 为必填项`
+        return
+      }
+      continue
+    }
+    if (p.type === 'number' || p.type === 'integer' || p.type === 'float') {
+      const n = Number(raw)
+      if (Number.isNaN(n)) {
+        toolTestDialog.error = `参数 ${p.name} 需要数字`
+        return
+      }
+      args[p.name] = n
+    } else if (p.type === 'boolean') {
+      args[p.name] = ['true', '1', 'yes', '是'].includes(raw.toLowerCase())
+    } else if (p.type === 'array' || p.type === 'object') {
+      try {
+        args[p.name] = JSON.parse(raw)
+      } catch {
+        toolTestDialog.error = `参数 ${p.name} 需要 JSON 格式`
+        return
+      }
+    } else {
+      args[p.name] = raw
+    }
+  }
+  toolTestDialog.loading = true
+  toolTestDialog.error = ''
+  try {
+    toolTestDialog.result = await api.post(`/api/assistant/tools/${tool.name}/execute`, { arguments: args })
+  } catch (e: any) {
+    toolTestDialog.error = e?.message || '执行失败'
+  } finally {
+    toolTestDialog.loading = false
+  }
+}
+
+function formatToolResult(result: any): string {
+  try {
+    return JSON.stringify(result, null, 2)
+  } catch {
+    return String(result)
+  }
+}
 
 const PROVIDER_OPTIONS = [
   { title: 'Ollama (本地)', value: 'ollama' },
@@ -156,7 +204,7 @@ async function saveConfig() {
 async function saveUseTools() {
   try {
     await api.post('/api/assistant/config', { use_tools: assistantConfig.use_tools })
-    success(assistantConfig.use_tools ? '已启用工具模式' : '已切换为纯对话模式')
+    success(assistantConfig.use_tools ? '已允许 AI 调用工具执行操作（全局生效，含 Telegram 默认值）' : '已切换为仅聊天模式：AI 无法执行操作，但响应更快')
   } catch {
     // 非关键
   }
@@ -295,187 +343,6 @@ const filteredSkills = computed(() => {
   })
 })
 
-// --- 对话 (SSE 流式) ---
-async function sendMessage() {
-  if (!chatInput.value.trim() || chatLoading.value) return
-
-  const userMessage = chatInput.value.trim()
-  chatInput.value = ''
-
-  chatMessages.value.push({ role: 'user', content: userMessage })
-  chatLoading.value = true
-
-  const msgIndex = chatMessages.value.length
-  chatMessages.value.push({
-    role: 'assistant',
-    content: '',
-    loading: true,
-    events: [],
-    isStreaming: true,
-  })
-
-  await nextTick()
-  scrollToBottom()
-
-  try {
-    const res = await fetch(`${API_BASE}/api/assistant/chat`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        messages: chatMessages.value
-          .filter(m => !m.loading && !m.isStreaming)
-          .map(m => ({ role: m.role, content: m.content })),
-        stream: true,
-        use_tools: assistantConfig.use_tools,
-      }),
-    })
-
-    if (!res.ok) {
-      let detail = `请求失败 (${res.status})`
-      try {
-        const errorData = await res.json()
-        detail = errorData.detail || detail
-      } catch { /* ignore */ }
-      chatMessages.value[msgIndex].content = detail
-      chatMessages.value[msgIndex].loading = false
-      chatMessages.value[msgIndex].isStreaming = false
-      chatLoading.value = false
-      return
-    }
-
-    const reader = res.body?.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    while (reader) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const event = JSON.parse(line.slice(6))
-            handleStreamEvent(msgIndex, event)
-          } catch {
-            // 忽略解析错误
-          }
-        }
-      }
-
-      await nextTick()
-      scrollToBottom()
-    }
-  } catch {
-    chatMessages.value[msgIndex].content = '网络错误，请稍后重试'
-  } finally {
-    chatMessages.value[msgIndex].loading = false
-    chatMessages.value[msgIndex].isStreaming = false
-    chatLoading.value = false
-    await nextTick()
-    scrollToBottom()
-  }
-}
-
-function handleStreamEvent(msgIndex: number, event: any) {
-  const msg = chatMessages.value[msgIndex]
-  if (!msg) return
-
-  switch (event.type) {
-    case 'skill':
-      msg.events!.push({
-        type: 'skill',
-        message: event.message,
-        skill_name: event.skill_name,
-      })
-      break
-
-    case 'thinking':
-      if (event.content) {
-        msg.events!.push({
-          type: 'thinking',
-          content: event.content,
-        })
-      }
-      break
-
-    case 'tool_call':
-      msg.events!.push({
-        type: 'tool_call',
-        tool_name: event.tool_name,
-        arguments: event.arguments,
-        message: event.message,
-      })
-      break
-
-    case 'tool_result': {
-      const lastToolEvent = [...msg.events!]
-        .reverse()
-        .find((e: any) => e.type === 'tool_call' && e.tool_name === event.tool_name)
-      if (lastToolEvent) {
-        lastToolEvent.result = event.result
-        lastToolEvent.success = event.success
-      }
-      msg.events!.push({
-        type: 'tool_result',
-        tool_name: event.tool_name,
-        success: event.success,
-        message: event.message,
-      })
-      break
-    }
-
-    case 'response':
-      msg.content = event.content || ''
-      break
-
-    case 'error':
-      msg.content = `错误: ${event.message}`
-      break
-  }
-}
-
-function scrollToBottom() {
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-  }
-}
-
-async function clearChat() {
-  const ok = await confirm({
-    title: '确认清空',
-    content: '确定要清空所有对话记录吗？',
-    confirmText: '确定清空',
-    cancelText: '取消',
-    confirmColor: 'error',
-  })
-  if (ok) {
-    chatMessages.value = []
-  }
-}
-
-function getEventColor(event: ToolCallEvent): string {
-  if (event.type === 'tool_result') {
-    return event.success ? 'success' : 'error'
-  }
-  if (event.type === 'error') return 'error'
-  if (event.type === 'skill') return 'info'
-  return 'default'
-}
-
-function getEventLabel(event: ToolCallEvent): string {
-  switch (event.type) {
-    case 'tool_call': return '调用工具'
-    case 'tool_result': return '执行结果'
-    case 'skill': return '触发技能'
-    case 'thinking': return '思考'
-    default: return event.type
-  }
-}
-
 // --- AI 介入测试 ---
 async function runFallbackTest() {
   if (!fallbackFilename.value.trim() || fallbackLoading.value) return
@@ -542,92 +409,7 @@ registerHeaderTab({
     <v-window v-model="activeTab">
       <!-- AI 对话 -->
       <v-window-item value="chat">
-        <v-card class="glass-card" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
-          <!-- 对话消息区 -->
-          <div ref="chatContainer" class="flex-grow-1 overflow-y-auto pa-4" style="min-height: 0">
-            <div v-if="chatMessages.length === 0" class="empty-state">
-              <v-icon size="64" color="primary" class="mb-4">mdi-robot-outline</v-icon>
-              <div class="text-h6 font-weight-medium">AI 助手</div>
-              <div class="text-body-2 text-medium-emphasis mt-2">输入消息开始对话，支持工具调用</div>
-            </div>
-
-            <div v-for="(msg, index) in chatMessages" :key="index" class="mb-4">
-              <!-- 用户消息 -->
-              <div v-if="msg.role === 'user'" class="d-flex justify-end">
-                <div class="user-bubble">{{ msg.content }}</div>
-              </div>
-
-              <!-- 助手消息 -->
-              <div v-else class="d-flex justify-start">
-                <div class="assistant-bubble">
-                  <!-- 工具调用事件 -->
-                  <div v-if="msg.events?.length" class="mb-2">
-                    <div
-                      v-for="(event, ei) in msg.events"
-                      :key="ei"
-                      class="event-item mb-1"
-                      :class="event.type"
-                    >
-                      <div class="d-flex align-center ga-2">
-                        <span class="text-caption font-weight-medium">{{ getEventLabel(event) }}</span>
-                        <span v-if="event.tool_name" class="text-caption font-mono text-primary">{{ event.tool_name }}</span>
-                        <span v-if="event.skill_name" class="text-caption font-mono text-primary">{{ event.skill_name }}</span>
-                        <v-chip
-                          v-if="event.type === 'tool_result'"
-                          :color="getEventColor(event)"
-                          size="x-small"
-                          variant="flat"
-                        >
-                          {{ event.success ? '成功' : '失败' }}
-                        </v-chip>
-                      </div>
-                      <div v-if="event.message" class="text-caption text-medium-emphasis mt-1">{{ event.message }}</div>
-                      <details v-if="event.arguments || event.result" class="mt-1">
-                        <summary class="text-caption text-primary cursor-pointer">详情</summary>
-                        <pre class="text-caption pa-2 rounded mt-1" style="background: rgba(0,0,0,0.06); overflow-x: auto; max-height: 200px;">{{ JSON.stringify(event.arguments || event.result, null, 2) }}</pre>
-                      </details>
-                    </div>
-                  </div>
-
-                  <!-- 消息内容 -->
-                  <v-progress-circular v-if="msg.loading" indeterminate size="20" color="primary" class="mr-2" />
-                  <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <v-divider />
-
-          <!-- 输入区 -->
-          <div class="pa-3 d-flex ga-2 align-center">
-            <v-text-field
-              v-model="chatInput"
-              placeholder="输入消息..."
-              density="comfortable"
-              variant="outlined"
-              hide-details
-              :disabled="chatLoading"
-              @keydown.enter="sendMessage"
-              class="flex-grow-1"
-            />
-            <v-btn
-              variant="tonal" color="primary"
-              icon="mdi-send"
-              :loading="chatLoading"
-              :disabled="!chatInput.trim()"
-              @click="sendMessage"
-            />
-            <v-btn
-              variant="tonal"
-              color="warning"
-              size="small"
-              prepend-icon="mdi-delete-outline"
-              :disabled="chatMessages.length === 0"
-              @click="clearChat"
-            >清空</v-btn>
-          </div>
-        </v-card>
+        <AiChatPanel ref="chatPanelRef" />
       </v-window-item>
 
       <!-- 工具列表 -->
@@ -661,9 +443,18 @@ registerHeaderTab({
                 <v-card v-for="tool in toolList" :key="tool.name" class="glass-card tool-card mb-2" variant="flat">
                   <div class="d-flex align-center justify-space-between mb-1">
                     <span class="font-mono font-weight-bold text-body-2">{{ tool.name }}</span>
-                    <v-chip size="x-small" variant="tonal" :color="tool.parameters?.length ? 'primary' : 'default'">
-                      {{ tool.parameters?.length || 0 }} 参数
-                    </v-chip>
+                    <div class="d-flex align-center ga-2">
+                      <v-chip size="x-small" variant="tonal" :color="tool.parameters?.length ? 'primary' : 'default'">
+                        {{ tool.parameters?.length || 0 }} 参数
+                      </v-chip>
+                      <v-btn
+                        size="x-small"
+                        variant="tonal"
+                        color="primary"
+                        prepend-icon="mdi-play-outline"
+                        @click="openToolTest(tool)"
+                      >测试</v-btn>
+                    </div>
                   </div>
                   <div class="text-body-2 text-medium-emphasis">{{ tool.description }}</div>
                   <div v-if="tool.parameters?.length" class="mt-2">
@@ -769,6 +560,14 @@ registerHeaderTab({
                   >
                     {{ expandedSkillId === skill.id ? '收起详情' : '查看详情' }}
                   </v-btn>
+                  <v-spacer />
+                  <v-btn
+                    size="small"
+                    variant="tonal"
+                    color="info"
+                    prepend-icon="mdi-chat-plus-outline"
+                    @click="useSkillInChat(skill)"
+                  >在对话中使用</v-btn>
                 </v-card-actions>
 
                 <!-- 展开详情 -->
@@ -854,8 +653,10 @@ registerHeaderTab({
             <div class="d-flex align-center ga-3 mb-4">
               <v-switch v-model="assistantConfig.use_tools" density="compact" hide-details color="primary" @update:model-value="saveUseTools" />
               <div>
-                <div class="text-body-2 font-weight-medium">启用工具调用</div>
-                <div class="text-caption text-medium-emphasis">允许 AI 调用系统工具执行实际操作</div>
+                <div class="text-body-2 font-weight-medium">允许 AI 操作（工具调用）</div>
+                <div class="text-caption text-medium-emphasis">
+                  开启：AI 可调用搜索、订阅、整理等工具执行实际操作；关闭：仅能聊天问答。全局默认值，Telegram Bot 未单独设置时也使用它
+                </div>
               </div>
             </div>
 
@@ -1190,7 +991,76 @@ registerHeaderTab({
         </v-card>
       </v-window-item>
     </v-window>
+
+    <!-- 工具测试对话框 -->
+    <v-dialog v-model="toolTestDialog.open" max-width="560">
+      <v-card class="glass-card">
+        <v-card-title class="pa-4 d-flex align-center ga-2">
+          <v-icon color="primary" size="20">mdi-play-circle-outline</v-icon>
+          <span class="font-mono text-body-1 font-weight-bold">{{ toolTestDialog.tool?.name }}</span>
+          <v-spacer />
+          <v-btn icon size="small" variant="text" @click="toolTestDialog.open = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-4">
+          <div class="text-body-2 text-medium-emphasis mb-4">{{ toolTestDialog.tool?.description }}</div>
+
+          <template v-if="toolTestDialog.tool?.parameters?.length">
+            <div v-for="p in toolTestDialog.tool.parameters" :key="p.name" class="mb-3">
+              <div class="text-caption mb-1">
+                <span class="font-mono text-primary">{{ p.name }}</span>
+                <span class="text-medium-emphasis">
+                  （{{ p.type }}{{ p.required ? '，必填' : '' }}）{{ p.description ? ' ' + p.description : '' }}
+                </span>
+              </div>
+              <v-text-field
+                v-model="toolTestDialog.values[p.name]"
+                density="compact"
+                variant="outlined"
+                hide-details
+                :placeholder="p.type === 'array' || p.type === 'object' ? 'JSON 格式' : p.required ? '必填' : '可选'"
+              />
+            </div>
+          </template>
+          <div v-else class="text-caption text-medium-emphasis mb-2">该工具无需参数，直接执行即可。</div>
+
+          <v-alert v-if="toolTestDialog.error" density="compact" type="error" variant="tonal" class="mt-2">
+            {{ toolTestDialog.error }}
+          </v-alert>
+
+          <div v-if="toolTestDialog.result !== null" class="mt-3">
+            <div class="text-caption text-medium-emphasis mb-1">执行结果</div>
+            <pre class="tool-test-result">{{ formatToolResult(toolTestDialog.result) }}</pre>
+          </div>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" @click="toolTestDialog.open = false">关闭</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-play" :loading="toolTestDialog.loading" @click="runToolTest">
+            执行
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 
+
+<style scoped>
+.tool-test-result {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: auto;
+  max-height: 300px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>

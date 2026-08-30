@@ -3,7 +3,8 @@ import logging
 import httpx
 import json
 import re
-from typing import Optional, Dict, List, Any
+import time
+from typing import Optional, Dict, List, Any, Tuple
 from config_manager import ConfigManager
 from logger import log_audit
 
@@ -21,6 +22,10 @@ class TelegramBot:
     _user_sessions: Dict[int, List[Dict]] = {}
     # 存储每个 chat 的分页列表数据：{chat_id: {"items": [...], "title": "...", "page": 0, "total": N, "msg_id": 123}}
     _paginated_lists: Dict[int, Dict[str, Any]] = {}
+    # 每个 chat 正在执行的 AI 任务：{chat_id: asyncio.Task}
+    _chat_tasks: Dict[int, asyncio.Task] = {}
+    # 每个 chat 的会话级设置：{chat_id: {"use_tools": bool | None}}，None 表示跟随全局配置
+    _chat_settings: Dict[int, Dict[str, Any]] = {}
     
     @classmethod
     def get_instance(cls) -> "TelegramBot":
@@ -60,11 +65,12 @@ class TelegramBot:
     # Telegram sendMessage 单条消息字符数上限
     TELEGRAM_MSG_LIMIT = 4096
 
-    async def _send_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None, reply_markup: Dict = None) -> bool:
+    async def _send_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None, reply_markup: Dict = None, parse_html: bool = True) -> bool:
         """
         发送消息，自动处理超长消息分片。
         Telegram sendMessage 单条消息限制 4096 字符，超过时按行拆分依次发送。
         :param reply_markup: 可选的 inline keyboard
+        :param parse_html: 按 Telegram HTML 发送；解析失败会自动回退纯文本
         :return: 全部分片发送成功返回 True，任一失败返回 False
         """
         if not text:
@@ -73,7 +79,7 @@ class TelegramBot:
         chunks = self._split_long_message(text, self.TELEGRAM_MSG_LIMIT)
 
         if len(chunks) == 1:
-            return await self._send_single_message(client, bot_token, chat_id, chunks[0], reply_to, reply_markup)
+            return await self._send_single_message(client, bot_token, chat_id, chunks[0], reply_to, reply_markup, parse_html) is not None
 
         logger.info(f"[TG Bot] 消息过长({len(text)}字符)，拆分为 {len(chunks)} 条发送")
         all_success = True
@@ -82,38 +88,53 @@ class TelegramBot:
             chunk_reply_to = reply_to if idx == 0 else None
             # 只有第一条附带 reply_markup（翻页按钮）
             chunk_markup = reply_markup if idx == 0 else None
-            if not await self._send_single_message(client, bot_token, chat_id, chunk, chunk_reply_to, chunk_markup):
+            sent = await self._send_single_message(client, bot_token, chat_id, chunk, chunk_reply_to, chunk_markup, parse_html)
+            if sent is None:
                 all_success = False
             # 避免发送过快触发 Telegram 速率限制
             await asyncio.sleep(0.3)
 
         return all_success
 
-    async def _send_single_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None, reply_markup: Dict = None) -> bool:
-        """发送单条消息（不超过 4096 字符）"""
+    async def _send_single_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None, reply_markup: Dict = None, parse_html: bool = True) -> Optional[int]:
+        """
+        发送单条消息（不超过 4096 字符）。
+        :return: 成功返回 message_id，失败返回 None
+        """
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         payload = {
             "chat_id": chat_id,
             "text": text,
-            "parse_mode": "HTML"
         }
-        
+
+        if parse_html:
+            payload["parse_mode"] = "HTML"
+
         if reply_to:
             payload["reply_to_message_id"] = reply_to
 
         if reply_markup:
             payload["reply_markup"] = reply_markup
-        
-        try:
-            resp = await client.post(url, json=payload, timeout=10)
-            if resp.status_code == 200:
-                return True
-            else:
+
+        for attempt in range(2):
+            try:
+                resp = await client.post(url, json=payload, timeout=10)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("result", {}).get("message_id")
+                # HTML 实体解析失败（模型输出常含特殊字符），去掉格式化回退纯文本重试一次
+                if attempt == 0 and parse_html and resp.status_code == 400:
+                    logger.warning(f"[TG Bot] HTML 解析失败，回退纯文本重发: {resp.text[:200]}")
+                    payload = {k: v for k, v in payload.items() if k != "parse_mode"}
+                    payload["text"] = self._html_to_plain(text)
+                    continue
                 logger.error(f"[TG Bot] 发送消息失败: {resp.status_code} - {resp.text}")
-        except Exception as e:
-            logger.error(f"[TG Bot] 发送消息异常: {e}")
-        
-        return False
+                return None
+            except Exception as e:
+                logger.error(f"[TG Bot] 发送消息异常: {e}")
+                return None
+
+        return None
 
     @staticmethod
     def _split_long_message(text: str, limit: int) -> List[str]:
@@ -148,6 +169,85 @@ class TelegramBot:
             chunks.append(current)
 
         return chunks
+
+    # ==================== Markdown → Telegram HTML ====================
+
+    @staticmethod
+    def _escape_html(text: str) -> str:
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    @staticmethod
+    def _html_to_plain(text: str) -> str:
+        """HTML 回退纯文本：去标签并还原转义"""
+        text = re.sub(r"<[^>]+>", "", text)
+        return text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+
+    def _md_to_telegram_html(self, text: str) -> str:
+        """
+        模型输出的 Markdown 转 Telegram 支持的 HTML 子集（b/i/s/code/pre/a）。
+        Telegram 不支持任意 HTML，直接发送原始 Markdown 会解析失败或原样显示符号。
+        """
+        if not text:
+            return ""
+        out: List[str] = []
+        segments = text.split("```")
+        for i, seg in enumerate(segments):
+            if i % 2 == 1:
+                # 代码块：第一行是语言标识
+                lines = seg.split("\n", 1)
+                lang = lines[0].strip() if len(lines) > 1 else ""
+                body = (lines[1] if len(lines) > 1 else seg).rstrip("\n")
+                inner = self._escape_html(body)
+                if lang:
+                    out.append(f'<pre><code class="language-{self._escape_html(lang)}">{inner}</code></pre>')
+                else:
+                    out.append(f"<pre>{inner}</pre>")
+            else:
+                out.append(self._convert_block_md(seg))
+        return "".join(out).replace("\x00", "")
+
+    def _convert_block_md(self, block: str) -> str:
+        """逐行转换非代码块的 Markdown：标题/引用/普通行"""
+        lines_out: List[str] = []
+        for line in block.split("\n"):
+            stripped = line.strip()
+            # 表格分隔行（|---|---|）跳过，表格内容行保留原样
+            if "|" in stripped and re.match(r"^\|?[\s:|-]*-[\s:|-]*\|", stripped):
+                continue
+            m = re.match(r"^#{1,6}\s+(.*)$", stripped)
+            if m:
+                lines_out.append(f"<b>{self._convert_inline_md(m.group(1))}</b>")
+                continue
+            m = re.match(r"^>\s?(.*)$", stripped)
+            if m:
+                lines_out.append(f"<i>{self._convert_inline_md(m.group(1))}</i>")
+                continue
+            lines_out.append(self._convert_inline_md(line))
+        return "\n".join(lines_out)
+
+    def _convert_inline_md(self, text: str) -> str:
+        """行内 Markdown 转换：行内代码先摘除，避免其中的符号被二次转换"""
+        codes: List[str] = []
+
+        def _stash(m):
+            codes.append(m.group(1))
+            return f"\x00{len(codes) - 1}\x00"
+
+        text = re.sub(r"`([^`\n]+)`", _stash, text)
+        text = self._escape_html(text)
+        text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
+        text = re.sub(r"__(.+?)__", r"<b>\1</b>", text)
+        text = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<i>\1</i>", text)
+        text = re.sub(r"~~(.+?)~~", r"<s>\1</s>", text)
+        text = re.sub(r"\[([^\]]+)\]\((https?://[^\s)]+)\)", r'<a href="\2">\1</a>', text)
+
+        def _restore(m):
+            idx = int(m.group(1))
+            if 0 <= idx < len(codes):
+                return f"<code>{self._escape_html(codes[idx])}</code>"
+            return ""
+
+        return re.sub(r"\x00(\d+)\x00", _restore, text)
 
     # ==================== 分页列表功能 ====================
 
@@ -407,10 +507,10 @@ class TelegramBot:
 
         return "\n".join(lines)
 
-    async def _try_send_as_paginated(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None) -> bool:
+    async def _try_send_as_paginated(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None) -> Optional[int]:
         """
         尝试将 Agent 返回的长列表消息转为带翻页按钮的消息。
-        如果消息不包含编号列表或不够长，返回 False 走普通发送。
+        如果消息不包含编号列表或不够长，返回 None 走普通发送。
         """
         parsed = self._parse_list_from_text(text)
         if not parsed:
@@ -581,76 +681,275 @@ class TelegramBot:
         except Exception as e:
             logger.debug(f"[TG Bot] 应答回调失败: {e}")
 
-    async def _edit_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, message_id: int, text: str, reply_markup: Dict = None) -> bool:
-        """编辑已发送的消息"""
+    async def _edit_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, message_id: int, text: str, reply_markup: Dict = None, parse_html: bool = True) -> bool:
+        """编辑已发送的消息（HTML 解析失败自动回退纯文本）"""
         url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
         payload = {
             "chat_id": chat_id,
             "message_id": message_id,
             "text": text,
-            "parse_mode": "HTML"
         }
+        if parse_html:
+            payload["parse_mode"] = "HTML"
         if reply_markup:
             payload["reply_markup"] = reply_markup
 
+        for attempt in range(2):
+            try:
+                resp = await client.post(url, json=payload, timeout=10)
+                if resp.status_code == 200:
+                    return True
+                if attempt == 0 and parse_html and resp.status_code == 400:
+                    logger.warning(f"[TG Bot] 编辑消息 HTML 解析失败，回退纯文本: {resp.text[:200]}")
+                    payload = {k: v for k, v in payload.items() if k != "parse_mode"}
+                    payload["text"] = self._html_to_plain(text)
+                    continue
+                logger.error(f"[TG Bot] 编辑消息失败: {resp.status_code} - {resp.text}")
+                return False
+            except Exception as e:
+                logger.error(f"[TG Bot] 编辑消息异常: {e}")
+                return False
+
+        return False
+
+    async def _delete_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, message_id: int) -> bool:
+        """删除已发送的消息（用于撤回进度占位消息）"""
+        url = f"https://api.telegram.org/bot{bot_token}/deleteMessage"
+        payload = {"chat_id": chat_id, "message_id": message_id}
         try:
             resp = await client.post(url, json=payload, timeout=10)
-            if resp.status_code == 200:
-                return True
-            else:
-                logger.error(f"[TG Bot] 编辑消息失败: {resp.status_code} - {resp.text}")
+            return resp.status_code == 200
         except Exception as e:
-            logger.error(f"[TG Bot] 编辑消息异常: {e}")
-        
-        return False
+            logger.debug(f"[TG Bot] 删除消息失败: {e}")
+            return False
+
+    async def _send_chat_action(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, action: str = "typing"):
+        """发送聊天状态动作（typing 只持续 5 秒，由 _typing_loop 周期性重发）"""
+        url = f"https://api.telegram.org/bot{bot_token}/sendChatAction"
+        payload = {"chat_id": chat_id, "action": action}
+        try:
+            await client.post(url, json=payload, timeout=10)
+        except Exception as e:
+            logger.debug(f"[TG Bot] 发送 chat action 失败: {e}")
+
+    async def _typing_loop(self, client: httpx.AsyncClient, bot_token: str, chat_id: int):
+        """AI 处理期间持续显示「输入中…」状态"""
+        while True:
+            await self._send_chat_action(client, bot_token, chat_id)
+            await asyncio.sleep(4.5)
+
+    async def _set_my_commands(self, client: httpx.AsyncClient, bot_token: str):
+        """注册 Bot 命令菜单（Telegram 输入框左侧的菜单按钮）"""
+        url = f"https://api.telegram.org/bot{bot_token}/setMyCommands"
+        payload = {
+            "commands": [
+                {"command": "status", "description": "查看系统状态"},
+                {"command": "skills", "description": "查看可用技能"},
+                {"command": "tools", "description": "查看/切换工具调用模式"},
+                {"command": "stop", "description": "停止当前 AI 任务"},
+                {"command": "clear", "description": "清空对话历史"},
+                {"command": "help", "description": "显示帮助"},
+            ]
+        }
+        try:
+            resp = await client.post(url, json=payload, timeout=10)
+            if resp.status_code != 200:
+                logger.warning(f"[TG Bot] 注册命令菜单失败: {resp.text[:200]}")
+        except Exception as e:
+            logger.warning(f"[TG Bot] 注册命令菜单异常: {e}")
 
     # ==================== Agent 调用 ====================
 
-    async def _call_agent(self, chat_id: int, text: str) -> tuple:
-        """调用 Agent，返回 (response_text, list_data) 元组"""
+    def _get_effective_tool_mode(self, chat_id: int) -> bool:
+        """本会话的工具模式：未手动设置时跟随全局配置"""
+        settings = self._chat_settings.get(chat_id, {})
+        current = settings.get("use_tools")
+        if current is not None:
+            return bool(current)
         try:
-            from assistant.agent import Agent, AgentConfig
-            from routers.assistant import get_assistant_config, init_assistant
-            
-            init_assistant()
-            
-            config = get_assistant_config()
-            
-            if not config.get("base_url") or not config.get("model"):
-                return "❌ 智能体未配置，请先在 AI 实验室中配置模型。", None
-            
-            agent_config = AgentConfig(
-                base_url=config.get("base_url", ""),
-                api_key=config.get("api_key", ""),
-                model=config.get("model", ""),
-                provider=config.get("provider", "openai"),
-                temperature=config.get("temperature", 0.7),
-                max_tokens=config.get("max_tokens", 64) * 1000,
-                max_iterations=config.get("max_iterations", 10)
+            from routers.assistant import get_assistant_config
+            return bool(get_assistant_config().get("use_tools", True))
+        except Exception:
+            return True
+
+    async def _run_agent_with_progress(
+        self, client: httpx.AsyncClient, bot_token: str,
+        chat_id: int, text: str, status_msg_id: Optional[int]
+    ) -> Tuple[str, Optional[Dict]]:
+        """
+        以事件方式运行 Agent，把工具调用进度实时编辑到占位消息上。
+        返回 (最终文本, 结构化列表数据)。
+        """
+        from assistant.agent import Agent, AgentConfig
+        from routers.assistant import get_assistant_config, init_assistant
+
+        init_assistant()
+
+        config = get_assistant_config()
+        if not config.get("base_url") or not config.get("model"):
+            return "❌ 智能体未配置，请先在 AI 实验室中配置模型。", None
+
+        agent_config = AgentConfig(
+            base_url=config.get("base_url", ""),
+            api_key=config.get("api_key", ""),
+            model=config.get("model", ""),
+            provider=config.get("provider", "openai"),
+            temperature=config.get("temperature", 0.7),
+            max_tokens=config.get("max_tokens", 64) * 1000,
+            max_iterations=config.get("max_iterations", 10)
+        )
+
+        existing_messages = self._user_sessions.get(chat_id, [])
+        agent = Agent(agent_config, existing_messages.copy() if existing_messages else None)
+
+        status_lines: List[str] = []
+        last_edit = 0.0
+
+        async def refresh(force: bool = False):
+            """把当前进度编辑到占位消息（限频 2 秒，force 跳过）"""
+            nonlocal last_edit
+            if not status_msg_id:
+                return
+            now = time.monotonic()
+            if not force and now - last_edit < 2.0:
+                return
+            last_edit = now
+            body = "\n".join(status_lines[-4:]) if status_lines else "思考中…"
+            await self._edit_message(
+                client, bot_token, chat_id, status_msg_id,
+                "🤔 " + self._escape_html(body)
             )
-            
-            existing_messages = self._user_sessions.get(chat_id, [])
-            
-            agent = Agent(agent_config, existing_messages.copy() if existing_messages else None)
-            
-            result = await agent.run_simple(text)
-            
-            self._user_sessions[chat_id] = agent.messages[-20:]
-            
-            # 获取 Agent 捕获的结构化列表数据
-            list_data = agent.last_list_data
-            
-            if result:
-                return result, list_data
-            else:
-                return "❌ 智能体返回空响应", None
-                
-        except ImportError as e:
-            logger.error(f"[TG Bot] 导入智能体模块失败: {e}")
-            return f"❌ 系统错误：无法加载智能体模块", None
+
+        final_text = ""
+        try:
+            async for event in agent.run(text):
+                event_type = event.get("type")
+                if event_type == "skill":
+                    status_lines.append(f"⚡ 技能: {event.get('skill_name', '')}")
+                    await refresh(force=True)
+                elif event_type == "tool_call":
+                    status_lines.append(f"🔧 {event.get('tool_name', '')} …")
+                    await refresh(force=True)
+                elif event_type == "tool_result":
+                    if status_lines:
+                        mark = "✅" if event.get("success") else "❌"
+                        status_lines[-1] = f"🔧 {event.get('tool_name', '')} {mark}"
+                    await refresh()
+                elif event_type == "warning":
+                    status_lines.append(f"⚠️ {event.get('message', '')}")
+                    await refresh()
+                elif event_type == "response":
+                    final_text = event.get("content", "")
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             logger.error(f"[TG Bot] 调用智能体失败: {e}", exc_info=True)
-            return f"❌ 智能体调用失败: {str(e)}", None
+            final_text = f"❌ 智能体调用失败: {e}"
+
+        self._user_sessions[chat_id] = agent.messages[-20:]
+
+        if not final_text:
+            final_text = "❌ 智能体返回空响应"
+
+        return final_text, agent.last_list_data
+
+    async def _call_simple_chat(self, chat_id: int, text: str) -> Tuple[str, None]:
+        """纯对话模式（不走工具调用），直接请求 LLM 并维护会话历史"""
+        from fastapi import HTTPException
+        from routers.assistant import get_assistant_config, init_assistant, _simple_chat, ChatMessage
+
+        init_assistant()
+
+        config = get_assistant_config()
+        if not config.get("base_url") or not config.get("model"):
+            return "❌ 智能体未配置，请先在 AI 实验室中配置模型。", None
+
+        history = self._user_sessions.get(chat_id, [])
+        msgs = [
+            ChatMessage(role=m["role"], content=m["content"])
+            for m in history if m.get("role") in ("user", "assistant") and m.get("content")
+        ]
+        msgs.append(ChatMessage(role="user", content=text))
+
+        try:
+            data = await _simple_chat(msgs, config)
+            content = ""
+            choices = data.get("choices") or []
+            if choices:
+                content = (choices[0].get("message") or {}).get("content", "")
+            content = (content or "").strip() or "❌ 智能体返回空响应"
+            self._user_sessions[chat_id] = (
+                history + [{"role": "user", "content": text}, {"role": "assistant", "content": content}]
+            )[-20:]
+            return content, None
+        except HTTPException as e:
+            detail = e.detail if isinstance(e.detail, str) else str(e.detail)
+            return f"❌ 请求失败: {detail}", None
+        except Exception as e:
+            logger.error(f"[TG Bot] 纯对话调用失败: {e}", exc_info=True)
+            return f"❌ 请求失败: {e}", None
+
+    async def _process_ai_message(self, client: httpx.AsyncClient, bot_token: str, chat_id: int, text: str, reply_to: int = None):
+        """
+        完整处理一条 AI 对话消息：
+        发送占位消息 → 持续 typing 状态 → 实时更新工具进度 → 完成后替换为最终回复。
+        任务可被 /stop 取消。
+        """
+        status_msg_id: Optional[int] = None
+        typing_task: Optional[asyncio.Task] = None
+        final_text = ""
+        list_data = None
+
+        try:
+            status_msg_id = await self._send_single_message(
+                client, bot_token, chat_id, "🤔 思考中…", reply_to=reply_to
+            )
+            typing_task = asyncio.create_task(self._typing_loop(client, bot_token, chat_id))
+
+            if self._get_effective_tool_mode(chat_id):
+                final_text, list_data = await self._run_agent_with_progress(
+                    client, bot_token, chat_id, text, status_msg_id
+                )
+            else:
+                final_text, list_data = await self._call_simple_chat(chat_id, text)
+        except asyncio.CancelledError:
+            logger.info(f"[TG Bot] AI 任务被取消: chat={chat_id}")
+            if status_msg_id:
+                await self._edit_message(client, bot_token, chat_id, status_msg_id, "⏹️ 已停止")
+            raise
+        finally:
+            if typing_task:
+                typing_task.cancel()
+            if self._chat_tasks.get(chat_id) is asyncio.current_task():
+                self._chat_tasks.pop(chat_id, None)
+
+        # ---- 发送最终结果（未被取消才会走到这里） ----
+        if list_data and list_data.get("items"):
+            # 结构化列表：撤掉进度占位，发送带订阅按钮的列表
+            if status_msg_id:
+                await self._delete_message(client, bot_token, chat_id, status_msg_id)
+            sent = await self._send_list_with_buttons(client, bot_token, chat_id, list_data, reply_to=reply_to)
+            if not sent:
+                await self._send_message(client, bot_token, chat_id, final_text, reply_to=reply_to)
+            return
+
+        # 尝试把长列表文本转为分页消息
+        if len(final_text) > 200 and await self._try_send_as_paginated(client, bot_token, chat_id, final_text, reply_to=reply_to):
+            if status_msg_id:
+                await self._delete_message(client, bot_token, chat_id, status_msg_id)
+            return
+
+        # 普通回复：把占位消息编辑为最终内容，超出部分作为新消息追加
+        html = self._md_to_telegram_html(final_text)
+        chunks = self._split_long_message(html, self.TELEGRAM_MSG_LIMIT)
+        if status_msg_id:
+            await self._edit_message(client, bot_token, chat_id, status_msg_id, chunks[0])
+            rest = chunks[1:]
+        else:
+            rest = chunks
+        for chunk in rest:
+            await self._send_single_message(client, bot_token, chat_id, chunk)
+            await asyncio.sleep(0.3)
     
     # ==================== 更新处理 ====================
 
@@ -688,40 +987,43 @@ class TelegramBot:
             response = await self._handle_command(chat_id, text)
             await self._send_message(client, bot_token, chat_id, response, reply_to=message_id)
         else:
-            response, list_data = await self._call_agent(chat_id, text)
-            
-            # 优先使用结构化列表数据（带订阅按钮）
-            if list_data and list_data.get("items"):
-                sent = await self._send_list_with_buttons(client, bot_token, chat_id, list_data, reply_to=message_id)
-                if not sent:
-                    await self._send_message(client, bot_token, chat_id, response, reply_to=message_id)
-            else:
-                # 回退：尝试从文本解析列表进行分页
-                sent = await self._try_send_as_paginated(client, bot_token, chat_id, response, reply_to=message_id)
-                if not sent:
-                    # 不是可分页列表，走普通发送
-                    await self._send_message(client, bot_token, chat_id, response, reply_to=message_id)
+            # AI 任务按 chat 隔离：同 chat 上一条没处理完时提示，避免交错
+            task = self._chat_tasks.get(chat_id)
+            if task and not task.done():
+                await self._send_message(
+                    client, bot_token, chat_id,
+                    "⏳ 上一条消息还在处理中，请稍候…\n发送 /stop 可取消当前任务",
+                    reply_to=message_id,
+                )
+                return
+            # 独立任务运行，不阻塞轮询循环（其他命令/其他 chat 不受影响）
+            self._chat_tasks[chat_id] = asyncio.create_task(
+                self._process_ai_message(client, bot_token, chat_id, text, message_id)
+            )
 
     async def _handle_command(self, chat_id: int, command: str) -> str:
         cmd = command.lower().strip()
-        
+
         if cmd == "/start":
             return (
                 "👋 你好！我是番剧管家智能助手\n\n"
-                "你可以直接发送消息与我对话，我可以帮你：\n"
-                "• 搜索和订阅番剧\n"
-                "• 查询系统状态\n"
-                "• 整理文件\n"
-                "• 回答动漫相关问题\n\n"
-                "发送 /help 查看更多命令"
+                "直接发消息即可对话，我可以帮你：\n"
+                "• 搜索和订阅番剧（搜索结果带按钮，点击直接订阅）\n"
+                "• 查询订阅、下载、整理、系统状态\n"
+                "• 自动匹配技能完成复杂任务\n\n"
+                "试试发送：查看我的订阅 或 推荐新番\n\n"
+                "发送 /help 查看全部命令"
             )
         elif cmd == "/help":
             return (
                 "📖 可用命令\n\n"
-                "/start - 开始对话\n"
-                "/help - 显示帮助\n"
-                "/clear - 清除对话历史\n"
-                "/status - 查看系统状态"
+                "/status - 查看系统状态\n"
+                "/skills - 查看可用技能\n"
+                "/tools - 查看/切换工具调用模式\n"
+                "/stop - 停止当前 AI 任务\n"
+                "/clear - 清空对话历史\n"
+                "/help - 显示帮助\n\n"
+                "💡 对话过程中会实时显示正在调用的工具，随时可以 /stop 中断。"
             )
         elif cmd == "/clear":
             if chat_id in self._user_sessions:
@@ -730,26 +1032,90 @@ class TelegramBot:
             if chat_id in self._paginated_lists:
                 del self._paginated_lists[chat_id]
             return "✅ 对话历史已清除"
+        elif cmd == "/stop":
+            task = self._chat_tasks.get(chat_id)
+            if task and not task.done():
+                task.cancel()
+                return "⏹️ 正在停止当前任务…"
+            return "当前没有正在执行的 AI 任务"
+        elif cmd == "/skills":
+            return await self._get_skills_text()
+        elif cmd == "/tools" or cmd.startswith("/tools "):
+            return self._handle_tools_command(chat_id, cmd)
         elif cmd == "/status":
-            return await self._get_system_status()
+            return await self._get_system_status(chat_id)
         else:
-            return f"❓ 未知命令: {command}\n发送 /help 查看可用命令"
-    
-    async def _get_system_status(self) -> str:
+            return f"❓ 未知命令: {self._escape_html(command)}\n发送 /help 查看可用命令"
+
+    def _handle_tools_command(self, chat_id: int, cmd: str) -> str:
+        """/tools 查看或切换本会话的工具调用模式"""
+        parts = cmd.split(maxsplit=1)
+        arg = parts[1].strip().lower() if len(parts) > 1 else ""
+        settings = self._chat_settings.setdefault(chat_id, {})
+
+        if arg in ("on", "off"):
+            settings["use_tools"] = (arg == "on")
+        elif arg:
+            return "用法：/tools on 开启，/tools off 关闭，/tools 查看当前状态"
+
+        current = settings.get("use_tools")
+        global_mode = True
+        try:
+            from routers.assistant import get_assistant_config
+            global_mode = bool(get_assistant_config().get("use_tools", True))
+        except Exception:
+            pass
+        effective = global_mode if current is None else current
+        source = "跟随全局配置" if current is None else "本会话手动设置"
+        hint = "" if arg in ("on", "off") else "\n\n发送 /tools on 或 /tools off 可切换"
+
+        return (
+            f"🛠 工具调用模式：{'开启' if effective else '关闭'}\n"
+            f"（{source}，全局默认：{'开启' if global_mode else '关闭'}）{hint}\n\n"
+            "开启后 AI 可调用订阅、整理、系统管理等工具；关闭则为纯对话模式。"
+        )
+
+    async def _get_skills_text(self) -> str:
+        """/skills 列出已启用的技能"""
+        try:
+            from routers.assistant import init_assistant
+            from assistant.skill_engine import SkillEngine
+
+            init_assistant()
+            skills = SkillEngine.list_skills()
+            if not skills:
+                return "暂无可用技能，可在 Web 端 AI 实验室中管理。"
+
+            lines = ["⚡ 可用技能\n"]
+            for s in skills:
+                name = self._escape_html(s.name or s.id)
+                desc = self._escape_html((s.description or "").strip())
+                lines.append(f"• <b>{name}</b> - {desc}")
+            lines.append("\n💬 对话中会按内容自动匹配技能；技能的启停管理在 Web 端 AI 实验室。")
+            return "\n".join(lines)
+        except Exception as e:
+            logger.error(f"[TG Bot] 获取技能列表失败: {e}", exc_info=True)
+            return f"❌ 获取技能失败: {e}"
+
+    async def _get_system_status(self, chat_id: int) -> str:
         try:
             from database import get_db_session
             from models import Subscription
-            
+
             with get_db_session() as session:
                 sub_count = session.query(Subscription).filter(Subscription.status == "active").count()
-            
+
             config = ConfigManager.get_config()
             assistant_config = config.get("assistant_config", {})
-            
+            effective_mode = self._get_effective_tool_mode(chat_id)
+            history_count = len(self._user_sessions.get(chat_id, []))
+
             return (
                 "📊 系统状态\n\n"
                 f"• 活跃订阅: {sub_count} 个\n"
-                f"• 智能体模型: {assistant_config.get('model', '未配置')}\n"
+                f"• 智能体模型: {self._escape_html(str(assistant_config.get('model', '未配置')))}\n"
+                f"• 工具模式: {'开启' if effective_mode else '关闭'}\n"
+                f"• 会话消息: {history_count} 条\n"
                 f"• Telegram Bot: 运行中 ✅"
             )
         except Exception as e:
@@ -767,8 +1133,10 @@ class TelegramBot:
         
         logger.info(f"[TG Bot] 开始长轮询，allowed_chats: {allowed_chats or '无限制'}")
         log_audit("TG Bot", "启动", "长轮询模式")
-        
+
         async with httpx.AsyncClient(proxy=proxy, timeout=35.0) as client:
+            # 注册 Bot 命令菜单（输入框左侧菜单按钮）
+            await self._set_my_commands(client, bot_token)
             while self._running:
                 try:
                     updates = await self._get_updates(client, bot_token, proxy)
@@ -807,13 +1175,18 @@ class TelegramBot:
     def stop(self):
         if not self._running:
             return
-        
+
         self._running = False
-        
+
         if self._task:
             self._task.cancel()
             self._task = None
-        
+
+        # 取消所有进行中的 AI 对话任务
+        for chat_task in self._chat_tasks.values():
+            chat_task.cancel()
+        self._chat_tasks.clear()
+
         logger.info("[TG Bot] 已停止")
     
     def is_running(self) -> bool:

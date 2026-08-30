@@ -141,38 +141,55 @@ class ToolRegistry:
         return "\n".join(lines)
 
     @classmethod
-    def select_tools_by_intent(cls, user_message: str, skill_tools: Optional[List[str]] = None) -> List[ToolDefinition]:
+    def select_tools_by_intent(
+        cls,
+        user_message: str,
+        skill_tools: Optional[List[str]] = None,
+        context_text: str = "",
+    ) -> List[ToolDefinition]:
         """
         根据用户意图动态选择相关工具，减少 token 消耗
-        
+
         策略：
         1. 如果技能指定了需要的工具，优先使用
-        2. 根据关键词匹配工具类别
-        3. 始终包含基础工具
+        2. 根据关键词匹配工具类别（同时匹配上下文，如上一轮的编号列表）
+        3. 用户消息带数字时（上下文编号选择场景），带上订阅/搜索工具
+        4. 始终包含基础工具
         """
+        import re
+
         selected_names = set()
         message_lower = user_message.lower()
-        
+        # 上下文（上一轮助手回复，如编号列表）参与关键词匹配，
+        # 否则用户回复"1"这类纯数字时无法选出操作列表所需的工具
+        combined = f"{context_text}\n{user_message}".lower()
+
         if skill_tools:
             selected_names.update(skill_tools)
-        
+
         intent_category_map = {
             "订阅管理": ["订阅", "订阅列表", "添加订阅", "取消订阅", "删除订阅", "禁用", "启用", "订阅任务", "追番", "追"],
-            "媒体搜索": ["搜索", "查找", "找", "tmdb", "bangumi", "热门", "新番", "日历", "发现", "推荐", "番剧", "电影", "剧集", "标签", "类型"],
+            "媒体搜索": ["搜索", "查找", "找", "tmdb", "bangumi", "热门", "新番", "日历", "发现", "推荐", "番剧", "电影", "剧集", "标签", "类型", "换一批", "下一页", "上一页", "翻页", "再来一批", "还有吗"],
             "下载管理": ["下载", "种子", "jackett", "资源", "搜索资源", "rss", "刷新", "订阅源", "规则"],
             "整理管理": ["整理", "重命名", "移动", "组织", "识别", "文件名", "目录", "历史", "失败"],
             "系统管理": ["状态", "配置", "设置", "系统", "检查", "健康", "日志", "缓存", "下载器"],
             "日历追踪": ["今日", "今天", "更新", "放送", "追踪", "日历追踪", "星期"],
         }
-        
+
         for category, keywords in intent_category_map.items():
-            if any(kw in message_lower for kw in keywords):
+            if any(kw in combined for kw in keywords):
                 tool_names = cls._categories.get(category, [])
                 selected_names.update(tool_names)
-        
+
+        # 上下文编号场景：用户回复纯数字/序号（如"1"、"1 3 5"、"1删除"），
+        # 操作对象是上一轮的搜索结果/番剧列表/订阅列表，必须带上订阅和搜索工具
+        if re.search(r"\d", user_message):
+            selected_names.update(cls._categories.get("订阅管理", []))
+            selected_names.update(cls._categories.get("媒体搜索", []))
+
         essential_tools = ["list_subscriptions", "search_tmdb", "get_bangumi_calendar"]
         selected_names.update(essential_tools)
-        
+
         return [cls._tools[name] for name in selected_names if name in cls._tools]
 
     @classmethod

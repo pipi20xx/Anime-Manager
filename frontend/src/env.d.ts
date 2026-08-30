@@ -12,3 +12,8 @@ declare module '*.md?raw' {
   const content: string
   export default content
 }
+
+declare module 'markdown-it-link-attributes' {
+  const plugin: (md: unknown, options?: Record<string, unknown>) => void
+  export default plugin
+}
