@@ -4,7 +4,7 @@
  *
  * 对标旧前端 SecondaryRuleViewDesktop + ClassifierEditModal:
  * - 规则卡片列表 + 启用/禁用开关
- * - 编辑弹窗：流派/公司/关键词多选下拉（远程搜索），国家/语言支持自定义输入
+ * - 编辑弹窗：流派/公司/关键词多选（远程搜索），全部字段支持自定义输入（不存在的值直接回车添加）
  * - 导入导出、拖拽排序
  * - 卡片内容展示截断
  */
@@ -142,12 +142,40 @@ function splitIds(ids: string | undefined): string[] {
   return ids.split(',').map((s: string) => s.trim()).filter(Boolean)
 }
 
+// ===== 补齐映射缓存缺失的公司/关键词 ID（两者按分页预取，未必覆盖规则里用到的 ID） =====
+const ID_TRANSLATE_FIELDS = [
+  { field: 'company_ids', map: 'companies' as const, type: 'company' },
+  { field: 'keyword_ids', map: 'keywords' as const, type: 'keyword' },
+]
+
+async function resolveUnknownMappingIds() {
+  await fetchMappingCache()
+  for (const { field, map, type } of ID_TRANSLATE_FIELDS) {
+    const cache = mappingCache.value[map] || (mappingCache.value[map] = {})
+    const unknown = new Set<string>()
+    for (const rule of rules.value) {
+      for (const id of splitIds(rule.criteria?.[field])) {
+        if (!cache[id]) unknown.add(id)
+      }
+    }
+    if (!unknown.size) continue
+    await Promise.allSettled([...unknown].map(async id => {
+      try {
+        const res = await userMappingApi.search({ type, q: id })
+        const hit = (res as any[]).find(r => String(r.id) === id)
+        if (hit?.name) cache[id] = hit.name
+      } catch { /* 查不到时保留 ID 展示 */ }
+    }))
+  }
+}
+
 // ===== CRUD =====
 async function fetchRules() {
   rulesLoading.value = true
   try {
     const res = await dataCenterApi.getRules()
     rules.value = Array.isArray(res) ? res : (res?.rules || res?.data || [])
+    await resolveUnknownMappingIds()
   } catch (e) { showError('加载规则失败') }
   finally { rulesLoading.value = false }
 }
@@ -280,7 +308,7 @@ defineExpose({ fetchRules })
         <!-- 标题行 -->
         <div class="manage-card__header">
           <div class="d-flex align-center ga-2 manage-card__title">
-            <span class="info-badge">#{{ index + 1 }}</span>
+            <span class="text-body-2 text-medium-emphasis">#{{ index + 1 }}</span>
             <span class="text-truncate">{{ rule.name }}</span>
           </div>
           <v-switch
@@ -344,12 +372,14 @@ defineExpose({ fetchRules })
         <v-divider class="my-3" />
         <div class="text-subtitle-2 font-weight-bold text-primary mb-2">匹配条件 (AND 逻辑)</div>
 
-        <!-- 流派 — 多选 + 远程搜索 -->
-        <v-autocomplete
+        <!-- 流派 — 多选 + 远程搜索 + 自定义输入 -->
+        <v-combobox
           v-model="selectedGenreIds"
           :items="genreSearchOptions"
+          :return-object="false"
+          no-filter
           label="流派"
-          placeholder="搜索选择流派..."
+          placeholder="搜索选择流派，或输入 ID 回车添加"
           variant="outlined"
           density="compact"
           multiple
@@ -362,12 +392,14 @@ defineExpose({ fetchRules })
           class="mb-3"
         />
 
-        <!-- 制作公司 — 多选 + 远程搜索 -->
-        <v-autocomplete
+        <!-- 制作公司 — 多选 + 远程搜索 + 自定义输入 -->
+        <v-combobox
           v-model="selectedCompanyIds"
           :items="companySearchOptions"
+          :return-object="false"
+          no-filter
           label="制作公司"
-          placeholder="搜索选择公司..."
+          placeholder="搜索选择公司，或输入 ID 回车添加"
           variant="outlined"
           density="compact"
           multiple
@@ -380,12 +412,14 @@ defineExpose({ fetchRules })
           class="mb-3"
         />
 
-        <!-- 关键词 — 多选 + 远程搜索 -->
-        <v-autocomplete
+        <!-- 关键词 — 多选 + 远程搜索 + 自定义输入 -->
+        <v-combobox
           v-model="selectedKeywordIds"
           :items="keywordSearchOptions"
+          :return-object="false"
+          no-filter
           label="关键词"
-          placeholder="搜索选择关键词..."
+          placeholder="搜索选择关键词，或输入 ID 回车添加"
           variant="outlined"
           density="compact"
           multiple
@@ -401,9 +435,10 @@ defineExpose({ fetchRules })
         <v-row density="compact">
           <!-- 原始国家 — 多选 + 自定义输入 -->
           <v-col cols="12" sm="6">
-            <v-autocomplete
+            <v-combobox
               v-model="selectedCountryCodes"
               :items="countryOptions"
+              :return-object="false"
               label="原始国家"
               placeholder="下拉选择或输入国家代码"
               variant="outlined"
@@ -417,9 +452,10 @@ defineExpose({ fetchRules })
           </v-col>
           <!-- 原始语言 — 多选 + 自定义输入 -->
           <v-col cols="12" sm="6">
-            <v-autocomplete
+            <v-combobox
               v-model="selectedLanguageCodes"
               :items="languageOptions"
+              :return-object="false"
               label="原始语言"
               placeholder="下拉选择或输入语言代码"
               variant="outlined"
@@ -452,7 +488,7 @@ defineExpose({ fetchRules })
   </v-dialog>
 </template>
 
-<!-- scoped 样式已迁移至 global.css .manage-card / .info-badge -->
+<!-- scoped 样式已迁移至 global.css .manage-card -->
 <style scoped>
 /* 固定信息区高度 — 7 行固定，保证所有卡片高度一致 */
 :deep(.manage-card__body) {
