@@ -55,6 +55,8 @@ class ChatRequest(BaseModel):
     stream: bool = False
     use_tools: bool = True
     skill_id: Optional[str] = None
+    # Agent 内部历史快照（含摘要/工具消息），作为种子回传，优于纯文本对话历史
+    agent_history: Optional[List[Dict]] = None
 
 class ConfigUpdate(BaseModel):
     base_url: Optional[str] = None
@@ -66,6 +68,8 @@ class ConfigUpdate(BaseModel):
     max_iterations: Optional[int] = None
     ai_fallback_enabled: Optional[bool] = None
     use_tools: Optional[bool] = None
+    enable_dynamic_tools: Optional[bool] = None
+    enable_llm_summary: Optional[bool] = None
 
 def get_assistant_config() -> Dict:
     config = ConfigManager.get_config()
@@ -78,8 +82,40 @@ def get_assistant_config() -> Dict:
         "max_tokens": 64,
         "max_iterations": 10,
         "ai_fallback_enabled": False,
-        "use_tools": True
+        "use_tools": True,
+        "enable_dynamic_tools": True,
+        "enable_llm_summary": True
     })
+
+def _build_agent_config(config: Dict):
+    """统一从 assistant_config 构造 AgentConfig（含动态工具/摘要等开关）"""
+    from assistant.agent import AgentConfig
+
+    return AgentConfig(
+        base_url=config.get("base_url", ""),
+        api_key=config.get("api_key", ""),
+        model=config.get("model", ""),
+        provider=config.get("provider", "openai"),
+        temperature=config.get("temperature", 0.7),
+        max_tokens=config.get("max_tokens", 64) * 1000,
+        max_iterations=config.get("max_iterations", 10),
+        max_history_messages=config.get("max_history_messages", 20),
+        summarize_threshold=config.get("summarize_threshold", 10),
+        enable_dynamic_tools=bool(config.get("enable_dynamic_tools", True)),
+        compact_tool_results=bool(config.get("compact_tool_results", True)),
+        enable_llm_summary=bool(config.get("enable_llm_summary", True)),
+    )
+
+def _clean_agent_history(agent_history: Optional[List[Dict]]) -> Optional[List[Dict]]:
+    """清洗前端回传的内部历史快照，非法条目直接丢弃"""
+    if not agent_history:
+        return None
+    allowed = ("system", "user", "assistant", "tool")
+    cleaned = [
+        m for m in agent_history
+        if isinstance(m, dict) and m.get("role") in allowed
+    ]
+    return cleaned[-40:] if cleaned else None
 
 def save_assistant_config(new_config: Dict):
     current_config = ConfigManager.get_config()
@@ -119,9 +155,9 @@ async def chat(request: ChatRequest):
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
     if request.stream:
-        return await _agent_chat_stream(messages, config, request.skill_id)
+        return await _agent_chat_stream(messages, config, request.skill_id, request.agent_history)
     else:
-        return await _agent_chat(messages, config, request.skill_id)
+        return await _agent_chat(messages, config, request.skill_id, request.agent_history)
 
 def _apply_skill_prompt(skill_id: Optional[str], user_message: str) -> str:
     """指定技能时把技能 prompt 包装到用户消息前（与 /skills/{id}/execute 一致）"""
@@ -248,9 +284,9 @@ async def _simple_chat_stream(messages: List[ChatMessage], config: Dict):
         }
     )
 
-async def _agent_chat(messages: List[Dict], config: Dict, skill_id: Optional[str] = None):
+async def _agent_chat(messages: List[Dict], config: Dict, skill_id: Optional[str] = None, agent_history: Optional[List[Dict]] = None):
     try:
-        from assistant.agent import Agent, AgentConfig
+        from assistant.agent import Agent
     except ImportError as e:
         logger.error(f"[Assistant] 导入 Agent 失败: {e}", exc_info=True)
         return {
@@ -262,22 +298,17 @@ async def _agent_chat(messages: List[Dict], config: Dict, skill_id: Optional[str
             }],
             "events": [{"type": "error", "message": str(e)}]
         }
-    
-    agent_config = AgentConfig(
-        base_url=config.get("base_url", ""),
-        api_key=config.get("api_key", ""),
-        model=config.get("model", ""),
-        provider=config.get("provider", "openai"),
-        temperature=config.get("temperature", 0.7),
-        max_tokens=config.get("max_tokens", 64) * 1000,
-        max_iterations=config.get("max_iterations", 10)
-    )
-    
-    agent = Agent(agent_config, messages=messages[:-1])
-    
+
+    agent_config = _build_agent_config(config)
+
+    seed = _clean_agent_history(agent_history)
+    if seed is None:
+        seed = messages[:-1]
+    agent = Agent(agent_config, seed)
+
     user_message = messages[-1].get("content", "") if messages else ""
     user_message = _apply_skill_prompt(skill_id, user_message)
-    
+
     events = []
     final_content = ""
     
@@ -303,21 +334,16 @@ async def _agent_chat(messages: List[Dict], config: Dict, skill_id: Optional[str
         "events": events
     }
 
-async def _agent_chat_stream(messages: List[Dict], config: Dict, skill_id: Optional[str] = None):
-    from assistant.agent import Agent, AgentConfig
-    
-    agent_config = AgentConfig(
-        base_url=config.get("base_url", ""),
-        api_key=config.get("api_key", ""),
-        model=config.get("model", ""),
-        provider=config.get("provider", "openai"),
-        temperature=config.get("temperature", 0.7),
-        max_tokens=config.get("max_tokens", 64) * 1000,
-        max_iterations=config.get("max_iterations", 10)
-    )
-    
-    agent = Agent(agent_config, messages=messages[:-1])
-    
+async def _agent_chat_stream(messages: List[Dict], config: Dict, skill_id: Optional[str] = None, agent_history: Optional[List[Dict]] = None):
+    from assistant.agent import Agent
+
+    agent_config = _build_agent_config(config)
+
+    seed = _clean_agent_history(agent_history)
+    if seed is None:
+        seed = messages[:-1]
+    agent = Agent(agent_config, seed)
+
     user_message = messages[-1].get("content", "") if messages else ""
     user_message = _apply_skill_prompt(skill_id, user_message)
     
@@ -454,20 +480,12 @@ async def execute_skill(skill_id: str, request: Request):
     if not config.get("base_url") or not config.get("model"):
         raise HTTPException(status_code=400, detail="请先配置模型地址和模型名称")
     
-    from assistant.agent import Agent, AgentConfig
-    
-    agent_config = AgentConfig(
-        base_url=config.get("base_url", ""),
-        api_key=config.get("api_key", ""),
-        model=config.get("model", ""),
-        provider=config.get("provider", "openai"),
-        temperature=config.get("temperature", 0.7),
-        max_tokens=config.get("max_tokens", 64) * 1000,
-        max_iterations=config.get("max_iterations", 10)
-    )
-    
+    from assistant.agent import Agent
+
+    agent_config = _build_agent_config(config)
+
     agent = Agent(agent_config)
-    
+
     skill_prompt = SkillEngine.get_skill_prompt(skill_id)
     enhanced_message = f"{skill_prompt}\n\n用户请求: {user_message}"
     
@@ -484,23 +502,70 @@ async def execute_skill(skill_id: str, request: Request):
 @router.post("/tools/{tool_name}/execute")
 async def execute_tool_directly(tool_name: str, request: Request):
     init_assistant()
-    
+
     from assistant.tools import ToolRegistry
-    
+
     tool_def = ToolRegistry.get(tool_name)
     if not tool_def:
         raise HTTPException(status_code=404, detail=f"工具 {tool_name} 不存在")
-    
+
     body = await request.json()
     arguments = body.get("arguments", {})
-    
+
     try:
         func = tool_def.func
         result = await func(**arguments)
-        
+
         if hasattr(result, 'to_dict'):
             return result.to_dict()
         return {"success": True, "data": result}
     except Exception as e:
         logger.error(f"[Assistant] 工具执行失败: {tool_name} - {e}")
         return {"success": False, "error": str(e)}
+
+
+# ==================== 对话会话存储 ====================
+
+@router.get("/sessions")
+async def list_chat_sessions():
+    """会话列表（按更新时间倒序）"""
+    from assistant import chat_store
+    return chat_store.list_sessions()
+
+
+@router.get("/sessions/{session_id}")
+async def get_chat_session(session_id: str):
+    from assistant import chat_store
+
+    data = chat_store.get_session(session_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="会话不存在")
+    return data
+
+
+@router.put("/sessions/{session_id}")
+async def save_chat_session(session_id: str, request: Request):
+    """保存会话（消息由前端维护，服务端只做存取与体积控制）"""
+    from assistant import chat_store
+
+    body = await request.json()
+    messages = body.get("messages") or []
+    if not isinstance(messages, list) or not messages:
+        raise HTTPException(status_code=400, detail="messages 不能为空")
+
+    meta = chat_store.save_session(
+        session_id,
+        messages,
+        title=body.get("title") or "",
+        agent_history=body.get("agent_history"),
+    )
+    return {"success": True, "session": meta}
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_chat_session(session_id: str):
+    from assistant import chat_store
+
+    if not chat_store.delete_session(session_id):
+        raise HTTPException(status_code=404, detail="会话不存在")
+    return {"success": True, "message": "会话已删除"}

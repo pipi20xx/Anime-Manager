@@ -57,7 +57,17 @@ const assistantConfig = reactive({
   max_iterations: 10,
   ai_fallback_enabled: false,
   use_tools: true,
+  enable_dynamic_tools: true,
 })
+
+async function saveDynamicTools() {
+  try {
+    await api.post('/api/assistant/config', { enable_dynamic_tools: assistantConfig.enable_dynamic_tools })
+    success(assistantConfig.enable_dynamic_tools ? '已开启动态工具选择（按意图挑选工具）' : '已切换为全量工具模式（所有工具提供给模型）')
+  } catch (e: any) {
+    showError(e?.message || '保存失败')
+  }
+}
 
 // Telegram Bot 配置
 const telegramConfig = reactive({
@@ -656,6 +666,16 @@ registerHeaderTab({
                 <div class="text-body-2 font-weight-medium">允许 AI 操作（工具调用）</div>
                 <div class="text-caption text-medium-emphasis">
                   开启：AI 可调用搜索、订阅、整理等工具执行实际操作；关闭：仅能聊天问答。全局默认值，Telegram Bot 未单独设置时也使用它
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-3 mb-4">
+              <v-switch v-model="assistantConfig.enable_dynamic_tools" density="compact" hide-details color="primary" @update:model-value="saveDynamicTools" />
+              <div>
+                <div class="text-body-2 font-weight-medium">动态工具选择</div>
+                <div class="text-caption text-medium-emphasis">
+                  开启：按消息内容自动挑选相关工具（省 token，极少数场景可能漏选）；关闭：把全部工具提供给模型（更稳，但更耗 token）
                 </div>
               </div>
             </div>

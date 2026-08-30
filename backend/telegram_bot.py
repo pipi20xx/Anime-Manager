@@ -2,6 +2,7 @@ import asyncio
 import logging
 import httpx
 import json
+import os
 import re
 import time
 from typing import Optional, Dict, List, Any, Tuple
@@ -12,6 +13,9 @@ logger = logging.getLogger("TelegramBot")
 
 # 每页显示的条目数
 ITEMS_PER_PAGE = 10
+
+# 会话状态持久化文件（对话历史 + 工具模式设置，重启不丢）
+TG_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tg_bot_state.json")
 
 
 class TelegramBot:
@@ -26,6 +30,9 @@ class TelegramBot:
     _chat_tasks: Dict[int, asyncio.Task] = {}
     # 每个 chat 的会话级设置：{chat_id: {"use_tools": bool | None}}，None 表示跟随全局配置
     _chat_settings: Dict[int, Dict[str, Any]] = {}
+    # Bot 身份（getMe），用于群聊里判断 @提及 / 回复机器人
+    _bot_id: int = 0
+    _bot_username: str = ""
     
     @classmethod
     def get_instance(cls) -> "TelegramBot":
@@ -207,13 +214,24 @@ class TelegramBot:
         return "".join(out).replace("\x00", "")
 
     def _convert_block_md(self, block: str) -> str:
-        """逐行转换非代码块的 Markdown：标题/引用/普通行"""
+        """逐行转换非代码块的 Markdown：标题/引用/表格/普通行"""
         lines_out: List[str] = []
+        in_table = False
         for line in block.split("\n"):
             stripped = line.strip()
-            # 表格分隔行（|---|---|）跳过，表格内容行保留原样
-            if "|" in stripped and re.match(r"^\|?[\s:|-]*-[\s:|-]*\|", stripped):
+
+            # 表格：分隔行跳过；数据行转成「cell ｜ cell」可读文本，表头加粗
+            if stripped.startswith("|"):
+                if re.match(r"^\|[\s:\-|]+\|$", stripped):
+                    continue
+                cells = [c.strip() for c in stripped.strip("|").split("|") if c.strip()]
+                if cells:
+                    joined = " ｜ ".join(self._convert_inline_md(c) for c in cells)
+                    lines_out.append(f"<b>{joined}</b>" if not in_table else joined)
+                    in_table = True
                 continue
+
+            in_table = False
             m = re.match(r"^#{1,6}\s+(.*)$", stripped)
             if m:
                 lines_out.append(f"<b>{self._convert_inline_md(m.group(1))}</b>")
@@ -780,8 +798,8 @@ class TelegramBot:
         以事件方式运行 Agent，把工具调用进度实时编辑到占位消息上。
         返回 (最终文本, 结构化列表数据)。
         """
-        from assistant.agent import Agent, AgentConfig
-        from routers.assistant import get_assistant_config, init_assistant
+        from assistant.agent import Agent
+        from routers.assistant import get_assistant_config, init_assistant, _build_agent_config
 
         init_assistant()
 
@@ -789,15 +807,7 @@ class TelegramBot:
         if not config.get("base_url") or not config.get("model"):
             return "❌ 智能体未配置，请先在 AI 实验室中配置模型。", None
 
-        agent_config = AgentConfig(
-            base_url=config.get("base_url", ""),
-            api_key=config.get("api_key", ""),
-            model=config.get("model", ""),
-            provider=config.get("provider", "openai"),
-            temperature=config.get("temperature", 0.7),
-            max_tokens=config.get("max_tokens", 64) * 1000,
-            max_iterations=config.get("max_iterations", 10)
-        )
+        agent_config = _build_agent_config(config)
 
         existing_messages = self._user_sessions.get(chat_id, [])
         agent = Agent(agent_config, existing_messages.copy() if existing_messages else None)
@@ -847,6 +857,7 @@ class TelegramBot:
             final_text = f"❌ 智能体调用失败: {e}"
 
         self._user_sessions[chat_id] = agent.messages[-20:]
+        self._save_state()
 
         if not final_text:
             final_text = "❌ 智能体返回空响应"
@@ -881,6 +892,7 @@ class TelegramBot:
             self._user_sessions[chat_id] = (
                 history + [{"role": "user", "content": text}, {"role": "assistant", "content": content}]
             )[-20:]
+            self._save_state()
             return content, None
         except HTTPException as e:
             detail = e.detail if isinstance(e.detail, str) else str(e.detail)
@@ -979,7 +991,20 @@ class TelegramBot:
             logger.warning(f"[TG Bot] 未授权的 chat_id: {chat_id}")
             await self._send_message(client, bot_token, chat_id, "❌ 你没有权限使用此 Bot")
             return
-        
+
+        # 群聊门槛：私聊有必应；群聊只响应 /命令、@机器人、或回复机器人消息，
+        # 避免群里每条闲聊文本都触发一次 AI 调用
+        chat_type = (message.get("chat") or {}).get("type", "private")
+        if chat_type in ("group", "supergroup") and not text.startswith("/"):
+            mentioned = bool(self._bot_username) and f"@{self._bot_username}".lower() in text.lower()
+            reply_from = ((message.get("reply_to_message") or {}).get("from") or {})
+            reply_to_bot = reply_from.get("id") == self._bot_id
+            if not (mentioned or reply_to_bot):
+                return
+            # 去掉 @提及 再交给 AI，避免模型看到无意义的 @xxx
+            if self._bot_username and mentioned:
+                text = re.sub(f"@{re.escape(self._bot_username)}\\s*", "", text, flags=re.IGNORECASE).strip() or text
+
         logger.info(f"[TG Bot] 收到消息 [{chat_id}]: {text[:50]}...")
         log_audit("TG Bot", "收到消息", f"[{chat_id}] {text[:50]}")
         
@@ -1003,6 +1028,8 @@ class TelegramBot:
 
     async def _handle_command(self, chat_id: int, command: str) -> str:
         cmd = command.lower().strip()
+        # 群聊中命令可能带 @BotName 后缀（如 /status@MyBot），剥掉再匹配
+        cmd = re.sub(r"^(/\w+)@\w+", r"\1", cmd)
 
         if cmd == "/start":
             return (
@@ -1031,6 +1058,7 @@ class TelegramBot:
             # 同时清除分页数据
             if chat_id in self._paginated_lists:
                 del self._paginated_lists[chat_id]
+            self._save_state()
             return "✅ 对话历史已清除"
         elif cmd == "/stop":
             task = self._chat_tasks.get(chat_id)
@@ -1055,6 +1083,7 @@ class TelegramBot:
 
         if arg in ("on", "off"):
             settings["use_tools"] = (arg == "on")
+            self._save_state()
         elif arg:
             return "用法：/tools on 开启，/tools off 关闭，/tools 查看当前状态"
 
@@ -1121,6 +1150,56 @@ class TelegramBot:
         except Exception as e:
             return f"❌ 获取状态失败: {e}"
     
+    # ==================== 状态持久化 ====================
+
+    def _load_state(self):
+        """启动时恢复对话历史和会话设置"""
+        try:
+            if not os.path.exists(TG_STATE_FILE):
+                return
+            with open(TG_STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            sessions = data.get("sessions") or {}
+            self._user_sessions = {
+                int(k): v for k, v in sessions.items()
+                if isinstance(v, list) and v
+            }
+            settings = data.get("settings") or {}
+            self._chat_settings = {
+                int(k): v for k, v in settings.items() if isinstance(v, dict)
+            }
+            logger.info(f"[TG Bot] 已恢复 {len(self._user_sessions)} 个会话历史")
+        except Exception as e:
+            logger.warning(f"[TG Bot] 加载会话状态失败: {e}")
+
+    def _save_state(self):
+        """对话历史/设置变更后落盘"""
+        try:
+            data = {
+                "sessions": {str(k): v[-20:] for k, v in self._user_sessions.items()},
+                "settings": {str(k): v for k, v in self._chat_settings.items()},
+            }
+            tmp = TG_STATE_FILE + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+            os.replace(tmp, TG_STATE_FILE)
+        except Exception as e:
+            logger.warning(f"[TG Bot] 保存会话状态失败: {e}")
+
+    async def _fetch_bot_identity(self, client: httpx.AsyncClient, bot_token: str):
+        """获取 Bot 身份，用于群聊中识别 @提及 和 回复机器人"""
+        url = f"https://api.telegram.org/bot{bot_token}/getMe"
+        try:
+            resp = await client.post(url, json={}, timeout=10)
+            data = resp.json()
+            if resp.status_code == 200 and data.get("ok"):
+                result = data.get("result", {})
+                self._bot_id = result.get("id") or 0
+                self._bot_username = result.get("username") or ""
+                logger.info(f"[TG Bot] Bot 身份: @{self._bot_username}")
+        except Exception as e:
+            logger.warning(f"[TG Bot] 获取 Bot 身份失败: {e}")
+
     async def _poll_loop(self):
         bot_config = self._get_bot_config()
         bot_token = bot_config["bot_token"]
@@ -1135,8 +1214,9 @@ class TelegramBot:
         log_audit("TG Bot", "启动", "长轮询模式")
 
         async with httpx.AsyncClient(proxy=proxy, timeout=35.0) as client:
-            # 注册 Bot 命令菜单（输入框左侧菜单按钮）
+            # 注册 Bot 命令菜单（输入框左侧菜单按钮）+ 获取 Bot 身份
             await self._set_my_commands(client, bot_token)
+            await self._fetch_bot_identity(client, bot_token)
             while self._running:
                 try:
                     updates = await self._get_updates(client, bot_token, proxy)
@@ -1158,16 +1238,17 @@ class TelegramBot:
         if self._running:
             logger.warning("[TG Bot] 已经在运行中")
             return
-        
+
         bot_config = self._get_bot_config()
         if not bot_config["enabled"]:
             logger.info("[TG Bot] 功能未启用")
             return
-        
+
         if not bot_config["bot_token"]:
             logger.error("[TG Bot] 未配置 Bot Token")
             return
-        
+
+        self._load_state()
         self._running = True
         self._task = asyncio.create_task(self._poll_loop())
         logger.info("[TG Bot] 已启动")
@@ -1187,6 +1268,7 @@ class TelegramBot:
             chat_task.cancel()
         self._chat_tasks.clear()
 
+        self._save_state()
         logger.info("[TG Bot] 已停止")
     
     def is_running(self) -> bool:

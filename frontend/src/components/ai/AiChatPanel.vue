@@ -86,6 +86,20 @@ const scrollerEl = ref<HTMLElement | null>(null)
 const composerEl = ref<HTMLTextAreaElement | null>(null)
 const pendingSkill = ref<SkillInfo | null>(null)
 
+// ---------- 多会话 ----------
+interface SessionMeta {
+  id: string
+  title: string
+  updated_at: number
+  message_count: number
+}
+
+const sessions = ref<SessionMeta[]>([])
+const currentSessionId = ref<string | null>(null)
+const historyOpen = ref(false)
+// Agent 内部历史快照（含摘要/工具消息），随会话持久化并在下轮请求回传
+const agentHistory = ref<any[] | null>(null)
+
 let abortController: AbortController | null = null
 let idCounter = 0
 
@@ -257,6 +271,11 @@ function applyStreamEvent(type: string, event: any, msg: ChatMessage) {
       if (event?.message) msg.segments.push({ type: 'warning', message: event.message })
       break
 
+    case 'history':
+      // Agent 内部历史快照（含摘要），随会话保存、下轮回传
+      if (Array.isArray(event?.messages)) agentHistory.value = event.messages
+      break
+
     case 'error':
       msg.segments.push({ type: 'warning', message: `错误: ${event?.message || '未知错误'}` })
       msg.status = 'error'
@@ -320,6 +339,7 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 async function submitUserMessage(text: string, skill?: { id: string; name?: string } | null) {
+  if (!currentSessionId.value) currentSessionId.value = createId('sess')
   messages.value.push({
     id: createId('user'),
     role: 'user',
@@ -330,6 +350,7 @@ async function submitUserMessage(text: string, skill?: { id: string; name?: stri
     skillName: skill?.name,
   })
   persistState()
+  saveSession()
   scheduleScrollUpdate(true)
   await runCompletion(text, skill?.id)
 }
@@ -373,6 +394,7 @@ async function runCompletion(text: string, skillId?: string) {
         stream: true,
         use_tools: useTools.value,
         skill_id: skillId || null,
+        agent_history: useTools.value ? agentHistory.value : null,
       }),
     })
 
@@ -407,7 +429,10 @@ async function runCompletion(text: string, skillId?: string) {
     flushPendingDelta()
     isBusy.value = false
     abortController = null
+    // 纯对话模式没有内部快照，清掉避免与工具模式互相污染
+    if (!useTools.value) agentHistory.value = null
     persistState()
+    saveSession()
     scheduleScrollUpdate(true)
   }
 }
@@ -442,14 +467,22 @@ async function copyMessage(msg: ChatMessage) {
 async function clearChat() {
   const ok = await confirm({
     title: '确认清空',
-    content: '确定要清空所有对话记录吗？',
+    content: '确定要清空当前对话记录吗？',
     confirmText: '确定清空',
     cancelText: '取消',
     confirmColor: 'error',
   })
   if (ok) {
+    const id = currentSessionId.value
     messages.value = []
+    agentHistory.value = null
+    currentSessionId.value = null
     localStorage.removeItem(STORAGE_KEY)
+    if (id) {
+      api.delete(`/api/assistant/sessions/${id}`)
+        .then(() => fetchSessions())
+        .catch(() => {})
+    }
   }
 }
 
@@ -472,20 +505,25 @@ function compactSegments(segments: ChatSegment[]): ChatSegment[] {
   })
 }
 
+function compactMessages(list: ChatMessage[]) {
+  return list.map(m => ({
+    id: m.id,
+    role: m.role,
+    content: m.role === 'user' ? m.content : messageText(m),
+    status: m.status,
+    skillId: m.skillId,
+    skillName: m.skillName,
+    segments: m.role === 'assistant' ? compactSegments(m.segments) : [],
+  }))
+}
+
 function persistState() {
   try {
-    const payload = messages.value
-      .filter(m => m.status !== 'streaming')
-      .slice(-MAX_PERSISTED_MESSAGES)
-      .map(m => ({
-        id: m.id,
-        role: m.role,
-        content: m.role === 'user' ? m.content : messageText(m),
-        status: m.status,
-        skillId: m.skillId,
-        skillName: m.skillName,
-        segments: m.role === 'assistant' ? compactSegments(m.segments) : [],
-      }))
+    const payload = {
+      sessionId: currentSessionId.value,
+      messages: compactMessages(messages.value.filter(m => m.status !== 'streaming').slice(-MAX_PERSISTED_MESSAGES)),
+      agentHistory: agentHistory.value ? agentHistory.value.slice(-40) : null,
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
   } catch {
     // 存储失败忽略
@@ -497,8 +535,64 @@ function restoreState() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return
     const data = JSON.parse(raw)
-    if (!Array.isArray(data) || !data.length) return
-    messages.value = data.map((m: any) => ({
+    // 兼容旧格式（纯数组，无会话概念）
+    const list: any[] = Array.isArray(data) ? data : (data.messages || [])
+    currentSessionId.value = Array.isArray(data) ? null : (data.sessionId || null)
+    agentHistory.value = Array.isArray(data) ? null : (data.agentHistory || null)
+    if (Array.isArray(list) && list.length) {
+      messages.value = list.map((m: any) => ({
+        id: m.id || createId(m.role === 'user' ? 'user' : 'assistant'),
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content || '',
+        segments: Array.isArray(m.segments) ? m.segments : [],
+        status: m.status === 'streaming' ? 'done' : m.status || 'done',
+        skillId: m.skillId,
+        skillName: m.skillName,
+      }))
+    }
+  } catch {
+    // 恢复失败忽略
+  }
+}
+
+// ---------- 会话存取（服务端为权威，localStorage 仅作离线兜底） ----------
+async function fetchSessions() {
+  try {
+    const data = await apiFetch<any[]>('/api/assistant/sessions')
+    sessions.value = Array.isArray(data) ? data : []
+  } catch {
+    sessions.value = []
+  }
+}
+
+async function saveSession() {
+  const id = currentSessionId.value
+  if (!id) return
+  const display = compactMessages(messages.value.filter(m => m.status !== 'streaming'))
+  if (!display.length) return
+  try {
+    const data = await api.put<any>(`/api/assistant/sessions/${id}`, {
+      title: (display.find(m => m.role === 'user')?.content || '').slice(0, 24),
+      messages: display,
+      agent_history: agentHistory.value,
+    })
+    const meta = data?.session
+    if (meta) {
+      const idx = sessions.value.findIndex(s => s.id === id)
+      if (idx >= 0) sessions.value[idx] = meta
+      else sessions.value.unshift(meta)
+    }
+  } catch {
+    // 保存失败不阻塞对话
+  }
+}
+
+async function loadSession(id: string, silent = false) {
+  if (isBusy.value) return
+  try {
+    const data = await apiFetch<any>(`/api/assistant/sessions/${id}`)
+    const list: any[] = Array.isArray(data?.messages) ? data.messages : []
+    messages.value = list.map((m: any) => ({
       id: m.id || createId(m.role === 'user' ? 'user' : 'assistant'),
       role: m.role === 'user' ? 'user' : 'assistant',
       content: m.content || '',
@@ -507,9 +601,59 @@ function restoreState() {
       skillId: m.skillId,
       skillName: m.skillName,
     }))
-  } catch {
-    // 恢复失败忽略
+    currentSessionId.value = id
+    agentHistory.value = Array.isArray(data?.agent_history) ? data.agent_history : null
+    persistState()
+    historyOpen.value = false
+    await nextTick()
+    scrollToBottom()
+  } catch (e: any) {
+    if (!silent) showError(e?.message || '加载会话失败')
   }
+}
+
+function newChat() {
+  if (isBusy.value) return
+  currentSessionId.value = null
+  agentHistory.value = null
+  messages.value = []
+  persistState()
+  historyOpen.value = false
+  nextTick(() => composerEl.value?.focus())
+}
+
+async function removeSession(id: string) {
+  try {
+    await api.delete(`/api/assistant/sessions/${id}`)
+    sessions.value = sessions.value.filter(s => s.id !== id)
+    if (currentSessionId.value === id) newChat()
+  } catch (e: any) {
+    showError(e?.message || '删除失败')
+  }
+}
+
+function openHistoryDrawer() {
+  fetchSessions()
+  historyOpen.value = true
+}
+
+const currentTitle = computed(() => {
+  const s = sessions.value.find(x => x.id === currentSessionId.value)
+  if (s) return s.title
+  return messages.value.length ? '当前对话' : '新对话'
+})
+
+function formatSessionTime(ts: number): string {
+  if (!ts) return ''
+  const diff = Date.now() - ts * 1000
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return '刚刚'
+  if (min < 60) return `${min} 分钟前`
+  const hour = Math.floor(min / 60)
+  if (hour < 24) return `${hour} 小时前`
+  const day = Math.floor(hour / 24)
+  if (day < 30) return `${day} 天前`
+  return new Date(ts * 1000).toLocaleDateString()
 }
 
 // ---------- 滚动跟随 ----------
@@ -700,6 +844,11 @@ onMounted(async () => {
   restoreState()
   fetchBaseConfig()
   fetchLists()
+  await fetchSessions()
+  // 服务端为权威：若本地记住的会话在服务端存在，用服务端版本覆盖本地快照
+  if (currentSessionId.value && sessions.value.some(s => s.id === currentSessionId.value)) {
+    await loadSession(currentSessionId.value, true)
+  }
   await nextTick()
   scrollToBottom()
   composerEl.value?.focus()
@@ -717,6 +866,15 @@ onBeforeUnmount(() => {
     class="glass-card ai-chat-card"
     style="height: calc(100vh - 280px); display: flex; flex-direction: column; position: relative"
   >
+    <!-- 顶栏：历史会话 / 新对话 -->
+    <div class="ai-chat-header px-3 py-1 d-flex align-center ga-1">
+      <v-btn size="small" variant="text" prepend-icon="mdi-history" @click="openHistoryDrawer">历史会话</v-btn>
+      <v-btn size="small" variant="text" prepend-icon="mdi-plus" @click="newChat">新对话</v-btn>
+      <v-spacer />
+      <span class="ai-session-title text-caption text-medium-emphasis">{{ currentTitle }}</span>
+    </div>
+    <v-divider />
+
     <!-- 消息区 -->
     <div
       ref="scrollerEl"
@@ -952,9 +1110,97 @@ onBeforeUnmount(() => {
       </div>
     </div>
   </v-card>
+
+  <!-- 历史会话 -->
+  <v-dialog v-model="historyOpen" max-width="460" scrollable>
+    <v-card class="glass-card">
+      <v-card-title class="pa-4 d-flex align-center ga-2">
+        <v-icon color="primary" size="20">mdi-history</v-icon>
+        <span class="text-subtitle-1 font-weight-bold">对话历史</span>
+        <v-spacer />
+        <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-plus" @click="newChat">新对话</v-btn>
+      </v-card-title>
+      <v-divider />
+      <v-card-text class="pa-2" style="max-height: 60vh; overflow-y: auto">
+        <div v-if="sessions.length === 0" class="text-center text-medium-emphasis pa-6">
+          暂无历史会话
+        </div>
+        <div
+          v-for="s in sessions"
+          :key="s.id"
+          class="ai-session-item"
+          :class="{ 'ai-session-item--active': s.id === currentSessionId }"
+          @click="loadSession(s.id)"
+        >
+          <div class="ai-session-item__body">
+            <div class="ai-session-item__title">{{ s.title }}</div>
+            <div class="ai-session-item__meta">{{ s.message_count }} 条消息 · {{ formatSessionTime(s.updated_at) }}</div>
+          </div>
+          <v-icon size="16" class="ai-session-item__delete" title="删除会话" @click.stop="removeSession(s.id)">mdi-delete-outline</v-icon>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
+/* ---------- 顶栏 / 会话 ---------- */
+.ai-chat-header {
+  flex: none;
+}
+
+.ai-session-title {
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ai-session-item:hover {
+  background: rgba(var(--v-theme-primary), 0.08);
+}
+
+.ai-session-item--active {
+  background: rgba(var(--v-theme-primary), 0.14);
+}
+
+.ai-session-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-session-item__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-session-item__meta {
+  font-size: 0.72rem;
+  color: rgba(var(--v-theme-on-surface), 0.5);
+  margin-top: 2px;
+}
+
+.ai-session-item__delete {
+  opacity: 0.4;
+}
+
+.ai-session-item__delete:hover {
+  opacity: 1;
+  color: rgb(var(--v-theme-error));
+}
+
 /* ---------- 消息区 ---------- */
 .ai-chat-scroller {
   scroll-behavior: auto;

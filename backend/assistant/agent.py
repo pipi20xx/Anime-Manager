@@ -34,6 +34,7 @@ class AgentConfig:
     summarize_threshold: int = 10
     enable_dynamic_tools: bool = True
     compact_tool_results: bool = True
+    enable_llm_summary: bool = True
 
 
 class MessageHistoryManager:
@@ -56,35 +57,25 @@ class MessageHistoryManager:
         self._trim_if_needed()
     
     def _trim_if_needed(self):
+        """
+        硬性兜底：超过上限时直接丢弃最旧消息。
+        质量压缩（摘要）由 Agent._compact_history_if_needed 在超限前主动完成，
+        这里只防止极端情况下历史无限膨胀。
+        """
         non_system = [m for m in self.messages if m.get("role") != "system"]
-        
+
         if len(non_system) <= self.max_messages:
             return
-        
+
         system_msg = None
         for msg in self.messages:
             if msg.get("role") == "system":
                 system_msg = msg
                 break
-        
-        messages_to_summarize = non_system[:self.summarize_threshold]
-        messages_to_keep = non_system[self.summarize_threshold:]
-        
-        new_summary = self._generate_summary(messages_to_summarize)
-        if self._summary:
-            self._summary = self._merge_summaries(self._summary, new_summary)
-        else:
-            self._summary = new_summary
-        
-        summary_msg = {
-            "role": "user",
-            "content": f"[历史摘要] {self._summary}",
-            "_is_summary": True
-        }
-        
-        self.messages = [system_msg] + [summary_msg] + messages_to_keep if system_msg else [summary_msg] + messages_to_keep
-        
-        logger.info(f"[HistoryManager] 已压缩 {len(messages_to_summarize)} 条消息为摘要")
+
+        kept = non_system[-(self.max_messages):]
+        self.messages = ([system_msg] if system_msg else []) + kept
+        logger.info(f"[HistoryManager] 超限硬截断: 保留最近 {len(kept)} 条")
     
     def _generate_summary(self, messages: List[Dict]) -> str:
         """
@@ -217,6 +208,81 @@ class Agent:
                 if content:
                     return content[:max_chars]
         return ""
+
+    async def _compact_history_if_needed(self):
+        """
+        历史压缩：非系统消息接近上限时，把最旧的一批压缩成摘要。
+        优先用 LLM 生成摘要（保留关键事实），失败时回退到正则启发式摘要。
+        在新用户消息入史之前调用，给本轮回复预留空间。
+        """
+        hm = self.history_manager
+        non_system = [m for m in hm.messages if m.get("role") != "system"]
+
+        # +2 为即将到来的用户消息和助手回复预留空间
+        if len(non_system) + 2 <= self.config.max_history_messages:
+            return
+
+        keep_count = max(self.config.max_history_messages - 6, 4)
+        to_summarize = non_system[:len(non_system) - keep_count]
+        to_keep = non_system[-keep_count:]
+
+        summary_text = ""
+        if self.config.enable_llm_summary and to_summarize:
+            try:
+                summary_text = await self._llm_summarize(to_summarize)
+            except Exception as e:
+                logger.warning(f"[Agent] LLM 摘要生成失败，回退启发式摘要: {e}")
+
+        if not summary_text:
+            summary_text = hm._generate_summary(to_summarize)
+
+        merged = hm._merge_summaries(hm.get_summary(), summary_text)
+        summary_msg = {"role": "user", "content": f"[历史摘要] {merged}", "_is_summary": True}
+
+        system_msg = next((m for m in hm.messages if m.get("role") == "system"), None)
+        hm.messages = ([system_msg] if system_msg else []) + [summary_msg] + to_keep
+        hm._summary = merged
+
+        logger.info(f"[Agent] 已压缩 {len(to_summarize)} 条历史为摘要（LLM={bool(summary_text and self.config.enable_llm_summary)}）")
+
+    async def _llm_summarize(self, messages: List[Dict]) -> str:
+        """让模型把早期对话压缩成一份保留关键事实的摘要"""
+        lines = []
+        role_names = {"user": "用户", "assistant": "助手", "tool": "工具"}
+        for m in messages[-30:]:
+            role = role_names.get(m.get("role"), m.get("role") or "未知")
+            content = m.get("content")
+            if not content or not isinstance(content, str):
+                continue
+            content = content.strip()
+            if not content:
+                continue
+            lines.append(f"{role}: {content[:500]}")
+
+        if not lines:
+            return ""
+
+        prompt = (
+            "请把以下番剧管理助手与用户的早期对话压缩成一份简洁的中文摘要，"
+            "保留关键事实：提到的作品名、订阅/删除/整理等操作及其结果、用户表达的偏好和未完成的事项。"
+            "直接输出摘要正文，不要任何前言或解释。\n\n" + "\n".join(lines)
+        )
+
+        payload = {
+            "model": self.config.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.3,
+            "max_tokens": 500,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(self._get_endpoint(), headers=self._get_headers(), json=payload)
+            if response.status_code != 200:
+                raise Exception(f"LLM 摘要请求失败: {response.status_code}")
+            data = response.json()
+
+        content = (data.get("choices", [{}])[0].get("message", {}) or {}).get("content", "")
+        return (content or "").strip()
 
     def _get_system_prompt(self, tools: List = None) -> str:
         tools_desc = ToolRegistry.get_compact_tools_description(tools) if tools else ""
@@ -397,6 +463,19 @@ class Agent:
         return f"{base_url}/v1/chat/completions"
 
     async def _call_llm(self, stream: bool = False) -> Dict:
+        """带一次自动重试的 LLM 调用（瞬时网络错误/超时直接重发）"""
+        last_error: Optional[Exception] = None
+        for attempt in range(2):
+            try:
+                return await self._call_llm_once()
+            except Exception as e:
+                last_error = e
+                logger.warning(f"[Agent] LLM 请求失败(第 {attempt + 1} 次): {e}")
+                if attempt == 0:
+                    await asyncio.sleep(1.0)
+        raise last_error
+
+    async def _call_llm_once(self) -> Dict:
         endpoint = self._get_endpoint()
         headers = self._get_headers()
         
@@ -434,8 +513,24 @@ class Agent:
 
     async def _call_llm_stream(self):
         """
-        流式调用 LLM，支持实时输出和提前中断
+        流式调用 LLM，支持实时输出和提前中断。
+        只在尚未输出任何内容时重试一次，避免重试导致内容重复。
         """
+        for attempt in range(2):
+            yielded_any = False
+            try:
+                async for chunk in self._call_llm_stream_once():
+                    yielded_any = True
+                    yield chunk
+                return
+            except Exception as e:
+                logger.warning(f"[Agent] LLM 流式请求失败(第 {attempt + 1} 次): {e}")
+                if attempt == 1 or yielded_any:
+                    raise
+                await asyncio.sleep(1.0)
+
+    async def _call_llm_stream_once(self):
+        """流式调用 LLM"""
         endpoint = self._get_endpoint()
         headers = self._get_headers()
         
@@ -588,6 +683,7 @@ class Agent:
                     self.history_manager.messages[i]["content"] = system_prompt
                     break
         
+        await self._compact_history_if_needed()
         self.history_manager.add({"role": "user", "content": user_message})
         
         self.iteration_count = 0
@@ -935,6 +1031,7 @@ class Agent:
                     self.history_manager.messages[i]["content"] = system_prompt
                     break
         
+        await self._compact_history_if_needed()
         self.history_manager.add({"role": "user", "content": user_message})
         
         self.iteration_count = 0
@@ -1044,10 +1141,11 @@ class Agent:
                 self.history_manager.extend(tool_results_messages)
                 
                 if has_formatted_output:
+                    yield {"type": "history", "messages": self.history_manager.get_messages()}
                     return
-                
+
                 continue
-            
+
             if full_content:
                 self.history_manager.add({"role": "assistant", "content": full_content})
                 yield {
@@ -1055,14 +1153,17 @@ class Agent:
                     "content": full_content
                 }
                 break
-            
+
             break
-        
+
         if self.iteration_count >= self.config.max_iterations:
             yield {
                 "type": "warning",
                 "message": "已达到最大迭代次数，请简化请求或分步执行"
             }
+
+        # 输出内部历史快照（含摘要消息），供前端随会话持久化，并在下轮请求中作为 agent_history 种子回传
+        yield {"type": "history", "messages": self.history_manager.get_messages()}
     
     @property
     def messages(self) -> List[Dict]:
