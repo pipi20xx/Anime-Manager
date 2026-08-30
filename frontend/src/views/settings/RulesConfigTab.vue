@@ -112,9 +112,12 @@ onMounted(() => {
 
   <div v-else class="rules-config-tab">
     <!-- 工具栏 -->
-    <div class="d-flex justify-end mb-4">
-      <v-btn color="primary" variant="tonal" size="small" :loading="syncLoading" prepend-icon="mdi-sync" @click="refreshRemoteRules">
+    <div class="d-flex justify-end align-center ga-2 mb-4">
+      <v-btn color="primary" variant="tonal" :loading="syncLoading" prepend-icon="mdi-sync" @click="refreshRemoteRules">
         同步远程规则
+      </v-btn>
+      <v-btn variant="tonal" color="primary" :loading="saving" @click="saveAll" prepend-icon="mdi-content-save-outline">
+        保存全部修改
       </v-btn>
     </div>
 
@@ -289,12 +292,5 @@ onMounted(() => {
         </v-row>
       </v-card-text>
     </v-card>
-
-    <!-- 保存按钮 -->
-    <div class="d-flex justify-end">
-      <v-btn variant="tonal" color="primary" :loading="saving" @click="saveAll" prepend-icon="mdi-content-save-outline">
-        保存全部修改
-      </v-btn>
-    </div>
   </div>
 </template>
