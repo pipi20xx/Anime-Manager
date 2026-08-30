@@ -59,14 +59,6 @@ const isSubscribed = computed(() => {
   )
 })
 
-// 从 backdrops 列表随机选一张，没有则回退到 backdrop_path
-const randomBackdrop = computed(() => {
-  if (detail.value?.backdrops?.length) {
-    return detail.value.backdrops[Math.floor(Math.random() * detail.value.backdrops.length)].file_path
-  }
-  return detail.value?.backdrop_path || ''
-})
-
 // 季度/演员等图片：raw TMDB 路径需要加尺寸前缀，已代理的路径直接返回
 function getPosterUrl(path: string, size: string = 'w300'): string {
   if (!path) return ''
@@ -308,16 +300,7 @@ onMounted(() => {
 
     <!-- 详情内容 -->
     <template v-else-if="detail">
-      <!-- 背景横幅 (从 backdrops 随机选一张) -->
-      <div
-        v-if="randomBackdrop"
-        class="detail-backdrop"
-        :style="{ backgroundImage: `url(${randomBackdrop})` }"
-      >
-        <div class="backdrop-overlay" />
-      </div>
-
-      <v-container fluid class="pa-4 pa-md-6 detail-content">
+      <v-container fluid class="pa-4 pa-md-6">
         <v-row>
           <!-- 海报 -->
           <v-col cols="12" sm="3" md="2">

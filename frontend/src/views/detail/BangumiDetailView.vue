@@ -484,7 +484,7 @@ onMounted(() => {
 .ep-num-main {
   font-size: 18px;
   font-weight: 900;
-  color: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-surface));
   line-height: 1;
 }
 .ep-num-sort {
