@@ -424,7 +424,7 @@ onMounted(() => {
                   class="cursor-pointer"
                   @click.stop="toggleTaskMonitor(task, 'scheduler')"
                 >
-                  <v-icon start size="14">mdi-clock-outline</v-icon>
+                  <v-icon start size="14">{{ task.scheduler_enabled ? 'mdi-timer-outline' : 'mdi-timer-off-outline' }}</v-icon>
                   定时扫描
                 </v-chip>
               </div>
