@@ -98,7 +98,6 @@ class ConfigManager:
         "rule_auto_update": False,
         "rule_update_interval": 24,
         "external_token": "",
-        "webhook_secret": "", # Webhook 共享密钥（CD2/Emby 回调），为空时不校验
         "api_logging": True,
         "jwt_never_expire": False, # JWT 令牌永不过期
         "stalled_timeout_minutes": 0, # 死种清理超时阈值（分钟），0为禁用
