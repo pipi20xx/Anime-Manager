@@ -100,6 +100,20 @@ app.include_router(file_hashes.router)
 app.include_router(appearance.router)
 
 # --- API Audit & Security Middleware ---
+SENSITIVE_KEY_MARKERS = ("password", "token", "apikey", "api_key", "secret", "otp")
+
+def _is_sensitive_key(key: str) -> bool:
+    k = str(key).lower()
+    return any(m in k for m in SENSITIVE_KEY_MARKERS)
+
+def _redact_value(value):
+    """递归脱敏：对 key 含敏感标记（password/token/apikey/secret/otp）的字段打码"""
+    if isinstance(value, dict):
+        return {k: ("******" if _is_sensitive_key(k) else _redact_value(v)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact_value(v) for v in value]
+    return value
+
 @app.middleware("http")
 async def api_audit_middleware(request: Request, call_next):
     path = request.url.path
@@ -206,22 +220,11 @@ async def api_audit_middleware(request: Request, call_next):
         
         audit_details = {
             "ip": request.client.host if request.client else "unknown",
-            "params": query_params,
+            "params": _redact_value(query_params),
         }
         if request_body:
-            if isinstance(request_body, dict):
-                safe_body = {k: (v if "password" not in k.lower() and "token" not in k.lower() else "******") 
-                             for k, v in request_body.items()}
-            elif isinstance(request_body, list):
-                safe_body = []
-                for item in request_body:
-                    if isinstance(item, dict):
-                        safe_body.append({k: (v if "password" not in k.lower() and "token" not in k.lower() else "******") for k, v in item.items()})
-                    else:
-                        safe_body.append(item)
-            else:
-                safe_body = request_body
-                
+            safe_body = _redact_value(request_body)
+
             audit_details["body"] = safe_body
 
         log_audit(
@@ -235,10 +238,59 @@ async def api_audit_middleware(request: Request, call_next):
         
     return response
 
+# --- WebSocket 鉴权 ---
+async def validate_user_token(token: str) -> bool:
+    """校验用户 JWT：签名 + 密码指纹 + 数据库会话（与 API 中间件同标准），供 WebSocket 使用"""
+    if not token:
+        return False
+    payload = decode_access_token(token)
+    if not payload or not payload.get("sub") or payload.get("type") == "2fa_pending":
+        return False
+    from database import db
+    from models import User, Session
+    from sqlmodel import select
+    try:
+        config = ConfigManager.get_config()
+        jwt_never_expire = config.get("jwt_never_expire", False)
+        async with db.session_scope() as session:
+            result = await session.execute(select(User).where(User.username == payload.get("sub")))
+            user = result.scalars().first()
+            if not user:
+                return False
+            if not decode_access_token(token, user.hashed_password):
+                return False
+            token_id = payload.get("jti")
+            if not token_id:
+                return False
+            filters = [Session.user_id == user.id, Session.token_id == token_id]
+            if not jwt_never_expire:
+                filters.append(Session.expires_at > datetime.utcnow())
+            session_result = await session.execute(select(Session).where(*filters))
+            return session_result.scalars().first() is not None
+    except Exception:
+        return False
+
+async def authenticate_websocket(websocket: WebSocket) -> bool:
+    """WebSocket 握手鉴权：支持 ?token= / ?apikey= 或 Authorization 头"""
+    token = websocket.query_params.get("token") or websocket.query_params.get("apikey")
+    if not token:
+        auth_header = websocket.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:].strip()
+    if not token:
+        return False
+    external_token = ConfigManager.get_config().get("external_token")
+    if external_token and token == external_token:
+        return True
+    return await validate_user_token(token)
+
 # --- WebSocket for Real-time Logs ---
 @app.websocket("/ws/system/logs")
 async def websocket_logs(websocket: WebSocket):
     await websocket.accept()
+    if not await authenticate_websocket(websocket):
+        await websocket.close(code=4401)
+        return
     await LogBroadcaster.register(websocket)
     try:
         while True:
@@ -252,6 +304,9 @@ from event_broadcaster import EventBroadcaster
 @app.websocket("/ws/events")
 async def websocket_events(websocket: WebSocket):
     await websocket.accept()
+    if not await authenticate_websocket(websocket):
+        await websocket.close(code=4401)
+        return
     queue = EventBroadcaster.subscribe()
 
     async def receive_loop():

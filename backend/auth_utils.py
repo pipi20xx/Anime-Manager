@@ -3,10 +3,45 @@ from typing import Optional, Tuple
 from jose import jwt
 import bcrypt
 import os
+import secrets
 import uuid
+import logging
+
+def _load_secret_key() -> str:
+    """优先取环境变量；未配置时生成随机密钥并持久化到 data/secret_key，避免使用公开默认值"""
+    env_key = os.getenv("JWT_SECRET_KEY")
+    if env_key:
+        return env_key
+
+    key_path = os.path.join("data", "secret_key")
+    key = None
+    try:
+        with open(key_path, "r", encoding="utf-8") as f:
+            key = f.read().strip() or None
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"读取 {key_path} 失败: {e}")
+
+    if key:
+        return key
+
+    key = secrets.token_urlsafe(48)
+    try:
+        os.makedirs("data", exist_ok=True)
+        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(key)
+        logging.getLogger(__name__).warning(
+            f"未配置 JWT_SECRET_KEY 环境变量，已生成随机密钥保存到 {key_path}；如需跨实例固定密钥请显式配置该环境变量"
+        )
+    except Exception as e:
+        # 落盘失败时仅在本次进程内生效，重启后会重新生成
+        logging.getLogger(__name__).warning(f"JWT 密钥写入 {key_path} 失败: {e}，本次运行使用临时密钥")
+    return key
 
 # 加密配置
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "anime_manager_secret_key_change_me_in_production")
+SECRET_KEY = _load_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 默认登录有效期 24 小时
 

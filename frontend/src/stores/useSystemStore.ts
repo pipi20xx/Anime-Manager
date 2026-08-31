@@ -77,13 +77,19 @@ export const useSystemStore = defineStore('system', () => {
     }, delay)
   }
 
+  // --- WebSocket 鉴权 ---
+  /** WS 握手无法携带 Authorization 头，统一通过 ?token= 传递 */
+  function getWsToken(): string {
+    return localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token') || ''
+  }
+
   // --- 系统日志 WebSocket (/ws/system/logs) ---
   function connectLogStream() {
     if (logSocket) return
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
-    const logWsUrl = `${protocol}//${host}/ws/system/logs`
+    const logWsUrl = `${protocol}//${host}/ws/system/logs?token=${encodeURIComponent(getWsToken())}`
 
     try {
       logSocket = new WebSocket(logWsUrl)
@@ -138,7 +144,7 @@ export const useSystemStore = defineStore('system', () => {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
-    const wsUrl = `${protocol}//${host}/ws/events`
+    const wsUrl = `${protocol}//${host}/ws/events?token=${encodeURIComponent(getWsToken())}`
 
     try {
       socket = new WebSocket(wsUrl)

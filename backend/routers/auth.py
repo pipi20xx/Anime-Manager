@@ -168,7 +168,7 @@ async def login(req: LoginRequest, request: Request, session: AsyncSession = Dep
 async def change_password(req: PasswordChangeRequest, session: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
     if not token: raise HTTPException(status_code=401)
     payload = decode_access_token(token)
-    if not payload: raise HTTPException(status_code=401)
+    if not payload or payload.get("type") == "2fa_pending": raise HTTPException(status_code=401)
     username = payload.get("sub")
     
     result = await session.execute(select(User).where(User.username == username))
@@ -188,7 +188,7 @@ async def change_password(req: PasswordChangeRequest, session: AsyncSession = De
 async def setup_2fa(session: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
     if not token: raise HTTPException(status_code=401)
     payload = decode_access_token(token)
-    if not payload: raise HTTPException(status_code=401)
+    if not payload or payload.get("type") == "2fa_pending": raise HTTPException(status_code=401)
     username = payload.get("sub")
     
     result = await session.execute(select(User).where(User.username == username))
@@ -209,7 +209,7 @@ async def setup_2fa(session: AsyncSession = Depends(get_session), token: str = D
 async def enable_2fa(code: str, session: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
     if not token: raise HTTPException(status_code=401)
     payload = decode_access_token(token)
-    if not payload: raise HTTPException(status_code=401)
+    if not payload or payload.get("type") == "2fa_pending": raise HTTPException(status_code=401)
     username = payload.get("sub")
     
     result = await session.execute(select(User).where(User.username == username))
@@ -226,7 +226,7 @@ async def enable_2fa(code: str, session: AsyncSession = Depends(get_session), to
 async def disable_2fa(session: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
     if not token: raise HTTPException(status_code=401)
     payload = decode_access_token(token)
-    if not payload: raise HTTPException(status_code=401)
+    if not payload or payload.get("type") == "2fa_pending": raise HTTPException(status_code=401)
     username = payload.get("sub")
     
     result = await session.execute(select(User).where(User.username == username))

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends, HTTPException
 import os
 import asyncio
 import logging
@@ -13,6 +13,22 @@ from task_history import start_task, log_task, finish_task
 
 router = APIRouter(prefix="/api/webhook", tags=["Webhook 回调"])
 logger = logging.getLogger("Webhook")
+
+_warned_no_webhook_secret = False
+
+async def verify_webhook_secret(request: Request):
+    """Webhook 共享密钥校验：未配置时放行并提示一次（兼容旧部署），配置后强制校验"""
+    global _warned_no_webhook_secret
+    secret = (ConfigManager.get_config().get("webhook_secret") or "").strip()
+    if not secret:
+        if not _warned_no_webhook_secret:
+            _warned_no_webhook_secret = True
+            logger.warning("未配置 webhook_secret，Webhook 接口处于无鉴权状态；配置后自动启用校验")
+        return
+    provided = request.headers.get("X-Webhook-Secret") or request.query_params.get("secret")
+    if provided != secret:
+        log_audit("Webhook", "鉴权失败", "webhook_secret 校验未通过", level="ERROR")
+        raise HTTPException(status_code=401, detail="Invalid webhook secret")
 
 async def process_cd2_notification(data: list, source: str = "webhook"):
     """
@@ -164,7 +180,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     await finish_task(task_id_ref, "completed", processed_count)
     return processed_count
 
-@router.post("/cd2/file_notify{tail:path}", summary="CloudDrive2 文件变动回调")
+@router.post("/cd2/file_notify{tail:path}", summary="CloudDrive2 文件变动回调", dependencies=[Depends(verify_webhook_secret)])
 async def cd2_webhook(request: Request, tail: str = ""):
     """
     接收来自外部 CD2 容器或本系统内部模拟的 Webhook 通知。
@@ -191,7 +207,7 @@ async def cd2_webhook(request: Request, tail: str = ""):
     return {"status": "success", "source": source_desc, "triggered": triggered}
 
 
-@router.post("/emby", summary="Emby Webhook")
+@router.post("/emby", summary="Emby Webhook", dependencies=[Depends(verify_webhook_secret)])
 async def emby_webhook(request: Request):
     """
     接收 Emby 的 Webhook 通知。

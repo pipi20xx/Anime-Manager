@@ -15,6 +15,7 @@ from sqlmodel import text
 from logger import log_audit
 from notification import notification_manager
 from rss_core.scheduler import check_stalled_downloads
+from url_guard import assert_safe_url, safe_get, UnsafeURLError
 
 router = APIRouter(prefix="/api/system", tags=["系统管理"])
 
@@ -415,7 +416,12 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
     """
     if not url:
         return Response(status_code=400)
-    
+
+    try:
+        assert_safe_url(url)
+    except UnsafeURLError as e:
+        raise HTTPException(status_code=400, detail=f"URL 不被允许: {e}")
+
     # 生成本地文件名
     import hashlib
     url_hash = hashlib.md5(url.encode()).hexdigest()
@@ -453,11 +459,11 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
     os.makedirs(cache_dir, exist_ok=True)
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
     proxy = ConfigManager.get_proxy("bangumi")
-    
-    async with httpx.AsyncClient(timeout=10, proxy=proxy, follow_redirects=True) as client:
+
+    async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:
         for attempt in range(3):
             try:
-                resp = await client.get(url, headers=headers)
+                resp = await safe_get(client, url, headers=headers)
                 if resp.status_code == 200 and _is_valid_image(resp.content):
                     await asyncio.to_thread(_ensure_dir_and_write, local_file, resp.content)
                     return Response(
@@ -471,6 +477,9 @@ async def get_bgm_image(url: str = Query(..., description="Bangumi 图片完整 
                 if attempt == 2:
                     print(f"[BGM IMG] 最终同步失败: {url} | 原因: {str(e)}")
                 await asyncio.sleep(1) # 等待 1 秒重试
+            except UnsafeURLError as e:
+                # 重定向跳到了内网地址，直接拒绝
+                raise HTTPException(status_code=400, detail=f"URL 不被允许: {e}")
             except Exception as e:
                 print(f"[BGM IMG] 未知异常: {str(e)}")
                 break
@@ -532,6 +541,13 @@ async def get_db_tables():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"数据库查询失败: {e}")
 
+def _safe_table_ident(table: str) -> str:
+    """校验并返回带双引号的安全表名标识符（各段仅允许字母、数字、下划线，防止引号/分号注入）"""
+    parts = table.split(".")
+    if not 1 <= len(parts) <= 2 or not all(re.match(r"^[a-zA-Z0-9_]+$", p) for p in parts):
+        raise HTTPException(400, f"无效的表名: {table}")
+    return ".".join(f'"{p}"' for p in parts)
+
 @router.post("/db/query", summary="执行 SQL 查询")
 async def query_db(payload: Dict[str, str] = Body(...)):
     """
@@ -544,13 +560,23 @@ async def query_db(payload: Dict[str, str] = Body(...)):
     # 安全检查：只允许 SELECT
     if not re.match(r"^\s*SELECT", sql, re.IGNORECASE):
         raise HTTPException(403, "仅允许执行 SELECT 查询语句")
-        
+
+    # 禁止多语句（末尾分号除外），杜绝借助第二语句执行写操作
+    if ";" in sql.rstrip(";"):
+        raise HTTPException(403, "仅允许单条 SELECT 语句（字符串常量中请避免使用分号）")
+
     # 禁止明显的高危操作（放宽对 . 的限制以支持 schema）
     if re.search(r";\s*(DROP|DELETE|UPDATE|INSERT|ALTER|TRUNCATE)", sql, re.IGNORECASE):
         raise HTTPException(403, "检测到潜在的危险操作，已拦截")
 
+    # 禁止可能在只读事务中绕过限制的服务端函数（如 dblink 可在新连接中执行写操作）
+    if re.search(r"\b(dblink|pg_read_file|pg_read_binary_file|pg_ls_dir|lo_import|lo_export|pg_sleep|pg_terminate_backend)\s*\(", sql, re.IGNORECASE):
+        raise HTTPException(403, "检测到潜在的危险操作，已拦截")
+
     try:
         async with db.session_scope():
+            # 只读事务兜底：即使语句校验被绕过也无法写库
+            await db.execute(text("SET TRANSACTION READ ONLY"))
             result = await db.execute(text(sql))
             
             # 统一结果解析逻辑
@@ -610,20 +636,15 @@ async def delete_db_row(payload: Dict[str, Any] = Body(...)):
     table = payload.get("table")
     pk_col = payload.get("pk_col")
     pk_val = payload.get("pk_val")
-    
+
     if not all([table, pk_col, pk_val is not None]):
         raise HTTPException(400, "缺少必要参数")
 
-    # 基本校验防止注入：允许字母、数字、下划线和点号
-    if not re.match(r"^[a-zA-Z0-9_\.]+$", table) or not re.match(r"^[a-zA-Z0-9_]+$", pk_col):
-         raise HTTPException(400, f"无效的标识符: table={table}, pk_col={pk_col}")
+    # 基本校验防止注入：标识符只允许字母、数字、下划线
+    if not re.match(r"^[a-zA-Z0-9_]+$", pk_col):
+         raise HTTPException(400, f"无效的标识符: pk_col={pk_col}")
 
-    # 处理表名：如果是 schema.table 格式，需要分别用双引号包裹
-    if "." in table:
-        s, t = table.split(".", 1)
-        safe_table = f'"{s}"."{t}"'
-    else:
-        safe_table = f'"{table}"'
+    safe_table = _safe_table_ident(table)
 
     sql = f"DELETE FROM {safe_table} WHERE {pk_col} = :pk_val"
     
@@ -646,18 +667,12 @@ async def truncate_db_table(payload: Dict[str, Any] = Body(...)):
     if not table:
         raise HTTPException(400, "未指定表名")
 
-    # 安全检查：仅允许清理 public 或 metadata schema 下的表
-    is_safe = table.startswith("public.") or table.startswith("metadata.")
-    
-    if not is_safe:
-        raise HTTPException(403, f"禁止操作系统级或受保护的表: {table}")
+    safe_table = _safe_table_ident(table)
 
-    # 处理表名转义
-    if "." in table:
-        s, t = table.split(".", 1)
-        safe_table = f'"{s}"."{t}"'
-    else:
-        safe_table = f'"{table}"'
+    # 安全检查：仅允许清理 public 或 metadata schema 下的表
+    schema = table.split(".")[0]
+    if schema not in ("public", "metadata"):
+        raise HTTPException(403, f"禁止操作系统级或受保护的表: {table}")
 
     try:
         async with db.session_scope() as session:
@@ -684,16 +699,11 @@ async def update_db_cell(payload: Dict[str, Any] = Body(...)):
     if not all([table, pk_col, col, pk_val is not None]):
         raise HTTPException(400, "缺少必要参数")
 
-    # 标识符安全校验：允许 table 包含点号
-    if not re.match(r"^[a-zA-Z0-9_\.]+$", table) or not all(re.match(r"^[a-zA-Z0-9_]+$", s) for s in [pk_col, col]):
+    # 标识符安全校验：只允许字母、数字、下划线
+    if not all(re.match(r"^[a-zA-Z0-9_]+$", s) for s in [pk_col, col]):
          raise HTTPException(400, "无效的标识符")
 
-    # 处理表名
-    if "." in table:
-        s, t = table.split(".", 1)
-        safe_table = f'"{s}"."{t}"'
-    else:
-        safe_table = f'"{table}"'
+    safe_table = _safe_table_ident(table)
 
     sql = f"UPDATE {safe_table} SET {col} = :val WHERE {pk_col} = :pk_val"
 

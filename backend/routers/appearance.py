@@ -180,6 +180,7 @@ import httpx
 import random as _random
 from fastapi.responses import Response
 from fastapi import Query
+from url_guard import assert_safe_url, safe_get, UnsafeURLError
 
 WALLPAPER_CACHE_DIR = os.path.join("data", "tmp", "wallpaper")
 
@@ -486,6 +487,11 @@ async def proxy_wallpaper(
     if not target_url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="无效的 URL")
 
+    try:
+        assert_safe_url(target_url)
+    except UnsafeURLError as e:
+        raise HTTPException(status_code=400, detail=f"URL 不被允许: {e}")
+
     # 缓存时间由配置控制
     cache_ttl = wp_config.get("cache_ttl", 30)
     if cache_ttl < 0:
@@ -536,8 +542,8 @@ async def proxy_wallpaper(
     # 下载新图片
     await asyncio.to_thread(_ensure_wallpaper_dir)
     try:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            resp = await client.get(target_url)
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await safe_get(client, target_url)
             if resp.status_code == 200 and _is_valid_image(resp.content):
                 content_type = resp.headers.get("content-type", "image/jpeg")
                 ext_map = {
@@ -570,6 +576,9 @@ async def proxy_wallpaper(
                 )
             else:
                 raise HTTPException(status_code=502, detail="壁纸源返回无效数据")
+    except UnsafeURLError as e:
+        logger.warning(f"壁纸代理拒绝 URL（重定向跳转）: {e}")
+        raise HTTPException(status_code=400, detail=f"URL 不被允许: {e}")
     except httpx.RequestError as e:
         logger.warning(f"壁纸代理请求失败: {e}")
         raise HTTPException(status_code=502, detail=f"壁纸代理失败: {str(e)}")

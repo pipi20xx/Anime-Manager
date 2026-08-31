@@ -86,6 +86,7 @@ class ConfigManager:
         "remote_privileged_urls": [],
         "rename_rules": Renamer.get_default_rules(),
         "organize_tasks": [], # 确保整理任务持久化
+        "organizer_allowed_roots": [], # 文件管理/整理接口允许访问的根目录（绝对路径列表），为空时不限制
         "strm_tasks": [], # 确保 strm_tasks 也有默认占位符
         "download_clients": [],
         "rss_auto_refresh": True,
@@ -97,6 +98,7 @@ class ConfigManager:
         "rule_auto_update": False,
         "rule_update_interval": 24,
         "external_token": "",
+        "webhook_secret": "", # Webhook 共享密钥（CD2/Emby 回调），为空时不校验
         "api_logging": True,
         "jwt_never_expire": False, # JWT 令牌永不过期
         "stalled_timeout_minutes": 0, # 死种清理超时阈值（分钟），0为禁用
