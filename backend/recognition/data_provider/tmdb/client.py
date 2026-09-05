@@ -50,9 +50,9 @@ class TMDBProvider:
 
         async with httpx.AsyncClient(timeout=10, proxy=self.proxy) as client:
             try:
-                # [DEBUG] 记录实际发送的请求 URL（构建请求对象查看编码后的URL）
+                # [DEBUG] 记录实际发送的请求 URL（URL 中空格显示为 + / 中文为 %XX，为编码后的正常形式）
                 debug_request = client.build_request('GET', full_url, params=params)
-                _log(f"┃   [DEBUG] 实际请求URL: {debug_request.url}")
+                _log(f"┃   [DEBUG] 实际请求URL: {debug_request.url} (解码关键词: '{params.get('query', '')}')")
                 resp = await client.get(full_url, params=params)
                 if resp.status_code == 200: return resp.json(), True
                 
