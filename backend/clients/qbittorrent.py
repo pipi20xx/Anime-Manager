@@ -13,8 +13,15 @@ class QBClient(BaseClient):
         super().__init__(client_config)
         self.session = requests.Session()
         self.session.headers.update({'Referer': self.url})
+        # QB >= 5.2.0 支持 X-Api-Key 无状态认证，配置了 API Key 时跳过账密登录
+        if self.api_token:
+            self.session.headers.update({'X-Api-Key': self.api_token})
+            self.logged_in = True
 
     def login(self) -> bool:
+        if self.api_token:
+            self.logged_in = True
+            return True
         try:
             self.session.cookies.clear()
             
@@ -102,6 +109,10 @@ class QBClient(BaseClient):
             
             # If still forbidden, try to re-login once
             if resp.status_code == 403:
+                # API Key 模式无会话可刷新，403 说明 Key 无效，直接失败避免无限重试
+                if self.api_token:
+                    logger.error(f"[{self.name}] QB returned 403 with API Key, the key is likely invalid")
+                    return False, f"Failed. Code: 403 (API Key 无效或被禁止), Resp: {resp.text}"
                 import time
                 time.sleep(0.5)
                 logger.warning(f"[{self.name}] QB returned 403, attempting re-login...")

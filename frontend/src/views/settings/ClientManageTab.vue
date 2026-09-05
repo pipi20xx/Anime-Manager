@@ -273,14 +273,14 @@ onMounted(() => {
           />
 
           <PasswordInput
-            v-if="form.type === 'cd2'"
+            v-if="form.type === 'cd2' || form.type === 'qbittorrent'"
             v-model="form.api_token"
-            label="API Token (选填)"
+            label="API Token / API Key (选填)"
             variant="outlined"
             density="compact"
             class="mb-3"
             hide-details
-            placeholder="直接使用 API Token，无需用户名密码"
+            :placeholder="form.type === 'qbittorrent' ? 'QB 5.2.0+ 可用，填写后无需账号密码' : '直接使用 API Token，无需用户名密码'"
           />
 
           <v-text-field
