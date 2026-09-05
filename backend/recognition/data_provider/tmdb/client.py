@@ -536,6 +536,60 @@ class TMDBProvider:
 
         return await self._process_candidates_multi(merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=original_cn_name)
 
+    async def _get_alt_titles(self, media_type: str, tmdb_id: str, logs: Any = None) -> List[str]:
+        """[New] 拉取 TMDB 别名表 (alternative_titles)，结果长缓存（别名基本不变）"""
+        cache_key = f"tmdb:alt_titles:{media_type}:{tmdb_id}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached is not None: return cached
+
+        data, success = await self._fetch(f"/{media_type}/{tmdb_id}/alternative_titles", logs=logs)
+        titles: List[str] = []
+        if success and data:
+            for t in (data.get("titles") or data.get("results") or []):
+                name = t.get("title") or t.get("name")
+                if name: titles.append(name)
+
+        await MetaCacheManager.set_discover_cache(cache_key, titles, expire_hours=720)
+        return titles
+
+    async def _review_fuzzy_with_aliases(self, scored_pool, targets, cn_name, en_name, logs, anime_priority, year, default_type: str = "tv"):
+        """[New] 模糊命中复核: 最佳候选为模糊命中时，拉取 top2 的别名参与对撞后重新打分排序"""
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        best = scored_pool[0]
+        if not best.get("match_reason", "").startswith("模糊"):
+            return
+
+        _log(f"┃ 🔎 模糊命中复核: 拉取候选别名参与对撞...")
+        changed = False
+        for entry in scored_pool[:2]:
+            item = entry["item"]
+            m_type = item.get("media_type") or default_type
+            alt_titles = await self._get_alt_titles(m_type, str(item.get("id")), logs=logs)
+            if not alt_titles: continue
+
+            new_score, _, new_info, _ = TMDBMatcher.calculate_match_score(
+                item, targets, cn_name or "", en_name or "", entry["idx"], anime_priority,
+                item.get("_is_from_segment", False), target_year=year, extra_titles=alt_titles
+            )
+            if new_score > entry["score"]:
+                _log(f"┃   🔎 ID:{item.get('id')} 别名命中提分: {entry['score']:.1f} -> {new_score:.1f} ({new_info})")
+                entry["score"] = new_score
+                entry["reviewed"] = True
+                changed = True
+
+        scored_pool.sort(key=lambda x: x["score"], reverse=True)
+
+        if changed:
+            new_best = scored_pool[0]
+            if new_best.get("reviewed"):
+                nb_name = new_best["item"].get("title") or new_best["item"].get("name")
+                _log(f"┃ ✅ 别名复核生效: 最佳候选为 {nb_name} (ID: {new_best['item'].get('id')}, {new_best['score']:.1f}分)")
+            else:
+                _log(f"┃ ⚠️ 别名复核后排名未变，仍以原最高分候选为准")
+
     async def _process_candidates_multi(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=None, year=None):
         def _log(msg):
             if hasattr(logs, "log"): logs.log(msg)
@@ -557,15 +611,17 @@ class TMDBProvider:
             c_name = item.get("title") or item.get("name")
             c_year = (item.get("release_date") or item.get("first_air_date") or "")[:4]
             c_type = item.get("media_type", "unknown")
-            
+
             _log(f"┣ [#{idx+1}] ID:{item.get('id')} | {c_name} ({c_year}) [{c_type.upper()}]")
             for t_line in trace: _log(t_line)
             _log(f"┃   ├─ 最佳匹配: {best_match_info}")
             _log(f"┃   └─ {summary}")
-            
-            scored_pool.append({"item": item, "score": score})
-        
+
+            scored_pool.append({"item": item, "score": score, "idx": idx, "match_reason": best_match_info})
+
         scored_pool.sort(key=lambda x: x["score"], reverse=True)
+        # [New] 模糊命中复核: 拉取候选别名重新对撞
+        await self._review_fuzzy_with_aliases(scored_pool, targets, cn_name, en_name, logs, anime_priority, year)
         best = scored_pool[0]
         
         _log(f"┃")
@@ -575,7 +631,8 @@ class TMDBProvider:
              
              final_name = best["item"].get("title") or best["item"].get("name")
              final_type = best["item"].get("media_type", "tv")
-             _log(f"┗ ✅ 最终采信: {final_name} (ID: {best['item']['id']}, 类型: {final_type.upper()})")
+             reviewed_tag = " (别名复核确认)" if best.get("reviewed") else ""
+             _log(f"┗ ✅ 最终采信{reviewed_tag}: {final_name} (ID: {best['item']['id']}, 类型: {final_type.upper()})")
              
              details = await self.get_details(str(best["item"]["id"]), final_type, logs=logs)
              if details:
@@ -610,24 +667,27 @@ class TMDBProvider:
             )
             c_name = item.get("title") or item.get("name")
             c_year = (item.get("release_date") or item.get("first_air_date") or "")[:4]
-            
+
             _log(f"┣ [#{idx+1}] ID:{item.get('id')} | {c_name} ({c_year})")
             for t_line in trace: _log(t_line)
             _log(f"┃   ├─ 最佳匹配: {best_match_info}")
             _log(f"┃   └─ {summary}")
-            
-            scored_pool.append({"item": item, "score": score})
-        
+
+            scored_pool.append({"item": item, "score": score, "idx": idx, "match_reason": best_match_info})
+
         scored_pool.sort(key=lambda x: x["score"], reverse=True)
+        # [New] 模糊命中复核: 拉取候选别名重新对撞
+        await self._review_fuzzy_with_aliases(scored_pool, targets, cn_name, en_name, logs, anime_priority, year, default_type=media_type)
         best = scored_pool[0]
-        
+
         _log(f"┃")
         if best["score"] >= 80 or len(seen_ids) == 1:
              if len(seen_ids) == 1 and best["score"] < 80:
                  _log(f"┃ 🪄 触发[孤独命中]策略 (唯一 ID)")
              
              final_name = best["item"].get("title") or best["item"].get("name")
-             _log(f"┗ ✅ 最终采信: {final_name} (ID: {best['item']['id']})")
+             reviewed_tag = " (别名复核确认)" if best.get("reviewed") else ""
+             _log(f"┗ ✅ 最终采信{reviewed_tag}: {final_name} (ID: {best['item']['id']})")
              
              # 尝试获取详情，如果失败则回退到基础搜索结果
              details = await self.get_details(str(best["item"]["id"]), media_type, logs=logs)

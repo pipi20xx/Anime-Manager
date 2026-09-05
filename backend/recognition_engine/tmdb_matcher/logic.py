@@ -83,10 +83,10 @@ class TMDBMatcher:
         return q_list[:3]
 
     @staticmethod
-    def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool, is_from_segment: bool = False, target_year: Optional[str] = None) -> Tuple[float, List[str]]:
+    def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool, is_from_segment: bool = False, target_year: Optional[str] = None, extra_titles: Optional[List[str]] = None) -> Tuple[float, List[str]]:
         """
         核心对撞算法：计算候选人分值，并记录详细的对撞轨迹
-        
+
         Args:
             item: 候选条目
             targets: 目标标题列表（清洗后）
@@ -96,12 +96,16 @@ class TMDBMatcher:
             anime_priority: 是否优先动画
             is_from_segment: 是否来自分词搜索（用于惩罚机制）
             target_year: 目标年份（用于年份打分）
+            extra_titles: 额外参与对撞的标题（如 TMDB 别名表），与 item 自带标题合并
         """
         c_name = item.get("title") or item.get("name")
         c_oname = item.get("original_title") or item.get("original_name")
         candidate_titles = []
         if c_name: candidate_titles.append(c_name)
         if c_oname and c_oname != c_name: candidate_titles.append(c_oname)
+        if extra_titles:
+            for t in extra_titles:
+                if t and t not in candidate_titles: candidate_titles.append(t)
         
         best_sim = 0.0
         best_match_info = ""
