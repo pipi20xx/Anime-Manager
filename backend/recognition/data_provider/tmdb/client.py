@@ -549,7 +549,7 @@ class TMDBProvider:
                 name = t.get("title") or t.get("name")
                 if name: titles.append(name)
 
-        await MetaCacheManager.set_discover_cache(cache_key, titles, expire_hours=720)
+        await MetaCacheManager.set_discover_cache(cache_key, titles, expire_hours=6)
         return titles
 
     async def _review_fuzzy_with_aliases(self, scored_pool, targets, cn_name, en_name, logs, anime_priority, year, default_type: str = "tv"):
