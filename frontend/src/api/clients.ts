@@ -26,4 +26,16 @@ export const clientsApi = {
 
   /** 获取 Jackett 站点列表 */
   getJackettIndexers: () => api.get<any[]>('/api/jackett/indexers'),
+
+  /** 获取客户端种子列表 */
+  getTorrents: (clientId: string) =>
+    api.get<any>(`/api/clients/torrents?client_id=${clientId}`),
+
+  /** 预览空间回收结果 */
+  previewSpaceCleanup: () =>
+    api.get<any>('/api/clients/space-cleanup/preview'),
+
+  /** 手动触发空间回收 */
+  triggerSpaceCleanup: () =>
+    api.post<any>('/api/clients/space-cleanup/run'),
 }

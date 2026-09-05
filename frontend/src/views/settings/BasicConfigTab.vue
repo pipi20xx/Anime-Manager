@@ -5,7 +5,7 @@
  * 包含: TMDB、Bangumi、SYTMDB、识别偏好、Jackett、Emby、Telegram通知、代理设置、自动化设置
  */
 import { ref, reactive, onMounted, computed } from 'vue'
-import { configApi, systemApi } from '@/api'
+import { configApi, systemApi, clientsApi } from '@/api'
 import { useNotification } from '@/composables'
 import { PasswordInput } from '@/components/common'
 
@@ -16,6 +16,10 @@ const { success, error: showError } = useNotification()
 const loading = ref(false)
 const saving = ref(false)
 const testTgLoading = ref(false)
+const spaceCleanupPreview = ref<any>(null)
+const spaceCleanupLoading = ref(false)
+const spaceCleanupRunning = ref(false)
+const qbClients = ref<any[]>([])
 const config = reactive<any>({})
 
 /* ========== 识别与订阅规则：本地/远程文本双向绑定 ========== */
@@ -134,8 +138,74 @@ function ensureProxyServices() {
   }
 }
 
+// 确保 space_cleanup_rules 数组存在
+function ensureSpaceCleanupRules() {
+  if (!config.space_cleanup_rules) {
+    config.space_cleanup_rules = []
+  }
+  // 为已有规则补充 protected_tags_str 辅助字段
+  for (const rule of config.space_cleanup_rules) {
+    if (!rule.protected_tags_str && rule.protected_tags) {
+      rule.protected_tags_str = rule.protected_tags.join(', ')
+    }
+    if (rule.delete_files === undefined) {
+      rule.delete_files = true
+    }
+  }
+}
+
+function addSpaceCleanupRule() {
+  ensureSpaceCleanupRules()
+  config.space_cleanup_rules.push({
+    client_id: '',
+    path: '',
+    max_size_gb: 500,
+    delete_files: true,
+    min_seeders: 0,
+    protected_tags: [],
+    protected_tags_str: '',
+  })
+}
+
+async function previewSpaceCleanup() {
+  spaceCleanupLoading.value = true
+  spaceCleanupPreview.value = null
+  try {
+    spaceCleanupPreview.value = await clientsApi.previewSpaceCleanup()
+  } catch (e: any) {
+    showError(e?.message || '预览失败')
+  } finally {
+    spaceCleanupLoading.value = false
+  }
+}
+
+async function runSpaceCleanup() {
+  spaceCleanupRunning.value = true
+  try {
+    const res = await clientsApi.triggerSpaceCleanup()
+    const stats = res?.stats || {}
+    if (stats.total_deleted > 0) {
+      success(`回收完成: 删除 ${stats.total_deleted} 个种子，释放 ${stats.total_freed_display}`)
+    } else {
+      success('回收完成: 无需删除')
+    }
+    // 刷新预览
+    await previewSpaceCleanup()
+  } catch (e: any) {
+    showError(e?.message || '执行失败')
+  } finally {
+    spaceCleanupRunning.value = false
+  }
+}
+
 onMounted(() => {
-  fetchConfig()
+  fetchConfig().then(() => {
+    ensureSpaceCleanupRules()
+  })
+  // 加载 QB 客户端列表供规则选择
+  clientsApi.getClients().then((list: any[]) => {
+    qbClients.value = list.filter((c: any) => c.type === 'qbittorrent')
+  }).catch(() => {})
 })
 </script>
 
@@ -662,6 +732,207 @@ onMounted(() => {
             </v-alert>
           </v-col>
         </v-row>
+      </v-card-text>
+    </v-card>
+
+    <!-- 磁盘空间回收 -->
+    <v-card class="glass-card mb-4">
+      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
+        <v-icon color="primary" size="20">mdi-database-remove-outline</v-icon>
+        <span class="text-subtitle-1 font-weight-bold">磁盘空间回收</span>
+      </v-card-title>
+      <v-divider />
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center ga-3 mb-4">
+          <v-switch v-model="config.space_cleanup_enabled" density="compact" hide-details color="primary" />
+          <div>
+            <div class="text-body-2 font-weight-medium">启用磁盘空间自动回收</div>
+            <div class="text-caption text-medium-emphasis">监控 QB 种子占用体积，超过阈值后从最老的种子开始删除</div>
+          </div>
+        </div>
+
+        <v-row class="mb-2">
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="config.space_cleanup_interval"
+              label="巡检频率 (分钟)"
+              type="number"
+              variant="outlined"
+              density="compact"
+              :disabled="!config.space_cleanup_enabled"
+              hide-details
+              min="5"
+              max="1440"
+              placeholder="建议 15-60"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- 规则列表 -->
+        <div v-if="!config.space_cleanup_rules || config.space_cleanup_rules.length === 0" class="text-center text-medium-emphasis py-4">
+          暂无回收规则，点击下方按钮添加
+        </div>
+
+        <div
+          v-for="(rule, index) in (config.space_cleanup_rules || [])"
+          :key="index"
+          class="rule-item mb-3 pa-3 rounded border"
+          style="border-color: rgba(var(--v-theme-primary), 0.15); background: rgba(var(--v-theme-surface-variant), 0.3);"
+        >
+          <div class="d-flex align-center justify-space-between mb-2">
+            <span class="text-body-2 font-weight-medium">规则 {{ Number(index) + 1 }}</span>
+            <v-btn
+              icon="mdi-delete-outline"
+              size="x-small"
+              variant="text"
+              color="error"
+              @click="config.space_cleanup_rules.splice(index, 1)"
+            />
+          </div>
+
+          <v-row dense>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="rule.client_id"
+                :items="qbClients"
+                item-title="name"
+                item-value="id"
+                label="指定下载器"
+                variant="outlined"
+                density="compact"
+                hide-details
+                clearable
+                placeholder="不选则对所有 QB 生效"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="rule.path"
+                label="监控路径"
+                variant="outlined"
+                density="compact"
+                hide-details
+                placeholder="/downloads"
+              />
+            </v-col>
+            <v-col cols="6" md="3">
+              <v-text-field
+                v-model="rule.max_size_gb"
+                label="体积上限 (GB)"
+                type="number"
+                variant="outlined"
+                density="compact"
+                hide-details
+                min="1"
+                placeholder="500"
+              />
+            </v-col>
+            <v-col cols="6" md="3">
+              <v-switch
+                v-model="rule.delete_files"
+                label="同时删文件"
+                density="compact"
+                hide-details
+                color="primary"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="rule.min_seeders"
+                label="最少做种数保护 (0=不保护)"
+                type="number"
+                variant="outlined"
+                density="compact"
+                hide-details
+                min="0"
+                placeholder="0"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="rule.protected_tags_str"
+                label="保护标签 (逗号分隔)"
+                variant="outlined"
+                density="compact"
+                hide-details
+                placeholder="keep,important"
+                @blur="rule.protected_tags = (rule.protected_tags_str || '').split(',').map((s: string) => s.trim()).filter(Boolean)"
+              />
+            </v-col>
+          </v-row>
+        </div>
+
+        <div class="d-flex ga-2 mt-2">
+          <v-btn
+            variant="tonal"
+            color="primary"
+            size="small"
+            prepend-icon="mdi-plus"
+            @click="addSpaceCleanupRule"
+          >
+            添加规则
+          </v-btn>
+          <v-btn
+            variant="tonal"
+            color="info"
+            size="small"
+            prepend-icon="mdi-eye-outline"
+            :loading="spaceCleanupLoading"
+            @click="previewSpaceCleanup"
+          >
+            预览
+          </v-btn>
+          <v-btn
+            variant="tonal"
+            color="warning"
+            size="small"
+            prepend-icon="mdi-broom"
+            :loading="spaceCleanupRunning"
+            @click="runSpaceCleanup"
+          >
+            立即执行
+          </v-btn>
+        </div>
+
+        <!-- 预览结果 -->
+        <div v-if="spaceCleanupPreview" class="mt-4">
+          <v-divider class="mb-3" />
+          <div class="text-body-2 font-weight-medium mb-2">
+            预览结果 (待删除: {{ spaceCleanupPreview.total_to_delete }} 个)
+          </div>
+          <div
+            v-for="(group, gi) in spaceCleanupPreview.groups"
+            :key="gi"
+            class="mb-3 pa-3 rounded"
+            style="background: rgba(var(--v-theme-surface-variant), 0.3);"
+          >
+            <div class="text-caption mb-1">
+              <v-icon size="14" class="mr-1">mdi-server</v-icon>
+              {{ group.client_name }} → {{ group.path }}
+            </div>
+            <div class="text-body-2 mb-2">
+              占用 <strong>{{ group.total_size_gb }} GB</strong> / 上限 <strong>{{ group.max_size_gb }} GB</strong>
+              <v-chip v-if="group.over_limit" size="x-small" color="error" class="ml-2">超限 {{ group.over_by_gb }} GB</v-chip>
+              <v-chip v-else size="x-small" color="success" class="ml-2">正常</v-chip>
+            </div>
+            <div v-if="group.torrents_to_delete && group.torrents_to_delete.length > 0">
+              <div class="text-caption text-medium-emphasis mb-1">计划删除:</div>
+              <div
+                v-for="(t, ti) in group.torrents_to_delete"
+                :key="ti"
+                class="text-caption d-flex align-center ga-2 py-1"
+                style="border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);"
+              >
+                <v-icon size="12" color="error">mdi-file-remove</v-icon>
+                <span class="flex-fill">{{ t.name }}</span>
+                <span class="text-medium-emphasis">{{ t.size_display }}</span>
+              </div>
+            </div>
+            <div v-else class="text-caption text-success">
+              无需删除
+            </div>
+          </div>
+        </div>
       </v-card-text>
     </v-card>
   </div>

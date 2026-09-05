@@ -17,6 +17,7 @@ from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
 from rss_core.scheduler import refresh_all_feeds, check_stalled_downloads
 from clients.cd2_monitor import CD2TransferMonitor
+from clients.space_cleanup_task import run_space_cleanup
 from task_history import start_task, log_task, finish_task
 
 logger = logging.getLogger("Monitor")
@@ -275,6 +276,21 @@ class MonitorManager:
             logger.info(f"[Monitor] 已启动死种清理监控，巡检间隔 {stalled_interval} 分钟。")
         else:
             logger.info("[Monitor] 死种清理已禁用 (间隔设为 0)。")
+
+        # 5.5 [Space Cleanup] 磁盘空间自动回收
+        space_cleanup_enabled = config.get("space_cleanup_enabled", False)
+        space_cleanup_interval = int(config.get("space_cleanup_interval", 30))
+        if space_cleanup_enabled and space_cleanup_interval > 0:
+            MonitorManager._scheduler.add_job(
+                run_space_cleanup,
+                'interval',
+                minutes=space_cleanup_interval,
+                id="space_cleanup_job",
+                replace_existing=True
+            )
+            logger.info(f"[Monitor] 已启动磁盘空间回收，巡检间隔 {space_cleanup_interval} 分钟。")
+        else:
+            logger.info("[Monitor] 磁盘空间回收已禁用。")
 
         # 6. [Health Check] 掉盘与失效自动检测
         health_enabled = config.get("health_check_enabled", True)
@@ -741,6 +757,22 @@ class MonitorManager:
                 "next_run": stalled_job.next_run_time.isoformat() if stalled_job and stalled_job.next_run_time else None,
                 "last_run": None,
                 "description": "检测并清理超时的下载任务"
+            })
+
+            # 空间回收
+            space_job = job_map.get("space_cleanup_job")
+            space_enabled = config.get("space_cleanup_enabled", False)
+            space_interval = config.get("space_cleanup_interval", 30)
+            services.append({
+                "id": "space_cleanup",
+                "name": "磁盘空间回收",
+                "type": "scheduler",
+                "enabled": space_enabled and space_interval > 0,
+                "running": space_job is not None,
+                "interval": f"{space_interval} 分钟" if space_enabled and space_interval > 0 else "已禁用",
+                "next_run": space_job.next_run_time.isoformat() if space_job and space_job.next_run_time else None,
+                "last_run": None,
+                "description": "按路径阈值自动删除最老的种子以回收磁盘空间"
             })
 
             # 健康检查巡检
