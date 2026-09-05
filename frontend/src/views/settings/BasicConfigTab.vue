@@ -841,7 +841,7 @@ onMounted(() => {
                 placeholder="/downloads"
               />
             </v-col>
-            <v-col cols="6" md="3">
+            <v-col cols="6" md="4">
               <v-text-field
                 v-model="rule.max_size_gb"
                 label="体积上限 (GB)"
@@ -853,16 +853,7 @@ onMounted(() => {
                 placeholder="500"
               />
             </v-col>
-            <v-col cols="6" md="3">
-              <v-switch
-                v-model="rule.delete_files"
-                label="同时删文件"
-                density="compact"
-                hide-details
-                color="primary"
-              />
-            </v-col>
-            <v-col cols="12" md="6">
+            <v-col cols="12" md="4">
               <v-text-field
                 v-model="rule.min_seeders"
                 label="最少做种数保护 (0=不保护)"
@@ -874,7 +865,7 @@ onMounted(() => {
                 placeholder="0"
               />
             </v-col>
-            <v-col cols="12" md="6">
+            <v-col cols="12" md="4">
               <v-text-field
                 v-model="rule.protected_tags_str"
                 label="保护标签 (逗号分隔)"
