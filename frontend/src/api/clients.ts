@@ -31,11 +31,15 @@ export const clientsApi = {
   getTorrents: (clientId: string) =>
     api.get<any>(`/api/clients/torrents?client_id=${clientId}`),
 
-  /** 预览空间回收结果 */
-  previewSpaceCleanup: () =>
-    api.get<any>('/api/clients/space-cleanup/preview'),
+  /** 预览空间回收结果（可选指定规则索引） */
+  previewSpaceCleanup: (ruleIndex?: number) =>
+    api.get<any>(ruleIndex !== undefined
+      ? `/api/clients/space-cleanup/preview?rule_index=${ruleIndex}`
+      : '/api/clients/space-cleanup/preview'),
 
-  /** 手动触发空间回收 */
-  triggerSpaceCleanup: () =>
-    api.post<any>('/api/clients/space-cleanup/run'),
+  /** 手动触发空间回收（可选指定规则索引） */
+  triggerSpaceCleanup: (ruleIndex?: number) =>
+    api.post<any>(ruleIndex !== undefined
+      ? `/api/clients/space-cleanup/run?rule_index=${ruleIndex}`
+      : '/api/clients/space-cleanup/run'),
 }

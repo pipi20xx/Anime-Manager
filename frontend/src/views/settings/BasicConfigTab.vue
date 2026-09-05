@@ -19,6 +19,10 @@ const testTgLoading = ref(false)
 const spaceCleanupPreview = ref<any>(null)
 const spaceCleanupLoading = ref(false)
 const spaceCleanupRunning = ref(false)
+// 按规则索引存储预览结果
+const rulePreviews = ref<Record<number, any>>({})
+const ruleLoading = ref<Record<number, boolean>>({})
+const ruleRunning = ref<Record<number, boolean>>({})
 const qbClients = ref<any[]>([])
 const config = reactive<any>({})
 
@@ -167,34 +171,33 @@ function addSpaceCleanupRule() {
   })
 }
 
-async function previewSpaceCleanup() {
-  spaceCleanupLoading.value = true
-  spaceCleanupPreview.value = null
+async function previewRule(index: number) {
+  ruleLoading.value[index] = true
   try {
-    spaceCleanupPreview.value = await clientsApi.previewSpaceCleanup()
+    rulePreviews.value[index] = await clientsApi.previewSpaceCleanup(index)
   } catch (e: any) {
     showError(e?.message || '预览失败')
   } finally {
-    spaceCleanupLoading.value = false
+    ruleLoading.value[index] = false
   }
 }
 
-async function runSpaceCleanup() {
-  spaceCleanupRunning.value = true
+async function runRule(index: number) {
+  ruleRunning.value[index] = true
   try {
-    const res = await clientsApi.triggerSpaceCleanup()
+    const res = await clientsApi.triggerSpaceCleanup(index)
     const stats = res?.stats || {}
     if (stats.total_deleted > 0) {
       success(`回收完成: 删除 ${stats.total_deleted} 个种子，释放 ${stats.total_freed_display}`)
     } else {
       success('回收完成: 无需删除')
     }
-    // 刷新预览
-    await previewSpaceCleanup()
+    // 自动刷新该规则预览
+    await previewRule(index)
   } catch (e: any) {
     showError(e?.message || '执行失败')
   } finally {
-    spaceCleanupRunning.value = false
+    ruleRunning.value[index] = false
   }
 }
 
@@ -781,13 +784,37 @@ onMounted(() => {
         >
           <div class="d-flex align-center justify-space-between mb-2">
             <span class="text-body-2 font-weight-medium">规则 {{ Number(index) + 1 }}</span>
-            <v-btn
-              icon="mdi-delete-outline"
-              size="x-small"
-              variant="text"
-              color="error"
-              @click="config.space_cleanup_rules.splice(index, 1)"
-            />
+            <div class="d-flex ga-1">
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="info"
+                prepend-icon="mdi-eye-outline"
+                :loading="ruleLoading[Number(index)]"
+                @click="previewRule(Number(index))"
+              >
+                预览
+              </v-btn>
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="warning"
+                prepend-icon="mdi-broom"
+                :loading="ruleRunning[Number(index)]"
+                @click="runRule(Number(index))"
+              >
+                执行
+              </v-btn>
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="error"
+                prepend-icon="mdi-delete-outline"
+                @click="config.space_cleanup_rules.splice(index, 1); rulePreviews[Number(index)] = null"
+              >
+                删除
+              </v-btn>
+            </div>
           </div>
 
           <v-row dense>
@@ -860,6 +887,45 @@ onMounted(() => {
               />
             </v-col>
           </v-row>
+
+          <!-- 单规则预览结果 -->
+          <div v-if="rulePreviews[Number(index)]" class="mt-3">
+            <v-divider class="mb-2" />
+            <div
+              v-for="(group, gi) in rulePreviews[Number(index)].groups"
+              :key="gi"
+              class="mb-2 pa-2 rounded"
+              style="background: rgba(var(--v-theme-surface), 0.5);"
+            >
+              <div class="text-caption mb-1">
+                <v-icon size="14" class="mr-1">mdi-server</v-icon>
+                {{ group.client_name }} → {{ group.path }}
+              </div>
+              <div class="text-body-2 mb-2">
+                占用 <strong>{{ group.total_size_gb }} GB</strong> / 上限 <strong>{{ group.max_size_gb }} GB</strong>
+                <v-chip v-if="group.over_limit" size="x-small" color="error" class="ml-2">超限 {{ group.over_by_gb }} GB</v-chip>
+                <v-chip v-else size="x-small" color="success" class="ml-2">正常</v-chip>
+              </div>
+              <div v-if="group.torrents_to_delete && group.torrents_to_delete.length > 0">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  计划删除 ({{ group.torrents_to_delete.length }} 个):
+                </div>
+                <div
+                  v-for="(t, ti) in group.torrents_to_delete"
+                  :key="ti"
+                  class="text-caption d-flex align-center ga-2 py-1"
+                  style="border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);"
+                >
+                  <v-icon size="12" color="error">mdi-file-remove</v-icon>
+                  <span class="flex-fill">{{ t.name }}</span>
+                  <span class="text-medium-emphasis">{{ t.size_display }}</span>
+                </div>
+              </div>
+              <div v-else class="text-caption text-success">
+                无需删除
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="d-flex ga-2 mt-2">
@@ -872,66 +938,6 @@ onMounted(() => {
           >
             添加规则
           </v-btn>
-          <v-btn
-            variant="tonal"
-            color="info"
-            size="small"
-            prepend-icon="mdi-eye-outline"
-            :loading="spaceCleanupLoading"
-            @click="previewSpaceCleanup"
-          >
-            预览
-          </v-btn>
-          <v-btn
-            variant="tonal"
-            color="warning"
-            size="small"
-            prepend-icon="mdi-broom"
-            :loading="spaceCleanupRunning"
-            @click="runSpaceCleanup"
-          >
-            立即执行
-          </v-btn>
-        </div>
-
-        <!-- 预览结果 -->
-        <div v-if="spaceCleanupPreview" class="mt-4">
-          <v-divider class="mb-3" />
-          <div class="text-body-2 font-weight-medium mb-2">
-            预览结果 (待删除: {{ spaceCleanupPreview.total_to_delete }} 个)
-          </div>
-          <div
-            v-for="(group, gi) in spaceCleanupPreview.groups"
-            :key="gi"
-            class="mb-3 pa-3 rounded"
-            style="background: rgba(var(--v-theme-surface-variant), 0.3);"
-          >
-            <div class="text-caption mb-1">
-              <v-icon size="14" class="mr-1">mdi-server</v-icon>
-              {{ group.client_name }} → {{ group.path }}
-            </div>
-            <div class="text-body-2 mb-2">
-              占用 <strong>{{ group.total_size_gb }} GB</strong> / 上限 <strong>{{ group.max_size_gb }} GB</strong>
-              <v-chip v-if="group.over_limit" size="x-small" color="error" class="ml-2">超限 {{ group.over_by_gb }} GB</v-chip>
-              <v-chip v-else size="x-small" color="success" class="ml-2">正常</v-chip>
-            </div>
-            <div v-if="group.torrents_to_delete && group.torrents_to_delete.length > 0">
-              <div class="text-caption text-medium-emphasis mb-1">计划删除:</div>
-              <div
-                v-for="(t, ti) in group.torrents_to_delete"
-                :key="ti"
-                class="text-caption d-flex align-center ga-2 py-1"
-                style="border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);"
-              >
-                <v-icon size="12" color="error">mdi-file-remove</v-icon>
-                <span class="flex-fill">{{ t.name }}</span>
-                <span class="text-medium-emphasis">{{ t.size_display }}</span>
-              </div>
-            </div>
-            <div v-else class="text-caption text-success">
-              无需删除
-            </div>
-          </div>
         </div>
       </v-card-text>
     </v-card>

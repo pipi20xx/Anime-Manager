@@ -51,23 +51,35 @@ async def _notify_space_cleanup(summary: Dict[str, Any]):
 async def run_space_cleanup(
     task_id: Optional[str] = None,
     manual: bool = False,
+    rule_index: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     执行空间回收任务。
 
     :param task_id: 外部传入的 task_id（手动触发时用），为 None 时自动生成
     :param manual: 是否为手动触发
+    :param rule_index: 指定规则索引（从 0 开始），为 None 时执行所有规则
     :return: 汇总统计
     """
     config = ConfigManager.get_config()
-    rules = config.get("space_cleanup_rules", [])
+    all_rules = config.get("space_cleanup_rules", [])
     enabled = config.get("space_cleanup_enabled", False)
 
     if not enabled and not manual:
         return {"skipped": True, "reason": "disabled"}
 
-    if not rules:
+    if not all_rules:
         return {"skipped": True, "reason": "no_rules"}
+
+    # ── 如果指定了 rule_index，只执行单条规则 ──
+    if rule_index is not None:
+        if rule_index < 0 or rule_index >= len(all_rules):
+            return {"skipped": True, "reason": f"invalid rule_index: {rule_index}"}
+        rules = [all_rules[rule_index]]
+        single_rule_label = f"规则 #{rule_index + 1}"
+    else:
+        rules = all_rules
+        single_rule_label = None
 
     # ── 创建任务记录 ──
     if not task_id:
@@ -75,7 +87,10 @@ async def run_space_cleanup(
 
     await start_task(task_id, "空间回收", "磁盘空间自动清理")
     prefix = "🔧 [手动]" if manual else "🤖 [自动]"
-    await log_task(task_id, f"{prefix} 开始磁盘空间回收检查")
+    if single_rule_label:
+        await log_task(task_id, f"{prefix} 开始磁盘空间回收 ({single_rule_label})")
+    else:
+        await log_task(task_id, f"{prefix} 开始磁盘空间回收检查")
     await log_task(task_id, f"📋 规则数量: {len(rules)}")
     await log_task(task_id, "──────────────────")
 

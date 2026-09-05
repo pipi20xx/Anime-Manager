@@ -161,14 +161,23 @@ async def get_torrents(client_id: str):
 
 
 @router.get("/clients/space-cleanup/preview", summary="预览空间回收结果")
-async def preview_space_cleanup():
+async def preview_space_cleanup(rule_index: Optional[int] = None):
     """
     预览空间回收：不执行删除，仅返回当前规则下各路径的占用情况及计划删除的种子。
+    :param rule_index: 指定规则索引（从 0 开始），不传则预览所有规则
     """
     config = ConfigManager.get_config()
-    rules = config.get("space_cleanup_rules", [])
-    if not rules:
+    all_rules = config.get("space_cleanup_rules", [])
+    if not all_rules:
         return {"rules": [], "message": "未配置空间回收规则"}
+
+    # ── 如果指定了 rule_index，只预览单条规则 ──
+    if rule_index is not None:
+        if rule_index < 0 or rule_index >= len(all_rules):
+            return {"rules": [], "message": f"无效的规则索引: {rule_index}"}
+        rules = [all_rules[rule_index]]
+    else:
+        rules = all_rules
 
     client_configs = ClientManager.get_all_clients()
     all_groups: List[Dict[str, Any]] = []
@@ -212,10 +221,12 @@ async def preview_space_cleanup():
 
 
 @router.post("/clients/space-cleanup/run", summary="手动触发空间回收")
-async def trigger_space_cleanup():
+async def trigger_space_cleanup(rule_index: Optional[int] = None):
     """
     手动触发一次磁盘空间回收任务（忽略 enabled 开关）。
+    :param rule_index: 指定规则索引（从 0 开始），不传则执行所有规则
     """
-    log_audit("空间回收", "手动触发", "用户手动触发磁盘空间回收")
-    stats = await run_space_cleanup(manual=True)
+    label = f"规则 #{rule_index + 1}" if rule_index is not None else "全部规则"
+    log_audit("空间回收", "手动触发", f"用户手动触发磁盘空间回收 ({label})")
+    stats = await run_space_cleanup(manual=True, rule_index=rule_index)
     return {"success": True, "stats": stats}
