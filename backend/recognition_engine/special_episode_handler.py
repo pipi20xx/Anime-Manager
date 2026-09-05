@@ -113,6 +113,7 @@ class SpecialEpisodeHandler:
 
                     # [Optimize] 标题尾部季号自动剥离: "Slime300 S13" -> 标题 "Slime300" + 季数 13
                     # 特权标题绕过 Anitopy 内核直接进入搜索，季号后缀会导致搜索词/指纹跨季漂移
+                    season_stripped = None
                     if title and "s" not in meta_dict:
                         s_match = re.search(r"(?i)[\s._-]+(?:S|Season\s*)(\d{1,2})$|第\s*(\d{1,2})\s*季$", title)
                         if s_match:
@@ -121,6 +122,7 @@ class SpecialEpisodeHandler:
                             if cleaned and len(cleaned) >= 2:
                                 title = cleaned
                                 extra_meta["s"] = season_num
+                                season_stripped = season_num
 
                     # 处理集数
                     if "e" in meta_dict:
@@ -167,6 +169,8 @@ class SpecialEpisodeHandler:
                     if group_name:
                         logs.append(f"┣ 字幕组: {group_name}")
                     logs.append(f"┣ 标题: {title}")
+                    if season_stripped is not None:
+                        logs.append(f"┣ [Shield] 特权标题季号已剥离: S{season_stripped}")
                     if "s" in extra_meta:
                         logs.append(f"┣ 季数: {extra_meta['s']}")
                     if episode is not None:
