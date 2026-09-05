@@ -816,7 +816,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <v-row dense>
+          <v-row density="comfortable">
             <v-col cols="12" md="6">
               <v-select
                 v-model="rule.client_id"
