@@ -110,7 +110,18 @@ class SpecialEpisodeHandler:
                     # 从 meta_dict 中提取字段
                     group_name = SpecialEpisodeHandler._resolve_capture_group(match, meta_dict.get("group", ""))
                     title = SpecialEpisodeHandler._resolve_capture_group(match, meta_dict.get("title", ""))
-                    
+
+                    # [Optimize] 标题尾部季号自动剥离: "Slime300 S13" -> 标题 "Slime300" + 季数 13
+                    # 特权标题绕过 Anitopy 内核直接进入搜索，季号后缀会导致搜索词/指纹跨季漂移
+                    if title and "s" not in meta_dict:
+                        s_match = re.search(r"(?i)[\s._-]+(?:S|Season\s*)(\d{1,2})$|第\s*(\d{1,2})\s*季$", title)
+                        if s_match:
+                            season_num = int(s_match.group(1) or s_match.group(2))
+                            cleaned = title[:s_match.start()].strip(" ._-%")
+                            if cleaned and len(cleaned) >= 2:
+                                title = cleaned
+                                extra_meta["s"] = season_num
+
                     # 处理集数
                     if "e" in meta_dict:
                         ep_str = SpecialEpisodeHandler._resolve_capture_group(match, meta_dict["e"])
