@@ -83,7 +83,9 @@ async function removeBlockItem(id: number) {
               <v-card-item class="pb-2">
                 <div class="d-flex align-center ga-2">
                   <v-icon color="error" size="20">mdi-shield-off-outline</v-icon>
-                  <v-card-title class="text-subtitle-1 font-weight-bold pa-0">TMDB {{ item.tmdb_id }}</v-card-title>
+                  <v-card-title class="text-subtitle-1 font-weight-bold pa-0">
+                    {{ item.resolved_title || item.title || `TMDB ${item.tmdb_id}` }}
+                  </v-card-title>
                 </div>
               </v-card-item>
               <v-card-text class="pt-0 flex-grow-1">
@@ -91,8 +93,11 @@ async function removeBlockItem(id: number) {
                   <v-chip size="x-small" variant="tonal" :color="item.media_type === 'tv' ? 'primary' : 'info'" label>
                     {{ item.media_type === 'tv' ? '剧集' : '电影' }}
                   </v-chip>
+                  <v-chip size="x-small" variant="tonal" color="secondary" label>
+                    TMDB {{ item.tmdb_id }}
+                  </v-chip>
                 </div>
-                <div v-if="item.title" class="text-body-2 text-medium-emphasis mt-2 text-truncate">
+                <div v-if="item.title && item.title !== item.resolved_title" class="text-body-2 text-medium-emphasis mt-2 text-truncate">
                   <v-icon size="14" class="mr-1">mdi-text</v-icon>{{ item.title }}
                 </div>
               </v-card-text>
