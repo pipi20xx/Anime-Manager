@@ -258,15 +258,15 @@ html.glass-theme-classic.glass-dark .v-field--variant-solo-filled {
 
 
 /* ================================================================
- * 9. SnackBar 按钮颜色反转
+ * 9. SnackBar 按钮颜色
  * ================================================================ */
 
 html.glass-theme-classic.glass-light .v-snackbar__wrapper .v-btn {
-  color: rgba(255, 255, 255, 0.90) !important;
+  color: rgba(0, 0, 0, 0.87) !important;
 }
 
 html.glass-theme-classic.glass-dark .v-snackbar__wrapper .v-btn {
-  color: rgba(0, 0, 0, 0.87) !important;
+  color: rgba(255, 255, 255, 0.90) !important;
 }
 
 
