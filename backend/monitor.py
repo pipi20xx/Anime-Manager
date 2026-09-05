@@ -694,6 +694,13 @@ class MonitorManager:
         """
         from datetime import datetime
         config = ConfigManager.get_config()
+
+        def _to_int(val, default):
+            try:
+                return int(val)
+            except (TypeError, ValueError):
+                return default
+
         services = []
         monitors = []
 
@@ -746,7 +753,7 @@ class MonitorManager:
 
             # 死种清理
             stalled_job = job_map.get("stalled_monitor_job")
-            stalled_interval = config.get("stalled_monitor_interval", 30)
+            stalled_interval = _to_int(config.get("stalled_monitor_interval", 30), 30)
             services.append({
                 "id": "stalled_monitor",
                 "name": "死种清理",
@@ -762,7 +769,7 @@ class MonitorManager:
             # 空间回收
             space_job = job_map.get("space_cleanup_job")
             space_enabled = config.get("space_cleanup_enabled", False)
-            space_interval = config.get("space_cleanup_interval", 30)
+            space_interval = _to_int(config.get("space_cleanup_interval", 30), 30)
             services.append({
                 "id": "space_cleanup",
                 "name": "磁盘空间回收",
@@ -778,7 +785,7 @@ class MonitorManager:
             # 健康检查巡检
             health_job = job_map.get("auto_health_check_job")
             health_enabled = config.get("health_check_enabled", True)
-            health_interval = config.get("health_check_interval", 30)
+            health_interval = _to_int(config.get("health_check_interval", 30), 30)
             services.append({
                 "id": "health_check",
                 "name": "健康检查巡检",

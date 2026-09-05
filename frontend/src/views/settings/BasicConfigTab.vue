@@ -764,9 +764,8 @@ onMounted(() => {
               density="compact"
               :disabled="!config.space_cleanup_enabled"
               hide-details
-              min="5"
-              max="1440"
-              placeholder="建议 15-60"
+              min="1"
+              placeholder="0 为禁用，建议 15-60"
             />
           </v-col>
         </v-row>
