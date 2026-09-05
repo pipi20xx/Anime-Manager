@@ -28,7 +28,12 @@ async def update_config(config: dict):
     old_config = ConfigManager.get_config()
     old_jwt_never_expire = old_config.get("jwt_never_expire", False)
     new_jwt_never_expire = config.get("jwt_never_expire", False)
-    
+
+    # 数字型配置项留空时归零，避免空字符串导致后端 int() 解析失败
+    for key, val in config.items():
+        if key.endswith("_interval") and (val == "" or val is None):
+            config[key] = 0
+
     ConfigManager.update_config(config)
     from clients.manager import ClientManager
     ClientManager.clear_cache()

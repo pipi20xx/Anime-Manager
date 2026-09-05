@@ -22,6 +22,13 @@ from task_history import start_task, log_task, finish_task
 
 logger = logging.getLogger("Monitor")
 
+def _to_int(val, default):
+    """配置中的数字项可能为空字符串或 None，安全转为整数。"""
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
+
 class StabilityChecker:
     TEMP_EXTENSIONS = ['.tmp', '.part', '.crdownload', '.!qB', '.download']
 
@@ -216,7 +223,7 @@ class MonitorManager:
         
         # 2. [RSS] 自动刷新任务
         if config.get("rss_auto_refresh", True):
-            interval = int(config.get("rss_refresh_interval", 15))
+            interval = _to_int(config.get("rss_refresh_interval", 15), 15)
             MonitorManager._scheduler.add_job(
                 refresh_all_feeds,
                 'interval',
@@ -228,7 +235,7 @@ class MonitorManager:
         
         # 2.5 [RSS Detect] 探测自动订阅任务
         from rss_core.detector import RssDetector
-        detect_interval = int(config.get("rss_detect_interval", 30))
+        detect_interval = _to_int(config.get("rss_detect_interval", 30), 30)
         if detect_interval > 0:
             MonitorManager._scheduler.add_job(
                 RssDetector.run_scheduled_tasks,
@@ -241,7 +248,7 @@ class MonitorManager:
         
         # 3. [Subscription] 自动搜寻补全任务
         if config.get("sub_auto_fill", False):
-            fill_interval = int(config.get("sub_fill_interval", 12))
+            fill_interval = _to_int(config.get("sub_fill_interval", 12), 12)
             MonitorManager._scheduler.add_job(
                 MonitorManager._auto_fill_subscriptions,
                 'interval',
@@ -253,7 +260,7 @@ class MonitorManager:
         
         # 4. [Rule] 自动规则同步
         if config.get("rule_auto_update", False):
-            rule_interval = int(config.get("rule_update_interval", 24))
+            rule_interval = _to_int(config.get("rule_update_interval", 24), 24)
             MonitorManager._scheduler.add_job(
                 MonitorManager._auto_sync_rules,
                 'interval',
@@ -264,7 +271,7 @@ class MonitorManager:
             logger.info(f"[Rule] 已调度规则自动同步，间隔 {rule_interval} 小时。")
         
         # 5. [Stalled Monitor] 下载超时检查
-        stalled_interval = int(config.get("stalled_monitor_interval", 30))
+        stalled_interval = _to_int(config.get("stalled_monitor_interval", 30), 30)
         if stalled_interval > 0:
             MonitorManager._scheduler.add_job(
                 check_stalled_downloads,
@@ -279,7 +286,7 @@ class MonitorManager:
 
         # 5.5 [Space Cleanup] 磁盘空间自动回收
         space_cleanup_enabled = config.get("space_cleanup_enabled", False)
-        space_cleanup_interval = int(config.get("space_cleanup_interval", 30))
+        space_cleanup_interval = _to_int(config.get("space_cleanup_interval", 30), 30)
         if space_cleanup_enabled and space_cleanup_interval > 0:
             MonitorManager._scheduler.add_job(
                 run_space_cleanup,
@@ -294,7 +301,7 @@ class MonitorManager:
 
         # 6. [Health Check] 掉盘与失效自动检测
         health_enabled = config.get("health_check_enabled", True)
-        health_interval = int(config.get("health_check_interval", 30))
+        health_interval = _to_int(config.get("health_check_interval", 30), 30)
         
         if health_enabled and health_interval > 0:
             MonitorManager._scheduler.add_job(
@@ -346,7 +353,7 @@ class MonitorManager:
         # 8. [Subscription Notifier] 订阅智能提醒
         sub_notify_enabled = config.get("subscription_notify_enabled", True)
         if sub_notify_enabled:
-            sub_notify_interval = int(config.get("subscription_notify_interval", 60))
+            sub_notify_interval = _to_int(config.get("subscription_notify_interval", 60), 60)
             MonitorManager._scheduler.add_job(
                 MonitorManager._subscription_notifier_check,
                 'interval',
@@ -694,12 +701,6 @@ class MonitorManager:
         """
         from datetime import datetime
         config = ConfigManager.get_config()
-
-        def _to_int(val, default):
-            try:
-                return int(val)
-            except (TypeError, ValueError):
-                return default
 
         services = []
         monitors = []
