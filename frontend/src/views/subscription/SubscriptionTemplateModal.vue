@@ -4,11 +4,24 @@
  *
  * 对标旧前端 SubscriptionTemplateModalDesktop:
  * - 模板列表 (表格) + 默认星标
- * - 新建/编辑模板 (筛选条件 + 下载设置 + 监控源)
+ * - 新建/编辑模板 (匹配条件 + 下载设置 + 监控源)
  */
 import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { FieldConditionSelect } from '@/components/common'
+
+// 匹配字段: key 为 editModel 上的 filter_* 属性, field 为规范值选项字段名
+const filterFields = [
+  { key: 'filter_res', field: 'resolution', label: '分辨率' },
+  { key: 'filter_team', field: 'team', label: '制作组' },
+  { key: 'filter_source', field: 'source', label: '介质来源' },
+  { key: 'filter_codec', field: 'video_encode', label: '视频编码' },
+  { key: 'filter_audio', field: 'audio_encode', label: '音频编码' },
+  { key: 'filter_sub', field: 'subtitle', label: '字幕语言' },
+  { key: 'filter_effect', field: 'video_effect', label: '视频特效' },
+  { key: 'filter_platform', field: 'platform', label: '发布平台' },
+]
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ (e: 'update:show', v: boolean): void }>()
@@ -186,16 +199,11 @@ async function setDefault(row: any) {
         <template v-else>
           <v-text-field v-model="editModel.name" label="预设名称" placeholder="例如: 默认动漫预设" variant="outlined" density="compact" class="mb-3" />
 
-          <div class="text-subtitle-2 font-weight-medium mb-2">筛选条件</div>
+          <div class="text-subtitle-2 font-weight-medium mb-2">匹配条件</div>
           <v-row density="compact">
-            <v-col cols="6"><v-text-field v-model="editModel.filter_res" label="分辨率" placeholder="如: 1080P, 4K" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_team" label="制作组" placeholder="如: LoliHouse" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_source" label="介质来源" placeholder="如: Blu-ray, WEB-DL" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_codec" label="视频编码" placeholder="如: H.265, H.264" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_audio" label="音频编码" placeholder="如: FLAC, AAC" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_sub" label="字幕语言" placeholder="如: 简体内封" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_effect" label="视频特效" placeholder="如: HDR10" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.filter_platform" label="发布平台" placeholder="如: Baha, Netflix" variant="outlined" density="compact" /></v-col>
+            <v-col v-for="f in filterFields" :key="f.key" cols="6">
+              <FieldConditionSelect v-model="(editModel as any)[f.key]" :field="f.field" :label="f.label" />
+            </v-col>
           </v-row>
 
           <v-divider class="my-3" />

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * FieldConditionSelect — 媒体规格筛选条件输入
+ * FieldConditionSelect — 媒体规格匹配条件输入
  *
  * 多选 combobox: 点开选规范值, 也可手输列表外的值 (回车添加)。
  * modelValue 为后端约定的逗号分隔字符串, 组件内部与数组互转。

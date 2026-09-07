@@ -4,7 +4,7 @@
  *
  * 对标旧前端 RssDetectManagerDesktop：
  * - 任务列表（开关启用/禁用、编辑、删除、执行）
- * - 编辑表单（RSS 链接、任务名称、预设、筛选条件、客户端、关键词等）
+ * - 编辑表单（RSS 链接、任务名称、预设、匹配条件、客户端、关键词等）
  * - 测试 RSS 预览功能
  */
 import { ref, reactive, watch } from 'vue'
@@ -12,7 +12,7 @@ import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { FieldConditionSelect } from '@/components/common'
 
-// 筛选字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
+// 匹配字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
 const filterFields = [
   { key: 'filter_res', field: 'resolution', label: '分辨率' },
   { key: 'filter_team', field: 'team', label: '制作组' },
@@ -203,7 +203,7 @@ async function testRss() {
 const subscribingId = ref<string | null>(null)
 
 /**
- * 从该番剧的预览条目明细中提取出现最多的规格，作为订阅的下载筛选条件。
+ * 从该番剧的预览条目明细中提取出现最多的规格，作为订阅的下载匹配条件。
  * 只提取非空且多数条目一致的值，避免混合规格把下载卡死。
  */
 function deriveSpecs(showTmdbId: string): Record<string, string> {

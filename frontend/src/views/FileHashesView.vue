@@ -371,7 +371,7 @@ async function exportEd2kLinks() {
   try {
     const all = await fetchAllFiltered()
     const lines = all.map(r => renderEd2kLink(r)).filter(Boolean)
-    const header = `# 文件哈希 ED2K 链接导出\n# 导出时间: ${new Date().toLocaleString()}\n# 筛选条件: ${filterDescription()}\n# 共 ${lines.length} 条 (剧集模板: ${ed2kTemplates.value.tv} | 电影模板: ${ed2kTemplates.value.movie})\n\n`
+    const header = `# 文件哈希 ED2K 链接导出\n# 导出时间: ${new Date().toLocaleString()}\n# 匹配条件: ${filterDescription()}\n# 共 ${lines.length} 条 (剧集模板: ${ed2kTemplates.value.tv} | 电影模板: ${ed2kTemplates.value.movie})\n\n`
     downloadText(header + lines.join('\n') + '\n', `ed2k_links_${timestamp()}.txt`)
     success(`已导出 ${lines.length} 条 ED2K 链接`)
   } catch (e) {
@@ -401,7 +401,7 @@ async function exportFullInfo() {
   exporting.value = true
   try {
     const all = await fetchAllFiltered()
-    const header = `# 文件哈希记录完整导出\n# 导出时间: ${new Date().toLocaleString()}\n# 筛选条件: ${filterDescription()}\n# 共 ${all.length} 条\n\n`
+    const header = `# 文件哈希记录完整导出\n# 导出时间: ${new Date().toLocaleString()}\n# 匹配条件: ${filterDescription()}\n# 共 ${all.length} 条\n\n`
     const body = all.map((r, i) => {
       const se = (r.season !== null && r.season !== undefined) ? `S${String(r.season).padStart(2, '0')}` : ''
       const ep = r.episode ? `E${r.episode}` : ''

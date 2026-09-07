@@ -9,7 +9,7 @@ import { subscriptionApi, tmdbApi, bangumiApi, clientsApi } from '@/api'
 import { useNotification } from '@/composables'
 import { FieldConditionSelect } from '@/components/common'
 
-// 筛选字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
+// 匹配字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
 const filterFields = [
   { key: 'filter_res', field: 'resolution', label: '分辨率' },
   { key: 'filter_team', field: 'team', label: '制作组' },
@@ -257,8 +257,8 @@ function handleSave() {
         </v-text-field>
         <v-text-field v-model="form.title" label="标题" variant="outlined" density="compact" class="mb-2" />
 
-        <!-- 筛选条件 -->
-        <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">资源筛选</div>
+        <!-- 匹配条件 -->
+        <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">匹配条件</div>
         <v-row density="compact">
           <v-col v-for="f in filterFields" :key="f.key" cols="6">
             <FieldConditionSelect v-model="(form as any)[f.key]" :field="f.field" :label="f.label" />

@@ -187,17 +187,19 @@ function resetRuleForm() {
   genreSearchOptions.value = []; companySearchOptions.value = []; keywordSearchOptions.value = []
 }
 
-function openAddRule() { resetRuleForm(); isNewRule.value = true; editingRuleIndex.value = -1; showRuleEditModal.value = true }
+function openAddRule() {
+  resetRuleForm(); isNewRule.value = true; editingRuleIndex.value = -1; showRuleEditModal.value = true
+  // 预加载选项，确保下拉箭头点击即可展开
+  searchGenres(''); searchCompanies(''); searchKeywords('')
+}
 
 function openEditRule(index: number) {
   resetRuleForm(); isNewRule.value = false; editingRuleIndex.value = index
   const raw = rules.value[index]
   Object.assign(ruleForm, { id: raw.id, name: raw.name || '', target: raw.target || 'all', enabled: raw.enabled !== false, criteria: raw.criteria || {} })
   criteriaToFields(raw.criteria || {})
-  // 预加载已有选项，确保已选中的值能显示标签
-  if (selectedGenreIds.value.length) searchGenres('')
-  if (selectedCompanyIds.value.length) searchCompanies('')
-  if (selectedKeywordIds.value.length) searchKeywords('')
+  // 预加载选项，确保已选中的值能显示标签，且下拉箭头点击即可展开
+  searchGenres(''); searchCompanies(''); searchKeywords('')
   showRuleEditModal.value = true
 }
 
