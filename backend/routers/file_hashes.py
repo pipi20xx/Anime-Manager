@@ -282,3 +282,178 @@ async def calculate_single_file_hash(request: SingleFileHashRequest):
             await session.refresh(new_record)
             log_audit("哈希", "入库成功", f"{hash_result.filename} (新建)", level="SUCCESS")
             return {"status": "success", "message": "哈希记录已创建", "data": new_record}
+
+
+class FixTitlesRequest(BaseModel):
+    """一键修复标题请求"""
+    ids: Optional[List[int]] = Field(None, description="指定记录 ID 列表，为空则修复全部")
+    q: Optional[str] = Field(None, description="关键词搜索筛选")
+    tmdb_id: Optional[str] = Field(None, description="按 TMDB ID 筛选")
+    media_type: Optional[str] = Field(None, description="按媒体类型筛选 (tv/movie)")
+    season: Optional[int] = Field(None, description="按季号筛选")
+    team: Optional[str] = Field(None, description="按制作组筛选")
+
+
+@router.post("/fix_titles", summary="一键修复标题：根据 TMDBID 和类型从数据中心补全标题")
+async def fix_titles(request: FixTitlesRequest):
+    """
+    根据 file_hashes 表中记录的 tmdb_id 和 media_type，
+    去数据中心的 metadata.tmdb_deep_meta 表查询正确标题（优先 custom_title），
+    批量更新 file_hashes.title 字段。
+
+    支持传入 ids 列表精确修复，或使用筛选条件批量修复。
+    """
+    from metadata.meta_cache import MetaCacheManager
+
+    async with db.session_scope() as session:
+        # 构建查询
+        base_stmt = select(FileHash)
+
+        filters = []
+        if request.ids:
+            filters.append(FileHash.id.in_(request.ids))
+        if request.tmdb_id:
+            filters.append(FileHash.tmdb_id == request.tmdb_id)
+        if request.media_type:
+            filters.append(FileHash.media_type == request.media_type)
+        if request.season is not None:
+            filters.append(FileHash.season == request.season)
+        if request.team:
+            filters.append(FileHash.team == request.team)
+        if request.q:
+            pattern = f"%{request.q}%"
+            filters.append(
+                FileHash.original_filename.ilike(pattern)
+                | FileHash.title.ilike(pattern)
+                | FileHash.ed2k.ilike(pattern)
+                | FileHash.sha1.ilike(pattern)
+                | FileHash.source_path.ilike(pattern)
+                | FileHash.target_path.ilike(pattern)
+            )
+
+        if filters:
+            base_stmt = base_stmt.where(*filters)
+
+        result = await session.execute(base_stmt)
+        records = result.scalars().all()
+
+        total = len(records)
+        fixed = 0
+        skipped = 0
+        not_found = 0
+        details = []
+
+        for record in records:
+            # 没有 tmdb_id 的记录跳过
+            if not record.tmdb_id:
+                skipped += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "status": "skipped",
+                    "reason": "无 tmdb_id"
+                })
+                continue
+
+            # 没有 media_type 的记录跳过
+            if not record.media_type:
+                skipped += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "status": "skipped",
+                    "reason": "无 media_type"
+                })
+                continue
+
+            # [重要] file_hashes.media_type 存的是中文 "电影"/"剧集"
+            # 而数据中心 metadata.tmdb_deep_meta.media_type 存的是英文 "movie"/"tv"
+            # 需要做映射转换
+            raw_type = record.media_type.strip()
+            if raw_type == "电影":
+                dc_media_type = "movie"
+            elif raw_type == "剧集":
+                dc_media_type = "tv"
+            elif raw_type in ("movie", "tv"):
+                dc_media_type = raw_type
+            else:
+                skipped += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "tmdb_id": record.tmdb_id,
+                    "media_type": record.media_type,
+                    "status": "skipped",
+                    "reason": f"无法识别的 media_type: {record.media_type}"
+                })
+                continue
+
+            # 从数据中心查询元数据 (使用英文类型)
+            key = f"{dc_media_type}:{record.tmdb_id}"
+            meta = await MetaCacheManager.get(key)
+
+            if not meta:
+                not_found += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "tmdb_id": record.tmdb_id,
+                    "media_type": record.media_type,
+                    "status": "not_found",
+                    "reason": f"数据中心未找到 {record.media_type}:{record.tmdb_id}"
+                })
+                continue
+
+            # 获取正确标题（MetaCacheManager.get 已处理 custom_title 优先逻辑）
+            correct_title = meta.get("title")
+            if not correct_title:
+                not_found += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "tmdb_id": record.tmdb_id,
+                    "media_type": record.media_type,
+                    "status": "not_found",
+                    "reason": "元数据中无标题"
+                })
+                continue
+
+            # 如果标题一致则跳过
+            if record.title == correct_title:
+                skipped += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "old_title": record.title,
+                    "new_title": correct_title,
+                    "status": "unchanged",
+                    "reason": "标题已一致"
+                })
+                continue
+
+            # 更新标题
+            old_title = record.title
+            record.title = correct_title
+            fixed += 1
+            details.append({
+                "id": record.id,
+                "original_filename": record.original_filename,
+                "tmdb_id": record.tmdb_id,
+                "media_type": record.media_type,
+                "old_title": old_title,
+                "new_title": correct_title,
+                "status": "fixed"
+            })
+
+        await session.commit()
+
+        log_audit("哈希", "一键修复标题", f"共 {total} 条, 修复 {fixed}, 跳过 {skipped}, 未找到 {not_found}", level="SUCCESS")
+
+        return {
+            "status": "success",
+            "total": total,
+            "fixed": fixed,
+            "skipped": skipped,
+            "not_found": not_found,
+            "details": details,
+        }

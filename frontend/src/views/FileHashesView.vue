@@ -268,6 +268,46 @@ const previewEd2kLink = computed(() => {
   return rebuildEd2kLink(previewRecord.value.ed2k_link, fn)
 })
 
+// ========== 一键修复标题 ==========
+const fixing = ref(false)
+const showFixResultModal = ref(false)
+const fixResult = ref<any>(null)
+
+async function fixTitles() {
+  if (hashTotal.value === 0) { warning('当前没有可修复的数据'); return }
+  const ok = await confirm({
+    title: '一键修复标题',
+    content: `将根据每条记录的 TMDB ID 和类型，从数据中心查询正确标题并更新。\n\n当前筛选范围内共 ${hashTotal.value} 条记录，其中无 TMDB ID 或类型的记录将被跳过。`,
+    confirmColor: 'primary',
+  })
+  if (!ok) return
+  fixing.value = true
+  try {
+    const res = await fileHashApi.fixTitles({
+      q: searchQuery.value || undefined,
+      tmdb_id: filterTmdbId.value || undefined,
+      media_type: filterMediaType.value,
+      season: filterSeason.value,
+      team: filterTeam.value || undefined,
+    })
+    fixResult.value = res
+    const { fixed, skipped, not_found, total } = res
+    if (fixed > 0) {
+      success(`修复完成：成功 ${fixed} 条，跳过 ${skipped} 条，未找到 ${not_found} 条（共 ${total} 条）`)
+    } else {
+      showInfo(`无需修复：跳过 ${skipped} 条，未找到 ${not_found} 条（共 ${total} 条）`)
+    }
+    showFixResultModal.value = true
+    // 刷新列表
+    offset.value = 0
+    await fetchHashList()
+  } catch (e: any) {
+    showError(e?.message || '修复失败，请重试')
+  } finally {
+    fixing.value = false
+  }
+}
+
 // ========== 导出 / 复制全部 ==========
 const exporting = ref(false)
 
@@ -572,6 +612,7 @@ onUnmounted(() => {
     <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
       <div class="page-subtitle text-body-2 text-medium-emphasis">共 {{ hashTotal }} 条 · SHA1 与 ED2K 哈希管理</div>
       <div class="page-actions d-flex ga-2">
+        <v-btn variant="tonal" color="warning" prepend-icon="mdi-wrench-check-outline" :loading="fixing" @click="fixTitles">一键修复</v-btn>
         <v-menu>
           <template #activator="{ props: menuProps }">
             <v-btn variant="tonal" color="info" prepend-icon="mdi-download-outline" :loading="exporting" v-bind="menuProps">导出</v-btn>
@@ -1082,6 +1123,61 @@ onUnmounted(() => {
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showCalculateModal = false">取消</v-btn>
           <v-btn variant="tonal" color="primary" :loading="calculateLoading" @click="submitCalculate">开始计算</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 一键修复结果弹窗 -->
+    <v-dialog v-model="showFixResultModal" max-width="900" scrollable>
+      <v-card class="glass-card">
+        <v-card-title class="pa-4 d-flex align-center">
+          <v-icon start color="warning">mdi-wrench-check-outline</v-icon>
+          修复结果
+          <v-spacer />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="showFixResultModal = false" />
+        </v-card-title>
+        <v-divider />
+
+        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto;">
+          <template v-if="fixResult">
+            <!-- 统计摘要 -->
+            <div class="d-flex ga-3 flex-wrap mb-4">
+              <v-chip size="small" variant="flat" color="primary">共 {{ fixResult.total }} 条</v-chip>
+              <v-chip size="small" variant="flat" color="success">修复 {{ fixResult.fixed }} 条</v-chip>
+              <v-chip size="small" variant="flat" color="grey">跳过 {{ fixResult.skipped }} 条</v-chip>
+              <v-chip size="small" variant="flat" color="error">未找到 {{ fixResult.not_found }} 条</v-chip>
+            </div>
+
+            <!-- 修复明细列表 -->
+            <div v-if="fixResult.details && fixResult.details.length" class="text-body-2">
+              <div v-for="(item, i) in fixResult.details" :key="i" class="pa-2 mb-1" style="border-radius: 8px; background: rgba(var(--v-theme-on-surface), 0.04);">
+                <div class="d-flex align-center ga-2">
+                  <v-chip
+                    size="x-small"
+                    variant="flat"
+                    :color="(item as any).status === 'fixed' ? 'success' : (item as any).status === 'not_found' ? 'error' : (item as any).status === 'unchanged' ? 'grey' : 'grey'"
+                  >
+                    {{ (item as any).status === 'fixed' ? '已修复' : (item as any).status === 'not_found' ? '未找到' : (item as any).status === 'unchanged' ? '已一致' : '跳过' }}
+                  </v-chip>
+                  <span class="text-caption text-medium-emphasis">ID: {{ (item as any).id }}</span>
+                  <span class="text-caption" style="word-break: break-all;">{{ (item as any).original_filename }}</span>
+                </div>
+                <div v-if="(item as any).old_title || (item as any).new_title" class="text-caption mt-1" style="word-break: break-all;">
+                  <span v-if="(item as any).old_title" class="text-medium-emphasis text-decoration-line-through">{{ (item as any).old_title }}</span>
+                  <v-icon v-if="(item as any).old_title && (item as any).new_title" size="10" class="mx-1">mdi-arrow-right</v-icon>
+                  <span v-if="(item as any).new_title" class="font-weight-bold" style="color: rgb(var(--v-theme-success));">{{ (item as any).new_title }}</span>
+                </div>
+                <div v-if="(item as any).reason" class="text-caption text-medium-emphasis mt-1">{{ (item as any).reason }}</div>
+              </div>
+            </div>
+            <div v-else class="text-center pa-4 text-medium-emphasis">无明细数据</div>
+          </template>
+        </v-card-text>
+
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="tonal" prepend-icon="mdi-close" @click="showFixResultModal = false">关闭</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

@@ -57,4 +57,15 @@ export const fileHashApi = {
     release_date?: string
   }) =>
     api.post<any>('/api/file_hashes/calculate', body),
+
+  /** 一键修复标题：根据 TMDBID 和类型从数据中心补全标题 */
+  fixTitles: (body?: {
+    ids?: number[]
+    q?: string
+    tmdb_id?: string
+    media_type?: string
+    season?: number
+    team?: string
+  }) =>
+    api.post<any>('/api/file_hashes/fix_titles', body || {}),
 }
