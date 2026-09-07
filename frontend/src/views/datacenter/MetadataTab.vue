@@ -52,8 +52,19 @@ const STATUS_MAP: Record<string, string> = {
 const showRefreshModal = ref(false)
 const refreshForm = reactive({
   older_than_days: undefined as number | undefined,
-  year: undefined as number | undefined,
+  year_from: undefined as number | undefined,
+  year_to: undefined as number | undefined,
   media_type: undefined as string | undefined,
+  genre_ids: [] as string[],
+})
+
+// --- 全量刷新弹窗：流派选项（从映射缓存构建） ---
+const genreOptions = computed(() => {
+  const genres = mappingCache.value.genres || {}
+  return Object.entries(genres).map(([id, name]) => ({
+    title: name as string,
+    value: id,
+  }))
 })
 
 watch(showEditModal, (val) => {
@@ -171,13 +182,15 @@ async function handleSyncSytmdb() {
 function handleExecuteRefresh() {
   const body: any = {}
   if (refreshForm.older_than_days) body.older_than_days = refreshForm.older_than_days
-  if (refreshForm.year) body.year = refreshForm.year
+  if (refreshForm.year_from) body.year_from = refreshForm.year_from
+  if (refreshForm.year_to) body.year_to = refreshForm.year_to
   if (refreshForm.media_type) body.media_type = refreshForm.media_type
+  if (refreshForm.genre_ids.length) body.genre_ids = refreshForm.genre_ids.join(',')
   dataCenterApi.refreshAll(body).then((res: any) => {
     success(res?.message || '全量刷新任务已启动')
   }).catch(() => showError('触发刷新失败'))
   showRefreshModal.value = false
-  Object.assign(refreshForm, { older_than_days: undefined, year: undefined, media_type: undefined })
+  Object.assign(refreshForm, { older_than_days: undefined, year_from: undefined, year_to: undefined, media_type: undefined, genre_ids: [] })
 }
 
 // --- 无限滚动 ---
@@ -290,7 +303,12 @@ onUnmounted(() => {
       <v-divider />
       <v-card-text class="pa-4">
         <v-text-field v-model="refreshForm.older_than_days" label="更新时间筛选" type="number" placeholder="留空表示不限制" variant="outlined" density="compact" class="mb-3" hint="天前的数据" persistent-hint />
-        <v-text-field v-model="refreshForm.year" label="首播年份筛选" type="number" placeholder="留空表示不限制" variant="outlined" density="compact" class="mb-3" />
+        <div class="d-flex align-center ga-2 mb-3">
+          <v-text-field v-model="refreshForm.year_from" label="首播年份（起）" type="number" placeholder="如 2020" variant="outlined" density="compact" hide-details />
+          <span class="text-medium-emphasis">~</span>
+          <v-text-field v-model="refreshForm.year_to" label="首播年份（止）" type="number" placeholder="如 2024" variant="outlined" density="compact" hide-details />
+        </div>
+        <v-select v-model="refreshForm.genre_ids" label="流派筛选" :items="genreOptions" multiple chips closable-chips variant="outlined" density="compact" clearable hide-details class="mb-3" placeholder="不选表示不限制" />
         <v-select v-model="refreshForm.media_type" label="媒体类型筛选" :items="[{ title: '全部', value: undefined }, { title: '电影', value: 'movie' }, { title: '剧集', value: 'tv' }]" variant="outlined" density="compact" clearable class="mb-3" />
       </v-card-text>
       <v-divider />

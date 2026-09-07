@@ -11,28 +11,36 @@ router = APIRouter(prefix="/tmdb_full", tags=["数据中心"])
 
 async def task_refresh_all_metadata(
     older_than_days: Optional[int] = None,
-    year: Optional[int] = None,
+    year_from: Optional[int] = None,
+    year_to: Optional[int] = None,
     media_type: Optional[str] = None,
-    tmdb_id: Optional[str] = None
+    tmdb_id: Optional[str] = None,
+    genre_ids: Optional[str] = None
 ):
     """
     后台执行全量刷新逻辑
     
     Args:
         older_than_days: 只更新 N 天前更新的记录
-        year: 只更新指定年份首播的记录
+        year_from: 只更新首播年份 >= 该年份的记录
+        year_to: 只更新首播年份 <= 该年份的记录
         media_type: 只更新指定类型 (movie/tv)
         tmdb_id: 只更新指定的 TMDB ID（单个刷新）
+        genre_ids: 只更新包含指定流派 ID 的记录（逗号分隔，如 "16,10749"）
     """
     filters = []
     if tmdb_id:
         filters.append(f"TMDB ID {tmdb_id}")
     if older_than_days:
         filters.append(f"更新时间早于 {older_than_days} 天")
-    if year:
-        filters.append(f"首播年份 {year}")
+    if year_from:
+        filters.append(f"首播年份 >= {year_from}")
+    if year_to:
+        filters.append(f"首播年份 <= {year_to}")
     if media_type:
         filters.append(f"类型 {media_type}")
+    if genre_ids:
+        filters.append(f"流派 {genre_ids}")
     
     filter_desc = " | ".join(filters) if filters else "全部"
     log_audit("离线库", "全量刷新", f"开始执行全量元数据同步任务 [{filter_desc}]...")
@@ -47,11 +55,19 @@ async def task_refresh_all_metadata(
             cutoff_date = datetime.now() - timedelta(days=older_than_days)
             stmt = stmt.where(TmdbDeepMeta.updated_at < cutoff_date)
         
-        if year:
-            stmt = stmt.where(col(TmdbDeepMeta.first_air_date).startswith(str(year)))
+        if year_from:
+            stmt = stmt.where(col(TmdbDeepMeta.first_air_date) >= str(year_from))
+        
+        if year_to:
+            stmt = stmt.where(col(TmdbDeepMeta.first_air_date) <= f"{year_to}-12-31")
         
         if media_type:
             stmt = stmt.where(TmdbDeepMeta.media_type == media_type)
+        
+        if genre_ids:
+            gid_list = [g.strip() for g in genre_ids.split(",") if g.strip()]
+            for gid in gid_list:
+                stmt = stmt.where(col(TmdbDeepMeta.genre_ids).contains(gid))
         
         items = (await session.execute(stmt)).all()
         
@@ -131,9 +147,11 @@ async def delete_secondary_rule(rule_id: int):
 async def refresh_all_metadata(
     background_tasks: BackgroundTasks,
     older_than_days: Optional[int] = Body(None, description="只更新 N 天前更新的记录"),
-    year: Optional[int] = Body(None, description="只更新指定年份首播的记录"),
+    year_from: Optional[int] = Body(None, description="只更新首播年份 >= 该年份的记录"),
+    year_to: Optional[int] = Body(None, description="只更新首播年份 <= 该年份的记录"),
     media_type: Optional[str] = Body(None, description="只更新指定类型 (movie/tv)"),
-    tmdb_id: Optional[str] = Body(None, description="只更新指定的 TMDB ID（单个刷新）")
+    tmdb_id: Optional[str] = Body(None, description="只更新指定的 TMDB ID（单个刷新）"),
+    genre_ids: Optional[str] = Body(None, description="只更新包含指定流派 ID 的记录（逗号分隔，如 \"16,10749\"）")
 ):
     """
     触发后台异步任务，对库中条目强制与 TMDB 云端同步。
@@ -141,17 +159,21 @@ async def refresh_all_metadata(
     支持筛选条件：
     - tmdb_id: 只更新指定的 TMDB ID（单个刷新）
     - older_than_days: 只更新 N 天前更新的记录（如 90 表示更新 3 个月前的数据）
-    - year: 只更新指定年份首播的记录（如 2024）
+    - year_from: 只更新首播年份 >= 该年份的记录（如 2020）
+    - year_to: 只更新首播年份 <= 该年份的记录（如 2024）
     - media_type: 只更新指定类型 (movie/tv)
+    - genre_ids: 只更新包含指定流派 ID 的记录（逗号分隔，如 "16,10749"）
     
     不传任何参数则刷新全部。
     """
     background_tasks.add_task(
         task_refresh_all_metadata,
         older_than_days=older_than_days,
-        year=year,
+        year_from=year_from,
+        year_to=year_to,
         media_type=media_type,
-        tmdb_id=tmdb_id
+        tmdb_id=tmdb_id,
+        genre_ids=genre_ids
     )
     
     filters = []
@@ -159,10 +181,14 @@ async def refresh_all_metadata(
         filters.append(f"TMDB ID {tmdb_id}")
     if older_than_days:
         filters.append(f"更新时间早于 {older_than_days} 天")
-    if year:
-        filters.append(f"首播年份 {year}")
+    if year_from:
+        filters.append(f"首播年份 >= {year_from}")
+    if year_to:
+        filters.append(f"首播年份 <= {year_to}")
     if media_type:
         filters.append(f"类型 {media_type}")
+    if genre_ids:
+        filters.append(f"流派 {genre_ids}")
     
     filter_desc = " | ".join(filters) if filters else "全部"
     return {"status": "success", "message": f"全量刷新任务已在后台启动 [{filter_desc}]，请关注系统日志"}

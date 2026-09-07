@@ -49,7 +49,7 @@ export const dataCenterApi = {
 
   // ===== 全量刷新 =====
   /** 触发全量强制刷新离线库 */
-  refreshAll: (body?: { older_than_days?: number; year?: number; media_type?: string; tmdb_id?: string }) =>
+  refreshAll: (body?: { older_than_days?: number; year_from?: number; year_to?: number; media_type?: string; tmdb_id?: string; genre_ids?: string }) =>
     api.post<any>('/api/tmdb_full/refresh_all', body || {}),
 
   // ===== 元数据缓存管理 =====
