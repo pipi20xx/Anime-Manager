@@ -42,6 +42,7 @@ class TmdbFullBrowser:
                         conditions = [
                             TmdbDeepMeta.title.ilike(term),
                             TmdbDeepMeta.original_title.ilike(term),
+                            TmdbDeepMeta.custom_title.ilike(term),
                             TmdbDeepMeta.tmdb_id.like(term),
                             TmdbDeepMeta.original_language.ilike(term)
                         ]
@@ -49,6 +50,7 @@ class TmdbFullBrowser:
                         conditions = [
                             col(TmdbDeepMeta.title).contains(search),
                             col(TmdbDeepMeta.original_title).contains(search),
+                            col(TmdbDeepMeta.custom_title).contains(search),
                             col(TmdbDeepMeta.tmdb_id).contains(search)
                         ]
                     
