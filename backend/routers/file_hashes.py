@@ -7,6 +7,7 @@ from sqlmodel import select, desc, func
 from database import db
 from models import FileHash
 from utils.hash_calculator import HashCalculator
+from recognition.recognizer import MovieRecognizer
 from logger import log_audit
 
 router = APIRouter(prefix="/api/file_hashes", tags=["文件哈希"])
@@ -480,5 +481,146 @@ async def fix_titles(request: FixTitlesRequest):
             "fixed": fixed,
             "skipped": skipped,
             "not_found": not_found,
+            "details": details,
+        }
+
+
+@router.post("/re_recognize", summary="重新识别并覆盖识别信息")
+async def re_recognize_file_hashes(request: FixTitlesRequest):
+    """
+    对筛选范围内的哈希记录, 使用其源路径重新执行完整识别流程
+    (文件名解析 + TMDB 匹配 + 深度元数据补全), 覆盖写回
+    季集/TMDB ID/标题/识别信息等字段。文件无需真实存在于磁盘。
+    注意: 会覆盖这些字段的现有值 (包括人工修改过的值)。
+    """
+    async with db.session_scope() as session:
+        base_stmt = select(FileHash)
+
+        filters = []
+        if request.ids:
+            filters.append(FileHash.id.in_(request.ids))
+        if request.tmdb_id:
+            filters.append(FileHash.tmdb_id == request.tmdb_id)
+        if request.media_type:
+            filters.append(FileHash.media_type == request.media_type)
+        if request.season is not None:
+            filters.append(FileHash.season == request.season)
+        if request.team:
+            filters.append(FileHash.team == request.team)
+        if request.q:
+            pattern = f"%{request.q}%"
+            filters.append(
+                FileHash.original_filename.ilike(pattern)
+                | FileHash.title.ilike(pattern)
+                | FileHash.ed2k.ilike(pattern)
+                | FileHash.sha1.ilike(pattern)
+                | FileHash.source_path.ilike(pattern)
+                | FileHash.target_path.ilike(pattern)
+            )
+
+        if filters:
+            base_stmt = base_stmt.where(*filters)
+
+        result = await session.execute(base_stmt)
+        records = result.scalars().all()
+
+        total = len(records)
+        updated = 0
+        skipped = 0
+        errors = 0
+        details = []
+
+        for record in records:
+            if not record.source_path:
+                skipped += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "status": "skipped",
+                    "reason": "无源路径"
+                })
+                continue
+
+            try:
+                result_data, _logs = await MovieRecognizer.recognize_full(
+                    record.source_path,
+                    original_input_path=record.source_path
+                )
+            except Exception as e:
+                errors += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "source_path": record.source_path,
+                    "status": "error",
+                    "reason": f"识别异常: {str(e)}"
+                })
+                continue
+
+            final = result_data.get("final_result", {}) if isinstance(result_data, dict) else {}
+
+            if not final.get("tmdb_id"):
+                skipped += 1
+                details.append({
+                    "id": record.id,
+                    "original_filename": record.original_filename,
+                    "source_path": record.source_path,
+                    "status": "skipped",
+                    "reason": "未能识别出 TMDB ID"
+                })
+                continue
+
+            old_snapshot = {
+                "title": record.title,
+                "tmdb_id": record.tmdb_id,
+                "season": record.season,
+                "episode": record.episode,
+            }
+
+            # 字段映射与 organizer_core/processor.py 的哈希入库逻辑保持一致
+            record.tmdb_id = str(final.get("tmdb_id"))
+            record.title = final.get("title")
+            record.season = final.get("season")
+            record.episode = str(final.get("episode")) if final.get("episode") else None
+            record.media_type = final.get("category")
+            record.resolution = final.get("resolution")
+            record.team = final.get("team")
+            record.video_encode = final.get("video_encode")
+            record.audio_encode = final.get("audio_encode")
+            record.video_effect = final.get("video_effect")
+            record.source = final.get("source")
+            record.subtitle = final.get("subtitle")
+            record.platform = final.get("platform")
+            record.year = str(final.get("year")) if final.get("year") else None
+            record.secondary_category = final.get("secondary_category")
+            record.origin_country = final.get("origin_country")
+            record.release_date = final.get("release_date")
+
+            updated += 1
+            details.append({
+                "id": record.id,
+                "original_filename": record.original_filename,
+                "source_path": record.source_path,
+                "old_title": old_snapshot["title"],
+                "new_title": record.title,
+                "old_tmdb_id": old_snapshot["tmdb_id"],
+                "new_tmdb_id": record.tmdb_id,
+                "old_season": old_snapshot["season"],
+                "new_season": record.season,
+                "old_episode": old_snapshot["episode"],
+                "new_episode": record.episode,
+                "status": "updated"
+            })
+
+        await session.commit()
+
+        log_audit("哈希", "重新识别", f"共 {total} 条, 更新 {updated}, 跳过 {skipped}, 失败 {errors}", level="SUCCESS")
+
+        return {
+            "status": "success",
+            "total": total,
+            "updated": updated,
+            "skipped": skipped,
+            "errors": errors,
             "details": details,
         }

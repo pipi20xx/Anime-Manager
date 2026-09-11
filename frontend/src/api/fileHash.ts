@@ -72,4 +72,15 @@ export const fileHashApi = {
     team?: string
   }) =>
     api.post<any>('/api/file_hashes/fix_titles', body || {}),
+
+  /** 重新识别：按源路径重跑识别并覆盖季集/TMDB ID/标题/识别信息 */
+  reRecognize: (body?: {
+    ids?: number[]
+    q?: string
+    tmdb_id?: string
+    media_type?: string
+    season?: number
+    team?: string
+  }) =>
+    api.post<any>('/api/file_hashes/re_recognize', body || {}),
 }

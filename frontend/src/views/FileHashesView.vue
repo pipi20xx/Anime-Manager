@@ -304,6 +304,7 @@ const previewEd2kLink = computed(() => {
 const fixing = ref(false)
 const showFixResultModal = ref(false)
 const fixResult = ref<any>(null)
+const fixResultType = ref<'fix' | 'reco'>('fix')
 
 async function fixTitles() {
   if (hashTotal.value === 0) { warning('当前没有可修复的数据'); return }
@@ -322,6 +323,7 @@ async function fixTitles() {
       season: filterSeason.value,
       team: filterTeam.value || undefined,
     })
+    fixResultType.value = 'fix'
     fixResult.value = res
     const { fixed, skipped, not_found, total } = res
     if (fixed > 0) {
@@ -337,6 +339,45 @@ async function fixTitles() {
     showError(e?.message || '修复失败，请重试')
   } finally {
     fixing.value = false
+  }
+}
+
+// ========== 重新识别 ==========
+const rerecognizing = ref(false)
+
+async function reRecognize() {
+  if (hashTotal.value === 0) { warning('当前没有可识别的数据'); return }
+  const ok = await confirm({
+    title: '重新识别',
+    content: `将根据每条记录的源路径重新执行完整识别（文件名解析 + TMDB 匹配），并覆盖标题、TMDB ID、季集和识别信息（包括人工修改过的值）。\n\n当前筛选范围内共 ${hashTotal.value} 条记录，识别不出 TMDB ID 的记录将被跳过。`,
+    confirmColor: 'primary',
+  })
+  if (!ok) return
+  rerecognizing.value = true
+  try {
+    const res = await fileHashApi.reRecognize({
+      q: searchQuery.value || undefined,
+      tmdb_id: filterTmdbId.value || undefined,
+      media_type: filterMediaType.value,
+      season: filterSeason.value,
+      team: filterTeam.value || undefined,
+    })
+    fixResultType.value = 'reco'
+    fixResult.value = res
+    const { updated, skipped, errors, total } = res
+    if (updated > 0) {
+      success(`重新识别完成：更新 ${updated} 条，跳过 ${skipped} 条，失败 ${errors} 条（共 ${total} 条）`)
+    } else {
+      showInfo(`没有可更新的记录：跳过 ${skipped} 条，失败 ${errors} 条（共 ${total} 条）`)
+    }
+    showFixResultModal.value = true
+    // 刷新列表
+    offset.value = 0
+    await fetchHashList()
+  } catch (e: any) {
+    showError(e?.message || '重新识别失败，请重试')
+  } finally {
+    rerecognizing.value = false
   }
 }
 
@@ -683,6 +724,7 @@ onUnmounted(() => {
       <div class="page-subtitle text-body-2 text-medium-emphasis">共 {{ hashTotal }} 条 · SHA1 与 ED2K 哈希管理</div>
       <div class="page-actions d-flex ga-2">
         <v-btn variant="tonal" color="warning" prepend-icon="mdi-wrench-check-outline" :loading="fixing" @click="fixTitles">一键修复</v-btn>
+        <v-btn variant="tonal" color="info" prepend-icon="mdi-magnify-scan" :loading="rerecognizing" @click="reRecognize">重新识别</v-btn>
         <v-menu>
           <template #activator="{ props: menuProps }">
             <v-btn variant="tonal" color="info" prepend-icon="mdi-download-outline" :loading="exporting" v-bind="menuProps">导出</v-btn>
@@ -1231,12 +1273,12 @@ onUnmounted(() => {
       </v-card>
     </v-dialog>
 
-    <!-- 一键修复结果弹窗 -->
+    <!-- 一键修复 / 重新识别 结果弹窗 -->
     <v-dialog v-model="showFixResultModal" max-width="900" scrollable>
       <v-card class="glass-card">
         <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="warning">mdi-wrench-check-outline</v-icon>
-          修复结果
+          <v-icon start :color="fixResultType === 'reco' ? 'info' : 'warning'">{{ fixResultType === 'reco' ? 'mdi-magnify-scan' : 'mdi-wrench-check-outline' }}</v-icon>
+          {{ fixResultType === 'reco' ? '重新识别结果' : '修复结果' }}
           <v-spacer />
           <v-btn icon="mdi-close" variant="text" size="small" @click="showFixResultModal = false" />
         </v-card-title>
@@ -1247,21 +1289,21 @@ onUnmounted(() => {
             <!-- 统计摘要 -->
             <div class="d-flex ga-3 flex-wrap mb-4">
               <v-chip size="small" variant="flat" color="primary">共 {{ fixResult.total }} 条</v-chip>
-              <v-chip size="small" variant="flat" color="success">修复 {{ fixResult.fixed }} 条</v-chip>
+              <v-chip size="small" variant="flat" color="success">{{ fixResultType === 'reco' ? '更新' : '修复' }} {{ fixResult.updated ?? fixResult.fixed }} 条</v-chip>
               <v-chip size="small" variant="flat" color="grey">跳过 {{ fixResult.skipped }} 条</v-chip>
-              <v-chip size="small" variant="flat" color="error">未找到 {{ fixResult.not_found }} 条</v-chip>
+              <v-chip size="small" variant="flat" color="error">{{ fixResultType === 'reco' ? '失败' : '未找到' }} {{ fixResult.errors ?? fixResult.not_found }} 条</v-chip>
             </div>
 
-            <!-- 修复明细列表 -->
+            <!-- 明细列表 -->
             <div v-if="fixResult.details && fixResult.details.length" class="text-body-2">
               <div v-for="(item, i) in fixResult.details" :key="i" class="pa-2 mb-1" style="border-radius: 8px; background: rgba(var(--v-theme-on-surface), 0.04);">
                 <div class="d-flex align-center ga-2">
                   <v-chip
                     size="x-small"
                     variant="flat"
-                    :color="(item as any).status === 'fixed' ? 'success' : (item as any).status === 'not_found' ? 'error' : (item as any).status === 'unchanged' ? 'grey' : 'grey'"
+                    :color="(item as any).status === 'fixed' || (item as any).status === 'updated' ? 'success' : (item as any).status === 'not_found' || (item as any).status === 'error' ? 'error' : 'grey'"
                   >
-                    {{ (item as any).status === 'fixed' ? '已修复' : (item as any).status === 'not_found' ? '未找到' : (item as any).status === 'unchanged' ? '已一致' : '跳过' }}
+                    {{ (item as any).status === 'fixed' ? '已修复' : (item as any).status === 'updated' ? '已更新' : (item as any).status === 'not_found' ? '未找到' : (item as any).status === 'error' ? '失败' : (item as any).status === 'unchanged' ? '已一致' : '跳过' }}
                   </v-chip>
                   <span class="text-caption text-medium-emphasis">ID: {{ (item as any).id }}</span>
                   <span class="text-caption" style="word-break: break-all;">{{ (item as any).original_filename }}</span>
@@ -1270,6 +1312,16 @@ onUnmounted(() => {
                   <span v-if="(item as any).old_title" class="text-medium-emphasis text-decoration-line-through">{{ (item as any).old_title }}</span>
                   <v-icon v-if="(item as any).old_title && (item as any).new_title" size="10" class="mx-1">mdi-arrow-right</v-icon>
                   <span v-if="(item as any).new_title" class="font-weight-bold" style="color: rgb(var(--v-theme-success));">{{ (item as any).new_title }}</span>
+                </div>
+                <div v-if="(item as any).new_tmdb_id !== undefined" class="text-caption mt-1">
+                  <span class="text-medium-emphasis">TMDB ID: {{ (item as any).old_tmdb_id || '-' }}</span>
+                  <v-icon size="10" class="mx-1">mdi-arrow-right</v-icon>
+                  <span class="font-weight-bold" style="color: rgb(var(--v-theme-success));">{{ (item as any).new_tmdb_id || '-' }}</span>
+                </div>
+                <div v-if="(item as any).new_season !== undefined" class="text-caption mt-1">
+                  <span class="text-medium-emphasis">季集: S{{ (item as any).old_season ?? '?' }}E{{ (item as any).old_episode ?? '-' }}</span>
+                  <v-icon size="10" class="mx-1">mdi-arrow-right</v-icon>
+                  <span class="font-weight-bold" style="color: rgb(var(--v-theme-success));">S{{ (item as any).new_season ?? '?' }}E{{ (item as any).new_episode ?? '-' }}</span>
                 </div>
                 <div v-if="(item as any).reason" class="text-caption text-medium-emphasis mt-1">{{ (item as any).reason }}</div>
               </div>
