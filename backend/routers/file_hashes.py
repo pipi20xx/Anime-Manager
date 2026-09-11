@@ -52,6 +52,12 @@ class FileHashListResponse(BaseModel):
     data: List[FileHashResponse]
 
 
+class FileHashInfoUpdate(BaseModel):
+    season: Optional[int] = Field(None, description="季号 (如 Specials 传 0), 传 null 清空")
+    episode: Optional[str] = Field(None, description="集号, 传 null 清空")
+    tmdb_id: Optional[str] = Field(None, description="TMDB ID, 传 null 清空")
+
+
 @router.get("", summary="查询文件哈希列表", response_model=FileHashListResponse)
 async def list_file_hashes(
     q: Optional[str] = Query(None, description="关键词搜索：文件名、标题、ED2K、SHA1、路径"),
@@ -132,6 +138,25 @@ async def get_file_hash(hash_id: int):
         item = await session.get(FileHash, hash_id)
         if not item:
             raise HTTPException(status_code=404, detail="记录不存在")
+        return item
+
+
+@router.patch("/{hash_id}", summary="修正哈希记录的季集/TMDB ID", response_model=FileHashResponse)
+async def update_file_hash_season_episode(hash_id: int, payload: FileHashInfoUpdate):
+    """
+    手动修正单条哈希记录的季号/集号/TMDB ID (如 Specials 的 S0)。
+    字段传 null 表示清空。
+    """
+    async with db.session_scope() as session:
+        item = await session.get(FileHash, hash_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="记录不存在")
+        item.season = payload.season
+        item.episode = payload.episode
+        item.tmdb_id = payload.tmdb_id
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
         return item
 
 

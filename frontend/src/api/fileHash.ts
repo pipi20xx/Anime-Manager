@@ -27,6 +27,10 @@ export const fileHashApi = {
   getDetail: (id: number) =>
     api.get<any>(`/api/file_hashes/${id}`),
 
+  /** 修正单条记录的季号/集号/TMDB ID (传 null 清空) */
+  updateInfo: (id: number, body: { season: number | null; episode: string | null; tmdb_id: string | null }) =>
+    api.patch<any>(`/api/file_hashes/${id}`, body),
+
   /** 按 ED2K 哈希查询 */
   getByEd2k: (ed2kHash: string) =>
     api.get<any>(`/api/file_hashes/ed2k/${ed2kHash}`),

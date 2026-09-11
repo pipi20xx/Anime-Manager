@@ -41,6 +41,38 @@ const showDetailModal = ref(false)
 const detailItem = ref<any>(null)
 const detailLoading = ref(false)
 
+// --- 详情弹窗双击行内编辑 (季度/集号/TMDB ID) ---
+const editingField = ref<'' | 'season' | 'episode' | 'tmdb_id'>('')
+const editValue = ref('')
+const seSaving = ref(false)
+
+const showSeRows = computed(() => {
+  if (!detailItem.value) return false
+  return formatMediaType(detailItem.value.media_type || '') === '剧集'
+    || (detailItem.value.season !== null && detailItem.value.season !== undefined)
+    || (detailItem.value.episode !== null && detailItem.value.episode !== undefined)
+})
+
+function normalizeSeasonInput(v: any): number | null {
+  if (v === '' || v === null || v === undefined) return null
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.trunc(n) : null
+}
+
+function startEdit(field: 'season' | 'episode' | 'tmdb_id') {
+  if (!detailItem.value) return
+  const d = detailItem.value
+  if (field === 'season') editValue.value = d.season ?? ''
+  else if (field === 'episode') editValue.value = d.episode ?? ''
+  else editValue.value = d.tmdb_id ?? ''
+  editingField.value = field
+}
+
+function cancelEdit() {
+  editingField.value = ''
+  editValue.value = ''
+}
+
 // --- 计算弹窗 ---
 const showCalculateModal = ref(false)
 const calculateLoading = ref(false)
@@ -507,6 +539,7 @@ function loadMore() {
 
 async function openDetail(item: any) {
   detailItem.value = item
+  cancelEdit()
   showDetailModal.value = true
   if (item.id) {
     detailLoading.value = true
@@ -518,6 +551,43 @@ async function openDetail(item: any) {
     } finally {
       detailLoading.value = false
     }
+  }
+}
+
+async function saveEdit() {
+  if (!detailItem.value || !editingField.value) return
+  const field = editingField.value
+  const orig = detailItem.value
+  seSaving.value = true
+  try {
+    // 后端为整组覆盖, 未编辑的字段按原值回传
+    const season = field === 'season' ? normalizeSeasonInput(editValue.value) : (orig.season ?? null)
+    const episode = field === 'episode' ? (String(editValue.value).trim() || null) : (orig.episode ?? null)
+    const tmdbId = field === 'tmdb_id' ? (String(editValue.value).trim() || null) : (orig.tmdb_id ?? null)
+    const data = await fileHashApi.updateInfo(orig.id, { season, episode, tmdb_id: tmdbId })
+    const updated = (data as any)?.data || data || {}
+    detailItem.value = {
+      ...orig,
+      season: updated.season ?? season,
+      episode: updated.episode ?? episode,
+      tmdb_id: updated.tmdb_id ?? tmdbId,
+    }
+    // 同步列表中对应行
+    const idx = hashList.value.findIndex((h: any) => h.id === orig.id)
+    if (idx >= 0) {
+      hashList.value[idx] = {
+        ...hashList.value[idx],
+        season: detailItem.value.season,
+        episode: detailItem.value.episode,
+        tmdb_id: detailItem.value.tmdb_id,
+      }
+    }
+    success('已更新')
+  } catch (e: any) {
+    showError(e?.response?.data?.detail || '更新失败')
+  } finally {
+    seSaving.value = false
+    cancelEdit()
   }
 }
 
@@ -739,7 +809,7 @@ onUnmounted(() => {
               <v-chip v-if="item.media_type" size="x-small" variant="flat" class="meta-tag meta-tag--type">
                 {{ formatMediaType(item.media_type) }}
               </v-chip>
-              <v-chip v-if="item.season" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+              <v-chip v-if="item.season !== null && item.season !== undefined" size="x-small" variant="flat" class="meta-tag meta-tag--season">
                 S{{ String(item.season).padStart(2, '0') }}{{ item.episode ? 'E' + String(item.episode).padStart(2, '0') : '' }}
               </v-chip>
               <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">
@@ -851,8 +921,42 @@ onUnmounted(() => {
             <div class="kv-row"><span class="kv-label">文件名</span><span class="kv-value font-weight-medium">{{ detailItem.original_filename || '-' }}</span></div>
             <div class="kv-row"><span class="kv-label">媒体类型</span><span class="kv-value font-weight-medium">{{ formatMediaType(detailItem.media_type) }}</span></div>
             <div class="kv-row"><span class="kv-label">文件大小</span><span class="kv-value font-weight-medium">{{ formatFileSize(detailItem.file_size) }}</span></div>
-            <div class="kv-row" v-if="detailItem.tmdb_id"><span class="kv-label">TMDB ID</span><span class="kv-value font-weight-medium">{{ detailItem.tmdb_id }}</span></div>
-            <div class="kv-row" v-if="detailItem.season"><span class="kv-label">季集</span><span class="kv-value font-weight-medium">S{{ detailItem.season }}E{{ detailItem.episode || '-' }}</span></div>
+            <div class="kv-row kv-row--editable" v-if="showSeRows" title="双击编辑" @dblclick="startEdit('season')">
+              <span class="kv-label">季度</span>
+              <template v-if="editingField === 'season'">
+                <v-text-field v-model="editValue" type="number" min="0" density="compact" variant="outlined" hide-details autofocus style="max-width: 140px" @keyup.enter="saveEdit" @keyup.esc="cancelEdit" />
+                <v-btn icon="mdi-check" size="x-small" color="primary" variant="tonal" :loading="seSaving" @click="saveEdit" />
+                <v-btn icon="mdi-close" size="x-small" variant="tonal" @click="cancelEdit" />
+              </template>
+              <template v-else>
+                <span class="kv-value font-weight-medium">{{ detailItem.season ?? '-' }}</span>
+                <v-icon class="edit-hint" size="14">mdi-pencil</v-icon>
+              </template>
+            </div>
+            <div class="kv-row kv-row--editable" v-if="showSeRows" title="双击编辑" @dblclick="startEdit('episode')">
+              <span class="kv-label">集号</span>
+              <template v-if="editingField === 'episode'">
+                <v-text-field v-model="editValue" density="compact" variant="outlined" hide-details autofocus style="max-width: 140px" @keyup.enter="saveEdit" @keyup.esc="cancelEdit" />
+                <v-btn icon="mdi-check" size="x-small" color="primary" variant="tonal" :loading="seSaving" @click="saveEdit" />
+                <v-btn icon="mdi-close" size="x-small" variant="tonal" @click="cancelEdit" />
+              </template>
+              <template v-else>
+                <span class="kv-value font-weight-medium">{{ detailItem.episode || '-' }}</span>
+                <v-icon class="edit-hint" size="14">mdi-pencil</v-icon>
+              </template>
+            </div>
+            <div class="kv-row kv-row--editable" title="双击编辑" @dblclick="startEdit('tmdb_id')">
+              <span class="kv-label">TMDB ID</span>
+              <template v-if="editingField === 'tmdb_id'">
+                <v-text-field v-model="editValue" density="compact" variant="outlined" hide-details autofocus style="max-width: 200px" @keyup.enter="saveEdit" @keyup.esc="cancelEdit" />
+                <v-btn icon="mdi-check" size="x-small" color="primary" variant="tonal" :loading="seSaving" @click="saveEdit" />
+                <v-btn icon="mdi-close" size="x-small" variant="tonal" @click="cancelEdit" />
+              </template>
+              <template v-else>
+                <span class="kv-value font-weight-medium">{{ detailItem.tmdb_id || '-' }}</span>
+                <v-icon class="edit-hint" size="14">mdi-pencil</v-icon>
+              </template>
+            </div>
             <div class="kv-row" v-if="detailItem.year"><span class="kv-label">年份</span><span class="kv-value font-weight-medium">{{ detailItem.year }}</span></div>
 
             <v-divider class="my-3" />
@@ -1185,6 +1289,20 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* 详情弹窗双击编辑行 */
+.kv-row--editable {
+  align-items: center;
+  cursor: pointer;
+}
+.kv-row--editable .edit-hint {
+  flex-shrink: 0;
+  opacity: 0;
+  color: rgb(var(--v-theme-primary));
+  transition: opacity 0.15s;
+}
+.kv-row--editable:hover .edit-hint {
+  opacity: 0.8;
+}
 /* 复制ED2K按钮与旁边的meta-tag芯片对齐 */
 .meta-tag-copy-btn {
   min-height: 20px !important;
