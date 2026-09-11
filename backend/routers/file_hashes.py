@@ -13,6 +13,13 @@ from logger import log_audit
 router = APIRouter(prefix="/api/file_hashes", tags=["文件哈希"])
 
 
+def _country_str(val):
+    """origin_country 落库归一：上游可能传 list（PG 数组列）或 str，file_hashes 表为逗号字符串列"""
+    if isinstance(val, (list, tuple)):
+        return ",".join(str(x).strip() for x in val if str(x).strip()) or None
+    return val
+
+
 class FileHashResponse(BaseModel):
     id: int
     sha1: str
@@ -593,7 +600,7 @@ async def re_recognize_file_hashes(request: FixTitlesRequest):
             record.platform = final.get("platform")
             record.year = str(final.get("year")) if final.get("year") else None
             record.secondary_category = final.get("secondary_category")
-            record.origin_country = final.get("origin_country")
+            record.origin_country = _country_str(final.get("origin_country"))
             record.release_date = final.get("release_date")
 
             updated += 1

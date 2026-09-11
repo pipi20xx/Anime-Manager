@@ -230,30 +230,20 @@ class TmdbFullDB:
         from .models import UserCountryMapping, UserLanguageMapping, UserGenreMapping, UserKeywordMapping
         
         async with await TmdbFullDB.get_session() as session:
-            existing_genres = await session.execute(select(UserGenreMapping))
-            if len(existing_genres.scalars().all()) == 0:
-                for item in DEFAULT_GENRE_MAPPINGS:
-                    session.add(UserGenreMapping(**item))
-                await session.commit()
-            
-            existing_countries = await session.execute(select(UserCountryMapping))
-            if len(existing_countries.scalars().all()) == 0:
-                for item in DEFAULT_COUNTRY_MAPPINGS:
-                    session.add(UserCountryMapping(**item))
-                await session.commit()
-            
-            existing_languages = await session.execute(select(UserLanguageMapping))
-            if len(existing_languages.scalars().all()) == 0:
-                for item in DEFAULT_LANGUAGE_MAPPINGS:
-                    session.add(UserLanguageMapping(**item))
-                await session.commit()
-            
-            existing_keywords = await session.execute(select(UserKeywordMapping))
-            if len(existing_keywords.scalars().all()) == 0:
-                keyword_mappings = _load_keyword_mappings()
-                for item in keyword_mappings:
-                    session.add(UserKeywordMapping(**item))
-                await session.commit()
+            # 各默认映射表：空表时用 PG 批量插入一次性写入
+            seed_map = [
+                (UserGenreMapping, DEFAULT_GENRE_MAPPINGS),
+                (UserCountryMapping, DEFAULT_COUNTRY_MAPPINGS),
+                (UserLanguageMapping, DEFAULT_LANGUAGE_MAPPINGS),
+                (UserKeywordMapping, _load_keyword_mappings()),
+            ]
+            for model, rows in seed_map:
+                res = await session.execute(select(model.id if hasattr(model, "id") else model.code))
+                if res.scalars().first() is not None:
+                    continue
+                if rows:
+                    session.add_all([model(**item) for item in rows])
+                    await session.commit()
 
     @staticmethod
     async def get_session() -> AsyncSession:

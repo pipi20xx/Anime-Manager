@@ -37,8 +37,8 @@ class TmdbFullMatcher:
                 "title": deep.custom_title or deep.title, # [PRIORITY] 固定名优先
                 "original_title": deep.original_title,
                 "original_language": deep.original_language,
-                "origin_country": deep.origin_country.split(",") if deep.origin_country else [],
-                "genre_ids": [int(i) for i in deep.genre_ids.split(",") if i] if deep.genre_ids else [],
+                "origin_country": list(deep.origin_country or []),
+                "genre_ids": list(deep.genre_ids or []),
                 "release_date": deep.first_air_date,
                 "category": "电影" if deep.media_type == "movie" else "剧集",
                 "source": "offline_cache" # 标记来源
@@ -96,7 +96,7 @@ class TmdbFullMatcher:
             for match, g_ids, o_lang in candidates:
                 score = 0
                 # A. 动漫优先权重
-                if anime_priority and g_ids and "16" in g_ids.split(","):
+                if anime_priority and g_ids and 16 in g_ids:
                     score += 100
                     if o_lang == "ja": score += 50 # 日漫再加分
                 

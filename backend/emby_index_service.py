@@ -5,6 +5,7 @@ import logging
 from typing import List, Dict, Set, Optional, Any
 from datetime import datetime, timedelta
 from sqlmodel import select, delete
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from database import DBService
 from models import EmbyMediaIndex
@@ -172,21 +173,18 @@ async def writeback_entries(entries: List[Dict]):
 
     try:
         async with DBService().session_scope() as session:
-            for e in deduped:
-                stmt = select(EmbyMediaIndex).where(
-                    EmbyMediaIndex.tmdb_id == str(e['tmdb_id']),
-                    EmbyMediaIndex.media_type == e['media_type'],
-                    EmbyMediaIndex.emby_item_id == e['emby_item_id']
-                )
-                r = await session.execute(stmt)
-                if not r.scalars().first():
-                    session.add(EmbyMediaIndex(
-                        tmdb_id=str(e['tmdb_id']),
-                        media_type=e['media_type'],
-                        emby_item_id=e['emby_item_id'],
-                        title=e['title'],
-                        sync_at=datetime.now()
-                    ))
+            # 批量 INSERT OR IGNORE：依赖 (tmdb_id, media_type, emby_item_id) 唯一索引
+            stmt = pg_insert(EmbyMediaIndex.__table__).values([
+                {
+                    "tmdb_id": str(e['tmdb_id']),
+                    "media_type": e['media_type'],
+                    "emby_item_id": e['emby_item_id'],
+                    "title": e['title'],
+                    "sync_at": datetime.now(),
+                }
+                for e in deduped
+            ]).on_conflict_do_nothing(index_elements=["tmdb_id", "media_type", "emby_item_id"])
+            await session.execute(stmt)
             await session.commit()
             logger.info(f"回写索引: {len(deduped)} 条新记录")
     except Exception as e:
@@ -236,14 +234,16 @@ async def sync_index() -> int:
         async with DBService().session_scope() as session:
             await session.execute(delete(EmbyMediaIndex))
             now = datetime.now()
-            for item in items:
-                session.add(EmbyMediaIndex(
-                    tmdb_id=item['tmdb_id'],
-                    media_type=item['media_type'],
-                    emby_item_id=item['emby_item_id'],
-                    title=item['title'],
-                    sync_at=now
-                ))
+            await session.execute(pg_insert(EmbyMediaIndex.__table__).values([
+                {
+                    "tmdb_id": item['tmdb_id'],
+                    "media_type": item['media_type'],
+                    "emby_item_id": item['emby_item_id'],
+                    "title": item['title'],
+                    "sync_at": now,
+                }
+                for item in items
+            ]))
             await session.commit()
         _last_sync_time = datetime.now()
         _last_sync_count = len(items)

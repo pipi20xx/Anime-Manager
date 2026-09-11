@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from sqlmodel import select, delete
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from .models import TmdbDeepMeta, MediaTitleIndex, RefGenre, RefCompany, RefKeyword
 from .database import TmdbFullDB
 
@@ -60,7 +61,6 @@ class TmdbFullIngestor:
         
         orig_title = tmdb_data.get('original_title') if media_type == 'movie' else tmdb_data.get('original_name')
         countries = tmdb_data.get('origin_country') or [c.get('iso_3166_1') for c in tmdb_data.get('production_countries', [])]
-        country_str = ",".join(countries) if countries else ""
         orig_lang = tmdb_data.get('original_language', 'unknown')
         
         # [特殊判断] 如果原产地是中国大陆且原始语言是中文，优先使用原始名称（通常是简体中文）
@@ -80,12 +80,12 @@ class TmdbFullIngestor:
         last_date = tmdb_data.get('last_air_date') if media_type == 'tv' else None
         year = first_date[:4] if first_date and len(first_date) >= 4 else None
         
-        genre_ids = ",".join([str(g.get('id')) for g in tmdb_data.get('genres', [])])
-        company_ids = ",".join([str(c.get('id')) for c in tmdb_data.get('production_companies', [])])
-        
+        genre_ids = [int(g['id']) for g in tmdb_data.get('genres', []) if g.get('id')]
+        company_ids = [int(c['id']) for c in tmdb_data.get('production_companies', []) if c.get('id')]
+
         kw_raw = tmdb_data.get('keywords', {})
         kw_list = kw_raw.get('keywords') or kw_raw.get('results') or []
-        keyword_ids = ",".join([str(k.get('id')) for k in kw_list])
+        keyword_ids = [int(k['id']) for k in kw_list if k.get('id')]
         
         # 2. 标题索引脱水 (区分优先级)
         title_map = {}
@@ -110,7 +110,7 @@ class TmdbFullIngestor:
                 # A. 准备主表数据
                 deep_meta = TmdbDeepMeta(
                     tmdb_id=tmdb_id, media_type=media_type, title=main_title,
-                    original_title=orig_title, origin_country=country_str,
+                    original_title=orig_title, origin_country=list(countries or []),
                     original_language=orig_lang, 
                     first_air_date=str(first_date) if first_date else "",
                     last_air_date=str(last_date) if last_date else None, 
@@ -140,20 +140,27 @@ class TmdbFullIngestor:
                 
                 await session.merge(deep_meta)
                 
-                # B. 索引表更新 (MediaTitleIndex)
+                # B. 索引表更新 (MediaTitleIndex)：先清空再单条批量插入
                 await session.execute(delete(MediaTitleIndex).where(
                     MediaTitleIndex.tmdb_id == tmdb_id, MediaTitleIndex.media_type == media_type
                 ))
-                for t, src in title_map.items():
-                    session.add(MediaTitleIndex(title=t, year=year, tmdb_id=tmdb_id, media_type=media_type, source=src))
-                
-                # C. 参考表维护
-                for g in tmdb_data.get('genres', []): 
-                    await session.merge(RefGenre(id=g['id'], name_zh=g['name'], name_en=""))
-                for c in tmdb_data.get('production_companies', []): 
-                    await session.merge(RefCompany(id=c['id'], name=c['name'], country=c.get('origin_country', '')))
-                for k in kw_list: 
-                    await session.merge(RefKeyword(id=k['id'], name_en=k['name']))
+                if title_map:
+                    await session.execute(pg_insert(MediaTitleIndex.__table__).values([
+                        {"title": t, "year": year, "tmdb_id": tmdb_id, "media_type": media_type, "source": src}
+                        for t, src in title_map.items()
+                    ]))
+
+                # C. 参考表维护：单条批量 Upsert (ON CONFLICT DO UPDATE)
+                ref_batches = (
+                    (RefGenre, [{"id": g['id'], "name_zh": g['name'], "name_en": ""} for g in tmdb_data.get('genres', []) if g.get('id')]),
+                    (RefCompany, [{"id": c['id'], "name": c['name'], "country": c.get('origin_country', '')} for c in tmdb_data.get('production_companies', []) if c.get('id')]),
+                    (RefKeyword, [{"id": k['id'], "name_en": k['name']} for k in kw_list if k.get('id')]),
+                )
+                for model, rows in ref_batches:
+                    if not rows: continue
+                    stmt = pg_insert(model.__table__).values(rows)
+                    update_cols = {c.name: stmt.excluded[c.name] for c in model.__table__.columns if c.name != "id"}
+                    await session.execute(stmt.on_conflict_do_update(index_elements=["id"], set_=update_cols))
 
                 await session.commit()
                 logger.info(f"成功保存 {media_type}/{tmdb_id} 到数据库。")

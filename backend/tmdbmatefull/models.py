@@ -1,8 +1,8 @@
 from typing import Optional, List, Any
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Column
-from sqlalchemy import JSON
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Integer, String
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from config_manager import ConfigManager
 
 def get_metadata_schema():
@@ -26,7 +26,7 @@ class TmdbDeepMeta(SQLModel, table=True):
     custom_title: Optional[str] = Field(default=None, index=True) # [NEW] 永久固定标题
     
     original_title: Optional[str] = Field(default="")     
-    origin_country: Optional[str] = Field(default="")     
+    origin_country: Optional[List[str]] = Field(default_factory=list, sa_column=Column(ARRAY(String)))
     original_language: Optional[str] = Field(default="")  
     
     first_air_date: Optional[str] = Field(default="")     
@@ -36,9 +36,9 @@ class TmdbDeepMeta(SQLModel, table=True):
     poster_path: Optional[str] = Field(default=None)      # 海报路径
     overview: Optional[str] = Field(default=None)         # 剧情简介
     
-    genre_ids: Optional[str] = Field(default="")          
-    company_ids: Optional[str] = Field(default="")        
-    keyword_ids: Optional[str] = Field(default="")        
+    genre_ids: Optional[List[int]] = Field(default_factory=list, sa_column=Column(ARRAY(Integer)))
+    company_ids: Optional[List[int]] = Field(default_factory=list, sa_column=Column(ARRAY(Integer)))
+    keyword_ids: Optional[List[int]] = Field(default_factory=list, sa_column=Column(ARRAY(Integer)))
     
     alias_pool: List[Any] = Field(sa_column=Column(get_json_type()), default_factory=list)
     title_pool: List[Any] = Field(sa_column=Column(get_json_type()), default_factory=list)

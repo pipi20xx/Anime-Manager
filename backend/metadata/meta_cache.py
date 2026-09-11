@@ -14,6 +14,26 @@ logger = logging.getLogger("MetaCache")
 # 二级缓存：内存中的短期热数据 (Key -> (data, expire_at))
 _L1_CACHE: Dict[str, tuple] = {}
 
+def _to_int_list(val) -> List[int]:
+    """将 str/list 等各种来源的 ID 集合归一为 int 列表 (对应 PG integer[] 列)"""
+    if isinstance(val, str):
+        val = [x for x in val.split(",") if x.strip()]
+    if isinstance(val, (list, tuple)):
+        res = []
+        for x in val:
+            try: res.append(int(x))
+            except (TypeError, ValueError): pass
+        return res
+    return []
+
+def _to_str_list(val) -> List[str]:
+    """将 str/list 等各种来源的国家代码归一为 str 列表 (对应 PG text[] 列)"""
+    if isinstance(val, str):
+        return [x.strip() for x in val.split(",") if x.strip()]
+    if isinstance(val, (list, tuple)):
+        return [str(x).strip() for x in val if str(x).strip()]
+    return []
+
 class MetaCacheManager:
     """
     统一元数据管理器。
@@ -80,6 +100,11 @@ class MetaCacheManager:
                     for k, v in info.items():
                         target = field_map.get(k, k)
                         if hasattr(existing, target) and target not in ["tmdb_id", "media_type", "custom_title"]:
+                            # 数组列类型归一，防止异构来源写入失败
+                            if target in ("genre_ids", "company_ids", "keyword_ids"):
+                                v = _to_int_list(v)
+                            elif target == "origin_country":
+                                v = _to_str_list(v)
                             setattr(existing, target, v)
                     existing.full_data = info
                 
@@ -93,9 +118,9 @@ class MetaCacheManager:
                     title=fixed_title, # 存入官方名
                     custom_title=fixed_title, # 同时也存入固定名
                     original_title=info.get("original_title", ""),
-                    origin_country=",".join(info["origin_country"]) if isinstance(info.get("origin_country"), list) else info.get("origin_country", ""),
+                    origin_country=_to_str_list(info.get("origin_country")),
                     first_air_date=info.get("release_date") or info.get("first_air_date", ""),
-                    genre_ids=info.get("genre_ids", ""),
+                    genre_ids=_to_int_list(info.get("genre_ids")),
                     full_data=info,
                     is_custom=True,
                     updated_at=datetime.now()

@@ -66,8 +66,7 @@ async def task_refresh_all_metadata(
         
         if genre_ids:
             gid_list = [g.strip() for g in genre_ids.split(",") if g.strip()]
-            for gid in gid_list:
-                stmt = stmt.where(col(TmdbDeepMeta.genre_ids).contains(gid))
+            stmt = stmt.where(TmdbDeepMeta.genre_ids.contains([int(g) for g in gid_list]))
         
         items = (await session.execute(stmt)).all()
         

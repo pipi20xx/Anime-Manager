@@ -200,7 +200,7 @@ class RemoteRule(SQLModel, table=True):
     __tablename__ = "remote_rules"
     id: Optional[int] = Field(default=None, primary_key=True)
     category: str = Field(index=True) # noise, groups, render
-    content: List[str] = Field(sa_column=Column(JSON))
+    content: List[str] = Field(sa_column=Column(JSONB))
     updated_at: datetime = Field(default_factory=datetime.now)
 
 class SubscriptionTemplate(SQLModel, table=True):

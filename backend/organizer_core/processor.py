@@ -16,6 +16,12 @@ from utils.hash_calculator import HashCalculator, HashResult
 
 logger = logging.getLogger(__name__)
 
+def _country_str(val):
+    """origin_country 落库归一：上游可能传 list（PG 数组列）或 str，file_hashes 表为逗号字符串列"""
+    if isinstance(val, (list, tuple)):
+        return ",".join(str(x).strip() for x in val if str(x).strip()) or None
+    return val
+
 class FileProcessor:
     SUB_EXTS = ['.ass', '.srt', '.ssa', '.sub', '.idx', '.vtt']
     AUDIO_EXTS = ['.mka', '.aac', '.ac3', '.dts', '.flac', '.mp3', '.ogg', '.opus', '.wav']
@@ -107,7 +113,7 @@ class FileProcessor:
                     existing.platform = final.get("platform")
                     existing.year = final.get("year")
                     existing.secondary_category = final.get("secondary_category")
-                    existing.origin_country = final.get("origin_country")
+                    existing.origin_country = _country_str(final.get("origin_country"))
                     existing.release_date = final.get("release_date")
 
                     existing.source_path = related_path
@@ -136,7 +142,7 @@ class FileProcessor:
                         platform=final.get("platform"),
                         year=final.get("year"),
                         secondary_category=final.get("secondary_category"),
-                        origin_country=final.get("origin_country"),
+                        origin_country=_country_str(final.get("origin_country")),
                         release_date=final.get("release_date"),
 
                         source_path=related_path,
@@ -454,7 +460,7 @@ class FileProcessor:
                                 existing.platform = final.get("platform")
                                 existing.year = final.get("year")
                                 existing.secondary_category = final.get("secondary_category")
-                                existing.origin_country = final.get("origin_country")
+                                existing.origin_country = _country_str(final.get("origin_country"))
                                 existing.release_date = final.get("release_date")
 
                                 existing.source_path = v_path
@@ -484,7 +490,7 @@ class FileProcessor:
                                     platform=final.get("platform"),
                                     year=final.get("year"),
                                     secondary_category=final.get("secondary_category"),
-                                    origin_country=final.get("origin_country"),
+                                    origin_country=_country_str(final.get("origin_country")),
                                     release_date=final.get("release_date"),
                                     source_path=v_path,
                                     target_path=None
@@ -668,7 +674,7 @@ class FileProcessor:
                                     existing.platform = final.get("platform")
                                     existing.year = final.get("year")
                                     existing.secondary_category = final.get("secondary_category")
-                                    existing.origin_country = final.get("origin_country")
+                                    existing.origin_country = _country_str(final.get("origin_country"))
                                     existing.release_date = final.get("release_date")
                                     existing.source_path = v_path
                                     existing.target_path = new_abs_path
@@ -696,7 +702,7 @@ class FileProcessor:
                                         platform=final.get("platform"),
                                         year=final.get("year"),
                                         secondary_category=final.get("secondary_category"),
-                                        origin_country=final.get("origin_country"),
+                                        origin_country=_country_str(final.get("origin_country")),
                                         release_date=final.get("release_date"),
 
                                         source_path=v_path,
@@ -799,7 +805,7 @@ class FileProcessor:
                                 existing.platform = final.get("platform")
                                 existing.year = final.get("year")
                                 existing.secondary_category = final.get("secondary_category")
-                                existing.origin_country = final.get("origin_country")
+                                existing.origin_country = _country_str(final.get("origin_country"))
                                 existing.release_date = final.get("release_date")
 
                                 existing.source_path = v_path
@@ -828,7 +834,7 @@ class FileProcessor:
                                     platform=final.get("platform"),
                                     year=final.get("year"),
                                     secondary_category=final.get("secondary_category"),
-                                    origin_country=final.get("origin_country"),
+                                    origin_country=_country_str(final.get("origin_country")),
                                     release_date=final.get("release_date"),
                                     source_path=v_path,
                                     target_path=new_abs_path

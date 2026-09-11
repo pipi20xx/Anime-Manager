@@ -33,30 +33,18 @@ class TmdbFullBrowser:
                 # 2. 构建主表查询
                 stmt = select(TmdbDeepMeta)
                 if search:
-                    # 针对 PGSQL 优化的 ilike
-                    from config_manager import ConfigManager
-                    is_pg = ConfigManager.get_config().get("database", {}).get("type") == "postgresql"
+                    term = f"%{search}%"
+                    conditions = [
+                        TmdbDeepMeta.title.ilike(term),
+                        TmdbDeepMeta.original_title.ilike(term),
+                        TmdbDeepMeta.custom_title.ilike(term),
+                        TmdbDeepMeta.tmdb_id.ilike(term),
+                        TmdbDeepMeta.original_language.ilike(term)
+                    ]
                     
-                    if is_pg:
-                        term = f"%{search}%"
-                        conditions = [
-                            TmdbDeepMeta.title.ilike(term),
-                            TmdbDeepMeta.original_title.ilike(term),
-                            TmdbDeepMeta.custom_title.ilike(term),
-                            TmdbDeepMeta.tmdb_id.like(term),
-                            TmdbDeepMeta.original_language.ilike(term)
-                        ]
-                    else:
-                        conditions = [
-                            col(TmdbDeepMeta.title).contains(search),
-                            col(TmdbDeepMeta.original_title).contains(search),
-                            col(TmdbDeepMeta.custom_title).contains(search),
-                            col(TmdbDeepMeta.tmdb_id).contains(search)
-                        ]
-                    
-                    for gid in matching_ids["genres"]: conditions.append(col(TmdbDeepMeta.genre_ids).contains(str(gid)))
-                    for cid in matching_ids["companies"]: conditions.append(col(TmdbDeepMeta.company_ids).contains(str(cid)))
-                    for kid in matching_ids["keywords"]: conditions.append(col(TmdbDeepMeta.keyword_ids).contains(str(kid)))
+                    for gid in matching_ids["genres"]: conditions.append(TmdbDeepMeta.genre_ids.contains([int(gid)]))
+                    for cid in matching_ids["companies"]: conditions.append(TmdbDeepMeta.company_ids.contains([int(cid)]))
+                    for kid in matching_ids["keywords"]: conditions.append(TmdbDeepMeta.keyword_ids.contains([int(kid)]))
                     stmt = stmt.where(or_(*conditions))
 
                 # 3. 计算总数
@@ -98,8 +86,8 @@ class TmdbFullBrowser:
             # 5. 导出已有国家
             country_res = await session.execute(select(TmdbDeepMeta.origin_country))
             countries_all = set()
-            for c_str in country_res.scalars().all():
-                if c_str: countries_all.update(str(c_str).split(","))
+            for c_list in country_res.scalars().all():
+                if c_list: countries_all.update(c_list)
             countries = sorted(list(countries_all))
 
             return {
@@ -116,9 +104,9 @@ class TmdbFullBrowser:
         """内部方法：将记录中的 ID 集合转换为名称列表"""
         all_g = set(); all_c = set(); all_k = set()
         for r in records:
-            if r.genre_ids: all_g.update(str(r.genre_ids).split(","))
-            if r.company_ids: all_c.update(str(r.company_ids).split(","))
-            if r.keyword_ids: all_k.update(str(r.keyword_ids).split(","))
+            if r.genre_ids: all_g.update(str(i) for i in r.genre_ids)
+            if r.company_ids: all_c.update(str(i) for i in r.company_ids)
+            if r.keyword_ids: all_k.update(str(i) for i in r.keyword_ids)
 
         g_map = {}; c_map = {}; k_map = {}
         if all_g:
@@ -137,9 +125,9 @@ class TmdbFullBrowser:
             item = r.model_dump()
             item["id"] = r.tmdb_id
             # 解析 ID 到名称
-            item["genres"] = [g_map.get(str(i), str(i)) for i in str(r.genre_ids).split(",") if i]
-            item["companies"] = [c_map.get(str(i), str(i)) for i in str(r.company_ids).split(",") if i]
-            item["keywords"] = [k_map.get(str(i), str(i)) for i in str(r.keyword_ids).split(",") if i]
+            item["genres"] = [g_map.get(str(i), str(i)) for i in (r.genre_ids or [])]
+            item["companies"] = [c_map.get(str(i), str(i)) for i in (r.company_ids or [])]
+            item["keywords"] = [k_map.get(str(i), str(i)) for i in (r.keyword_ids or [])]
             
             # 合并锁定标题逻辑
             if r.custom_title:

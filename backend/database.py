@@ -266,6 +266,36 @@ async def init_db():
     except Exception as e:
         print(f"[AutoMigrate] file_hashes.file_size 类型迁移跳过: {e}")
 
+    # [类型迁移] 纯 PG 原生化：逗号字符串列 -> 原生数组/JSONB 列
+    # 通过 udt_name 判断目标类型，已迁移则跳过（避免每次启动重写大表）
+    async def migrate_column_types():
+        # (schema, table, column, 目标类型, USING 表达式, 迁移完成后的 udt_name)
+        targets = [
+            ("metadata", "tmdb_deep_meta", "genre_ids", "integer[]", "string_to_array(NULLIF(genre_ids,''), ',')::int[]", "_int4"),
+            ("metadata", "tmdb_deep_meta", "company_ids", "integer[]", "string_to_array(NULLIF(company_ids,''), ',')::int[]", "_int4"),
+            ("metadata", "tmdb_deep_meta", "keyword_ids", "integer[]", "string_to_array(NULLIF(keyword_ids,''), ',')::int[]", "_int4"),
+            ("metadata", "tmdb_deep_meta", "origin_country", "text[]", "string_to_array(NULLIF(origin_country,''), ',')::text[]", "_text"),
+            ("public", "remote_rules", "content", "jsonb", "content::jsonb", "jsonb"),
+        ]
+        for schema, table, column, target_type, using_expr, done_udt in targets:
+            try:
+                async with engine.connect() as check_conn:
+                    res = await check_conn.execute(text(
+                        "SELECT udt_name FROM information_schema.columns "
+                        "WHERE table_schema = :s AND table_name = :t AND column_name = :c"
+                    ), {"s": schema, "t": table, "c": column})
+                    udt = res.scalar()
+                if udt is None or udt == done_udt:
+                    continue  # 新库由建表直接生成目标类型，或已迁移
+                sql = f'ALTER TABLE "{schema}"."{table}" ALTER COLUMN "{column}" TYPE {target_type} USING {using_expr};'
+                async with engine.begin() as alter_conn:
+                    await alter_conn.execute(text(sql))
+                print(f"[AutoMigrate] {schema}.{table}.{column} 已迁移为 {target_type}")
+            except Exception as e:
+                print(f"[AutoMigrate] {schema}.{table}.{column} 类型迁移跳过: {e}")
+
+    await migrate_column_types()
+
     async with engine.begin() as conn:
 
         # 4. 清理已废弃的表
@@ -278,7 +308,31 @@ async def init_db():
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_subs_title_trgm ON public.subscriptions USING gin (title gin_trgm_ops);"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_title_trgm ON metadata.tmdb_deep_meta USING gin (title gin_trgm_ops);"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_orig_title_trgm ON metadata.tmdb_deep_meta USING gin (original_title gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_custom_title_trgm ON metadata.tmdb_deep_meta USING gin (custom_title gin_trgm_ops);"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_full_data_gin ON metadata.tmdb_deep_meta USING GIN (full_data);"))
+
+        # [性能增强] ID 数组列 GIN 索引，加速 @> 包含查询 (需在类型迁移为原生数组后执行)
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_genre_gin ON metadata.tmdb_deep_meta USING gin (genre_ids);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_company_gin ON metadata.tmdb_deep_meta USING gin (company_ids);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_tmdb_meta_keyword_gin ON metadata.tmdb_deep_meta USING gin (keyword_ids);"))
+
+        # [性能增强] 文件哈希表多字段模糊搜索 (routers/file_hashes.py 的 ILIKE 查询)
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_file_hash_filename_trgm ON public.file_hashes USING gin (original_filename gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_file_hash_title_trgm ON public.file_hashes USING gin (title gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_file_hash_ed2k_trgm ON public.file_hashes USING gin (ed2k gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_file_hash_sha1_trgm ON public.file_hashes USING gin (sha1 gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_file_hash_source_path_trgm ON public.file_hashes USING gin (source_path gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_file_hash_target_path_trgm ON public.file_hashes USING gin (target_path gin_trgm_ops);"))
+
+        # [性能增强] RSS 条目标题模糊搜索
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_feed_items_title_trgm ON public.feed_items USING gin (title gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_feed_items_tmdb_title_trgm ON public.feed_items USING gin (tmdb_title gin_trgm_ops);"))
+
+        # [性能增强] 元数据参考字典表名称搜索
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ref_genre_zh_trgm ON metadata.ref_genres USING gin (name_zh gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ref_genre_en_trgm ON metadata.ref_genres USING gin (name_en gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ref_company_name_trgm ON metadata.ref_companies USING gin (name gin_trgm_ops);"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ref_keyword_name_trgm ON metadata.ref_keywords USING gin (name_en gin_trgm_ops);"))
         
         # [BangumiDataItem] raw_data JSONB 字段建立 GIN 索引以加速 JSON 查询
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_bangumi_data_item_raw_data_gin ON public.bangumi_data_item USING GIN (raw_data);"))
@@ -320,6 +374,8 @@ async def init_db():
         # 6. 特殊索引 (唯一约束等)
         # 为 FeedItem 增加唯一索引以支持批量 Upsert
         await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_feed_items_guid ON public.feed_items (guid);"))
+        # 为 Emby 索引表增加唯一索引以支持批量回写 (INSERT OR IGNORE)
+        await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_emby_media_index_item ON public.emby_media_index (tmdb_id, media_type, emby_item_id);"))
         
     from logger import log_audit
     log_audit("数据库", "初始化", "PostgreSQL 数据库已连接并初始化 (含自动迁移检查)")
