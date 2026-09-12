@@ -4,10 +4,11 @@
  *
  * 功能: 添加、编辑、删除、测试下载客户端
  */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { PasswordInput } from '@/components/common'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 defineOptions({ name: 'ClientManageTab' })
 
@@ -56,6 +57,22 @@ async function fetchClients() {
   } finally {
     loading.value = false
   }
+}
+
+// ---------- 目录浏览选择 ----------
+const showFolderBrowser = ref(false)
+const browsingField = ref<'default_save_path' | 'mount_path'>('default_save_path')
+const browsingVia = computed(() =>
+  browsingField.value === 'mount_path' ? 'local' : (form.type === 'cd2' ? 'cd2' : 'local')
+)
+
+const openFolderBrowser = (field: 'default_save_path' | 'mount_path') => {
+  browsingField.value = field
+  showFolderBrowser.value = true
+}
+
+const onFolderSelected = (path: string) => {
+  form[browsingField.value] = path
 }
 
 function openAddClient() {
@@ -285,12 +302,14 @@ onMounted(() => {
 
           <v-text-field
             v-model="form.default_save_path"
-            label="默认下载路径 (选填)"
+            :label="form.type === 'cd2' ? '默认下载路径 (选填，CD2 云盘路径)' : '默认下载路径 (选填)'"
             variant="outlined"
             density="compact"
             class="mb-3"
             hide-details
-            placeholder="留空则使用下载器全局设置"
+            :placeholder="form.type === 'cd2' ? '/115open/downloads' : '留空则使用下载器全局设置'"
+            append-inner-icon="mdi-folder-open-outline"
+            @click:append-inner="openFolderBrowser('default_save_path')"
           />
 
           <v-text-field
@@ -302,6 +321,8 @@ onMounted(() => {
             class="mb-3"
             hide-details
             placeholder="例如: /NVME/docker2/clouddrive2-19798/medata/CloudDrive"
+            append-inner-icon="mdi-folder-open-outline"
+            @click:append-inner="openFolderBrowser('mount_path')"
           />
 
           <div v-if="form.type === 'cd2'" class="switch-row-lg">
@@ -354,6 +375,14 @@ onMounted(() => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 目录浏览选择 -->
+    <FolderBrowserModal
+      v-model="showFolderBrowser"
+      :via="browsingVia"
+      :title="browsingField === 'mount_path' ? '选择 CD2 本地挂载点' : (form.type === 'cd2' ? '选择 CD2 云盘下载目录' : '选择默认下载目录')"
+      @select="onFolderSelected"
+    />
   </div>
 </template>
 

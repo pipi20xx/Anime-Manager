@@ -10,6 +10,12 @@ import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { FieldConditionSelect } from '@/components/common'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
+
+// ---------- 下载目录浏览选择 ----------
+const showFolderBrowser = ref(false)
+const openFolderBrowser = () => { showFolderBrowser.value = true }
+const onFolderSelected = (path: string) => { editModel.save_path = path }
 
 // 匹配字段: key 为 editModel 上的 filter_* 属性, field 为规范值选项字段名
 const filterFields = [
@@ -217,7 +223,17 @@ async function setDefault(row: any) {
 
           <div class="text-subtitle-2 font-weight-medium mb-2">下载设置</div>
           <v-row density="compact">
-            <v-col cols="12"><v-text-field v-model="editModel.save_path" label="下载目录" placeholder="留空则使用客户端默认路径" variant="outlined" density="compact" /></v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="editModel.save_path"
+                label="下载目录"
+                placeholder="留空则使用客户端默认路径"
+                variant="outlined"
+                density="compact"
+                append-inner-icon="mdi-folder-open-outline"
+                @click:append-inner="openFolderBrowser"
+              />
+            </v-col>
             <v-col cols="6">
               <v-select v-model="editModel.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" />
             </v-col>
@@ -239,4 +255,12 @@ async function setDefault(row: any) {
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 下载目录浏览选择 -->
+  <FolderBrowserModal
+    v-model="showFolderBrowser"
+    via="local"
+    title="选择下载目录"
+    @select="onFolderSelected"
+  />
 </template>

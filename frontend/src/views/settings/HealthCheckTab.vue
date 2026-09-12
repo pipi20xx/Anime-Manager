@@ -7,11 +7,17 @@
 import { ref, reactive, onMounted } from 'vue'
 import { healthApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 defineOptions({ name: 'HealthCheckTab' })
 
 const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
+
+// ---------- 文件路径浏览选择（file 模式） ----------
+const showFileBrowser = ref(false)
+const openFileBrowser = () => { showFileBrowser.value = true }
+const onFileSelected = (path: string) => { editingConfig.file_path = path }
 
 const configs = ref<any[]>([])
 const loading = ref(false)
@@ -286,6 +292,8 @@ onMounted(() => {
             class="mb-3"
             hide-details
             placeholder="容器内的文件路径，例如: /mnt/aliyun/check.txt"
+            append-inner-icon="mdi-file-outline"
+            @click:append-inner="openFileBrowser"
           />
           <v-text-field
             v-model="editingConfig.file_url"
@@ -309,5 +317,14 @@ onMounted(() => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 检测文件路径浏览选择（文件模式） -->
+    <FolderBrowserModal
+      v-model="showFileBrowser"
+      via="local"
+      mode="file"
+      title="选择检测文件"
+      @select="onFileSelected"
+    />
   </div>
 </template>

@@ -11,6 +11,12 @@ import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { FieldConditionSelect } from '@/components/common'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
+
+// ---------- 下载目录浏览选择 ----------
+const showFolderBrowser = ref(false)
+const openFolderBrowser = () => { showFolderBrowser.value = true }
+const onFolderSelected = (path: string) => { form.save_path = path }
 
 // 匹配字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
 const filterFields = [
@@ -409,7 +415,17 @@ function formatDateTime(dateStr: string | null): string {
                 placeholder="默认客户端"
               />
             </v-col>
-            <v-col cols="6"><v-text-field v-model="form.save_path" label="下载目录" variant="outlined" density="compact" placeholder="留空则使用客户端默认路径" /></v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.save_path"
+                label="下载目录"
+                variant="outlined"
+                density="compact"
+                placeholder="留空则使用客户端默认路径"
+                append-inner-icon="mdi-folder-open-outline"
+                @click:append-inner="openFolderBrowser"
+              />
+            </v-col>
             <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
             <v-col cols="6"><v-text-field v-model="form.interval_minutes" label="执行间隔（分钟）" type="number" variant="outlined" density="compact" /></v-col>
             <v-col cols="12"><v-text-field v-model="form.include_keywords" label="必须包含" variant="outlined" density="compact" placeholder="包含这些关键词才下载" /></v-col>
@@ -514,6 +530,14 @@ function formatDateTime(dateStr: string | null): string {
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 下载目录浏览选择 -->
+  <FolderBrowserModal
+    v-model="showFolderBrowser"
+    via="local"
+    title="选择下载目录"
+    @select="onFolderSelected"
+  />
 </template>
 
 <!-- scoped 样式已迁移至 global.css .config-row -->

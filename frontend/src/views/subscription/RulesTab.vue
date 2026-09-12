@@ -12,8 +12,14 @@ import { ref, onMounted } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import DownloadHistoryModal from './DownloadHistoryModal.vue'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 defineOptions({ name: 'RulesTab' })
+
+// ---------- 保存路径浏览选择 ----------
+const showFolderBrowser = ref(false)
+const openFolderBrowser = () => { showFolderBrowser.value = true }
+const onFolderSelected = (path: string) => { ruleForm.value.save_path = path }
 
 const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
@@ -249,7 +255,15 @@ defineExpose({ fetchRules })
           <v-text-field v-model="ruleForm.must_not_contain" label="排除关键词" placeholder="用 | 分隔" variant="outlined" density="compact" class="mb-3" />
           <v-select v-model="ruleSelectedFeedIds" label="作用范围 (留空则监控所有源)" :items="feeds.map(f => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" class="mb-3" />
           <v-select v-model="ruleForm.target_client_id" label="指定下载器" :items="clients.map(c => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" class="mb-3" />
-          <v-text-field v-model="ruleForm.save_path" label="保存路径" variant="outlined" density="compact" class="mb-3" />
+          <v-text-field
+            v-model="ruleForm.save_path"
+            label="保存路径"
+            variant="outlined"
+            density="compact"
+            class="mb-3"
+            append-inner-icon="mdi-folder-open-outline"
+            @click:append-inner="openFolderBrowser"
+          />
           <v-row density="compact">
             <v-col cols="6"><v-text-field v-model="ruleForm.category" label="分类" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="ruleForm.tags" label="标签" variant="outlined" density="compact" /></v-col>
@@ -296,6 +310,14 @@ defineExpose({ fetchRules })
 
     <!-- 下载记录弹窗 -->
     <DownloadHistoryModal v-model:show="showHistoryModal" :feeds="feeds" />
+
+    <!-- 保存路径浏览选择 -->
+    <FolderBrowserModal
+      v-model="showFolderBrowser"
+      via="local"
+      title="选择保存路径"
+      @select="onFolderSelected"
+    />
   </div>
 </template>
 

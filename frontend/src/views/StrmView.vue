@@ -12,11 +12,28 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { strmApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 defineOptions({ name: 'StrmView' })
 
 const { success, error: showError, info } = useNotification()
 const { confirm } = useConfirm()
+
+// ---------- 目录浏览选择（STRM 任务源/目标目录） ----------
+const showFolderBrowser = ref(false)
+const browsingField = ref<'source_path' | 'target_path'>('source_path')
+const browsingVia = ref<'local' | 'cd2'>('local')
+
+const openFolderBrowser = (field: 'source_path' | 'target_path') => {
+  browsingField.value = field
+  // CD2 联动任务的源目录是 CD2 挂载视图下的本地路径，统一按本地浏览
+  browsingVia.value = 'local'
+  showFolderBrowser.value = true
+}
+
+const onFolderSelected = (path: string) => {
+  taskForm[browsingField.value] = path
+}
 
 const tasks = ref<any[]>([])
 const loading = ref(false)
@@ -485,10 +502,24 @@ onMounted(() => {
                   <v-text-field v-model="taskForm.tree_file_path" label="目录树文件路径" density="compact" placeholder="例如: /root/tree.txt" />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="taskForm.source_path" label="源目录" density="compact" placeholder="待扫描的本地媒体文件夹" />
+                  <v-text-field
+                    v-model="taskForm.source_path"
+                    label="源目录"
+                    density="compact"
+                    placeholder="待扫描的本地媒体文件夹"
+                    append-inner-icon="mdi-folder-open-outline"
+                    @click:append-inner="openFolderBrowser('source_path')"
+                  />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="taskForm.target_path" label="目标目录" density="compact" placeholder="STRM 文件存放位置" />
+                  <v-text-field
+                    v-model="taskForm.target_path"
+                    label="目标目录"
+                    density="compact"
+                    placeholder="STRM 文件存放位置"
+                    append-inner-icon="mdi-folder-open-outline"
+                    @click:append-inner="openFolderBrowser('target_path')"
+                  />
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="taskForm.content_prefix" label="链接前缀" density="compact" placeholder="http://ip:port/..." />
@@ -647,6 +678,14 @@ onMounted(() => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 目录浏览选择 -->
+    <FolderBrowserModal
+      v-model="showFolderBrowser"
+      :via="browsingVia"
+      :title="browsingField === 'source_path' ? '选择源目录' : '选择目标目录'"
+      @select="onFolderSelected"
+    />
   </v-container>
 </template>
 

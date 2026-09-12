@@ -5,6 +5,7 @@
  * 分 Tab 表单: 核心配置 / 自动化 / 过滤规则 / 高级选项
  */
 import { ref, computed, watch } from 'vue'
+import FolderBrowserModal from './FolderBrowserModal.vue'
 
 defineOptions({ name: 'TaskEditModal' })
 
@@ -48,6 +49,22 @@ watch(
     }
   }
 )
+
+// ---------- 目录浏览选择 ----------
+const showFolderBrowser = ref(false)
+const browsingField = ref<'source_dir' | 'target_dir'>('source_dir')
+const browsingVia = computed(() =>
+  browsingField.value === 'source_dir' ? props.taskForm.source_via : props.taskForm.target_via
+)
+
+const openFolderBrowser = (field: 'source_dir' | 'target_dir') => {
+  browsingField.value = field
+  showFolderBrowser.value = true
+}
+
+const onFolderSelected = (path: string) => {
+  props.taskForm[browsingField.value] = path
+}
 </script>
 
 <template>
@@ -106,6 +123,8 @@ watch(
               variant="outlined"
               density="compact"
               class="mb-1"
+              append-inner-icon="mdi-folder-open-outline"
+              @click:append-inner="openFolderBrowser('source_dir')"
             />
             <v-alert
               v-if="taskForm.source_via === 'cd2'"
@@ -128,6 +147,8 @@ watch(
               variant="outlined"
               density="compact"
               class="mb-1"
+              append-inner-icon="mdi-folder-open-outline"
+              @click:append-inner="openFolderBrowser('target_dir')"
             />
             <v-alert
               v-if="taskForm.target_via === 'cd2'"
@@ -348,4 +369,12 @@ watch(
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 目录浏览选择 -->
+  <FolderBrowserModal
+    v-model="showFolderBrowser"
+    :via="browsingVia"
+    :title="browsingField === 'source_dir' ? '选择源目录' : '选择目标目录'"
+    @select="onFolderSelected"
+  />
 </template>

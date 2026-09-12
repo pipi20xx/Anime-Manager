@@ -8,6 +8,12 @@ import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, tmdbApi, bangumiApi, clientsApi } from '@/api'
 import { useNotification } from '@/composables'
 import { FieldConditionSelect } from '@/components/common'
+import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
+
+// ---------- 下载目录浏览选择 ----------
+const showFolderBrowser = ref(false)
+const openFolderBrowser = () => { showFolderBrowser.value = true }
+const onFolderSelected = (path: string) => { form.save_path = path }
 
 // 匹配字段: key 为 form 上的 filter_* 属性, field 为规范值选项字段名
 const filterFields = [
@@ -268,7 +274,16 @@ function handleSave() {
         <v-row density="compact" class="mt-2">
           <v-col cols="6"><v-text-field v-model="form.include_keywords" label="必须包含" variant="outlined" density="compact" /></v-col>
           <v-col cols="6"><v-text-field v-model="form.exclude_keywords" label="排除关键词" variant="outlined" density="compact" /></v-col>
-          <v-col cols="6"><v-text-field v-model="form.save_path" label="下载目录" variant="outlined" density="compact" /></v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="form.save_path"
+              label="下载目录"
+              variant="outlined"
+              density="compact"
+              append-inner-icon="mdi-folder-open-outline"
+              @click:append-inner="openFolderBrowser"
+            />
+          </v-col>
           <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" /></v-col>
         </v-row>
 
@@ -307,6 +322,14 @@ function handleSave() {
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 下载目录浏览选择 -->
+  <FolderBrowserModal
+    v-model="showFolderBrowser"
+    via="local"
+    title="选择下载目录"
+    @select="onFolderSelected"
+  />
 </template>
 
 
