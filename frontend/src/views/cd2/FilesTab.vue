@@ -493,7 +493,7 @@ onMounted(() => loadEntries())
         <v-list-item
           v-for="entry in entries"
           :key="entry.path"
-          class="px-2"
+          class="file-list-item"
           @click="entry.is_dir && navigate(entry.path)"
           @contextmenu.prevent="openMenu($event, entry)"
         >
@@ -850,5 +850,13 @@ onMounted(() => loadEntries())
   overflow: hidden;
   word-break: break-all;
   line-height: 1.4;
+}
+
+/* 与原文件浏览一致：去掉 prepend 后的占位 spacer，固定图标与文字间距 */
+.file-list-item :deep(.v-list-item__spacer) {
+  display: none !important;
+}
+.file-list-item :deep(.v-list-item__prepend) {
+  margin-inline-end: 8px !important;
 }
 </style>

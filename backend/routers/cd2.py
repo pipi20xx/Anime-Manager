@@ -155,6 +155,16 @@ async def get_monitor_status():
         for path, info in cache.items()
     ]
 
+    # 实时传输任务（上传/下载完整信息；失败或未配置时不影响联动监控状态展示）
+    transfers = {"uploads": [], "downloads": [], "upload_speed": 0.0, "download_speed": 0.0}
+    try:
+        client = _get_cd2_client()
+        transfers = await asyncio.to_thread(client._server_info.transfers)
+    except HTTPException:
+        pass
+    except Exception as e:
+        logger.warning(f"获取实时传输任务失败: {e}")
+
     return {
         "configured": cd2_conf is not None,
         "enabled": bool(monitor_enabled) and cd2_conf is not None,
@@ -162,6 +172,7 @@ async def get_monitor_status():
         "interval": cd2_conf.get("monitor_interval", 5) if cd2_conf else 5,
         "watching_count": len(watching),
         "watching": watching,
+        "transfers": transfers,
     }
 
 

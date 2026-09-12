@@ -58,6 +58,18 @@ const operatorTypeText = (type: number) => {
   }
 }
 
+const formatSize = (bytes: number) => {
+  if (!bytes || bytes < 1) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  let v = bytes
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024
+    i++
+  }
+  return `${v.toFixed(i === 0 ? 0 : 1)} ${units[i]}`
+}
+
 const loadStatus = async () => {
   loading.value = true
   try {
@@ -134,6 +146,98 @@ onMounted(() => {
         </v-chip>
         <v-spacer />
         <span class="text-caption text-medium-emphasis">运行时长: {{ formatUptime(server.running?.uptime_sec || 0) }}</span>
+      </div>
+    </v-card-text>
+  </v-card>
+
+  <!-- 实时传输任务 -->
+  <v-card class="glass-card mb-4">
+    <v-card-title class="d-flex align-center">
+      <v-icon class="mr-2">mdi-chart-line</v-icon>
+      实时传输任务
+      <v-spacer />
+      <v-btn
+        icon="mdi-refresh"
+        size="small"
+        variant="text"
+        :loading="loading"
+        title="刷新"
+        @click="loadStatus"
+      />
+    </v-card-title>
+    <v-divider />
+    <v-card-text>
+      <div v-if="status.transfers?.upload_error || status.transfers?.download_error" class="mb-2">
+        <v-alert type="warning" variant="tonal" density="compact">
+          {{ status.transfers?.upload_error || status.transfers?.download_error }}
+        </v-alert>
+      </div>
+
+      <!-- 上传 / 复制 / 远程上传 -->
+      <div class="text-subtitle-2 mb-1">
+        上传类
+        <v-chip size="x-small" variant="tonal" color="success" class="ml-2">
+          ↑ {{ formatSpeed(status.transfers?.upload_speed || 0) }}
+        </v-chip>
+      </div>
+      <div v-if="!status.transfers?.uploads?.length" class="text-caption text-medium-emphasis mb-2">
+        暂无上传类任务
+      </div>
+      <div v-else>
+        <div v-for="task in status.transfers.uploads" :key="task.key" class="py-1">
+          <div class="d-flex align-center gap-2">
+            <v-chip size="x-small" variant="tonal">{{ task.operator }}</v-chip>
+            <span class="text-body-2 text-truncate" style="max-width: 45%">{{ task.name || task.path }}</span>
+            <v-chip
+              size="x-small"
+              variant="tonal"
+              :color="[5, 6].includes(task.status_enum) ? 'success' : [9, 10].includes(task.status_enum) ? 'error' : [2, 4].includes(task.status_enum) ? 'grey' : 'primary'"
+            >
+              {{ task.status }}
+            </v-chip>
+            <v-spacer />
+            <span class="text-caption text-medium-emphasis">{{ formatSize(task.transfered) }} / {{ formatSize(task.size) }}</span>
+          </div>
+          <v-progress-linear
+            :model-value="task.progress"
+            height="5"
+            rounded
+            :color="[5, 6].includes(task.status_enum) ? 'success' : [9, 10].includes(task.status_enum) ? 'error' : 'primary'"
+            class="mt-1"
+          />
+        </div>
+      </div>
+
+      <v-divider class="my-3" />
+
+      <!-- 下载 -->
+      <div class="text-subtitle-2 mb-1">
+        下载
+        <v-chip size="x-small" variant="tonal" color="primary" class="ml-2">
+          ↓ {{ formatSpeed(status.transfers?.download_speed || 0) }}
+        </v-chip>
+      </div>
+      <div v-if="!status.transfers?.downloads?.length" class="text-caption text-medium-emphasis">
+        暂无下载任务
+      </div>
+      <div v-else>
+        <div v-for="task in status.transfers.downloads" :key="task.path" class="py-1">
+          <div class="d-flex align-center gap-2">
+            <v-chip size="x-small" variant="tonal" color="primary">{{ task.threads }} 线程</v-chip>
+            <span class="text-body-2 text-truncate" style="max-width: 45%">{{ task.name || task.path }}</span>
+            <v-spacer />
+            <span class="text-caption text-medium-emphasis">
+              {{ formatSize(task.buffered) }} / {{ formatSize(task.length) }} · {{ formatSpeed(task.speed) }}
+            </span>
+          </div>
+          <v-progress-linear
+            :model-value="task.progress"
+            height="5"
+            rounded
+            color="primary"
+            class="mt-1"
+          />
+        </div>
       </div>
     </v-card-text>
   </v-card>
