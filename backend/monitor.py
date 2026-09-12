@@ -1271,11 +1271,16 @@ class MonitorManager:
                     skip_stability_check = True
                 
                 if not skip_stability_check:
-                    is_stable = await StabilityChecker.wait_for_stability(file_path)
-                    if not is_stable:
-                        logger.debug(f"[实时监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
-                        queue.task_done()
-                        continue
+                    # CD2 gRPC 模式：文件是云路径，本地无法校验稳定性；
+                    # STRM 生成只写文本文件，不需要读取媒体内容
+                    if is_strm and current_task.get("sync_mode") == "cd2_api":
+                        skip_stability_check = True
+                    else:
+                        is_stable = await StabilityChecker.wait_for_stability(file_path)
+                        if not is_stable:
+                            logger.debug(f"[实时监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
+                            queue.task_done()
+                            continue
 
                 should_rate_limit = True
                 mon_task_id = batch_task_id

@@ -56,17 +56,33 @@ class CD2SyncManager:
             cd2_internal_path = source_root[len(mapping_root):]
             if not cd2_internal_path.startswith('/'):
                 cd2_internal_path = '/' + cd2_internal_path
-        
+
         cd2_internal_path = cd2_internal_path.replace('//', '/')
 
-        # 2. 登录并扫描云端 (CD2)
+        # 2. 解析 CD2 客户端配置：任务未携带 cd2_config 时自动从 download_clients 解析
+        if not cd2_conf:
+            try:
+                from config_manager import ConfigManager
+                _cfg = ConfigManager.get_config()
+                cd2_conf = next((c for c in _cfg.get("download_clients", []) if c.get("type") == "cd2"), None)
+            except Exception as e:
+                logger.warning(f"[STRM] 解析 CD2 客户端配置失败: {e}")
+        if not cd2_conf:
+            yield json.dumps({"type": "error", "message": "未找到已配置的 CD2 客户端，请先在系统设置中添加"}) + "\n"
+            return
+
         client_config = {
             "name": "STRM_Indexer",
-            "url": cd2_conf.get("host", ""),
-            "username": cd2_conf.get("user", ""),
-            "password": cd2_conf.get("pass", ""),
+            "url": cd2_conf.get("url", cd2_conf.get("host", "")),
+            "username": cd2_conf.get("username", cd2_conf.get("user", "")),
+            "password": cd2_conf.get("password", cd2_conf.get("pass", "")),
+            "api_token": cd2_conf.get("api_token", ""),
             "mount_path": mapping_root
         }
+        if not client_config["url"]:
+            yield json.dumps({"type": "error", "message": "CD2 客户端配置缺少地址 (url)"}) + "\n"
+            return
+
         client = CD2Client(client_config)
         if not await client.login_async():
             yield json.dumps({"type": "error", "message": "CD2 登录失败"}) + "\n"

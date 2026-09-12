@@ -38,6 +38,13 @@ class StrmGenerator:
                 yield line
             return
 
+        # 方案 A2: CD2 云盘 gRPC 模式（源目录为 CD2 内部路径，如 /115open/xxx）
+        if sync_mode == "cd2_api":
+            from .cd2_sync_manager import CD2SyncManager
+            async for line in CD2SyncManager.generate_via_api(config):
+                yield line
+            return
+
         # 方案 B: 显式列表模式
         if sync_mode == "list" and "file_list" in config:
             engine = StrmTaskEngine(config)

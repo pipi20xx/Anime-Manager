@@ -25,14 +25,17 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     for item in data:
         action = item.get("action")
         file_path = item.get("source_file", "").split(':')[0]
-        
+
         if not file_path:
             continue
         if action != "create":
             continue
         if str(item.get("is_dir", "")).lower() == "true":
             continue
-        
+        # 跳过 .strm 输出文件：它们存在于云目录时（历史残留或反向写入）会反复触发联动
+        if file_path.lower().endswith(".strm"):
+            continue
+
         valid_items.append(item)
     
     if not valid_items:
@@ -87,25 +90,33 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
             local_file_path = os.path.normpath(mapping_root + clean_cloud_path)
             
             is_match = local_file_path.startswith(os.path.normpath(src_root)) or clean_cloud_path.startswith(os.path.normpath(src_root))
-            
+
             if is_match:
                 from monitor import MonitorManager
                 task_name = task.get('name', '未命名')
                 task_stats[task_name] = task_stats.get(task_name, 0) + 1
-                
-                log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"本地路径: {local_file_path}")
-                
-                enqueued = MonitorManager.enqueue_file(task.get("id"), local_file_path)
-                
+
+                # gRPC 模式 (cd2_api)：直接使用云路径坐标系，处理器原生支持
+                if task.get("sync_mode") == "cd2_api":
+                    process_path = clean_cloud_path
+                    path_label = "云路径"
+                else:
+                    process_path = local_file_path
+                    path_label = "本地路径"
+
+                log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"{path_label}: {process_path}")
+
+                enqueued = MonitorManager.enqueue_file(task.get("id"), process_path)
+
                 if enqueued:
                     await log_task(task_id_ref, f"✅ 匹配任务: [{task_name}] -> 已加入后台队列")
-                    await log_task(task_id_ref, f"   本地路径: {local_file_path}")
+                    await log_task(task_id_ref, f"   {path_label}: {process_path}")
                     processed_count += 1
                 else:
                     await log_task(task_id_ref, f"🎯 匹配任务: [{task_name}]")
-                    await log_task(task_id_ref, f"   本地路径: {local_file_path}")
+                    await log_task(task_id_ref, f"   {path_label}: {process_path}")
                     await log_task(task_id_ref, f"⏳ 开始处理...")
-                    processing_tasks.append((task_name, local_file_path, task, StrmGenerator.process_single_file(local_file_path, task)))
+                    processing_tasks.append((task_name, process_path, task, StrmGenerator.process_single_file(process_path, task)))
                     processed_count += 1
 
                 matched = True

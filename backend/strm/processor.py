@@ -42,6 +42,24 @@ class StrmProcessor:
         source_root = task_config.get("source_dir") or task_config.get("source_path")
         target_root = task_config.get("target_dir") or task_config.get("target_path")
         copy_meta = task_config.get("copy_meta", False)
+
+        # CD2 云路径源适配：webhook/联动推送的文件是挂载视图路径（如 /medata/CloudDrive/115open/...），
+        # 而任务的源目录可能是云路径（如 /115open/cscd2md）。此时把源根换算到挂载视图坐标系，
+        # 否则 relpath 会产生 ../.. 导致 STRM 写回源目录。
+        try:
+            _norm_file = os.path.normpath(file_path)
+            if source_root and not _norm_file.startswith(os.path.normpath(source_root)):
+                mapping_root = (task_config.get("cd2_mapping_path") or "").strip()
+                if not mapping_root:
+                    from clients.manager import ClientManager
+                    _cd2_conf = next((c for c in ClientManager.get_all_clients() if c.get('type') == 'cd2'), None)
+                    mapping_root = (_cd2_conf or {}).get('mount_path', '')
+                if mapping_root:
+                    _local_root = os.path.normpath(mapping_root.rstrip('/') + '/' + os.path.normpath(source_root).lstrip('/'))
+                    if _norm_file.startswith(_local_root):
+                        source_root = _local_root
+        except Exception:
+            pass
         
         _overwrite_all = task_config.get("overwrite", False)
         overwrite_strm = task_config.get("overwrite_strm", _overwrite_all)
@@ -146,7 +164,7 @@ class StrmProcessor:
                                 all_clients = ClientManager.get_all_clients()
                                 # 找到第一个 CD2 客户端
                                 cd2_conf = next((c for c in all_clients if c.get('type') == 'cd2'), None)
-                                
+
                                 if cd2_conf:
                                     mount_path = cd2_conf.get('mount_path', '').rstrip('/')
                                     cd2_host = cd2_conf.get('url', '').rstrip('/')

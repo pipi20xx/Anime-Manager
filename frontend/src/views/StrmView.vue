@@ -83,6 +83,7 @@ const taskForm = reactive({
 
 const SYNC_MODE_OPTIONS = [
   { title: '本地文件扫描', value: 'local' },
+  { title: 'CD2 云盘 (gRPC)', value: 'cd2_api' },
   { title: '目录树文件', value: 'tree_file' },
 ]
 
@@ -93,6 +94,7 @@ const MONITOR_MODE_OPTIONS = [
 
 const SYNC_MODE_MAP: Record<string, string> = {
   local: '本地文件扫描',
+  cd2_api: 'CD2 云盘',
   tree_file: '目录树文件',
 }
 
@@ -496,7 +498,14 @@ onMounted(() => {
                   <v-text-field v-model="taskForm.name" label="任务名称" density="compact" placeholder="例如: 百度网盘电影库" />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-select v-model="taskForm.sync_mode" label="同步模式" :items="SYNC_MODE_OPTIONS" density="compact" />
+                  <v-select
+                    v-model="taskForm.sync_mode"
+                    label="同步模式"
+                    :items="SYNC_MODE_OPTIONS"
+                    density="compact"
+                    :hint="taskForm.sync_mode === 'cd2_api' ? '源目录填 CD2 云路径（如 /115open/cscd2md）；实时增量靠 CD2 联动，全量扫描走 gRPC API，无需挂载' : undefined"
+                    persistent-hint
+                  />
                 </v-col>
                 <v-col v-if="taskForm.sync_mode === 'tree_file'" cols="12" sm="6">
                   <v-text-field v-model="taskForm.tree_file_path" label="目录树文件路径" density="compact" placeholder="例如: /root/tree.txt" />
