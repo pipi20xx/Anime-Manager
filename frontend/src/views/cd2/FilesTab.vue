@@ -11,6 +11,7 @@ import { computed, onMounted, ref } from 'vue'
 import { cd2Api, recognitionApi, organizerApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
+import ManualOrganizeModal from '../organizer/ManualOrganizeModal.vue'
 
 defineOptions({ name: 'FilesTab' })
 
@@ -271,6 +272,30 @@ const runRemoteUpload = async (file: File, uploadId: string) => {
 
 const cancelUpload = () => {
   uploadCancelled.value = true
+}
+
+// ---------- 手动整理（源自动为当前 CD2 云目录） ----------
+const showManualModal = ref(false)
+const openManualOrganize = () => {
+  if (currentPath.value === '/') {
+    showError('请先进入要整理的目录（根目录无法作为整理源）')
+    return
+  }
+  showManualModal.value = true
+}
+
+const onManualRunBackground = async (task: any) => {
+  try {
+    const data = await organizerApi.startBackground(task, { dry_run: false })
+    if (data?.status === 'success') {
+      success('后台整理任务已启动，可在任务中心查看进度')
+      showManualModal.value = false
+    } else {
+      showError(data?.message || '启动失败')
+    }
+  } catch (e: any) {
+    showError(e?.message || '启动失败')
+  }
 }
 
 // ---------- 单文件识别 → 重命名（复用识别管线，重命名走 CD2 gRPC） ----------
@@ -552,6 +577,18 @@ onMounted(() => loadEntries())
           @click="openOfflineModal"
         >
           离线下载管理
+        </v-btn>
+        <v-btn
+          color="primary"
+          variant="tonal"
+          size="small"
+          prepend-icon="mdi-folder-sync-outline"
+          class="mr-1"
+          :disabled="currentPath === '/'"
+          title="手动整理当前目录"
+          @click="openManualOrganize"
+        >
+          手动整理
         </v-btn>
         <v-btn
           icon="mdi-upload"
@@ -963,6 +1000,17 @@ onMounted(() => loadEntries())
     @recognize="(params: any) => recognizeFile(selectedFile, params)"
     @rename="handleRename"
     @repreview="handleRepreview"
+  />
+
+  <!-- 手动整理（源自动为当前 CD2 云目录） -->
+  <ManualOrganizeModal
+    v-model="showManualModal"
+    :current-path="currentPath"
+    :available-rules="availableRules"
+    :default-task="null"
+    source-via="cd2"
+    :preview-enabled="false"
+    @run-background="onManualRunBackground"
   />
 </template>
 

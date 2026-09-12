@@ -8,16 +8,22 @@
  * - 高级选项 Tab: 动漫优先/覆盖模式/联动STRM/清理空目录/忽略历史/重试失败/Emby检查/哈希计算/智能记忆
  * - 启动时弹出确认对话框选择"预览并手动执行"或"后台静默执行"
  */
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, computed, watch } from 'vue'
 import { tmdbApi } from '@/api'
 import { useNotification } from '@/composables'
+import { useLocalStorage } from '@/composables/useStorage'
 import { GlassDialog } from '@/glass'
+import FolderBrowserModal from './FolderBrowserModal.vue'
 
 const props = defineProps<{
   modelValue: boolean
   currentPath: string
   availableRules: any[]
   defaultTask: any
+  /** 打开时的源类型：本地文件浏览传 local，CD2 文件浏览传 cd2 */
+  sourceVia?: 'local' | 'cd2'
+  /** 是否提供"预览并手动执行"入口（默认 true） */
+  previewEnabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -36,6 +42,9 @@ const manualTask = reactive<any>({
   id: '',
   name: '',
   rule_id: '',
+  source_dir: '',
+  source_via: 'local',
+  target_via: 'local',
   target_dir: '',
   action_type: 'move',
   overwrite_mode: false,
@@ -116,13 +125,37 @@ function getImg(path: string): string {
   return `/api/system/img?path=${path.startsWith('/') ? '' : '/'}${path}`
 }
 
+// --- 浏览器记忆：记住上次手动整理的配置（首次使用整理任务的第一个作为默认） ---
+const MANUAL_ORGANIZE_STORAGE_KEY = 'apm_manual_organize_settings'
+const manualOrganizeMemory = useLocalStorage<Record<string, any>>(MANUAL_ORGANIZE_STORAGE_KEY, {})
+
+// 不需要记忆的字段：身份/入口相关 + 每次单独选择的强制参数
+const MANUAL_MEMORY_EXCLUDED_KEYS = [
+  'id', 'name', 'source_dir', 'source_via',
+  'forced_tmdb_id', 'forced_type', 'forced_season',
+]
+
+function snapshotManualSettings() {
+  const snap: Record<string, any> = {}
+  for (const [k, v] of Object.entries(manualTask)) {
+    if (!MANUAL_MEMORY_EXCLUDED_KEYS.includes(k)) snap[k] = v
+  }
+  manualOrganizeMemory.value = snap
+}
+
 // --- 弹窗打开时，合并默认配置 ---
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
-    if (props.defaultTask) {
+    // 优先使用浏览器记忆的上次配置；首次使用时取整理任务的第一个作为默认
+    const saved = manualOrganizeMemory.value
+    if (saved && Object.keys(saved).length > 0) {
+      Object.assign(manualTask, saved)
+    } else if (props.defaultTask) {
       Object.assign(manualTask, JSON.parse(JSON.stringify(props.defaultTask)))
     }
-    manualTask.name = `手动整理当前目录 (${props.currentPath})`
+    manualTask.name = `手动整理 (${props.currentPath})`
+    manualTask.source_via = props.sourceVia || 'local'
+    manualTask.source_dir = props.currentPath
     if (!manualTask.rule_id && props.availableRules.length > 0) {
       manualTask.rule_id = props.availableRules[0].id
     }
@@ -132,17 +165,62 @@ watch(() => props.modelValue, (newVal) => {
   }
 })
 
+// --- 源/目标类型与操作类型联动 ---
+const actionTypeOptions = computed(() => {
+  const options = [
+    { title: '物理移动', value: 'move' },
+    { title: '完整复制', value: 'copy' },
+    { title: '建立硬链', value: 'link' },
+    { title: 'CD2 移动', value: 'cd2_move' },
+    { title: 'CD2 复制', value: 'cd2_copy' },
+    { title: '仅记录哈希', value: 'hash_only' },
+  ]
+  if (manualTask.source_via === 'cd2' || manualTask.target_via === 'cd2') {
+    return options.filter((o) => ['cd2_move', 'cd2_copy'].includes(o.value))
+  }
+  return options
+})
+
+watch(() => [manualTask.source_via, manualTask.target_via], () => {
+  if (!actionTypeOptions.value.some((o) => o.value === manualTask.action_type)) {
+    manualTask.action_type = 'cd2_move'
+  }
+})
+
+// 切换源类型时同步源目录：本地跟随当前浏览目录，云盘保留已填内容
+watch(() => manualTask.source_via, (via) => {
+  if (via === 'local') manualTask.source_dir = props.currentPath
+})
+
+// --- 目录浏览选择 ---
+const showFolderBrowser = ref(false)
+const browsingField = ref<'source_dir' | 'target_dir'>('target_dir')
+const browsingVia = computed(() =>
+  browsingField.value === 'source_dir' ? manualTask.source_via : manualTask.target_via
+)
+
+const openFolderBrowser = (field: 'source_dir' | 'target_dir') => {
+  browsingField.value = field
+  showFolderBrowser.value = true
+}
+
+const onFolderSelected = (path: string) => {
+  manualTask[browsingField.value] = path
+}
+
 // --- 启动确认 ---
 function handleConfirm() {
   showConfirmDialog.value = true
 }
 
 function handleRun() {
+  snapshotManualSettings()
   showConfirmDialog.value = false
   emit('run', { ...manualTask })
 }
 
 function handleRunBackground() {
+  snapshotManualSettings()
   showConfirmDialog.value = false
   emit('run-background', { ...manualTask })
 }
@@ -171,10 +249,6 @@ function handleRunBackground() {
         <div class="pa-4">
           <!-- 核心配置 -->
           <div v-if="activeTab === 'basic'">
-            <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-              整理针对目录: {{ currentPath }}
-            </v-alert>
-
             <v-select
               v-model="manualTask.rule_id"
               label="重命名规则"
@@ -186,27 +260,52 @@ function handleRunBackground() {
               hide-details
             />
 
+            <div class="mb-2">
+              <div class="text-caption text-medium-emphasis mb-1">源目录类型</div>
+              <v-btn-toggle v-model="manualTask.source_via" mandatory density="compact">
+                <v-btn value="local" prepend-icon="mdi-harddisk">本地路径</v-btn>
+                <v-btn value="cd2" prepend-icon="mdi-cloud-outline">CD2 云盘</v-btn>
+              </v-btn-toggle>
+            </div>
+            <v-text-field
+              v-if="manualTask.source_via === 'cd2'"
+              v-model="manualTask.source_dir"
+              label="源目录 (CD2 路径)"
+              placeholder="/115open/downloads"
+              variant="outlined"
+              clearable
+              class="mb-3"
+              hide-details
+              append-inner-icon="mdi-folder-open-outline"
+              @click:append-inner="openFolderBrowser('source_dir')"
+            />
+            <div v-else class="text-body-2 mb-3">
+              整理针对目录: {{ manualTask.source_dir || currentPath }}
+            </div>
+
+            <div class="mb-2">
+              <div class="text-caption text-medium-emphasis mb-1">目标目录类型</div>
+              <v-btn-toggle v-model="manualTask.target_via" mandatory density="compact">
+                <v-btn value="local" prepend-icon="mdi-harddisk">本地路径</v-btn>
+                <v-btn value="cd2" prepend-icon="mdi-cloud-outline">CD2 云盘</v-btn>
+              </v-btn-toggle>
+            </div>
             <v-text-field
               v-model="manualTask.target_dir"
-              label="目标目录"
-              placeholder="媒体库绝对路径 (如: /vol1/1000/Media)"
+              :label="manualTask.target_via === 'cd2' ? '目标目录 (CD2 路径，如 /115open/media)' : '目标目录'"
+              :placeholder="manualTask.target_via === 'cd2' ? '/115open/media' : '媒体库绝对路径 (如: /vol1/1000/Media)'"
               density="compact"
               variant="outlined"
               class="mb-3"
               hide-details
+              append-inner-icon="mdi-folder-open-outline"
+              @click:append-inner="openFolderBrowser('target_dir')"
             />
 
             <v-select
               v-model="manualTask.action_type"
               label="操作类型"
-              :items="[
-                { title: '物理移动', value: 'move' },
-                { title: '完整复制', value: 'copy' },
-                { title: '建立硬链', value: 'link' },
-                { title: 'CD2 移动', value: 'cd2_move' },
-                { title: 'CD2 复制', value: 'cd2_copy' },
-                { title: '仅记录哈希', value: 'hash_only' },
-              ]"
+              :items="actionTypeOptions"
               density="compact"
               variant="outlined"
               class="mb-3"
@@ -446,11 +545,19 @@ function handleRunBackground() {
       <v-btn color="info" variant="tonal" prepend-icon="mdi-rocket-launch" @click="handleRunBackground">
         后台静默执行
       </v-btn>
-      <v-btn color="primary" variant="tonal" prepend-icon="mdi-eye-outline" @click="handleRun">
+      <v-btn v-if="previewEnabled !== false" color="primary" variant="tonal" prepend-icon="mdi-eye-outline" @click="handleRun">
         预览并手动执行
       </v-btn>
     </template>
   </GlassDialog>
+
+  <!-- 目录浏览选择 -->
+  <FolderBrowserModal
+    v-model="showFolderBrowser"
+    :via="browsingVia"
+    :title="browsingField === 'source_dir' ? '选择源目录' : '选择目标目录'"
+    @select="onFolderSelected"
+  />
 </template>
 
 <!-- scoped 样式已迁移至 global.css .config-row / .inactive-hint / .hash-warning-inline -->

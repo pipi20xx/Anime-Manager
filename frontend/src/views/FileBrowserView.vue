@@ -497,7 +497,7 @@ async function runManualOrganize(task: any) {
 
   try {
     const response = await organizerApi.streamAdhoc(
-      { ...task, source_dir: currentPath.value },
+      { ...task, source_dir: task.source_via === 'cd2' ? (task.source_dir || currentPath.value) : currentPath.value },
       { dry_run: true }
     )
     await readStream(response)
@@ -511,7 +511,7 @@ async function runManualOrganize(task: any) {
 async function runManualOrganizeBackground(task: any) {
   try {
     const data = await organizerApi.startBackground(
-      { ...task, source_dir: currentPath.value },
+      { ...task, source_dir: task.source_via === 'cd2' ? (task.source_dir || currentPath.value) : currentPath.value },
       { dry_run: false }
     )
     if (data?.status === 'success') {
