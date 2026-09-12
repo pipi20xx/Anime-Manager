@@ -1,6 +1,7 @@
 import logging
+import os
 import posixpath
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from logger import log_audit
 
@@ -145,6 +146,69 @@ class CD2FileBrowser:
                     pass
             return False, details
 
+    def walk_files(self, root: str, video_exts: Optional[List[str]] = None, ignore_regex=None) -> List[Dict[str, Any]]:
+        """
+        递归遍历云目录（BFS），产出文件列表。
+        供整理任务扫描云源使用：与本地 _walk_recursive 语义对齐——
+        video_exts 白名单过滤扩展名，ignore_regex 对文件名/目录名做 re.search。
+        返回 [{path, name, size}]。
+        """
+        import re as _re
+
+        conn = self.connection
+        files: List[Dict[str, Any]] = []
+        queue = ["/" + (root or "/").strip("/")]
+        visited = set()
+
+        while queue:
+            current = queue.pop(0)
+            if current in visited:
+                continue
+            visited.add(current)
+
+            try:
+                result = self.list_dir(current)
+                entries = result.get("entries", [])
+            except Exception as e:
+                logger.warning(f"[{conn.name}] 遍历目录失败 {current}: {e}")
+                continue
+
+            for entry in entries:
+                name = entry["name"]
+                if entry["is_dir"]:
+                    if ignore_regex and any(_re.search(p, name, _re.I) for p in ignore_regex):
+                        continue
+                    queue.append(entry["path"])
+                else:
+                    if video_exts:
+                        ext = os.path.splitext(name)[1].lower()
+                        if ext not in video_exts:
+                            continue
+                    if ignore_regex and any(_re.search(p, name, _re.I) for p in ignore_regex):
+                        continue
+                    files.append({
+                        "path": entry["path"],
+                        "name": name,
+                        "size": entry.get("size", 0),
+                    })
+        return files
+
+    def path_exists(self, path: str) -> bool:
+        """检查云路径是否存在（列出父目录按名称匹配）"""
+        conn = self.connection
+        normalized = "/" + (path or "").strip("/")
+        parent = posixpath.dirname(normalized) or "/"
+        name = posixpath.basename(normalized)
+        try:
+            req = conn.pb2.ListSubFileRequest(path=parent, forceRefresh=False)
+            for reply in conn.stub.GetSubFiles(req, metadata=conn.get_metadata(), timeout=30):
+                for f in reply.subFiles:
+                    if f.name == name:
+                        return True
+        except Exception as e:
+            logger.debug(f"[{conn.name}] path_exists 检查失败 {normalized}: {e}")
+        return False
+
     def ensure_dir(self, path: str) -> tuple:
         """
         逐级确认目录存在（GetSubFiles 检查 + CreateFolder 兜底，容忍"已存在"错误）。
@@ -238,6 +302,65 @@ class CD2FileBrowser:
         except Exception as e:
             details = getattr(e, "details", None) or str(e)
             logger.error(f"[{conn.name}] CD2 识别重命名异常: {details}")
+            return False, details
+
+    def download_file(self, cloud_path: str, local_path: str) -> tuple:
+        """
+        从 CD2 下载文件到本地路径（免挂载）。
+        通过 GetDownloadUrlPath 获取下载地址（优先云存储直链），HTTP 流式写入本地。
+        返回 (success, downloaded_bytes_or_error)。
+        """
+        conn = self.connection
+        import requests as _requests
+
+        tmp_path = local_path + ".cd2downloading"
+        try:
+            req = conn.pb2.GetDownloadUrlPathRequest(
+                path=cloud_path, preview=False, lazy_read=False, get_direct_url=True
+            )
+            info = conn.stub.GetDownloadUrlPath(req, metadata=conn.get_metadata(), timeout=60)
+
+            headers = {}
+            if info.HasField("userAgent") and info.userAgent:
+                headers["User-Agent"] = info.userAgent
+            for k, v in info.additionalHeaders.items():
+                headers[k] = v
+
+            if info.HasField("directUrl") and info.directUrl:
+                url = info.directUrl
+                logger.debug(f"[{conn.name}] 使用云存储直链下载: {cloud_path}")
+            else:
+                # downloadUrlPath 含 {SCHEME}/{HOST}/{PREVIEW} 占位符，按 gRPC 主机替换
+                url_path = (info.downloadUrlPath or "")
+                url_path = url_path.replace("{SCHEME}", "http").replace("{HOST}", conn.host).replace("{PREVIEW}", "False")
+                url = f"http://{conn.host}{url_path}"
+                logger.debug(f"[{conn.name}] 使用 CD2 内置 HTTP 下载: {cloud_path}")
+
+            downloaded = 0
+            with _requests.get(url, headers=headers, stream=True, timeout=(10, 60)) as resp:
+                resp.raise_for_status()
+                with open(tmp_path, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+
+            if downloaded <= 0:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                return False, "下载内容为空"
+
+            os.replace(tmp_path, local_path)
+            log_audit("CD2文件", "下载", f"下载到本地: {cloud_path} ({downloaded} 字节)")
+            return True, downloaded
+        except Exception as e:
+            details = getattr(e, "details", None) or str(e)
+            logger.error(f"[{conn.name}] CD2 下载文件失败 {cloud_path}: {details}")
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
             return False, details
 
     def transfer_files(self, paths: List[str], dest_dir: str, action: str = "move", conflict_policy: int = 1) -> tuple:

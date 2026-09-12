@@ -27,8 +27,17 @@ class CD2Connection:
         self._async_channel = None
         self._async_stub = None
 
+    def _ensure_proto(self) -> bool:
+        """
+        懒加载协议模块。实例可能在 proto 就绪前被创建（如启动早期被缓存），
+        pb2 为 None 时在使用处重试，而不是永久失效。
+        """
+        if self.pb2 is None or self.pb2_grpc is None:
+            self.pb2, self.pb2_grpc = ensure_cd2_module()
+        return self.pb2 is not None and self.pb2_grpc is not None
+
     def _connect(self) -> bool:
-        if not self.pb2 or not self.pb2_grpc:
+        if not self._ensure_proto():
             logger.error(f"[{self.name}] CD2 modules not available.")
             return False
 
@@ -39,6 +48,8 @@ class CD2Connection:
 
     async def _get_async_stub(self):
         """获取异步 gRPC Stub"""
+        if not self._ensure_proto():
+            raise RuntimeError(f"[{self.name}] CD2 协议模块未加载")
         if self._async_channel is None:
             self._async_channel = grpc.aio.insecure_channel(self.host)
             self._async_stub = self.pb2_grpc.CloudDriveFileSrvStub(self._async_channel)

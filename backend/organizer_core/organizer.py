@@ -81,6 +81,38 @@ class Organizer:
         return False
 
     @staticmethod
+    def _walk_recursive_cd2(source_dir: str, ignore_file_regex: List[str], ignore_dir_regex: List[str],
+                            queue: list, lock: threading.Lock, scan_event: threading.Event, should_stop) -> None:
+        """
+        CD2 云源扫描：通过 gRPC GetSubFiles 递归遍历（免挂载）。
+        产物与本地扫描一致（路径字符串队列）。
+        """
+        try:
+            from config_manager import ConfigManager
+            from clients.manager import ClientManager
+            config = ConfigManager.get_config()
+            cd2_conf = next((c for c in config.get("download_clients", []) if c.get("type") == "cd2"), None)
+            if not cd2_conf:
+                logger.error("✨ [整理] CD2 云源扫描失败: 未配置 CD2 客户端")
+                return
+            client = ClientManager.get_client(cd2_conf.get("id"))
+            if not client:
+                logger.error("✨ [整理] CD2 云源扫描失败: 客户端初始化失败")
+                return
+
+            files = client.walk_files(source_dir, video_exts=Organizer.VIDEO_EXTS,
+                                      ignore_regex=(ignore_file_regex or []) + (ignore_dir_regex or []))
+            logger.info(f"✨ [整理] CD2 云源扫描完成: {len(files)} 个视频文件")
+            for f in files:
+                if should_stop():
+                    return
+                with lock:
+                    queue.append(f["path"])
+                scan_event.set()
+        except Exception as e:
+            logger.error(f"✨ [整理] CD2 云源扫描异常: {e}")
+
+    @staticmethod
     async def run_task(task: Dict[str, Any], dry_run: bool = True, task_id: str = None) -> Generator[str, None, None]:
         """
         流式执行整理任务。
@@ -118,10 +150,16 @@ class Organizer:
 
         def scan_wrapper():
             nonlocal scan_done
-            Organizer._walk_recursive(
-                source_dir, ignore_file_regex, ignore_dir_regex,
-                dir_exists_cache, file_queue, queue_lock, scan_event, max_batch, should_stop
-            )
+            if task.get("source_via", "local") == "cd2":
+                Organizer._walk_recursive_cd2(
+                    source_dir, ignore_file_regex, ignore_dir_regex,
+                    file_queue, queue_lock, scan_event, should_stop
+                )
+            else:
+                Organizer._walk_recursive(
+                    source_dir, ignore_file_regex, ignore_dir_regex,
+                    dir_exists_cache, file_queue, queue_lock, scan_event, max_batch, should_stop
+                )
             scan_done = True
             scan_event.set()
 
@@ -205,7 +243,11 @@ class Organizer:
             await asyncio.sleep(0.01)
 
             src, dst, action = item.get("source"), item.get("target"), item.get("action", "move")
-            res = await FileExecutor.execute_action(src, dst, action, conflict_mode, dir_cache)
+            res = await FileExecutor.execute_action(
+                src, dst, action, conflict_mode, dir_cache,
+                source_via=item.get("source_via", "local"),
+                target_via=item.get("target_via", "local"),
+            )
             
             if res == "success":
                 processed += 1

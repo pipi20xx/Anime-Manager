@@ -69,6 +69,7 @@ class _Session:
         self.status: Optional[int] = None
         self.error = None
         self.terminal = False
+        self.local = False  # 磁盘数据源模式：hash 请求在本地闭环处理，不入浏览器队列
 
 
 class RemoteUploadManager:
@@ -96,6 +97,17 @@ class RemoteUploadManager:
         self._channel_thread: Optional[threading.Thread] = None
         self._channel_stop = threading.Event()
         self._device_id = _get_device_id()
+        # 会话注册前到达的通道消息缓冲（StartRemoteUpload 返回与注册间存在竞态窗口）
+        self._orphan_replies: Dict[str, list] = {}
+
+    def _register_session(self, session: _Session):
+        """注册会话并回放注册前到达的通道消息"""
+        with self._sessions_lock:
+            self._sessions[session.upload_id] = session
+            orphans = self._orphan_replies.pop(session.upload_id, [])
+        for reply in orphans:
+            logger.debug(f"回放孤儿通道消息: {session.upload_id[:8]}... ({reply.WhichOneof('request')})")
+            self._dispatch(reply)
 
     # ---------- channel ----------
     def _ensure_channel(self, conn):
@@ -123,10 +135,154 @@ class RemoteUploadManager:
                 logger.warning(f"[{conn.name}] RemoteUploadChannel 断开，5 秒后重连: {e}")
                 time.sleep(5)
 
+    def cancel(self, upload_id: str) -> Dict[str, Any]:
+        conn = self._conn
+        session = self._sessions.get(upload_id)
+        req = conn.pb2.RemoteUploadControlRequest(upload_id=upload_id, cancel=conn.pb2.CancelRemoteUpload())
+        conn.stub.RemoteUploadControl(req, metadata=conn.get_metadata(), timeout=30)
+        if session:
+            session.terminal = True
+            with session.cond:
+                session.cond.notify_all()
+            self._sessions.pop(upload_id, None)
+        return {"success": True, "message": "已取消"}
+
+    # ---------- 本地磁盘数据源（供整理任务：本地文件 → 云端，后台同步执行） ----------
+    def upload_local_file_sync(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None) -> Dict[str, Any]:
+        """
+        将本地磁盘文件经 Remote Upload 协议上传到云端（流式分块，不整体缓冲）。
+        与浏览器流程共用 channel 与会话机制，但数据直接从磁盘读取，
+        read/hash 任务在本地闭环处理，不进入浏览器轮询队列。
+        返回 {success, status_text, error}。
+        """
+        size = os.path.getsize(local_path)
+        self._ensure_channel(conn)
+
+        req = conn.pb2.StartRemoteUploadRequest(
+            file_path=cloud_file_path,
+            file_size=size,
+            client_can_calculate_hashes=True,
+        )
+        started = conn.stub.StartRemoteUpload(req, metadata=conn.get_metadata(), timeout=60)
+        upload_id = started.upload_id
+        session = _Session(upload_id, cloud_file_path, size)
+        session.local = True
+        self._register_session(session)
+
+        log_audit("CD2上传", "开始", f"远程上传(磁盘源): {cloud_file_path} ({size} 字节)")
+
+        file_md5 = None
+        local_md5 = hashlib.md5()
+        try:
+            with open(local_path, "rb") as f:
+                while not session.terminal:
+                    if stop_event is not None and stop_event.is_set():
+                        self.cancel(upload_id)
+                        return {"success": False, "status_text": "已取消", "error": None}
+
+                    job = self._next_job_local(session, timeout=10)
+                    if job is None:
+                        continue
+
+                    if job["type"] == "read":
+                        f.seek(job["offset"])
+                        data = f.read(job["length"])
+                        local_md5.update(data)
+                        read_req = conn.pb2.RemoteReadDataUpload(
+                            upload_id=upload_id,
+                            offset=job["offset"],
+                            length=len(data),
+                            lazy_read=job["lazy_read"],
+                            data=data,
+                            is_last_chunk=(job["offset"] + len(data)) >= size,
+                        )
+                        resp = conn.stub.RemoteReadData(read_req, metadata=conn.get_metadata(), timeout=120)
+                        if not resp.success:
+                            raise RuntimeError(f"RemoteReadData 失败: {resp.error_message}")
+
+                    elif job["type"] == "hash":
+                        # 数据已按顺序读取，各哈希算法直接基于本地文件计算
+                        self._handle_hash_local(conn, session, local_path, local_md5, job)
+        except Exception as e:
+            details = getattr(e, "details", None) or str(e)
+            logger.error(f"磁盘源远程上传失败 {local_path}: {details}")
+            try:
+                self.cancel(upload_id)
+            except Exception:
+                pass
+            return {"success": False, "status_text": "错误", "error": details}
+
+        status_text = _STATUS_TEXT.get(session.status or -1, "未知")
+        success = session.status == 5  # Finish
+        with self._sessions_lock:
+            self._sessions.pop(upload_id, None)
+        if success:
+            log_audit("CD2上传", "完成", f"远程上传完成: {cloud_file_path}")
+        return {"success": success, "status_text": status_text, "error": session.error}
+
+    def _handle_hash_local(self, conn, session: _Session, local_path: str, local_md5, job: dict):
+        """磁盘模式哈希：直接读本地文件计算并上报"""
+        hash_type = job.get("hash_type", 0)
+        block_size = job.get("block_size", 0)
+        size = session.size
+        try:
+            if hash_type == HASH_MD5:
+                block_hashes = []
+                if block_size > 0:
+                    with open(local_path, "rb") as bf:
+                        while True:
+                            chunk = bf.read(block_size)
+                            if not chunk:
+                                break
+                            block_hashes.append(hashlib.md5(chunk).hexdigest())
+                self._report_hash_progress(conn, session, HASH_MD5, size,
+                                           final_hex=local_md5.hexdigest(), block_hashes=block_hashes)
+            elif hash_type == HASH_SHA1:
+                sha1 = hashlib.sha1()
+                with open(local_path, "rb") as bf:
+                    for chunk in iter(lambda: bf.read(4 * 1024 * 1024), b""):
+                        sha1.update(chunk)
+                self._report_hash_progress(conn, session, HASH_SHA1, size, final_hex=sha1.hexdigest())
+            elif hash_type == HASH_PIKPAK:
+                segment_size = _pikpak_segment_size(size)
+                digests = b""
+                with open(local_path, "rb") as bf:
+                    while True:
+                        seg = bf.read(segment_size)
+                        if not seg:
+                            break
+                        digests += hashlib.sha1(seg).digest()
+                self._report_hash_progress(conn, session, HASH_PIKPAK, size,
+                                           final_hex=hashlib.sha1(digests).hexdigest().upper())
+            else:
+                self._report_hash_progress(conn, session, hash_type, 0)
+        except Exception as e:
+            logger.error(f"磁盘源哈希计算失败: {e}")
+            try:
+                self._report_hash_progress(conn, session, hash_type, 0)
+            except Exception:
+                pass
+
+    def _next_job_local(self, session: _Session, timeout: float) -> Optional[dict]:
+        """磁盘模式：从会话队列取任务（无终态时阻塞等待）"""
+        deadline = time.time() + timeout
+        with session.cond:
+            while True:
+                if session.jobs:
+                    return session.jobs.pop(0)
+                if session.terminal:
+                    return None
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    return None
+                session.cond.wait(remaining)
+
     def _dispatch(self, reply):
         session = self._sessions.get(reply.upload_id)
         if session is None:
-            logger.debug(f"收到未注册会话的通道消息: {reply.upload_id}")
+            # 会话尚未注册（StartRemoteUpload 返回前服务器已推送请求）：暂存，注册时补入
+            with self._sessions_lock:
+                self._orphan_replies.setdefault(reply.upload_id, []).append(reply)
             return
         case = reply.WhichOneof("request")
         if case == "read_data":
@@ -142,10 +298,14 @@ class RemoteUploadManager:
             self._push_job(session, job)
         elif case == "hash_data":
             h = reply.hash_data
-            threading.Thread(
-                target=self._hash_worker, args=(session, int(h.hash_type), int(h.block_size or 0)),
-                name=f"CD2Hash-{reply.upload_id[:8]}", daemon=True,
-            ).start()
+            if session.local:
+                # 磁盘数据源模式：hash 请求转成本地计算任务
+                self._push_job(session, {"type": "hash", "hash_type": int(h.hash_type), "block_size": int(h.block_size or 0)})
+            else:
+                threading.Thread(
+                    target=self._hash_worker, args=(session, int(h.hash_type), int(h.block_size or 0)),
+                    name=f"CD2Hash-{reply.upload_id[:8]}", daemon=True,
+                ).start()
         elif case == "status_changed":
             s = reply.status_changed
             session.status = int(s.status)
@@ -173,8 +333,7 @@ class RemoteUploadManager:
         started = conn.stub.StartRemoteUpload(req, metadata=conn.get_metadata(), timeout=60)
         upload_id = started.upload_id
         session = _Session(upload_id, req.file_path, size)
-        with self._sessions_lock:
-            self._sessions[upload_id] = session
+        self._register_session(session)
         log_audit("CD2上传", "开始", f"远程上传: {req.file_path} ({size} 字节)")
         return {"upload_id": upload_id, "file_path": req.file_path, "size": size}
 

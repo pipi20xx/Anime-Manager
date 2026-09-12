@@ -4,7 +4,7 @@
  *
  * 分 Tab 表单: 核心配置 / 自动化 / 过滤规则 / 高级选项
  */
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 defineOptions({ name: 'TaskEditModal' })
 
@@ -22,14 +22,32 @@ const emit = defineEmits<{
 
 const taskEditTab = ref('basic')
 
-const actionTypeOptions = [
-  { title: '物理移动', value: 'move' },
-  { title: '完整复制', value: 'copy' },
-  { title: '建立硬链', value: 'link' },
-  { title: 'CD2 移动', value: 'cd2_move' },
-  { title: 'CD2 复制', value: 'cd2_copy' },
-  { title: '仅记录哈希', value: 'hash_only' },
-]
+const actionTypeOptions = computed(() => {
+  const options = [
+    { title: '物理移动', value: 'move' },
+    { title: '完整复制', value: 'copy' },
+    { title: '建立硬链', value: 'link' },
+    { title: 'CD2 移动', value: 'cd2_move' },
+    { title: 'CD2 复制', value: 'cd2_copy' },
+    { title: '仅记录哈希', value: 'hash_only' },
+  ]
+  // 任一端选择了 CD2 云盘：仅支持云操作模式
+  if (props.taskForm.source_via === 'cd2' || props.taskForm.target_via === 'cd2') {
+    return options.filter((o) => ['cd2_move', 'cd2_copy'].includes(o.value))
+  }
+  return options
+})
+
+// 切换源/目标类型后，若当前操作类型不再可选则自动纠正
+watch(
+  () => [props.taskForm.source_via, props.taskForm.target_via],
+  () => {
+    const valid = actionTypeOptions.value.some((o) => o.value === props.taskForm.action_type)
+    if (!valid) {
+      props.taskForm.action_type = 'cd2_move'
+    }
+  }
+)
 </script>
 
 <template>
@@ -74,23 +92,55 @@ const actionTypeOptions = [
               class="mb-3"
             />
 
+            <div class="mb-2">
+              <div class="text-caption text-medium-emphasis mb-1">源目录类型</div>
+              <v-btn-toggle v-model="taskForm.source_via" mandatory density="compact" class="mb-2">
+                <v-btn value="local" prepend-icon="mdi-harddisk">本地路径</v-btn>
+                <v-btn value="cd2" prepend-icon="mdi-cloud-outline">CD2 云盘</v-btn>
+              </v-btn-toggle>
+            </div>
             <v-text-field
               v-model="taskForm.source_dir"
-              label="源目录"
-              placeholder="待整理的文件夹"
+              :label="taskForm.source_via === 'cd2' ? '源目录 (CD2 路径，如 /115open/downloads)' : '源目录'"
+              :placeholder="taskForm.source_via === 'cd2' ? '/115open/downloads' : '待整理的文件夹'"
               variant="outlined"
               density="compact"
-              class="mb-3"
+              class="mb-1"
             />
+            <v-alert
+              v-if="taskForm.source_via === 'cd2'"
+              type="info" variant="tonal" density="compact" class="mb-3"
+            >
+              将通过 CD2 gRPC 直接扫描云盘目录（无需挂载）。云盘源暂不支持关联字幕识别与哈希计算。
+            </v-alert>
 
+            <div class="mb-2 mt-2">
+              <div class="text-caption text-medium-emphasis mb-1">目标目录类型</div>
+              <v-btn-toggle v-model="taskForm.target_via" mandatory density="compact" class="mb-2">
+                <v-btn value="local" prepend-icon="mdi-harddisk">本地路径</v-btn>
+                <v-btn value="cd2" prepend-icon="mdi-cloud-outline">CD2 云盘</v-btn>
+              </v-btn-toggle>
+            </div>
             <v-text-field
               v-model="taskForm.target_dir"
-              label="目标目录"
-              placeholder="整理后的根目录"
+              :label="taskForm.target_via === 'cd2' ? '目标目录 (CD2 路径，如 /115open/media)' : '目标目录'"
+              :placeholder="taskForm.target_via === 'cd2' ? '/115open/media' : '整理后的根目录'"
               variant="outlined"
               density="compact"
-              class="mb-3"
+              class="mb-1"
             />
+            <v-alert
+              v-if="taskForm.target_via === 'cd2'"
+              type="info" variant="tonal" density="compact" class="mb-3"
+            >
+              整理结果将直接写入 CD2 云盘：云→云走服务器端移动/复制；本地→云走 Remote Upload 协议上传。
+            </v-alert>
+            <v-alert
+              v-if="taskForm.source_via === 'cd2' && taskForm.target_via === 'local'"
+              type="info" variant="tonal" density="compact" class="mb-3"
+            >
+              将通过 CD2 下载接口把云端文件直接下载到本地目录（免挂载），完成后可按操作类型删除云端源文件。
+            </v-alert>
 
             <v-select
               v-model="taskForm.action_type"
@@ -108,6 +158,9 @@ const actionTypeOptions = [
               <div class="flex-grow-1">
                 <div class="font-weight-medium">实时监控</div>
                 <div class="text-caption text-medium-emphasis">监听文件系统事件</div>
+                <div v-if="taskForm.source_via === 'cd2'" class="text-caption text-warning">
+                  云盘源暂不支持实时监控（本地文件系统事件不可用），任务将按计划扫描执行
+                </div>
               </div>
             </div>
 

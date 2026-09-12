@@ -212,35 +212,157 @@ class FileExecutor:
             pass
 
     @staticmethod
-    async def execute_action(src: str, dst: str, action: str, conflict: str, dir_cache: set = None, source_root: str = None) -> str:
+    async def _execute_cd2_via(client, src: str, dst: str, action: str, conflict: str,
+                               source_via: str, target_via: str, dir_cache: set = None) -> str:
+        """
+        via 路由矩阵：按源/目标归属域选择底层通道。
+        - cd2→cd2:   纯 gRPC（ensure_dir + 原位改名 + MoveFile/CopyFile）
+        - cd2→local: gRPC CopyFile 经挂载写入本地（cd2_move 后 DeleteFile 云端源）
+        - local→cd2: Remote Upload 磁盘数据源（流式分块，免挂载）
+        """
+        action_label = "移动" if action == "cd2_move" else "复制"
+        browser = client._file_browser
+
+        # via 路由直接走底层连接，需确保客户端已登录（token 写入 metadata）
+        if not client.logged_in:
+            ok = await asyncio.to_thread(client.login)
+            if not ok:
+                return "cd2_failed: CD2 登录失败"
+
+        dst_dir = os.path.dirname(dst) or "/"
+        dst_name = os.path.basename(dst)
+
+        # ---------- cd2 → cd2 ----------
+        if source_via == "cd2" and target_via == "cd2":
+            ok, msg = await asyncio.to_thread(browser.ensure_dir, dst_dir)
+            if not ok: return f"cd2_failed: {msg}"
+
+            if await asyncio.to_thread(browser.path_exists, dst):
+                if conflict == "skip": return "skipped_conflict"
+                if conflict == "overwrite":
+                    ok, msg = await asyncio.to_thread(browser.delete_files, [dst])
+                    if not ok: return f"cd2_failed: 目标覆盖删除失败: {msg}"
+
+            if action == "cd2_copy":
+                ok, msg = await asyncio.to_thread(browser.transfer_files, [src], dst_dir, "copy", 1)
+                if not ok: return f"cd2_failed: {msg}"
+                # 复制后目标位为原文件名，需要改名
+                copied_path = f"{dst_dir.rstrip('/')}/{os.path.basename(src)}"
+                if os.path.basename(src) != dst_name:
+                    ok, msg = await asyncio.to_thread(browser.rename, copied_path, dst_name)
+                    if not ok: return f"cd2_failed: {msg}"
+            else:
+                if os.path.basename(src) != dst_name:
+                    ok, msg = await asyncio.to_thread(browser.rename, src, dst_name)
+                    if not ok: return f"cd2_failed: {msg}"
+                    src = f"{os.path.dirname(src).rstrip('/')}/{dst_name}"
+                ok, msg = await asyncio.to_thread(browser.transfer_files, [src], dst_dir, "move", 1)
+                if not ok: return f"cd2_failed: {msg}"
+            return "success"
+
+        # ---------- cd2 → local（免挂载：GetDownloadUrlPath 直下载，挂载复制兜底） ----------
+        if source_via == "cd2" and target_via == "local":
+            if conflict == "skip" and await asyncio.to_thread(os.path.exists, dst):
+                return "skipped_conflict"
+            if conflict == "overwrite" and await asyncio.to_thread(os.path.exists, dst):
+                await asyncio.to_thread(os.remove, dst)
+
+            target_parent = os.path.dirname(dst)
+            await asyncio.to_thread(os.makedirs, target_parent, exist_ok=True)
+
+            # 主通道：获取下载地址流式下载（优先云存储直链）
+            ok, result = await asyncio.to_thread(browser.download_file, src, dst)
+            if ok:
+                if action == "cd2_move":
+                    ok_del, msg_del = await asyncio.to_thread(browser.delete_files, [src])
+                    if not ok_del:
+                        return f"cd2_failed: 下载成功但删除云端源文件失败: {msg_del}"
+                return "success"
+
+            # 兜底：下载失败时回退"经 CD2 挂载 CopyFile"（需要 mount_path 配置）
+            logger.warning(f"CD2 直下载失败，尝试经挂载复制兜底: {result}")
+            mount_path = (client.config or {}).get("mount_path", "")
+            if not mount_path:
+                return f"cd2_failed: {result}"
+
+            cd2_dst_dir = client._to_cd2_path(target_parent)
+            ok, msg = await asyncio.to_thread(browser.ensure_dir, cd2_dst_dir)
+            if not ok: return f"cd2_failed: {msg}"
+
+            ok, msg = await asyncio.to_thread(browser.transfer_files, [src], cd2_dst_dir, "copy", 1)
+            if not ok: return f"cd2_failed: {msg}"
+
+            copied_cloud = f"{cd2_dst_dir.rstrip('/')}/{os.path.basename(src)}"
+            if os.path.basename(src) != dst_name:
+                ok, msg = await asyncio.to_thread(browser.rename, copied_cloud, dst_name)
+                if not ok: return f"cd2_failed: {msg}"
+
+            if action == "cd2_move":
+                ok, msg = await asyncio.to_thread(browser.delete_files, [src])
+                if not ok: return f"cd2_failed: 删除云端源文件失败: {msg}"
+            return "success"
+
+        # ---------- local → cd2（Remote Upload 磁盘数据源） ----------
+        if source_via == "local" and target_via == "cd2":
+            if not await asyncio.to_thread(os.path.exists, src):
+                return "src_not_found"
+
+            ok, msg = await asyncio.to_thread(browser.ensure_dir, dst_dir)
+            if not ok: return f"cd2_failed: {msg}"
+
+            if await asyncio.to_thread(browser.path_exists, dst):
+                if conflict == "skip": return "skipped_conflict"
+                if conflict == "overwrite":
+                    ok, msg = await asyncio.to_thread(browser.delete_files, [dst])
+                    if not ok: return f"cd2_failed: 目标覆盖删除失败: {msg}"
+
+            from clients.cd2.remote_upload import RemoteUploadManager
+            result = await asyncio.to_thread(
+                RemoteUploadManager.get_instance().upload_local_file_sync,
+                client._conn, src, dst,
+            )
+            if not result.get("success"):
+                return f"cd2_failed: {result.get('error') or result.get('status_text')}"
+            return "success"
+
+        return "cd2_failed: 不支持的 via 组合"
+
+    @staticmethod
+    async def execute_action(src: str, dst: str, action: str, conflict: str, dir_cache: set = None, source_root: str = None,
+                             source_via: str = "local", target_via: str = "local") -> str:
         """
         Execute single file action asynchronously.
+        source_via/target_via: 'local' | 'cd2'，决定 CD2 类动作的底层通道。
         """
-        # I/O checks in thread
-        if not await asyncio.to_thread(os.path.exists, src): return "src_not_found"
-        src_size = await asyncio.to_thread(os.path.getsize, src)
+        # 云源：本地 FS 存在性检查跳过（数据可能只在云端）
+        if source_via != "cd2":
+            if not await asyncio.to_thread(os.path.exists, src): return "src_not_found"
+        src_size = None
+        if source_via != "cd2":
+            src_size = await asyncio.to_thread(os.path.getsize, src)
 
-        if await asyncio.to_thread(os.path.exists, dst):
-            try:
-                is_same = await asyncio.to_thread(os.path.samefile, src, dst)
-                if is_same: return "same_file"
-            except: pass
-            if conflict == "skip": return "skipped_conflict"
-            if conflict == "overwrite":
-                try: 
-                    if await asyncio.to_thread(os.path.isdir, dst): 
-                        await asyncio.to_thread(shutil.rmtree, dst)
-                    else: 
-                        await asyncio.to_thread(os.remove, dst)
-                except: return "overwrite_failed"
-        
+        if target_via != "cd2":
+            if await asyncio.to_thread(os.path.exists, dst):
+                try:
+                    is_same = await asyncio.to_thread(os.path.samefile, src, dst)
+                    if is_same: return "same_file"
+                except: pass
+                if conflict == "skip": return "skipped_conflict"
+                if conflict == "overwrite":
+                    try:
+                        if await asyncio.to_thread(os.path.isdir, dst):
+                            await asyncio.to_thread(shutil.rmtree, dst)
+                        else:
+                            await asyncio.to_thread(os.remove, dst)
+                    except: return "overwrite_failed"
+
         try:
             # --- CD2 Native API Operations ---
             if action in ["cd2_move", "cd2_copy"]:
                 all_clients = await asyncio.to_thread(ClientManager.get_all_clients)
                 cd2_client = None
                 matched_mount = ""
-                
+
                 for c_conf in all_clients:
                     if c_conf.get('type') == 'cd2':
                         mount_path = c_conf.get('mount_path')
@@ -248,13 +370,20 @@ class FileExecutor:
                             cd2_client = await asyncio.to_thread(ClientManager.get_client, c_conf.get('id'))
                             matched_mount = mount_path
                             break
-                
+
                 if not cd2_client:
                     cd2_configs = [c for c in all_clients if c.get('type') == 'cd2']
                     if len(cd2_configs) == 1:
                         cd2_client = await asyncio.to_thread(ClientManager.get_client, cd2_configs[0].get('id'))
                     else: return "cd2_client_not_found"
 
+                if source_via == "cd2" or target_via == "cd2":
+                    # --- via 路由矩阵（显式归属域优先） ---
+                    return await FileExecutor._execute_cd2_via(
+                        cd2_client, src, dst, action, conflict, source_via, target_via, dir_cache
+                    )
+
+                # --- 旧版挂载路径模式（老任务兼容，行为不变） ---
                 target_parent = os.path.dirname(dst)
                 await FileExecutor._ensure_cd2_dir(cd2_client, target_parent, dir_cache)
 
@@ -263,14 +392,14 @@ class FileExecutor:
                     success, msg = await asyncio.to_thread(cd2_client.move_file, src, dst)
                 else: # cd2_copy
                     success, msg = await asyncio.to_thread(cd2_client.copy_file, src, dst)
-                
+
                 if not success:
                     if "already exists" in str(msg).lower() or "ALREADY_EXISTS" in str(msg):
                         logger.warning(f"目标位已存在: {os.path.basename(src)}")
                         return "skipped"
                     logger.error(f"{os.path.basename(src)} -> {msg}")
                     return f"cd2_failed: {msg}"
-                
+
                 logger.debug(f"{os.path.basename(src)} (API校验成功 ✅)")
                 return "success"
             
@@ -310,20 +439,22 @@ class FileExecutor:
                         return "hardlink_failed_cross_device" if e.errno == 18 else f"failed_{e.errno}"
             
             # --- Verification ---
-            if not await asyncio.to_thread(os.path.exists, dst):
-                logger.error(f"文件未出现在目标位置: {os.path.basename(dst)}")
-                return "failed_verification_not_found"
-            
-            dst_size = await asyncio.to_thread(os.path.getsize, dst)
-            if action != "move" and action != "link":
-                if src_size != dst_size:
-                    logger.error(f"大小不一致: {src_size} != {dst_size}")
-                    return f"failed_size_mismatch({src_size}!={dst_size})"
-            
-            stat_info = await asyncio.to_thread(os.stat, dst)
-            mode = oct(stat_info.st_mode)[-3:]
-            
-            audit_details = {"action": action, "src": src, "dst": dst, "size": f"{dst_size / 1024 / 1024:.2f} MB", "mode": mode, "status": "Verified"}
+            # 云目标没有本地 FS 视图，CD2 API 返回成功即认定成功
+            if target_via != "cd2":
+                if not await asyncio.to_thread(os.path.exists, dst):
+                    logger.error(f"文件未出现在目标位置: {os.path.basename(dst)}")
+                    return "failed_verification_not_found"
+
+                dst_size = await asyncio.to_thread(os.path.getsize, dst)
+                if action != "move" and action != "link" and src_size is not None:
+                    if src_size != dst_size:
+                        logger.error(f"大小不一致: {src_size} != {dst_size}")
+                        return f"failed_size_mismatch({src_size}!={dst_size})"
+
+                stat_info = await asyncio.to_thread(os.stat, dst)
+                mode = oct(stat_info.st_mode)[-3:]
+
+            audit_details = {"action": action, "src": src, "dst": dst, "status": "Verified", "via": f"{source_via}->{target_via}"}
             logger.debug(f"{action_label}成功: {os.path.basename(src)} (校验通过 ✅)")
             return "success"
         except Exception as e: 

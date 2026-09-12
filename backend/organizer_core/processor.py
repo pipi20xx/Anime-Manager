@@ -152,6 +152,27 @@ class FileProcessor:
                     await FileProcessor._log_detail(task_id, f"📝 关联文件哈希已保存: {related_file}")
 
     @staticmethod
+    def _resolve_cd2_client(v_path: str = "", cd2_client_id: str = "", via: str = "local"):
+        """
+        解析 CD2 客户端：显式 cd2_client_id > mount_path 前缀匹配 > 单实例兜底。
+        """
+        all_clients = ClientManager.get_all_clients()
+        cd2_configs = [c for c in all_clients if c.get('type') == 'cd2']
+
+        if cd2_client_id:
+            if any(c.get('id') == cd2_client_id for c in cd2_configs):
+                return ClientManager.get_client(cd2_client_id)
+
+        for c_conf in cd2_configs:
+            m_path = c_conf.get('mount_path')
+            if m_path and v_path and os.path.abspath(v_path).startswith(os.path.abspath(m_path)):
+                return ClientManager.get_client(c_conf.get('id'))
+
+        if len(cd2_configs) == 1:
+            return ClientManager.get_client(cd2_configs[0].get('id'))
+        return None
+
+    @staticmethod
     async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True, task_id: str = None) -> List[Dict[str, Any]]:
         """
         处理单个视频文件及其关联字幕
@@ -193,25 +214,29 @@ class FileProcessor:
         source_dir = task.get("source_dir")
         target_dir = task.get("target_dir")
         action_type = task.get("action_type", "move")
+        source_via = task.get("source_via", "local")
+        target_via = task.get("target_via", "local")
         action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制', 'hash_only': '仅记录哈希'}.get(action_type, action_type)
         conflict_mode = "overwrite" if task.get("overwrite_mode") else "skip"
-        
+
         root = os.path.dirname(v_path)
         v_file = os.path.basename(v_path)
         v_base, v_ext = os.path.splitext(v_file)
-        
+
         results = []
 
         try:
             # 寻找关联字幕和音轨 - 移至线程执行
+            # 云源文件通过 gRPC 无法高效枚举同名关联文件，跳过（关联文件仅本地源支持）
             related_files = []
-            try:
-                all_files_in_dir = await asyncio.to_thread(os.listdir, root)
-                for f in all_files_in_dir:
-                    f_ext = os.path.splitext(f)[1].lower()
-                    if f_ext in FileProcessor.RELATED_EXTS and f.startswith(v_base):
-                        related_files.append(f)
-            except Exception: pass # 目录可能不存在或无法读取
+            if source_via != "cd2":
+                try:
+                    all_files_in_dir = await asyncio.to_thread(os.listdir, root)
+                    for f in all_files_in_dir:
+                        f_ext = os.path.splitext(f)[1].lower()
+                        if f_ext in FileProcessor.RELATED_EXTS and f.startswith(v_base):
+                            related_files.append(f)
+                except Exception: pass # 目录可能不存在或无法读取
 
             # 识别
             # [NEW] 实时获取规则，确保预览中新增的规则立即生效
@@ -403,8 +428,9 @@ class FileProcessor:
                 plan_items.append((related_abs_old, related_abs_new))
 
             # [New] Calculate Hash before move (if enabled)
+            # 云源无法直接读文件计算哈希，强制跳过
             hash_result: Optional[HashResult] = None
-            if task.get("calculate_hash", False) and not dry_run:
+            if task.get("calculate_hash", False) and not dry_run and source_via != "cd2":
                 try:
                     _size_mb = os.path.getsize(v_path) / 1024 / 1024
                     await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file} ({_size_mb:.2f} MB)")
@@ -551,45 +577,56 @@ class FileProcessor:
 
             # Execute
             if not dry_run and action_type in ["cd2_move", "cd2_copy"]:
-                # --- Optimized CD2 Path ---
-                # 1. Get Client First
-                all_clients = ClientManager.get_all_clients()
-                cd2_client = None
-                for c_conf in all_clients:
-                    if c_conf.get('type') == 'cd2':
-                        m_path = c_conf.get('mount_path')
-                        if m_path and os.path.abspath(v_path).startswith(os.path.abspath(m_path)):
-                            cd2_client = ClientManager.get_client(c_conf.get('id'))
-                            break
-                
-                if not cd2_client:
-                    cd2_configs = [c for c in all_clients if c.get('type') == 'cd2']
-                    if len(cd2_configs) == 1:
-                        cd2_client = ClientManager.get_client(cd2_configs[0].get('id'))
+                # --- CD2 路径：按源/目标归属域 (via) 路由 ---
+                cd2_client = FileProcessor._resolve_cd2_client(
+                    v_path, task.get("cd2_client_id"),
+                    source_via if source_via == "cd2" else ("cd2" if target_via == "cd2" else "local")
+                )
 
                 if cd2_client:
-                    # 2. Ensure Directory using API
-                    target_parent = os.path.dirname(new_abs_path)
-                    await FileExecutor._ensure_cd2_dir(cd2_client, target_parent, context.get("dir_cache"))
-
-                    # 3. Batch Call
-                    batch_res = await FileExecutor._execute_cd2_batch(cd2_client, plan_items, action_type)
-                    if batch_res == "success":
-                        await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {v_file} → {new_abs_path}")
-                    elif batch_res == "skipped":
-                        await FileProcessor._log_detail(task_id, f"⏭️ CD2 {action_label}跳过（目标已存在）: {v_file}")
+                    if source_via == "cd2" or target_via == "cd2":
+                        # --- via 路由矩阵：逐项执行（视频 + 关联文件） ---
+                        batch_res = "success"
+                        any_skipped = False
+                        for src, dst in plan_items:
+                            res = await FileExecutor.execute_action(
+                                src, dst, action_type, conflict_mode,
+                                context.get("dir_cache"), source_via=source_via, target_via=target_via
+                            )
+                            if res == "success":
+                                await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {os.path.basename(src)}")
+                            elif res in ("skipped", "skipped_conflict"):
+                                any_skipped = True
+                                await FileProcessor._log_detail(task_id, f"⏭️ CD2 {action_label}跳过（目标已存在）: {os.path.basename(src)}")
+                            else:
+                                batch_res = res
+                                logger.error(f"❌ CD2 {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(res)} (状态码: {res})")
+                                await FileProcessor._log_detail(task_id, f"❌ CD2 {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(res)}", "ERROR")
+                        if batch_res == "success" and any_skipped:
+                            batch_res = "skipped"
                     else:
-                        await FileProcessor._log_detail(task_id, f"❌ CD2 {action_label}失败: {v_file} → {FileExecutor.get_status_message(batch_res)}", "ERROR")
+                        # --- 旧版挂载路径模式（源/目标均为本地挂载视图，行为不变） ---
+                        target_parent = os.path.dirname(new_abs_path)
+                        await FileExecutor._ensure_cd2_dir(cd2_client, target_parent, context.get("dir_cache"))
+                        batch_res = await FileExecutor._execute_cd2_batch(cd2_client, plan_items, action_type)
+                        if batch_res == "success":
+                            await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {v_file} → {new_abs_path}")
+                        elif batch_res == "skipped":
+                            await FileProcessor._log_detail(task_id, f"⏭️ CD2 {action_label}跳过（目标已存在）: {v_file}")
+                        else:
+                            await FileProcessor._log_detail(task_id, f"❌ CD2 {action_label}失败: {v_file} → {FileExecutor.get_status_message(batch_res)}", "ERROR")
                     for src, dst in plan_items:
                         # 如果整个批次跳过，则单个项标记为 skip
                         item_status = "error"
                         if batch_res == "success": item_status = "success"
                         elif batch_res == "skipped": item_status = "skip"
-                        
+
                         # 添加识别信息到结果中
                         result_item = {
                             "type": "item", "status": item_status,
-                            "source": src, "target": dst, "action": action_type, "msg": FileExecutor.get_status_message(batch_res)
+                            "source": src, "target": dst, "action": action_type,
+                            "source_via": source_via, "target_via": target_via,
+                            "msg": FileExecutor.get_status_message(batch_res)
                         }
                         # 只对视频文件添加识别信息
                         if src == v_path:
@@ -601,8 +638,8 @@ class FileProcessor:
                     
                     # STRM Linkage (only if batch succeeded)
                     if batch_res == "success":
-                        # [New] 清理源空目录 (向上递归)
-                        if task.get("clean_empty_dir", False) and action_type == "cd2_move":
+                        # [New] 清理源空目录 (向上递归) — 仅本地源
+                        if task.get("clean_empty_dir", False) and action_type == "cd2_move" and source_via == "local":
                             source_parent = os.path.dirname(v_path)
                             await FileExecutor._cleanup_empty_parents(source_parent, source_dir)
 
@@ -611,7 +648,7 @@ class FileProcessor:
 
                         # [Always Trigger] 使用模拟 Webhook 方式触发 STRM
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
-                        cd2_path = cd2_client._to_cd2_path(new_abs_path)
+                        cd2_path = new_abs_path if target_via == "cd2" else cd2_client._to_cd2_path(new_abs_path)
                         asyncio.create_task(FileProcessor._simulate_cd2_webhook(cd2_path))
                     
                     # [Record History] - 无论 success 还是 skipped 都保存历史记录
@@ -733,7 +770,9 @@ class FileProcessor:
                 # 添加识别信息到结果中
                 result_item = {
                     "type": "item", "status": "success" if v_res in ["success", "preview"] else "error",
-                    "source": src, "target": dst, "action": action_type, "msg": FileExecutor.get_status_message(v_res)
+                    "source": src, "target": dst, "action": action_type,
+                    "source_via": source_via, "target_via": target_via,
+                    "msg": FileExecutor.get_status_message(v_res)
                 }
                 # 只对视频文件添加识别信息
                 if src == v_path:

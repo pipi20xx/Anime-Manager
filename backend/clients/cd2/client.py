@@ -207,6 +207,12 @@ class CD2Client(BaseClient):
             return False, "Login failed"
         return self._file_browser.organize_rename(path, new_relative_path)
 
+    def walk_files(self, root: str, video_exts: List[str] = None, ignore_regex: List[str] = None) -> List[Dict[str, Any]]:
+        """递归遍历云目录（供整理任务扫描云源）"""
+        if not self.logged_in and not self.login():
+            return []
+        return self._file_browser.walk_files(root, video_exts=video_exts, ignore_regex=ignore_regex)
+
     def delete_paths(self, paths: List[str]) -> Tuple[bool, str]:
         if not self.logged_in and not self.login():
             return False, "Login failed"

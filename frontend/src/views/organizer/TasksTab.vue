@@ -49,6 +49,8 @@ const taskForm = reactive({
   rule_id: '',
   source_dir: '',
   target_dir: '',
+  source_via: 'local',
+  target_via: 'local',
   action_type: 'move',
   overwrite_mode: false,
   anime_priority: true,
@@ -77,6 +79,8 @@ function resetTaskForm() {
   taskForm.rule_id = ''
   taskForm.source_dir = ''
   taskForm.target_dir = ''
+  taskForm.source_via = 'local'
+  taskForm.target_via = 'local'
   taskForm.action_type = 'move'
   taskForm.overwrite_mode = false
   taskForm.anime_priority = true
