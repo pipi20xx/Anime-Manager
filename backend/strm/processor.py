@@ -114,6 +114,40 @@ class StrmProcessor:
             if await asyncio.to_thread(os.path.exists, target_file) and not overwrite_meta:
                 return {"status": "skipped", "message": "MetaExists", "rel_path": rel_path}
 
+            # CD2 gRPC 云源：元数据文件在云盘上，通过 CD2 下载接口流式取回（不依赖挂载）
+            if task_config.get("sync_mode") == "cd2_api":
+                try:
+                    from config_manager import ConfigManager as _CM
+                    from clients.manager import ClientManager as _CMgr
+                    _cfg = _CM.get_config()
+                    _cd2_conf = next((c for c in _cfg.get("download_clients", []) if c.get("type") == "cd2"), None)
+                    if not _cd2_conf:
+                        return {"status": "error", "message": "未找到已配置的 CD2 客户端"}
+                    _cd2_client = _CMgr.get_client(_cd2_conf.get("id"))
+                    if not _cd2_client:
+                        return {"status": "error", "message": "CD2 客户端初始化失败"}
+
+                    resp, _size = await asyncio.to_thread(_cd2_client._file_browser.open_download_stream, file_path)
+                    try:
+                        def _download_meta():
+                            with open(target_file, 'wb') as f:
+                                for chunk in resp.iter_content(chunk_size=256 * 1024):
+                                    if chunk:
+                                        f.write(chunk)
+                        await asyncio.to_thread(_download_meta)
+                    finally:
+                        await asyncio.to_thread(resp.close)
+
+                    if await asyncio.to_thread(os.path.getsize, target_file) <= 0:
+                        await asyncio.to_thread(os.remove, target_file)
+                        return {"status": "error", "message": "元数据下载内容为空"}
+
+                    logger.debug(f"[STRM] CD2 下载元数据: {os.path.basename(file_path)}")
+                    return {"status": "success", "message": "Copied Meta (CD2 Downloaded)", "rel_path": rel_path}
+                except Exception as ce:
+                    logger.error(f"[STRM] CD2 下载元数据失败: {os.path.basename(file_path)} - {ce}")
+                    return {"status": "error", "message": f"CD2 元数据下载失败: {ce}"}
+
             try:
                 # 使用 copyfile 仅复制内容
                 await asyncio.to_thread(shutil.copyfile, file_path, target_file)
