@@ -176,7 +176,7 @@ const actionTypeOptions = computed(() => {
     { title: '仅记录哈希', value: 'hash_only' },
   ]
   if (manualTask.source_via === 'cd2' || manualTask.target_via === 'cd2') {
-    return options.filter((o) => ['cd2_move', 'cd2_copy'].includes(o.value))
+    return options.filter((o) => ['cd2_move', 'cd2_copy', 'hash_only'].includes(o.value))
   }
   return options
 })

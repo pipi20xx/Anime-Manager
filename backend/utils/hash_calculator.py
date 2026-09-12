@@ -140,51 +140,128 @@ class HashCalculator:
         if not os.path.exists(file_path):
             logger.warning(f"[HashCalculator] 文件不存在: {file_path}")
             return None
-        
+
         if not os.path.isfile(file_path):
             logger.warning(f"[HashCalculator] 不是文件: {file_path}")
             return None
-        
+
         try:
             file_size = os.path.getsize(file_path)
             filename = os.path.basename(file_path)
             logger.debug(f"[HashCalculator] 开始计算: {filename} ({file_size / 1024 / 1024:.2f} MB)")
-            
-            sha1_hash = hashlib.sha1()
-            ed2k_block_hashes = []
-            
+
             with open(file_path, 'rb') as f:
-                while True:
-                    chunk = f.read(HashCalculator.ED2K_BLOCK_SIZE)
-                    if not chunk:
-                        break
-                    
-                    sha1_hash.update(chunk)
-                    ed2k_block_hashes.append(_md4_hash(chunk).digest())
-            
-            sha1 = sha1_hash.hexdigest()
-            ed2k = HashCalculator._calculate_ed2k_final(ed2k_block_hashes)
-            ed2k_link = HashCalculator._build_ed2k_link(filename, file_size, ed2k)
-            
-            logger.debug(f"[HashCalculator] 计算完成: {filename}")
-            logger.debug(f"[HashCalculator] SHA1: {sha1}")
-            logger.debug(f"[HashCalculator] ED2K: {ed2k_link}")
-            
-            return HashResult(
-                sha1=sha1,
-                ed2k=ed2k,
-                ed2k_link=ed2k_link,
-                file_size=file_size,
-                file_path=file_path,
-                filename=filename
-            )
-            
+                return HashCalculator.calculate_hashes_from_chunks(
+                    (chunk for chunk in iter(lambda: f.read(HashCalculator.ED2K_BLOCK_SIZE), b'')),
+                    file_size, filename,
+                )
         except PermissionError:
             logger.error(f"[HashCalculator] 权限不足: {file_path}")
             return None
         except Exception as e:
             logger.error(f"[HashCalculator] 计算失败: {file_path} | 错误: {e}", exc_info=True)
             return None
+
+    @staticmethod
+    def calculate_hashes_from_chunks(chunks_iter, file_size: int, filename: str) -> Optional[HashResult]:
+        """
+        共用核心：逐块（按 ED2K 块大小对齐）计算 SHA1 全文件 + 每块 MD4 → ED2K。
+        chunks_iter 需产出原始字节块（长度任意，内部按块边界聚合）。
+        """
+        try:
+            logger.debug(f"[HashCalculator] 开始计算: {filename} ({(file_size or 0) / 1024 / 1024:.2f} MB)")
+
+            sha1_hash = hashlib.sha1()
+            ed2k_block_hashes = []
+            block_buffer = bytearray()
+
+            def _feed(chunk: bytes):
+                nonlocal block_buffer
+                sha1_hash.update(chunk)
+                block_buffer.extend(chunk)
+                while len(block_buffer) >= HashCalculator.ED2K_BLOCK_SIZE:
+                    ed2k_block_hashes.append(_md4_hash(bytes(block_buffer[:HashCalculator.ED2K_BLOCK_SIZE])).digest())
+                    del block_buffer[:HashCalculator.ED2K_BLOCK_SIZE]
+
+            for chunk in chunks_iter:
+                if chunk:
+                    _feed(chunk)
+
+            if block_buffer:
+                ed2k_block_hashes.append(_md4_hash(bytes(block_buffer)).digest())
+
+            sha1 = sha1_hash.hexdigest()
+            ed2k = HashCalculator._calculate_ed2k_final(ed2k_block_hashes)
+            ed2k_link = HashCalculator._build_ed2k_link(filename, file_size, ed2k)
+
+            logger.debug(f"[HashCalculator] 计算完成: {filename}")
+            logger.debug(f"[HashCalculator] SHA1: {sha1}")
+            logger.debug(f"[HashCalculator] ED2K: {ed2k_link}")
+
+            return HashResult(
+                sha1=sha1,
+                ed2k=ed2k,
+                ed2k_link=ed2k_link,
+                file_size=file_size,
+                file_path="",
+                filename=filename
+            )
+        except Exception as e:
+            logger.error(f"[HashCalculator] 流式计算失败: {filename} | 错误: {e}", exc_info=True)
+            return None
+
+    @staticmethod
+    async def calculate_hashes_from_stream(response, file_size: int, filename: str) -> Optional[HashResult]:
+        """
+        从 HTTP 流式响应计算哈希（云源文件，不落盘）。
+        response: requests 的流式 Response（已带 stream=True）。
+        严格校验实际接收字节数与预期文件大小一致，防止错误内容/截断导致哈希错误。
+        """
+        from logger import log_audit
+        size_mb = (file_size or 0) / 1024 / 1024
+        log_audit("哈希", "开始流式计算", f"{filename} ({size_mb:.2f} MB)")
+
+        received = {'bytes': 0}
+
+        def _iter_chunks():
+            buffer = bytearray()
+            block = HashCalculator.ED2K_BLOCK_SIZE
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if not chunk:
+                    continue
+                received['bytes'] += len(chunk)
+                buffer.extend(chunk)
+                while len(buffer) >= block:
+                    yield bytes(buffer[:block])
+                    del buffer[:block]
+            if buffer:
+                yield bytes(buffer)
+
+        result = await asyncio.to_thread(
+            HashCalculator.calculate_hashes_from_chunks, _iter_chunks(), file_size, filename
+        )
+
+        # 数据完整性校验：拉取字节数必须与云端文件大小一致
+        if result and file_size and received['bytes'] != file_size:
+            logger.error(
+                f"[HashCalculator] 流式数据不完整: {filename} 预期 {file_size} 字节, 实际 {received['bytes']} 字节"
+            )
+            log_audit(
+                "哈希", "计算失败", filename, level="ERROR",
+                details=f"流式数据不完整: 预期 {file_size} 字节, 实际 {received['bytes']} 字节 (下载源返回内容异常)"
+            )
+            return None
+
+        if result:
+            log_audit(
+                "哈希", "计算完成", filename,
+                level="SUCCESS",
+                details=f"SHA1: {result.sha1} | ED2K: {result.ed2k} (流式)"
+            )
+        else:
+            log_audit("哈希", "计算失败", filename, level="ERROR")
+
+        return result
     
     @staticmethod
     async def calculate_hashes(file_path: str) -> Optional[HashResult]:

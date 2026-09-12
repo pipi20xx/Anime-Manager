@@ -304,6 +304,66 @@ class CD2FileBrowser:
             logger.error(f"[{conn.name}] CD2 识别重命名异常: {details}")
             return False, details
 
+    def get_cloud_file_size(self, cloud_path: str) -> int:
+        """
+        获取云文件大小。
+        注意: GetFileDetailProperties.totalSize 对单个文件返回的值不可靠（实测偏差），
+        因此优先用父目录列表 (GetSubFiles) 的 size，FileDetailProperties 仅作兜底。
+        """
+        conn = self.connection
+        try:
+            parent = posixpath.dirname(cloud_path) or "/"
+            name = posixpath.basename(cloud_path)
+            normalized = "/" + cloud_path.strip("/")
+            result = self.list_dir(parent)
+            for entry in result.get("entries", []):
+                if entry["path"] == normalized or entry["name"] == name:
+                    return int(entry.get("size", 0))
+        except Exception as e:
+            logger.debug(f"[{conn.name}] 列目录获取大小失败 {cloud_path}: {e}")
+
+        try:
+            req = conn.pb2.FileRequest(path=cloud_path)
+            props = conn.stub.GetFileDetailProperties(req, metadata=conn.get_metadata(), timeout=30)
+            if props and int(props.totalSize) > 0:
+                return int(props.totalSize)
+        except Exception as e:
+            logger.debug(f"[{conn.name}] GetFileDetailProperties 获取大小失败 {cloud_path}: {e}")
+        return 0
+
+    def open_download_stream(self, cloud_path: str):
+        """
+        获取云文件的 HTTP 下载流（GetDownloadUrlPath，优先云存储直链）。
+        返回 (stream_response, file_size)。使用后由调用方关闭。
+        """
+        import requests as _requests
+
+        conn = self.connection
+        req = conn.pb2.GetDownloadUrlPathRequest(
+            path=cloud_path, preview=False, lazy_read=False, get_direct_url=True
+        )
+        info = conn.stub.GetDownloadUrlPath(req, metadata=conn.get_metadata(), timeout=60)
+
+        headers = {}
+        if info.HasField("userAgent") and info.userAgent:
+            headers["User-Agent"] = info.userAgent
+        for k, v in info.additionalHeaders.items():
+            headers[k] = v
+
+        if info.HasField("directUrl") and info.directUrl:
+            url = info.directUrl
+        else:
+            url_path = (info.downloadUrlPath or "")
+            url_path = url_path.replace("{SCHEME}", "http").replace("{HOST}", conn.host).replace("{PREVIEW}", "False")
+            url = f"http://{conn.host}{url_path}"
+
+        resp = _requests.get(url, headers=headers, stream=True, timeout=(10, 60))
+        resp.raise_for_status()
+        file_size = int(resp.headers.get("Content-Length", 0) or 0)
+        if file_size <= 0:
+            file_size = self.get_cloud_file_size(cloud_path)
+        return resp, file_size
+
     def download_file(self, cloud_path: str, local_path: str) -> tuple:
         """
         从 CD2 下载文件到本地路径（免挂载）。

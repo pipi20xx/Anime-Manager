@@ -32,9 +32,9 @@ const actionTypeOptions = computed(() => {
     { title: 'CD2 复制', value: 'cd2_copy' },
     { title: '仅记录哈希', value: 'hash_only' },
   ]
-  // 任一端选择了 CD2 云盘：仅支持云操作模式
+  // 任一端选择了 CD2 云盘：仅支持云操作模式（hash_only 只读源文件，云源走流式计算，允许）
   if (props.taskForm.source_via === 'cd2' || props.taskForm.target_via === 'cd2') {
-    return options.filter((o) => ['cd2_move', 'cd2_copy'].includes(o.value))
+    return options.filter((o) => ['cd2_move', 'cd2_copy', 'hash_only'].includes(o.value))
   }
   return options
 })
@@ -341,10 +341,10 @@ const onFolderSelected = (path: string) => {
                   <v-switch v-model="taskForm.calculate_hash" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
                   <div>
                     <div class="switch-label">哈希计算</div>
-                    <div class="switch-desc">整理时计算 SHA1 和 ED2K</div>
+                    <div class="switch-desc">整理时计算 SHA1 和 ED2K（云源将通过 CD2 流式拉取全文件计算，不落盘但耗时与流量相当于完整下载）</div>
                   </div>
                 </div>
-                <div v-if="taskForm.calculate_hash && taskForm.action_type !== 'hash_only'" class="org-hash-warning">
+                <div v-if="taskForm.calculate_hash && taskForm.action_type !== 'hash_only' && taskForm.source_via !== 'cd2'" class="org-hash-warning">
                   ⚠️ 需要读取整个文件，云盘环境不建议开启
                 </div>
               </div>

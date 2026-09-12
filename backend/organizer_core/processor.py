@@ -173,6 +173,34 @@ class FileProcessor:
         return None
 
     @staticmethod
+    async def _calculate_hash_for(v_path: str, task: Dict[str, Any], source_via: str, task_id: str = None) -> Optional[HashResult]:
+        """
+        统一哈希计算入口：本地源读磁盘，云源通过 CD2 下载接口流式计算（不落盘）。
+        """
+        v_file = os.path.basename(v_path)
+        if source_via != "cd2":
+            return await HashCalculator.calculate_hashes(v_path)
+
+        try:
+            cd2_client = FileProcessor._resolve_cd2_client(v_path, task.get("cd2_client_id"), "cd2")
+            if not cd2_client:
+                await FileProcessor._log_detail(task_id, "❌ 云源哈希计算失败: 未找到 CD2 客户端", "ERROR")
+                return None
+
+            browser = cd2_client._file_browser
+            # 大小以下载响应的 Content-Length 为准（open_download_stream 内部已含回退逻辑）
+            resp, file_size = await asyncio.to_thread(browser.open_download_stream, v_path)
+            await FileProcessor._log_detail(task_id, f"🔢 云源流式计算哈希: {v_file} ({file_size / 1024 / 1024:.2f} MB)")
+            try:
+                return await HashCalculator.calculate_hashes_from_stream(resp, file_size, v_file)
+            finally:
+                await asyncio.to_thread(resp.close)
+        except Exception as e:
+            logger.error(f"云源哈希计算异常: {v_path} | {e}")
+            await FileProcessor._log_detail(task_id, f"❌ 云源哈希计算异常: {e}", "ERROR")
+            return None
+
+    @staticmethod
     async def organize_video_file(v_path: str, task: Dict[str, Any], context: Dict[str, Any] = None, dry_run: bool = True, task_id: str = None) -> List[Dict[str, Any]]:
         """
         处理单个视频文件及其关联字幕
@@ -428,15 +456,10 @@ class FileProcessor:
                 plan_items.append((related_abs_old, related_abs_new))
 
             # [New] Calculate Hash before move (if enabled)
-            # 云源无法直接读文件计算哈希，强制跳过
+            # 云源通过 CD2 下载接口流式计算（不落盘），本地源直接读磁盘
             hash_result: Optional[HashResult] = None
-            if task.get("calculate_hash", False) and not dry_run and source_via != "cd2":
-                try:
-                    _size_mb = os.path.getsize(v_path) / 1024 / 1024
-                    await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file} ({_size_mb:.2f} MB)")
-                except Exception:
-                    await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
-                hash_result = await HashCalculator.calculate_hashes(v_path)
+            if task.get("calculate_hash", False) and not dry_run:
+                hash_result = await FileProcessor._calculate_hash_for(v_path, task, source_via, task_id)
                 if hash_result:
                     await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
                     await FileProcessor._log_detail(task_id, f"🔢 ED2K: {hash_result.ed2k_link}")
@@ -448,12 +471,7 @@ class FileProcessor:
                 if not dry_run:
                     # hash_only 模式下始终计算哈希（不受 calculate_hash 开关限制）
                     if not hash_result:
-                        try:
-                            _size_mb = os.path.getsize(v_path) / 1024 / 1024
-                            await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file} ({_size_mb:.2f} MB)")
-                        except Exception:
-                            await FileProcessor._log_detail(task_id, f"🔢 开始计算文件哈希: {v_file}")
-                        hash_result = await HashCalculator.calculate_hashes(v_path)
+                        hash_result = await FileProcessor._calculate_hash_for(v_path, task, source_via, task_id)
                         if hash_result:
                             await FileProcessor._log_detail(task_id, f"🔢 SHA1: {hash_result.sha1}")
                             await FileProcessor._log_detail(task_id, f"🔢 ED2K: {hash_result.ed2k_link}")

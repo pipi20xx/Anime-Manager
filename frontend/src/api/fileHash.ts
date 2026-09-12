@@ -42,6 +42,8 @@ export const fileHashApi = {
   /** 计算单文件哈希并入库 */
   calculate: (body: {
     file_path: string
+    source_via?: string
+    client_id?: string
     tmdb_id?: string
     title?: string
     season?: number

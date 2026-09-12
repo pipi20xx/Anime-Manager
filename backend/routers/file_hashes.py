@@ -2,6 +2,8 @@ from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+import asyncio
+import os
 from sqlmodel import select, desc, func
 
 from database import db
@@ -198,6 +200,8 @@ async def get_file_hash_by_sha1(sha1_hash: str):
 
 class SingleFileHashRequest(BaseModel):
     file_path: str = Field(..., description="文件的绝对路径")
+    source_via: str = Field("local", description="路径归属域: local | cd2")
+    client_id: Optional[str] = Field(None, description="CD2 客户端 ID (source_via=cd2 时可选)")
     tmdb_id: Optional[str] = Field(None, description="TMDB ID")
     title: Optional[str] = Field(None, description="标题")
     season: Optional[int] = Field(None, description="季号")
@@ -223,16 +227,54 @@ async def calculate_single_file_hash(request: SingleFileHashRequest):
     对指定文件计算 SHA1 和 ED2K 哈希值，并按 ED2K 去重后存入数据库。
     支持同时传入识别结果信息（标题、季集等）一起写入。
     如果该文件的 ED2K 哈希已存在，则更新记录。
+    本地路径直接读文件；CD2 云路径通过下载接口流式计算（不落盘）。
     """
-    import os
-    if not os.path.exists(request.file_path):
-        raise HTTPException(status_code=404, detail=f"文件不存在: {request.file_path}")
-    if not os.path.isfile(request.file_path):
-        raise HTTPException(status_code=400, detail=f"路径不是文件: {request.file_path}")
+    import posixpath
 
-    hash_result = await HashCalculator.calculate_hashes(request.file_path)
-    if not hash_result:
-        raise HTTPException(status_code=500, detail="哈希计算失败，请检查文件权限或日志")
+    hash_result = None
+
+    if request.source_via == "cd2":
+        # --- CD2 云路径：流式计算 ---
+        try:
+            from config_manager import ConfigManager
+            from clients.manager import ClientManager
+            config = ConfigManager.get_config()
+            cd2_conf = next((c for c in config.get("download_clients", []) if c.get("type") == "cd2"), None)
+            if request.client_id:
+                cd2_conf = next((c for c in config.get("download_clients", [])
+                                 if c.get("type") == "cd2" and c.get("id") == request.client_id), cd2_conf)
+            if not cd2_conf:
+                raise HTTPException(status_code=400, detail="未找到已配置的 CD2 客户端")
+            cd2_client = ClientManager.get_client(cd2_conf.get("id"))
+            if not cd2_client:
+                raise HTTPException(status_code=400, detail="CD2 客户端初始化失败")
+
+            browser = cd2_client._file_browser
+            # 大小以下载响应的 Content-Length 为准（get_cloud_file_size 对单文件不可靠）
+            resp, file_size = await asyncio.to_thread(browser.open_download_stream, request.file_path)
+            try:
+                hash_result = await HashCalculator.calculate_hashes_from_stream(
+                    resp, file_size, posixpath.basename(request.file_path)
+                )
+            finally:
+                await asyncio.to_thread(resp.close)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"云源哈希计算失败: {e}")
+
+        if not hash_result:
+            raise HTTPException(status_code=500, detail="哈希计算失败，请检查日志")
+    else:
+        # --- 本地路径 ---
+        if not os.path.exists(request.file_path):
+            raise HTTPException(status_code=404, detail=f"文件不存在: {request.file_path}")
+        if not os.path.isfile(request.file_path):
+            raise HTTPException(status_code=400, detail=f"路径不是文件: {request.file_path}")
+
+        hash_result = await HashCalculator.calculate_hashes(request.file_path)
+        if not hash_result:
+            raise HTTPException(status_code=500, detail="哈希计算失败，请检查文件权限或日志")
 
     async with db.session_scope() as session:
         stmt = select(FileHash).where(FileHash.ed2k == hash_result.ed2k)

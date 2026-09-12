@@ -23,6 +23,8 @@ const props = defineProps<{
   loading: boolean
   isRenaming: boolean
   availableRules: any[]
+  /** 文件路径归属域: local | cd2（决定哈希计算通道） */
+  fileVia?: 'local' | 'cd2'
 }>()
 
 const emit = defineEmits<{
@@ -120,6 +122,7 @@ async function calculateHash() {
     const fr = props.data.final_result
     const data = await fileHashApi.calculate({
       file_path: props.file.path,
+      source_via: props.fileVia || 'local',
       tmdb_id: fr.tmdb_id && fr.tmdb_id !== 'N/A' ? String(fr.tmdb_id) : undefined,
       title: fr.title || undefined,
       season: fr.season !== undefined ? Number(fr.season) : undefined,

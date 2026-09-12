@@ -997,6 +997,7 @@ onMounted(() => loadEntries())
     :loading="isRecogLoading"
     :is-renaming="isRenaming"
     :available-rules="availableRules"
+    file-via="cd2"
     @recognize="(params: any) => recognizeFile(selectedFile, params)"
     @rename="handleRename"
     @repreview="handleRepreview"
