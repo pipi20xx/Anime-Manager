@@ -1,4 +1,5 @@
 import logging
+import posixpath
 from typing import Dict, Any, List
 
 from logger import log_audit
@@ -142,6 +143,101 @@ class CD2FileBrowser:
                                         metadata=conn.get_metadata(), timeout=15)
                 except Exception:
                     pass
+            return False, details
+
+    def ensure_dir(self, path: str) -> tuple:
+        """
+        逐级确认目录存在（GetSubFiles 检查 + CreateFolder 兜底，容忍"已存在"错误）。
+        参考 organizer executor._ensure_cd2_dir 的语义，但纯 gRPC 实现、不需要挂载。
+        """
+        conn = self.connection
+        normalized = "/" + (path or "").strip("/")
+        if normalized == "/":
+            return True, "Success"
+
+        parts = [p for p in normalized.split("/") if p]
+        current = ""
+        for part in parts:
+            parent = current or "/"
+            current = f"{current}/{part}"
+
+            exists = False
+            try:
+                req = conn.pb2.ListSubFileRequest(path=parent, forceRefresh=False)
+                for reply in conn.stub.GetSubFiles(req, metadata=conn.get_metadata(), timeout=30):
+                    for f in reply.subFiles:
+                        if f.name == part and (bool(f.isDirectory) or int(f.fileType) == 0):
+                            exists = True
+                            break
+                    if exists:
+                        break
+            except Exception as e:
+                logger.debug(f"[{conn.name}] 检查目录 {current} 失败，将尝试直接创建: {e}")
+
+            if exists:
+                continue
+
+            try:
+                req = conn.pb2.CreateFolderRequest(parentPath=parent, folderName=part)
+                resp = conn.stub.CreateFolder(req, metadata=conn.get_metadata(), timeout=60)
+                if not resp.result.success:
+                    err = resp.result.errorMessage or ""
+                    if "already exists" in err.lower() or "conflict" in err.lower():
+                        continue
+                    return False, f"创建目录 {current} 失败: {err}"
+            except Exception as e:
+                details = getattr(e, "details", None) or str(e)
+                return False, f"创建目录 {current} 失败: {details}"
+
+        return True, "Success"
+
+    def organize_rename(self, path: str, new_relative_path: str, conflict_policy: int = 1) -> tuple:
+        """
+        识别后的整理式重命名：目标相对路径可含子目录。
+        步骤（同 organizer executor 的 cd2_move 顺序）：
+        1. ensure_dir 创建目标子目录
+        2. 原位重命名为新文件名
+        3. 移动到目标子目录（无子目录变化时跳过）
+        返回 (success, final_path_or_error)
+        """
+        conn = self.connection
+        try:
+            source_dir = posixpath.dirname(path) or "/"
+            target_abs = posixpath.normpath(posixpath.join(source_dir, new_relative_path.strip("/")))
+            target_dir = posixpath.dirname(target_abs) or "/"
+            new_name = posixpath.basename(target_abs)
+
+            # 1. 逐级创建目标目录
+            ok, msg = self.ensure_dir(target_dir)
+            if not ok:
+                return False, msg
+
+            # 2. 原位重命名（名字相同则跳过）
+            current_path = path
+            if new_name != posixpath.basename(path):
+                ok, msg = self.rename(path, new_name)
+                if not ok:
+                    return False, msg
+                current_path = f"{source_dir.rstrip('/')}/{new_name}"
+
+            # 3. 移动到目标目录（目录未变化则跳过）
+            final_path = current_path
+            if target_dir != source_dir:
+                req = conn.pb2.MoveFileRequest(
+                    theFilePaths=[current_path],
+                    destPath=target_dir,
+                    conflictPolicy=_CONFLICT_POLICY.get(conflict_policy, "Rename"),
+                )
+                resp = conn.stub.MoveFile(req, metadata=conn.get_metadata(), timeout=120)
+                if not resp.success:
+                    return False, f"移动失败: {resp.errorMessage or '未知错误'}"
+                final_path = f"{target_dir.rstrip('/')}/{new_name}"
+
+            log_audit("CD2文件", "识别重命名", f"{path} -> {final_path}")
+            return True, final_path
+        except Exception as e:
+            details = getattr(e, "details", None) or str(e)
+            logger.error(f"[{conn.name}] CD2 识别重命名异常: {details}")
             return False, details
 
     def transfer_files(self, paths: List[str], dest_dir: str, action: str = "move", conflict_policy: int = 1) -> tuple:

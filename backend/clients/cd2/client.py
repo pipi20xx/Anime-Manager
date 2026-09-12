@@ -201,6 +201,12 @@ class CD2Client(BaseClient):
             return False, "Login failed"
         return self._file_browser.rename(path, new_name)
 
+    def organize_rename(self, path: str, new_relative_path: str) -> Tuple[bool, str]:
+        """识别后的整理式重命名：可含子目录，自动建目录+移动"""
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._file_browser.organize_rename(path, new_relative_path)
+
     def delete_paths(self, paths: List[str]) -> Tuple[bool, str]:
         if not self.logged_in and not self.login():
             return False, "Login failed"

@@ -8,8 +8,9 @@
  * 全部直接使用 CD2 内部路径（如 /115open/xxx）。
  */
 import { computed, onMounted, ref } from 'vue'
-import { cd2Api } from '@/api'
+import { cd2Api, recognitionApi, organizerApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import RecognitionModal from '../organizer/RecognitionModal.vue'
 
 defineOptions({ name: 'FilesTab' })
 
@@ -100,6 +101,7 @@ const menuAction = (action: string) => {
   if (!entry) return
   if (action === 'open') navigate(entry.path)
   else if (action === 'rename') openRenameModal(entry)
+  else if (action === 'recognize') recognizeFile(entry)
   else if (action === 'move') openTransferModal('move', entry)
   else if (action === 'copy') openTransferModal('copy', entry)
   else if (action === 'delete') deleteEntry(entry)
@@ -269,6 +271,108 @@ const runRemoteUpload = async (file: File, uploadId: string) => {
 
 const cancelUpload = () => {
   uploadCancelled.value = true
+}
+
+// ---------- 单文件识别 → 重命名（复用识别管线，重命名走 CD2 gRPC） ----------
+const showRecognitionModal = ref(false)
+const selectedFile = ref<any>(null)
+const recognitionData = ref<any>(null)
+const previewPath = ref('')
+const recognizingPath = ref('')
+const isRecogLoading = ref(false)
+const isRenaming = ref(false)
+const availableRules = ref<any[]>([])
+let rulesLoaded = false
+
+const loadRules = async () => {
+  if (rulesLoaded) return
+  try {
+    const config = await configApi.getConfig()
+    availableRules.value = config?.rename_rules || []
+    rulesLoaded = true
+  } catch {
+    // 规则加载失败不阻断识别，仅预览时提示
+  }
+}
+
+const recognizeFile = async (entry: any, forcedParams: any = null) => {
+  selectedFile.value = entry
+  recognitionData.value = null
+  previewPath.value = ''
+  loadRules()
+
+  // 无强制参数时只打开弹窗，由用户在弹窗内确认后识别
+  if (!forcedParams) {
+    showRecognitionModal.value = true
+    return
+  }
+
+  recognizingPath.value = entry.path
+  isRecogLoading.value = true
+  showRecognitionModal.value = true
+  try {
+    const payload = {
+      filename: entry.path,
+      forced_tmdb_id: forcedParams?.tmdb_id || undefined,
+      forced_type: forcedParams?.type || undefined,
+      forced_season: forcedParams?.season || undefined,
+      forced_episode: forcedParams?.episode || undefined,
+      anime_priority: forcedParams?.anime_priority,
+      offline_priority: forcedParams?.offline_priority,
+      bangumi_priority: forcedParams?.bangumi_priority,
+      bangumi_failover: forcedParams?.bangumi_failover,
+      series_fingerprint: forcedParams?.series_fingerprint,
+      batch_enhancement: forcedParams?.batch_enhancement,
+      force_filename: forcedParams?.force_filename,
+    }
+    const data = await recognitionApi.recognize(payload)
+    recognitionData.value = data
+    await handleRepreview(availableRules.value[0]?.id)
+  } catch (e: any) {
+    showError(e?.message || '识别出错')
+  } finally {
+    recognizingPath.value = ''
+    isRecogLoading.value = false
+  }
+}
+
+const handleRepreview = async (ruleId: string) => {
+  if (!recognitionData.value) return
+  try {
+    const previewData = await organizerApi.renamePreview({
+      rule_id: ruleId,
+      result_data: recognitionData.value,
+    })
+    if (previewData?.status === 'success') {
+      previewPath.value = previewData.new_path
+    } else {
+      previewPath.value = '预览失败: ' + (previewData?.message || '规则不匹配')
+    }
+  } catch {
+    previewPath.value = '预览失败'
+  }
+}
+
+const handleRename = async () => {
+  if (!selectedFile.value || !previewPath.value || previewPath.value.startsWith('预览失败')) {
+    showError('无效的预览路径')
+    return
+  }
+  // 完整预览路径交给后端：含子目录时自动逐级建目录并移动，纯文件名变化时原位重命名
+  isRenaming.value = true
+  try {
+    const res = await cd2Api.organizeRename({
+      path: selectedFile.value.path,
+      new_relative_path: previewPath.value,
+    })
+    success(`已整理至: ${res?.final_path || previewPath.value}`)
+    showRecognitionModal.value = false
+    await loadEntries(true)
+  } catch (e: any) {
+    showError(e?.message || '重命名失败')
+  } finally {
+    isRenaming.value = false
+  }
 }
 
 // ---------- 离线下载管理（弹框） ----------
@@ -536,6 +640,12 @@ onMounted(() => loadEntries())
           prepend-icon="mdi-folder-open-outline"
           title="打开"
           @click="menuAction('open')"
+        />
+        <v-list-item
+          v-if="!menuTarget.is_dir"
+          prepend-icon="mdi-head-cog-outline"
+          title="识别"
+          @click="menuAction('recognize')"
         />
         <v-list-item prepend-icon="mdi-pencil-outline" title="重命名" @click="menuAction('rename')" />
         <v-list-item prepend-icon="mdi-folder-move-outline" title="移动到..." @click="menuAction('move')" />
@@ -840,6 +950,20 @@ onMounted(() => loadEntries())
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 单文件识别弹窗（复用原文件浏览组件，重命名走 CD2 gRPC） -->
+  <RecognitionModal
+    v-model="showRecognitionModal"
+    :file="selectedFile"
+    :data="recognitionData"
+    :preview-path="previewPath"
+    :loading="isRecogLoading"
+    :is-renaming="isRenaming"
+    :available-rules="availableRules"
+    @recognize="(params: any) => recognizeFile(selectedFile, params)"
+    @rename="handleRename"
+    @repreview="handleRepreview"
+  />
 </template>
 
 <style scoped>

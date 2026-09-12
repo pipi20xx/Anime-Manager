@@ -215,6 +215,25 @@ async def rename_path(req: RenamePathRequest):
     return {"success": True, "message": "重命名成功"}
 
 
+class OrganizeRenameRequest(BaseModel):
+    path: str
+    new_relative_path: str
+    client_id: Optional[str] = None
+
+
+@router.post("/cd2/files/organize-rename", summary="识别后的整理式重命名（可含子目录）")
+async def organize_rename(req: OrganizeRenameRequest):
+    if not req.new_relative_path.strip():
+        raise HTTPException(status_code=400, detail="目标路径为空")
+
+    client = _get_cd2_client(req.client_id)
+    success, msg = await asyncio.to_thread(client.organize_rename, req.path, req.new_relative_path.strip("/"))
+    if not success:
+        log_audit("CD2文件", "识别重命名失败", f"{req.path}: {msg}", level="ERROR")
+        raise HTTPException(status_code=400, detail=msg)
+    return {"success": True, "final_path": msg}
+
+
 class DeletePathsRequest(BaseModel):
     paths: List[str]
     client_id: Optional[str] = None

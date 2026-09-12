@@ -45,6 +45,10 @@ export const cd2Api = {
   renamePath: (body: { path: string; new_name: string }) =>
     api.post<any>('/api/cd2/files/rename', body),
 
+  /** 识别后的整理式重命名（可含子目录，自动建目录+移动） */
+  organizeRename: (body: { path: string; new_relative_path: string }) =>
+    api.post<any>('/api/cd2/files/organize-rename', body),
+
   /** 删除文件/文件夹 */
   deletePaths: (body: { paths: string[] }) =>
     api.post<any>('/api/cd2/files/delete', body),
