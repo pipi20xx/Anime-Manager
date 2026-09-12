@@ -227,26 +227,26 @@ html.glass-theme-classic.glass-dark .seasonal-tab .v-field .v-icon {
 
 /* ================================================================
  * 8. 输入框 — outlined 变体实色边框 + 圆角
- *    与卡片同样的处理方式：直接用 border 强制覆盖，
- *    隐藏 Vuetify 内部的 outline 机制（其左侧圆角不受控）。
+ *    必须保留 Vuetify 的 .v-field__outline（不能 display:none）：
+ *    outlined 字段的浮动 label 渲染在 .v-field__outline__notch 内。
+ *    边框颜色通过 outline 的 currentColor 控制，
+ *    圆角由 .v-field 上的 border-radius 经 inherit 传导。
  * ================================================================ */
 
 /* 亮色：深色边框 */
 html.glass-theme-classic.glass-light .v-field--variant-outlined {
-  border: 1px solid rgba(0, 0, 0, 0.4) !important;
   border-radius: var(--am-field-radius) !important;
 }
-html.glass-theme-classic.glass-light .v-field--variant-outlined .v-field__outline {
-  display: none !important;
+html.glass-theme-classic.glass-light .v-field--variant-outlined:not(.v-field--focused) .v-field__outline {
+  color: rgba(0, 0, 0, 0.4) !important;
 }
 
 /* 暗色：浅色边框 */
 html.glass-theme-classic.glass-dark .v-field--variant-outlined {
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
   border-radius: var(--am-field-radius) !important;
 }
-html.glass-theme-classic.glass-dark .v-field--variant-outlined .v-field__outline {
-  display: none !important;
+html.glass-theme-classic.glass-dark .v-field--variant-outlined:not(.v-field--focused) .v-field__outline {
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
 /* focus 高亮 */
