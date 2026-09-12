@@ -1278,7 +1278,13 @@ class MonitorManager:
                     else:
                         is_stable = await StabilityChecker.wait_for_stability(file_path)
                         if not is_stable:
-                            logger.debug(f"[实时监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
+                            if not await asyncio.to_thread(os.path.exists, file_path):
+                                logger.warning(
+                                    f"[实时监控] 源文件不存在: {os.path.basename(file_path)} "
+                                    f"(路径: {file_path}) —— 若源目录为 CD2 云路径，请将同步模式切换为「CD2 云盘 (gRPC)」"
+                                )
+                            else:
+                                logger.debug(f"[实时监控] 文件不稳定或已消失: {os.path.basename(file_path)}")
                             queue.task_done()
                             continue
 
