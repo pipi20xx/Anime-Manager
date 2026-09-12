@@ -385,7 +385,7 @@ async def startup_event():
         startup_errors = []
         
         try:
-            from clients.cd2_helper import ensure_cd2_module
+            from clients.cd2.proto_loader import ensure_cd2_module
             await asyncio.to_thread(ensure_cd2_module)
         except Exception as e:
             logger.warning(f"CD2 预热跳过: {e}")
@@ -447,7 +447,7 @@ async def startup_event():
 
         try:
             from notification import notification_manager
-            from clients.cd2_monitor import CD2TransferMonitor
+            from clients.cd2 import CD2TransferMonitor
             
             config = ConfigManager.get_config()
             cd2_clients = [c for c in config.get("download_clients", []) if c.get("type") == "cd2"]

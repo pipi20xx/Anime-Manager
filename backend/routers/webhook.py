@@ -113,6 +113,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
         
         if not matched:
             await log_task(task_id_ref, f"⏭️ 未匹配任何任务: {filename}")
+            log_audit("CD2联动", "未匹配", f"⏭️ 未命中任何 STRM 任务: {filename}", details=f"路径: {file_path}", level="WARN")
     
     if processing_tasks:
         try:

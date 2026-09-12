@@ -16,7 +16,7 @@ from strm.processor import StrmProcessor
 from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
 from rss_core.scheduler import refresh_all_feeds, check_stalled_downloads
-from clients.cd2_monitor import CD2TransferMonitor
+from clients.cd2 import CD2TransferMonitor
 from clients.space_cleanup_task import run_space_cleanup
 from task_history import start_task, log_task, finish_task
 

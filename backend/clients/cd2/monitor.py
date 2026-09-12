@@ -2,16 +2,15 @@ import time
 import os
 import logging
 import threading
-import requests
 import grpc
 from typing import Dict, Any, Optional
 
 from config_manager import ConfigManager
-from .cd2 import CD2Client
-from .cd2_helper import ensure_cd2_module
+from .connection import CD2Connection
 from logger import log_audit
 
 logger = logging.getLogger("CD2Monitor")
+
 
 class CD2TransferMonitor:
     """
@@ -24,11 +23,8 @@ class CD2TransferMonitor:
     _watchdog_thread: Optional[threading.Thread] = None
 
     def __init__(self):
-        self.pb2, self.pb2_grpc = ensure_cd2_module()
+        self.conn: Optional[CD2Connection] = None
         self.last_scan_cache = {}
-        self.channel = None
-        self.stub = None
-        self.token = None
         self._refresh_config()
 
     def _refresh_config(self):
@@ -90,11 +86,11 @@ class CD2TransferMonitor:
                             if monitor_enabled is None:
                                 config = ConfigManager.get_config()
                                 monitor_enabled = config.get("enable_cd2_monitor", True)
-                            
+
                             if monitor_enabled and cls._instance.client_config:
                                 cls._thread = threading.Thread(
-                                    target=cls._instance._run_loop, 
-                                    name="CD2MonitorThread", 
+                                    target=cls._instance._run_loop,
+                                    name="CD2MonitorThread",
                                     daemon=True
                                 )
                                 cls._thread.start()
@@ -113,31 +109,29 @@ class CD2TransferMonitor:
 
     def _connect_and_login(self) -> bool:
         if not self.client_config: return False
-        
+
         try:
-            host = self.client_config.get("url", "").replace("http://", "").replace("https://", "").rstrip("/")
-            api_token = self.client_config.get("api_token", "")
-            user = self.client_config.get("username", "")
-            password = self.client_config.get("password", "")
+            if self.conn and self.conn.channel:
+                self.conn.channel.close()
 
-            if self.channel: self.channel.close()
-            
-            self.channel = grpc.insecure_channel(host)
-            self.stub = self.pb2_grpc.CloudDriveFileSrvStub(self.channel)
+            # 每次重连都新建连接，等价于原先的关闭旧 channel 后重建
+            self.conn = CD2Connection(self.client_config)
 
-            if api_token:
-                self.token = api_token
+            # 与原实现一致：先创建 channel/stub，再处理鉴权
+            if not self.conn._connect():
+                logger.error("CD2 监控连接失败: CD2 模块不可用")
+                return False
+
+            if self.conn.api_token:
+                self.conn.token = self.conn.api_token
+                self.conn.logged_in = True
                 logger.info("CD2 监控使用 API Token 登录成功")
                 return True
 
-            req = self.pb2.GetTokenRequest(userName=user, password=password)
-            resp = self.stub.GetToken(req, timeout=10)
-            
-            if resp.success:
-                self.token = resp.token
+            if self.conn.login():
                 return True
             else:
-                logger.error(f"CD2 监控登录失败: {resp.errorMessage}")
+                logger.error("CD2 监控登录失败")
                 return False
         except Exception as e:
             logger.error(f"CD2 监控连接异常: {e}")
@@ -149,21 +143,20 @@ class CD2TransferMonitor:
             logger.error("CD2 监控无法连接，将在 60 秒后重试...")
             time.sleep(60)
             # 如果第一次就失败，尝试递归或循环重试，这里简单点直接进入循环
-        
+
         retry_count = 0
 
         while not self._stop_event.is_set():
             try:
-                if not self.token or not self.stub:
+                if not self.conn or not self.conn.token or not self.conn.stub:
                     if not self._connect_and_login():
                         time.sleep(30)
                         continue
 
-                meta = [('authorization', f'Bearer {self.token}')]
-                req = self.pb2.GetUploadFileListRequest(itemsPerPage=100, pageNumber=0, filter="")
-                
+                req = self.conn.pb2.GetUploadFileListRequest(itemsPerPage=100, pageNumber=0, filter="")
+
                 # 获取任务列表
-                result = self.stub.GetUploadFileList(req, metadata=meta, timeout=10)
+                result = self.conn.stub.GetUploadFileList(req, metadata=self.conn.get_metadata(), timeout=10)
                 retry_count = 0 # 重置重试计数
 
                 current_scan_paths = set()
@@ -171,10 +164,10 @@ class CD2TransferMonitor:
                 for f in result.uploadFiles:
                     f_path = f.destPath
                     if not f_path: continue
-                    
+
                     # 记录当前存在的任务
                     current_scan_paths.add(f_path)
-                    
+
                     # 更新缓存状态
                     f_name = os.path.basename(f_path) if f_path else "Unknown"
                     self.last_scan_cache[f_path] = {
@@ -190,12 +183,12 @@ class CD2TransferMonitor:
                 for path in vanished_paths:
                     info = self.last_scan_cache[path]
                     last_status = info['status']
-                    
+
                     # 只有非错误状态的消失才算成功完成
                     if "Error" not in last_status and "Fatal" not in last_status and "Cancelled" not in last_status:
                         log_audit("CD2监控", "任务完成", f"检测到 CD2 任务完成: {info['name']}", details=f"路径: {path}")
                         self._send_webhook(path)
-                    
+
                     del self.last_scan_cache[path]
 
                 time.sleep(self.monitor_interval)
@@ -203,15 +196,15 @@ class CD2TransferMonitor:
             except grpc.RpcError as e:
                 # 忽略一些常规超时或断连，尝试重连
                 logger.debug(f"CD2 监控 RPC 波动: {e.code()}")
-                self.token = None # 触发重连
+                if self.conn: self.conn.token = None # 触发重连
                 time.sleep(5)
             except Exception as e:
                 log_audit("CD2监控", "异常", f"监控循环异常: {e}", level="ERROR")
-                self.token = None
+                if self.conn: self.conn.token = None
                 time.sleep(10)
 
-        if self.channel:
-            self.channel.close()
+        if self.conn and self.conn.channel:
+            self.conn.channel.close()
 
     def _send_webhook(self, cd2_path: str):
         """发送内部 Webhook 通知 (延迟 5 秒)"""
@@ -223,7 +216,7 @@ class CD2TransferMonitor:
             log_audit("CD2监控", "准备联动", f"文件传输已完成，5秒后触发 STRM 同步...", details=f"目标: {os.path.basename(cd2_path)}")
 
             await asyncio.sleep(5)
-            
+
             payload_data = [
                 {
                     "action": "create",
@@ -231,7 +224,7 @@ class CD2TransferMonitor:
                     "is_dir": "false"
                 }
             ]
-            
+
             try:
                 triggered = await process_cd2_notification(payload_data, "CD2监控")
                 if triggered == 0:

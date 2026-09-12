@@ -1,11 +1,8 @@
 import os
 import sys
 import requests
-import importlib
-import pkg_resources
 import hashlib
 import logging
-import bencodepy
 from grpc_tools import protoc
 
 logger = logging.getLogger(__name__)
@@ -17,7 +14,7 @@ def get_gen_dir():
     if os.path.exists("/app/data"):
         return "/app/data/cd2_gen"
     # 其次尝试相对于当前文件的路径
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     return os.path.join(base_dir, "data", "cd2_gen")
 
 GEN_DIR = get_gen_dir()
@@ -31,7 +28,7 @@ def ensure_cd2_module():
     确保 CD2 协议模块可用。支持持久化、Hash 校验和自动更新。
     """
     global _LOADED_MODULES, GEN_DIR, PROTO_FILE, HASH_FILE
-    
+
     if _LOADED_MODULES:
         return _LOADED_MODULES
 
@@ -99,17 +96,17 @@ def ensure_cd2_module():
             if not download_proto():
                 logger.error("无法获取协议文件且本地不存在，初始化中止。")
                 return None, None
-        
+
         compile_proto()
 
     # 4. 加载生成的模块
     if GEN_DIR not in sys.path:
         sys.path.insert(0, GEN_DIR)
-    
+
     try:
         for m in ['clouddrive_pb2', 'clouddrive_pb2_grpc']:
             if m in sys.modules: del sys.modules[m]
-            
+
         import clouddrive_pb2
         import clouddrive_pb2_grpc
         _LOADED_MODULES = (clouddrive_pb2, clouddrive_pb2_grpc)
@@ -140,7 +137,8 @@ def compile_proto():
     try:
         logger.info("正在执行 Protoc 编译...")
         try:
-            proto_include = pkg_resources.resource_filename('grpc_tools', '_proto')
+            from pkg_resources import resource_filename
+            proto_include = resource_filename('grpc_tools', '_proto')
         except:
             import grpc_tools
             proto_include = os.path.join(os.path.dirname(grpc_tools.__file__), '_proto')
@@ -153,23 +151,12 @@ def compile_proto():
             f'--grpc_python_out={GEN_DIR}',
             os.path.abspath(PROTO_FILE),
         ]
-        
+
         exit_code = protoc.main(cmd)
         if exit_code != 0:
             logger.error(f"Protoc 编译失败，退出码: {exit_code}")
         else:
             logger.info("Protoc 编译成功。")
-            
+
     except Exception as e:
         logger.error(f"编译 proto 过程中出现系统异常: {e}")
-
-def torrent_to_magnet(torrent_content: bytes) -> str:
-    try:
-        metadata = bencodepy.decode(torrent_content)
-        info = metadata[b'info']
-        info_encoded = bencodepy.encode(info)
-        digest = hashlib.sha1(info_encoded).hexdigest()
-        return f"magnet:?xt=urn:btih:{digest}"
-    except Exception as e:
-        logger.error(f"种子转磁力链接失败: {e}")
-        return ""
