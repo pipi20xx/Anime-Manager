@@ -93,6 +93,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/StrmView.vue'),
       },
 
+      // === CD2 管理 ===
+      {
+        path: '/cd2',
+        name: 'Cd2Manage',
+        component: () => import('@/views/cd2/Cd2View.vue'),
+      },
+
       // === Jackett 搜索 ===
       {
         path: '/jackett',

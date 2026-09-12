@@ -74,3 +74,27 @@ class CD2OfflineTasks:
             return False, f"RPC Error: {e.details()}"
         except Exception as e:
             return False, f"Exception: {str(e)}"
+
+    def add_urls(self, urls: str, to_folder: str) -> Tuple[bool, str]:
+        """
+        提交离线下载链接 (AddOfflineFiles)。
+        :param urls: 磁力链/ed2k 等，多个链接由 CD2 解析
+        :param to_folder: 目标目录 (CD2 内部路径)
+        """
+        conn = self.connection
+        try:
+            req = conn.pb2.AddOfflineFileRequest(
+                urls=urls,
+                toFolder=to_folder,
+                checkFolderAfterSecs=1
+            )
+            resp = conn.stub.AddOfflineFiles(req, metadata=conn.get_metadata(), timeout=60)
+
+            if resp.success:
+                log_audit("CD2", "添加任务", f"成功添加离线任务到: {to_folder}", details={"client": conn.name})
+                return True, "Task added successfully."
+            return False, f"CD2 Error: {resp.errorMessage}"
+        except grpc.RpcError as e:
+            return False, f"RPC Error: {e.details()}"
+        except Exception as e:
+            return False, f"Exception: {str(e)}"

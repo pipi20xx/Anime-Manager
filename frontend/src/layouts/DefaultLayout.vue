@@ -80,6 +80,7 @@ const navGroups = [
       { title: '追剧日历', icon: 'mdi-calendar-month-outline', to: '/calendar' },
       { title: '资源搜索', icon: 'mdi-magnify-scan', to: '/jackett' },
       { title: '文件浏览', icon: 'mdi-file-tree-outline', to: '/files' },
+      { title: 'CD2 管理', icon: 'mdi-cloud-cog-outline', to: '/cd2' },
       { title: 'AI 实验室', icon: 'mdi-robot-outline', to: '/ai-lab' },
     ],
   },

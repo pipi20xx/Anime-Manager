@@ -57,7 +57,7 @@ __version__ = _get_version()
 # Import Routers
 from routers import (
     recognition, organizer, cache, strm, config,
-    system, clients, rss, subscriptions, tmdb, bangumi, webhook, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, assistant, sytmdb, file_hashes, appearance, tmdb_blocklist
+    system, clients, rss, subscriptions, tmdb, bangumi, webhook, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, assistant, sytmdb, file_hashes, appearance, tmdb_blocklist, cd2
 )
 
 app = FastAPI(
@@ -84,6 +84,7 @@ app.include_router(explore.router)
 app.include_router(bangumi.router)
 app.include_router(sytmdb.router, prefix="/api")
 app.include_router(clients.router, prefix="/api")
+app.include_router(cd2.router, prefix="/api")
 app.include_router(rss.router, prefix="/api")
 app.include_router(subscriptions.router, prefix="/api")
 app.include_router(priority.router, prefix="/api")

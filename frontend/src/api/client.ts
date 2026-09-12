@@ -67,6 +67,9 @@ export async function apiFetch<T>(
   if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
     if (body instanceof FormData) {
       config.body = body
+    } else if (body instanceof Blob || body instanceof ArrayBuffer || typeof body === 'string') {
+      // 原始字节/文本体：透传，调用方自行指定 Content-Type
+      config.body = body
     } else {
       config.body = JSON.stringify(body)
     }

@@ -6,6 +6,10 @@ from clients.base_client import BaseClient
 from .connection import CD2Connection
 from .file_ops import CD2FileOps
 from .offline import CD2OfflineTasks
+from .task_manager import CD2TaskManager
+from .file_browser import CD2FileBrowser
+from .server_info import CD2ServerInfo
+from .remote_upload import RemoteUploadManager
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +30,9 @@ class CD2Client(BaseClient):
         self._file_ops.set_config(client_config)
         self._offline = CD2OfflineTasks(self._conn)
         self._offline.set_config(client_config)
+        self._task_manager = CD2TaskManager(self._conn)
+        self._file_browser = CD2FileBrowser(self._conn)
+        self._server_info = CD2ServerInfo(self._conn)
 
     # ---- 对外保持兼容的属性（原实现直接挂在实例上） ----
     @property
@@ -148,6 +155,86 @@ class CD2Client(BaseClient):
 
     def delete_torrent(self, torrent_hash: str, delete_files: bool = False) -> bool:
         return False
+
+    # ---- 种子（离线）任务管理，委托 CD2TaskManager（按 CD2 路径操作） ----
+    def list_offline_tasks(self, path: str) -> Dict[str, Any]:
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed", "tasks": [], "quota": {}, "total": 0}
+        result = self._task_manager.list_tasks(path)
+        if result.get("success"):
+            result["quota"] = self._task_manager.get_quota(path)
+        return result
+
+    def remove_offline_tasks(self, info_hashes: List[str], path: str, delete_files: bool = False) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._task_manager.remove_tasks(info_hashes, path, delete_files)
+
+    def restart_offline_task(self, info_hash: str, url: str, parent_id: str, path: str) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._task_manager.restart_task(info_hash, url, parent_id, path)
+
+    def clear_offline_tasks(self, filter_code: int, path: str, delete_files: bool = False) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._task_manager.clear_tasks(filter_code, path, delete_files)
+
+    def add_offline_urls(self, urls: str, to_folder: str) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._offline.add_urls(urls, to_folder)
+
+    # ---- 文件浏览与文件操作（CD2 内部路径），委托 CD2FileBrowser ----
+    def browse_files(self, path: str = "/", force_refresh: bool = False) -> Dict[str, Any]:
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed", "entries": [], "total": 0}
+        return self._file_browser.list_dir(path, force_refresh)
+
+    def create_folder(self, parent_path: str, name: str) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._file_browser.create_folder(parent_path, name)
+
+    def rename_path(self, path: str, new_name: str) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._file_browser.rename(path, new_name)
+
+    def delete_paths(self, paths: List[str]) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._file_browser.delete_files(paths)
+
+    def transfer_paths(self, paths: List[str], dest_dir: str, action: str = "move", conflict_policy: int = 1) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._file_browser.transfer_files(paths, dest_dir, action, conflict_policy)
+
+    def upload_file(self, parent_path: str, file_name: str, data: bytes) -> Tuple[bool, str]:
+        if not self.logged_in and not self.login():
+            return False, "Login failed"
+        return self._file_browser.upload_file(parent_path, file_name, data)
+
+    def get_server_info(self) -> Dict[str, Any]:
+        if not self.logged_in and not self.login():
+            return {"running": {}, "tasks": {}, "system": {}}
+        return self._server_info.snapshot()
+
+    # ---- 远程上传（Remote Upload 协议），委托 RemoteUploadManager ----
+    def start_remote_upload(self, path: str, file_name: str, size: int) -> Dict[str, Any]:
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed"}
+        return RemoteUploadManager.get_instance().start(self._conn, path, file_name, size)
+
+    def remote_upload_next(self, upload_id: str) -> Dict[str, Any]:
+        return RemoteUploadManager.get_instance().next_request(upload_id)
+
+    def remote_upload_data(self, upload_id: str, request_id: str, data: bytes) -> Dict[str, Any]:
+        return RemoteUploadManager.get_instance().submit_data(upload_id, request_id, data)
+
+    def remote_upload_cancel(self, upload_id: str) -> Dict[str, Any]:
+        return RemoteUploadManager.get_instance().cancel(upload_id)
 
     async def close_async(self):
         """关闭异步连接"""

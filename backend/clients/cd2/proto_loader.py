@@ -133,6 +133,64 @@ def download_proto():
         logger.error(f"下载协议文件失败: {e}")
         return False
 
+def get_proto_info() -> dict:
+    """获取本地协议文件的版本信息，供 CD2 管理页展示"""
+    info = {
+        "gen_dir": GEN_DIR,
+        "proto_exists": os.path.exists(PROTO_FILE),
+        "hash": None,
+        "updated_at": None,
+        "pb2_exists": os.path.exists(os.path.join(GEN_DIR, "clouddrive_pb2.py")),
+        "pb2_grpc_exists": os.path.exists(os.path.join(GEN_DIR, "clouddrive_pb2_grpc.py")),
+        "loaded": _LOADED_MODULES is not None,
+    }
+    if info["proto_exists"]:
+        try:
+            with open(PROTO_FILE, "r", encoding="utf-8") as f:
+                info["hash"] = hashlib.md5(f.read().encode("utf-8")).hexdigest()
+            info["updated_at"] = int(os.path.getmtime(PROTO_FILE))
+        except Exception as e:
+            logger.error(f"读取协议文件信息失败: {e}")
+    return info
+
+
+def force_update_proto() -> dict:
+    """
+    强制从官网下载最新协议并重新编译加载（无视本地 hash 比对）。
+    已存在的客户端实例持有旧 pb2 引用仍可继续使用，新实例使用新模块。
+    """
+    global _LOADED_MODULES
+    logger.info("手动触发 CD2 协议强制更新...")
+
+    if not download_proto():
+        return {"success": False, "message": "从官网下载 clouddrive.proto 失败，请检查网络"}
+
+    compile_proto()
+
+    pb2_path = os.path.join(GEN_DIR, "clouddrive_pb2.py")
+    pb2_grpc_path = os.path.join(GEN_DIR, "clouddrive_pb2_grpc.py")
+    if not os.path.exists(pb2_path) or not os.path.exists(pb2_grpc_path):
+        return {"success": False, "message": "Protoc 编译失败，未生成 py 文件"}
+
+    if GEN_DIR not in sys.path:
+        sys.path.insert(0, GEN_DIR)
+
+    try:
+        for m in ['clouddrive_pb2', 'clouddrive_pb2_grpc']:
+            if m in sys.modules:
+                del sys.modules[m]
+
+        import clouddrive_pb2
+        import clouddrive_pb2_grpc
+        _LOADED_MODULES = (clouddrive_pb2, clouddrive_pb2_grpc)
+        log_msg = "CD2 协议已强制更新并重新加载 ✅"
+        logger.info(log_msg)
+        return {"success": True, "message": log_msg, "hash": get_proto_info().get("hash")}
+    except Exception as e:
+        logger.error(f"强制更新后重新加载 CD2 协议模块失败: {e}")
+        return {"success": False, "message": f"重新加载模块失败: {e}"}
+
+
 def compile_proto():
     try:
         logger.info("正在执行 Protoc 编译...")
