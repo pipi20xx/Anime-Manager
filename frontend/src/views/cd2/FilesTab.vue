@@ -276,11 +276,12 @@ const cancelUpload = () => {
 
 // ---------- 手动整理（源自动为当前 CD2 云目录） ----------
 const showManualModal = ref(false)
-const openManualOrganize = () => {
+const openManualOrganize = async () => {
   if (currentPath.value === '/') {
     showError('请先进入要整理的目录（根目录无法作为整理源）')
     return
   }
+  await loadRules()
   showManualModal.value = true
 }
 
@@ -543,7 +544,10 @@ const confirmDeleteTask = async () => {
   }
 }
 
-onMounted(() => loadEntries())
+onMounted(() => {
+  loadEntries()
+  loadRules()
+})
 </script>
 
 <template>
