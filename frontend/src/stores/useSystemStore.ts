@@ -5,7 +5,7 @@
  * 内置心跳检测（30s ping）和断线重连后自动 re-fetch。
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { ProgressData } from '@/types'
 
 // ===== 模块级单例：事件处理器注册表 =====
@@ -28,6 +28,8 @@ export const useSystemStore = defineStore('system', () => {
   let retryCount = 0
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null
   let lastMessageTime = Date.now()
+  /** 主动断开标志：disconnect() 置位，阻止 onclose 触发重连 */
+  let intentionalClose = false
 
   // --- 登录状态 ---
   const isLoggedIn = ref(!!(localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')))
@@ -106,8 +108,11 @@ export const useSystemStore = defineStore('system', () => {
       }
     }
 
-    logSocket.onclose = () => {
+    logSocket.onclose = (event) => {
       logSocket = null
+      if (intentionalClose) return
+      // 鉴权失败，重试无意义，等待重新登录后由 watch(isLoggedIn) 触发重连
+      if (event.code === 4401) return
       if (isLoggedIn.value) {
         scheduleLogReconnect()
       }
@@ -141,6 +146,7 @@ export const useSystemStore = defineStore('system', () => {
   // --- WebSocket 方法 ---
   function connect() {
     if (socket) return
+    intentionalClose = false
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.host
@@ -202,10 +208,13 @@ export const useSystemStore = defineStore('system', () => {
       }
     }
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       isConnected.value = false
       socket = null
       stopHeartbeat()
+      if (intentionalClose) return
+      // 鉴权失败，重试无意义，等待重新登录后由 watch(isLoggedIn) 触发重连
+      if (event.code === 4401) return
       if (isLoggedIn.value) {
         scheduleReconnect()
       }
@@ -217,6 +226,7 @@ export const useSystemStore = defineStore('system', () => {
   }
 
   function disconnect() {
+    intentionalClose = true
     if (socket) {
       socket.close()
       socket = null
@@ -270,6 +280,17 @@ export const useSystemStore = defineStore('system', () => {
     username.value = ''
     disconnect()
   }
+
+  // --- 登录状态驱动 WS 生命周期 ---
+  // 任何路径改变登录状态（登录页、2FA、外部 token）都会自动连接/断开，
+  // 不再依赖各处显式调用 connect()/disconnect()
+  watch(isLoggedIn, (loggedIn) => {
+    if (loggedIn) {
+      connect()
+    } else {
+      disconnect()
+    }
+  })
 
   return {
     isConnected,

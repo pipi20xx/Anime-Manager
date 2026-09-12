@@ -27,6 +27,11 @@ async function handleLogin() {
   loading.value = true
   try {
     const res = await authApi.login(formValue)
+    // 2FA pending token 不能当正式 token 使用，否则后续所有请求和 WS 都会 401
+    if (res.status === '2fa_required') {
+      showError('该账号已启用两步验证，请输入验证码后登录')
+      return
+    }
     systemStore.loginSuccess(res.access_token, res.username)
     systemStore.connect()
     success('登录成功')
