@@ -1,6 +1,6 @@
 # 🌸 番剧管家 (Anime Manager)
 
-[![Version](https://img.shields.io/badge/Version-3.0.0-blue?style=flat-square)](./VERSION)
+[![Version](https://img.shields.io/badge/Version-3.3.4-blue?style=flat-square)](./VERSION)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Vue3](https://img.shields.io/badge/Frontend-Vue%203-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![Vuetify](https://img.shields.io/badge/UI-Vuetify%204-1867C0?style=flat-square&logo=vuetify)](https://vuetifyjs.com/)
@@ -19,6 +19,8 @@
 - **多层识别架构**: 纯净识别内核（`recognition_engine`）、数据适配层（`data_provider`）、业务编排层（`recognition`）三层解耦设计
 - **多数据源集成**: 深度集成 TMDB、Bangumi 及 PostgreSQL 离线元数据中心
 - **AI 辅助纠错**: 引入 AI 辅助逻辑，提升识别准确率
+- **别名审核**: 模糊命中时自动拉取 TMDB 别名表复核重排，降低中文标题错误匹配
+- **特权标题剥离季号**: 特权标题自动剥离尾部季号（如 `Slime300 S13` → 标题 + 季数），避免搜索词跨季漂移
 - **Anitopy 解析**: 内置 Anitopy 动漫文件名解析器，精准提取标题、集数、制作组等信息
 - **TMDB 黑名单**: 支持 TMDB 条目黑名单，避免错误匹配
 - **识别日志追踪**: 完整的识别流程记录，支持查看和重试
@@ -35,8 +37,11 @@
 - **Jackett 集成**: 内置 [Jackett](https://github.com/Jackett/Jackett) 客户端，支持索引站资源搜索与统一管理
 
 ### 📂 自动化文件整理
-- **多种整理模式**: 移动、复制、软链接、硬链接
+- **多种整理模式**: 移动、复制、软链接、硬链接、CD2 云端移动/复制
+- **免挂载云整理**: 源目录支持通过 CD2 gRPC 免挂载扫描与整理云盘文件
+- **CD2 云端单文件识别**: 云盘文件可直接识别并整理式重命名
 - **规范化重命名**: 自动重组为 `Title/Season N/S01E01.mp4` 结构
+- **目录浏览适配**: 手动整理支持目录浏览选择，单文件亦可直接识别
 - **后台任务**: 支持后台异步执行整理任务
 - **文件浏览器**: 内置文件浏览器，可视化选择源目录与目标目录
 - **整理历史**: 完整的整理操作记录，支持失败分析与重试
@@ -44,18 +49,31 @@
 ### 🗄️ STRM 生成引擎
 - **异步并行扫描**: 生产者-消费者模型，快速扫描大量文件
 - **全自动清理**: 智能比对源端与目标端，自动同步增删
-- **CD2 集成**: 支持 CloudDrive2 文件索引与同步
+- **CD2 gRPC 模式**: STRM 任务支持 `cd2_api` 同步模式，直连 CloudDrive2 gRPC 接口并发扫描云端目录，**无需本地挂载**
+- **CD2 集成**: 支持 CloudDrive2 文件索引与目录树同步，直链生成与下载流兜底
 - **树形同步**: 基于目录树的增量同步管理
+- **传输监控联动**: CD2 传输完成后自动触发 STRM 增量同步
 - **元数据透传**: 支持 NFO、图片等关联文件自动同步
 - **任务管理**: 创建、预览、执行 STRM 同步任务
 
+### ☁️ CloudDrive2 深度集成 (gRPC)
+- **模块化 gRPC 客户端**: 连接认证、文件浏览、文件操作、离线下载、传输监控、Remote Upload 按职责拆分，同步/异步双通道
+- **自动 proto 管理**: 自动从 CloudDrive2 官网下载 `clouddrive.proto`、MD5 校验并动态编译，支持强制更新与产物状态查看
+- **双认证方式**: 支持账号密码登录与 API Token 直连
+- **云端文件浏览器**: 内置 CD2 云盘文件管理，支持浏览、上传、重命名、移动复制、删除
+- **云端单文件识别**: 支持对 CD2 云端文件直接识别并执行整理式重命名（自动建目录 + 移动，带冲突策略）
+- **免挂载云整理**: 整理任务可走 CD2 API：云→云纯 gRPC 批量操作、云→本地直链下载、本地→云 Remote Upload gRPC 双向流分块上传
+- **离线下载管理**: CD2 离线下载任务列表/配额/删除/清空/重启，种子文件自动转磁力推送
+- **传输监控**: 后台守护线程轮询上传任务，完成后自动联动 STRM 同步与通知
+- **云端哈希计算**: 通过 CD2 API 流式取流直接计算 SHA1/ED2K，无需落盘、无需挂载
+
 ### 🔗 Webhook 回调
 - **Emby**: 接收媒体库播放和扫描事件，支持 Emby 媒体库索引同步
-- **CloudDrive2**: 文件变动自动触发整理，CD2 传输监控
+- **CloudDrive2**: 文件变动通知自动触发 STRM 同步与整理，配合传输监控实现全链路自动化
 - **自动化联动**: 媒体库更新后自动触发识别和整理
 
 ### 📊 数据中心
-- **离线元数据**: PostgreSQL 存储全量 TMDB 元数据
+- **离线元数据**: PostgreSQL 存储全量 TMDB 元数据，支持按年份区间/媒体类型/流派/单条等条件后台全量刷新
 - **用户映射**: 支持流派、公司、关键词、语言、国家等自定义映射
 - **二级分类**: 灵活的元数据分类规则（Classifier）
 - **快速搜索**: 基于索引的模糊搜索
@@ -68,7 +86,9 @@
 - **今日总结**: 每日推送今日更新汇总
 
 ### 🔧 系统管理
-- **多下载客户端**: 支持 qBittorrent、CloudDrive2 等多种下载器
+- **多下载客户端**: 支持 qBittorrent、CloudDrive2 等多种下载器；qBittorrent 5.2.0+ 支持 API Key 免密认证
+- **磁盘空间清理**: 按磁盘占用阈值规则自动清理低价值种子，支持保护标签/分类/最小做种数，清理记录写入任务历史并推送通知
+- **CD2 管理中心**: 独立的 CD2 管理页面（文件浏览、传输监控、gRPC 协议管理）
 - **日志控制台**: WebSocket 实时推送系统日志
 - **通知推送**: 规范化分层通知系统（数据层 / 渲染层 / 发送层），覆盖下载、整理、订阅、STRM、系统等全事件通知，Telegram 推送与 Bot 交互
 - **定时任务**: 基于 APScheduler 的后台定时任务调度
@@ -89,7 +109,8 @@
 - **双因素认证**: 支持 TOTP 二步验证 (2FA)
 - **会话管理**: 多设备登录管理，支持强制下线
 - **API Token**: 支持外部 API 访问控制
-- **API 审计**: 所有 API 请求自动记录审计日志
+- **API 审计**: 所有 API 请求自动记录审计日志（敏感字段脱敏）
+- **SSRF 防护**: 出站 URL 安全校验，阻止私网/环回/保留地址探测
 
 ### 💓 健康检查
 - **文件监控**: 监控本地文件是否存在、可读
@@ -114,16 +135,17 @@
 - **TMDB 详情**: 支持查看 TMDB 条目与人物详情
 
 ### 🎨 外观定制
-- **主题系统**: 支持自定义主题配色
+- **主题系统**: 支持自定义主题配色与经典主题
+- **壁纸定制**: 支持自定义壁纸设置
 - **实例定制**: 自定义实例名称、图标等
-- **页面定制**: 灵活的页面级外观配置
+- **页面定制**: 灵活的页面级外观配置（圆角、阴影、边框等）
 - **PWA 支持**: 可安装为渐进式 Web 应用
 
 ### 🌐 外部控制
 - **API 接口**: 完整的 RESTful API
 - **Token 认证**: 支持 Bearer Token 认证
 - **Webhook**: 支持外部系统回调
-- **文件哈希**: 支持文件哈希校验
+- **文件哈希库**: ED2K/SHA1 哈希计算与查询（支持 CD2 云端流式计算），支持标题批量同步数据库、S0 特别篇修正与按筛选范围重新识别，供桌面工具与油猴脚本调用
 
 ---
 
@@ -138,15 +160,16 @@
 - **File Monitor**: Watchdog
 - **Recognition**: 自研识别内核 + Anitopy + AI Integration
 - **Auth**: JWT (python-jose) + bcrypt + pyotp (2FA)
-- **gRPC**: CloudDrive2 客户端通信
+- **gRPC**: grpcio + protobuf，CloudDrive2 客户端通信（proto 自动下载编译，同步/异步双通道，Remote Upload 双向流上传）
 - **WebSocket**: 原生 FastAPI WebSocket + asyncio.Queue 发布-订阅模式，支持心跳检测与断线重连
 - **Notification**: 分层通知架构（数据层 / 渲染层 / 发送层），Telegram Bot API 推送，事件驱动与可扩展设计
 
 ### 前端 (Frontend)
-- **Framework**: Vue 3 (Composition API) + TypeScript
-- **Bundler**: Vite 8
-- **UI/UX**: Vuetify 4 组件库 + MDI 图标，Liquid Glass 流动玻璃设计语言，亮色/暗色主题
+- **Framework**: Vue 3 (Composition API) + TypeScript + Vue Router 5
+- **Bundler**: Vite 8 (Rolldown)
+- **UI/UX**: Vuetify 4 组件库 + MDI 图标，Liquid Glass 流动玻璃设计语言（three.js 玻璃拟态渲染引擎），亮色/暗色主题
 - **State**: Pinia 4
+- **i18n**: vue-i18n 11 国际化支持
 - **PWA**: vite-plugin-pwa 渐进式 Web 应用支持
 - **Markdown**: marked 文档渲染支持
 - **Auto Import**: unplugin-auto-import 自动导入 Vue/Router/Pinia/VueUse API
@@ -342,6 +365,7 @@ Anime-Manager/
 │   ├── init_user.py                # 初始化默认用户
 │   ├── migrate_subs.py             # 订阅数据迁移
 │   ├── entrypoint.sh               # Docker 入口脚本
+│   ├── url_guard.py                # 出站 URL 安全校验 (SSRF 防护)
 │   ├── task_history.py             # 任务历史管理
 │   ├── telegram_bot.py             # Telegram Bot 交互（轮询模式）
 │   ├── subscription_notifier.py    # 订阅播出提醒
@@ -376,6 +400,7 @@ Anime-Manager/
 │   │   ├── priority.py             # 优先级规则
 │   │   ├── explore.py              # 探索发现
 │   │   ├── clients.py              # 下载客户端管理
+│   │   ├── cd2.py                  # CD2 管理（文件浏览/传输监控/离线任务/Remote Upload/协议管理）
 │   │   ├── config.py               # 系统配置
 │   │   ├── system.py               # 系统管理
 │   │   ├── task_history.py         # 任务历史
@@ -429,7 +454,7 @@ Anime-Manager/
 │   ├── organizer_core/             # 文件整理逻辑
 │   │   ├── organizer.py            # 整理器
 │   │   ├── processor.py            # 处理器
-│   │   ├── executor.py             # 执行器
+│   │   ├── executor.py             # 执行器（含 CD2 云端批量操作与 Remote Upload）
 │   │   ├── renamer.py              # 重命名器
 │   │   └── file_explorer.py        # 文件浏览器
 │   │
@@ -458,11 +483,21 @@ Anime-Manager/
 │   ├── clients/                    # 下载客户端
 │   │   ├── base_client.py          # 客户端基类
 │   │   ├── manager.py              # 客户端管理器
-│   │   ├── qbittorrent.py          # qBittorrent
-│   │   ├── cd2.py                  # CloudDrive2
-│   │   ├── cd2_helper.py           # CD2 辅助工具
-│   │   ├── cd2_monitor.py          # CD2 传输监控
-│   │   └── jackett.py              # Jackett
+│   │   ├── qbittorrent.py          # qBittorrent（支持 API Key 免密认证）
+│   │   ├── jackett.py              # Jackett
+│   │   ├── space_cleanup.py        # 磁盘空间清理引擎（按阈值规则选种删除）
+│   │   ├── space_cleanup_task.py   # 空间清理定时任务编排
+│   │   └── cd2/                    # CloudDrive2 gRPC 客户端（模块化）
+│   │       ├── client.py           # 客户端外观层（统一对外接口）
+│   │       ├── connection.py       # gRPC 连接与认证（账密 / API Token，同步/异步双通道）
+│   │       ├── proto_loader.py     # proto 自动下载、校验与动态编译
+│   │       ├── file_browser.py     # 云端文件浏览/递归遍历/下载流/传输
+│   │       ├── file_ops.py         # 云端重命名/建目录/批量移动/复制
+│   │       ├── offline.py          # 离线下载（磁力推送、种子转磁力）
+│   │       ├── task_manager.py     # 离线下载任务管理
+│   │       ├── remote_upload.py    # Remote Upload gRPC 双向流分块上传
+│   │       ├── server_info.py      # 服务器状态与传输快照
+│   │       └── monitor.py          # 传输监控（完成后联动 STRM 同步）
 │   │
 │   ├── tmdbmatefull/               # TMDB 元数据中心
 │   │   ├── database.py             # 数据库操作
@@ -496,6 +531,7 @@ Anime-Manager/
 │   │   │   ├── config.ts           # 配置 API
 │   │   │   ├── dataCenter.ts       # 数据中心 API
 │   │   │   ├── calendar.ts         # 日历 API
+│   │   │   ├── cd2.ts              # CD2 管理 API（监控/proto/文件传输）
 │   │   │   └── ...                 # 其他 API 模块
 │   │   ├── views/                  # 视图页面
 │   │   │   ├── HomeView.vue        # 首页
@@ -506,18 +542,23 @@ Anime-Manager/
 │   │   │   ├── OrganizerView.vue   # 文件整理
 │   │   │   ├── SubscriptionView.vue# 订阅管理
 │   │   │   ├── StrmView.vue        # STRM 生成
-│   │   │   ├── ExploreView.vue     # 探索发现（路由容器）
+│   │   │   ├── explore/            # 探索发现
+│   │   │   │   ├── ExploreView.vue       # 探索发现（路由容器）
+│   │   │   │   ├── DiscoveryTab.vue      # 发现
+│   │   │   │   ├── ScheduleTab.vue       # 播出时间表
+│   │   │   │   ├── SearchTab.vue         # 搜索
+│   │   │   │   └── SeasonalTab.vue       # 当季番剧
+│   │   │   ├── cd2/                # CD2 管理中心
+│   │   │   │   ├── Cd2View.vue           # CD2 管理主页（路由容器）
+│   │   │   │   ├── FilesTab.vue          # 云盘文件浏览与单文件识别
+│   │   │   │   ├── MonitorTab.vue        # 传输监控
+│   │   │   │   └── ProtoTab.vue          # gRPC 协议管理
 │   │   │   ├── FileBrowserView.vue # 文件浏览器
 │   │   │   ├── JackettSearchView.vue # Jackett 搜索
 │   │   │   ├── ExternalControlView.vue # 外部控制
 │   │   │   ├── FileHashesView.vue  # 文件哈希
 │   │   │   ├── TaskHistoryView.vue # 任务历史
 │   │   │   ├── GuideView.vue       # 使用指南
-│   │   │   ├── explore/            # 探索子页面
-│   │   │   │   ├── DiscoveryTab.vue     # 发现
-│   │   │   │   ├── ScheduleTab.vue      # 播出时间表
-│   │   │   │   ├── SearchTab.vue        # 搜索
-│   │   │   │   └── SeasonalTab.vue      # 当季番剧
 │   │   │   ├── subscription/       # 订阅子组件
 │   │   │   │   ├── SubscriptionsTab.vue  # 订阅列表
 │   │   │   │   ├── FeedsTab.vue          # 订阅源
@@ -554,15 +595,24 @@ Anime-Manager/
 │   │   │       └── ServiceStatusTab.vue    # 服务状态
 │   │   ├── components/             # 可复用组件
 │   │   │   └── common/            # 公共组件
-│   │   │       ├── GlassDialog.vue       # 玻璃弹窗
 │   │   │       ├── ConfirmDialog.vue     # 确认对话框
 │   │   │       ├── LogTerminal.vue       # 日志终端
 │   │   │       ├── SecretField.vue       # 密钥字段
 │   │   │       ├── PasswordInput.vue     # 密码输入
-│   │   │       └── AppGlassCard.vue      # 玻璃卡片
+│   │   │       ├── BorderDialog.vue      # 边框弹窗（圆角/颜色/阴影配置）
+│   │   │       ├── WallpaperDialog.vue   # 壁纸设置弹窗
+│   │   │       └── ...                   # 其他公共组件
+│   │   ├── glass/                  # 玻璃拟态渲染引擎
+│   │   │   ├── components/         # GlassDialog、AppGlassCard 等玻璃组件
+│   │   │   ├── composables/        # 玻璃渲染组合式函数（固定壳层/光学渲染/壁纸）
+│   │   │   ├── rendering/          # three.js 渲染实现
+│   │   │   └── utils/              # 渲染工具
 │   │   ├── composables/            # 组合式函数（扁平化）
 │   │   │   ├── useWebSocket.ts     # WebSocket 事件流（心跳重连）
 │   │   │   ├── useThemeStore.ts    # 主题状态（亮/暗切换）
+│   │   │   ├── useThemeCustomizer.ts # 主题定制器（圆角/颜色/阴影）
+│   │   │   ├── useFieldOptions.ts  # 字段选项（规则字段元数据）
+│   │   │   ├── useDynamicHeaderTab.ts # 动态页头 Tab
 │   │   │   ├── useConfirm.ts       # 确认对话框
 │   │   │   ├── useNotification.ts  # 通知提示
 │   │   │   ├── useStorage.ts       # 本地/会话存储
@@ -578,6 +628,7 @@ Anime-Manager/
 │   │   ├── styles/                 # Liquid Glass 设计系统
 │   │   │   ├── index.css           # 样式入口（按功能引入）
 │   │   │   ├── base.css            # 重置/CSS变量/亮暗主题/工具类
+│   │   │   ├── tokens.css          # 设计令牌
 │   │   │   ├── components.css      # Vuetify 组件覆盖
 │   │   │   ├── buttons.css         # 按钮样式
 │   │   │   ├── feedback.css        # 反馈组件样式
@@ -585,11 +636,14 @@ Anime-Manager/
 │   │   │   ├── pages.css           # 页面级样式
 │   │   │   ├── tags.css            # 元数据标签样式
 │   │   │   ├── cards.css           # 卡片系统
+│   │   │   ├── theme-classic.css   # 经典主题
+│   │   │   ├── visual.css          # 视觉效果
 │   │   │   ├── design-spec.css     # 设计规范补全
 │   │   │   ├── utilities.css       # 通用复用样式
 │   │   │   └── settings.scss       # Vuetify SASS 变量配置
 │   │   ├── plugins/                # 插件配置
-│   │   │   └── vuetify.ts          # Vuetify 主题与组件默认值
+│   │   │   ├── vuetify.ts          # Vuetify 主题与组件默认值
+│   │   │   └── i18n.ts             # vue-i18n 国际化
 │   │   ├── types/                  # TypeScript 类型定义
 │   │   ├── utils/                  # 工具函数
 │   │   ├── router/                 # 路由配置
@@ -613,6 +667,10 @@ Anime-Manager/
 │       ├── bgmimg/                 # Bangumi 图片缓存
 │       └── tmdbimg/                # TMDB 图片缓存
 │
+├── ed2k_generator.py               # 桌面工具：文件 MD4/ED2K 哈希计算 (PyQt6)
+├── ed2k_search_client.py           # 桌面工具：文件哈希搜索客户端
+├── episode_group_tool.py           # 桌面工具：TMDB 剧集组划分
+├── sytmdb/                         # SYTMDB 剧集组数据子项目（可选）
 ├── Dockerfile                      # 多阶段构建文件
 ├── docker-compose.yml              # Docker Compose 配置
 ├── VERSION                         # 版本号
@@ -634,6 +692,18 @@ Anime-Manager/
 | **识别失败重试** (`recognize-failed-retry`) | 智能分析识别失败原因并提供解决方案 |
 
 技能定义位于 `skills/` 目录，采用 `SKILL.md` 格式，支持自定义扩展。
+
+---
+
+## 🧰 周边工具
+
+仓库内附带若干独立辅助工具（不属于服务运行必需依赖）：
+
+- **ed2k_generator.py** - PyQt6 桌面工具，拖拽文件即可计算 MD4/ED2K 哈希
+- **ed2k_search_client.py** - 桌面客户端，连接本系统 API 按关键词 / TMDB ID / 类型 / 季号搜索文件哈希
+- **episode_group_tool.py** - PyQt6 工具，按「季结局」自动划分 TMDB 剧集组
+- **ANIME Pro Matcher Client** - Tampermonkey 油猴脚本，在 PT / Nyaa / Mikan / dmhy 等站点页面注入识别匹配，通过 API Token 回连本系统
+- **sytmdb/** - SYTMDB 剧集组数据子项目（自带 Dockerfile，可作为可选外部数据源）
 
 ---
 
@@ -691,15 +761,15 @@ Anime-Manager/
 服务启动时会自动执行以下初始化：
 
 1. **数据库初始化** - 连接 PostgreSQL，创建表结构
-2. **元数据缓存** - 初始化本地元数据缓存库
-3. **配置加载** - 读取系统配置与规则缓存
+2. **元数据缓存** - 初始化本地元数据缓存库与离线元数据中心（TmdbFullDB）
+3. **配置加载** - 读取系统配置、特权规则与规则缓存
 4. **内置制作组加载** - 加载内置字幕组制作组定义
 5. **默认用户创建** - 确保默认管理员账户存在
-6. **CD2 模块预热** - 预热 CloudDrive2 客户端模块
-7. **文件监控启动** - 启动 Watchdog 文件监控与定时任务
+6. **CD2 模块预热** - 预热 CloudDrive2 gRPC 客户端模块，启动传输监控（如已启用）
+7. **文件监控启动** - 启动 Watchdog 文件监控与定时任务调度（含磁盘空间清理等周期任务）
 8. **Emby 索引同步** - 自动同步 Emby 媒体库索引（如已配置）
 9. **元数据预热** - 后台预热 Bangumi 日历与 TMDB 热点数据
-10. **启动通知** - 发送 Telegram 启动通知（如已配置）
+10. **启动通知** - 发送 Telegram 启动通知，附带各模块运行状态汇总（如已配置）
 
 ---
 
