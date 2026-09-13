@@ -194,8 +194,6 @@ class RemoteUploadManager:
 
         log_audit("CD2上传", "开始", f"远程上传(磁盘源): {cloud_file_path} ({size} 字节)")
 
-        file_md5 = None
-        local_md5 = hashlib.md5()
         try:
             with open(local_path, "rb") as f:
                 while not session.terminal:
@@ -210,7 +208,6 @@ class RemoteUploadManager:
                     if job["type"] == "read":
                         f.seek(job["offset"])
                         data = f.read(job["length"])
-                        local_md5.update(data)
                         read_req = conn.pb2.RemoteReadDataUpload(
                             upload_id=upload_id,
                             offset=job["offset"],
@@ -224,8 +221,9 @@ class RemoteUploadManager:
                             raise RuntimeError(f"RemoteReadData 失败: {resp.error_message}")
 
                     elif job["type"] == "hash":
-                        # 数据已按顺序读取，各哈希算法直接基于本地文件计算
-                        self._handle_hash_local(conn, session, local_path, local_md5, job)
+                        # 各哈希算法基于本地文件全量独立计算，
+                        # 不依赖读取进度（哈希请求可能先于数据传输到达）
+                        self._handle_hash_local(conn, session, local_path, job)
         except Exception as e:
             details = getattr(e, "details", None) or str(e)
             logger.error(f"磁盘源远程上传失败 {local_path}: {details}")
@@ -243,13 +241,14 @@ class RemoteUploadManager:
             log_audit("CD2上传", "完成", f"远程上传完成: {cloud_file_path}")
         return {"success": success, "status_text": status_text, "error": session.error}
 
-    def _handle_hash_local(self, conn, session: _Session, local_path: str, local_md5, job: dict):
-        """磁盘模式哈希：直接读本地文件计算并上报"""
+    def _handle_hash_local(self, conn, session: _Session, local_path: str, job: dict):
+        """磁盘模式哈希：全文件独立计算并上报（与数据读取进度无关）"""
         hash_type = job.get("hash_type", 0)
         block_size = job.get("block_size", 0)
         size = session.size
         try:
             if hash_type == HASH_MD5:
+                overall = hashlib.md5()
                 block_hashes = []
                 if block_size > 0:
                     with open(local_path, "rb") as bf:
@@ -258,8 +257,13 @@ class RemoteUploadManager:
                             if not chunk:
                                 break
                             block_hashes.append(hashlib.md5(chunk).hexdigest())
+                            overall.update(chunk)
+                else:
+                    with open(local_path, "rb") as bf:
+                        for chunk in iter(lambda: bf.read(4 * 1024 * 1024), b""):
+                            overall.update(chunk)
                 self._report_hash_progress(conn, session, HASH_MD5, size,
-                                           final_hex=local_md5.hexdigest(), block_hashes=block_hashes)
+                                           final_hex=overall.hexdigest(), block_hashes=block_hashes)
             elif hash_type == HASH_SHA1:
                 sha1 = hashlib.sha1()
                 with open(local_path, "rb") as bf:
