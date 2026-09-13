@@ -22,6 +22,7 @@ import TasksTab from './organizer/TasksTab.vue'
 import RulesTab from './organizer/RulesTab.vue'
 import BackgroundTasksTab from './organizer/BackgroundTasksTab.vue'
 import OrganizeHistoryTab from './organizer/OrganizeHistoryTab.vue'
+import RapidRetryTab from './organizer/RapidRetryTab.vue'
 import TaskCenterModal from './organizer/TaskCenterModal.vue'
 
 defineOptions({ name: 'OrganizerView' })
@@ -119,6 +120,7 @@ registerHeaderTab({
     { title: '重命名规则', tab: 'rules' },
     { title: '后台任务', tab: 'background' },
     { title: '整理历史', tab: 'history' },
+    { title: '秒传管理', tab: 'rapid' },
   ],
   modelValue: activeTab,
 })
@@ -159,6 +161,11 @@ registerHeaderTab({
       <!-- ===== 整理历史 ===== -->
       <v-window-item value="history">
         <OrganizeHistoryTab ref="historyTabRef" />
+      </v-window-item>
+
+      <!-- ===== 秒传管理 ===== -->
+      <v-window-item value="rapid">
+        <RapidRetryTab />
       </v-window-item>
     </v-window>
 

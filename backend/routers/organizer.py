@@ -597,6 +597,108 @@ async def delete_organize_history(history_id: int, delete_file: bool = Query(Fal
         return {"success": False, "message": str(e)}
 
 
+# ---------- CD2 秒传重试队列管理 ----------
+
+@router.get("/api/organize/rapid_retry", summary="获取秒传重试队列")
+async def get_rapid_retry_list(
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    status: str = Query(None),
+):
+    """
+    分页查询秒传重试队列记录。
+    - status: 按状态筛选 (pending/running/done/failed)
+    """
+    from database import db
+    from models import RapidUploadRetry
+    from sqlmodel import select
+
+    async with db.session_scope():
+        stmt = select(RapidUploadRetry).order_by(RapidUploadRetry.created_at.desc()).offset(offset).limit(limit)
+        if status:
+            stmt = stmt.where(RapidUploadRetry.status == status)
+        rows = await db.all(RapidUploadRetry, stmt)
+        return [r.model_dump() for r in rows]
+
+@router.delete("/api/organize/rapid_retry/finished", summary="清空已结束的秒传重试记录")
+async def clear_finished_rapid_retry():
+    """删除所有已完成(done)和失败(failed)的秒传重试记录。"""
+    from database import db
+    from models import RapidUploadRetry
+    from sqlmodel import delete
+
+    try:
+        async with db.session_scope() as session:
+            result = await session.execute(
+                delete(RapidUploadRetry).where(RapidUploadRetry.status.in_(["done", "failed"]))
+            )
+            await session.commit()
+        removed = getattr(result, "rowcount", 0) or 0
+        return {"success": True, "message": f"已清除 {removed} 条已结束记录", "removed": removed}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@router.delete("/api/organize/rapid_retry/{record_id}", summary="删除秒传重试记录")
+async def delete_rapid_retry(record_id: int):
+    """
+    删除指定的秒传重试记录（不影响磁盘文件和已上传的云端文件）。
+    running 状态的记录不允许删除，等待其结束后再操作。
+    """
+    from database import db
+    from models import RapidUploadRetry
+
+    try:
+        async with db.session_scope():
+            record = await db.get(RapidUploadRetry, record_id)
+            if not record:
+                raise HTTPException(status_code=404, detail="记录不存在")
+            if record.status == "running":
+                raise HTTPException(status_code=400, detail="记录正在重试中，无法删除")
+            await db.delete(record)
+            return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@router.post("/api/organize/rapid_retry/{record_id}/retry", summary="手动立即重试秒传")
+async def retry_rapid_retry(record_id: int):
+    """
+    手动立即重试指定的秒传记录：
+    - pending 记录：下次重试时间立即生效
+    - failed 记录：重置尝试次数并重新入队
+    - running/done 记录不允许操作
+    """
+    from database import db
+    from models import RapidUploadRetry
+    from datetime import datetime
+
+    try:
+        async with db.session_scope():
+            record = await db.get(RapidUploadRetry, record_id)
+            if not record:
+                raise HTTPException(status_code=404, detail="记录不存在")
+            if record.status == "running":
+                raise HTTPException(status_code=400, detail="记录正在重试中")
+            if record.status == "done":
+                raise HTTPException(status_code=400, detail="该文件已秒传完成")
+            if record.status == "failed":
+                record.attempts = 0
+            record.status = "pending"
+            record.next_retry_at = datetime.now()
+            record.updated_at = datetime.now()
+            await db.save(record, audit=False)
+
+        # 立即触发一轮队列处理，不等分钟级轮询
+        from clients.cd2.rapid_retry import RapidUploadRetryManager
+        asyncio.create_task(RapidUploadRetryManager.run_due_jobs())
+        return {"success": True, "message": "已触发立即重试"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
 def _match_task_from_config(source_path: str):
     """
     从 organize_tasks 配置中按 source_dir 前缀匹配 source_path 所属的任务。

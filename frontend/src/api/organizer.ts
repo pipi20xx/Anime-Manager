@@ -75,6 +75,23 @@ startBackground: (body: any, opts?: { dry_run?: boolean }) =>
   retryHistory: (historyId: number) =>
     api.post<any>(`/api/organize/history/${historyId}/retry`),
 
+  // --- CD2 秒传重试队列 ---
+  /** 分页获取秒传重试队列 */
+  getRapidRetryList: (params?: { limit?: number; offset?: number; status?: string }) =>
+    api.get<any>('/api/organize/rapid_retry', { params }),
+
+  /** 删除单条秒传重试记录 */
+  deleteRapidRetry: (recordId: number) =>
+    api.delete<any>(`/api/organize/rapid_retry/${recordId}`),
+
+  /** 手动立即重试秒传记录 */
+  retryRapidRetry: (recordId: number) =>
+    api.post<any>(`/api/organize/rapid_retry/${recordId}/retry`),
+
+  /** 清空已完成/失败的秒传重试记录 */
+  clearFinishedRapidRetry: () =>
+    api.delete<any>('/api/organize/rapid_retry/finished'),
+
   /** 单项全流程重算 */
   recalculateItem: (body: any) =>
     api.post<any>('/api/organize/recalculate', body),
