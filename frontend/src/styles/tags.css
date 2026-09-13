@@ -195,3 +195,21 @@
 .v-theme--light .meta-tag--country {
   background: #6d4c41 !important;
 }
+
+/* --- 路径归属: CD2 — 青色系 --- */
+.meta-tag--via-cd2 {
+  background: #00695c !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--via-cd2 {
+  background: #00897b !important;
+}
+
+/* --- 路径归属: 本地 — 灰色系 --- */
+.meta-tag--via-local {
+  background: #546e7a !important;
+  color: #fff !important;
+}
+.v-theme--light .meta-tag--via-local {
+  background: #78909c !important;
+}

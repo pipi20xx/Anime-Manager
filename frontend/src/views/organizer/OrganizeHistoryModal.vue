@@ -192,10 +192,30 @@ function historyStatusLabel(status: string): string {
                   </span>
                 </div>
                 <div v-if="item.source_path" class="text-caption text-medium-emphasis mt-1 org-path-truncate">
-                  <span class="font-weight-medium">源:</span> {{ item.source_path }}
+                  <span class="font-weight-medium">源:</span>
+                  <v-chip
+                    v-if="item.source_via"
+                    size="x-small"
+                    variant="flat"
+                    class="meta-tag mx-1"
+                    :class="item.source_via === 'cd2' ? 'meta-tag--via-cd2' : 'meta-tag--via-local'"
+                  >
+                    {{ item.source_via === 'cd2' ? 'CD2' : '本地' }}
+                  </v-chip>
+                  {{ item.source_path }}
                 </div>
                 <div v-if="item.target_path" class="text-caption text-medium-emphasis mt-1 org-path-truncate">
-                  <span class="font-weight-medium">目标:</span> {{ item.target_path }}
+                  <span class="font-weight-medium">目标:</span>
+                  <v-chip
+                    v-if="item.target_via"
+                    size="x-small"
+                    variant="flat"
+                    class="meta-tag mx-1"
+                    :class="item.target_via === 'cd2' ? 'meta-tag--via-cd2' : 'meta-tag--via-local'"
+                  >
+                    {{ item.target_via === 'cd2' ? 'CD2' : '本地' }}
+                  </v-chip>
+                  {{ item.target_path }}
                 </div>
               </div>
               <div class="d-flex flex-column ga-1">

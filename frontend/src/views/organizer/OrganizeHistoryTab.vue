@@ -251,6 +251,15 @@ defineExpose({ fetchHistory })
         <div v-if="item.source_path" class="org-path-container mt-3">
           <div class="org-path-item">
             <span class="org-path-label">源路径</span>
+            <v-chip
+              v-if="item.source_via"
+              size="x-small"
+              variant="flat"
+              class="meta-tag flex-shrink-0"
+              :class="item.source_via === 'cd2' ? 'meta-tag--via-cd2' : 'meta-tag--via-local'"
+            >
+              {{ item.source_via === 'cd2' ? 'CD2' : '本地' }}
+            </v-chip>
             <v-icon size="14" class="mr-1">mdi-folder-outline</v-icon>
             <span class="org-path-text" :title="item.source_path">{{ item.source_path }}</span>
           </div>
@@ -259,6 +268,15 @@ defineExpose({ fetchHistory })
           </div>
           <div v-if="item.target_path" class="org-path-item">
             <span class="org-path-label">目标路径</span>
+            <v-chip
+              v-if="item.target_via"
+              size="x-small"
+              variant="flat"
+              class="meta-tag flex-shrink-0"
+              :class="item.target_via === 'cd2' ? 'meta-tag--via-cd2' : 'meta-tag--via-local'"
+            >
+              {{ item.target_via === 'cd2' ? 'CD2' : '本地' }}
+            </v-chip>
             <v-icon size="14" class="mr-1" color="primary">mdi-folder-check-outline</v-icon>
             <span class="org-path-text org-path-target" :title="item.target_path">{{ item.target_path }}</span>
           </div>

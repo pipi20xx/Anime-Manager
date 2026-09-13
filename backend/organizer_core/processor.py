@@ -329,6 +329,7 @@ class FileProcessor:
                     from models import OrganizeHistory
                     history = OrganizeHistory(
                         source_path=v_path, filename=v_file,
+                        source_via=source_via, target_via=target_via,
                         status="failed", message="识别失败 (无 TMDB ID)",
                         action_type=action_type,
                         rule_id=task.get("rule_id"),
@@ -391,6 +392,7 @@ class FileProcessor:
                                 from models import OrganizeHistory
                                 history = OrganizeHistory(
                                     source_path=v_path, filename=v_file,
+                                    source_via=source_via, target_via=target_via,
                                     tmdb_id=str(tmdb_id), title=final.get("title"),
                                     season=season, episode=str(episode),
                                     media_type=media_type,
@@ -559,6 +561,7 @@ class FileProcessor:
                         from models import OrganizeHistory
                         history = OrganizeHistory(
                             source_path=v_path, filename=v_file,
+                            source_via=source_via, target_via=target_via,
                             status="failed", message="哈希计算失败",
                             action_type=action_type,
                             rule_id=task.get("rule_id"),
@@ -676,6 +679,7 @@ class FileProcessor:
                         async with db.session_scope():
                             history = OrganizeHistory(
                                 source_path=v_path, target_path=new_abs_path,
+                                source_via=source_via, target_via=target_via,
                                 filename=v_file, tmdb_id=str(final.get("tmdb_id")),
                                 title=final.get("title"), season=final.get("season"),
                                 episode=str(final.get("episode")),
@@ -808,6 +812,7 @@ class FileProcessor:
                     async with db.session_scope():
                         history = OrganizeHistory(
                             source_path=v_path, target_path=new_abs_path,
+                            source_via=source_via, target_via=target_via,
                             filename=v_file, tmdb_id=str(final.get("tmdb_id")),
                             title=final.get("title"), season=final.get("season"),
                             episode=str(final.get("episode")),

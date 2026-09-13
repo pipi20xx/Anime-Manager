@@ -264,6 +264,9 @@ class OrganizeHistory(SQLModel, table=True):
     year: Optional[str] = None
     status: str = Field(default="success") # success, failed, skipped
     message: Optional[str] = None
+    # 源/目标路径归属: local(本地) / cd2(CD2 挂载)
+    source_via: Optional[str] = None
+    target_via: Optional[str] = None
     # 重试所需的任务配置快照（用于精确复现当时的整理流程）
     rule_id: Optional[str] = None
     source_dir: Optional[str] = None

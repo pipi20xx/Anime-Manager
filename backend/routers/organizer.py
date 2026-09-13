@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, Query, Body, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import asyncio
 import json
 import uuid
 import logging
+import os
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -497,6 +498,24 @@ async def batch_execute(request: Request, body: BatchExecuteRequest, task_id: st
 
 # --- Organize History ---
 
+def _infer_path_via(path: Optional[str]) -> str:
+    """按 CD2 挂载点前缀推断路径归属（local / cd2），用于旧历史记录兜底"""
+    if not path:
+        return "local"
+    from clients.manager import ClientManager
+    for c in ClientManager.get_all_clients():
+        if c.get("type") == "cd2":
+            mount = (c.get("mount_path") or "").strip()
+            if mount and os.path.abspath(path).startswith(os.path.abspath(mount)):
+                return "cd2"
+    return "local"
+
+def _with_via(data: dict) -> dict:
+    """补全记录的 source_via/target_via：新记录取落库值，旧记录按挂载点推断"""
+    data["source_via"] = data.get("source_via") or _infer_path_via(data.get("source_path"))
+    data["target_via"] = data.get("target_via") or _infer_path_via(data.get("target_path"))
+    return data
+
 @router.get("/api/organize/history", summary="获取整理历史")
 async def get_organize_history(
     limit: int = Query(50, ge=1, le=200),
@@ -524,7 +543,8 @@ async def get_organize_history(
                 (OrganizeHistory.title.ilike(f"%{search}%")) |
                 (OrganizeHistory.filename.ilike(f"%{search}%"))
             )
-        return await db.all(OrganizeHistory, stmt)
+        rows = await db.all(OrganizeHistory, stmt)
+        return [_with_via(h.model_dump()) for h in rows]
 
 @router.delete("/api/organize/history/clear", summary="清空整理历史")
 async def clear_organize_history():
@@ -657,6 +677,8 @@ async def _retry_history_runner(history_id: int, task_id: str):
                 "calculate_hash": history.calculate_hash if history.calculate_hash is not None else False,
                 "clean_empty_dir": history.clean_empty_dir if history.clean_empty_dir is not None else False,
                 "trigger_strm": history.trigger_strm if history.trigger_strm is not None else False,
+                "source_via": history.source_via or _infer_path_via(source_path),
+                "target_via": history.target_via or _infer_path_via(history.target_dir),
                 "ignore_history": True,
                 "name": f"重试整理 (历史#{history_id})"
             }
