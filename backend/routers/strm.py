@@ -213,9 +213,12 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
         
         await start_task(task_id, "STRM", task_name)
         await log_task(task_id, f"🚀 开始执行 STRM 同步: {task_name}")
-        await log_task(task_id, f"📁 源: {config.get('source_dir') or config.get('source_path')}")
-        await log_task(task_id, f"� 目标: {config.get('target_dir') or config.get('target_path')}")
+        from path_utils import via_tag
         sync_mode = config.get('sync_mode', 'local')
+        src = config.get('source_dir') or config.get('source_path')
+        tgt = config.get('target_dir') or config.get('target_path')
+        await log_task(task_id, f"📁 源: {src}{via_tag(src, force_cd2=(sync_mode == 'cd2_api'))}")
+        await log_task(task_id, f"📁 目标: {tgt}{via_tag(tgt)}")
         mode_label = {'local': '本地', 'cd2_api': 'CD2 API', 'webdav': 'WebDAV'}.get(sync_mode, sync_mode)
         await log_task(task_id, f"🔧 模式: {mode_label} | 覆盖: {config.get('overwrite_strm', True)}")
         await log_task(task_id, "──────────────────")

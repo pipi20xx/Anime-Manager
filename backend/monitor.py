@@ -684,12 +684,15 @@ class MonitorManager:
             logger.error(f"[Monitor] Auto health check failed: {e}")
 
     @staticmethod
-    def enqueue_file(task_id: str, file_path: str):
-        """将文件推送到特定任务的异步处理队列中 (供外部 Webhook 调用)"""
+    def enqueue_file(task_id: str, file_path: str, source: str = "联动", origin_task_id: str = None, origin_desc: str = None):
+        """将文件推送到特定任务的异步处理队列中 (供外部 Webhook/联动调用)"""
         queue = MonitorManager._queues.get(task_id)
         if queue and MonitorManager._loop:
-            # 使用 threadsafe 以防万一从非 asyncio 线程调用
-            MonitorManager._loop.call_soon_threadsafe(queue.put_nowait, (file_path, None))
+            # 使用 threadsafe 以防万一从非 asyncio 线程调用；第4位为来源信息（来源标注 + 触发的联动任务ID/标题）
+            MonitorManager._loop.call_soon_threadsafe(
+                queue.put_nowait,
+                (file_path, None, None, {"source": source, "origin_task_id": origin_task_id, "origin_desc": origin_desc})
+            )
             return True
         return False
 
@@ -1232,8 +1235,19 @@ class MonitorManager:
             try:
                 item = await queue.get()
                 batch_stats = None
+                source_tag = None
+                origin_task_id = None
+                origin_desc = None
                 if isinstance(item, tuple):
-                    if len(item) == 3:
+                    if len(item) == 4:
+                        file_path, batch_task_id, batch_stats, source_info = item
+                        if isinstance(source_info, dict):
+                            source_tag = source_info.get("source")
+                            origin_task_id = source_info.get("origin_task_id")
+                            origin_desc = source_info.get("origin_desc")
+                        else:
+                            source_tag = source_info
+                    elif len(item) == 3:
                         file_path, batch_task_id, batch_stats = item
                     else:
                         file_path, batch_task_id = item
@@ -1298,8 +1312,10 @@ class MonitorManager:
                                 from task_history import start_task as _start_task, log_task as _log_task
                                 import uuid as _uuid
                                 mon_task_id = f"strm_mon_{_uuid.uuid4().hex[:12]}"
-                                await _start_task(mon_task_id, "STRM", f"[实时监控] {os.path.basename(file_path)}")
+                                await _start_task(mon_task_id, "STRM", f"[{source_tag or '实时监控'}] {os.path.basename(file_path)}")
                                 await _log_task(mon_task_id, f"📄 处理文件: {file_path}")
+                                if origin_task_id or origin_desc:
+                                    await _log_task(mon_task_id, f"🔗 联动来源任务: {origin_desc or origin_task_id}")
                             except Exception:
                                 mon_task_id = None
                         else:
@@ -1311,12 +1327,26 @@ class MonitorManager:
                         res = await StrmProcessor.process_single_file(file_path, current_task)
                         status = res.get("status", "unknown") if isinstance(res, dict) else "error"
                         message = res.get("message", "") if isinstance(res, dict) else str(res)
+                        # 实际落盘路径 = 目标目录 + 处理结果中的相对路径（STRM 或元数据）
+                        target_root = current_task.get("target_dir") or current_task.get("target_path")
+                        written_path = os.path.join(target_root, res["rel_path"]) if (isinstance(res, dict) and target_root and res.get("rel_path")) else None
                         if status == "success":
                             logger.info(f"✨ [实时监控] STRM完成: {os.path.basename(file_path)}")
                             if mon_task_id:
                                 try:
                                     from task_history import log_task as _log_task
                                     await _log_task(mon_task_id, f"✅ 成功: {os.path.basename(file_path)} ({message})")
+                                    if written_path:
+                                        if "STRM" in message:
+                                            await _log_task(mon_task_id, f"   📄 STRM 文件: {written_path}")
+                                            try:
+                                                source_root = current_task.get("source_dir") or current_task.get("source_path")
+                                                content = StrmProcessor.calculate_strm_content(source_root, file_path, current_task)
+                                                await _log_task(mon_task_id, f"   🔗 内容: {content}")
+                                            except Exception:
+                                                pass
+                                        else:
+                                            await _log_task(mon_task_id, f"   🖼️ 元数据文件: {written_path}")
                                 except Exception:
                                     pass
                         elif status == "skipped":
@@ -1325,6 +1355,9 @@ class MonitorManager:
                                 try:
                                     from task_history import log_task as _log_task
                                     await _log_task(mon_task_id, f"⏭️ 跳过: {os.path.basename(file_path)} ({message})")
+                                    if written_path:
+                                        label = "元数据已存在" if "Meta" in message else "STRM 已存在 (未开启覆盖)"
+                                        await _log_task(mon_task_id, f"   {label}: {written_path}")
                                 except Exception:
                                     pass
                         else:
@@ -1384,6 +1417,8 @@ class MonitorManager:
                                 elif res.get("type") == "item":
                                     if res.get("status") == "error":
                                         batch_stats["error"] += 1
+                                    elif res.get("status") == "skip":
+                                        batch_stats["skipped"] += 1
                                     else:
                                         batch_stats["success"] += 1
                 except Exception as e:
@@ -1485,21 +1520,23 @@ class MonitorManager:
             stats = {"success": 0, "skipped": 0, "error": 0}
             try:
                 from task_history import start_task as _start_task, log_task as _log_task
+                from path_utils import via_tag
                 import uuid as _uuid
                 scan_task_id = f"scan_{_uuid.uuid4().hex[:12]}"
                 module = "STRM" if is_strm else "整理"
                 await _start_task(scan_task_id, module, f"[定时扫描] {task_name}")
                 await _log_task(scan_task_id, f"🚀 开始定时扫描: {task_name}")
-                await _log_task(scan_task_id, f"📁 源: {source_dir}")
+                sync_mode = current_task.get("sync_mode", "local")
+                await _log_task(scan_task_id, f"📁 源: {source_dir}{via_tag(source_dir, current_task.get('source_via'), force_cd2=(is_strm and sync_mode == 'cd2_api'))}")
                 target_dir = current_task.get("target_dir") or current_task.get("target_path")
                 if target_dir:
-                    await _log_task(scan_task_id, f"📁 目标: {target_dir}")
+                    target_via = current_task.get("target_via") or ('cd2' if current_task.get("action_type") in ('cd2_move', 'cd2_copy') else None)
+                    await _log_task(scan_task_id, f"📁 目标: {target_dir}{via_tag(target_dir, target_via)}")
                 if not is_strm:
                     action_type = current_task.get("action_type", "move")
                     action_label = {"move": "移动", "copy": "复制", "cd2_move": "CD2移动", "cd2_copy": "CD2复制", "hash_only": "仅记录哈希"}.get(action_type, action_type)
                     await _log_task(scan_task_id, f"🔧 模式: 正式执行 ({action_label})")
                 else:
-                    sync_mode = current_task.get("sync_mode", "local")
                     sync_label = {"local": "本地", "cd2_api": "CD2 API", "webdav": "WebDAV"}.get(sync_mode, sync_mode)
                     await _log_task(scan_task_id, f"🔧 模式: {sync_label}")
                 await _log_task(scan_task_id, f"📋 发现 {len(files_to_process)} 个文件")

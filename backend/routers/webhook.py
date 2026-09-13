@@ -3,6 +3,7 @@ import os
 import asyncio
 import logging
 import json
+import time
 import uuid
 
 from strm.strm_generator import StrmGenerator
@@ -14,14 +15,31 @@ from task_history import start_task, log_task, finish_task
 router = APIRouter(prefix="/api/webhook", tags=["Webhook 回调"])
 logger = logging.getLogger("Webhook")
 
+# 同一文件事件去重：原生 Webhook 与内部 gRPC 监控（CD2监控）可能对同一文件各触发一次
+_EVENT_DEDUP_WINDOW = 120  # 秒
+_recent_events = {}
+
+def _is_duplicate_event(file_path: str) -> bool:
+    now = time.time()
+    # 清理过期记录，防止无限增长
+    if len(_recent_events) > 500:
+        expired = [p for p, t in _recent_events.items() if now - t >= _EVENT_DEDUP_WINDOW]
+        for p in expired:
+            _recent_events.pop(p, None)
+    last = _recent_events.get(file_path)
+    _recent_events[file_path] = now
+    return last is not None and now - last < _EVENT_DEDUP_WINDOW
+
 async def process_cd2_notification(data: list, source: str = "webhook"):
     """
     内部处理函数，可由 Webhook 路由调用，也可由系统内部直接触发。
+    返回 {"triggered": 命中并处理的文件数, "deduped": 被去重忽略的事件数}
     """
     if not data:
-        return 0
+        return {"triggered": 0, "deduped": 0}
     
     valid_items = []
+    skipped_dup_count = 0
     for item in data:
         action = item.get("action")
         file_path = item.get("source_file", "").split(':')[0]
@@ -35,11 +53,17 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
         # 跳过 .strm 输出文件：它们存在于云目录时（历史残留或反向写入）会反复触发联动
         if file_path.lower().endswith(".strm"):
             continue
+        # 同一文件事件去重：原生 Webhook 与内部监控对同一文件各触发一次时，只处理先到的
+        if _is_duplicate_event(file_path):
+            skipped_dup_count += 1
+            log_audit("CD2联动", "去重", "重复事件已忽略（同一文件刚由另一链路触发过）", details=f"来源: {source} | 路径: {file_path}")
+            logger.info(f"[CD2联动] 去重: {file_path} (来源: {source})")
+            continue
 
         valid_items.append(item)
     
     if not valid_items:
-        return 0
+        return {"triggered": 0, "deduped": skipped_dup_count}
     
     first_filename = os.path.basename(valid_items[0].get("source_file", "").split(':')[0])
     
@@ -48,7 +72,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     
     task_id = f"webhook_{uuid.uuid4().hex[:8]}"
     await start_task(task_id, "Webhook联动", task_desc)
-    await log_task(task_id, f"🚀 收到 CD2 联动请求，共 {len(valid_items)} 个事件")
+    await log_task(task_id, f"🚀 收到 CD2 联动请求 (来源: {module_name})，共 {len(valid_items)} 个事件")
 
     config = ConfigManager.get_config()
     strm_tasks = config.get("strm_tasks", [])
@@ -56,6 +80,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     all_clients = {c.get('id'): c for c in config.get("download_clients", []) if c.get("type") == "cd2"}
 
     processed_count = 0
+    enqueued_count = 0
     processing_tasks = []
     task_id_ref = task_id
     task_stats = {}
@@ -106,9 +131,10 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
 
                 log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"{path_label}: {process_path}")
 
-                enqueued = MonitorManager.enqueue_file(task.get("id"), process_path)
+                enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, origin_task_id=task_id_ref, origin_desc=task_desc)
 
                 if enqueued:
+                    enqueued_count += 1
                     await log_task(task_id_ref, f"✅ 匹配任务: [{task_name}] -> 已加入后台队列")
                     await log_task(task_id_ref, f"   {path_label}: {process_path}")
                     processed_count += 1
@@ -120,8 +146,8 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
                     processed_count += 1
 
                 matched = True
-                break
-        
+                # 不 break：所有源目录匹配的任务都处理（与定时扫描/实时监控行为一致）
+
         if not matched:
             await log_task(task_id_ref, f"⏭️ 未匹配任何任务: {filename}")
             log_audit("CD2联动", "未匹配", f"⏭️ 未命中任何 STRM 任务: {filename}", details=f"路径: {file_path}", level="WARN")
@@ -171,10 +197,14 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     if task_stats:
         task_info = ", ".join([f"{name}({count})" for name, count in task_stats.items()])
         summary += f" | 涉及任务: {task_info}"
+    if enqueued_count:
+        summary += f" | 其中 {enqueued_count} 个已入队由对应任务异步处理"
+    if skipped_dup_count:
+        summary += f" | 去重忽略 {skipped_dup_count} 个重复事件"
     
     await log_task(task_id_ref, summary)
     await finish_task(task_id_ref, "completed", processed_count)
-    return processed_count
+    return {"triggered": processed_count, "deduped": skipped_dup_count}
 
 @router.post("/cd2/file_notify{tail:path}", summary="CloudDrive2 文件变动回调")
 async def cd2_webhook(request: Request, tail: str = ""):
@@ -199,8 +229,8 @@ async def cd2_webhook(request: Request, tail: str = ""):
     source_desc = "原生 Webhook" if client_host not in ["127.0.0.1", "localhost"] else "内部监控"
     
     triggered = await process_cd2_notification(data, source_desc)
-                
-    return {"status": "success", "source": source_desc, "triggered": triggered}
+
+    return {"status": "success", "source": source_desc, "triggered": triggered.get("triggered", 0), "deduped": triggered.get("deduped", 0)}
 
 
 @router.post("/emby", summary="Emby Webhook")

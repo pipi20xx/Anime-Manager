@@ -226,8 +226,13 @@ class CD2TransferMonitor:
             ]
 
             try:
-                triggered = await process_cd2_notification(payload_data, "CD2监控")
-                if triggered == 0:
+                result = await process_cd2_notification(payload_data, "CD2监控")
+                triggered = result.get("triggered", 0) if isinstance(result, dict) else result
+                deduped = result.get("deduped", 0) if isinstance(result, dict) else 0
+                if triggered == 0 and deduped > 0:
+                    # 事件已被去重（整理联动/原生 Webhook 先处理过），属正常情况
+                    log_audit("CD2监控", "提示", "事件为重复事件（已由其他联动链路处理），本次跳过", details=f"路径: {cd2_path}")
+                elif triggered == 0:
                     log_audit("CD2监控", "提示", "联动触发完成，但未命中任何 STRM 任务 (请检查路径映射)", level="WARN", details=f"路径: {cd2_path}")
             except Exception as e:
                 log_audit("CD2监控", "异常", f"执行内部联动失败: {e}", level="ERROR")

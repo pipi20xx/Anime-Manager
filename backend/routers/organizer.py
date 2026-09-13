@@ -159,9 +159,12 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
             pass
         await start_task(task_id, "整理", task_name)
         await log_task(task_id, f"🚀 开始执行整理任务: {task_name}")
-        await log_task(task_id, f"📁 源: {task.get('source_dir')}")
-        await log_task(task_id, f"📁 目标: {task.get('target_dir')}")
+        from path_utils import via_tag
+        await log_task(task_id, f"📁 源: {task.get('source_dir')}{via_tag(task.get('source_dir'), task.get('source_via'))}")
         action_type = task.get('action_type', 'move')
+        # cd2_move/cd2_copy 的目标是 CD2 云路径（不在挂载点下），直接按配置/动作判定
+        target_via = task.get('target_via') or ('cd2' if action_type in ('cd2_move', 'cd2_copy') else None)
+        await log_task(task_id, f"📁 目标: {task.get('target_dir')}{via_tag(task.get('target_dir'), target_via)}")
         action_label = {'move': '移动', 'copy': '复制', 'cd2_move': 'CD2移动', 'cd2_copy': 'CD2复制', 'hash_only': '仅记录哈希'}.get(action_type, action_type)
         mode_label = f"预览 ({action_label})" if dry_run else f"正式执行 ({action_label})"
         await log_task(task_id, f"🔧 模式: {mode_label}")
@@ -184,6 +187,8 @@ async def _background_task_runner(task: Dict[str, Any], dry_run: bool, task_id: 
                             await EventBroadcaster.broadcast_background_tasks(list(_background_tasks.values()))
                         except Exception:
                             pass
+                    elif status == "skip":
+                        skipped += 1
                     elif status == "error":
                         errors += 1
                 elif data_type == "skip":
@@ -500,15 +505,8 @@ async def batch_execute(request: Request, body: BatchExecuteRequest, task_id: st
 
 def _infer_path_via(path: Optional[str]) -> str:
     """按 CD2 挂载点前缀推断路径归属（local / cd2），用于旧历史记录兜底"""
-    if not path:
-        return "local"
-    from clients.manager import ClientManager
-    for c in ClientManager.get_all_clients():
-        if c.get("type") == "cd2":
-            mount = (c.get("mount_path") or "").strip()
-            if mount and os.path.abspath(path).startswith(os.path.abspath(mount)):
-                return "cd2"
-    return "local"
+    from path_utils import infer_path_via
+    return infer_path_via(path)
 
 def _with_via(data: dict) -> dict:
     """补全记录的 source_via/target_via：新记录取落库值，旧记录按挂载点推断"""

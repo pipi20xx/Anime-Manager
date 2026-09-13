@@ -618,7 +618,7 @@ class FileProcessor:
                                 await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {os.path.basename(src)}")
                             elif res in ("skipped", "skipped_conflict"):
                                 any_skipped = True
-                                await FileProcessor._log_detail(task_id, f"⏭️ CD2 {action_label}跳过（目标已存在）: {os.path.basename(src)}")
+                                await FileProcessor._log_detail(task_id, f"⏭️ {action_label}跳过（目标已存在，未开启覆盖模式）: {os.path.basename(src)}")
                             else:
                                 batch_res = res
                                 logger.error(f"❌ CD2 {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(res)} (状态码: {res})")
@@ -633,7 +633,7 @@ class FileProcessor:
                         if batch_res == "success":
                             await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {v_file} → {new_abs_path}")
                         elif batch_res == "skipped":
-                            await FileProcessor._log_detail(task_id, f"⏭️ CD2 {action_label}跳过（目标已存在）: {v_file}")
+                            await FileProcessor._log_detail(task_id, f"⏭️ {action_label}跳过（目标已存在，未开启覆盖模式）: {v_file}")
                         else:
                             await FileProcessor._log_detail(task_id, f"❌ CD2 {action_label}失败: {v_file} → {FileExecutor.get_status_message(batch_res)}", "ERROR")
                     for src, dst in plan_items:
@@ -785,13 +785,14 @@ class FileProcessor:
                     if src == v_path:
                         await FileProcessor._log_detail(task_id, f"📦 {action_label}成功: {v_file} → {dst}")
                 elif v_res in ["skipped", "skipped_conflict"]:
-                    await FileProcessor._log_detail(task_id, f"⏭️ {action_label}跳过（目标已存在）: {os.path.basename(src)}")
+                    await FileProcessor._log_detail(task_id, f"⏭️ {action_label}跳过（目标已存在，未开启覆盖模式）: {os.path.basename(src)}")
                 else:
                     await FileProcessor._log_detail(task_id, f"❌ {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(v_res)}", "ERROR")
                 
                 # 添加识别信息到结果中
                 result_item = {
-                    "type": "item", "status": "success" if v_res in ["success", "preview"] else "error",
+                    "type": "item",
+                    "status": "success" if v_res in ["success", "preview"] else ("skip" if v_res in ["skipped", "skipped_conflict"] else "error"),
                     "source": src, "target": dst, "action": action_type,
                     "source_via": source_via, "target_via": target_via,
                     "msg": FileExecutor.get_status_message(v_res)
@@ -952,8 +953,9 @@ class FileProcessor:
         ]
         
         try:
-            # 直接调用内部处理函数，不再走 HTTP
-            triggered = await process_cd2_notification(payload_data)
+            # 直接调用内部处理函数，不再走 HTTP；标注来源为整理联动，与真实的 CD2 Webhook 区分
+            result = await process_cd2_notification(payload_data, "整理联动")
+            triggered = result.get("triggered", 0) if isinstance(result, dict) else 0
             if triggered > 0:
                 logger.debug(f"成功触发 CD2 联动: {os.path.basename(cd2_path)}")
             else:
