@@ -7,7 +7,7 @@
  * 查看当前目录的离线任务、提交新任务、删除与重启。
  * 全部直接使用 CD2 内部路径（如 /115open/xxx）。
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { cd2Api, recognitionApi, organizerApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
@@ -105,7 +105,51 @@ const menuAction = (action: string) => {
   else if (action === 'recognize') recognizeFile(entry)
   else if (action === 'move') openTransferModal('move', entry)
   else if (action === 'copy') openTransferModal('copy', entry)
+  else if (action === 'copy_path') copyPath(entry)
   else if (action === 'delete') deleteEntry(entry)
+}
+
+const copyToClipboard = async (text: string) => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      // 内网 HTTP 环境下 Clipboard API 不可用，降级为 execCommand
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+const copyPath = async (entry: any) => {
+  const text = entry.path || ''
+  if (await copyToClipboard(text)) {
+    success(`已复制路径: ${text}`)
+  } else {
+    showError('复制失败，请手动复制')
+  }
+}
+
+const copyOfflineLink = async (task: any) => {
+  const text = task.url || ''
+  if (!text) {
+    showError('该任务没有可用链接')
+    return
+  }
+  if (await copyToClipboard(text)) {
+    success('链接已复制到剪贴板')
+  } else {
+    showError('复制失败，请手动复制')
+  }
 }
 
 // ---------- 新建文件夹 ----------
@@ -446,8 +490,21 @@ const offlineStatusColor = (code: number) => {
 
 const openOfflineModal = () => {
   showOfflineModal.value = true
+  offlinePage.value = 1
   loadOfflineTasks()
 }
+
+// ---------- 任务分页（任务多时避免一次性渲染全部卡片） ----------
+const offlinePage = ref(1)
+const offlinePageSize = ref(24)
+const offlinePageCount = computed(() => Math.max(1, Math.ceil(offlineTasks.value.length / offlinePageSize.value)))
+const offlinePagedTasks = computed(() => {
+  const start = (offlinePage.value - 1) * offlinePageSize.value
+  return offlineTasks.value.slice(start, start + offlinePageSize.value)
+})
+watch(offlinePageCount, (count) => {
+  if (offlinePage.value > count) offlinePage.value = count
+})
 
 const loadOfflineTasks = async () => {
   offlineLoading.value = true
@@ -691,6 +748,7 @@ onMounted(() => {
         <v-list-item prepend-icon="mdi-pencil-outline" title="重命名" @click="menuAction('rename')" />
         <v-list-item prepend-icon="mdi-folder-move-outline" title="移动到..." @click="menuAction('move')" />
         <v-list-item prepend-icon="mdi-content-copy" title="复制到..." @click="menuAction('copy')" />
+        <v-list-item prepend-icon="mdi-clipboard-text-outline" title="复制路径" @click="menuAction('copy_path')" />
         <v-divider class="my-1" />
         <v-list-item
           prepend-icon="mdi-delete-outline"
@@ -861,9 +919,9 @@ onMounted(() => {
           当前目录下暂无离线任务
         </div>
 
-        <!-- 卡片式任务列表 -->
+        <!-- 卡片式任务列表（分页渲染） -->
         <v-row v-else dense>
-          <v-col v-for="task in offlineTasks" :key="task.info_hash || task.url" cols="12" sm="6" md="4">
+          <v-col v-for="task in offlinePagedTasks" :key="task.info_hash || task.url" cols="12" sm="6" md="4">
             <v-card class="glass-card d-flex flex-column" height="100%">
               <v-card-text class="pa-3 d-flex flex-column flex-grow-1">
                 <div class="d-flex align-center mb-2">
@@ -880,6 +938,13 @@ onMounted(() => {
                     :loading="restartingHash === task.info_hash"
                     title="重启任务"
                     @click="restartOfflineTask(task)"
+                  />
+                  <v-btn
+                    icon="mdi-link-variant"
+                    size="x-small"
+                    variant="text"
+                    title="复制链接"
+                    @click="copyOfflineLink(task)"
                   />
                   <v-btn
                     icon="mdi-delete-outline"
@@ -916,6 +981,28 @@ onMounted(() => {
             </v-card>
           </v-col>
         </v-row>
+
+        <!-- 分页 -->
+        <div v-if="offlineTasks.length" class="d-flex align-center flex-wrap ga-2 mt-2">
+          <span class="text-caption text-medium-emphasis">共 {{ offlineTasks.length }} 个任务</span>
+          <v-select
+            v-model="offlinePageSize"
+            :items="[12, 24, 48, 96]"
+            label="每页"
+            density="compact"
+            variant="outlined"
+            hide-details
+            style="max-width: 96px"
+          />
+          <v-spacer />
+          <v-pagination
+            v-model="offlinePage"
+            :length="offlinePageCount"
+            :total-visible="7"
+            density="comfortable"
+            active-color="primary"
+          />
+        </div>
       </v-card-text>
     </v-card>
   </v-dialog>

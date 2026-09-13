@@ -1,5 +1,6 @@
 import logging
 import posixpath
+import time
 from typing import Dict, Any, List
 
 from logger import log_audit
@@ -30,6 +31,10 @@ class CD2TaskManager:
     """
     def __init__(self, connection):
         self.connection = connection
+        # 账号解析缓存: path -> (cloudName, cloudAccountId, 解析时间)
+        # _resolve_account 需完整列举父目录，云盘上很慢；目录归属极少变化，缓存复用
+        self._account_cache: Dict[str, tuple] = {}
+        self._account_cache_ttl = 600
 
     # ---- 账号解析 ----
     def _resolve_account(self, path: str) -> Dict[str, str]:
@@ -39,6 +44,11 @@ class CD2TaskManager:
         """
         conn = self.connection
         normalized = "/" + (path or "/").strip("/")
+
+        cached = self._account_cache.get(normalized)
+        if cached and time.time() - cached[2] < self._account_cache_ttl:
+            return {"cloudName": cached[0], "cloudAccountId": cached[1]}
+
         parent = posixpath.dirname(normalized) or "/"
         name = posixpath.basename(normalized)
 
@@ -49,6 +59,7 @@ class CD2TaskManager:
             for f in reply.subFiles:
                 entry_path = f.fullPathName or f.path or f"/{f.name}"
                 if entry_path == normalized or f.name == name:
+                    self._account_cache[normalized] = (f.CloudAPI.name, f.CloudAPI.userName, time.time())
                     return {"cloudName": f.CloudAPI.name, "cloudAccountId": f.CloudAPI.userName}
 
         raise RuntimeError(f"未找到 {normalized} 所属的云端账号")
