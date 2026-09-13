@@ -477,6 +477,7 @@ async def startup_event():
             logger.warning(f"发送启动通知失败: {e}")
 
     MonitorManager.init(asyncio.get_running_loop())
+    LogBroadcaster.set_loop(asyncio.get_running_loop())
     asyncio.create_task(async_init_tasks())
 
     async def warm_up_meta():

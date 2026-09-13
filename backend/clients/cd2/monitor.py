@@ -25,7 +25,15 @@ class CD2TransferMonitor:
     def __init__(self):
         self.conn: Optional[CD2Connection] = None
         self.last_scan_cache = {}
+        # 主动取消的任务路径：消失时不视为"任务完成"（用后即弃）
+        self._ignored_vanished = set()
         self._refresh_config()
+
+    @classmethod
+    def ignore_task(cls, path: str):
+        """标记任务路径为主动取消：该路径从任务列表消失时不触发完成联动"""
+        if cls._instance is not None and path:
+            cls._instance._ignored_vanished.add(path)
 
     def _refresh_config(self):
         """重新加载配置"""
@@ -182,6 +190,13 @@ class CD2TransferMonitor:
 
                 for path in vanished_paths:
                     info = self.last_scan_cache[path]
+
+                    # 主动取消的任务（秒传未命中等）：消失不算完成，跳过联动
+                    if path in self._ignored_vanished:
+                        self._ignored_vanished.discard(path)
+                        del self.last_scan_cache[path]
+                        continue
+
                     last_status = info['status']
 
                     # 只有非错误状态的消失才算成功完成

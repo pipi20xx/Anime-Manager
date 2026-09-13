@@ -163,18 +163,6 @@ class RemoteUploadManager:
             self._channel_wakeup.clear()
             conn = self._conn
 
-    def cancel(self, upload_id: str) -> Dict[str, Any]:
-        conn = self._conn
-        session = self._sessions.get(upload_id)
-        req = conn.pb2.RemoteUploadControlRequest(upload_id=upload_id, cancel=conn.pb2.CancelRemoteUpload())
-        conn.stub.RemoteUploadControl(req, metadata=conn.get_metadata(), timeout=30)
-        if session:
-            session.terminal = True
-            with session.cond:
-                session.cond.notify_all()
-            self._sessions.pop(upload_id, None)
-        return {"success": True, "message": "已取消"}
-
     # ---------- 本地磁盘数据源（供整理任务：本地文件 → 云端，后台同步执行） ----------
     def upload_local_file_sync(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None, rapid_mode: str = "off") -> Dict[str, Any]:
         """
@@ -521,6 +509,12 @@ class RemoteUploadManager:
         req = conn.pb2.RemoteUploadControlRequest(upload_id=upload_id, cancel=conn.pb2.CancelRemoteUpload())
         conn.stub.RemoteUploadControl(req, metadata=conn.get_metadata(), timeout=30)
         if session:
+            # 主动取消的任务：通知监控该路径消失不算完成，避免误触发 STRM 联动
+            try:
+                from clients.cd2.monitor import CD2TransferMonitor
+                CD2TransferMonitor.ignore_task(session.file_path)
+            except Exception:
+                pass
             session.terminal = True
             with session.cond:
                 session.cond.notify_all()

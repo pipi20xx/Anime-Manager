@@ -36,6 +36,12 @@ class LogFormatter(logging.Formatter):
 class LogBroadcaster:
     _subscribers = set()
     _history = [] # 内存回填缓冲区
+    _main_loop = None  # 主事件循环引用（工作线程日志回投用）
+
+    @classmethod
+    def set_loop(cls, loop):
+        """启动时记录主事件循环，供无 loop 的工作线程广播日志"""
+        cls._main_loop = loop
 
     @classmethod
     def subscribe(cls):
@@ -97,7 +103,11 @@ class QueueHandler(logging.Handler):
                 loop = asyncio.get_running_loop()
                 loop.create_task(LogBroadcaster.broadcast(msg))
             except RuntimeError:
-                pass
+                # 工作线程（上传线程/监控线程等）没有运行中的事件循环，
+                # 回投到主事件循环广播，避免线程日志在前端实时流中丢失
+                main_loop = LogBroadcaster._main_loop
+                if main_loop is not None and main_loop.is_running():
+                    asyncio.run_coroutine_threadsafe(LogBroadcaster.broadcast(msg), main_loop)
         except:
             pass
 
