@@ -96,6 +96,7 @@ class RemoteUploadManager:
         self._sessions_lock = threading.Lock()
         self._channel_thread: Optional[threading.Thread] = None
         self._channel_stop = threading.Event()
+        self._channel_wakeup = threading.Event()
         self._device_id = _get_device_id()
         # 会话注册前到达的通道消息缓冲（StartRemoteUpload 返回与注册间存在竞态窗口）
         self._orphan_replies: Dict[str, list] = {}
@@ -112,18 +113,29 @@ class RemoteUploadManager:
     # ---------- channel ----------
     def _ensure_channel(self, conn):
         if self._conn is conn and self._channel_thread and self._channel_thread.is_alive():
+            # 通道可能因空闲转入待机，唤醒它立即重连
+            self._channel_wakeup.set()
             return
         self._conn = conn
         self._channel_stop.clear()
+        self._channel_wakeup.set()  # 唤醒旧线程（若挂起），使其检测到连接已更换后退出
         self._channel_thread = threading.Thread(
             target=self._channel_loop, name="CD2RemoteUploadChannel", daemon=True
         )
         self._channel_thread.start()
+        self._channel_wakeup.clear()
         logger.info(f"[{conn.name}] RemoteUploadChannel 已启动 (device_id: {self._device_id[:8]}...)")
+
+    def _has_active_sessions(self) -> bool:
+        with self._sessions_lock:
+            return any(not s.terminal for s in self._sessions.values())
 
     def _channel_loop(self):
         conn = self._conn
         while not self._channel_stop.is_set():
+            if self._conn is not conn:
+                # 连接已被更新（如配置变更重建客户端），旧通道线程退出
+                return
             try:
                 req = conn.pb2.RemoteUploadChannelRequest(device_id=self._device_id)
                 stream = conn.stub.RemoteUploadChannel(req, metadata=conn.get_metadata())
@@ -132,8 +144,18 @@ class RemoteUploadManager:
             except Exception as e:
                 if self._channel_stop.is_set():
                     break
-                logger.warning(f"[{conn.name}] RemoteUploadChannel 断开，5 秒后重连: {e}")
+                logger.warning(f"[{conn.name}] RemoteUploadChannel 断开: {e}")
+
+            # 流已结束：仅在仍有活动会话时重连，否则转入待机，避免空闲期
+            # 反复重连被服务端替换（channel replaced）造成告警刷屏
+            if self._has_active_sessions():
                 time.sleep(5)
+                continue
+
+            logger.info(f"[{conn.name}] 无活动上传会话，RemoteUploadChannel 转入待机")
+            self._channel_wakeup.wait()
+            self._channel_wakeup.clear()
+            conn = self._conn
 
     def cancel(self, upload_id: str) -> Dict[str, Any]:
         conn = self._conn
@@ -168,6 +190,7 @@ class RemoteUploadManager:
         session = _Session(upload_id, cloud_file_path, size)
         session.local = True
         self._register_session(session)
+        self._channel_wakeup.set()  # 会话已就绪，若通道恰在待机则立即恢复连接
 
         log_audit("CD2上传", "开始", f"远程上传(磁盘源): {cloud_file_path} ({size} 字节)")
 
@@ -334,6 +357,7 @@ class RemoteUploadManager:
         upload_id = started.upload_id
         session = _Session(upload_id, req.file_path, size)
         self._register_session(session)
+        self._channel_wakeup.set()  # 会话已就绪，若通道恰在待机则立即恢复连接
         log_audit("CD2上传", "开始", f"远程上传: {req.file_path} ({size} 字节)")
         return {"upload_id": upload_id, "file_path": req.file_path, "size": size}
 

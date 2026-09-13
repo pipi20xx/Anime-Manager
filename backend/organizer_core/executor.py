@@ -4,6 +4,7 @@ import asyncio
 import logging
 from typing import List, Tuple, Dict, Any
 from clients.manager import ClientManager
+from logger import log_audit
 
 logger = logging.getLogger(__name__)
 
@@ -323,6 +324,14 @@ class FileExecutor:
             )
             if not result.get("success"):
                 return f"cd2_failed: {result.get('error') or result.get('status_text')}"
+
+            if action == "cd2_move":
+                try:
+                    await asyncio.to_thread(os.remove, src)
+                    logger.info(f"🗑️ CD2移动完成，已删除本地源文件: {os.path.basename(src)}")
+                    log_audit("CD2文件", "删除", f"CD2移动完成，已删除本地源文件: {src}")
+                except Exception as e:
+                    return f"cd2_failed: 上传成功但删除本地源文件失败: {e}"
             return "success"
 
         return "cd2_failed: 不支持的 via 组合"
