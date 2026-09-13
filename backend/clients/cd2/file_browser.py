@@ -193,14 +193,15 @@ class CD2FileBrowser:
                     })
         return files
 
-    def path_exists(self, path: str) -> bool:
-        """检查云路径是否存在（列出父目录按名称匹配）"""
+    def path_exists(self, path: str, force_refresh: bool = False) -> bool:
+        """检查云路径是否存在（列出父目录按名称匹配）。
+        force_refresh=True 时绕过 CD2 目录缓存，强制拉取云端实时列表。"""
         conn = self.connection
         normalized = "/" + (path or "").strip("/")
         parent = posixpath.dirname(normalized) or "/"
         name = posixpath.basename(normalized)
         try:
-            req = conn.pb2.ListSubFileRequest(path=parent, forceRefresh=False)
+            req = conn.pb2.ListSubFileRequest(path=parent, forceRefresh=force_refresh)
             for reply in conn.stub.GetSubFiles(req, metadata=conn.get_metadata(), timeout=30):
                 for f in reply.subFiles:
                     if f.name == name:

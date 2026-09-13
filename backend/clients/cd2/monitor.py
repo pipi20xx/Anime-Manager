@@ -201,8 +201,24 @@ class CD2TransferMonitor:
 
                     # 只有非错误状态的消失才算成功完成
                     if "Error" not in last_status and "Fatal" not in last_status and "Cancelled" not in last_status:
-                        log_audit("CD2监控", "任务完成", f"检测到 CD2 任务完成: {info['name']}", details=f"路径: {path}")
-                        self._send_webhook(path)
+                        # 终极判据：目标文件真的出现在网盘上才算完成。
+                        # 短生命周期任务（两次扫描间出现又消失）看不到真实终态，
+                        # 服务端/其他来源的取消也会走到这里，以文件存在性为准。
+                        file_exists = False
+                        try:
+                            from .file_browser import CD2FileBrowser
+                            # 强制刷新父目录列表：CD2 缓存可能滞后于刚完成的上传，
+                            # 必须用云端实时状态作为最终判据
+                            file_exists = CD2FileBrowser(self.conn).path_exists(path, force_refresh=True)
+                        except Exception as e:
+                            logger.warning(f"CD2 监控校验目标文件失败: {e}")
+                            file_exists = True  # 校验失败时按原逻辑处理，避免漏报真实完成
+
+                        if file_exists:
+                            log_audit("CD2监控", "任务完成", f"检测到 CD2 任务完成: {info['name']}", details=f"路径: {path}")
+                            self._send_webhook(path)
+                        else:
+                            log_audit("CD2监控", "提示", f"任务已消失且目标文件不存在，判定为已取消/失败，跳过联动: {info['name']}", details=f"路径: {path}")
 
                     del self.last_scan_cache[path]
 

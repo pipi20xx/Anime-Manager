@@ -38,12 +38,20 @@ class RapidUploadRetryManager:
             )
             existing = await db.first(RapidUploadRetry, stmt)
             if existing:
+                # 整理任务本次运行刚发生的未命中也是一次真实尝试，计入次数（封顶于上限）
+                existing.attempts = min((existing.attempts or 0) + 1, max_retries)
                 existing.cloud_path = cloud_path
                 existing.action_type = action_type
                 existing.rapid_mode = rapid_mode
                 existing.retry_interval = retry_interval
                 existing.max_retries = max_retries
-                existing.next_retry_at = now + timedelta(minutes=retry_interval)
+                if existing.attempts >= max_retries:
+                    # 次数已用尽：安排立即处理，worker 将直接回退真实上传/放弃
+                    existing.message = f"秒传次数已用尽（{existing.attempts}/{max_retries}），待回退处理"
+                    existing.next_retry_at = now + timedelta(minutes=1)
+                else:
+                    existing.message = f"整理任务秒传未命中，已计入重试（第 {existing.attempts}/{max_retries} 次）"
+                    existing.next_retry_at = now + timedelta(minutes=retry_interval)
                 existing.meta = meta
                 existing.updated_at = now
                 await db.save(existing, audit=False)
@@ -56,9 +64,10 @@ class RapidUploadRetryManager:
                     rapid_mode=rapid_mode,
                     retry_interval=retry_interval,
                     max_retries=max_retries,
-                    attempts=0,
+                    attempts=1,  # 首次未命中即第 1 次
                     next_retry_at=now + timedelta(minutes=retry_interval),
                     status="pending",
+                    message=f"秒传未命中（第 1/{max_retries} 次）",
                     meta=meta,
                 )
                 await db.save(record, audit=False)
@@ -165,6 +174,14 @@ class RapidUploadRetryManager:
             await cls._finalize_success(record_id, snap, cloud_path, note="目标已存在")
             return
 
+        attempts = snap["attempts"]
+
+        # 次数已用尽（整理任务重复入队可能把计数顶到上限）：不再尝试秒传，直接按模式处理
+        if attempts >= snap["max_retries"]:
+            log_audit("CD2秒传", "回退上传",
+                      f"{local_path}: 秒传次数已用尽（{attempts}/{snap['max_retries']}），不再尝试秒传")
+            return await cls._fallback_or_giveup(record_id, snap, client, attempts)
+
         # 重试秒传：rapid_only 模式下服务端一要数据即取消
         from clients.cd2.remote_upload import RemoteUploadManager
         result = await asyncio.to_thread(
@@ -186,40 +203,48 @@ class RapidUploadRetryManager:
                           f"{local_path}: 第 {attempts}/{snap['max_retries']} 次未命中，"
                           f"{snap['retry_interval']} 分钟后重试")
                 return
-
             # 次数用尽
-            if snap["rapid_mode"] == "rapid_then_upload":
-                log_audit("CD2秒传", "回退上传", f"{local_path}: {attempts} 次秒传未命中，回退为真实上传")
-                # 等待被取消的秒传会话从 CD2 上传列表中消失：取消后立刻对同路径
-                # 发起新会话会被服务端忽略（任务不调度、无任何状态推送）
-                from clients.cd2.remote_upload import RemoteUploadManager as _RUM
-                for _ in range(12):
-                    found, _st, _m = _RUM.get_instance()._query_upload_status(client._conn, cloud_path)
-                    if not found:
-                        break
-                    await asyncio.sleep(5)
-                result = await asyncio.to_thread(
-                    RemoteUploadManager.get_instance().upload_local_file_sync,
-                    client._conn, local_path, cloud_path, None, "off",
-                )
-                if result.get("success"):
-                    await cls._finalize_success(record_id, snap, cloud_path,
-                                                note=f"秒传 {attempts} 次未命中后真实上传")
-                    return
-                await cls._mark(record_id, attempts=attempts, status="failed",
-                                message=f"真实上传失败: {result.get('error') or result.get('status_text')}")
-                return
-
-            await cls._mark(record_id, attempts=attempts, status="failed",
-                            message=f"秒传 {attempts} 次均未命中，已放弃（仅秒传模式）")
-            from notification import notification_manager
-            await notification_manager.notify_organize_failed(
-                local_path, f"秒传 {attempts} 次均未命中，已放弃上传（仅秒传模式）")
-            return
+            snap["attempts"] = attempts
+            return await cls._fallback_or_giveup(record_id, snap, client, attempts)
 
         # 其他上传错误（网络/服务端异常）：按普通失败重试
         await cls._reschedule(record_id, snap,
                               result.get("error") or result.get("status_text") or "上传失败")
+
+    @classmethod
+    async def _fallback_or_giveup(cls, record_id: int, snap: dict, client, attempts: int):
+        """秒传次数用尽后的处理：回退真实上传（rapid_then_upload）或放弃（rapid_only）"""
+        from clients.cd2.remote_upload import RemoteUploadManager
+        local_path = snap["local_path"]
+        cloud_path = snap["cloud_path"]
+
+        if snap["rapid_mode"] == "rapid_then_upload":
+            log_audit("CD2秒传", "回退上传", f"{local_path}: {attempts} 次秒传未命中，回退为真实上传")
+            # 等待被取消的秒传会话从 CD2 上传列表中消失：取消后立刻对同路径
+            # 发起新会话会被服务端忽略（任务不调度、无任何状态推送）
+            for _ in range(12):
+                found, _st, _m = RemoteUploadManager.get_instance()._query_upload_status(
+                    client._conn, cloud_path)
+                if not found:
+                    break
+                await asyncio.sleep(5)
+            result = await asyncio.to_thread(
+                RemoteUploadManager.get_instance().upload_local_file_sync,
+                client._conn, local_path, cloud_path, None, "off",
+            )
+            if result.get("success"):
+                await cls._finalize_success(record_id, snap, cloud_path,
+                                            note=f"秒传 {attempts} 次未命中后真实上传")
+                return
+            await cls._mark(record_id, attempts=attempts, status="failed",
+                            message=f"真实上传失败: {result.get('error') or result.get('status_text')}")
+            return
+
+        await cls._mark(record_id, attempts=attempts, status="failed",
+                        message=f"秒传 {attempts} 次均未命中，已放弃（仅秒传模式）")
+        from notification import notification_manager
+        await notification_manager.notify_organize_failed(
+            local_path, f"秒传 {attempts} 次均未命中，已放弃上传（仅秒传模式）")
 
     @classmethod
     async def _reschedule(cls, record_id: int, snap: dict, reason: str):
