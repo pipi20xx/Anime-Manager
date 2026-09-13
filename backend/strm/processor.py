@@ -75,6 +75,9 @@ class StrmProcessor:
             rel_path = await asyncio.to_thread(os.path.relpath, file_path, source_root)
         except ValueError:
             return {"status": "error", "message": "File not in source root"}
+        # 防御：文件不在源目录内时 relpath 会产生 ../ 逃逸，禁止写出到目标目录之外
+        if rel_path == os.pardir or rel_path.startswith(os.pardir + os.sep):
+            return {"status": "error", "message": "文件不在源目录范围内，请检查源目录或路径换算配置"}
             
         target_subdir = os.path.join(target_root, os.path.dirname(rel_path))
         

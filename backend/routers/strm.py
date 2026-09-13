@@ -9,6 +9,7 @@ import json
 import logging
 
 from strm.strm_generator import StrmGenerator
+from strm.processor import StrmProcessor
 from config_manager import ConfigManager
 from logger import log_audit
 from task_history import start_task, log_task, finish_task
@@ -40,6 +41,57 @@ async def get_strm_tasks():
     """
     config = ConfigManager.get_config()
     return config.get("strm_tasks", [])
+
+class StrmTestGenerateRequest(BaseModel):
+    file_path: str
+    config: Dict[str, Any]
+
+@router.post("/generate_one", summary="测试生成单个 STRM（实际落盘）")
+async def strm_generate_one(req: StrmTestGenerateRequest):
+    """
+    使用给定任务配置实际处理单个文件（真实写出 STRM/元数据），用于编辑任务时快速验证配置是否正确。
+    """
+    task = req.config or {}
+    gen_config = {
+        "source_dir": task.get("source_dir") or task.get("source_path"),
+        "target_dir": task.get("target_dir") or task.get("target_path"),
+        "content_prefix": task.get("content_prefix", ""),
+        "content_suffix": task.get("content_suffix", ""),
+        "url_encode": bool(task.get("url_encode", False)),
+        "copy_meta": bool(task.get("copy_meta", False)),
+        "overwrite": bool(task.get("overwrite", False)),
+        "overwrite_strm": bool(task.get("overwrite_strm", True)),
+        "overwrite_meta": bool(task.get("overwrite_meta", False)),
+        "cd2_mapping_path": task.get("cd2_mapping_path", ""),
+        "sync_mode": task.get("sync_mode", "local"),
+        "tree_file_path": task.get("tree_file_path", ""),
+        "target_extensions": task.get("target_extensions"),
+        "meta_extensions": task.get("meta_extensions"),
+    }
+
+    if not req.file_path.strip():
+        raise HTTPException(status_code=400, detail="请输入要测试的文件路径")
+    if not gen_config["source_dir"] or not gen_config["target_dir"]:
+        raise HTTPException(status_code=400, detail="请先填写源目录和目标目录")
+
+    # 输入的不是源目录下的完整路径时，自动按源目录拼接（支持直接填文件名或 /xxx.mkv）
+    file_path = req.file_path.strip().replace("\\", "/")
+    norm_source = os.path.normpath(gen_config["source_dir"])
+    if not file_path.startswith(norm_source):
+        file_path = os.path.join(norm_source, file_path.lstrip("/"))
+
+    log_audit("STRM", "测试", f"单文件生成: {file_path}")
+    result = await StrmProcessor.process_single_file(file_path, gen_config)
+
+    # 附加速览信息：实际落盘路径与 STRM 内容
+    if result.get("rel_path"):
+        result["written_path"] = os.path.join(gen_config["target_dir"], result["rel_path"])
+    if result.get("status") == "success" and "STRM" in result.get("message", ""):
+        try:
+            result["content"] = StrmProcessor.calculate_strm_content(gen_config["source_dir"], file_path, gen_config)
+        except Exception:
+            pass
+    return result
 
 @router.post("/preview", summary="预览内容生成")
 async def strm_preview(config: StrmConfig):

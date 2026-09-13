@@ -16,6 +16,9 @@ export const strmApi = {
   /** 预览 STRM 内容 */
   preview: (body: any) => api.post<any>('/api/strm/preview', body),
 
+  /** 测试生成单个 STRM（实际落盘） */
+  generateOne: (body: any) => api.post<any>('/api/strm/generate_one', body),
+
   /** 通过任务 ID 后台运行 */
   runTask: (taskId: string) => api.post<any>(`/api/strm/run/${taskId}`),
 

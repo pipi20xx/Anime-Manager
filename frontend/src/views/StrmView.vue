@@ -10,7 +10,7 @@
  * - 完整编辑表单 Modal（Tab 分页，功能对齐全旧前端）
  */
 import { ref, reactive, watch, onMounted } from 'vue'
-import { strmApi, configApi } from '@/api'
+import { strmApi, configApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
@@ -33,6 +33,111 @@ const openFolderBrowser = (field: 'source_path' | 'target_path') => {
 
 const onFolderSelected = (path: string) => {
   taskForm[browsingField.value] = path
+}
+
+// ---------- 链接前缀预设（从 CD2 下载器配置自动拼入，填入后仍可手动修改） ----------
+const ensureTrailingSlash = (p: string) => (p.endsWith('/') ? p : p + '/')
+
+function cd2Netloc(url: string): string | null {
+  try {
+    return new URL(url.includes('://') ? url : 'http://' + url).host
+  } catch {
+    return null
+  }
+}
+
+async function applyPrefixPreset(kind: 'cd2_http' | 'cd2_local') {
+  let cd2: any = null
+  try {
+    const clients = await clientsApi.getClients()
+    cd2 = (clients || []).find((c: any) => c.type === 'cd2') || null
+  } catch {
+    cd2 = null
+  }
+  if (!cd2) {
+    info('未找到已配置的 CD2 下载器，请先在 设置 → 下载器设置 中添加')
+    return
+  }
+
+  if (kind === 'cd2_local') {
+    const mountPath = (cd2.mount_path || '').trim()
+    if (!mountPath) {
+      info('CD2 客户端尚未填写「CD2 本地挂载点」，请先在 下载器设置 中填写')
+      return
+    }
+    taskForm.content_prefix = ensureTrailingSlash(mountPath)
+    return
+  }
+
+  // CD2 HTTP 直链：http://{host}/static/http/{host}/False//{云端子路径}/
+  const netloc = cd2Netloc((cd2.url || '').trim())
+  if (!netloc) {
+    showError('CD2 客户端地址无效，无法生成前缀')
+    return
+  }
+  let prefix = `http://${netloc}/static/http/${netloc}/False//`
+  const source = (taskForm.source_path || '').trim()
+  const mountPath = (cd2.mount_path || '').trim().replace(/\/+$/, '')
+  if (source) {
+    let cloudSub = ''
+    if (mountPath && source.startsWith(mountPath)) {
+      // 源目录在挂载点内：截取挂载点之后的云端子路径
+      cloudSub = source.slice(mountPath.length).replace(/^\/+|\/+$/g, '')
+    } else if (taskForm.sync_mode === 'cd2_api' && source.startsWith('/')) {
+      // CD2 云路径源（如 /123云盘/xxx）：本身即云端子路径
+      cloudSub = source.replace(/^\/+|\/+$/g, '')
+    }
+    if (cloudSub) prefix += cloudSub + '/'
+  }
+  taskForm.content_prefix = prefix
+}
+
+// ---------- 测试生成 STRM（单文件实际落盘） ----------
+const showTestGen = ref(false)
+const testGenFile = ref('')
+const testGenLoading = ref(false)
+const testGenResult = ref<any>(null)
+
+function openTestGen() {
+  testGenFile.value = ''
+  testGenResult.value = null
+  showTestGen.value = true
+}
+
+async function handleTestGenerate() {
+  const filePath = testGenFile.value.trim()
+  if (!filePath) {
+    showError('请输入要测试的文件路径')
+    return
+  }
+  if (!taskForm.source_path || !taskForm.target_path) {
+    showError('请先填写源目录和目标目录')
+    return
+  }
+  testGenLoading.value = true
+  testGenResult.value = null
+  try {
+    const res = await strmApi.generateOne({
+      file_path: filePath,
+      config: {
+        ...taskForm,
+        source_dir: taskForm.source_path,
+        target_dir: taskForm.target_path,
+        target_extensions: taskForm.target_extensions.split(',').map((s: string) => s.trim()).filter(Boolean),
+        meta_extensions: taskForm.meta_extensions.split(',').map((s: string) => s.trim()).filter(Boolean),
+      },
+    })
+    testGenResult.value = res
+    if (res?.status === 'success') {
+      success(`已实际生成: ${res.written_path || res.rel_path || filePath}`)
+    } else {
+      showError(res?.message || '生成失败')
+    }
+  } catch (e: any) {
+    showError(e?.message || '测试生成失败')
+  } finally {
+    testGenLoading.value = false
+  }
 }
 
 const tasks = ref<any[]>([])
@@ -531,7 +636,32 @@ onMounted(() => {
                   />
                 </v-col>
                 <v-col cols="12" sm="6">
-                  <v-text-field v-model="taskForm.content_prefix" label="链接前缀" density="compact" placeholder="http://ip:port/..." />
+                  <v-text-field v-model="taskForm.content_prefix" label="链接前缀" density="compact" placeholder="http://ip:port/...">
+                    <template #append-inner>
+                      <v-menu>
+                        <template #activator="{ props: menuProps }">
+                          <v-btn
+                            icon="mdi-arrow-down-drop-circle-outline"
+                            v-bind="menuProps"
+                            variant="text"
+                            density="compact"
+                            size="small"
+                            aria-label="链接前缀预设"
+                          />
+                        </template>
+                        <v-list density="compact" min-width="280">
+                          <v-list-item @click="applyPrefixPreset('cd2_http')">
+                            <v-list-item-title>CD2 HTTP 直链</v-list-item-title>
+                            <v-list-item-subtitle>按 CD2 地址自动拼接 /static/http/... 前缀</v-list-item-subtitle>
+                          </v-list-item>
+                          <v-list-item @click="applyPrefixPreset('cd2_local')">
+                            <v-list-item-title>CD2 本地挂载点</v-list-item-title>
+                            <v-list-item-subtitle>填入 CD2 本地挂载点路径</v-list-item-subtitle>
+                          </v-list-item>
+                        </v-list>
+                      </v-menu>
+                    </template>
+                  </v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
                   <v-text-field v-model="taskForm.content_suffix" label="链接后缀" density="compact" placeholder="（可选）" />
@@ -682,8 +812,53 @@ onMounted(() => {
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
+          <v-btn variant="tonal" prepend-icon="mdi-flash-outline" @click="openTestGen">测试生成</v-btn>
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showModal = false">取消</v-btn>
           <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" :loading="saving" @click="handleSave">保存任务</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 测试生成 STRM（单文件实际落盘） -->
+    <v-dialog v-model="showTestGen" max-width="640">
+      <v-card>
+        <v-card-title class="text-h6">测试生成 STRM</v-card-title>
+        <v-card-text>
+          <div class="text-body-2 text-medium-emphasis mb-3">
+            使用当前编辑中的任务配置（源目录、链接前缀、扩展名等）实际处理一个文件，真实写出 STRM / 元数据文件。
+          </div>
+          <v-text-field
+            v-model="testGenFile"
+            label="文件路径"
+            density="compact"
+            placeholder="例如: /568/Hateshinaki.Scarlet.2025.1080p.BluRay.Remux.AVC.TrueHD.5.1.2Audio-AnimeF@ADE.mkv"
+            hint="可直接填文件名或相对路径（自动拼接源目录），也可填源目录下的完整路径"
+            persistent-hint
+            @keyup.enter="handleTestGenerate"
+          />
+          <template v-if="testGenResult">
+            <v-divider class="my-4" />
+            <v-alert
+              :type="testGenResult.status === 'success' ? 'success' : 'error'"
+              density="compact"
+              variant="tonal"
+            >
+              {{ testGenResult.message || (testGenResult.status === 'success' ? '生成成功' : '生成失败') }}
+            </v-alert>
+            <div v-if="testGenResult.written_path" class="mt-3">
+              <div class="text-caption text-medium-emphasis">实际落盘文件</div>
+              <div class="kv-value--mono">{{ testGenResult.written_path }}</div>
+            </div>
+            <div v-if="testGenResult.content" class="mt-3">
+              <div class="text-caption text-medium-emphasis">STRM 内容</div>
+              <div class="kv-value--mono">{{ testGenResult.content }}</div>
+            </div>
+          </template>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="tonal" @click="showTestGen = false">关闭</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-flash-outline" :loading="testGenLoading" @click="handleTestGenerate">确认生成</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
