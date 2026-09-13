@@ -153,6 +153,7 @@ class FileExecutor:
         if code == "overwrite_failed": return "覆盖失败"
         if code == "skipped": return "已跳过 (目标已存在)"
         if code == "cd2_client_not_found": return "未找到 CD2 客户端"
+        if code == "cd2_rapid_miss": return "秒传未命中，已加入重试队列稍后自动重试"
         if code == "hardlink_failed_cross_device": return "跨设备硬链失败 (不支持跨盘)"
         if code == "failed_verification_not_found": return "校验失败: 目标文件未找到"
         if code.startswith("failed_size_mismatch"):
@@ -214,12 +215,14 @@ class FileExecutor:
 
     @staticmethod
     async def _execute_cd2_via(client, src: str, dst: str, action: str, conflict: str,
-                               source_via: str, target_via: str, dir_cache: set = None) -> str:
+                               source_via: str, target_via: str, dir_cache: set = None,
+                               rapid: dict = None) -> str:
         """
         via 路由矩阵：按源/目标归属域选择底层通道。
         - cd2→cd2:   纯 gRPC（ensure_dir + 原位改名 + MoveFile/CopyFile）
         - cd2→local: gRPC CopyFile 经挂载写入本地（cd2_move 后 DeleteFile 云端源）
         - local→cd2: Remote Upload 磁盘数据源（流式分块，免挂载）
+        rapid: 秒传配置 {mode, interval, max_retries}，仅 local→cd2 生效
         """
         action_label = "移动" if action == "cd2_move" else "复制"
         browser = client._file_browser
@@ -318,10 +321,16 @@ class FileExecutor:
                     if not ok: return f"cd2_failed: 目标覆盖删除失败: {msg}"
 
             from clients.cd2.remote_upload import RemoteUploadManager
+            rapid_mode = "off"
+            if rapid and rapid.get("mode") in ("rapid_then_upload", "rapid_only"):
+                rapid_mode = rapid["mode"]
             result = await asyncio.to_thread(
                 RemoteUploadManager.get_instance().upload_local_file_sync,
-                client._conn, src, dst,
+                client._conn, src, dst, None, rapid_mode,
             )
+            if result.get("rapid_miss"):
+                # 秒传未命中：不真实上传，交由重试队列处理（源文件保持不动）
+                return "cd2_rapid_miss"
             if not result.get("success"):
                 return f"cd2_failed: {result.get('error') or result.get('status_text')}"
 
@@ -338,10 +347,11 @@ class FileExecutor:
 
     @staticmethod
     async def execute_action(src: str, dst: str, action: str, conflict: str, dir_cache: set = None, source_root: str = None,
-                             source_via: str = "local", target_via: str = "local") -> str:
+                             source_via: str = "local", target_via: str = "local", rapid: dict = None) -> str:
         """
         Execute single file action asynchronously.
         source_via/target_via: 'local' | 'cd2'，决定 CD2 类动作的底层通道。
+        rapid: 秒传配置 {mode, interval, max_retries}，仅 local→cd2 生效。
         """
         # 云源：本地 FS 存在性检查跳过（数据可能只在云端）
         if source_via != "cd2":
@@ -389,7 +399,8 @@ class FileExecutor:
                 if source_via == "cd2" or target_via == "cd2":
                     # --- via 路由矩阵（显式归属域优先） ---
                     return await FileExecutor._execute_cd2_via(
-                        cd2_client, src, dst, action, conflict, source_via, target_via, dir_cache
+                        cd2_client, src, dst, action, conflict, source_via, target_via, dir_cache,
+                        rapid=rapid,
                     )
 
                 # --- 旧版挂载路径模式（老任务兼容，行为不变） ---

@@ -279,6 +279,29 @@ class OrganizeHistory(SQLModel, table=True):
     # 关联识别任务的 task_id，用于查看对应的识别日志（任务中心「识别」模块）
     task_id: Optional[str] = Field(default=None, index=True)
 
+class RapidUploadRetry(SQLModel, table=True):
+    """CD2 秒传重试队列：秒传未命中的文件等待网盘哈希库更新后定时重试"""
+    __tablename__ = "rapid_upload_retry"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "秒传重试队列"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    client_id: Optional[str] = None
+    local_path: str = Field(index=True)
+    cloud_path: str
+    # move=成功后删源文件, copy=保留
+    action_type: str = Field(default="move")
+    rapid_mode: str = Field(default="rapid_then_upload")  # rapid_then_upload / rapid_only
+    retry_interval: int = Field(default=60)   # 分钟
+    max_retries: int = Field(default=6)
+    attempts: int = Field(default=0)
+    next_retry_at: datetime = Field(default_factory=datetime.now, index=True)
+    status: str = Field(default="pending", index=True)  # pending/running/done/failed
+    message: Optional[str] = None
+    # 识别结果与任务配置快照（重试成功后用于写出完整整理历史）
+    meta: Optional[dict] = Field(default=None, sa_column=Column(get_json_type()))
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
 class FileHash(SQLModel, table=True):
     __tablename__ = "file_hashes"
     __table_args__ = {"schema": get_public_schema()}

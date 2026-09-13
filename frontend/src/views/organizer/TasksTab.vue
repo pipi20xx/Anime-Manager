@@ -71,6 +71,9 @@ const taskForm = reactive({
   calculate_hash: false,
   clean_empty_dir: false,
   series_fingerprint: true,
+  cd2_rapid_mode: 'off',
+  cd2_rapid_interval: 60,
+  cd2_rapid_max_retries: 6,
 })
 
 function resetTaskForm() {
@@ -101,6 +104,9 @@ function resetTaskForm() {
   taskForm.calculate_hash = false
   taskForm.clean_empty_dir = false
   taskForm.series_fingerprint = true
+  taskForm.cd2_rapid_mode = 'off'
+  taskForm.cd2_rapid_interval = 60
+  taskForm.cd2_rapid_max_retries = 6
 }
 
 function openAddTask() {
@@ -144,6 +150,9 @@ function openEditTask(index: number) {
   if (rawData.anime_priority === undefined) rawData.anime_priority = true
   if (rawData.retry_failed === undefined) rawData.retry_failed = true
   if (rawData.series_fingerprint === undefined) rawData.series_fingerprint = true
+  if (rawData.cd2_rapid_mode === undefined) rawData.cd2_rapid_mode = 'off'
+  if (rawData.cd2_rapid_interval === undefined) rawData.cd2_rapid_interval = 60
+  if (rawData.cd2_rapid_max_retries === undefined) rawData.cd2_rapid_max_retries = 6
 
   Object.assign(taskForm, rawData)
   showTaskModal.value = true

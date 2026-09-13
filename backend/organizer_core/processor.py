@@ -607,18 +607,68 @@ class FileProcessor:
                 if cd2_client:
                     if source_via == "cd2" or target_via == "cd2":
                         # --- via 路由矩阵：逐项执行（视频 + 关联文件） ---
+                        # 秒传配置：仅 local→cd2 且任务开启秒传模式时生效
+                        rapid_cfg = None
+                        _rapid_mode = task.get("cd2_rapid_mode", "off")
+                        if (source_via == "local" and target_via == "cd2"
+                                and _rapid_mode in ("rapid_then_upload", "rapid_only")):
+                            try:
+                                _interval = max(1, int(task.get("cd2_rapid_interval", 60)))
+                            except (TypeError, ValueError):
+                                _interval = 60
+                            try:
+                                _max_retries = max(1, int(task.get("cd2_rapid_max_retries", 6)))
+                            except (TypeError, ValueError):
+                                _max_retries = 6
+                            rapid_cfg = {
+                                "mode": _rapid_mode,
+                                "interval": _interval,
+                                "max_retries": _max_retries,
+                            }
                         batch_res = "success"
                         any_skipped = False
                         for src, dst in plan_items:
                             res = await FileExecutor.execute_action(
                                 src, dst, action_type, conflict_mode,
-                                context.get("dir_cache"), source_via=source_via, target_via=target_via
+                                context.get("dir_cache"), source_via=source_via, target_via=target_via,
+                                rapid=rapid_cfg
                             )
                             if res == "success":
                                 await FileProcessor._log_detail(task_id, f"📦 CD2 {action_label}成功: {os.path.basename(src)}")
                             elif res in ("skipped", "skipped_conflict"):
                                 any_skipped = True
                                 await FileProcessor._log_detail(task_id, f"⏭️ {action_label}跳过（目标已存在，未开启覆盖模式）: {os.path.basename(src)}")
+                            elif res == "cd2_rapid_miss":
+                                batch_res = res
+                                # 秒传未命中：加入重试队列，等待网盘哈希库更新后自动重试
+                                from clients.cd2.rapid_retry import RapidUploadRetryManager
+                                await RapidUploadRetryManager.enqueue(
+                                    client_id=(cd2_client.config or {}).get("id"),
+                                    local_path=src, cloud_path=dst,
+                                    action_type=action_type,
+                                    rapid_mode=_rapid_mode,
+                                    retry_interval=rapid_cfg["interval"],
+                                    max_retries=rapid_cfg["max_retries"],
+                                    meta={
+                                        "source_path": src,
+                                        "filename": os.path.basename(src),
+                                        "action_type": action_type,
+                                        "final": final,
+                                        "task": {
+                                            "rule_id": task.get("rule_id"),
+                                            "source_dir": task.get("source_dir"),
+                                            "target_dir": task.get("target_dir"),
+                                            "overwrite_mode": task.get("overwrite_mode"),
+                                            "check_emby_exists": task.get("check_emby_exists", False),
+                                            "calculate_hash": task.get("calculate_hash", False),
+                                            "clean_empty_dir": task.get("clean_empty_dir", False),
+                                            "trigger_strm": task.get("trigger_strm", False),
+                                        },
+                                        "task_id": recog_task_id,
+                                        "create_history": src == v_path,
+                                    },
+                                )
+                                await FileProcessor._log_detail(task_id, f"⏳ CD2 秒传未命中，已加入重试队列: {os.path.basename(src)}")
                             else:
                                 batch_res = res
                                 logger.error(f"❌ CD2 {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(res)} (状态码: {res})")

@@ -369,6 +369,49 @@ const onFolderSelected = (path: string) => {
                   <div class="switch-desc">自动记住系列特征，后续秒级识别</div>
                 </div>
               </div>
+
+              <!-- CD2 秒传上传（仅 本地 → CD2 时显示） -->
+              <div v-if="taskForm.source_via === 'local' && taskForm.target_via === 'cd2'" class="cd2-rapid-section">
+                <div class="text-subtitle-2 font-weight-medium mb-2">CD2 秒传上传</div>
+                <v-select
+                  v-model="taskForm.cd2_rapid_mode"
+                  :items="[
+                    { title: '直接上传（默认）', value: 'off' },
+                    { title: '秒传优先·重试后再真实上传', value: 'rapid_then_upload' },
+                    { title: '仅秒传·重试后放弃', value: 'rapid_only' }
+                  ]"
+                  label="上传模式"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                />
+                <div class="text-caption text-medium-emphasis mt-1 mb-3">
+                  开启后先尝试秒传（哈希命中即秒传，不传输数据）；未命中则按间隔自动重试
+                </div>
+                <div v-if="taskForm.cd2_rapid_mode !== 'off'" class="d-flex ga-3">
+                  <v-text-field
+                    v-model.number="taskForm.cd2_rapid_interval"
+                    label="重试间隔（分钟）"
+                    type="number"
+                    min="1"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                  />
+                  <v-text-field
+                    v-model.number="taskForm.cd2_rapid_max_retries"
+                    label="最大重试次数"
+                    type="number"
+                    min="1"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                  />
+                </div>
+                <div v-if="taskForm.cd2_rapid_mode === 'rapid_only'" class="text-caption text-warning mt-1">
+                  ⚠️ 仅秒传模式下重试次数用尽将放弃上传，文件保留在原位置
+                </div>
+              </div>
             </div>
           </v-window-item>
         </v-window>

@@ -416,6 +416,18 @@ class MonitorManager:
         )
         logger.info("[Discover] 已调度每日发现页第一页缓存预热 (04:00)")
 
+        # 12. [CD2 Rapid Upload] 秒传重试队列轮询
+        from clients.cd2.rapid_retry import RapidUploadRetryManager
+        MonitorManager._scheduler.add_job(
+            RapidUploadRetryManager.run_due_jobs,
+            'interval',
+            minutes=1,
+            id="cd2_rapid_retry_job",
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info("[CD2秒传] 已启动秒传重试队列轮询，间隔 1 分钟")
+
     @staticmethod
     async def _warmup_discover_cache():
         """预热发现页第一页缓存 (Bangumi + TMDB)"""

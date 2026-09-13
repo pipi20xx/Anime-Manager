@@ -24,6 +24,12 @@ _POLL_TIMEOUT = 25          # 浏览器长轮询等待时长（秒）
 _RANGE_TIMEOUT = 300        # 等待浏览器回传分块的超时（秒）
 _HASH_PROGRESS_INTERVAL = 16 * 1024 * 1024  # 哈希进度上报间隔（字节）
 
+# 秒传模式判定参数
+# 判定只看任务状态：进入"传输中"(Transfer)=未命中立即取消；Finish=秒传命中。
+# 哈希上报后主动轮询 GetUploadFileList 兜底，防状态推送丢失
+_RAPID_POLL_INTERVAL = 20    # 轮询间隔（秒）
+_RAPID_WAIT_LIMIT = 7200     # 等待秒传决策的硬上限（秒），正常不会触发
+
 
 def _get_device_id() -> str:
     """持久化 device_id。协议要求跨重启复用，服务器借此替换通道并重放未完成请求。"""
@@ -170,12 +176,16 @@ class RemoteUploadManager:
         return {"success": True, "message": "已取消"}
 
     # ---------- 本地磁盘数据源（供整理任务：本地文件 → 云端，后台同步执行） ----------
-    def upload_local_file_sync(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None) -> Dict[str, Any]:
+    def upload_local_file_sync(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None, rapid_mode: str = "off") -> Dict[str, Any]:
         """
         将本地磁盘文件经 Remote Upload 协议上传到云端（流式分块，不整体缓冲）。
         与浏览器流程共用 channel 与会话机制，但数据直接从磁盘读取，
         read/hash 任务在本地闭环处理，不进入浏览器轮询队列。
-        返回 {success, status_text, error}。
+        rapid_mode: off=普通上传; rapid_then_upload/rapid_only=秒传优先。
+        秒传判定只看任务状态：数据读取/哈希请求均正常应答，不做暂缓；
+        服务端进入"传输中"(Transfer)即未命中，立即取消；Finish 即命中；
+        哈希上报后轮询 GetUploadFileList 兜底防状态推送丢失。
+        返回 {success, status_text, error, rapid_miss, rapid}。
         """
         size = os.path.getsize(local_path)
         self._ensure_channel(conn)
@@ -194,12 +204,63 @@ class RemoteUploadManager:
 
         log_audit("CD2上传", "开始", f"远程上传(磁盘源): {cloud_file_path} ({size} 字节)")
 
+        rapid = rapid_mode in ("rapid_then_upload", "rapid_only")
         try:
+            hash_job_seen = False    # 服务端是否已下发过哈希请求
+            last_poll_at = 0.0       # 上次轮询任务状态的时间
+            task_seen = False        # 轮询时是否已在任务列表中见过本任务（防列表注册竞态误判）
+            rapid_started_at = time.time()  # 会话开始时间（等待决策硬上限的基准）
             with open(local_path, "rb") as f:
                 while not session.terminal:
                     if stop_event is not None and stop_event.is_set():
-                        self.cancel(upload_id)
+                        self._safe_cancel(upload_id)
                         return {"success": False, "status_text": "已取消", "error": None}
+
+                    # 秒传判定①：进入"传输中"状态 = 服务端决定真实传输 → 未命中，立即取消
+                    if rapid and session.status == 3:
+                        logger.info(f"服务端进入传输中状态，判定秒传未命中，取消上传: {cloud_file_path}")
+                        self._safe_cancel(upload_id)
+                        return {"success": False, "rapid_miss": True,
+                                "status_text": "秒传未命中", "error": None}
+
+                    # 秒传判定②：哈希上报后主动轮询 CD2 上传任务列表兜底（防状态推送丢失）
+                    if rapid and hash_job_seen:
+                        now = time.time()
+                        if now - last_poll_at >= _RAPID_POLL_INTERVAL:
+                            last_poll_at = now
+                            found, st, err_msg = self._query_upload_status(conn, cloud_file_path)
+                            if found:
+                                task_seen = True
+                            if found and st == 5:  # Finish：秒传命中
+                                log_audit("CD2上传", "完成", f"秒传命中: {cloud_file_path}")
+                                return self._finish_local_session(upload_id, session, "完成(秒传)")
+                            if found and st == 3:  # Transfer：服务端决定真实传输
+                                logger.info(f"秒传未命中(任务状态传输中，轮询确认)，取消上传: {cloud_file_path}")
+                                self._safe_cancel(upload_id)
+                                return {"success": False, "rapid_miss": True,
+                                        "status_text": "秒传未命中", "error": None}
+                            if found and st in (2, 9, 10):  # Cancelled/Error/FatalError
+                                logger.error(f"远程上传任务异常({err_msg}): {cloud_file_path}")
+                                self._safe_cancel(upload_id)
+                                return {"success": False, "status_text": "错误",
+                                        "error": err_msg or "上传任务异常"}
+                            if not found and task_seen:
+                                # 任务已从列表消失：先等通道推送终态（错误任务也会消失），
+                                # 仍未收到终态则视为秒传完成（我们没传过数据，不可能真实传输完成）
+                                deadline = time.time() + 30
+                                while not session.terminal and time.time() < deadline:
+                                    time.sleep(1)
+                                if session.terminal and session.status != 5:
+                                    logger.error(f"远程上传任务异常({session.error}): {cloud_file_path}")
+                                    return {"success": False, "status_text": "错误",
+                                            "error": session.error or "上传任务异常"}
+                                log_audit("CD2上传", "完成", f"秒传命中: {cloud_file_path}")
+                                return self._finish_local_session(upload_id, session, "完成(秒传)")
+                            if now - rapid_started_at >= _RAPID_WAIT_LIMIT:
+                                logger.info(f"等待秒传决策超时({_RAPID_WAIT_LIMIT}秒)，取消上传: {cloud_file_path}")
+                                self._safe_cancel(upload_id)
+                                return {"success": False, "rapid_miss": True,
+                                        "status_text": "秒传未命中", "error": None}
 
                     job = self._next_job_local(session, timeout=10)
                     if job is None:
@@ -224,13 +285,15 @@ class RemoteUploadManager:
                         # 各哈希算法基于本地文件全量独立计算，
                         # 不依赖读取进度（哈希请求可能先于数据传输到达）
                         self._handle_hash_local(conn, session, local_path, job)
+                        if rapid:
+                            hash_job_seen = True
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = getattr(e, "details", None)
+            if callable(details):
+                details = details()
+            details = details or str(e)
             logger.error(f"磁盘源远程上传失败 {local_path}: {details}")
-            try:
-                self.cancel(upload_id)
-            except Exception:
-                pass
+            self._safe_cancel(upload_id)
             return {"success": False, "status_text": "错误", "error": details}
 
         status_text = _STATUS_TEXT.get(session.status or -1, "未知")
@@ -238,8 +301,40 @@ class RemoteUploadManager:
         with self._sessions_lock:
             self._sessions.pop(upload_id, None)
         if success:
-            log_audit("CD2上传", "完成", f"远程上传完成: {cloud_file_path}")
-        return {"success": success, "status_text": status_text, "error": session.error}
+            log_audit("CD2上传", "完成", f"秒传命中: {cloud_file_path}")
+        return {"success": success, "status_text": status_text, "error": session.error,
+                "rapid": success}
+
+    def _safe_cancel(self, upload_id: str):
+        """取消会话，会话已不存在（如任务已被服务端结束）时静默忽略"""
+        try:
+            self.cancel(upload_id)
+        except Exception as e:
+            logger.debug(f"取消上传会话 {upload_id[:8]}... 失败(可能已结束): {e}")
+
+    def _query_upload_status(self, conn, cloud_path: str):
+        """按目标路径查询 CD2 上传任务列表中的任务状态。
+        返回 (found, statusEnum, errorMessage)；查询失败时返回 (True, -1, "") 视为仍在进行，避免误判。"""
+        try:
+            req = conn.pb2.GetUploadFileListRequest(itemsPerPage=100, pageNumber=0, filter="")
+            result = conn.stub.GetUploadFileList(req, metadata=conn.get_metadata(), timeout=15)
+            for f in result.uploadFiles:
+                if getattr(f, "destPath", "") == cloud_path:
+                    return True, int(getattr(f, "statusEnum", -1)), getattr(f, "errorMessage", "") or ""
+            return False, -1, ""
+        except Exception as e:
+            logger.debug(f"查询上传任务状态失败: {e}")
+            return True, -1, ""
+
+    def _finish_local_session(self, upload_id: str, session: "_Session", status_text: str) -> Dict[str, Any]:
+        """服务端任务已结束，本地清理会话并返回成功结果"""
+        session.terminal = True
+        with session.cond:
+            session.cond.notify_all()
+        with self._sessions_lock:
+            self._sessions.pop(upload_id, None)
+        return {"success": True, "status_text": status_text, "error": None,
+                "rapid_miss": False, "rapid": True}
 
     def _handle_hash_local(self, conn, session: _Session, local_path: str, job: dict):
         """磁盘模式哈希：全文件独立计算并上报（与数据读取进度无关）"""
