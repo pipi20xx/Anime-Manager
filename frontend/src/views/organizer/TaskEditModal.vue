@@ -6,6 +6,7 @@
  */
 import { ref, computed, watch } from 'vue'
 import FolderBrowserModal from './FolderBrowserModal.vue'
+import { getActionTypeHint } from '@/utils/organizeActions'
 
 defineOptions({ name: 'TaskEditModal' })
 
@@ -38,6 +39,11 @@ const actionTypeOptions = computed(() => {
   }
   return options
 })
+
+// 当前组合下的操作说明（无匹配文案时不显示）
+const actionTypeHint = computed(() =>
+  getActionTypeHint(props.taskForm.action_type, props.taskForm.source_via, props.taskForm.target_via)
+)
 
 // 切换源/目标类型后，若当前操作类型不再可选则自动纠正
 watch(
@@ -170,6 +176,13 @@ const onFolderSelected = (path: string) => {
               variant="outlined"
               density="compact"
             />
+            <v-alert
+              v-if="actionTypeHint"
+              type="info" variant="tonal" density="compact" class="mt-1 mb-3"
+              icon="mdi-information-outline"
+            >
+              {{ actionTypeHint }}
+            </v-alert>
           </v-window-item>
 
           <!-- 自动化 -->

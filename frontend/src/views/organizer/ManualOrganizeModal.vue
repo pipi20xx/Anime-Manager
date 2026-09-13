@@ -14,6 +14,7 @@ import { useNotification } from '@/composables'
 import { useLocalStorage } from '@/composables/useStorage'
 import { GlassDialog } from '@/glass'
 import FolderBrowserModal from './FolderBrowserModal.vue'
+import { getActionTypeHint } from '@/utils/organizeActions'
 
 const props = defineProps<{
   modelValue: boolean
@@ -187,6 +188,11 @@ watch(() => [manualTask.source_via, manualTask.target_via], () => {
   }
 })
 
+// 当前组合下的操作说明（无匹配文案时不显示）
+const actionTypeHint = computed(() =>
+  getActionTypeHint(manualTask.action_type, manualTask.source_via, manualTask.target_via)
+)
+
 // 切换源类型时同步源目录：本地跟随当前浏览目录，云盘保留已填内容
 watch(() => manualTask.source_via, (via) => {
   if (via === 'local') manualTask.source_dir = props.currentPath
@@ -308,9 +314,16 @@ function handleRunBackground() {
               :items="actionTypeOptions"
               density="compact"
               variant="outlined"
-              class="mb-3"
+              class="mb-2"
               hide-details
             />
+            <v-alert
+              v-if="actionTypeHint"
+              type="info" variant="tonal" density="compact" class="mb-3"
+              icon="mdi-information-outline"
+            >
+              {{ actionTypeHint }}
+            </v-alert>
 
             <!-- 强制元数据 -->
             <div class="config-section mb-4">
