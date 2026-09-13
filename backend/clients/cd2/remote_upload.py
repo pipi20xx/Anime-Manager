@@ -76,6 +76,7 @@ class _Session:
         self.error = None
         self.terminal = False
         self.local = False  # 磁盘数据源模式：hash 请求在本地闭环处理，不入浏览器队列
+        self.last_activity = time.time()  # 最近一次收到服务端消息的时间（停滞诊断用）
 
 
 class RemoteUploadManager:
@@ -101,6 +102,7 @@ class RemoteUploadManager:
         self._sessions: Dict[str, _Session] = {}
         self._sessions_lock = threading.Lock()
         self._channel_thread: Optional[threading.Thread] = None
+        self._channel_lock = threading.Lock()  # 保证同一时刻只有一条通道线程
         self._channel_stop = threading.Event()
         self._channel_wakeup = threading.Event()
         self._device_id = _get_device_id()
@@ -118,19 +120,25 @@ class RemoteUploadManager:
 
     # ---------- channel ----------
     def _ensure_channel(self, conn):
-        if self._conn is conn and self._channel_thread and self._channel_thread.is_alive():
-            # 通道可能因空闲转入待机，唤醒它立即重连
-            self._channel_wakeup.set()
-            return
-        self._conn = conn
-        self._channel_stop.clear()
-        self._channel_wakeup.set()  # 唤醒旧线程（若挂起），使其检测到连接已更换后退出
-        self._channel_thread = threading.Thread(
-            target=self._channel_loop, name="CD2RemoteUploadChannel", daemon=True
-        )
-        self._channel_thread.start()
-        self._channel_wakeup.clear()
-        logger.info(f"[{conn.name}] RemoteUploadChannel 已启动 (device_id: {self._device_id[:8]}...)")
+        # 单飞：持锁串行化，换连接时等旧线程退出后再启动新线程，
+        # 避免两条流用同一 device_id 被服务端互踢（channel replaced 循环）
+        with self._channel_lock:
+            if self._conn is conn and self._channel_thread and self._channel_thread.is_alive():
+                # 通道可能因空闲转入待机，唤醒它立即重连
+                self._channel_wakeup.set()
+                return
+            self._conn = conn
+            old_thread = self._channel_thread
+            self._channel_wakeup.set()  # 唤醒待机中的旧线程，使其在循环顶部检测到连接已更换后退出
+            if old_thread and old_thread.is_alive():
+                old_thread.join(timeout=6)
+            self._channel_stop.clear()
+            self._channel_thread = threading.Thread(
+                target=self._channel_loop, name="CD2RemoteUploadChannel", daemon=True
+            )
+            self._channel_thread.start()
+            self._channel_wakeup.clear()  # 新线程已直连，清掉唤醒信号避免其待机期误醒
+            logger.info(f"[{conn.name}] RemoteUploadChannel 已启动 (device_id: {self._device_id[:8]}...)")
 
     def _has_active_sessions(self) -> bool:
         with self._sessions_lock:
@@ -150,7 +158,11 @@ class RemoteUploadManager:
             except Exception as e:
                 if self._channel_stop.is_set():
                     break
-                logger.warning(f"[{conn.name}] RemoteUploadChannel 断开: {e}")
+                if "channel replaced" in str(e):
+                    # 换连接时的预期现象（新通道已接管，服务端踢掉旧流），降级避免刷屏
+                    logger.debug(f"[{conn.name}] RemoteUploadChannel 被新通道替换: {e}")
+                else:
+                    logger.warning(f"[{conn.name}] RemoteUploadChannel 断开: {e}")
 
             # 流已结束：仅在仍有活动会话时重连，否则转入待机，避免空闲期
             # 反复重连被服务端替换（channel replaced）造成告警刷屏
@@ -161,7 +173,8 @@ class RemoteUploadManager:
             logger.info(f"[{conn.name}] 无活动上传会话，RemoteUploadChannel 转入待机")
             self._channel_wakeup.wait()
             self._channel_wakeup.clear()
-            conn = self._conn
+            # 注意：此处不重读 self._conn —— 连接已被更换时，本线程在循环顶部
+            # 自行退出，由 _ensure_channel 启动的新线程接管，避免双流互踢
 
     # ---------- 本地磁盘数据源（供整理任务：本地文件 → 云端，后台同步执行） ----------
     def upload_local_file_sync(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None, rapid_mode: str = "off") -> Dict[str, Any]:
@@ -252,6 +265,14 @@ class RemoteUploadManager:
 
                     job = self._next_job_local(session, timeout=10)
                     if job is None:
+                        # 普通上传模式下服务端应持续推送任务/状态，长时间无消息说明传输停滞
+                        if rapid_mode == "off":
+                            idle = time.time() - session.last_activity
+                            if idle >= 90:
+                                logger.warning(
+                                    f"上传会话已 {int(idle)} 秒未收到服务端任务/状态，传输可能停滞: {cloud_file_path}"
+                                )
+                                session.last_activity = time.time()
                         continue
 
                     if job["type"] == "read":
@@ -394,6 +415,7 @@ class RemoteUploadManager:
             with self._sessions_lock:
                 self._orphan_replies.setdefault(reply.upload_id, []).append(reply)
             return
+        session.last_activity = time.time()
         case = reply.WhichOneof("request")
         if case == "read_data":
             r = reply.read_data

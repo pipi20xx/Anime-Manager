@@ -4,6 +4,7 @@ import asyncio
 import logging
 import threading
 import uuid
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
@@ -427,6 +428,14 @@ class MonitorManager:
             max_instances=1,
         )
         logger.info("[CD2秒传] 已启动秒传重试队列轮询，间隔 1 分钟")
+
+        # 启动时恢复上次进程中断遗留的 running 记录（5 秒后执行一次）
+        MonitorManager._scheduler.add_job(
+            RapidUploadRetryManager.recover_stale_running,
+            'date',
+            run_date=datetime.now() + timedelta(seconds=5),
+            id="cd2_rapid_retry_recover",
+        )
 
     @staticmethod
     async def _warmup_discover_cache():

@@ -77,12 +77,16 @@ class RapidUploadRetryManager:
     @classmethod
     async def _run_due_jobs_unlocked(cls):
         from models import RapidUploadRetry
+        now = datetime.now()
         async with db.session_scope():
             stmt = select(RapidUploadRetry).where(
                 RapidUploadRetry.status == "pending",
-                RapidUploadRetry.next_retry_at <= datetime.now(),
+                RapidUploadRetry.next_retry_at <= now,
             )
             due_ids = [r.id for r in (await db.all(RapidUploadRetry, stmt)) or []]
+
+        # 注：running 记录不在此处恢复——真实上传可能超过 30 分钟，
+        # 进程中断遗留的 running 记录由启动时 recover_stale_running 统一复位
 
         for rid in due_ids:
             try:
@@ -92,6 +96,23 @@ class RapidUploadRetryManager:
                 await cls._mark(rid, status="pending",
                                 message=f"重试执行异常: {e}",
                                 next_retry_at=datetime.now() + timedelta(minutes=5))
+
+    @classmethod
+    async def recover_stale_running(cls):
+        """启动时恢复：进程重启遗留的 running 记录全部复位为待重试（下次轮询即处理）"""
+        from models import RapidUploadRetry
+        async with db.session_scope():
+            stmt = select(RapidUploadRetry).where(RapidUploadRetry.status == "running")
+            rows = (await db.all(RapidUploadRetry, stmt)) or []
+            now = datetime.now()
+            for r in rows:
+                r.status = "pending"
+                r.message = "进程重启，已自动恢复重试"
+                r.next_retry_at = now
+                r.updated_at = now
+                await db.save(r, audit=False)
+        if rows:
+            logger.info(f"[CD2秒传] 已恢复 {len(rows)} 条因重启中断的重试记录")
 
     # ---------- 单个任务处理 ----------
     @classmethod
@@ -169,6 +190,14 @@ class RapidUploadRetryManager:
             # 次数用尽
             if snap["rapid_mode"] == "rapid_then_upload":
                 log_audit("CD2秒传", "回退上传", f"{local_path}: {attempts} 次秒传未命中，回退为真实上传")
+                # 等待被取消的秒传会话从 CD2 上传列表中消失：取消后立刻对同路径
+                # 发起新会话会被服务端忽略（任务不调度、无任何状态推送）
+                from clients.cd2.remote_upload import RemoteUploadManager as _RUM
+                for _ in range(12):
+                    found, _st, _m = _RUM.get_instance()._query_upload_status(client._conn, cloud_path)
+                    if not found:
+                        break
+                    await asyncio.sleep(5)
                 result = await asyncio.to_thread(
                     RemoteUploadManager.get_instance().upload_local_file_sync,
                     client._conn, local_path, cloud_path, None, "off",
