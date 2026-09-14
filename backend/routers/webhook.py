@@ -631,8 +631,8 @@ async def _handle_deep_delete_cd2(payload: dict):
             )
             logger.info(f"[神医深度删除联动] {action_text}成功: {item_title}, {len(paths_to_delete)} 项{delete_target_type}")
 
-            # 清理空文件夹：仅在文件删除模式下检查
-            if deep_delete_config.get("cleanup_empty_folder", False) and delete_target_type == "文件":
+            # 清理空文件夹：仅在文件删除模式下且 Type 为 Movie 时检查
+            if deep_delete_config.get("cleanup_empty_folder", False) and delete_target_type == "文件" and item_type == "Movie":
                 cleanup_paths = await _cleanup_empty_folders(task_id, client, cd2_paths, permanent_delete)
                 if cleanup_paths:
                     paths_to_delete.extend(cleanup_paths)

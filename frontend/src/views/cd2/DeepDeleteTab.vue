@@ -222,10 +222,10 @@ onMounted(() => {
               color="primary"
             />
             <div>
-              <div class="switch-label">清理空文件夹</div>
+              <div class="switch-label">清理空文件夹（仅电影）</div>
               <div class="switch-desc">
-                删除文件后自动检查父文件夹是否为空，如果为空则一并删除（递归向上清理）。
-                适用于电影等每部作品独占一个文件夹的场景。
+                删除电影文件后自动检查父文件夹是否为空，如果为空则一并删除（递归向上清理）。
+                仅对 Type=Movie 生效，不影响剧集。文件夹中只要还有任何文件或子文件夹就不会删除。
               </div>
             </div>
           </div>
