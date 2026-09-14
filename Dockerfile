@@ -5,8 +5,12 @@ COPY frontend/package*.json ./
 # 删除 lock 文件以避免 npm 可选依赖跨架构 bug (npm/cli#4828)
 # 锁文件在 x64 上生成时不含 arm64 的 @rolldown/binding 原生包
 RUN rm -f package-lock.json && \
-    npm config set registry https://repo.huaweicloud.com/repository/npm/ && \
-    npm install --legacy-peer-deps
+    npm config set registry https://registry.npmmirror.com && \
+    npm install --legacy-peer-deps \
+        --fetch-retries=5 \
+        --fetch-retry-mintimeout=20000 \
+        --fetch-retry-maxtimeout=120000 \
+        --fetch-timeout=300000
 COPY frontend/ ./
 RUN npm run build
 
