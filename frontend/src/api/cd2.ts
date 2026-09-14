@@ -96,6 +96,7 @@ export const cd2Api = {
     delete_preference: string
     permanent_delete: boolean
     notify_on_delete: boolean
+    cleanup_empty_folder: boolean
     path_mappings: Array<{ from: string; to: string }>
   }) => api.post<any>('/api/cd2/deep-delete', body),
 }

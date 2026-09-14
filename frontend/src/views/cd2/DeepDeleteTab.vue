@@ -24,6 +24,7 @@ const config = reactive({
   delete_preference: 'files' as 'files' | 'folder' | 'auto',
   permanent_delete: false,
   notify_on_delete: true,
+  cleanup_empty_folder: false,
   path_mappings: [] as Array<{ from: string; to: string }>,
 })
 
@@ -41,6 +42,7 @@ const loadConfig = async () => {
     config.delete_preference = data.delete_preference ?? 'files'
     config.permanent_delete = data.permanent_delete ?? false
     config.notify_on_delete = data.notify_on_delete ?? true
+    config.cleanup_empty_folder = data.cleanup_empty_folder ?? false
     config.path_mappings = data.path_mappings ?? []
   } catch (e: any) {
     showError(e?.message || '获取配置失败')
@@ -64,6 +66,7 @@ const saveConfig = async () => {
       delete_preference: config.delete_preference,
       permanent_delete: config.permanent_delete,
       notify_on_delete: config.notify_on_delete,
+      cleanup_empty_folder: config.cleanup_empty_folder,
       path_mappings: config.path_mappings,
     })
     success('配置已保存')
@@ -204,6 +207,25 @@ onMounted(() => {
               <div class="switch-label">发送 Telegram 通知</div>
               <div class="switch-desc">
                 联动删除完成后发送 Telegram 通知，包含作品名称、删除模式、删除数量和路径列表。
+              </div>
+            </div>
+          </div>
+
+          <v-divider class="mb-2" />
+
+          <!-- 空文件夹清理开关 -->
+          <div class="switch-row-lg">
+            <v-switch
+              v-model="config.cleanup_empty_folder"
+              density="compact"
+              hide-details
+              color="primary"
+            />
+            <div>
+              <div class="switch-label">清理空文件夹</div>
+              <div class="switch-desc">
+                删除文件后自动检查父文件夹是否为空，如果为空则一并删除（递归向上清理）。
+                适用于电影等每部作品独占一个文件夹的场景。
               </div>
             </div>
           </div>

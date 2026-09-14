@@ -124,6 +124,7 @@ class ConfigManager:
             "delete_preference": "files",   # 删除偏好: files=仅删文件, folder=尝试删整个文件夹, auto=根据 IsFolder 自动判断
             "permanent_delete": False,      # True=永久删除, False=删除到回收站
             "notify_on_delete": True,       # 联动删除后是否发送 TG 通知
+            "cleanup_empty_folder": False,  # 删除文件后检查并清理空的父文件夹
             "path_mappings": []             # 路径映射规则 [{"from": "前缀", "to": "替换为"}]
         },
         "database": {

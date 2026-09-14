@@ -379,6 +379,80 @@ def _infer_folder_path_from_cd2_paths(cd2_paths: list, item_path: str = "") -> s
     return None
 
 
+async def _cleanup_empty_folders(task_id: str, client, deleted_cd2_paths: list, permanently: bool) -> list:
+    """
+    删除文件后，检查其父文件夹是否为空，如果为空则递归清理。
+
+    从被删文件的父目录开始逐级向上检查，遇到非空目录即停止。
+    返回被清理的空文件夹路径列表。
+    """
+    import os
+
+    cleanup_paths = []
+    # 收集所有需要检查的父目录（去重）
+    parent_dirs = set()
+    for path in deleted_cd2_paths:
+        parent = os.path.dirname(path)
+        if parent and parent != "/":
+            parent_dirs.add(parent)
+
+    if not parent_dirs:
+        return cleanup_paths
+
+    action_text = "永久删除" if permanently else "删除到回收站"
+    await log_task(task_id, f"🧹 检查空文件夹 ({len(parent_dirs)} 个父目录)...")
+
+    # 按路径深度从深到浅排序，先检查最深的
+    sorted_dirs = sorted(parent_dirs, key=lambda p: len(p.strip("/").split("/")), reverse=True)
+
+    for parent_dir in sorted_dirs:
+        current_dir = parent_dir
+        while current_dir and current_dir != "/":
+            # 检查该目录是否已在待清理列表中（避免重复检查）
+            if current_dir in cleanup_paths:
+                break
+
+            try:
+                result = await asyncio.to_thread(client.browse_files, current_dir, True)
+            except Exception as e:
+                await log_task(task_id, f"   ⚠️ 检查目录失败: {current_dir} ({e})", "WARN")
+                break
+
+            entries = result.get("entries", []) if isinstance(result, dict) else []
+            if entries:
+                # 目录非空，停止向上检查
+                break
+
+            # 目录为空，加入清理列表
+            cleanup_paths.append(current_dir)
+            await log_task(task_id, f"   📁 发现空文件夹: {current_dir}")
+
+            # 继续向上检查父目录
+            current_dir = os.path.dirname(current_dir)
+
+    if cleanup_paths:
+        await log_task(task_id, f"🧹 准备{action_text} {len(cleanup_paths)} 个空文件夹:")
+        for p in cleanup_paths:
+            await log_task(task_id, f"   📁 {p}")
+
+        success, msg = await asyncio.to_thread(
+            client.delete_paths, cleanup_paths, permanently
+        )
+
+        if success:
+            await log_task(task_id, f"✅ 空文件夹清理成功: {len(cleanup_paths)} 个")
+            logger.info(f"[神医深度删除联动] 空文件夹清理: {len(cleanup_paths)} 个")
+        else:
+            await log_task(task_id, f"⚠️ 空文件夹清理失败: {msg}", "WARN")
+            logger.warning(f"[神医深度删除联动] 空文件夹清理失败: {msg}")
+            # 清理失败不计入总数
+            return []
+    else:
+        await log_task(task_id, f"✅ 未发现空文件夹")
+
+    return cleanup_paths
+
+
 async def _handle_deep_delete_cd2(payload: dict):
     """
     处理 Emby deep.delete 事件的 CD2 联动删除。
@@ -556,6 +630,12 @@ async def _handle_deep_delete_cd2(payload: dict):
                 f"CD2 联动{action_text}完成: {item_title} ({len(paths_to_delete)} 项{delete_target_type})",
             )
             logger.info(f"[神医深度删除联动] {action_text}成功: {item_title}, {len(paths_to_delete)} 项{delete_target_type}")
+
+            # 清理空文件夹：仅在文件删除模式下检查
+            if deep_delete_config.get("cleanup_empty_folder", False) and delete_target_type == "文件":
+                cleanup_paths = await _cleanup_empty_folders(task_id, client, cd2_paths, permanent_delete)
+                if cleanup_paths:
+                    paths_to_delete.extend(cleanup_paths)
         else:
             await log_task(task_id, f"❌ {action_text}失败: {msg}", "ERROR")
             log_audit(
