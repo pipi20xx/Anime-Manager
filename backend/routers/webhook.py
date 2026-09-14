@@ -335,49 +335,48 @@ def _infer_folder_path_from_cd2_paths(cd2_paths: list, item_path: str = "") -> s
     """
     当 Item.Path 无法通过映射规则转换时，从已映射的 CD2 文件路径中推导文件夹路径。
 
-    策略：
-    1. 取所有 CD2 文件路径的公共父目录
-    2. 如果提供了 item_path，用其末尾 1-2 级目录名在公共父目录上做验证/修正
+    核心策略：Item.Path 的末尾部分一定出现在 CD2 文件路径中。
+    从 Item.Path 完整路径开始，逐级去掉头部前缀去 CD2 路径中匹配，
+    第一个匹配到的就是最长、最精准的文件夹路径。
+
+    例1 (Season):
+      Item.Path = /NVME/CSXF/BT/(2020)租借女友[tmdbid=96316]/Season 1
+      CD2 路径  = /123云盘/新番连载/BT/(2020)租借女友[tmdbid=96316]/Season 1/S01E49.mkv
+      逐级尝试:
+        NVME/CSXF/BT/(2020)租借女友[tmdbid=96316]/Season 1  ❌
+        CSXF/BT/(2020)租借女友[tmdbid=96316]/Season 1       ❌
+        BT/(2020)租借女友[tmdbid=96316]/Season 1             ✅
+      推导结果 = /123云盘/新番连载/BT/(2020)租借女友[tmdbid=96316]/Season 1
+
+    例2 (Series):
+      Item.Path = /NVME/CSXF/BT/(2021)转生史莱姆日记[tmdbid=118541]
+      CD2 路径  = /123云盘/新番连载/BT/(2021)转生史莱姆日记[tmdbid=118541]/Season 4/S04E19.mkv
+      逐级尝试:
+        NVME/CSXF/BT/(2021)转生史莱姆日记[tmdbid=118541]  ❌
+        CSXF/BT/(2021)转生史莱姆日记[tmdbid=118541]       ❌
+        BT/(2021)转生史莱姆日记[tmdbid=118541]             ✅
+      推导结果 = /123云盘/新番连载/BT/(2021)转生史莱姆日记[tmdbid=118541]
     """
-    import os
-
-    if not cd2_paths:
+    if not cd2_paths or not item_path:
         return None
 
-    # 取所有路径的公共父目录
-    def parent(path: str) -> str:
-        return os.path.dirname(path)
-
-    common = parent(cd2_paths[0])
-    for p in cd2_paths[1:]:
-        common = os.path.commonpath([common, parent(p)])
-        if not common or common == "/":
-            break
-
-    if not common or common == "/":
+    item_parts = [p for p in item_path.strip("/").split("/") if p]
+    if not item_parts:
         return None
 
-    # 如果有 item_path，尝试用它的末尾几级目录名来验证 common
-    if item_path:
-        # item_path 例: /NVME/CSXF/BT/(2020)租借女友[tmdbid=96316]/Season 1
-        # 取末尾 1~2 级目录名去匹配 common 的末尾
-        item_parts = [p for p in item_path.strip("/").split("/") if p]
-        for depth in (min(2, len(item_parts)), 1):
-            tail = "/".join(item_parts[-depth:])
-            if tail and common.endswith(tail):
-                return common
-        # 如果末尾不匹配，仍返回 common（可能是中间某级目录名不同）
-        # 但用 item_path 最后一级目录名做一次修正尝试
-        if item_parts:
-            last_dir = item_parts[-1]
-            # 检查 common 的最后一级是否和 item_path 的最后一级不同
-            common_parts = [p for p in common.strip("/").split("/") if p]
-            if common_parts and common_parts[-1] != last_dir:
-                # 替换最后一级（可能是 Season 1 vs Season 01 之类的差异）
-                # 但这种情况不常见，保守起见还是返回 common
-                pass
+    first_cd2 = cd2_paths[0]
 
-    return common
+    # 从完整路径开始，逐级去掉头部前缀去匹配
+    # 第一个匹配到的就是最长最精准的
+    for start in range(len(item_parts)):
+        tail = "/".join(item_parts[start:])
+        # 在 CD2 路径中查找 /tail/ 出现的位置
+        needle = "/" + tail + "/"
+        idx = first_cd2.find(needle)
+        if idx >= 0:
+            return first_cd2[:idx + len(tail) + 1]
+
+    return None
 
 
 async def _handle_deep_delete_cd2(payload: dict):
