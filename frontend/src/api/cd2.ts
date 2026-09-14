@@ -87,10 +87,10 @@ export const cd2Api = {
   remoteUploadCancel: (uploadId: string) =>
     api.post<any>(`/api/cd2/upload/remote/${uploadId}/cancel`, {}),
 
-  /** 获取深度删除联动配置 */
+  /** 获取神医深度删除联动配置 */
   getDeepDeleteConfig: () => api.get<any>('/api/cd2/deep-delete'),
 
-  /** 保存深度删除联动配置 */
+  /** 保存神医深度删除联动配置 */
   saveDeepDeleteConfig: (body: {
     enabled: boolean
     delete_preference: string

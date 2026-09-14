@@ -27,7 +27,7 @@ from .notifier import TelegramNotifier
 
 logger = logging.getLogger("Notification")
 
-# ── Emby 深度删除通知聚合配置 ──
+# ── 神医深度删除通知聚合配置 ──
 # 聚合窗口（秒）：在此时间内收到的多条删除通知将被合并为一条发送
 EMBY_DELETE_AGGREGATE_WINDOW = 30
 # 单条消息最大文件数，超过则分多条发送（Telegram 消息长度限制 4096 字符）
@@ -63,7 +63,7 @@ class NotificationManager:
     # 以保留「改配置即时生效」的行为。
     _notifier: Optional[TelegramNotifier] = None
 
-    # ── Emby 深度删除通知聚合状态 ──
+    # ── 神医深度删除通知聚合状态 ──
     # 累积的文件名缓冲区
     _delete_buffer: List[str] = []
     # 延迟刷新任务
@@ -796,7 +796,7 @@ class NotificationManager:
                                       delete_mode: str, permanently: bool,
                                       deleted_count: int, deleted_paths: List[str],
                                       error_msg: str = "") -> None:
-        """深度删除 CD2 联动结果通知。"""
+        """神医深度删除 CD2 联动结果通知。"""
         if not self._tg_conf().get("enabled"):
             return
         await self.send(Notification(

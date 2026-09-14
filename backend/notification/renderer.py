@@ -478,13 +478,13 @@ class NotificationRenderer:
 
         # 聚合模式：显示汇总信息
         if is_aggregated:
-            header = f"🧹 <b>Emby 深度删除</b>\n"
+            header = f"🧹 <b>神医深度删除</b>\n"
             if total_chunks > 1:
                 header += f"📊 共 {total_count} 个文件（第 {chunk_index}/{total_chunks} 批）\n\n"
             else:
                 header += f"📊 共 {total_count} 个文件\n\n"
         else:
-            header = "Emby深度删除\n\n"
+            header = "神医深度删除\n\n"
 
         msg = header
         for filename in files:
@@ -526,7 +526,7 @@ class NotificationRenderer:
             if error_msg:
                 lines.append(f"❌ <b>错误：</b>{error_msg}")
 
-        lines.append("\n─── 来自 Emby 深度删除联动 ───")
+        lines.append("\n─── 来自神医深度删除联动 ───")
         return "\n".join(lines)
 
     def _render_client_error(self, n: "Notification") -> str:

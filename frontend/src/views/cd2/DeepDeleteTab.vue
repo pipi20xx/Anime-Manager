@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * DeepDeleteTab — Emby 深度删除 → CD2 联动删除配置
+ * DeepDeleteTab — 神医深度删除 → CD2 联动删除配置
  *
  * 功能:
  * 1. 开启/关闭联动删除开关
@@ -108,7 +108,7 @@ onMounted(() => {
       <v-card class="glass-card mb-4">
         <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
           <v-icon color="primary" size="20">mdi-delete-variant</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">Emby 深度删除 → CD2 联动</span>
+          <span class="text-subtitle-1 font-weight-bold">神医深度删除 → CD2 联动</span>
           <v-spacer />
           <v-switch
             v-model="config.enabled"
@@ -121,7 +121,7 @@ onMounted(() => {
         <v-divider />
         <v-card-text class="pa-4">
           <v-alert type="info" variant="tonal" density="compact" class="mb-2">
-            当 Emby 执行「深度删除」时，自动通过 CD2 API 删除云盘上对应的文件/文件夹。<br />
+            当神医执行「深度删除」时，自动通过 CD2 API 删除云盘上对应的文件/文件夹。<br />
             需要配置<strong>路径映射规则</strong>，将 Emby 发来的路径转换为 CD2 内部路径。
           </v-alert>
           <v-alert

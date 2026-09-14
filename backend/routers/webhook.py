@@ -262,9 +262,9 @@ async def emby_webhook(request: Request):
         asyncio.create_task(notification_manager.notify_library_new(payload))
         return {"status": "success", "action": "notification_sent"}
 
-    # 处理深度删除事件 (deep.delete)
+    # 处理神医深度删除事件 (deep.delete)
     if event == "deep.delete":
-        log_audit("Webhook", "Emby深度删除", f"收到深度删除通知: {item_title}")
+        log_audit("Webhook", "神医深度删除", f"收到神医深度删除通知: {item_title}")
         # 异步执行 CD2 联动删除（内含 TG 通知）
         asyncio.create_task(_handle_deep_delete_cd2(payload))
         return {"status": "success", "action": "delete_notification_sent"}
@@ -287,7 +287,7 @@ async def emby_webhook(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# Emby 深度删除 → CD2 联动删除
+# 神医深度删除 → CD2 联动删除
 # ---------------------------------------------------------------------------
 
 def _parse_mount_paths(description: str) -> list:
@@ -396,15 +396,15 @@ async def _handle_deep_delete_cd2(payload: dict):
     # ── 启动任务中心记录 ──
     item_title_raw = payload.get("Item", {}).get("Name", "未知")
     task_id = f"deep_delete_{_uuid.uuid4().hex[:8]}"
-    task_desc = f"[深度删除联动] {item_title_raw}"
-    await start_task(task_id, "深度删除联动", task_desc)
+    task_desc = f"[神医深度删除联动] {item_title_raw}"
+    await start_task(task_id, "神医深度删除联动", task_desc)
 
     try:
         config = ConfigManager.get_config()
         deep_delete_config = config.get("deep_delete", {})
 
         if not deep_delete_config.get("enabled", False):
-            await log_task(task_id, "⚠️ 深度删除联动未启用，跳过")
+            await log_task(task_id, "⚠️ 神医深度删除联动未启用，跳过")
             await finish_task(task_id, "skipped")
             return
 
@@ -413,14 +413,14 @@ async def _handle_deep_delete_cd2(payload: dict):
 
         if not mount_paths:
             await log_task(task_id, "⚠️ Description 中未找到 Mount Paths，跳过", "WARN")
-            logger.warning("[深度删除联动] Description 中未找到 Mount Paths，跳过")
+            logger.warning("[神医深度删除联动] Description 中未找到 Mount Paths，跳过")
             await finish_task(task_id, "skipped")
             return
 
         mappings = deep_delete_config.get("path_mappings", [])
         if not mappings:
             await log_task(task_id, "⚠️ 未配置路径映射规则，跳过", "WARN")
-            logger.warning("[深度删除联动] 未配置路径映射规则，跳过")
+            logger.warning("[神医深度删除联动] 未配置路径映射规则，跳过")
             await finish_task(task_id, "skipped")
             return
 
@@ -452,11 +452,11 @@ async def _handle_deep_delete_cd2(payload: dict):
             await log_task(task_id, f"⚠️ {len(skipped)} 个路径未匹配任何映射规则", "WARN")
             for p in skipped:
                 await log_task(task_id, f"   ✗ {p}", "WARN")
-            logger.warning(f"[深度删除联动] {len(skipped)} 个路径未匹配任何映射规则")
+            logger.warning(f"[神医深度删除联动] {len(skipped)} 个路径未匹配任何映射规则")
 
         if not cd2_paths:
             await log_task(task_id, "⚠️ 没有有效的 CD2 路径，跳过删除", "WARN")
-            logger.warning("[深度删除联动] 没有有效的 CD2 路径，跳过删除")
+            logger.warning("[神医深度删除联动] 没有有效的 CD2 路径，跳过删除")
             await finish_task(task_id, "skipped")
             return
 
@@ -482,10 +482,10 @@ async def _handle_deep_delete_cd2(payload: dict):
                     delete_target_type = "文件夹"
                     await log_task(task_id, f"📁 文件夹模式 (自动推导): 将删除文件夹")
                     await log_task(task_id, f"   → {inferred}")
-                    logger.info(f"[深度删除联动] 文件夹模式: Item.Path 映射失败，自动推导文件夹: {inferred}")
+                    logger.info(f"[神医深度删除联动] 文件夹模式: Item.Path 映射失败，自动推导文件夹: {inferred}")
                 else:
                     await log_task(task_id, f"⚠️ Item Path '{item_path}' 未匹配映射规则且无法推导文件夹，回退到文件删除", "WARN")
-                    logger.warning(f"[深度删除联动] Item Path 未匹配映射规则且无法推导，回退到文件删除")
+                    logger.warning(f"[神医深度删除联动] Item Path 未匹配映射规则且无法推导，回退到文件删除")
         elif preference == "auto":
             if is_folder and item_type in ("Series", "Season"):
                 item_path = item.get("Path", "")
@@ -505,7 +505,7 @@ async def _handle_deep_delete_cd2(payload: dict):
                         delete_target_type = "文件夹"
                         await log_task(task_id, f"📁 自动模式 (Type={item_type}, 自动推导): 将删除文件夹")
                         await log_task(task_id, f"   → {inferred}")
-                        logger.info(f"[深度删除联动] 自动模式: Item.Path 映射失败，自动推导文件夹: {inferred}")
+                        logger.info(f"[神医深度删除联动] 自动模式: Item.Path 映射失败，自动推导文件夹: {inferred}")
                     elif item_path:
                         await log_task(task_id, f"⚠️ 自动模式: Item.Path '{item_path}' 未匹配映射规则且无法推导，回退到文件删除", "WARN")
                     else:
@@ -519,14 +519,14 @@ async def _handle_deep_delete_cd2(payload: dict):
         cd2_conf = next((c for c in config.get("download_clients", []) if c.get("type") == "cd2"), None)
         if not cd2_conf:
             await log_task(task_id, "⚠️ 未找到已配置的 CD2 客户端，跳过", "WARN")
-            logger.warning("[深度删除联动] 未找到已配置的 CD2 客户端，跳过")
+            logger.warning("[神医深度删除联动] 未找到已配置的 CD2 客户端，跳过")
             await finish_task(task_id, "skipped")
             return
 
         client = ClientManager.get_client(cd2_conf.get("id"))
         if not client:
             await log_task(task_id, "⚠️ CD2 客户端初始化失败，跳过", "WARN")
-            logger.warning("[深度删除联动] CD2 客户端初始化失败，跳过")
+            logger.warning("[神医深度删除联动] CD2 客户端初始化失败，跳过")
             await finish_task(task_id, "skipped")
             return
 
@@ -543,7 +543,7 @@ async def _handle_deep_delete_cd2(payload: dict):
         for p in paths_to_delete:
             await log_task(task_id, f"   {'📁' if delete_target_type == '文件夹' else '📄'} {p}")
         # 系统日志简化：只输出概要，不输出路径列表
-        logger.info(f"[深度删除联动] 准备{action_text} {len(paths_to_delete)} 项{delete_target_type}: {item_title}")
+        logger.info(f"[神医深度删除联动] 准备{action_text} {len(paths_to_delete)} 项{delete_target_type}: {item_title}")
 
         success, msg = await asyncio.to_thread(
             client.delete_paths, paths_to_delete, permanent_delete
@@ -552,18 +552,18 @@ async def _handle_deep_delete_cd2(payload: dict):
         if success:
             await log_task(task_id, f"✅ {action_text}成功: {len(paths_to_delete)} 项{delete_target_type}")
             log_audit(
-                "深度删除联动", "删除成功",
+                "神医深度删除联动", "删除成功",
                 f"CD2 联动{action_text}完成: {item_title} ({len(paths_to_delete)} 项{delete_target_type})",
             )
-            logger.info(f"[深度删除联动] {action_text}成功: {item_title}, {len(paths_to_delete)} 项{delete_target_type}")
+            logger.info(f"[神医深度删除联动] {action_text}成功: {item_title}, {len(paths_to_delete)} 项{delete_target_type}")
         else:
             await log_task(task_id, f"❌ {action_text}失败: {msg}", "ERROR")
             log_audit(
-                "深度删除联动", "删除失败",
+                "神医深度删除联动", "删除失败",
                 f"CD2 联动{action_text}失败: {msg}",
                 level="ERROR",
             )
-            logger.error(f"[深度删除联动] {action_text}失败: {msg}")
+            logger.error(f"[神医深度删除联动] {action_text}失败: {msg}")
 
         # 发送 TG 通知
         if notify_on_delete:
@@ -579,14 +579,14 @@ async def _handle_deep_delete_cd2(payload: dict):
                 )
             except Exception as notify_err:
                 await log_task(task_id, f"⚠️ 发送 TG 通知失败: {notify_err}", "WARN")
-                logger.warning(f"[深度删除联动] 发送 TG 通知失败: {notify_err}")
+                logger.warning(f"[神医深度删除联动] 发送 TG 通知失败: {notify_err}")
 
         # 完成任务
         await finish_task(task_id, "completed" if success else "failed", len(paths_to_delete))
 
     except Exception as e:
-        logger.error(f"[深度删除联动] 处理异常: {e}", exc_info=True)
-        log_audit("深度删除联动", "异常", f"处理深度删除联动时发生错误: {e}", level="ERROR")
+        logger.error(f"[神医深度删除联动] 处理异常: {e}", exc_info=True)
+        log_audit("神医深度删除联动", "异常", f"处理神医深度删除联动时发生错误: {e}", level="ERROR")
         try:
             await log_task(task_id, f"❌ 处理异常: {e}", "ERROR")
             await finish_task(task_id, "failed")

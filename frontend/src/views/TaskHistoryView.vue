@@ -4,7 +4,7 @@
  *
  * 功能对标旧前端 TaskHistoryViewDesktop:
  * - 任务列表（卡片式） + 无限滚动加载
- * - 按模块筛选（整理 / STRM / RSS / 识别 / 规则同步 / 订阅补全 / 死种清理 / Webhook联动 / 深度删除联动）
+ * - 按模块筛选（整理 / STRM / RSS / 识别 / 规则同步 / 订阅补全 / 死种清理 / Webhook联动 / 神医深度删除联动）
  * - 搜索任务名称
  * - 任务详情弹窗 + 分组日志展示
  * - WebSocket 实时推送（任务变更 + 运行中任务实时日志）
@@ -53,7 +53,7 @@ const moduleOptions = computed(() => [
   { title: '订阅补全', value: '订阅补全' },
   { title: '死种清理', value: '死种清理' },
   { title: 'Webhook联动', value: 'Webhook联动' },
-  { title: '深度删除联动', value: '深度删除联动' },
+  { title: '神医深度删除联动', value: '神医深度删除联动' },
 ])
 
 // --- 分组日志 ---

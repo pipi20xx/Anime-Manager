@@ -42,8 +42,8 @@ class NotificationEvent(str, Enum):
 
     # ── 媒体库 ──
     LIBRARY_NEW = "library_new"                      # Emby 新入库
-    LIBRARY_DELETED = "library_deleted"              # Emby 深度删除
-    DEEP_DELETE_CD2 = "deep_delete_cd2"              # 深度删除 CD2 联动结果
+    LIBRARY_DELETED = "library_deleted"              # 神医深度删除
+    DEEP_DELETE_CD2 = "deep_delete_cd2"              # 神医深度删除 CD2 联动结果
 
     # ── 客户端 ──
     CLIENT_ERROR = "client_error"                    # 下载客户端执行异常
