@@ -33,6 +33,7 @@ class NotificationRenderer:
         NotificationEvent.STRM_WEBHOOK: "🔗",
         NotificationEvent.LIBRARY_NEW: "📺",
         NotificationEvent.LIBRARY_DELETED: "🧹",
+        NotificationEvent.DEEP_DELETE_CD2: "☁️",
         NotificationEvent.CLIENT_ERROR: "⚠️",
         NotificationEvent.CLIENT_PUSH_FAILED: "⚠️",
         NotificationEvent.RSS_UPDATED: "📡",
@@ -490,6 +491,43 @@ class NotificationRenderer:
             msg += f"{filename}\n"
         msg += "\n─── 来自 Emby Webhook ───"
         return msg
+
+    def _render_deep_delete_cd2(self, n: "Notification") -> str:
+        d = n.data
+        item_title = d.get("item_title", "未知")
+        success = d.get("success", False)
+        delete_mode = d.get("delete_mode", "files")
+        permanently = d.get("permanently", False)
+        deleted_count = d.get("deleted_count", 0)
+        deleted_paths = d.get("deleted_paths", [])
+        error_msg = d.get("error_msg", "")
+
+        mode_text = {"files": "文件", "folder": "文件夹", "auto": "自动"}.get(delete_mode, delete_mode)
+        action_text = "永久删除" if permanently else "删除到回收站"
+        status_icon = "✅" if success else "❌"
+
+        lines = [
+            f"☁️ <b>CD2 联动删除{action_text}</b>\n",
+            f"📦 <b>作品：</b>{item_title}",
+            f"🎯 <b>删除模式：</b>{mode_text}",
+            f"📊 <b>删除数量：</b>{deleted_count} 项",
+        ]
+
+        if success:
+            lines.append(f"\n{status_icon} <b>结果：</b>{action_text}成功")
+            if deleted_paths:
+                lines.append("\n<b>删除路径：</b>")
+                for p in deleted_paths[:8]:
+                    lines.append(f"<code>{p}</code>")
+                if len(deleted_paths) > 8:
+                    lines.append(f"...共 {len(deleted_paths)} 项")
+        else:
+            lines.append(f"\n{status_icon} <b>结果：</b>{action_text}失败")
+            if error_msg:
+                lines.append(f"❌ <b>错误：</b>{error_msg}")
+
+        lines.append("\n─── 来自 Emby 深度删除联动 ───")
+        return "\n".join(lines)
 
     def _render_client_error(self, n: "Notification") -> str:
         d = n.data

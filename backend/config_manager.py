@@ -119,6 +119,13 @@ class ConfigManager:
         "telegram_bot_enabled": False, # Telegram Bot 对话功能
         "telegram_allowed_chats": [], # 允许的 chat_id 列表（空为不限制）
         "file_browser_favorites": [], # 文件浏览器收藏夹 [{"name": "显示名", "path": "/path/to/dir"}]
+        "deep_delete": {
+            "enabled": False,               # 是否启用 Emby 深度删除联动 CD2
+            "delete_preference": "files",   # 删除偏好: files=仅删文件, folder=尝试删整个文件夹, auto=根据 IsFolder 自动判断
+            "permanent_delete": False,      # True=永久删除, False=删除到回收站
+            "notify_on_delete": True,       # 联动删除后是否发送 TG 通知
+            "path_mappings": []             # 路径映射规则 [{"from": "前缀", "to": "替换为"}]
+        },
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",

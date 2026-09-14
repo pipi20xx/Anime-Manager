@@ -213,10 +213,10 @@ class CD2Client(BaseClient):
             return []
         return self._file_browser.walk_files(root, video_exts=video_exts, ignore_regex=ignore_regex)
 
-    def delete_paths(self, paths: List[str]) -> Tuple[bool, str]:
+    def delete_paths(self, paths: List[str], permanently: bool = False) -> Tuple[bool, str]:
         if not self.logged_in and not self.login():
             return False, "Login failed"
-        return self._file_browser.delete_files(paths)
+        return self._file_browser.delete_files(paths, permanently=permanently)
 
     def transfer_paths(self, paths: List[str], dest_dir: str, action: str = "move", conflict_policy: int = 1) -> Tuple[bool, str]:
         if not self.logged_in and not self.login():

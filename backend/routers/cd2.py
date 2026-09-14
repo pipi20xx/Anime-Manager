@@ -365,3 +365,37 @@ async def force_update():
     else:
         log_audit("CD2协议", "更新失败", result.get("message", ""), level="ERROR")
     return result
+
+
+# ---------------------------------------------------------------------------
+# 深度删除联动配置 (deep.delete → CD2)
+# ---------------------------------------------------------------------------
+
+class DeepDeleteConfig(BaseModel):
+    enabled: bool = False
+    delete_preference: str = "files"  # files | folder | auto
+    permanent_delete: bool = False     # True=永久删除, False=删除到回收站
+    notify_on_delete: bool = True       # 联动删除后是否发送 TG 通知
+    path_mappings: List[dict] = []  # [{"from": "...", "to": "..."}]
+
+
+@router.get("/cd2/deep-delete", summary="获取深度删除联动配置")
+async def get_deep_delete_config():
+    config = ConfigManager.get_config()
+    dd = config.get("deep_delete", {})
+    return {
+        "enabled": dd.get("enabled", False),
+        "delete_preference": dd.get("delete_preference", "files"),
+        "permanent_delete": dd.get("permanent_delete", False),
+        "notify_on_delete": dd.get("notify_on_delete", True),
+        "path_mappings": dd.get("path_mappings", []),
+    }
+
+
+@router.post("/cd2/deep-delete", summary="保存深度删除联动配置")
+async def save_deep_delete_config(req: DeepDeleteConfig):
+    ConfigManager.update_config({"deep_delete": req.model_dump()})
+    action = "永久删除" if req.permanent_delete else "删除到回收站"
+    log_audit("深度删除联动", "配置更新",
+              f"联动删除已{'启用' if req.enabled else '禁用'}，删除偏好: {req.delete_preference}，{action}，TG通知: {'开' if req.notify_on_delete else '关'}，映射规则: {len(req.path_mappings)} 条")
+    return {"success": True, "message": "配置已保存"}

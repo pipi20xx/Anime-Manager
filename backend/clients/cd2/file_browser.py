@@ -85,19 +85,28 @@ class CD2FileBrowser:
             logger.error(f"[{conn.name}] CD2 重命名异常: {details}")
             return False, details
 
-    def delete_files(self, paths: List[str]) -> tuple:
-        """批量删除文件/文件夹 (DeleteFiles，删除到回收站)"""
+    def delete_files(self, paths: List[str], permanently: bool = False) -> tuple:
+        """
+        批量删除文件/文件夹。
+        
+        :param permanently: True=永久删除 (DeleteFilesPermanently)，False=删除到回收站 (DeleteFiles)
+        :note: 永久删除仅部分云盘支持（如阿里云盘），不支持时 CD2 会返回错误
+        """
         conn = self.connection
+        verb = "永久删除" if permanently else "删除"
         try:
             req = conn.pb2.MultiFileRequest(path=paths)
-            resp = conn.stub.DeleteFiles(req, metadata=conn.get_metadata(), timeout=120)
+            if permanently:
+                resp = conn.stub.DeleteFilesPermanently(req, metadata=conn.get_metadata(), timeout=120)
+            else:
+                resp = conn.stub.DeleteFiles(req, metadata=conn.get_metadata(), timeout=120)
             if resp.success:
-                log_audit("CD2文件", "删除", f"删除 {len(paths)} 个文件/文件夹")
+                log_audit("CD2文件", verb, f"{verb} {len(paths)} 个文件/文件夹")
                 return True, "Success"
-            return False, resp.errorMessage or "删除失败"
+            return False, resp.errorMessage or f"{verb}失败"
         except Exception as e:
             details = getattr(e, "details", None) or str(e)
-            logger.error(f"[{conn.name}] CD2 删除文件异常: {details}")
+            logger.error(f"[{conn.name}] CD2 {verb}文件异常: {details}")
             return False, details
 
     def upload_file(self, parent_path: str, file_name: str, data: bytes) -> tuple:

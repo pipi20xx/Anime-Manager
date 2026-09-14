@@ -86,4 +86,16 @@ export const cd2Api = {
   /** 取消远程上传 */
   remoteUploadCancel: (uploadId: string) =>
     api.post<any>(`/api/cd2/upload/remote/${uploadId}/cancel`, {}),
+
+  /** 获取深度删除联动配置 */
+  getDeepDeleteConfig: () => api.get<any>('/api/cd2/deep-delete'),
+
+  /** 保存深度删除联动配置 */
+  saveDeepDeleteConfig: (body: {
+    enabled: boolean
+    delete_preference: string
+    permanent_delete: boolean
+    notify_on_delete: boolean
+    path_mappings: Array<{ from: string; to: string }>
+  }) => api.post<any>('/api/cd2/deep-delete', body),
 }

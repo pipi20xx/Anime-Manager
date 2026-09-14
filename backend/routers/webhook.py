@@ -264,10 +264,9 @@ async def emby_webhook(request: Request):
 
     # 处理深度删除事件 (deep.delete)
     if event == "deep.delete":
-        description = payload.get("Description", "")
         log_audit("Webhook", "Emby深度删除", f"收到深度删除通知: {item_title}")
-        # 异步执行删除通知
-        asyncio.create_task(notification_manager.notify_emby_deleted(payload))
+        # 异步执行 CD2 联动删除（内含 TG 通知）
+        asyncio.create_task(_handle_deep_delete_cd2(payload))
         return {"status": "success", "action": "delete_notification_sent"}
 
     # 处理其他删除事件格式
@@ -285,3 +284,312 @@ async def emby_webhook(request: Request):
             return {"status": "success", "action": "delete_notification_sent"}
 
     return {"status": "ignored", "event": event}
+
+
+# ---------------------------------------------------------------------------
+# Emby 深度删除 → CD2 联动删除
+# ---------------------------------------------------------------------------
+
+def _parse_mount_paths(description: str) -> list:
+    """从 Emby deep.delete 的 Description 字段中解析 Mount Paths。"""
+    if not description or "Mount Paths:" not in description:
+        return []
+    section = description.split("Mount Paths:")[1].strip()
+    paths = []
+    for line in section.split('\n'):
+        line = line.strip()
+        if line:
+            paths.append(line)
+    return paths
+
+
+def _convert_path_via_mappings(local_path: str, mappings: list) -> str | None:
+    """
+    根据用户自定义路径映射规则，将 Emby 发来的路径转换为 CD2 内部路径。
+    遍历 mappings，找到第一个 from 前缀匹配的规则，替换为 to + 剩余路径。
+    如果没有任何规则匹配，返回 None。
+    """
+    for rule in mappings:
+        from_prefix = (rule.get("from") or "").strip()
+        to_prefix = (rule.get("to") or "").strip()
+        if not from_prefix:
+            continue
+        if local_path.startswith(from_prefix):
+            remaining = local_path[len(from_prefix):]
+            # 去掉开头多余的斜杠（to_prefix 已包含必要的斜杠时）
+            while remaining.startswith("/"):
+                remaining = remaining[1:]
+            cd2_path = to_prefix + "/" + remaining if to_prefix else "/" + remaining
+            # 规范化：确保以 / 开头，消除双斜杠
+            if not cd2_path.startswith("/"):
+                cd2_path = "/" + cd2_path
+            cd2_path = cd2_path.replace("//", "/")
+            # 处理末尾可能的斜杠
+            if cd2_path != "/" and cd2_path.endswith("/"):
+                cd2_path = cd2_path.rstrip("/")
+            return cd2_path
+    return None
+
+
+def _infer_folder_path_from_cd2_paths(cd2_paths: list, item_path: str = "") -> str | None:
+    """
+    当 Item.Path 无法通过映射规则转换时，从已映射的 CD2 文件路径中推导文件夹路径。
+
+    策略：
+    1. 取所有 CD2 文件路径的公共父目录
+    2. 如果提供了 item_path，用其末尾 1-2 级目录名在公共父目录上做验证/修正
+    """
+    import os
+
+    if not cd2_paths:
+        return None
+
+    # 取所有路径的公共父目录
+    def parent(path: str) -> str:
+        return os.path.dirname(path)
+
+    common = parent(cd2_paths[0])
+    for p in cd2_paths[1:]:
+        common = os.path.commonpath([common, parent(p)])
+        if not common or common == "/":
+            break
+
+    if not common or common == "/":
+        return None
+
+    # 如果有 item_path，尝试用它的末尾几级目录名来验证 common
+    if item_path:
+        # item_path 例: /NVME/CSXF/BT/(2020)租借女友[tmdbid=96316]/Season 1
+        # 取末尾 1~2 级目录名去匹配 common 的末尾
+        item_parts = [p for p in item_path.strip("/").split("/") if p]
+        for depth in (min(2, len(item_parts)), 1):
+            tail = "/".join(item_parts[-depth:])
+            if tail and common.endswith(tail):
+                return common
+        # 如果末尾不匹配，仍返回 common（可能是中间某级目录名不同）
+        # 但用 item_path 最后一级目录名做一次修正尝试
+        if item_parts:
+            last_dir = item_parts[-1]
+            # 检查 common 的最后一级是否和 item_path 的最后一级不同
+            common_parts = [p for p in common.strip("/").split("/") if p]
+            if common_parts and common_parts[-1] != last_dir:
+                # 替换最后一级（可能是 Season 1 vs Season 01 之类的差异）
+                # 但这种情况不常见，保守起见还是返回 common
+                pass
+
+    return common
+
+
+async def _handle_deep_delete_cd2(payload: dict):
+    """
+    处理 Emby deep.delete 事件的 CD2 联动删除。
+    
+    流程：
+    1. 检查 deep_delete 配置是否启用
+    2. 解析 Description 中的 Mount Paths
+    3. 通过自定义路径映射规则转换为 CD2 内部路径
+    4. 根据 delete_preference 决定删除文件还是文件夹
+    5. 调用 CD2 API 执行删除
+    6. 全程记录到任务中心
+    """
+    import uuid as _uuid
+
+    # ── 启动任务中心记录 ──
+    item_title_raw = payload.get("Item", {}).get("Name", "未知")
+    task_id = f"deep_delete_{_uuid.uuid4().hex[:8]}"
+    task_desc = f"[深度删除联动] {item_title_raw}"
+    await start_task(task_id, "深度删除联动", task_desc)
+
+    try:
+        config = ConfigManager.get_config()
+        deep_delete_config = config.get("deep_delete", {})
+
+        if not deep_delete_config.get("enabled", False):
+            await log_task(task_id, "⚠️ 深度删除联动未启用，跳过")
+            await finish_task(task_id, "skipped")
+            return
+
+        description = payload.get("Description", "")
+        mount_paths = _parse_mount_paths(description)
+
+        if not mount_paths:
+            await log_task(task_id, "⚠️ Description 中未找到 Mount Paths，跳过", "WARN")
+            logger.warning("[深度删除联动] Description 中未找到 Mount Paths，跳过")
+            await finish_task(task_id, "skipped")
+            return
+
+        mappings = deep_delete_config.get("path_mappings", [])
+        if not mappings:
+            await log_task(task_id, "⚠️ 未配置路径映射规则，跳过", "WARN")
+            logger.warning("[深度删除联动] 未配置路径映射规则，跳过")
+            await finish_task(task_id, "skipped")
+            return
+
+        # 根据 delete_preference 决定删除策略
+        preference = deep_delete_config.get("delete_preference", "files")
+        item = payload.get("Item", {})
+        is_folder = item.get("IsFolder", False)
+        item_type = item.get("Type", "")
+
+        await log_task(task_id, f"📦 作品: {item_title_raw}")
+        await log_task(task_id, f"📋 Emby 原始信息:")
+        await log_task(task_id, f"   • Type: {item_type}")
+        await log_task(task_id, f"   • IsFolder: {is_folder}")
+        await log_task(task_id, f"   • Mount Paths ({len(mount_paths)} 项):")
+        for p in mount_paths:
+            await log_task(task_id, f"     • {p}")
+
+        # 路径转换
+        cd2_paths = []
+        skipped = []
+        for local_path in mount_paths:
+            cd2_path = _convert_path_via_mappings(local_path, mappings)
+            if cd2_path:
+                cd2_paths.append(cd2_path)
+            else:
+                skipped.append(local_path)
+
+        if skipped:
+            await log_task(task_id, f"⚠️ {len(skipped)} 个路径未匹配任何映射规则", "WARN")
+            for p in skipped:
+                await log_task(task_id, f"   ✗ {p}", "WARN")
+            logger.warning(f"[深度删除联动] {len(skipped)} 个路径未匹配任何映射规则")
+
+        if not cd2_paths:
+            await log_task(task_id, "⚠️ 没有有效的 CD2 路径，跳过删除", "WARN")
+            logger.warning("[深度删除联动] 没有有效的 CD2 路径，跳过删除")
+            await finish_task(task_id, "skipped")
+            return
+
+        paths_to_delete = cd2_paths  # 默认删除 Mount Paths 中的文件
+        delete_target_type = "文件"  # 标记删除的是文件还是文件夹，用于日志展示
+
+        if preference == "folder":
+            # 尝试推导出父文件夹路径进行删除
+            item_path = item.get("Path", "")
+            folder_cd2_path = None
+            if item_path:
+                folder_cd2_path = _convert_path_via_mappings(item_path, mappings)
+            if folder_cd2_path:
+                paths_to_delete = [folder_cd2_path]
+                delete_target_type = "文件夹"
+                await log_task(task_id, f"📁 文件夹模式: 将删除文件夹")
+                await log_task(task_id, f"   → {folder_cd2_path}")
+            else:
+                # 映射失败，尝试从已映射的 CD2 文件路径推导文件夹路径
+                inferred = _infer_folder_path_from_cd2_paths(cd2_paths, item_path)
+                if inferred:
+                    paths_to_delete = [inferred]
+                    delete_target_type = "文件夹"
+                    await log_task(task_id, f"📁 文件夹模式 (自动推导): 将删除文件夹")
+                    await log_task(task_id, f"   → {inferred}")
+                    logger.info(f"[深度删除联动] 文件夹模式: Item.Path 映射失败，自动推导文件夹: {inferred}")
+                else:
+                    await log_task(task_id, f"⚠️ Item Path '{item_path}' 未匹配映射规则且无法推导文件夹，回退到文件删除", "WARN")
+                    logger.warning(f"[深度删除联动] Item Path 未匹配映射规则且无法推导，回退到文件删除")
+        elif preference == "auto":
+            if is_folder and item_type in ("Series", "Season"):
+                item_path = item.get("Path", "")
+                folder_cd2_path = None
+                if item_path:
+                    folder_cd2_path = _convert_path_via_mappings(item_path, mappings)
+                if folder_cd2_path:
+                    paths_to_delete = [folder_cd2_path]
+                    delete_target_type = "文件夹"
+                    await log_task(task_id, f"📁 自动模式 (Type={item_type}): 将删除文件夹")
+                    await log_task(task_id, f"   → {folder_cd2_path}")
+                else:
+                    # 映射失败，尝试从已映射的 CD2 文件路径推导文件夹路径
+                    inferred = _infer_folder_path_from_cd2_paths(cd2_paths, item_path)
+                    if inferred:
+                        paths_to_delete = [inferred]
+                        delete_target_type = "文件夹"
+                        await log_task(task_id, f"📁 自动模式 (Type={item_type}, 自动推导): 将删除文件夹")
+                        await log_task(task_id, f"   → {inferred}")
+                        logger.info(f"[深度删除联动] 自动模式: Item.Path 映射失败，自动推导文件夹: {inferred}")
+                    elif item_path:
+                        await log_task(task_id, f"⚠️ 自动模式: Item.Path '{item_path}' 未匹配映射规则且无法推导，回退到文件删除", "WARN")
+                    else:
+                        await log_task(task_id, f"⚠️ 自动模式: Item.Path 为空 (Type={item_type})且无法推导，回退到文件删除", "WARN")
+            elif is_folder:
+                # IsFolder=true 但 Type 不在 Series/Season 中，仍然标注为文件夹
+                await log_task(task_id, f"ℹ️ 自动模式: IsFolder=true, Type={item_type}，按文件路径删除")
+
+        # 获取 CD2 客户端
+        from clients.manager import ClientManager
+        cd2_conf = next((c for c in config.get("download_clients", []) if c.get("type") == "cd2"), None)
+        if not cd2_conf:
+            await log_task(task_id, "⚠️ 未找到已配置的 CD2 客户端，跳过", "WARN")
+            logger.warning("[深度删除联动] 未找到已配置的 CD2 客户端，跳过")
+            await finish_task(task_id, "skipped")
+            return
+
+        client = ClientManager.get_client(cd2_conf.get("id"))
+        if not client:
+            await log_task(task_id, "⚠️ CD2 客户端初始化失败，跳过", "WARN")
+            logger.warning("[深度删除联动] CD2 客户端初始化失败，跳过")
+            await finish_task(task_id, "skipped")
+            return
+
+        # 读取删除偏好配置
+        permanent_delete = deep_delete_config.get("permanent_delete", False)
+        notify_on_delete = deep_delete_config.get("notify_on_delete", True)
+
+        # 执行删除
+        item_title = payload.get("Item", {}).get("Name", "未知")
+        action_text = "永久删除" if permanent_delete else "删除到回收站"
+
+        # 日志排版：逐行展示路径（任务中心详细记录）
+        await log_task(task_id, f"🔧 准备{action_text} {len(paths_to_delete)} 项{delete_target_type}:")
+        for p in paths_to_delete:
+            await log_task(task_id, f"   {'📁' if delete_target_type == '文件夹' else '📄'} {p}")
+        # 系统日志简化：只输出概要，不输出路径列表
+        logger.info(f"[深度删除联动] 准备{action_text} {len(paths_to_delete)} 项{delete_target_type}: {item_title}")
+
+        success, msg = await asyncio.to_thread(
+            client.delete_paths, paths_to_delete, permanent_delete
+        )
+
+        if success:
+            await log_task(task_id, f"✅ {action_text}成功: {len(paths_to_delete)} 项{delete_target_type}")
+            log_audit(
+                "深度删除联动", "删除成功",
+                f"CD2 联动{action_text}完成: {item_title} ({len(paths_to_delete)} 项{delete_target_type})",
+            )
+            logger.info(f"[深度删除联动] {action_text}成功: {item_title}, {len(paths_to_delete)} 项{delete_target_type}")
+        else:
+            await log_task(task_id, f"❌ {action_text}失败: {msg}", "ERROR")
+            log_audit(
+                "深度删除联动", "删除失败",
+                f"CD2 联动{action_text}失败: {msg}",
+                level="ERROR",
+            )
+            logger.error(f"[深度删除联动] {action_text}失败: {msg}")
+
+        # 发送 TG 通知
+        if notify_on_delete:
+            try:
+                await notification_manager.notify_deep_delete_cd2(
+                    item_title=item_title,
+                    success=success,
+                    delete_mode=preference,
+                    permanently=permanent_delete,
+                    deleted_count=len(paths_to_delete),
+                    deleted_paths=paths_to_delete,
+                    error_msg=msg if not success else "",
+                )
+            except Exception as notify_err:
+                await log_task(task_id, f"⚠️ 发送 TG 通知失败: {notify_err}", "WARN")
+                logger.warning(f"[深度删除联动] 发送 TG 通知失败: {notify_err}")
+
+        # 完成任务
+        await finish_task(task_id, "completed" if success else "failed", len(paths_to_delete))
+
+    except Exception as e:
+        logger.error(f"[深度删除联动] 处理异常: {e}", exc_info=True)
+        log_audit("深度删除联动", "异常", f"处理深度删除联动时发生错误: {e}", level="ERROR")
+        try:
+            await log_task(task_id, f"❌ 处理异常: {e}", "ERROR")
+            await finish_task(task_id, "failed")
+        except Exception:
+            pass

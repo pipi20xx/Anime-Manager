@@ -792,6 +792,26 @@ class NotificationManager:
                         file_list.append(os.path.basename(source_file))
         return file_list
 
+    async def notify_deep_delete_cd2(self, item_title: str, success: bool,
+                                      delete_mode: str, permanently: bool,
+                                      deleted_count: int, deleted_paths: List[str],
+                                      error_msg: str = "") -> None:
+        """深度删除 CD2 联动结果通知。"""
+        if not self._tg_conf().get("enabled"):
+            return
+        await self.send(Notification(
+            event_type=NotificationEvent.DEEP_DELETE_CD2,
+            data={
+                "item_title": item_title,
+                "success": success,
+                "delete_mode": delete_mode,
+                "permanently": permanently,
+                "deleted_count": deleted_count,
+                "deleted_paths": deleted_paths,
+                "error_msg": error_msg,
+            },
+        ))
+
     async def _delayed_flush_deleted(self) -> None:
         """等待聚合窗口超时后，将缓冲区中的文件列表合并发送。"""
         try:
