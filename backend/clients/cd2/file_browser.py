@@ -349,6 +349,10 @@ class CD2FileBrowser:
         import requests as _requests
 
         conn = self.connection
+        # 确保同步 gRPC 连接已建立（可能只有异步 stub 被 login_async 创建过）
+        if conn.stub is None:
+            if not conn._connect():
+                raise RuntimeError(f"[{conn.name}] CD2 同步连接未建立，无法下载")
         req = conn.pb2.GetDownloadUrlPathRequest(
             path=cloud_path, preview=False, lazy_read=False, get_direct_url=True
         )
@@ -382,6 +386,11 @@ class CD2FileBrowser:
         """
         conn = self.connection
         import requests as _requests
+
+        # 确保同步 gRPC 连接已建立
+        if conn.stub is None:
+            if not conn._connect():
+                return False, "CD2 同步连接未建立"
 
         tmp_path = local_path + ".cd2downloading"
         try:

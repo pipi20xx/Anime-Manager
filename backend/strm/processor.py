@@ -130,6 +130,12 @@ class StrmProcessor:
                     if not _cd2_client:
                         return {"status": "error", "message": "CD2 客户端初始化失败"}
 
+                    # 确保同步 gRPC 连接已建立。
+                    # login_async() 只创建异步 stub，而 open_download_stream 使用同步 stub，
+                    # 必须调用同步 login()（内部 _connect() 创建 channel/stub）
+                    if not _cd2_client._conn.stub:
+                        await asyncio.to_thread(_cd2_client.login)
+
                     resp, _size = await asyncio.to_thread(_cd2_client._file_browser.open_download_stream, file_path)
                     try:
                         def _download_meta():
