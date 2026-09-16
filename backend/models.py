@@ -440,6 +440,10 @@ class HealthCheckConfig(SQLModel, table=True):
 
 
 
+    path_via: str = Field(default="local")  # "local" | "cd2"
+
+
+
     enabled: bool = Field(default=True)
 
 

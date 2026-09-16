@@ -35,6 +35,7 @@ const editingConfig = reactive({
   name: '',
   file_path: '',
   file_url: '',
+  path_via: 'local' as 'local' | 'cd2',
   enabled: true,
 })
 
@@ -82,6 +83,7 @@ function openAdd() {
     file_path: '',
     file_url: '',
     enabled: true,
+    path_via: 'local',
   })
   showModal.value = true
 }
@@ -94,6 +96,7 @@ function openEdit(item: any) {
     file_path: item.file_path,
     file_url: item.file_url,
     enabled: item.enabled,
+    path_via: item.path_via || 'local',
   })
   showModal.value = true
 }
@@ -188,7 +191,7 @@ onMounted(() => {
     </div>
 
     <div class="text-body-2 text-medium-emphasis mb-4">
-      通过定时下载指定文件并与本地路径进行比对，用于监测硬盘是否掉线或下载源的 Cookie 是否失效。
+      通过定时检测指定文件是否存在，用于监测本地硬盘是否掉线、CD2 云端是否可访问，或下载源的 Cookie 是否失效。支持本地路径和 CD2 挂载路径。
     </div>
 
     <div class="d-flex align-center ga-4 flex-wrap mb-4">
@@ -241,7 +244,10 @@ onMounted(() => {
             <div class="d-flex flex-column ga-1 mb-3">
               <div class="kv-row">
                 <span class="kv-label">文件路径</span>
-                <span class="kv-value kv-value--mono text-caption">{{ item.file_path }}</span>
+                <span class="d-flex align-center ga-1">
+                  <v-chip size="x-small" variant="flat" :color="item.path_via === 'cd2' ? 'indigo' : 'brown-grey'" class="mr-1">{{ item.path_via === 'cd2' ? 'CD2' : '本地' }}</v-chip>
+                  <span class="kv-value kv-value--mono text-caption">{{ item.file_path }}</span>
+                </span>
               </div>
               <div class="kv-row">
                 <span class="kv-label">远程 URL</span>
@@ -275,6 +281,13 @@ onMounted(() => {
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
+          <!-- 说明 -->
+          <v-alert density="compact" variant="tonal" color="info" class="mb-3" icon="mdi-information-outline">
+            <div class="text-caption">
+              <div>仅填写<b>文件路径</b>：只检测文件是否存在（本地磁盘 IO 验证 / CD2 gRPC 云端检查）。</div>
+              <div>同时填写<b>远程 URL</b>：文件存在后再请求 URL，HTTP 非 200/206 则判定 Cookie 失效。</div>
+            </div>
+          </v-alert>
           <v-text-field
             v-model="editingConfig.name"
             label="配置名称"
@@ -284,17 +297,28 @@ onMounted(() => {
             hide-details
             placeholder="例如: 阿里云盘掉盘检测"
           />
+          <!-- 路径类型切换 -->
+          <div class="mb-2">
+            <div class="text-caption text-medium-emphasis mb-1">文件路径类型</div>
+            <v-btn-toggle v-model="editingConfig.path_via" mandatory density="compact" class="mb-2">
+              <v-btn value="local" prepend-icon="mdi-harddisk">本地路径</v-btn>
+              <v-btn value="cd2" prepend-icon="mdi-cloud-outline">CD2 云盘</v-btn>
+            </v-btn-toggle>
+          </div>
           <v-text-field
             v-model="editingConfig.file_path"
-            label="文件路径"
+            :label="editingConfig.path_via === 'cd2' ? '文件路径 (CD2 路径，如 /115open/check.txt)' : '文件路径'"
             variant="outlined"
             density="compact"
-            class="mb-3"
+            class="mb-1"
             hide-details
-            placeholder="容器内的文件路径，例如: /mnt/aliyun/check.txt"
+            :placeholder="editingConfig.path_via === 'cd2' ? '/115open/check.txt' : '容器内的文件路径，例如: /mnt/aliyun/check.txt'"
             append-inner-icon="mdi-file-outline"
             @click:append-inner="openFileBrowser"
           />
+          <div v-if="editingConfig.file_path" class="text-caption mb-3" :class="editingConfig.path_via === 'cd2' ? 'text-indigo' : 'text-medium-emphasis'">
+            <v-icon size="12" class="mr-1">mdi-cloud-outline</v-icon>检测方式: {{ editingConfig.path_via === 'cd2' ? 'CD2 (gRPC 云端文件存在性检查)' : '本地磁盘 (文件存在 + IO 读取验证)' }}
+          </div>
           <v-text-field
             v-model="editingConfig.file_url"
             label="远程 URL"
@@ -321,9 +345,9 @@ onMounted(() => {
     <!-- 检测文件路径浏览选择（文件模式） -->
     <FolderBrowserModal
       v-model="showFileBrowser"
-      via="local"
+      :via="editingConfig.path_via"
       mode="file"
-      title="选择检测文件"
+      :title="editingConfig.path_via === 'cd2' ? '选择 CD2 云盘检测文件' : '选择本地检测文件'"
       @select="onFileSelected"
     />
   </div>
