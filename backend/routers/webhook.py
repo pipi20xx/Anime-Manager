@@ -5,6 +5,7 @@ import logging
 import json
 import time
 import uuid
+import urllib.parse
 
 from strm.strm_generator import StrmGenerator
 from config_manager import ConfigManager
@@ -308,6 +309,9 @@ def _convert_path_via_mappings(local_path: str, mappings: list) -> str | None:
     根据用户自定义路径映射规则，将 Emby 发来的路径转换为 CD2 内部路径。
     遍历 mappings，找到第一个 from 前缀匹配的规则，替换为 to + 剩余路径。
     如果没有任何规则匹配，返回 None。
+
+    支持 URL 编码的路径：当 local_path 是 HTTP 直链（如 CD2 的 /static/http/... 形式）时，
+    路径中包含 URL 编码的中文（%E4%BA%91%E7%9B%98 等），会自动解码为原始字符。
     """
     for rule in mappings:
         from_prefix = (rule.get("from") or "").strip()
@@ -316,6 +320,8 @@ def _convert_path_via_mappings(local_path: str, mappings: list) -> str | None:
             continue
         if local_path.startswith(from_prefix):
             remaining = local_path[len(from_prefix):]
+            # URL 解码：CD2 直链路径中包含 %E4%BA%91%E7%9B%98 等编码，需要解码为原始中文
+            remaining = urllib.parse.unquote(remaining)
             # 去掉开头多余的斜杠（to_prefix 已包含必要的斜杠时）
             while remaining.startswith("/"):
                 remaining = remaining[1:]
@@ -359,6 +365,9 @@ def _infer_folder_path_from_cd2_paths(cd2_paths: list, item_path: str = "") -> s
     """
     if not cd2_paths or not item_path:
         return None
+
+    # URL 解码：Item.Path 可能是 CD2 直链形式，包含 URL 编码的中文
+    item_path = urllib.parse.unquote(item_path)
 
     item_parts = [p for p in item_path.strip("/").split("/") if p]
     if not item_parts:
