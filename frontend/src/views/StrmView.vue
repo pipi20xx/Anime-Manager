@@ -516,17 +516,22 @@ onMounted(() => {
               </v-chip>
             </div>
 
-            <!-- 信息区 -->
+            <!-- 信息区：路径容器（源 → 目标 竖向布局） -->
             <div class="manage-card__body">
-              <div class="manage-card__info">
-                <v-icon size="14" class="mr-1">mdi-folder-outline</v-icon>
-                <span class="manage-card__info-label">源</span>
-                <span class="manage-card__info-value" :title="task.source_path || task.source_dir">{{ task.source_path || task.source_dir || '-' }}</span>
-              </div>
-              <div class="manage-card__info">
-                <v-icon size="14" class="mr-1">mdi-folder-arrow-right-outline</v-icon>
-                <span class="manage-card__info-label">目标</span>
-                <span class="manage-card__info-value" :title="task.target_path || task.target_dir">{{ task.target_path || task.target_dir || '-' }}</span>
+              <div class="task-path-container">
+                <div class="task-path-item">
+                  <span class="via-badge" :class="task.sync_mode === 'cd2_api' ? 'via-badge--cd2' : 'via-badge--local'">
+                    {{ task.sync_mode === 'cd2_api' ? 'CD2' : '本地' }}
+                  </span>
+                  <span class="task-path-text" :title="task.source_path || task.source_dir">{{ task.source_path || task.source_dir || '-' }}</span>
+                </div>
+                <div class="task-path-divider">
+                  <v-icon size="14">mdi-arrow-down</v-icon>
+                </div>
+                <div class="task-path-item">
+                  <span class="via-badge via-badge--local">本地</span>
+                  <span class="task-path-text" :title="task.target_path || task.target_dir">{{ task.target_path || task.target_dir || '-' }}</span>
+                </div>
               </div>
 
               <!-- 状态标签 -->
@@ -873,4 +878,55 @@ onMounted(() => {
   </v-container>
 </template>
 
+<style scoped>
+/* 路径容器：竖向布局，源 → 箭头 → 目标 */
+.task-path-container {
+  display: flex;
+  flex-direction: column;
+  border: var(--am-content-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+}
+.task-path-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  gap: 6px;
+}
+.task-path-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.task-path-text {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgb(var(--v-theme-on-surface));
+  flex: 1;
+  min-width: 0;
+}
 
+/* 轻量 via 标记 */
+.via-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  color: #fff;
+}
+.via-badge--cd2 {
+  background: #00897b;
+}
+.via-badge--local {
+  background: #78909c;
+}
+</style>

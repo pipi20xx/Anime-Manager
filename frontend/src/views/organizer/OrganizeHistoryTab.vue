@@ -250,7 +250,6 @@ defineExpose({ fetchHistory })
         <!-- 2. Paths (Vertical Stacked) -->
         <div v-if="item.source_path" class="org-path-container mt-3">
           <div class="org-path-item">
-            <span class="org-path-label">源路径</span>
             <v-chip
               v-if="item.source_via"
               size="x-small"
@@ -260,14 +259,12 @@ defineExpose({ fetchHistory })
             >
               {{ item.source_via === 'cd2' ? 'CD2' : '本地' }}
             </v-chip>
-            <v-icon size="14" class="mr-1">mdi-folder-outline</v-icon>
             <span class="org-path-text" :title="item.source_path">{{ item.source_path }}</span>
           </div>
           <div class="org-path-divider">
-            <v-icon size="14" color="primary">mdi-arrow-down</v-icon>
+            <v-icon size="14">mdi-arrow-down</v-icon>
           </div>
           <div v-if="item.target_path" class="org-path-item">
-            <span class="org-path-label">目标路径</span>
             <v-chip
               v-if="item.target_via"
               size="x-small"
@@ -277,7 +274,6 @@ defineExpose({ fetchHistory })
             >
               {{ item.target_via === 'cd2' ? 'CD2' : '本地' }}
             </v-chip>
-            <v-icon size="14" class="mr-1" color="primary">mdi-folder-check-outline</v-icon>
             <span class="org-path-text org-path-target" :title="item.target_path">{{ item.target_path }}</span>
           </div>
         </div>

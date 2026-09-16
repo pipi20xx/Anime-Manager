@@ -164,7 +164,7 @@
   border: var(--am-content-border);
   border-radius: 8px;
   overflow: hidden;
-  background: rgba(var(--v-theme-on-surface), 0.02);
+  background: transparent;
 }
 .org-path-item {
   display: flex;
@@ -201,7 +201,7 @@
   padding: 2px 0;
   border-top: none;
   border-bottom: none;
-  background: rgba(var(--v-theme-on-surface), 0.02);
+  background: transparent;
 }
 .org-path-truncate {
   white-space: nowrap;
