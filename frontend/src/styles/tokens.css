@@ -71,6 +71,9 @@
   --am-badge-accent: #4ecdc4;
   --am-badge-warm: #ff6b6b;
   --am-badge-rating-color: #ffd700;
+
+  /* 路径容器边框 — 默认跟随 content-border，ACG 主题覆盖为 none */
+  --am-path-border: var(--am-content-border);
 }
 
 /* 登录标题色（仅区分明暗，不区分主题） */
@@ -277,6 +280,10 @@ html.glass-theme-acg {
 
   /* Content Border */
   --am-content-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* Path Container Border — ACG 主题下路径容器无边框
+     用于 .org-path-container / .task-path-container (整理任务/STRM链接任务/整理历史) */
+  --am-path-border: none;
 }
 
 @media (orientation: portrait) {

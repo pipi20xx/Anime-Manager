@@ -883,7 +883,7 @@ onMounted(() => {
 .task-path-container {
   display: flex;
   flex-direction: column;
-  border: var(--am-content-border);
+  border: var(--am-path-border);
   border-radius: 8px;
   overflow: hidden;
   background: transparent;
