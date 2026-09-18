@@ -12,6 +12,11 @@ router = APIRouter(tags=["媒体识别"], prefix="")
 
 class AiTestRequest(BaseModel):
     filename: str
+    current_title: Optional[str] = None
+    current_episode: Optional[int] = None
+
+class PrivilegeTestRequest(BaseModel):
+    filename: str
     custom_regex: Optional[str] = None
     group_index: Optional[int] = 1
 
@@ -184,11 +189,15 @@ async def test_ai_parsing(request: AiTestRequest):
         return {"status": "error", "message": "AI 引擎不可用 (请检查日志/模型)"}
         
     try:
-        result = ai.parse_filename(filename)
+        result = ai.guess_title_variants(
+            filename,
+            current_title=request.current_title,
+            current_episode=request.current_episode,
+        )
         if not result:
             return {"status": "error", "message": "AI 解析未返回有效数据 (可能是配置错误或模型无响应)"}
-            
-        log_audit("AI", "测试成功", f"解析结论: {result.get('title')} S{result.get('season','-')}E{result.get('episode','-')}")
+
+        log_audit("AI", "测试成功", f"解析结论: {result.get('real_title')} S{result.get('season') or '-'}E{result.get('episode') or '-'}")
         return {"status": "success", "result": result}
     except Exception as e:
         log_audit("AI", "测试崩溃", str(e), level="ERROR")
@@ -251,7 +260,7 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
         return {"status": "error", "message": str(e), "debug": debug_info}
 
 @router.post("/api/privilege/test", summary="特权集数锁定测试")
-async def test_privilege_lock(request: AiTestRequest):
+async def test_privilege_lock(request: PrivilegeTestRequest):
     """
     针对特定字幕组（如 LoliHouse）的特权规则提取测试。
     支持传入自定义正则进行调试。
