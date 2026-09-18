@@ -638,6 +638,7 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 |------|------|------|
 | `/api/recognize` | POST | 全链路识别接口（支持单文件、强制参数、临时规则、副标题注入） |
 | `/api/tmdb/tv/{tmdb_id}` | GET | 获取剧集季度详情 |
+| `/api/ai/test` | POST | AI 实验室：语义解析测试（AI 标题推断，不涉 TMDB 对撞） |
 | `/api/ai/fallback-test` | POST | AI 智能介入测试（标题推断 + 调试信息与耗时） |
 | `/api/privilege/test` | POST | 特权集数锁定测试 |
 | `/api/privilege/rules` | GET | 获取内置特权规则列表 |
