@@ -252,7 +252,7 @@ onUnmounted(() => {
   <v-card class="glass-card pa-4 mb-4">
     <div class="text-subtitle-1 font-weight-bold text-primary mb-3">智能记忆管理</div>
     <v-alert type="info" density="compact" variant="tonal" class="mb-3">智能记忆用于加速重复文件的识别。无效记录可能导致不同剧集误匹配。</v-alert>
-    <div class="d-flex ga-2">
+    <div class="d-flex justify-end flex-wrap ga-2">
       <v-btn variant="tonal" color="info" prepend-icon="mdi-broom" :loading="mtnFingerprintLoading" @click="cleanupInvalidFingerprints">智能清理无效记忆</v-btn>
       <v-btn variant="tonal" color="warning" prepend-icon="mdi-delete-sweep-outline" :loading="mtnFingerprintLoading" @click="clearFingerprints">清空全部记忆</v-btn>
     </div>
