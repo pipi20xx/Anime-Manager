@@ -80,12 +80,12 @@ class TmdbFullIngestor:
         last_date = tmdb_data.get('last_air_date') if media_type == 'tv' else None
         year = first_date[:4] if first_date and len(first_date) >= 4 else None
         
-        genre_ids = [int(g['id']) for g in tmdb_data.get('genres', []) if g.get('id')]
-        company_ids = [int(c['id']) for c in tmdb_data.get('production_companies', []) if c.get('id')]
+        genre_ids = list(dict.fromkeys(int(g['id']) for g in tmdb_data.get('genres', []) if g.get('id')))
+        company_ids = list(dict.fromkeys(int(c['id']) for c in tmdb_data.get('production_companies', []) if c.get('id')))
 
         kw_raw = tmdb_data.get('keywords', {})
         kw_list = kw_raw.get('keywords') or kw_raw.get('results') or []
-        keyword_ids = [int(k['id']) for k in kw_list if k.get('id')]
+        keyword_ids = list(dict.fromkeys(int(k['id']) for k in kw_list if k.get('id')))
         
         # 2. 标题索引脱水 (区分优先级)
         title_map = {}
@@ -158,6 +158,8 @@ class TmdbFullIngestor:
                 )
                 for model, rows in ref_batches:
                     if not rows: continue
+                    # TMDB 源数据可能含重复 id，不去重会让 ON CONFLICT 同行生效两次而报错
+                    rows = list({r["id"]: r for r in rows}.values())
                     stmt = pg_insert(model.__table__).values(rows)
                     update_cols = {c.name: stmt.excluded[c.name] for c in model.__table__.columns if c.name != "id"}
                     await session.execute(stmt.on_conflict_do_update(index_elements=["id"], set_=update_cols))
