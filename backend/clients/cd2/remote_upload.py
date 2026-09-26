@@ -265,10 +265,37 @@ class RemoteUploadManager:
 
                     job = self._next_job_local(session, timeout=10)
                     if job is None:
-                        # 普通上传模式下服务端应持续推送任务/状态，长时间无消息说明传输停滞
+                        # 服务端应持续推送任务/状态。终态推送可能在通道断线期间丢失，
+                        # 任务在 CD2 端已结束但本地会话收不到通知——仅报警会让会话僵死，
+                        # 因此空闲超限后轮询任务列表兜底收尾
                         if rapid_mode == "off":
                             idle = time.time() - session.last_activity
-                            if idle >= 90:
+                            if idle >= 90 and time.time() - last_poll_at >= _RAPID_POLL_INTERVAL:
+                                last_poll_at = time.time()
+                                found, st, err_msg = self._query_upload_status(conn, cloud_file_path)
+                                if found:
+                                    task_seen = True
+                                if found and st == 5:  # Finish：任务列表确认完成
+                                    log_audit("CD2上传", "完成", f"任务列表确认完成: {cloud_file_path}")
+                                    return self._finish_local_session(upload_id, session, "完成")
+                                if found and st in (2, 9, 10):  # Cancelled/Error/FatalError
+                                    logger.error(f"远程上传任务异常({err_msg}): {cloud_file_path}")
+                                    self._safe_cancel(upload_id)
+                                    return {"success": False, "status_text": "错误",
+                                            "error": err_msg or "上传任务异常"}
+                                if not found and task_seen:
+                                    # 任务已从列表消失：先等服务端补推终态（错误任务也会消失），
+                                    # 仍未收到则按完成收尾（数据已全部回传，不可能停在半途）
+                                    deadline = time.time() + 30
+                                    while not session.terminal and time.time() < deadline:
+                                        time.sleep(1)
+                                    if session.terminal and session.status != 5:
+                                        logger.error(f"远程上传任务异常({session.error}): {cloud_file_path}")
+                                        return {"success": False, "status_text": "错误",
+                                                "error": session.error or "上传任务异常"}
+                                    log_audit("CD2上传", "完成", f"任务已结束(兜底判定): {cloud_file_path}")
+                                    return self._finish_local_session(upload_id, session, "完成")
+                                # 任务仍在（传输中/排队/暂停）：提示可能停滞并重置计时
                                 logger.warning(
                                     f"上传会话已 {int(idle)} 秒未收到服务端任务/状态，传输可能停滞: {cloud_file_path}"
                                 )
