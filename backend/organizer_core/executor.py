@@ -129,11 +129,22 @@ class FileExecutor:
                     src_name = os.path.basename(src)
                     dst_name = os.path.basename(dst)
                     if src_name != dst_name:
-                        path_at_dest = os.path.join(dest_dir, src_name)
-                        logger.debug(f"  正在改名: {src_name} -> {dst_name}")
-                        success, err = await asyncio.to_thread(client.rename_file, client._to_cd2_path(path_at_dest), dst_name)
+                        # 复制后云端索引可能延迟登记，先等待定位再改（兼容 CD2 冲突自动改名）
+                        actual_name, wait_err = await asyncio.to_thread(
+                            client._file_browser.wait_for_file, client._to_cd2_path(os.path.join(dest_dir, src_name))
+                        )
+                        if not actual_name:
+                            logger.error(f"    ❌ 定位目标文件失败: {src_name} -> {wait_err}")
+                            if i == 0: return f"rename_failed: {wait_err}"
+                            continue
+                        if actual_name != src_name:
+                            logger.warning(f"    ⚠️ 目标同名冲突，实际落盘文件: {actual_name}")
+                        logger.debug(f"  正在改名: {actual_name} -> {dst_name}")
+                        success, err = await asyncio.to_thread(
+                            client.rename_file, client._to_cd2_path(os.path.join(dest_dir, actual_name)), dst_name
+                        )
                         if not success:
-                            logger.error(f"    ❌ 改名失败: {src_name} -> {err}")
+                            logger.error(f"    ❌ 改名失败: {actual_name} -> {err}")
                             if i == 0: return f"rename_failed: {err}"
                         else:
                             logger.debug(f"    ✅ 改名成功: {dst_name}")
@@ -250,10 +261,14 @@ class FileExecutor:
             if action == "cd2_copy":
                 ok, msg = await asyncio.to_thread(browser.transfer_files, [src], dst_dir, "copy", 1)
                 if not ok: return f"cd2_failed: {msg}"
-                # 复制后目标位为原文件名，需要改名
-                copied_path = f"{dst_dir.rstrip('/')}/{os.path.basename(src)}"
-                if os.path.basename(src) != dst_name:
-                    ok, msg = await asyncio.to_thread(browser.rename, copied_path, dst_name)
+                # 复制后目标位为原文件名，需要改名；云端索引可能延迟登记，先等待定位再改
+                copied_name = os.path.basename(src)
+                if copied_name != dst_name:
+                    copied_path = f"{dst_dir.rstrip('/')}/{copied_name}"
+                    actual_name, wait_err = await asyncio.to_thread(browser.wait_for_file, copied_path)
+                    if not actual_name:
+                        return f"cd2_failed: 复制成功但定位目标文件失败: {wait_err}"
+                    ok, msg = await asyncio.to_thread(browser.rename, f"{dst_dir.rstrip('/')}/{actual_name}", dst_name)
                     if not ok: return f"cd2_failed: {msg}"
             else:
                 if os.path.basename(src) != dst_name:

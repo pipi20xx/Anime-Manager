@@ -1,5 +1,7 @@
 import logging
 import os
+import re
+import time
 import posixpath
 import fnmatch
 from typing import Dict, Any, List, Optional
@@ -229,6 +231,47 @@ class CD2FileBrowser:
         except Exception as e:
             logger.debug(f"[{conn.name}] path_exists 检查失败 {normalized}: {e}")
         return False
+
+    def wait_for_file(self, path: str, timeout: int = 30, poll_interval: float = 1.0) -> tuple:
+        """
+        等待云路径上的文件出现（复制/上传后云端索引可能延迟登记）。
+        兼容目标目录存在同名文件时 CD2 冲突自动改名（追加 "(1)" 等后缀）的情况：
+        按 "主名 (N).扩展名" 变体匹配定位实际落盘文件，取 writeTime 最新的一个。
+        返回 (实际文件名 or None, 错误信息 or None)。
+        """
+        conn = self.connection
+        normalized = "/" + (path or "").strip("/")
+        parent = posixpath.dirname(normalized) or "/"
+        name = posixpath.basename(normalized)
+        stem = posixpath.splitext(name)[0]
+        ext = posixpath.splitext(name)[1]
+        # 冲突自动改名变体: "主名 (N).ext" / "主名(N).ext"
+        variant_re = re.compile(r"^" + re.escape(stem) + r"\s*\(\d+\)" + re.escape(ext) + r"$")
+
+        deadline = time.time() + timeout
+        while True:
+            try:
+                req = conn.pb2.ListSubFileRequest(path=parent, forceRefresh=True)
+                exact, variants = [], []
+                for reply in conn.stub.GetSubFiles(req, metadata=conn.get_metadata(), timeout=30):
+                    for f in reply.subFiles:
+                        if f.name == name:
+                            exact.append(f.name)
+                        elif variant_re.match(f.name):
+                            wt = f.writeTime.seconds if f.HasField("writeTime") else 0
+                            variants.append((f.name, wt))
+                if exact:
+                    return name, None
+                if variants:
+                    variants.sort(key=lambda x: x[1], reverse=True)
+                    logger.warning(f"[{conn.name}] CD2 复制时目标同名冲突，实际落盘文件: {variants[0][0]}")
+                    return variants[0][0], None
+            except Exception as e:
+                logger.debug(f"[{conn.name}] wait_for_file 轮询失败 {parent}: {e}")
+
+            if time.time() >= deadline:
+                return None, f"等待 {timeout}s 后仍未在 {parent} 找到 {name}（云端索引未登记）"
+            time.sleep(poll_interval)
 
     def ensure_dir(self, path: str) -> tuple:
         """
