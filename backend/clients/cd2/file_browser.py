@@ -484,44 +484,52 @@ class CD2FileBrowser:
                               ignore_patterns: Optional[List[str]] = None) -> int:
         """
         从 path 向上逐级清理"实际为空"的目录，到 root_limit 为止（不含 root_limit），遇非空即停。
-        "空" = 目录内条目全部是忽略项（内置系统垃圾 + 自定义通配符）或已删除的子目录；
-        有忽略文件先删忽略文件再删目录本身；全部走回收站删除。
-        返回删除的目录数。
+        "空" = 目录内条目全部是忽略项（内置系统垃圾 + 自定义通配符）或已验证可删的子目录。
+        优化：先向上验证出可删除的最高层祖先，再一次递归删除（DeleteFiles 删目录自带递归），
+        而不是逐级各删一次。返回清理的目录层数。
         """
         conn = self.connection
         cur = "/" + (path or "").strip("/")
         limit = "/" + (root_limit or "").strip("/")
-        deleted = 0
+        if cur == "/" or cur == limit or not cur.startswith(limit):
+            return 0
 
+        verified = None   # 已验证可删除的最高层目录
+        chain: List[str] = []
+        child_path = None  # 上一层已验证的目录（在父目录条目中视为"可带走"）
         while cur and cur != "/" and cur != limit and cur.startswith(limit):
-            parent = posixpath.dirname(cur) or "/"
             try:
                 result = self.list_dir(cur, force_refresh=True)
                 if not result.get("success"):
                     logger.warning(f"[{conn.name}] 清理空目录: 列目录失败 {cur}: {result.get('message')}")
-                    return deleted
+                    break
                 entries = result.get("entries", [])
-                junk = [e for e in entries if _cd2_is_ignored(e["name"], ignore_patterns)]
-                if len(junk) != len(entries):
-                    return deleted
-
-                junk_paths = [e["path"] for e in junk]
-                if junk_paths:
-                    ok, msg = self.delete_files(junk_paths)
-                    if not ok:
-                        logger.warning(f"[{conn.name}] 清理忽略文件失败 {cur}: {msg}")
-                        return deleted
-                ok, msg = self.delete_files([cur])
-                if not ok:
-                    logger.warning(f"[{conn.name}] 删除空目录失败 {cur}: {msg}")
-                    return deleted
-                log_audit("CD2文件", "清理空目录", cur)
-                deleted += 1
-                cur = parent
+                if not all(
+                    _cd2_is_ignored(e["name"], ignore_patterns)
+                    or (e["is_dir"] and child_path and e["path"] == child_path)
+                    for e in entries
+                ):
+                    break
+                verified = cur
+                chain.append(cur)
+                child_path = cur
+                cur = posixpath.dirname(cur) or "/"
             except Exception as e:
                 logger.warning(f"[{conn.name}] 清理空目录异常 {cur}: {e}")
-                return deleted
-        return deleted
+                break
+
+        if not verified:
+            return 0
+        ok, msg = self.delete_files([verified])
+        if not ok:
+            logger.warning(f"[{conn.name}] 删除空目录失败 {verified}: {msg}")
+            return 0
+        if len(chain) > 1:
+            log_audit("CD2文件", "清理空目录",
+                      f"{verified} (向上清理 {len(chain)} 层: {'; '.join(reversed(chain))})")
+        else:
+            log_audit("CD2文件", "清理空目录", verified)
+        return len(chain)
 
     def scan_empty_dirs(self, path: str, ignore_patterns: Optional[List[str]] = None) -> Dict[str, Any]:
         """
@@ -586,9 +594,11 @@ class CD2FileBrowser:
     def clean_empty_dirs(self, path: str, ignore_patterns: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         清理 path 子树中所有"实际为空"的目录（不含 path 本身）。
-        重新扫描生成候选（最深在前），然后自底向上逐个：forceRefresh 复核（防扫描后云端变动）
-        → 删除忽略文件 → 删除目录本身（回收站）。单个失败不影响其余；
-        失败的子目录会使其父目录同样判定为非空，不会被递归误删。
+        重新扫描生成候选，只删除"最顶层"候选（祖先不在候选集中的目录）——
+        DeleteFiles 删目录自带递归，一次即可带走整条空链；每个顶层删除前用
+        forceRefresh 复核（防扫描后云端变动）。顶层删除失败时回退为对其子候选
+        自底向上逐个处理，尽量多清。全部走回收站。count 为实际移除的候选目录数
+        （含随顶层递归删除的），failed 为未能移除的候选目录。
         """
         conn = self.connection
         scan = self.scan_empty_dirs(path, ignore_patterns)
@@ -597,44 +607,81 @@ class CD2FileBrowser:
                     "count": 0, "deleted": [], "failed": []}
 
         candidates = scan["items"]  # 最深在前
+        cand_paths = {i["path"] for i in candidates}
 
-        deleted: List[str] = []
+        def _under(p: str, ancestor: str) -> bool:
+            return p.startswith(ancestor.rstrip("/") + "/")
+
+        # 只删"最顶层"候选
+        topmost = [i for i in candidates
+                   if not any(_under(i["path"], p) for p in cand_paths if p != i["path"])]
+
+        removed: List[str] = []
         failed: List[Dict[str, str]] = []
-        deleted_set = set()
-        for item in candidates:
-            d = item["path"]
+        failed_set = set()
+
+        def _fail(p: str, msg: str):
+            failed.append({"path": p, "error": msg})
+            failed_set.add(p)
+
+        def _verify(d: str):
+            """forceRefresh 复核：返回 (junk_paths, None) 可删 / (None, 错误信息) 不可删。
+            条目须全部为忽略项，或是将被随目录递归删除的候选子目录。"""
             try:
                 result = self.list_dir(d, force_refresh=True)
-                if not result.get("success"):
-                    failed.append({"path": d, "error": result.get("message", "列目录失败")})
+            except Exception as e:
+                return None, str(e)
+            if not result.get("success"):
+                return None, result.get("message", "列目录失败")
+            junk, ok = [], True
+            for e in result.get("entries", []):
+                if _cd2_is_ignored(e["name"], ignore_patterns):
+                    junk.append(e["path"])
+                elif e["is_dir"] and e["path"] in cand_paths and e["path"] not in failed_set:
                     continue
-                entries = result.get("entries", [])
-                junk, ok = [], True
-                for e in entries:
-                    if _cd2_is_ignored(e["name"], ignore_patterns):
-                        junk.append(e["path"])
-                    elif e["is_dir"] and e["path"] in deleted_set:
-                        continue
-                    else:
-                        ok = False
-                        break
-                if not ok:
-                    failed.append({"path": d, "error": "目录包含未忽略的内容，已跳过"})
+                else:
+                    ok = False
+                    break
+            return (junk, None) if ok else (None, "目录包含未忽略的内容，已跳过")
+
+        def _fallback(d: str, reason: str):
+            """顶层删除失败后的回退：对其子候选自底向上逐个处理，尽量多清"""
+            for sub in [i for i in candidates if _under(i["path"], d)]:  # 已是最深在前
+                sp = sub["path"]
+                junk, msg = _verify(sp)
+                if junk is None:
+                    _fail(sp, msg)
                     continue
                 if junk:
                     ok, msg = self.delete_files(junk)
                     if not ok:
-                        failed.append({"path": d, "error": f"清理忽略文件失败: {msg}"})
+                        _fail(sp, f"清理忽略文件失败: {msg}")
                         continue
-                ok, msg = self.delete_files([d])
+                ok, msg = self.delete_files([sp])
                 if ok:
-                    deleted_set.add(d)
-                    deleted.append(d)
-                    log_audit("CD2文件", "清理空目录", d)
+                    removed.append(sp)
                 else:
-                    failed.append({"path": d, "error": msg})
-            except Exception as e:
-                details = getattr(e, "details", None) or str(e)
-                failed.append({"path": d, "error": details})
+                    _fail(sp, msg)
+            _fail(d, reason)
 
-        return {"success": True, "count": len(deleted), "deleted": deleted, "failed": failed}
+        for item in topmost:
+            d = item["path"]
+            junk, msg = _verify(d)
+            if junk is None:
+                _fallback(d, msg)
+                continue
+            ok, msg = self.delete_files([d])
+            if ok:
+                subs = [i["path"] for i in candidates if _under(i["path"], d)]
+                removed.append(d)
+                removed.extend(i["path"] for i in candidates if _under(i["path"], d))
+                if subs:
+                    log_audit("CD2文件", "清理空目录",
+                              f"{d} (连同 {len(subs)} 个子级空目录: {'; '.join(subs)})")
+                else:
+                    log_audit("CD2文件", "清理空目录", d)
+            else:
+                logger.warning(f"[{conn.name}] 删除空目录失败 {d}: {msg}")
+                _fallback(d, msg)
+
+        return {"success": True, "count": len(removed), "deleted": removed, "failed": failed}
