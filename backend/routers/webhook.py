@@ -16,6 +16,13 @@ from task_history import start_task, log_task, finish_task
 router = APIRouter(prefix="/api/webhook", tags=["Webhook 回调"])
 logger = logging.getLogger("Webhook")
 
+def _dump_payload(payload) -> str:
+    """将收到的 Webhook payload 原样序列化为完整 JSON 文本（任务中心记录用）。"""
+    try:
+        return json.dumps(payload, ensure_ascii=False, indent=2)
+    except Exception:
+        return str(payload)
+
 # 同一文件事件去重：原生 Webhook 与内部 gRPC 监控（CD2监控）可能对同一文件各触发一次
 _EVENT_DEDUP_WINDOW = 120  # 秒
 _recent_events = {}
@@ -259,8 +266,8 @@ async def emby_webhook(request: Request):
 
     if event == "library.new":
         log_audit("Webhook", "Emby入库", f"收到新媒体入库通知: {item_title}")
-        # 异步执行通知，不阻塞响应
-        asyncio.create_task(notification_manager.notify_library_new(payload))
+        # 异步执行通知（含任务中心记录），不阻塞响应
+        asyncio.create_task(_handle_library_new(payload))
         return {"status": "success", "action": "notification_sent"}
 
     # 处理神医深度删除事件 (deep.delete)
@@ -280,11 +287,74 @@ async def emby_webhook(request: Request):
         
         if delete_items:
             log_audit("Webhook", "Emby删除", f"收到删除通知，共 {len(delete_items)} 项")
-            # 异步执行删除通知
-            asyncio.create_task(notification_manager.notify_emby_deleted(delete_items))
+            # 异步执行删除通知（含任务中心记录）
+            asyncio.create_task(_handle_emby_deleted(delete_items))
             return {"status": "success", "action": "delete_notification_sent"}
 
     return {"status": "ignored", "event": event}
+
+
+# ---------------------------------------------------------------------------
+# Emby 通知 → 任务中心记录
+# ---------------------------------------------------------------------------
+
+async def _handle_library_new(payload: dict):
+    """处理 Emby library.new 事件：完整记录收到的 payload + TG 发送结果到任务中心。"""
+    item_title = payload.get("Item", {}).get("Name", "未知")
+    task_id = f"emby_new_{uuid.uuid4().hex[:8]}"
+    await start_task(task_id, "Emby入库通知", f"[Emby入库] {item_title}")
+
+    try:
+        await log_task(task_id, "📥 收到 Emby library.new 事件，完整 payload:")
+        await log_task(task_id, _dump_payload(payload))
+
+        result = await notification_manager.notify_library_new(payload)
+        if result is None:
+            await log_task(task_id, "⏭️ 通知未发送（Telegram 未启用或未开启入库通知开关）")
+            await finish_task(task_id, "skipped")
+            return
+
+        success, msg, _ = result
+        if success:
+            await log_task(task_id, "✅ TG 入库通知发送成功")
+        else:
+            await log_task(task_id, f"❌ TG 入库通知发送失败: {msg}", "ERROR")
+        await finish_task(task_id, "completed" if success else "failed")
+
+    except Exception as e:
+        logger.error(f"[Emby入库通知] 处理异常: {e}", exc_info=True)
+        log_audit("Webhook", "Emby入库", f"处理 Emby 入库通知时发生错误: {e}", level="ERROR")
+        try:
+            await log_task(task_id, f"❌ 处理异常: {e}", "ERROR")
+            await finish_task(task_id, "failed")
+        except Exception:
+            pass
+
+
+async def _handle_emby_deleted(delete_items: list):
+    """处理 Emby 删除事件：完整记录收到的 payload 到任务中心。"""
+    first_name = os.path.basename(delete_items[0].get("source_file", "")) if delete_items else "未知"
+    task_desc = f"[Emby删除] {first_name}" if len(delete_items) == 1 else f"[Emby删除] 共 {len(delete_items)} 个事件"
+    task_id = f"emby_del_{uuid.uuid4().hex[:8]}"
+    await start_task(task_id, "Emby删除通知", task_desc)
+
+    try:
+        await log_task(task_id, f"📥 收到 Emby 删除事件，共 {len(delete_items)} 项，完整 payload:")
+        await log_task(task_id, _dump_payload(delete_items))
+
+        await notification_manager.notify_emby_deleted(delete_items)
+        # 删除通知走 30 秒聚合缓冲，实际发送结果由聚合批次统一发出，此处不等待
+        await log_task(task_id, "✅ 已加入 TG 聚合缓冲（30 秒窗口内多条删除合并为一条发送）")
+        await finish_task(task_id, "completed", len(delete_items))
+
+    except Exception as e:
+        logger.error(f"[Emby删除通知] 处理异常: {e}", exc_info=True)
+        log_audit("Webhook", "Emby删除", f"处理 Emby 删除通知时发生错误: {e}", level="ERROR")
+        try:
+            await log_task(task_id, f"❌ 处理异常: {e}", "ERROR")
+            await finish_task(task_id, "failed")
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -481,6 +551,8 @@ async def _handle_deep_delete_cd2(payload: dict):
     task_id = f"deep_delete_{_uuid.uuid4().hex[:8]}"
     task_desc = f"[神医深度删除联动] {item_title_raw}"
     await start_task(task_id, "神医深度删除联动", task_desc)
+    await log_task(task_id, "📥 收到 Emby deep.delete 事件，完整 payload:")
+    await log_task(task_id, _dump_payload(payload))
 
     try:
         config = ConfigManager.get_config()

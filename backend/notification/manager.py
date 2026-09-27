@@ -576,8 +576,11 @@ class NotificationManager:
 
     # ── Emby 媒体库 ──
 
-    async def notify_library_new(self, payload: dict) -> None:
-        """Emby 新入库通知。"""
+    async def notify_library_new(self, payload: dict) -> Optional[Tuple[bool, str, Optional[int]]]:
+        """Emby 新入库通知。
+
+        :return: (success, message, message_id)；Telegram 未启用/开关关闭时返回 None。
+        """
         tg = self._tg_conf()
         if not tg.get("enabled"):
             return
@@ -614,11 +617,19 @@ class NotificationManager:
                 if episode_name:
                     se_info += f" {episode_name}"
 
-        # Series 级事件（Type=Series）：Emby 新版会在 Description 带集数信息，如 "S02 E12\n\nTmdbId: 278043"
+        # Series 级事件（Type=Series）：Emby 新版 Description 首行固定为集数信息，
+        # 如 "S02 E12"、"S01 E01-E08"、"S01 E01-E03, E06-E08"，\n 之后才是 TmdbId 等元数据。
+        # 直接取首行原样展示，兼容后续新增的任意写法；首行不像集数信息时再用正则兜底。
         if not se_info:
-            m = re.search(r"S(\d+)\s*E(\d+)", payload.get("Description", ""))
-            if m:
-                se_info = f"S{int(m.group(1)):02d} E{int(m.group(2)):02d}"
+            first_line = payload.get("Description", "").split("\n", 1)[0].strip()
+            if re.match(r"^S\d+", first_line, re.IGNORECASE) and re.search(r"E\d+", first_line, re.IGNORECASE):
+                se_info = first_line
+            else:
+                m = re.search(r"S(\d+)\s*E(\d+)(?:\s*-\s*E?(\d+))?", payload.get("Description", ""))
+                if m:
+                    se_info = f"S{int(m.group(1)):02d} E{int(m.group(2)):02d}"
+                    if m.group(3):
+                        se_info += f"-E{int(m.group(3)):02d}"
 
         from datetime import datetime, timedelta
         date_str = payload.get("Date", "")
@@ -686,7 +697,7 @@ class NotificationManager:
                 except Exception:
                     pass
 
-        await self.send(Notification(
+        return await self.send(Notification(
             event_type=NotificationEvent.LIBRARY_NEW,
             data={
                 "category": category,
