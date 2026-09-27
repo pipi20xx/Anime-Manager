@@ -490,12 +490,26 @@ class FileProcessor:
             # [New] Get File Size
             try:
                 f_stat = os.stat(v_path)
-                f_size_mb = f_stat.st_size / (1024 * 1024)
+                f_size_bytes = f_stat.st_size
+            except Exception:
+                # 云源路径本地不存在，通过 CD2 gRPC 获取真实大小
+                f_size_bytes = 0
+                if source_via == "cd2":
+                    try:
+                        _size_client = FileProcessor._resolve_cd2_client(v_path, task.get("cd2_client_id"), "cd2")
+                        if _size_client:
+                            f_size_bytes = await asyncio.to_thread(
+                                _size_client._file_browser.get_cloud_file_size, v_path
+                            )
+                    except Exception as size_e:
+                        logger.debug(f"获取云源文件大小失败: {size_e}")
+            if f_size_bytes:
+                f_size_mb = f_size_bytes / (1024 * 1024)
                 if f_size_mb > 1024:
                     final["file_size"] = f"{f_size_mb/1024:.2f}GB"
                 else:
                     final["file_size"] = f"{f_size_mb:.2f}MB"
-            except:
+            else:
                 final["file_size"] = "Unknown"
 
             is_batch_item = "-" in str(final.get("episode", ""))
