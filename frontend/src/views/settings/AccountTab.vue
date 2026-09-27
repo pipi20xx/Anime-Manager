@@ -385,7 +385,7 @@ onMounted(() => {
     </v-card>
 
     <!-- 2FA 设置弹窗 -->
-    <v-dialog v-model="showOtpSetup" max-width="400">
+    <v-dialog v-model="showOtpSetup" max-width="400" scrollable>
       <v-card>
 <v-card-title class="pa-4 d-flex align-center ga-2">
 <v-icon color="primary" size="20">mdi-shield-check-outline</v-icon>

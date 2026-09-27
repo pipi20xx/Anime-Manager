@@ -873,7 +873,7 @@ onMounted(() => {
     </v-dialog>
 
     <!-- 编辑追踪项弹窗 -->
-    <v-dialog v-model="showEditModal" max-width="450">
+    <v-dialog v-model="showEditModal" max-width="450" scrollable>
       <v-card class="glass-card">
         <v-card-title class="pa-4 d-flex align-center">
           <v-icon start color="primary">mdi-pencil</v-icon>

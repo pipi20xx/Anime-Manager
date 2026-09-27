@@ -777,7 +777,7 @@ onMounted(() => {
     </v-menu>
 
     <!-- 文件详情 Modal -->
-    <v-dialog v-model="showInfoModal" max-width="500">
+    <v-dialog v-model="showInfoModal" max-width="500" scrollable>
       <v-card class="glass-card">
 <v-card-title class="pa-4 d-flex align-center">
 <v-icon start>mdi-information-outline</v-icon>
@@ -825,7 +825,7 @@ onMounted(() => {
     </v-dialog>
 
     <!-- 前往路径 Modal -->
-    <v-dialog v-model="showGoToModal" max-width="500">
+    <v-dialog v-model="showGoToModal" max-width="500" scrollable>
       <v-card class="glass-card">
 <v-card-title class="pa-4 d-flex align-center">
 <v-icon start>mdi-folder-marker</v-icon>

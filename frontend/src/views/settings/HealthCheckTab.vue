@@ -271,7 +271,7 @@ onMounted(() => {
     </div>
 
     <!-- 编辑/添加弹窗 -->
-    <v-dialog v-model="showModal" max-width="500">
+    <v-dialog v-model="showModal" max-width="500" scrollable>
       <v-card class="glass-card">
         <v-card-title class="pa-4 d-flex align-center ga-2">
           <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>

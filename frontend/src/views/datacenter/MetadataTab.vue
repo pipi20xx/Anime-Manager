@@ -293,7 +293,7 @@ onUnmounted(() => {
   </div>
 
   <!-- 全量刷新弹窗 -->
-  <v-dialog v-model="showRefreshModal" max-width="500">
+  <v-dialog v-model="showRefreshModal" max-width="500" scrollable>
     <v-card class="glass-card">
 <v-card-title class="pa-4 d-flex align-center">
 <v-icon start color="primary">mdi-sync</v-icon>全量刷新设置

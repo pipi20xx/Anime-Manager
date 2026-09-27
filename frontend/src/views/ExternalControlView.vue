@@ -432,7 +432,7 @@ registerHeaderTab({
     </v-card>
 
     <!-- 日志详情弹窗 -->
-    <v-dialog v-model="showLogDetail" max-width="600">
+    <v-dialog v-model="showLogDetail" max-width="600" scrollable>
       <v-card rounded="xl">
 <v-card-title class="d-flex align-center">
 <v-icon start color="primary">mdi-file-document-outline</v-icon>

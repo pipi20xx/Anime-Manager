@@ -1013,7 +1013,7 @@ registerHeaderTab({
     </v-window>
 
     <!-- 工具测试对话框 -->
-    <v-dialog v-model="toolTestDialog.open" max-width="560">
+    <v-dialog v-model="toolTestDialog.open" max-width="560" scrollable>
       <v-card class="glass-card">
         <v-card-title class="pa-4 d-flex align-center ga-2">
           <v-icon color="primary" size="20">mdi-play-circle-outline</v-icon>

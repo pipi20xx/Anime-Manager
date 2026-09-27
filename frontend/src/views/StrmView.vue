@@ -825,7 +825,7 @@ onMounted(() => {
     </v-dialog>
 
     <!-- 测试生成 STRM（单文件实际落盘） -->
-    <v-dialog v-model="showTestGen" max-width="640">
+    <v-dialog v-model="showTestGen" max-width="640" scrollable>
       <v-card>
         <v-card-title class="text-h6">测试生成 STRM</v-card-title>
         <v-card-text>

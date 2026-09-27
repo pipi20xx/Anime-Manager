@@ -766,7 +766,7 @@ onMounted(() => {
   </v-menu>
 
   <!-- 新建文件夹 -->
-  <v-dialog v-model="showCreateModal" max-width="440">
+  <v-dialog v-model="showCreateModal" max-width="440" scrollable>
     <v-card>
       <v-card-title class="d-flex align-center">
         新建文件夹
@@ -795,7 +795,7 @@ onMounted(() => {
   </v-dialog>
 
   <!-- 重命名 -->
-  <v-dialog v-model="showRenameModal" max-width="440">
+  <v-dialog v-model="showRenameModal" max-width="440" scrollable>
     <v-card>
       <v-card-title class="d-flex align-center">
         重命名
@@ -824,7 +824,7 @@ onMounted(() => {
   </v-dialog>
 
   <!-- 移动/复制 -->
-  <v-dialog v-model="showTransferModal" max-width="480">
+  <v-dialog v-model="showTransferModal" max-width="480" scrollable>
     <v-card>
       <v-card-title class="d-flex align-center">
         {{ transferAction === 'move' ? '移动' : '复制' }}「{{ transferTarget?.name }}」
@@ -1013,7 +1013,7 @@ onMounted(() => {
   </v-dialog>
 
   <!-- 删除任务确认（含同时删除云端文件选项） -->
-  <v-dialog v-model="showDeleteModal" max-width="460">
+  <v-dialog v-model="showDeleteModal" max-width="460" scrollable>
     <v-card>
       <v-card-title class="d-flex align-center">
         <v-icon color="error" class="mr-2">mdi-delete-outline</v-icon>
@@ -1046,7 +1046,7 @@ onMounted(() => {
   </v-dialog>
 
   <!-- 清空任务确认（四选一 + 同时删除云端文件） -->
-  <v-dialog v-model="showClearModal" max-width="460">
+  <v-dialog v-model="showClearModal" max-width="460" scrollable>
     <v-card>
       <v-card-title class="d-flex align-center">
         <v-icon color="warning" class="mr-2">mdi-broom</v-icon>
