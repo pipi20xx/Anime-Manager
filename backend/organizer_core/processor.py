@@ -300,7 +300,6 @@ class FileProcessor:
 
         try:
             # 寻找关联字幕和音轨 - 移至线程执行
-            # 云源文件通过 gRPC 无法高效枚举同名关联文件，跳过（关联文件仅本地源支持）
             related_files = []
             if source_via != "cd2":
                 try:
@@ -310,6 +309,24 @@ class FileProcessor:
                         if f_ext in FileProcessor.RELATED_EXTS and f.startswith(v_base):
                             related_files.append(f)
                 except Exception: pass # 目录可能不存在或无法读取
+            else:
+                # 云盘源：通过 CD2 gRPC 枚举视频同目录的关联文件，规则与本地一致
+                try:
+                    _disc_client = FileProcessor._resolve_cd2_client(v_path, task.get("cd2_client_id"), "cd2")
+                    if _disc_client:
+                        listing = await asyncio.to_thread(
+                            _disc_client._file_browser.list_dir, os.path.dirname(v_path) or "/"
+                        )
+                        if listing.get("success"):
+                            for entry in listing.get("entries", []):
+                                if entry.get("is_dir"):
+                                    continue
+                                f = entry.get("name", "")
+                                f_ext = os.path.splitext(f)[1].lower()
+                                if f_ext in FileProcessor.RELATED_EXTS and f.startswith(v_base):
+                                    related_files.append(f)
+                except Exception as disc_e:
+                    logger.warning(f"云源关联文件枚举失败: {disc_e}")
 
             # 识别
             # [NEW] 实时获取规则，确保预览中新增的规则立即生效
@@ -592,8 +609,8 @@ class FileProcessor:
                                 await db.save(file_hash, audit=False)
                                 await FileProcessor._log_detail(task_id, f"📝 哈希记录已保存: {v_file}")
 
-                        # [New] 计算关联字幕文件的哈希
-                        if related_files:
+                        # [New] 计算关联字幕文件的哈希（云源文件不在本地，跳过）
+                        if related_files and source_via != "cd2":
                             await FileProcessor._save_related_file_hashes(related_files, root, final, task_id)
 
                         results.append({
@@ -893,8 +910,8 @@ class FileProcessor:
                                     )
                                     await db.save(file_hash, audit=False)
                             
-                            # [New] 计算关联字幕文件的哈希
-                            if hash_result and batch_res == "success" and related_files:
+                            # [New] 计算关联字幕文件的哈希（云源文件不在本地，跳过）
+                            if hash_result and batch_res == "success" and related_files and source_via != "cd2":
                                 await FileProcessor._save_related_file_hashes(related_files, root, final, task_id, related_targets)
 
                     # recog 任务收口（覆盖成功/跳过/秒传未命中/失败四种批次结果）
@@ -1047,8 +1064,8 @@ class FileProcessor:
                                 )
                                 await db.save(file_hash, audit=False)
 
-                            # [New] 计算关联字幕文件的哈希
-                            if related_files:
+                            # [New] 计算关联字幕文件的哈希（云源文件不在本地，跳过）
+                            if related_files and source_via != "cd2":
                                 await FileProcessor._save_related_file_hashes(related_files, root, final, task_id, related_targets)
 
                     if v_res == "success":
