@@ -278,6 +278,22 @@ defineExpose({ fetchHistory })
           </div>
         </div>
 
+        <!-- 随行文件（字幕/音轨）去向 -->
+        <div v-if="item.related_files?.length" class="mt-2 related-files-box">
+          <div class="related-files-title">
+            <v-icon size="13" class="mr-1">mdi-paperclip</v-icon>随行文件 ({{ item.related_files.length }})
+          </div>
+          <div v-for="(rf, i) in item.related_files" :key="i" class="related-file-item">
+            <div class="related-file-head">
+              <v-icon size="13" :color="rf.status === 'success' ? 'success' : (rf.status === 'skipped' ? 'warning' : 'error')">
+                {{ rf.status === 'success' ? 'mdi-check-circle' : (rf.status === 'skipped' ? 'mdi-skip-next' : 'mdi-alert-circle') }}
+              </v-icon>
+              <span class="related-file-name">{{ rf.filename }}</span>
+            </div>
+            <div v-if="rf.target_path" class="related-file-target" :title="rf.target_path">→ {{ rf.target_path }}</div>
+          </div>
+        </div>
+
         <!-- 3. Footer: Details + Actions -->
         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-3">
           <div class="d-flex align-center ga-2 flex-wrap min-width-0">
@@ -329,5 +345,45 @@ defineExpose({ fetchHistory })
 <style scoped>
 .history-filter-chip {
   height: 40px !important;
+}
+
+/* 随行文件（字幕/音轨）去向：文件名一行、目标路径一行 */
+.related-files-box {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.related-files-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 4px;
+}
+
+.related-file-item {
+  padding: 1px 0 1px 6px;
+}
+
+.related-file-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.related-file-name {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+}
+
+.related-file-target {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+  padding-left: 21px;
 }
 </style>

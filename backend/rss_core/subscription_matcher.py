@@ -163,7 +163,7 @@ class SubscriptionMatcher:
                     
                     if recog_task_id:
                         try:
-                            stats = {"title": _title, "tmdb_id": _tmdb, "category": final_result.get("category"), "season": _season, "episode": _episode}
+                            stats = {"success": 1, "title": _title, "tmdb_id": _tmdb, "category": final_result.get("category"), "season": _season, "episode": _episode}
                             await _finish_task(recog_task_id, "completed", stats=stats)
                         except Exception:
                             pass
@@ -327,7 +327,7 @@ class SubscriptionMatcher:
                 else:
                     if recog_task_id:
                         try:
-                            await _finish_task(recog_task_id, "error")
+                            await _finish_task(recog_task_id, "error", stats={"errors": 1})
                         except Exception:
                             pass
             except Exception as e:
@@ -338,7 +338,7 @@ class SubscriptionMatcher:
                 if recog_task_id:
                     try:
                         await _log_task(recog_task_id, f"❌ 识别异常: {str(e)}", "ERROR")
-                        await _finish_task(recog_task_id, "error")
+                        await _finish_task(recog_task_id, "error", stats={"errors": 1, "message": str(e)})
                     except Exception:
                         pass
         

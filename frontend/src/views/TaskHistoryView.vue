@@ -304,6 +304,9 @@ function getTaskStats(task: any): string | null {
     if (stats.total_pushed) return `推送${stats.total_pushed}项`
   } else if (module === '识别') {
     const parts = []
+    if (stats.success) parts.push(`成功${stats.success}`)
+    if (stats.skipped) parts.push(`跳过${stats.skipped}`)
+    if (stats.errors) parts.push(`失败${stats.errors}`)
     if (stats.title) parts.push(stats.title)
     if (stats.tmdb_id) parts.push(`ID:${stats.tmdb_id}`)
     if (stats.category) parts.push(stats.category)
@@ -314,6 +317,7 @@ function getTaskStats(task: any): string | null {
       else if (season) parts.push(`S${season}`)
       else if (episode) parts.push(`E${episode}`)
     }
+    if (stats.related_files?.length) parts.push(`随行${stats.related_files.length}`)
     return parts.join(' | ') || null
   }
   return null

@@ -72,6 +72,28 @@ function logLineClass(level: string): string {
   return 'org-log-line'
 }
 
+// --- 识别任务元数据展示 ---
+function getEpInfo(stats: any): string {
+  if (!stats || stats.category !== '剧集' || stats.season == null) return ''
+  return `S${stats.season}E${stats.episode ?? '-'}`
+}
+
+function getRelatedIcon(status: string | undefined): string {
+  if (status === 'success') return 'mdi-check-circle'
+  if (status === 'skipped') return 'mdi-skip-next'
+  return 'mdi-alert-circle'
+}
+
+function getRelatedColor(status: string | undefined): string {
+  if (status === 'success') return '#1B8134'
+  if (status === 'skipped') return '#E65100'
+  return '#EF4444'
+}
+
+function copyText(text: string) {
+  navigator.clipboard?.writeText(text).catch(() => {})
+}
+
 // --- 流式整理模式 ---
 function getFileName(source: string | undefined): string {
   if (!source) return '未知文件'
@@ -207,9 +229,57 @@ watch(() => props.logs?.length, () => {
               </div>
             </div>
             <div v-if="logDetail.stats" class="mt-3">
-              <v-chip size="small" variant="tonal" color="success" class="mr-2">成功: {{ logDetail.stats.success ?? 0 }}</v-chip>
-              <v-chip size="small" variant="tonal" color="info" class="mr-2">跳过: {{ logDetail.stats.skipped ?? 0 }}</v-chip>
-              <v-chip size="small" variant="tonal" color="error">失败: {{ logDetail.stats.errors ?? 0 }}</v-chip>
+              <!-- 计数：键存在才显示，避免识别等单文件任务出现无意义的 0 -->
+              <v-chip v-if="logDetail.stats.success != null" size="small" variant="tonal" color="success" class="mr-2">成功: {{ logDetail.stats.success }}</v-chip>
+              <v-chip v-if="logDetail.stats.skipped != null" size="small" variant="tonal" color="info" class="mr-2">跳过: {{ logDetail.stats.skipped }}</v-chip>
+              <v-chip v-if="logDetail.stats.errors != null" size="small" variant="tonal" color="error" class="mr-2">失败: {{ logDetail.stats.errors }}</v-chip>
+              <v-chip v-if="logDetail.stats.message" size="small" variant="tonal" color="warning">{{ logDetail.stats.message }}</v-chip>
+            </div>
+
+            <!-- 识别任务元数据：识别结果 + 目标路径 -->
+            <div
+              v-if="logDetail.stats && (logDetail.stats.title || logDetail.stats.target_path)"
+              class="mt-3 recog-meta"
+            >
+              <div v-if="logDetail.stats.title" class="recog-meta-row">
+                <span class="recog-meta-label">识别结果</span>
+                <span class="recog-meta-value">
+                  <span>{{ logDetail.stats.title }}</span>
+                  <span v-if="getEpInfo(logDetail.stats)" class="recog-meta-gap">{{ getEpInfo(logDetail.stats) }}</span>
+                  <a
+                    v-if="logDetail.stats.tmdb_id"
+                    :href="`https://www.themoviedb.org/${logDetail.stats.category === '电影' ? 'movie' : 'tv'}/${logDetail.stats.tmdb_id}`"
+                    target="_blank"
+                    class="recog-meta-gap"
+                  >TMDB: {{ logDetail.stats.tmdb_id }}</a>
+                </span>
+              </div>
+              <div v-if="logDetail.stats.target_path" class="recog-meta-row">
+                <span class="recog-meta-label">目标路径</span>
+                <span class="recog-meta-value recog-meta-path" :title="logDetail.stats.target_path" @click="copyText(logDetail.stats.target_path)">
+                  {{ logDetail.stats.target_path }}
+                  <v-icon size="12" class="ml-1">mdi-content-copy</v-icon>
+                </span>
+              </div>
+            </div>
+
+            <!-- 随行文件（字幕/音轨）去向 -->
+            <div v-if="logDetail.stats?.related_files?.length" class="mt-3">
+              <div class="related-files-title">
+                <v-icon size="14" class="mr-1">mdi-paperclip</v-icon>随行文件 ({{ logDetail.stats.related_files.length }})
+              </div>
+              <div v-for="(rf, i) in logDetail.stats.related_files" :key="i" class="related-file-item">
+                <div class="related-file-head">
+                  <v-icon size="14" :color="getRelatedColor(rf.status)">{{ getRelatedIcon(rf.status) }}</v-icon>
+                  <span class="related-file-name">{{ rf.filename }}</span>
+                </div>
+                <div
+                  v-if="rf.target_path"
+                  class="related-file-target"
+                  :title="rf.target_path"
+                  @click="copyText(rf.target_path)"
+                >→ {{ rf.target_path }}</div>
+              </div>
             </div>
           </div>
 
@@ -247,6 +317,90 @@ watch(() => props.logs?.length, () => {
 </template>
 
 <style scoped>
+/* 识别任务元数据 */
+.recog-meta {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recog-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.recog-meta-label {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.recog-meta-value {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.recog-meta-gap {
+  margin-left: 8px;
+}
+
+.recog-meta-path {
+  cursor: pointer;
+}
+
+.recog-meta-path:hover {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* 随行文件（字幕/音轨）：文件名一行、目标路径一行 */
+.related-files-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 4px;
+}
+
+.related-file-item {
+  padding: 2px 0 2px 6px;
+}
+
+.related-file-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.related-file-name {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+}
+
+.related-file-target {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+  padding-left: 22px;
+  cursor: pointer;
+}
+
+.related-file-target:hover {
+  color: rgb(var(--v-theme-primary));
+}
+
 /* 流式整理模式 */
 .stream-table {
   width: 100%;

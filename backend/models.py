@@ -267,6 +267,8 @@ class OrganizeHistory(SQLModel, table=True):
     # 源/目标路径归属: local(本地) / cd2(CD2 挂载)
     source_via: Optional[str] = None
     target_via: Optional[str] = None
+    # 随行文件清单（字幕/音轨等）: [{filename, target_path, status}]
+    related_files: Optional[List[Dict[str, Any]]] = Field(default=None, sa_column=Column(get_json_type()))
     # 重试所需的任务配置快照（用于精确复现当时的整理流程）
     rule_id: Optional[str] = None
     source_dir: Optional[str] = None
