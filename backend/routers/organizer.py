@@ -82,6 +82,37 @@ async def get_file_info(request: FilePathRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class FileCleanEmptyRequest(BaseModel):
+    path: str
+    ignore_patterns: Optional[List[str]] = None
+
+@router.post("/api/files/scan_empty_dirs", summary="扫描空文件夹")
+async def scan_empty_dirs(request: FileCleanEmptyRequest):
+    """扫描目录子树中"实际为空"的文件夹（内置垃圾文件与自定义忽略规则不算内容），仅预览不删除"""
+    try:
+        data = await asyncio.to_thread(FileExplorer.scan_empty_dirs, request.path, request.ignore_patterns)
+        return {"status": "success", "data": data}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="路径不存在")
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="权限不足")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/files/clean_empty_dirs", summary="清理空文件夹")
+async def clean_empty_dirs(request: FileCleanEmptyRequest):
+    """删除目录子树中所有"实际为空"的文件夹，当前目录本身不会被删除"""
+    try:
+        data = await asyncio.to_thread(FileExplorer.clean_empty_dirs, request.path, request.ignore_patterns)
+        logger.info(f"清理空文件夹: {request.path} 删除 {data['count']} 个")
+        return {"status": "success", "data": data}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="路径不存在")
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="权限不足")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class RenamePreviewRequest(BaseModel):
     rule_id: str
     result_data: Dict[str, Any] # 完整的识别结果

@@ -32,6 +32,14 @@ export const organizerApi = {
   getFileInfo: (body: { path: string }) =>
     api.post<any>('/api/files/info', body),
 
+  /** 扫描空文件夹（预览，不删除） */
+  scanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
+    api.post<any>('/api/files/scan_empty_dirs', body),
+
+  /** 清理空文件夹 */
+  cleanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
+    api.post<any>('/api/files/clean_empty_dirs', body),
+
   /** 重命名预览 */
   renamePreview: (body: any) =>
     api.post<any>('/api/rename/preview', body),

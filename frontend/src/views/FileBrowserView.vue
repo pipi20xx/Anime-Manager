@@ -16,6 +16,7 @@ import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from './organizer/RecognitionModal.vue'
 import ManualOrganizeModal from './organizer/ManualOrganizeModal.vue'
 import ExecutionLogModal from './organizer/ExecutionLogModal.vue'
+import CleanEmptyDirsModal from './CleanEmptyDirsModal.vue'
 
 defineOptions({ name: 'FileBrowserView' })
 
@@ -62,6 +63,9 @@ const defaultTask = ref<any>(null)
 // 整理目录 Modal
 const showManualModal = ref(false)
 const organizeTasks = ref<any[]>([])
+
+// 清理空文件夹 Modal
+const showCleanEmptyModal = ref(false)
 
 // 执行日志 Modal
 const showExecModal = ref(false)
@@ -620,6 +624,7 @@ onMounted(() => {
             {{ isCurrentFavorite() ? '已收藏' : '收藏' }}
           </v-btn>
           <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-folder-marker" @click="showGoToModal = true">前往路径</v-btn>
+          <v-btn size="small" variant="tonal" color="warning" prepend-icon="mdi-delete-sweep" @click="showCleanEmptyModal = true">清理空文件夹</v-btn>
         </div>
       </div>
     </v-card>
@@ -871,6 +876,13 @@ onMounted(() => {
       :default-task="defaultTask"
       @run="runManualOrganize"
       @run-background="runManualOrganizeBackground"
+    />
+
+    <!-- 清理空文件夹弹窗 -->
+    <CleanEmptyDirsModal
+      v-model="showCleanEmptyModal"
+      :current-path="currentPath"
+      @cleaned="fetchFiles()"
     />
 
     <!-- 执行日志弹窗 -->
