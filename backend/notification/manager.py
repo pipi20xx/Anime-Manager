@@ -614,6 +614,12 @@ class NotificationManager:
                 if episode_name:
                     se_info += f" {episode_name}"
 
+        # Series 级事件（Type=Series）：Emby 新版会在 Description 带集数信息，如 "S02 E12\n\nTmdbId: 278043"
+        if not se_info:
+            m = re.search(r"S(\d+)\s*E(\d+)", payload.get("Description", ""))
+            if m:
+                se_info = f"S{int(m.group(1)):02d} E{int(m.group(2)):02d}"
+
         from datetime import datetime, timedelta
         date_str = payload.get("Date", "")
         formatted_date = "未知"
