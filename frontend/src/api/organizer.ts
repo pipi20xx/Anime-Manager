@@ -68,7 +68,7 @@ startBackground: (body: any, opts?: { dry_run?: boolean }) =>
 
   // --- 整理历史 ---
   /** 分页获取整理历史 */
-  getHistory: (params?: { limit?: number; offset?: number; status?: string; search?: string }) =>
+  getHistory: (params?: { limit?: number; offset?: number; status?: string; search?: string; days?: number; start_date?: string; end_date?: string }) =>
     api.get<any>('/api/organize/history', { params }),
 
   /** 删除单条整理历史 */
@@ -82,6 +82,10 @@ startBackground: (body: any, opts?: { dry_run?: boolean }) =>
   /** 重试单条整理历史 */
   retryHistory: (historyId: number) =>
     api.post<any>(`/api/organize/history/${historyId}/retry`),
+
+  /** 按整理历史生成 STRM（单条传 history_ids；批量传 select_all + 筛选条件） */
+  strmLinkHistory: (body: { history_ids?: number[]; select_all?: boolean; status?: string; search?: string; days?: number; start_date?: string; end_date?: string; count_only?: boolean }) =>
+    api.post<any>('/api/organize/history/strm_link', body),
 
   // --- CD2 秒传重试队列 ---
   /** 分页获取秒传重试队列 */

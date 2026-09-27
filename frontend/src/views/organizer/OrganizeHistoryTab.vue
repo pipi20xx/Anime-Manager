@@ -26,10 +26,32 @@ const historyOffset = ref(0)
 const historyHasMore = ref(true)
 const historyStatusFilter = ref<string>('all')
 const historySearch = ref('')
+// 筛选模式: all=全部时间 / top=最近N条 / days=最近N天 / range=自定义日期范围
+const historyFilterMode = ref<string>('all')
+const historyTopCount = ref<number>(100)
+const historyDaysCount = ref<number>(30)
+const historyStartDate = ref('')
+const historyEndDate = ref('')
 
 // --- 日志查看弹框 ---
 const showLogModal = ref(false)
 const logTaskId = ref('')
+
+/** 组装当前筛选对应的查询参数（列表查询与批量联动共用） */
+function buildFilterParams(): Record<string, any> {
+  const p: Record<string, any> = {}
+  if (historyStatusFilter.value !== 'all') p.status = historyStatusFilter.value
+  if (historySearch.value) p.search = historySearch.value
+  if (historyFilterMode.value === 'top') {
+    if (historyTopCount.value > 0) p.top = historyTopCount.value
+  } else if (historyFilterMode.value === 'days') {
+    if (historyDaysCount.value > 0) p.days = historyDaysCount.value
+  } else if (historyFilterMode.value === 'range') {
+    if (historyStartDate.value) p.start_date = historyStartDate.value
+    if (historyEndDate.value) p.end_date = historyEndDate.value
+  }
+  return p
+}
 
 async function fetchHistory(isRefresh = false) {
   if (historyLoading.value) return
@@ -41,12 +63,13 @@ async function fetchHistory(isRefresh = false) {
 
   historyLoading.value = true
   try {
-    const statusParam = historyStatusFilter.value !== 'all' ? historyStatusFilter.value : undefined
+    const filters = buildFilterParams()
+    // "最近 N 条"模式下一次拉全，无分页
+    const isTopMode = historyFilterMode.value === 'top' && filters.top
     const data = await organizerApi.getHistory({
-      limit: 20,
-      offset: historyOffset.value,
-      status: statusParam,
-      search: historySearch.value || undefined,
+      limit: isTopMode ? filters.top : 20,
+      offset: isTopMode ? 0 : historyOffset.value,
+      ...filters,
     })
     const items = Array.isArray(data) ? data : (data?.items || data?.data || [])
     if (isRefresh) {
@@ -54,7 +77,7 @@ async function fetchHistory(isRefresh = false) {
     } else {
       historyList.value = [...historyList.value, ...items]
     }
-    historyHasMore.value = items.length >= 20
+    historyHasMore.value = isTopMode ? false : items.length >= 20
     historyOffset.value += items.length
   } catch (e) {
     // 静默
@@ -132,6 +155,75 @@ function viewTaskLog(item: any) {
   showLogModal.value = true
 }
 
+// --- STRM 联动（单条独立生成 / 按筛选批量生成，避免全库遍历） ---
+const strmLinkLoadingId = ref<number | null>(null)
+const strmLinkBatchLoading = ref(false)
+
+function currentStrmFilters() {
+  return { select_all: true, ...buildFilterParams() }
+}
+
+async function strmLinkItem(item: any) {
+  const ok = await confirm({
+    title: '确认生成 STRM',
+    content: '将对该记录的目标文件执行 STRM 联动：匹配 STRM 任务后生成 STRM，并同步源目录中已存在的元数据/字幕（不会向 TMDB 拉取新元数据）。进度可在「任务历史」中查看。',
+    confirmText: '开始执行',
+  })
+  if (!ok) return
+  strmLinkLoadingId.value = item.id
+  try {
+    const data = await organizerApi.strmLinkHistory({ history_ids: [item.id] })
+    if (data?.success) {
+      success('已提交后台执行，进度可在「任务历史」中查看')
+    } else {
+      showError(data?.message || '提交失败')
+    }
+  } catch (e: any) {
+    showError('提交失败: ' + e.message)
+  } finally {
+    strmLinkLoadingId.value = null
+  }
+}
+
+/** 按当前筛选条件批量执行 STRM 联动（服务端按条件全量处理，不依赖已加载条数） */
+async function strmLinkFiltered() {
+  strmLinkBatchLoading.value = true
+  let matched = 0
+  try {
+    const data = await organizerApi.strmLinkHistory({ ...currentStrmFilters(), count_only: true })
+    matched = data?.matched ?? 0
+  } catch (e: any) {
+    showError('查询命中数量失败: ' + e.message)
+    strmLinkBatchLoading.value = false
+    return
+  }
+  strmLinkBatchLoading.value = false
+
+  if (!matched) {
+    warning('当前筛选条件下没有可处理的记录（需为成功/跳过状态且有目标路径）')
+    return
+  }
+  const ok = await confirm({
+    title: '按筛选条件批量生成 STRM',
+    content: `当前筛选条件下共命中 ${matched} 条记录（成功/跳过），将逐条匹配 STRM 任务并生成 STRM + 同步源目录已存在的元数据/字幕。进度可在「任务历史」中查看。`,
+    confirmText: `开始执行 (${matched})`,
+  })
+  if (!ok) return
+  strmLinkBatchLoading.value = true
+  try {
+    const data = await organizerApi.strmLinkHistory(currentStrmFilters())
+    if (data?.success) {
+      success(`已提交后台执行，共 ${data.matched} 条，进度可在「任务历史」中查看`)
+    } else {
+      showError(data?.message || '提交失败')
+    }
+  } catch (e: any) {
+    showError('提交失败: ' + e.message)
+  } finally {
+    strmLinkBatchLoading.value = false
+  }
+}
+
 // --- 辅助函数 ---
 function historyStatusColor(status: string): string {
   if (status === 'success') return 'success'
@@ -203,6 +295,75 @@ defineExpose({ fetchHistory })
       <v-chip :color="historyStatusFilter === 'failed' ? 'primary' : undefined" :variant="historyStatusFilter === 'failed' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('failed')">失败</v-chip>
       <v-chip :color="historyStatusFilter === 'skipped' ? 'primary' : undefined" :variant="historyStatusFilter === 'skipped' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('skipped')">跳过</v-chip>
       <v-spacer />
+      <v-btn
+        variant="tonal" color="info" size="small"
+        prepend-icon="mdi-link-variant"
+        :loading="strmLinkBatchLoading"
+        @click="strmLinkFiltered"
+      >按筛选生成 STRM</v-btn>
+      <v-select
+        v-model="historyFilterMode"
+        :items="[
+          { title: '全部时间', value: 'all' },
+          { title: '最近 N 条', value: 'top' },
+          { title: '最近 N 天', value: 'days' },
+          { title: '日期范围', value: 'range' },
+        ]"
+        label="时间"
+        density="compact"
+        variant="outlined"
+        hide-details
+        style="max-width: 130px"
+        @update:model-value="fetchHistory(true)"
+      />
+      <v-text-field
+        v-if="historyFilterMode === 'top'"
+        v-model.number="historyTopCount"
+        label="条数"
+        type="number"
+        min="1"
+        density="compact"
+        variant="outlined"
+        hide-details
+        style="max-width: 100px"
+        @keyup.enter="fetchHistory(true)"
+        @blur="fetchHistory(true)"
+      />
+      <v-text-field
+        v-if="historyFilterMode === 'days'"
+        v-model.number="historyDaysCount"
+        label="天数"
+        type="number"
+        min="1"
+        density="compact"
+        variant="outlined"
+        hide-details
+        style="max-width: 100px"
+        @keyup.enter="fetchHistory(true)"
+        @blur="fetchHistory(true)"
+      />
+      <template v-if="historyFilterMode === 'range'">
+        <v-text-field
+          v-model="historyStartDate"
+          label="开始日期"
+          type="date"
+          density="compact"
+          variant="outlined"
+          hide-details
+          style="max-width: 150px"
+          @change="fetchHistory(true)"
+        />
+        <v-text-field
+          v-model="historyEndDate"
+          label="结束日期"
+          type="date"
+          density="compact"
+          variant="outlined"
+          hide-details
+          style="max-width: 150px"
+          @change="fetchHistory(true)"
+        />
+      </template>
       <v-btn variant="tonal" color="error" size="small" prepend-icon="mdi-delete-sweep-outline" @click="clearAllHistory">清空历史</v-btn>
     </div>
 
@@ -318,6 +479,13 @@ defineExpose({ fetchHistory })
             </v-chip>
           </div>
           <div class="d-flex align-center ga-1 flex-shrink-0">
+            <v-btn
+              v-if="item.target_path && item.status !== 'failed'"
+              size="small" variant="tonal" color="success"
+              prepend-icon="mdi-link-variant"
+              :loading="strmLinkLoadingId === item.id"
+              @click="strmLinkItem(item)"
+            >STRM</v-btn>
             <v-btn v-if="item.task_id" size="small" variant="tonal" color="info" prepend-icon="mdi-file-document-outline" @click="viewTaskLog(item)">日志</v-btn>
             <v-btn size="small" variant="tonal" color="warning" prepend-icon="mdi-refresh" @click="retryHistoryItem(item.id)">重试</v-btn>
             <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteHistoryItem(item)">删除</v-btn>

@@ -1196,10 +1196,11 @@ class FileProcessor:
             logger.error(f"触发 STRM 失败: {str(e)}")
 
     @staticmethod
-    async def _process_strm_and_notify(file_path: str, task_config: Dict[str, Any], task_id: str = None):
+    async def _process_strm_and_notify(file_path: str, task_config: Dict[str, Any], task_id: str = None, notify: bool = True):
         """
         处理视频文件及其关联字幕。
         视频生成 STRM，字幕同步到 STRM 目标目录（需开启 copy_meta）。
+        返回视频的处理结果 dict（status: success/skipped/error/...），批量调用可传 notify=False 抑制逐条通知。
         """
         from strm.strm_generator import StrmGenerator
 
@@ -1208,10 +1209,11 @@ class FileProcessor:
             res = await StrmGenerator.process_single_file(file_path, task_config)
             if res.get("status") == "success":
                 await FileProcessor._log_detail(task_id, f"🎬 STRM 生成成功: {os.path.basename(file_path)}")
-                await notification_manager.notify_strm_link_created(
-                    os.path.basename(file_path),
-                    task_config.get("name", "Unknown Task")
-                )
+                if notify:
+                    await notification_manager.notify_strm_link_created(
+                        os.path.basename(file_path),
+                        task_config.get("name", "Unknown Task")
+                    )
 
             # 2. 处理同目录下的字幕文件（需开启同步元数据）
             if task_config.get("copy_meta", False):
@@ -1231,5 +1233,7 @@ class FileProcessor:
                 except Exception as scan_e:
                     logger.warning(f"扫描字幕失败: {scan_e}")
 
+            return res
         except Exception as e:
             logger.error(str(e))
+            return {"status": "error", "message": str(e)}

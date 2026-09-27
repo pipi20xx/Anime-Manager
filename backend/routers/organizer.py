@@ -545,19 +545,48 @@ def _with_via(data: dict) -> dict:
     data["target_via"] = data.get("target_via") or _infer_path_via(data.get("target_path"))
     return data
 
+def _apply_history_filters(stmt, status: Optional[str], search: Optional[str],
+                           days: Optional[int], start_date: Optional[str], end_date: Optional[str]):
+    """整理历史通用筛选：状态/搜索/时间（days 优先于日期范围），供列表查询与批量联动复用"""
+    from models import OrganizeHistory
+    from datetime import timedelta
+    if status:
+        stmt = stmt.where(OrganizeHistory.status == status)
+    if search:
+        stmt = stmt.where(
+            (OrganizeHistory.title.ilike(f"%{search}%")) |
+            (OrganizeHistory.filename.ilike(f"%{search}%"))
+        )
+    try:
+        if days:
+            stmt = stmt.where(OrganizeHistory.processed_at >= datetime.now() - timedelta(days=days))
+        else:
+            if start_date:
+                stmt = stmt.where(OrganizeHistory.processed_at >= datetime.strptime(start_date, "%Y-%m-%d"))
+            if end_date:
+                stmt = stmt.where(OrganizeHistory.processed_at <= datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1) - timedelta(seconds=1))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="时间格式错误，应为 YYYY-MM-DD")
+    return stmt
+
 @router.get("/api/organize/history", summary="获取整理历史")
 async def get_organize_history(
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     status: str = Query(None),
-    search: str = Query(None)
+    search: str = Query(None),
+    days: int = Query(None, ge=1, le=3650),
+    start_date: str = Query(None),
+    end_date: str = Query(None)
 ):
     """
     分页查询已完成的文件整理记录。
-    - limit: 返回数量限制
+    - limit: 返回数量限制（单页最多 1000，可用大数值拉取"最近 N 条"）
     - offset: 偏移量（用于分页）
     - status: 按状态筛选 (success/failed/skipped)
     - search: 搜索标题或文件名
+    - days: 仅最近 N 天（与 start_date/end_date 互斥，days 优先）
+    - start_date/end_date: 时间范围，格式 YYYY-MM-DD（含当天）
     """
     from database import db
     from models import OrganizeHistory
@@ -565,13 +594,7 @@ async def get_organize_history(
 
     async with db.session_scope():
         stmt = select(OrganizeHistory).order_by(OrganizeHistory.processed_at.desc()).offset(offset).limit(limit)
-        if status:
-            stmt = stmt.where(OrganizeHistory.status == status)
-        if search:
-            stmt = stmt.where(
-                (OrganizeHistory.title.ilike(f"%{search}%")) |
-                (OrganizeHistory.filename.ilike(f"%{search}%"))
-            )
+        stmt = _apply_history_filters(stmt, status, search, days, start_date, end_date)
         rows = await db.all(OrganizeHistory, stmt)
         return [_with_via(h.model_dump()) for h in rows]
 
@@ -917,6 +940,176 @@ async def retry_organize_history(history_id: int):
         raise
     except Exception as e:
         logger.error(f"启动重试任务失败: {str(e)}", exc_info=True)
+        return {"success": False, "message": str(e)}
+
+
+# ---------- 整理历史 STRM 联动（单条独立生成 / 按筛选批量生成） ----------
+
+class StrmLinkRequest(BaseModel):
+    history_ids: List[int] = []       # 单条/显式指定记录
+    select_all: bool = False          # true: 按筛选条件批量（status/search/top/days/时间范围）
+    status: Optional[str] = None
+    search: Optional[str] = None
+    top: Optional[int] = None         # 最近 N 条（按整理时间倒序）
+    days: Optional[int] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    count_only: bool = False          # 仅返回命中数量，不执行
+
+async def _strm_link_runner(records: List[dict], task_id: str):
+    """
+    批量补跑 STRM 联动：对整理历史的目标文件匹配 STRM 任务并执行单文件处理
+    （生成 STRM + copy_meta 同步源目录元数据/字幕），与整理联动行为一致。
+    """
+    from strm.constants import VIDEO_EXTENSIONS
+    from organizer_core.processor import FileProcessor
+
+    success_count = skip_count = error_count = unmatched_count = 0
+    total = len(records)
+    try:
+        await start_task(task_id, "STRM", f"[历史联动] {total} 条记录")
+        await log_task(task_id, f"🚀 开始历史 STRM 联动，共 {total} 条记录")
+
+        config = ConfigManager.get_config()
+        strm_tasks = config.get("strm_tasks", [])
+        all_clients = {c.get("id"): c for c in config.get("download_clients", [])}
+
+        if not strm_tasks:
+            await log_task(task_id, "❌ 未配置任何 STRM 任务，无法联动", "ERROR")
+            await finish_task(task_id, "error", stats={"errors": total, "message": "未配置 STRM 任务"})
+            return
+
+        for idx, rec in enumerate(records, 1):
+            target_path = rec.get("target_path") or ""
+            filename = rec.get("filename") or os.path.basename(target_path)
+            try:
+                if os.path.splitext(target_path)[1].lower() not in VIDEO_EXTENSIONS:
+                    unmatched_count += 1
+                    await log_task(task_id, f"⏭️ [{idx}/{total}] 跳过（目标不是视频文件）: {filename}", "WARN")
+                    continue
+
+                clean_cloud_path = "/" + target_path.lstrip("/")
+                matched_any = False
+                for task in strm_tasks:
+                    if not task.get("webhook_enabled", True):
+                        continue
+                    src_root = task.get("source_path") or task.get("source_dir")
+                    if not src_root:
+                        continue
+
+                    client_id = task.get("cd2_client_id")
+                    client_conf = all_clients.get(client_id, {})
+                    if not client_id and len(all_clients) == 1:
+                        client_conf = list(all_clients.values())[0]
+                    mapping_root = (task.get("cd2_mapping_path") or client_conf.get("mount_path") or "").strip().rstrip("/")
+
+                    # 双坐标系匹配（与 CD2 Webhook 一致）：云目标按云路径匹配，本地/挂载目标按映射路径匹配
+                    cloud_match = rec.get("target_via") == "cd2" and clean_cloud_path.startswith(os.path.normpath(src_root))
+                    local_match = (os.path.normpath(mapping_root + clean_cloud_path).startswith(os.path.normpath(src_root))
+                                   or target_path.startswith(os.path.normpath(src_root)))
+                    if not (cloud_match or local_match):
+                        continue
+
+                    task_name = task.get("name", "未命名")
+                    # cd2_api 任务使用云路径坐标系，其余使用记录中的目标路径
+                    if task.get("sync_mode") == "cd2_api" and rec.get("target_via") == "cd2":
+                        process_path = clean_cloud_path
+                    else:
+                        process_path = target_path
+
+                    matched_any = True
+                    res = await FileProcessor._process_strm_and_notify(process_path, task, task_id, notify=False)
+                    status = (res or {}).get("status")
+                    if status == "success":
+                        success_count += 1
+                        await log_task(task_id, f"✅ [{idx}/{total}] [{task_name}] {filename}")
+                    elif status == "skipped":
+                        skip_count += 1
+                        await log_task(task_id, f"⏭️ [{idx}/{total}] [{task_name}] {filename}（已存在）")
+                    else:
+                        error_count += 1
+                        await log_task(task_id, f"❌ [{idx}/{total}] [{task_name}] {filename} -> {(res or {}).get('message', '处理失败')}", "ERROR")
+
+                if not matched_any:
+                    unmatched_count += 1
+                    await log_task(task_id, f"⏭️ [{idx}/{total}] 未命中任何 STRM 任务: {target_path}", "WARN")
+            except Exception as e:
+                error_count += 1
+                logger.error(f"历史联动单条处理异常: {rec}", exc_info=True)
+                await log_task(task_id, f"❌ [{idx}/{total}] {filename} 异常: {str(e)}", "ERROR")
+            await asyncio.sleep(0.2)
+
+        summary = f"历史联动完成: 成功 {success_count} | 跳过 {skip_count} | 失败 {error_count} | 未匹配 {unmatched_count}"
+        await log_task(task_id, f"🎯 {summary}")
+        final_status = "error" if (error_count > 0 and success_count == 0) else "completed"
+        await finish_task(task_id, final_status, processed=success_count + skip_count, stats={
+            "success": success_count, "skipped": skip_count,
+            "errors": error_count, "unmatched": unmatched_count,
+        })
+    except Exception as e:
+        logger.error(f"历史 STRM 联动异常: {e}", exc_info=True)
+        try:
+            await log_task(task_id, f"❌ 异常: {str(e)}", "ERROR")
+            await finish_task(task_id, "error", stats={
+                "success": success_count, "skipped": skip_count,
+                "errors": error_count, "message": str(e),
+            })
+        except Exception:
+            pass
+
+@router.post("/api/organize/history/strm_link", summary="按整理历史生成 STRM")
+async def strm_link_history(request: StrmLinkRequest):
+    """
+    根据整理历史的目标路径补跑 STRM 联动（生成 STRM + 同步源目录元数据/字幕），
+    等价于整理时自动联动，避免全库遍历。
+    - history_ids: 显式指定的历史记录 ID 列表（单条独立生成传一个元素即可）
+    - select_all: 按筛选条件（status/search/days/时间范围）批量执行
+    - count_only: 仅返回命中数量（前端确认用）
+    始终限定：状态为成功/跳过 且 有目标路径的记录。
+    """
+    from database import db
+    from models import OrganizeHistory
+    from sqlmodel import select
+
+    try:
+        async with db.session_scope():
+            if request.history_ids:
+                stmt = select(OrganizeHistory).where(OrganizeHistory.id.in_(request.history_ids))
+            elif request.select_all:
+                stmt = select(OrganizeHistory).order_by(OrganizeHistory.processed_at.desc())
+                if request.top:
+                    stmt = stmt.limit(request.top)  # 最近 N 条
+                stmt = _apply_history_filters(stmt, request.status, request.search,
+                                              request.days, request.start_date, request.end_date)
+            else:
+                return {"success": False, "message": "请指定记录 ID 或开启按筛选批量"}
+            rows = await db.all(OrganizeHistory, stmt)
+
+        # 强制范围：成功/跳过 + 有目标路径（failed 目标可能不存在）
+        records = [h for h in rows if h.status in ("success", "skipped") and h.target_path]
+
+        if request.count_only:
+            return {"success": True, "matched": len(records)}
+
+        if not records:
+            return {"success": False, "message": "没有可处理的记录（需为成功/跳过状态且有目标路径）"}
+
+        task_id = f"strmlink_{uuid.uuid4().hex[:12]}"
+        # 传纯 dict，避免跨协程持有 ORM 对象；target_via 兜底推断
+        payload = [{
+            "target_path": h.target_path,
+            "filename": h.filename,
+            "title": h.title,
+            "target_via": h.target_via or _infer_path_via(h.target_path),
+        } for h in records]
+        asyncio.create_task(_strm_link_runner(payload, task_id))
+
+        logger.debug(f"启动历史 STRM 联动: {len(payload)} 条记录, task_id={task_id}")
+        return {"success": True, "task_id": task_id, "matched": len(payload)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"启动历史 STRM 联动失败: {str(e)}", exc_info=True)
         return {"success": False, "message": str(e)}
 
 
