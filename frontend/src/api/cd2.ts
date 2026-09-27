@@ -53,6 +53,14 @@ export const cd2Api = {
   deletePaths: (body: { paths: string[] }) =>
     api.post<any>('/api/cd2/files/delete', body),
 
+  /** 扫描云盘空文件夹（预览，不删除） */
+  scanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
+    api.post<any>('/api/cd2/files/scan-empty-dirs', body),
+
+  /** 清理云盘空文件夹 */
+  cleanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
+    api.post<any>('/api/cd2/files/clean-empty-dirs', body),
+
   /** 移动/复制文件 (action: move | copy) */
   transferPaths: (body: { paths: string[]; dest_dir: string; action: 'move' | 'copy'; conflict_policy: number }) =>
     api.post<any>('/api/cd2/files/transfer', body),

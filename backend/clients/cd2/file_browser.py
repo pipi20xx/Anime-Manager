@@ -1,6 +1,7 @@
 import logging
 import os
 import posixpath
+import fnmatch
 from typing import Dict, Any, List, Optional
 
 from logger import log_audit
@@ -9,6 +10,16 @@ logger = logging.getLogger(__name__)
 
 # MoveFileRequest/CopyFileRequest.ConflictPolicy: Overwrite=0; Rename=1; Skip=2
 _CONFLICT_POLICY = {0: "Overwrite", 1: "Rename", 2: "Skip"}
+
+# 判定"实际为空"时默认忽略的系统垃圾文件（云端无群晖 @eaDir 场景，不含）
+_CD2_BUILTIN_IGNORED = {'.DS_Store', 'Thumbs.db'}
+
+
+def _cd2_is_ignored(name: str, ignore_patterns: Optional[List[str]]) -> bool:
+    """判断文件/目录名是否属于"不算内容"的忽略项（内置系统垃圾 + 自定义通配符规则）"""
+    if name in _CD2_BUILTIN_IGNORED or name.startswith('._'):
+        return True
+    return any(fnmatch.fnmatch(name, p.strip()) for p in (ignore_patterns or []) if p and p.strip())
 
 
 class CD2FileBrowser:
@@ -468,3 +479,162 @@ class CD2FileBrowser:
             details = getattr(e, "details", None) or str(e)
             logger.error(f"[{conn.name}] CD2 文件{action}异常: {details}")
             return False, details
+
+    def cleanup_empty_parents(self, path: str, root_limit: str,
+                              ignore_patterns: Optional[List[str]] = None) -> int:
+        """
+        从 path 向上逐级清理"实际为空"的目录，到 root_limit 为止（不含 root_limit），遇非空即停。
+        "空" = 目录内条目全部是忽略项（内置系统垃圾 + 自定义通配符）或已删除的子目录；
+        有忽略文件先删忽略文件再删目录本身；全部走回收站删除。
+        返回删除的目录数。
+        """
+        conn = self.connection
+        cur = "/" + (path or "").strip("/")
+        limit = "/" + (root_limit or "").strip("/")
+        deleted = 0
+
+        while cur and cur != "/" and cur != limit and cur.startswith(limit):
+            parent = posixpath.dirname(cur) or "/"
+            try:
+                result = self.list_dir(cur, force_refresh=True)
+                if not result.get("success"):
+                    logger.warning(f"[{conn.name}] 清理空目录: 列目录失败 {cur}: {result.get('message')}")
+                    return deleted
+                entries = result.get("entries", [])
+                junk = [e for e in entries if _cd2_is_ignored(e["name"], ignore_patterns)]
+                if len(junk) != len(entries):
+                    return deleted
+
+                junk_paths = [e["path"] for e in junk]
+                if junk_paths:
+                    ok, msg = self.delete_files(junk_paths)
+                    if not ok:
+                        logger.warning(f"[{conn.name}] 清理忽略文件失败 {cur}: {msg}")
+                        return deleted
+                ok, msg = self.delete_files([cur])
+                if not ok:
+                    logger.warning(f"[{conn.name}] 删除空目录失败 {cur}: {msg}")
+                    return deleted
+                log_audit("CD2文件", "清理空目录", cur)
+                deleted += 1
+                cur = parent
+            except Exception as e:
+                logger.warning(f"[{conn.name}] 清理空目录异常 {cur}: {e}")
+                return deleted
+        return deleted
+
+    def scan_empty_dirs(self, path: str, ignore_patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        递归扫描 path 子树中所有"实际为空"的目录（不含 path 本身）。
+        顺序 DFS，每个目录一次 GetSubFiles（走 CD2 缓存）；某目录列举失败则该目录视为非空
+        （其父目录不会被误判为空）。返回条目按最深在前排序。
+        """
+        conn = self.connection
+        root = "/" + (path or "/").strip("/") or "/"
+
+        empty_set = set()
+        items: List[Dict[str, Any]] = []
+        failed: set = set()
+        children_map: Dict[str, List[Dict[str, Any]]] = {}
+        visited = set()
+
+        # 迭代后序 DFS：(path, expanded)
+        stack = [(root, False)]
+        while stack:
+            cur, expanded = stack.pop()
+            if expanded:
+                if cur in failed:
+                    continue
+                remaining = 0
+                junk_files: List[str] = []
+                for e in children_map.get(cur, []):
+                    if _cd2_is_ignored(e["name"], ignore_patterns):
+                        junk_files.append(e["name"])
+                    elif e["is_dir"] and e["path"] in empty_set:
+                        continue
+                    else:
+                        remaining += 1
+                if remaining == 0 and cur != root:
+                    empty_set.add(cur)
+                    items.append({
+                        "path": cur,
+                        "name": posixpath.basename(cur) or cur,
+                        "junk_files": junk_files,
+                    })
+                continue
+
+            if cur in visited:
+                continue
+            visited.add(cur)
+
+            result = self.list_dir(cur)
+            if not result.get("success"):
+                logger.warning(f"[{conn.name}] 扫描空目录: 列目录失败 {cur}: {result.get('message')}")
+                failed.add(cur)
+                stack.append((cur, True))
+                continue
+            entries = result.get("entries", [])
+            children_map[cur] = entries
+            stack.append((cur, True))
+            # reversed 使第一个子目录最后弹出（LIFO），保持大致从深到浅的输出顺序
+            for e in reversed([e for e in entries if e["is_dir"]]):
+                if e["path"] not in visited:
+                    stack.append((e["path"], False))
+
+        return {"success": True, "count": len(items), "items": items}
+
+    def clean_empty_dirs(self, path: str, ignore_patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        清理 path 子树中所有"实际为空"的目录（不含 path 本身）。
+        重新扫描生成候选（最深在前），然后自底向上逐个：forceRefresh 复核（防扫描后云端变动）
+        → 删除忽略文件 → 删除目录本身（回收站）。单个失败不影响其余；
+        失败的子目录会使其父目录同样判定为非空，不会被递归误删。
+        """
+        conn = self.connection
+        scan = self.scan_empty_dirs(path, ignore_patterns)
+        if not scan.get("success"):
+            return {"success": False, "message": scan.get("message", "扫描失败"),
+                    "count": 0, "deleted": [], "failed": []}
+
+        candidates = scan["items"]  # 最深在前
+
+        deleted: List[str] = []
+        failed: List[Dict[str, str]] = []
+        deleted_set = set()
+        for item in candidates:
+            d = item["path"]
+            try:
+                result = self.list_dir(d, force_refresh=True)
+                if not result.get("success"):
+                    failed.append({"path": d, "error": result.get("message", "列目录失败")})
+                    continue
+                entries = result.get("entries", [])
+                junk, ok = [], True
+                for e in entries:
+                    if _cd2_is_ignored(e["name"], ignore_patterns):
+                        junk.append(e["path"])
+                    elif e["is_dir"] and e["path"] in deleted_set:
+                        continue
+                    else:
+                        ok = False
+                        break
+                if not ok:
+                    failed.append({"path": d, "error": "目录包含未忽略的内容，已跳过"})
+                    continue
+                if junk:
+                    ok, msg = self.delete_files(junk)
+                    if not ok:
+                        failed.append({"path": d, "error": f"清理忽略文件失败: {msg}"})
+                        continue
+                ok, msg = self.delete_files([d])
+                if ok:
+                    deleted_set.add(d)
+                    deleted.append(d)
+                    log_audit("CD2文件", "清理空目录", d)
+                else:
+                    failed.append({"path": d, "error": msg})
+            except Exception as e:
+                details = getattr(e, "details", None) or str(e)
+                failed.append({"path": d, "error": details})
+
+        return {"success": True, "count": len(deleted), "deleted": deleted, "failed": failed}

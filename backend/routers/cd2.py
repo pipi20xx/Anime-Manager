@@ -252,6 +252,33 @@ async def delete_paths(req: DeletePathsRequest):
     return {"success": True, "message": f"已删除 {len(req.paths)} 项"}
 
 
+class CleanEmptyDirsRequest(BaseModel):
+    path: str
+    ignore_patterns: Optional[List[str]] = None
+    client_id: Optional[str] = None
+
+
+@router.post("/cd2/files/scan-empty-dirs", summary="扫描云盘空文件夹")
+async def cd2_scan_empty_dirs(req: CleanEmptyDirsRequest):
+    """递归扫描云目录子树中"实际为空"的文件夹（内置垃圾文件与自定义忽略规则不算内容），仅预览不删除"""
+    client = _get_cd2_client(req.client_id)
+    result = await asyncio.to_thread(client.scan_empty_dirs, req.path, req.ignore_patterns)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "扫描失败"))
+    return result
+
+
+@router.post("/cd2/files/clean-empty-dirs", summary="清理云盘空文件夹")
+async def cd2_clean_empty_dirs(req: CleanEmptyDirsRequest):
+    """删除云目录子树中所有"实际为空"的文件夹（回收站删除），当前目录本身不会被删除"""
+    client = _get_cd2_client(req.client_id)
+    result = await asyncio.to_thread(client.clean_empty_dirs, req.path, req.ignore_patterns)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "清理失败"))
+    log_audit("CD2文件", "清理空文件夹", f"{req.path} 删除 {result.get('count', 0)} 个")
+    return result
+
+
 class TransferPathsRequest(BaseModel):
     paths: List[str]
     dest_dir: str

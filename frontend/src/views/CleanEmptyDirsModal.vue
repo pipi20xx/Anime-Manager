@@ -3,20 +3,25 @@
  * CleanEmptyDirsModal — 清理空文件夹弹窗
  *
  * - 点击"开始扫描"后递归扫描当前目录子树中"实际为空"的文件夹，预览后确认删除
- * - 内置系统垃圾文件（.DS_Store / Thumbs.db / @eaDir / ._*）始终不算内容
+ * - 内置系统垃圾文件（.DS_Store / Thumbs.db / @eaDir(仅本地) / ._*）始终不算内容
  * - 支持自定义通配符规则（每行一条，如 *.png.zip），规则保存在浏览器 localStorage
  * - 当前目录本身永远不会被删除
+ * - source="local" 走本地文件系统接口，source="cd2" 走 CD2 gRPC 接口
  */
 import { ref, watch, computed } from 'vue'
-import { organizerApi } from '@/api'
+import { organizerApi, cd2Api } from '@/api'
 import { useNotification } from '@/composables'
 import { useLocalStorage } from '@/composables/useStorage'
 import { GlassDialog } from '@/glass'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   currentPath: string
-}>()
+  /** 数据源：local=本地文件浏览，cd2=CD2 云盘文件浏览 */
+  source?: 'local' | 'cd2'
+}>(), {
+  source: 'local',
+})
 
 const emit = defineEmits<{
   'update:modelValue': [val: boolean]
@@ -48,14 +53,28 @@ function resetPatterns() {
   patternsText.value = DEFAULT_PATTERNS
 }
 
+/**
+ * 归一化两种 API 的响应包装：
+ * organizer: {status: 'success', data: {count, items/deleted, ...}}
+ * cd2: {success, count, items/deleted, ...} 直接返回结果对象
+ */
+function extractPayload(res: any): any {
+  if (res?.data && typeof res.data === 'object' &&
+      ('items' in res.data || 'deleted' in res.data || 'count' in res.data)) {
+    return res.data
+  }
+  return res ?? {}
+}
+
 async function scan() {
   scanning.value = true
   try {
-    const res = await organizerApi.scanEmptyDirs({
-      path: props.currentPath,
-      ignore_patterns: parsePatterns(),
-    })
-    const data = res?.data ?? (res as any)
+    const body = { path: props.currentPath, ignore_patterns: parsePatterns() }
+    const res = props.source === 'cd2'
+      ? await cd2Api.scanEmptyDirs(body)
+      : await organizerApi.scanEmptyDirs(body)
+    const data = extractPayload(res)
+    if (data?.success === false) throw new Error(data?.message || '扫描失败')
     scanItems.value = data?.items || []
     scanFailed.value = false
     hasScanned.value = true
@@ -91,11 +110,12 @@ async function doClean() {
   if (!hasScanned.value || scanCount.value === 0) return
   cleaning.value = true
   try {
-    const res = await organizerApi.cleanEmptyDirs({
-      path: props.currentPath,
-      ignore_patterns: parsePatterns(),
-    })
-    const data = res?.data ?? (res as any)
+    const body = { path: props.currentPath, ignore_patterns: parsePatterns() }
+    const res = props.source === 'cd2'
+      ? await cd2Api.cleanEmptyDirs(body)
+      : await organizerApi.cleanEmptyDirs(body)
+    const data = extractPayload(res)
+    if (data?.success === false) throw new Error(data?.message || '清理失败')
     const deleted = data?.count || 0
     const failed = data?.failed || []
     if (deleted > 0 && failed.length > 0) {
@@ -134,6 +154,9 @@ function displayPath(p: string) {
   >
     <v-alert type="info" variant="tonal" density="compact" class="mb-4">
       点击"开始扫描"后，将递归扫描当前目录下的子文件夹，仅删除"实际为空"的文件夹；当前目录本身不会被删除。
+      <template v-if="source === 'cd2'">
+        云端扫描逐目录请求，子目录多时较慢。
+      </template>
     </v-alert>
 
     <v-textarea

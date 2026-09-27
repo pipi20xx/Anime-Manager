@@ -12,6 +12,7 @@ import { cd2Api, recognitionApi, organizerApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
 import ManualOrganizeModal from '../organizer/ManualOrganizeModal.vue'
+import CleanEmptyDirsModal from '../CleanEmptyDirsModal.vue'
 
 defineOptions({ name: 'FilesTab' })
 
@@ -317,6 +318,9 @@ const runRemoteUpload = async (file: File, uploadId: string) => {
 const cancelUpload = () => {
   uploadCancelled.value = true
 }
+
+// ---------- 清理空文件夹 ----------
+const showCleanEmptyModal = ref(false)
 
 // ---------- 手动整理（源自动为当前 CD2 云目录） ----------
 const showManualModal = ref(false)
@@ -660,6 +664,7 @@ onMounted(() => {
           @click="triggerUpload"
         />
         <v-btn icon="mdi-folder-plus-outline" size="small" variant="text" title="新建文件夹" @click="openCreateModal" />
+        <v-btn icon="mdi-delete-sweep" size="small" variant="text" title="清理空文件夹" :disabled="currentPath === '/'" @click="showCleanEmptyModal = true" />
         <v-btn icon="mdi-refresh" size="small" variant="text" :loading="loading" title="刷新" @click="loadEntries()" />
         <v-btn icon="mdi-sync" size="small" variant="text" :loading="loading" title="强制刷新 (绕过缓存)" @click="loadEntries(true)" />
         <input ref="fileInput" type="file" hidden @change="onFilePicked" />
@@ -1092,6 +1097,14 @@ onMounted(() => {
     @recognize="(params: any) => recognizeFile(selectedFile, params)"
     @rename="handleRename"
     @repreview="handleRepreview"
+  />
+
+  <!-- 清理空文件夹弹窗 -->
+  <CleanEmptyDirsModal
+    v-model="showCleanEmptyModal"
+    :current-path="currentPath"
+    source="cd2"
+    @cleaned="loadEntries()"
   />
 
   <!-- 手动整理（源自动为当前 CD2 云目录） -->

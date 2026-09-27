@@ -709,10 +709,26 @@ class FileProcessor:
                     
                     # STRM Linkage (only if batch succeeded)
                     if batch_res == "success":
-                        # [New] 清理源空目录 (向上递归) — 仅本地源
-                        if task.get("clean_empty_dir", False) and action_type == "cd2_move" and source_via == "local":
-                            source_parent = os.path.dirname(v_path)
-                            await FileExecutor._cleanup_empty_parents(source_parent, source_dir)
+                        # [New] 清理源空目录 (向上递归)
+                        if task.get("clean_empty_dir", False) and action_type == "cd2_move":
+                            if source_via == "local":
+                                source_parent = os.path.dirname(v_path)
+                                await FileExecutor._cleanup_empty_parents(source_parent, source_dir)
+                            elif source_via == "cd2":
+                                # 云盘源 (云→云/云→本地): gRPC 向上清理，删到任务源目录为止
+                                _cd2_cleanup_client = FileProcessor._resolve_cd2_client(
+                                    v_path, task.get("cd2_client_id"), "cd2"
+                                )
+                                if _cd2_cleanup_client:
+                                    try:
+                                        _cleaned = await asyncio.to_thread(
+                                            _cd2_cleanup_client.cleanup_empty_parents,
+                                            os.path.dirname(v_path), source_dir,
+                                        )
+                                        if _cleaned:
+                                            await FileProcessor._log_detail(task_id, f"🧹 已清理云盘源空目录 {_cleaned} 个")
+                                    except Exception as _e:
+                                        logger.warning(f"云盘源空目录清理失败: {_e}")
 
                         # [Notify]
                         await notification_manager.notify_organize_complete(final)

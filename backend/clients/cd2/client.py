@@ -218,6 +218,24 @@ class CD2Client(BaseClient):
             return False, "Login failed"
         return self._file_browser.delete_files(paths, permanently=permanently)
 
+    def cleanup_empty_parents(self, path: str, root_limit: str, ignore_patterns: List[str] = None) -> int:
+        """从 path 向上逐级清理"实际为空"的云目录，到 root_limit 为止（供整理任务云盘源清理）"""
+        if not self.logged_in and not self.login():
+            return 0
+        return self._file_browser.cleanup_empty_parents(path, root_limit, ignore_patterns=ignore_patterns)
+
+    def scan_empty_dirs(self, path: str, ignore_patterns: List[str] = None) -> Dict[str, Any]:
+        """递归扫描云目录子树中"实际为空"的文件夹（预览用）"""
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed", "count": 0, "items": []}
+        return self._file_browser.scan_empty_dirs(path, ignore_patterns=ignore_patterns)
+
+    def clean_empty_dirs(self, path: str, ignore_patterns: List[str] = None) -> Dict[str, Any]:
+        """清理云目录子树中所有"实际为空"的文件夹"""
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed", "count": 0, "deleted": [], "failed": []}
+        return self._file_browser.clean_empty_dirs(path, ignore_patterns=ignore_patterns)
+
     def transfer_paths(self, paths: List[str], dest_dir: str, action: str = "move", conflict_policy: int = 1) -> Tuple[bool, str]:
         if not self.logged_in and not self.login():
             return False, "Login failed"
