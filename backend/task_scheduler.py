@@ -316,7 +316,7 @@ JOB_REGISTRY: List[Dict[str, Any]] = [
         "job_id": "auto_health_check_job",
         "name": "健康检查巡检",
         "module": "健康检查",
-        "description": "定时检测掉盘与媒体库失效条目",
+        "description": "定时检测硬盘掉线、CD2 云端可达性与下载源 Cookie 失效",
         "enabled_config_key": "health_check_enabled",
         "schedule": {"type": "interval", "key": "health_check_interval", "default": 30, "unit": "分钟"},
         "task_module": None,  # 高频巡检不写 task_history
@@ -559,6 +559,12 @@ MAINTENANCE_ACTIONS: List[Dict[str, str]] = [
         "description": "从 SYTMDB 服务器拉取自定义元数据写入本地缓存（需已在设置中配置 SYTMDB 地址）",
     },
     {
+        "action": "maint_calendar_refresh",
+        "name": "刷新放送日期",
+        "module": "维护",
+        "description": "批量刷新所有追踪剧集的放送日期（从 TMDB 拉取），保持日历每日播报与订阅提醒的判定数据新鲜",
+    },
+    {
         "action": "maint_tmdb_refresh_all",
         "name": "TMDB元数据全量刷新",
         "module": "维护",
@@ -612,6 +618,9 @@ async def _run_maintenance_action(action_id: str, params: Optional[Dict[str, Any
         if not addr:
             raise ValueError("未配置 SYTMDB 地址，请先在系统设置中填写 SYTMDB Host")
         await _do_sytmdb_sync(addr, token)
+    elif action_id == "maint_calendar_refresh":
+        from routers.calendar import refresh_all_subjects
+        await refresh_all_subjects()
     elif action_id == "maint_tmdb_refresh_all":
         from routers.tmdb_full import task_refresh_all_metadata
         p = params or {}
@@ -641,8 +650,16 @@ async def _recorded_maintenance(action_id: str, params: Optional[Dict[str, Any]]
     task_id = f"{action_id}_{uuid.uuid4().hex[:8]}"
     await start_task(task_id, "维护", name)
     try:
-        await _run_maintenance_action(action_id, params)
-        await log_task(task_id, "✅ 执行完成")
+        result = await _run_maintenance_action(action_id, params)
+        if isinstance(result, dict):
+            if result.get("success") is False:
+                raise ValueError(result.get("message") or "执行失败")
+            if result.get("updated") is not None:
+                await log_task(task_id, f"✅ 执行完成，更新 {result['updated']} 个条目")
+            else:
+                await log_task(task_id, "✅ 执行完成")
+        else:
+            await log_task(task_id, "✅ 执行完成")
         await finish_task(task_id, "completed", 0)
     except Exception as e:
         await log_task(task_id, f"❌ 执行失败: {e}", "ERROR")
