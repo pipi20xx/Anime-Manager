@@ -2,35 +2,18 @@
 /**
  * MaintenanceTab — 维护中心
  *
- * 功能: 智能记忆管理/Emby索引同步/BangumiData同步+预热/表清空(分类风险)
+ * 功能: 表清空(分类风险)
+ * 智能记忆/Emby索引同步/BangumiData同步等操作已迁移至「任务计划」页统一管理
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { dataCenterApi, bangumiApi } from '@/api'
-import { useNotification, useConfirm, useWebSocket, formatDbSize, formatTime, parseCount } from '@/composables'
+import { ref, computed, onMounted } from 'vue'
+import { dataCenterApi } from '@/api'
+import { useNotification, useConfirm, formatDbSize } from '@/composables'
 
-const { success, error: showError, info } = useNotification()
+const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
-const { on: onWsEvent, onReconnect } = useWebSocket()
 
 const mtnLoading = ref(false)
 const mtnTables = ref<any[]>([])
-const mtnFingerprintLoading = ref(false)
-
-// Emby 同步
-const embySyncLoading = ref(false)
-const services = ref<any[]>([])
-const embyService = computed(() => services.value.find((s: any) => s.id === 'emby_index_sync') || null)
-const bgmService = computed(() => services.value.find((s: any) => s.id === 'bgm_mapping_sync') || null)
-
-// BangumiData 同步 + 预热
-const bgmSyncLoading = ref(false)
-const bgmWarmupLoading = ref(false)
-const bgmWarmupStatus = ref<any>({ running: false, progress: {} })
-const warmupPercent = computed(() => {
-  const p = bgmWarmupStatus.value.progress
-  if (!p || !p.total) return 0
-  return Math.round((p.done / p.total) * 100)
-})
 
 // 表分类描述
 const tableDescriptions: Record<string, string> = {
@@ -123,96 +106,6 @@ async function fetchMtnTables() {
   } catch (e) { showError('获取表列表失败') } finally { mtnLoading.value = false }
 }
 
-async function fetchServices() {
-  try {
-    const data = await dataCenterApi.getServicesStatus() as any
-    services.value = data?.services || []
-  } catch (e) { /* ignore */ }
-}
-
-async function clearFingerprints() {
-  const ok = await confirm({ title: '确认清空智能记忆', content: '这将删除所有智能记忆缓存。识别速度可能会暂时变慢，但不会影响已刮削的数据。', confirmColor: 'warning' })
-  if (!ok) return
-  mtnFingerprintLoading.value = true
-  try {
-    const data = await dataCenterApi.clearFingerprints() as any
-    success(data?.message || '智能记忆已清空')
-  } catch (e) { showError('操作失败') } finally { mtnFingerprintLoading.value = false }
-}
-
-async function cleanupInvalidFingerprints() {
-  const ok = await confirm({ title: '智能清理无效记忆', content: '将清理过于简单、缺乏区分度的指纹记录，保留有效的记忆。' })
-  if (!ok) return
-  mtnFingerprintLoading.value = true
-  try {
-    const data = await dataCenterApi.cleanupInvalidFingerprints() as any
-    if (data?.status === 'success') success(data.message)
-    else showError('清理失败')
-  } catch (e) { showError('操作失败') } finally { mtnFingerprintLoading.value = false }
-}
-
-async function handleEmbySync() {
-  const ok = await confirm({ title: 'Emby 索引同步', content: '将从 Emby 服务器拉取媒体库索引数据，可能需要一些时间。是否继续？' })
-  if (!ok) return
-  embySyncLoading.value = true
-  try {
-    const data = await dataCenterApi.syncEmbyIndex() as any
-    if (data?.status === 'success') { success(`Emby 索引同步完成，共 ${data.count} 条`); fetchServices() }
-    else showError(data?.detail || 'Emby 索引同步失败')
-  } catch (e: any) { showError(e?.message || '请求失败') } finally { embySyncLoading.value = false }
-}
-
-async function handleBgmSync() {
-  const ok = await confirm({ title: 'BangumiData 同步', content: '将从 bangumi-data 项目拉取最新条目数据并更新本地数据库。是否继续？' })
-  if (!ok) return
-  bgmSyncLoading.value = true
-  try {
-    const data = await bangumiApi.syncMapping(true) as any
-    if (data?.success) { success(data.message || `BangumiData 同步完成`); fetchServices() }
-    else showError(data?.message || data?.detail || 'BangumiData 同步失败')
-  } catch (e: any) { showError(e?.message || '请求失败') } finally { bgmSyncLoading.value = false }
-}
-
-async function handleBgmWarmup() {
-  const ok = await confirm({ title: '预热 Subject 缓存', content: '将遍历所有 BangumiData 条目预热详情缓存。任务在后台执行，可能耗时较长。是否继续？' })
-  if (!ok) return
-  bgmWarmupLoading.value = true
-  try {
-    const data = await bangumiApi.warmup(false) as any
-    if (data?.success) info('预热任务已在后台启动')
-    else { showError(data?.message || '启动预热失败'); bgmWarmupLoading.value = false }
-  } catch (e) { showError('请求失败'); bgmWarmupLoading.value = false }
-}
-
-async function fetchWarmupStatus() {
-  try { bgmWarmupStatus.value = await bangumiApi.getWarmupStatus() } catch (e) { /* ignore */ }
-}
-
-// WS 预热进度
-let wsUnsubWarmup: (() => void) | null = null
-let wsUnsubReconnect: (() => void) | null = null
-
-function subscribeWarmupProgress() {
-  if (!wsUnsubWarmup) {
-    wsUnsubWarmup = onWsEvent('warmup_progress', (data: any) => {
-      bgmWarmupStatus.value = data
-      if (!data.running && bgmWarmupLoading.value) {
-        bgmWarmupLoading.value = false
-        const p = data.progress || {}
-        if (p.success !== undefined) success(`预热完成: 成功 ${p.success} | 跳过 ${p.skipped || 0} | 失败 ${p.failed || 0}`)
-      }
-    })
-  }
-  if (!wsUnsubReconnect) {
-    wsUnsubReconnect = onReconnect(() => { fetchWarmupStatus().then(() => { bgmWarmupLoading.value = bgmWarmupStatus.value.running }) })
-  }
-}
-
-function unsubscribeWarmupProgress() {
-  if (wsUnsubWarmup) { wsUnsubWarmup(); wsUnsubWarmup = null }
-  if (wsUnsubReconnect) { wsUnsubReconnect(); wsUnsubReconnect = null }
-}
-
 async function handleMtnTruncate(tableName: string) {
   const cat = getCategory(tableName)
   const meta = categoryMeta[cat]
@@ -236,69 +129,11 @@ function getTruncateBtnColor(tableName: string): string {
 }
 
 onMounted(() => {
-  fetchServices()
   fetchMtnTables()
-  subscribeWarmupProgress()
-  fetchWarmupStatus().then(() => { if (bgmWarmupStatus.value.running) bgmWarmupLoading.value = true })
-})
-
-onUnmounted(() => {
-  unsubscribeWarmupProgress()
 })
 </script>
 
 <template>
-  <!-- 智能记忆管理 -->
-  <v-card class="glass-card pa-4 mb-4">
-    <div class="text-subtitle-1 font-weight-bold text-primary mb-3">智能记忆管理</div>
-    <v-alert type="info" density="compact" variant="tonal" class="mb-3">智能记忆用于加速重复文件的识别。无效记录可能导致不同剧集误匹配。</v-alert>
-    <div class="d-flex justify-end flex-wrap ga-2">
-      <v-btn variant="tonal" color="info" prepend-icon="mdi-broom" :loading="mtnFingerprintLoading" @click="cleanupInvalidFingerprints">智能清理无效记忆</v-btn>
-      <v-btn variant="tonal" color="warning" prepend-icon="mdi-delete-sweep-outline" :loading="mtnFingerprintLoading" @click="clearFingerprints">清空全部记忆</v-btn>
-    </div>
-  </v-card>
-
-  <!-- Emby 索引同步 -->
-  <v-card class="glass-card pa-4 mb-4">
-    <div class="text-subtitle-1 font-weight-bold text-primary mb-3">Emby 索引同步</div>
-    <v-alert type="info" density="compact" variant="tonal" class="mb-3">同步 Emby 库索引以加速 TMDB ID 查询。建议在 Emby 媒体库有较大变动后手动触发一次同步。</v-alert>
-    <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-      <div class="d-flex ga-6">
-        <div><div class="text-caption text-medium-emphasis">当前条目数</div><div class="text-h6 font-weight-bold">{{ parseCount(embyService?.description) ?? '—' }}</div></div>
-        <div><div class="text-caption text-medium-emphasis">上次同步</div><div class="text-body-2">{{ formatTime(embyService?.last_run ?? null) }}</div></div>
-        <div><div class="text-caption text-medium-emphasis">下次同步</div><div class="text-body-2">{{ formatTime(embyService?.next_run ?? null) }}</div></div>
-      </div>
-      <v-btn variant="tonal" color="primary" prepend-icon="mdi-sync" :loading="embySyncLoading" @click="handleEmbySync">立即同步</v-btn>
-    </div>
-  </v-card>
-
-  <!-- BangumiData 同步 -->
-  <v-card class="glass-card pa-4 mb-4">
-    <div class="text-subtitle-1 font-weight-bold text-primary mb-3">BangumiData 同步</div>
-    <v-alert type="info" density="compact" variant="tonal" class="mb-3">同步 BangumiData 条目表用于番剧识别。数据源为 bangumi-data 项目。</v-alert>
-    <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-      <div class="d-flex ga-6">
-        <div><div class="text-caption text-medium-emphasis">当前条目数</div><div class="text-h6 font-weight-bold">{{ parseCount(bgmService?.description) ?? '—' }}</div></div>
-        <div><div class="text-caption text-medium-emphasis">上次同步</div><div class="text-body-2">{{ formatTime(bgmService?.last_run ?? null) }}</div></div>
-        <div><div class="text-caption text-medium-emphasis">下次同步</div><div class="text-body-2">{{ formatTime(bgmService?.next_run ?? null) }}</div></div>
-      </div>
-      <div class="d-flex ga-2">
-        <v-btn variant="tonal" color="primary" prepend-icon="mdi-sync" :loading="bgmSyncLoading" :disabled="bgmWarmupLoading" @click="handleBgmSync">立即同步</v-btn>
-        <v-btn variant="tonal" color="info" prepend-icon="mdi-fire" :loading="bgmWarmupLoading" :disabled="bgmSyncLoading" @click="handleBgmWarmup">预热 Subject 缓存</v-btn>
-      </div>
-    </div>
-    <!-- 预热进度 -->
-    <div v-if="bgmWarmupLoading || (!bgmWarmupStatus.running && bgmWarmupStatus.progress?.total)" class="mt-4 pa-3 rounded-lg" style="background:rgba(var(--v-theme-on-surface),0.04)">
-      <div class="d-flex justify-space-between align-center mb-2">
-        <span class="text-body-2 font-weight-medium text-primary">Subject 缓存预热</span>
-        <span v-if="bgmWarmupStatus.progress?.total" class="text-caption text-medium-emphasis">
-          {{ bgmWarmupStatus.progress.done }} / {{ bgmWarmupStatus.progress.total }}（成功 {{ bgmWarmupStatus.progress.success }} | 跳过 {{ bgmWarmupStatus.progress.skipped || 0 }} | 失败 {{ bgmWarmupStatus.progress.failed || 0 }}）
-        </span>
-      </div>
-      <v-progress-linear :model-value="warmupPercent" :color="bgmWarmupStatus.running ? 'primary' : 'success'" height="6" rounded />
-    </div>
-  </v-card>
-
   <!-- 数据库表维护 -->
   <v-alert type="warning" density="compact" variant="tonal" class="mb-4">
     以下操作将永久删除数据库表中的所有数据（TRUNCATE）。表已按风险等级分组：<b style="color:#2e7d32">缓存</b>可放心清空，<b style="color:#f57c00">配置</b>需谨慎，<b style="color:#c62828">核心</b>极度危险。

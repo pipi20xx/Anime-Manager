@@ -8,7 +8,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from
 import { dataCenterApi } from '@/api'
 import { useNotification, useConfirm, getImg, useMappingCache } from '@/composables'
 
-const { success, error: showError, warning, info } = useNotification()
+const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
 const { mappingCache, fetchMappingCache } = useMappingCache()
 
@@ -169,16 +169,6 @@ async function refreshSingle(item: any) {
   } catch (e) { showError('刷新失败') } finally { refreshSingleId.value = null }
 }
 
-async function handleSyncSytmdb() {
-  const ok = await confirm({
-    title: '确认同步 SYTMDB',
-    content: '将从 SYTMDB 服务同步手动修正过的元数据快照，使用系统设置中配置的地址和 Token。任务在后台执行，请通过实时日志查看进度。',
-  })
-  if (!ok) return
-  info('同步任务已启动，请查看实时日志了解进度')
-  try { await dataCenterApi.syncSytmdb({}) } catch (e: any) { showError(e?.message || '启动同步失败') }
-}
-
 function handleExecuteRefresh() {
   const body: any = {}
   if (refreshForm.older_than_days) body.older_than_days = refreshForm.older_than_days
@@ -232,7 +222,6 @@ onUnmounted(() => {
       @keyup.enter="searchBrowse" @click:clear="browserSearch = ''; searchBrowse()"
     />
     <v-btn color="warning" variant="tonal" prepend-icon="mdi-refresh" @click="showRefreshModal = true">全量刷新</v-btn>
-    <v-btn color="info" variant="tonal" prepend-icon="mdi-sync-circle" @click="handleSyncSytmdb">同步 SYTMDB</v-btn>
     <v-btn variant="tonal" color="primary" prepend-icon="mdi-plus" @click="openCreate">手动新增</v-btn>
   </div>
 

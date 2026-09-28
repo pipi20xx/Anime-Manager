@@ -31,25 +31,19 @@ def normalize_guid(guid: str) -> str:
         return hashlib.md5(guid.encode()).hexdigest()
     return guid
 
+async def clear_rss_cache() -> int:
+    """清空 RSS 订阅项缓存 (FeedItem)，返回删除条数。作为独立定时任务由调度器触发。"""
+    async with db.session_scope() as session:
+        logger.info("Scheduler: 定时清空 RSS 订阅项缓存...")
+        result = await session.execute(delete(FeedItem))
+        await session.commit()
+        deleted = result.rowcount or 0
+    logger.info(f"Scheduler: RSS 缓存清空完成，共删除 {deleted} 条")
+    return deleted
+
 async def refresh_all_feeds():
-    global _last_auto_clear_time
     from config_manager import ConfigManager
     config = ConfigManager.get_config()
-    
-    # [Fix] 1. 自动清理：使用独立的短事务
-    auto_clear = config.get("auto_clear_recognition", False)
-    clear_interval_hours = config.get("auto_clear_interval", 24)
-    
-    if auto_clear:
-        current_now = time.time()
-        elapsed_seconds = current_now - _last_auto_clear_time
-        interval_seconds = clear_interval_hours * 3600
-        if _last_auto_clear_time == 0 or elapsed_seconds >= interval_seconds:
-            async with db.session_scope() as session:
-                logger.info(f"Scheduler: 触发定时自动清空缓存 ({clear_interval_hours}h)...")
-                await session.execute(delete(FeedItem))
-                await session.commit()
-            _last_auto_clear_time = current_now
 
     logger.info("Scheduler: 开始 RSS 刷新任务...")
     

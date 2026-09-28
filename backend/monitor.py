@@ -211,16 +211,50 @@ class MonitorManager:
             return
 
         config = ConfigManager.get_config()
-        
-        # 1. 注册每日日志清理任务 (保留30天)
-        MonitorManager._scheduler.add_job(
-            MonitorManager._daily_cleanup,
-            'cron',
-            hour=3, # 凌晨3点
-            minute=0,
-            id="daily_cleanup_job",
-            replace_existing=True
+
+        # 任务计划页的低频任务包装（执行前后写 task_history）
+        from task_scheduler import (
+            instrumented_daily_cleanup,
+            instrumented_discover_warmup,
+            instrumented_calendar_push,
+            instrumented_bgm_schedule_push,
+            instrumented_subscription_summary,
+            instrumented_emby_index_sync,
+            instrumented_rss_cache_clear,
+            instrumented_task_record_cleanup,
         )
+
+        # 1. 注册每日日志清理任务 (保留30天)
+        if config.get("daily_cleanup_enabled", True):
+            cleanup_time = config.get("daily_cleanup_time", "03:00")
+            try:
+                cleanup_hour, cleanup_minute = map(int, cleanup_time.split(':'))
+            except Exception:
+                cleanup_hour, cleanup_minute = 3, 0
+            MonitorManager._scheduler.add_job(
+                instrumented_daily_cleanup,
+                'cron',
+                hour=cleanup_hour,
+                minute=cleanup_minute,
+                id="daily_cleanup_job",
+                replace_existing=True
+            )
+
+        # 1.1 任务中心记录定期清理（原任务中心"清理旧记录"按钮的定时化）
+        if config.get("task_record_cleanup_enabled", True):
+            tr_time = config.get("task_record_cleanup_time", "03:20")
+            try:
+                tr_hour, tr_minute = map(int, tr_time.split(':'))
+            except Exception:
+                tr_hour, tr_minute = 3, 20
+            MonitorManager._scheduler.add_job(
+                instrumented_task_record_cleanup,
+                'cron',
+                hour=tr_hour,
+                minute=tr_minute,
+                id="task_record_cleanup_job",
+                replace_existing=True
+            )
         
         # 2. [RSS] 自动刷新任务
         if config.get("rss_auto_refresh", True):
@@ -237,7 +271,7 @@ class MonitorManager:
         # 2.5 [RSS Detect] 探测自动订阅任务
         from rss_core.detector import RssDetector
         detect_interval = _to_int(config.get("rss_detect_interval", 30), 30)
-        if detect_interval > 0:
+        if config.get("rss_detect_enabled", True) and detect_interval > 0:
             MonitorManager._scheduler.add_job(
                 RssDetector.run_scheduled_tasks,
                 'interval',
@@ -247,6 +281,19 @@ class MonitorManager:
             )
             logger.info(f"[RSS探测] 已调度自动探测订阅，间隔 {detect_interval} 分钟。")
         
+        # 2.6 [RSS Cache] 定时清空 RSS 订阅项缓存（原嵌在刷新逻辑内，现为独立任务）
+        if config.get("auto_clear_recognition", False):
+            clear_hours = _to_int(config.get("auto_clear_interval", 24), 24)
+            if clear_hours > 0:
+                MonitorManager._scheduler.add_job(
+                    instrumented_rss_cache_clear,
+                    'interval',
+                    hours=clear_hours,
+                    id="rss_cache_clear_job",
+                    replace_existing=True
+                )
+                logger.info(f"[RSS] 已调度订阅项缓存定时清空，间隔 {clear_hours} 小时")
+
         # 3. [Subscription] 自动搜寻补全任务
         if config.get("sub_auto_fill", False):
             fill_interval = _to_int(config.get("sub_fill_interval", 12), 12)
@@ -273,7 +320,7 @@ class MonitorManager:
         
         # 5. [Stalled Monitor] 下载超时检查
         stalled_interval = _to_int(config.get("stalled_monitor_interval", 30), 30)
-        if stalled_interval > 0:
+        if config.get("stalled_monitor_enabled", True) and stalled_interval > 0:
             MonitorManager._scheduler.add_job(
                 check_stalled_downloads,
                 'interval',
@@ -323,7 +370,7 @@ class MonitorManager:
             try:
                 hour, minute = map(int, push_time.split(':'))
                 MonitorManager._scheduler.add_job(
-                    MonitorManager._calendar_daily_push,
+                    instrumented_calendar_push,
                     'cron',
                     hour=hour,
                     minute=minute,
@@ -340,7 +387,7 @@ class MonitorManager:
             try:
                 hour, minute = map(int, push_time.split(':'))
                 MonitorManager._scheduler.add_job(
-                    MonitorManager._bgm_schedule_daily_push,
+                    instrumented_bgm_schedule_push,
                     'cron',
                     hour=hour,
                     minute=minute,
@@ -363,23 +410,23 @@ class MonitorManager:
                 replace_existing=True
             )
             logger.info(f"[订阅提醒] 已启动订阅更新检查，间隔 {sub_notify_interval} 分钟")
-            
-            # 每日摘要
-            if config.get("subscription_daily_summary", False):
-                summary_time = config.get("subscription_summary_time", "08:00")
-                try:
-                    hour, minute = map(int, summary_time.split(':'))
-                    MonitorManager._scheduler.add_job(
-                        MonitorManager._subscription_daily_summary,
-                        'cron',
-                        hour=hour,
-                        minute=minute,
-                        id="subscription_daily_summary_job",
-                        replace_existing=True
-                    )
-                    logger.info(f"[订阅提醒] 已开启每日摘要，推送时间: {summary_time}")
-                except Exception as e:
-                    logger.error(f"[订阅提醒] 每日摘要设置解析失败: {e}")
+
+        # 每日摘要（独立于智能提醒开关）
+        if config.get("subscription_daily_summary", False):
+            summary_time = config.get("subscription_summary_time", "08:00")
+            try:
+                hour, minute = map(int, summary_time.split(':'))
+                MonitorManager._scheduler.add_job(
+                    instrumented_subscription_summary,
+                    'cron',
+                    hour=hour,
+                    minute=minute,
+                    id="subscription_daily_summary_job",
+                    replace_existing=True
+                )
+                logger.info(f"[订阅提醒] 已开启每日摘要，推送时间: {summary_time}")
+            except Exception as e:
+                logger.error(f"[订阅提醒] 每日摘要设置解析失败: {e}")
         
         # 9. [Telegram Bot] 智能体对话
         tg_bot_enabled = config.get("telegram_bot_enabled", False)
@@ -392,30 +439,52 @@ class MonitorManager:
             except Exception as e:
                 logger.error(f"[TG Bot] 启动失败: {e}")
         
-        # 10. [BGM-TMDB Mapping] 每7天自动同步映射表
+        # 10. [BGM-TMDB Mapping] 自动同步映射表（默认每 7 天）
         bgm_mapping_enabled = config.get("bgm_mapping_auto_sync", True)
         if bgm_mapping_enabled:
-            MonitorManager._scheduler.add_job(
-                MonitorManager._auto_sync_bgm_mapping,
-                'interval',
-                days=7,
-                id="bgm_mapping_sync_job",
-                replace_existing=True
-            )
-            logger.info("[BangumiData] 已启动自动同步任务，间隔 7 天")
-            
-            asyncio.create_task(MonitorManager._auto_sync_bgm_mapping())
+            bgm_days = _to_int(config.get("bgm_mapping_sync_interval", 7), 7)
+            if bgm_days > 0:
+                MonitorManager._scheduler.add_job(
+                    MonitorManager._auto_sync_bgm_mapping,
+                    'interval',
+                    days=bgm_days,
+                    id="bgm_mapping_sync_job",
+                    replace_existing=True
+                )
+                logger.info(f"[BangumiData] 已启动自动同步任务，间隔 {bgm_days} 天")
+
+                asyncio.create_task(MonitorManager._auto_sync_bgm_mapping())
         
         # 11. [Discover Cache] 每日预热发现页第一页缓存 (Bangumi + TMDB)
-        MonitorManager._scheduler.add_job(
-            MonitorManager._warmup_discover_cache,
-            'cron',
-            hour=4,
-            minute=0,
-            id="discover_cache_warmup_job",
-            replace_existing=True
-        )
-        logger.info("[Discover] 已调度每日发现页第一页缓存预热 (04:00)")
+        if config.get("discover_warmup_enabled", True):
+            warmup_time = config.get("discover_warmup_time", "04:00")
+            try:
+                warmup_hour, warmup_minute = map(int, warmup_time.split(':'))
+            except Exception:
+                warmup_hour, warmup_minute = 4, 0
+            MonitorManager._scheduler.add_job(
+                instrumented_discover_warmup,
+                'cron',
+                hour=warmup_hour,
+                minute=warmup_minute,
+                id="discover_cache_warmup_job",
+                replace_existing=True
+            )
+            logger.info(f"[Discover] 已调度每日发现页第一页缓存预热 ({warmup_time})")
+
+        # 11.5 [Emby Index] Emby 库索引定时同步（需已配置 Emby）
+        if (config.get("emby_index_sync_enabled", True)
+                and config.get("emby_url") and config.get("emby_api_key")):
+            emby_interval = _to_int(config.get("emby_index_sync_interval", 1440), 1440)
+            if emby_interval > 0:
+                MonitorManager._scheduler.add_job(
+                    instrumented_emby_index_sync,
+                    'interval',
+                    minutes=emby_interval,
+                    id="emby_index_sync_job",
+                    replace_existing=True
+                )
+                logger.info(f"[Emby索引] 已调度定时同步，间隔 {emby_interval} 分钟")
 
         # 12. [CD2 Rapid Upload] 秒传重试队列轮询
         from clients.cd2.rapid_retry import RapidUploadRetryManager
@@ -436,6 +505,21 @@ class MonitorManager:
             run_date=datetime.now() + timedelta(seconds=5),
             id="cd2_rapid_retry_recover",
         )
+
+        # 13. [任务计划] 应用内置任务的 cron 覆盖（任务计划页对内置任务自定义周期）
+        overrides = config.get("scheduler_cron_overrides") or {}
+        for override_job_id, cron_expr in overrides.items():
+            if not cron_expr:
+                continue
+            if not MonitorManager._scheduler.get_job(override_job_id):
+                continue  # 任务本身被开关禁用，不调度
+            try:
+                from apscheduler.triggers.cron import CronTrigger
+                MonitorManager._scheduler.reschedule_job(
+                    override_job_id, trigger=CronTrigger.from_crontab(cron_expr)
+                )
+            except Exception as e:
+                logger.warning(f"[任务计划] cron 覆盖无效，已忽略 {override_job_id}: {cron_expr} ({e})")
 
     @staticmethod
     async def _warmup_discover_cache():
@@ -615,8 +699,10 @@ class MonitorManager:
             deleted = await MetaCacheManager.clear_system_logs(30)
             if deleted > 0:
                 log_audit("维护", "自动清理", f"已自动清理 {deleted} 条 30 天前的系统日志。")
+            return deleted
         except Exception as e:
             logger.error(f"[Maintenance] Log cleanup failed: {e}")
+            return -1
     
     @staticmethod
     async def _subscription_notifier_check():
@@ -1160,6 +1246,10 @@ class MonitorManager:
         # 1. 设置系统级任务
         MonitorManager._setup_system_jobs()
 
+        # 1.5 加载用户自定义定时任务（任务计划页创建）
+        if MonitorManager._loop:
+            MonitorManager._loop.create_task(MonitorManager._setup_custom_jobs())
+
         # [New] 启动 CD2 传输监控
         try:
             CD2TransferMonitor.start()
@@ -1168,6 +1258,41 @@ class MonitorManager:
 
         # 2. 设置文件监控任务 (由于涉及文件系统同步检查，我们将其放入后台任务，防止阻塞主线程)
         MonitorManager._loop.create_task(MonitorManager._async_start_all())
+
+    @staticmethod
+    async def _setup_custom_jobs():
+        """注册所有启用的用户自定义定时任务，并补齐默认维护入口卡片"""
+        from sqlmodel import select
+        from models import CustomScheduledJob
+        from database import db
+        from task_scheduler import register_custom_job, DEFAULT_CUSTOM_JOBS
+        try:
+            async with db.session_scope(force_new=True):
+                result = await db.session.execute(
+                    select(CustomScheduledJob).where(CustomScheduledJob.enabled == True)  # noqa: E712
+                )
+                jobs = result.scalars().all()
+
+                # 种子：为移除按钮的维护操作补默认卡片（停用状态，仅作手动触发入口）
+                all_result = await db.session.execute(select(CustomScheduledJob))
+                existing_actions = {job.action for job in all_result.scalars().all()}
+                created = 0
+                for dj in DEFAULT_CUSTOM_JOBS:
+                    if dj["action"] in existing_actions:
+                        continue
+                    db.session.add(CustomScheduledJob(
+                        name=dj["name"], action=dj["action"], cron=dj["cron"], enabled=False,
+                    ))
+                    created += 1
+                if created:
+                    await db.session.commit()
+                    logger.info(f"[任务计划] 已创建 {created} 个默认维护入口卡片（停用状态）")
+
+            registered = sum(1 for job in jobs if register_custom_job(job))
+            if registered:
+                logger.info(f"[任务计划] 已注册 {registered} 个自定义定时任务")
+        except Exception as e:
+            logger.error(f"[任务计划] 加载自定义定时任务失败: {e}")
 
     @staticmethod
     async def _async_start_all():

@@ -12,6 +12,7 @@
  * - 删除 / 清理旧记录
  */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { useWebSocket } from '@/composables'
@@ -19,13 +20,17 @@ import { getStatusTag } from '@/utils/taskStatus'
 
 defineOptions({ name: 'TaskHistoryView' })
 
+const route = useRoute()
 const { success, error: showError, info } = useNotification()
 const { confirm } = useConfirm()
 
 // --- 数据 ---
 const tasks = ref<any[]>([])
 const loading = ref(false)
-const moduleFilter = ref<string>('all')
+// 支持从路由参数初始化模块筛选（任务计划页「日志」跳转）
+const moduleFilter = ref<string>(
+  typeof route.query.module === 'string' ? route.query.module : 'all'
+)
 const searchQuery = ref('')
 const page = ref(0)
 const pageSize = ref(20)
@@ -43,7 +48,7 @@ let unsubReconnect: (() => void) | null = null
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 // --- 模块选项 ---
-const moduleOptions = computed(() => [
+const baseModuleOptions = [
   { title: '全部', value: 'all' },
   { title: '整理', value: '整理' },
   { title: 'STRM', value: 'STRM' },
@@ -56,7 +61,15 @@ const moduleOptions = computed(() => [
   { title: '神医深度删除联动', value: '神医深度删除联动' },
   { title: 'Emby入库通知', value: 'Emby入库通知' },
   { title: 'Emby删除通知', value: 'Emby删除通知' },
-])
+]
+
+const moduleOptions = computed(() => {
+  // 路由带来的未知模块（如任务计划页跳转）动态补进选项
+  if (moduleFilter.value !== 'all' && !baseModuleOptions.some(o => o.value === moduleFilter.value)) {
+    return [{ title: moduleFilter.value, value: moduleFilter.value }, ...baseModuleOptions]
+  }
+  return baseModuleOptions
+})
 
 // --- 分组日志 ---
 const selectedTaskGroupedLogs = computed(() => {
@@ -230,26 +243,6 @@ async function deleteTask(taskId: string) {
   }
 }
 
-async function cleanupTasks() {
-  const ok = await confirm({
-    title: '清理旧记录',
-    content: '确定要清理超过 30 天的任务记录吗？',
-    confirmColor: 'warning',
-  })
-  if (!ok) return
-  try {
-    const data = await taskHistoryApi.cleanup()
-    if (data?.status === 'success' || data?.success) {
-      success(data?.message || '清理完成')
-      fetchTasks()
-    } else {
-      showError(data?.message || '清理失败')
-    }
-  } catch (e) {
-    showError('清理失败')
-  }
-}
-
 // --- 格式化方法 ---
 function formatTime(iso: string | null): string {
   if (!iso) return '-'
@@ -362,10 +355,6 @@ onUnmounted(() => {
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
-    <div class="d-flex justify-end mb-4">
-      <v-btn variant="tonal" color="warning" prepend-icon="mdi-broom" @click="cleanupTasks">清理旧记录</v-btn>
-    </div>
-
     <!-- 搜索与筛选 -->
     <div class="d-flex ga-3 mb-4 flex-wrap align-center">
       <v-text-field

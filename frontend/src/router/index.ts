@@ -79,6 +79,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/TaskHistoryView.vue'),
       },
 
+      // === 任务计划 ===
+      {
+        path: '/scheduler',
+        name: 'Scheduler',
+        component: () => import('@/views/SchedulerView.vue'),
+      },
+
       // === 数据中心 ===
       {
         path: '/data-center',

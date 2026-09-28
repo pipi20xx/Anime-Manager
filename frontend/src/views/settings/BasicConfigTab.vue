@@ -2,7 +2,8 @@
 /**
  * BasicConfigTab — 基础配置
  *
- * 包含: TMDB、Bangumi、SYTMDB、识别偏好、Jackett、Emby、Telegram通知、代理设置、自动化设置
+ * 包含: TMDB、Bangumi、SYTMDB、识别偏好、Jackett、Emby、Telegram通知、代理设置
+ * 定时任务相关设置（RSS刷新/规则同步/订阅补全/死种清理等）已迁移至「任务计划」页统一管理
  */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { configApi, systemApi, clientsApi } from '@/api'
@@ -599,176 +600,17 @@ onMounted(() => {
       </v-card-text>
     </v-card>
 
-    <!-- 自动化设置 -->
-    <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-cog-transfer-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">自动化设置</span>
-      </v-card-title>
-      <v-divider />
-      <v-card-text class="pa-4">
-        <v-row>
-          <!-- RSS 自动刷新 -->
-          <v-col cols="12" md="6">
-            <div class="d-flex align-center ga-3 mb-2">
-              <v-switch v-model="config.rss_auto_refresh" density="compact" hide-details color="primary" />
-              <div>
-                <div class="text-body-2 font-weight-medium">RSS 自动刷新</div>
-                <div class="text-caption text-medium-emphasis">定时拉取 RSS 源，检测新发布的资源</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.rss_refresh_interval"
-              label="刷新间隔 (分)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              :disabled="!config.rss_auto_refresh"
-              hide-details
-              min="1"
-              max="1440"
-            />
-          </v-col>
-
-          <!-- 规则自动同步 -->
-          <v-col cols="12" md="6">
-            <div class="d-flex align-center ga-3 mb-2">
-              <v-switch v-model="config.rule_auto_update" density="compact" hide-details color="primary" />
-              <div>
-                <div class="text-body-2 font-weight-medium">规则自动同步</div>
-                <div class="text-caption text-medium-emphasis">定时从远程地址同步社区识别规则</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.rule_update_interval"
-              label="同步周期 (时)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              :disabled="!config.rule_auto_update"
-              hide-details
-              min="1"
-            />
-          </v-col>
-
-          <!-- 自动搜寻补全 -->
-          <v-col cols="12" md="6">
-            <div class="d-flex align-center ga-3 mb-2">
-              <v-switch v-model="config.sub_auto_fill" density="compact" hide-details color="primary" />
-              <div>
-                <div class="text-body-2 font-weight-medium">自动搜寻补全</div>
-                <div class="text-caption text-medium-emphasis">自动搜寻补全缺失的订阅集数</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.sub_fill_interval"
-              label="补全周期 (时)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              :disabled="!config.sub_auto_fill"
-              hide-details
-              min="1"
-            />
-          </v-col>
-
-          <!-- 定时清理缓存 -->
-          <v-col cols="12" md="6">
-            <div class="d-flex align-center ga-3 mb-2">
-              <v-switch v-model="config.auto_clear_recognition" density="compact" hide-details color="primary" />
-              <div>
-                <div class="text-body-2 font-weight-medium">定时清理缓存</div>
-                <div class="text-caption text-medium-emphasis">定时清空 RSS 订阅项缓存</div>
-              </div>
-            </div>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.auto_clear_interval"
-              label="清理周期 (时)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              :disabled="!config.auto_clear_recognition"
-              hide-details
-              min="1"
-            />
-          </v-col>
-
-          <!-- 死种超时清理 -->
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.stalled_timeout_minutes"
-              label="死种超时清理 (分钟)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              hide-details
-              min="0"
-              max="43200"
-              placeholder="0 为禁用"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.stalled_monitor_interval"
-              label="巡检频率 (分钟)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              hide-details
-              min="0"
-              max="1440"
-              placeholder="0 为禁用，建议 15-60"
-            />
-          </v-col>
-
-          <v-col cols="12">
-            <v-alert type="info" variant="tonal" density="compact">
-              定时检查 qBittorrent 下载器，发现运行超过 <strong>{{ config.stalled_timeout_minutes || 0 }}</strong> 分钟且进度未完成的任务，将自动删除并加入黑名单，同时回滚订阅状态以便重新下载。
-            </v-alert>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-
-    <!-- 磁盘空间回收 -->
+    <!-- 磁盘空间回收规则 -->
     <v-card class="glass-card mb-4">
       <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
         <v-icon color="primary" size="20">mdi-database-remove-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">磁盘空间回收</span>
+        <span class="text-subtitle-1 font-weight-bold">磁盘空间回收规则</span>
       </v-card-title>
       <v-divider />
       <v-card-text class="pa-4">
-        <div class="d-flex align-center ga-3 mb-4">
-          <v-switch v-model="config.space_cleanup_enabled" density="compact" hide-details color="primary" />
-          <div>
-            <div class="text-body-2 font-weight-medium">启用磁盘空间自动回收</div>
-            <div class="text-caption text-medium-emphasis">监控 QB 种子占用体积，超过阈值后从最老的种子开始删除</div>
-          </div>
-        </div>
-
-        <v-row class="mb-2">
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="config.space_cleanup_interval"
-              label="巡检频率 (分钟)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              :disabled="!config.space_cleanup_enabled"
-              hide-details
-              min="1"
-              placeholder="0 为禁用，建议 15-60"
-            />
-          </v-col>
-        </v-row>
+        <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+          回收功能的启用开关与巡检周期请在「任务计划」页的「磁盘空间自动回收」卡片中管理；此处仅配置回收规则。监控 QB 种子占用体积，超过阈值后从最老的种子开始删除。
+        </v-alert>
 
         <!-- 规则列表 -->
         <div v-if="!config.space_cleanup_rules || config.space_cleanup_rules.length === 0" class="text-center text-medium-emphasis py-4">

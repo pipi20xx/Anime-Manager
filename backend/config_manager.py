@@ -91,6 +91,19 @@ class ConfigManager:
         "download_clients": [],
         "rss_auto_refresh": True,
         "rss_refresh_interval": 15,
+        "rss_detect_enabled": True, # RSS 定时探测订阅开关
+        "stalled_monitor_enabled": True, # 死种清理巡检开关（间隔仍由 stalled_monitor_interval 控制，0 禁用）
+        "daily_cleanup_enabled": True, # 每日日志清理开关
+        "daily_cleanup_time": "03:00", # 每日日志清理时间
+        "task_record_cleanup_enabled": True, # 任务中心记录定期清理开关
+        "task_record_cleanup_time": "03:20", # 任务中心记录定期清理时间
+        "task_record_retention_days": 30, # 任务执行记录保留天数
+        "discover_warmup_enabled": True, # 发现页缓存预热开关
+        "discover_warmup_time": "04:00", # 发现页缓存预热时间
+        "emby_index_sync_enabled": True, # Emby 库索引定时同步开关
+        "emby_index_sync_interval": 1440, # Emby 库索引同步间隔（分钟）
+        "bgm_mapping_sync_interval": 7, # BangumiData 映射表同步间隔（天）
+        "scheduler_cron_overrides": {}, # 任务计划页对内置定时任务的 cron 覆盖 {job_id: "cron 表达式"}
         "auto_clear_recognition": False,
         "auto_clear_interval": 24,
         "sub_auto_fill": False,

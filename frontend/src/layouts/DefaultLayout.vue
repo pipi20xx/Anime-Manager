@@ -89,6 +89,7 @@ const navGroups = [
     label: '数据中心',
     items: [
       { title: '数据中心', icon: 'mdi-database-outline', to: '/data-center' },
+      { title: '任务计划', icon: 'mdi-calendar-clock', to: '/scheduler' },
       { title: '任务中心', icon: 'mdi-clipboard-list-outline', to: '/task-history' },
       { title: '文件哈希', icon: 'mdi-fingerprint', to: '/file-hashes' },
     ],

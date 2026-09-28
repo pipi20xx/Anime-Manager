@@ -526,6 +526,23 @@ class TaskRecord(SQLModel, table=True):
     logs: List[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default_factory=list)
     stats: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
 
+class CustomScheduledJob(SQLModel, table=True):
+    __tablename__ = "custom_scheduled_jobs"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "自定义定时任务"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(default="")
+    action: str = Field(index=True)  # 动作标识，对应 task_scheduler.JOB_REGISTRY 的 job_id
+    cron: Optional[str] = None  # cron 表达式（5 段：分 时 日 月 周），优先于 legacy 字段
+    params: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))  # 动作参数（如全量刷新的筛选条件）
+    schedule_type: str = Field(default="interval")  # legacy: interval=间隔执行 / daily=每天定时
+    interval_minutes: int = Field(default=60)  # legacy: schedule_type=interval 时的间隔（分钟）
+    run_time: Optional[str] = None  # legacy: schedule_type=daily 时的执行时间（HH:MM）
+    enabled: bool = Field(default=True)
+    last_run_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
 class RssDetectTask(SQLModel, table=True):
     __tablename__ = "rss_detect_tasks"
     __table_args__ = {"schema": get_public_schema()}
