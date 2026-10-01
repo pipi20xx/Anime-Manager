@@ -293,6 +293,30 @@
    - **Stage 1**: Node 22 构建前端（Vite 8 + Vuetify 4）
    - **Stage 2**: Python 3.11 运行后端，挂载前端构建产物
 
+3. ⚠️ **Fork 后自行构建注意**：Dockerfile 中的 npm / pip 源默认指向作者的**内网构建缓存**（`http://192.168.50.12:4873` 与 `http://192.168.50.12:3141`），Fork 之后你的环境访问不到这些地址，构建会失败或卡住。自行构建时请通过 `--build-arg` 覆盖为公网源：
+   ```bash
+   docker build \
+     --build-arg NPM_REGISTRY=https://registry.npmmirror.com \
+     --build-arg PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
+     --build-arg PIP_TRUSTED_HOST=mirrors.aliyun.com \
+     -t anime-manager .
+   ```
+
+   使用 Compose 构建则在 `build:` 段加 `args`：
+   ```yaml
+   build:
+     context: .
+     dockerfile: Dockerfile
+     args:
+       NPM_REGISTRY: https://registry.npmmirror.com
+       PIP_INDEX_URL: https://mirrors.aliyun.com/pypi/simple/
+       PIP_TRUSTED_HOST: mirrors.aliyun.com
+   ```
+
+   也可以直接改 Dockerfile 里三个 `ARG` 的默认值（`NPM_REGISTRY`、`PIP_INDEX_URL`、`PIP_TRUSTED_HOST`）。
+
+   另外，前端开发用的 `docker-compose.frontend-dev.yml`（含 `sytmdb/` 子项目的同名文件）中前端容器的运行时 `npm install` 源也写的是内网缓存地址，Fork 后请一并改为公网 npm 源。
+
 ---
 
 ### Jackett 部署与配置（推荐）

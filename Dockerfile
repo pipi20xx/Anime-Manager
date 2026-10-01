@@ -1,11 +1,13 @@
 # --- Stage 1: Frontend Build ---
 FROM node:22-alpine AS frontend-builder
+# npm 包缓存（内网 Verdaccio 只读代理）；内网外构建时用 --build-arg 覆盖
+ARG NPM_REGISTRY=http://192.168.50.12:4873
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 # 删除 lock 文件以避免 npm 可选依赖跨架构 bug (npm/cli#4828)
 # 锁文件在 x64 上生成时不含 arm64 的 @rolldown/binding 原生包
 RUN rm -f package-lock.json && \
-    npm config set registry https://registry.npmmirror.com && \
+    npm config set registry ${NPM_REGISTRY} && \
     npm install --legacy-peer-deps \
         --fetch-retries=5 \
         --fetch-retry-mintimeout=20000 \
@@ -19,6 +21,10 @@ RUN sed -n 's/.*"version"\s*:\s*"\([^"]*\)".*/\1/p' package.json > /app/VERSION
 
 # --- Stage 2: Backend & Final Image ---
 FROM python:3.11-slim
+# pip 包缓存（内网 devpi 只读代理，http 地址必须配 trusted-host）；
+# 内网外构建时用 --build-arg 覆盖
+ARG PIP_INDEX_URL=http://192.168.50.12:3141/root/pypi/+simple
+ARG PIP_TRUSTED_HOST=192.168.50.12
 WORKDIR /app
 
 # 使用阿里云镜像源（更快）
@@ -29,7 +35,7 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+RUN pip install --no-cache-dir -r requirements.txt -i ${PIP_INDEX_URL} --trusted-host ${PIP_TRUSTED_HOST}
 
 COPY backend/ .
 

@@ -38,7 +38,7 @@ services:
       - "5174:5173"   # Vite 开发服务器
     environment:
       - TZ=Asia/Shanghai
-    command: sh -c "npm config set registry https://repo.huaweicloud.com/repository/npm/ && npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+    command: sh -c "npm config set registry http://192.168.50.12:4873 && npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
     depends_on:
       - apm-backend
     restart: unless-stopped
