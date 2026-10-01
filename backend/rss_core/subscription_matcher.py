@@ -238,7 +238,7 @@ class SubscriptionMatcher:
                     # Emby 库存在检查（受订阅源开关控制）：开启时若 Emby 已有则标记已下载，
                     # 阻止后续追剧订阅与下载规则重复处理；未命中或开关关闭则放行。
                     if not _tmdb_blocked and feed_check_emby and final_result.get("tmdb_id"):
-                        from emby_client import get_emby_client
+                        from emby_client import get_emby_client, EmbyAPIError
                         from emby_index_service import wrap_emby_with_index
                         from task_history import log_task as _log_task
                         _emby_client = get_emby_client()
@@ -257,6 +257,8 @@ class SubscriptionMatcher:
                                             _emby_exists = await asyncio.to_thread(_emby_client.check_episode_exists, _emby_tmdb, _emby_season, _emby_episode)
                                     elif _emby_type == "电影":
                                         _emby_exists = await asyncio.to_thread(_emby_client.check_movie_exists, _emby_tmdb)
+                                except EmbyAPIError as e:
+                                    logger.warning(f"Emby API 不可用，无法确认库状态，按未入库继续处理: {e}")
                                 finally:
                                     await _cleanup()
 
@@ -513,7 +515,7 @@ class SubscriptionMatcher:
 
                     # Emby 库存在检查（受订阅源开关控制）
                     if feed_check_emby:
-                        from emby_client import get_emby_client
+                        from emby_client import get_emby_client, EmbyAPIError
                         from emby_index_service import wrap_emby_with_index
                         emby_client = get_emby_client()
                         if emby_client:
@@ -525,6 +527,8 @@ class SubscriptionMatcher:
                                         exists_in_emby = await asyncio.to_thread(emby_client.check_episode_exists, tmdb_id, season, episode)
                                     elif m_type == "movie":
                                         exists_in_emby = await asyncio.to_thread(emby_client.check_movie_exists, tmdb_id)
+                                except EmbyAPIError as e:
+                                    logger.warning(f"Emby API 不可用，无法确认库状态，按未入库继续处理: {e}")
                                 finally:
                                     await cleanup()
                                 if exists_in_emby:

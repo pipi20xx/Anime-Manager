@@ -426,7 +426,7 @@ class FileProcessor:
             check_emby_exists = task.get("check_emby_exists", False)
             
             if check_emby_exists:
-                from emby_client import get_emby_client
+                from emby_client import get_emby_client, EmbyAPIError
                 from emby_index_service import wrap_emby_with_index
                 emby_client = get_emby_client()
                 
@@ -444,6 +444,8 @@ class FileProcessor:
                                 exists = await asyncio.to_thread(emby_client.check_movie_exists, tmdb_id)
                             elif media_type == "剧集" and season is not None and episode is not None:
                                 exists = await asyncio.to_thread(emby_client.check_episode_exists, tmdb_id, season, episode)
+                        except EmbyAPIError as e:
+                            logger.warning(f"Emby API 不可用，无法确认库状态，按未入库继续处理: {e}")
                         finally:
                             await cleanup()
                         

@@ -6,6 +6,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class EmbyAPIError(Exception):
+    """Emby API 请求失败（认证无效 / 网络错误 / 服务端错误）。区别于"库里没有该条目"。"""
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class EmbyNotConfiguredError(EmbyAPIError):
+    """Emby URL 或 API Key 未配置。"""
+    pass
+
+
 class EmbyClient:
     def __init__(self):
         self.config = ConfigManager.get_config()
@@ -46,16 +58,21 @@ class EmbyClient:
 
     def _make_request(self, method: str, endpoint: str, params: Optional[Dict] = None, data: Optional[Dict] = None) -> Optional[Dict]:
         if not self.base_url or not self.api_key:
-            return None
-        
+            raise EmbyNotConfiguredError("Emby URL 或 API Key 未配置")
+
         url = f"{self.base_url}{endpoint}"
         try:
             response = self.session.request(method, url, params=params, json=data, timeout=30)
             response.raise_for_status()
             return response.json()
+        except requests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            reason = e.response.reason if e.response is not None else ''
+            logger.warning(f"Emby API 请求失败: {method} {endpoint} -> HTTP {status} {reason}")
+            raise EmbyAPIError(f"Emby API 请求失败 (HTTP {status}): {endpoint}", status_code=status) from e
         except Exception as e:
-            logger.debug(f"Emby API 请求失败: {e}")
-            return None
+            logger.warning(f"Emby API 请求失败: {method} {endpoint} -> {type(e).__name__}: {e}")
+            raise EmbyAPIError(f"Emby API 请求失败 ({type(e).__name__}): {endpoint}") from e
 
     def search_by_tmdb_id(self, tmdb_id: str, media_type: str = 'all',
                           index_item_ids: Optional[List[str]] = None) -> Optional[Dict]:
@@ -98,10 +115,16 @@ class EmbyClient:
 
             # 1) ID 直查 (Emby 要求 User 上下文，否则 404)
             endpoint = f'/Users/{self.user_id}/Items/{item_id}' if self.user_id else f'/Items/{item_id}'
-            item = self._make_request('GET', endpoint, params={
-                'Fields': 'ProviderIds,Path,MediaSources',
-                'EnableUserData': 'false'
-            })
+            try:
+                item = self._make_request('GET', endpoint, params={
+                    'Fields': 'ProviderIds,Path,MediaSources',
+                    'EnableUserData': 'false'
+                })
+            except EmbyAPIError as e:
+                if e.status_code == 404:
+                    item = None  # 条目确实不存在，走 stale 自愈
+                else:
+                    raise  # API 不可用（认证/网络等），不能当作"条目已删除"
 
             if item:
                 item_tmdb_id = (item.get('ProviderIds', {}) or {}).get('Tmdb')
@@ -449,8 +472,8 @@ class EmbyClient:
             'HasTmdbId': 'true'
         })
         if not result or 'Items' not in result:
-            logger.warning("Emby fetch_all_items_brief: 未获取到任何条目")
-            return []
+            logger.warning(f"Emby fetch_all_items_brief: 响应异常（无 Items 字段）: {result}")
+            raise EmbyAPIError("Emby API 响应异常（无 Items 字段）: /Items")
 
         brief_items = []
         for item in result['Items']:
@@ -483,8 +506,12 @@ class EmbyClient:
         return {'Items': result['Items'], 'TotalRecordCount': result.get('TotalRecordCount', 0)}
 
     def test_connection(self) -> bool:
-        result = self._make_request('GET', '/System/Info')
-        return result is not None
+        try:
+            self._make_request('GET', '/System/Info')
+            return True
+        except EmbyAPIError as e:
+            logger.warning(f"Emby 连接测试失败: {e}")
+            return False
 
 
 _emby_client_instance = None

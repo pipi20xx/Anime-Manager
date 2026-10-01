@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from recognition.data_provider.tmdb.client import TMDBProvider
 from tmdbmatefull.database import DEFAULT_GENRE_MAPPINGS, DEFAULT_COUNTRY_MAPPINGS, DEFAULT_LANGUAGE_MAPPINGS
 from logger import log_audit
+from emby_client import EmbyAPIError
 from emby_index_service import wrap_emby_with_index, sync_index
 
 router = APIRouter(prefix="/api/tmdb", tags=["TMDB 云端数据"])
@@ -174,8 +175,13 @@ async def get_detail_emby_status(media_type: str, tmdb_id: str):
         else:
             return emby.get_series_library_status(tmdb_id)
 
-    result = await asyncio.to_thread(_fetch)
-    await cleanup()
+    try:
+        result = await asyncio.to_thread(_fetch)
+    except EmbyAPIError as e:
+        log_audit("Emby", "库状态", f"TMDB ID {tmdb_id}: ⚠️ Emby API 不可用: {e}")
+        raise HTTPException(status_code=502, detail=f"Emby API 不可用: {e}")
+    finally:
+        await cleanup()
 
     _set_emby_cache(cache_key, result)
 
@@ -234,8 +240,13 @@ async def get_season_episodes_emby(tmdb_id: str, season_number: int):
     def _fetch():
         return emby.get_season_episodes_info(tmdb_id, season_number)
 
-    episodes_info = await asyncio.to_thread(_fetch)
-    await cleanup()
+    try:
+        episodes_info = await asyncio.to_thread(_fetch)
+    except EmbyAPIError as e:
+        log_audit("Emby", "季度集", f"TMDB ID {tmdb_id} S{season_number}: ⚠️ Emby API 不可用: {e}")
+        raise HTTPException(status_code=502, detail=f"Emby API 不可用: {e}")
+    finally:
+        await cleanup()
 
     result = {"episodes": episodes_info}
     _set_emby_cache(cache_key, result)

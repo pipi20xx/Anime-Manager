@@ -209,7 +209,7 @@ async def sync_index() -> int:
     """
     global _last_sync_time, _last_sync_count
     import asyncio
-    from emby_client import get_emby_client
+    from emby_client import get_emby_client, EmbyAPIError
 
     logger.info("开始同步 Emby 库索引...")
 
@@ -219,6 +219,10 @@ async def sync_index() -> int:
 
     try:
         items = await asyncio.to_thread(_fetch)
+    except EmbyAPIError as e:
+        logger.error(f"同步索引: Emby API 不可用，本次同步中止: {e}")
+        _last_sync_count = -1
+        return -1
     except Exception as e:
         logger.error(f"同步索引: Emby 请求失败: {e}")
         _last_sync_count = -1
