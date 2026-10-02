@@ -321,7 +321,7 @@ class TMDBProvider:
         await MetaCacheManager.set_discover_cache(cache_key, formatted, expire_hours=24)
         return formatted
 
-    async def search(self, query: str, year: Optional[str], media_type: str, logs: Any = None, lang: str = "zh-CN") -> Tuple[List[Dict], bool]:
+    async def search(self, query: str, year: Optional[str], media_type: str, logs: Any = None, lang: str = "zh-CN", use_cache: bool = True) -> Tuple[List[Dict], bool]:
         """
         TMDB 搜索接口
         
@@ -331,11 +331,12 @@ class TMDBProvider:
             - success: True 表示请求成功，False 表示网络错误
         """
         cache_key = f"tmdb:search:{media_type}:{lang}:{query}:{year or ''}"
-        cached = await MetaCacheManager.get_discover_cache(cache_key)
-        if cached:
-            # [DEBUG] 记录缓存命中
-            if hasattr(logs, "log"): logs.log(f"┃   [DEBUG] TMDB缓存命中: query='{query}'")
-            return cached, True
+        if use_cache:
+            cached = await MetaCacheManager.get_discover_cache(cache_key)
+            if cached:
+                # [DEBUG] 记录缓存命中
+                if hasattr(logs, "log"): logs.log(f"┃   [DEBUG] TMDB缓存命中: query='{query}'")
+                return cached, True
 
         params = {"query": query, "include_adult": "true", "language": lang}
         
@@ -360,10 +361,11 @@ class TMDBProvider:
             data_retry, retry_success = await self._fetch(f"/search/{media_type}", params, logs=logs)
             if retry_success and data_retry: results = data_retry.get("results", [])
             
-        await MetaCacheManager.set_discover_cache(cache_key, results, expire_hours=6)
+        if use_cache:
+            await MetaCacheManager.set_discover_cache(cache_key, results, expire_hours=6)
         return results, True
 
-    async def search_multi(self, query: str, year: Optional[str] = None, logs: Any = None, lang: str = "zh-CN") -> Tuple[List[Dict], bool]:
+    async def search_multi(self, query: str, year: Optional[str] = None, logs: Any = None, lang: str = "zh-CN", use_cache: bool = True) -> Tuple[List[Dict], bool]:
         """
         TMDB 多类型搜索接口
         
@@ -373,8 +375,9 @@ class TMDBProvider:
             - success: True 表示请求成功，False 表示网络错误
         """
         cache_key = f"tmdb:search:multi:{lang}:{query}:{year or ''}"
-        cached = await MetaCacheManager.get_discover_cache(cache_key)
-        if cached: return cached, True
+        if use_cache:
+            cached = await MetaCacheManager.get_discover_cache(cache_key)
+            if cached: return cached, True
 
         params = {"query": query, "include_adult": "true", "language": lang}
         
@@ -386,7 +389,8 @@ class TMDBProvider:
         
         results = [r for r in results if r.get("media_type") in ["movie", "tv"]]
         
-        await MetaCacheManager.set_discover_cache(cache_key, results, expire_hours=6)
+        if use_cache:
+            await MetaCacheManager.set_discover_cache(cache_key, results, expire_hours=6)
         return results, True
 
     async def smart_search(self, cn_name: Optional[str], en_name: Optional[str], year: Optional[str], media_type: str, logs: Any, anime_priority: bool = True, original_cn_name: Optional[str] = None) -> Optional[Dict]:
@@ -430,7 +434,7 @@ class TMDBProvider:
                 
                 if idx == 0:
                     for attempt in range(MAX_RETRIES):
-                        res_list, success = await self.search(q, year, media_type, logs=logs, lang=lang)
+                        res_list, success = await self.search(q, year, media_type, logs=logs, lang=lang, use_cache=False)
                         if success:
                             break
                         if attempt < MAX_RETRIES - 1:
@@ -441,7 +445,7 @@ class TMDBProvider:
                         _log(f"┃   ❌ 完整标题搜索网络失败，已重试 {MAX_RETRIES} 次，中止本次识别")
                         return None
                 else:
-                    res_list, success = await self.search(q, year, media_type, logs=logs, lang=lang)
+                    res_list, success = await self.search(q, year, media_type, logs=logs, lang=lang, use_cache=False)
                     if not success:
                         _log(f"┃   ⚠️ 分词搜索网络失败，跳过此查询")
                         continue
@@ -503,7 +507,7 @@ class TMDBProvider:
                 
                 if idx == 0:
                     for attempt in range(MAX_RETRIES):
-                        res_list, success = await self.search_multi(q, year, logs=logs, lang=lang)
+                        res_list, success = await self.search_multi(q, year, logs=logs, lang=lang, use_cache=False)
                         if success:
                             break
                         if attempt < MAX_RETRIES - 1:
@@ -514,7 +518,7 @@ class TMDBProvider:
                         _log(f"┃   ❌ 完整标题搜索网络失败，已重试 {MAX_RETRIES} 次，中止本次识别")
                         return None
                 else:
-                    res_list, success = await self.search_multi(q, year, logs=logs, lang=lang)
+                    res_list, success = await self.search_multi(q, year, logs=logs, lang=lang, use_cache=False)
                     if not success:
                         _log(f"┃   ⚠️ 分词搜索网络失败，跳过此查询")
                         continue

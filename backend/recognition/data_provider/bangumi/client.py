@@ -927,7 +927,7 @@ class BangumiProvider:
                 tmdb_lang = "ja-JP" if lang_hint == "ja" else "zh-CN"
                 q_label = "日文原名" if lang_hint == "ja" else "中文标题"
                 
-                results, _ = await tmdb.search(query, year, endpoint, logs=logs, lang=tmdb_lang)
+                results, _ = await tmdb.search(query, year, endpoint, logs=logs, lang=tmdb_lang, use_cache=False)
                 _log(f"┃   ├─ 🔍 [{q_label}] '{query}' -> 发现 {len(results)} 个候选人")
                 
                 for cand in results:
