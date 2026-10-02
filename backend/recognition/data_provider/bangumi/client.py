@@ -409,6 +409,7 @@ class BangumiProvider:
         """
         基于本地 bangumi_data_item 表，按季度返回该季番剧列表。
         - quarter: WINTER(1-3月) / SPRING(4-6月) / SUMMER(7-9月) / FALL(10-12月)
+        - 不按 media_type 过滤（TV/OVA/Web/剧场版等均包含）
         - 筛选依据：优先使用 broadcast 字段，fallback 到 begin 字段，
           年月落在该季度月份范围内
         - 海报/评分/集数/标签按需从 subject 详情补全（有 7 天缓存）
@@ -429,7 +430,8 @@ class BangumiProvider:
         if not months:
             return {"status": "error", "message": f"未知季度: {season}", "data": []}
 
-        cache_key = f"bangumi:seasonal:{year}:{season}"
+        # v2: 不再按 media_type 过滤，升级 key 使旧结果缓存立即失效
+        cache_key = f"bangumi:seasonal:v2:{year}:{season}"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached:
             return cached
@@ -443,7 +445,6 @@ class BangumiProvider:
         try:
             async with db.session_scope():
                 stmt = select(BangumiDataItem).where(
-                    BangumiDataItem.media_type == "tv",
                     or_(BangumiDataItem.broadcast != None, BangumiDataItem.begin != None),
                 )
                 result = await db.session.execute(stmt)
