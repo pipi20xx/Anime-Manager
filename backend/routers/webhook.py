@@ -38,6 +38,81 @@ def _is_duplicate_event(file_path: str) -> bool:
     _recent_events[file_path] = now
     return last is not None and now - last < _EVENT_DEDUP_WINDOW
 
+def _effective_path(item: dict) -> str:
+    """事件的有效路径：rename（同盘移动）取 destination_file（新路径），其余取 source_file。"""
+    action = item.get("action")
+    raw = item.get("destination_file") if action == "rename" else None
+    if not raw:
+        raw = item.get("source_file", "")
+    return (raw or "").split(':')[0]
+
+async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, origin_task_id: str = None, delay: int = 15):
+    """
+    目录级事件展开：CD2 复制/移动文件夹时只推送顶层目录变动（不含内容）。
+    仅在路径已命中 STRM 任务后调用；延迟后递归列举云目录中的视频文件，
+    逐个作为文件事件走完整联动链路（复用匹配/入队/去重/通知逻辑）。
+    """
+    from clients.manager import ClientManager
+    from strm.constants import VIDEO_EXTENSIONS
+
+    await asyncio.sleep(delay)
+    task_id = f"webhook_dir_{uuid.uuid4().hex[:8]}"
+    try:
+        await start_task(task_id, "Webhook联动", f"[{source}] 目录展开: {os.path.basename(dir_cloud_path)}")
+        await log_task(task_id, f"📁 目录事件展开: {dir_cloud_path}")
+        if origin_task_id:
+            await log_task(task_id, f"🔗 来源事件任务: {origin_task_id}")
+
+        # 解析 CD2 客户端（仅用于列举目录）：优先用命中任务绑定的客户端，单实例时兜底
+        config = ConfigManager.get_config()
+        client = None
+        for cid in client_ids:
+            if cid:
+                candidate = ClientManager.get_client(cid)
+                if candidate and hasattr(candidate, "walk_files"):
+                    client = candidate
+                    break
+        if client is None:
+            cd2_confs = [c for c in config.get("download_clients", []) if c.get("type") == "cd2"]
+            if len(cd2_confs) == 1:
+                client = ClientManager.get_client(cd2_confs[0].get("id"))
+        if client is None:
+            await log_task(task_id, "❌ 未找到可用 CD2 客户端，无法展开目录", "ERROR")
+            await finish_task(task_id, "error", 0)
+            return
+
+        files = []
+        for attempt in range(2):
+            files = await asyncio.to_thread(client.walk_files, dir_cloud_path, list(VIDEO_EXTENSIONS))
+            if files:
+                break
+            # 复制可能尚未落盘完成，空结果时多等一轮再试
+            await log_task(task_id, f"⏳ 第 {attempt + 1} 次扫描未发现视频文件（复制可能未完成），{delay} 秒后重试...")
+            await asyncio.sleep(delay)
+
+        if not files:
+            await log_task(task_id, "⏭️ 目录中未发现视频文件，结束")
+            await finish_task(task_id, "completed", 0, {"skipped": True})
+            return
+
+        await log_task(task_id, f"🔍 发现 {len(files)} 个视频文件，逐个推送联动...")
+        payload = [
+            {"action": "create", "source_file": f.get("path"), "is_dir": "false"}
+            for f in files
+        ]
+        result = await process_cd2_notification(payload, source)
+        triggered = result.get("triggered", 0) if isinstance(result, dict) else 0
+        await log_task(task_id, f"🏁 目录展开完成，联动处理 {triggered} 个文件")
+        await finish_task(task_id, "completed", triggered)
+        log_audit("CD2联动", "目录展开", f"目录展开完成: {os.path.basename(dir_cloud_path)}", details=f"视频文件 {len(files)} 个，联动处理 {triggered} 个")
+    except Exception as e:
+        logger.error(f"[CD2联动] 目录展开失败 {dir_cloud_path}: {e}")
+        try:
+            await log_task(task_id, f"❌ 目录展开失败: {e}", "ERROR")
+            await finish_task(task_id, "error", 0)
+        except Exception:
+            pass
+
 async def process_cd2_notification(data: list, source: str = "webhook"):
     """
     内部处理函数，可由 Webhook 路由调用，也可由系统内部直接触发。
@@ -50,14 +125,17 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     skipped_dup_count = 0
     for item in data:
         action = item.get("action")
-        file_path = item.get("source_file", "").split(':')[0]
+        file_path = _effective_path(item)
 
         if not file_path:
             continue
-        if action != "create":
+        # rename（同盘移动）必须有新路径才有意义
+        if action == "rename" and not item.get("destination_file"):
             continue
-        if str(item.get("is_dir", "")).lower() == "true":
+        if action not in ("create", "rename"):
             continue
+        # 目录事件放行（打标后续处理）：先做零开销路径匹配，命中任务才展开目录
+        item["_is_dir_event"] = str(item.get("is_dir", "")).lower() == "true"
         # 跳过 .strm 输出文件：它们存在于云目录时（历史残留或反向写入）会反复触发联动
         if file_path.lower().endswith(".strm"):
             continue
@@ -73,7 +151,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     if not valid_items:
         return {"triggered": 0, "deduped": skipped_dup_count}
     
-    first_filename = os.path.basename(valid_items[0].get("source_file", "").split(':')[0])
+    first_filename = os.path.basename(_effective_path(valid_items[0]))
     
     module_name = source if source.startswith("CD2") else f"CD2{source}"
     task_desc = f"[{module_name}] {first_filename}" if len(valid_items) == 1 else f"[{module_name}] 共 {len(valid_items)} 个事件"
@@ -94,21 +172,24 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     task_stats = {}
 
     for item in valid_items:
-        file_path = item.get("source_file", "").split(':')[0]
         action = item.get("action")
-        
-        filename = os.path.basename(file_path)
-        await log_task(task_id_ref, f"📥 事件: {filename}")
-        await log_task(task_id_ref, f"   源路径: {file_path}")
-        log_audit("CD2联动", "收到事件", f"收到 CD2 文件变动通知", details=f"动作: {action} | 路径: {file_path}")
+        is_dir_event = item.get("_is_dir_event", False)
+        file_path = _effective_path(item)
 
-        matched = False
+        filename = os.path.basename(file_path)
+        kind_label = "目录" if is_dir_event else "文件"
+        await log_task(task_id_ref, f"📥 事件 [{action}/{kind_label}]: {filename}")
+        await log_task(task_id_ref, f"   路径: {file_path}")
+        log_audit("CD2联动", "收到事件", f"收到 CD2 文件变动通知", details=f"动作: {action} | 类型: {kind_label} | 路径: {file_path}")
+
         clean_cloud_path = '/' + file_path.lstrip('/')
 
+        # 第一步：纯字符串路径预匹配，零 CD2 API 开销
+        matched_tasks = []
         for task in strm_tasks:
             if not task.get("webhook_enabled", True):
                 continue
-                
+
             src_root = task.get("source_path") or task.get("source_dir")
             if not src_root: continue
 
@@ -119,46 +200,60 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
 
             mapping_root = (task.get("cd2_mapping_path") or client_conf.get("mount_path") or "").strip()
             mapping_root = mapping_root.rstrip('/')
-            
+
             local_file_path = os.path.normpath(mapping_root + clean_cloud_path)
-            
+
             is_match = local_file_path.startswith(os.path.normpath(src_root)) or clean_cloud_path.startswith(os.path.normpath(src_root))
 
             if is_match:
-                from monitor import MonitorManager
-                task_name = task.get('name', '未命名')
-                task_stats[task_name] = task_stats.get(task_name, 0) + 1
+                matched_tasks.append((task, local_file_path))
 
-                # gRPC 模式 (cd2_api)：直接使用云路径坐标系，处理器原生支持
-                if task.get("sync_mode") == "cd2_api":
-                    process_path = clean_cloud_path
-                    path_label = "云路径"
-                else:
-                    process_path = local_file_path
-                    path_label = "本地路径"
-
-                log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"{path_label}: {process_path}")
-
-                enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, origin_task_id=task_id_ref, origin_desc=task_desc)
-
-                if enqueued:
-                    enqueued_count += 1
-                    await log_task(task_id_ref, f"✅ 匹配任务: [{task_name}] -> 已加入后台队列")
-                    await log_task(task_id_ref, f"   {path_label}: {process_path}")
-                    processed_count += 1
-                else:
-                    await log_task(task_id_ref, f"🎯 匹配任务: [{task_name}]")
-                    await log_task(task_id_ref, f"   {path_label}: {process_path}")
-                    await log_task(task_id_ref, f"⏳ 开始处理...")
-                    processing_tasks.append((task_name, process_path, task, StrmGenerator.process_single_file(process_path, task)))
-                    processed_count += 1
-
-                matched = True
-                # 不 break：所有源目录匹配的任务都处理（与定时扫描/实时监控行为一致）
-
-        if not matched:
+        if not matched_tasks:
             await log_task(task_id_ref, f"⏭️ 未匹配任何任务: {filename}")
             log_audit("CD2联动", "未匹配", f"⏭️ 未命中任何 STRM 任务: {filename}", details=f"路径: {file_path}", level="WARN")
+            continue
+
+        # 目录事件（CD2 复制/移动文件夹只报顶层、不含内容）：
+        # 命中任务后才交给后台延迟展开云目录，避免未命中时的 API 开销
+        if is_dir_event:
+            task_names = ", ".join(t.get('name', '未命名') for t, _ in matched_tasks)
+            await log_task(task_id_ref, f"📁 目录事件命中任务: [{task_names}]，稍后展开目录扫描视频文件")
+            log_audit("CD2联动", "目录展开", f"目录事件命中 {len(matched_tasks)} 个 STRM 任务，延迟展开目录", details=f"路径: {file_path}")
+            client_ids = [t.get("cd2_client_id") for t, _ in matched_tasks]
+            asyncio.create_task(_expand_dir_event(clean_cloud_path, source, client_ids, origin_task_id=task_id_ref))
+            processed_count += 1
+            continue
+
+        for task, local_file_path in matched_tasks:
+            from monitor import MonitorManager
+            task_name = task.get('name', '未命名')
+            task_stats[task_name] = task_stats.get(task_name, 0) + 1
+
+            # gRPC 模式 (cd2_api)：直接使用云路径坐标系，处理器原生支持
+            if task.get("sync_mode") == "cd2_api":
+                process_path = clean_cloud_path
+                path_label = "云路径"
+            else:
+                process_path = local_file_path
+                path_label = "本地路径"
+
+            log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"{path_label}: {process_path}")
+
+            enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, origin_task_id=task_id_ref, origin_desc=task_desc)
+
+            if enqueued:
+                enqueued_count += 1
+                await log_task(task_id_ref, f"✅ 匹配任务: [{task_name}] -> 已加入后台队列")
+                await log_task(task_id_ref, f"   {path_label}: {process_path}")
+                processed_count += 1
+            else:
+                await log_task(task_id_ref, f"🎯 匹配任务: [{task_name}]")
+                await log_task(task_id_ref, f"   {path_label}: {process_path}")
+                await log_task(task_id_ref, f"⏳ 开始处理...")
+                processing_tasks.append((task_name, process_path, task, StrmGenerator.process_single_file(process_path, task)))
+                processed_count += 1
+
+            # 不 break：所有源目录匹配的任务都处理（与定时扫描/实时监控行为一致）
     
     if processing_tasks:
         try:
