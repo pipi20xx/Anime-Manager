@@ -1,9 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Any
+from sqlmodel import select
 from recognition.data_provider.bangumi.client import BangumiProvider
 from config_manager import ConfigManager
 from logger import log_audit
+from database import db
+from models import BgmUserMark
 
 router = APIRouter(prefix="/api/bangumi", tags=["Bangumi 二次元数据"])
 
@@ -347,3 +350,45 @@ async def lookup_mapping(bgm_id: int):
     if mapping:
         return {"success": True, "mapping": mapping}
     return {"success": False, "message": "未找到映射"}
+
+@router.get("/mark", summary="获取全部用户标记")
+async def get_marks():
+    """返回 bgm_user_mark 表全部标记（表小，一次全量）。"""
+    async with db.session_scope():
+        rows = await db.all(BgmUserMark, select(BgmUserMark))
+        return {
+            "success": True,
+            "data": [
+                {"bgm_id": r.bgm_id, "status": r.status, "updated_at": r.updated_at}
+                for r in rows
+            ],
+        }
+
+class _MarkBody(BaseModel):
+    status: Optional[str] = None
+
+@router.post("/mark/{bgm_id}", summary="设置/取消用户标记")
+async def set_mark(bgm_id: int, body: _MarkBody):
+    """
+    status 传 "organized" 等非空值则设置标记，传 null 则取消标记。
+    """
+    async with db.session_scope():
+        stmt = select(BgmUserMark).where(BgmUserMark.bgm_id == bgm_id)
+        existing = await db.first(BgmUserMark, stmt)
+        if body.status:
+            if existing:
+                existing.status = body.status
+                from datetime import datetime as _dt
+                existing.updated_at = _dt.now()
+                await db.save(existing)
+                action = "更新标记"
+            else:
+                await db.save(BgmUserMark(bgm_id=bgm_id, status=body.status))
+                action = "添加标记"
+            log_audit("Bangumi标记", action, f"bgm_id={bgm_id}, status={body.status}")
+            return {"success": True, "bgm_id": bgm_id, "status": body.status}
+        else:
+            if existing:
+                await db.delete(existing)
+                log_audit("Bangumi标记", "取消标记", f"bgm_id={bgm_id}")
+            return {"success": True, "bgm_id": bgm_id, "status": None}

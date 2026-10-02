@@ -593,6 +593,15 @@ class BangumiDataItem(SQLModel, table=True):
     raw_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     updated_at: datetime = Field(default_factory=datetime.now)
 
+class BgmUserMark(SQLModel, table=True):
+    """Bangumi 条目用户手动标记（如季度番剧表的"已整理"）"""
+    __tablename__ = "bgm_user_mark"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "Bangumi 用户标记"
+    bgm_id: int = Field(primary_key=True, index=True)
+    status: str = Field(default="organized", max_length=32)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
 class BangumiRawCache(SQLModel, table=True):
     __tablename__ = "bangumi_raw_cache"
     __table_args__ = {"schema": get_public_schema()}

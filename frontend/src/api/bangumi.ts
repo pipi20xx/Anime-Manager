@@ -52,4 +52,11 @@ export const bangumiApi = {
   /** 查询映射 */
   lookupMapping: (bgmId: string | number) =>
     api.get<any>(`/api/bangumi/mapping/lookup/${bgmId}`),
+
+  /** 获取全部用户标记（已整理等） */
+  getMarks: () => api.get<any>('/api/bangumi/mark'),
+
+  /** 设置/取消用户标记：status 传 null 表示取消 */
+  setMark: (bgmId: string | number, status: string | null) =>
+    api.post<any>(`/api/bangumi/mark/${bgmId}`, { status }),
 }
