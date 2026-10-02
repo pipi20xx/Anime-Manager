@@ -56,6 +56,7 @@ const tableDescriptions: Record<string, string> = {
   'public.file_hashes': '文件哈希记录',
   'public.rss_detect_tasks': 'RSS 探测订阅任务',
   'public.bangumi_data_item': 'Bangumi 数据条目',
+  'public.bgm_user_mark': 'Bangumi 用户手动标记（季度番剧表"已整理"等）',
   'public.bangumi_raw_cache': 'Bangumi 原始 API 响应缓存',
   'public.emby_media_index': 'Emby 库索引',
 }
