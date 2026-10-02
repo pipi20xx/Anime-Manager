@@ -46,6 +46,34 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || window.locatio
 const webhookUrl = computed(() => `${window.location.origin}/api/webhook/cd2/file_notify`)
 const embyWebhookUrl = computed(() => `${window.location.origin}/api/webhook/emby`)
 
+// CD2 webhook.toml 完整配置：base_url 指向本项目回调根路径，由模板自动拼接 /file_notify
+const cd2WebhookToml = computed(() => `# CloudDrive2 Webhook 配置
+# 覆盖保存到 CD2 配置目录下的 webhook.toml，重启 CD2 后生效
+[global_params]
+base_url = "${window.location.origin}/api/webhook/cd2"
+enabled = true
+
+[global_params.default_headers]
+content-type = "application/json"
+
+[file_system_watcher]
+url = "{base_url}/file_notify"
+method = "POST"
+enabled = true
+body = '''
+{
+    "data": [
+            {
+                "action": "{action}",
+                "is_dir": "{is_dir}",
+                "source_file": "{source_file}",
+                "destination_file": "{destination_file}"
+            }
+    ]
+}
+'''
+`)
+
 const docsUrl = computed(() => {
   const theme = themeStore.isDarkMode ? 'dark' : 'light'
   return `${API_BASE}/api/system/docs?theme=${theme}&token=${config.value.external_token || ''}`
@@ -257,7 +285,7 @@ registerHeaderTab({
           <div class="mb-6">
             <h3 class="text-subtitle-1 font-weight-bold mb-2">Webhook 推送</h3>
             <p class="text-body-2 text-medium-emphasis mb-4">
-              当您的云盘文件发生变动时，CD2 会通过此 Webhook 通知番剧管家立即刷新。
+              当您的云盘文件发生变动时（支持文件/文件夹的新建与移动），CD2 会通过此 Webhook 通知番剧管家立即刷新。
               必须要有 CloudDrive2 会员才可以使用此功能。
             </p>
             <v-text-field
@@ -282,6 +310,19 @@ registerHeaderTab({
                 </v-tooltip>
               </template>
             </v-text-field>
+            <v-btn
+              color="secondary"
+              variant="tonal"
+              class="mt-3"
+              prepend-icon="mdi-file-code"
+              @click="copy(cd2WebhookToml, '已复制 CD2 webhook.toml 完整配置')"
+            >
+              复制 CD2 webhook.toml 完整配置
+            </v-btn>
+            <p class="text-body-2 text-medium-emphasis mt-2">
+              用复制的内容覆盖 CD2 配置目录下的 <code>webhook.toml</code> 并重启 CD2 即可生效，
+              无需手动修改任何字段（回调地址已自动填入本机访问地址）。
+            </p>
           </div>
 
           <v-divider class="my-6" />
