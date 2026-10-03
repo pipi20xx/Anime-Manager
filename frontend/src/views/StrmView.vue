@@ -26,8 +26,8 @@ const browsingVia = ref<'local' | 'cd2'>('local')
 
 const openFolderBrowser = (field: 'source_path' | 'target_path') => {
   browsingField.value = field
-  // CD2 联动任务的源目录是 CD2 挂载视图下的本地路径，统一按本地浏览
-  browsingVia.value = 'local'
+  // CD2 gRPC 模式的源目录是 CD2 云盘内部路径（如 /115open/xxx），走云盘浏览；目标目录始终本地
+  browsingVia.value = field === 'source_path' && taskForm.sync_mode === 'cd2_api' ? 'cd2' : 'local'
   showFolderBrowser.value = true
 }
 
@@ -872,7 +872,7 @@ onMounted(() => {
     <FolderBrowserModal
       v-model="showFolderBrowser"
       :via="browsingVia"
-      :title="browsingField === 'source_path' ? '选择源目录' : '选择目标目录'"
+      :title="browsingField === 'source_path' ? (browsingVia === 'cd2' ? '选择源目录 (CD2 云盘)' : '选择源目录') : '选择目标目录'"
       @select="onFolderSelected"
     />
   </v-container>

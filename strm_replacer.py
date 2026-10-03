@@ -6,9 +6,10 @@ STRM 文件路径替换工具 (PyQt6)
 功能：
   - 选择一个文件夹，递归查找所有层级中的 .strm 文件
   - 自定义多组"替换为"规则
+  - URL 解码模式：将 %XX 百分号转义的链接还原为可读明文（其他项目生成的 STRM 常见）
   - 三大页面：① 配置页 ② 预览结果页 ③ 处理日志页
   - 支持备份原文件，可自定义备份文件夹（保持目录结构）
-  - 支持仅替换路径 / 全文替换两种模式
+  - 支持仅替换路径 / 全文替换 / URL 解码三种模式
   - 窗口宽高可任意调整
 
 依赖安装：
@@ -22,6 +23,7 @@ import sys
 import os
 import shutil
 from pathlib import Path
+from urllib.parse import unquote
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -31,6 +33,40 @@ from PyQt6.QtWidgets import (
     QProgressBar, QMessageBox, QGroupBox, QRadioButton, QButtonGroup,
     QTabWidget, QScrollArea
 )
+
+
+# ──────────────────────────────────────────────
+# 内容转换核心逻辑
+# ──────────────────────────────────────────────
+def transform_content(content: str, mode: str, rules: list) -> str:
+    """
+    按模式转换 STRM 内容，返回转换后的文本（保持末尾换行）。
+      mode = "path"   仅对含路径分隔符的行执行文字替换
+      mode = "full"   对全文执行文字替换
+      mode = "decode" URL 解码：仅还原 %XX 转义序列，已是明文的行保持不变
+    """
+    if mode == "decode":
+        # unquote 只转换合法的 %XX 序列；非法序列与普通字符原样保留，天然幂等
+        new_content = "\n".join(unquote(line) for line in content.splitlines())
+    elif mode == "path":
+        lines = content.splitlines()
+        new_lines = []
+        for line in lines:
+            line_stripped = line.strip()
+            # 如果这一行看起来像一个路径（包含 / 或 \）
+            if "/" in line_stripped or "\\" in line_stripped:
+                for old, new in rules:
+                    line = line.replace(old, new)
+            new_lines.append(line)
+        new_content = "\n".join(new_lines)
+    else:
+        for old, new in rules:
+            content = content.replace(old, new)
+        new_content = content
+
+    if content.endswith("\n") and not new_content.endswith("\n"):
+        new_content += "\n"
+    return new_content
 
 
 # ──────────────────────────────────────────────
@@ -50,7 +86,7 @@ class StrmReplaceWorker(QThread):
         self.folder = folder
         self.rules = rules          # [(old, new), ...]
         self.backup = backup
-        self.mode = mode            # "path" 或 "full"
+        self.mode = mode            # "path" / "full" / "decode"
         self.backup_dir = backup_dir  # 备份目标文件夹，空字符串=同目录 .bak
 
     def run(self):
@@ -61,35 +97,25 @@ class StrmReplaceWorker(QThread):
         success = 0
         fail = 0
 
-        self.log.emit(f"找到 {total} 个 .strm 文件，开始处理...\n")
+        self.log.emit(f"找到 {total} 个 .strm 文件，开始处理...")
+        mode_name = {"path": "仅替换路径行", "full": "全文替换", "decode": "URL 解码"}[self.mode]
+        self.log.emit(f"处理模式: {mode_name}")
+        if self.mode == "decode":
+            self.log.emit("(若本行不显示「URL 解码」，说明运行的是旧版工具，请更新 strm_replacer.py 后重开)")
+        self.log.emit("")
         self.progress.emit(0, total)
 
+        escape_count = 0
         for i, strm_file in enumerate(strm_files, 1):
             try:
                 # 读取文件内容
                 content = strm_file.read_text(encoding="utf-8")
                 original_content = content
 
-                if self.mode == "path":
-                    # 仅替换路径部分（取每行中类似路径的内容）
-                    lines = content.splitlines()
-                    new_lines = []
-                    for line in lines:
-                        line_stripped = line.strip()
-                        # 如果这一行看起来像一个路径（包含 / 或 \）
-                        if "/" in line_stripped or "\\" in line_stripped:
-                            for old, new in self.rules:
-                                line = line.replace(old, new)
-                        new_lines.append(line)
-                    new_content = "\n".join(new_lines)
-                    # 保持文件末尾换行
-                    if content.endswith("\n") and not new_content.endswith("\n"):
-                        new_content += "\n"
-                else:
-                    # 全文替换：对所有内容执行替换
-                    for old, new in self.rules:
-                        content = content.replace(old, new)
-                    new_content = content
+                if "%" in content:
+                    escape_count += 1
+
+                new_content = transform_content(content, self.mode, self.rules)
 
                 if new_content != original_content:
                     # 备份
@@ -118,7 +144,11 @@ class StrmReplaceWorker(QThread):
 
             self.progress.emit(i, total)
 
-        self.log.emit(f"\n处理完成！成功替换: {success}，失败: {fail}，总计: {total}\n")
+        self.log.emit(f"\n处理完成！成功替换: {success}，失败: {fail}，总计: {total}")
+        if self.mode == "decode":
+            self.log.emit(f"诊断: {total} 个文件中 {escape_count} 个内容包含 % 转义序列"
+                          + ("（0 个说明文件内容本就没有编码，解码模式无事可做）" if escape_count == 0 else ""))
+        self.log.emit("")
         self.finished_signal.emit(success, fail)
 
 
@@ -210,15 +240,19 @@ class StrmReplacerWindow(QMainWindow):
 
         # 替换模式
         mode_row = QHBoxLayout()
-        mode_row.addWidget(QLabel("替换模式:"))
+        mode_row.addWidget(QLabel("处理模式:"))
         self.rb_path = QRadioButton("仅替换路径行（推荐）")
         self.rb_path.setChecked(True)
         self.rb_full = QRadioButton("全文替换")
+        self.rb_decode = QRadioButton("URL 解码（%XX → 原字符）")
+        self.rb_decode.setToolTip("将其他项目生成的 STRM 中百分号转义的链接还原为可读明文，无需配置规则")
         self.mode_group = QButtonGroup(self)
         self.mode_group.addButton(self.rb_path)
         self.mode_group.addButton(self.rb_full)
+        self.mode_group.addButton(self.rb_decode)
         mode_row.addWidget(self.rb_path)
         mode_row.addWidget(self.rb_full)
+        mode_row.addWidget(self.rb_decode)
         mode_row.addStretch()
         rules_layout.addLayout(mode_row)
 
@@ -383,14 +417,20 @@ class StrmReplacerWindow(QMainWindow):
                 rules.append((old_text, new_text))
         return rules
 
+    # ── 获取当前处理模式 ──
+    def _get_mode(self) -> str:
+        if self.rb_decode.isChecked():
+            return "decode"
+        return "path" if self.rb_path.isChecked() else "full"
+
     # ── 验证输入 ──
     def _validate(self):
         folder = self.folder_edit.text().strip()
         if not folder or not os.path.isdir(folder):
             QMessageBox.warning(self, "警告", "请先选择一个有效的文件夹。")
             return False
-        rules = self._get_rules()
-        if not rules:
+        # URL 解码模式不依赖替换规则，其余模式至少需要一条规则
+        if self._get_mode() != "decode" and not self._get_rules():
             QMessageBox.warning(self, "警告", "请至少添加一条有效的替换规则（查找内容不能为空）。")
             return False
         return True
@@ -402,7 +442,7 @@ class StrmReplacerWindow(QMainWindow):
 
         folder = self.folder_edit.text().strip()
         rules = self._get_rules()
-        mode = "path" if self.rb_path.isChecked() else "full"
+        mode = self._get_mode()
 
         folder_path = Path(folder)
         strm_files = list(folder_path.rglob("*.strm"))
@@ -422,22 +462,7 @@ class StrmReplacerWindow(QMainWindow):
                 content = strm_file.read_text(encoding="utf-8")
                 original_content = content
 
-                if mode == "path":
-                    lines = content.splitlines()
-                    new_lines = []
-                    for line in lines:
-                        line_stripped = line.strip()
-                        if "/" in line_stripped or "\\" in line_stripped:
-                            for old, new in rules:
-                                line = line.replace(old, new)
-                        new_lines.append(line)
-                    new_content = "\n".join(new_lines)
-                    if content.endswith("\n") and not new_content.endswith("\n"):
-                        new_content += "\n"
-                else:
-                    for old, new in rules:
-                        content = content.replace(old, new)
-                    new_content = content
+                new_content = transform_content(content, mode, rules)
 
                 if new_content != original_content:
                     rel_path = str(strm_file.relative_to(folder_path))
@@ -475,11 +500,16 @@ class StrmReplacerWindow(QMainWindow):
         rules = self._get_rules()
         backup = self.cb_backup.isChecked()
         backup_dir = self.backup_dir_edit.text().strip()
-        mode = "path" if self.rb_path.isChecked() else "full"
+        mode = self._get_mode()
 
-        msg = f"即将对以下文件夹中的所有 .strm 文件执行替换：\n\n  {folder}\n\n"
-        msg += f"替换规则数: {len(rules)}\n"
-        msg += f"替换模式: {'仅替换路径行' if mode == 'path' else '全文替换'}\n"
+        mode_text = {"path": "仅替换路径行", "full": "全文替换", "decode": "URL 解码"}[mode]
+
+        msg = f"即将对以下文件夹中的所有 .strm 文件执行处理：\n\n  {folder}\n\n"
+        if mode == "decode":
+            msg += "处理模式: URL 解码（%XX 转义 → 原字符，不使用替换规则）\n"
+        else:
+            msg += f"替换规则数: {len(rules)}\n"
+            msg += f"替换模式: {mode_text}\n"
         if backup:
             if backup_dir:
                 msg += f"自动备份: 是（备份到 {backup_dir}，保持目录结构）\n"
