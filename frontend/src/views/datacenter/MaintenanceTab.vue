@@ -335,8 +335,6 @@ onMounted(() => {
 .fp-result-list {
   max-height: 320px;
   overflow-y: auto;
-  border: 1px solid rgba(128, 128, 128, 0.2);
-  border-radius: 8px;
 }
 
 .fp-ellipsis {
