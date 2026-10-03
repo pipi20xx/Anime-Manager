@@ -1,4 +1,4 @@
-"""联动记录中心 API：Webhook 事件台账的查询、详情、手动重放与清理。
+"""联动记录中心 API：Webhook 事件台账的查询、详情、手动重试与清理。
 
 注意：路由前缀刻意避开 /api/webhook* —— 该前缀在 main.py 的鉴权中间件中被
 免登录放行（供 CD2/Emby 回调使用），台账管理端点必须走登录鉴权。
@@ -70,10 +70,10 @@ async def event_logs(event_id: int):
     return {"tasks": logs}
 
 
-@router.post("/{event_id}/replay", summary="手动重放联动事件")
+@router.post("/{event_id}/replay", summary="手动重试联动事件")
 async def replay_event(event_id: int):
     """
-    将台账中保存的原始 payload 原样重新执行一遍（成功/失败的事件均可重放）。
+    将台账中保存的原始 payload 原样重新执行一遍（成功/失败的事件均可重试）。
     复用同一条台账记录：attempts +1，状态回到 processing 后按本次执行结果更新。
     """
     record = await ledger.mark_replaying(event_id)
@@ -83,28 +83,28 @@ async def replay_event(event_id: int):
     payload = record.payload or {}
     data = payload.get("data")
     if not isinstance(data, list) or not data:
-        await ledger.update_event(event_id, status="failed", error_message="重放失败: 台账中无可执行的 payload")
+        await ledger.update_event(event_id, status="failed", error_message="重试失败: 台账中无可执行的 payload")
         raise HTTPException(status_code=400, detail="台账中无可执行的 payload")
 
     result = await process_cd2_notification(
-        data, source="手动重放", raw_payload=payload,
+        data, source="手动重试", raw_payload=payload,
         replay_event_id=event_id, skip_dedup=True,
         parent_event_id=record.parent_event_id,
     )
     return {"status": "success", "event_id": event_id, "result": result}
 
 
-@router.post("/replay_all", summary="批量重放当前筛选结果")
+@router.post("/replay_all", summary="批量重试当前筛选结果")
 async def replay_all_events(
     status: str = Query(None, description="按状态筛选"),
     source: str = Query(None, description="按来源筛选"),
     search: str = Query(None, description="按路径关键词筛选"),
     start_time: str = Query(None, description="起始时间 ISO 格式"),
     end_time: str = Query(None, description="结束时间 ISO 格式"),
-    limit: int = Query(500, ge=1, le=1000, description="单次最多重放条数（按时间倒序）"),
+    limit: int = Query(500, ge=1, le=1000, description="单次最多重试条数（按时间倒序）"),
 ):
     """
-    对当前筛选结果内的全部事件按顺序逐条重放（与列表页筛选条件一致）。
+    对当前筛选结果内的全部事件按顺序逐条重试（与列表页筛选条件一致）。
     串行执行避免并发请求触发网盘风控；单次上限 limit 条，超出请缩小筛选范围。
     """
     start = _parse_dt(start_time)
@@ -123,23 +123,23 @@ async def replay_all_events(
             payload = record.payload or {}
             data = payload.get("data")
             if not isinstance(data, list) or not data:
-                await ledger.update_event(eid, status="failed", error_message="重放失败: 台账中无可执行的 payload")
+                await ledger.update_event(eid, status="failed", error_message="重试失败: 台账中无可执行的 payload")
                 failed += 1
                 continue
             await process_cd2_notification(
-                data, source="手动重放", raw_payload=payload,
+                data, source="手动重试", raw_payload=payload,
                 replay_event_id=eid, skip_dedup=True,
                 parent_event_id=record.parent_event_id,
             )
             ok += 1
         except Exception as e:
-            logger.warning(f"[联动记录] 批量重放单条失败 (id={eid}): {e}")
-            await ledger.update_event(eid, status="failed", error_message=f"重放异常: {e}")
+            logger.warning(f"[联动记录] 批量重试单条失败 (id={eid}): {e}")
+            await ledger.update_event(eid, status="failed", error_message=f"重试异常: {e}")
             failed += 1
     return {
         "status": "success", "matched": matched, "replayed": ok, "failed": failed,
-        "message": f"批量重放完成：成功触发 {ok} 个{('，失败 ' + str(failed) + ' 个') if failed else ''}"
-                   + (f"（筛选共 {matched} 条，本次超出上限未重放 {matched - ok - failed} 条，请缩小范围后继续）" if matched > ok + failed else ""),
+        "message": f"批量重试完成：成功触发 {ok} 个{('，失败 ' + str(failed) + ' 个') if failed else ''}"
+                   + (f"（筛选共 {matched} 条，本次超出上限未重试 {matched - ok - failed} 条，请缩小范围后继续）" if matched > ok + failed else ""),
     }
 
 
@@ -160,7 +160,7 @@ async def clear_events(
     end_time: str = Query(None, description="结束时间 ISO 格式"),
     before_days: int = Query(None, description="只清理 N 天前的记录"),
 ):
-    """清理范围与列表筛选条件完全一致（重放/清理共用同一套筛选）。"""
+    """清理范围与列表筛选条件完全一致（重试/清理共用同一套筛选）。"""
     count = await ledger.clear_events(status=status, source=source, search=search,
                                       start_time=_parse_dt(start_time), end_time=_parse_dt(end_time),
                                       before_days=before_days)

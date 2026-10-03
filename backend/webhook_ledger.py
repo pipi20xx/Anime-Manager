@@ -127,7 +127,7 @@ async def update_event(event_id: Optional[int], status: str = None,
 
 
 async def mark_replaying(event_id: int) -> Optional[WebhookEvent]:
-    """手动重放前置：attempts +1、状态回 processing。返回记录供重放链路复用。"""
+    """手动重试前置：attempts +1、状态回 processing。返回记录供重试链路复用。"""
     async with db.session_scope(force_new=True):
         result = await db.session.execute(select(WebhookEvent).where(WebhookEvent.id == event_id))
         record = result.scalar_one_or_none()
@@ -231,7 +231,7 @@ def _apply_filters(query, status: str = None, source: str = None, search: str = 
 async def get_event_ids(status: str = None, source: str = None, search: str = None,
                         start_time: datetime = None, end_time: datetime = None,
                         limit: int = 500) -> List[int]:
-    """按筛选条件取事件 id 列表（批量重放用，按时间倒序）。"""
+    """按筛选条件取事件 id 列表（批量重试用，按时间倒序）。"""
     async with db.session_scope(force_new=True):
         query = _apply_filters(
             select(WebhookEvent.id).order_by(WebhookEvent.first_seen_at.desc()).limit(limit),
@@ -286,7 +286,7 @@ async def delete_event(event_id: int) -> bool:
 async def clear_events(status: str = None, source: str = None, search: str = None,
                        start_time: datetime = None, end_time: datetime = None,
                        before_days: int = None) -> int:
-    """批量清理：与列表共用同一套筛选条件（保证"清理"范围 = "重放"范围 = 筛选范围）。"""
+    """批量清理：与列表共用同一套筛选条件（保证"清理"范围 = "重试"范围 = 筛选范围）。"""
     async with db.session_scope(force_new=True):
         query = _apply_filters(delete(WebhookEvent), status=status, source=source, search=search,
                                start_time=start_time, end_time=end_time)

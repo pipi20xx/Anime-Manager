@@ -296,6 +296,19 @@ async def init_db():
 
     await migrate_column_types()
 
+    # [数据迁移] 联动记录来源标签「手动重放」更名为「手动重试」（与界面文案保持一致）
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("""
+                UPDATE public.webhook_events
+                SET sources = (SELECT jsonb_agg(
+                                   CASE WHEN elem = '"手动重放"'::jsonb THEN '"手动重试"'::jsonb ELSE elem END)
+                               FROM jsonb_array_elements(sources) AS elem)
+                WHERE sources @> '["手动重放"]'::jsonb;
+            """))
+    except Exception as e:
+        print(f"[AutoMigrate] webhook_events 来源标签更名跳过: {e}")
+
     async with engine.begin() as conn:
 
         # 4. 清理已废弃的表

@@ -60,10 +60,10 @@ export const webhookEventsApi = {
       logs: Array<{ time: string; level: string; message: string }>
     }> }>(`/api/linkage_events/${id}/logs`),
 
-  /** 手动重放事件 */
+  /** 手动重试事件 */
   replay: (id: number) => api.post<any>(`/api/linkage_events/${id}/replay`),
 
-  /** 批量重放当前筛选结果（与列表筛选条件一致，串行执行） */
+  /** 批量重试当前筛选结果（与列表筛选条件一致，串行执行） */
   replayAll: (params?: {
     status?: string
     source?: string

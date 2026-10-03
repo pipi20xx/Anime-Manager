@@ -6,7 +6,7 @@
  * - 按状态 / 来源筛选，按路径搜索
  * - 统计信息（状态分布 + 今日总数/今日失败）
  * - 事件详情弹窗：原始 payload、错误信息、目录展开的子事件、跳转任务中心
- * - 手动重放（成功/失败的事件均可原样重新执行）、删除 / 批量清理
+ * - 手动重试（成功/失败的事件均可原样重新执行）、删除 / 批量清理
  */
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -52,7 +52,7 @@ const sourceOptions = [
   { title: '内部监控', value: '内部监控' },
   { title: 'CD2监控', value: 'CD2监控' },
   { title: '整理联动', value: '整理联动' },
-  { title: '手动重放', value: '手动重放' },
+  { title: '手动重试', value: '手动重试' },
 ]
 
 // --- 状态展示映射 ---
@@ -91,7 +91,7 @@ watch(searchQuery, () => {
 
 watch([statusFilter, sourceFilter, startDate, endDate], () => fetchEvents())
 
-// --- 批量重放当前筛选结果 ---
+// --- 批量重试当前筛选结果 ---
 function buildFilterParams(): Record<string, any> {
   const params: Record<string, any> = {}
   if (statusFilter.value !== 'all') params.status = statusFilter.value
@@ -104,22 +104,22 @@ function buildFilterParams(): Record<string, any> {
 
 async function replayFiltered() {
   if (totalCount.value === 0) {
-    showError('当前筛选结果为空，没有可重放的记录')
+    showError('当前筛选结果为空，没有可重试的记录')
     return
   }
   const ok = await confirm({
-    title: '批量重放',
-    content: `将按时间从新到旧，顺序重放当前筛选结果中的 ${totalCount.value} 条记录（每个事件的原始 payload 原样重新执行，串行执行避免触发风控）。确定继续吗？`,
+    title: '批量重试',
+    content: `将按时间从新到旧，顺序重试当前筛选结果中的 ${totalCount.value} 条记录（每个事件的原始 payload 原样重新执行，串行执行避免触发风控）。确定继续吗？`,
     confirmColor: 'primary',
   })
   if (!ok) return
   replayingAll.value = true
   try {
     const res = await webhookEventsApi.replayAll(buildFilterParams())
-    success(res?.message || '批量重放完成')
+    success(res?.message || '批量重试完成')
     fetchEvents()
   } catch (e) {
-    showError('批量重放失败')
+    showError('批量重试失败')
   } finally {
     replayingAll.value = false
   }
@@ -230,17 +230,17 @@ function goTaskCenter() {
 // --- 操作 ---
 async function replayEvent(event: WebhookEvent) {
   const ok = await confirm({
-    title: '确认重放',
+    title: '确认重试',
     content: `将把该事件的原始 payload 原样重新执行一遍（第 ${(event.attempts || 1) + 1} 次）。确定继续吗？`,
     confirmColor: 'primary',
   })
   if (!ok) return
   try {
     await webhookEventsApi.replay(event.id)
-    success('重放已触发，状态将随执行结果更新')
+    success('重试已触发，状态将随执行结果更新')
     setTimeout(() => fetchEvents(), 1500)
   } catch (e) {
-    showError('重放失败')
+    showError('重试失败')
   }
 }
 
@@ -393,7 +393,7 @@ onUnmounted(() => {
       />
       <v-spacer />
       <v-btn variant="tonal" size="small" color="primary" prepend-icon="mdi-replay"
-             :loading="replayingAll" :disabled="replayingAll || totalCount === 0" @click="replayFiltered">重放</v-btn>
+             :loading="replayingAll" :disabled="replayingAll || totalCount === 0" @click="replayFiltered">重试</v-btn>
       <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-spray-bottle" @click="clearEvents">清理</v-btn>
       <v-btn variant="tonal" size="small" color="primary" prepend-icon="mdi-refresh" @click="fetchEvents()">刷新</v-btn>
     </div>
@@ -445,7 +445,7 @@ onUnmounted(() => {
           <v-card-actions class="pa-2">
             <v-spacer />
             <v-btn variant="tonal" size="small" color="info" prepend-icon="mdi-text-box-outline" @click="openDetail(event)">详情</v-btn>
-            <v-btn variant="tonal" size="small" color="primary" prepend-icon="mdi-replay" @click="replayEvent(event)">重放</v-btn>
+            <v-btn variant="tonal" size="small" color="primary" prepend-icon="mdi-replay" @click="replayEvent(event)">重试</v-btn>
             <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteEvent(event)">删除</v-btn>
           </v-card-actions>
         </v-card>
@@ -549,7 +549,7 @@ onUnmounted(() => {
               <div v-else class="text-caption text-medium-emphasis">暂无关联任务日志</div>
             </div>
 
-            <div class="text-caption text-medium-emphasis mb-1">原始 payload（重放时使用）</div>
+            <div class="text-caption text-medium-emphasis mb-1">原始 payload（重试时使用）</div>
             <pre class="we-payload">{{ payloadText }}</pre>
 
             <div class="d-flex ga-2 mt-3 text-caption text-medium-emphasis flex-wrap">
@@ -564,7 +564,7 @@ onUnmounted(() => {
                  :disabled="!selectedEvent?.task_id" @click="goTaskCenter">在任务中心打开</v-btn>
           <v-spacer />
           <v-btn variant="tonal" size="small" color="primary" prepend-icon="mdi-replay"
-                 @click="selectedEvent && replayEvent(selectedEvent)">重放</v-btn>
+                 @click="selectedEvent && replayEvent(selectedEvent)">重试</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

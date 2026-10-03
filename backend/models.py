@@ -654,13 +654,13 @@ class WebhookEvent(SQLModel, table=True):
     action: str = Field(default="create")  # create / rename
     file_path: str = Field(index=True)     # 有效路径（rename 取新路径）
     is_dir: bool = Field(default=False)
-    # 到达来源列表：["原生 Webhook", "内部监控", "整理联动", "手动重放"]，双通道合并时追加
+    # 到达来源列表：["原生 Webhook", "内部监控", "整理联动", "手动重试"]，双通道合并时追加
     sources: Optional[List[str]] = Field(default=None, sa_column=Column(get_json_type()))
-    # 原始报文（重放时原样重新执行）
+    # 原始报文（重试时原样重新执行）
     payload: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     status: str = Field(default="pending", index=True)  # pending/processing/success/failed/unmatched
     error_message: Optional[str] = None
-    attempts: int = Field(default=1)       # 执行次数（手动重放 +1）
+    attempts: int = Field(default=1)       # 执行次数（手动重试 +1）
     dup_count: int = Field(default=0)      # 重复到达被合并的次数
     # 目录事件展开出的子文件事件回链
     parent_event_id: Optional[int] = Field(default=None, index=True)

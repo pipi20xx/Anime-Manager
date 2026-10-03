@@ -123,7 +123,7 @@ const tableDescriptions: Record<string, string> = {
   'public.emby_media_index': 'Emby 库索引',
   'public.custom_scheduled_jobs': '自定义定时任务（任务计划页创建的 cron/间隔任务）',
   'public.notification_records': '通知中心发送记录（Telegram 等渠道的消息渲染留档）',
-  'public.webhook_events': '联动记录中心（Webhook 事件台账：CD2 联动成败、重放记录，并引用 task_records 保存全链路日志）',
+  'public.webhook_events': '联动记录中心（Webhook 事件台账：CD2 联动成败、重试记录，并引用 task_records 保存全链路日志）',
 }
 
 type TableCategory = 'cache' | 'config' | 'core'

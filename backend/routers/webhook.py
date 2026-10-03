@@ -74,7 +74,7 @@ async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, 
             await finish_task(task_id, "error", 0)
             return
 
-        # walk_files 异常（网盘 API 风控/限流）必须落到台账，供人工在联动记录页重放
+        # walk_files 异常（网盘 API 风控/限流）必须落到台账，供人工在联动记录页重试
         files = []
         try:
             for attempt in range(2):
@@ -126,7 +126,7 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
     内部处理函数，可由 Webhook 路由调用，也可由系统内部直接触发。
     返回 {"triggered": 命中并处理的文件数, "deduped": 被去重忽略的事件数}
     :param raw_payload: Webhook 端点收到的原始报文（内部触发可不传），台账关闭时回退到任务中心留档
-    :param replay_event_id: 手动重放时传入原台账记录 id（复用该行、跳过判重）
+    :param replay_event_id: 手动重试时传入原台账记录 id（复用该行、跳过判重）
     :param skip_dedup: 跳过判重（配合 replay_event_id 使用）
     :param parent_event_id: 目录事件展开出的子文件事件，回链到父事件的台账记录
     """
@@ -155,7 +155,7 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         # 事件落台账 + 持久化判重：原生 Webhook 与内部监控对同一文件各触发一次时，
         # 只处理先到的，后到的合并进同一行（sources 追加来源）
         if replay_event_id:
-            # 手动重放：复用原台账行，跳过判重
+            # 手动重试：复用原台账行，跳过判重
             event_id = replay_event_id
             item["_event_id"] = event_id
         else:
