@@ -328,8 +328,10 @@ async def cd2_webhook(request: Request, tail: str = ""):
         return {"status": "success", "message": "Notification received"}
 
     data = payload.get("data")
-    # 无论后续是否命中任务，原始报文都留档到审计日志
-    log_audit("CD2联动", "收到原始报文", f"收到 CD2 Webhook 请求 (后缀: {tail})", details=_dump_payload(payload))
+    # 原始报文的完整内容只留档到任务中心（process_cd2_notification 内 log_task），
+    # 系统日志是实时流，只记概要，避免长 payload 刷屏
+    event_count = len(data) if isinstance(data, list) else 0
+    log_audit("CD2联动", "收到请求", f"收到 CD2 Webhook 请求 (后缀: {tail}，事件数: {event_count})")
     if not data:
         return {"status": "ignored", "reason": "empty_data"}
 
