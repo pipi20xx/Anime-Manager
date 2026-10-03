@@ -392,6 +392,7 @@ onUnmounted(() => {
                 <v-chip size="small" :color="getStatusTag(task.status).color" variant="tonal">
                   {{ getStatusTag(task.status).label }}
                 </v-chip>
+                <v-chip size="small" variant="tonal" color="info" class="flex-shrink-0">{{ task.module }}</v-chip>
                 <span class="text-subtitle-2 font-weight-bold text-truncate">{{ task.name || task.module }}</span>
               </div>
               <span class="text-caption text-medium-emphasis flex-shrink-0">{{ formatTime(task.started_at) }}</span>

@@ -138,7 +138,7 @@ class SubscriptionMatcher:
                     from task_history import start_task as _start_task, log_task as _log_task, finish_task as _finish_task
                     import uuid as _uuid
                     recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
-                    await _start_task(recog_task_id, "识别", title)
+                    await _start_task(recog_task_id, "识别", f"[识别] {title}")
                     for log_msg in recog_logs:
                         level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
                         await _log_task(recog_task_id, log_msg, level)

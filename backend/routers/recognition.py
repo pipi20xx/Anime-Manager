@@ -62,7 +62,7 @@ async def recognize(req: RecognizeRequest):
     
     task_id = f"recog_{uuid.uuid4().hex[:12]}"
     try:
-        await start_task(task_id, "识别", display_name)
+        await start_task(task_id, "识别", f"[识别] {display_name}")
     except Exception:
         task_id = None
 

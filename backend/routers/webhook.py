@@ -239,7 +239,7 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
 
             log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"{path_label}: {process_path}")
 
-            enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, origin_task_id=task_id_ref, origin_desc=task_desc)
+            enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, source="STRM联动", origin_task_id=task_id_ref, origin_desc=task_desc)
 
             if enqueued:
                 enqueued_count += 1

@@ -431,7 +431,7 @@ async def recalculate_item(request: dict):
     try:
         import uuid as _uuid
         recog_task_id = f"recog_{_uuid.uuid4().hex[:12]}"
-        await start_task(recog_task_id, "识别", filename)
+        await start_task(recog_task_id, "识别", f"[识别] {filename}")
         for log_msg in recog_logs:
             level = "ERROR" if "❌" in log_msg or "[ERROR]" in log_msg else "WARN" if "⚠️" in log_msg else "INFO"
             await log_task(recog_task_id, log_msg, level)
