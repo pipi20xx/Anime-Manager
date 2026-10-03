@@ -31,6 +31,24 @@ def _dedup_window() -> int:
         return 180
 
 
+def get_retention_days() -> int:
+    """联动记录保留天数。
+
+    优先读顶层 webhook_ledger_retention_days（定时任务页面的可编辑参数按顶层键存取），
+    兼容旧的手改配置 webhook_ledger.retention_days，均无则 90。
+    """
+    config = ConfigManager.get_config()
+    for value in (config.get("webhook_ledger_retention_days"),
+                  config.get("webhook_ledger", {}).get("retention_days")):
+        try:
+            days = int(value)
+            if days >= 1:
+                return days
+        except (TypeError, ValueError):
+            continue
+    return 90
+
+
 def build_event_key(action: str, file_path: str) -> str:
     """判重键：action + 规范化路径（同路径不同动作不算重复）。"""
     return f"{action}:{(file_path or '').strip()}"
@@ -297,11 +315,11 @@ async def clear_events(status: str = None, source: str = None, search: str = Non
         return result.rowcount or 0
 
 
-async def cleanup_old_events(retention_days: int = 90):
+async def cleanup_old_events(retention_days: int = None):
     """定期清理（挂在任务记录清理的每日巡检里执行）。"""
     if not ledger_enabled():
         return 0
-    return await clear_events(before_days=retention_days)
+    return await clear_events(before_days=retention_days or get_retention_days())
 
 
 def _to_dict(record: WebhookEvent) -> Dict[str, Any]:

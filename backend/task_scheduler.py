@@ -17,6 +17,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from config_manager import ConfigManager
 from database import db
+from logger import log_audit
 from task_history import start_task, log_task, finish_task
 
 
@@ -227,14 +228,15 @@ instrumented_rss_cache_clear = _make_recorded("RSS缓存清理", "RSS 缓存定�
 async def run_task_record_cleanup():
     from task_history import cleanup_old_tasks
     from config_manager import ConfigManager
+    from webhook_ledger import cleanup_old_events, get_retention_days
     days = _to_int(ConfigManager.get_config().get("task_record_retention_days", 30), 30)
-    # 顺带清理联动记录台账（内部按 webhook_ledger.retention_days 独立控制保留期）
+    # 顺带清理联动记录台账（保留天数独立配置，默认 90 天）
     try:
-        from webhook_ledger import cleanup_old_events
-        ledger_days = _to_int(ConfigManager.get_config().get("webhook_ledger", {}).get("retention_days", 90), 90)
-        await cleanup_old_events(retention_days=ledger_days)
-    except Exception:
-        pass
+        deleted = await cleanup_old_events(retention_days=get_retention_days())
+        if deleted:
+            log_audit("任务记录清理", "联动记录", f"已清理 {deleted} 条过期联动记录")
+    except Exception as e:
+        log_audit("任务记录清理", "联动记录清理失败", f"清理过期联动记录时发生错误: {e}", level="ERROR")
     return await cleanup_old_tasks(max_records=500, max_days=days)
 
 instrumented_task_record_cleanup = _make_recorded("任务记录清理", "任务记录定期清理", "task_record_cleanup", run_task_record_cleanup)
@@ -396,18 +398,27 @@ JOB_REGISTRY: List[Dict[str, Any]] = [
         "job_id": "task_record_cleanup_job",
         "name": "任务记录定期清理",
         "module": "任务记录清理",
-        "description": "定期清理任务中心的执行记录（保留最近 500 条及设定天数内的记录）",
+        "description": "每天清理过期的任务中心执行记录与联动记录（联动记录按天数删除，无条数兜底）",
         "enabled_config_key": "task_record_cleanup_enabled",
         "schedule": {"type": "daily", "key": "task_record_cleanup_time", "default": "03:20"},
         "extra_params": [
             {
                 "key": "task_record_retention_days",
-                "label": "保留天数",
+                "label": "任务记录保留天数",
                 "type": "number",
                 "min": 1,
                 "max": 3650,
                 "default": 30,
                 "hint": "超过该天数的任务执行记录将被清理（无论时间，始终保留最近 500 条）",
+            },
+            {
+                "key": "webhook_ledger_retention_days",
+                "label": "联动记录保留天数",
+                "type": "number",
+                "min": 1,
+                "max": 3650,
+                "default": 90,
+                "hint": "超过该天数的联动记录（Webhook 事件台账）将被删除（纯按天删除，无条数兜底）",
             },
         ],
         "task_module": "任务记录清理",
