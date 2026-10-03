@@ -124,6 +124,41 @@ async def cleanup_invalid_fingerprints():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/fingerprints/by_tmdb", summary="按 TMDB ID 查询智能记忆记录")
+async def search_fingerprints_by_tmdb(tmdb_id: str, media_type: Optional[str] = None):
+    """
+    按 TMDB ID（可选附加类型过滤）预览将受影响的智能记忆（指纹）记录，
+    供定向清理前确认。
+    """
+    tmdb_id = (tmdb_id or "").strip()
+    if not tmdb_id:
+        raise HTTPException(status_code=400, detail="缺少 tmdb_id")
+    items = await MetaCacheManager.get_fingerprints_by_tmdb(tmdb_id, (media_type or "").strip().lower())
+    return {"status": "success", "total": len(items), "items": items}
+
+@router.post("/delete_fingerprints_by_tmdb", summary="按 TMDB ID 定向删除智能记忆")
+async def delete_fingerprints_by_tmdb(payload: Dict[str, Any]):
+    """
+    按 TMDB ID（可选附加类型）批量删除对应的智能记忆（指纹）记录。
+    用于 TMDB 条目被删除/失效后清理对应的失效记忆。
+    """
+    tmdb_id = str(payload.get("tmdb_id") or "").strip()
+    media_type = str(payload.get("media_type") or "").strip().lower()
+    if not tmdb_id:
+        raise HTTPException(status_code=400, detail="缺少 tmdb_id")
+    try:
+        deleted = await MetaCacheManager.delete_fingerprints_by_tmdb(tmdb_id, media_type)
+        type_label = media_type or "全部类型"
+        log_audit("数据中心", "定向清理智能记忆", f"TMDB {type_label}:{tmdb_id}，删除 {len(deleted)} 条记忆")
+        return {
+            "status": "success",
+            "message": f"已删除 {len(deleted)} 条记忆记录 (TMDB {type_label}:{tmdb_id})",
+            "deleted_count": len(deleted),
+            "deleted_items": deleted,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/clear_blacklist", summary="清空下载黑名单")
 async def clear_blacklist():
     """

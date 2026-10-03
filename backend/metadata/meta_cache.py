@@ -214,6 +214,30 @@ class MetaCacheManager:
             return [item.model_dump() for item in items]
 
     @staticmethod
+    async def get_fingerprints_by_tmdb(tmdb_id: str, media_type: str = "") -> List[Dict[str, Any]]:
+        """按 TMDB ID（可附加类型过滤）查询智能记忆记录"""
+        async with db.session_scope():
+            stmt = select(SeriesFingerprint).where(SeriesFingerprint.tmdb_id == str(tmdb_id))
+            if media_type:
+                stmt = stmt.where(SeriesFingerprint.type == media_type)
+            items = await db.all(SeriesFingerprint, stmt)
+            return [item.model_dump() for item in items]
+
+    @staticmethod
+    async def delete_fingerprints_by_tmdb(tmdb_id: str, media_type: str = "") -> List[Dict[str, Any]]:
+        """按 TMDB ID（可附加类型过滤）批量删除智能记忆记录，返回被删除的记录用于回执"""
+        deleted = await MetaCacheManager.get_fingerprints_by_tmdb(tmdb_id, media_type)
+        if not deleted:
+            return []
+        async with db.session_scope() as session:
+            stmt = delete(SeriesFingerprint).where(SeriesFingerprint.tmdb_id == str(tmdb_id))
+            if media_type:
+                stmt = stmt.where(SeriesFingerprint.type == media_type)
+            await session.execute(stmt)
+            await session.commit()
+        return deleted
+
+    @staticmethod
     async def delete_fingerprint(fingerprint: str) -> bool:
         """删除单个指纹记录"""
         async with db.session_scope() as session:

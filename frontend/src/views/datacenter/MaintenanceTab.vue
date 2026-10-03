@@ -15,6 +15,68 @@ const { confirm } = useConfirm()
 const mtnLoading = ref(false)
 const mtnTables = ref<any[]>([])
 
+// --- 定向清理智能记忆 ---
+const fpDialog = ref(false)
+const fpTmdbId = ref('')
+const fpMediaType = ref('')  // '' = 全部类型
+const fpSearching = ref(false)
+const fpDeleting = ref(false)
+const fpSearched = ref(false)   // 是否已按当前条件查询过
+const fpResults = ref<any[]>([])
+
+const fpTypeItems = [
+  { title: '全部类型', value: '' },
+  { title: '剧集 (tv)', value: 'tv' },
+  { title: '电影 (movie)', value: 'movie' },
+]
+
+const fpQueryKey = computed(() => `${fpTmdbId.value.trim()}|${fpMediaType.value}`)
+// 防止结果与当前输入条件脱节：修改输入后需重新查询才能删除
+const fpResultsStale = ref(false)
+
+function openFpDialog() {
+  fpDialog.value = true
+  fpTmdbId.value = ''
+  fpMediaType.value = ''
+  fpResults.value = []
+  fpSearched.value = false
+  fpResultsStale.value = false
+}
+
+async function searchFingerprints() {
+  const id = fpTmdbId.value.trim()
+  if (!id) { showError('请先输入 TMDB ID'); return }
+  fpSearching.value = true
+  try {
+    const res = await dataCenterApi.searchFingerprintsByTmdb({ tmdb_id: id, media_type: fpMediaType.value || undefined })
+    fpResults.value = res?.items || []
+    fpSearched.value = true
+    fpResultsStale.value = false
+    if (fpResults.value.length === 0) showError('未找到匹配的记忆记录')
+  } catch (e) { showError('查询失败') } finally { fpSearching.value = false }
+}
+
+async function deleteFingerprints() {
+  const id = fpTmdbId.value.trim()
+  if (!id || fpResultsStale.value) return
+  const typeLabel = fpTypeItems.find(i => i.value === fpMediaType.value)?.title || '全部类型'
+  const ok = await confirm({
+    title: '确认删除记忆',
+    content: `将删除 TMDB ${typeLabel}:${id} 对应的 ${fpResults.value.length} 条智能记忆记录，删除后这些条目下次识别会重新进行云端搜索。此操作无法撤销。`,
+    confirmColor: 'error',
+  })
+  if (!ok) return
+  fpDeleting.value = true
+  try {
+    const res = await dataCenterApi.deleteFingerprintsByTmdb({ tmdb_id: id, media_type: fpMediaType.value || undefined })
+    success(res?.message || `已删除 ${res?.deleted_count ?? 0} 条记忆记录`)
+    fpResults.value = []
+    fpSearched.value = false
+  } catch (e) { showError('删除失败') } finally { fpDeleting.value = false }
+}
+
+function onFpInputChanged() { fpResultsStale.value = fpSearched.value }
+
 // 表分类描述
 const tableDescriptions: Record<string, string> = {
   'metadata.tmdb_deep_meta': 'TMDB 深度元数据（海报、剧情、演员等）',
@@ -135,6 +197,105 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- 定向清理智能记忆 -->
+  <v-card class="glass-card mb-4">
+    <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
+      <v-icon color="primary" size="20">mdi-brain-delete-outline</v-icon>
+      <span class="text-subtitle-1 font-weight-bold">定向清理智能记忆</span>
+    </v-card-title>
+    <v-divider />
+    <v-card-text class="pa-4">
+      <div class="text-caption text-medium-emphasis">
+        当某个 TMDB 条目已在 TMDB 上被删除/失效时，其智能记忆记录实际上已无用。
+        输入 TMDB ID 和类型可定向查询并删除对应的记忆（指纹）记录，无需在记忆库中逐条查找。
+      </div>
+      <v-btn class="mt-3" color="error" variant="tonal" prepend-icon="mdi-target" @click="openFpDialog">定向清理</v-btn>
+    </v-card-text>
+  </v-card>
+
+  <!-- 定向清理智能记忆弹窗 -->
+  <v-dialog v-model="fpDialog" max-width="680" scrollable>
+    <v-card class="glass-card">
+      <v-card-title class="d-flex align-center ga-2">
+        <v-icon color="primary" size="20">mdi-brain-delete-outline</v-icon>
+        <span class="text-subtitle-1 font-weight-bold">定向清理智能记忆</span>
+      </v-card-title>
+      <v-divider />
+      <v-card-text>
+        <v-row dense class="mt-1">
+          <v-col cols="12" sm="7">
+            <v-text-field
+              v-model="fpTmdbId"
+              label="TMDB ID"
+              variant="outlined"
+              density="compact"
+              placeholder="如 123456"
+              hide-details
+              :disabled="fpDeleting"
+              @update:model-value="onFpInputChanged"
+              @keyup.enter="searchFingerprints"
+            />
+          </v-col>
+          <v-col cols="12" sm="5">
+            <v-select
+              v-model="fpMediaType"
+              :items="fpTypeItems"
+              label="类型"
+              variant="outlined"
+              density="compact"
+              hide-details
+              :disabled="fpDeleting"
+              @update:model-value="onFpInputChanged"
+            />
+          </v-col>
+        </v-row>
+
+        <div class="d-flex ga-3 mt-3">
+          <v-btn color="primary" variant="tonal" :loading="fpSearching" :disabled="!fpTmdbId.trim() || fpDeleting" prepend-icon="mdi-magnify" @click="searchFingerprints">查询匹配记录</v-btn>
+          <v-spacer />
+          <v-btn
+            color="error"
+            :loading="fpDeleting"
+            :disabled="!fpSearched || fpResultsStale || fpResults.length === 0"
+            prepend-icon="mdi-delete-outline"
+            @click="deleteFingerprints"
+          >删除匹配记录 ({{ fpResults.length }})</v-btn>
+        </div>
+
+        <v-alert v-if="fpSearched && fpResults.length === 0" type="info" density="compact" variant="tonal" class="mt-4">
+          没有匹配的记忆记录
+        </v-alert>
+
+        <template v-if="fpResults.length > 0">
+          <div class="text-caption text-medium-emphasis mt-4 mb-1">匹配到 {{ fpResults.length }} 条记录：</div>
+          <v-list density="compact" class="fp-result-list">
+            <v-list-item v-for="item in fpResults" :key="item.fingerprint">
+              <template #prepend>
+                <v-icon size="18" color="primary">mdi-fingerprint</v-icon>
+              </template>
+              <v-tooltip activator="parent" location="top" max-width="640" scroll-strategy="close">
+                <span class="fp-tooltip-text">{{ item.fingerprint }}</span>
+              </v-tooltip>
+              <template #title>
+                <span class="text-body-2 fp-ellipsis">{{ item.fingerprint }}</span>
+              </template>
+              <template #subtitle>
+                <span class="text-caption fp-ellipsis" :title="`${item.title || '未知标题'} · ${item.type === 'movie' ? '电影' : '剧集'} · ID ${item.tmdb_id}`">
+                  {{ item.title || '未知标题' }} · {{ item.type === 'movie' ? '电影' : '剧集' }} · ID {{ item.tmdb_id }}
+                </span>
+              </template>
+            </v-list-item>
+          </v-list>
+        </template>
+      </v-card-text>
+      <v-divider />
+      <v-card-actions class="pa-3">
+        <v-spacer />
+        <v-btn variant="text" :disabled="fpDeleting" @click="fpDialog = false">关闭</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <!-- 数据库表维护 -->
   <v-alert type="warning" density="compact" variant="tonal" class="mb-4">
     以下操作将永久删除数据库表中的所有数据（TRUNCATE）。表已按风险等级分组：<b style="color:#2e7d32">缓存</b>可放心清空，<b style="color:#f57c00">配置</b>需谨慎，<b style="color:#c62828">核心</b>极度危险。
@@ -169,5 +330,31 @@ onMounted(() => {
     </div>
   </template>
 </template>
+
+<style scoped>
+.fp-result-list {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+}
+
+.fp-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
+
+<style>
+/* tooltip 内容不受 scoped 限制（渲染在全局 overlay 层），超长指纹需可换行查看 */
+.fp-tooltip-text {
+  display: block;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.6;
+}
+</style>
 
 

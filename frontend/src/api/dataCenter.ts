@@ -69,6 +69,14 @@ export const dataCenterApi = {
   cleanupInvalidFingerprints: () =>
     api.post<any>('/api/cache/cleanup_invalid_fingerprints'),
 
+  /** 按 TMDB ID（可选类型）查询智能记忆记录，用于定向清理前预览 */
+  searchFingerprintsByTmdb: (params: { tmdb_id: string; media_type?: string }) =>
+    api.get<any>('/api/cache/fingerprints/by_tmdb', { params }),
+
+  /** 按 TMDB ID（可选类型）定向删除智能记忆记录 */
+  deleteFingerprintsByTmdb: (payload: { tmdb_id: string; media_type?: string }) =>
+    api.post<any>('/api/cache/delete_fingerprints_by_tmdb', payload),
+
   /** 清空下载黑名单 */
   clearBlacklist: () =>
     api.post<any>('/api/cache/clear_blacklist'),
