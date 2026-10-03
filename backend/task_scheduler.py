@@ -228,6 +228,13 @@ async def run_task_record_cleanup():
     from task_history import cleanup_old_tasks
     from config_manager import ConfigManager
     days = _to_int(ConfigManager.get_config().get("task_record_retention_days", 30), 30)
+    # 顺带清理联动记录台账（内部按 webhook_ledger.retention_days 独立控制保留期）
+    try:
+        from webhook_ledger import cleanup_old_events
+        ledger_days = _to_int(ConfigManager.get_config().get("webhook_ledger", {}).get("retention_days", 90), 90)
+        await cleanup_old_events(retention_days=ledger_days)
+    except Exception:
+        pass
     return await cleanup_old_tasks(max_records=500, max_days=days)
 
 instrumented_task_record_cleanup = _make_recorded("任务记录清理", "任务记录定期清理", "task_record_cleanup", run_task_record_cleanup)

@@ -642,3 +642,32 @@ class NotificationRecord(SQLModel, table=True):
     message_id: Optional[int] = None
     chunks: int = Field(default=1)
     created_at: datetime = Field(default_factory=datetime.now, index=True)
+
+class WebhookEvent(SQLModel, table=True):
+    """联动记录中心：CD2 联动事件台账，每个逻辑事件一行（双通道重复到达时合并进同一行）"""
+    __tablename__ = "webhook_events"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "联动记录"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    # 判重键：action + 规范化路径
+    event_key: str = Field(index=True)
+    action: str = Field(default="create")  # create / rename
+    file_path: str = Field(index=True)     # 有效路径（rename 取新路径）
+    is_dir: bool = Field(default=False)
+    # 到达来源列表：["原生 Webhook", "内部监控", "整理联动", "手动重放"]，双通道合并时追加
+    sources: Optional[List[str]] = Field(default=None, sa_column=Column(get_json_type()))
+    # 原始报文（重放时原样重新执行）
+    payload: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
+    status: str = Field(default="pending", index=True)  # pending/processing/success/failed/unmatched
+    error_message: Optional[str] = None
+    attempts: int = Field(default=1)       # 执行次数（手动重放 +1）
+    dup_count: int = Field(default=0)      # 重复到达被合并的次数
+    # 目录事件展开出的子文件事件回链
+    parent_event_id: Optional[int] = Field(default=None, index=True)
+    # 关联任务中心记录的 task_id（webhook 接收任务的执行日志）
+    task_id: Optional[str] = Field(default=None, index=True)
+    # 后续链路产生的关联任务 id 列表（队列 STRM 处理任务、目录展开任务等）
+    related_task_ids: Optional[List[str]] = Field(default=None, sa_column=Column(get_json_type()))
+    first_seen_at: datetime = Field(default_factory=datetime.now, index=True)
+    last_event_at: datetime = Field(default_factory=datetime.now, index=True)
+    updated_at: datetime = Field(default_factory=datetime.now)

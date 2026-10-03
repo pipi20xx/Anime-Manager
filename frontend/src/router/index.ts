@@ -79,6 +79,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/TaskHistoryView.vue'),
       },
 
+      // === 联动记录（Webhook 事件台账） ===
+      {
+        path: '/webhook-events',
+        name: 'WebhookEvents',
+        component: () => import('@/views/WebhookEventsView.vue'),
+      },
+
       // === 通知中心 ===
       {
         path: '/notification-center',

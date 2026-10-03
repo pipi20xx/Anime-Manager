@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, or_
 from sqlalchemy.sql import func
 
 from database import db
@@ -94,7 +94,11 @@ async def get_task_list(limit: int = 50, offset: int = 0, module: str = None, se
         if module:
             query = query.where(TaskRecord.module == module)
         if search:
-            query = query.where(TaskRecord.name.ilike(f"%{search}%"))
+            # 同时匹配任务名称与 task_id（联动记录中心按 task_id 跳转时靠这个命中）
+            query = query.where(or_(
+                TaskRecord.name.ilike(f"%{search}%"),
+                TaskRecord.task_id.ilike(f"%{search}%"),
+            ))
         result = await db.session.execute(query)
         records = result.scalars().all()
         return [{
@@ -148,17 +152,37 @@ async def delete_task(task_id: str) -> bool:
 
 async def cleanup_old_tasks(max_records: int = 500, max_days: int = 30):
     async with db.session_scope(force_new=True):
+        # 联动记录台账引用的任务记录不清理（台账 90 天保留期内，事件详情的内嵌日志依赖它们）
+        referenced_task_ids = set()
+        try:
+            from models import WebhookEvent
+            res = await db.session.execute(
+                select(WebhookEvent.task_id).where(WebhookEvent.task_id.is_not(None))
+            )
+            referenced_task_ids.update(r[0] for r in res.all())
+            res2 = await db.session.execute(
+                select(WebhookEvent.related_task_ids).where(WebhookEvent.related_task_ids.is_not(None))
+            )
+            for (arr,) in res2.all():
+                referenced_task_ids.update(arr or [])
+        except Exception:
+            pass
+
         limit_date = datetime.now() - timedelta(days=max_days)
         deleted_time = await db.session.execute(
             delete(TaskRecord).where(
-                TaskRecord.started_at < limit_date
+                TaskRecord.started_at < limit_date,
+                *([TaskRecord.task_id.not_in(referenced_task_ids)] if referenced_task_ids else [])
             )
         )
-        
+
         subq = select(TaskRecord.id).order_by(TaskRecord.started_at.desc()).limit(max_records)
         deleted_count = await db.session.execute(
-            delete(TaskRecord).where(TaskRecord.id.not_in(subq))
+            delete(TaskRecord).where(
+                TaskRecord.id.not_in(subq),
+                *([TaskRecord.task_id.not_in(referenced_task_ids)] if referenced_task_ids else [])
+            )
         )
-        
+
         await db.session.commit()
         return deleted_time.rowcount + deleted_count.rowcount

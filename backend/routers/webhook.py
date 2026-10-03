@@ -3,7 +3,6 @@ import os
 import asyncio
 import logging
 import json
-import time
 import uuid
 import urllib.parse
 
@@ -12,6 +11,7 @@ from config_manager import ConfigManager
 from logger import log_audit
 from notification import notification_manager
 from task_history import start_task, log_task, finish_task
+import webhook_ledger as ledger
 
 router = APIRouter(prefix="/api/webhook", tags=["Webhook 回调"])
 logger = logging.getLogger("Webhook")
@@ -23,20 +23,9 @@ def _dump_payload(payload) -> str:
     except Exception:
         return str(payload)
 
-# 同一文件事件去重：原生 Webhook 与内部 gRPC 监控（CD2监控）可能对同一文件各触发一次
-_EVENT_DEDUP_WINDOW = 120  # 秒
-_recent_events = {}
-
-def _is_duplicate_event(file_path: str) -> bool:
-    now = time.time()
-    # 清理过期记录，防止无限增长
-    if len(_recent_events) > 500:
-        expired = [p for p, t in _recent_events.items() if now - t >= _EVENT_DEDUP_WINDOW]
-        for p in expired:
-            _recent_events.pop(p, None)
-    last = _recent_events.get(file_path)
-    _recent_events[file_path] = now
-    return last is not None and now - last < _EVENT_DEDUP_WINDOW
+# 同一文件事件去重：原生 Webhook 与内部 gRPC 监控（CD2监控）可能对同一文件各触发一次。
+# 判重已升级为台账数据库持久化（webhook_ledger.record_event），窗口由
+# webhook_ledger.dedup_window_seconds 配置（默认 180 秒），重启不丢失。
 
 def _effective_path(item: dict) -> str:
     """事件的有效路径：rename（同盘移动）取 destination_file（新路径），其余取 source_file。"""
@@ -46,11 +35,12 @@ def _effective_path(item: dict) -> str:
         raw = item.get("source_file", "")
     return (raw or "").split(':')[0]
 
-async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, origin_task_id: str = None, delay: int = 15):
+async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, origin_task_id: str = None, delay: int = 15, parent_event_id: int = None):
     """
     目录级事件展开：CD2 复制/移动文件夹时只推送顶层目录变动（不含内容）。
     仅在路径已命中 STRM 任务后调用；延迟后递归列举云目录中的视频文件，
     逐个作为文件事件走完整联动链路（复用匹配/入队/去重/通知逻辑）。
+    parent_event_id: 父目录事件的台账记录 id，展开结果回写其状态。
     """
     from clients.manager import ClientManager
     from strm.constants import VIDEO_EXTENSIONS
@@ -59,6 +49,8 @@ async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, 
     task_id = f"webhook_dir_{uuid.uuid4().hex[:8]}"
     try:
         await start_task(task_id, "Webhook联动", f"[{source}] 目录展开: {os.path.basename(dir_cloud_path)}")
+        # 目录展开任务回链父事件，台账详情页聚合展示
+        await ledger.add_related_task(parent_event_id, task_id)
         await log_task(task_id, f"📁 目录事件展开: {dir_cloud_path}")
         if origin_task_id:
             await log_task(task_id, f"🔗 来源事件任务: {origin_task_id}")
@@ -78,20 +70,32 @@ async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, 
                 client = ClientManager.get_client(cd2_confs[0].get("id"))
         if client is None:
             await log_task(task_id, "❌ 未找到可用 CD2 客户端，无法展开目录", "ERROR")
+            await ledger.update_event(parent_event_id, status="failed", error_message="目录展开失败: 未找到可用 CD2 客户端")
             await finish_task(task_id, "error", 0)
             return
 
+        # walk_files 异常（网盘 API 风控/限流）必须落到台账，供人工在联动记录页重放
         files = []
-        for attempt in range(2):
-            files = await asyncio.to_thread(client.walk_files, dir_cloud_path, list(VIDEO_EXTENSIONS))
-            if files:
-                break
-            # 复制可能尚未落盘完成，空结果时多等一轮再试
-            await log_task(task_id, f"⏳ 第 {attempt + 1} 次扫描未发现视频文件（复制可能未完成），{delay} 秒后重试...")
-            await asyncio.sleep(delay)
+        try:
+            for attempt in range(2):
+                files = await asyncio.to_thread(client.walk_files, dir_cloud_path, list(VIDEO_EXTENSIONS))
+                if files:
+                    break
+                if attempt < 1:
+                    # 复制可能尚未落盘完成，空结果时多等一轮再试
+                    await log_task(task_id, f"⏳ 第 {attempt + 1} 次扫描未发现视频文件（复制可能未完成），{delay} 秒后重试...")
+                    await asyncio.sleep(delay)
+        except Exception as e:
+            logger.error(f"[CD2联动] 目录展开 API 异常 {dir_cloud_path}: {e}")
+            await log_task(task_id, f"❌ 列举目录失败（CD2 API 异常/风控）: {e}", "ERROR")
+            log_audit("CD2联动", "目录展开失败", f"列举目录时 CD2 API 异常: {e}", details=f"路径: {dir_cloud_path}", level="ERROR")
+            await ledger.update_event(parent_event_id, status="failed", error_message=f"目录展开失败(CD2 API): {e}")
+            await finish_task(task_id, "error", 0)
+            return
 
         if not files:
             await log_task(task_id, "⏭️ 目录中未发现视频文件，结束")
+            await ledger.update_event(parent_event_id, status="success")
             await finish_task(task_id, "completed", 0, {"skipped": True})
             return
 
@@ -100,28 +104,35 @@ async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, 
             {"action": "create", "source_file": f.get("path"), "is_dir": "false"}
             for f in files
         ]
-        result = await process_cd2_notification(payload, source)
+        result = await process_cd2_notification(payload, source, parent_event_id=parent_event_id)
         triggered = result.get("triggered", 0) if isinstance(result, dict) else 0
         await log_task(task_id, f"🏁 目录展开完成，联动处理 {triggered} 个文件")
+        await ledger.update_event(parent_event_id, status="success")
         await finish_task(task_id, "completed", triggered)
         log_audit("CD2联动", "目录展开", f"目录展开完成: {os.path.basename(dir_cloud_path)}", details=f"视频文件 {len(files)} 个，联动处理 {triggered} 个")
     except Exception as e:
         logger.error(f"[CD2联动] 目录展开失败 {dir_cloud_path}: {e}")
         try:
             await log_task(task_id, f"❌ 目录展开失败: {e}", "ERROR")
+            await ledger.update_event(parent_event_id, status="failed", error_message=f"目录展开失败: {e}")
             await finish_task(task_id, "error", 0)
         except Exception:
             pass
 
-async def process_cd2_notification(data: list, source: str = "webhook", raw_payload=None):
+async def process_cd2_notification(data: list, source: str = "webhook", raw_payload=None,
+                                   replay_event_id: int = None, skip_dedup: bool = False,
+                                   parent_event_id: int = None):
     """
     内部处理函数，可由 Webhook 路由调用，也可由系统内部直接触发。
     返回 {"triggered": 命中并处理的文件数, "deduped": 被去重忽略的事件数}
-    :param raw_payload: Webhook 端点收到的原始报文（内部触发可不传），用于任务中心完整留档
+    :param raw_payload: Webhook 端点收到的原始报文（内部触发可不传），台账关闭时回退到任务中心留档
+    :param replay_event_id: 手动重放时传入原台账记录 id（复用该行、跳过判重）
+    :param skip_dedup: 跳过判重（配合 replay_event_id 使用）
+    :param parent_event_id: 目录事件展开出的子文件事件，回链到父事件的台账记录
     """
     if not data:
         return {"triggered": 0, "deduped": 0}
-    
+
     valid_items = []
     skipped_dup_count = 0
     for item in data:
@@ -140,29 +151,50 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         # 跳过 .strm 输出文件：它们存在于云目录时（历史残留或反向写入）会反复触发联动
         if file_path.lower().endswith(".strm"):
             continue
-        # 同一文件事件去重：原生 Webhook 与内部监控对同一文件各触发一次时，只处理先到的
-        if _is_duplicate_event(file_path):
-            skipped_dup_count += 1
-            log_audit("CD2联动", "去重", "重复事件已忽略（同一文件刚由另一链路触发过）", details=f"来源: {source} | 路径: {file_path}")
-            logger.info(f"[CD2联动] 去重: {file_path} (来源: {source})")
-            continue
+
+        # 事件落台账 + 持久化判重：原生 Webhook 与内部监控对同一文件各触发一次时，
+        # 只处理先到的，后到的合并进同一行（sources 追加来源）
+        if replay_event_id:
+            # 手动重放：复用原台账行，跳过判重
+            event_id = replay_event_id
+            item["_event_id"] = event_id
+        else:
+            item_payload = {"data": [{k: v for k, v in item.items() if not k.startswith("_")}]}
+            record = await ledger.record_event(action, file_path, item["_is_dir_event"], source,
+                                               item_payload, parent_event_id=parent_event_id)
+            if record is None:
+                skipped_dup_count += 1
+                log_audit("CD2联动", "去重", "重复事件已忽略（同一文件刚由另一链路触发过）", details=f"来源: {source} | 路径: {file_path}")
+                logger.info(f"[CD2联动] 去重: {file_path} (来源: {source})")
+                continue
+            event_id = record.id
+            item["_event_id"] = event_id
 
         valid_items.append(item)
-    
+
     if not valid_items:
         return {"triggered": 0, "deduped": skipped_dup_count}
-    
+
     first_filename = os.path.basename(_effective_path(valid_items[0]))
-    
+
     module_name = source if source.startswith("CD2") else f"CD2{source}"
     task_desc = f"[{module_name}] {first_filename}" if len(valid_items) == 1 else f"[{module_name}] 共 {len(valid_items)} 个事件"
-    
+
     task_id = f"webhook_{uuid.uuid4().hex[:8]}"
     await start_task(task_id, "Webhook联动", task_desc)
     await log_task(task_id, f"🚀 收到 CD2 联动请求 (来源: {module_name})，共 {len(valid_items)} 个事件")
-    # 完整记录 CD2 发来的原始报文（与 Emby Webhook 一致的留档方式）
-    await log_task(task_id, "📥 原始 payload:")
-    await log_task(task_id, _dump_payload(raw_payload if raw_payload is not None else {"data": data}))
+    # 原始报文已按事件落联动记录台账；台账关闭时回退到任务中心完整留档
+    if ledger.ledger_enabled():
+        event_ids = sorted({i.get("_event_id") for i in valid_items if i.get("_event_id")})
+        if event_ids:
+            await log_task(task_id, f"📥 原始 payload 已存联动记录 #{', '.join(str(i) for i in event_ids)}")
+    else:
+        await log_task(task_id, "📥 原始 payload:")
+        await log_task(task_id, _dump_payload(raw_payload if raw_payload is not None else {"data": data}))
+
+    # 事件进入执行阶段，绑定任务中心记录
+    for eid in {i.get("_event_id") for i in valid_items if i.get("_event_id")}:
+        await ledger.update_event(eid, status="processing", task_id=task_id)
 
     config = ConfigManager.get_config()
     strm_tasks = config.get("strm_tasks", [])
@@ -179,6 +211,7 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         action = item.get("action")
         is_dir_event = item.get("_is_dir_event", False)
         file_path = _effective_path(item)
+        event_id = item.get("_event_id")
 
         filename = os.path.basename(file_path)
         kind_label = "目录" if is_dir_event else "文件"
@@ -215,6 +248,7 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         if not matched_tasks:
             await log_task(task_id_ref, f"⏭️ 未匹配任何任务: {filename}")
             log_audit("CD2联动", "未匹配", f"⏭️ 未命中任何 STRM 任务: {filename}", details=f"路径: {file_path}", level="WARN")
+            await ledger.update_event(event_id, status="unmatched", error_message="未命中任何 STRM 任务")
             continue
 
         # 目录事件（CD2 复制/移动文件夹只报顶层、不含内容）：
@@ -224,7 +258,7 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
             await log_task(task_id_ref, f"📁 目录事件命中任务: [{task_names}]，稍后展开目录扫描视频文件")
             log_audit("CD2联动", "目录展开", f"目录事件命中 {len(matched_tasks)} 个 STRM 任务，延迟展开目录", details=f"路径: {file_path}")
             client_ids = [t.get("cd2_client_id") for t, _ in matched_tasks]
-            asyncio.create_task(_expand_dir_event(clean_cloud_path, source, client_ids, origin_task_id=task_id_ref))
+            asyncio.create_task(_expand_dir_event(clean_cloud_path, source, client_ids, origin_task_id=task_id_ref, parent_event_id=event_id))
             processed_count += 1
             continue
 
@@ -243,18 +277,21 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
 
             log_audit("CD2联动", "任务命中", f"匹配到 STRM 任务: {task_name}", details=f"{path_label}: {process_path}")
 
-            enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, source="STRM联动", origin_task_id=task_id_ref, origin_desc=task_desc)
+            enqueued = MonitorManager.enqueue_file(task.get("id"), process_path, source="STRM联动",
+                                                   origin_task_id=task_id_ref, origin_desc=task_desc,
+                                                   origin_event_id=event_id)
 
             if enqueued:
                 enqueued_count += 1
                 await log_task(task_id_ref, f"✅ 匹配任务: [{task_name}] -> 已加入后台队列")
                 await log_task(task_id_ref, f"   {path_label}: {process_path}")
+                await ledger.update_event(event_id, status="success")
                 processed_count += 1
             else:
                 await log_task(task_id_ref, f"🎯 匹配任务: [{task_name}]")
                 await log_task(task_id_ref, f"   {path_label}: {process_path}")
                 await log_task(task_id_ref, f"⏳ 开始处理...")
-                processing_tasks.append((task_name, process_path, task, StrmGenerator.process_single_file(process_path, task)))
+                processing_tasks.append((task_name, process_path, task, StrmGenerator.process_single_file(process_path, task), event_id))
                 processed_count += 1
 
             # 不 break：所有源目录匹配的任务都处理（与定时扫描/实时监控行为一致）
@@ -265,10 +302,17 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
             valid_results = []
             for i, r in enumerate(results):
                 task_name, local_file_path, task_config = processing_tasks[i][0], processing_tasks[i][1], processing_tasks[i][2]
+                event_id = processing_tasks[i][4] if len(processing_tasks[i]) > 4 else None
                 if isinstance(r, Exception):
                     await log_task(task_id_ref, f"  ❌ 处理异常: {str(r)}", "ERROR")
                     log_audit("CD2联动", "处理异常", f"执行 STRM 任务时发生错误: {r}", level="ERROR")
+                    await ledger.update_event(event_id, status="failed", error_message=f"处理异常: {r}")
                 elif isinstance(r, dict):
+                    if r.get("status") == "error":
+                        await ledger.update_event(event_id, status="failed",
+                                                  error_message=str(r.get("message") or "处理失败"))
+                    else:
+                        await ledger.update_event(event_id, status="success")
                     target_root = task_config.get("target_dir") or task_config.get("target_path")
                     r["task_name"] = task_name
                     r["target_root"] = target_root
@@ -298,6 +342,8 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         except Exception as e:
             await log_task(task_id_ref, f"❌ 处理异常: {str(e)}", "ERROR")
             log_audit("CD2联动", "处理异常", f"执行 STRM 任务时发生错误: {e}", level="ERROR")
+            for t in processing_tasks:
+                await ledger.update_event(t[4] if len(t) > 4 else None, status="failed", error_message=f"处理异常: {e}")
     
     # 汇总显示
     summary = f"🏁 完成，共处理 {processed_count} 个文件"

@@ -121,6 +121,9 @@ const tableDescriptions: Record<string, string> = {
   'public.bgm_user_mark': 'Bangumi 用户手动标记（季度番剧表"已整理"等）',
   'public.bangumi_raw_cache': 'Bangumi 原始 API 响应缓存',
   'public.emby_media_index': 'Emby 库索引',
+  'public.custom_scheduled_jobs': '自定义定时任务（任务计划页创建的 cron/间隔任务）',
+  'public.notification_records': '通知中心发送记录（Telegram 等渠道的消息渲染留档）',
+  'public.webhook_events': '联动记录中心（Webhook 事件台账：CD2 联动成败、重放记录，并引用 task_records 保存全链路日志）',
 }
 
 type TableCategory = 'cache' | 'config' | 'core'
@@ -130,7 +133,8 @@ const tableCategories: Record<string, TableCategory> = {
   'public.calendar_subjects': 'cache', 'public.emby_media_index': 'cache', 'public.system_logs': 'cache',
   'public.feed_items': 'cache', 'public.download_history': 'cache', 'public.task_records': 'cache',
   'public.organize_history': 'cache', 'public.bangumi_data_item': 'cache', 'public.subscribed_episodes': 'cache',
-  'public.rapid_upload_retry': 'cache',
+  'public.rapid_upload_retry': 'cache', 'public.notification_records': 'cache', 'public.webhook_events': 'cache',
+  'public.custom_scheduled_jobs': 'config',
   'metadata.recognition_corrections': 'config', 'metadata.user_genre_mapping': 'config',
   'metadata.user_company_mapping': 'config', 'metadata.user_keyword_mapping': 'config',
   'metadata.user_language_mapping': 'config', 'metadata.user_country_mapping': 'config',

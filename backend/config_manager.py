@@ -140,6 +140,11 @@ class ConfigManager:
             "cleanup_empty_folder": False,  # 删除文件后检查并清理空的父文件夹
             "path_mappings": []             # 路径映射规则 [{"from": "前缀", "to": "替换为"}]
         },
+        "webhook_ledger": {
+            "enabled": True,                # 联动记录中心开关（关闭后 webhook 不落台账、不做持久化判重）
+            "dedup_window_seconds": 180,    # 事件判重窗口（秒）：原生 Webhook 与内部监控对同一文件的重复触发在此窗口内合并
+            "retention_days": 90            # 联动记录保留天数
+        },
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",

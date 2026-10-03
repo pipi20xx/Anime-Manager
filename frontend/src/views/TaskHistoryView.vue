@@ -31,7 +31,7 @@ const loading = ref(false)
 const moduleFilter = ref<string>(
   typeof route.query.module === 'string' ? route.query.module : 'all'
 )
-const searchQuery = ref('')
+const searchQuery = ref(typeof route.query.search === 'string' ? route.query.search : '')
 const page = ref(0)
 const pageSize = ref(20)
 const hasMore = ref(true)

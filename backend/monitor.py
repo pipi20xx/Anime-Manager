@@ -791,14 +791,14 @@ class MonitorManager:
             logger.error(f"[Monitor] Auto health check failed: {e}")
 
     @staticmethod
-    def enqueue_file(task_id: str, file_path: str, source: str = "联动", origin_task_id: str = None, origin_desc: str = None):
+    def enqueue_file(task_id: str, file_path: str, source: str = "联动", origin_task_id: str = None, origin_desc: str = None, origin_event_id: int = None):
         """将文件推送到特定任务的异步处理队列中 (供外部 Webhook/联动调用)"""
         queue = MonitorManager._queues.get(task_id)
         if queue and MonitorManager._loop:
-            # 使用 threadsafe 以防万一从非 asyncio 线程调用；第4位为来源信息（来源标注 + 触发的联动任务ID/标题）
+            # 使用 threadsafe 以防万一从非 asyncio 线程调用；第4位为来源信息（来源标注 + 触发的联动任务ID/标题 + 台账事件ID）
             MonitorManager._loop.call_soon_threadsafe(
                 queue.put_nowait,
-                (file_path, None, None, {"source": source, "origin_task_id": origin_task_id, "origin_desc": origin_desc})
+                (file_path, None, None, {"source": source, "origin_task_id": origin_task_id, "origin_desc": origin_desc, "origin_event_id": origin_event_id})
             )
             return True
         return False
@@ -1384,6 +1384,7 @@ class MonitorManager:
                 source_tag = None
                 origin_task_id = None
                 origin_desc = None
+                origin_event_id = None
                 if isinstance(item, tuple):
                     if len(item) == 4:
                         file_path, batch_task_id, batch_stats, source_info = item
@@ -1391,6 +1392,7 @@ class MonitorManager:
                             source_tag = source_info.get("source")
                             origin_task_id = source_info.get("origin_task_id")
                             origin_desc = source_info.get("origin_desc")
+                            origin_event_id = source_info.get("origin_event_id")
                         else:
                             source_tag = source_info
                     elif len(item) == 3:
@@ -1470,9 +1472,26 @@ class MonitorManager:
                                 await _log_task(mon_task_id, f"📄 处理: {os.path.basename(file_path)}")
                             except Exception:
                                 pass
+                        # 联动台账回链：队列处理任务挂到事件上（详情页聚合展示全链路日志）
+                        if origin_event_id and mon_task_id:
+                            try:
+                                from webhook_ledger import add_related_task
+                                await add_related_task(origin_event_id, mon_task_id)
+                            except Exception:
+                                pass
                         res = await StrmProcessor.process_single_file(file_path, current_task)
                         status = res.get("status", "unknown") if isinstance(res, dict) else "error"
                         message = res.get("message", "") if isinstance(res, dict) else str(res)
+                        # 联动台账：用队列的真实处理结果回写事件状态（替代入队时的近似 success）
+                        if origin_event_id:
+                            try:
+                                from webhook_ledger import update_event as _ledger_update
+                                if status == "error":
+                                    await _ledger_update(origin_event_id, status="failed", error_message=f"队列处理失败: {message}")
+                                else:
+                                    await _ledger_update(origin_event_id, status="success")
+                            except Exception:
+                                pass
                         # 实际落盘路径 = 目标目录 + 处理结果中的相对路径（STRM 或元数据）
                         target_root = current_task.get("target_dir") or current_task.get("target_path")
                         written_path = os.path.join(target_root, res["rel_path"]) if (isinstance(res, dict) and target_root and res.get("rel_path")) else None
@@ -1580,6 +1599,12 @@ class MonitorManager:
                     import traceback
                     logger.error(f"✨ [实时监控] 处理错误: {str(e)}")
                     logger.debug(traceback.format_exc())
+                    if origin_event_id:
+                        try:
+                            from webhook_ledger import update_event as _ledger_update
+                            await _ledger_update(origin_event_id, status="failed", error_message=f"队列处理异常: {str(e)}")
+                        except Exception:
+                            pass
                     if mon_task_id and not batch_task_id:
                         try:
                             from task_history import log_task as _log_task, finish_task as _finish_task
