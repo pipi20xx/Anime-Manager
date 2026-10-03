@@ -79,6 +79,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/TaskHistoryView.vue'),
       },
 
+      // === 通知中心 ===
+      {
+        path: '/notification-center',
+        name: 'NotificationCenter',
+        component: () => import('@/views/NotificationCenterView.vue'),
+      },
+
       // === 任务计划 ===
       {
         path: '/scheduler',

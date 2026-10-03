@@ -1,7 +1,7 @@
 from typing import Optional, List, Any, Dict
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship, Column
-from sqlalchemy import JSON, BigInteger
+from sqlalchemy import JSON, BigInteger, Text
 from sqlalchemy.dialects.postgresql import JSONB
 
 def get_public_schema():
@@ -624,3 +624,21 @@ class EmbyMediaIndex(SQLModel, table=True):
     sync_at: datetime = Field(default_factory=datetime.now)
 
 
+
+class NotificationRecord(SQLModel, table=True):
+    """通知中心：发送到通知渠道（Telegram 等）的消息记录，含完整渲染内容"""
+    __tablename__ = "notification_records"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "通知记录"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    channel: str = Field(default="telegram", index=True)
+    event_type: str = Field(index=True)
+    title: str = Field(default="")
+    content: str = Field(default="", sa_column=Column(Text))
+    image_url: Optional[str] = None
+    style: Optional[str] = None
+    status: str = Field(default="success", index=True)  # success / failed
+    error: Optional[str] = None
+    message_id: Optional[int] = None
+    chunks: int = Field(default=1)
+    created_at: datetime = Field(default_factory=datetime.now, index=True)

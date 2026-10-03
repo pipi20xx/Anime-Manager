@@ -146,8 +146,85 @@ class NotificationManager:
         notifier = self._build_notifier()
         if notifier is None:
             return False, "Telegram notification is disabled or not configured", None
-        return await notifier.send(notification, style=style, photo_url=photo_url,
-                                   pin=pin, buttons=buttons)
+
+        # 发送前先渲染一份完整内容，用于通知中心留档（渲染器无状态，与发送内容一致）
+        record_text = ""
+        record_error: Optional[str] = None
+        try:
+            record_text = self.renderer.render(notification, style if style is not None else self._tg_conf().get("style", "default"))
+        except Exception:
+            record_text = ""
+
+        success, message, message_id = await notifier.send(notification, style=style, photo_url=photo_url,
+                                                           pin=pin, buttons=buttons)
+        if not success:
+            record_error = message
+
+        try:
+            await self._save_record(notification, record_text, photo_url, success, record_error, message_id)
+        except Exception as e:
+            logger.warning(f"通知记录写入失败: {e}")
+
+        return success, message, message_id
+
+    # ── 通知中心留档 ──
+
+    _record_insert_count = 0
+    NOTIFICATION_RECORD_KEEP = 1000
+
+    @staticmethod
+    def _strip_html(text: str) -> str:
+        import re as _re
+        return _re.sub(r"<[^>]+>", "", text or "").strip()
+
+    async def _save_record(
+        self,
+        notification: Notification,
+        text: str,
+        photo_url: Optional[str],
+        success: bool,
+        error: Optional[str],
+        message_id: Optional[int],
+    ) -> None:
+        """把本次发送写入通知中心记录，并按保留条数做清理。"""
+        from database import db
+        from models import NotificationRecord
+        from sqlmodel import select
+        from sqlalchemy import delete as sa_delete, func
+
+        first_line = next((ln for ln in text.split("\n") if ln.strip()), "")
+        record = NotificationRecord(
+            channel="telegram",
+            event_type=getattr(notification.event_type, "value", str(notification.event_type)),
+            title=self._strip_html(first_line)[:120] or "(无标题)",
+            content=text,
+            image_url=photo_url if photo_url is not None else notification.image_url,
+            style=self._tg_conf().get("style", "default"),
+            status="success" if success else "failed",
+            error=(error or None)[:500] if error else None,
+            message_id=message_id,
+            chunks=1,
+        )
+
+        async with db.session_scope():
+            await db.save(record, audit=False)
+
+            # 每 20 条插入触发一次保留清理（保留最近 N 条）
+            NotificationManager._record_insert_count += 1
+            if NotificationManager._record_insert_count % 20 == 0:
+                total_res = await db.execute(select(func.count(NotificationRecord.id)))
+                count = total_res.scalar() or 0
+                if count > NotificationManager.NOTIFICATION_RECORD_KEEP:
+                    offset = count - NotificationManager.NOTIFICATION_RECORD_KEEP
+                    cutoff_res = await db.execute(
+                        select(NotificationRecord.id)
+                        .order_by(NotificationRecord.id)
+                        .offset(offset)
+                        .limit(1)
+                    )
+                    cutoff_id = cutoff_res.scalar()
+                    if cutoff_id:
+                        await db.execute(sa_delete(NotificationRecord).where(NotificationRecord.id < cutoff_id))
 
     async def pin_chat_message(
         self,
