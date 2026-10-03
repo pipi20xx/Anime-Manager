@@ -37,7 +37,9 @@ def _effective_path(item: dict) -> str:
 
 async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, origin_task_id: str = None, delay: int = 15, parent_event_id: int = None):
     """
-    目录级事件展开：CD2 复制/移动文件夹时只推送顶层目录变动（不含内容）。
+    目录级事件展开：CD2 移动/重命名文件夹时只推送顶层目录变动（不含内容），
+    逐文件事件不会触发，必须展开目录才能联动到其中的视频文件。
+    （目录新建事件不进入此流程：新建目录本身不含内容，其中的文件写入时会产生各自的文件事件）
     仅在路径已命中 STRM 任务后调用；延迟后递归列举云目录中的视频文件，
     逐个作为文件事件走完整联动链路（复用匹配/入队/去重/通知逻辑）。
     parent_event_id: 父目录事件的台账记录 id，展开结果回写其状态。
@@ -146,8 +148,15 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
             continue
         if action not in ("create", "rename"):
             continue
-        # 目录事件放行（打标后续处理）：先做零开销路径匹配，命中任务才展开目录
-        item["_is_dir_event"] = str(item.get("is_dir", "")).lower() == "true"
+        # 目录事件打标：仅 rename（移动/重命名文件夹）保留目录展开；
+        # create（新建目录）不联动——新建目录本身不含内容，其中的文件写入时
+        # 会各自产生文件事件，对空目录展开只会白跑一遍扫描
+        is_dir_event = str(item.get("is_dir", "")).lower() == "true"
+        if is_dir_event and action == "create":
+            log_audit("CD2联动", "忽略事件", "目录创建事件不触发联动（目录内文件会以文件事件单独触发）", details=f"路径: {file_path}")
+            logger.info(f"[CD2联动] 忽略目录创建事件: {file_path}")
+            continue
+        item["_is_dir_event"] = is_dir_event
         # 跳过 .strm 输出文件：它们存在于云目录时（历史残留或反向写入）会反复触发联动
         if file_path.lower().endswith(".strm"):
             continue
@@ -251,7 +260,7 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
             await ledger.update_event(event_id, status="unmatched", error_message="未命中任何 STRM 任务")
             continue
 
-        # 目录事件（CD2 复制/移动文件夹只报顶层、不含内容）：
+        # 目录事件（此时只剩 rename：CD2 移动/重命名文件夹只报顶层、不含内容）：
         # 命中任务后才交给后台延迟展开云目录，避免未命中时的 API 开销
         if is_dir_event:
             task_names = ", ".join(t.get('name', '未命名') for t, _ in matched_tasks)
