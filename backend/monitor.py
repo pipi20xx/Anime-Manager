@@ -1478,6 +1478,15 @@ class MonitorManager:
                         written_path = os.path.join(target_root, res["rel_path"]) if (isinstance(res, dict) and target_root and res.get("rel_path")) else None
                         if status == "success":
                             logger.info(f"✨ [实时监控] STRM完成: {os.path.basename(file_path)}")
+                            # Webhook 实时联动来源（队列路径）：补发 TG 通知（管理器内聚合窗口合并发送）
+                            if origin_task_id:
+                                try:
+                                    from notification import notification_manager as _nm
+                                    res["task_name"] = task_name
+                                    res["target_root"] = target_root
+                                    asyncio.create_task(_nm.notify_strm_webhook([res]))
+                                except Exception:
+                                    pass
                             if mon_task_id:
                                 try:
                                     from task_history import log_task as _log_task

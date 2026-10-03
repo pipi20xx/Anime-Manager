@@ -326,6 +326,7 @@ class NotificationRenderer:
                     sections.append(f"     {char} {f}")
             sections.append("")
 
+        sections.append("─── 来自 实时联动策略 ───")
         return "\n".join(sections)
 
     def _render_organize_complete(self, n: "Notification") -> str:

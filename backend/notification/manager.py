@@ -41,6 +41,10 @@ ORGANIZE_AGGREGATE_WINDOW = 60
 # 缓冲区达到此文件数时立即发送，不再等待聚合窗口超时
 ORGANIZE_FLUSH_THRESHOLD = 20
 
+# ── STRM 实时联动通知聚合配置 ──
+# 聚合窗口（秒）：目录展开等场景会连续入队多个文件，窗口内合并为一条消息
+STRM_LINK_AGGREGATE_WINDOW = 15
+
 
 def _get_val(obj: Any, key: str, default: Any = None) -> Any:
     """从 dict 或对象上取值，兼容两种数据形态。"""
@@ -78,6 +82,10 @@ class NotificationManager:
     _organize_flush_task: Optional[asyncio.Task] = None
     # 用于保护缓冲区的异步锁
     _organize_lock: asyncio.Lock = asyncio.Lock()
+
+    # ── STRM 实时联动通知聚合状态 ──
+    _strm_link_buffer: List[dict] = []
+    _strm_link_flush_task: Optional[asyncio.Task] = None
 
     # ════════════════════════════════════════════════════════
     # 初始化与底层构建
@@ -360,26 +368,47 @@ class NotificationManager:
         ))
 
     async def notify_strm_webhook(self, results: list) -> None:
-        """Webhook 实时监控通知（支持多文件分组显示）。"""
+        """STRM 实时联动通知（支持多文件分组显示，聚合窗口内合并发送）。
+
+        Webhook 兜底直连与实时监控队列两条链路共用本入口：
+        先缓冲，窗口内无新事件后合并为一条消息发送。
+        """
         if not self._tg_conf().get("notify_on_strm_link", True):
             return
 
-        success_results = [r for r in results if r and r.get("status") == "success"]
+        success_results = [r for r in results if r and r.get("status") == "success" and r.get("rel_path")]
         if not success_results:
+            return
+
+        self._strm_link_buffer.extend(success_results)
+
+        # 已有待发送的刷新任务则交给它统一带走在窗口期内新增的条目
+        if self._strm_link_flush_task is not None and not self._strm_link_flush_task.done():
+            return
+        self._strm_link_flush_task = asyncio.create_task(self._flush_strm_link_buffer())
+
+    async def _flush_strm_link_buffer(self) -> None:
+        """聚合窗口结束后，把缓冲的成功结果合并为一条通知发送。"""
+        try:
+            await asyncio.sleep(STRM_LINK_AGGREGATE_WINDOW)
+        except asyncio.CancelledError:
+            return
+
+        results = self._strm_link_buffer[:]
+        self._strm_link_buffer.clear()
+        if not results:
             return
 
         strm_files: Dict[str, List[str]] = {}
         meta_files: Dict[str, List[str]] = {}
         task_names = set()
 
-        for res in success_results:
+        for res in results:
             rel_path = res.get("rel_path")
             target_root = res.get("target_root", "")
             task_name = res.get("task_name")
             if task_name:
                 task_names.add(task_name)
-            if not rel_path:
-                continue
 
             full_path = os.path.join(target_root, rel_path) if target_root else rel_path
             folder = os.path.dirname(full_path) or "/"
