@@ -113,10 +113,11 @@ async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, 
         except Exception:
             pass
 
-async def process_cd2_notification(data: list, source: str = "webhook"):
+async def process_cd2_notification(data: list, source: str = "webhook", raw_payload=None):
     """
     内部处理函数，可由 Webhook 路由调用，也可由系统内部直接触发。
     返回 {"triggered": 命中并处理的文件数, "deduped": 被去重忽略的事件数}
+    :param raw_payload: Webhook 端点收到的原始报文（内部触发可不传），用于任务中心完整留档
     """
     if not data:
         return {"triggered": 0, "deduped": 0}
@@ -159,6 +160,9 @@ async def process_cd2_notification(data: list, source: str = "webhook"):
     task_id = f"webhook_{uuid.uuid4().hex[:8]}"
     await start_task(task_id, "Webhook联动", task_desc)
     await log_task(task_id, f"🚀 收到 CD2 联动请求 (来源: {module_name})，共 {len(valid_items)} 个事件")
+    # 完整记录 CD2 发来的原始报文（与 Emby Webhook 一致的留档方式）
+    await log_task(task_id, "📥 原始 payload:")
+    await log_task(task_id, _dump_payload(raw_payload if raw_payload is not None else {"data": data}))
 
     config = ConfigManager.get_config()
     strm_tasks = config.get("strm_tasks", [])
@@ -324,14 +328,16 @@ async def cd2_webhook(request: Request, tail: str = ""):
         return {"status": "success", "message": "Notification received"}
 
     data = payload.get("data")
+    # 无论后续是否命中任务，原始报文都留档到审计日志
+    log_audit("CD2联动", "收到原始报文", f"收到 CD2 Webhook 请求 (后缀: {tail})", details=_dump_payload(payload))
     if not data:
         return {"status": "ignored", "reason": "empty_data"}
 
     # 识别调用来源 (如果是 127.0.0.1 则是内部模拟，否则是外部 CD2)
     client_host = request.client.host if request.client else "unknown"
     source_desc = "原生 Webhook" if client_host not in ["127.0.0.1", "localhost"] else "内部监控"
-    
-    triggered = await process_cd2_notification(data, source_desc)
+
+    triggered = await process_cd2_notification(data, source_desc, raw_payload=payload)
 
     return {"status": "success", "source": source_desc, "triggered": triggered.get("triggered", 0), "deduped": triggered.get("deduped", 0)}
 
