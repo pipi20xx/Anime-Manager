@@ -296,16 +296,19 @@ class StrmProcessor:
         return {"status": "ignored", "message": "Not target"}
 
     @staticmethod
-    async def remove_empty_dirs_async(path: str):
-        """异步化的空目录清理"""
-        if not await asyncio.to_thread(os.path.isdir, path): return
+    async def remove_empty_dirs_async(path: str) -> List[str]:
+        """异步化的空目录清理，返回被删除目录的相对路径列表（自底向上，级联清空父目录）"""
+        if not await asyncio.to_thread(os.path.isdir, path): return []
         
         def _cleanup():
+            removed = []
             for root, dirs, files in os.walk(path, topdown=False):
                 for d in dirs:
                     full_path = os.path.join(root, d)
                     try:
                         if not os.listdir(full_path):
                             os.rmdir(full_path)
+                            removed.append(os.path.relpath(full_path, path))
                     except: pass
-        await asyncio.to_thread(_cleanup)
+            return removed
+        return await asyncio.to_thread(_cleanup)

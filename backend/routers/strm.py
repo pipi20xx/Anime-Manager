@@ -243,7 +243,9 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                     elif status == "error":
                         await log_task(task_id, f"❌ 失败: {os.path.basename(source)} - {data.get('msg', '')}", "ERROR")
                     elif status == "deleted":
-                        await log_task(task_id, f"🧹 清理冗余: {os.path.basename(source)}")
+                        await log_task(task_id, f"🧹 清理冗余: {source}")
+                    elif status == "dir_removed":
+                        await log_task(task_id, f"📁 清理空目录: {source}")
                 elif msg_type == "log":
                     log_status = data.get("status")
                     log_path = data.get("path", "")
@@ -265,6 +267,7 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                     meta_copied = stats.get("meta_copied", 0)
                     meta_skipped = stats.get("meta_skipped", 0)
                     deleted = stats.get("deleted", 0)
+                    empty_dirs_removed = stats.get("empty_dirs_removed", 0)
                     duration = stats.get("duration", "未知")
                     
                     total_files = strm_created + strm_skipped
@@ -280,6 +283,8 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
                     if deleted > 0:
                         await log_task(task_id, "")
                         await log_task(task_id, f"🧹 清理冗余：{deleted}")
+                    if empty_dirs_removed > 0:
+                        await log_task(task_id, f"📁 清理空目录：{empty_dirs_removed}")
                     await log_task(task_id, "")
                     await log_task(task_id, f"⏱️ 总计耗时：{duration}")
                     await log_task(task_id, "──────────────────")
@@ -302,11 +307,13 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
         ms = final_stats.get("meta_skipped", 0)
         err = final_stats.get("errors", 0)
         dl = final_stats.get("deleted", 0)
+        edr = final_stats.get("empty_dirs_removed", 0)
         
         final_summary = f"🏁 任务结束: 生成 {sc} | 同步 {mc}"
         if ss > 0 or ms > 0: final_summary += f" | 跳过 {ss + ms}"
         if err > 0: final_summary += f" | 失败 {err}"
         if dl > 0: final_summary += f" | 清理 {dl}"
+        if edr > 0: final_summary += f" | 空目录 {edr}"
         
         await log_task(task_id, final_summary)
         
@@ -318,6 +325,7 @@ async def _strm_background_runner(config: Dict[str, Any], task_id: str, task_nam
             "meta_copied": mc,
             "meta_skipped": ms,
             "deleted": dl,
+            "empty_dirs_removed": edr,
             "duration": duration,
             "success": sc,
             "skipped": ss + ms,

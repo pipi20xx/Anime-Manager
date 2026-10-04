@@ -431,6 +431,7 @@ class NotificationManager:
                 "meta_copied": stats.get("meta_copied", 0),
                 "meta_skipped": stats.get("meta_skipped", 0),
                 "deleted": stats.get("deleted", 0),
+                "empty_dirs_removed": stats.get("empty_dirs_removed", 0),
                 "source": stats.get("source", "未知"),
             },
         ))

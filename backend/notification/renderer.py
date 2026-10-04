@@ -271,6 +271,8 @@ class NotificationRenderer:
         meta_c = d.get("meta_copied", 0)
         meta_s = d.get("meta_skipped", 0)
         deleted = d.get("deleted", 0)
+        empty_dirs = d.get("empty_dirs_removed", 0)
+        empty_dirs_line = f"📁 <b>清理空目录：</b>{empty_dirs}\n" if empty_dirs else ""
         source = d.get("source", "未知")
         return (
             f"🎬 <b>STRM 任务处理完成</b>\n\n"
@@ -283,6 +285,7 @@ class NotificationRenderer:
             f"   ├ ✅ 同步：{meta_c}\n"
             f"   └ ⏭️ 跳过：{meta_s}\n\n"
             f"🧹 <b>清理冗余：</b>{deleted}\n"
+            f"{empty_dirs_line}"
             f"⏱️ <b>总计耗时：</b>{duration}\n"
             f"──────────────────\n"
             f"📁 <b>源径：</b><code>{source}</code>"

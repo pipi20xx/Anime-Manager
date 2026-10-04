@@ -767,10 +767,10 @@ onMounted(() => {
                   </div>
                 </div>
                 <div class="switch-row">
-                  <v-switch v-model="taskForm.clean_target" density="compact" hide-details color="error" />
+                  <v-switch v-model="taskForm.clean_target" density="compact" hide-details color="primary" />
                   <div>
-                    <div class="switch-label">生成前清理目标</div>
-                    <div class="switch-desc">生成 STRM 前清空目标目录已有内容</div>
+                    <div class="switch-label">清理无效文件</div>
+                    <div class="switch-desc">扫描完成后删除目标目录中源里已不存在的 STRM 和元数据文件（不动其他文件）</div>
                   </div>
                 </div>
                 <div class="switch-row">

@@ -211,6 +211,7 @@ class CD2SyncManager:
         
         # 5. 执行阶段一：生成 STRM
         engine = StrmTaskEngine(config, stats=stats)
+        engine.start_time = start_time  # 耗时从扫描开始起算（engine 默认首次 run 才起算）
         
         if strm_tasks_paths:
             msg = f"第一阶段：开始生成 {len(strm_tasks_paths)} 个 STRM 文件..."
@@ -234,20 +235,9 @@ class CD2SyncManager:
             async for line in engine.run(ListScanner(meta_tasks_paths), is_last_stage=True, use_interval=True):
                 yield line
         else:
-            # 如果没有元数据任务，我们也需要收尾（清理和通知）
-            if strm_tasks_paths:
-                engine.all_valid_rel_paths = all_valid_rel_paths
-                # 运行一个空扫描器来触发 finalize 逻辑
-                async for line in engine.run(ListScanner([]), is_last_stage=True):
-                    yield line
-            else:
-                # 没有任何待处理任务（全部本地已存在跳过）：同样收尾并发送通知，
-                # 保证"跑一次就有一次通知"
-                duration = time.time() - start_time
-                stats["duration"] = f"{duration:.1f}s"
-                stats["source"] = source_root
-                stats["target"] = target_root
-                asyncio.create_task(
-                    notification_manager.notify_strm_finished(config.get("name", "任务"), stats)
-                )
-                yield json.dumps({"type": "finish", "stats": stats}) + "\n"
+            # 没有元数据任务时同样要收尾（清理冗余 + 发送通知）：
+            # "全部已存在跳过"也必须走到这里，否则 clean_target 的对账清理
+            # （删除源里已不存在的 strm/元数据）永远不会执行
+            engine.all_valid_rel_paths = all_valid_rel_paths
+            async for line in engine.run(ListScanner([]), is_last_stage=True):
+                yield line

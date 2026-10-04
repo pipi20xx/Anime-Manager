@@ -105,16 +105,34 @@ class StrmTaskEngine:
                 yield line
 
         if self.config.get("clean_empty_dirs"):
-            await StrmProcessor.remove_empty_dirs_async(self.target_dir)
+            removed_dirs = await StrmProcessor.remove_empty_dirs_async(self.target_dir)
+            if removed_dirs:
+                self.stats["empty_dirs_removed"] = len(removed_dirs)
+                for rel_d in removed_dirs:
+                    yield json.dumps({"type": "item", "status": "dir_removed", "source": rel_d}) + "\n"
 
         # 4. 完成
         self._finalize()
         yield json.dumps({"type": "finish", "stats": self.stats}) + "\n"
 
+    def _display_path(self, item: str) -> str:
+        """日志展示路径：优先显示相对源目录的路径（带剧集/季目录层级），
+        不在源目录下时（列表模式等）原样展示"""
+        source_root = os.path.normpath(self.config.get("source_dir") or self.config.get("source_path") or "")
+        if source_root:
+            try:
+                rel = os.path.relpath(item, source_root)
+                if not rel.startswith(".."):
+                    return rel
+            except ValueError:
+                pass
+        return item
+
     def _handle_result(self, item: str, res: Dict[str, Any]) -> AsyncGenerator[str, None]:
         status = res.get("status")
         msg = res.get("message")
         rel_path = res.get("rel_path")
+        display = self._display_path(item)
 
         if status == "success":
             if msg == "Created STRM":
@@ -129,7 +147,7 @@ class StrmTaskEngine:
             
             yield json.dumps({
                 "type": "log", 
-                "path": os.path.basename(item), 
+                "path": display, 
                 "status": "success", 
                 "message": msg
             }) + "\n"
@@ -147,25 +165,26 @@ class StrmTaskEngine:
             
             yield json.dumps({
                 "type": "log", 
-                "path": os.path.basename(item), 
+                "path": display, 
                 "status": "skipped", 
                 "message": f"跳过 (已存在): {msg}"
             }) + "\n"
 
         elif status == "error":
             self.stats["errors"] += 1
-            yield json.dumps({"type": "log", "path": os.path.basename(item), "status": "error", "message": msg}) + "\n"
+            yield json.dumps({"type": "log", "path": display, "status": "error", "message": msg}) + "\n"
 
     async def _cleanup_phase(self) -> AsyncGenerator[str, None]:
         yield json.dumps({"type": "info", "message": "正在比对并清理本地冗余文件..."}) + "\n"
         
         def _cleanup():
             deleted = 0
+            deleted_paths = []
             copy_meta = self.config.get("copy_meta", False)
             meta_extensions = set(self.config.get("meta_extensions") or META_EXTENSIONS)
             now = time.time()
             # 保护期：10分钟内创建或修改的文件不清理
-            protection_window = 600 
+            protection_window = 600
             
             for root, _, files in os.walk(self.target_dir):
                 for f in files:
@@ -187,11 +206,15 @@ class StrmTaskEngine:
                             try:
                                 os.remove(full_p)
                                 deleted += 1
+                                deleted_paths.append(rel_p)
                                 logger.debug(f"[STRM] 清理冗余: {f}")
                             except: pass
-            return deleted
+            return deleted, deleted_paths
         
-        self.stats["deleted"] = await asyncio.to_thread(_cleanup)
+        self.stats["deleted"], deleted_paths = await asyncio.to_thread(_cleanup)
+        # 逐文件回传删除明细（相对路径），任务中心/实时日志逐行展示
+        for rel_p in deleted_paths:
+            yield json.dumps({"type": "item", "status": "deleted", "source": rel_p}) + "\n"
 
     def _finalize(self):
         duration = time.time() - self.start_time
