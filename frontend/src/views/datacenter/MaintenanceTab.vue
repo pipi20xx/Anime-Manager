@@ -323,7 +323,7 @@ onMounted(() => {
                 <span class="font-weight-bold text-primary text-truncate">{{ table.name.split('.')[1] }}</span>
                 <span class="category-badge" :style="{ color: categoryMeta[getCategory(table.name)].color, backgroundColor: categoryMeta[getCategory(table.name)].bg }">{{ categoryMeta[getCategory(table.name)].label }}</span>
               </div>
-              <div class="text-caption text-medium-emphasis mb-2" style="flex:1">{{ tableDescriptions[table.name] || '暂无说明' }}</div>
+              <div class="text-caption text-medium-emphasis table-desc" :title="tableDescriptions[table.name] || ''">{{ tableDescriptions[table.name] || '暂无说明' }}</div>
               <div class="d-flex ga-3 mb-2">
                 <div><span class="text-caption text-medium-emphasis">行数</span><div class="font-weight-bold" :style="{ color: table.count > 0 ? '#f57c00' : '#0288d1' }">{{ table.count }}</div></div>
                 <div><span class="text-caption text-medium-emphasis">占用</span><div class="font-weight-bold text-primary">{{ formatDbSize(table.size_bytes) }}</div></div>
@@ -341,6 +341,19 @@ onMounted(() => {
 .fp-result-list {
   max-height: 320px;
   overflow-y: auto;
+}
+
+/* 说明区固定两行：保证所有卡片等高，「清空数据」按钮始终在同一位置不随内容浮动 */
+.table-desc {
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+  min-height: 3em; /* 恰好两行 */
+  margin-bottom: 8px;
+  cursor: default;
 }
 
 .fp-ellipsis {
