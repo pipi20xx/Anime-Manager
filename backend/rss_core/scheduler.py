@@ -182,11 +182,41 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
         check_list = entries
         matched_count = 0
         skipped_count = 0
+        # TMDB 屏蔽列表整轮载入一次（列表为空时无额外开销）
+        block_map, global_blocks = await SubscriptionMatcher.load_tmdb_block_map()
 
         for entry in check_list:
             guid = entry['guid']
             entry_title = entry.get('title')
-            
+
+            # TMDB 屏蔽回溯检查：识别/订阅阶段之后才加入屏蔽的条目在这里补拦。
+            # 新识别条目已写过 TmdbBlocked 历史，下方 is_downloaded 本就会跳过；
+            # 带规格条件（如制作组）的屏蔽条目只拦满足条件的资源，其余照常匹配规则。
+            if block_map:
+                _fi = await db.first(FeedItem, select(FeedItem).where(FeedItem.guid == guid))
+                if _fi and _fi.tmdb_id:
+                    _fi_meta = {
+                        "season": _fi.season, "episode": _fi.episode,
+                        "resolution": _fi.resolution, "team": _fi.team, "source": _fi.source,
+                        "video_encode": _fi.video_encode, "audio_encode": _fi.audio_encode,
+                        "video_effect": _fi.video_effect, "subtitle": _fi.subtitle, "platform": _fi.platform,
+                    }
+                    _block_entry = SubscriptionMatcher.match_tmdb_block(
+                        block_map, global_blocks, str(_fi.tmdb_id), _fi.media_type, _fi_meta
+                    )
+                    if _block_entry:
+                        _block_cond = SubscriptionMatcher.describe_block_conditions(_block_entry)
+                        logger.info(f"TMDB屏蔽列表命中: {entry_title} (tmdb_id={_fi.tmdb_id})")
+                        if task_id:
+                            _cond_suffix = f"（{_block_cond}）" if _block_cond else ""
+                            await log_task(task_id, f"🚫 TMDB屏蔽列表命中{_cond_suffix}，跳过规则匹配: {entry_title}")
+                        await SubscriptionMatcher.apply_tmdb_block(
+                            _block_entry, _fi_meta, guid, entry_title,
+                            feed_id=feed_id, description=entry.get('description')
+                        )
+                        skipped_count += 1
+                        continue
+
             is_new_for_any_rule = False
             for rule in enabled_rules:
                 if await RssManager.is_downloaded(guid, title=entry_title, rule_id=rule.id):

@@ -63,5 +63,6 @@ export const subscriptionApi = {
   // --- TMDB Blocklist ---
   getTmdbBlocklist: () => api.get<any>('/api/tmdb-blocklist'),
   addTmdbBlocklistItem: (body: any) => api.post<any>('/api/tmdb-blocklist', body),
+  updateTmdbBlocklistItem: (id: number, body: any) => api.put<any>(`/api/tmdb-blocklist/${id}`, body),
   removeTmdbBlocklistItem: (id: number) => api.delete<any>(`/api/tmdb-blocklist/${id}`),
 }

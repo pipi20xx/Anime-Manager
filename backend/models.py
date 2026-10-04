@@ -150,15 +150,22 @@ class Blacklist(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
 
 class TmdbBlocklist(SQLModel, table=True):
-    """TMDB 主动屏蔽列表：用户手动填入 tmdb_id + 类型，识别命中后标记已下载，跳过下载规则/追剧订阅"""
+    """TMDB 主动屏蔽列表：填 tmdb_id + 类型（+ 可选规格条件）屏蔽特定作品/资源；
+    tmdb_id 留空则为全局条件屏蔽（如屏蔽某制作组的全部发布），识别命中后标记已下载，跳过下载规则/追剧订阅"""
     __tablename__ = "tmdb_blocklist"
     __table_args__ = {"schema": get_public_schema()}
     __admin_name__ = "TMDB屏蔽列表"
     id: Optional[int] = Field(default=None, primary_key=True)
-    tmdb_id: str = Field(index=True)
-    media_type: str = Field(default="tv")  # tv / movie
+    # 锚定作品 ID；留空 = 不锚定作品、仅按 conditions 全局屏蔽（此时 conditions 必填，如 team=LoliHouse）
+    tmdb_id: str = Field(default="", index=True)
+    media_type: str = Field(default="tv")  # tv / movie / all（仅全局条件条目可 all）
     title: Optional[str] = None  # 备注名，方便用户识别
     reason: Optional[str] = None  # 屏蔽原因
+    # 规格条件（键同 field_match.FIELD_MATCH_STRATEGY，如 team/resolution/source）。
+    # tmdb_id 非空时：为空 = 整部作品级屏蔽（连订阅一起标记）；非空 = 资源级屏蔽，只拦满足条件的资源，
+    # 同作品其他组的资源照常走订阅/规则。
+    # tmdb_id 为空时：conditions 必填，对所有作品按条件做资源级屏蔽。
+    conditions: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     created_at: datetime = Field(default_factory=datetime.now)
 
 

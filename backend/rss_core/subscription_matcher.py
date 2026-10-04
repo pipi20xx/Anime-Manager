@@ -68,6 +68,133 @@ class SubscriptionMatcher:
         return 0
 
     @staticmethod
+    async def load_tmdb_block_map() -> Tuple[Dict[Tuple[str, str], Dict[str, Any]], List[Dict[str, Any]]]:
+        """
+        一次性载入 TMDB 屏蔽列表，供单轮任务内逐条目查表，避免每条目一次数据库查询。
+        返回 (精确表, 全局条件表)：
+        - 精确表键为 (tmdb_id, media_type)，锚定具体作品；
+        - tmdb_id 留空的条目进入全局条件表，对所有作品按规格条件匹配（如屏蔽某制作组全部发布）。
+        均为普通 dict/list，不受会话生命周期影响。
+        """
+        from models import TmdbBlocklist
+        block_map: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        global_blocks: List[Dict[str, Any]] = []
+        async with db.session_scope():
+            entries = await db.all(TmdbBlocklist, select(TmdbBlocklist))
+        for e in entries:
+            payload = {
+                "tmdb_id": str(e.tmdb_id or "").strip(),
+                "media_type": e.media_type or "tv",
+                "conditions": e.conditions or {},
+            }
+            if payload["tmdb_id"]:
+                block_map[(payload["tmdb_id"], payload["media_type"])] = payload
+            else:
+                global_blocks.append(payload)
+        return block_map, global_blocks
+
+    @staticmethod
+    def match_tmdb_block(block_map: Dict[Tuple[str, str], Dict[str, Any]],
+                         global_blocks: List[Dict[str, Any]],
+                         tmdb_id: Optional[str], media_type: str, meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        查找命中的屏蔽条目。优先查精确表（锚定作品）；未命中再过全局条件表
+        （tmdb_id 留空的条目，media_type=all 时对剧集/电影都生效）。
+        带 conditions 的条目走 field_match 统一匹配，条件不满足视为未命中。
+        """
+        if tmdb_id:
+            entry = block_map.get((str(tmdb_id), media_type))
+            if entry:
+                conditions = entry.get("conditions") or {}
+                if not conditions or check_conditions(conditions, meta or {}):
+                    return entry
+        for entry in global_blocks or []:
+            if entry.get("media_type") not in (None, "", "all", media_type):
+                continue
+            conditions = entry.get("conditions") or {}
+            if conditions and check_conditions(conditions, meta or {}):
+                return entry
+        return None
+
+    @staticmethod
+    def describe_block_conditions(entry: Dict[str, Any]) -> str:
+        conditions = entry.get("conditions") or {}
+        cond = ", ".join(f"{k}={v}" for k, v in conditions.items() if str(v or "").strip())
+        if not cond:
+            return ""
+        prefix = "全局条件" if not entry.get("tmdb_id") else "条件"
+        return f"{prefix}: {cond}"
+
+    @staticmethod
+    async def apply_tmdb_block(entry: Dict[str, Any], meta: Dict[str, Any], guid: str, title: str,
+                               feed_id: Optional[int] = None, description: Optional[str] = None):
+        """
+        屏蔽命中后的统一动作（幂等，已有 TmdbBlocked 记录则跳过）：
+        - 无规格条件（整部作品级）：同步把启用订阅的对应集标记已下载，订阅不再追；
+        - 带规格条件（资源级）：只拦本条资源，同作品其他组的资源照常匹配；
+        最后写 state=TmdbBlocked 的下载历史（rule_id 为空 = 全局），
+        使后续订阅匹配与规则匹配两个阶段都按"已下载"跳过。
+        """
+        from models import DownloadHistory
+        async with db.session_scope():
+            dup_stmt = select(DownloadHistory).where(
+                DownloadHistory.guid == guid,
+                DownloadHistory.state == "TmdbBlocked"
+            )
+            if await db.first(DownloadHistory, dup_stmt) is not None:
+                return
+
+        if not (entry.get("conditions") or {}) and entry.get("tmdb_id"):
+            # 仅整部作品级屏蔽（锚定具体作品且无规格条件）才标记订阅；
+            # 全局条件条目与带条件的条目都是资源级，不动订阅状态。
+            _tmdb = entry["tmdb_id"]
+            _mtype = entry["media_type"]
+            _season = meta.get("season")
+            _episode = meta.get("episode")
+            async with db.session_scope():
+                _sub_stmt = select(Subscription).where(
+                    Subscription.tmdb_id == _tmdb,
+                    Subscription.media_type == _mtype,
+                    Subscription.enabled == True
+                )
+                _subs = await db.all(Subscription, _sub_stmt)
+                for _sub in _subs:
+                    if _mtype == "tv":
+                        try:
+                            _ep_num = int(_episode)
+                            if _sub.season != 0 and _sub.season != _season:
+                                continue
+                            if _sub.start_episode > 0 and _ep_num < _sub.start_episode:
+                                continue
+                            if _sub.end_episode > 0 and _ep_num > _sub.end_episode:
+                                continue
+                        except:
+                            continue
+                        await SubscriptionManager.add_subscribed_episode(
+                            _sub.tmdb_id, _sub.media_type, _season, _ep_num,
+                            title=f"TMDB屏蔽列表: {title}"
+                        )
+                        if _sub.end_episode > 0:
+                            await SubscriptionManager.check_and_complete_subscription(_sub.id)
+                    else:
+                        await SubscriptionManager.add_subscribed_episode(
+                            _sub.tmdb_id, _sub.media_type, 0, 0,
+                            title=f"TMDB屏蔽列表: {title}"
+                        )
+
+        async with db.session_scope():
+            hist = DownloadHistory(
+                guid=guid,
+                title=title,
+                description=description,
+                feed_id=feed_id,
+                download_client_id=None,
+                info_hash=None,
+                state="TmdbBlocked"
+            )
+            await RssManager.add_history(hist)
+
+    @staticmethod
     async def recognize_items(entries: List[Dict], retry_failed: bool = False, task_id: str = None) -> int:
         """
         对条目进行识别。
@@ -82,6 +209,8 @@ class SubscriptionMatcher:
 
         # 缓存 feeds 配置，减少数据库查询
         feeds_cache = {}
+        # 屏蔽列表整轮载入一次（全局，不受订阅源开关控制）
+        block_map, global_blocks = await SubscriptionMatcher.load_tmdb_block_map()
         recognized_count = 0
 
         for entry in entries:
@@ -169,71 +298,29 @@ class SubscriptionMatcher:
                             pass
 
                     # TMDB 主动屏蔽检查（全局，不受订阅源开关控制）：
-                    # 用户手动填入 tmdb_id + 类型，识别命中后直接标记已下载，
+                    # 用户手动填入 tmdb_id + 类型（可选规格条件如制作组），识别命中后直接标记已下载，
                     # 阻止后续追剧订阅与下载规则处理；标记 state=TmdbBlocked 以区别于 Emby。
+                    # 带规格条件的条目为资源级屏蔽：只拦满足条件的资源，不标记订阅；
+                    # 无条件为整部作品级屏蔽：同时标记订阅对应集已下载。
                     _tmdb_blocked = False
                     if final_result.get("tmdb_id"):
-                        _block_tmdb = final_result.get("tmdb_id")
                         _block_type = final_result.get("category")
-                        _block_season = final_result.get("season")
-                        _block_episode = final_result.get("episode")
-                        async with db.session_scope():
-                            from models import TmdbBlocklist
-                            _block_stmt = select(TmdbBlocklist).where(
-                                TmdbBlocklist.tmdb_id == str(_block_tmdb),
-                                TmdbBlocklist.media_type == ("tv" if _block_type == "剧集" else "movie")
-                            )
-                            _block_entry = await db.first(TmdbBlocklist, _block_stmt)
+                        _block_media = "tv" if _block_type == "剧集" else "movie"
+                        _block_entry = SubscriptionMatcher.match_tmdb_block(
+                            block_map, global_blocks, final_result.get("tmdb_id"), _block_media, final_result
+                        )
                         if _block_entry:
                             _tmdb_blocked = True
-                            logger.debug(f"TMDB屏蔽列表命中: {final_result.get('title')} (tmdb_id={_block_tmdb})")
+                            _block_cond = SubscriptionMatcher.describe_block_conditions(_block_entry)
+                            logger.debug(f"TMDB屏蔽列表命中: {final_result.get('title')} (tmdb_id={final_result.get('tmdb_id')})")
                             if task_id:
                                 from task_history import log_task as _log_task
-                                await _log_task(task_id, f"🚫 TMDB屏蔽列表命中，标记已下载: {final_result.get('title')} S{_block_season}E{_block_episode}")
-                            # 标记订阅已下载 + 写下载历史，阻止追剧订阅与下载规则重复处理
-                            async with db.session_scope():
-                                from models import Subscription
-                                _sub_stmt = select(Subscription).where(
-                                    Subscription.tmdb_id == str(_block_tmdb),
-                                    Subscription.media_type == ("tv" if _block_type == "剧集" else "movie"),
-                                    Subscription.enabled == True
-                                )
-                                _block_subs = await db.all(Subscription, _sub_stmt)
-                                for _block_sub in _block_subs:
-                                    if _block_type == "剧集":
-                                        try:
-                                            _ep_num = int(_block_episode)
-                                            if _block_sub.season != 0 and _block_sub.season != _block_season:
-                                                continue
-                                            if _block_sub.start_episode > 0 and _ep_num < _block_sub.start_episode:
-                                                continue
-                                            if _block_sub.end_episode > 0 and _ep_num > _block_sub.end_episode:
-                                                continue
-                                        except:
-                                            continue
-                                        await SubscriptionManager.add_subscribed_episode(
-                                            _block_sub.tmdb_id, _block_sub.media_type, _block_season, _ep_num,
-                                            title=f"TMDB屏蔽列表: {title}"
-                                        )
-                                        if _block_sub.end_episode > 0:
-                                            await SubscriptionManager.check_and_complete_subscription(_block_sub.id)
-                                    elif _block_type == "电影":
-                                        await SubscriptionManager.add_subscribed_episode(
-                                            _block_sub.tmdb_id, _block_sub.media_type, 0, 0,
-                                            title=f"TMDB屏蔽列表: {title}"
-                                        )
-                            from models import DownloadHistory
-                            async with db.session_scope():
-                                _block_hist = DownloadHistory(
-                                    guid=guid,
-                                    title=title,
-                                    description=entry.get('description'),
-                                    feed_id=db_item.feed_id,
-                                    download_client_id=None,
-                                    info_hash=None,
-                                    state="TmdbBlocked"
-                                )
-                                await RssManager.add_history(_block_hist)
+                                _cond_suffix = f"（{_block_cond}）" if _block_cond else ""
+                                await _log_task(task_id, f"🚫 TMDB屏蔽列表命中{_cond_suffix}，标记已下载: {final_result.get('title')} S{final_result.get('season')}E{final_result.get('episode')}")
+                            await SubscriptionMatcher.apply_tmdb_block(
+                                _block_entry, final_result, guid, title,
+                                feed_id=db_item.feed_id, description=entry.get('description')
+                            )
 
                     # Emby 库存在检查（受订阅源开关控制）：开启时若 Emby 已有则标记已下载，
                     # 阻止后续追剧订阅与下载规则重复处理；未命中或开关关闭则放行。
@@ -353,6 +440,9 @@ class SubscriptionMatcher:
         """
         if not subscriptions: return 0
 
+        # 屏蔽列表整轮载入一次，用于回溯拦截"识别之后才加入屏蔽"的条目
+        block_map, global_blocks = await SubscriptionMatcher.load_tmdb_block_map()
+
         rules_map = {}
         profiles_map = {}
         async with db.session_scope():
@@ -413,7 +503,26 @@ class SubscriptionMatcher:
 
             if not db_item or not db_item.tmdb_id:
                 continue
-            
+
+            # TMDB 屏蔽回溯检查：识别阶段后才加入屏蔽的条目在这里补拦。
+            # 新识别条目已在 recognize_items 阶段写过 TmdbBlocked 历史，
+            # 会被上方 is_downloaded 拦下，通常不会走到这里。
+            _block_entry = SubscriptionMatcher.match_tmdb_block(
+                block_map, global_blocks, str(db_item.tmdb_id), db_item.media_type, item_data
+            )
+            if _block_entry:
+                _block_cond = SubscriptionMatcher.describe_block_conditions(_block_entry)
+                logger.debug(f"TMDB屏蔽列表命中(回溯): {title} (tmdb_id={db_item.tmdb_id})")
+                if task_id:
+                    _cond_suffix = f"（{_block_cond}）" if _block_cond else ""
+                    await log_task(task_id, f"🚫 TMDB屏蔽列表命中{_cond_suffix}，标记已下载: {title}")
+                await SubscriptionMatcher.apply_tmdb_block(
+                    _block_entry, item_data, guid, title,
+                    feed_id=db_item.feed_id, description=entry.get('description')
+                )
+                skipped_count += 1
+                continue
+
             current_feed_id = str(db_item.feed_id)
 
             # 查询该条目所属订阅源是否开启 Emby 检查
