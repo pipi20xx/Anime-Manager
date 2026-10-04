@@ -14,6 +14,7 @@ from .engine import StrmTaskEngine
 from .scanners import ListScanner
 from clients.cd2 import CD2Client
 from logger import log_audit
+from notification import notification_manager
 
 logger = logging.getLogger("CD2SyncManager")
 
@@ -240,7 +241,13 @@ class CD2SyncManager:
                 async for line in engine.run(ListScanner([]), is_last_stage=True):
                     yield line
             else:
-                # 没有任何任务
+                # 没有任何待处理任务（全部本地已存在跳过）：同样收尾并发送通知，
+                # 保证"跑一次就有一次通知"
                 duration = time.time() - start_time
                 stats["duration"] = f"{duration:.1f}s"
+                stats["source"] = source_root
+                stats["target"] = target_root
+                asyncio.create_task(
+                    notification_manager.notify_strm_finished(config.get("name", "任务"), stats)
+                )
                 yield json.dumps({"type": "finish", "stats": stats}) + "\n"

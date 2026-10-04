@@ -124,6 +124,7 @@ const tableDescriptions: Record<string, string> = {
   'public.custom_scheduled_jobs': '自定义定时任务（任务计划页创建的 cron/间隔任务）',
   'public.notification_records': '通知中心发送记录（Telegram 等渠道的消息渲染留档）',
   'public.webhook_events': '联动记录中心（Webhook 事件台账：CD2 联动成败、重试记录，并引用 task_records 保存全链路日志）',
+  'public.cd2_dir_cache': 'CD2 目录锁定快照缓存：锁定的目录浏览/扫描/生成走本地快照（0 API），解锁即删除',
 }
 
 type TableCategory = 'cache' | 'config' | 'core'
@@ -134,6 +135,7 @@ const tableCategories: Record<string, TableCategory> = {
   'public.feed_items': 'cache', 'public.download_history': 'cache', 'public.task_records': 'cache',
   'public.organize_history': 'cache', 'public.bangumi_data_item': 'cache', 'public.subscribed_episodes': 'cache',
   'public.rapid_upload_retry': 'cache', 'public.notification_records': 'cache', 'public.webhook_events': 'cache',
+  'public.cd2_dir_cache': 'cache',
   'public.custom_scheduled_jobs': 'config',
   'metadata.recognition_corrections': 'config', 'metadata.user_genre_mapping': 'config',
   'metadata.user_company_mapping': 'config', 'metadata.user_keyword_mapping': 'config',
