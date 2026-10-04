@@ -217,13 +217,10 @@ async def dir_cache_lock(req: DirCacheRequest):
     client = _get_cd2_client(req.client_id)
 
     if req.recursive:
-        result = await lock_subtree(client, req.path)
-        if not result.get("success"):
-            raise HTTPException(status_code=400, detail=result.get("message", "递归锁定失败"))
-        msg = result.get("message") or f"已锁定 {result.get('dir_count', 0)} 个目录"
-        log_audit("CD2目录缓存", "递归锁定",
-                  f"{req.path}（{result.get('dir_count', 0)} 个目录，失败 {result.get('failed_count', 0)}）")
-        return {"success": True, "message": msg, **result}
+        from cd2_dir_cache import spawn_background
+        spawn_background(lock_subtree(client, req.path))
+        log_audit("CD2目录缓存", "递归锁定", f"{req.path}（后台任务已启动）")
+        return {"success": True, "message": "递归锁定已在后台开始，进度见任务中心「CD2目录缓存」分类"}
 
     result = await lock_dir(client, req.path)
     if not result.get("success"):

@@ -176,73 +176,116 @@ async def refresh_dir(client, path: str) -> Dict[str, Any]:
     return {"entries": result.get("entries", []), "locked": True, "fetched_at": datetime.now(), **counts}
 
 
+_bg_tasks: Set["asyncio.Task"] = set()
+_lock_inflight: Set[str] = set()
+
+
+def spawn_background(coro) -> "asyncio.Task":
+    """后台任务启动器：持有引用防止长任务被 GC，完成自动清理"""
+    task = asyncio.create_task(coro)
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
+    return task
+
+
 async def lock_subtree(client, root: str) -> Dict[str, Any]:
     """
-    递归锁定子树：scan_path 遍历（本身吃缓存，未锁目录才付 API），
-    然后把发现的全部目录连同各自快照批量置 locked。
+    递归锁定子树（由调用方以后台任务方式启动）：scan_path 遍历（本身吃缓存，
+    未锁目录才付 API），把发现的全部目录连同各自快照批量置 locked。
+    进度实时写入任务中心，关闭页面不影响执行。
     """
     from strm.cd2_indexer import CD2Indexer
 
     p = _normalize_path(root)
-    if not client.logged_in or not client.token:
-        if not await client.login_async():
-            return {"success": False, "message": "CD2 登录失败"}
+    if p in _lock_inflight:
+        return {"success": False, "message": "该目录的递归锁定已在后台进行中，请勿重复触发"}
+    _lock_inflight.add(p)
 
-    indexer = CD2Indexer(client, max_workers=4)
-    tree = await indexer.scan_path(p, force_refresh=False)
-    failed_dirs = set(getattr(indexer, "failed_dirs", None) or [])
-    if not isinstance(tree, dict) or not tree:
-        return {"success": False, "message": "子树扫描失败，未能获取云端数据"}
-
-    now = datetime.now()
-    values = []
-    for dir_path, items in tree.items():
-        entries = [
-            {
-                "name": it.get("name"),
-                "path": it.get("path"),
-                "is_dir": bool(it.get("is_dir")),
-                "size": int(it.get("size") or 0),
-                "write_time": int(it.get("write_time") or 0),
-                "is_forbidden": bool(it.get("is_forbidden")),
-                "can_offline_download": bool(it.get("can_offline_download")),
-            }
-            for it in (items or [])
-        ]
-        counts = _counts(entries)
-        values.append({"path": _normalize_path(dir_path), "entries": entries, "locked": True,
-                       "fetched_at": now, **counts})
-
-    async with db.session_scope():
-        for i in range(0, len(values), _BULK_CHUNK):
-            chunk = values[i:i + _BULK_CHUNK]
-            stmt = pg_insert(Cd2DirCache.__table__).values(chunk)
-            stmt = stmt.on_conflict_do_update(
-                index_elements=["path"],
-                set_={
-                    "entries": stmt.excluded.entries,
-                    "locked": stmt.excluded.locked,
-                    "file_count": stmt.excluded.file_count,
-                    "dir_count": stmt.excluded.dir_count,
-                    "fetched_at": stmt.excluded.fetched_at,
-                },
-            )
-            await db.session.execute(stmt)
-
-    logger.info(f"[CD2目录缓存] 子树已锁定: {p}（共 {len(values)} 个目录，拉取失败 {len(failed_dirs)}）")
-    lines = [f"根目录: {p}", f"锁定 {len(values)} 个目录"]
-    if failed_dirs:
-        lines.append(f"⚠️ {len(failed_dirs)} 个目录拉取失败（未锁定，可稍后重试）")
+    task_id = f"cd2cache_{uuid.uuid4().hex[:8]}"
     try:
-        await _record_task("递归锁定子树", lines, processed=len(values))
+        if not client.logged_in or not client.token:
+            if not await client.login_async():
+                await start_task(task_id, "CD2目录缓存", f"递归锁定子树: {p}")
+                await log_task(task_id, "❌ CD2 登录失败", "ERROR")
+                await finish_task(task_id, "error", 0)
+                return {"success": False, "message": "CD2 登录失败"}
+
+        await start_task(task_id, "CD2目录缓存", f"递归锁定子树: {p}")
+        await log_task(task_id, f"根目录: {p}（已锁定的目录走快照，0 API）")
+
+        indexer = CD2Indexer(client, max_workers=4)
+        scanned = 0
+
+        async def on_progress(path: str):
+            nonlocal scanned
+            scanned += 1
+            if scanned == 1 or scanned % 20 == 0:
+                await log_task(task_id, f"[{scanned}] {path}")
+
+        tree = await indexer.scan_path(p, force_refresh=False, on_progress=on_progress)
+        failed_dirs = set(getattr(indexer, "failed_dirs", None) or [])
+        if not isinstance(tree, dict) or not tree:
+            await log_task(task_id, "❌ 子树扫描失败，未能获取云端数据", "ERROR")
+            await finish_task(task_id, "error", 0)
+            return {"success": False, "message": "子树扫描失败，未能获取云端数据"}
+
+        now = datetime.now()
+        values = []
+        for dir_path, items in tree.items():
+            entries = [
+                {
+                    "name": it.get("name"),
+                    "path": it.get("path"),
+                    "is_dir": bool(it.get("is_dir")),
+                    "size": int(it.get("size") or 0),
+                    "write_time": int(it.get("write_time") or 0),
+                    "is_forbidden": bool(it.get("is_forbidden")),
+                    "can_offline_download": bool(it.get("can_offline_download")),
+                }
+                for it in (items or [])
+            ]
+            counts = _counts(entries)
+            values.append({"path": _normalize_path(dir_path), "entries": entries, "locked": True,
+                           "fetched_at": now, **counts})
+
+        async with db.session_scope():
+            for i in range(0, len(values), _BULK_CHUNK):
+                chunk = values[i:i + _BULK_CHUNK]
+                stmt = pg_insert(Cd2DirCache.__table__).values(chunk)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=["path"],
+                    set_={
+                        "entries": stmt.excluded.entries,
+                        "locked": stmt.excluded.locked,
+                        "file_count": stmt.excluded.file_count,
+                        "dir_count": stmt.excluded.dir_count,
+                        "fetched_at": stmt.excluded.fetched_at,
+                    },
+                )
+                await db.session.execute(stmt)
+
+        logger.info(f"[CD2目录缓存] 子树已锁定: {p}（共 {len(values)} 个目录，拉取失败 {len(failed_dirs)}）")
+        await log_task(task_id, f"✅ 已锁定 {len(values)} 个目录")
+        if failed_dirs:
+            await log_task(task_id, f"⚠️ {len(failed_dirs)} 个目录拉取失败（未锁定，可稍后重试）", "ERROR")
+        await finish_task(task_id, "completed", len(values))
+
+        result = {"success": True, "path": p, "dir_count": len(values)}
+        if failed_dirs:
+            # 失败分支保持未锁定（不会缓存错误数据），如实上报供用户重试
+            result["failed_count"] = len(failed_dirs)
+            result["message"] = f"已锁定 {len(values)} 个目录，{len(failed_dirs)} 个目录拉取失败（未锁定，可稍后重试）"
+        return result
     except Exception as e:
-        logger.warning(f"[CD2目录缓存] 记录任务失败: {e}")
-    result = {"success": True, "path": p, "dir_count": len(values)}
-    if failed_dirs:
-        # 失败分支保持未锁定（不会缓存错误数据），如实上报供用户重试
-        result["failed_count"] = len(failed_dirs)
-        result["message"] = f"已锁定 {len(values)} 个目录，{len(failed_dirs)} 个目录拉取失败（未锁定，可稍后重试）"
-    return result
+        logger.error(f"[CD2目录缓存] 递归锁定异常 {p}: {e}")
+        try:
+            await log_task(task_id, f"❌ 异常终止: {e}", "ERROR")
+            await finish_task(task_id, "error", 0)
+        except Exception:
+            pass
+        return {"success": False, "message": str(e)}
+    finally:
+        _lock_inflight.discard(p)
 
 
 async def unlock_path(path: str) -> bool:
