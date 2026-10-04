@@ -13,6 +13,8 @@ class CD2Indexer:
         self.client = client
         self.max_workers = max_workers
         self.is_running = True
+        # 最近一次 scan_path 中拉取失败的目录（网盘限流/风控等），供调用方如实上报
+        self.failed_dirs: set = set()
 
     async def scan_path(self, root_path: str, force_refresh: bool = False, on_progress=None) -> Dict[str, List[Dict[str, Any]]]:
         """
@@ -33,6 +35,7 @@ class CD2Indexer:
             root_path = root_path.rstrip("/")
 
         tree_data = {}
+        self.failed_dirs = set()
         queue = asyncio.Queue()
         await queue.put(root_path)
         
@@ -56,11 +59,21 @@ class CD2Indexer:
                     if on_progress:
                         await on_progress(path)
 
-                    items = await self._fetch_dir(stub, pb2, path, force_refresh)
-                    
-                    # --- 增加限流延迟 ---
-                    import random
-                    await asyncio.sleep(random.uniform(0.3, 0.6)) 
+                    # 锁定缓存优先：锁定的目录直接用快照（0 API），子目录照常入队
+                    items = None
+                    try:
+                        from cd2_dir_cache import get_snapshot_entries
+                        items = await get_snapshot_entries(path)
+                    except Exception as ce:
+                        logger.debug(f"[CD2Indexer] 缓存查询失败 {path}: {ce}")
+
+                    if items is None:
+                        items = await self._fetch_dir(stub, pb2, path, force_refresh)
+                        if items is None:
+                            self.failed_dirs.add(path)
+                        # --- 增加限流延迟（走缓存的不需要） ---
+                        import random
+                        await asyncio.sleep(random.uniform(0.3, 0.6))
 
                     if items is not None:
                         tree_data[path] = items
@@ -89,16 +102,20 @@ class CD2Indexer:
         try:
             req = pb2.ListSubFileRequest(path=path, forceRefresh=force)
             metadata = self.client.get_metadata()
-            # 异步流式迭代
+            # 异步流式迭代（字段提取与 CD2FileBrowser.list_dir 保持同源同形，
+            # 保证锁定快照无论由哪条路径写入，条目结构一致）
             call = stub.GetSubFiles(req, metadata=metadata, timeout=60)
             async for resp in call:
                 if not resp.subFiles: continue
                 for f in resp.subFiles:
                     result.append({
                         'name': f.name,
-                        'path': f.fullPathName or f.path,
-                        'is_dir': f.isDirectory or f.fileType == 0,
-                        'size': f.size
+                        'path': f.fullPathName or f.path or f"/{f.name}",
+                        'is_dir': bool(f.isDirectory) or int(f.fileType) == 0,
+                        'size': int(f.size),
+                        'write_time': int(f.writeTime.seconds) if f.HasField("writeTime") else 0,
+                        'is_forbidden': bool(f.isForbidden),
+                        'can_offline_download': bool(getattr(f, "canOfflineDownload", False)),
                     })
             return result
         except Exception as e:

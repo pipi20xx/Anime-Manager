@@ -344,6 +344,20 @@ class DiscoverCache(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.now)
     expire_at: datetime
 
+
+class Cd2DirCache(SQLModel, table=True):
+    """CD2 目录快照缓存：锁定的目录所有读路径走本地快照，0 API"""
+    __tablename__ = "cd2_dir_cache"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "CD2目录缓存"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    path: str = Field(unique=True, index=True)          # CD2 内部云路径，全局唯一键
+    entries: List[Dict] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    locked: bool = Field(default=False)
+    file_count: int = Field(default=0)
+    dir_count: int = Field(default=0)
+    fetched_at: datetime = Field(default_factory=datetime.now)
+
 class CalendarSubject(SQLModel, table=True):
     __tablename__ = "calendar_subjects"
     __table_args__ = {"schema": get_public_schema()}

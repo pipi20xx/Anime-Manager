@@ -1,0 +1,268 @@
+"""
+CD2 目录快照缓存（方案B）
+- 锁定的目录：所有读路径走本地快照，0 API
+- 未锁定的目录：实时查询，无任何副作用（不写缓存）
+- 快照只产生于：lock_dir / lock_subtree / refresh_dir / webhook 事件喂快照
+- 缓存键 = CD2 内部云路径，全局共享（不绑定单个任务）
+- 删除/删除校验等需要新鲜数据的路径不经过本模块（保持直连 GetSubFiles）
+"""
+import asyncio
+import logging
+import posixpath
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
+
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from database import db
+from models import Cd2DirCache
+
+logger = logging.getLogger(__name__)
+
+_BULK_CHUNK = 500
+
+
+def _normalize_path(path: str) -> str:
+    """统一为无尾斜杠的绝对云路径（根为 /）"""
+    p = '/' + (path or '').lstrip('/')
+    return p.rstrip('/') or '/'
+
+
+async def get_snapshot(path: str) -> Optional[Dict[str, Any]]:
+    """读取快照行，返回 {entries, locked, fetched_at}；无行返回 None"""
+    p = _normalize_path(path)
+    async with db.session_scope():
+        row = await db.first(Cd2DirCache, select(Cd2DirCache).where(Cd2DirCache.path == p))
+        if not row:
+            return None
+        return {
+            "entries": list(row.entries or []),
+            "locked": bool(row.locked),
+            "fetched_at": row.fetched_at,
+        }
+
+
+async def get_snapshot_entries(path: str) -> Optional[List[Dict[str, Any]]]:
+    """锁定目录返回快照条目列表；未锁定/不存在返回 None（供扫描器判断）"""
+    snap = await get_snapshot(path)
+    if snap and snap["locked"]:
+        return snap["entries"]
+    return None
+
+
+async def is_locked(path: str) -> bool:
+    snap = await get_snapshot(path)
+    return bool(snap and snap["locked"])
+
+
+async def get_locked_flags(paths: List[str]) -> Set[str]:
+    """批量查哪些路径已锁定（供前端目录徽标），返回锁定的路径集合"""
+    normalized = [_normalize_path(p) for p in (paths or []) if p]
+    if not normalized:
+        return set()
+    async with db.session_scope():
+        result = await db.session.execute(
+            select(Cd2DirCache.path).where(Cd2DirCache.path.in_(normalized), Cd2DirCache.locked == True)  # noqa: E712
+        )
+        return {r for (r,) in result.all()}
+
+
+async def list_dir_via_cache(client, path: str, refresh: bool = False) -> Dict[str, Any]:
+    """
+    CD2 目录列表统一读入口。
+    - 锁定：返回快照（refresh=True 时先重取快照，失败回退旧快照）
+    - 未锁定：实时查询（不写缓存）
+    返回 browse_files 同款结构，附加 locked / from_cache 标记。
+    """
+    p = _normalize_path(path)
+    snap = await get_snapshot(p)
+    if snap and snap["locked"]:
+        from_cache = True
+        if refresh:
+            try:
+                snap = await refresh_dir(client, p)
+                from_cache = False  # 刚重取过的就是新鲜数据
+            except Exception as e:
+                logger.warning(f"[CD2目录缓存] 刷新快照失败 {p}: {e}，回退旧快照")
+        entries = snap["entries"]
+        return {
+            "success": True,
+            "path": p,
+            "entries": entries,
+            "total": len(entries),
+            "can_offline": any(e.get("can_offline_download") for e in entries),
+            "locked": True,
+            "from_cache": from_cache,
+            "fetched_at": snap["fetched_at"].isoformat() if snap.get("fetched_at") else None,
+        }
+
+    result = await asyncio.to_thread(client.browse_files, p, refresh)
+    result.setdefault("locked", False)
+    result["from_cache"] = False
+    return result
+
+
+def _counts(entries: List[Dict[str, Any]]) -> Dict[str, int]:
+    dir_count = sum(1 for e in entries if e.get("is_dir"))
+    return {"file_count": len(entries) - dir_count, "dir_count": dir_count}
+
+
+async def _upsert_snapshot(path: str, entries: List[Dict[str, Any]], locked: bool = True):
+    p = _normalize_path(path)
+    counts = _counts(entries)
+    async with db.session_scope():
+        row = await db.first(Cd2DirCache, select(Cd2DirCache).where(Cd2DirCache.path == p))
+        if row:
+            row.entries = entries
+            row.locked = locked
+            row.file_count = counts["file_count"]
+            row.dir_count = counts["dir_count"]
+            row.fetched_at = datetime.now()
+            await db.save(row)
+        else:
+            await db.save(Cd2DirCache(path=p, entries=entries, locked=locked,
+                                      fetched_at=datetime.now(), **counts))
+    return counts
+
+
+async def lock_dir(client, path: str) -> Dict[str, Any]:
+    """锁定目录：拉一次最新列表 → 存快照 → 置 locked。此后读路径 0 API。"""
+    p = _normalize_path(path)
+    result = await asyncio.to_thread(client.browse_files, p, False)
+    if not result.get("success"):
+        return {"success": False, "message": result.get("message", "列目录失败")}
+    counts = await _upsert_snapshot(p, result.get("entries", []), locked=True)
+    logger.info(f"[CD2目录缓存] 已锁定: {p} ({counts['file_count']} 文件 / {counts['dir_count']} 目录)")
+    return {"success": True, "path": p, **counts}
+
+
+async def refresh_dir(client, path: str) -> Dict[str, Any]:
+    """重取快照并保持锁定（force_refresh 绕过 CD2 自身缓存，保证拿到的确实是新数据）"""
+    p = _normalize_path(path)
+    result = await asyncio.to_thread(client.browse_files, p, True)
+    if not result.get("success"):
+        raise RuntimeError(result.get("message", "列目录失败"))
+    counts = await _upsert_snapshot(p, result.get("entries", []), locked=True)
+    logger.debug(f"[CD2目录缓存] 快照已刷新: {p}")
+    return {"entries": result.get("entries", []), "locked": True, "fetched_at": datetime.now(), **counts}
+
+
+async def lock_subtree(client, root: str) -> Dict[str, Any]:
+    """
+    递归锁定子树：scan_path 遍历（本身吃缓存，未锁目录才付 API），
+    然后把发现的全部目录连同各自快照批量置 locked。
+    """
+    from strm.cd2_indexer import CD2Indexer
+
+    p = _normalize_path(root)
+    if not client.logged_in or not client.token:
+        if not await client.login_async():
+            return {"success": False, "message": "CD2 登录失败"}
+
+    indexer = CD2Indexer(client, max_workers=4)
+    tree = await indexer.scan_path(p, force_refresh=False)
+    failed_dirs = set(getattr(indexer, "failed_dirs", None) or [])
+    if not isinstance(tree, dict) or not tree:
+        return {"success": False, "message": "子树扫描失败，未能获取云端数据"}
+
+    now = datetime.now()
+    values = []
+    for dir_path, items in tree.items():
+        entries = [
+            {
+                "name": it.get("name"),
+                "path": it.get("path"),
+                "is_dir": bool(it.get("is_dir")),
+                "size": int(it.get("size") or 0),
+                "write_time": int(it.get("write_time") or 0),
+                "is_forbidden": bool(it.get("is_forbidden")),
+                "can_offline_download": bool(it.get("can_offline_download")),
+            }
+            for it in (items or [])
+        ]
+        counts = _counts(entries)
+        values.append({"path": _normalize_path(dir_path), "entries": entries, "locked": True,
+                       "fetched_at": now, **counts})
+
+    async with db.session_scope():
+        for i in range(0, len(values), _BULK_CHUNK):
+            chunk = values[i:i + _BULK_CHUNK]
+            stmt = pg_insert(Cd2DirCache.__table__).values(chunk)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["path"],
+                set_={
+                    "entries": stmt.excluded.entries,
+                    "locked": stmt.excluded.locked,
+                    "file_count": stmt.excluded.file_count,
+                    "dir_count": stmt.excluded.dir_count,
+                    "fetched_at": stmt.excluded.fetched_at,
+                },
+            )
+            await db.session.execute(stmt)
+
+    logger.info(f"[CD2目录缓存] 子树已锁定: {p}（共 {len(values)} 个目录，拉取失败 {len(failed_dirs)}）")
+    result = {"success": True, "path": p, "dir_count": len(values)}
+    if failed_dirs:
+        # 失败分支保持未锁定（不会缓存错误数据），如实上报供用户重试
+        result["failed_count"] = len(failed_dirs)
+        result["message"] = f"已锁定 {len(values)} 个目录，{len(failed_dirs)} 个目录拉取失败（未锁定，可稍后重试）"
+    return result
+
+
+async def unlock_path(path: str) -> bool:
+    """解锁目录：删除缓存行，恢复实时"""
+    p = _normalize_path(path)
+    async with db.session_scope():
+        row = await db.first(Cd2DirCache, select(Cd2DirCache).where(Cd2DirCache.path == p))
+        if not row:
+            return False
+        await db.delete(row)
+    logger.info(f"[CD2目录缓存] 已解锁: {p}")
+    return True
+
+
+async def unlock_subtree(path: str) -> int:
+    """递归解锁：删除目录自身及全部子孙的缓存行"""
+    p = _normalize_path(path)
+    async with db.session_scope():
+        result = await db.session.execute(
+            delete(Cd2DirCache).where(
+                (Cd2DirCache.path == p) | Cd2DirCache.path.startswith(p.rstrip('/') + '/', autoescape=True)
+            )
+        )
+    logger.info(f"[CD2目录缓存] 子树已解锁: {p}（{result.rowcount} 个目录）")
+    return result.rowcount
+
+
+async def stats() -> Dict[str, Any]:
+    async with db.session_scope():
+        result = await db.session.execute(
+            select(Cd2DirCache.file_count, Cd2DirCache.dir_count, Cd2DirCache.fetched_at)
+            .where(Cd2DirCache.locked == True)  # noqa: E712
+        )
+        rows = result.all()
+    return {
+        "locked_dirs": len(rows),
+        "total_files": sum(r[0] or 0 for r in rows),
+        "total_dirs": sum(r[1] or 0 for r in rows),
+        "oldest_fetch": min((r[2] for r in rows), default=None).isoformat() if rows else None,
+    }
+
+
+async def feed_event(cloud_path: str, is_dir: bool):
+    """
+    webhook 事件喂快照：受影响目录（文件事件的父目录/目录事件自身）已锁定时后台重取。
+    客户端实例仅在确有锁定目录需要刷新时才解析；绝不抛异常——联动主流程不受缓存状态影响。
+    """
+    try:
+        p = _normalize_path(cloud_path)
+        target = p if is_dir else (posixpath.dirname(p) or '/')
+        snap = await get_snapshot(target)
+        if not (snap and snap["locked"]):
+            return
+        from routers.cd2 import _get_cd2_client
+        await refresh_dir(_get_cd2_client(), target)
+        logger.info(f"[CD2目录缓存] 事件触发快照刷新: {target}")
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 事件刷新快照失败 ({cloud_path}): {e}")

@@ -176,13 +176,85 @@ async def get_monitor_status():
     }
 
 
-@router.get("/cd2/files", summary="浏览 CD2 文件目录")
+@router.get("/cd2/files", summary="浏览 CD2 文件目录（锁定目录走快照）")
 async def browse_files(path: str = "/", refresh: bool = False, client_id: Optional[str] = None):
+    from cd2_dir_cache import get_locked_flags, list_dir_via_cache
+
     client = _get_cd2_client(client_id)
-    result = await asyncio.to_thread(client.browse_files, path or "/", refresh)
+    result = await list_dir_via_cache(client, path or "/", refresh)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "列目录失败"))
+
+    # 目录条目附加锁定徽标（一次批量查询）
+    try:
+        dir_paths = [e["path"] for e in result.get("entries", []) if e.get("is_dir")]
+        locked_set = await get_locked_flags(dir_paths)
+        if locked_set:
+            for e in result["entries"]:
+                if e.get("is_dir"):
+                    e["locked"] = e["path"] in locked_set
+    except Exception as e:
+        logger.warning(f"查询目录锁定徽标失败: {e}")
     return result
+
+
+# ---------------------------------------------------------------------------
+# CD2 目录快照缓存（锁定 = 永久缓存，读路径 0 API）
+# ---------------------------------------------------------------------------
+
+class DirCacheRequest(BaseModel):
+    path: str
+    recursive: bool = False
+    client_id: Optional[str] = None
+
+
+@router.post("/cd2/dir-cache/lock", summary="锁定目录（递归时锁定整棵子树）")
+async def dir_cache_lock(req: DirCacheRequest):
+    from cd2_dir_cache import lock_dir, lock_subtree
+
+    if not req.path.startswith("/"):
+        raise HTTPException(status_code=400, detail="路径无效")
+    client = _get_cd2_client(req.client_id)
+
+    if req.recursive:
+        result = await lock_subtree(client, req.path)
+        if not result.get("success"):
+            raise HTTPException(status_code=400, detail=result.get("message", "递归锁定失败"))
+        msg = result.get("message") or f"已锁定 {result.get('dir_count', 0)} 个目录"
+        log_audit("CD2目录缓存", "递归锁定",
+                  f"{req.path}（{result.get('dir_count', 0)} 个目录，失败 {result.get('failed_count', 0)}）")
+        return {"success": True, "message": msg, **result}
+
+    result = await lock_dir(client, req.path)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "锁定失败"))
+    log_audit("CD2目录缓存", "锁定", req.path)
+    return {"success": True, "message": "已锁定", **result}
+
+
+@router.post("/cd2/dir-cache/unlock", summary="解锁目录（递归时解锁整棵子树，幂等）")
+async def dir_cache_unlock(req: DirCacheRequest):
+    from cd2_dir_cache import unlock_path, unlock_subtree
+
+    if not req.path.startswith("/"):
+        raise HTTPException(status_code=400, detail="路径无效")
+
+    if req.recursive:
+        count = await unlock_subtree(req.path)
+        log_audit("CD2目录缓存", "递归解锁", f"{req.path}（{count} 个目录）")
+        return {"success": True, "message": f"已解锁 {count} 个目录", "count": count}
+
+    deleted = await unlock_path(req.path)
+    if deleted:
+        log_audit("CD2目录缓存", "解锁", req.path)
+        return {"success": True, "message": "已解锁"}
+    return {"success": True, "message": "该目录未锁定，无需解锁"}
+
+
+@router.get("/cd2/dir-cache/stats", summary="目录缓存统计")
+async def dir_cache_stats():
+    from cd2_dir_cache import stats as cache_stats
+    return await cache_stats()
 
 
 class CreateFolderRequest(BaseModel):

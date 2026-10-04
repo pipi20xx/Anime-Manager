@@ -24,6 +24,9 @@ const currentPath = ref('/')
 const entries = ref<any[]>([])
 // 当前目录是否支持离线下载（由后端根据子项 canOfflineDownload 判定）
 const canOffline = ref(false)
+// 当前目录锁定缓存状态
+const currentDirLocked = ref(false)
+const currentDirFromCache = ref(false)
 
 const breadcrumbs = computed(() => {
   const parts = currentPath.value.split('/').filter(Boolean)
@@ -77,6 +80,9 @@ const loadEntries = async (forceRefresh = false) => {
     const res = await cd2Api.browseFiles(currentPath.value, forceRefresh)
     entries.value = res.entries || []
     canOffline.value = !!res.can_offline
+    // 锁定缓存状态（后端 list_dir_via_cache 返回）
+    currentDirLocked.value = !!res.locked
+    currentDirFromCache.value = !!res.from_cache
   } catch (e: any) {
     showError(e?.message || '列目录失败')
   } finally {
@@ -108,6 +114,10 @@ const menuAction = (action: string) => {
   else if (action === 'copy') openTransferModal('copy', entry)
   else if (action === 'copy_path') copyPath(entry)
   else if (action === 'delete') deleteEntry(entry)
+  else if (action === 'lock') lockEntry(entry, false)
+  else if (action === 'lock_recursive') lockEntry(entry, true)
+  else if (action === 'unlock') unlockEntry(entry, false)
+  else if (action === 'unlock_recursive') unlockEntry(entry, true)
 }
 
 const copyToClipboard = async (text: string) => {
@@ -241,6 +251,61 @@ const deleteEntry = async (entry: any) => {
     await loadEntries(true)
   } catch (e: any) {
     showError(e?.message || '删除失败')
+  }
+}
+
+// ---------- 目录锁定缓存（锁定 = 永久快照，读路径 0 API） ----------
+const lockEntry = async (entry: any, recursive: boolean) => {
+  if (recursive) {
+    const ok = await confirm(`递归锁定「${entry.name}」整棵子树？未锁定的目录将逐个拉取一次（产生 API 调用），之后整棵子树的浏览/扫描/生成全部走本地快照。`)
+    if (!ok) return
+  }
+  try {
+    const res = await cd2Api.lockDir({ path: entry.path, recursive })
+    if (res?.failed_count > 0) {
+      showError(res?.message || '部分目录拉取失败')
+    } else {
+      success(res?.message || '已锁定')
+    }
+    await loadEntries()
+  } catch (e: any) {
+    showError(e?.message || '锁定失败')
+  }
+}
+
+const lockCurrentDir = async () => {
+  try {
+    const res = await cd2Api.lockDir({ path: currentPath.value })
+    success(res?.message || '已锁定')
+    await loadEntries()
+  } catch (e: any) {
+    showError(e?.message || '锁定失败')
+  }
+}
+
+const unlockEntry = async (entry: any, recursive: boolean) => {
+  if (recursive) {
+    const ok = await confirm(`递归解锁「${entry.name}」整棵子树？全部快照将被删除并恢复实时浏览。`)
+    if (!ok) return
+  }
+  try {
+    const res = await cd2Api.unlockDir({ path: entry.path, recursive })
+    success(res?.message || '已解锁')
+    await loadEntries(true)
+  } catch (e: any) {
+    showError(e?.message || '解锁失败')
+  }
+}
+
+const unlockCurrentDir = async () => {
+  const ok = await confirm(`解锁当前目录「${currentPath.value}」？快照将被删除并恢复实时浏览。`)
+  if (!ok) return
+  try {
+    await cd2Api.unlockDir({ path: currentPath.value })
+    success('已解锁')
+    await loadEntries(true)
+  } catch (e: any) {
+    showError(e?.message || '解锁失败')
   }
 }
 
@@ -631,6 +696,19 @@ onMounted(() => {
           <v-icon v-if="i < breadcrumbs.length - 1" size="x-small">mdi-chevron-right</v-icon>
         </template>
         <v-spacer />
+        <v-chip
+          v-if="currentDirLocked"
+          size="x-small"
+          variant="tonal"
+          color="success"
+          prepend-icon="mdi-lock"
+          class="mr-2"
+          title="此目录已锁定：浏览/扫描/生成走本地快照（0 API），点击解锁"
+          style="cursor: pointer"
+          @click="unlockCurrentDir"
+        >
+          已锁定{{ currentDirFromCache ? ' (缓存)' : '' }}
+        </v-chip>
         <span class="text-caption text-medium-emphasis mr-2">{{ entries.length }} 项</span>
         <v-btn
           v-if="canOffline && currentPath !== '/'"
@@ -642,6 +720,17 @@ onMounted(() => {
           @click="openOfflineModal"
         >
           离线下载管理
+        </v-btn>
+        <v-btn
+          v-if="!currentDirLocked && currentPath !== '/'"
+          variant="tonal"
+          size="small"
+          prepend-icon="mdi-lock-outline"
+          class="mr-1"
+          title="锁定当前目录（永久快照缓存，浏览/扫描/生成 0 API）"
+          @click="lockCurrentDir"
+        >
+          锁定此目录
         </v-btn>
         <v-btn
           color="primary"
@@ -666,7 +755,14 @@ onMounted(() => {
         <v-btn icon="mdi-folder-plus-outline" size="small" variant="text" title="新建文件夹" @click="openCreateModal" />
         <v-btn icon="mdi-delete-sweep" size="small" variant="text" title="清理空文件夹" :disabled="currentPath === '/'" @click="showCleanEmptyModal = true" />
         <v-btn icon="mdi-refresh" size="small" variant="text" :loading="loading" title="刷新" @click="loadEntries()" />
-        <v-btn icon="mdi-sync" size="small" variant="text" :loading="loading" title="强制刷新 (绕过缓存)" @click="loadEntries(true)" />
+        <v-btn
+          icon="mdi-sync"
+          size="small"
+          variant="text"
+          :loading="loading"
+          :title="currentDirLocked ? '刷新快照 (重取并保持锁定)' : '强制刷新 (绕过缓存)'"
+          @click="loadEntries(true)"
+        />
         <input ref="fileInput" type="file" hidden @change="onFilePicked" />
       </div>
     </v-card-text>
@@ -715,6 +811,18 @@ onMounted(() => {
             <v-chip v-if="entry.is_forbidden" size="x-small" variant="tonal" color="warning" class="ml-2">
               受限
             </v-chip>
+            <!-- 文件：当前目录已锁定即来自快照；目录：仅自身已锁定时显示（其内容需要自己的锁） -->
+            <v-chip
+              v-if="entry.is_dir ? !!entry.locked : currentDirLocked"
+              size="x-small"
+              variant="tonal"
+              color="success"
+              class="ml-2"
+              :title="entry.is_dir ? '此子目录自身已锁定（其内容走快照）' : '已随目录快照缓存（0 API）'"
+            >
+              <v-icon icon="mdi-lock" size="x-small" class="mr-1" />
+              已缓存
+            </v-chip>
           </v-list-item-title>
           <v-list-item-subtitle class="text-caption">
             {{ formatSize(entry.size, entry.is_dir) }} · {{ formatTime(entry.write_time) }}
@@ -754,6 +862,14 @@ onMounted(() => {
         <v-list-item prepend-icon="mdi-folder-move-outline" title="移动到..." @click="menuAction('move')" />
         <v-list-item prepend-icon="mdi-content-copy" title="复制到..." @click="menuAction('copy')" />
         <v-list-item prepend-icon="mdi-clipboard-text-outline" title="复制路径" @click="menuAction('copy_path')" />
+        <!-- 目录锁定缓存 / 生成 STRM（四个锁定操作常显，未锁定时解锁为幂等空操作） -->
+        <template v-if="menuTarget.is_dir">
+          <v-divider class="my-1" />
+          <v-list-item prepend-icon="mdi-lock-outline" title="锁定此目录 (永久缓存)" @click="menuAction('lock')" />
+          <v-list-item prepend-icon="mdi-lock-plus-outline" title="递归锁定整个子树" @click="menuAction('lock_recursive')" />
+          <v-list-item prepend-icon="mdi-lock-open-outline" title="解锁此目录" @click="menuAction('unlock')" />
+          <v-list-item prepend-icon="mdi-lock-reset" title="递归解锁整个子树" @click="menuAction('unlock_recursive')" />
+        </template>
         <v-divider class="my-1" />
         <v-list-item
           prepend-icon="mdi-delete-outline"

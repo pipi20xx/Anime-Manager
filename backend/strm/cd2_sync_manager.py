@@ -130,6 +130,15 @@ class CD2SyncManager:
             yield json.dumps({"type": "error", "message": "未能获取到云端数据"}) + "\n"
             return
 
+        # 扫描存在拉取失败的目录时（网盘限流/风控），缺失分支会被当作"云端无此文件"，
+        # 若执行冗余清理会把对应 strm 误删——本次强制跳过清理并如实告知
+        failed_dirs = set(getattr(indexer, "failed_dirs", None) or [])
+        if failed_dirs and config.get("clean_target"):
+            config["clean_target"] = False
+            warn = f"⚠️ 有 {len(failed_dirs)} 个目录拉取失败（网盘限流/风控？），本次已自动跳过冗余清理以避免误删，建议稍后重扫"
+            logger.warning(f"[STRM] {warn}")
+            yield json.dumps({"type": "info", "message": warn}) + "\n"
+
         # 3. 扫描本地目标目录快照 (用于比对)
         yield json.dumps({"type": "info", "message": "正在构建本地目标目录快照..."}) + "\n"
         existing_files: Set[str] = set()

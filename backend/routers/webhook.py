@@ -35,6 +35,15 @@ def _effective_path(item: dict) -> str:
         raw = item.get("source_file", "")
     return (raw or "").split(':')[0]
 
+
+async def _feed_dir_cache(cloud_path: str, is_dir: bool):
+    """CD2 目录锁定缓存保鲜：仅当受影响目录已锁定时后台重取快照，失败不影响联动主流程。"""
+    try:
+        from cd2_dir_cache import feed_event
+        await feed_event(cloud_path, is_dir)
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 事件保鲜失败 ({cloud_path}): {e}")
+
 async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, origin_task_id: str = None, delay: int = 15, parent_event_id: int = None):
     """
     目录级事件展开：CD2 移动/重命名文件夹时只推送顶层目录变动（不含内容），
@@ -153,6 +162,8 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         # 会各自产生文件事件，对空目录展开只会白跑一遍扫描
         is_dir_event = str(item.get("is_dir", "")).lower() == "true"
         if is_dir_event and action == "create":
+            # 新建目录不联动，但其父目录（若已锁定）列表多了一个子项，快照需保鲜
+            asyncio.create_task(_feed_dir_cache(file_path, False))
             log_audit("CD2联动", "忽略事件", "目录创建事件不触发联动（目录内文件会以文件事件单独触发）", details=f"路径: {file_path}")
             logger.info(f"[CD2联动] 忽略目录创建事件: {file_path}")
             continue
@@ -229,6 +240,11 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
         log_audit("CD2联动", "收到事件", f"收到 CD2 文件变动通知", details=f"动作: {action} | 类型: {kind_label} | 路径: {file_path}")
 
         clean_cloud_path = '/' + file_path.lstrip('/')
+
+        # CD2 目录锁定缓存：事件保鲜（已锁定目录自动重取快照；目录事件会同时改变父目录列表）
+        asyncio.create_task(_feed_dir_cache(clean_cloud_path, is_dir_event))
+        if is_dir_event:
+            asyncio.create_task(_feed_dir_cache(clean_cloud_path, False))
 
         # 第一步：纯字符串路径预匹配，零 CD2 API 开销
         matched_tasks = []

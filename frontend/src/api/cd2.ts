@@ -98,6 +98,17 @@ export const cd2Api = {
   /** 获取神医深度删除联动配置 */
   getDeepDeleteConfig: () => api.get<any>('/api/cd2/deep-delete'),
 
+  /** 锁定目录快照缓存（recursive=true 锁定整棵子树） */
+  lockDir: (body: { path: string; recursive?: boolean }) =>
+    api.post<any>('/api/cd2/dir-cache/lock', body),
+
+  /** 解锁目录（recursive=true 解锁整棵子树，恢复实时） */
+  unlockDir: (body: { path: string; recursive?: boolean }) =>
+    api.post<any>('/api/cd2/dir-cache/unlock', body),
+
+  /** 目录缓存统计（锁定目录数/缓存条目数） */
+  dirCacheStats: () => api.get<any>('/api/cd2/dir-cache/stats'),
+
   /** 保存神医深度删除联动配置 */
   saveDeepDeleteConfig: (body: {
     enabled: boolean
