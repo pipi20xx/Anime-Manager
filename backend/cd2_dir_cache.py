@@ -250,19 +250,70 @@ async def stats() -> Dict[str, Any]:
     }
 
 
+# 事件保鲜防抖：同一目录的事件风暴合并为一次刷新，避免逐文件打 API
+_REFRESH_DEBOUNCE_SECONDS = 5.0
+_pending_refresh_tasks: Dict[str, "asyncio.Task"] = {}
+
+
+def _schedule_refresh(target: str) -> None:
+    existing = _pending_refresh_tasks.get(target)
+    if existing and not existing.done():
+        return
+    _pending_refresh_tasks[target] = asyncio.create_task(_debounced_refresh(target))
+
+
+async def _debounced_refresh(target: str) -> None:
+    try:
+        await asyncio.sleep(_REFRESH_DEBOUNCE_SECONDS)
+        await _refresh_locked_chain(target)
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 事件刷新快照失败 ({target}): {e}")
+    finally:
+        _pending_refresh_tasks.pop(target, None)
+
+
+async def _refresh_locked_chain(affected_dir: str) -> None:
+    """
+    事件保鲜核心逻辑：
+    1) 受影响目录自身已锁定 → 重取快照（其内容发生了变化）
+    2) 自身未锁定 → 向上找最近的锁定祖先，若其快照缺失通向本目录的下一级条目
+       （新建目录尚未入快照），重取该祖先——覆盖"往锁定目录里复制新文件夹、
+       CD2 只发文件事件"导致的快照失明；祖先快照已包含该条目则不打 API
+    """
+    affected = _normalize_path(affected_dir)
+
+    snap = await get_snapshot(affected)
+    if snap and snap["locked"]:
+        from routers.cd2 import _get_cd2_client
+        await refresh_dir(_get_cd2_client(), affected)
+        logger.info(f"[CD2目录缓存] 事件触发快照刷新: {affected}")
+        return
+
+    child = affected
+    cur = posixpath.dirname(child) or '/'
+    while True:
+        anc_snap = await get_snapshot(cur)
+        if anc_snap and anc_snap["locked"]:
+            entries = {e.get("path") for e in (anc_snap.get("entries") or [])}
+            if _normalize_path(child) not in entries:
+                from routers.cd2 import _get_cd2_client
+                await refresh_dir(_get_cd2_client(), cur)
+                logger.info(f"[CD2目录缓存] 事件触发快照刷新（新增子目录补录）: {cur}")
+            return
+        if cur == '/':
+            return
+        child = cur
+        cur = posixpath.dirname(cur) or '/'
+
+
 async def feed_event(cloud_path: str, is_dir: bool):
     """
-    webhook 事件喂快照：受影响目录（文件事件的父目录/目录事件自身）已锁定时后台重取。
-    客户端实例仅在确有锁定目录需要刷新时才解析；绝不抛异常——联动主流程不受缓存状态影响。
+    webhook 事件喂快照：受影响目录已锁定时防抖刷新；自身未锁定时向上检查
+    锁定祖先的快照是否需要补录新目录。绝不抛异常——联动主流程不受影响。
     """
     try:
         p = _normalize_path(cloud_path)
         target = p if is_dir else (posixpath.dirname(p) or '/')
-        snap = await get_snapshot(target)
-        if not (snap and snap["locked"]):
-            return
-        from routers.cd2 import _get_cd2_client
-        await refresh_dir(_get_cd2_client(), target)
-        logger.info(f"[CD2目录缓存] 事件触发快照刷新: {target}")
+        _schedule_refresh(target)
     except Exception as e:
         logger.warning(f"[CD2目录缓存] 事件刷新快照失败 ({cloud_path}): {e}")
