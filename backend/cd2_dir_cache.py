@@ -17,6 +17,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from database import db
 from models import Cd2DirCache
+from logger import log_audit
 
 logger = logging.getLogger(__name__)
 
@@ -286,6 +287,7 @@ async def _refresh_locked_chain(affected_dir: str) -> None:
     if snap and snap["locked"]:
         from routers.cd2 import _get_cd2_client
         await refresh_dir(_get_cd2_client(), affected)
+        log_audit("CD2目录缓存", "事件保鲜", f"内容变更，已重取快照: {affected}")
         logger.info(f"[CD2目录缓存] 事件触发快照刷新: {affected}")
         return
 
@@ -298,6 +300,7 @@ async def _refresh_locked_chain(affected_dir: str) -> None:
             if _normalize_path(child) not in entries:
                 from routers.cd2 import _get_cd2_client
                 await refresh_dir(_get_cd2_client(), cur)
+                log_audit("CD2目录缓存", "事件保鲜", f"发现新增子目录，已补录快照: {cur}（新增: {child}）")
                 logger.info(f"[CD2目录缓存] 事件触发快照刷新（新增子目录补录）: {cur}")
             return
         if cur == '/':
