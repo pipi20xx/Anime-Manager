@@ -9,6 +9,7 @@ CD2 目录快照缓存（方案B）
 import asyncio
 import logging
 import posixpath
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
@@ -18,8 +19,22 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from database import db
 from models import Cd2DirCache
 from logger import log_audit
+from task_history import start_task, log_task, finish_task
 
 logger = logging.getLogger(__name__)
+
+
+async def _record_task(action: str, lines: List[str], processed: int = 0, status: str = "completed"):
+    """把目录缓存操作记入任务中心（独立分类：CD2目录缓存），失败不影响主流程"""
+    task_id = f"cd2cache_{uuid.uuid4().hex[:8]}"
+    try:
+        await start_task(task_id, "CD2目录缓存", action)
+        for line in lines:
+            if line:
+                await log_task(task_id, line)
+        await finish_task(task_id, status, processed)
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 任务中心记录失败: {e}")
 
 _BULK_CHUNK = 500
 
@@ -84,6 +99,11 @@ async def list_dir_via_cache(client, path: str, refresh: bool = False) -> Dict[s
             try:
                 snap = await refresh_dir(client, p)
                 from_cache = False  # 刚重取过的就是新鲜数据
+                counts = {k: snap.get(k, 0) for k in ("file_count", "dir_count")}
+                asyncio.create_task(_record_task(
+                    "手动刷新快照",
+                    [f"路径: {p}", f"快照更新: {counts['file_count']} 文件 / {counts['dir_count']} 目录"],
+                ))
             except Exception as e:
                 logger.warning(f"[CD2目录缓存] 刷新快照失败 {p}: {e}，回退旧快照")
         entries = snap["entries"]
@@ -135,6 +155,13 @@ async def lock_dir(client, path: str) -> Dict[str, Any]:
         return {"success": False, "message": result.get("message", "列目录失败")}
     counts = await _upsert_snapshot(p, result.get("entries", []), locked=True)
     logger.info(f"[CD2目录缓存] 已锁定: {p} ({counts['file_count']} 文件 / {counts['dir_count']} 目录)")
+    try:
+        await _record_task("锁定目录", [
+            f"路径: {p}",
+            f"快照: {counts['file_count']} 文件 / {counts['dir_count']} 目录",
+        ])
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 记录任务失败: {e}")
     return {"success": True, "path": p, **counts}
 
 
@@ -203,6 +230,13 @@ async def lock_subtree(client, root: str) -> Dict[str, Any]:
             await db.session.execute(stmt)
 
     logger.info(f"[CD2目录缓存] 子树已锁定: {p}（共 {len(values)} 个目录，拉取失败 {len(failed_dirs)}）")
+    lines = [f"根目录: {p}", f"锁定 {len(values)} 个目录"]
+    if failed_dirs:
+        lines.append(f"⚠️ {len(failed_dirs)} 个目录拉取失败（未锁定，可稍后重试）")
+    try:
+        await _record_task("递归锁定子树", lines, processed=len(values))
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 记录任务失败: {e}")
     result = {"success": True, "path": p, "dir_count": len(values)}
     if failed_dirs:
         # 失败分支保持未锁定（不会缓存错误数据），如实上报供用户重试
@@ -220,6 +254,10 @@ async def unlock_path(path: str) -> bool:
             return False
         await db.delete(row)
     logger.info(f"[CD2目录缓存] 已解锁: {p}")
+    try:
+        await _record_task("解锁目录", [f"路径: {p}（快照已删除，恢复实时）"])
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 记录任务失败: {e}")
     return True
 
 
@@ -233,6 +271,12 @@ async def unlock_subtree(path: str) -> int:
             )
         )
     logger.info(f"[CD2目录缓存] 子树已解锁: {p}（{result.rowcount} 个目录）")
+    if result.rowcount > 0:
+        try:
+            await _record_task("递归解锁子树", [f"根目录: {p}", f"清除 {result.rowcount} 个快照"],
+                               processed=result.rowcount)
+        except Exception as e:
+            logger.warning(f"[CD2目录缓存] 记录任务失败: {e}")
     return result.rowcount
 
 
@@ -266,30 +310,40 @@ def _schedule_refresh(target: str) -> None:
 async def _debounced_refresh(target: str) -> None:
     try:
         await asyncio.sleep(_REFRESH_DEBOUNCE_SECONDS)
-        await _refresh_locked_chain(target)
+        lines = await _refresh_locked_chain(target)
+        if lines:
+            await _record_task("事件保鲜", lines)
     except Exception as e:
         logger.warning(f"[CD2目录缓存] 事件刷新快照失败 ({target}): {e}")
+        try:
+            await _record_task("事件保鲜", [f"⚠️ 快照刷新失败: {target}", str(e)], status="error")
+        except Exception:
+            pass
     finally:
         _pending_refresh_tasks.pop(target, None)
 
 
-async def _refresh_locked_chain(affected_dir: str) -> None:
+async def _refresh_locked_chain(affected_dir: str) -> Optional[List[str]]:
     """
     事件保鲜核心逻辑：
     1) 受影响目录自身已锁定 → 重取快照（其内容发生了变化）
     2) 自身未锁定 → 向上找最近的锁定祖先，若其快照缺失通向本目录的下一级条目
        （新建目录尚未入快照），重取该祖先——覆盖"往锁定目录里复制新文件夹、
        CD2 只发文件事件"导致的快照失明；祖先快照已包含该条目则不打 API
+    返回动作明细（未触发任何刷新时为 None）。
     """
     affected = _normalize_path(affected_dir)
 
     snap = await get_snapshot(affected)
     if snap and snap["locked"]:
         from routers.cd2 import _get_cd2_client
-        await refresh_dir(_get_cd2_client(), affected)
+        counts = await refresh_dir(_get_cd2_client(), affected)
         log_audit("CD2目录缓存", "事件保鲜", f"内容变更，已重取快照: {affected}")
         logger.info(f"[CD2目录缓存] 事件触发快照刷新: {affected}")
-        return
+        return [
+            f"内容变更，重取快照: {affected}",
+            f"快照更新: {counts.get('file_count', 0)} 文件 / {counts.get('dir_count', 0)} 目录",
+        ]
 
     child = affected
     cur = posixpath.dirname(child) or '/'
@@ -299,12 +353,17 @@ async def _refresh_locked_chain(affected_dir: str) -> None:
             entries = {e.get("path") for e in (anc_snap.get("entries") or [])}
             if _normalize_path(child) not in entries:
                 from routers.cd2 import _get_cd2_client
-                await refresh_dir(_get_cd2_client(), cur)
+                counts = await refresh_dir(_get_cd2_client(), cur)
                 log_audit("CD2目录缓存", "事件保鲜", f"发现新增子目录，已补录快照: {cur}（新增: {child}）")
                 logger.info(f"[CD2目录缓存] 事件触发快照刷新（新增子目录补录）: {cur}")
-            return
+                return [
+                    f"发现新增子目录: {child}",
+                    f"已补录祖先快照: {cur}",
+                    f"快照更新: {counts.get('file_count', 0)} 文件 / {counts.get('dir_count', 0)} 目录",
+                ]
+            return None
         if cur == '/':
-            return
+            return None
         child = cur
         cur = posixpath.dirname(cur) or '/'
 

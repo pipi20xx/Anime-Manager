@@ -61,6 +61,7 @@ const baseModuleOptions = [
   { title: '神医深度删除联动', value: '神医深度删除联动' },
   { title: 'Emby入库通知', value: 'Emby入库通知' },
   { title: 'Emby删除通知', value: 'Emby删除通知' },
+  { title: 'CD2目录缓存', value: 'CD2目录缓存' },
 ]
 
 const moduleOptions = computed(() => {
