@@ -412,7 +412,7 @@ class TMDBProvider:
         segmented = self._resolve_segmentation(logs)
 
         _log(f"┃ [TMDB-Smart] 🚀 启动定向搜索策略 (标题分词: {'开启' if segmented else '关闭'})")
-        for _g, _qs in (("原始中文", orig_queries), ("简体中文", cn_queries), ("英文(en-US)", en_queries), ("英文(zh-CN)", en_queries)):
+        for _g, _qs in (("原始中文", orig_queries), ("简体中文", cn_queries), ("英文(en-US)", en_queries), ("英文(zh-CN)", en_queries), ("英文(ja-JP)", en_queries)):
             if _qs:
                 _log(f"┃   🔍 [查询组-{_g}] {' | '.join(_qs if segmented else _qs[:1])}")
         
@@ -428,6 +428,8 @@ class TMDBProvider:
             all_query_groups.append({"queries": _en_qs, "lang": "en-US", "label": "英文"})
             # TMDB 的关键词匹配依赖请求语言：部分条目只有带 zh-CN 请求时才能被英文/罗马音命中
             all_query_groups.append({"queries": _en_qs, "lang": "zh-CN", "label": "英文·中文语言"})
+            # 罗马音别名挂在条目的 JP 语言标签下，只有 ja-JP 请求才能命中（实测 zh-CN/en-US 均返回 0 结果）
+            all_query_groups.append({"queries": _en_qs, "lang": "ja-JP", "label": "英文·日语语言"})
         _pending = [q for g in all_query_groups for q in g["queries"]]
         _q_sent = 0
         _plan = getattr(logs, "search_plan", None)
@@ -506,7 +508,7 @@ class TMDBProvider:
         segmented = self._resolve_segmentation(logs)
 
         _log(f"┃ [TMDB-Multi] 🚀 启动多类型搜索策略 (TV + Movie) (标题分词: {'开启' if segmented else '关闭'})")
-        for _g, _qs in (("原始中文", orig_queries), ("简体中文", cn_queries), ("英文(en-US)", en_queries), ("英文(zh-CN)", en_queries)):
+        for _g, _qs in (("原始中文", orig_queries), ("简体中文", cn_queries), ("英文(en-US)", en_queries), ("英文(zh-CN)", en_queries), ("英文(ja-JP)", en_queries)):
             if _qs:
                 _log(f"┃   🔍 [查询组-{_g}] {' | '.join(_qs if segmented else _qs[:1])}")
         
@@ -522,6 +524,8 @@ class TMDBProvider:
             all_query_groups.append({"queries": _en_qs, "lang": "en-US", "label": "英文"})
             # TMDB 的关键词匹配依赖请求语言：部分条目只有带 zh-CN 请求时才能被英文/罗马音命中
             all_query_groups.append({"queries": _en_qs, "lang": "zh-CN", "label": "英文·中文语言"})
+            # 罗马音别名挂在条目的 JP 语言标签下，只有 ja-JP 请求才能命中（实测 zh-CN/en-US 均返回 0 结果）
+            all_query_groups.append({"queries": _en_qs, "lang": "ja-JP", "label": "英文·日语语言"})
         _pending = [q for g in all_query_groups for q in g["queries"]]
         _q_sent = 0
         _plan = getattr(logs, "search_plan", None)
