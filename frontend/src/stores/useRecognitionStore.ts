@@ -91,6 +91,7 @@ export interface RecognizeData {
     skip_reason: string
     groups: { label: string; queries: string[]; sent: string[] }[]
     result: string
+    romaji_variants?: { ja: string; romaji: string }[]
   }
 }
 

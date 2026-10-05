@@ -2,8 +2,37 @@ import regex as re
 import asyncio
 from typing import List, Optional, Dict, Any, Tuple
 from difflib import SequenceMatcher
+from functools import lru_cache
 
 from .query_builder import QueryBuilder
+
+# --- 日文标题罗马音转换 (评分桥: 使罗马音目标能与日文候选标题直接算分) ---
+_kakasi_instance = None
+_kakasi_failed = False
+
+def _get_kakasi():
+    """懒加载 pykakasi 单例；未安装或初始化失败时返回 None (优雅降级为无罗马音变体)"""
+    global _kakasi_instance, _kakasi_failed
+    if _kakasi_failed: return None
+    if _kakasi_instance is None:
+        try:
+            import pykakasi
+            _kakasi_instance = pykakasi.kakasi()
+        except Exception:
+            _kakasi_failed = True
+    return _kakasi_instance
+
+@lru_cache(maxsize=4096)
+def _jp_to_romaji(text: str) -> Optional[str]:
+    """日文标题转罗马音；不含假名 (纯中/英文标题) 或转换不可用时返回 None"""
+    if not text or not re.search(r"[\u3040-\u30ff]", text): return None
+    kks = _get_kakasi()
+    if not kks: return None
+    try:
+        romaji = "".join(item.get("hepburn", "") or "" for item in kks.convert(text)).strip()
+        return romaji or None
+    except Exception:
+        return None
 
 class TMDBMatcher:
     """
@@ -94,6 +123,10 @@ class TMDBMatcher:
         if extra_titles:
             for t in extra_titles:
                 if t and t not in candidate_titles: candidate_titles.append(t)
+
+        # [New] 日文标题生成罗马音变体参与对撞 (含假名才转换，纯中文标题不受影响)
+        romaji_variants = {_jp_to_romaji(t) for t in candidate_titles}
+        candidate_titles.extend(v for v in romaji_variants if v and v not in candidate_titles)
         
         best_sim = 0.0
         best_match_info = ""

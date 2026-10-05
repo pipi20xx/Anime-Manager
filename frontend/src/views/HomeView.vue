@@ -528,6 +528,26 @@ const filteredLogs = computed(() => {
                     </v-col>
                   </v-row>
 
+                  <!-- ========== 罗马音转换 ========== -->
+                  <v-row v-if="store.data?.search_plan?.romaji_variants?.length" class="mb-4">
+                    <v-col cols="12">
+                      <v-card variant="flat" class="glass-card sub-card">
+                        <v-card-title class="text-subtitle-2 font-weight-bold pa-3 d-flex align-center ga-2">
+                          <v-icon color="primary" size="18">mdi-alphabetical-variant</v-icon>
+                          罗马音转换
+                          <v-chip size="x-small" variant="tonal" density="compact" class="ml-auto">pykakasi</v-chip>
+                        </v-card-title>
+                        <v-divider />
+                        <v-card-text class="pa-3">
+                          <div v-for="(v, vi) in store.data?.search_plan?.romaji_variants" :key="vi" class="mb-2">
+                            <div class="text-body-2">{{ v.ja }}</div>
+                            <div class="text-caption text-medium-emphasis">→ {{ v.romaji }}</div>
+                          </div>
+                        </v-card-text>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+
                   <!-- ========== 规则应用日志 ========== -->
                   <v-card v-if="parsedRuleLogs.length > 0" variant="flat" class="glass-card mb-4">
                     <v-card-title class="text-subtitle-2 font-weight-bold pa-3 d-flex align-center ga-2">

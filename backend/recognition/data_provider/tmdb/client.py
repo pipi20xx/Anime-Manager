@@ -4,7 +4,7 @@ import re
 from typing import List, Optional, Dict, Any, Tuple
 from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
-from recognition_engine.tmdb_matcher.logic import TMDBMatcher
+from recognition_engine.tmdb_matcher.logic import TMDBMatcher, _jp_to_romaji
 from logger import log_audit
 
 class TMDBProvider:
@@ -649,6 +649,20 @@ class TMDBProvider:
             else:
                 _log(f"┃ ⚠️ 别名复核后排名未变，仍以原最高分候选为准")
 
+    @staticmethod
+    def _collect_romaji_variants(merged_candidates: List[Dict], plan: Any = None) -> None:
+        """收集日文候选标题的罗马音变体，写入 search_plan 供识别测试页展示"""
+        if plan is None: return
+        seen, variants = set(), []
+        for item in merged_candidates[:10]:
+            for key in ("name", "original_name", "title", "original_title"):
+                t = item.get(key)
+                if not t or t in seen: continue
+                seen.add(t)
+                r = _jp_to_romaji(t)
+                if r: variants.append({"ja": t, "romaji": r})
+        if variants: plan["romaji_variants"] = variants
+
     async def _process_candidates_multi(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, logs, anime_priority, original_cn_name=None, year=None):
         def _log(msg):
             if hasattr(logs, "log"): logs.log(msg)
@@ -680,6 +694,7 @@ class TMDBProvider:
             scored_pool.append({"item": item, "score": score, "idx": idx, "match_reason": best_match_info})
 
         scored_pool.sort(key=lambda x: x["score"], reverse=True)
+        self._collect_romaji_variants(merged_candidates, getattr(logs, "search_plan", None))
         # [New] 模糊命中复核: 拉取候选别名重新对撞
         await self._review_fuzzy_with_aliases(scored_pool, targets, cn_name, en_name, logs, anime_priority, year)
         best = scored_pool[0]
@@ -739,6 +754,7 @@ class TMDBProvider:
             scored_pool.append({"item": item, "score": score, "idx": idx, "match_reason": best_match_info})
 
         scored_pool.sort(key=lambda x: x["score"], reverse=True)
+        self._collect_romaji_variants(merged_candidates, getattr(logs, "search_plan", None))
         # [New] 模糊命中复核: 拉取候选别名重新对撞
         await self._review_fuzzy_with_aliases(scored_pool, targets, cn_name, en_name, logs, anime_priority, year, default_type=media_type)
         best = scored_pool[0]

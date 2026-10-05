@@ -102,13 +102,21 @@ def core_recognize(
                     processed_title = re.sub(pattern_alt, " ", processed_title, count=1)
                     sp_logs.append(f"┣ [Shield] 特权集数已从标题中剥离 (格式转换): {sp_raw_alt}")
 
-        # 剥离特权制作组
+        # 剥离特权制作组 (支持 [组名] / 尾部 -组名 / 尾部裸组名 三种格式)
         if sp_group:
-            group_pattern = rf'\[{re.escape(sp_group)}\]'
-            if re.search(group_pattern, processed_title, re.IGNORECASE):
-                processed_title = re.sub(group_pattern, " ", processed_title, flags=re.IGNORECASE)
-                processed_title = re.sub(r"\s+", " ", processed_title).strip()
-                sp_logs.append(f"┣ [Shield] 特权制作组已从标题中剥离: {sp_group}")
+            sp_group = sp_group.strip()
+            group_escaped = re.escape(sp_group)
+            group_patterns = [
+                rf'\[{group_escaped}\]',                               # [ADWeb]
+                rf'(?i)-{group_escaped}(?=[\s.]|$)',                   # ...-ADWeb / -ADWeb.mkv
+                rf'(?i)(?<![a-zA-Z0-9_-]){group_escaped}(?=[\s.]|$)',  # ...p.VCB-Studio.mkv (裸组名)
+            ]
+            for gp in group_patterns:
+                if re.search(gp, processed_title, re.IGNORECASE):
+                    processed_title = re.sub(gp, " ", processed_title, flags=re.IGNORECASE)
+                    processed_title = re.sub(r"\s+", " ", processed_title).strip()
+                    sp_logs.append(f"┣ [Shield] 特权制作组已从标题中剥离: {sp_group}")
+                    break
 
         sp_logs.append(f"清洗后结果: {processed_title}")
         logger_stub.debug_out("STEP 1.5: 特权提取 (标题 + 集数)", sp_logs)
