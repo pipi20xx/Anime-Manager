@@ -3,6 +3,8 @@ import asyncio
 from typing import List, Optional, Dict, Any, Tuple
 from difflib import SequenceMatcher
 
+from .query_builder import QueryBuilder
+
 class TMDBMatcher:
     """
     TMDB 匹配与归一化逻辑内核 (L1)
@@ -64,23 +66,9 @@ class TMDBMatcher:
     @staticmethod
     def prepare_queries(raw_name: Optional[str]) -> List[str]:
         """
-        准备多路搜索关键词
+        准备多路搜索关键词（实现已独立至 query_builder.QueryBuilder，此入口保持兼容）
         """
-        if not raw_name: return []
-        q_list = [raw_name]
-        
-        # 常见无意义短词/虚词过滤
-        stop_words = {'NO', 'TO', 'GA', 'NI', 'WA', 'THE', 'AND', 'FOR', 'WITH', 'FROM'}
-        
-        if len(raw_name) > 10:
-            # 这里的拆分主要针对 [中文] + [英文] 或 特殊符号分隔的标题
-            segments = re.split(r'[&+\x20　、/]', raw_name)
-            for s in segments:
-                s_strip = s.strip()
-                # 过滤逻辑：1. 长度 > 2; 2. 不在停用词表; 3. 不重复
-                if len(s_strip) > 2 and s_strip.upper() not in stop_words and s_strip not in q_list:
-                    q_list.append(s_strip)
-        return q_list[:3]
+        return QueryBuilder.prepare_queries(raw_name)
 
     @staticmethod
     def calculate_match_score(item: Dict[str, Any], targets: List[str], cn_name: str, en_name: str, idx: int, anime_priority: bool, is_from_segment: bool = False, target_year: Optional[str] = None, extra_titles: Optional[List[str]] = None) -> Tuple[float, List[str]]:

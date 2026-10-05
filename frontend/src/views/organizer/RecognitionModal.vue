@@ -39,7 +39,8 @@ const { success, error: showError, warning } = useNotification()
 // --- 策略偏好持久化 ---
 const STRATEGY_KEYS = [
   'anime_priority', 'offline_priority', 'bangumi_priority',
-  'bangumi_failover', 'force_filename', 'series_fingerprint', 'batch_enhancement'
+  'bangumi_failover', 'force_filename', 'series_fingerprint', 'batch_enhancement',
+  'enable_title_segmentation'
 ] as const
 const STORAGE_KEY = 'recognition_strategy_prefs'
 
@@ -73,6 +74,7 @@ const forcedParams = reactive({
   force_filename: savedPrefs.force_filename ?? false,
   series_fingerprint: savedPrefs.series_fingerprint ?? false,
   batch_enhancement: savedPrefs.batch_enhancement ?? false,
+  enable_title_segmentation: savedPrefs.enable_title_segmentation ?? false,
 })
 
 // 策略开关变化时自动保存
@@ -224,12 +226,13 @@ watch(() => props.modelValue, (newVal) => {
             <div class="strategy-grid mb-4">
               <v-card
                 v-for="item in [
-                  { key: 'anime_priority', title: '动漫识别优化', desc: '开启后提升动画匹配精度，过滤同名真人剧' },
+                  { key: 'anime_priority', title: '动漫识别优化', desc: '提升动画匹配精度，过滤同名真人剧' },
+                  { key: 'enable_title_segmentation', title: '标题分词搜索', desc: '匹配失败时将标题切分为单词重试；建议保持关闭' },
                   { key: 'offline_priority', title: '本地数据中心', desc: '优先碰撞本地数据库，实现毫秒级离线匹配' },
                   { key: 'bangumi_priority', title: 'Bangumi 数据源优先', desc: '针对新番或缺失条目，优先尝试 BGM 镜像' },
-                  { key: 'bangumi_failover', title: 'Bangumi 故障转移', desc: '当 TMDB 搜索失败时，自动使用 BGM 补全' },
+                  { key: 'bangumi_failover', title: 'Bangumi 故障转移', desc: 'TMDB 匹配失败时自动使用 BGM 补全' },
                   { key: 'force_filename', title: '强制单文件模式', desc: '将完整输入作为文件名解析，无视路径干扰' },
-                  { key: 'series_fingerprint', title: '智能记忆', desc: '自动记住系列特征，后续文件实现秒级拦截' },
+                  { key: 'series_fingerprint', title: '智能记忆', desc: '自动记住系列特征，后续文件实现秒级识别' },
                   { key: 'batch_enhancement', title: '合集识别增强', desc: '支持解析 01-12 等合集，自动计算集数区间' },
                 ]"
                 :key="item.key"

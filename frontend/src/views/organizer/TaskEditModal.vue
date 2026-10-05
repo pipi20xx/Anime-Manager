@@ -296,8 +296,16 @@ const onFolderSelected = (path: string) => {
               <div class="switch-row">
                 <v-switch v-model="taskForm.anime_priority" density="compact" hide-details color="primary" />
                 <div>
-                  <div class="switch-label">动漫优先</div>
-                  <div class="switch-desc">优先使用动漫识别策略</div>
+                  <div class="switch-label">动漫识别优化</div>
+                  <div class="switch-desc">提升动画匹配精度，过滤同名真人剧</div>
+                </div>
+              </div>
+
+              <div class="switch-row">
+                <v-switch v-model="taskForm.enable_title_segmentation" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">标题分词搜索</div>
+                  <div class="switch-desc">匹配失败时将标题切分为单词重试；建议保持关闭</div>
                 </div>
               </div>
 
@@ -305,7 +313,7 @@ const onFolderSelected = (path: string) => {
                 <v-switch v-model="taskForm.overwrite_mode" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
                 <div>
                   <div class="switch-label">覆盖模式</div>
-                  <div class="switch-desc">目标已存在时允许覆盖</div>
+                  <div class="switch-desc">目标路径已存在文件时允许覆盖</div>
                 </div>
               </div>
 
@@ -313,7 +321,7 @@ const onFolderSelected = (path: string) => {
                 <v-switch v-model="taskForm.trigger_strm" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
                 <div>
                   <div class="switch-label">联动 STRM</div>
-                  <div class="switch-desc">整理后自动生成 STRM 文件</div>
+                  <div class="switch-desc">整理完成后自动生成/更新 STRM 文件</div>
                 </div>
               </div>
 
@@ -329,7 +337,7 @@ const onFolderSelected = (path: string) => {
                 <v-switch v-model="taskForm.ignore_history" density="compact" hide-details color="primary" />
                 <div>
                   <div class="switch-label">忽略历史</div>
-                  <div class="switch-desc">跳过已成功整理的历史记录</div>
+                  <div class="switch-desc">跳过已成功整理或已跳过的历史记录，不重新处理</div>
                 </div>
               </div>
 
@@ -337,7 +345,7 @@ const onFolderSelected = (path: string) => {
                 <v-switch v-model="taskForm.retry_failed" density="compact" hide-details color="primary" />
                 <div>
                   <div class="switch-label">重试失败项</div>
-                  <div class="switch-desc">重新尝试之前识别失败的文件</div>
+                  <div class="switch-desc">重新尝试之前识别失败的文件（TMDB 数据可能已更新）</div>
                 </div>
               </div>
 
@@ -345,7 +353,7 @@ const onFolderSelected = (path: string) => {
                 <v-switch v-model="taskForm.check_emby_exists" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
                 <div>
                   <div class="switch-label">Emby 检查</div>
-                  <div class="switch-desc">检测 Emby 库是否存在，存在则跳过</div>
+                  <div class="switch-desc">检测 Emby 库是否存在，存在则跳过处理</div>
                 </div>
               </div>
 
@@ -354,7 +362,7 @@ const onFolderSelected = (path: string) => {
                   <v-switch v-model="taskForm.calculate_hash" :disabled="taskForm.action_type === 'hash_only'" density="compact" hide-details color="primary" />
                   <div>
                     <div class="switch-label">哈希计算</div>
-                    <div class="switch-desc">整理时计算 SHA1 和 ED2K（云源将通过 CD2 流式拉取全文件计算，不落盘但耗时与流量相当于完整下载）</div>
+                    <div class="switch-desc">整理时计算 SHA1 和 ED2K 哈希值并记录</div>
                   </div>
                 </div>
                 <div v-if="taskForm.calculate_hash && taskForm.action_type !== 'hash_only' && taskForm.source_via !== 'cd2'" class="org-hash-warning">
@@ -366,7 +374,7 @@ const onFolderSelected = (path: string) => {
                 <v-switch v-model="taskForm.series_fingerprint" density="compact" hide-details color="primary" />
                 <div>
                   <div class="switch-label">智能记忆</div>
-                  <div class="switch-desc">自动记住系列特征，后续秒级识别</div>
+                  <div class="switch-desc">自动记住系列特征，后续文件实现秒级识别</div>
                 </div>
               </div>
 

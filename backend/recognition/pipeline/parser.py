@@ -104,6 +104,7 @@ class ParserStage:
         p_bgm = "ON" if ctx.bangumi_priority else "OFF"
         p_failover = "ON" if ctx.bangumi_failover else "OFF"
         p_force_file = "ON" if is_force_file else "OFF"
+        p_segment = "ON" if ctx.enable_title_segmentation else "OFF"
 
         # 加载临时特权规则
         from recognition_engine.special_episode_handler import SpecialEpisodeHandler
@@ -116,7 +117,7 @@ class ParserStage:
         # [NEW] 显示原始完整路径（若与待处理条目不同）
         if ctx.original_input and ctx.original_input != ctx.filename:
             ctx.log(f"┃ [原始路径]: {ctx.original_input}")
-        ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 智能记忆[{p_fp}] | 搜索顺序[{p_off}] | BGM数据源优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
+        ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 智能记忆[{p_fp}] | 标题分词[{p_segment}] | 搜索顺序[{p_off}] | BGM数据源优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
 
         # 1. 检查系列指纹 (Pre-match Acceleration)
         # 只有在启用指纹且当前还未获取到数据时执行
@@ -129,8 +130,10 @@ class ParserStage:
                     "source": "fingerprint_match"
                 }
                 ctx.add_perf("记忆命中", start)
+                ctx.search_plan["skip_reason"] = "智能记忆命中"
                 # [Short-circuit] 记忆命中后，仅执行极简解析(提取集数等必备信息)，跳过昂贵的标题拆分与匹配
                 ctx.log(f"┃ [智能记忆] ⚡ 记忆加速启动，将跳过冗余内核解析步骤")
+                ctx.log(f"┃ [智能记忆] ⏭️ 本次识别不会发起云端搜索（TMDB 分词/查询均不参与）")
 
         # 2. 调用新内核进行解析 (Layer 1 Core)
         # 如果指纹命中了，我们会告诉内核使用指纹数据，内核会自动简化流程

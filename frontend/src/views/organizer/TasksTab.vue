@@ -54,6 +54,7 @@ const taskForm = reactive({
   action_type: 'move',
   overwrite_mode: false,
   anime_priority: true,
+  enable_title_segmentation: false,
   incremental_enabled: false,
   incremental_mode: 'realtime',
   monitor_interval: 10,
@@ -87,6 +88,7 @@ function resetTaskForm() {
   taskForm.action_type = 'move'
   taskForm.overwrite_mode = false
   taskForm.anime_priority = true
+  taskForm.enable_title_segmentation = false
   taskForm.incremental_enabled = false
   taskForm.incremental_mode = 'realtime'
   taskForm.monitor_interval = 10
@@ -148,6 +150,7 @@ function openEditTask(index: number) {
   if (rawData.ignore_file_regex === undefined) rawData.ignore_file_regex = []
   if (rawData.ignore_dir_regex === undefined) rawData.ignore_dir_regex = []
   if (rawData.anime_priority === undefined) rawData.anime_priority = true
+  if (rawData.enable_title_segmentation === undefined) rawData.enable_title_segmentation = false
   if (rawData.retry_failed === undefined) rawData.retry_failed = true
   if (rawData.series_fingerprint === undefined) rawData.series_fingerprint = true
   if (rawData.cd2_rapid_mode === undefined) rawData.cd2_rapid_mode = 'off'

@@ -241,15 +241,15 @@ defineExpose({ fetchFeeds })
             <div class="switch-row">
               <v-switch v-model="feedForm.anime_priority" color="primary" density="compact" hide-details />
               <div>
-                <div class="switch-label">动漫优先</div>
-                <div class="switch-desc">识别时优先使用动漫专用策略，提高番剧识别准确率</div>
+                <div class="switch-label">动漫识别优化</div>
+                <div class="switch-desc">提升动画匹配精度，过滤同名真人剧</div>
               </div>
             </div>
             <div class="switch-row">
               <v-switch v-model="feedForm.check_emby_exists" color="primary" density="compact" hide-details />
               <div>
                 <div class="switch-label">Emby 检查</div>
-                <div class="switch-desc">检测 Emby 媒体库是否已存在该资源，存在则跳过下载</div>
+                <div class="switch-desc">检测 Emby 库是否存在，存在则跳过处理</div>
               </div>
             </div>
             <div class="switch-row">

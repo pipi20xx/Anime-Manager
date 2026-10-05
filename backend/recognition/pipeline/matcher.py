@@ -159,6 +159,7 @@ class MatcherStage:
         if not ctx.tmdb_data:
             # 2.1 强制 TMDB ID 锁定模式
             if meta.forced_tmdbid:
+                ctx.search_plan["skip_reason"] = "指定 TMDB ID，未按标题搜索"
                 if meta.type == MediaType.AUTO:
                     ctx.log(f"[匹配] 🚀 发现锁定 ID: {meta.forced_tmdbid} (类型: AUTO)，优先查询数据中心...")
                     # [Optimization] 优先查数据中心，命中完整档案则跳过云端请求
@@ -270,6 +271,8 @@ class MatcherStage:
                                 ctx.tmdb_data = await ctx.bangumi_client.map_to_tmdb(
                                     bgm_subject, ctx.api_key, ctx
                                 )
+                                if ctx.tmdb_data:
+                                    ctx.search_plan["result"] = "经 Bangumi 命中并映射到 TMDB"
 
             # 2.3 执行搜索 (优先特权标题，失败后用正常标题)
             if ctx.offline_priority:
@@ -280,6 +283,10 @@ class MatcherStage:
                 # 再用正常标题搜索
                 if not ctx.tmdb_data:
                     await search_offline(use_privileged=False)
+                if ctx.tmdb_data:
+                    ctx.log(f"[匹配] ⏭️ 已在本地阶段获取元数据，跳过云端搜索（标题分词不参与）")
+                    if not ctx.search_plan["skip_reason"]:
+                        ctx.search_plan["skip_reason"] = "本地数据中心命中"
                 # 云端搜索 (特权标题逐个尝试)
                 for i in range(len(privileged_titles)):
                     if ctx.tmdb_data: break
@@ -310,7 +317,9 @@ class MatcherStage:
             
             if not ctx.tmdb_data and ctx.ai_fallback_enabled:
                 await _ai_fallback_search(ctx, meta)
-        
+        else:
+            ctx.log(f"[匹配] ⏭️ 元数据已由前置阶段命中（智能记忆/锁定 ID），跳过云端搜索（标题分词不参与）")
+
         if ctx.tmdb_data and meta.type == MediaType.AUTO:
             matched_type = ctx.tmdb_data.get("type", "tv")
             if matched_type == "movie":

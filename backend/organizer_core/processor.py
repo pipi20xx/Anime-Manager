@@ -39,6 +39,7 @@ class FileProcessor:
             "all_groups": config.get("custom_release_groups", []) + cached_rules.get("groups", []),
             "all_render": config.get("custom_render_words", []) + cached_rules.get("render", []),
             "anime_priority": task.get("anime_priority", config.get("anime_priority", True)),
+            "enable_title_segmentation": task.get("enable_title_segmentation"),
             "rule": next((r for r in config.get("rename_rules", Renamer.get_default_rules()) if r["id"] == task.get("rule_id")), None)
         }
 
@@ -354,6 +355,7 @@ class FileProcessor:
                 all_groups=all_groups, 
                 api_key=context["api_key"], 
                 anime_priority=context["anime_priority"], 
+                enable_title_segmentation=context.get("enable_title_segmentation"),
                 all_render=all_render,
                 forced_tmdb_id=f_tmdb, 
                 forced_type=f_type, 

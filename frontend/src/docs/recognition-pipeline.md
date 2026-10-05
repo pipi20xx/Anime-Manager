@@ -530,7 +530,7 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 ##### `tmdb/client.py` - TMDB API 封装
 - **职责**: 封装 TMDB API，处理搜索和详情获取
 - **特性**:
-  - 多路分词搜索：原始中文 / 简体中文 (zh-CN) 与英文 (en-US) 分组查询
+  - 多路分词搜索：原始中文 / 简体中文 (zh-CN) 与英文 (en-US) 分组查询；分词实现独立于 `recognition_engine/tmdb_matcher/query_builder.py`，受 `enable_title_segmentation` 开关控制（默认关闭，仅用完整标题查询；评分 targets 不受开关影响）
   - 搜索失败时按年份参数自动重试；详情获取失败时用归一化搜索结果兜底
   - 单 API Key、10s 超时、支持代理
   - **别名审核** ⭐: 最佳候选为模糊命中时，拉取 top2 候选的 TMDB alternative_titles 重新对撞打分复核（别名/搜索结果缓存 6 小时）

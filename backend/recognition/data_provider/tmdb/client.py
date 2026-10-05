@@ -18,6 +18,13 @@ class TMDBProvider:
         self.api_key = api_key or config_key
         self.proxy = ConfigManager.get_proxy("tmdb")
 
+    def _resolve_segmentation(self, logs: Any) -> bool:
+        """标题分词开关：优先本次识别的显式覆盖（RecognitionContext），否则回退全局配置"""
+        override = getattr(logs, "enable_title_segmentation", None)
+        if override is not None:
+            return bool(override)
+        return ConfigManager.get_config().get("enable_title_segmentation", False)
+
     async def _fetch(self, endpoint: str, params: dict = {}, logs: Any = None) -> Tuple[Optional[Dict], bool]:
         """
         TMDB API 请求核心方法
@@ -52,7 +59,8 @@ class TMDBProvider:
             try:
                 # [DEBUG] 记录实际发送的请求 URL（URL 中空格显示为 + / 中文为 %XX，为编码后的正常形式）
                 debug_request = client.build_request('GET', full_url, params=params)
-                _log(f"┃   [DEBUG] 实际请求URL: {debug_request.url} (解码关键词: '{params.get('query', '')}')")
+                debug_url = str(debug_request.url).replace(self.api_key, "****") if self.api_key else debug_request.url
+                _log(f"┃   [DEBUG] 实际请求URL: {debug_url} (解码关键词: '{params.get('query', '')}')")
                 resp = await client.get(full_url, params=params)
                 if resp.status_code == 200: return resp.json(), True
                 
@@ -401,21 +409,34 @@ class TMDBProvider:
         cn_queries = TMDBMatcher.prepare_queries(cn_name)
         en_queries = TMDBMatcher.prepare_queries(en_name)
         orig_queries = TMDBMatcher.prepare_queries(original_cn_name) if original_cn_name and original_cn_name != cn_name else []
+        segmented = self._resolve_segmentation(logs)
 
-        _log(f"┃ [TMDB-Smart] 🚀 启动定向搜索策略...")
-        _log(f"┃   [DEBUG] cn_name='{cn_name}', cn_queries[0]='{cn_queries[0] if cn_queries else 'N/A'}'")
+        _log(f"┃ [TMDB-Smart] 🚀 启动定向搜索策略 (标题分词: {'开启' if segmented else '关闭'})")
+        for _g, _qs in (("原始中文", orig_queries), ("简体中文", cn_queries), ("英文", en_queries)):
+            if _qs:
+                _log(f"┃   🔍 [查询组-{_g}] {' | '.join(_qs if segmented else _qs[:1])}")
         
         merged_candidates = []
         seen_ids = set()
         MAX_RETRIES = 3
 
         all_query_groups = []
-        if orig_queries: all_query_groups.append({"queries": orig_queries, "lang": "zh-CN", "label": "原始中文"})
-        if cn_queries: all_query_groups.append({"queries": cn_queries, "lang": "zh-CN", "label": "简体中文"})
-        if en_queries: all_query_groups.append({"queries": en_queries, "lang": "en-US", "label": "英文"})
+        if orig_queries: all_query_groups.append({"queries": orig_queries if segmented else orig_queries[:1], "lang": "zh-CN", "label": "原始中文"})
+        if cn_queries: all_query_groups.append({"queries": cn_queries if segmented else cn_queries[:1], "lang": "zh-CN", "label": "简体中文"})
+        if en_queries: all_query_groups.append({"queries": en_queries if segmented else en_queries[:1], "lang": "en-US", "label": "英文"})
+        _pending = [q for g in all_query_groups for q in g["queries"]]
+        _q_sent = 0
+        _plan = getattr(logs, "search_plan", None)
+        if _plan is not None:
+            _plan["cloud_searched"] = True
 
         for group in all_query_groups:
             lang = group["lang"]
+            if _plan is not None:
+                _plan["groups"].append({"label": group["label"], "queries": list(group["queries"]), "sent": []})
+                _g_sent = _plan["groups"][-1]["sent"]
+            else:
+                _g_sent = None
             for idx, q in enumerate(group["queries"]):
                 if len(merged_candidates) > 0:
                     targets = self._build_match_targets(cn_name, en_name, cn_queries, original_cn_name=original_cn_name)
@@ -426,11 +447,13 @@ class TMDBProvider:
                         temp_scored.append(score)
                     
                     if temp_scored and max(temp_scored) >= 95:
-                        _log(f"┃   ℹ️ 已命中高置信度候选 ({max(temp_scored):.0f}分)，跳过后续查询")
+                        _log(f"┃   ℹ️ 已命中高置信度候选 ({max(temp_scored):.0f}分)，跳过备用查询词: {' | '.join(_pending[_q_sent:][:5])}")
                         break
 
                 res_list = None
                 success = False
+                _q_sent += 1
+                if _g_sent is not None: _g_sent.append(q)
                 
                 if idx == 0:
                     for attempt in range(MAX_RETRIES):
@@ -443,6 +466,7 @@ class TMDBProvider:
                     
                     if not success:
                         _log(f"┃   ❌ 完整标题搜索网络失败，已重试 {MAX_RETRIES} 次，中止本次识别")
+                        if _plan is not None: _plan["result"] = "网络连续失败，中止本次搜索"
                         return None
                 else:
                     res_list, success = await self.search(q, year, media_type, logs=logs, lang=lang, use_cache=False)
@@ -451,7 +475,7 @@ class TMDBProvider:
                         continue
                 
                 if idx == 0 and len(res_list) == 1:
-                    _log(f"┃   🪄 全名搜索唯一命中，确认为高置信度目标")
+                    _log(f"┃   🪄 全名搜索唯一命中，确认为高置信度目标（备用查询词未发送: {' | '.join(_pending[_q_sent:][:5]) or '无'}）")
                     for item in res_list:
                         if item.get("id") not in seen_ids:
                             seen_ids.add(item.get("id"))
@@ -475,20 +499,34 @@ class TMDBProvider:
         cn_queries = TMDBMatcher.prepare_queries(cn_name)
         en_queries = TMDBMatcher.prepare_queries(en_name)
         orig_queries = TMDBMatcher.prepare_queries(original_cn_name) if original_cn_name and original_cn_name != cn_name else []
+        segmented = self._resolve_segmentation(logs)
 
-        _log(f"┃ [TMDB-Multi] 🚀 启动多类型搜索策略 (TV + Movie)...")
+        _log(f"┃ [TMDB-Multi] 🚀 启动多类型搜索策略 (TV + Movie) (标题分词: {'开启' if segmented else '关闭'})")
+        for _g, _qs in (("原始中文", orig_queries), ("简体中文", cn_queries), ("英文", en_queries)):
+            if _qs:
+                _log(f"┃   🔍 [查询组-{_g}] {' | '.join(_qs if segmented else _qs[:1])}")
         
         merged_candidates = []
         seen_ids = set()
         MAX_RETRIES = 3
 
         all_query_groups = []
-        if orig_queries: all_query_groups.append({"queries": orig_queries, "lang": "zh-CN", "label": "原始中文"})
-        if cn_queries: all_query_groups.append({"queries": cn_queries, "lang": "zh-CN", "label": "简体中文"})
-        if en_queries: all_query_groups.append({"queries": en_queries, "lang": "en-US", "label": "英文"})
+        if orig_queries: all_query_groups.append({"queries": orig_queries if segmented else orig_queries[:1], "lang": "zh-CN", "label": "原始中文"})
+        if cn_queries: all_query_groups.append({"queries": cn_queries if segmented else cn_queries[:1], "lang": "zh-CN", "label": "简体中文"})
+        if en_queries: all_query_groups.append({"queries": en_queries if segmented else en_queries[:1], "lang": "en-US", "label": "英文"})
+        _pending = [q for g in all_query_groups for q in g["queries"]]
+        _q_sent = 0
+        _plan = getattr(logs, "search_plan", None)
+        if _plan is not None:
+            _plan["cloud_searched"] = True
 
         for group in all_query_groups:
             lang = group["lang"]
+            if _plan is not None:
+                _plan["groups"].append({"label": group["label"], "queries": list(group["queries"]), "sent": []})
+                _g_sent = _plan["groups"][-1]["sent"]
+            else:
+                _g_sent = None
             for idx, q in enumerate(group["queries"]):
                 if len(merged_candidates) > 0:
                     targets = self._build_match_targets(cn_name, en_name, cn_queries, original_cn_name=original_cn_name)
@@ -499,11 +537,13 @@ class TMDBProvider:
                         temp_scored.append(score)
                     
                     if temp_scored and max(temp_scored) >= 95:
-                        _log(f"┃   ℹ️ 已命中高置信度候选 ({max(temp_scored):.0f}分)，跳过后续查询")
+                        _log(f"┃   ℹ️ 已命中高置信度候选 ({max(temp_scored):.0f}分)，跳过备用查询词: {' | '.join(_pending[_q_sent:][:5])}")
                         break
 
                 res_list = None
                 success = False
+                _q_sent += 1
+                if _g_sent is not None: _g_sent.append(q)
                 
                 if idx == 0:
                     for attempt in range(MAX_RETRIES):
@@ -516,6 +556,7 @@ class TMDBProvider:
                     
                     if not success:
                         _log(f"┃   ❌ 完整标题搜索网络失败，已重试 {MAX_RETRIES} 次，中止本次识别")
+                        if _plan is not None: _plan["result"] = "网络连续失败，中止本次搜索"
                         return None
                 else:
                     res_list, success = await self.search_multi(q, year, logs=logs, lang=lang, use_cache=False)
@@ -524,7 +565,7 @@ class TMDBProvider:
                         continue
                 
                 if idx == 0 and len(res_list) == 1:
-                    _log(f"┃   🪄 全名搜索唯一命中，确认为高置信度目标")
+                    _log(f"┃   🪄 全名搜索唯一命中，确认为高置信度目标（备用查询词未发送: {' | '.join(_pending[_q_sent:][:5]) or '无'}）")
                     for item in res_list:
                         if item.get("id") not in seen_ids:
                             seen_ids.add(item.get("id"))
@@ -601,6 +642,7 @@ class TMDBProvider:
 
         if not merged_candidates:
             _log(f"┃ ❌ TMDB 多类型搜索均无结果")
+            if getattr(logs, "search_plan", None) is not None: logs.search_plan["result"] = "搜索无结果"
             return None
         
         _log(f"┃ [TMDB-Match] ⚖️ 正在对合并后的 {len(merged_candidates[:10])} 个候选进行交叉对撞...")
@@ -637,6 +679,7 @@ class TMDBProvider:
              final_type = best["item"].get("media_type", "tv")
              reviewed_tag = " (别名复核确认)" if best.get("reviewed") else ""
              _log(f"┗ ✅ 最终采信{reviewed_tag}: {final_name} (ID: {best['item']['id']}, 类型: {final_type.upper()})")
+             if getattr(logs, "search_plan", None) is not None: logs.search_plan["result"] = f"命中: {final_name} (ID: {best['item']['id']})"
              
              details = await self.get_details(str(best["item"]["id"]), final_type, logs=logs)
              if details:
@@ -649,6 +692,7 @@ class TMDBProvider:
                  return fallback_norm
         
         _log(f"┗ ❌ 置信度不足 ({best['score']:.1f} < 80)")
+        if getattr(logs, "search_plan", None) is not None: logs.search_plan["result"] = f"未命中（最高分 {best['score']:.0f} < 80）"
         return None
 
     async def _process_candidates(self, merged_candidates, seen_ids, cn_name, en_name, cn_queries, media_type, logs, anime_priority, original_cn_name=None, year=None):
@@ -658,6 +702,7 @@ class TMDBProvider:
 
         if not merged_candidates:
             _log(f"┃ ❌ TMDB 定向搜索均无结果")
+            if getattr(logs, "search_plan", None) is not None: logs.search_plan["result"] = "搜索无结果"
             return None
         
         _log(f"┃ [TMDB-Match] ⚖️ 正在对合并后的 {len(merged_candidates[:10])} 个候选进行交叉对撞...")
@@ -692,6 +737,7 @@ class TMDBProvider:
              final_name = best["item"].get("title") or best["item"].get("name")
              reviewed_tag = " (别名复核确认)" if best.get("reviewed") else ""
              _log(f"┗ ✅ 最终采信{reviewed_tag}: {final_name} (ID: {best['item']['id']})")
+             if getattr(logs, "search_plan", None) is not None: logs.search_plan["result"] = f"命中: {final_name} (ID: {best['item']['id']})"
              
              # 尝试获取详情，如果失败则回退到基础搜索结果
              details = await self.get_details(str(best["item"]["id"]), media_type, logs=logs)
@@ -707,6 +753,7 @@ class TMDBProvider:
                  return fallback_norm
         
         _log(f"┗ ❌ 置信度不足 ({best['score']:.1f} < 80)")
+        if getattr(logs, "search_plan", None) is not None: logs.search_plan["result"] = f"未命中（最高分 {best['score']:.0f} < 80）"
         return None
 
     def _build_match_targets(self, cn_name, en_name, cn_queries, original_cn_name=None):

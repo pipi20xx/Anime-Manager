@@ -22,6 +22,8 @@ class ConfigManager:
         "bangumi_token": "",
         "bangumi_priority": False,
         "bangumi_failover": True,
+        # 标题分词搜索：关闭时仅用完整标题查询（分词单词查询实测命中质量差，默认关闭）
+        "enable_title_segmentation": False,
         "sytmdb_host": "",
         "sytmdb_token": "",
         "http_proxy": "",

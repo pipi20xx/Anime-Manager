@@ -85,6 +85,13 @@ export interface RecognizeData {
   final_result: FinalResult
   raw_meta: RawMeta
   tmdb_match?: TmdbMatch | null
+  search_plan?: {
+    segmentation: boolean
+    cloud_searched: boolean
+    skip_reason: string
+    groups: { label: string; queries: string[]; sent: string[] }[]
+    result: string
+  }
 }
 
 export const useRecognitionStore = defineStore('recognition', () => {
@@ -102,6 +109,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
   const forceFilename = ref(false)
   const seriesFingerprint = ref(true)
   const batchEnhancement = ref(false)
+  const titleSegmentation = ref(false)
 
   // --- 高级参数（沙盒调试） ---
   const forcedTmdbId = ref('')
@@ -128,6 +136,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
       ['force_filename', (v) => (forceFilename.value = v === 'true')],
       ['series_fingerprint', (v) => (seriesFingerprint.value = v === 'true')],
       ['batch_enhancement', (v) => (batchEnhancement.value = v === 'true')],
+      ['enable_title_segmentation', (v) => (titleSegmentation.value = v === 'true')],
     ]
     for (const [key, setter] of getters) {
       const saved = localStorage.getItem(key)
@@ -143,6 +152,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
     localStorage.setItem('force_filename', String(forceFilename.value))
     localStorage.setItem('series_fingerprint', String(seriesFingerprint.value))
     localStorage.setItem('batch_enhancement', String(batchEnhancement.value))
+    localStorage.setItem('enable_title_segmentation', String(titleSegmentation.value))
   }
 
   async function performRecognition() {
@@ -163,6 +173,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
         force_filename: forceFilename.value,
         series_fingerprint: seriesFingerprint.value,
         batch_enhancement: batchEnhancement.value,
+        enable_title_segmentation: titleSegmentation.value,
         forced_tmdb_id: forcedTmdbId.value || undefined,
         forced_type: forcedType.value || undefined,
         forced_season: forcedSeason.value || undefined,
@@ -233,6 +244,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
     logs,
     data,
     animePriority,
+    titleSegmentation,
     offlinePriority,
     bangumiPriority,
     bangumiFailover,

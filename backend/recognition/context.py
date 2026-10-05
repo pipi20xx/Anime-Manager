@@ -47,6 +47,15 @@ class RecognitionContext:
         self.bangumi_failover = get_pref("bangumi_failover", "bangumi_failover", True)
         self.batch_enhance = get_pref("batch_enhancement", "batch_enhancement", False)
         self.use_fingerprint = get_pref("series_fingerprint", "series_fingerprint", True)
+        self.enable_title_segmentation = get_pref("enable_title_segmentation", "enable_title_segmentation", False)
+        # 搜索查询计划（供识别测试页"搜索查询计划"卡片展示）
+        self.search_plan = {
+            "segmentation": bool(self.enable_title_segmentation),
+            "cloud_searched": False,
+            "skip_reason": "",
+            "groups": [],
+            "result": "",
+        }
         
         assistant_config = self.config.get("assistant_config", {})
         self.ai_fallback_enabled = assistant_config.get("ai_fallback_enabled", False)

@@ -331,7 +331,15 @@ onMounted(() => {
           <v-switch v-model="config.anime_priority" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">动漫识别优化</div>
-            <div class="text-caption text-medium-emphasis">优先使用动漫专用搜索策略，提高动漫识别准确率</div>
+            <div class="text-caption text-medium-emphasis">提升动画匹配精度，过滤同名真人剧</div>
+          </div>
+        </div>
+
+        <div class="d-flex align-center ga-3 mb-4">
+          <v-switch v-model="config.enable_title_segmentation" density="compact" hide-details color="primary" />
+          <div>
+            <div class="text-body-2 font-weight-medium">标题分词搜索</div>
+            <div class="text-caption text-medium-emphasis">匹配失败时将标题切分为单词重试；建议保持关闭</div>
           </div>
         </div>
 
@@ -339,7 +347,7 @@ onMounted(() => {
           <v-switch v-model="config.offline_priority" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">本地数据中心优先</div>
-            <div class="text-caption text-medium-emphasis">优先从本地数据中心匹配数据，速度极快且节省 API，无数据时再联网搜索</div>
+            <div class="text-caption text-medium-emphasis">优先碰撞本地数据库，实现毫秒级离线匹配</div>
           </div>
         </div>
 
@@ -347,7 +355,7 @@ onMounted(() => {
           <v-switch v-model="config.batch_enhancement" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">合集识别增强</div>
-            <div class="text-caption text-medium-emphasis">增强对合集类资源的识别能力，自动解析多剧集合集</div>
+            <div class="text-caption text-medium-emphasis">支持解析 01-12 等合集，自动计算集数区间</div>
           </div>
         </div>
 
@@ -355,7 +363,7 @@ onMounted(() => {
           <v-switch v-model="config.bangumi_priority" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">Bangumi 数据源优先</div>
-            <div class="text-caption text-medium-emphasis">优先使用 Bangumi 数据源，更适合中文动漫信息</div>
+            <div class="text-caption text-medium-emphasis">针对新番或缺失条目，优先尝试 BGM 镜像</div>
           </div>
         </div>
 
@@ -363,7 +371,7 @@ onMounted(() => {
           <v-switch v-model="config.bangumi_failover" :disabled="config.bangumi_priority" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">Bangumi 故障转移</div>
-            <div class="text-caption text-medium-emphasis">TMDB 匹配失败时自动使用 Bangumi 进行识别</div>
+            <div class="text-caption text-medium-emphasis">TMDB 匹配失败时自动使用 BGM 补全</div>
           </div>
         </div>
 
@@ -371,7 +379,7 @@ onMounted(() => {
           <v-switch v-model="config.series_fingerprint" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">智能记忆</div>
-            <div class="text-caption text-medium-emphasis">记住已识别剧集的匹配结果，后续自动应用相同匹配</div>
+            <div class="text-caption text-medium-emphasis">自动记住系列特征，后续文件实现秒级识别</div>
           </div>
         </div>
       </v-card-text>

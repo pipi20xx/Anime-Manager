@@ -381,6 +381,7 @@ async function recognizeFile(item: any, forcedParams: any = null) {
       bangumi_failover: forcedParams?.bangumi_failover,
       series_fingerprint: forcedParams?.series_fingerprint,
       batch_enhancement: forcedParams?.batch_enhancement,
+      enable_title_segmentation: forcedParams?.enable_title_segmentation,
       force_filename: forcedParams?.force_filename,
     }
     const data = await recognitionApi.recognize(payload)

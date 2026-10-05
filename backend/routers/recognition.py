@@ -39,6 +39,7 @@ class RecognizeRequest(BaseModel):
     bangumi_failover: Optional[bool] = None
     series_fingerprint: Optional[bool] = None # 智能指纹覆盖
     batch_enhancement: Optional[bool] = None # 合集增强覆盖
+    enable_title_segmentation: Optional[bool] = None # 标题分词覆盖
     description: Optional[str] = None # 副标题描述 (PT站副标题/RSS description)
     # 临时调试规则 (Debug Sandbox)
     temp_noise: Optional[List[str]] = None
@@ -72,6 +73,7 @@ async def recognize(req: RecognizeRequest):
     offline_priority = req.offline_priority if req.offline_priority is not None else config.get("offline_priority", True)
     bangumi_priority = req.bangumi_priority if req.bangumi_priority is not None else config.get("bangumi_priority", False)
     bangumi_failover = req.bangumi_failover if req.bangumi_failover is not None else config.get("bangumi_failover", True)
+    enable_title_segmentation = req.enable_title_segmentation if req.enable_title_segmentation is not None else config.get("enable_title_segmentation", False)
 
     try:
         result_data, logs = await MovieRecognizer.recognize_full(
@@ -85,6 +87,7 @@ async def recognize(req: RecognizeRequest):
             bangumi_failover=bangumi_failover,
             series_fingerprint=req.series_fingerprint,
             batch_enhancement=req.batch_enhancement,
+            enable_title_segmentation=enable_title_segmentation,
             all_render=req.temp_render,
             all_privilege=req.temp_privilege,
             force_filename=req.force_filename,

@@ -65,6 +65,13 @@ export interface RecognizeData {
     tags?: string[]
   }
   tmdb_match?: any
+  search_plan?: {
+    segmentation: boolean
+    cloud_searched: boolean
+    skip_reason: string
+    groups: { label: string; queries: string[]; sent: string[] }[]
+    result: string
+  }
 }
 
 // ==========================================
@@ -260,6 +267,7 @@ export interface OrganizeTask {
   action_type: 'move' | 'copy' | 'symlink'
   overwrite_mode?: boolean
   anime_priority?: boolean
+  enable_title_segmentation?: boolean
   incremental_enabled?: boolean
   incremental_mode?: 'realtime' | 'polling'
   scheduler_enabled?: boolean

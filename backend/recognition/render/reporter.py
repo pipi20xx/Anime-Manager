@@ -40,5 +40,6 @@ class RenderReporter:
             prefix = "┗" if i == len(lines) - 1 else "┣"
             ctx.log(f"{prefix} {line}")
 
+        data_packet["search_plan"] = getattr(ctx, "search_plan", None)
         data_packet["logs"] = ctx.logs
         return data_packet

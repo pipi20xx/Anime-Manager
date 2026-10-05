@@ -408,15 +408,6 @@ const filteredLogs = computed(() => {
                             </div>
                           </div>
 
-                          <!-- 标签 -->
-                          <div v-if="rawData.tags && rawData.tags.length > 0" class="mt-3">
-                            <div class="text-caption text-medium-emphasis mb-1">标签</div>
-                            <div class="d-flex flex-wrap ga-1">
-                              <v-chip v-for="tag in rawData.tags" :key="tag" size="x-small" variant="outlined" density="compact">
-                                {{ tag }}
-                              </v-chip>
-                            </div>
-                          </div>
                         </v-card-text>
                       </v-card>
                     </v-col>
@@ -490,6 +481,49 @@ const filteredLogs = computed(() => {
                           <v-icon size="32" color="medium-emphasis" class="mb-2">mdi-cloud-off-outline</v-icon>
                           <div class="text-body-2 text-medium-emphasis">未匹配到 TMDB 数据</div>
                         </div>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+
+                  <!-- ========== 搜索查询计划 ========== -->
+                  <v-row v-if="store.data?.search_plan" class="mb-4">
+                    <v-col cols="12">
+                      <v-card variant="flat" class="glass-card sub-card">
+                        <v-card-title class="text-subtitle-2 font-weight-bold pa-3 d-flex align-center ga-2">
+                          <v-icon color="primary" size="18">mdi-magnify-scan</v-icon>
+                          搜索查询计划
+                          <v-chip size="x-small" :color="store.data?.search_plan.segmentation ? 'primary' : 'default'" variant="tonal" class="ml-auto">
+                            标题分词{{ store.data?.search_plan.segmentation ? '开启' : '关闭' }}
+                          </v-chip>
+                        </v-card-title>
+                        <v-divider />
+                        <v-card-text class="pa-3">
+                          <div v-if="!store.data?.search_plan.cloud_searched" class="text-body-2 text-medium-emphasis">
+                            ⏭️ 本次未发起云端搜索 — {{ store.data?.search_plan.skip_reason || '元数据由前置阶段获取' }}
+                          </div>
+                          <template v-else>
+                            <div v-for="(g, gi) in store.data?.search_plan.groups" :key="gi" class="mb-2">
+                              <div class="text-caption text-medium-emphasis mb-1">查询组-{{ g.label }}</div>
+                              <div class="d-flex flex-wrap ga-1">
+                                <v-chip
+                                  v-for="(q, qi) in g.queries"
+                                  :key="qi"
+                                  size="x-small"
+                                  density="compact"
+                                  :color="g.sent.includes(q) ? 'primary' : 'default'"
+                                  :variant="g.sent.includes(q) ? 'tonal' : 'outlined'"
+                                >
+                                  {{ q }}{{ g.sent.includes(q) ? '' : ' · 未发送' }}
+                                </v-chip>
+                              </div>
+                            </div>
+                            <div v-if="!store.data?.search_plan.groups?.length" class="text-body-2 text-medium-emphasis">
+                              （无标题查询词，可能经 Bangumi 等其他来源命中）
+                            </div>
+                            <v-divider class="my-2" />
+                            <div class="text-body-2">搜索结果：{{ store.data?.search_plan.result || '-' }}</div>
+                          </template>
+                        </v-card-text>
                       </v-card>
                     </v-col>
                   </v-row>
@@ -596,8 +630,16 @@ const filteredLogs = computed(() => {
 
               <div class="pref-item">
                 <div class="pref-info">
-                  <div class="pref-label">本地数据中心</div>
-                  <div class="pref-desc">优先碰撞本地数据库，毫秒级离线匹配</div>
+                  <div class="pref-label">标题分词搜索</div>
+                  <div class="pref-desc">匹配失败时将标题切分为单词重试；建议保持关闭</div>
+                </div>
+                <v-switch v-model="store.titleSegmentation" density="compact" hide-details color="primary" />
+              </div>
+
+              <div class="pref-item">
+                <div class="pref-info">
+                  <div class="pref-label">本地数据中心优先</div>
+                  <div class="pref-desc">优先碰撞本地数据库，实现毫秒级离线匹配</div>
                 </div>
                 <v-switch v-model="store.offlinePriority" density="compact" hide-details color="primary" />
               </div>
@@ -605,7 +647,7 @@ const filteredLogs = computed(() => {
               <div class="pref-item">
                 <div class="pref-info">
                   <div class="pref-label">Bangumi 数据源优先</div>
-                  <div class="pref-desc">优先尝试 BGM 镜像</div>
+                  <div class="pref-desc">针对新番或缺失条目，优先尝试 BGM 镜像</div>
                 </div>
                 <v-switch v-model="store.bangumiPriority" density="compact" hide-details color="primary" />
               </div>
@@ -613,7 +655,7 @@ const filteredLogs = computed(() => {
               <div class="pref-item" :style="{ opacity: store.bangumiPriority ? 0.5 : 1 }">
                 <div class="pref-info">
                   <div class="pref-label">Bangumi 故障转移</div>
-                  <div class="pref-desc">TMDB 失败时自动使用 BGM 补全</div>
+                  <div class="pref-desc">TMDB 匹配失败时自动使用 BGM 补全</div>
                 </div>
                 <v-switch v-model="store.bangumiFailover" density="compact" hide-details color="primary" :disabled="store.bangumiPriority" />
               </div>
@@ -621,7 +663,7 @@ const filteredLogs = computed(() => {
               <div class="pref-item">
                 <div class="pref-info">
                   <div class="pref-label">强制单文件模式</div>
-                  <div class="pref-desc">将完整输入作为文件名解析</div>
+                  <div class="pref-desc">将完整输入作为文件名解析，无视路径干扰</div>
                 </div>
                 <v-switch v-model="store.forceFilename" density="compact" hide-details color="primary" />
               </div>
@@ -629,7 +671,7 @@ const filteredLogs = computed(() => {
               <div class="pref-item">
                 <div class="pref-info">
                   <div class="pref-label">智能记忆</div>
-                  <div class="pref-desc">自动记住系列特征，秒级拦截</div>
+                  <div class="pref-desc">自动记住系列特征，后续文件实现秒级识别</div>
                 </div>
                 <v-switch v-model="store.seriesFingerprint" density="compact" hide-details color="primary" />
               </div>
@@ -637,7 +679,7 @@ const filteredLogs = computed(() => {
               <div class="pref-item">
                 <div class="pref-info">
                   <div class="pref-label">合集识别增强</div>
-                  <div class="pref-desc">支持 01-12 等合集解析</div>
+                  <div class="pref-desc">支持解析 01-12 等合集，自动计算集数区间</div>
                 </div>
                 <v-switch v-model="store.batchEnhancement" density="compact" hide-details color="primary" />
               </div>

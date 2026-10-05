@@ -50,6 +50,7 @@ const manualTask = reactive<any>({
   action_type: 'move',
   overwrite_mode: false,
   anime_priority: true,
+  enable_title_segmentation: false,
   monitor_mode: 'none',
   monitor_interval: 3600,
   process_interval: 0,
@@ -451,8 +452,16 @@ function handleRunBackground() {
               <div class="switch-row">
                 <v-switch v-model="manualTask.anime_priority" density="compact" color="primary" hide-details />
                 <div>
-                  <div class="switch-label">动漫优先</div>
-                  <div class="switch-desc">优先使用动漫专用识别策略，提高动漫识别准确率</div>
+                  <div class="switch-label">动漫识别优化</div>
+                  <div class="switch-desc">提升动画匹配精度，过滤同名真人剧</div>
+                </div>
+              </div>
+
+              <div class="switch-row">
+                <v-switch v-model="manualTask.enable_title_segmentation" density="compact" color="primary" hide-details />
+                <div>
+                  <div class="switch-label">标题分词搜索</div>
+                  <div class="switch-desc">匹配失败时将标题切分为单词重试；建议保持关闭</div>
                 </div>
               </div>
 

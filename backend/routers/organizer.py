@@ -423,6 +423,7 @@ async def recalculate_item(request: dict):
         all_groups=all_groups,
         api_key=config.get("tmdb_api_key", ""),
         anime_priority=task_config.get("anime_priority", True),
+        enable_title_segmentation=task_config.get("enable_title_segmentation"),
         all_render=all_render,
         original_input_path=full_path if full_path != filename else None
     )
