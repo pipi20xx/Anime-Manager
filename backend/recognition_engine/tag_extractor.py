@@ -6,6 +6,7 @@ from .constants import (
     VIDEO_RE, PIX_RE, PLATFORM_RE, DYNAMIC_RANGE_RE, AUDIO_RE, SOURCE_RE,
     SOURCE_VALUE_MAP, PLATFORM_VALUE_MAP, VIDEO_ENCODE_RULES,
     AUDIO_CODEC_RULES, DYNAMIC_RANGE_DEFS, SUB_LANG_FULL, SUB_TYPES,
+    DUAL_AUDIO_RE, MULTI_SUBS_RE, AUDIO_LANG_RE, AUDIO_LANG_MAP, MULTI_AUDIO_RE,
 )
 
 class TagExtractor:
@@ -334,9 +335,12 @@ class TagExtractor:
 
     @staticmethod
     def extract_audio_encode(filename: str) -> Tuple[Optional[str], List[str]]:
-        """[内置] 识别音频规格"""
+        """[内置] 识别音频规格 (含双音轨/多音轨/音轨语言标记)"""
         matches = list(re.finditer(AUDIO_RE, filename))
-        if matches:
+        dual_match = re.search(DUAL_AUDIO_RE, filename)
+        multi_audio_match = re.search(MULTI_AUDIO_RE, filename)
+        lang_matches = list(re.finditer(AUDIO_LANG_RE, filename))
+        if matches or dual_match or multi_audio_match or lang_matches:
             final_tags, raw_log_parts, seen_combos = [], [], set()
             for m in matches:
                 codec_raw = m.group(1).upper().replace(".", "").replace("-", "").replace("_", "")
@@ -362,6 +366,16 @@ class TagExtractor:
                 full_tag = f"{codec} {channel}".strip() if channel else codec
                 if full_tag not in seen_combos:
                     final_tags.append(full_tag); seen_combos.add(full_tag); raw_log_parts.append(m.group(0))
+            # [New] 音轨语言标记 (如 WEB-DL.JPN.AAC2.0 的 JPN) 规范为 日语/英语
+            for lm in lang_matches:
+                lang = AUDIO_LANG_MAP.get(lm.group(1).upper())
+                if lang and lang not in final_tags:
+                    final_tags.append(lang); raw_log_parts.append(lm.group(0))
+            # [New] 双音轨/多音轨标记追加到规格末尾 (如 E-AC-3 日语 英语 多音轨)
+            if dual_match and "双音轨" not in final_tags:
+                final_tags.append("双音轨"); raw_log_parts.append(dual_match.group(0))
+            if multi_audio_match and "多音轨" not in final_tags:
+                final_tags.append("多音轨"); raw_log_parts.append(multi_audio_match.group(0))
             def sort_key(x):
                 base = x.split()[0] 
                 order = ["Dolby", "DTS-HD", "TrueHD", "LPCM", "E-AC-3", "AC-3", "DTS", "FLAC", "Opus", "AAC", "Vorbis"]
@@ -394,15 +408,18 @@ class TagExtractor:
         f_norm = filename.upper()
         
         # 1. 特征定义
+        # [New] 先剔除独立的音轨语言标记 (如 WEB-DL.JPN.AAC2.0 的 JPN)，避免将音频语言误判为字幕语言；
+        #       CHS/CHT/GB/BIG5 等字幕专用代码不受影响，复合标记 CHI_JPN/ENG_SUB 由下划线边界保护
+        f_sub_scope = re.sub(AUDIO_LANG_RE, " ", f_norm)
         has_chs = bool(re.search(r"简|簡|CHS|SC|GB|简体|简中", f_norm))
         has_cht = bool(re.search(r"繁|CHT|TC|BIG5|繁体|繁中", f_norm))
-        has_jap = bool(re.search(r"日|JAP|JPN|JP|日文|日语", f_norm))
+        has_jap = bool(re.search(r"日|JAP|JPN|JP|日文|日语", f_sub_scope))
         # [Optimize] 增加对工业标签的语义识别 (如 SRTx2 通常代表简繁双语)
         if not (has_chs or has_cht) and re.search(r"[SA][RS][ST]X2", f_norm):
             has_chs = has_cht = True
-        
+
         # 英文判定需严格边界，防止匹配到 SENSEI 等
-        has_eng = bool(re.search(r"(?<![a-zA-Z0-9])(ENG|EN|英文|英语)(?![a-zA-Z0-9])", f_norm))
+        has_eng = bool(re.search(r"(?<![a-zA-Z0-9])(ENG|EN|英文|英语)(?![a-zA-Z0-9])", f_sub_scope))
         
         # 2. 类型定义
         is_internal = bool(re.search(r"内封|內封|ASSx|SRTx|CHI_JPN|JPSC", f_norm))
@@ -417,7 +434,13 @@ class TagExtractor:
         if has_jap: langs.append("日")
         if has_eng: langs.append("英")
         
-        if not langs: return None, []
+        if not langs:
+            # [New] MSubs/Multi-Subs 标记：未标注具体语言，规范为 多语内封
+            if re.search(MULTI_SUBS_RE, f_norm):
+                final_label = f"多语{SUB_TYPES[0]}"
+                logs.append(f"[规则][内置] 字幕语言: {final_label} (多字幕标记)")
+                return final_label, logs
+            return None, []
         
         # 基础前缀判定：单语言用全称，多语言用简称
         if len(langs) == 1:

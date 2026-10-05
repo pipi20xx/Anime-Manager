@@ -610,13 +610,15 @@ class TMDBProvider:
         return titles
 
     async def _review_fuzzy_with_aliases(self, scored_pool, targets, cn_name, en_name, logs, anime_priority, year, default_type: str = "tv"):
-        """[New] 模糊命中复核: 最佳候选为模糊命中时，拉取 top2 的别名参与对撞后重新打分排序"""
+        """[New] 模糊命中复核: 最佳候选为模糊命中或全 0 分时，拉取 top2 的别名参与对撞后重新打分排序"""
         def _log(msg):
             if hasattr(logs, "log"): logs.log(msg)
             elif isinstance(logs, list): logs.append(msg)
 
         best = scored_pool[0]
-        if not best.get("match_reason", "").startswith("模糊"):
+        # match_reason 为空意味着所有标题对比都是 0 分（如罗马音目标 vs 日文原名），同样需要别名复核救援
+        _mr = best.get("match_reason", "")
+        if _mr and not _mr.startswith("模糊"):
             return
 
         _log(f"┃ 🔎 模糊命中复核: 拉取候选别名参与对撞...")

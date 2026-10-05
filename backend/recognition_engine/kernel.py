@@ -2,7 +2,7 @@ import regex as re
 from typing import List, Optional, Tuple, Any, Dict, Callable
 import zhconv
 
-from .constants import MediaType, PIX_RE, VIDEO_RE, AUDIO_RE, SOURCE_RE, DYNAMIC_RANGE_RE, PLATFORM_RE, NOISE_WORDS
+from .constants import MediaType, PIX_RE, VIDEO_RE, AUDIO_RE, SOURCE_RE, DYNAMIC_RANGE_RE, PLATFORM_RE, NOISE_WORDS, DUAL_AUDIO_RE, MULTI_SUBS_RE, AUDIO_LANG_RE, MULTI_AUDIO_RE
 from .data_models import MetaBase
 from .title_cleaner import TitleCleaner
 from .tag_extractor import TagExtractor
@@ -306,6 +306,9 @@ def core_recognize(
         (PIX_RE, TagExtractor.extract_resolution, "resource_pix"),
         (VIDEO_RE, TagExtractor.extract_video_encode, "video_encode"),
         (AUDIO_RE, TagExtractor.extract_audio_encode, "audio_encode"),
+        (DUAL_AUDIO_RE, None, None), # [New] 屏蔽双音轨标记 (属性提取在 extract_audio_encode 内)
+        (MULTI_AUDIO_RE, None, None), # [New] 屏蔽多音轨标记 (属性提取在 extract_audio_encode 内)
+        (AUDIO_LANG_RE, None, None), # [New] 屏蔽音轨语言标记 (属性提取在 extract_audio_encode 内)
         (SOURCE_RE, TagExtractor.extract_source, "resource_type"),
         (DYNAMIC_RANGE_RE, TagExtractor.extract_dynamic_range, "video_effect"),
         (PLATFORM_RE, TagExtractor.extract_platform, "resource_platform"),
@@ -328,6 +331,7 @@ def core_recognize(
     # 强力噪音屏蔽 (包含容器后缀, 完结标志, 压制术语 and NOISE_WORDS)
     noise_shield = [
         (r"(?i)\b(MKV|MP4|AVI|FLV|WMV|MOV|7z|ZIP|TS|7zip)\b", "文件容器"),
+        (MULTI_SUBS_RE, "多字幕标记"),
         (r"(?i)\b(Fin|END|Complete|Final)\b", "完结标志"),
         (r"(?i)(完结|全集|合集)", "合集标志"),
         (r"(?i)(精校|修正|修复|重制|修正版|无修正|未删减)", "修正标签"),

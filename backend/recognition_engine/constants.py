@@ -102,6 +102,18 @@ SUBTITLE_RE = r"(?i)[\[\(\{（【][^\]\}）】]*?(?:(?:[简繁日中英体文语
 # 2.6 别名与检索词屏蔽正则
 ALIAS_RE = r"(?i)[\[\(\{（【]\s*(?:检索用|检索|檢索|别名|別名|又名|附带|附帶|翻译|翻译自)[:：\s]+.*?[\]\)\}）】]"
 
+# 2.7 音轨/字幕轨计数标记
+# 双音轨 (DUAL / DUAL-AUDIO / DUAL_AUDIO / DualAudio)，属性提取在 extract_audio_encode
+DUAL_AUDIO_RE = r"(?i)(?<![a-zA-Z0-9])DUAL(?:[-\s.]?AUDIO)?(?![a-zA-Z0-9])"
+# 多音轨 (MULTi / MULTI / MULTI-AUDIO)，属性提取在 extract_audio_encode
+MULTI_AUDIO_RE = r"(?i)(?<![a-zA-Z0-9])MULTI?(?:[-\s.]?AUDIO)?(?![a-zA-Z0-9])"
+# 多字幕 (MSubs / Multi-Subs / MULTI_SUBS)，属性提取在 extract_subtitle_lang
+MULTI_SUBS_RE = r"(?i)(?<![a-zA-Z0-9])M(?:ULTI)?[-\s.]?SUBS?(?![a-zA-Z0-9])"
+# 音轨语言标记 (JPN/ENG 等独立出现时为音频语言，如 Crunchyroll.WEB-DL.JPN.AAC2.0)，
+# 下划线不算边界，保护 CHI_JPN / ENG_SUB 这类字幕复合标记；属性提取在 extract_audio_encode
+AUDIO_LANG_RE = r"(?i)(?<![a-zA-Z0-9_])(JPN|JAP|JP|ENG)(?![a-zA-Z0-9_])"
+AUDIO_LANG_MAP = {"JPN": "日语", "JAP": "日语", "JP": "日语", "ENG": "英语"}
+
 # 3. 深度噪音
 NOISE_WORDS = [
     r"(?i)PTS|JADE|AOD|CHC|(?!LINETV)[A-Z]{1,4}TV[-0-9UVHDK]*",
