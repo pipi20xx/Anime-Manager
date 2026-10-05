@@ -79,15 +79,16 @@ EFFECT_RE = r"(?i)(?<![a-zA-Z0-9])(3D|REPACK|HQ|Remastered|Extended|Uncut|Intern
 
 # 2. 流媒体平台
 # 识别 token (顺序敏感, 同上) + 归一化映射 (键为 token 大写)
-PLATFORM_TOKENS = ["Baha", "Bilibili", "Netflix", "NF", "Amazon", "AMZN", "DSNP",
+PLATFORM_TOKENS = ["Baha", "Bilibili", "BILI", "Netflix", "NF", "Amazon", "AMZN", "DSNP",
                    "Crunchyroll", "CR", "Hulu", "HBO", "YouTube", "YT", "playWEB",
                    "B-Global", "friDay", "LINETV", "KKTV", "ATVP", "IQ", "IQIYI",
-                   "CRAMZN", "iT", "ABEMA", "HIDIVE", "Viu", "CATCHPLAY"]
+                   "CRAMZN", "iT", "ABEMA", "HIDIVE", "UNEXT", "Viu", "CATCHPLAY"]
 PLATFORM_PLUS_TOKENS = ["Disney+", "AppleTV+"]
 PLATFORM_VALUE_MAP = {
     "CR": "Crunchyroll", "NF": "Netflix", "AMZN": "Amazon", "ATVP": "AppleTV+",
     "DSNP": "Disney+", "IT": "iTunes", "LINETV": "LINE TV", "ABEMA": "AbemaTV",
-    "IQ": "iQIYI", "IQIYI": "iQIYI", "CRAMZN": "Amazon",
+    "IQ": "iQIYI", "IQIYI": "iQIYI", "CRAMZN": "Amazon", "BILI": "Bilibili",
+    "UNEXT": "U-NEXT",
 }
 PLATFORM_RE = (
     r"(?i)(?:-)?(?<![a-zA-Z0-9])(" + "|".join(PLATFORM_TOKENS) + r")(?![a-zA-Z0-9])"
