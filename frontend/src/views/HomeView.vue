@@ -82,9 +82,10 @@ const parsedRuleLogs = computed<ParsedRuleLog[]>(() => {
 })
 
 // --- 审计日志 Tab ---
+// 注意：Vuetify clearable 点 X 会把 v-model 置为 null，读取时必须做空值守卫
 const logSearchKeyword = ref('')
 const filteredLogs = computed(() => {
-  if (!logSearchKeyword.value.trim()) return store.logs
+  if (!logSearchKeyword.value?.trim()) return store.logs
   const kw = logSearchKeyword.value.toLowerCase()
   return store.logs.filter(log => String(log).toLowerCase().includes(kw))
 })
@@ -594,6 +595,7 @@ const filteredLogs = computed(() => {
                     density="compact"
                     hide-details
                     clearable
+                    @click:clear="logSearchKeyword = ''"
                     class="flex-grow-1"
                   />
                   <v-chip variant="tonal" color="primary" density="compact">
