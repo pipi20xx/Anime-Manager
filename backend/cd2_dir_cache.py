@@ -2,7 +2,7 @@
 CD2 目录快照缓存（方案B）
 - 锁定的目录：所有读路径走本地快照，0 API
 - 未锁定的目录：实时查询，无任何副作用（不写缓存）
-- 快照只产生于：lock_dir / lock_subtree / refresh_dir / webhook 事件喂快照
+- 快照只产生于：lock_dir / lock_subtree / refresh_dir / webhook 事件喂快照（删除事件会清除对应子树快照）
 - 缓存键 = CD2 内部云路径，全局共享（不绑定单个任务）
 - 删除/删除校验等需要新鲜数据的路径不经过本模块（保持直连 GetSubFiles）
 """
@@ -304,15 +304,16 @@ async def unlock_path(path: str) -> bool:
     return True
 
 
+def _subtree_cond(p: str):
+    """目录自身及全部子孙的缓存行匹配条件"""
+    return (Cd2DirCache.path == p) | Cd2DirCache.path.startswith(p.rstrip('/') + '/', autoescape=True)
+
+
 async def unlock_subtree(path: str) -> int:
     """递归解锁：删除目录自身及全部子孙的缓存行"""
     p = _normalize_path(path)
     async with db.session_scope():
-        result = await db.session.execute(
-            delete(Cd2DirCache).where(
-                (Cd2DirCache.path == p) | Cd2DirCache.path.startswith(p.rstrip('/') + '/', autoescape=True)
-            )
-        )
+        result = await db.session.execute(delete(Cd2DirCache).where(_subtree_cond(p)))
     logger.info(f"[CD2目录缓存] 子树已解锁: {p}（{result.rowcount} 个目录）")
     if result.rowcount > 0:
         try:
@@ -320,6 +321,20 @@ async def unlock_subtree(path: str) -> int:
                                processed=result.rowcount)
         except Exception as e:
             logger.warning(f"[CD2目录缓存] 记录任务失败: {e}")
+    return result.rowcount
+
+
+async def purge_subtree(path: str) -> int:
+    """
+    目录在云端被删除后清除其自身及全部子孙的快照行（webhook 删除事件触发）。
+    残留的锁定行会污染缓存统计和前端锁定徽标；行数 0 时静默，不打扰任务中心。
+    """
+    p = _normalize_path(path)
+    async with db.session_scope():
+        result = await db.session.execute(delete(Cd2DirCache).where(_subtree_cond(p)))
+    if result.rowcount > 0:
+        logger.info(f"[CD2目录缓存] 目录已删除，清理其快照: {p}（{result.rowcount} 行）")
+        log_audit("CD2目录缓存", "事件保鲜", f"目录已删除，清理其快照: {p}（{result.rowcount} 行）")
     return result.rowcount
 
 

@@ -44,6 +44,14 @@ async def _feed_dir_cache(cloud_path: str, is_dir: bool):
     except Exception as e:
         logger.warning(f"[CD2目录缓存] 事件保鲜失败 ({cloud_path}): {e}")
 
+async def _purge_deleted_subtree(cloud_path: str):
+    """目录被删除后清除其自身及子孙的快照行，失败不影响联动主流程。"""
+    try:
+        from cd2_dir_cache import purge_subtree
+        await purge_subtree(cloud_path)
+    except Exception as e:
+        logger.warning(f"[CD2目录缓存] 删除事件清理快照失败 ({cloud_path}): {e}")
+
 async def _expand_dir_event(dir_cloud_path: str, source: str, client_ids: list, origin_task_id: str = None, delay: int = 15, parent_event_id: int = None):
     """
     目录级事件展开：CD2 移动/重命名文件夹时只推送顶层目录变动（不含内容），
@@ -154,6 +162,17 @@ async def process_cd2_notification(data: list, source: str = "webhook", raw_payl
             continue
         # rename（同盘移动）必须有新路径才有意义
         if action == "rename" and not item.get("destination_file"):
+            continue
+        if action == "delete":
+            # 删除事件不触发联动，但目录锁定缓存需要保鲜：
+            # 内容减少体现在父目录 → 喂父目录（已锁定才重取快照，5 秒防抖合并事件风暴）；
+            # 目录被删 → 其自身及子孙的快照行已无意义，随之清除。
+            # 台账不记录删除事件（不参与判重），快照清理自身幂等，风暴下重复触发无副作用
+            is_dir_event = str(item.get("is_dir", "")).lower() == "true"
+            cloud_path = '/' + file_path.lstrip('/')
+            asyncio.create_task(_feed_dir_cache(os.path.dirname(cloud_path) or '/', True))
+            if is_dir_event:
+                asyncio.create_task(_purge_deleted_subtree(cloud_path))
             continue
         if action not in ("create", "rename"):
             continue
