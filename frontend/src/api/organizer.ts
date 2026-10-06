@@ -71,6 +71,10 @@ startBackground: (body: any, opts?: { dry_run?: boolean }) =>
   getHistory: (params?: { limit?: number; offset?: number; status?: string; search?: string; days?: number; start_date?: string; end_date?: string }) =>
     api.get<any>('/api/organize/history', { params }),
 
+  /** 获取整理历史统计（状态分布 + 今日新增/今日失败） */
+  getHistoryStats: () =>
+    api.get<any>('/api/organize/history/stats'),
+
   /** 删除单条整理历史 */
   deleteHistory: (historyId: number, deleteFile = false) =>
     api.delete<any>(`/api/organize/history/${historyId}`, { params: { delete_file: deleteFile } }),

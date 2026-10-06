@@ -599,6 +599,37 @@ async def get_organize_history(
         rows = await db.all(OrganizeHistory, stmt)
         return [_with_via(h.model_dump()) for h in rows]
 
+@router.get("/api/organize/history/stats", summary="获取整理历史统计")
+async def get_organize_history_stats():
+    """
+    整理历史统计：状态分布（成功/失败/跳过）+ 总数 + 今日新增/今日失败。
+    """
+    from database import db
+    from models import OrganizeHistory
+    from sqlmodel import select, func
+
+    async with db.session_scope():
+        result = await db.session.execute(
+            select(OrganizeHistory.status, func.count(OrganizeHistory.id)).group_by(OrganizeHistory.status)
+        )
+        by_status = {s: c for s, c in result.all()}
+
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_result = await db.session.execute(
+            select(func.count(OrganizeHistory.id)).where(OrganizeHistory.processed_at >= today_start)
+        )
+        today_total = today_result.scalar() or 0
+        today_failed_result = await db.session.execute(
+            select(func.count(OrganizeHistory.id)).where(
+                OrganizeHistory.processed_at >= today_start, OrganizeHistory.status == "failed")
+        )
+        return {
+            "by_status": by_status,
+            "total": sum(by_status.values()),
+            "today_total": today_total,
+            "today_failed": today_failed_result.scalar() or 0,
+        }
+
 @router.delete("/api/organize/history/clear", summary="清空整理历史")
 async def clear_organize_history():
     """

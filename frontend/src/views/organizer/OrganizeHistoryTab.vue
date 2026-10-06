@@ -10,7 +10,7 @@
  * - 删除确认带物理删除选项
  * - 跳过/失败消息行
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { organizerApi, taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import ExecutionLogModal from './ExecutionLogModal.vue'
@@ -22,6 +22,7 @@ const { confirm } = useConfirm()
 
 const historyList = ref<any[]>([])
 const historyLoading = ref(false)
+const historyStats = ref<{ total: number; today_total: number; today_failed: number; by_status?: Record<string, number> } | null>(null)
 const historyOffset = ref(0)
 const historyHasMore = ref(true)
 const historyStatusFilter = ref<string>('all')
@@ -32,6 +33,29 @@ const historyTopCount = ref<number>(100)
 const historyDaysCount = ref<number>(30)
 const historyStartDate = ref('')
 const historyEndDate = ref('')
+
+// --- 统计卡片（对标联动记录页） ---
+const historyStatChips = computed(() => {
+  const s = historyStats.value
+  if (!s) return []
+  const by = s.by_status || {}
+  return [
+    { label: '累计事件', value: s.total, color: 'primary', icon: 'mdi-format-list-numbered' },
+    { label: '今日新增', value: s.today_total, color: 'info', icon: 'mdi-calendar-today' },
+    { label: '今日失败', value: s.today_failed, color: s.today_failed ? 'error' : 'grey', icon: 'mdi-alert-outline' },
+    { label: '成功', value: by.success || 0, color: 'success', icon: 'mdi-check-circle-outline' },
+    { label: '失败', value: by.failed || 0, color: 'error', icon: 'mdi-alert-circle-outline' },
+    { label: '跳过', value: by.skipped || 0, color: 'warning', icon: 'mdi-skip-next' },
+  ]
+})
+
+async function fetchHistoryStats() {
+  try {
+    historyStats.value = await organizerApi.getHistoryStats()
+  } catch {
+    /* 统计失败不打断列表 */
+  }
+}
 
 // --- 日志查看弹框 ---
 const showLogModal = ref(false)
@@ -79,6 +103,7 @@ async function fetchHistory(isRefresh = false) {
     }
     historyHasMore.value = isTopMode ? false : items.length >= 20
     historyOffset.value += items.length
+    fetchHistoryStats()
   } catch (e) {
     // 静默
   } finally {
@@ -126,6 +151,7 @@ async function deleteHistoryItem(item: any) {
     await organizerApi.deleteHistory(item.id, deleteFile)
     success('已删除')
     historyList.value = historyList.value.filter((h: any) => h.id !== item.id)
+    fetchHistoryStats()
   } catch (e) {
     showError('删除失败')
   }
@@ -140,6 +166,8 @@ async function clearAllHistory() {
     historyList.value = []
     historyOffset.value = 0
     historyHasMore.value = false
+    historyStats.value = null
+    fetchHistoryStats()
   } catch (e) {
     showError('清空失败')
   }
@@ -276,6 +304,14 @@ defineExpose({ fetchHistory })
 
 <template>
   <div>
+    <!-- 统计概览 -->
+    <div v-if="historyStatChips.length" class="d-flex ga-2 mb-4 flex-wrap">
+      <v-chip v-for="chip in historyStatChips" :key="chip.label" variant="tonal" :color="chip.color" size="small">
+        <v-icon start size="14">{{ chip.icon }}</v-icon>
+        {{ chip.label }} {{ chip.value }}
+      </v-chip>
+    </div>
+
     <!-- 筛选栏 -->
     <div class="d-flex ga-2 mb-4 flex-wrap align-center">
       <v-text-field
