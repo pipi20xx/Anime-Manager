@@ -42,27 +42,21 @@ class Renamer:
         season_val = final.get('season')
         episode_val = final.get('episode')
         
-        season_02 = ""
-        try:
-            if isinstance(season_val, (int, float)):
-                season_02 = f"{int(season_val):02d}"
-            elif season_val and str(season_val).isdigit():
-                 season_02 = f"{int(season_val):02d}"
-            else:
-                season_02 = str(season_val or "")
-        except:
-            season_02 = str(season_val or "")
-            
-        episode_02 = ""
-        try:
-            if isinstance(episode_val, (int, float)):
-                episode_02 = f"{int(episode_val):02d}"
-            elif episode_val and str(episode_val).isdigit():
-                 episode_02 = f"{int(episode_val):02d}"
-            else:
-                episode_02 = str(episode_val or "")
-        except:
-            episode_02 = str(episode_val or "")
+        # 整数补零；小数集数(如 13.5)保留小数，int() 会截断成 13
+        def _fmt_02(val: Any) -> str:
+            try:
+                if isinstance(val, (int, float)):
+                    if float(val).is_integer():
+                        return f"{int(val):02d}"
+                    return str(val)
+                if val and str(val).isdigit():
+                    return f"{int(val):02d}"
+                return str(val or "")
+            except:
+                return str(val or "")
+
+        season_02 = _fmt_02(season_val)
+        episode_02 = _fmt_02(episode_val)
 
         replacements["{season_02}"] = season_02
         replacements["{episode_02}"] = episode_02
