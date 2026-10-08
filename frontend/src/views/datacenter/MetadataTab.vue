@@ -56,6 +56,7 @@ const refreshForm = reactive({
   year_to: undefined as number | undefined,
   media_type: undefined as string | undefined,
   genre_ids: [] as string[],
+  airing_filter: undefined as string | undefined,
 })
 
 // --- 全量刷新弹窗：流派选项（从映射缓存构建） ---
@@ -176,11 +177,12 @@ function handleExecuteRefresh() {
   if (refreshForm.year_to) body.year_to = refreshForm.year_to
   if (refreshForm.media_type) body.media_type = refreshForm.media_type
   if (refreshForm.genre_ids.length) body.genre_ids = refreshForm.genre_ids.join(',')
+  if (refreshForm.airing_filter) body.airing_filter = refreshForm.airing_filter
   dataCenterApi.refreshAll(body).then((res: any) => {
     success(res?.message || '全量刷新任务已启动')
   }).catch(() => showError('触发刷新失败'))
   showRefreshModal.value = false
-  Object.assign(refreshForm, { older_than_days: undefined, year_from: undefined, year_to: undefined, media_type: undefined, genre_ids: [] })
+  Object.assign(refreshForm, { older_than_days: undefined, year_from: undefined, year_to: undefined, media_type: undefined, genre_ids: [], airing_filter: undefined })
 }
 
 // --- 无限滚动 ---
@@ -299,6 +301,7 @@ onUnmounted(() => {
         </div>
         <v-select v-model="refreshForm.genre_ids" label="流派筛选" :items="genreOptions" multiple chips closable-chips variant="outlined" density="compact" clearable hide-details class="mb-3" placeholder="不选表示不限制" />
         <v-select v-model="refreshForm.media_type" label="媒体类型筛选" :items="[{ title: '全部', value: undefined }, { title: '电影', value: 'movie' }, { title: '剧集', value: 'tv' }]" variant="outlined" density="compact" clearable class="mb-3" />
+        <v-select v-model="refreshForm.airing_filter" label="连载状态筛选" :items="[{ title: '全部', value: undefined }, { title: '仅连载中（next_episode_to_air 非空）', value: 'airing' }, { title: '仅已完结（next_episode_to_air 为空）', value: 'ended' }]" variant="outlined" density="compact" clearable class="mb-3" hint="仅对剧集生效，依据库内 full_data 的 next_episode_to_air 判断" persistent-hint />
       </v-card-text>
       <v-divider />
       <v-card-actions class="pa-4">

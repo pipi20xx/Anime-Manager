@@ -15,11 +15,12 @@ async def task_refresh_all_metadata(
     year_to: Optional[int] = None,
     media_type: Optional[str] = None,
     tmdb_id: Optional[str] = None,
-    genre_ids: Optional[str] = None
+    genre_ids: Optional[str] = None,
+    airing_filter: Optional[str] = None
 ):
     """
     后台执行全量刷新逻辑
-    
+
     Args:
         older_than_days: 只更新 N 天前更新的记录
         year_from: 只更新首播年份 >= 该年份的记录
@@ -27,6 +28,7 @@ async def task_refresh_all_metadata(
         media_type: 只更新指定类型 (movie/tv)
         tmdb_id: 只更新指定的 TMDB ID（单个刷新）
         genre_ids: 只更新包含指定流派 ID 的记录（逗号分隔，如 "16,10749"）
+        airing_filter: 连载状态筛选 (airing=仅连载中 next_episode_to_air 非空 / ended=仅已完结 next_episode_to_air 为空)
     """
     filters = []
     if tmdb_id:
@@ -41,32 +43,43 @@ async def task_refresh_all_metadata(
         filters.append(f"类型 {media_type}")
     if genre_ids:
         filters.append(f"流派 {genre_ids}")
-    
+    if airing_filter:
+        filters.append("仅连载中" if airing_filter == "airing" else "仅已完结")
+
     filter_desc = " | ".join(filters) if filters else "全部"
     log_audit("离线库", "全量刷新", f"开始执行全量元数据同步任务 [{filter_desc}]...")
-    
+
     async with await TmdbFullDB.get_session() as session:
         stmt = select(TmdbDeepMeta.tmdb_id, TmdbDeepMeta.media_type, TmdbDeepMeta.title)
-        
+
         if tmdb_id:
             stmt = stmt.where(TmdbDeepMeta.tmdb_id == str(tmdb_id))
-        
+
         if older_than_days:
             cutoff_date = datetime.now() - timedelta(days=older_than_days)
             stmt = stmt.where(TmdbDeepMeta.updated_at < cutoff_date)
-        
+
         if year_from:
             stmt = stmt.where(col(TmdbDeepMeta.first_air_date) >= str(year_from))
-        
+
         if year_to:
             stmt = stmt.where(col(TmdbDeepMeta.first_air_date) <= f"{year_to}-12-31")
-        
+
         if media_type:
             stmt = stmt.where(TmdbDeepMeta.media_type == media_type)
-        
+
         if genre_ids:
             gid_list = [g.strip() for g in genre_ids.split(",") if g.strip()]
             stmt = stmt.where(TmdbDeepMeta.genre_ids.contains([int(g) for g in gid_list]))
+
+        if airing_filter:
+            # next_episode_to_air 为空（含字段缺失或 JSON null）视为完结，仅对 tv 有意义
+            stmt = stmt.where(TmdbDeepMeta.media_type == "tv")
+            nea_text = TmdbDeepMeta.full_data["next_episode_to_air"].astext
+            if airing_filter == "ended":
+                stmt = stmt.where(nea_text.is_(None))
+            else:
+                stmt = stmt.where(nea_text.isnot(None))
         
         items = (await session.execute(stmt)).all()
         
@@ -150,11 +163,12 @@ async def refresh_all_metadata(
     year_to: Optional[int] = Body(None, description="只更新首播年份 <= 该年份的记录"),
     media_type: Optional[str] = Body(None, description="只更新指定类型 (movie/tv)"),
     tmdb_id: Optional[str] = Body(None, description="只更新指定的 TMDB ID（单个刷新）"),
-    genre_ids: Optional[str] = Body(None, description="只更新包含指定流派 ID 的记录（逗号分隔，如 \"16,10749\"）")
+    genre_ids: Optional[str] = Body(None, description="只更新包含指定流派 ID 的记录（逗号分隔，如 \"16,10749\"）"),
+    airing_filter: Optional[str] = Body(None, description="连载状态筛选: airing=仅连载中 / ended=仅已完结（依据 next_episode_to_air 是否为空）")
 ):
     """
     触发后台异步任务，对库中条目强制与 TMDB 云端同步。
-    
+
     支持筛选条件：
     - tmdb_id: 只更新指定的 TMDB ID（单个刷新）
     - older_than_days: 只更新 N 天前更新的记录（如 90 表示更新 3 个月前的数据）
@@ -162,7 +176,8 @@ async def refresh_all_metadata(
     - year_to: 只更新首播年份 <= 该年份的记录（如 2024）
     - media_type: 只更新指定类型 (movie/tv)
     - genre_ids: 只更新包含指定流派 ID 的记录（逗号分隔，如 "16,10749"）
-    
+    - airing_filter: 连载状态筛选 (airing/ended)，仅对剧集生效
+
     不传任何参数则刷新全部。
     """
     background_tasks.add_task(
@@ -172,9 +187,10 @@ async def refresh_all_metadata(
         year_to=year_to,
         media_type=media_type,
         tmdb_id=tmdb_id,
-        genre_ids=genre_ids
+        genre_ids=genre_ids,
+        airing_filter=airing_filter
     )
-    
+
     filters = []
     if tmdb_id:
         filters.append(f"TMDB ID {tmdb_id}")
@@ -188,6 +204,8 @@ async def refresh_all_metadata(
         filters.append(f"类型 {media_type}")
     if genre_ids:
         filters.append(f"流派 {genre_ids}")
+    if airing_filter:
+        filters.append("仅连载中" if airing_filter == "airing" else "仅已完结")
     
     filter_desc = " | ".join(filters) if filters else "全部"
     return {"status": "success", "message": f"全量刷新任务已在后台启动 [{filter_desc}]，请关注系统日志"}

@@ -594,6 +594,8 @@ MAINTENANCE_ACTIONS: List[Dict[str, str]] = [
             {"key": "media_type", "label": "媒体类型筛选", "type": "select", "default": "",
              "options": [{"title": "全部", "value": ""}, {"title": "电影", "value": "movie"}, {"title": "剧集", "value": "tv"}]},
             {"key": "genre_ids", "label": "流派 ID 筛选", "type": "text", "hint": "逗号分隔，如 16,10749，留空表示不限制"},
+            {"key": "airing_filter", "label": "连载状态筛选", "type": "select", "default": "",
+             "options": [{"title": "全部", "value": ""}, {"title": "仅连载中（next_episode_to_air 非空）", "value": "airing"}, {"title": "仅已完结（next_episode_to_air 为空）", "value": "ended"}]},
         ],
     },
 ]
@@ -648,6 +650,7 @@ async def _run_maintenance_action(action_id: str, params: Optional[Dict[str, Any
             year_to=int(p["year_to"]) if p.get("year_to") else None,
             media_type=p.get("media_type") or None,
             genre_ids=p.get("genre_ids") or None,
+            airing_filter=p.get("airing_filter") or None,
         )
     elif action_id.startswith("maint_truncate_"):
         # action_id 格式: maint_truncate_<schema>_<table>，schema 只有 public/metadata 两种
