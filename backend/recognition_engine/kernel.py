@@ -394,7 +394,14 @@ def core_recognize(
     
     # [Fix] 在进入内核前再次清理末尾的残留符号 (如 - . _) 防止 Anitopy 卡死
     processed_title = re.sub(r"[\s\-\._]+$", "", processed_title)
-    current_logs.append(f"┣ [DEBUG] 内核前终极清洗: {processed_title}")
+    current_logs.append(f"┣ [DEBUG] 内核前清洗前: {processed_title}")
+    # [Fix] 屏蔽词被替换为空格后会产生 "S05E02. .BSITE" 形态: Anitopy 会把"点后跟空格"
+    # 的点吸附进前词 (变成 S05E02.), 导致 SxxExx 季集正则失配。
+    # 收拢点两侧的空格并合并连续点, 还原为 "S05E02.BSITE" (小数点后跟数字, 不受影响)
+    processed_title = re.sub(r"\s*\.\s*", ".", processed_title)
+    processed_title = re.sub(r"\.{2,}", ".", processed_title)
+    processed_title = processed_title.strip()
+    current_logs.append(f"┣ [DEBUG] 内核前清洗后: {processed_title}")
     
     safe_title = str(processed_title).strip()
     current_logs.append(f"┃ [DEBUG][STEP 3]: 调用 Anitopy 语义内核")
