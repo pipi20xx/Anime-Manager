@@ -119,6 +119,11 @@ class QBClient(BaseClient):
                 if self.login():
                     return self.add_torrent(content, is_file, **kwargs)
 
+            if resp.status_code == 409:
+                # qBittorrent 5.x 对已存在的种子返回 409 Conflict:同一资源可能从多个源重复推送,视为成功避免误记失败
+                logger.info(f"[{self.name}] Torrent already exists in client (409 Conflict), treated as success")
+                return True, "Ok. Torrent already exists"
+
             if resp.status_code == 200:
                 if resp.text == "Ok.":
                     logger.info(f"[{self.name}] Torrent added successfully (QB < 5.2.0)")

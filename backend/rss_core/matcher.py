@@ -101,6 +101,39 @@ class Matcher:
             return False, None, error_msg
 
     @staticmethod
+    def _parse_magnet_infohash(link: str) -> Optional[str]:
+        """从磁力链解析 infohash（Base32 自动转 Hex），无法解析返回 None"""
+        match = re.search(r'xt=urn:btih:([a-fA-F0-9]{40}|[a-zA-Z2-7]{32})', link)
+        if not match:
+            return None
+        raw_hash = match.group(1).lower()
+        if len(raw_hash) == 32:
+            try:
+                import base64
+                import binascii
+                missing_padding = len(raw_hash) % 8
+                if missing_padding:
+                    raw_hash += '=' * (8 - missing_padding)
+                return base64.b32decode(raw_hash.upper()).hex().lower()
+            except Exception as e:
+                logger.warning(f"Base32 hash conversion failed: {e}")
+                return raw_hash
+        return raw_hash
+
+    @staticmethod
+    def _compute_torrent_infohash(content: bytes) -> Optional[str]:
+        """计算种子文件的 infohash（用于推送前与客户端内已有种子去重）"""
+        try:
+            import hashlib
+            import bencodepy
+            metadata = bencodepy.decode(content)
+            info = metadata[b'info']
+            return hashlib.sha1(bencodepy.encode(info)).hexdigest().lower()
+        except Exception as e:
+            logger.warning(f"计算种子 infohash 失败: {e}")
+            return None
+
+    @staticmethod
     async def download(entry: Dict, rule: Rule, task_id: str = None) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         将匹配的条目推送到下载客户端。
@@ -116,24 +149,7 @@ class Matcher:
         title = entry['title']
         guid = entry.get('guid')
         
-        info_hash = None
-        if download_link.startswith('magnet:'):
-            match = re.search(r'xt=urn:btih:([a-fA-F0-9]{40}|[a-zA-Z2-7]{32})', download_link)
-            if match:
-                raw_hash = match.group(1).lower()
-                if len(raw_hash) == 32:
-                    try:
-                        import base64
-                        import binascii
-                        missing_padding = len(raw_hash) % 8
-                        if missing_padding:
-                            raw_hash += '=' * (8 - missing_padding)
-                        info_hash = base64.b32decode(raw_hash.upper()).hex().lower()
-                    except Exception as e:
-                        logger.warning(f"Base32 hash conversion failed: {e}")
-                        info_hash = raw_hash
-                else:
-                    info_hash = raw_hash
+        info_hash = Matcher._parse_magnet_infohash(download_link) if download_link.startswith('magnet:') else None
         
         client = ClientManager.get_client(client_id)
         if not client:
@@ -153,9 +169,9 @@ class Matcher:
         async def try_download(link: str, is_fallback: bool = False) -> Tuple[bool, Optional[str], str]:
             """尝试下载并推送到客户端，返回 (是否成功, InfoHash, 错误信息)"""
             nonlocal info_hash
-            
+
             prefix = "[备用链接] " if is_fallback else ""
-            
+
             pre_hashes = set()
             try:
                 pre_torrents = await asyncio.to_thread(client.get_torrents, filter='all')
@@ -163,24 +179,41 @@ class Matcher:
             except: pass
 
             display_type = "磁力链" if link.startswith('magnet:') else "种子文件"
-            
+
+            content = None
+            candidate_hash = info_hash
+            if link.startswith('magnet:'):
+                candidate_hash = Matcher._parse_magnet_infohash(link) or candidate_hash
+            else:
+                success, content, error_msg = await Matcher._download_torrent_file(link, title, guid)
+                if not success:
+                    await notification_manager.notify_torrent_download_failed(title, link, error_msg, is_fallback)
+                    return False, None, error_msg
+                candidate_hash = Matcher._compute_torrent_infohash(content) or candidate_hash
+
+            # 推送前去重:同一资源可能同时出现在多个订阅源/站点(guid 不同,is_downloaded 拦不住),
+            # 客户端已有相同 infohash 时按成功处理,不再重复推送
+            if candidate_hash and candidate_hash.lower() in pre_hashes:
+                info_hash = candidate_hash
+                logger.info(f"⏭️ {prefix}客户端已存在相同种子，跳过重复推送: {title} (Hash: {candidate_hash})")
+                if task_id:
+                    from task_history import log_task as _log_task
+                    await _log_task(task_id, f"⏭️ {prefix}客户端已存在相同种子，跳过重复推送: {title}")
+                return True, info_hash, ""
+
             if link.startswith('magnet:'):
                 success, msg = await asyncio.to_thread(client.add_torrent, link, is_file=False, **kwargs)
                 if not success:
                     await notification_manager.notify_client_push_failed(title, client.name, msg)
                     return False, None, msg
             else:
-                success, content, error_msg = await Matcher._download_torrent_file(link, title, guid)
-                if not success:
-                    await notification_manager.notify_torrent_download_failed(title, link, error_msg, is_fallback)
-                    return False, None, error_msg
-                
                 success, msg = await asyncio.to_thread(client.add_torrent, content, is_file=True, **kwargs)
                 if not success:
                     await notification_manager.notify_client_push_failed(title, client.name, msg)
                     return False, None, msg
-            
+
             if success:
+                info_hash = candidate_hash
                 if not info_hash:
                     try:
                         for _ in range(5):
