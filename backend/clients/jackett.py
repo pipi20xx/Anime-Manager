@@ -95,7 +95,8 @@ class JackettClient:
         headers = JackettClient._get_headers(base_url)
 
         proxy = ConfigManager.get_proxy("jackett")
-        async with httpx.AsyncClient(timeout=30, proxy=proxy, follow_redirects=True, headers=headers) as client:
+        # 聚合搜索(all)时 Jackett 要等最慢的索引器返回,实测可达 40s+,超时过短会导致整体无结果
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=10.0), proxy=proxy, follow_redirects=True, headers=headers) as client:
             try:
                 async def do_request():
                     return await client.get(url, params=params)
@@ -109,7 +110,7 @@ class JackettClient:
                 if resp.status_code == 200:
                     return JackettClient._parse_rss(resp.text)
             except Exception as e:
-                logger.error(f"Jackett search error: {e}")
+                logger.error(f"Jackett search error: {type(e).__name__}: {e}")
         return []
 
     @staticmethod
