@@ -7,6 +7,7 @@ import uuid
 from typing import Dict, Any, Optional
 
 from logger import log_audit
+from .errors import grpc_error_details
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,13 @@ _HASH_PROGRESS_INTERVAL = 16 * 1024 * 1024  # 哈希进度上报间隔（字节�
 # 哈希上报后主动轮询 GetUploadFileList 兜底，防状态推送丢失
 _RAPID_POLL_INTERVAL = 20    # 轮询间隔（秒）
 _RAPID_WAIT_LIMIT = 7200     # 等待秒传决策的硬上限（秒），正常不会触发
+
+# 磁盘源上传失败重试：网络中断（如 OSS 分块请求失败）属于瞬时错误，
+# 重试前取消 CD2 端残留上传任务，从头开新会话
+_UPLOAD_ATTEMPTS = 3         # 总尝试次数（首次 + 2 次重试）
+_UPLOAD_RETRY_DELAY = 10     # 重试间隔（秒）
+# CD2 上传任务列表中的非终态状态（Wait/Preprocessing/Transfer/Pause/Inqueue）
+_NON_TERMINAL_UPLOAD_STATUS = {0, 1, 3, 4, 7}
 
 
 def _get_device_id() -> str:
@@ -179,6 +187,53 @@ class RemoteUploadManager:
     # ---------- 本地磁盘数据源（供整理任务：本地文件 → 云端，后台同步执行） ----------
     def upload_local_file_sync(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None, rapid_mode: str = "off") -> Dict[str, Any]:
         """
+        将本地磁盘文件经 Remote Upload 协议上传到云端（带失败重试）。
+        网络中断等瞬时错误会先取消 CD2 端残留上传任务，再从头开新会话重试；
+        秒传未命中与主动取消不重试。返回 {success, status_text, error, rapid_miss, rapid}。
+        """
+        last_result = None
+        for attempt in range(1, _UPLOAD_ATTEMPTS + 1):
+            if stop_event is not None and stop_event.is_set():
+                return {"success": False, "status_text": "已取消", "error": None}
+            result = self._upload_local_file_once(conn, local_path, cloud_file_path, stop_event, rapid_mode)
+            if result.get("success") or result.get("rapid_miss") or result.get("status_text") == "已取消":
+                return result
+            last_result = result
+            if attempt < _UPLOAD_ATTEMPTS:
+                logger.warning(
+                    f"远程上传失败(第 {attempt}/{_UPLOAD_ATTEMPTS} 次): {result.get('error')}，"
+                    f"{_UPLOAD_RETRY_DELAY} 秒后清理残留任务并重试: {cloud_file_path}"
+                )
+                self.cancel_cloud_tasks(conn, cloud_file_path)
+                time.sleep(_UPLOAD_RETRY_DELAY)
+        return last_result
+
+    def cancel_cloud_tasks(self, conn, cloud_path: str) -> int:
+        """取消 CD2 上传任务列表中指定目标路径的残留（非终态）任务，返回取消数量。
+
+        上传中断后 CD2 端会留下 FatalError/传输中的任务，占住目标路径，
+        导致后续重试在覆盖检测/删除环节异常。
+        """
+        try:
+            req = conn.pb2.GetUploadFileListRequest(itemsPerPage=100, pageNumber=0, filter="")
+            result = conn.stub.GetUploadFileList(req, metadata=conn.get_metadata(), timeout=15)
+            keys = [
+                f.key for f in result.uploadFiles
+                if getattr(f, "destPath", "") == cloud_path
+                and int(getattr(f, "statusEnum", -1)) in _NON_TERMINAL_UPLOAD_STATUS
+            ]
+            if not keys:
+                return 0
+            cancel_req = conn.pb2.MultpleUploadFileKeyRequest(keys=keys)
+            conn.stub.CancelUploadFiles(cancel_req, metadata=conn.get_metadata(), timeout=15)
+            logger.info(f"已取消 {len(keys)} 个残留上传任务: {cloud_path}")
+            return len(keys)
+        except Exception as e:
+            logger.warning(f"清理残留上传任务失败 {cloud_path}: {grpc_error_details(e)}")
+            return 0
+
+    def _upload_local_file_once(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None, rapid_mode: str = "off") -> Dict[str, Any]:
+        """
         将本地磁盘文件经 Remote Upload 协议上传到云端（流式分块，不整体缓冲）。
         与浏览器流程共用 channel 与会话机制，但数据直接从磁盘读取，
         read/hash 任务在本地闭环处理，不进入浏览器轮询队列。
@@ -324,10 +379,7 @@ class RemoteUploadManager:
                         if rapid:
                             hash_job_seen = True
         except Exception as e:
-            details = getattr(e, "details", None)
-            if callable(details):
-                details = details()
-            details = details or str(e)
+            details = grpc_error_details(e)
             logger.error(f"磁盘源远程上传失败 {local_path}: {details}")
             self._safe_cancel(upload_id)
             return {"success": False, "status_text": "错误", "error": details}
@@ -342,11 +394,20 @@ class RemoteUploadManager:
                 "rapid": success}
 
     def _safe_cancel(self, upload_id: str):
-        """取消会话，会话已不存在（如任务已被服务端结束）时静默忽略"""
+        """取消会话；无论服务端取消是否成功（如任务已被服务端结束、连接断开），
+        本地会话都必须终结并移除，否则会话泄漏导致通道线程永不待机"""
         try:
             self.cancel(upload_id)
         except Exception as e:
             logger.debug(f"取消上传会话 {upload_id[:8]}... 失败(可能已结束): {e}")
+        finally:
+            with self._sessions_lock:
+                session = self._sessions.get(upload_id)
+                if session is not None:
+                    session.terminal = True
+                    with session.cond:
+                        session.cond.notify_all()
+                    self._sessions.pop(upload_id, None)
 
     def _query_upload_status(self, conn, cloud_path: str):
         """按目标路径查询 CD2 上传任务列表中的任务状态。

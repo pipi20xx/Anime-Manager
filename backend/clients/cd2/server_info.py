@@ -28,7 +28,7 @@ class CD2ServerInfo:
                 "uptime_sec": int(resp.uptime),
             }
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取运行信息异常: {details}")
             return {}
 
@@ -43,7 +43,7 @@ class CD2ServerInfo:
                 "copy_task_count": int(resp.copyTaskCount),
             }
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取任务数异常: {details}")
             return {}
 
@@ -59,7 +59,7 @@ class CD2ServerInfo:
                 "system_message": resp.SystemMessage or "",
             }
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取系统信息异常: {details}")
             return {}
 
@@ -106,7 +106,7 @@ class CD2ServerInfo:
                     "error": f.errorMessage,
                 })
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取上传任务列表异常: {details}")
             result["error"] = details
         return result
@@ -135,7 +135,7 @@ class CD2ServerInfo:
                     "last_error": f.lastDownloadError or "",
                 })
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取下载任务列表异常: {details}")
             result["error"] = details
         return result

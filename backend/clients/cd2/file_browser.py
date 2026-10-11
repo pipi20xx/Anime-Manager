@@ -7,6 +7,7 @@ import fnmatch
 from typing import Dict, Any, List, Optional
 
 from logger import log_audit
+from .errors import grpc_error_details
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class CD2FileBrowser:
             can_offline = any(e["can_offline_download"] for e in entries)
             return {"success": True, "path": path or "/", "entries": entries, "total": len(entries), "can_offline": can_offline}
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 列目录失败 {path}: {details}")
             return {"success": False, "message": details, "entries": [], "total": 0}
 
@@ -79,7 +80,7 @@ class CD2FileBrowser:
                 return True, "Success"
             return False, resp.result.errorMessage or "创建失败"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 新建文件夹异常: {details}")
             return False, details
 
@@ -94,7 +95,7 @@ class CD2FileBrowser:
                 return True, "Success"
             return False, resp.errorMessage or "重命名失败"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 重命名异常: {details}")
             return False, details
 
@@ -118,7 +119,7 @@ class CD2FileBrowser:
                 return True, "Success"
             return False, resp.errorMessage or f"{verb}失败"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 {verb}文件异常: {details}")
             return False, details
 
@@ -157,7 +158,7 @@ class CD2FileBrowser:
             log_audit("CD2文件", "上传", f"上传文件: {parent_path}/{file_name} ({total} 字节)")
             return True, "Success"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 上传文件异常: {details}")
             # 异常时尽力关闭句柄，避免句柄泄漏
             if handle:
@@ -314,7 +315,7 @@ class CD2FileBrowser:
                         continue
                     return False, f"创建目录 {current} 失败: {err}"
             except Exception as e:
-                details = getattr(e, "details", None) or str(e)
+                details = grpc_error_details(e)
                 return False, f"创建目录 {current} 失败: {details}"
 
         return True, "Success"
@@ -364,7 +365,7 @@ class CD2FileBrowser:
             log_audit("CD2文件", "识别重命名", f"{path} -> {final_path}")
             return True, final_path
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 识别重命名异常: {details}")
             return False, details
 
@@ -487,7 +488,7 @@ class CD2FileBrowser:
             log_audit("CD2文件", "下载", f"下载到本地: {cloud_path} ({downloaded} 字节)")
             return True, downloaded
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 下载文件失败 {cloud_path}: {details}")
             try:
                 if os.path.exists(tmp_path):
@@ -519,7 +520,7 @@ class CD2FileBrowser:
                 return True, "Success"
             return False, resp.errorMessage or f"{verb}失败"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 文件{action}异常: {details}")
             return False, details
 

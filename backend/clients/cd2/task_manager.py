@@ -4,6 +4,7 @@ import time
 from typing import Dict, Any, List
 
 from logger import log_audit
+from .errors import grpc_error_details
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ class CD2TaskManager:
 
             return {"success": True, "path": path, "tasks": tasks, "total": len(tasks)}
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取离线任务列表异常 {path}: {details}")
             return {"success": False, "message": details, "path": path, "tasks": [], "total": 0}
 
@@ -120,7 +121,7 @@ class CD2TaskManager:
             resp = conn.stub.GetOfflineQuotaInfo(req, metadata=conn.get_metadata(), timeout=15)
             return {"total": int(resp.total), "used": int(resp.used), "left": int(resp.left)}
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 获取离线配额异常 {path}: {details}")
             return {}
 
@@ -157,7 +158,7 @@ class CD2TaskManager:
                 return True, "Success"
             return False, resp.errorMessage or "删除失败"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 删除离线任务异常: {details}")
             return False, details
 
@@ -186,7 +187,7 @@ class CD2TaskManager:
             )
             return True, "Success"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 清空离线任务异常: {details}")
             return False, details
 
@@ -207,6 +208,6 @@ class CD2TaskManager:
             log_audit("CD2任务", "重启", f"重启离线任务: {info_hash}", details=f"路径: {path}")
             return True, "Success"
         except Exception as e:
-            details = getattr(e, "details", None) or str(e)
+            details = grpc_error_details(e)
             logger.error(f"[{conn.name}] CD2 重启离线任务异常: {details}")
             return False, details
