@@ -228,6 +228,13 @@ class RemoteUploadManager:
                 return 0
             cancel_req = conn.pb2.MultpleUploadFileKeyRequest(keys=keys)
             conn.stub.CancelUploadFiles(cancel_req, metadata=conn.get_metadata(), timeout=15)
+            # 主动取消的路径在监控的任务列表中消失时不算完成，避免误触发 STRM 联动
+            # （否则取消落在监控两次扫描之间时，缓存状态仍是取消前的传输中状态）
+            try:
+                from clients.cd2.monitor import CD2TransferMonitor
+                CD2TransferMonitor.ignore_task(cloud_path)
+            except Exception:
+                pass
             logger.info(f"已取消 {len(keys)} 个残留上传任务: {cloud_path}")
             return len(keys)
         except Exception as e:
@@ -406,6 +413,12 @@ class RemoteUploadManager:
             with self._sessions_lock:
                 session = self._sessions.get(upload_id)
                 if session is not None:
+                    # 主动取消的路径在监控的任务列表中消失时不算完成，避免误触发 STRM 联动
+                    try:
+                        from clients.cd2.monitor import CD2TransferMonitor
+                        CD2TransferMonitor.ignore_task(session.file_path)
+                    except Exception:
+                        pass
                     session.terminal = True
                     with session.cond:
                         session.cond.notify_all()
