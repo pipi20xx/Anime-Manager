@@ -49,10 +49,12 @@ async function fetchClients() {
 }
 
 async function handleSearch() {
+  // clearable 清空后 keyword 为 null,axios 会直接丢弃 null 参数导致后端 422,归一化为空字符串
+  const kw = (keyword.value ?? '').trim()
   loading.value = true
   try {
     const data = await api.get<any[]>('/api/jackett/search', {
-      params: { keyword: keyword.value, indexer: selectedIndexerId.value },
+      params: { keyword: kw, indexer: selectedIndexerId.value },
     })
     results.value = Array.isArray(data) ? data : []
     if (results.value.length === 0) {

@@ -4,6 +4,7 @@
  *
  * 功能:
  * - 卡片网格展示 STRM 任务（与整理任务卡片样式统一）
+ * - 卡片拖拽排序（与整理任务一致）
  * - 新建/编辑/删除/复制任务
  * - 运行任务
  * - 切换实时监控/定时扫描
@@ -11,7 +12,7 @@
  */
 import { ref, reactive, watch, onMounted } from 'vue'
 import { strmApi, configApi, clientsApi } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useDragSort } from '@/composables'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 defineOptions({ name: 'StrmView' })
@@ -142,6 +143,24 @@ async function handleTestGenerate() {
 
 const tasks = ref<any[]>([])
 const loading = ref(false)
+
+// 拖拽排序（可变模式：直接重排 tasks，完成后持久化到配置）
+const { dragIndex, dragOverIndex, onDragStart, onDragOver, onDragEnd } = useDragSort(tasks, {
+  onSort: saveTaskOrder,
+})
+
+async function saveTaskOrder() {
+  try {
+    const config = await configApi.getConfig()
+    // 按界面上的新顺序重排配置里的 strm_tasks（按 id 对应，避免覆盖拖拽期间的其他改动）
+    const byId = new Map<string, any>((config.strm_tasks || []).map((t: any) => [t.id, t]))
+    const ordered = tasks.value.map((t: any) => byId.get(t.id) || t)
+    await configApi.saveConfig({ ...config, strm_tasks: ordered })
+    success('排序已保存')
+  } catch (e) {
+    showError('保存排序失败')
+  }
+}
 
 // 编辑 Modal
 const showModal = ref(false)
@@ -501,8 +520,17 @@ onMounted(() => {
     <!-- 任务卡片网格 -->
     <template v-else-if="tasks.length > 0">
       <v-row>
-        <v-col v-for="(task, index) in tasks" :key="task.id" cols="12" sm="6" md="4">
-          <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEdit(index)">
+        <v-col
+          v-for="(task, index) in tasks"
+          :key="task.id"
+          cols="12" sm="6" md="4"
+          draggable="true"
+          :class="{ 'drag-sorting': dragIndex === index, 'drag-over': dragOverIndex === index }"
+          @dragstart="onDragStart(index, $event)"
+          @dragover="onDragOver(index, $event)"
+          @dragend="onDragEnd"
+        >
+          <v-card class="glass-card manage-card cursor-pointer" :class="{ 'hover-lift': dragIndex === -1 }" @click="dragIndex === -1 && openEdit(index)">
             <!-- 标题行 -->
             <div class="manage-card__header">
               <div class="d-flex align-center ga-2 manage-card__title">
