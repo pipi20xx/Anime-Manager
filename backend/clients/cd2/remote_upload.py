@@ -31,10 +31,11 @@ _HASH_PROGRESS_INTERVAL = 16 * 1024 * 1024  # 哈希进度上报间隔（字节�
 _RAPID_POLL_INTERVAL = 20    # 轮询间隔（秒）
 _RAPID_WAIT_LIMIT = 7200     # 等待秒传决策的硬上限（秒），正常不会触发
 
-# 磁盘源上传失败重试：网络中断（如 OSS 分块请求失败）属于瞬时错误，
-# 重试前取消 CD2 端残留上传任务，从头开新会话
+# 磁盘源上传失败重试：网络中断（如路由器重新拨号、OSS 分块请求失败）属于
+# 瞬时错误，重试前取消 CD2 端残留上传任务，从头开新会话。
+# 退避间隔需覆盖一次 PPPoE 重新拨号（约 30s~2min），故 30s 起步指数退避
 _UPLOAD_ATTEMPTS = 3         # 总尝试次数（首次 + 2 次重试）
-_UPLOAD_RETRY_DELAY = 10     # 重试间隔（秒）
+_UPLOAD_RETRY_DELAY = 30     # 首次重试间隔（秒），后续翻倍
 # CD2 上传任务列表中的非终态状态（Wait/Preprocessing/Transfer/Pause/Inqueue）
 _NON_TERMINAL_UPLOAD_STATUS = {0, 1, 3, 4, 7}
 
@@ -200,12 +201,13 @@ class RemoteUploadManager:
                 return result
             last_result = result
             if attempt < _UPLOAD_ATTEMPTS:
+                delay = _UPLOAD_RETRY_DELAY * (2 ** (attempt - 1))
                 logger.warning(
                     f"远程上传失败(第 {attempt}/{_UPLOAD_ATTEMPTS} 次): {result.get('error')}，"
-                    f"{_UPLOAD_RETRY_DELAY} 秒后清理残留任务并重试: {cloud_file_path}"
+                    f"{delay} 秒后清理残留任务并重试: {cloud_file_path}"
                 )
                 self.cancel_cloud_tasks(conn, cloud_file_path)
-                time.sleep(_UPLOAD_RETRY_DELAY)
+                time.sleep(delay)
         return last_result
 
     def cancel_cloud_tasks(self, conn, cloud_path: str) -> int:
