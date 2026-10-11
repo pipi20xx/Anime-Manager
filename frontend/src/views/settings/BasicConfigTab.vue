@@ -260,7 +260,7 @@ onMounted(() => {
           <v-switch v-model="config.tmdb_image_proxy" density="compact" hide-details color="primary" />
           <div>
             <div class="text-body-2 font-weight-medium">启用图片代理</div>
-            <div class="text-caption text-medium-emphasis">使用国内镜像站时建议关闭，直连更快</div>
+            <div class="text-caption text-medium-emphasis">开启后通过网络设置中配置的代理访问图片域名；使用国内镜像站时建议关闭，直连更快</div>
           </div>
         </div>
       </v-card-text>
