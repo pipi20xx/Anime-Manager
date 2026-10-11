@@ -181,7 +181,9 @@ class CD2TransferMonitor:
                     self.last_scan_cache[f_path] = {
                         "name": f_name,
                         "status": f.status,
-                        "type": getattr(f, 'operatorType', 0)
+                        "type": getattr(f, 'operatorType', 0),
+                        "size": int(getattr(f, 'size', 0) or 0),
+                        "transferred": int(getattr(f, 'transferedBytes', 0) or 0),
                     }
 
                 # 检查已完成的任务 (消失的任务)
@@ -201,6 +203,19 @@ class CD2TransferMonitor:
 
                     # 只有非错误状态的消失才算成功完成
                     if "Error" not in last_status and "Fatal" not in last_status and "Cancelled" not in last_status:
+                        # 最后观测到传输字节数未达全量 → 传输并未完成（如人工移除了
+                        # 卡死/中断的任务），即使目标位有残留半成品条目也不算完成
+                        total_size = info.get("size", 0)
+                        transferred = info.get("transferred", 0)
+                        if total_size > 0 and transferred < total_size:
+                            log_audit(
+                                "CD2监控", "提示",
+                                f"任务已消失但传输未完成({transferred}/{total_size} 字节)，判定为手动移除/中断，跳过联动: {info['name']}",
+                                details=f"路径: {path}",
+                            )
+                            del self.last_scan_cache[path]
+                            continue
+
                         # 终极判据：目标文件真的出现在网盘上才算完成。
                         # 短生命周期任务（两次扫描间出现又消失）看不到真实终态，
                         # 服务端/其他来源的取消也会走到这里，以文件存在性为准。
