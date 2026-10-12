@@ -223,48 +223,51 @@ onMounted(() => {
       <v-card
         v-for="item in configs"
         :key="item.id"
-        class="glass-card"
+        class="glass-card manage-card hover-lift cursor-pointer"
         :class="{
           'service-card--running': item.enabled && item.last_status === 'OK',
           'service-card--stopped': item.enabled && item.last_status && item.last_status !== 'OK',
           'service-card--pending': item.enabled && !item.last_status,
           'service-card--disabled': !item.enabled,
         }"
+        @click="openEdit(item)"
       >
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <div class="d-flex align-center ga-2">
-                <span class="text-body-2 font-weight-bold">{{ item.name }}</span>
-                <v-chip v-if="!item.enabled" size="x-small" color="grey" variant="tonal">已禁用</v-chip>
-              </div>
-              <v-chip size="x-small" :color="getStatusInfo(item.last_status).color" variant="tonal">
-                {{ getStatusInfo(item.last_status).text }}
-              </v-chip>
-            </div>
-            <div class="d-flex flex-column ga-1 mb-3">
-              <div class="kv-row">
-                <span class="kv-label">文件路径</span>
-                <span class="d-flex align-center ga-1">
-                  <v-chip size="x-small" variant="flat" :color="item.path_via === 'cd2' ? 'indigo' : 'brown-grey'" class="mr-1">{{ item.path_via === 'cd2' ? 'CD2' : '本地' }}</v-chip>
-                  <span class="kv-value kv-value--mono text-caption">{{ item.file_path }}</span>
-                </span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-label">远程 URL</span>
-                <span class="kv-value kv-value--mono text-caption">{{ item.file_url || '-' }}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-label">最后检查</span>
-                <span class="kv-value text-caption">{{ formatDate(item.last_check) }}</span>
-              </div>
-            </div>
-            <div class="d-flex ga-1">
-              <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click="startCheck(item.id)">执行</v-btn>
-              <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil" @click="openEdit(item)">编辑</v-btn>
-              <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="deleteConfig(item.id)">删除</v-btn>
-            </div>
-          </v-card-text>
-        </v-card>
+        <!-- 标题行 -->
+        <div class="manage-card__header">
+          <div class="manage-card__title">{{ item.name }}</div>
+          <div class="d-flex align-center ga-1 flex-shrink-0">
+            <v-chip v-if="!item.enabled" size="x-small" color="grey" variant="tonal">已禁用</v-chip>
+            <v-chip size="x-small" :color="getStatusInfo(item.last_status).color" variant="tonal" class="manage-card__badge">
+              {{ getStatusInfo(item.last_status).text }}
+            </v-chip>
+          </div>
+        </div>
+
+        <!-- 信息区 -->
+        <div class="manage-card__body">
+          <div class="manage-card__info">
+            <span class="manage-card__info-label">文件路径</span>
+            <v-chip size="x-small" variant="flat" :color="item.path_via === 'cd2' ? 'indigo' : 'grey'" class="flex-shrink-0">{{ item.path_via === 'cd2' ? 'CD2' : '本地' }}</v-chip>
+            <span class="manage-card__info-value font-mono" :title="item.file_path">{{ item.file_path }}</span>
+          </div>
+          <div class="manage-card__info">
+            <span class="manage-card__info-label">远程 URL</span>
+            <span class="manage-card__info-value" :title="item.file_url">{{ item.file_url || '-' }}</span>
+          </div>
+          <div class="manage-card__info">
+            <span class="manage-card__info-label">最后检查</span>
+            <span class="manage-card__info-value">{{ formatDate(item.last_check) }}</span>
+          </div>
+        </div>
+
+        <v-divider />
+        <v-card-actions class="manage-card__actions">
+          <v-spacer />
+          <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click.stop="startCheck(item.id)">执行</v-btn>
+          <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-pencil" @click.stop="openEdit(item)">编辑</v-btn>
+          <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteConfig(item.id)">删除</v-btn>
+        </v-card-actions>
+      </v-card>
     </div>
     <div v-else class="text-center text-medium-emphasis pa-8">
       暂无检测配置，请点击右上角添加
