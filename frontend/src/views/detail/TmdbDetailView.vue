@@ -504,6 +504,7 @@ onMounted(() => {
                       :key="ep.episode"
                       variant="tonal"
                       rounded="lg"
+                      class="ep-card"
                     >
                       <v-row no-gutters>
                         <!-- 缩略图：移动端 cols=12 全宽上图，桌面端 sm=4 左侧图 -->
@@ -515,7 +516,7 @@ onMounted(() => {
                             :class="$vuetify.display.smAndUp ? 'rounded-l-lg' : 'rounded-t-lg'"
                             aspect-ratio="16/9"
                           />
-                          <div v-else class="d-flex align-center justify-center bg-surface-variant" style="aspect-ratio:16/9" :class="$vuetify.display.smAndUp ? 'rounded-l-lg' : 'rounded-t-lg'">
+                          <div v-else class="d-flex align-center justify-center" style="aspect-ratio:16/9" :class="$vuetify.display.smAndUp ? 'rounded-l-lg' : 'rounded-t-lg'">
                             <span class="text-h6 font-weight-bold text-medium-emphasis">E{{ ep.episode }}</span>
                           </div>
                         </v-col>
@@ -657,4 +658,14 @@ onMounted(() => {
 }
 
 /* 详情页 chip 覆盖已迁移至 styles/visual.css §9（与 BangumiDetailView 共用） */
+
+/* ── 集封面：去掉 Vuetify tonal 变体默认叠在整张卡片上的一层底色 ──
+   .v-card--variant-tonal 会渲染一个 .v-card__underlay（background: currentColor，
+   opacity: var(--v-activated-opacity)，默认 0.12），它是卡片的最后一个子节点、绝对定位铺满整张卡，
+   因此会盖在左侧集剧照之上形成一层灰蒙版。本卡底色已由 visual.css 的 --am-surface-bg 统一接管，
+   这层蒙版纯属多余，直接置为完全透明。 */
+.ep-card :deep(.v-card__underlay) {
+  background: transparent !important;
+  opacity: 0 !important;
+}
 </style>
