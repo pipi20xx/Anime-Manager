@@ -73,6 +73,9 @@ class ConfigManager:
             "temperature": 0.7,
             "max_tokens": 64,
             "max_iterations": 10,
+            "max_history_messages": 20,   # 会话历史条数上限
+            "max_history_tokens": 24000,  # 会话历史 token 预算（0 = 只按条数限制）
+            "thinking_level": "auto",     # 思考深度 off/auto/minimal/low/medium/high/max/xhigh
             "ai_fallback_enabled": False,
             "use_tools": True
         },

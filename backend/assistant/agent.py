@@ -31,7 +31,12 @@ class AgentConfig:
     max_tokens: int = 4096
     max_iterations: int = 10
     max_history_messages: int = 20
+    # 历史 token 预算（按 MessageHistoryManager 的粗略估算；0 = 只按条数限制）
+    max_history_tokens: int = 24000
     summarize_threshold: int = 10
+    # 思考深度：off/auto/minimal/low/medium/high/max/xhigh
+    # auto（默认）= 不注入任何思考参数，完全沿用服务端默认，避免给不认识的网关塞未知字段
+    thinking_level: str = "auto"
     enable_dynamic_tools: bool = True
     compact_tool_results: bool = True
     enable_llm_summary: bool = True
@@ -41,9 +46,11 @@ class MessageHistoryManager:
     """
     消息历史管理器 - 支持智能摘要压缩，节省 token
     """
-    def __init__(self, max_messages: int = 20, summarize_threshold: int = 10):
+    def __init__(self, max_messages: int = 20, summarize_threshold: int = 10, max_tokens: int = 0):
         self.max_messages = max_messages
         self.summarize_threshold = summarize_threshold
+        # 历史 token 预算（0 = 关闭按 token 修整）
+        self.max_tokens = max_tokens
         self.messages: List[Dict] = []
         self._summary: str = ""
         self._summary_tokens: int = 0
@@ -58,13 +65,17 @@ class MessageHistoryManager:
     
     def _trim_if_needed(self):
         """
-        硬性兜底：超过上限时直接丢弃最旧消息。
+        硬性兜底，两道闸：
+        1) 条数：非系统消息超过 max_messages；
+        2) token：估算总量超过 max_tokens —— 一条工具结果就可能上万 token，只按条数根本限制不住。
         质量压缩（摘要）由 Agent._compact_history_if_needed 在超限前主动完成，
         这里只防止极端情况下历史无限膨胀。
         """
         non_system = [m for m in self.messages if m.get("role") != "system"]
 
-        if len(non_system) <= self.max_messages:
+        over_count = len(non_system) > self.max_messages
+        over_tokens = bool(self.max_tokens) and self._estimate_tokens(non_system) > self.max_tokens
+        if not over_count and not over_tokens:
             return
 
         system_msg = None
@@ -74,6 +85,18 @@ class MessageHistoryManager:
                 break
 
         kept = non_system[-(self.max_messages):]
+
+        if over_tokens:
+            # 从最旧的开始丢，直到估算 token 回到预算内（至少保留最近 4 条）
+            while len(kept) > 4 and self._estimate_tokens(kept) > self.max_tokens:
+                kept.pop(0)
+            self.messages = ([system_msg] if system_msg else []) + kept
+            logger.info(
+                f"[HistoryManager] token 超预算({self.max_tokens})，硬截断至 {len(kept)} 条"
+                f"（估算 {self._estimate_tokens(kept)} token）"
+            )
+            return
+
         self.messages = ([system_msg] if system_msg else []) + kept
         logger.info(f"[HistoryManager] 超限硬截断: 保留最近 {len(kept)} 条")
     
@@ -163,9 +186,11 @@ class MessageHistoryManager:
         self.messages = []
         self._summary = ""
     
-    def get_token_estimate(self) -> int:
+    @staticmethod
+    def _estimate_tokens(messages: List[Dict]) -> int:
+        """粗略估算：中文按 2 字符 ≈ 1 token（原实现口径，保持不变）"""
         total = 0
-        for msg in self.messages:
+        for msg in messages:
             content = msg.get("content", "")
             if isinstance(content, str):
                 total += len(content) // 2
@@ -174,6 +199,9 @@ class MessageHistoryManager:
                     if isinstance(part, dict) and "text" in part:
                         total += len(part["text"]) // 2
         return total
+
+    def get_token_estimate(self) -> int:
+        return self._estimate_tokens(self.messages)
     
     def get_summary(self) -> str:
         return self._summary
@@ -184,7 +212,8 @@ class Agent:
         self.config = config
         self.history_manager = MessageHistoryManager(
             max_messages=config.max_history_messages,
-            summarize_threshold=config.summarize_threshold
+            summarize_threshold=config.summarize_threshold,
+            max_tokens=config.max_history_tokens
         )
         if messages:
             self.history_manager.messages = messages
@@ -218,13 +247,33 @@ class Agent:
         hm = self.history_manager
         non_system = [m for m in hm.messages if m.get("role") != "system"]
 
-        # +2 为即将到来的用户消息和助手回复预留空间
-        if len(non_system) + 2 <= self.config.max_history_messages:
+        # 两道触发条件：条数接近上限，或 token 估算超过预算的 70%
+        over_count = len(non_system) + 2 > self.config.max_history_messages
+        budget = self.config.max_history_tokens
+        over_tokens = bool(budget) and hm.get_token_estimate() > int(budget * 0.7)
+        if not over_count and not over_tokens:
             return
 
         keep_count = max(self.config.max_history_messages - 6, 4)
+        if over_tokens:
+            # 按 token 预算从后往前收敛保留条数：单条工具结果就可能上万 token，
+            # 只看条数会「保留 14 条」却仍然远超预算。
+            running = 0
+            token_keep = 0
+            for msg in reversed(non_system):
+                running += MessageHistoryManager._estimate_tokens([msg])
+                if running > int(budget * 0.6) and token_keep >= 4:
+                    break
+                token_keep += 1
+            keep_count = min(keep_count, max(token_keep, 4))
+
         to_summarize = non_system[:len(non_system) - keep_count]
         to_keep = non_system[-keep_count:]
+
+        if not to_summarize:
+            # 没有可压缩的旧消息（条数少但单条极大）时交给 _trim_if_needed 硬截断，
+            # 避免每次调用都凭空追加一条空摘要。
+            return
 
         summary_text = ""
         if self.config.enable_llm_summary and to_summarize:
@@ -272,7 +321,9 @@ class Agent:
             "model": self.config.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.3,
-            "max_tokens": 500,
+            # 摘要同样可能被思维链吃光额度，留出余量并沿用思考档位设置
+            "max_tokens": 1024,
+            **self._thinking_fragment(),
         }
 
         async with httpx.AsyncClient(timeout=60.0) as client:
@@ -462,6 +513,32 @@ class Agent:
         
         return f"{base_url}/v1/chat/completions"
 
+    def _thinking_fragment(self) -> Dict[str, Any]:
+        """
+        按配置的思考档位生成要合并进请求体的片段。
+
+        - auto（默认）：不注入任何参数，完全沿用服务端默认 —— 不认识的字段可能让网关直接 400，
+          所以在没探测过之前绝不自作主张；
+        - 其他档位：使用能力探测缓存里确认可用的风格（AI 实验室 →「探测能力」）。
+          没有缓存时不注入并给出提示，避免"设了没生效"这种沉默失败。
+        """
+        level = (self.config.thinking_level or "auto").strip().lower()
+        if level == "auto":
+            return {}
+        try:
+            from assistant import llm_capabilities
+        except Exception as e:
+            logger.warning(f"[Agent] 能力层不可用，跳过思考参数注入: {e}")
+            return {}
+
+        fragment = llm_capabilities.thinking_payload_from_cache(self.config.base_url, self.config.model, level)
+        if not fragment:
+            logger.warning(
+                f"[Agent] 思考档位 '{level}' 未生效：尚无该模型的思考能力探测结果，"
+                f"请在 AI 实验室点「探测能力」"
+            )
+        return fragment
+
     async def _call_llm(self, stream: bool = False) -> Dict:
         """带一次自动重试的 LLM 调用（瞬时网络错误/超时直接重发）"""
         last_error: Optional[Exception] = None
@@ -491,6 +568,7 @@ class Agent:
             "messages": messages,
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
+            **self._thinking_fragment(),
         }
         
         if tools:
@@ -547,6 +625,7 @@ class Agent:
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
             "stream": True,
+            **self._thinking_fragment(),
         }
         
         if tools:
@@ -1188,6 +1267,8 @@ async def create_agent(config: Optional[Dict] = None) -> Agent:
         max_tokens=config.get("max_tokens", 64) * 1000,
         max_iterations=config.get("max_iterations", 10),
         max_history_messages=config.get("max_history_messages", 20),
+        max_history_tokens=config.get("max_history_tokens", 24000),
+        thinking_level=config.get("thinking_level", "auto"),
         summarize_threshold=config.get("summarize_threshold", 10),
         enable_dynamic_tools=config.get("enable_dynamic_tools", True),
         compact_tool_results=config.get("compact_tool_results", True)

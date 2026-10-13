@@ -6,6 +6,7 @@ from recognition.ai_helper import AIHelper
 from config_manager import ConfigManager
 from logger import log_audit
 from task_history import start_task, log_task, finish_task
+import asyncio
 import uuid
 
 router = APIRouter(tags=["媒体识别"], prefix="")
@@ -192,10 +193,13 @@ async def test_ai_parsing(request: AiTestRequest):
         return {"status": "error", "message": "AI 引擎不可用 (请检查日志/模型)"}
         
     try:
-        result = ai.guess_title_variants(
+        # AIHelper 走同步 httpx，直接调用会阻塞事件循环（连探测+重试可能十几秒，
+        # 足以让 APScheduler 报 "job was missed"），统一丢到线程里执行
+        result = await asyncio.to_thread(
+            ai.guess_title_variants,
             filename,
-            current_title=request.current_title,
-            current_episode=request.current_episode,
+            request.current_title,
+            request.current_episode,
         )
         if not result:
             return {"status": "error", "message": "AI 解析未返回有效数据 (可能是配置错误或模型无响应)"}
@@ -238,7 +242,10 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
     try:
         import time as _time
         start = _time.time()
-        result = ai.guess_title_variants(filename, request.current_title, request.current_episode)
+        # 同上：同步 HTTP 必须离开事件循环，否则探测+重试期间整个后端的定时任务都会迟到
+        result = await asyncio.to_thread(
+            ai.guess_title_variants, filename, request.current_title, request.current_episode
+        )
         elapsed = round(_time.time() - start, 2)
 
         if not result:

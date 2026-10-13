@@ -66,10 +66,24 @@ class ConfigUpdate(BaseModel):
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     max_iterations: Optional[int] = None
+    # 历史管理：条数 + token 双上限
+    max_history_messages: Optional[int] = None
+    max_history_tokens: Optional[int] = None
+    # 思考深度：off/auto/minimal/low/medium/high/max/xhigh
+    thinking_level: Optional[str] = None
     ai_fallback_enabled: Optional[bool] = None
     use_tools: Optional[bool] = None
     enable_dynamic_tools: Optional[bool] = None
     enable_llm_summary: Optional[bool] = None
+
+
+class ProbeRequest(BaseModel):
+    """能力探测/模型列表的可选覆盖参数（不传则用已保存的配置）"""
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+    provider: Optional[str] = None
+
 
 def get_assistant_config() -> Dict:
     config = ConfigManager.get_config()
@@ -81,6 +95,9 @@ def get_assistant_config() -> Dict:
         "temperature": 0.7,
         "max_tokens": 64,
         "max_iterations": 10,
+        "max_history_messages": 20,
+        "max_history_tokens": 24000,
+        "thinking_level": "auto",
         "ai_fallback_enabled": False,
         "use_tools": True,
         "enable_dynamic_tools": True,
@@ -100,6 +117,8 @@ def _build_agent_config(config: Dict):
         max_tokens=config.get("max_tokens", 64) * 1000,
         max_iterations=config.get("max_iterations", 10),
         max_history_messages=config.get("max_history_messages", 20),
+        max_history_tokens=config.get("max_history_tokens", 24000),
+        thinking_level=config.get("thinking_level", "auto"),
         summarize_threshold=config.get("summarize_threshold", 10),
         enable_dynamic_tools=bool(config.get("enable_dynamic_tools", True)),
         compact_tool_results=bool(config.get("compact_tool_results", True)),
@@ -137,6 +156,113 @@ async def update_config(config: ConfigUpdate):
     config_dict = config.dict(exclude_none=True)
     save_assistant_config(config_dict)
     return {"success": True, "message": "配置已保存"}
+
+
+# ==================== 模型能力：列表 / 探测 / 缓存 ====================
+
+def _resolve_probe_targets(override: Optional[ProbeRequest]) -> Dict[str, str]:
+    """探测目标：请求体里的覆盖值优先，缺省用已保存的配置"""
+    config = get_assistant_config()
+    override = override or ProbeRequest()
+    return {
+        "base_url": (override.base_url or config.get("base_url") or "").strip(),
+        "api_key": override.api_key if override.api_key is not None else (config.get("api_key") or ""),
+        "model": (override.model or config.get("model") or "").strip(),
+        "provider": override.provider or config.get("provider") or "openai",
+    }
+
+
+@router.get("/models", summary="拉取模型列表")
+async def list_available_models():
+    """
+    拉取当前 API 地址上的模型列表（OpenAI 兼容 /v1/models；Ollama 用 /api/tags）。
+    上下文长度等非标准字段能拿到就带上，拿不到就是 null —— 不做任何猜测。
+    """
+    import asyncio
+    from assistant import llm_capabilities
+
+    target = _resolve_probe_targets(None)
+    if not target["base_url"]:
+        raise HTTPException(status_code=400, detail="请先填写 API 地址")
+
+    result = await asyncio.to_thread(
+        llm_capabilities.list_models, target["base_url"], target["api_key"], target["provider"]
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=502, detail=f"拉取模型列表失败：{result.get('message')}")
+    return result
+
+
+@router.post("/probe", summary="探测模型能力（思考深度 / 上下文）")
+async def probe_model_capability(override: Optional[ProbeRequest] = None):
+    """
+    探测当前模型支持哪种「关闭思考」的参数风格，结果按 (base_url, model) 缓存。
+    顺带从 /models 里尽力补全上下文长度等元数据。
+    """
+    import asyncio
+    from assistant import llm_capabilities
+
+    target = _resolve_probe_targets(override)
+    if not target["base_url"] or not target["model"]:
+        raise HTTPException(status_code=400, detail="请先配置 API 地址与模型名称")
+
+    result = await asyncio.to_thread(
+        llm_capabilities.probe,
+        target["base_url"],
+        target["api_key"],
+        target["model"],
+        target["provider"],
+    )
+    if not result.get("ok"):
+        detail = result.get("message") or result.get("errors") or "未知错误"
+        raise HTTPException(status_code=502, detail=f"探测失败：{detail}")
+
+    # 很多网关只在模型列表里给上下文长度，这里顺手补全并回写缓存
+    try:
+        models = await asyncio.to_thread(
+            llm_capabilities.list_models, target["base_url"], target["api_key"], target["provider"]
+        )
+        if models.get("ok"):
+            for item in models.get("models", []):
+                if item.get("id") == target["model"]:
+                    result["context_length"] = result.get("context_length") or item.get("context_length")
+                    result["max_output_tokens"] = result.get("max_output_tokens") or item.get("max_output_tokens")
+                    break
+            llm_capabilities.save_cached(target["base_url"], target["model"], result)
+    except Exception as e:
+        logger.debug(f"[Assistant] 补全模型元数据失败: {e}")
+
+    return result
+
+
+@router.get("/capabilities", summary="读取已缓存的模型能力")
+async def get_model_capabilities():
+    from assistant import llm_capabilities
+
+    target = _resolve_probe_targets(None)
+    return {
+        "cached": llm_capabilities.get_cached(target["base_url"], target["model"]),
+        "levels": [
+            {"value": level, "label": llm_capabilities.THINKING_LEVEL_LABELS.get(level, level)}
+            for level in llm_capabilities.THINKING_LEVELS
+        ],
+        "styles": [
+            {
+                "value": key,
+                "label": llm_capabilities.style_label(key),
+                "levels": llm_capabilities.supported_levels(key),
+            }
+            for key in ("none", *llm_capabilities.PROBE_ORDER)
+        ],
+    }
+
+
+@router.delete("/capabilities", summary="清除模型能力缓存")
+async def clear_model_capabilities():
+    from assistant import llm_capabilities
+
+    removed = llm_capabilities.clear_cached()
+    return {"success": True, "removed": removed}
 
 @router.post("/chat")
 async def chat(request: ChatRequest):

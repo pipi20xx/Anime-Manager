@@ -55,10 +55,88 @@ const assistantConfig = reactive({
   temperature: 0.7,
   max_tokens: 64,
   max_iterations: 10,
+  max_history_messages: 20,
+  max_history_tokens: 24000,
+  thinking_level: 'auto',
   ai_fallback_enabled: false,
   use_tools: true,
   enable_dynamic_tools: true,
 })
+
+// --- 模型能力：列表拉取 / 思考能力探测 ---
+const availableModels = ref<{ id: string; context_length?: number | null; max_output_tokens?: number | null }[]>([])
+const availableModelIds = computed(() => availableModels.value.map(m => m.id))
+const modelsLoading = ref(false)
+const probeLoading = ref(false)
+const capability = ref<any>(null)
+
+const THINKING_LEVEL_OPTIONS = [
+  { title: '跟随服务端默认（auto）', value: 'auto' },
+  { title: '关闭思考（off）', value: 'off' },
+  { title: '最低（minimal）', value: 'minimal' },
+  { title: '低（low）', value: 'low' },
+  { title: '中（medium）', value: 'medium' },
+  { title: '高（high）', value: 'high' },
+  { title: '最高（max）', value: 'max' },
+  { title: '极高（xhigh）', value: 'xhigh' },
+]
+
+const capabilityHint = computed(() => {
+  const cap = capability.value
+  if (!cap) {
+    return '还没探测过。点「探测能力」会确认该模型用哪种参数能关掉思考并缓存复用；没探测结果前不会向请求里注入任何思考参数（避免网关报 400）。'
+  }
+  const parts: string[] = []
+  if (cap.thinking_style && cap.thinking_style !== 'none') parts.push(`思考参数：${cap.thinking_style}`)
+  if (cap.true_off === true) parts.push('可完全关闭')
+  else if (cap.true_off === false) parts.push('无法完全关闭（只能降低）')
+  if (cap.default_thinking === true) parts.push('服务端默认会思考')
+  else if (cap.default_thinking === false) parts.push('服务端默认不思考')
+  if (cap.context_length) parts.push(`上下文 ${cap.context_length}`)
+  if (cap.max_output_tokens) parts.push(`最大输出 ${cap.max_output_tokens}`)
+  return parts.length ? parts.join(' · ') : (cap.message || '探测完成')
+})
+
+async function fetchModels() {
+  modelsLoading.value = true
+  try {
+    const data = await api.get<any>('/api/assistant/models')
+    availableModels.value = data?.models || []
+    success(`已拉取 ${availableModels.value.length} 个模型`)
+  } catch (e: any) {
+    showError(e?.message || '拉取模型列表失败')
+  } finally {
+    modelsLoading.value = false
+  }
+}
+
+async function probeCapability() {
+  probeLoading.value = true
+  try {
+    // 用界面上当前填的值探测（还没保存也能测）
+    const data = await api.post<any>('/api/assistant/probe', {
+      base_url: assistantConfig.base_url,
+      api_key: assistantConfig.api_key,
+      model: assistantConfig.model,
+      provider: assistantConfig.provider,
+    })
+    capability.value = data
+    success(data?.message || '能力探测完成')
+  } catch (e: any) {
+    showError(e?.message || '能力探测失败')
+  } finally {
+    probeLoading.value = false
+  }
+}
+
+async function fetchCapability() {
+  try {
+    const data = await apiFetch<any>('/api/assistant/capabilities')
+    capability.value = data?.cached || null
+  } catch {
+    // 非关键
+  }
+}
 
 async function saveDynamicTools() {
   try {
@@ -397,6 +475,7 @@ onMounted(() => {
   fetchTelegramConfig()
   fetchSkills()
   fetchTools()
+  fetchCapability()
 })
 
 // 注册动态顶栏 Tab
@@ -632,7 +711,29 @@ registerHeaderTab({
 
             <PasswordInput v-if="assistantConfig.provider === 'openai'" v-model="assistantConfig.api_key" label="API Key" density="compact" class="mb-3" hide-details />
 
-            <v-text-field v-model="assistantConfig.model" label="模型名称" density="compact" hide-details placeholder="如 qwen2.5:7b 或 gpt-4o" />
+            <div class="d-flex align-start ga-2">
+              <v-combobox
+                v-model="assistantConfig.model"
+                :items="availableModelIds"
+                label="模型名称"
+                density="compact"
+                hide-details
+                class="flex-grow-1"
+                placeholder="如 qwen2.5:7b 或 gpt-4o"
+              />
+              <v-btn
+                size="small"
+                variant="tonal"
+                color="primary"
+                prepend-icon="mdi-cloud-download-outline"
+                :loading="modelsLoading"
+                class="mt-1"
+                @click="fetchModels"
+              >拉取列表</v-btn>
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              可从 API 读取可用模型直接选（当前 {{ availableModels.length }} 个），避免手打模型名拼错
+            </div>
           </v-card-text>
         </v-card>
 
@@ -647,7 +748,40 @@ registerHeaderTab({
               <v-chip size="small" variant="tonal">{{ assistantConfig.temperature }}</v-chip>
             </div>
 
-            <v-text-field v-model.number="assistantConfig.max_tokens" label="最大 Token 数 (K)" type="number" density="compact" class="mb-3" hide-details />
+            <!-- 思考深度：按 provider 能力就近映射；具体用哪种参数风格由「探测能力」确定并缓存 -->
+            <div class="d-flex align-center ga-2 mb-1">
+              <v-select
+                v-model="assistantConfig.thinking_level"
+                :items="THINKING_LEVEL_OPTIONS"
+                label="思考深度"
+                density="compact"
+                hide-details
+                class="flex-grow-1"
+              />
+              <v-btn
+                size="small"
+                variant="tonal"
+                color="primary"
+                prepend-icon="mdi-radar"
+                :loading="probeLoading"
+                @click="probeCapability"
+              >探测能力</v-btn>
+            </div>
+            <div class="text-caption text-medium-emphasis mb-3">{{ capabilityHint }}</div>
+
+            <v-text-field v-model.number="assistantConfig.max_tokens" label="最大输出 Token 数 (K)" type="number" density="compact" class="mb-1" hide-details />
+            <div class="text-caption text-medium-emphasis mb-3">
+              发给模型的单轮输出上限，单位「千」（64 → 64000）。它只限制模型这一轮能写多长，不是会话记忆上限。
+            </div>
+
+            <div class="d-flex ga-3 mb-1">
+              <v-text-field v-model.number="assistantConfig.max_history_messages" label="历史条数上限" type="number" density="compact" hide-details />
+              <v-text-field v-model.number="assistantConfig.max_history_tokens" label="历史 Token 预算" type="number" density="compact" hide-details />
+            </div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              会话记忆的双上限：超出先把最旧消息压成摘要，再超就硬截断（Token 预算填 0 表示只按条数限制）
+            </div>
+
             <v-text-field v-model.number="assistantConfig.max_iterations" label="最大迭代次数" type="number" density="compact" class="mb-4" hide-details />
 
             <v-divider class="mb-4" />

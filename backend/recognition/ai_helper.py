@@ -99,10 +99,25 @@ class AIHelper:
             "model": model,
             "messages": messages,
             "temperature": 0.1,
-            # 256 对推理型模型（deepseek-v4.x 等）太小：思维链会先把额度吃光，
-            # 最终 message.content 为空、或 JSON 写到一半被截断，上层只能报「模型无响应」。
-            "max_tokens": 2048
+            # 这是「输出上限」，只作用于本文件（AI 介入测试/介入识别），
+            # 与 AI 实验室里那个「最大 Token 数 (K)」无关（那个只给助手对话用）。
+            # 256 时推理型模型（deepseek-v4.x）的思维链会把额度吃光 → content 为空；
+            # 实测单次最长约 2k 思考 token，这里留一倍余量。
+            "max_tokens": 4096
         }
+
+        # 思考深度：介入识别是确定性抽取任务，不需要思维链。
+        # 只用「探测缓存里已确认可用」的关闭风格；没探测过就不注入（不给不认识的网关塞未知字段）。
+        try:
+            from assistant import llm_capabilities
+        except Exception as e:  # 能力层不可用时退化为「不注入思考参数」
+            llm_capabilities = None
+            logger.debug(f"[AI-Fallback] 能力层不可用，跳过思考参数注入: {e}")
+        if llm_capabilities:
+            thinking_fragment = llm_capabilities.thinking_payload_from_cache(base_url, model, "off")
+            if thinking_fragment:
+                payload.update(thinking_fragment)
+                logger.info(f"[AI-Fallback] 🧠 按能力缓存注入思考参数: {thinking_fragment}")
 
         logger.debug(f"[AI-Fallback] 📤 请求模型: {model}")
         logger.debug(f"[AI-Fallback] 📤 URL: {target_url}")
@@ -112,7 +127,9 @@ class AIHelper:
             import time
             start_time = time.time()
             
-            with httpx.Client(timeout=60.0) as client:
+            # 超时与上面的 max_tokens 挂钩：推理型模型按实测 ~150 token/s 计，
+            # 4096 token 约需 28s，这里给到 120s 以免「调大上限反而撞超时」
+            with httpx.Client(timeout=120.0) as client:
                 resp = client.post(
                     target_url,
                     json=payload,
@@ -146,9 +163,14 @@ class AIHelper:
 
                 if not content.strip():
                     if finish_reason == "length":
+                        # 额度被思维链吃光：探测一次该 (base_url, model) 支持哪种关闭方式并重试
+                        retried = self._retry_with_thinking_off(base_url, api_key, model, target_url, messages)
+                        if retried:
+                            return retried
                         logger.error(
                             f"[AI-Fallback] ❌ max_tokens 用尽仍未产出正文（模型: {model}，"
-                            f"推理内容 {len(reasoning)} 字符）：请调大 max_tokens 或改用非推理模型"
+                            f"推理内容 {len(reasoning)} 字符）：请调大 max_tokens、改用非推理模型，"
+                            f"或在 AI 实验室点「探测能力」"
                         )
                     elif reasoning:
                         logger.error(
@@ -181,6 +203,60 @@ class AIHelper:
             return None
         except Exception as e:
             logger.error(f"[AI-Fallback] ❌ 未知错误: {type(e).__name__}: {e}")
+            return None
+
+    def _retry_with_thinking_off(
+        self, base_url: str, api_key: str, model: str, target_url: str, messages: list
+    ) -> Optional[Dict[str, Any]]:
+        """
+        额度被思维链吃光后的兜底：探测该 (base_url, model) 支持哪种「关闭思考」的参数风格，
+        带着它重发一次。探测结果会写入能力缓存，后续调用直接命中，不再重复试。
+        找不到可关闭的方式时返回 None（由调用方继续报错）。
+        """
+        try:
+            from assistant import llm_capabilities
+        except Exception as e:
+            logger.warning(f"[AI-Fallback] 能力层不可用，无法探测思考参数: {e}")
+            return None
+
+        probe_result = llm_capabilities.probe(base_url, api_key, model, provider="openai")
+        logger.info(f"[AI-Fallback] 🔎 思考能力探测: {probe_result.get('message')}")
+        fragment = llm_capabilities.build_thinking_fragment(
+            probe_result.get("thinking_style") or "none", "off"
+        )
+        if not fragment:
+            return None
+
+        retry_payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": 0.1,
+            "max_tokens": 4096,
+            **fragment,
+        }
+        try:
+            with httpx.Client(timeout=120.0) as client:
+                resp = client.post(
+                    target_url,
+                    json=retry_payload,
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                )
+            if resp.status_code != 200:
+                logger.error(f"[AI-Fallback] ❌ 关思考重试失败 [{resp.status_code}]: {resp.text[:300]}")
+                return None
+
+            choice = (resp.json().get("choices") or [{}])[0]
+            message = choice.get("message") or {}
+            content = message.get("content") or ""
+            logger.info(
+                f"[AI-Fallback] 📥 关思考重试: finish_reason={choice.get('finish_reason')} | "
+                f"content={len(content)} 字符 | reasoning={len(message.get('reasoning_content') or '')} 字符"
+            )
+            if not content.strip():
+                return None
+            return self._extract_json(content)
+        except Exception as e:
+            logger.error(f"[AI-Fallback] ❌ 关思考重试异常: {type(e).__name__}: {e}")
             return None
 
     def _extract_json(self, text: str) -> Optional[Dict[str, Any]]:
