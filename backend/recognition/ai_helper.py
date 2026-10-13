@@ -99,7 +99,9 @@ class AIHelper:
             "model": model,
             "messages": messages,
             "temperature": 0.1,
-            "max_tokens": 256
+            # 256 对推理型模型（deepseek-v4.x 等）太小：思维链会先把额度吃光，
+            # 最终 message.content 为空、或 JSON 写到一半被截断，上层只能报「模型无响应」。
+            "max_tokens": 2048
         }
 
         logger.debug(f"[AI-Fallback] 📤 请求模型: {model}")
@@ -130,13 +132,34 @@ class AIHelper:
                     logger.error(f"[AI-Fallback] ❌ 无有效响应: {data}")
                     return None
                 
-                content = data['choices'][0]['message']['content']
-                
-                if not content or not content.strip():
-                    logger.error(f"[AI-Fallback] ❌ 模型返回空响应，请检查模型名称是否正确")
-                    logger.error(f"[AI-Fallback] 💡 智谱AI常用模型: glm-4, glm-4-flash, glm-4-plus")
+                choice = data["choices"][0]
+                message = choice.get("message") or {}
+                content = message.get("content") or ""
+                reasoning = message.get("reasoning_content") or ""
+                finish_reason = choice.get("finish_reason")
+
+                logger.info(
+                    f"[AI-Fallback] 📥 finish_reason={finish_reason} | "
+                    f"content={len(content)} 字符 | reasoning={len(reasoning)} 字符 | "
+                    f"usage={data.get('usage')}"
+                )
+
+                if not content.strip():
+                    if finish_reason == "length":
+                        logger.error(
+                            f"[AI-Fallback] ❌ max_tokens 用尽仍未产出正文（模型: {model}，"
+                            f"推理内容 {len(reasoning)} 字符）：请调大 max_tokens 或改用非推理模型"
+                        )
+                    elif reasoning:
+                        logger.error(
+                            "[AI-Fallback] ❌ message.content 为空，正文疑似只出现在 reasoning_content 中"
+                        )
+                    else:
+                        logger.error(
+                            f"[AI-Fallback] ❌ 模型返回空响应，请确认模型名 '{model}' 在 {base_url} 上可用"
+                        )
                     return None
-                
+
                 logger.debug(f"[AI-Fallback] 📥 原始响应: {content}")
                 
                 result = self._extract_json(content)
