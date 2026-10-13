@@ -1,4 +1,5 @@
 import os
+import asyncio
 import json
 import logging
 from typing import List, Dict, Optional
@@ -656,14 +657,15 @@ async def execute_tool_directly(tool_name: str, request: Request):
 async def list_chat_sessions():
     """会话列表（按更新时间倒序）"""
     from assistant import chat_store
-    return chat_store.list_sessions()
+    # chat_store 是同步文件 IO（每个会话一次 open+json.load），不能在事件循环上直接跑
+    return await asyncio.to_thread(chat_store.list_sessions)
 
 
 @router.get("/sessions/{session_id}")
 async def get_chat_session(session_id: str):
     from assistant import chat_store
 
-    data = chat_store.get_session(session_id)
+    data = await asyncio.to_thread(chat_store.get_session, session_id)
     if not data:
         raise HTTPException(status_code=404, detail="会话不存在")
     return data
@@ -679,7 +681,8 @@ async def save_chat_session(session_id: str, request: Request):
     if not isinstance(messages, list) or not messages:
         raise HTTPException(status_code=400, detail="messages 不能为空")
 
-    meta = chat_store.save_session(
+    meta = await asyncio.to_thread(
+        chat_store.save_session,
         session_id,
         messages,
         title=body.get("title") or "",
@@ -692,6 +695,6 @@ async def save_chat_session(session_id: str, request: Request):
 async def delete_chat_session(session_id: str):
     from assistant import chat_store
 
-    if not chat_store.delete_session(session_id):
+    if not await asyncio.to_thread(chat_store.delete_session, session_id):
         raise HTTPException(status_code=404, detail="会话不存在")
     return {"success": True, "message": "会话已删除"}

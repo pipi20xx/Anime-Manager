@@ -142,14 +142,24 @@ class CD2SyncManager:
 
         # 3. 扫描本地目标目录快照 (用于比对)
         yield json.dumps({"type": "info", "message": "正在构建本地目标目录快照..."}) + "\n"
-        existing_files: Set[str] = set()
-        if os.path.exists(target_root):
+
+        def _snapshot_local_target() -> Set[str]:
+            """
+            本地目标目录快照。
+            os.walk 是同步重 IO（目录多/走网络共享时可达数秒），必须离开事件循环，
+            否则 CD2 模式生成 STRM 期间整个后端都会被按住。
+            """
+            found: Set[str] = set()
             for root, _, files in os.walk(target_root):
                 rel_d = os.path.relpath(root, target_root)
                 if rel_d == ".": rel_d = ""
                 for f in files:
-                    p = normalize_path(os.path.join(rel_d, f))
-                    existing_files.add(p)
+                    found.add(normalize_path(os.path.join(rel_d, f)))
+            return found
+
+        existing_files: Set[str] = set()
+        if await asyncio.to_thread(os.path.exists, target_root):
+            existing_files = await asyncio.to_thread(_snapshot_local_target)
         
         # 4. 任务分拣
         stats = {

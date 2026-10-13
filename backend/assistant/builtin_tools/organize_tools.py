@@ -1,5 +1,6 @@
 from ..tools import tool, ToolResult
 from typing import Optional
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,7 +52,8 @@ async def list_directory(path: str) -> ToolResult:
     try:
         from organizer_core.file_explorer import FileExplorer
         
-        data = FileExplorer.list_directory(path)
+        # 同步目录遍历（网络共享/大目录可达数百毫秒），必须离开事件循环
+        data = await asyncio.to_thread(FileExplorer.list_directory, path)
         
         return ToolResult(
             success=True,
@@ -79,7 +81,8 @@ async def get_file_info(path: str) -> ToolResult:
     try:
         from organizer_core.file_explorer import FileExplorer
         
-        data = FileExplorer.get_file_info(path)
+        # 同上：stat/读目录是同步 IO
+        data = await asyncio.to_thread(FileExplorer.get_file_info, path)
         
         return ToolResult(success=True, data=data)
     except Exception as e:
