@@ -220,8 +220,12 @@
   background: transparent;
 }
 .task-path-item {
+  /* 目录类型徽标 + 路径作为「一个整体」左右居中：
+     短路径时整组落在行中间（徽标紧贴路径，不再孤零零贴左）；
+     长路径时文本按剩余宽度收缩，仍在末尾省略号截断、并从路径开头显示 */
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 6px 10px;
   gap: 6px;
 }
@@ -238,7 +242,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: rgb(var(--v-theme-on-surface));
-  flex: 1;
+  /* 刻意不用 flex: 1：内容短时盒子只占内容宽度，整组才能被 justify-content: center 居中；
+     内容长时按 0 1 auto 收缩到徽标之外的剩余空间，截断行为与改动前完全一致 */
+  flex: 0 1 auto;
   min-width: 0;
 }
 

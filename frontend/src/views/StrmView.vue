@@ -563,7 +563,7 @@ onMounted(() => {
               </div>
 
               <!-- 状态标签 -->
-              <div class="manage-card__tags">
+              <div class="manage-card__tags manage-card__tags--center">
                 <v-chip
                   size="small"
                   :color="task.incremental_enabled ? 'info' : 'default'"

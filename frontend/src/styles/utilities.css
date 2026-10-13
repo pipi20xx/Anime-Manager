@@ -455,6 +455,12 @@
   margin-top: 4px;
 }
 
+/* 变体：标签行整体居中（整理任务 / STRM 卡片用，与上方居中的路径对齐；
+   其他使用 .manage-card__tags 的页面保持默认左对齐，不受影响） */
+.manage-card__tags--center {
+  justify-content: center;
+}
+
 .manage-card__actions {
   display: flex;
   align-items: center;
