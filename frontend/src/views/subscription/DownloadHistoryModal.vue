@@ -12,6 +12,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { subscriptionApi } from '@/api'
 import { api } from '@/api/client'
 import { useNotification, useConfirm } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -175,13 +176,11 @@ const filteredItems = computed(() => {
 <template>
   <v-dialog :model-value="show" max-width="1200" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-history-download</v-icon>
-        下载记录
-        <v-chip size="small" variant="tonal" class="ml-3">{{ total }} 条</v-chip>
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-history-download" icon-color="primary" title="下载记录" @close="$emit('update:show', false)">
+        <template #append>
+          <v-chip size="small" variant="tonal" class="ml-3">{{ total }} 条</v-chip>
+        </template>
+      </DialogTitle>
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -301,10 +300,7 @@ const filteredItems = computed(() => {
           <div v-if="!hasMore && items.length > 0" class="text-center text-caption text-medium-emphasis pa-2">已加载全部</div>
         </div>
 
-        <div v-else class="text-center pa-8">
-          <v-icon size="64" color="primary" class="mb-4">mdi-inbox-outline</v-icon>
-          <div class="text-body-2 text-medium-emphasis">暂无下载记录</div>
-        </div>
+        <EmptyState v-else icon="mdi-inbox-outline" description="暂无下载记录" />
       </v-card-text>
 
       <v-divider />

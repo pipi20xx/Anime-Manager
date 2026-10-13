@@ -210,6 +210,104 @@
   max-width: 100%;
 }
 
+/* ── 整理任务/STRM 路径容器（自 TasksTab + StrmView scoped 收编，两处原本逐字相同） ── */
+.task-path-container {
+  display: flex;
+  flex-direction: column;
+  border: var(--am-path-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+}
+.task-path-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  gap: 6px;
+}
+.task-path-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.task-path-text {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgb(var(--v-theme-on-surface));
+  flex: 1;
+  min-width: 0;
+}
+
+/* 轻量 via 标记：不用 v-chip，避免 Vuetify 额外 padding/margin 导致间距过大 */
+.via-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  color: #fff;
+}
+.via-badge--cd2 {
+  background: #00897b;
+}
+.via-badge--local {
+  background: #78909c;
+}
+
+/* ── 随行文件（字幕/音轨）去向（自 ExecutionLogModal + OrganizeHistoryTab scoped 收编，两处原本重复） ── */
+.related-files-box {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+.related-files-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 4px;
+}
+.related-file-item {
+  padding: 2px 0 2px 6px;
+}
+.related-file-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.related-file-name {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+}
+.related-file-target {
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  color: rgb(var(--v-theme-on-surface));
+  overflow-wrap: anywhere;
+  padding-left: 22px;
+}
+/* 可点击复制的目标路径（弹窗内） */
+.related-file-target--copyable {
+  cursor: pointer;
+}
+.related-file-target--copyable:hover {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* ── 整理历史/秒传重试 筛选 chip 高度（自 OrganizeHistoryTab + RapidRetryTab scoped 收编） ── */
+.history-filter-chip {
+  height: 40px !important;
+}
+
 /* ── 规则预览结果 ── */
 .org-preview-result {
   padding: 12px;
@@ -278,6 +376,13 @@
 .file-list-item:last-child {
   border-bottom: none;
 }
+/* 去掉 prepend 后的占位 spacer，固定图标与文字间距（自 FileBrowserView + cd2/FilesTab scoped 收编，两处原本逐字相同） */
+.file-list-item .v-list-item__spacer {
+  display: none !important;
+}
+.file-list-item .v-list-item__prepend {
+  margin-inline-end: 8px !important;
+}
 .detail-row {
   display: flex;
   align-items: flex-start;
@@ -298,34 +403,7 @@
 }
 
 /* ── StrmView STRM 生成 ── */
-/* ⚠️ DEPRECATED: 以下 .task-card / .info-row 系列已迁移至 §31 .manage-card__* 系列，新代码请使用新类名 */
-.task-card {
-  transition: transform 0.2s ease;
-}
-.task-card:hover {
-  transform: translateY(-4px);
-}
-.info-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.info-label {
-  font-size: 12px;
-  color: rgb(var(--v-theme-on-surface));
-  font-weight: 600;
-  min-width: 64px;
-  flex-shrink: 0;
-}
-.info-value {
-  flex: 1;
-  font-size: 13px;
-  font-family: monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* 注：原 .task-card / .info-row 系列已废弃并删除（无使用者）；键值行请用 utilities.css 的 .kv-row / .manage-card__info 系列 */
 
 /* ── GuideView 使用指南 ── */
 .guide-card {
@@ -517,6 +595,87 @@
   align-items: center;
   justify-content: center;
   background: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+/* ── 33i. 已入库徽章 / 想看按钮（自 SeasonalTab scoped 收编，媒体卡片系统扩展） ── */
+.media-card__organized-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+.media-card__mark-btn {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.media-card:hover .media-card__mark-btn,
+.media-card__mark-btn:focus-visible {
+  opacity: 1;
+}
+/* 触屏设备无 hover，已标记的按钮保持可见 */
+.media-card--organized .media-card__mark-btn {
+  opacity: 1;
+}
+
+/* ── 33j. 海报角标 pill（自 SubscriptionsTab 的 5 个 scoped 徽章收编；
+ *     与 33c/33d/33e 同源的毛玻璃角标，定位与配色用修饰符） ── */
+.poster-pill {
+  position: absolute;
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  background: var(--am-badge-overlay-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.poster-pill--type {
+  top: 6px;
+  left: 6px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  color: var(--am-badge-accent);
+}
+.poster-pill--ep {
+  top: 32px;
+  left: 6px;
+  font-weight: 600;
+  color: #fff;
+}
+.poster-pill--status {
+  top: 6px;
+  right: 6px;
+  font-weight: 700;
+}
+.poster-pill--status.active {
+  color: #4caf50;
+}
+.poster-pill--status.inactive {
+  color: #f44336;
+}
+.poster-pill--pushed {
+  bottom: 6px;
+  right: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--am-badge-accent);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.poster-pill--upgrade {
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 /* ── 33f. 卡片下方信息区 ── */
@@ -722,29 +881,226 @@
   z-index: 2;
 }
 
-/* ── SystemLogsTab 系统日志 ── */
-.log-container {
-  background: rgba(var(--v-theme-on-surface), 0.02);
+/* ── 识别结果信息行 / 深度审计日志
+ *   （自 HomeView + RecognitionModal scoped 收编，两处原本逐字相同；
+ *     RecognitionModal 的 log-p/d/s/w/i 短类名已统一为 getLogClass 长类名） ── */
+.recog-poster {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
-.log-line {
-  padding: 2px 4px;
-  border-radius: 2px;
+.recog-text-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.recog-text-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.recog-text-label {
+  color: rgb(var(--v-theme-on-surface));
+  width: 80px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.recog-text-value {
+  color: rgb(var(--v-theme-on-surface));
+  word-break: break-all;
+}
+@media (max-width: 600px) {
+  .recog-text-label {
+    width: 70px;
+    font-size: 12px;
+  }
+}
+
+/* 审计日志框（弹窗内折叠面板 / HomeView 面板共用） */
+.audit-log-box {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.audit-log-line {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  padding: 2px 0;
+}
+.audit-log-idx {
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 10px;
+  width: 24px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.audit-log-text {
+  color: rgb(var(--v-theme-on-surface));
   white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 审计日志 Tab（HomeView 全屏变体） */
+.audit-log-full {
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: calc(100vh - 280px);
+  min-height: 400px;
+  overflow-y: auto;
+}
+.audit-log-line-full {
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+  padding: 2px 0;
+}
+.audit-log-idx-full {
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 10px;
+  width: 32px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.audit-log-text-full {
+  color: rgb(var(--v-theme-on-surface));
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 日志行分类着色（useRecognitionStore.getLogClass / RecognitionModal.getLogClass 返回值） */
+.log-header { color: rgb(var(--v-theme-primary)); font-weight: bold; }
+.log-debug { color: rgb(var(--v-theme-info)); }
+.log-success { color: rgb(var(--v-theme-success)); }
+.log-warning { color: rgb(var(--v-theme-warning)); }
+.log-result { color: rgb(var(--v-theme-warning)); font-weight: bold; }
+.log-normal { color: rgb(var(--v-theme-on-surface)); }
+
+/* ============================================================
+ * 任务日志行（TaskHistoryView + WebhookEventsView 共用；
+ *   命名为 log-rows__* 避免与 LogTerminal 组件私有的 .log-line/.log-group 冲突；
+ *   容器（字号/内边距）由各页面自己定义）
+ * ============================================================ */
+.th-task-card {
+  transition: all 0.2s ease;
+}
+.th-log-container {
+  font-family: monospace;
+  font-size: 13px;
+}
+.log-rows__group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+.log-rows__group:last-child {
+  border-bottom: none;
+}
+.log-rows__group-line {
+  width: 2px;
+  background-color: rgb(var(--v-theme-primary));
+  border-radius: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 4px 0;
+  opacity: 0.6;
+}
+.log-rows__group-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.log-rows__line {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+.log-rows__time {
+  color: rgb(var(--v-theme-on-surface));
+  min-width: 75px;
+  flex-shrink: 0;
+}
+.log-rows__level {
+  min-width: 40px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.log-rows__msg {
+  flex: 1;
+  word-break: break-all;
+}
+
+/* 任务/事件 日志级别色（TaskHistoryView + WebhookEventsView 共用，hex 原样保留） */
+.log-lv-info { color: #52c41a; }
+.log-lv-error { color: #ff4d4f; }
+.log-lv-warning { color: #faad14; }
+
+/* ============================================================
+ * MaintenanceTab — 数据维护（自 scoped + 全局 style 块收编；
+ *   .fp-tooltip-text 原本就需全局作用域：tooltip 渲染在全局 overlay 层）
+ * ============================================================ */
+.fp-result-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* 说明区固定两行：保证所有卡片等高，「清空数据」按钮始终在同一位置不随内容浮动 */
+.table-desc {
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+  min-height: 3em; /* 恰好两行 */
+  margin-bottom: 8px;
+  cursor: default;
+}
+
+.fp-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* tooltip 内容超长指纹需可换行查看 */
+.fp-tooltip-text {
+  display: block;
+  white-space: normal;
   word-break: break-all;
   line-height: 1.6;
 }
-.log-error {
-  color: rgb(var(--v-theme-error));
-  background: rgba(var(--v-theme-error), 0.06);
+
+/* ============================================================
+ * 按钮覆盖 — 组件内 .v-btn 微调统一收编至全局
+ *   （包装类均带组件前缀，不会泄漏；其余组件私有结构样式仍在各自 scoped 中）
+ * ============================================================ */
+
+/* LogTerminal 日志终端：级别筛选切换按钮 + 跳到最新浮动按钮 */
+.log-level-toggle .v-btn {
+  min-width: auto;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: none;
 }
-.log-warning {
-  color: rgb(var(--v-theme-warning));
+.log-jump .v-btn {
+  pointer-events: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
-.log-info {
-  color: rgb(var(--v-theme-on-surface));
-}
-.log-debug {
-  color: rgb(var(--v-theme-on-surface));
+
+/* SchedulerView 调度中心：Cron 快捷切换按钮 */
+.sc-cron-toggle .v-btn {
+  font-size: 0.8rem;
 }
 
 /* ── DatabaseTab 数据库 ── */
@@ -787,6 +1143,27 @@
   font-size: 12px;
 }
 
+/* ── ED2K 复制按钮（做成 meta-tag 芯片外观；自 FileHashesView scoped 收编） ── */
+.meta-tag-copy-btn {
+  min-height: 20px !important;
+  height: auto !important;
+  padding: 0 8px !important;
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 10px !important;
+}
+.meta-tag-copy-btn .v-btn__content {
+  font-size: 10px !important;
+  gap: 4px;
+}
+.meta-tag-copy-btn .v-icon {
+  font-size: 10px !important;
+  height: 10px !important;
+  width: 10px !important;
+  margin-inline: 0 !important;
+}
+
 /* ============================================================
  * TaskHistoryView — 任务中心独立页面
  * ============================================================ */
@@ -796,70 +1173,17 @@
 }
 
 /* ============================================================
- * DataCenterView — 数据中心
+ * SqlLabTab — SQL 实验室（数据中心库表浏览，.dc-db-* 系列唯一使用方；
+ *   原 scoped 变体（吸顶表头/拖拽平移/紧凑单元格）与全局定义合并至此。
+ *   原 DataCenterView 区块中无任何使用者的 .dc-stat-card / .dc-search-item /
+ *   .dc-db-table-list / .dc-db-table-item 已删除）
  * ============================================================ */
-.dc-stat-card {
-  transition: transform 0.2s ease;
-}
-
-.dc-stat-card:hover {
-  transform: translateY(-4px);
-}
-
-.dc-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
-  font-size: 14px;
-}
-
-.dc-detail-row:last-child {
-  border-bottom: none;
-}
-
-.dc-search-item {
-  padding: 12px 16px;
-  border-radius: 16px;
-  background: rgba(var(--v-theme-on-surface), 0.03);
-  border: var(--am-content-border);
-  transition: all 0.2s ease;
-}
-
-.dc-search-item:hover {
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  border-color: rgb(var(--v-theme-on-surface));
-}
-
-/* --- 数据库管理 --- */
-.dc-db-table-list {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.dc-db-table-item {
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(var(--v-theme-on-surface), 0.03);
-  border: var(--am-content-border);
-  transition: all 0.2s ease;
-  cursor: pointer;
-  margin-bottom: 6px;
-}
-
-.dc-db-table-item:hover {
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  border-color: rgb(var(--v-theme-on-surface));
-}
-
-.dc-db-table-item--active {
-  background: rgba(var(--v-theme-primary), 0.08);
-  border-color: rgba(var(--v-theme-primary), 0.3);
-}
-
 .dc-db-data-container {
-  overflow: hidden;
+  overflow-x: auto;
+  cursor: grab;
+}
+.dc-db-data-container:active {
+  cursor: grabbing;
 }
 
 .dc-db-table-wrapper {
@@ -879,17 +1203,21 @@
 }
 
 .dc-db-table th {
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-weight: 600;
   white-space: nowrap;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   text-align: left;
+  border-bottom: 2px solid rgba(var(--v-theme-on-surface), 0.12);
+  position: sticky;
+  top: 0;
+  background: transparent;
+  z-index: 1;
 }
 
 .dc-db-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
-  max-width: 200px;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -897,6 +1225,32 @@
 
 .dc-db-table tbody tr:hover {
   background: rgba(var(--v-theme-on-surface), 0.03);
+}
+
+.dc-db-cell { cursor: default; }
+.dc-db-cell:not(.dc-db-cell--pk) { cursor: text; }
+
+.dc-db-edit-input {
+  width: 100%;
+  padding: 2px 4px;
+  font-size: 13px;
+  border: 1px solid rgb(var(--v-theme-primary));
+  border-radius: 4px;
+  outline: none;
+  background: rgba(var(--v-theme-surface), 1);
+}
+
+.dc-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  font-size: 14px;
+}
+
+.dc-detail-row:last-child {
+  border-bottom: none;
 }
 
 /* --- 哈希详情全值展示 --- */
@@ -921,6 +1275,14 @@
 .text-truncate-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-all;
@@ -999,6 +1361,28 @@
 
 /* --- 表单标签最小宽度 (AppearanceView 等) --- */
 .label-min-w { min-width: 100px; }
+
+/* --- 下拉筛选文字居中（自 TaskHistoryView / NotificationCenterView scoped 收编） --- */
+.select-center .v-field__input,
+.select-center .v-select__selection,
+.select-center .v-select__selection-text {
+  width: 100% !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+.select-center .v-list-item-title {
+  text-align: center !important;
+}
+
+/* --- 文本输入框文字居中（自 TaskCenterModal scoped 收编） --- */
+.field-center .v-field__input,
+.field-center input {
+  text-align: center !important;
+}
+.field-center .v-label {
+  width: 100% !important;
+  text-align: center !important;
+}
 
 /* --- 搜索输入框 --- */
 .dc-search-input {
@@ -1259,6 +1643,247 @@
 }
 .markdown-body strong {
   font-weight: 600;
+}
+
+/* ── 37g-2. 指南文档变体（自 GuideView .md-content scoped 收编）
+ *     文档级排版：大标题带下划线、斑马纹表格、宽松间距。用法：markdown-body markdown-body--guide ── */
+.markdown-body--guide {
+  line-height: 1.8;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.markdown-body--guide h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 1rem;
+  border-bottom: 2px solid rgba(var(--v-theme-on-surface), 0.12);
+  padding-bottom: 0.5rem;
+}
+.markdown-body--guide h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 2rem 0 1rem;
+  color: rgb(var(--v-theme-on-surface));
+}
+.markdown-body--guide h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+}
+.markdown-body--guide h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem;
+  color: rgb(var(--v-theme-on-surface));
+}
+.markdown-body--guide p {
+  margin-bottom: 1rem;
+}
+.markdown-body--guide ul,
+.markdown-body--guide ol {
+  padding-left: 1.8rem;
+  margin-bottom: 1rem;
+}
+.markdown-body--guide li {
+  margin-bottom: 0.4rem;
+}
+.markdown-body--guide blockquote {
+  border-left: 4px solid rgba(var(--v-theme-on-surface), 0.2);
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 1rem 0;
+  opacity: 1;
+  padding-left: 16px;
+}
+.markdown-body--guide blockquote p {
+  margin-bottom: 0.3rem;
+}
+.markdown-body--guide blockquote p:last-child {
+  margin-bottom: 0;
+}
+.markdown-body--guide table {
+  display: block;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+.markdown-body--guide th {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.markdown-body--guide tr:nth-child(even) {
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+.markdown-body--guide code {
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgb(var(--v-theme-on-surface));
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.85em;
+}
+.markdown-body--guide pre {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  padding: 16px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  line-height: 1.5;
+}
+.markdown-body--guide pre code {
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+}
+.markdown-body--guide a {
+  color: rgb(var(--v-theme-info));
+  text-decoration: underline;
+}
+.markdown-body--guide hr {
+  border: none;
+  height: 1px;
+  background: rgba(var(--v-theme-on-surface), 0.12);
+  margin: 2rem 0;
+}
+.markdown-body--guide strong {
+  color: rgb(var(--v-theme-on-surface));
+}
+.markdown-body--guide img {
+  max-width: 80%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+/* ── 37g-3. AI 聊天变体（自 AiMarkdownContent .ai-markdown scoped 收编）
+ *     聊天级紧凑排版 + 流式光标 + 代码块壳（.ai-code-* 由 utils/aiMarkdown 渲染器输出）。
+ *     用法：markdown-body markdown-body--chat，流式时追加 .md-streaming ── */
+.markdown-body--chat {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.markdown-body--chat p {
+  margin: 0 0 0.5em;
+}
+.markdown-body--chat p:last-child {
+  margin-bottom: 0;
+}
+.markdown-body--chat ul,
+.markdown-body--chat ol {
+  margin: 0.25em 0 0.5em;
+  padding-left: 1.4em;
+}
+.markdown-body--chat li {
+  margin: 0.15em 0;
+}
+.markdown-body--chat h1,
+.markdown-body--chat h2,
+.markdown-body--chat h3,
+.markdown-body--chat h4 {
+  font-size: 1em;
+  font-weight: 700;
+  margin: 0.6em 0 0.3em;
+}
+.markdown-body--chat blockquote {
+  margin: 0.4em 0;
+  padding: 0.1em 0.8em;
+  border-left: 3px solid rgba(var(--v-theme-primary), 0.5);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  opacity: 1;
+}
+.markdown-body--chat code:not(.hljs) {
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  background: rgba(var(--v-theme-primary), 0.12);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.markdown-body--chat table {
+  margin: 0.5em 0;
+  font-size: 0.82rem;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.markdown-body--chat th,
+.markdown-body--chat td {
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.15);
+  padding: 4px 10px;
+}
+.markdown-body--chat th {
+  background: rgba(var(--v-theme-primary), 0.08);
+}
+.markdown-body--chat hr {
+  border: none;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  margin: 0.6em 0;
+}
+.markdown-body--chat a {
+  color: rgb(var(--v-theme-primary));
+  text-decoration: none;
+}
+.markdown-body--chat a:hover {
+  text-decoration: underline;
+}
+.markdown-body--chat .ai-code-block {
+  margin: 0.5em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0d1117;
+}
+.markdown-body--chat .ai-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.markdown-body--chat .ai-code-lang {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.markdown-body--chat .ai-code-copy {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.markdown-body--chat .ai-code-copy:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.markdown-body--chat .ai-code-block pre {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  max-height: 420px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.markdown-body--chat .ai-code-block code {
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: transparent;
+  padding: 0;
+}
+/* 流式输出光标 */
+.markdown-body--chat.md-streaming > :last-child::after {
+  content: '▍';
+  display: inline-block;
+  margin-left: 2px;
+  color: rgb(var(--v-theme-primary));
+  animation: md-cursor-blink 1s steps(2, start) infinite;
+}
+@keyframes md-cursor-blink {
+  to {
+    visibility: hidden;
+  }
 }
 
 

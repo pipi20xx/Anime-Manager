@@ -9,6 +9,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { userMappingApi } from '@/api'
 import { useNotification, useConfirm, downloadJson } from '@/composables'
 import { AppGlassCard, GlassDialog } from '@/glass'
+import { EmptyState } from '@/components/common'
 
 const { success, error: showError, info } = useNotification()
 const { confirm } = useConfirm()
@@ -333,10 +334,7 @@ defineExpose({ fetchMappings, fetchRefCounts })
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-database-off-outline</v-icon>
-      <div class="text-h6 font-weight-medium">暂无{{ typeLabels[mapActiveType] }}映射</div>
-    </div>
+    <EmptyState v-else icon="mdi-database-off-outline" title="暂无{{ typeLabels[mapActiveType] }}映射" />
 
     <!-- 分页 -->
     <div v-if="mapTotal > mapMeta.pageSize" class="d-flex justify-center mt-3">

@@ -12,6 +12,7 @@
 import { ref, computed, onMounted, onActivated, watch, onUnmounted } from 'vue'
 import { dataCenterApi } from '@/api'
 import { useNotification, useConfirm, formatDbSize } from '@/composables'
+import { DialogTitle } from '@/components/common'
 
 const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
@@ -298,7 +299,7 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
       density="comfortable"
       hide-details
       clearable
-      style="font-family: monospace"
+      class="font-mono"
       @keydown.ctrl.enter="handleManualRun"
     >
       <template #append-inner>
@@ -395,11 +396,7 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
   <!-- 行详情弹窗 -->
   <v-dialog v-model="showDbRowDetail" max-width="640" scrollable>
     <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start color="primary">mdi-table-row</v-icon>行详情
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showDbRowDetail = false" />
-</v-card-title>
+<DialogTitle icon="mdi-table-row" icon-color="primary" title="行详情" @close="showDbRowDetail = false" />
       <v-divider />
       <v-card-text class="pa-4" v-if="dbRowDetailItem">
         <div class="dc-detail-row" v-for="(val, key) in dbRowDetailItem" :key="String(key)">
@@ -420,32 +417,4 @@ onActivated(() => { if (tables.value.length === 0) fetchTables() })
   </v-dialog>
 </template>
 
-<style scoped>
-/* 数据库表格容器 — 拖拽滚动 */
-.dc-db-data-container { overflow-x: auto; cursor: grab; }
-.dc-db-data-container:active { cursor: grabbing; }
-.dc-db-table-wrapper { overflow-x: auto; }
-.dc-db-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.dc-db-table th {
-  padding: 8px 12px; text-align: left; font-weight: 600;
-  border-bottom: 2px solid rgba(var(--v-theme-on-surface),0.12); white-space: nowrap;
-  position: sticky; top: 0; background: transparent; z-index: 1;
-}
-.dc-db-table td {
-  padding: 6px 12px; border-bottom: 1px solid rgba(var(--v-theme-on-surface),0.06);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;
-}
-.dc-db-cell { cursor: default; }
-.dc-db-cell:not(.dc-db-cell--pk) { cursor: text; }
-.dc-db-edit-input {
-  width: 100%; padding: 2px 4px; font-size: 13px;
-  border: 1px solid rgb(var(--v-theme-primary)); border-radius: 4px;
-  outline: none; background: rgba(var(--v-theme-surface),1);
-}
-
-/* 详情行 */
-.dc-detail-row {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  padding: 8px 0; border-bottom: 1px solid rgba(var(--v-theme-on-surface),0.06);
-}
-</style>
+<!-- scoped 样式已合并至 styles/cards.css（.dc-db-* / .dc-detail-row，本组件为其唯一使用方） -->

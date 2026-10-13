@@ -13,6 +13,7 @@ import { subscriptionApi, clientsApi, api } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import TmdbBlocklistModal from './TmdbBlocklistModal.vue'
 import FeedItemsModal from './FeedItemsModal.vue'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FeedsTab' })
 
@@ -193,21 +194,12 @@ defineExpose({ fetchFeeds })
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-rss-off</v-icon>
-      <div class="text-h6 font-weight-medium">暂无订阅源</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">点击"新增订阅源"开始</div>
-    </div>
+    <EmptyState v-else icon="mdi-rss-off" title="暂无订阅源" description="点击&quot;新增订阅源&quot;开始" />
 
     <!-- Feed 编辑弹窗 -->
     <v-dialog v-model="showFeedModal" max-width="560" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start>mdi-rss</v-icon>
-          {{ isNewFeed ? '添加 RSS 订阅源' : '编辑 RSS 订阅源' }}
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showFeedModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-rss" :title="isNewFeed ? '添加 RSS 订阅源' : '编辑 RSS 订阅源'" @close="showFeedModal = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="feedForm.title" label="订阅名称" placeholder="例如: 蜜柑 - 季度新番" variant="outlined" density="compact" class="mb-3" />
@@ -278,4 +270,4 @@ defineExpose({ fetchFeeds })
   </div>
 </template>
 
-<!-- scoped 样式已迁移至 global.css .hover-lift -->
+<!-- .hover-lift 定义在 styles/utilities.css（视觉部分在 visual.css §16） -->

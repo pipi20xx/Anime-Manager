@@ -123,6 +123,21 @@
   font-family: monospace;
 }
 
+/* 可编辑键值行（自 FileHashesView scoped 收编）：整行可点，悬浮时右侧浮现编辑提示 */
+.kv-row--editable {
+  align-items: center;
+  cursor: pointer;
+}
+.kv-row--editable .edit-hint {
+  flex-shrink: 0;
+  opacity: 0;
+  color: rgb(var(--v-theme-primary));
+  transition: opacity 0.15s;
+}
+.kv-row--editable:hover .edit-hint {
+  opacity: 0.8;
+}
+
 
 /* ============================================================
  * 状态点
@@ -471,7 +486,23 @@
  * ============================================================ */
 
 .font-mono {
-  font-family: monospace;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+/* 等宽输出框 — JSON / 载荷 / 日志详情等只读文本块
+   （统一自 AiLabView .tool-test-result / WebhookEventsView .we-payload / ExternalControlView .log-detail-pre） */
+.mono-box {
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow: auto;
 }
 
 .min-width-0 {

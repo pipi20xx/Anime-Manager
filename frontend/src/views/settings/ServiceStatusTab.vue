@@ -8,6 +8,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { dataCenterApi, api } from '@/api'
 import { useNotification } from '@/composables'
+import { DialogTitle, SectionHeader } from '@/components/common'
 
 defineOptions({ name: 'ServiceStatusTab' })
 
@@ -195,10 +196,7 @@ onUnmounted(() => {
 
       <!-- 系统服务 -->
       <div class="d-flex align-center justify-space-between mb-3">
-        <div class="d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-server-outline</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">系统服务</span>
-        </div>
+        <SectionHeader icon="mdi-server-outline" title="系统服务" />
         <v-chip size="small" color="info" variant="tonal">
           {{ runningServicesCount }} / {{ servicesData.services.length }} 运行中
         </v-chip>
@@ -218,12 +216,12 @@ onUnmounted(() => {
               </v-chip>
             </div>
             <div class="d-flex ga-4 mb-1">
-              <span class="text-caption text-medium-emphasis">间隔: <span class="font-monospace">{{ service.interval }}</span></span>
+              <span class="text-caption text-medium-emphasis">间隔: <span class="font-mono">{{ service.interval }}</span></span>
               <span v-if="service.next_run" class="text-caption text-medium-emphasis">
-                下次执行: <span class="font-monospace">{{ formatNextRun(service.next_run) }}</span>
+                下次执行: <span class="font-mono">{{ formatNextRun(service.next_run) }}</span>
               </span>
               <span v-if="service.last_run" class="text-caption text-medium-emphasis">
-                上次同步: <span class="font-monospace">{{ formatNextRun(service.last_run) }}</span>
+                上次同步: <span class="font-mono">{{ formatNextRun(service.last_run) }}</span>
               </span>
             </div>
             <div class="text-caption text-medium-emphasis">{{ service.description }}</div>
@@ -235,10 +233,7 @@ onUnmounted(() => {
       <!-- 文件监控任务 -->
       <template v-if="servicesData.monitors.length > 0">
         <div class="d-flex align-center justify-space-between mb-3">
-          <div class="d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-eye-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">文件监控任务</span>
-          </div>
+          <SectionHeader icon="mdi-eye-outline" title="文件监控任务" />
           <div class="d-flex align-center ga-2">
             <v-chip v-if="totalQueuedFiles > 0" size="small" color="warning" variant="tonal">
               <v-icon start size="14">mdi-tray-alert</v-icon>
@@ -304,10 +299,7 @@ onUnmounted(() => {
       </template>
 
       <!-- 运行时统计 -->
-      <div class="d-flex align-center ga-2 mb-3">
-        <v-icon color="primary" size="20">mdi-chart-bar</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">运行时统计</span>
-      </div>
+      <SectionHeader class="mb-3" icon="mdi-chart-bar" title="运行时统计" />
       <v-row class="mb-4">
         <v-col cols="4">
           <v-card class="glass-card text-center">
@@ -336,10 +328,7 @@ onUnmounted(() => {
       </v-row>
 
       <!-- 规则统计 -->
-      <div class="d-flex align-center ga-2 mb-3">
-        <v-icon color="primary" size="20">mdi-ruler-square</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">规则统计</span>
-      </div>
+      <SectionHeader class="mb-3" icon="mdi-ruler-square" title="规则统计" />
       <div class="card-grid card-grid--4">
         <v-card class="glass-card">
           <v-card-text class="pa-4">
@@ -403,21 +392,21 @@ onUnmounted(() => {
     <!-- 队列内容弹窗 -->
     <v-dialog v-model="queueModalVisible" max-width="850">
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <div class="d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-format-list-bulleted</v-icon>
-            <span>{{ queueModalData?.name }} - 队列内容</span>
-          </div>
-          <v-chip size="small" :color="(queueModalData?.count || 0) > 0 ? 'warning' : 'success'" variant="tonal" class="ml-2">
-            {{ queueModalData?.count || 0 }} 个文件
-          </v-chip>
-          <v-chip v-if="queueModalData?.type" size="x-small" color="info" variant="tonal" class="ml-1">
-            {{ queueModalData.type === 'organize' ? '整理' : 'STRM' }}
-          </v-chip>
-          <v-spacer />
-          <v-btn icon="mdi-refresh" variant="text" size="small" class="mr-1" @click="fetchQueueItems" />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="queueModalVisible = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-format-list-bulleted" icon-color="primary" @close="queueModalVisible = false">
+          {{ queueModalData?.name }} - 队列内容
+          <template #append>
+            <v-chip size="small" :color="(queueModalData?.count || 0) > 0 ? 'warning' : 'success'" variant="tonal" class="ml-2">
+              {{ queueModalData?.count || 0 }} 个文件
+            </v-chip>
+            <v-chip v-if="queueModalData?.type" size="x-small" color="info" variant="tonal" class="ml-1">
+              {{ queueModalData.type === 'organize' ? '整理' : 'STRM' }}
+            </v-chip>
+          </template>
+          <template #actions>
+            <v-btn icon="mdi-refresh" variant="text" size="small" class="mr-1" @click="fetchQueueItems" />
+            <v-btn icon="mdi-close" variant="text" size="small" @click="queueModalVisible = false" />
+          </template>
+        </DialogTitle>
         <v-divider />
         <v-card-text class="pa-0">
           <div v-if="queueLoading && queueItems.length === 0" class="d-flex justify-center pa-8">

@@ -7,6 +7,7 @@
 import { computed, ref, watch } from 'vue'
 import { organizerApi, cd2Api } from '@/api'
 import { useNotification } from '@/composables'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FolderBrowserModal' })
 
@@ -113,12 +114,7 @@ watch(() => props.modelValue, (open) => {
     scrollable
   >
     <v-card class="glass-card">
-      <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-folder-search-outline</v-icon>
-        {{ title || (via === 'cd2' ? '浏览 CD2 云盘目录' : '浏览本地目录') }}
-        <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="emit('update:modelValue', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-folder-search-outline" :title="title || (via === 'cd2' ? '浏览 CD2 云盘目录' : '浏览本地目录')" @close="emit('update:modelValue', false)" />
       <v-divider />
 
       <!-- 面包屑导航 -->

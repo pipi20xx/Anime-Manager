@@ -6,6 +6,7 @@
  * 预览逻辑与后端 Renamer.format_path 保持一致
  */
 import { computed } from 'vue'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'RuleEditModal' })
 
@@ -233,12 +234,7 @@ const tvPreview = computed(() => renderPattern(props.ruleForm.tv_pattern, TV_SAM
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="800" scrollable>
     <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start>mdi-form-textbox</v-icon>
-{{ isNew ? '创建新规则' : '编辑重命名规则' }}
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="emit('update:modelValue', false)" />
-</v-card-title>
+<DialogTitle icon="mdi-form-textbox" :title="isNew ? '创建新规则' : '编辑重命名规则'" @close="emit('update:modelValue', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">

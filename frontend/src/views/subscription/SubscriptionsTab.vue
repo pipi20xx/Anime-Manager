@@ -19,6 +19,7 @@ import JackettFillModal from './JackettFillModal.vue'
 import PriorityRuleModal from './PriorityRuleModal.vue'
 import SubscriptionTemplateModal from './SubscriptionTemplateModal.vue'
 import RssDetectModal from './RssDetectModal.vue'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'SubscriptionsTab' })
 
@@ -290,31 +291,31 @@ defineExpose({ fetchSubscriptions })
               :src="getImg(sub.poster_path)"
               cover
             />
-            <div v-else class="sub-poster-placeholder d-flex align-center justify-center">
+            <div v-else class="poster-placeholder w-100 h-100">
               <v-icon size="40" color="grey">mdi-television-classic</v-icon>
             </div>
             <!-- 类型/集数标识 -->
-            <div class="sub-type-badge">
+            <div class="poster-pill poster-pill--type">
               <template v-if="sub.media_type === 'tv'">TV</template>
               <template v-else>电影</template>
             </div>
             <!-- 集数范围标识 -->
-            <div v-if="sub.media_type === 'tv'" class="sub-ep-badge">
+            <div v-if="sub.media_type === 'tv'" class="poster-pill poster-pill--ep">
               S{{ sub.season === 0 ? 'All' : sub.season }} · E{{ sub.start_episode || 1 }}{{ sub.end_episode > 0 ? '-' + sub.end_episode : '+' }}
             </div>
             <!-- 启用状态角标 -->
-            <div class="sub-status-badge" :class="sub.enabled !== false ? 'active' : 'inactive'">
+            <div class="poster-pill poster-pill--status" :class="sub.enabled !== false ? 'active' : 'inactive'">
               {{ sub.enabled !== false ? '启用' : '未启用' }}
             </div>
             <!-- 已推送角标 -->
-            <div v-if="sub.media_type === 'tv'" class="sub-pushed-badge">
+            <div v-if="sub.media_type === 'tv'" class="poster-pill poster-pill--pushed">
               <v-icon size="12" class="mr-1">mdi-send-outline</v-icon>{{ sub.pushed_count ?? 0 }}/{{ sub.end_episode > 0 ? sub.end_episode - (sub.start_episode || 1) + 1 : '?' }}
             </div>
-            <div v-else-if="sub.pushed_count > 0" class="sub-pushed-badge">
+            <div v-else-if="sub.pushed_count > 0" class="poster-pill poster-pill--pushed">
               <v-icon size="12" class="mr-1">mdi-check-circle-outline</v-icon>已推送
             </div>
             <!-- 洗版标签 -->
-            <div v-if="getUpgradeStatus(sub)" class="sub-upgrade-tag">
+            <div v-if="getUpgradeStatus(sub)" class="poster-pill poster-pill--upgrade">
               <v-icon size="12" :color="getUpgradeStatus(sub)?.allowed ? 'primary' : 'grey'">mdi-arrow-up-bold</v-icon>
             </div>
           </div>
@@ -343,11 +344,7 @@ defineExpose({ fetchSubscriptions })
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-rss-off</v-icon>
-      <div class="text-h6 font-weight-medium">暂无订阅</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">点击"添加新订阅"或"Bangumi一键订阅"开始追剧</div>
-    </div>
+    <EmptyState v-else icon="mdi-rss-off" title="暂无订阅" description="点击&quot;添加新订阅&quot;或&quot;Bangumi一键订阅&quot;开始追剧" />
 
     <!-- 订阅编辑弹窗 -->
     <SubEditModal
@@ -389,13 +386,11 @@ defineExpose({ fetchSubscriptions })
     <!-- Bangumi 一键订阅弹窗 -->
     <v-dialog v-model="showQuickSubModal" max-width="1000" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="info">mdi-star-outline</v-icon>
-          Bangumi 一键订阅
-          <div class="text-caption text-medium-emphasis ml-2">快速同步全周放送列表</div>
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showQuickSubModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-star-outline" icon-color="info" title="Bangumi 一键订阅" @close="showQuickSubModal = false">
+          <template #append>
+            <div class="text-caption text-medium-emphasis ml-2">快速同步全周放送列表</div>
+          </template>
+        </DialogTitle>
         <v-divider />
 
         <v-card-text class="pa-4">
@@ -513,91 +508,6 @@ defineExpose({ fetchSubscriptions })
   width: 100%;
   height: 100%;
 }
-.sub-poster-placeholder {
-  width: 100%;
-  height: 100%;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-}
-.sub-type-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 2;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  line-height: 1.6;
-  background: var(--am-badge-overlay-bg);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  color: var(--am-badge-accent);
-}
-.sub-ep-badge {
-  position: absolute;
-  top: 32px;
-  left: 6px;
-  z-index: 2;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  line-height: 1.5;
-  background: var(--am-badge-overlay-bg);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  color: #fff;
-}
-.sub-status-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 2;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  line-height: 1.5;
-  background: var(--am-badge-overlay-bg);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.sub-status-badge.active {
-  color: #4caf50;
-}
-.sub-status-badge.inactive {
-  color: #f44336;
-}
-.sub-upgrade-tag {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
-  padding: 2px 6px;
-  border-radius: 4px;
-  z-index: 2;
-}
-.sub-pushed-badge {
-  position: absolute;
-  bottom: 6px;
-  right: 6px;
-  z-index: 2;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.5;
-  letter-spacing: 0.3px;
-  background: var(--am-badge-overlay-bg);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  color: var(--am-badge-accent);
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-}
+/* .sub-poster-placeholder 已统一为全局 .poster-placeholder + w-100/h-100 */
+/* 5 个海报角标已统一为全局 .poster-pill 修饰符（styles/cards.css §33j） */
 </style>

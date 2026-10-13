@@ -14,6 +14,7 @@ import { ref, computed, onMounted } from 'vue'
 import { organizerApi, taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import ExecutionLogModal from './ExecutionLogModal.vue'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'OrganizeHistoryTab' })
 
@@ -535,59 +536,11 @@ defineExpose({ fetchHistory })
       </div>
     </div>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-history</v-icon>
-      <div class="text-h6 font-weight-medium">暂无整理历史</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">执行整理任务后，历史记录会显示在这里</div>
-    </div>
+    <EmptyState v-else icon="mdi-history" title="暂无整理历史" description="执行整理任务后，历史记录会显示在这里" />
 
     <!-- 识别日志查看弹框 -->
     <ExecutionLogModal v-model="showLogModal" :task-id="logTaskId" />
   </div>
 </template>
 
-<style scoped>
-.history-filter-chip {
-  height: 40px !important;
-}
-
-/* 随行文件（字幕/音轨）去向：文件名一行、目标路径一行 */
-.related-files-box {
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-}
-
-.related-files-title {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgb(var(--v-theme-on-surface));
-  margin-bottom: 4px;
-}
-
-.related-file-item {
-  padding: 1px 0 1px 6px;
-}
-
-.related-file-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.related-file-name {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 12px;
-  color: rgb(var(--v-theme-on-surface));
-  overflow-wrap: anywhere;
-}
-
-.related-file-target {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 12px;
-  color: rgb(var(--v-theme-on-surface));
-  overflow-wrap: anywhere;
-  padding-left: 21px;
-}
-</style>
+<!-- scoped 样式已迁移至 styles/cards.css（.history-filter-chip / .related-files-*，与 RapidRetryTab、ExecutionLogModal 共用） -->

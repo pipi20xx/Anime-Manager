@@ -357,9 +357,9 @@ aria-label="关闭"
 </VCardTitle>
       <VDivider />
 
-      <VCardText class="glass-settings-dialog__body">
+      <VCardText class="theme-dialog__body">
         <section>
-          <h3 class="glass-settings-dialog__label">{{ t('theme.glassAppearance') }}</h3>
+          <h3 class="theme-dialog__label">{{ t('theme.glassAppearance') }}</h3>
           <VBtnToggle
             :model-value="draftAppearance"
             mandatory
@@ -377,11 +377,11 @@ aria-label="关闭"
               {{ t(option.label) }}
             </VBtn>
           </VBtnToggle>
-          <p class="glass-settings-dialog__hint">{{ t('theme.glassAppearanceHint') }}</p>
+          <p class="theme-dialog__hint">{{ t('theme.glassAppearanceHint') }}</p>
         </section>
 
         <section>
-          <h3 class="glass-settings-dialog__label">{{ t('theme.glassQuality') }}</h3>
+          <h3 class="theme-dialog__label">{{ t('theme.glassQuality') }}</h3>
           <VBtnToggle
             :model-value="draftQuality"
             mandatory
@@ -399,12 +399,12 @@ aria-label="关闭"
               {{ t(option.label) }}
             </VBtn>
           </VBtnToggle>
-          <p class="glass-settings-dialog__hint">{{ t(qualityHint) }}</p>
+          <p class="theme-dialog__hint">{{ t(qualityHint) }}</p>
         </section>
 
         <section v-if="usesRealtimeOptics">
           <div class="glass-settings-dialog__preset-header">
-            <h3 class="glass-settings-dialog__label">{{ t('theme.glassPreset') }}</h3>
+            <h3 class="theme-dialog__label">{{ t('theme.glassPreset') }}</h3>
           </div>
           <VBtnToggle
             :model-value="activePreset"
@@ -423,11 +423,11 @@ aria-label="关闭"
               {{ t(option.label) }}
             </VBtn>
           </VBtnToggle>
-          <p class="glass-settings-dialog__hint">{{ t('theme.glassPresetHint') }}</p>
+          <p class="theme-dialog__hint">{{ t('theme.glassPresetHint') }}</p>
         </section>
 
         <section v-if="showsDynamicsMode" class="glass-settings-dialog__dynamics-mode-section">
-          <h3 class="glass-settings-dialog__label">{{ t('theme.glassDynamicsMode') }}</h3>
+          <h3 class="theme-dialog__label">{{ t('theme.glassDynamicsMode') }}</h3>
           <VBtnToggle
             :model-value="draftDynamicsMode"
             mandatory
@@ -445,11 +445,11 @@ aria-label="关闭"
               {{ t(option.label) }}
             </VBtn>
           </VBtnToggle>
-          <p class="glass-settings-dialog__hint">{{ t(dynamicsModeHint) }}</p>
+          <p class="theme-dialog__hint">{{ t(dynamicsModeHint) }}</p>
         </section>
 
         <section v-if="showsSurfaceMode" class="glass-settings-dialog__surface-mode-section">
-          <h3 class="glass-settings-dialog__label">{{ t('theme.glassSurfaceMode') }}</h3>
+          <h3 class="theme-dialog__label">{{ t('theme.glassSurfaceMode') }}</h3>
           <VBtnToggle
             :model-value="draftSurfaceMode"
             mandatory
@@ -467,13 +467,13 @@ aria-label="关闭"
               {{ t(option.label) }}
             </VBtn>
           </VBtnToggle>
-          <p class="glass-settings-dialog__hint">{{ t(surfaceModeHint) }}</p>
+          <p class="theme-dialog__hint">{{ t(surfaceModeHint) }}</p>
         </section>
 
         <section class="glass-settings-dialog__tuning">
           <h3 class="glass-settings-dialog__group-label">{{ t('theme.glassMaterialTuning') }}</h3>
           <div class="glass-settings-dialog__slider-header">
-            <h3 class="glass-settings-dialog__label">{{ t('theme.glassTransparencyStrength') }}</h3>
+            <h3 class="theme-dialog__label">{{ t('theme.glassTransparencyStrength') }}</h3>
             <output>{{ draftTransparencyStrength }}%</output>
           </div>
           <VSlider
@@ -490,7 +490,7 @@ aria-label="关闭"
           />
 
           <div class="glass-settings-dialog__slider-header glass-settings-dialog__slider-header--spaced">
-            <h3 class="glass-settings-dialog__label">{{ t('theme.glassTransmissionStrength') }}</h3>
+            <h3 class="theme-dialog__label">{{ t('theme.glassTransmissionStrength') }}</h3>
             <output>{{ draftTransmissionStrength }}%</output>
           </div>
           <VSlider
@@ -507,7 +507,7 @@ aria-label="关闭"
           />
 
           <div class="glass-settings-dialog__slider-header glass-settings-dialog__slider-header--spaced">
-            <h3 class="glass-settings-dialog__label">{{ t('theme.glassReflectionStrength') }}</h3>
+            <h3 class="theme-dialog__label">{{ t('theme.glassReflectionStrength') }}</h3>
             <output>{{ draftReflectionStrength }}%</output>
           </div>
           <VSlider
@@ -522,7 +522,7 @@ aria-label="关闭"
             thumb-label
             @update:model-value="updateReflectionStrength"
           />
-          <p class="glass-settings-dialog__hint">
+          <p class="theme-dialog__hint">
             {{ t('theme.glassMaterialStrengthHint') }}
           </p>
 
@@ -530,7 +530,7 @@ aria-label="关闭"
           <div v-if="showsDynamicTuning" class="glass-settings-dialog__live-controls">
             <h3 class="glass-settings-dialog__group-label">{{ t('theme.glassDynamicTuning') }}</h3>
             <div class="glass-settings-dialog__slider-header">
-              <h3 class="glass-settings-dialog__label">{{ t('theme.glassTranslationStrength') }}</h3>
+              <h3 class="theme-dialog__label">{{ t('theme.glassTranslationStrength') }}</h3>
               <output>{{ draftTranslationStrength }}%</output>
             </div>
             <VSlider
@@ -547,7 +547,7 @@ aria-label="关闭"
             />
 
             <div class="glass-settings-dialog__slider-header glass-settings-dialog__slider-header--spaced">
-              <h3 class="glass-settings-dialog__label">{{ t('theme.glassDeformationStrength') }}</h3>
+              <h3 class="theme-dialog__label">{{ t('theme.glassDeformationStrength') }}</h3>
               <output>{{ draftDeformationStrength }}%</output>
             </div>
             <VSlider
@@ -564,7 +564,7 @@ aria-label="关闭"
             />
 
             <div class="glass-settings-dialog__slider-header glass-settings-dialog__slider-header--spaced">
-              <h3 class="glass-settings-dialog__label">{{ t('theme.glassFlowStrength') }}</h3>
+              <h3 class="theme-dialog__label">{{ t('theme.glassFlowStrength') }}</h3>
               <output>{{ draftFlowStrength }}%</output>
             </div>
             <VSlider
@@ -579,7 +579,7 @@ aria-label="关闭"
               thumb-label
               @update:model-value="updateFlowStrength"
             />
-            <p class="glass-settings-dialog__hint">
+            <p class="theme-dialog__hint">
               {{ t('theme.glassOpticalStrengthHint') }}
             </p>
           </div>
@@ -587,7 +587,7 @@ aria-label="关闭"
       </VCardText>
 
       <VDivider />
-      <VCardActions class="glass-settings-dialog__actions justify-center">
+      <VCardActions class="theme-dialog__actions justify-center">
         <VBtn :slim="false" variant="tonal" prepend-icon="mdi-refresh" class="me-2" @click="resetSettings">
           {{ t('common.reset') }}
         </VBtn>
@@ -607,34 +607,7 @@ aria-label="关闭"
 </template>
 
 <style scoped lang="scss">
-.glass-settings-dialog__body {
-  display: grid;
-  align-content: start;
-  gap: 24px;
-  grid-auto-rows: max-content;
-  padding: 20px 24px 24px;
-}
-
-.glass-settings-dialog__actions {
-  flex: none;
-  padding: 16px 24px;
-}
-
-.glass-settings-dialog__label {
-  margin: 0 0 10px;
-  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.glass-settings-dialog__hint {
-  margin: 8px 0 0;
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
-
+/* __body / __actions / __label / __hint 已收编至全局 .theme-dialog__*（styles/design-spec.css），其余为本弹窗私有结构 */
 .glass-settings-dialog__group-label {
   margin: 0 0 14px;
   color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
@@ -649,7 +622,7 @@ aria-label="关闭"
   justify-content: space-between;
   gap: 16px;
 
-  .glass-settings-dialog__label {
+  .theme-dialog__label {
     margin-block-end: 0;
   }
 
@@ -669,10 +642,6 @@ aria-label="关闭"
   border-block-start: 1px solid rgba(var(--v-theme-on-surface), 0.1);
   margin-block-start: 24px;
   padding-block-start: 20px;
-
-  :deep(.v-slider) {
-    margin-block-start: 4px;
-  }
 }
 
 .glass-settings-dialog__preset-header {
@@ -681,7 +650,7 @@ aria-label="关闭"
   justify-content: space-between;
   gap: 12px;
 
-  .glass-settings-dialog__label {
+  .theme-dialog__label {
     margin-block-end: 0;
   }
 }
@@ -767,12 +736,5 @@ aria-label="关闭"
   block-size: 32px !important;
 }
 
-.glass-settings-dialog__appearance-option:deep(.v-btn--active),
-.glass-settings-dialog__dynamics-mode-option:deep(.v-btn--active),
-.glass-settings-dialog__quality-option:deep(.v-btn--active),
-.glass-settings-dialog__preset-option:deep(.v-btn--active),
-.glass-settings-dialog__surface-mode-option:deep(.v-btn--active) {
-  background-color: rgba(var(--v-theme-primary), 0.14) !important;
-  box-shadow: inset 0 0 0 1px rgba(var(--v-theme-primary), 0.38) !important;
-}
+/* .v-slider / .v-btn--active 覆盖已迁移至 styles/design-spec.css（弹窗 Vuetify 覆盖区块） */
 </style>

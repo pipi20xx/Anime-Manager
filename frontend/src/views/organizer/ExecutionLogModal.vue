@@ -275,7 +275,7 @@ watch(() => props.logs?.length, () => {
                 </div>
                 <div
                   v-if="rf.target_path"
-                  class="related-file-target"
+                  class="related-file-target related-file-target--copyable"
                   :title="rf.target_path"
                   @click="copyText(rf.target_path)"
                 >→ {{ rf.target_path }}</div>
@@ -362,46 +362,9 @@ watch(() => props.logs?.length, () => {
   color: rgb(var(--v-theme-primary));
 }
 
-/* 随行文件（字幕/音轨）：文件名一行、目标路径一行 */
-.related-files-title {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgb(var(--v-theme-on-surface));
-  margin-bottom: 4px;
-}
+/* 随行文件（字幕/音轨）样式已迁移至 styles/cards.css（.related-files-*，与 OrganizeHistoryTab 共用），此处仅保留弹窗私有的 recog-meta / stream-table 系列 */
 
-.related-file-item {
-  padding: 2px 0 2px 6px;
-}
-
-.related-file-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.related-file-name {
-  font-size: 12px;
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  color: rgb(var(--v-theme-on-surface));
-  overflow-wrap: anywhere;
-}
-
-.related-file-target {
-  font-size: 12px;
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  color: rgb(var(--v-theme-on-surface));
-  overflow-wrap: anywhere;
-  padding-left: 22px;
-  cursor: pointer;
-}
-
-.related-file-target:hover {
-  color: rgb(var(--v-theme-primary));
-}
-
-/* 流式整理模式 */
+/* 识别任务元数据 */
 .stream-table {
   width: 100%;
   border-collapse: collapse;

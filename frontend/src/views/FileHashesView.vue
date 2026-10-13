@@ -13,6 +13,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { fileHashApi } from '@/api'
 import { useNotification, useConfirm, useClipboard } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FileHashesView' })
 
@@ -885,7 +886,7 @@ onUnmounted(() => {
               >
                 TMDB: {{ item.tmdb_id }}
               </v-chip>
-              <span class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatDate(item.calculated_at) }}</span>
+              <span class="text-caption text-medium-emphasis font-mono">{{ formatDate(item.calculated_at) }}</span>
             </div>
           </div>
 
@@ -903,17 +904,17 @@ onUnmounted(() => {
           <div class="meta-tags mt-2">
             <v-chip v-if="item.sha1" size="x-small" variant="flat" class="meta-tag meta-tag--size" :title="item.sha1">
               <v-icon size="10" class="mr-1">mdi-fingerprint</v-icon>
-              <span style="font-family: monospace;">SHA1: {{ truncateHash(item.sha1) }}</span>
+              <span class="font-mono">SHA1: {{ truncateHash(item.sha1) }}</span>
             </v-chip>
             <v-chip v-if="item.ed2k" size="x-small" variant="flat" class="meta-tag meta-tag--encode" :title="item.ed2k">
               <v-icon size="10" class="mr-1">mdi-link-variant</v-icon>
-              <span style="font-family: monospace;">ED2K: {{ truncateHash(item.ed2k) }}</span>
+              <span class="font-mono">ED2K: {{ truncateHash(item.ed2k) }}</span>
             </v-chip>
             <v-btn v-if="item.ed2k_link" size="x-small" variant="tonal" color="info" class="meta-tag-copy-btn" @click.stop="copyEd2kWithTemplate(item)" title="复制 ED2K 链接（按模板渲染）"><v-icon size="10" start>mdi-content-copy</v-icon>复制ED2K</v-btn>
           </div>
 
           <!-- 源路径 -->
-          <div v-if="item.source_path" class="text-caption text-medium-emphasis mt-2" style="font-family: monospace; word-break: break-all;" :title="item.source_path">
+          <div v-if="item.source_path" class="text-caption text-medium-emphasis mt-2 font-mono word-break-all" :title="item.source_path">
             <v-icon size="12" class="mr-1">mdi-folder-outline</v-icon>{{ item.source_path }}
           </div>
         </v-card>
@@ -933,24 +934,15 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div v-else class="empty-state">
-      <v-icon size="64" color="primary" class="mb-4">mdi-fingerprint</v-icon>
-      <div class="text-h6 font-weight-medium">暂无哈希记录</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">在整理任务中开启"哈希计算"后，记录会出现在这里</div>
-    </div>
+    <EmptyState v-else icon="mdi-fingerprint" title="暂无哈希记录" description="在整理任务中开启&quot;哈希计算&quot;后，记录会出现在这里" />
 
     <!-- 哈希详情弹窗 -->
     <v-dialog v-model="showDetailModal" max-width="720" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-fingerprint</v-icon>
-          哈希详情
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showDetailModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-fingerprint" icon-color="primary" title="哈希详情" @close="showDetailModal = false" />
         <v-divider />
 
-        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto;">
+        <v-card-text class="pa-4 dialog-scroll-body">
           <v-skeleton-loader v-if="detailLoading" type="list-item@6" />
 
           <template v-else-if="detailItem">
@@ -1066,15 +1058,10 @@ onUnmounted(() => {
     <!-- 高级设置弹窗：ED2K 链接命名模板 -->
     <v-dialog v-model="showTemplateSettings" max-width="700" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-cog-outline</v-icon>
-          ED2K 链接命名模板
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showTemplateSettings = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-cog-outline" icon-color="primary" title="ED2K 链接命名模板" @close="showTemplateSettings = false" />
         <v-divider />
 
-        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto;">
+        <v-card-text class="pa-4 dialog-scroll-body">
           <!-- 说明 -->
           <div class="text-body-2 text-medium-emphasis mb-4 pa-3" style="background: rgba(var(--v-theme-on-surface), 0.03); border-radius: 8px; line-height: 1.6;">
             复制 ED2K 链接时，会根据记录的媒体类型自动选择对应模板组合识别信息生成新的文件名，替换链接中的文件名段。
@@ -1114,7 +1101,7 @@ onUnmounted(() => {
                 :rows="2"
                 auto-grow
                 placeholder="{title} ({year}) - S{season_02}E{episode_02} - {team}"
-                style="font-family: monospace;"
+                class="font-mono"
               />
             </v-window-item>
 
@@ -1143,7 +1130,7 @@ onUnmounted(() => {
                 :rows="2"
                 auto-grow
                 placeholder="{title} ({year}) - {team}"
-                style="font-family: monospace;"
+                class="font-mono"
               />
             </v-window-item>
           </v-window>
@@ -1161,11 +1148,11 @@ onUnmounted(() => {
             </div>
             <div class="text-body-2 mb-1">
               <span class="text-medium-emphasis">渲染文件名：</span>
-              <code style="font-family: monospace;">{{ previewFilename }}</code>
+              <code class="font-mono">{{ previewFilename }}</code>
             </div>
             <div class="text-body-2" style="word-break: break-all;">
               <span class="text-medium-emphasis">完整 ED2K：</span>
-              <code style="font-family: monospace; color: rgb(var(--v-theme-success));">{{ previewEd2kLink }}</code>
+              <code class="font-mono" style="color: rgb(var(--v-theme-success));">{{ previewEd2kLink }}</code>
             </div>
           </div>
 
@@ -1179,7 +1166,7 @@ onUnmounted(() => {
                   <v-row density="compact">
                     <v-col v-for="(desc, v) in g.vars" :key="v" cols="12" sm="6">
                       <div class="d-flex align-center ga-2">
-                        <code style="font-family: monospace; background: rgba(var(--v-theme-on-surface), 0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ v }}</code>
+                        <code class="font-mono" style="background: rgba(var(--v-theme-on-surface), 0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ v }}</code>
                         <span class="text-caption text-medium-emphasis">{{ desc }}</span>
                       </div>
                     </v-col>
@@ -1202,15 +1189,10 @@ onUnmounted(() => {
     <!-- 计算哈希弹窗 -->
     <v-dialog v-model="showCalculateModal" max-width="640" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="info">mdi-plus</v-icon>
-          计算单文件哈希
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showCalculateModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-plus" icon-color="info" title="计算单文件哈希" @close="showCalculateModal = false" />
         <v-divider />
 
-        <v-card-text class="pa-4 form-section" style="max-height: 70vh; overflow-y: auto;">
+        <v-card-text class="pa-4 form-section dialog-scroll-body">
           <v-text-field v-model="calculateForm.file_path" label="文件绝对路径 *" variant="outlined" density="compact" placeholder="/path/to/file.mkv" />
 
           <div class="section-title mb-2 mt-2">
@@ -1276,15 +1258,12 @@ onUnmounted(() => {
     <!-- 一键修复 / 重新识别 结果弹窗 -->
     <v-dialog v-model="showFixResultModal" max-width="900" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start :color="fixResultType === 'reco' ? 'info' : 'warning'">{{ fixResultType === 'reco' ? 'mdi-magnify-scan' : 'mdi-wrench-check-outline' }}</v-icon>
-          {{ fixResultType === 'reco' ? '重新识别结果' : '修复结果' }}
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showFixResultModal = false" />
-        </v-card-title>
+        <DialogTitle icon-color="fixResultType === 'reco' ? 'info' : 'warning'" @close="showFixResultModal = false">
+          <template #icon>{{ fixResultType === 'reco' ? 'mdi-magnify-scan' : 'mdi-wrench-check-outline' }}</template>
+        </DialogTitle>
         <v-divider />
 
-        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto;">
+        <v-card-text class="pa-4 dialog-scroll-body">
           <template v-if="fixResult">
             <!-- 统计摘要 -->
             <div class="d-flex ga-3 flex-wrap mb-4">
@@ -1340,39 +1319,4 @@ onUnmounted(() => {
   </v-container>
 </template>
 
-<style scoped>
-/* 详情弹窗双击编辑行 */
-.kv-row--editable {
-  align-items: center;
-  cursor: pointer;
-}
-.kv-row--editable .edit-hint {
-  flex-shrink: 0;
-  opacity: 0;
-  color: rgb(var(--v-theme-primary));
-  transition: opacity 0.15s;
-}
-.kv-row--editable:hover .edit-hint {
-  opacity: 0.8;
-}
-/* 复制ED2K按钮与旁边的meta-tag芯片对齐 */
-.meta-tag-copy-btn {
-  min-height: 20px !important;
-  height: auto !important;
-  padding: 0 8px !important;
-  font-size: 10px !important;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  border-radius: 10px !important;
-}
-.meta-tag-copy-btn .v-btn__content {
-  font-size: 10px !important;
-  gap: 4px;
-}
-.meta-tag-copy-btn .v-icon {
-  font-size: 10px !important;
-  height: 10px !important;
-  width: 10px !important;
-  margin-inline: 0 !important;
-}
-</style>
+<!-- scoped 样式已迁移：.kv-row--editable → styles/utilities.css，.meta-tag-copy-btn → styles/cards.css -->

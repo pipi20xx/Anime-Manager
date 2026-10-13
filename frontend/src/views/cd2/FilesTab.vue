@@ -13,6 +13,7 @@ import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
 import ManualOrganizeModal from '../organizer/ManualOrganizeModal.vue'
 import CleanEmptyDirsModal from '../CleanEmptyDirsModal.vue'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FilesTab' })
 
@@ -885,11 +886,7 @@ onMounted(() => {
   <!-- 新建文件夹 -->
   <v-dialog v-model="showCreateModal" max-width="440" scrollable>
     <v-card>
-      <v-card-title class="d-flex align-center">
-        新建文件夹
-        <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showCreateModal = false" />
-      </v-card-title>
+      <DialogTitle title="新建文件夹" @close="showCreateModal = false" />
       <v-card-text>
         <v-text-field
           v-model="newFolderName"
@@ -914,11 +911,7 @@ onMounted(() => {
   <!-- 重命名 -->
   <v-dialog v-model="showRenameModal" max-width="440" scrollable>
     <v-card>
-      <v-card-title class="d-flex align-center">
-        重命名
-        <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showRenameModal = false" />
-      </v-card-title>
+      <DialogTitle title="重命名" @close="showRenameModal = false" />
       <v-card-text>
         <v-text-field
           v-model="renameNewName"
@@ -943,11 +936,9 @@ onMounted(() => {
   <!-- 移动/复制 -->
   <v-dialog v-model="showTransferModal" max-width="480" scrollable>
     <v-card>
-      <v-card-title class="d-flex align-center">
+      <DialogTitle  @close="showTransferModal = false">
         {{ transferAction === 'move' ? '移动' : '复制' }}「{{ transferTarget?.name }}」
-        <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showTransferModal = false" />
-      </v-card-title>
+      </DialogTitle>
       <v-card-text>
         <v-text-field
           v-model="transferDest"
@@ -984,35 +975,18 @@ onMounted(() => {
   <!-- 离线下载管理 -->
   <v-dialog v-model="showOfflineModal" max-width="860" scrollable>
     <v-card>
-      <v-card-title class="d-flex align-center flex-wrap gap-2">
-        <v-icon class="mr-2">mdi-magnet</v-icon>
+      <DialogTitle icon="mdi-magnet" @close="showOfflineModal = false">
         离线下载管理
-        <v-chip size="x-small" variant="tonal" class="ml-2">{{ currentPath }}</v-chip>
-        <v-chip v-if="offlineQuota.total" size="x-small" variant="tonal" color="primary" class="ml-1">
-          配额 {{ offlineQuota.used ?? 0 }} / {{ offlineQuota.total }}
-        </v-chip>
-        <v-spacer />
-        <v-btn
-          variant="tonal"
-          size="small"
-          prepend-icon="mdi-broom"
-          :disabled="!offlineTasks.length"
-          @click="openClearModal"
-        >
-          清空
-        </v-btn>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          size="small"
-          :prepend-icon="showAddTask ? 'mdi-chevron-up' : 'mdi-plus'"
-          @click="showAddTask = !showAddTask"
-        >
-          添加任务
-        </v-btn>
-        <v-btn icon="mdi-refresh" size="small" variant="text" :loading="offlineLoading" title="刷新" @click="loadOfflineTasks" />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showOfflineModal = false" />
-      </v-card-title>
+        <template #append>
+          <v-chip size="x-small" variant="tonal" class="ml-2">{{ currentPath }}</v-chip>
+          <v-chip v-if="offlineQuota.total" size="x-small" variant="tonal" color="primary" class="ml-1">
+            配额 {{ offlineQuota.used ?? 0 }} / {{ offlineQuota.total }}
+          </v-chip>
+          <v-btn variant="tonal" size="small" prepend-icon="mdi-broom" :disabled="!offlineTasks.length" @click="openClearModal">清空</v-btn>
+          <v-btn color="primary" variant="tonal" size="small" :prepend-icon="showAddTask ? 'mdi-chevron-up' : 'mdi-plus'" @click="showAddTask = !showAddTask">添加任务</v-btn>
+          <v-btn icon="mdi-refresh" size="small" variant="text" :loading="offlineLoading" title="刷新" @click="loadOfflineTasks" />
+        </template>
+      </DialogTitle>
       <v-divider />
 
       <!-- 提交新任务 -->
@@ -1079,7 +1053,7 @@ onMounted(() => {
                 </div>
 
                 <div
-                  class="text-body-2 font-weight-medium mb-2 offline-task-name"
+                  class="text-body-2 font-weight-medium mb-2 text-truncate-2"
                   :title="task.name || task.info_hash"
                 >
                   {{ task.name || task.info_hash || '未知任务' }}
@@ -1132,12 +1106,7 @@ onMounted(() => {
   <!-- 删除任务确认（含同时删除云端文件选项） -->
   <v-dialog v-model="showDeleteModal" max-width="460" scrollable>
     <v-card>
-      <v-card-title class="d-flex align-center">
-        <v-icon color="error" class="mr-2">mdi-delete-outline</v-icon>
-        删除离线任务
-        <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showDeleteModal = false" />
-      </v-card-title>
+      <DialogTitle icon="mdi-delete-outline" icon-color="error" title="删除离线任务" @close="showDeleteModal = false" />
       <v-card-text>
         <div class="text-body-2 mb-2 text-truncate">
           {{ deletingTask?.name || deletingTask?.info_hash || '未知任务' }}
@@ -1165,12 +1134,7 @@ onMounted(() => {
   <!-- 清空任务确认（四选一 + 同时删除云端文件） -->
   <v-dialog v-model="showClearModal" max-width="460" scrollable>
     <v-card>
-      <v-card-title class="d-flex align-center">
-        <v-icon color="warning" class="mr-2">mdi-broom</v-icon>
-        清空离线任务
-        <v-spacer />
-        <v-btn icon="mdi-close" size="small" variant="text" @click="showClearModal = false" />
-      </v-card-title>
+      <DialogTitle icon="mdi-broom" icon-color="warning" title="清空离线任务" @close="showClearModal = false" />
       <v-card-text>
         <v-select
           v-model="clearFilter"
@@ -1236,21 +1200,4 @@ onMounted(() => {
   />
 </template>
 
-<style scoped>
-.offline-task-name {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: break-all;
-  line-height: 1.4;
-}
-
-/* 与原文件浏览一致：去掉 prepend 后的占位 spacer，固定图标与文字间距 */
-.file-list-item :deep(.v-list-item__spacer) {
-  display: none !important;
-}
-.file-list-item :deep(.v-list-item__prepend) {
-  margin-inline-end: 8px !important;
-}
-</style>
+<!-- 两行截断已统一为全局 .text-truncate-2；.file-list-item 的 v-list 覆盖已迁移至 styles/cards.css（与 FileBrowserView 共用） -->

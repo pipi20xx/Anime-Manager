@@ -17,6 +17,7 @@ import { taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { useWebSocket } from '@/composables'
 import { getStatusTag } from '@/utils/taskStatus'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'TaskHistoryView' })
 
@@ -375,7 +376,7 @@ onUnmounted(() => {
         density="compact"
         variant="outlined"
         hide-details
-        class="task-filter-select"
+        class="task-filter-select select-center"
         item-title="title"
         item-value="value"
       />
@@ -440,34 +441,28 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-clipboard-list-outline</v-icon>
-      <div class="text-h6 font-weight-medium">暂无任务记录</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">执行整理或识别任务后记录会出现在这里</div>
-    </div>
+    <EmptyState v-else icon="mdi-clipboard-list-outline" title="暂无任务记录" description="执行整理或识别任务后记录会出现在这里" />
 
     <!-- 日志弹窗 -->
     <v-dialog v-model="showLogModal" max-width="960">
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-text-box-outline</v-icon>
-          任务日志
-          <v-spacer />
-          <v-chip v-if="selectedTask" size="small" :color="getStatusTag(selectedTask.status).color" variant="tonal">
-            {{ getStatusTag(selectedTask.status).label }}
-          </v-chip>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showLogModal = false" class="ml-2" />
-        </v-card-title>
+        <DialogTitle icon="mdi-text-box-outline" icon-color="primary" title="任务日志" @close="showLogModal = false">
+          <template #append>
+            <v-chip v-if="selectedTask" size="small" :color="getStatusTag(selectedTask.status).color" variant="tonal" class="ml-2">
+              {{ getStatusTag(selectedTask.status).label }}
+            </v-chip>
+          </template>
+        </DialogTitle>
         <v-divider />
-        <v-card-text class="pa-4 log-scroll-area" style="max-height: 70vh; overflow-y: auto">
+        <v-card-text class="pa-4 log-scroll-area dialog-scroll-body">
           <div v-if="selectedTask?.logs?.length" class="th-log-container">
-            <div v-for="group in selectedTaskGroupedLogs" :key="group.groupTime" class="log-group">
-              <div class="log-group-line"></div>
-              <div class="log-group-items">
-                <div v-for="(log, i) in group.logs" :key="i" class="log-line">
-                  <span class="log-time">{{ log.time }}</span>
-                  <span :class="['log-level', (log.level || '').toLowerCase()]">{{ log.level }}</span>
-                  <span class="log-msg">{{ log.message }}</span>
+            <div v-for="group in selectedTaskGroupedLogs" :key="group.groupTime" class="log-rows__group">
+              <div class="log-rows__group-line"></div>
+              <div class="log-rows__group-items">
+                <div v-for="(log, i) in group.logs" :key="i" class="log-rows__line">
+                  <span class="log-rows__time">{{ log.time }}</span>
+                  <span :class="['log-rows__level', 'log-lv-' + (log.level || '').toLowerCase()]">{{ log.level }}</span>
+                  <span class="log-rows__msg">{{ log.message }}</span>
                 </div>
               </div>
             </div>
@@ -483,73 +478,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.th-task-card {
-  transition: all 0.2s ease;
-}
-
-.th-log-container {
-  font-family: monospace;
-  font-size: 13px;
-}
-.log-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-.log-group:last-child {
-  border-bottom: none;
-}
-.log-group-line {
-  width: 2px;
-  background-color: rgb(var(--v-theme-primary));
-  border-radius: 1px;
-  flex-shrink: 0;
-  align-self: stretch;
-  margin: 4px 0;
-  opacity: 0.6;
-}
-.log-group-items {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.log-line {
-  display: flex;
-  gap: 8px;
-  padding: 2px 0;
-}
-.log-time {
-  color: rgb(var(--v-theme-on-surface));
-  min-width: 75px;
-}
-.log-level {
-  min-width: 40px;
-  font-weight: bold;
-}
-.log-level.info { color: #52c41a; }
-.log-level.error { color: #ff4d4f; }
-.log-level.warning { color: #faad14; }
-.log-msg {
-  flex: 1;
-  word-break: break-all;
-}
+/* 日志弹窗结构样式（.th-log-* / .log-lv-*）已迁移至 styles/cards.css，类名同步加 th- 前缀 */
 .task-filter-select {
   min-width: 140px;
   max-width: 180px;
 }
-/* 选中文字居中 */
-.task-filter-select :deep(.v-field__input),
-.task-filter-select :deep(.v-select__selection),
-.task-filter-select :deep(.v-select__selection-text) {
-  width: 100% !important;
-  text-align: center !important;
-  justify-content: center !important;
-}
-/* 下拉菜单选项也居中 */
-.task-filter-select :deep(.v-list-item-title) {
-  text-align: center !important;
-}
+/* 文字居中已统一为全局 .select-center（styles/cards.css） */
 </style>

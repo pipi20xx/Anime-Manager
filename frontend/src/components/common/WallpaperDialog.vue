@@ -266,7 +266,7 @@ watch(
       </VCardTitle>
       <VDivider />
 
-      <VCardText class="wallpaper-dialog__body">
+      <VCardText class="theme-dialog__body">
         <div v-if="loading" class="wallpaper-dialog__loading">
           <VProgressCircular indeterminate color="primary" size="32" />
         </div>
@@ -274,7 +274,7 @@ watch(
         <template v-else-if="config">
           <!-- 源类型选择 -->
           <section>
-            <h3 class="wallpaper-dialog__label">壁纸来源</h3>
+            <h3 class="theme-dialog__label">壁纸来源</h3>
             <VBtnToggle
               :model-value="currentSourceType"
               mandatory
@@ -300,7 +300,7 @@ watch(
 
           <!-- API 源选择 -->
           <section v-if="currentSourceType === 'api'">
-            <h3 class="wallpaper-dialog__label">选择 API 源</h3>
+            <h3 class="theme-dialog__label">选择 API 源</h3>
             <div class="wallpaper-dialog__source-grid">
               <button
                 v-for="source in sources"
@@ -329,7 +329,7 @@ watch(
 
           <!-- 自定义 URL -->
           <section v-if="currentSourceType === 'url'">
-            <h3 class="wallpaper-dialog__label">壁纸 URL</h3>
+            <h3 class="theme-dialog__label">壁纸 URL</h3>
             <VTextField
               v-model="customUrlInput"
               placeholder="https://example.com/wallpaper.jpg"
@@ -349,7 +349,7 @@ watch(
             >
               应用
             </VBtn>
-            <p class="wallpaper-dialog__hint">
+            <p class="theme-dialog__hint">
               输入固定图片 URL（直链）。随机 API 地址请使用"API 随机"模式。
             </p>
           </section>
@@ -357,7 +357,7 @@ watch(
           <!-- 本地上传 -->
           <section v-if="currentSourceType === 'upload'">
             <div class="wallpaper-dialog__upload-header">
-              <h3 class="wallpaper-dialog__label">已上传壁纸</h3>
+              <h3 class="theme-dialog__label">已上传壁纸</h3>
               <VBtn
                 variant="tonal"
                 color="primary"
@@ -420,7 +420,7 @@ watch(
           <!-- 壁纸亮度 -->
           <section>
             <div class="wallpaper-dialog__slider-header">
-              <h3 class="wallpaper-dialog__label">壁纸亮度</h3>
+              <h3 class="theme-dialog__label">壁纸亮度</h3>
               <VBtn
                 variant="text"
                 size="x-small"
@@ -443,14 +443,14 @@ watch(
               thumb-label
               @update:model-value="updateBrightness"
             />
-            <p class="wallpaper-dialog__hint">
+            <p class="theme-dialog__hint">
               自动模式下根据壁纸明暗自动计算亮度；手动模式可自行调节。
             </p>
           </section>
 
           <!-- 缓存时间 -->
           <section>
-            <h3 class="wallpaper-dialog__label">缓存时间</h3>
+            <h3 class="theme-dialog__label">缓存时间</h3>
             <div class="wallpaper-dialog__cache-grid">
               <button
                 v-for="preset in cacheTtlPresets"
@@ -469,7 +469,7 @@ watch(
       </VCardText>
 
       <VDivider />
-      <VCardActions class="wallpaper-dialog__actions justify-center">
+      <VCardActions class="theme-dialog__actions justify-center">
         <VBtn
           variant="tonal"
           color="primary"
@@ -484,39 +484,12 @@ watch(
 </template>
 
 <style scoped lang="scss">
-.wallpaper-dialog__body {
-  display: grid;
-  align-content: start;
-  gap: 24px;
-  grid-auto-rows: max-content;
-  padding: 20px 24px 24px;
-}
-
+/* __body / __actions / __label / __hint 已收编至全局 .theme-dialog__*（styles/design-spec.css），其余为本弹窗私有结构 */
 .wallpaper-dialog__loading {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 0;
-}
-
-.wallpaper-dialog__actions {
-  flex: none;
-  padding: 16px 24px;
-}
-
-.wallpaper-dialog__label {
-  margin: 0 0 10px;
-  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.wallpaper-dialog__hint {
-  margin: 8px 0 0;
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-  font-size: 0.75rem;
-  line-height: 1.45;
 }
 
 .wallpaper-dialog__slider-header {
@@ -525,17 +498,13 @@ watch(
   justify-content: space-between;
   gap: 16px;
 
-  .wallpaper-dialog__label {
+  .theme-dialog__label {
     margin-block-end: 0;
   }
 }
 
 .wallpaper-dialog__source-type {
   width: 100%;
-
-  :deep(.v-btn-group) {
-    width: 100%;
-  }
 }
 
 .wallpaper-dialog__source-type-option {
@@ -592,11 +561,7 @@ watch(
   font-size: 0.6875rem;
 }
 
-.wallpaper-dialog__url-input {
-  :deep(.v-field) {
-    border-radius: 8px;
-  }
-}
+/* .v-btn-group / .v-field 覆盖已迁移至 styles/design-spec.css（弹窗 Vuetify 覆盖区块） */
 
 .wallpaper-dialog__upload-header {
   display: flex;
@@ -604,7 +569,7 @@ watch(
   justify-content: space-between;
   gap: 12px;
 
-  .wallpaper-dialog__label {
+  .theme-dialog__label {
     margin-block-end: 0;
   }
 }

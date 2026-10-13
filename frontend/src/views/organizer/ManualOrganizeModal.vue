@@ -15,6 +15,7 @@ import { useLocalStorage } from '@/composables/useStorage'
 import { GlassDialog } from '@/glass'
 import FolderBrowserModal from './FolderBrowserModal.vue'
 import { getActionTypeHint } from '@/utils/organizeActions'
+import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   modelValue: boolean
@@ -236,12 +237,7 @@ function handleRunBackground() {
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="750" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-folder-sync-outline</v-icon>
-        手动整理当前目录 (临时任务)
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="emit('update:modelValue', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-folder-sync-outline" icon-color="primary" title="手动整理当前目录 (临时任务)" @close="emit('update:modelValue', false)" />
       <v-divider />
 
       <v-card-text class="pa-0" style="max-height: 70vh">
@@ -582,4 +578,4 @@ function handleRunBackground() {
   />
 </template>
 
-<!-- scoped 样式已迁移至 global.css .config-row / .inactive-hint / .hash-warning-inline -->
+<!-- .config-row / .inactive-hint / .hash-warning-inline 定义在 styles/utilities.css -->

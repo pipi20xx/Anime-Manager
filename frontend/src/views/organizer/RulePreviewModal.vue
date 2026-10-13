@@ -6,6 +6,7 @@
 import { ref, watch } from 'vue'
 import { organizerApi } from '@/api'
 import { useNotification } from '@/composables'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'RulePreviewModal' })
 
@@ -75,12 +76,9 @@ async function submitPreview() {
 <template>
   <v-dialog v-model="show" max-width="720" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-eye-outline</v-icon>
+      <DialogTitle icon="mdi-eye-outline" icon-color="primary" @close="show = false">
         规则预览 — {{ ruleName }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="show = false" />
-      </v-card-title>
+      </DialogTitle>
       <v-divider />
 
       <v-card-text class="pa-4">

@@ -13,6 +13,7 @@ import { configApi, systemApi } from '@/api'
 import { useNotification, useClipboard } from '@/composables'
 import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import { useThemeStore } from '@/stores'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'ExternalControlView' })
 
@@ -422,16 +423,16 @@ registerHeaderTab({
             @update:page="page = $event; fetchLogs()"
           >
             <template #item.timestamp="{ item }">
-              <span class="text-caption font-monospace">{{ formatTimestamp(item.timestamp) }}</span>
+              <span class="text-caption font-mono">{{ formatTimestamp(item.timestamp) }}</span>
             </template>
             <template #item.ip="{ item }">
-              <span class="text-caption font-monospace">{{ getIp(item) }}</span>
+              <span class="text-caption font-mono">{{ getIp(item) }}</span>
             </template>
             <template #item.action="{ item }">
               <v-chip size="x-small" color="info" variant="tonal" label>{{ item.action }}</v-chip>
             </template>
             <template #item.message="{ item }">
-              <span class="text-caption font-monospace">{{ item.message }}</span>
+              <span class="text-caption font-mono">{{ item.message }}</span>
             </template>
             <template #item.details="{ item }">
               <v-btn
@@ -475,15 +476,10 @@ registerHeaderTab({
     <!-- 日志详情弹窗 -->
     <v-dialog v-model="showLogDetail" max-width="600" scrollable>
       <v-card rounded="xl">
-<v-card-title class="d-flex align-center">
-<v-icon start color="primary">mdi-file-document-outline</v-icon>
-请求详情
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showLogDetail = false" />
-</v-card-title>
+<DialogTitle icon="mdi-file-document-outline" icon-color="primary" title="请求详情" @close="showLogDetail = false" />
         <v-divider />
         <v-card-text class="pa-4">
-          <pre class="log-detail-pre">{{ currentLogDetail }}</pre>
+          <pre class="mono-box">{{ currentLogDetail }}</pre>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -495,27 +491,12 @@ registerHeaderTab({
 </template>
 
 <style scoped>
+/* .font-monospace 已统一为全局 .font-mono；.log-detail-pre 已统一为全局 .mono-box */
 .docs-iframe {
   width: 100%;
   min-height: 800px;
   display: block;
   border: none;
   border-radius: 12px;
-}
-
-.log-detail-pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  background: rgba(var(--v-theme-surface-variant), 0.15);
-  padding: 16px;
-  border-radius: 8px;
-}
-
-.font-monospace {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
 }
 </style>

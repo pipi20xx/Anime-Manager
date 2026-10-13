@@ -8,6 +8,7 @@
 import { ref, reactive } from 'vue'
 import { useNotification, useConfirm, useDragSort } from '@/composables'
 import RuleEditModal from './RuleEditModal.vue'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'RulesTab' })
 
@@ -164,10 +165,7 @@ async function duplicateRule(index: number) {
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-form-textbox</v-icon>
-      <div class="text-h6 font-weight-medium">暂无重命名规则</div>
-    </div>
+    <EmptyState v-else icon="mdi-form-textbox" title="暂无重命名规则" />
 
     <!-- 规则编辑弹窗 -->
     <RuleEditModal

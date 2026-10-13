@@ -14,6 +14,8 @@ import { ref, reactive, watch, onMounted } from 'vue'
 import { strmApi, configApi, clientsApi } from '@/api'
 import { useNotification, useConfirm, useDragSort } from '@/composables'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
+import { EmptyState } from '@/components/common'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'StrmView' })
 
@@ -598,24 +600,21 @@ onMounted(() => {
     </template>
 
     <!-- 空状态 -->
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-link-variant</v-icon>
-      <div class="text-h6 font-weight-medium">暂无 STRM 任务</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">点击「新建任务」创建你的第一个 STRM 生成任务</div>
-      <v-btn color="primary" variant="tonal" class="mt-4" prepend-icon="mdi-plus" @click="openNew">
-        新建任务
-      </v-btn>
-    </div>
+    <EmptyState
+      v-else
+      icon="mdi-link-variant"
+      title="暂无 STRM 任务"
+      description="点击「新建任务」创建你的第一个 STRM 生成任务"
+    >
+      <template #actions>
+        <v-btn color="primary" variant="tonal" prepend-icon="mdi-plus" @click="openNew">新建任务</v-btn>
+      </template>
+    </EmptyState>
 
     <!-- 编辑 Modal — Tab 分页，功能对齐全旧前端 -->
     <v-dialog v-model="showModal" max-width="800" scrollable>
       <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start>mdi-link-variant</v-icon>
-{{ isNewTask ? '新建 STRM 任务' : '编辑 STRM 任务' }}
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-link-variant" :title="isNewTask ? '新建 STRM 任务' : '编辑 STRM 任务'" @close="showModal = false" />
         <v-divider />
         <v-card-text class="pa-0">
           <v-tabs v-model="activeTab" density="compact" color="primary">
@@ -897,55 +896,4 @@ onMounted(() => {
   </v-container>
 </template>
 
-<style scoped>
-/* 路径容器：竖向布局，源 → 箭头 → 目标 */
-.task-path-container {
-  display: flex;
-  flex-direction: column;
-  border: var(--am-path-border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: transparent;
-}
-.task-path-item {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  gap: 6px;
-}
-.task-path-divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.task-path-text {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: rgb(var(--v-theme-on-surface));
-  flex: 1;
-  min-width: 0;
-}
-
-/* 轻量 via 标记 */
-.via-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1;
-  padding: 2px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  color: #fff;
-}
-.via-badge--cd2 {
-  background: #00897b;
-}
-.via-badge--local {
-  background: #78909c;
-}
-</style>
+<!-- scoped 样式已迁移至 styles/cards.css（.task-path-* / .via-badge*，与 TasksTab 共用） -->

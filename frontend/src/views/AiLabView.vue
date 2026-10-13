@@ -14,7 +14,7 @@ import { api, apiFetch } from '@/api'
 import { configApi } from '@/api'
 import { useNotification } from '@/composables'
 import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
-import { PasswordInput } from '@/components/common'
+import { PasswordInput, DialogTitle, SectionHeader } from '@/components/common'
 import AiChatPanel from '@/components/ai/AiChatPanel.vue'
 import { renderAiMarkdown } from '@/utils/aiMarkdown'
 
@@ -425,10 +425,9 @@ registerHeaderTab({
       <!-- 工具列表 -->
       <v-window-item value="tools">
         <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-toolbox-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">可用工具 ({{ tools.length }})</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-toolbox-outline">
+            可用工具 ({{ tools.length }})
+          </SectionHeader>
           <div class="pa-4 pb-2 d-flex justify-end">
             <v-text-field
               v-model="toolSearchQuery"
@@ -491,10 +490,9 @@ registerHeaderTab({
       <!-- 技能管理 -->
       <v-window-item value="skills">
         <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-lightning-bolt-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">可用技能 ({{ skills.length }})</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-lightning-bolt-outline">
+            可用技能 ({{ skills.length }})
+          </SectionHeader>
           <div class="pa-4 pb-2 d-flex align-center justify-end ga-2">
             <v-text-field
               v-model="skillSearchQuery"
@@ -620,10 +618,7 @@ registerHeaderTab({
 
         <!-- AI 模型配置 -->
         <v-card class="glass-card mb-4">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-brain</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">AI 模型配置</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-brain" title="AI 模型配置" />
           <v-divider />
           <v-card-text class="pa-4">
             <div class="text-body-2 font-weight-medium mb-2">模型提供商</div>
@@ -643,10 +638,7 @@ registerHeaderTab({
 
         <!-- 推理参数 -->
         <v-card class="glass-card mb-4">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-tune-vertical</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">推理参数</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-tune-vertical" title="推理参数" />
           <v-divider />
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-4">
@@ -694,10 +686,7 @@ registerHeaderTab({
       <!-- AI 介入测试 -->
       <v-window-item value="fallback-test">
         <v-card class="glass-card mb-4">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-robot-excited-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">AI 智能介入测试</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-robot-excited-outline" title="AI 智能介入测试" />
           <v-divider />
           <v-card-text class="pa-4">
             <div class="text-body-2 text-medium-emphasis mb-4">
@@ -975,10 +964,7 @@ registerHeaderTab({
       <!-- Telegram Bot -->
       <v-window-item value="telegram">
         <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-send-circle-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">Telegram Bot</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-send-circle-outline" title="Telegram Bot" />
           <v-divider />
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-4">
@@ -1015,14 +1001,9 @@ registerHeaderTab({
     <!-- 工具测试对话框 -->
     <v-dialog v-model="toolTestDialog.open" max-width="560" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-play-circle-outline</v-icon>
+        <DialogTitle icon="mdi-play-circle-outline" icon-color="primary" @close="toolTestDialog.open = false">
           <span class="font-mono text-body-1 font-weight-bold">{{ toolTestDialog.tool?.name }}</span>
-          <v-spacer />
-          <v-btn icon size="small" variant="text" @click="toolTestDialog.open = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-card-title>
+        </DialogTitle>
         <v-divider />
         <v-card-text class="pa-4">
           <div class="text-body-2 text-medium-emphasis mb-4">{{ toolTestDialog.tool?.description }}</div>
@@ -1052,7 +1033,7 @@ registerHeaderTab({
 
           <div v-if="toolTestDialog.result !== null" class="mt-3">
             <div class="text-caption text-medium-emphasis mb-1">执行结果</div>
-            <pre class="tool-test-result">{{ formatToolResult(toolTestDialog.result) }}</pre>
+            <pre class="mono-box">{{ formatToolResult(toolTestDialog.result) }}</pre>
           </div>
         </v-card-text>
         <v-divider />
@@ -1068,19 +1049,4 @@ registerHeaderTab({
   </v-container>
 </template>
 
-
-
-<style scoped>
-.tool-test-result {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  overflow: auto;
-  max-height: 300px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-</style>
+<!-- scoped 样式已统一为全局 .mono-box（styles/utilities.css） -->

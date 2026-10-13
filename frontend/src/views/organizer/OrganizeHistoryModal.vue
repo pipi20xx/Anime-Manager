@@ -6,6 +6,7 @@
 import { ref, watch } from 'vue'
 import { organizerApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'OrganizeHistoryModal' })
 
@@ -135,12 +136,7 @@ function historyStatusLabel(status: string): string {
 <template>
   <v-dialog v-model="show" max-width="800" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-history</v-icon>
-        整理历史
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="show = false" />
-      </v-card-title>
+      <DialogTitle icon="mdi-history" icon-color="primary" title="整理历史" @close="show = false" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -230,10 +226,7 @@ function historyStatusLabel(status: string): string {
           </div>
         </div>
 
-        <div v-else class="text-center pa-8">
-          <v-icon size="64" color="primary" class="mb-4">mdi-history</v-icon>
-          <div class="text-h6 font-weight-medium">暂无整理历史</div>
-        </div>
+        <EmptyState v-else icon="mdi-history" title="暂无整理历史" />
       </v-card-text>
 
       <v-divider />

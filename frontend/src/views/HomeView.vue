@@ -11,6 +11,7 @@
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRecognitionStore } from '@/stores'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'HomeView' })
 
@@ -324,11 +325,11 @@ const filteredLogs = computed(() => {
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">处理后名:</span>
-                            <span class="recog-text-value text-mono">{{ safeVal(finalData.processed_name) }}</span>
+                            <span class="recog-text-value font-mono">{{ safeVal(finalData.processed_name) }}</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">原始文件:</span>
-                            <span class="recog-text-value text-mono recog-filename">{{ safeVal(finalData.filename) }}</span>
+                            <span class="recog-text-value font-mono recog-filename">{{ safeVal(finalData.filename) }}</span>
                           </div>
                         </div>
 
@@ -434,7 +435,7 @@ const filteredLogs = computed(() => {
                                 aspect-ratio="2/3"
                                 class="tmdb-small-poster"
                               />
-                              <div v-else class="tmdb-no-poster">N/A</div>
+                              <div v-else class="poster-placeholder poster-placeholder--dashed tmdb-no-poster">N/A</div>
                             </div>
                             <!-- 信息 -->
                             <div class="flex-grow-1" style="min-width: 0">
@@ -574,11 +575,7 @@ const filteredLogs = computed(() => {
                 </div>
 
                 <!-- 空状态 -->
-                <div v-else-if="!store.loading" class="text-center pa-8">
-                  <v-icon size="64" color="primary" class="mb-4">mdi-head-cog-outline</v-icon>
-                  <div class="text-h6 font-weight-medium">输入文件名开始识别</div>
-                  <div class="text-body-2 text-medium-emphasis mt-2">支持番剧文件名、路径、或完整路径的深度解析</div>
-                </div>
+                <EmptyState v-else-if="!store.loading" icon="mdi-head-cog-outline" title="输入文件名开始识别" description="支持番剧文件名、路径、或完整路径的深度解析" />
               </div>
             </v-window-item>
 
@@ -718,6 +715,7 @@ const filteredLogs = computed(() => {
 
 <style scoped>
 /* ===== 搜索结果 ===== */
+/* 注：本页识别搜索结果行与全局 .search-result-item（cards.css，订阅/整理搜索）布局不同，属本页私有变体 */
 .search-results-box {
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   border-radius: 8px;
@@ -736,34 +734,7 @@ const filteredLogs = computed(() => {
   background: rgba(var(--v-theme-primary), 0.06);
 }
 
-.recog-poster {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-/* 文本信息行 */
-.recog-text-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.recog-text-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  font-size: 13px;
-}
-.recog-text-label {
-  color: rgb(var(--v-theme-on-surface));
-  width: 80px;
-  flex-shrink: 0;
-  text-align: right;
-}
-.recog-text-value {
-  color: rgb(var(--v-theme-on-surface));
-  word-break: break-all;
-}
-.text-mono {
-  font-family: monospace;
-}
+/* .recog-* 信息行与 .audit-log-* 审计日志已迁移至 styles/cards.css（与 RecognitionModal 共用） */
 .recog-filename {
   font-size: 11px;
 }
@@ -804,17 +775,11 @@ const filteredLogs = computed(() => {
 .tmdb-small-poster {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
+/* 底色/居中/虚线边框来自全局 .poster-placeholder(--dashed)，此处仅固定尺寸与字号 */
 .tmdb-no-poster {
   width: 80px;
   height: 120px;
-  background: rgba(var(--v-theme-on-surface), 0.04);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 11px;
-  color: rgb(var(--v-theme-on-surface));
-  border-radius: 8px;
-  border: 1px dashed rgba(var(--v-theme-on-surface), 0.1);
 }
 .tmdb-title {
   font-weight: bold;
@@ -903,85 +868,7 @@ const filteredLogs = computed(() => {
   border-left: 2px solid #009688;
 }
 
-/* ===== 深度审计日志 (折叠面板内) ===== */
-.audit-log-box {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  max-height: 400px;
-  overflow-y: auto;
-}
-.audit-log-line {
-  display: flex;
-  gap: 8px;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
-  padding: 2px 0;
-}
-.audit-log-idx {
-  color: rgb(var(--v-theme-on-surface));
-  font-size: 10px;
-  width: 24px;
-  flex-shrink: 0;
-  text-align: right;
-}
-.audit-log-text {
-  color: rgb(var(--v-theme-on-surface));
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-/* ===== 审计日志 Tab (全屏) ===== */
-.audit-log-full {
-  font-family: monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  max-height: calc(100vh - 280px);
-  min-height: 400px;
-  overflow-y: auto;
-}
-.audit-log-line-full {
-  display: flex;
-  gap: 10px;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
-  padding: 2px 0;
-}
-.audit-log-idx-full {
-  color: rgb(var(--v-theme-on-surface));
-  font-size: 10px;
-  width: 32px;
-  flex-shrink: 0;
-  text-align: right;
-}
-.audit-log-text-full {
-  color: rgb(var(--v-theme-on-surface));
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-/* 日志分类着色 */
-:deep(.log-header), :deep(.log-p) {
-  color: rgb(var(--v-theme-primary));
-  font-weight: bold;
-}
-:deep(.log-debug), :deep(.log-d) {
-  color: rgb(var(--v-theme-info));
-}
-:deep(.log-success), :deep(.log-s) {
-  color: rgb(var(--v-theme-success));
-}
-:deep(.log-warning), :deep(.log-w) {
-  color: rgb(var(--v-theme-warning));
-}
-:deep(.log-result), :deep(.log-i) {
-  color: rgb(var(--v-theme-warning));
-  font-weight: bold;
-}
-:deep(.log-normal) {
-  color: rgb(var(--v-theme-on-surface));
-}
+/* 深度审计日志（折叠面板 + 全屏 Tab）与日志分类着色已迁移至 styles/cards.css */
 
 /* ===== 偏好设置 ===== */
 .pref-list {
@@ -1017,11 +904,8 @@ const filteredLogs = computed(() => {
 }
 
 /* ===== 移动端适配 ===== */
+/* .recog-text-label 移动端样式已随 .recog-* 系列迁移至 styles/cards.css */
 @media (max-width: 600px) {
-  .recog-text-label {
-    width: 70px;
-    font-size: 12px;
-  }
   .raw-specs-list {
     display: grid;
     grid-template-columns: 1fr 1fr;

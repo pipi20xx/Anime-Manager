@@ -10,6 +10,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { notificationsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'NotificationCenterView' })
 
@@ -254,7 +255,7 @@ onUnmounted(() => {
         hide-details
         item-title="title"
         item-value="value"
-        class="notification-filter-select"
+        class="notification-filter-select select-center"
       />
       <v-select
         v-model="statusFilter"
@@ -264,7 +265,7 @@ onUnmounted(() => {
         hide-details
         item-title="title"
         item-value="value"
-        class="notification-filter-select"
+        class="notification-filter-select select-center"
       />
       <v-spacer />
       <div class="page-subtitle text-body-2 text-medium-emphasis">共 {{ total }} 条记录</div>
@@ -339,30 +340,30 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-bell-ring-outline</v-icon>
-      <div class="text-h6 font-weight-medium">{{ hasAnyFilter ? '没有符合筛选条件的通知记录' : '暂无通知记录' }}</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">系统发送通知后会自动留档在这里</div>
-    </div>
+    <EmptyState v-else icon="mdi-bell-ring-outline" title="{{ hasAnyFilter ? '没有符合筛选条件的通知记录' : '暂无通知记录' }}" description="系统发送通知后会自动留档在这里" />
 
     <!-- 完整内容弹窗 -->
     <v-dialog v-model="showDetail" max-width="640" scrollable>
       <v-card v-if="selectedRecord" class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">{{ eventTypeIcon(selectedRecord.event_type) }}</v-icon>
-          通知内容
-          <v-spacer />
-          <v-chip
-            size="small"
-            :color="selectedRecord.status === 'success' ? 'success' : 'error'"
-            variant="tonal"
-          >
-            {{ selectedRecord.status === 'success' ? '已发送' : '发送失败' }}
-          </v-chip>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showDetail = false" class="ml-2" />
-        </v-card-title>
+        <DialogTitle
+          :icon="eventTypeIcon(selectedRecord.event_type)"
+          icon-color="primary"
+          title="通知内容"
+          @close="showDetail = false"
+        >
+          <template #append>
+            <v-chip
+              size="small"
+              :color="selectedRecord.status === 'success' ? 'success' : 'error'"
+              variant="tonal"
+              class="ml-2"
+            >
+              {{ selectedRecord.status === 'success' ? '已发送' : '发送失败' }}
+            </v-chip>
+          </template>
+        </DialogTitle>
         <v-divider />
-        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto">
+        <v-card-text class="pa-4 dialog-scroll-body">
           <div class="d-flex ga-4 text-caption text-medium-emphasis flex-wrap mb-3">
             <span>
               <v-icon size="12" class="mr-1">mdi-clock-outline</v-icon>
@@ -401,18 +402,7 @@ onUnmounted(() => {
   min-width: 140px;
   max-width: 180px;
 }
-/* 选中文字居中 */
-.notification-filter-select :deep(.v-field__input),
-.notification-filter-select :deep(.v-select__selection),
-.notification-filter-select :deep(.v-select__selection-text) {
-  width: 100% !important;
-  text-align: center !important;
-  justify-content: center !important;
-}
-/* 下拉菜单选项也居中 */
-.notification-filter-select :deep(.v-list-item-title) {
-  text-align: center !important;
-}
+/* 文字居中已统一为全局 .select-center（styles/cards.css） */
 .nc-detail-content {
   font-family: inherit;
   font-size: 0.875rem;

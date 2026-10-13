@@ -7,7 +7,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import { PasswordInput } from '@/components/common'
+import { PasswordInput, DialogTitle, SectionHeader } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 defineOptions({ name: 'ClientManageTab' })
@@ -171,10 +171,7 @@ onMounted(() => {
       <!-- 客户端列表 -->
       <v-card class="glass-card mb-4">
         <v-card-title class="pa-4 pb-2 d-flex align-center justify-space-between">
-          <div class="d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-download-circle-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">下载客户端配置</span>
-          </div>
+          <SectionHeader icon="mdi-download-circle-outline" title="下载客户端配置" />
           <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-plus" @click="openAddClient">
             添加客户端
           </v-btn>
@@ -232,12 +229,7 @@ onMounted(() => {
     <!-- 编辑/添加客户端弹窗 -->
     <v-dialog v-model="showModal" max-width="600" scrollable>
       <v-card>
-<v-card-title class="pa-4 d-flex align-center ga-2">
-<v-icon color="primary" size="20">mdi-download-circle-outline</v-icon>
-<span>{{ isNewClient ? '添加下载器' : '编辑下载器' }}</span>
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-download-circle-outline" icon-color="primary" :title="isNewClient ? '添加下载器' : '编辑下载器'" @close="showModal = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-select
@@ -386,4 +378,4 @@ onMounted(() => {
   </div>
 </template>
 
-<!-- scoped 样式已迁移至 global.css .hover-lift -->
+<!-- .hover-lift 定义在 styles/utilities.css（视觉部分在 visual.css §16） -->

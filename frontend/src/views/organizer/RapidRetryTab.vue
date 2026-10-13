@@ -11,6 +11,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { organizerApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'RapidRetryTab' })
 
@@ -263,18 +264,13 @@ defineExpose({ fetchList })
       </div>
     </div>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-flash-alert-outline</v-icon>
-      <div class="text-h6 font-weight-medium">队列为空</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">
-        开启秒传模式的整理任务未命中时，文件会进入这里等待自动重试
-      </div>
-    </div>
+    <EmptyState
+      v-else
+      icon="mdi-flash-alert-outline"
+      title="队列为空"
+      description="开启秒传模式的整理任务未命中时，文件会进入这里等待自动重试"
+    />
   </div>
 </template>
 
-<style scoped>
-.history-filter-chip {
-  height: 40px !important;
-}
-</style>
+<!-- scoped 样式已迁移至 styles/cards.css（.history-filter-chip，与 OrganizeHistoryTab 共用） -->

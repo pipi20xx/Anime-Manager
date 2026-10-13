@@ -10,6 +10,7 @@ import { organizerApi } from '@/api'
 import { useNotification, useConfirm, useDragSort } from '@/composables'
 import TaskEditModal from './TaskEditModal.vue'
 import ExecutionLogModal from './ExecutionLogModal.vue'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'TasksTab' })
 
@@ -433,11 +434,7 @@ async function requestRunTask(task: any) {
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-folder-sync-outline</v-icon>
-      <div class="text-h6 font-weight-medium">暂无整理任务</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">点击"添加任务"创建第一个整理任务</div>
-    </div>
+    <EmptyState v-else icon="mdi-folder-sync-outline" title="暂无整理任务" description="点击&quot;添加任务&quot;创建第一个整理任务" />
 
     <!-- 任务编辑弹窗 -->
     <TaskEditModal
@@ -461,55 +458,4 @@ async function requestRunTask(task: any) {
   </div>
 </template>
 
-<style scoped>
-/* 路径容器：竖向布局，源 → 箭头 → 目标 */
-.task-path-container {
-  display: flex;
-  flex-direction: column;
-  border: var(--am-path-border);
-  border-radius: 8px;
-  overflow: hidden;
-  background: transparent;
-}
-.task-path-item {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  gap: 6px;
-}
-.task-path-divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.task-path-text {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: rgb(var(--v-theme-on-surface));
-  flex: 1;
-  min-width: 0;
-}
-
-/* 轻量 via 标记：不用 v-chip，避免 Vuetify 额外 padding/margin 导致间距过大 */
-.via-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1;
-  padding: 2px 6px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  color: #fff;
-}
-.via-badge--cd2 {
-  background: #00897b;
-}
-.via-badge--local {
-  background: #78909c;
-}
-</style>
+<!-- scoped 样式已迁移至 styles/cards.css（.task-path-* / .via-badge*，与 StrmView 共用） -->

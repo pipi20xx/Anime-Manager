@@ -7,6 +7,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { dataCenterApi } from '@/api'
 import { useNotification, useConfirm, getImg, useMappingCache } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
@@ -260,18 +261,14 @@ onUnmounted(() => {
         <div class="media-card__title" :title="item.title || item.name">{{ item.title || item.name || '-' }}</div>
         <div class="media-card__year">{{ item.first_air_date?.slice(0, 4) || item.year || '-' }}</div>
       </div>
-      <div class="dc-meta-actions">
+      <div class="media-card__actions">
         <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-refresh" :loading="refreshSingleId === String(item.tmdb_id)" @click.stop="refreshSingle(item)">刷新</v-btn>
         <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteMetadata(item)">删除</v-btn>
       </div>
     </v-card>
   </div>
 
-  <div v-else class="text-center pa-8">
-    <v-icon size="64" color="primary" class="mb-4">mdi-database-off-outline</v-icon>
-    <div class="text-h6 font-weight-medium">暂无元数据</div>
-    <div class="text-body-2 text-medium-emphasis mt-2">使用"全量刷新"从 TMDB 云端同步数据</div>
-  </div>
+  <EmptyState v-else icon="mdi-database-off-outline" title="暂无元数据" description="使用&quot;全量刷新&quot;从 TMDB 云端同步数据" />
 
   <!-- 无限滚动哨兵 -->
   <div ref="sentinelRef" class="dc-sentinel">
@@ -286,11 +283,7 @@ onUnmounted(() => {
   <!-- 全量刷新弹窗 -->
   <v-dialog v-model="showRefreshModal" max-width="500" scrollable>
     <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start color="primary">mdi-sync</v-icon>全量刷新设置
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showRefreshModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-sync" icon-color="primary" title="全量刷新设置" @close="showRefreshModal = false" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-text-field v-model="refreshForm.older_than_days" label="更新时间筛选" type="number" placeholder="留空表示不限制" variant="outlined" density="compact" class="mb-3" hint="天前的数据" persistent-hint />
@@ -315,12 +308,7 @@ onUnmounted(() => {
   <!-- 编辑/新增元数据弹窗 -->
   <v-dialog v-model="showEditModal" max-width="900" scrollable>
     <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start color="primary">mdi-pencil-outline</v-icon>
-{{ isEditing ? '修正元数据' : '手动新增元数据' }}
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showEditModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-pencil-outline" icon-color="primary" :title="isEditing ? '修正元数据' : '手动新增元数据'" @close="showEditModal = false" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-tabs v-model="editTab" density="compact" class="mb-4">
@@ -482,7 +470,7 @@ onUnmounted(() => {
                     <div>
                       <div class="text-body-2 font-weight-medium">{{ s.name }}</div>
                       <div class="text-caption text-medium-emphasis">{{ s.episode_count }} 集<span v-if="s.air_date"> · {{ s.air_date }}</span></div>
-                      <div v-if="s.overview" class="text-caption text-medium-emphasis mt-1 dc-clamp-2">{{ s.overview }}</div>
+                      <div v-if="s.overview" class="text-caption text-medium-emphasis mt-1 text-truncate-2">{{ s.overview }}</div>
                     </div>
                   </div>
                 </div>
@@ -514,24 +502,8 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 海报占位符 */
-.media-card__poster-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--v-theme-on-surface), 0.06);
-}
-
-/* 卡片底部操作按钮 */
-.dc-meta-actions {
-  display: flex;
-  gap: 4px;
-  padding: 0 8px 8px;
-  justify-content: center;
-}
-
+/* .media-card__poster-placeholder / .media-card__actions / 两行截断
+   已统一使用全局定义（cards.css §33 / utilities.css），不再重复定义 */
 /* 无限滚动哨兵 */
 .dc-sentinel { min-height: 1px; }
 
@@ -546,7 +518,7 @@ onUnmounted(() => {
 .dc-info-label { font-size: 12px; color: rgb(var(--v-theme-on-surface)); white-space: nowrap; }
 .dc-info-value { font-size: 13px; font-weight: 500; }
 
-/* 完整数据 — 区块标题 */
+/* 完整数据 — 区块标题（与全局 .section-title 数值不同，属本页变体） */
 .dc-section-title {
   font-size: 14px;
   font-weight: 700;
@@ -582,14 +554,6 @@ onUnmounted(() => {
   background: rgba(var(--v-theme-on-surface), 0.08);
   border-radius: 4px;
   flex-shrink: 0;
-}
-
-/* 完整数据 — 文本截断 2 行 */
-.dc-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 /* 完整数据 — 原始 JSON 查看器 */

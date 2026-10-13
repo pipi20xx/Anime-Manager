@@ -14,6 +14,7 @@
 import { reactive, ref, watch } from 'vue'
 import { tmdbApi, fileHashApi } from '@/api'
 import { useNotification } from '@/composables'
+import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   modelValue: boolean
@@ -155,13 +156,13 @@ function getImg(path: string): string {
   return `/api/system/img?path=${path.startsWith('/') ? '' : '/'}${path}`
 }
 
-// --- 审计日志分类 ---
+// --- 审计日志分类（与 useRecognitionStore.getLogClass 保持同一套长类名，样式在 styles/cards.css） ---
 function getLogClass(log: string): string {
-  if (log.includes('深度审计启动') || log.includes('🚀')) return 'log-p'
-  if (log.includes('[DEBUG]')) return 'log-d'
-  if (log.includes('🎯') || log.includes('成功')) return 'log-s'
-  if (log.includes('✂️') || log.includes('拦截')) return 'log-w'
-  if (log.includes('📢') || log.includes('结论')) return 'log-i'
+  if (log.includes('深度审计启动') || log.includes('🚀')) return 'log-header'
+  if (log.includes('[DEBUG]')) return 'log-debug'
+  if (log.includes('🎯') || log.includes('成功')) return 'log-success'
+  if (log.includes('✂️') || log.includes('拦截')) return 'log-warning'
+  if (log.includes('📢') || log.includes('结论')) return 'log-result'
   return ''
 }
 
@@ -203,15 +204,10 @@ watch(() => props.modelValue, (newVal) => {
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="850" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-head-cog-outline</v-icon>
-        单文件识别
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="emit('update:modelValue', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-head-cog-outline" icon-color="primary" title="单文件识别" @close="emit('update:modelValue', false)" />
       <v-divider />
 
-      <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto">
+      <v-card-text class="pa-4 dialog-scroll-body">
         <v-skeleton-loader v-if="loading" type="paragraph, paragraph" />
 
         <template v-else>
@@ -405,7 +401,7 @@ watch(() => props.modelValue, (newVal) => {
                     </div>
                     <div class="recog-text-row">
                       <span class="recog-text-label">处理后名:</span>
-                      <span class="recog-text-value text-mono">{{ data.final_result?.processed_name || '-' }}</span>
+                      <span class="recog-text-value font-mono">{{ data.final_result?.processed_name || '-' }}</span>
                     </div>
                   </div>
                 </v-col>
@@ -438,9 +434,9 @@ watch(() => props.modelValue, (newVal) => {
                 哈希已计算并入库
               </div>
               <div class="hash-info">
-                <div class="hash-row"><span class="hash-label">SHA1</span><span class="hash-value mono">{{ hashResult.sha1 }}</span></div>
-                <div class="hash-row"><span class="hash-label">ED2K</span><span class="hash-value mono">{{ hashResult.ed2k }}</span></div>
-                <div class="hash-row"><span class="hash-label">ED2K链接</span><span class="hash-value mono" style="font-size: 11px">{{ hashResult.ed2k_link }}</span></div>
+                <div class="hash-row"><span class="hash-label">SHA1</span><span class="hash-value font-mono">{{ hashResult.sha1 }}</span></div>
+                <div class="hash-row"><span class="hash-label">ED2K</span><span class="hash-value font-mono">{{ hashResult.ed2k }}</span></div>
+                <div class="hash-row"><span class="hash-label">ED2K链接</span><span class="hash-value font-mono" style="font-size: 11px">{{ hashResult.ed2k_link }}</span></div>
               </div>
             </v-card>
 
@@ -455,9 +451,9 @@ watch(() => props.modelValue, (newVal) => {
                 </v-expansion-panel-title>
                 <v-expansion-panel-text>
                   <div class="audit-log-box">
-                    <div v-for="(log, i) in data.logs" :key="i" :class="['recog-log-line', getLogClass(log)]">
-                      <span class="log-idx">{{ String(Number(i) + 1).padStart(2, '0') }}</span>
-                      <span class="log-text">{{ log }}</span>
+                    <div v-for="(log, i) in data.logs" :key="i" :class="['audit-log-line', getLogClass(log)]">
+                      <span class="audit-log-idx">{{ String(Number(i) + 1).padStart(2, '0') }}</span>
+                      <span class="audit-log-text">{{ log }}</span>
                     </div>
                   </div>
                 </v-expansion-panel-text>
@@ -495,34 +491,7 @@ watch(() => props.modelValue, (newVal) => {
 .strategy-label { font-size: 14px; font-weight: 600; color: rgb(var(--v-theme-on-surface)); margin-bottom: 2px; }
 .strategy-desc { font-size: 12px; color: rgb(var(--v-theme-on-surface)); line-height: 1.4; }
 
-.recog-poster {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-/* 文本信息行 */
-.recog-text-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.recog-text-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  font-size: 13px;
-}
-.recog-text-label {
-  color: rgb(var(--v-theme-on-surface));
-  width: 80px;
-  flex-shrink: 0;
-  text-align: right;
-}
-.recog-text-value {
-  color: rgb(var(--v-theme-on-surface));
-  word-break: break-all;
-}
-.text-mono {
-  font-family: monospace;
-}
+/* .recog-* 信息行与 .audit-log-* 审计日志已迁移至 styles/cards.css（与 HomeView 共用） */
 
 .preview-path {
   font-family: monospace; font-size: 13px;
@@ -533,21 +502,6 @@ watch(() => props.modelValue, (newVal) => {
 .hash-info { display: flex; flex-direction: column; gap: 4px; }
 .hash-row { display: flex; gap: 8px; align-items: baseline; }
 .hash-label { font-size: 11px; color: rgb(var(--v-theme-on-surface)); width: 60px; flex-shrink: 0; text-align: right; }
+/* .hash-value 与全局同名（cards.css FileHashes 区块），此处为本弹窗的变体覆盖 */
 .hash-value { font-size: 12px; color: rgb(var(--v-theme-on-surface)); word-break: break-all; }
-.mono { font-family: monospace; }
-
-/* 审计日志 */
-.audit-log-box {
-  padding: 12px;
-  font-family: monospace; font-size: 12px; line-height: 1.6;
-}
-.recog-log-line { display: flex; gap: 8px; border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04); padding: 2px 0; }
-.log-idx { color: rgb(var(--v-theme-on-surface)); font-size: 10px; width: 20px; flex-shrink: 0; }
-.log-text { color: rgb(var(--v-theme-on-surface)); }
-
-.log-p { color: rgb(var(--v-theme-primary)); font-weight: bold; }
-.log-d { color: rgb(var(--v-theme-info)); }
-.log-s { color: rgb(var(--v-theme-primary)); }
-.log-w { color: rgb(var(--v-theme-warning)); }
-.log-i { color: rgb(var(--v-theme-warning)); font-weight: bold; }
 </style>

@@ -8,7 +8,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { authApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { useSystemStore } from '@/stores'
-import { PasswordInput } from '@/components/common'
+import { PasswordInput, DialogTitle, SectionHeader } from '@/components/common'
 
 defineOptions({ name: 'AccountTab' })
 
@@ -216,10 +216,7 @@ onMounted(() => {
       <!-- 凭据管理 -->
       <v-col cols="12" md="6">
         <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-key-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">凭据管理</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-key-outline" title="凭据管理" />
           <v-divider />
           <v-card-text class="pa-4">
             <PasswordInput
@@ -262,10 +259,7 @@ onMounted(() => {
       <!-- 2FA -->
       <v-col cols="12" md="6">
         <v-card class="glass-card">
-          <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-            <v-icon color="primary" size="20">mdi-shield-check-outline</v-icon>
-            <span class="text-subtitle-1 font-weight-bold">多重身份验证 (2FA)</span>
-          </v-card-title>
+          <SectionHeader card-title icon="mdi-shield-check-outline" title="多重身份验证 (2FA)" />
           <v-divider />
           <v-card-text class="pa-4">
             <div class="switch-row-lg">
@@ -297,10 +291,7 @@ onMounted(() => {
     <!-- 会话管理 -->
     <v-card class="glass-card mt-4">
       <v-card-title class="pa-4 pb-2 d-flex align-center justify-space-between">
-        <div class="d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-devices</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">会话管理</span>
-        </div>
+        <SectionHeader icon="mdi-devices" title="会话管理" />
         <v-btn
           size="small"
           color="error"
@@ -387,12 +378,7 @@ onMounted(() => {
     <!-- 2FA 设置弹窗 -->
     <v-dialog v-model="showOtpSetup" max-width="400" scrollable>
       <v-card>
-<v-card-title class="pa-4 d-flex align-center ga-2">
-<v-icon color="primary" size="20">mdi-shield-check-outline</v-icon>
-<span>设置双重身份验证</span>
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showOtpSetup = false" />
-</v-card-title>
+<DialogTitle icon="mdi-shield-check-outline" icon-color="primary" title="设置双重身份验证" @close="showOtpSetup = false" />
         <v-divider />
         <v-card-text class="pa-4 text-center">
           <div class="text-body-2 mb-4">请使用验证器应用扫描下方二维码</div>

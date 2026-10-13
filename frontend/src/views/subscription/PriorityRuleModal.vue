@@ -9,7 +9,7 @@
 import { ref, computed, watch } from 'vue'
 import { api } from '@/api/client'
 import { useNotification, useConfirm } from '@/composables'
-import { FieldConditionSelect } from '@/components/common'
+import { FieldConditionSelect, DialogTitle } from '@/components/common'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ (e: 'update:show', v: boolean): void }>()
@@ -184,12 +184,7 @@ function getConditions(rule: any) {
 <template>
   <v-dialog :model-value="show" max-width="900" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-arrow-up-bold-circle-outline</v-icon>
-        洗版规则管理
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-arrow-up-bold-circle-outline" icon-color="primary" title="洗版规则管理" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -310,10 +305,7 @@ function getConditions(rule: any) {
     <!-- Rule Editor -->
     <v-dialog v-model="showRuleEdit" max-width="700" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">编辑基础规则
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showRuleEdit = false" />
-        </v-card-title>
+        <DialogTitle title="编辑基础规则" @close="showRuleEdit = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="currentRule.name" label="规则名称" placeholder="例如: 4K HDR 优先" variant="outlined" density="compact" class="mb-3" />
@@ -338,10 +330,7 @@ function getConditions(rule: any) {
     <!-- Profile Editor -->
     <v-dialog v-model="showProfileEdit" max-width="700" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">编辑洗版策略
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showProfileEdit = false" />
-        </v-card-title>
+        <DialogTitle title="编辑洗版策略" @close="showProfileEdit = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="currentProfile.name" label="策略名称" placeholder="例如: 4K优先策略" variant="outlined" density="compact" class="mb-3" />

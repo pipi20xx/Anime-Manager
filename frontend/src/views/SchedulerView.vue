@@ -21,6 +21,7 @@ import {
 } from '@/api'
 import { useNotification, useConfirm, useWebSocket } from '@/composables'
 import { getStatusTag } from '@/utils/taskStatus'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'SchedulerView' })
 
@@ -607,20 +608,12 @@ onUnmounted(() => {
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-calendar-clock</v-icon>
-      <div class="text-h6 font-weight-medium">暂无定时任务</div>
-    </div>
+    <EmptyState v-else icon="mdi-calendar-clock" title="暂无定时任务" />
 
     <!-- ===== 新增/编辑弹窗 ===== -->
     <v-dialog v-model="showDialog" max-width="560" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-calendar-plus</v-icon>
-          {{ dialogTitle }}
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showDialog = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-calendar-plus" icon-color="primary" :title="dialogTitle" @close="showDialog = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <!-- 基本信息 -->
@@ -910,7 +903,5 @@ onUnmounted(() => {
   padding: 6px 8px;
 }
 
-.sc-cron-toggle .v-btn {
-  font-size: 0.8rem;
-}
+/* .sc-cron-toggle .v-btn 覆盖已迁移至 styles/cards.css（按钮覆盖统一收编） */
 </style>

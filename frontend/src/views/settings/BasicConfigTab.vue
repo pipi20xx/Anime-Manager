@@ -8,7 +8,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { configApi, systemApi, clientsApi } from '@/api'
 import { useNotification } from '@/composables'
-import { PasswordInput } from '@/components/common'
+import { PasswordInput, SectionHeader } from '@/components/common'
 
 defineOptions({ name: 'BasicConfigTab' })
 
@@ -228,10 +228,7 @@ onMounted(() => {
 
     <!-- TMDB 设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-movie-search-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">TMDB 设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-movie-search-outline" title="TMDB 设置" />
       <v-divider />
       <v-card-text class="pa-4">
         <PasswordInput
@@ -268,10 +265,7 @@ onMounted(() => {
 
     <!-- Bangumi 设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-star-four-points-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">Bangumi 设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-star-four-points-outline" title="Bangumi 设置" />
       <v-divider />
       <v-card-text class="pa-4">
         <PasswordInput
@@ -289,10 +283,7 @@ onMounted(() => {
 
     <!-- SYTMDB 设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-sync-circle-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">SYTMDB 设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-sync-circle-outline" title="SYTMDB 设置" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
@@ -321,10 +312,7 @@ onMounted(() => {
 
     <!-- 识别偏好设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-tune-vertical</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">识别偏好设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-tune-vertical" title="识别偏好设置" />
       <v-divider />
       <v-card-text class="pa-4">
         <div class="d-flex align-center ga-3 mb-4">
@@ -387,10 +375,7 @@ onMounted(() => {
 
     <!-- Jackett 设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-magnify-scan</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">Jackett 设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-magnify-scan" title="Jackett 设置" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-text-field
@@ -426,10 +411,7 @@ onMounted(() => {
 
     <!-- Emby 设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-filmstrip-box</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">Emby 设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-filmstrip-box" title="Emby 设置" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-text-field
@@ -484,10 +466,7 @@ onMounted(() => {
 
     <!-- Telegram 通知设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-send-circle-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">通知设置 (Telegram)</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-send-circle-outline" title="通知设置 (Telegram)" />
       <v-divider />
       <v-card-text class="pa-4" v-if="(ensureTelegram(), true)">
         <PasswordInput
@@ -564,10 +543,7 @@ onMounted(() => {
 
     <!-- 代理设置 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-vpn</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">网络代理设置</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-vpn" title="网络代理设置" />
       <v-divider />
       <v-card-text class="pa-4" v-if="(ensureProxyServices(), true)">
         <v-text-field
@@ -610,10 +586,7 @@ onMounted(() => {
 
     <!-- 磁盘空间回收规则 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-database-remove-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">磁盘空间回收规则</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-database-remove-outline" title="磁盘空间回收规则" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-alert type="info" variant="tonal" density="compact" class="mb-4">

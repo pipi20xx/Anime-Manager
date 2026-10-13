@@ -590,6 +590,17 @@
   }
 }
 
+/* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色
+   （自 BangumiDetailView + TmdbDetailView scoped 收编，两处原本逐字相同） */
+.tmdb-detail-view .v-chip--variant-tonal.text-primary,
+.bangumi-detail-view .v-chip--variant-tonal.text-primary {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+.tmdb-detail-view .v-chip--variant-tonal.text-primary .v-chip__underlay,
+.bangumi-detail-view .v-chip--variant-tonal.text-primary .v-chip__underlay {
+  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
+}
+
 /* ============================================================
  * 10. Snackbar — 通知条
  * ============================================================ */

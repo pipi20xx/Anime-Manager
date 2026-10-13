@@ -16,6 +16,7 @@ import { calendarApi, bangumiApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
 import { useNavigationStore } from '@/stores'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'CalendarView' })
 
@@ -524,23 +525,23 @@ onMounted(() => {
       </div>
 
       <!-- 全局空状态 -->
-      <div v-else class="text-center pa-12">
-        <v-icon size="64" color="primary" class="mb-4">mdi-calendar-blank</v-icon>
-        <div class="text-h6 font-weight-medium mb-2">还没有追踪任何番剧</div>
-        <div class="text-body-2 text-medium-emphasis mb-4">点击"追踪管理"添加追踪番剧</div>
-        <v-btn variant="tonal" color="primary" prepend-icon="mdi-plus" @click="showManageModal = true">添加追踪番剧</v-btn>
-      </div>
+      <EmptyState
+        v-else
+        pad="large"
+        icon="mdi-calendar-blank"
+        title="还没有追踪任何番剧"
+        description="点击“追踪管理”添加追踪番剧"
+      >
+        <template #actions>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-plus" @click="showManageModal = true">添加追踪番剧</v-btn>
+        </template>
+      </EmptyState>
     </template>
 
     <!-- 追踪管理弹窗 -->
     <v-dialog v-model="showManageModal" max-width="900" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-calendar-month</v-icon>
-          追踪管理
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showManageModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-calendar-month" icon-color="primary" title="追踪管理" @close="showManageModal = false" />
         <v-divider />
 
         <v-card-text class="pa-4" style="min-height: 400px">
@@ -603,11 +604,7 @@ onMounted(() => {
                   </div>
                 </v-card>
               </div>
-              <div v-else class="text-center pa-8">
-                <v-icon size="64" color="primary" class="mb-4">mdi-calendar-remove</v-icon>
-                <div class="text-h6 font-weight-medium">暂无追踪条目</div>
-                <div class="text-body-2 text-medium-emphasis mt-2">通过"从放送表导入"或"手动添加"添加追踪番剧</div>
-              </div>
+              <EmptyState v-else icon="mdi-calendar-remove" title="暂无追踪条目" description="通过&quot;从放送表导入&quot;或&quot;手动添加&quot;添加追踪番剧" />
             </v-window-item>
 
             <!-- 从放送表导入 -->
@@ -875,12 +872,7 @@ onMounted(() => {
     <!-- 编辑追踪项弹窗 -->
     <v-dialog v-model="showEditModal" max-width="450" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-pencil</v-icon>
-          {{ editBuffer.title ? `编辑 - ${editBuffer.title}` : '编辑追踪项' }}
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showEditModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-pencil" icon-color="primary" :title="editBuffer.title ? `编辑 - ${editBuffer.title}` : '编辑追踪项'" @close="showEditModal = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field

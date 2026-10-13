@@ -9,7 +9,7 @@
 import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import { FieldConditionSelect } from '@/components/common'
+import { FieldConditionSelect, DialogTitle } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 // ---------- 下载目录浏览选择 ----------
@@ -132,12 +132,7 @@ async function setDefault(row: any) {
 <template>
   <v-dialog :model-value="show" max-width="850" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-file-document-outline</v-icon>
-        {{ showEdit ? (editModel.id ? '编辑订阅预设' : '新增订阅预设') : '订阅预设模板管理' }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-file-document-outline" icon-color="primary" :title="showEdit ? (editModel.id ? '编辑订阅预设' : '新增订阅预设') : '订阅预设模板管理'" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">

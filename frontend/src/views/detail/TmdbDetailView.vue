@@ -18,6 +18,7 @@ import { tmdbApi, subscriptionApi } from '@/api'
 import { useNotification } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
 import { useNavigationStore } from '@/stores'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'TmdbDetailView' })
 
@@ -545,7 +546,7 @@ onMounted(() => {
                               <span v-if="ep.air_date">{{ ep.air_date }}</span>
                             </div>
 
-                            <div v-if="ep.overview" class="text-body-2 text-medium-emphasis ep-overview">{{ ep.overview }}</div>
+                            <div v-if="ep.overview" class="text-body-2 text-medium-emphasis text-truncate-3">{{ ep.overview }}</div>
 
                             <!-- Emby 文件列表 -->
                             <div v-if="getEpisodeEmbyInfo(season.season_number, ep.episode)?.files?.length" class="ep-files">
@@ -598,20 +599,20 @@ onMounted(() => {
     </template>
 
     <!-- 错误状态 -->
-    <div v-else-if="error" class="text-center pa-8">
-      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
-      <div class="text-h6 mb-2">加载失败</div>
-      <div class="text-body-2 text-medium-emphasis mb-4">{{ error }}</div>
-      <v-btn color="primary" prepend-icon="mdi-refresh" @click="fetchDetail()">
-        重新加载
-      </v-btn>
-    </div>
+    <EmptyState
+      v-else-if="error"
+      icon="mdi-alert-circle-outline"
+      icon-color="error"
+      title="加载失败"
+      :description="error"
+    >
+      <template #actions>
+        <v-btn color="primary" prepend-icon="mdi-refresh" @click="fetchDetail()">重新加载</v-btn>
+      </template>
+    </EmptyState>
 
     <!-- 空状态 -->
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="grey" class="mb-4">mdi-movie-off</v-icon>
-      <div class="text-h6">暂无数据</div>
-    </div>
+    <EmptyState v-else icon="mdi-movie-off" icon-color="grey" title="暂无数据" />
 
   </div>
 </template>
@@ -628,14 +629,7 @@ onMounted(() => {
   border-left: 3px solid rgb(var(--v-theme-primary));
 }
 
-/* ── 集简介：限制行数 ── */
-.ep-overview {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.5;
-}
+/* 集简介三行截断已统一为全局 .text-truncate-3（styles/cards.css） */
 
 /* ── Emby 文件列表 ── */
 .ep-files {
@@ -662,11 +656,5 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-/* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色 */
-:deep(.v-chip--variant-tonal.text-primary) {
-  color: rgb(var(--v-theme-on-surface)) !important;
-}
-:deep(.v-chip--variant-tonal.text-primary .v-chip__underlay) {
-  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
-}
+/* 详情页 chip 覆盖已迁移至 styles/visual.css §9（与 BangumiDetailView 共用） */
 </style>

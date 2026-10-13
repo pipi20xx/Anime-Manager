@@ -322,13 +322,7 @@ function clearLogs() {
   flex: 0 0 auto;
   text-transform: none;
 }
-.log-level-toggle .v-btn {
-  min-width: auto;
-  padding: 0 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: none;
-}
+/* .log-level-toggle .v-btn / .log-jump .v-btn 覆盖已迁移至 styles/cards.css（按钮覆盖统一收编） */
 .log-search {
   flex: 1 1 160px;
   min-width: 120px;
@@ -438,7 +432,7 @@ function clearLogs() {
   overflow-wrap: anywhere;
 }
 
-/* 跳到最新浮动按钮 */
+/* 跳到最新浮动按钮（按钮覆盖已迁移至 styles/cards.css） */
 .log-jump {
   position: sticky;
   bottom: 12px;
@@ -446,9 +440,5 @@ function clearLogs() {
   justify-content: flex-end;
   pointer-events: none;
   margin-top: 8px;
-}
-.log-jump :deep(.v-btn) {
-  pointer-events: auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 </style>

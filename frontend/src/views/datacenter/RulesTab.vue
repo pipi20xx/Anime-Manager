@@ -12,6 +12,7 @@ import { ref, reactive, onMounted, onActivated } from 'vue'
 import { dataCenterApi } from '@/api'
 import { userMappingApi } from '@/api/userMapping'
 import { useNotification, useConfirm, downloadJson, useMappingCache, useDragSort } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
@@ -348,21 +349,12 @@ defineExpose({ fetchRules })
     </v-col>
   </v-row>
 
-  <div v-else class="text-center pa-8">
-    <v-icon size="64" color="primary" class="mb-4">mdi-tag-off-outline</v-icon>
-    <div class="text-h6 font-weight-medium">暂无分类规则</div>
-    <div class="text-body-2 text-medium-emphasis mt-2">添加规则来自动分类整理后的文件</div>
-  </div>
+  <EmptyState v-else icon="mdi-tag-off-outline" title="暂无分类规则" description="添加规则来自动分类整理后的文件" />
 
   <!-- 规则编辑弹窗 -->
   <v-dialog v-model="showRuleEditModal" max-width="800" scrollable>
     <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start color="primary">mdi-tag-outline</v-icon>
-{{ isNewRule ? '创建分类规则' : '编辑分类规则' }}
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showRuleEditModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-tag-outline" icon-color="primary" :title="isNewRule ? '创建分类规则' : '编辑分类规则'" @close="showRuleEditModal = false" />
       <v-divider />
       <v-card-text class="pa-4">
         <!-- 基础设置 -->
@@ -490,7 +482,7 @@ defineExpose({ fetchRules })
   </v-dialog>
 </template>
 
-<!-- scoped 样式已迁移至 global.css .manage-card -->
+<!-- .manage-card 基础样式在 styles/utilities.css；下方为本页私有的等高约束 -->
 <style scoped>
 /* 固定信息区高度 — 7 行固定，保证所有卡片高度一致 */
 :deep(.manage-card__body) {

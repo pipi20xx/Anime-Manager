@@ -13,6 +13,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { api } from '@/api/client'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -201,12 +202,7 @@ async function handleClearHistory() {
 <template>
   <v-dialog :model-value="show" max-width="1400" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-format-list-bulleted</v-icon>
-        订阅源详情
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-format-list-bulleted" icon-color="primary" title="订阅源详情" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -334,10 +330,7 @@ async function handleClearHistory() {
           <div v-if="!hasMore && items.length > 0" class="text-center text-caption text-medium-emphasis pa-2">已加载全部</div>
         </div>
 
-        <div v-else class="text-center pa-8">
-          <v-icon size="64" color="primary" class="mb-4">mdi-inbox-outline</v-icon>
-          <div class="text-body-2 text-medium-emphasis">暂无条目</div>
-        </div>
+        <EmptyState v-else icon="mdi-inbox-outline" description="暂无条目" />
       </v-card-text>
 
       <v-divider />

@@ -7,7 +7,7 @@
 import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, tmdbApi, bangumiApi, clientsApi } from '@/api'
 import { useNotification } from '@/composables'
-import { FieldConditionSelect } from '@/components/common'
+import { FieldConditionSelect, DialogTitle } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 // ---------- 下载目录浏览选择 ----------
@@ -203,12 +203,7 @@ function handleSave() {
 <template>
   <v-dialog :model-value="show" max-width="720" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start>mdi-rss</v-icon>
-        {{ isNew ? '新建订阅' : '编辑订阅' }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-rss" :title="isNew ? '新建订阅' : '编辑订阅'" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">

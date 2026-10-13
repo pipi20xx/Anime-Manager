@@ -8,6 +8,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { healthApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
+import { DialogTitle, SectionHeader } from '@/components/common'
 
 defineOptions({ name: 'HealthCheckTab' })
 
@@ -176,10 +177,7 @@ onMounted(() => {
   <div>
     <!-- 全局设置 -->
     <div class="d-flex align-center justify-space-between mb-3">
-      <div class="d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">掉盘与 CK 失效检测</span>
-      </div>
+      <SectionHeader icon="mdi-harddisk-remove" title="掉盘与 CK 失效检测" />
       <div class="d-flex ga-2">
         <v-btn color="info" variant="tonal" size="small" prepend-icon="mdi-play" @click="checkAll">
           立即检测全部
@@ -276,12 +274,7 @@ onMounted(() => {
     <!-- 编辑/添加弹窗 -->
     <v-dialog v-model="showModal" max-width="500" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-harddisk-remove</v-icon>
-          <span>健康检查配置</span>
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-harddisk-remove" icon-color="primary" title="健康检查配置" @close="showModal = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <!-- 说明 -->

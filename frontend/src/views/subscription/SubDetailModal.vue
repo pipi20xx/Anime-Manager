@@ -12,6 +12,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { subscriptionApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
+import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -246,12 +247,9 @@ watch(() => props.show, (val) => {
 <template>
   <v-dialog :model-value="show" max-width="1100" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-format-list-checks</v-icon>
+      <DialogTitle icon="mdi-format-list-checks" icon-color="primary" @close="$emit('update:show', false)">
         订阅推送记录 — {{ sub?.title || '' }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      </DialogTitle>
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -262,7 +260,7 @@ watch(() => props.show, (val) => {
           <div class="detail-header">
             <div class="detail-poster">
               <v-img v-if="posterUrl" :src="posterUrl" cover aspect-ratio="2/3" class="rounded-lg" />
-              <div v-else class="detail-poster-placeholder d-flex align-center justify-center">
+              <div v-else class="poster-placeholder w-100 h-100">
                 <v-icon size="40" color="grey">{{ isMovie ? 'mdi-filmstrip' : 'mdi-television-classic' }}</v-icon>
               </div>
             </div>
@@ -292,7 +290,7 @@ watch(() => props.show, (val) => {
                 </v-card>
                 <v-card class="glass-card pa-3 text-center flex-1" variant="flat">
                   <div class="text-caption text-medium-emphasis">总集数</div>
-                  <div class="text-h6 font-weight-bold text-primary" style="font-family: monospace; font-size: 18px;">{{ episodeRangeLabel }}</div>
+                  <div class="text-h6 font-weight-bold text-primary font-mono" style="font-size: 18px;">{{ episodeRangeLabel }}</div>
                 </v-card>
                 <v-card class="glass-card pa-3 text-center flex-1" variant="flat">
                   <div class="text-caption text-medium-emphasis">完成度</div>
@@ -372,7 +370,7 @@ watch(() => props.show, (val) => {
                   <v-card v-for="item in selectedRecords" :key="item.id || item.download_at" class="glass-card hover-lift pa-3 mb-2 d-flex align-start ga-3" variant="flat">
                     <div class="flex-1 min-width-0">
                       <div class="text-body-2 font-weight-medium">{{ item.title || '（未命名资源）' }}</div>
-                      <div class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatDateTime(item.download_at) }}</div>
+                      <div class="text-caption text-medium-emphasis font-mono">{{ formatDateTime(item.download_at) }}</div>
                     </div>
                     <v-chip v-if="item.quality_score && item.quality_score > 0" size="x-small" variant="tonal" color="brown">
                       分数 {{ item.quality_score }}
@@ -384,12 +382,12 @@ watch(() => props.show, (val) => {
               <template v-else>
                 <div v-if="sortedEpisodes.length > 0">
                   <v-card v-for="item in sortedEpisodes" :key="`${item.season}-${item.episode}-${item.id || item.download_at}`" class="glass-card hover-lift pa-3 mb-2 d-flex align-start ga-3" variant="flat">
-                    <v-chip size="x-small" variant="flat" color="primary" class="flex-shrink-0" style="font-family: monospace;">
+                    <v-chip size="x-small" variant="flat" color="primary" class="flex-shrink-0 font-mono">
                       {{ formatEpisode(item) }}
                     </v-chip>
                     <div class="flex-1 min-width-0">
                       <div class="text-body-2 font-weight-medium">{{ item.title || '（未命名资源）' }}</div>
-                      <div class="text-caption text-medium-emphasis" style="font-family: monospace;">{{ formatDateTime(item.download_at) }}</div>
+                      <div class="text-caption text-medium-emphasis font-mono">{{ formatDateTime(item.download_at) }}</div>
                     </div>
                     <v-chip v-if="item.quality_score && item.quality_score > 0" size="x-small" variant="tonal" color="brown">
                       分数 {{ item.quality_score }}
@@ -430,10 +428,7 @@ watch(() => props.show, (val) => {
   overflow: hidden;
   background: rgba(var(--v-theme-on-surface), 0.04);
 }
-.detail-poster-placeholder {
-  width: 100%;
-  height: 100%;
-}
+/* .detail-poster-placeholder 已统一为全局 .poster-placeholder + w-100/h-100（新增淡背景） */
 .detail-info {
   flex: 1;
   display: flex;

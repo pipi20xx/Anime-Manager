@@ -7,6 +7,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { configApi } from '@/api'
 import { useNotification } from '@/composables'
+import { SectionHeader } from '@/components/common'
 
 defineOptions({ name: 'RulesConfigTab' })
 
@@ -123,10 +124,7 @@ onMounted(() => {
 
     <!-- 自定义识别词 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-text-search-variant</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">自定义识别词</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-text-search-variant" title="自定义识别词" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-row>
@@ -142,7 +140,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -157,7 +155,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
         </v-row>
@@ -166,10 +164,7 @@ onMounted(() => {
 
     <!-- 自定义制作组 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-account-group-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">自定义制作组</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-account-group-outline" title="自定义制作组" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-row>
@@ -185,7 +180,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -200,7 +195,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
         </v-row>
@@ -209,10 +204,7 @@ onMounted(() => {
 
     <!-- 自定义渲染词 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-format-text-variant-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">自定义渲染词</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-format-text-variant-outline" title="自定义渲染词" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-row>
@@ -228,7 +220,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -243,7 +235,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
         </v-row>
@@ -252,10 +244,7 @@ onMounted(() => {
 
     <!-- 自定义特权规则 -->
     <v-card class="glass-card mb-4">
-      <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-        <v-icon color="primary" size="20">mdi-shield-crown-outline</v-icon>
-        <span class="text-subtitle-1 font-weight-bold">自定义特权规则</span>
-      </v-card-title>
+      <SectionHeader card-title icon="mdi-shield-crown-outline" title="自定义特权规则" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-row>
@@ -271,7 +260,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -286,7 +275,7 @@ onMounted(() => {
               density="compact"
               rows="8"
               hide-details
-              class="font-monospace"
+              class="font-mono"
             />
           </v-col>
         </v-row>

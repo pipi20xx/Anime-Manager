@@ -6,6 +6,7 @@
 import { ref, computed, watch, reactive } from 'vue'
 import { subscriptionApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -169,12 +170,7 @@ async function removeBlockItem(id: number) {
   <!-- 列表弹窗 -->
   <v-dialog :model-value="show" max-width="720" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="error">mdi-shield-off-outline</v-icon>
-        TMDB 屏蔽列表
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-shield-off-outline" icon-color="error" title="TMDB 屏蔽列表" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -247,12 +243,7 @@ async function removeBlockItem(id: number) {
   <!-- 添加/编辑表单弹窗 -->
   <v-dialog v-model="showFormModal" max-width="480" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="error">mdi-shield-off-outline</v-icon>
-        {{ editingId != null ? '编辑屏蔽条目' : '添加屏蔽条目' }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="closeForm" />
-      </v-card-title>
+      <DialogTitle icon="mdi-shield-off-outline" icon-color="error" :title="editingId != null ? '编辑屏蔽条目' : '添加屏蔽条目'" @close="closeForm" />
       <v-divider />
       <v-card-text class="pa-4">
         <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID（可留空）" placeholder="留空 = 按条件全局屏蔽" variant="outlined" density="compact" class="mb-3" />

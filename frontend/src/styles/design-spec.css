@@ -36,6 +36,12 @@
   padding: 12px 16px !important;
 }
 
+/* 弹窗内容区滚动体（可滚动长内容的标准高度上限） */
+.dialog-scroll-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
 .page-actions {
   display: flex;
   align-items: center;
@@ -111,4 +117,199 @@
 
 .v-dialog .v-card-text .v-row + .v-row {
   margin-top: 4px;
+}
+
+
+/* ============================================================
+ * 主题定制弹窗骨架 — theme-dialog__*
+ *   自 BorderDialog / ShadowDialog / BorderRadiusDialog / PrimaryColorDialog /
+ *   WallpaperDialog / GlassSettingsDialog 六个弹窗逐字相同的 scoped 骨架收编。
+ *   说明：
+ *   - __grid（列数/间距）与 __slider-header（gap）各弹窗不同，未纳入骨架；
+ *   - __preview 的 transition 同时覆盖 border / box-shadow / border-radius
+ *     三种定制维度，三个"预览型"弹窗无需再各自定义过渡；
+ *   - 各弹窗私有的选项卡变体（__swatch / __source-card / __preset-option 等）
+ *     仍留在组件 scoped 内。
+ * ============================================================ */
+
+.theme-dialog__body {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+  grid-auto-rows: max-content;
+  padding: 20px 24px 24px;
+}
+
+.theme-dialog__actions {
+  flex: none;
+  padding: 16px 24px;
+}
+
+.theme-dialog__label {
+  margin: 0 0 10px;
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.theme-dialog__hint {
+  margin: 8px 0 0;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+/* 预设网格：三个"预览型"弹窗均为 5 列（PrimaryColorDialog 为 6 列，自留在 scoped） */
+.theme-dialog__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theme-dialog__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.theme-dialog__option:hover {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  transform: translateY(-2px);
+}
+
+.theme-dialog__option--active {
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.08);
+}
+
+.theme-dialog__option-label {
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.theme-dialog__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 40px;
+  inline-size: 40px;
+  background: rgba(var(--v-theme-on-surface), 0.05);
+  border-radius: 8px;
+  transition: border 0.2s ease, box-shadow 0.2s ease, border-radius 0.2s ease;
+}
+
+.theme-dialog__slider-wrapper {
+  margin-block-start: 8px;
+  padding-inline: 8px;
+}
+
+.theme-dialog__slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.theme-dialog__slider-header .theme-dialog__label {
+  margin-block-end: 0;
+}
+
+.theme-dialog__current-value {
+  color: rgb(var(--v-theme-primary));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.theme-dialog__tick-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: -4px;
+  padding-inline: 8px;
+}
+
+.theme-dialog__tick-label {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  font-size: 0.625rem;
+  text-align: center;
+  flex: 1;
+}
+
+.theme-dialog__tick-label:first-child {
+  text-align: left;
+}
+
+.theme-dialog__tick-label:last-child {
+  text-align: right;
+}
+
+.theme-dialog__current {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 12px;
+  background: rgba(var(--v-theme-on-surface), 0.035);
+}
+
+.theme-dialog__current-preview {
+  block-size: 48px;
+  inline-size: 48px;
+  background: rgba(var(--v-theme-primary), 0.1);
+  border-radius: 10px;
+  flex-shrink: 0;
+  transition: border 0.2s ease, box-shadow 0.2s ease, border-radius 0.2s ease;
+}
+
+.theme-dialog__current-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-dialog__current-label {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  font-size: 0.75rem;
+}
+
+.theme-dialog__current-text {
+  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.theme-dialog__current-hint {
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+  font-size: 0.6875rem;
+}
+
+/* ── 弹窗内 Vuetify 组件覆盖（自 WallpaperDialog / GlassSettingsDialog scoped 收编；
+ *     原 :deep() 在全局下改为普通后代选择器，包装类均带弹窗前缀不泄漏） ── */
+.wallpaper-dialog__source-type .v-btn-group {
+  width: 100%;
+}
+.wallpaper-dialog__url-input .v-field {
+  border-radius: 8px;
+}
+.glass-settings-dialog__live-controls .v-slider {
+  margin-block-start: 4px;
+}
+.glass-settings-dialog__appearance-option .v-btn--active,
+.glass-settings-dialog__dynamics-mode-option .v-btn--active,
+.glass-settings-dialog__quality-option .v-btn--active,
+.glass-settings-dialog__preset-option .v-btn--active,
+.glass-settings-dialog__surface-mode-option .v-btn--active {
+  background-color: rgba(var(--v-theme-primary), 0.14) !important;
+  box-shadow: inset 0 0 0 1px rgba(var(--v-theme-primary), 0.38) !important;
 }

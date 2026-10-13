@@ -8,6 +8,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { dataCenterApi } from '@/api'
 import { useNotification, useConfirm, formatDbSize } from '@/composables'
+import { SectionHeader } from '@/components/common'
 
 const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
@@ -205,10 +206,7 @@ onMounted(() => {
 <template>
   <!-- 定向清理智能记忆 -->
   <v-card class="glass-card mb-4">
-    <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-      <v-icon color="primary" size="20">mdi-brain-delete-outline</v-icon>
-      <span class="text-subtitle-1 font-weight-bold">定向清理智能记忆</span>
-    </v-card-title>
+    <SectionHeader card-title icon="mdi-brain-delete-outline" title="定向清理智能记忆" />
     <v-divider />
     <v-card-text class="pa-4">
       <div class="text-caption text-medium-emphasis">
@@ -337,41 +335,6 @@ onMounted(() => {
   </template>
 </template>
 
-<style scoped>
-.fp-result-list {
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-/* 说明区固定两行：保证所有卡片等高，「清空数据」按钮始终在同一位置不随内容浮动 */
-.table-desc {
-  flex: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.5;
-  min-height: 3em; /* 恰好两行 */
-  margin-bottom: 8px;
-  cursor: default;
-}
-
-.fp-ellipsis {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-</style>
-
-<style>
-/* tooltip 内容不受 scoped 限制（渲染在全局 overlay 层），超长指纹需可换行查看 */
-.fp-tooltip-text {
-  display: block;
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.6;
-}
-</style>
+<!-- 样式（.fp-* / .table-desc / .fp-tooltip-text）已迁移至 styles/cards.css MaintenanceTab 区块 -->
 
 

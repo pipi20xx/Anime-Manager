@@ -13,6 +13,7 @@ import { tmdbApi } from '@/api'
 import { useNotification } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
 import { useNavigationStore } from '@/stores'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'TmdbPersonDetailView' })
 
@@ -281,20 +282,20 @@ onMounted(() => {
     </template>
 
     <!-- 错误状态 -->
-    <div v-else-if="error" class="text-center pa-8">
-      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
-      <div class="text-h6 mb-2">加载失败</div>
-      <div class="text-body-2 text-medium-emphasis mb-4">{{ error }}</div>
-      <v-btn color="primary" prepend-icon="mdi-refresh" @click="fetchPerson()">
-        重新加载
-      </v-btn>
-    </div>
+    <EmptyState
+      v-else-if="error"
+      icon="mdi-alert-circle-outline"
+      icon-color="error"
+      title="加载失败"
+      :description="error"
+    >
+      <template #actions>
+        <v-btn color="primary" prepend-icon="mdi-refresh" @click="fetchPerson()">重新加载</v-btn>
+      </template>
+    </EmptyState>
 
     <!-- 空状态 -->
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="grey" class="mb-4">mdi-account-off</v-icon>
-      <div class="text-h6">暂无数据</div>
-    </div>
+    <EmptyState v-else icon="mdi-account-off" icon-color="grey" title="暂无数据" />
   </div>
 </template>
 

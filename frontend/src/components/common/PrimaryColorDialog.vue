@@ -102,10 +102,10 @@ function isLightColor(hex: string): boolean {
       </VCardTitle>
       <VDivider />
 
-      <VCardText class="primary-color-dialog__body">
+      <VCardText class="theme-dialog__body">
         <!-- 预设颜色网格 -->
         <section>
-          <h3 class="primary-color-dialog__label">预设颜色</h3>
+          <h3 class="theme-dialog__label">预设颜色</h3>
           <div class="primary-color-dialog__grid">
             <button
               v-for="color in themeCustomizerPrimaryColors"
@@ -127,7 +127,7 @@ function isLightColor(hex: string): boolean {
               />
             </button>
           </div>
-          <p class="primary-color-dialog__hint">
+          <p class="theme-dialog__hint">
             点击颜色块即可切换主题色。主题色不会因深色/浅色模式切换而改变。
           </p>
         </section>
@@ -135,7 +135,7 @@ function isLightColor(hex: string): boolean {
         <!-- 自定义颜色 -->
         <section>
           <div class="primary-color-dialog__custom-header">
-            <h3 class="primary-color-dialog__label">自定义颜色</h3>
+            <h3 class="theme-dialog__label">自定义颜色</h3>
             <VBtn
               variant="text"
               size="small"
@@ -170,17 +170,17 @@ function isLightColor(hex: string): boolean {
         </section>
 
         <!-- 当前选中预览 -->
-        <section class="primary-color-dialog__current">
+        <section class="theme-dialog__current">
           <div class="primary-color-dialog__current-swatch" :style="{ backgroundColor: currentPrimaryColor }" />
-          <div class="primary-color-dialog__current-info">
-            <span class="primary-color-dialog__current-label">当前主题色</span>
+          <div class="theme-dialog__current-info">
+            <span class="theme-dialog__current-label">当前主题色</span>
             <span class="primary-color-dialog__current-value">{{ currentPrimaryColor.toUpperCase() }}</span>
           </div>
         </section>
       </VCardText>
 
       <VDivider />
-      <VCardActions class="primary-color-dialog__actions justify-center">
+      <VCardActions class="theme-dialog__actions justify-center">
         <VBtn
           :slim="false"
           variant="tonal"
@@ -196,33 +196,7 @@ function isLightColor(hex: string): boolean {
 </template>
 
 <style scoped lang="scss">
-.primary-color-dialog__body {
-  display: grid;
-  align-content: start;
-  gap: 24px;
-  grid-auto-rows: max-content;
-  padding: 20px 24px 24px;
-}
-
-.primary-color-dialog__actions {
-  flex: none;
-  padding: 16px 24px;
-}
-
-.primary-color-dialog__label {
-  margin: 0 0 10px;
-  color: rgba(var(--v-theme-on-surface), var(--v-high-emphasis-opacity));
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.primary-color-dialog__hint {
-  margin: 8px 0 0;
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
+/* __body / __actions / __label / __hint 已收编至全局 .theme-dialog__*（styles/design-spec.css） */
 
 .primary-color-dialog__grid {
   display: grid;
@@ -260,7 +234,7 @@ function isLightColor(hex: string): boolean {
   justify-content: space-between;
   gap: 12px;
 
-  .primary-color-dialog__label {
+  .theme-dialog__label {
     margin-block-end: 0;
   }
 }
@@ -302,32 +276,12 @@ function isLightColor(hex: string): boolean {
   border-radius: 8px;
 }
 
-.primary-color-dialog__current {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 12px;
-  background: rgba(var(--v-theme-on-surface), 0.035);
-}
-
+/* __current / __current-info / __current-label 已收编至全局 .theme-dialog__*（styles/design-spec.css） */
 .primary-color-dialog__current-swatch {
   block-size: 36px;
   inline-size: 36px;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-
-.primary-color-dialog__current-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.primary-color-dialog__current-label {
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-  font-size: 0.75rem;
 }
 
 .primary-color-dialog__current-value {

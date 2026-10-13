@@ -10,6 +10,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { cd2Api } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import { SectionHeader } from '@/components/common'
 
 defineOptions({ name: 'DeepDeleteTab' })
 
@@ -109,18 +110,18 @@ onMounted(() => {
     <template v-else>
       <!-- 功能说明 -->
       <v-card class="glass-card mb-4">
-        <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-delete-variant</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">神医深度删除 → CD2 联动</span>
-          <v-spacer />
-          <v-switch
-            v-model="config.enabled"
-            color="primary"
-            hide-details
-            density="compact"
-            @update:model-value="handleToggleEnabled"
-          />
-        </v-card-title>
+        <SectionHeader card-title icon="mdi-delete-variant" title="神医深度删除 → CD2 联动">
+          <template #actions>
+            <v-spacer />
+            <v-switch
+              v-model="config.enabled"
+              color="primary"
+              hide-details
+              density="compact"
+              @update:model-value="handleToggleEnabled"
+            />
+          </template>
+        </SectionHeader>
         <v-divider />
         <v-card-text class="pa-4">
           <v-alert type="info" variant="tonal" density="compact" class="mb-2">
@@ -142,10 +143,7 @@ onMounted(() => {
 
       <!-- 删除偏好 -->
       <v-card class="glass-card mb-4">
-        <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-tune-variant</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">删除偏好</span>
-        </v-card-title>
+        <SectionHeader card-title icon="mdi-tune-variant" title="删除偏好" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-radio-group v-model="config.delete_preference" density="compact" hide-details>
@@ -170,10 +168,7 @@ onMounted(() => {
 
       <!-- 删除方式与通知 -->
       <v-card class="glass-card mb-4">
-        <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-bell-cog-outline</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">删除方式与通知</span>
-        </v-card-title>
+        <SectionHeader card-title icon="mdi-bell-cog-outline" title="删除方式与通知" />
         <v-divider />
         <v-card-text class="pa-4">
           <!-- 永久删除开关 -->
@@ -234,21 +229,13 @@ onMounted(() => {
 
       <!-- 路径映射规则 -->
       <v-card class="glass-card mb-4">
-        <v-card-title class="pa-4 pb-2 d-flex align-center ga-2">
-          <v-icon color="primary" size="20">mdi-swap-horizontal</v-icon>
-          <span class="text-subtitle-1 font-weight-bold">路径映射规则</span>
-          <v-chip size="x-small" variant="tonal" class="ml-2">{{ config.path_mappings.length }} 条</v-chip>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            variant="tonal"
-            size="small"
-            prepend-icon="mdi-plus"
-            @click="addMapping"
-          >
-            添加规则
-          </v-btn>
-        </v-card-title>
+        <SectionHeader card-title icon="mdi-swap-horizontal" title="路径映射规则">
+          <template #actions>
+            <v-chip size="x-small" variant="tonal" class="ml-2">{{ config.path_mappings.length }} 条</v-chip>
+            <v-spacer />
+            <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-plus" @click="addMapping">添加规则</v-btn>
+          </template>
+        </SectionHeader>
         <v-divider />
         <v-card-text class="pa-4">
           <v-alert type="info" variant="tonal" density="compact" class="mb-3">

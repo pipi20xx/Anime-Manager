@@ -279,26 +279,4 @@ watch([selectedYear, selectedSeason], () => {
   </div>
 </template>
 
-<style scoped>
-.media-card__organized-badge {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
-}
-.media-card__mark-btn {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-.media-card:hover .media-card__mark-btn,
-.media-card__mark-btn:focus-visible {
-  opacity: 1;
-}
-/* 触屏设备无 hover，已标记的按钮保持可见 */
-.media-card--organized .media-card__mark-btn {
-  opacity: 1;
-}
-</style>
+<!-- scoped 样式已迁移至 styles/cards.css §33i（.media-card__organized-badge / __mark-btn，媒体卡片系统扩展） -->

@@ -10,6 +10,7 @@ import { organizerApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { getStatusTag } from '@/utils/taskStatus'
 import ExecutionLogModal from './ExecutionLogModal.vue'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'BackgroundTasksTab' })
 
@@ -113,11 +114,7 @@ function openLogModal(taskId: string) {
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-cloud-off-outline</v-icon>
-      <div class="text-h6 font-weight-medium">暂无后台任务</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">执行整理任务后会在这里显示</div>
-    </div>
+    <EmptyState v-else icon="mdi-cloud-off-outline" title="暂无后台任务" description="执行整理任务后会在这里显示" />
 
     <!-- 执行日志弹窗 -->
     <ExecutionLogModal v-model="showLogModal" :task-id="logTaskId" />

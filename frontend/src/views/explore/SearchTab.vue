@@ -13,6 +13,7 @@ import { exploreApi, subscriptionApi } from '@/api'
 import { useNotification } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
 import { useNavigationStore } from '@/stores'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'SearchTab' })
 
@@ -147,23 +148,23 @@ onMounted(() => {
     </div>
 
     <!-- 错误状态 -->
-    <div v-else-if="error" class="text-center pa-12">
-      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
-      <div class="text-h6 mb-2">搜索失败</div>
-      <div class="text-body-2 text-medium-emphasis mb-4">{{ error }}</div>
-      <v-btn color="primary" prepend-icon="mdi-refresh" @click="doSearch()">
-        重新搜索
-      </v-btn>
-    </div>
+    <EmptyState
+      v-else-if="error"
+      pad="large"
+      icon="mdi-alert-circle-outline"
+      icon-color="error"
+      title="搜索失败"
+      :description="error"
+    >
+      <template #actions>
+        <v-btn color="primary" prepend-icon="mdi-refresh" @click="doSearch()">重新搜索</v-btn>
+      </template>
+    </EmptyState>
 
     <!-- 搜索结果 -->
     <div v-else-if="hasSearched">
       <!-- 无结果 -->
-      <div v-if="!results.bangumi.length && !results.tmdb_movie.length && !results.tmdb_tv.length" class="text-center pa-12">
-        <v-icon size="64" color="primary" class="mb-4">mdi-magnify-close</v-icon>
-        <div class="text-h6">未找到相关结果</div>
-        <div class="text-body-2 text-medium-emphasis mt-2">换个关键词试试？</div>
-      </div>
+      <EmptyState v-if="!results.bangumi.length && !results.tmdb_movie.length && !results.tmdb_tv.length" icon="mdi-magnify-close" title="未找到相关结果" description="换个关键词试试？" pad="large" />
 
       <!-- Bangumi 结果 -->
       <div v-if="results.bangumi.length > 0" class="mb-8">
@@ -272,11 +273,7 @@ onMounted(() => {
     </div>
 
     <!-- 初始空状态 -->
-    <div v-else class="text-center pa-12">
-      <v-icon size="64" color="primary" class="mb-4">mdi-magnify</v-icon>
-      <div class="text-h6 font-weight-medium">输入关键词搜索</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">同时搜索 TMDB 和 Bangumi 的番剧、电影数据</div>
-    </div>
+    <EmptyState v-else icon="mdi-magnify" title="输入关键词搜索" description="同时搜索 TMDB 和 Bangumi 的番剧、电影数据" pad="large" />
   </div>
 </template>
 

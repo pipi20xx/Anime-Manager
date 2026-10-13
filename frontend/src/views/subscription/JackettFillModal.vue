@@ -11,6 +11,7 @@
 import { ref, watch, nextTick } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification } from '@/composables'
+import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -178,12 +179,12 @@ watch(() => props.show, (val) => {
 <template>
   <v-dialog :model-value="show" max-width="700" scrollable @update:model-value="handleClose">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="primary">mdi-magnify</v-icon>
+      <DialogTitle icon="mdi-magnify" icon-color="primary" @close="handleClose">
         搜寻补全: {{ subTitle }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" :disabled="isRunning" @click="handleClose" />
-      </v-card-title>
+        <template #actions>
+          <v-btn icon="mdi-close" variant="text" size="small" :disabled="isRunning" @click="handleClose" />
+        </template>
+      </DialogTitle>
       <v-divider />
 
       <v-card-text class="pa-4">

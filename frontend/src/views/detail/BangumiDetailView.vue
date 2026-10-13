@@ -22,6 +22,7 @@ import { bangumiApi, subscriptionApi } from '@/api'
 import { useNotification } from '@/composables'
 import { getImg } from '@/composables/useDataCenter'
 import { useNavigationStore } from '@/stores'
+import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'BangumiDetailView' })
 
@@ -444,10 +445,7 @@ onMounted(() => {
     </template>
 
     <!-- 空状态 -->
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
-      <div class="text-h6">加载失败</div>
-    </div>
+    <EmptyState v-else icon="mdi-alert-circle-outline" icon-color="error" title="加载失败" />
   </div>
 </template>
 
@@ -540,13 +538,5 @@ onMounted(() => {
   padding-top: 4px;
   border-top: 1px dashed rgba(var(--v-theme-on-surface), 0.08);
   margin-top: 2px;
-}
-
-/* 详情页 chip 文字使用默认色（白天黑/夜晚白），不使用 primary 蓝色 */
-:deep(.v-chip--variant-tonal.text-primary) {
-  color: rgb(var(--v-theme-on-surface)) !important;
-}
-:deep(.v-chip--variant-tonal.text-primary .v-chip__underlay) {
-  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
 }
 </style>

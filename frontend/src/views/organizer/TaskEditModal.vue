@@ -7,6 +7,7 @@
 import { ref, computed, watch } from 'vue'
 import FolderBrowserModal from './FolderBrowserModal.vue'
 import { getActionTypeHint } from '@/utils/organizeActions'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'TaskEditModal' })
 
@@ -76,12 +77,7 @@ const onFolderSelected = (path: string) => {
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="720" scrollable>
     <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start>mdi-folder-sync-outline</v-icon>
-{{ isNew ? '创建新整理任务' : '编辑任务配置' }}
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="emit('update:modelValue', false)" />
-</v-card-title>
+<DialogTitle icon="mdi-folder-sync-outline" :title="isNew ? '创建新整理任务' : '编辑任务配置'" @close="emit('update:modelValue', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">

@@ -8,6 +8,7 @@ import { taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { getStatusTag } from '@/utils/taskStatus'
 import ExecutionLogModal from './ExecutionLogModal.vue'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'TaskCenterModal' })
 
@@ -120,12 +121,7 @@ async function cleanupTaskCenter() {
 <template>
   <v-dialog v-model="show" max-width="800" scrollable>
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="info">mdi-clipboard-list-outline</v-icon>
-        任务中心
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="show = false" />
-      </v-card-title>
+      <DialogTitle icon="mdi-clipboard-list-outline" icon-color="info" title="任务中心" @close="show = false" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -139,7 +135,7 @@ async function cleanupTaskCenter() {
             prepend-inner-icon="mdi-magnify"
             clearable
             hide-details
-            class="task-center-search-field"
+            class="task-center-search-field field-center"
             @keyup.enter="searchTaskCenter"
             @click:clear="taskCenterSearch = ''; searchTaskCenter()"
           />
@@ -184,10 +180,7 @@ async function cleanupTaskCenter() {
           </div>
         </div>
 
-        <div v-else class="text-center pa-8">
-          <v-icon size="64" color="primary" class="mb-4">mdi-clipboard-list-outline</v-icon>
-          <div class="text-h6 font-weight-medium">暂无任务记录</div>
-        </div>
+        <EmptyState v-else icon="mdi-clipboard-list-outline" title="暂无任务记录" />
       </v-card-text>
 
       <v-divider />
@@ -206,12 +199,5 @@ async function cleanupTaskCenter() {
 .task-center-search-field {
   max-width: 380px;
 }
-.task-center-search-field :deep(.v-field__input),
-.task-center-search-field :deep(input) {
-  text-align: center !important;
-}
-.task-center-search-field :deep(.v-label) {
-  width: 100% !important;
-  text-align: center !important;
-}
+/* 文字居中已统一为全局 .field-center（styles/cards.css） */
 </style>

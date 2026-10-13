@@ -10,7 +10,7 @@
 import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import { FieldConditionSelect } from '@/components/common'
+import { FieldConditionSelect, DialogTitle } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
 
 // ---------- 下载目录浏览选择 ----------
@@ -280,12 +280,7 @@ function formatDateTime(dateStr: string | null): string {
 <template>
   <v-dialog :model-value="show" max-width="1100" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <v-card-title class="pa-4 d-flex align-center">
-        <v-icon start color="accent">mdi-radar</v-icon>
-        {{ showEdit ? (isNewTask ? '添加探测任务' : '编辑探测任务') : '自动 RSS 订阅管理' }}
-        <v-spacer />
-        <v-btn icon="mdi-close" variant="text" size="small" @click="$emit('update:show', false)" />
-      </v-card-title>
+      <DialogTitle icon="mdi-radar" icon-color="accent" :title="showEdit ? (isNewTask ? '添加探测任务' : '编辑探测任务') : '自动 RSS 订阅管理'" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -540,4 +535,4 @@ function formatDateTime(dateStr: string | null): string {
   />
 </template>
 
-<!-- scoped 样式已迁移至 global.css .config-row -->
+<!-- .config-row 定义在 styles/utilities.css -->

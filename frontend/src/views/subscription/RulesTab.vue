@@ -13,6 +13,7 @@ import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import DownloadHistoryModal from './DownloadHistoryModal.vue'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'RulesTab' })
 
@@ -229,21 +230,12 @@ defineExpose({ fetchRules })
       </v-col>
     </v-row>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-filter-outline</v-icon>
-      <div class="text-h6 font-weight-medium">暂无规则</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">点击"创建规则"开始</div>
-    </div>
+    <EmptyState v-else icon="mdi-filter-outline" title="暂无规则" description="点击&quot;创建规则&quot;开始" />
 
     <!-- 规则编辑弹窗 -->
     <v-dialog v-model="showRuleModal" max-width="640" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start>mdi-filter-outline</v-icon>
-          {{ isNewRule ? '创建匹配规则' : '编辑匹配规则' }}
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showRuleModal = false" />
-        </v-card-title>
+        <DialogTitle icon="mdi-filter-outline" :title="isNewRule ? '创建匹配规则' : '编辑匹配规则'" @close="showRuleModal = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field v-model="ruleForm.name" label="规则名称" variant="outlined" density="compact" class="mb-3" />
@@ -283,12 +275,9 @@ defineExpose({ fetchRules })
     <!-- 规则预览弹窗 -->
     <v-dialog v-model="showPreviewModal" max-width="800" scrollable>
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-eye-outline</v-icon>
+        <DialogTitle icon="mdi-eye-outline" icon-color="primary" @close="showPreviewModal = false">
           规则预览 — {{ previewRuleData?.name }}
-          <v-spacer />
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showPreviewModal = false" />
-        </v-card-title>
+        </DialogTitle>
         <v-divider />
         <v-card-text class="pa-4">
           <v-skeleton-loader v-if="previewLoading" type="list-item@5" />
@@ -321,4 +310,4 @@ defineExpose({ fetchRules })
   </div>
 </template>
 
-<!-- scoped 样式已迁移至 global.css .hover-lift / .kv-row / .kv-label / .kv-value -->
+<!-- .hover-lift / .kv-row / .kv-label / .kv-value 定义在 styles/utilities.css -->

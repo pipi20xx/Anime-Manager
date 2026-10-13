@@ -13,6 +13,7 @@ import { useRouter } from 'vue-router'
 import { webhookEventsApi, taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import type { WebhookEvent, WebhookEventStats } from '@/api/webhookEvents'
+import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'WebhookEventsView' })
 
@@ -433,7 +434,7 @@ onUnmounted(() => {
                 <v-icon size="12" class="mr-1">mdi-replay</v-icon>已执行 {{ event.attempts }} 次
               </span>
             </div>
-            <div class="text-caption text-medium-emphasis mt-1 we-break-all">
+            <div class="text-caption text-medium-emphasis mt-1 word-break-all">
               <v-icon size="12" class="mr-1">mdi-map-marker-path</v-icon>{{ event.file_path }}
             </div>
             <div v-if="event.status === 'failed' && event.error_message" class="text-caption text-error mt-1">
@@ -465,29 +466,23 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div v-else class="text-center pa-8">
-      <v-icon size="64" color="primary" class="mb-4">mdi-webhook</v-icon>
-      <div class="text-h6 font-weight-medium">暂无联动记录</div>
-      <div class="text-body-2 text-medium-emphasis mt-2">CD2 Webhook 或内部联动触发后，事件会记录在这里</div>
-    </div>
+    <EmptyState v-else icon="mdi-webhook" title="暂无联动记录" description="CD2 Webhook 或内部联动触发后，事件会记录在这里" />
 
     <!-- 详情弹窗 -->
     <v-dialog v-model="showDetailModal" max-width="860">
       <v-card class="glass-card">
-        <v-card-title class="pa-4 d-flex align-center">
-          <v-icon start color="primary">mdi-webhook</v-icon>
-          联动事件详情
-          <v-spacer />
-          <v-chip v-if="selectedEvent" size="small" :color="statusMeta(selectedEvent.status).color" variant="tonal">
-            {{ statusMeta(selectedEvent.status).label }}
-          </v-chip>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="showDetailModal = false" class="ml-2" />
-        </v-card-title>
+        <DialogTitle icon="mdi-webhook" icon-color="primary" title="联动事件详情" @close="showDetailModal = false">
+          <template #append>
+            <v-chip v-if="selectedEvent" size="small" :color="statusMeta(selectedEvent.status).color" variant="tonal" class="ml-2">
+              {{ statusMeta(selectedEvent.status).label }}
+            </v-chip>
+          </template>
+        </DialogTitle>
         <v-divider />
-        <v-card-text class="pa-4" style="max-height: 70vh; overflow-y: auto">
+        <v-card-text class="pa-4 dialog-scroll-body">
           <template v-if="selectedEvent">
             <div class="text-caption text-medium-emphasis mb-1">路径</div>
-            <div class="text-body-2 mb-3 we-break-all">{{ selectedEvent.file_path }}</div>
+            <div class="text-body-2 mb-3 word-break-all">{{ selectedEvent.file_path }}</div>
 
             <div class="d-flex ga-2 flex-wrap mb-3">
               <v-chip size="small" variant="tonal" color="info">{{ selectedEvent.action }}</v-chip>
@@ -538,10 +533,10 @@ onUnmounted(() => {
                     <v-chip size="x-small" variant="tonal" class="flex-shrink-0">{{ t.module }}</v-chip>
                   </div>
                   <div class="we-log-lines">
-                    <div v-for="(log, i) in t.logs" :key="i" class="we-log-line">
-                      <span class="we-log-time">{{ log.time }}</span>
-                      <span :class="['we-log-level', (log.level || '').toLowerCase()]">{{ log.level }}</span>
-                      <span class="we-log-msg">{{ log.message }}</span>
+                    <div v-for="(log, i) in t.logs" :key="i" class="log-rows__line">
+                      <span class="log-rows__time">{{ log.time }}</span>
+                      <span :class="['log-rows__level', 'log-lv-' + (log.level || '').toLowerCase()]">{{ log.level }}</span>
+                      <span class="log-rows__msg">{{ log.message }}</span>
                     </div>
                   </div>
                 </div>
@@ -550,7 +545,7 @@ onUnmounted(() => {
             </div>
 
             <div class="text-caption text-medium-emphasis mb-1">原始 payload（重试时使用）</div>
-            <pre class="we-payload">{{ payloadText }}</pre>
+            <pre class="mono-box">{{ payloadText }}</pre>
 
             <div class="d-flex ga-2 mt-3 text-caption text-medium-emphasis flex-wrap">
               <span>首次到达: {{ formatTime(selectedEvent.first_seen_at) }}</span>
@@ -572,12 +567,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* .we-break-all → 全局 .word-break-all；.we-payload → 全局 .mono-box；
+   日志级别色统一用全局 .log-lv-*（styles/cards.css）。其余为本页私有结构。 */
 .we-failed-card {
   border-left: 3px solid rgb(var(--v-theme-error));
-}
-
-.we-break-all {
-  word-break: break-all;
 }
 
 .we-child-list {
@@ -616,41 +609,5 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.we-log-line {
-  display: flex;
-  gap: 8px;
-  padding: 2px 0;
-}
-
-.we-log-time {
-  min-width: 75px;
-  flex-shrink: 0;
-}
-
-.we-log-level {
-  min-width: 40px;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.we-log-level.info { color: #52c41a; }
-.we-log-level.error { color: #ff4d4f; }
-.we-log-level.warning { color: #faad14; }
-
-.we-log-msg {
-  flex: 1;
-  word-break: break-all;
-}
-
-.we-payload {
-  font-family: monospace;
-  font-size: 12px;
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  border-radius: 6px;
-  padding: 12px;
-  max-height: 260px;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
+/* 日志行结构已统一为全局 .log-rows__* 系列（styles/cards.css，与 TaskHistoryView 共用） */
 </style>

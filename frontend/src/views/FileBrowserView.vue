@@ -17,6 +17,7 @@ import RecognitionModal from './organizer/RecognitionModal.vue'
 import ManualOrganizeModal from './organizer/ManualOrganizeModal.vue'
 import ExecutionLogModal from './organizer/ExecutionLogModal.vue'
 import CleanEmptyDirsModal from './CleanEmptyDirsModal.vue'
+import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FileBrowserView' })
 
@@ -780,12 +781,7 @@ onMounted(() => {
     <!-- 文件详情 Modal -->
     <v-dialog v-model="showInfoModal" max-width="500" scrollable>
       <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start>mdi-information-outline</v-icon>
-项目详情
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showInfoModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-information-outline" title="项目详情" @close="showInfoModal = false" />
         <v-divider />
         <v-card-text class="pa-4" v-if="fileInfo">
           <div class="kv-row">
@@ -828,12 +824,7 @@ onMounted(() => {
     <!-- 前往路径 Modal -->
     <v-dialog v-model="showGoToModal" max-width="500" scrollable>
       <v-card class="glass-card">
-<v-card-title class="pa-4 d-flex align-center">
-<v-icon start>mdi-folder-marker</v-icon>
-前往指定路径
-<v-spacer />
-<v-btn icon="mdi-close" variant="text" size="small" @click="showGoToModal = false" />
-</v-card-title>
+<DialogTitle icon="mdi-folder-marker" title="前往指定路径" @close="showGoToModal = false" />
         <v-divider />
         <v-card-text class="pa-4">
           <v-text-field
@@ -900,14 +891,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* .file-list-card 为本页私有；.file-list-item 的 v-list 覆盖已迁移至 styles/cards.css（与 cd2/FilesTab 共用） */
 .file-list-card {
   position: relative;
   overflow: hidden;
-}
-.file-list-item :deep(.v-list-item__spacer) {
-  display: none !important;
-}
-.file-list-item :deep(.v-list-item__prepend) {
-  margin-inline-end: 8px !important;
 }
 </style>
