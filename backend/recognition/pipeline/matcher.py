@@ -1,3 +1,4 @@
+import asyncio
 import time
 from ..context import RecognitionContext
 from recognition_engine.constants import MediaType
@@ -46,7 +47,11 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
     current_title = meta.cn_name or meta.en_name or meta.processed_name
     current_episode = meta.begin_episode
     
-    ai_result = ai.guess_title_variants(ctx.filename, current_title, current_episode)
+    # AIHelper 内部是同步 httpx：直接在事件循环里调用会把整个后端按住
+    # （AI 介入最长可能十几秒，含思考能力探测+重试），必须丢到线程池
+    ai_result = await asyncio.to_thread(
+        ai.guess_title_variants, ctx.filename, current_title, current_episode
+    )
     
     if not ai_result:
         ctx.log(f"┣ [AI 智能体] ❌ AI 未返回有效结果")
