@@ -11,6 +11,19 @@ function authHeaders(): Record<string, string> {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || ''
 
+/**
+ * 批量删除文件（按扩展名）请求体
+ * - delete_extensions 为空 → 删除所有文件
+ * - exclude_extensions 优先级最高，命中的文件永不删除；为空 → 不排除任何文件
+ */
+export interface BatchDeleteFilesBody {
+  path: string
+  delete_extensions?: string[]
+  exclude_extensions?: string[]
+  /** 是否递归处理子文件夹，默认 true */
+  recursive?: boolean
+}
+
 export const organizerApi = {
   /** 列出目录文件 */
   listFiles: (body: { path: string; recursive?: boolean }) =>
@@ -39,6 +52,14 @@ export const organizerApi = {
   /** 清理空文件夹 */
   cleanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
     api.post<any>('/api/files/clean_empty_dirs', body),
+
+  /** 批量删除：按扩展名扫描待删除的文件（预览，不删除） */
+  scanFilesByExt: (body: BatchDeleteFilesBody) =>
+    api.post<any>('/api/files/scan_files_by_ext', body),
+
+  /** 批量删除：按扩展名删除文件 */
+  deleteFilesByExt: (body: BatchDeleteFilesBody) =>
+    api.post<any>('/api/files/delete_files_by_ext', body),
 
   /** 重命名预览 */
   renamePreview: (body: any) =>

@@ -348,6 +348,44 @@ async def cd2_clean_empty_dirs(req: CleanEmptyDirsRequest):
     return result
 
 
+class BatchDeleteFilesRequest(BaseModel):
+    path: str
+    # 要删除的文件扩展名，如 ['.jpg', '.png']；为空表示删除所有文件
+    delete_extensions: Optional[List[str]] = None
+    # 不想删除的文件扩展名，如 ['.mkv', '.mp4']；优先级高于 delete_extensions，为空表示不排除任何文件
+    exclude_extensions: Optional[List[str]] = None
+    # 是否递归处理子文件夹
+    recursive: bool = True
+    client_id: Optional[str] = None
+
+
+@router.post("/cd2/files/scan-files-by-ext", summary="扫描云盘待批量删除的文件")
+async def cd2_scan_files_by_ext(req: BatchDeleteFilesRequest):
+    """按扩展名规则扫描云目录（可含子目录）中待删除的文件，仅预览不删除"""
+    client = _get_cd2_client(req.client_id)
+    result = await asyncio.to_thread(
+        client.scan_files_by_ext, req.path,
+        req.delete_extensions, req.exclude_extensions, req.recursive)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "扫描失败"))
+    return result
+
+
+@router.post("/cd2/files/delete-files-by-ext", summary="批量删除云盘指定扩展名的文件")
+async def cd2_delete_files_by_ext(req: BatchDeleteFilesRequest):
+    """按扩展名规则批量删除云目录（可含子目录）中的文件（回收站删除），只删文件不动文件夹"""
+    client = _get_cd2_client(req.client_id)
+    result = await asyncio.to_thread(
+        client.delete_files_by_ext, req.path,
+        req.delete_extensions, req.exclude_extensions, req.recursive)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "批量删除失败"))
+    log_audit("CD2文件", "批量删除文件",
+              f"{req.path} 删除 {result.get('count', 0)} 个文件"
+              + (f"，{len(result.get('failed') or [])} 个失败" if result.get("failed") else ""))
+    return result
+
+
 class TransferPathsRequest(BaseModel):
     paths: List[str]
     dest_dir: str

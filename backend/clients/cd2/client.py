@@ -236,6 +236,24 @@ class CD2Client(BaseClient):
             return {"success": False, "message": "Login failed", "count": 0, "deleted": [], "failed": []}
         return self._file_browser.clean_empty_dirs(path, ignore_patterns=ignore_patterns)
 
+    def scan_files_by_ext(self, path: str, delete_extensions: List[str] = None,
+                          exclude_extensions: List[str] = None, recursive: bool = True) -> Dict[str, Any]:
+        """按扩展名规则扫描云目录（可含子目录）中待删除的文件（预览用）"""
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed", "count": 0, "items": [], "total_size": 0}
+        return self._file_browser.scan_files_by_ext(
+            path, delete_extensions=delete_extensions,
+            exclude_extensions=exclude_extensions, recursive=recursive)
+
+    def delete_files_by_ext(self, path: str, delete_extensions: List[str] = None,
+                            exclude_extensions: List[str] = None, recursive: bool = True) -> Dict[str, Any]:
+        """按扩展名规则批量删除云目录（可含子目录）中的文件"""
+        if not self.logged_in and not self.login():
+            return {"success": False, "message": "Login failed", "count": 0, "deleted": [], "failed": []}
+        return self._file_browser.delete_files_by_ext(
+            path, delete_extensions=delete_extensions,
+            exclude_extensions=exclude_extensions, recursive=recursive)
+
     def transfer_paths(self, paths: List[str], dest_dir: str, action: str = "move", conflict_policy: int = 1) -> Tuple[bool, str]:
         if not self.logged_in and not self.login():
             return False, "Login failed"

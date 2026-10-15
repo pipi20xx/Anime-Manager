@@ -113,6 +113,46 @@ async def clean_empty_dirs(request: FileCleanEmptyRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class BatchDeleteFilesRequest(BaseModel):
+    path: str
+    # 要删除的文件扩展名，如 ['.jpg', '.png']；为空表示删除所有文件
+    delete_extensions: Optional[List[str]] = None
+    # 不想删除的文件扩展名，如 ['.mkv', '.mp4']；优先级高于 delete_extensions，为空表示不排除任何文件
+    exclude_extensions: Optional[List[str]] = None
+    # 是否递归处理子文件夹
+    recursive: bool = True
+
+@router.post("/api/files/scan_files_by_ext", summary="扫描待批量删除的文件")
+async def scan_files_by_ext(request: BatchDeleteFilesRequest):
+    """按扩展名规则扫描目录（可含子目录）中待删除的文件，仅预览不删除"""
+    try:
+        data = await asyncio.to_thread(
+            FileExplorer.scan_files_by_ext, request.path,
+            request.delete_extensions, request.exclude_extensions, request.recursive)
+        return {"status": "success", "data": data}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="路径不存在")
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="权限不足")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/files/delete_files_by_ext", summary="批量删除指定扩展名的文件")
+async def delete_files_by_ext(request: BatchDeleteFilesRequest):
+    """按扩展名规则批量删除目录（可含子目录）中的文件，只删文件不动文件夹"""
+    try:
+        data = await asyncio.to_thread(
+            FileExplorer.delete_files_by_ext, request.path,
+            request.delete_extensions, request.exclude_extensions, request.recursive)
+        logger.info(f"批量删除文件: {request.path} 删除 {data['count']} 个")
+        return {"status": "success", "data": data}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="路径不存在")
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="权限不足")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class RenamePreviewRequest(BaseModel):
     rule_id: str
     result_data: Dict[str, Any] # 完整的识别结果

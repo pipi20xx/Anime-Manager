@@ -2,6 +2,7 @@
  * CD2 API — CloudDrive2 管理接口
  */
 import { api, apiFetch } from './client'
+import type { BatchDeleteFilesBody } from './organizer'
 
 export const cd2Api = {
   /** 获取离线（种子）任务列表 + 配额（按 CD2 路径，如账号目录） */
@@ -60,6 +61,14 @@ export const cd2Api = {
   /** 清理云盘空文件夹 */
   cleanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
     api.post<any>('/api/cd2/files/clean-empty-dirs', body),
+
+  /** 批量删除：按扩展名扫描云盘待删除的文件（预览，不删除） */
+  scanFilesByExt: (body: BatchDeleteFilesBody) =>
+    api.post<any>('/api/cd2/files/scan-files-by-ext', body),
+
+  /** 批量删除：按扩展名删除云盘文件 */
+  deleteFilesByExt: (body: BatchDeleteFilesBody) =>
+    api.post<any>('/api/cd2/files/delete-files-by-ext', body),
 
   /** 移动/复制文件 (action: move | copy) */
   transferPaths: (body: { paths: string[]; dest_dir: string; action: 'move' | 'copy'; conflict_policy: number }) =>

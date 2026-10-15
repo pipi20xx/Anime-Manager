@@ -17,6 +17,7 @@ import RecognitionModal from './organizer/RecognitionModal.vue'
 import ManualOrganizeModal from './organizer/ManualOrganizeModal.vue'
 import ExecutionLogModal from './organizer/ExecutionLogModal.vue'
 import CleanEmptyDirsModal from './CleanEmptyDirsModal.vue'
+import BatchDeleteFilesModal from './BatchDeleteFilesModal.vue'
 import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FileBrowserView' })
@@ -67,6 +68,9 @@ const organizeTasks = ref<any[]>([])
 
 // 清理空文件夹 Modal
 const showCleanEmptyModal = ref(false)
+
+// 批量删除文件 Modal
+const showBatchDeleteModal = ref(false)
 
 // 执行日志 Modal
 const showExecModal = ref(false)
@@ -627,6 +631,7 @@ onMounted(() => {
           </v-btn>
           <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-folder-marker" @click="showGoToModal = true">前往路径</v-btn>
           <v-btn size="small" variant="tonal" color="warning" prepend-icon="mdi-delete-sweep" @click="showCleanEmptyModal = true">清理空文件夹</v-btn>
+          <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-file-remove-outline" @click="showBatchDeleteModal = true">批量删除文件</v-btn>
         </div>
       </div>
     </v-card>
@@ -875,6 +880,13 @@ onMounted(() => {
       v-model="showCleanEmptyModal"
       :current-path="currentPath"
       @cleaned="fetchFiles()"
+    />
+
+    <!-- 批量删除文件弹窗 -->
+    <BatchDeleteFilesModal
+      v-model="showBatchDeleteModal"
+      :current-path="currentPath"
+      @deleted="fetchFiles()"
     />
 
     <!-- 执行日志弹窗 -->

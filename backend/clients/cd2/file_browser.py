@@ -25,6 +25,51 @@ def _cd2_is_ignored(name: str, ignore_patterns: Optional[List[str]]) -> bool:
     return any(fnmatch.fnmatch(name, p.strip()) for p in (ignore_patterns or []) if p and p.strip())
 
 
+# 批量删除预览最多返回的条目数（实际删除不受此限制）
+_BATCH_DELETE_PREVIEW_LIMIT = 2000
+# 单次 DeleteFiles 提交的文件数上限
+_BATCH_DELETE_CHUNK = 200
+
+
+def _normalize_extensions(extensions: Optional[List[str]]) -> List[str]:
+    """
+    归一化扩展名列表，兼容多种写法：
+    '.jpg' / 'jpg' / 'JPG' / '*.jpg' → '.jpg'；多项可用 ; , ， ； 分隔。
+    '*' / '.*' / 'all' → '*'（匹配所有文件）。返回空列表表示"不限制扩展名"。
+    """
+    result: List[str] = []
+    for raw in (extensions or []):
+        text = str(raw).replace('；', ';').replace('，', ',').replace(',', ';')
+        for part in text.split(';'):
+            ext = part.strip().lower()
+            if not ext:
+                continue
+            if ext in ('*', '.*', 'all'):
+                ext = '*'
+            elif ext.startswith('*.'):
+                ext = ext[1:]
+            elif not ext.startswith('.'):
+                ext = '.' + ext
+            if ext not in result:
+                result.append(ext)
+    return result
+
+
+def _extension_matches(name: str, extensions: List[str]) -> bool:
+    """文件名是否命中扩展名规则；extensions 为空视为命中所有文件"""
+    if not extensions:
+        return True
+    lower = name.lower()
+    return any(lower.endswith(ext) or fnmatch.fnmatch(lower, ext) for ext in extensions)
+
+
+def _should_delete_file(name: str, delete_exts: List[str], exclude_exts: List[str]) -> bool:
+    """优先级：不想删除的扩展名（exclude）> 要删除的扩展名（delete）"""
+    if exclude_exts and _extension_matches(name, exclude_exts):
+        return False
+    return _extension_matches(name, delete_exts)
+
+
 class CD2FileBrowser:
     """
     CD2 文件浏览与文件操作（直接使用 CD2 内部路径，不做本地路径转换）。
@@ -729,3 +774,116 @@ class CD2FileBrowser:
                 _fallback(d, msg)
 
         return {"success": True, "count": len(removed), "deleted": removed, "failed": failed}
+
+    # ---------- 批量按扩展名删除文件 ----------
+
+    def iter_files(self, path: str, recursive: bool = True):
+        """
+        生成器：遍历云目录（可含子目录）产出文件条目（name/path/is_dir/size/write_time）。
+        逐目录 GetSubFiles（走 CD2 缓存）；列目录失败则跳过该目录，不中断整体扫描。
+        """
+        conn = self.connection
+        base = "/" + (path or "/").strip("/") or "/"
+        queue = [base]
+        visited = set()
+
+        while queue:
+            current = queue.pop(0)
+            if current in visited:
+                continue
+            visited.add(current)
+
+            result = self.list_dir(current)
+            if not result.get("success"):
+                logger.warning(f"[{conn.name}] 批量删除扫描: 列目录失败 {current}: {result.get('message')}")
+                continue
+
+            for entry in result.get("entries", []):
+                if entry.get("is_dir"):
+                    if recursive and not entry.get("is_forbidden"):
+                        queue.append(entry["path"])
+                else:
+                    yield entry
+
+    def scan_files_by_ext(self, path: str, delete_extensions: Optional[List[str]] = None,
+                          exclude_extensions: Optional[List[str]] = None,
+                          recursive: bool = True) -> Dict[str, Any]:
+        """
+        扫描云目录（可含子目录）中符合扩展名规则的文件，仅预览不删除。
+        规则：delete_extensions 为空=所有文件；exclude_extensions 优先，命中则永不删除。
+        """
+        try:
+            delete_exts = _normalize_extensions(delete_extensions)
+            exclude_exts = _normalize_extensions(exclude_extensions)
+
+            items: List[Dict[str, Any]] = []
+            count = 0
+            total_size = 0
+            for entry in self.iter_files(path, recursive):
+                name = entry["name"]
+                if not _should_delete_file(name, delete_exts, exclude_exts):
+                    continue
+                size = int(entry.get("size") or 0)
+                count += 1
+                total_size += size
+                if len(items) < _BATCH_DELETE_PREVIEW_LIMIT:
+                    items.append({
+                        "path": entry["path"],
+                        "name": name,
+                        "size": size,
+                        "mtime": entry.get("write_time", 0),
+                    })
+
+            return {
+                "success": True,
+                "count": count,
+                "items": items,
+                "total_size": total_size,
+                "truncated": count > len(items),
+                "preview_limit": _BATCH_DELETE_PREVIEW_LIMIT,
+            }
+        except Exception as e:
+            details = grpc_error_details(e)
+            logger.error(f"[{self.connection.name}] 扫描待删除文件失败 {path}: {details}")
+            return {"success": False, "message": details, "count": 0, "items": [], "total_size": 0}
+
+    def delete_files_by_ext(self, path: str, delete_extensions: Optional[List[str]] = None,
+                            exclude_extensions: Optional[List[str]] = None,
+                            recursive: bool = True) -> Dict[str, Any]:
+        """
+        批量删除云目录（可含子目录）中符合扩展名规则的文件（走回收站）。
+        只删文件、不动文件夹；分批提交 DeleteFiles，单批失败只影响该批。
+        """
+        try:
+            delete_exts = _normalize_extensions(delete_extensions)
+            exclude_exts = _normalize_extensions(exclude_extensions)
+
+            targets: List[str] = []
+            freed = 0
+            for entry in self.iter_files(path, recursive):
+                if not _should_delete_file(entry["name"], delete_exts, exclude_exts):
+                    continue
+                targets.append(entry["path"])
+                freed += int(entry.get("size") or 0)
+
+            deleted: List[str] = []
+            failed: List[Dict[str, str]] = []
+            for i in range(0, len(targets), _BATCH_DELETE_CHUNK):
+                chunk = targets[i:i + _BATCH_DELETE_CHUNK]
+                ok, msg = self.delete_files(chunk)
+                if ok:
+                    deleted.extend(chunk)
+                else:
+                    failed.extend({"path": p, "error": msg} for p in chunk)
+
+            if deleted:
+                log_audit("CD2文件", "批量删除文件",
+                          f"{path} 删除 {len(deleted)} 个文件"
+                          + (f"，{len(failed)} 个失败" if failed else ""))
+
+            return {"success": True, "count": len(deleted), "deleted": deleted,
+                    "failed": failed, "freed_bytes": freed}
+        except Exception as e:
+            details = grpc_error_details(e)
+            logger.error(f"[{self.connection.name}] 批量删除文件失败 {path}: {details}")
+            return {"success": False, "message": details, "count": 0, "deleted": [], "failed": []}

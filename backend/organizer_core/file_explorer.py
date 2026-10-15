@@ -251,3 +251,155 @@ class FileExplorer:
                 failed.append({"path": d, "error": str(e)})
 
         return {"count": len(deleted), "deleted": deleted, "failed": failed}
+
+    # ---------- 批量按扩展名删除文件 ----------
+
+    # 预览列表最多返回的条目数（实际删除不受此限制）
+    BATCH_DELETE_PREVIEW_LIMIT = 2000
+
+    @staticmethod
+    def _normalize_extensions(extensions: Optional[List[str]]) -> List[str]:
+        """
+        归一化扩展名列表，兼容多种写法：
+        '.jpg' / 'jpg' / 'JPG' / '*.jpg' → '.jpg'；多项可用 ; , ， ； 分隔。
+        '*' / '.*' / 'all' → '*'（匹配所有文件）。返回空列表表示"不限制扩展名"。
+        """
+        result: List[str] = []
+        for raw in (extensions or []):
+            text = str(raw).replace('；', ';').replace('，', ',').replace(',', ';')
+            for part in text.split(';'):
+                ext = part.strip().lower()
+                if not ext:
+                    continue
+                if ext in ('*', '.*', 'all'):
+                    ext = '*'
+                elif ext.startswith('*.'):
+                    ext = ext[1:]
+                elif not ext.startswith('.'):
+                    ext = '.' + ext
+                if ext not in result:
+                    result.append(ext)
+        return result
+
+    @staticmethod
+    def _extension_matches(name: str, extensions: List[str]) -> bool:
+        """文件名是否命中扩展名规则；extensions 为空视为命中所有文件"""
+        if not extensions:
+            return True
+        lower = name.lower()
+        return any(lower.endswith(ext) or fnmatch(lower, ext) for ext in extensions)
+
+    @staticmethod
+    def _should_delete_file(name: str, delete_exts: List[str], exclude_exts: List[str]) -> bool:
+        """
+        判定文件是否应被批量删除。
+        优先级：不想删除的扩展名（exclude）> 要删除的扩展名（delete）。
+        """
+        if exclude_exts and FileExplorer._extension_matches(name, exclude_exts):
+            return False
+        return FileExplorer._extension_matches(name, delete_exts)
+
+    @staticmethod
+    def _iter_matching_files(path: str, delete_exts: List[str], exclude_exts: List[str], recursive: bool = True):
+        """生成器：产出目录（可含子目录）中所有命中规则的文件 (full_path, name, size, mtime)"""
+        if recursive:
+            for root, _dirs, files in os.walk(path):
+                for name in files:
+                    if not FileExplorer._should_delete_file(name, delete_exts, exclude_exts):
+                        continue
+                    full = os.path.join(root, name)
+                    try:
+                        st = os.stat(full)
+                    except OSError:
+                        continue
+                    yield full, name, st.st_size, st.st_mtime
+            return
+
+        try:
+            entries = list(os.scandir(path))
+        except OSError:
+            return
+        for entry in entries:
+            try:
+                if not entry.is_file():
+                    continue
+            except OSError:
+                continue
+            if not FileExplorer._should_delete_file(entry.name, delete_exts, exclude_exts):
+                continue
+            try:
+                st = entry.stat()
+            except OSError:
+                continue
+            yield entry.path, entry.name, st.st_size, st.st_mtime
+
+    @staticmethod
+    def scan_files_by_ext(path: str, delete_extensions: Optional[List[str]] = None,
+                          exclude_extensions: Optional[List[str]] = None,
+                          recursive: bool = True) -> Dict[str, Any]:
+        """
+        扫描目录（可含子目录）中符合扩展名规则的文件，仅预览不删除。
+        规则：delete_extensions 为空=所有文件；exclude_extensions 优先，命中则永不删除。
+        """
+        FileExplorer._ensure_allowed(path)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Path not found: {path}")
+        if not os.path.isdir(path):
+            raise NotADirectoryError(f"Path is not a directory: {path}")
+
+        delete_exts = FileExplorer._normalize_extensions(delete_extensions)
+        exclude_exts = FileExplorer._normalize_extensions(exclude_extensions)
+
+        limit = FileExplorer.BATCH_DELETE_PREVIEW_LIMIT
+        items: List[Dict[str, Any]] = []
+        count = 0
+        total_size = 0
+        for full, name, size, mtime in FileExplorer._iter_matching_files(path, delete_exts, exclude_exts, recursive):
+            count += 1
+            total_size += size
+            if len(items) < limit:
+                items.append({"path": full, "name": name, "size": size, "mtime": mtime})
+
+        return {
+            "count": count,
+            "items": items,
+            "total_size": total_size,
+            "truncated": count > len(items),
+            "preview_limit": limit,
+        }
+
+    @staticmethod
+    def delete_files_by_ext(path: str, delete_extensions: Optional[List[str]] = None,
+                            exclude_extensions: Optional[List[str]] = None,
+                            recursive: bool = True) -> Dict[str, Any]:
+        """
+        批量删除目录（可含子目录）中符合扩展名规则的文件。
+        只删文件、不动文件夹；每个文件删除前重新校验规则与存在性（防扫描后变动）；
+        单个文件失败不影响其余。
+        """
+        FileExplorer._ensure_allowed(path)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Path not found: {path}")
+        if not os.path.isdir(path):
+            raise NotADirectoryError(f"Path is not a directory: {path}")
+
+        delete_exts = FileExplorer._normalize_extensions(delete_extensions)
+        exclude_exts = FileExplorer._normalize_extensions(exclude_extensions)
+
+        deleted: List[str] = []
+        failed: List[Dict[str, str]] = []
+        freed = 0
+        for full, _name, size, _mtime in FileExplorer._iter_matching_files(path, delete_exts, exclude_exts, recursive):
+            try:
+                # 重新校验：扫描后文件可能已被删除/改名
+                if not os.path.isfile(full):
+                    continue
+                if not FileExplorer._should_delete_file(os.path.basename(full), delete_exts, exclude_exts):
+                    continue
+                os.remove(full)
+                deleted.append(full)
+                freed += size
+            except OSError as e:
+                failed.append({"path": full, "error": str(e)})
+
+        return {"count": len(deleted), "deleted": deleted, "failed": failed, "freed_bytes": freed}

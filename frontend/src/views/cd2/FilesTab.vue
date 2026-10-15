@@ -2,7 +2,7 @@
 /**
  * FilesTab — CD2 文件浏览与操作
  * 浏览 CD2 云端目录（GetSubFiles），右键/⋮ 菜单操作：打开、重命名、移动、复制、删除。
- * 工具栏（纯图标）：离线下载管理、手动整理、上传、新建文件夹、清理空文件夹、刷新、强制刷新。
+ * 工具栏（纯图标）：离线下载管理、手动整理、上传、新建文件夹、清理空文件夹、批量删除文件、刷新、强制刷新。
  * 目录锁定/解锁统一走右键菜单（锁定此目录 / 递归锁定 / 解锁 / 递归解锁），工具栏不再放锁定按钮。
  * 进入支持离线下载的目录（如 /115open）后，可通过「离线下载管理」图标
  * 查看当前目录的离线任务、提交新任务、删除与重启。
@@ -14,6 +14,7 @@ import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
 import ManualOrganizeModal from '../organizer/ManualOrganizeModal.vue'
 import CleanEmptyDirsModal from '../CleanEmptyDirsModal.vue'
+import BatchDeleteFilesModal from '../BatchDeleteFilesModal.vue'
 import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FilesTab' })
@@ -379,6 +380,9 @@ const cancelUpload = () => {
 // ---------- 清理空文件夹 ----------
 const showCleanEmptyModal = ref(false)
 
+// ---------- 批量删除文件（按扩展名） ----------
+const showBatchDeleteModal = ref(false)
+
 // ---------- 手动整理（源自动为当前 CD2 云目录） ----------
 const showManualModal = ref(false)
 const openManualOrganize = async () => {
@@ -729,6 +733,7 @@ onMounted(() => {
         />
         <v-btn icon="mdi-folder-plus-outline" size="small" variant="text" title="新建文件夹" @click="openCreateModal" />
         <v-btn icon="mdi-delete-sweep" size="small" variant="text" title="清理空文件夹" :disabled="currentPath === '/'" @click="showCleanEmptyModal = true" />
+        <v-btn icon="mdi-file-remove-outline" size="small" variant="text" title="批量删除文件（按扩展名）" @click="showBatchDeleteModal = true" />
         <v-btn icon="mdi-refresh" size="small" variant="text" :loading="loading" title="刷新" @click="loadEntries()" />
         <v-btn
           icon="mdi-sync"
@@ -1186,6 +1191,14 @@ onMounted(() => {
     :current-path="currentPath"
     source="cd2"
     @cleaned="loadEntries()"
+  />
+
+  <!-- 批量删除文件弹窗 -->
+  <BatchDeleteFilesModal
+    v-model="showBatchDeleteModal"
+    :current-path="currentPath"
+    source="cd2"
+    @deleted="loadEntries()"
   />
 
   <!-- 手动整理（源自动为当前 CD2 云目录） -->
