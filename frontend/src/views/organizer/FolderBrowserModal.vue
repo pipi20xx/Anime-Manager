@@ -16,6 +16,8 @@ const props = defineProps<{
   via: 'local' | 'cd2'
   title?: string
   mode?: 'dir' | 'file'
+  /** 打开时的初始目录（默认根目录 /） */
+  initialPath?: string
 }>()
 
 const emit = defineEmits<{
@@ -100,7 +102,7 @@ const choose = () => {
 // 每次打开时按 via 重置起始路径
 watch(() => props.modelValue, (open) => {
   if (open) {
-    currentPath.value = props.via === 'cd2' ? '/' : '/'
+    currentPath.value = props.initialPath?.trim() || '/'
     load()
   }
 })

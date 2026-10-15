@@ -13,6 +13,7 @@ import { cd2Api, recognitionApi, organizerApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
 import ManualOrganizeModal from '../organizer/ManualOrganizeModal.vue'
+import FolderBrowserModal from '../organizer/FolderBrowserModal.vue'
 import CleanEmptyDirsModal from '../CleanEmptyDirsModal.vue'
 import BatchDeleteFilesModal from '../BatchDeleteFilesModal.vue'
 import { DialogTitle } from '@/components/common'
@@ -218,6 +219,8 @@ const transferAction = ref<'move' | 'copy'>('move')
 const transferTarget = ref<any>(null)
 const transferDest = ref('/')
 const transferConflict = ref(1)
+// 目标目录浏览弹窗（直接浏览 CD2 云盘选目录）
+const showTransferBrowser = ref(false)
 
 const openTransferModal = (action: 'move' | 'copy', entry: any) => {
   transferAction.value = action
@@ -225,6 +228,11 @@ const openTransferModal = (action: 'move' | 'copy', entry: any) => {
   transferDest.value = currentPath.value === '/' ? '/' : currentPath.value
   transferConflict.value = 1
   showTransferModal.value = true
+}
+
+// 从「浏览云盘目录」弹窗回填目标目录
+const pickTransferDest = (path: string) => {
+  if (path) transferDest.value = path
 }
 
 const submitTransfer = async () => {
@@ -926,7 +934,17 @@ onMounted(() => {
           density="compact"
           hide-details
           class="mb-3"
-        />
+        >
+          <template #append-inner>
+            <v-btn
+              icon="mdi-folder-search-outline"
+              size="small"
+              variant="text"
+              title="浏览云盘目录"
+              @click="showTransferBrowser = true"
+            />
+          </template>
+        </v-text-field>
         <v-select
           v-model="transferConflict"
           label="同名冲突处理"
@@ -949,6 +967,16 @@ onMounted(() => {
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 目标目录选择（浏览 CD2 云盘） -->
+  <FolderBrowserModal
+    v-model="showTransferBrowser"
+    via="cd2"
+    mode="dir"
+    title="选择目标目录"
+    :initial-path="transferDest"
+    @select="pickTransferDest"
+  />
 
   <!-- 离线下载管理 -->
   <v-dialog v-model="showOfflineModal" max-width="860" scrollable>
