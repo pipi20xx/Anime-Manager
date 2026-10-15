@@ -38,7 +38,8 @@ const isFileMode = computed(() => props.mode === 'file')
 
 const breadcrumbs = computed(() => {
   const parts = currentPath.value.split('/').filter(Boolean)
-  const crumbs = [{ name: props.via === 'cd2' ? '根目录' : '/', path: '/' }]
+  // 与 CD2 文件浏览（FilesTab）保持一致：首级统一显示「根目录」
+  const crumbs = [{ name: '根目录', path: '/' }]
   let acc = ''
   for (const p of parts) {
     acc += `/${p}`

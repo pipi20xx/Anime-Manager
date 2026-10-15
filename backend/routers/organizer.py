@@ -25,9 +25,16 @@ _background_tasks: Dict[str, Dict[str, Any]] = {}
 class FileListRequest(BaseModel):
     path: str = "/"
 
-class FileOperationRequest(BaseModel):
-    src: str
-    dst: str
+class FileTransferRequest(BaseModel):
+    """复制到 / 移动到（语义对齐 CD2 的 /api/cd2/files/transfer）"""
+    paths: List[str]
+    dest_dir: str
+    action: str = "move"        # move | copy
+    conflict_policy: int = 1    # 0=覆盖 1=自动重命名 2=跳过
+
+class FileRenameRequest(BaseModel):
+    path: str
+    new_name: str
 
 class FilePathRequest(BaseModel):
     path: str
@@ -56,21 +63,52 @@ async def delete_file(request: FilePathRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/files/copy", summary="复制文件或目录")
-async def copy_file(request: FileOperationRequest):
-    try:
-        await asyncio.to_thread(FileExplorer.copy_item, request.src, request.dst)
-        logger.debug(f"从 {request.src} 复制到 {request.dst}")
-        return {"status": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.post("/api/files/transfer", summary="复制到/移动到指定目录")
+async def transfer_files(request: FileTransferRequest):
+    """
+    把 paths 中的每一项复制/移动到 dest_dir 下（保持原名）。
+    conflict_policy: 0=覆盖 1=自动重命名 2=跳过（默认自动重命名，不会静默覆盖）。
+    """
+    if not request.paths:
+        raise HTTPException(status_code=400, detail="未指定要操作的文件")
+    if request.action not in ("move", "copy"):
+        raise HTTPException(status_code=400, detail=f"不支持的操作类型: {request.action}")
 
-@router.post("/api/files/move", summary="移动/重命名文件或目录")
-async def move_file(request: FileOperationRequest):
+    results: List[Dict[str, Any]] = []
+    for src in request.paths:
+        try:
+            results.append(await asyncio.to_thread(
+                FileExplorer.transfer_item, src, request.dest_dir,
+                request.action, request.conflict_policy))
+        except Exception as e:
+            logger.warning(f"[文件浏览] {request.action} 失败 {src}: {e}")
+            results.append({"status": "failed", "src": src, "message": str(e)})
+
+    if results and all(r.get("status") == "failed" for r in results):
+        raise HTTPException(status_code=400, detail=results[0].get("message") or "操作失败")
+
+    verb = "移动" if request.action == "move" else "复制"
+    skipped = sum(1 for r in results if r.get("status") == "skipped")
+    logger.debug(f"{verb} {len(results)} 项 -> {request.dest_dir}")
+    return {
+        "status": "success",
+        "results": results,
+        "message": f"{verb}成功" + (f"，{skipped} 项因同名被跳过" if skipped else ""),
+    }
+
+@router.post("/api/files/rename", summary="重命名文件或目录")
+async def rename_file(request: FileRenameRequest):
     try:
-        await asyncio.to_thread(FileExplorer.move_item, request.src, request.dst)
-        logger.debug(f"从 {request.src} 移动到 {request.dst}")
-        return {"status": "success"}
+        data = await asyncio.to_thread(FileExplorer.rename_item, request.path, request.new_name)
+        return {"status": "success", "data": data}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileExistsError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except (ValueError, NotADirectoryError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -33,13 +33,17 @@ export const organizerApi = {
   deleteFile: (body: { path: string }) =>
     api.post<any>('/api/files/delete', body),
 
-  /** 复制文件或目录 */
-  copyFile: (body: { src: string; dst: string }) =>
-    api.post<any>('/api/files/copy', body),
+  /** 复制到 / 移动到指定目录（conflict_policy: 0=覆盖 1=自动重命名 2=跳过） */
+  transferFiles: (body: {
+    paths: string[]
+    dest_dir: string
+    action: 'move' | 'copy'
+    conflict_policy: number
+  }) => api.post<any>('/api/files/transfer', body),
 
-  /** 移动/重命名文件或目录 */
-  moveFile: (body: { src: string; dst: string }) =>
-    api.post<any>('/api/files/move', body),
+  /** 重命名文件或目录 */
+  renameFile: (body: { path: string; new_name: string }) =>
+    api.post<any>('/api/files/rename', body),
 
   /** 获取文件详情 */
   getFileInfo: (body: { path: string }) =>

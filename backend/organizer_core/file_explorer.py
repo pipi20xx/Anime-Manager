@@ -101,28 +101,117 @@ class FileExplorer:
         else:
             os.remove(path)
 
-    @staticmethod
-    def copy_item(src: str, dst: str):
-        """复制文件或目录"""
-        FileExplorer._ensure_allowed(src, dst)
-        if not os.path.exists(src):
-            raise FileNotFoundError(f"Source path not found: {src}")
+    # ---- 复制到 / 移动到（对齐 CD2 的同名冲突策略）----
+    CONFLICT_OVERWRITE = 0
+    CONFLICT_RENAME = 1
+    CONFLICT_SKIP = 2
 
-        # 如果 dst 是一个已存在的目录，shutil.copy2 会把文件拷入该目录
-        # 但如果是目录复制，需要 dst 不存在或者使用 copytree
-        if os.path.isdir(src):
-            shutil.copytree(src, dst)
+    @staticmethod
+    def _normalize(path: str) -> str:
+        return os.path.abspath(os.path.expanduser((path or "").strip()))
+
+    @staticmethod
+    def _unique_dest(dst: str, is_dir: bool) -> str:
+        """生成不冲突的目标名：name.ext -> name (1).ext"""
+        parent = os.path.dirname(dst)
+        base = os.path.basename(dst)
+        stem, ext = (base, "") if is_dir else os.path.splitext(base)
+        i = 1
+        while True:
+            candidate = os.path.join(parent, f"{stem} ({i}){ext}")
+            if not os.path.exists(candidate):
+                return candidate
+            i += 1
+
+    @staticmethod
+    def _resolve_conflict(dst: str, is_dir: bool, conflict_policy: int) -> Optional[str]:
+        """目标已存在时按策略处理；返回最终目标路径，None 表示跳过"""
+        if not os.path.exists(dst):
+            return dst
+        if conflict_policy == FileExplorer.CONFLICT_SKIP:
+            return None
+        if conflict_policy == FileExplorer.CONFLICT_OVERWRITE:
+            if os.path.isdir(dst) and not os.path.islink(dst):
+                shutil.rmtree(dst)
+            else:
+                os.remove(dst)
+            return dst
+        return FileExplorer._unique_dest(dst, is_dir)
+
+    @staticmethod
+    def transfer_item(src: str, dest_dir: str, action: str = "move",
+                      conflict_policy: int = 1) -> Dict[str, Any]:
+        """
+        把 src 复制/移动到 dest_dir 下（保持原名），支持同名冲突策略。
+        :param action: "move" 或 "copy"
+        :param conflict_policy: 0=覆盖 1=自动重命名 2=跳过（默认自动重命名）
+        """
+        if action not in ("move", "copy"):
+            raise ValueError(f"不支持的操作类型: {action}")
+
+        src = FileExplorer._normalize(src)
+        dest_dir = FileExplorer._normalize(dest_dir)
+        FileExplorer._ensure_allowed(src, dest_dir)
+
+        if not os.path.exists(src):
+            raise FileNotFoundError(f"源路径不存在: {src}")
+        if os.path.dirname(src) == src:
+            raise ValueError("不能对根目录执行此操作")
+        if not os.path.isdir(dest_dir):
+            raise NotADirectoryError(f"目标目录不存在: {dest_dir}")
+
+        is_dir = os.path.isdir(src)
+        # 目录不能复制/移动进自身或其子目录
+        if is_dir and (dest_dir == src or dest_dir.startswith(src + os.sep)):
+            raise ValueError("目标目录不能是源目录本身或其子目录")
+
+        dst = os.path.join(dest_dir, os.path.basename(src))
+        if dst == src:
+            raise ValueError("源路径与目标路径相同")
+
+        final_dst = FileExplorer._resolve_conflict(dst, is_dir, conflict_policy)
+        if final_dst is None:
+            return {"status": "skipped", "src": src, "dst": dst,
+                    "message": "目标已存在同名项，已跳过"}
+
+        if action == "copy":
+            if is_dir:
+                shutil.copytree(src, final_dst)
+            else:
+                shutil.copy2(src, final_dst)
         else:
-            shutil.copy2(src, dst)
+            shutil.move(src, final_dst)
+
+        verb = "复制" if action == "copy" else "移动"
+        logger.info(f"[FileExplorer] {verb}: {src} -> {final_dst}")
+        return {"status": "success", "src": src, "dst": final_dst, "message": f"已{verb}"}
 
     @staticmethod
-    def move_item(src: str, dst: str):
-        """移动/重命名文件或目录"""
-        FileExplorer._ensure_allowed(src, dst)
-        if not os.path.exists(src):
-            raise FileNotFoundError(f"Source path not found: {src}")
+    def rename_item(path: str, new_name: str) -> Dict[str, Any]:
+        """在同一目录内重命名（new_name 只能是名称，不能含路径分隔符）"""
+        path = FileExplorer._normalize(path)
+        FileExplorer._ensure_allowed(path)
 
-        shutil.move(src, dst)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"路径不存在: {path}")
+        if os.path.dirname(path) == path:
+            raise ValueError("不能重命名根目录")
+
+        new_name = (new_name or "").strip()
+        if not new_name:
+            raise ValueError("新名称不能为空")
+        if new_name in (".", "..") or os.sep in new_name or (os.altsep and os.altsep in new_name):
+            raise ValueError("新名称不能包含路径分隔符")
+
+        dst = os.path.join(os.path.dirname(path), new_name)
+        if dst == path:
+            return {"status": "success", "src": path, "dst": path, "message": "名称未变化"}
+        if os.path.exists(dst):
+            raise FileExistsError(f"同名文件或文件夹已存在: {new_name}")
+
+        os.rename(path, dst)
+        logger.info(f"[FileExplorer] 重命名: {path} -> {dst}")
+        return {"status": "success", "src": path, "dst": dst, "message": "已重命名"}
 
     @staticmethod
     def get_file_info(path: str) -> Dict[str, Any]:

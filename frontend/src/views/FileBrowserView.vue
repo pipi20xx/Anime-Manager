@@ -4,7 +4,7 @@
  *
  * 功能对标旧前端 FileBrowserViewDesktop:
  * - 面包屑导航 + 收藏夹侧栏（服务端存储）
- * - 文件/文件夹列表 + 右键菜单 (复制/剪切/粘贴/删除/详情)
+ * - 文件/文件夹列表 + 右键菜单 (复制到/移动到/重命名/复制路径/删除/详情)
  * - 单文件识别（识别弹窗 + 重命名预览 + 哈希计算 + 审计日志）
  * - 整理当前目录（Ad-hoc 流式执行 + dry-run 预览 + 批量提交）
  * - 前往指定路径
@@ -13,6 +13,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { organizerApi, recognitionApi, configApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
+import FolderBrowserModal from './organizer/FolderBrowserModal.vue'
 import RecognitionModal from './organizer/RecognitionModal.vue'
 import ManualOrganizeModal from './organizer/ManualOrganizeModal.vue'
 import ExecutionLogModal from './organizer/ExecutionLogModal.vue'
@@ -22,7 +23,7 @@ import { DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'FileBrowserView' })
 
-const { success, error: showError, warning, info } = useNotification()
+const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
 
 // --- 状态 ---
@@ -34,8 +35,20 @@ const showSkeleton = ref(false)
 // 收藏夹 (服务端存储)
 const favorites = ref<{ name: string; path: string }[]>([])
 
-// 剪贴板
-const clipboard = ref<{ item: any; mode: 'copy' | 'move' } | null>(null)
+// 复制到 / 移动到（目标目录 + 同名冲突策略，对齐 CD2 文件浏览）
+const showTransferModal = ref(false)
+const transferAction = ref<'move' | 'copy'>('move')
+const transferTarget = ref<any>(null)
+const transferDest = ref('/')
+const transferConflict = ref(1)
+const transferSubmitting = ref(false)
+const showTransferBrowser = ref(false)
+
+// 重命名
+const showRenameModal = ref(false)
+const renameTarget = ref<any>(null)
+const renameNewName = ref('')
+const renameSubmitting = ref(false)
 
 // 上下文菜单
 const contextMenu = ref({ show: false, x: 0, y: 0, item: null as any })
@@ -253,43 +266,88 @@ function closeContextMenu() {
 function handleContextAction(action: string) {
   const item = contextMenu.value.item
   switch (action) {
-    case 'copy': copyToClipboard(item, 'copy'); break
-    case 'move': copyToClipboard(item, 'move'); break
+    case 'copy': if (item) openTransferModal('copy', item); break
+    case 'move': if (item) openTransferModal('move', item); break
+    case 'rename': if (item) openRenameModal(item); break
     case 'copyPath': copyPath(item?.path || currentPath.value); break
     case 'delete': if (item) deleteItem(item.path); break
     case 'info': if (item) getFileInfo(item.path); break
-    case 'paste': pasteItem(); break
   }
 }
 
-function copyToClipboard(item: any, mode: 'copy' | 'move') {
-  clipboard.value = { item, mode }
-  info(`已${mode === 'copy' ? '复制' : '剪切'}: ${item.name}`)
+// --- 复制到 / 移动到 ---
+function openTransferModal(action: 'move' | 'copy', item: any) {
+  transferAction.value = action
+  transferTarget.value = item
+  transferDest.value = currentPath.value
+  transferConflict.value = 1
+  transferSubmitting.value = false
+  showTransferModal.value = true
   closeContextMenu()
 }
 
-async function pasteItem() {
-  if (!clipboard.value) return
-  const { item, mode } = clipboard.value
-  const dst = currentPath.value === '/' ? `/${item.name}` : `${currentPath.value}/${item.name}`
-  if (item.path === dst) {
-    warning('源路径与目标路径相同')
-    return
-  }
+// 从「浏览本地目录」弹窗回填目标目录
+function pickTransferDest(path: string) {
+  if (path) transferDest.value = path
+}
+
+async function submitTransfer() {
+  const item = transferTarget.value
+  const dest = transferDest.value.trim()
+  if (!item || !dest) return
+  transferSubmitting.value = true
+  const verb = transferAction.value === 'move' ? '移动' : '复制'
   try {
-    if (mode === 'copy') {
-      await organizerApi.copyFile({ src: item.path, dst })
-      success('复制成功')
+    const res = await organizerApi.transferFiles({
+      paths: [item.path],
+      dest_dir: dest,
+      action: transferAction.value,
+      conflict_policy: transferConflict.value,
+    })
+    const results = res?.results || res?.data?.results || []
+    const skipped = results.filter((r: any) => r?.status === 'skipped').length
+    const failed = results.filter((r: any) => r?.status === 'failed')
+    if (failed.length) {
+      showError(failed[0]?.message || `${verb}失败`)
+    } else if (skipped) {
+      warning('目标已存在同名项，已按「跳过」处理')
+      showTransferModal.value = false
     } else {
-      await organizerApi.moveFile({ src: item.path, dst })
-      success('移动成功')
-      clipboard.value = null
+      success(`${verb}成功`)
+      showTransferModal.value = false
     }
     fetchFiles()
   } catch (e: any) {
-    showError(e?.message || '操作失败')
+    showError(e?.message || `${verb}失败`)
+  } finally {
+    transferSubmitting.value = false
   }
+}
+
+// --- 重命名 ---
+function openRenameModal(item: any) {
+  renameTarget.value = item
+  renameNewName.value = item.name
+  renameSubmitting.value = false
+  showRenameModal.value = true
   closeContextMenu()
+}
+
+async function submitRename() {
+  const item = renameTarget.value
+  const name = renameNewName.value.trim()
+  if (!item || !name || name === item.name) return
+  renameSubmitting.value = true
+  try {
+    await organizerApi.renameFile({ path: item.path, new_name: name })
+    success('重命名成功')
+    showRenameModal.value = false
+    fetchFiles()
+  } catch (e: any) {
+    showError(e?.message || '重命名失败')
+  } finally {
+    renameSubmitting.value = false
+  }
 }
 
 async function deleteItem(path: string) {
@@ -755,13 +813,17 @@ onMounted(() => {
       :close-on-content-click="true"
     >
       <v-list density="compact" min-width="160">
-        <v-list-item v-if="contextMenu.item" @click="handleContextAction('copy')">
-          <template #prepend><v-icon size="18">mdi-content-copy</v-icon></template>
-          <v-list-item-title class="text-body-2">复制</v-list-item-title>
+        <v-list-item v-if="contextMenu.item" @click="handleContextAction('rename')">
+          <template #prepend><v-icon size="18">mdi-pencil-outline</v-icon></template>
+          <v-list-item-title class="text-body-2">重命名</v-list-item-title>
         </v-list-item>
         <v-list-item v-if="contextMenu.item" @click="handleContextAction('move')">
-          <template #prepend><v-icon size="18">mdi-content-cut</v-icon></template>
-          <v-list-item-title class="text-body-2">剪切</v-list-item-title>
+          <template #prepend><v-icon size="18">mdi-folder-move-outline</v-icon></template>
+          <v-list-item-title class="text-body-2">移动到...</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="contextMenu.item" @click="handleContextAction('copy')">
+          <template #prepend><v-icon size="18">mdi-content-copy</v-icon></template>
+          <v-list-item-title class="text-body-2">复制到...</v-list-item-title>
         </v-list-item>
         <v-list-item @click="handleContextAction('copyPath')">
           <template #prepend><v-icon size="18">mdi-link-variant</v-icon></template>
@@ -774,11 +836,6 @@ onMounted(() => {
         <v-list-item v-if="contextMenu.item" @click="handleContextAction('info')">
           <template #prepend><v-icon size="18">mdi-information-outline</v-icon></template>
           <v-list-item-title class="text-body-2">详情</v-list-item-title>
-        </v-list-item>
-        <v-divider v-if="clipboard" />
-        <v-list-item v-if="clipboard" @click="handleContextAction('paste')">
-          <template #prepend><v-icon size="18">mdi-content-paste</v-icon></template>
-          <v-list-item-title class="text-body-2">粘贴: {{ clipboard.item.name }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -847,6 +904,109 @@ onMounted(() => {
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-close" @click="showGoToModal = false">取消</v-btn>
           <v-btn variant="tonal" color="primary" prepend-icon="mdi-arrow-right" @click="goToPath">前往</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 复制到 / 移动到 -->
+    <v-dialog v-model="showTransferModal" max-width="480" scrollable>
+      <v-card class="glass-card">
+        <DialogTitle
+          icon="mdi-folder-move-outline"
+          :title="`${transferAction === 'move' ? '移动到' : '复制到'}「${transferTarget?.name || ''}」`"
+          @close="showTransferModal = false"
+        />
+        <v-divider />
+        <v-card-text class="pa-4">
+          <v-text-field
+            v-model="transferDest"
+            label="目标目录"
+            placeholder="/mnt/media/anime"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="mb-3"
+          >
+            <template #append-inner>
+              <v-btn
+                icon="mdi-folder-search-outline"
+                size="small"
+                variant="text"
+                title="浏览目录"
+                @click="showTransferBrowser = true"
+              />
+            </template>
+          </v-text-field>
+          <v-select
+            v-model="transferConflict"
+            label="同名冲突处理"
+            variant="outlined"
+            density="compact"
+            hide-details
+            :items="[
+              { title: '自动重命名', value: 1 },
+              { title: '覆盖', value: 0 },
+              { title: '跳过', value: 2 },
+            ]"
+          />
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="tonal" @click="showTransferModal = false">取消</v-btn>
+          <v-btn
+            variant="tonal"
+            color="primary"
+            :loading="transferSubmitting"
+            @click="submitTransfer"
+          >
+            {{ transferAction === 'move' ? '移动' : '复制' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 目标目录选择（浏览本地目录） -->
+    <FolderBrowserModal
+      v-model="showTransferBrowser"
+      via="local"
+      mode="dir"
+      title="选择目标目录"
+      :initial-path="transferDest"
+      @select="pickTransferDest"
+    />
+
+    <!-- 重命名 -->
+    <v-dialog v-model="showRenameModal" max-width="440" scrollable>
+      <v-card class="glass-card">
+        <DialogTitle icon="mdi-pencil-outline" title="重命名" @close="showRenameModal = false" />
+        <v-divider />
+        <v-card-text class="pa-4">
+          <v-text-field
+            v-model="renameNewName"
+            label="新名称"
+            variant="outlined"
+            density="compact"
+            hide-details
+            class="mb-2"
+            autofocus
+            @keyup.enter="submitRename"
+          />
+          <div class="text-caption text-medium-emphasis text-truncate">原路径: {{ renameTarget?.path }}</div>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="tonal" @click="showRenameModal = false">取消</v-btn>
+          <v-btn
+            variant="tonal"
+            color="primary"
+            :loading="renameSubmitting"
+            :disabled="!renameNewName.trim() || renameNewName.trim() === renameTarget?.name"
+            @click="submitRename"
+          >
+            确定
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
