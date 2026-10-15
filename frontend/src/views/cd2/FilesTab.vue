@@ -2,8 +2,9 @@
 /**
  * FilesTab — CD2 文件浏览与操作
  * 浏览 CD2 云端目录（GetSubFiles），右键/⋮ 菜单操作：打开、重命名、移动、复制、删除。
- * 工具栏支持新建文件夹、上传小文件（CreateFile + WriteToFile 分块）。
- * 进入支持离线下载的目录（如 /115open）后，可通过「离线下载管理」按钮
+ * 工具栏（纯图标）：离线下载管理、手动整理、上传、新建文件夹、清理空文件夹、刷新、强制刷新。
+ * 目录锁定/解锁统一走右键菜单（锁定此目录 / 递归锁定 / 解锁 / 递归解锁），工具栏不再放锁定按钮。
+ * 进入支持离线下载的目录（如 /115open）后，可通过「离线下载管理」图标
  * 查看当前目录的离线任务、提交新任务、删除与重启。
  * 全部直接使用 CD2 内部路径（如 /115open/xxx）。
  */
@@ -268,16 +269,6 @@ const lockEntry = async (entry: any, recursive: boolean) => {
     } else {
       success(res?.message || '已锁定')
     }
-    await loadEntries()
-  } catch (e: any) {
-    showError(e?.message || '锁定失败')
-  }
-}
-
-const lockCurrentDir = async () => {
-  try {
-    const res = await cd2Api.lockDir({ path: currentPath.value })
-    success(res?.message || '已锁定')
     await loadEntries()
   } catch (e: any) {
     showError(e?.message || '锁定失败')
@@ -714,38 +705,20 @@ onMounted(() => {
         <span class="text-caption text-medium-emphasis mr-2">{{ entries.length }} 项</span>
         <v-btn
           v-if="canOffline && currentPath !== '/'"
-          color="primary"
-          variant="tonal"
+          icon="mdi-magnet"
           size="small"
-          prepend-icon="mdi-magnet"
-          class="mr-1"
+          variant="text"
+          title="离线下载管理"
           @click="openOfflineModal"
-        >
-          离线下载管理
-        </v-btn>
+        />
         <v-btn
-          v-if="!currentDirLocked && currentPath !== '/'"
-          variant="tonal"
+          icon="mdi-folder-sync-outline"
           size="small"
-          prepend-icon="mdi-lock-outline"
-          class="mr-1"
-          title="锁定当前目录（永久快照缓存，浏览/扫描/生成 0 API）"
-          @click="lockCurrentDir"
-        >
-          锁定此目录
-        </v-btn>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          size="small"
-          prepend-icon="mdi-folder-sync-outline"
-          class="mr-1"
+          variant="text"
           :disabled="currentPath === '/'"
           title="手动整理当前目录"
           @click="openManualOrganize"
-        >
-          手动整理
-        </v-btn>
+        />
         <v-btn
           icon="mdi-upload"
           size="small"
@@ -982,9 +955,36 @@ onMounted(() => {
           <v-chip v-if="offlineQuota.total" size="x-small" variant="tonal" color="primary" class="ml-1">
             配额 {{ offlineQuota.used ?? 0 }} / {{ offlineQuota.total }}
           </v-chip>
-          <v-btn variant="tonal" size="small" prepend-icon="mdi-broom" :disabled="!offlineTasks.length" @click="openClearModal">清空</v-btn>
-          <v-btn color="primary" variant="tonal" size="small" :prepend-icon="showAddTask ? 'mdi-chevron-up' : 'mdi-plus'" @click="showAddTask = !showAddTask">添加任务</v-btn>
-          <v-btn icon="mdi-refresh" size="small" variant="text" :loading="offlineLoading" title="刷新" @click="loadOfflineTasks" />
+        </template>
+        <!-- 动作区（右对齐，纯图标，与工具栏一致） -->
+        <template #actions>
+          <v-btn
+            icon="mdi-broom"
+            size="small"
+            variant="text"
+            class="mr-1"
+            :disabled="!offlineTasks.length"
+            title="清空全部离线任务"
+            @click="openClearModal"
+          />
+          <v-btn
+            :icon="showAddTask ? 'mdi-chevron-up' : 'mdi-plus'"
+            size="small"
+            variant="text"
+            class="mr-1"
+            :title="showAddTask ? '收起添加任务' : '添加离线任务'"
+            @click="showAddTask = !showAddTask"
+          />
+          <v-btn
+            icon="mdi-refresh"
+            size="small"
+            variant="text"
+            class="mr-1"
+            :loading="offlineLoading"
+            title="刷新"
+            @click="loadOfflineTasks"
+          />
+          <v-btn icon="mdi-close" variant="text" size="small" aria-label="关闭" @click="showOfflineModal = false" />
         </template>
       </DialogTitle>
       <v-divider />
