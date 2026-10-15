@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import os
+import posixpath
 import threading
 import time
 import uuid
@@ -30,6 +31,14 @@ _HASH_PROGRESS_INTERVAL = 16 * 1024 * 1024  # 哈希进度上报间隔（字节�
 # 哈希上报后主动轮询 GetUploadFileList 兜底，防状态推送丢失
 _RAPID_POLL_INTERVAL = 20    # 轮询间隔（秒）
 _RAPID_WAIT_LIMIT = 7200     # 等待秒传决策的硬上限（秒），正常不会触发
+
+# 普通上传（rapid_mode=off）的空闲兜底：
+# 任务列表只保留进行中的任务，条目消失既可能是完成也可能是失败/被取消。
+# CD2 走传输管理上传：上传未完成（中断/取消/被移除）时云端查不到目标文件，
+# 因此以"目标文件在不在"作为唯一判据（不做体积比较），不能原地空等。
+_IDLE_WARN = 90              # 静默多久后开始轮询任务列表并告警（秒）
+_STALL_LIMIT = 1800          # 服务端完全静默且结果无法判定的硬上限（秒），超时判失败
+_VANISH_RECHECK_DELAY = 10   # 任务消失后云端查不到文件时的复查等待（秒），防目录索引滞后误判
 
 # 磁盘源上传失败重试：网络中断（如路由器重新拨号、OSS 分块请求失败）属于
 # 瞬时错误，重试前取消 CD2 端残留上传任务，从头开新会话。
@@ -85,7 +94,9 @@ class _Session:
         self.error = None
         self.terminal = False
         self.local = False  # 磁盘数据源模式：hash 请求在本地闭环处理，不入浏览器队列
-        self.last_activity = time.time()  # 最近一次收到服务端消息的时间（停滞诊断用）
+        self.last_activity = time.time()  # 最近一次收到服务端消息的时间（停滞诊断用，告警后会重置）
+        self.last_msg_at = self.last_activity  # 最近一次真实服务端消息（不重置，硬上限基准）
+        self.uploaded_bytes = 0  # 已回传给服务端的字节数（判定"数据是否全部送达"用）
 
 
 class RemoteUploadManager:
@@ -331,10 +342,10 @@ class RemoteUploadManager:
                     if job is None:
                         # 服务端应持续推送任务/状态。终态推送可能在通道断线期间丢失，
                         # 任务在 CD2 端已结束但本地会话收不到通知——仅报警会让会话僵死，
-                        # 因此空闲超限后轮询任务列表兜底收尾
+                        # 因此空闲超限后轮询任务列表 + 云端目标文件兜底收尾
                         if rapid_mode == "off":
                             idle = time.time() - session.last_activity
-                            if idle >= 90 and time.time() - last_poll_at >= _RAPID_POLL_INTERVAL:
+                            if idle >= _IDLE_WARN and time.time() - last_poll_at >= _RAPID_POLL_INTERVAL:
                                 last_poll_at = time.time()
                                 found, st, err_msg = self._query_upload_status(conn, cloud_file_path)
                                 if found:
@@ -347,19 +358,35 @@ class RemoteUploadManager:
                                     self._safe_cancel(upload_id)
                                     return {"success": False, "status_text": "错误",
                                             "error": err_msg or "上传任务异常"}
-                                if not found and task_seen:
-                                    # 任务已从列表消失：先等服务端补推终态（错误任务也会消失），
-                                    # 仍未收到则按完成收尾（数据已全部回传，不可能停在半途）
-                                    deadline = time.time() + 30
-                                    while not session.terminal and time.time() < deadline:
-                                        time.sleep(1)
-                                    if session.terminal and session.status != 5:
-                                        logger.error(f"远程上传任务异常({session.error}): {cloud_file_path}")
+                                if not found:
+                                    # 任务已从实时任务列表消失：以云端目标文件为准下结论。
+                                    # 不能只看"以前是否见过该任务"——首次轮询时任务可能早已
+                                    # 消失，那样会话会永远停在告警分支里空转（整理任务挂死）
+                                    verdict = self._judge_vanished_upload(conn, session, cloud_file_path)
+                                    if verdict == "done":
+                                        log_audit("CD2上传", "完成",
+                                                  f"任务已结束且云端目标文件校验通过: {cloud_file_path}")
+                                        return self._finish_local_session(upload_id, session, "完成")
+                                    if verdict == "failed":
+                                        logger.error(
+                                            f"上传任务已从 CD2 列表消失但云端目标文件未就绪，"
+                                            f"判定为失败/被取消: {cloud_file_path}"
+                                        )
+                                        self._safe_cancel(upload_id)
                                         return {"success": False, "status_text": "错误",
-                                                "error": session.error or "上传任务异常"}
-                                    log_audit("CD2上传", "完成", f"任务已结束(兜底判定): {cloud_file_path}")
-                                    return self._finish_local_session(upload_id, session, "完成")
-                                # 任务仍在（传输中/排队/暂停）：提示可能停滞并重置计时
+                                                "error": "上传任务已消失且云端目标文件未就绪（判定为失败/被取消）"}
+                                    # verdict == "unknown"：云端查询失败，继续等待（受硬上限约束）
+                                # 任务仍在（传输中/排队/暂停）或结果无法判定：
+                                # 先看是否已超过硬上限，避免会话永远僵死
+                                if time.time() - session.last_msg_at >= _STALL_LIMIT:
+                                    logger.error(
+                                        f"上传会话已 {int(time.time() - session.last_msg_at)} 秒未收到服务端"
+                                        f"任务/状态且无法确认结果，放弃本次上传: {cloud_file_path}"
+                                    )
+                                    self._safe_cancel(upload_id)
+                                    return {"success": False, "status_text": "错误",
+                                            "error": f"等待服务端任务/状态超时({_STALL_LIMIT} 秒)"}
+                                # 任务仍在（传输中/排队/暂停）：提示可能停滞并重置告警计时
                                 logger.warning(
                                     f"上传会话已 {int(idle)} 秒未收到服务端任务/状态，传输可能停滞: {cloud_file_path}"
                                 )
@@ -380,6 +407,7 @@ class RemoteUploadManager:
                         resp = conn.stub.RemoteReadData(read_req, metadata=conn.get_metadata(), timeout=120)
                         if not resp.success:
                             raise RuntimeError(f"RemoteReadData 失败: {resp.error_message}")
+                        session.uploaded_bytes += len(data)
 
                     elif job["type"] == "hash":
                         # 各哈希算法基于本地文件全量独立计算，
@@ -437,6 +465,55 @@ class RemoteUploadManager:
         except Exception as e:
             logger.debug(f"查询上传任务状态失败: {e}")
             return True, -1, ""
+
+    def _query_cloud_file(self, conn, cloud_path: str):
+        """实时查询云端目标文件（forceRefresh 绕过 CD2 目录缓存）。
+
+        返回 (exists, size, error)：error 不为 None 表示查询失败（exists/size 无意义）。
+        """
+        try:
+            parent = posixpath.dirname(cloud_path) or "/"
+            name = posixpath.basename(cloud_path)
+            req = conn.pb2.ListSubFileRequest(path=parent, forceRefresh=True)
+            for reply in conn.stub.GetSubFiles(req, metadata=conn.get_metadata(), timeout=30):
+                for f in reply.subFiles:
+                    if f.name == name:
+                        return True, int(getattr(f, "size", 0) or 0), None
+            return False, 0, None
+        except Exception as e:
+            return False, 0, grpc_error_details(e)
+
+    def _judge_vanished_upload(self, conn, session: _Session, cloud_path: str) -> str:
+        """CD2 上传任务已从实时任务列表消失时判定本次上传的结果。
+
+        任务列表只保留进行中的任务：条目消失既可能是"完成"，也可能是
+        "失败/被取消/被人工移除"，因此以云端目标文件的实时状态为准
+        （与 CD2TransferMonitor 的终审判据一致）。
+        返回 "done" / "failed" / "unknown"（查询失败，无法判定）。
+
+        判据只看"目标文件在不在"（不做体积比较）：CD2 走传输管理上传，上传未完成
+        （中断/取消/被移除）时云端查不到目标文件，能查到就一定已经完整上传。
+        查不到时先隔 _VANISH_RECHECK_DELAY 秒复查一次再判 failed，防目录索引滞后误判。
+        """
+        for attempt in (1, 2):
+            exists, _cloud_size, q_err = self._query_cloud_file(conn, cloud_path)
+            if q_err is not None:
+                break  # 查询失败：无法用云端文件判定
+            if not exists:
+                if attempt == 1:
+                    # 目录列表可能滞后于刚完成的上传：稍后复查一次再下结论，
+                    # 避免把成功误判为失败（判失败会触发整份重传）
+                    time.sleep(_VANISH_RECHECK_DELAY)
+                    continue
+                return "failed"
+            # 目标文件在 → 上传完整（CD2 上传未完成时云端查不到目标文件）
+            return "done"
+
+        # 云端查询失败时的兜底：数据已全部回传给服务端，只差一个终态推送
+        if session.size > 0 and session.uploaded_bytes >= session.size:
+            return "done"
+        logger.warning(f"查询云端目标文件失败，本次无法判定上传结果: {cloud_path}: {q_err}")
+        return "unknown"
 
     def _finish_local_session(self, upload_id: str, session: "_Session", status_text: str) -> Dict[str, Any]:
         """服务端任务已结束，本地清理会话并返回成功结果"""
@@ -519,6 +596,7 @@ class RemoteUploadManager:
                 self._orphan_replies.setdefault(reply.upload_id, []).append(reply)
             return
         session.last_activity = time.time()
+        session.last_msg_at = session.last_activity
         case = reply.WhichOneof("request")
         if case == "read_data":
             r = reply.read_data
