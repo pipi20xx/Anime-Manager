@@ -1487,9 +1487,9 @@ onUnmounted(() => {
           </span>
           <v-btn
             v-if="hasLibrary"
-            size="x-small"
+            size="small"
+            variant="tonal"
             :color="indexReady ? undefined : 'warning'"
-            :variant="indexReady ? 'text' : 'flat'"
             prepend-icon="mdi-refresh"
             :loading="rebuilding"
             @click="rebuildIndex"
@@ -1839,12 +1839,15 @@ onUnmounted(() => {
               </v-menu>
               <v-btn
                 size="small"
-                variant="text"
+                variant="tonal"
                 color="error"
-                icon="mdi-delete-outline"
-                title="删除任务"
+                prepend-icon="mdi-delete-outline"
+                :disabled="!!busyIds[job.job_id]"
+                title="删除任务（含工作目录与成品）"
                 @click="removeJob(job)"
-              />
+              >
+                删除
+              </v-btn>
             </div>
 
             <!-- 引用字体 / 缺失字体 chips -->
