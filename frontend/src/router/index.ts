@@ -149,6 +149,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/AiLabView.vue'),
       },
 
+      // === 字体管家 ===
+      {
+        path: '/fonts',
+        name: 'FontManager',
+        component: () => import('@/views/fonts/FontManagerView.vue'),
+      },
+
       // === 外部控制 ===
       {
         path: '/external-control',

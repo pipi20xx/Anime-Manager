@@ -21,6 +21,7 @@ import rssMd from '@/docs/rss-rule-guide.md?raw'
 import subscriptionMd from '@/docs/subscription-guide.md?raw'
 import strmMd from '@/docs/strm-guide.md?raw'
 import dataCenterMd from '@/docs/data-center-guide.md?raw'
+import fontManagerMd from '@/docs/font-manager-guide.md?raw'
 
 // 预加载 docs 目录下所有图片，将相对路径映射为 Vite 解析后的 URL
 // 解决 Markdown 中 ./xxx.png 相对路径在浏览器中 404 的问题
@@ -60,6 +61,7 @@ const tabs = [
   { value: 'subscription', label: '追剧订阅配置 (TMDB)', icon: 'mdi-television-classic', md: subscriptionMd },
   { value: 'strm', label: '虚拟库 (STRM)', icon: 'mdi-link-variant', md: strmMd },
   { value: 'datacenter', label: '数据中心架构', icon: 'mdi-database-outline', md: dataCenterMd },
+  { value: 'font-manager', label: '字体管家 (assfonts)', icon: 'mdi-format-font', md: fontManagerMd },
 ]
 
 // 配置 marked

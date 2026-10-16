@@ -29,3 +29,4 @@ export type { SchedulerAction, CustomScheduledJob, CustomJobBody } from './sched
 export type { CronPreview } from './scheduler'
 export type { BuiltinExtraParam } from './scheduler'
 export { webhookEventsApi } from './webhookEvents'
+export { fontManagerApi } from './fontManager'

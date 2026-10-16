@@ -82,6 +82,7 @@ const navGroups = [
       { title: '文件浏览', icon: 'mdi-file-tree-outline', to: '/files' },
       { title: 'CD2 管理', icon: 'mdi-cloud-cog-outline', to: '/cd2' },
       { title: 'AI 实验室', icon: 'mdi-robot-outline', to: '/ai-lab' },
+      { title: '字体管家', icon: 'mdi-format-font', to: '/fonts' },
     ],
   },
   {

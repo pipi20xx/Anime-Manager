@@ -150,6 +150,29 @@ class ConfigManager:
             "dedup_window_seconds": 180,    # 事件判重窗口（秒）：原生 Webhook 与内部监控对同一文件的重复触发在此窗口内合并
             "retention_days": 90            # 联动记录保留天数
         },
+        "font_manager": {
+            # ── 字体来源 ──
+            "library_dir": "",                 # 字体库目录（用户自选，用于构建 assfonts 字体索引）
+            "extra_library_dirs": [],          # 额外字体库目录（可多个，索引构建时多次 -f 叠加）
+            "index_dir": "data/fonts/index",   # assfonts 索引（fonts.json）存放目录
+            "workspace_dir": "data/fonts/jobs",  # 上传字幕与成品的工作目录
+            # ── 处理模式与方式（对齐 assfonts 全部命令行能力）──
+            "mode": "default",                 # default/subset_only/embed_only/clean_embedded/combined_subset
+            "extra_font_dir": "",              # 本次处理的额外字体目录（-f），用于「仅内嵌」等场景
+            "output_dir": "",                  # 输出目录（-o），留空=任务工作目录
+            "rename_fonts": False,             # 重命名子集化字体（-r，避免与系统字体冲突）
+            "hdr_luminance": 0,                # HDR 亮度压暗（-l；0=不处理，203 为上游默认值）
+            "internal_threads": 0,             # 内核内部线程数（-m；0=内核默认）
+            "verbose_level": 3,                # 内核日志级别（-v；0-3，注意 <2 会吞掉缺字体提示）
+            "keep_subset_dir": True,           # 是否保留 <字幕名>_subsetted 子集字体文件夹
+            "delete_source": False,            # 处理成功后删除上传的源字幕副本（无法再重试）
+            # ── 字体上传 ──
+            "temp_font_dir": "data/fonts/temp_fonts",  # 临时字体池（只作为处理时的 -f 补充源，不进字体库）
+            "auto_rebuild_after_upload": True,  # 上传字体到字体库后自动重建索引
+            # ── 内核 ──
+            "binary_path": "",                 # 自定义 assfonts 路径（留空=自动：data/bin > 镜像内置）
+            "proxy_for_update": True           # 检查/下载内核更新时是否走系统 http_proxy
+        },
         "database": {
             "type": "postgresql", # 仅支持 postgresql
             "host": "localhost",

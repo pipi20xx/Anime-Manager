@@ -692,3 +692,35 @@ class WebhookEvent(SQLModel, table=True):
     first_seen_at: datetime = Field(default_factory=datetime.now, index=True)
     last_event_at: datetime = Field(default_factory=datetime.now, index=True)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class FontSubtitleJob(SQLModel, table=True):
+    """字体管家 — 字幕子集化任务记录
+
+    每个上传的 ASS/SSA 字幕一条记录：记录解析出的引用字体、缺失字体、
+    子集化状态与成品路径，供页面刷新后继续查看与下载。
+    """
+    __tablename__ = "font_subtitle_jobs"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "字体管家任务"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    job_id: str = Field(unique=True, index=True)
+    filename: str = Field(index=True)
+    stored_path: str
+    status: str = Field(default="pending", index=True)  # pending/running/success/missing/failed
+    referenced_fonts: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    missing_fonts: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    has_embedded: bool = Field(default=False)
+    mode: Optional[str] = Field(default="default")        # 本次使用的处理模式
+    output_kind: Optional[str] = Field(default="ass")     # ass=单个字幕 / zip=字体包
+    output_path: Optional[str] = None
+    output_name: Optional[str] = None
+    output_size: int = Field(default=0)
+    output_dir: Optional[str] = None                      # 实际输出目录（-o）
+    subset_dir: Optional[str] = None                      # <stem>_subsetted 字体夹
+    cleaned_path: Optional[str] = None                    # <stem>.cleaned.ass（清除内嵌产物）
+    duration_ms: int = Field(default=0)
+    error: Optional[str] = None
+    log: Optional[str] = Field(default=None, sa_column=Column(Text))
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
+    updated_at: datetime = Field(default_factory=datetime.now)

@@ -44,7 +44,7 @@ COPY backend/ .
 
 COPY skills/ ./skills/
 
-RUN chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh bin/assfonts
 
 COPY --from=frontend-builder /app/frontend/dist ./dist
 

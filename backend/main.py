@@ -57,7 +57,7 @@ __version__ = _get_version()
 # Import Routers
 from routers import (
     recognition, organizer, cache, strm, config,
-    system, clients, rss, subscriptions, tmdb, bangumi, webhook, webhook_ledger, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, scheduler, assistant, sytmdb, file_hashes, appearance, tmdb_blocklist, cd2, notifications
+    system, clients, rss, subscriptions, tmdb, bangumi, webhook, webhook_ledger, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, scheduler, assistant, sytmdb, file_hashes, appearance, font_manager, tmdb_blocklist, cd2, notifications
 )
 
 app = FastAPI(
@@ -102,6 +102,7 @@ app.include_router(notifications.router)
 app.include_router(assistant.router)
 app.include_router(file_hashes.router)
 app.include_router(appearance.router)
+app.include_router(font_manager.router)
 
 # --- API Audit & Security Middleware ---
 SENSITIVE_KEY_MARKERS = ("password", "token", "apikey", "api_key", "secret", "otp")
