@@ -1368,6 +1368,18 @@
   align-items: center;
   gap: 12px;
 }
+/* 文案再长也不挤压开关本体（否则开关会被 flex 收缩、和相邻行错位） */
+.switch-row > .v-switch {
+  flex: 0 0 auto;
+}
+/* 开关行下方的补充说明（与开关左侧留出同样的缩进） */
+.switch-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 0.66;
+  margin: 4px 0 0 52px;
+}
 .switch-label {
   font-weight: 500;
   color: rgb(var(--v-theme-on-surface));

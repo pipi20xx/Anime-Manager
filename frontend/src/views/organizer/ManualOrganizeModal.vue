@@ -529,18 +529,20 @@ function handleRunBackground() {
                 </div>
               </div>
 
-              <div class="switch-row">
-                <v-switch
-                  v-model="manualTask.subset_subtitles"
-                  :disabled="manualTask.action_type === 'hash_only'"
-                  density="compact" color="primary" hide-details
-                />
-                <div>
-                  <div class="switch-label">随行字幕子集化</div>
-                  <div class="switch-desc">
-                    整理时把随行的 .ass/.ssa 做字体子集化并内嵌，成品名带 .assfonts 标记；
-                    缺字体或失败时按原字幕搬运（云盘源的字幕会先下载再子集化）
+              <div>
+                <div class="switch-row">
+                  <v-switch
+                    v-model="manualTask.subset_subtitles"
+                    :disabled="manualTask.action_type === 'hash_only'"
+                    density="compact" color="primary" hide-details
+                  />
+                  <div>
+                    <div class="switch-label">随行字幕子集化</div>
+                    <div class="switch-desc">整理时把随行的 .ass/.ssa 做字体子集化并内嵌，成品名带 .assfonts 标记</div>
                   </div>
+                </div>
+                <div class="switch-hint">
+                  缺字体或失败时按原字幕搬运；云盘源的字幕会先下载、子集化后再随视频搬走
                 </div>
               </div>
             </div>
