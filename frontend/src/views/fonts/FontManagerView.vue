@@ -10,7 +10,7 @@
  * - 任务列表：状态、模式标签、引用/缺失字体、成品大小、耗时、执行/重试/多交付物下载/删除、批量操作
  * - 字体库面板：索引内字体列表（格式分布 + 搜索 + 格式筛选）+ 上传字体到库（永久入库）
  * - 临时字体卡片：上传/拖拽临时字体，仅作为内核 -f 补充源，不入库，可单删/清空
- * - 设置对话框：字体来源 / 处理模式 / 处理方式 / 内核与网络
+ * - 设置对话框：字体来源 / 字幕处理（模式 + 处理参数） / 内核与网络
  * - 参数帮助对话框：内核 -h 原文 + 内核参数 → 本页位置对照表
  * - 有任务处于 running 时每 1.5s 轮询任务列表
  */
@@ -829,7 +829,7 @@ function defaultConfigForm(): FontManagerConfig {
     extra_library_dirs: [],
     index_dir: '',
     workspace_dir: '',
-    // 处理模式与方式
+    // 字幕处理（模式 + 处理参数）
     mode: '',
     extra_font_dir: '',
     output_dir: '',
@@ -1014,17 +1014,17 @@ interface KernelArgMapRow {
 
 const KERNEL_ARG_MAP: KernelArgMapRow[] = [
   { arg: '-i, --input', desc: '输入字幕', where: '拖拽 / 选择文件上传' },
-  { arg: '-o, --output', desc: '输出目录', where: '设置 → 处理方式 → 输出目录' },
-  { arg: '-f, --fontpath', desc: '字体目录', where: '设置 → 字体来源（主库 / 额外库）+ 处理方式 → 额外字体目录' },
+  { arg: '-o, --output', desc: '输出目录', where: '设置 → 字幕处理 → 输出目录' },
+  { arg: '-f, --fontpath', desc: '字体目录', where: '设置 → 字体来源（主库 / 额外库）+ 字幕处理 → 额外字体目录' },
   { arg: '-b, --build', desc: '建立字体索引', where: '顶部「重建索引」' },
   { arg: '-d, --dbpath', desc: '索引存放目录', where: '设置 → 字体来源 → 索引目录' },
   { arg: '-s, --subset-only', desc: '仅子集化字体', where: '处理模式 → 仅子集化字体' },
   { arg: '-e, --embed-only', desc: '仅嵌入字体', where: '处理模式 → 仅内嵌字体' },
-  { arg: '-r, --rename', desc: '重命名子集化字体', where: '设置 → 处理方式 → 重命名字体' },
-  { arg: '-l, --luminance', desc: 'HDR 亮度', where: '设置 → 处理方式 → HDR 亮度' },
-  { arg: '-m, --multi-thread', desc: '内部线程数', where: '设置 → 处理方式 → 内核内部线程数' },
+  { arg: '-r, --rename', desc: '重命名子集化字体', where: '设置 → 字幕处理 → 重命名字体' },
+  { arg: '-l, --luminance', desc: 'HDR 亮度', where: '设置 → 字幕处理 → HDR 亮度' },
+  { arg: '-m, --multi-thread', desc: '内部线程数', where: '设置 → 字幕处理 → 内核线程数' },
   { arg: '-c, --font-combined', desc: '合并同名字体', where: '处理模式 → 合并子集化（两阶段）' },
-  { arg: '-v, --verbose', desc: '日志级别', where: '设置 → 处理方式 → 内核日志级别' },
+  { arg: '-v, --verbose', desc: '日志级别', where: '设置 → 字幕处理 → 内核日志级别' },
   { arg: '-h, --help', desc: '帮助信息', where: '本对话框' },
 ]
 
@@ -2284,10 +2284,10 @@ onUnmounted(() => {
             </v-row>
 
             <v-divider class="my-3" />
-            <!-- ── 处理模式 ── -->
+            <!-- ── 字幕处理（处理模式与重命名/HDR 等处理参数同属一类，合并为一个分组） ── -->
             <div class="section-title mb-2">
               <v-icon size="16" color="primary">mdi-cog-play-outline</v-icon>
-              处理模式
+              字幕处理
             </div>
             <v-select
               v-model="configForm.mode"
@@ -2302,73 +2302,6 @@ onUnmounted(() => {
             />
             <div class="text-caption text-medium-emphasis mb-3" style="line-height: 1.4">
               {{ configModeDescription || '模式列表读取中…' }}
-            </div>
-
-            <v-divider class="my-3" />
-            <!-- ── 处理方式 ── -->
-            <div class="section-title mb-2">
-              <v-icon size="16" color="primary">mdi-tune</v-icon>
-              处理方式
-            </div>
-
-            <div class="d-flex align-center ga-2 mb-1">
-              <v-text-field
-                v-model="configForm.extra_font_dir"
-                label="额外字体目录 (-f)"
-                variant="outlined"
-                density="compact"
-                hide-details
-                placeholder="留空 = 仅使用字体库"
-              />
-              <v-btn
-                variant="tonal"
-                color="info"
-                prepend-icon="mdi-folder-search-outline"
-                @click="openFolderPicker({ type: 'extra-font' })"
-              >
-                浏览
-              </v-btn>
-              <v-btn
-                v-if="configForm.extra_font_dir"
-                variant="text"
-                color="warning"
-                icon="mdi-close"
-                title="清空"
-                @click="configForm.extra_font_dir = ''"
-              />
-            </div>
-            <div class="text-caption text-medium-emphasis mb-3">
-              本次处理额外加载的字体目录，用于「仅内嵌」等需要指定字体来源的场景
-            </div>
-
-            <div class="d-flex align-center ga-2 mb-1">
-              <v-text-field
-                v-model="configForm.output_dir"
-                label="输出目录 (-o)"
-                variant="outlined"
-                density="compact"
-                hide-details
-                placeholder="留空 = 输出到任务工作目录"
-              />
-              <v-btn
-                variant="tonal"
-                color="info"
-                prepend-icon="mdi-folder-search-outline"
-                @click="openFolderPicker({ type: 'output' })"
-              >
-                浏览
-              </v-btn>
-              <v-btn
-                v-if="configForm.output_dir"
-                variant="text"
-                color="warning"
-                icon="mdi-close"
-                title="清空"
-                @click="configForm.output_dir = ''"
-              />
-            </div>
-            <div class="text-caption text-medium-emphasis mb-3">
-              留空则输出到任务工作目录；开启后所有成品都放这里
             </div>
 
             <div class="switch-row mb-2">
@@ -2402,6 +2335,68 @@ onUnmounted(() => {
             <div class="text-caption text-medium-emphasis mb-3">
               对应 assfonts -l，范围 0-1000；开启后默认 203，会给成品名加上 .hdr 后缀
             </div>
+
+            <div class="d-flex align-center ga-2 mb-1">
+              <v-text-field
+                v-model="configForm.extra_font_dir"
+                label="额外字体目录 (-f)"
+                variant="outlined"
+                density="compact"
+                hide-details
+                placeholder="留空 = 仅使用字体库"
+              />
+              <v-btn
+                variant="tonal"
+                color="info"
+                prepend-icon="mdi-folder-search-outline"
+                @click="openFolderPicker({ type: 'extra-font' })"
+              >
+                浏览
+              </v-btn>
+              <v-btn
+                v-if="configForm.extra_font_dir"
+                variant="text"
+                color="warning"
+                icon="mdi-close"
+                title="清空"
+                @click="configForm.extra_font_dir = ''"
+              />
+            </div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              本次处理额外加载的字体目录，用于「仅内嵌」等需要指定字体来源的场景
+            </div>
+
+
+            <div class="d-flex align-center ga-2 mb-1">
+              <v-text-field
+                v-model="configForm.output_dir"
+                label="输出目录 (-o)"
+                variant="outlined"
+                density="compact"
+                hide-details
+                placeholder="留空 = 输出到任务工作目录"
+              />
+              <v-btn
+                variant="tonal"
+                color="info"
+                prepend-icon="mdi-folder-search-outline"
+                @click="openFolderPicker({ type: 'output' })"
+              >
+                浏览
+              </v-btn>
+              <v-btn
+                v-if="configForm.output_dir"
+                variant="text"
+                color="warning"
+                icon="mdi-close"
+                title="清空"
+                @click="configForm.output_dir = ''"
+              />
+            </div>
+            <div class="text-caption text-medium-emphasis mb-3">
+              留空则输出到任务工作目录；开启后所有成品都放这里
+            </div>
+
 
             <div class="d-flex align-center flex-wrap ga-3 mb-1">
               <v-text-field
