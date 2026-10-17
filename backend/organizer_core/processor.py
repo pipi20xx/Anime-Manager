@@ -12,7 +12,7 @@ from .renamer import Renamer
 from config_manager import ConfigManager
 from clients.manager import ClientManager
 from .executor import FileExecutor
-from .subtitle_subset import RelatedSubtitleSubsetter
+from .subtitle_subset import CLOUD_TMP_DIR, RelatedSubtitleSubsetter
 from notification import notification_manager
 from utils.hash_calculator import HashCalculator, HashResult
 
@@ -114,7 +114,8 @@ class FileProcessor:
 
     @staticmethod
     async def _drop_replaced_source(src: str, res: str, temp_to_orig: Dict[str, str],
-                                    action_type: str, video_ok: bool = True) -> None:
+                                    action_type: str, video_ok: bool = True,
+                                    source_via: str = "local", client=None) -> None:
         """子集化成品搬运成功后，删掉源目录里的原字幕（替换语义）。
 
         只在「该字幕搬运成功 + move 类动作 + 视频也成功」时删；
@@ -122,6 +123,19 @@ class FileProcessor:
         """
         orig = (temp_to_orig or {}).get(src)
         if not orig or not video_ok or res != "success" or action_type not in ("move", "cd2_move"):
+            return
+        if source_via == "cd2":
+            # 云盘源：原件在云端，走 CD2 接口删
+            if client is None:
+                return
+            try:
+                ok, msg = await asyncio.to_thread(client._file_browser.delete_files, [orig])
+                if ok:
+                    logger.debug(f"已删除被替换的云端源字幕: {orig}")
+                else:
+                    logger.warning(f"删除云端源字幕失败（保留原件）: {orig} | {msg}")
+            except Exception as e:
+                logger.warning(f"删除云端源字幕失败（保留原件）: {orig} | {e}")
             return
         try:
             if os.path.isfile(orig):
@@ -845,7 +859,8 @@ class FileProcessor:
                             else:
                                 related_outcomes[os.path.basename(src)] = res
                                 await FileProcessor._drop_replaced_source(
-                                    src, res, subset_temp_to_orig, action_type, cd2_video_ok)
+                                    src, res, subset_temp_to_orig, action_type, cd2_video_ok,
+                                    source_via, cd2_client)
                             if res == "success":
                                 await FileProcessor._log_both(task_id, recog_task_id, f"📦 CD2 {action_label}成功: {os.path.basename(src)}")
                             elif res in ("skipped", "skipped_conflict"):
@@ -897,7 +912,8 @@ class FileProcessor:
                         if batch_res == "success" and subset_temp_to_orig:
                             for _tmp in list(subset_temp_to_orig):
                                 await FileProcessor._drop_replaced_source(
-                                    _tmp, "success", subset_temp_to_orig, action_type, True)
+                                    _tmp, "success", subset_temp_to_orig, action_type, True,
+                                    source_via, cd2_client)
                         if batch_res == "success":
                             await FileProcessor._log_both(task_id, recog_task_id, f"📦 CD2 {action_label}成功: {v_file} → {new_abs_path}")
                         elif batch_res == "skipped":
@@ -1095,7 +1111,8 @@ class FileProcessor:
                     related_outcomes[os.path.basename(src)] = v_res
                     # 内嵌成品搬成功后删掉源目录里的原字幕（替换语义）
                     await FileProcessor._drop_replaced_source(
-                        src, v_res, subset_temp_to_orig, action_type, video_ok)
+                        src, v_res, subset_temp_to_orig, action_type, video_ok,
+                        source_via, cd2_client if source_via == "cd2" else None)
                 if v_res in ["success", "preview"]:
                     if src == v_path:
                         await FileProcessor._log_both(task_id, recog_task_id, f"📦 {action_label}成功: {v_file} → {dst}")
@@ -1280,6 +1297,17 @@ class FileProcessor:
             # 子集化临时目录（输入副本 / 成品 / _subsetted）一律清掉，成功失败都不留
             if subset_work_dir:
                 await asyncio.to_thread(RelatedSubtitleSubsetter.cleanup, subset_work_dir)
+            # 云盘源：源目录下的临时成品目录搬完就没用了
+            if subset_overrides and (task.get("source_via") or "local") == "cd2":
+                try:
+                    _cli = cd2_client or FileProcessor._resolve_cd2_client(
+                        v_path, task.get("cd2_client_id"), "cd2")
+                    if _cli:
+                        await asyncio.to_thread(
+                            _cli._file_browser.delete_files,
+                            [os.path.join(root, CLOUD_TMP_DIR)])
+                except Exception as e:
+                    logger.debug(f"清理云端子集化临时目录失败: {e}")
 
         return results
 

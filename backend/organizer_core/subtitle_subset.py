@@ -14,6 +14,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -30,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 # 临时目录里超过这个时间的残留目录会在下次整理时顺手清掉
 STALE_SECONDS = 24 * 3600
+# 云盘源的临时成品目录（放在源目录下的隐藏目录，搬完即删）
+CLOUD_TMP_DIR = ".assfonts_tmp"
 _swept_roots: set = set()
 
 LogFn = Callable[..., Awaitable[Any]]
@@ -72,6 +75,35 @@ def _human_size(size: int) -> str:
 
 class RelatedSubtitleSubsetter:
     """随行字幕子集化的编排器（无状态，全部静态方法）。"""
+
+    @staticmethod
+    async def _cd2_client(task: Dict[str, Any]):
+        """按任务配置找 CD2 客户端（显式 id > 单实例兜底）。"""
+        from clients.manager import ClientManager
+        try:
+            all_clients = await asyncio.to_thread(ClientManager.get_all_clients)
+        except Exception:
+            return None
+        cd2s = [c for c in all_clients if c.get("type") == "cd2"]
+        if not cd2s:
+            return None
+        cid = task.get("cd2_client_id")
+        if cid and any(c.get("id") == cid for c in cd2s):
+            return await asyncio.to_thread(ClientManager.get_client, cid)
+        if len(cd2s) == 1:
+            return await asyncio.to_thread(ClientManager.get_client, cd2s[0].get("id"))
+        return None
+
+    @staticmethod
+    async def _ensure_login(client) -> bool:
+        """CD2 未登录时 file_browser 会静默失败，必须先登录。"""
+        if getattr(client, "logged_in", False):
+            return True
+        try:
+            return bool(await asyncio.to_thread(client.login))
+        except Exception as e:
+            logger.warning(f"[字幕子集化] CD2 登录异常: {e}")
+            return False
 
     @staticmethod
     def candidates(related_files: List[str]) -> List[str]:
@@ -148,13 +180,13 @@ class RelatedSubtitleSubsetter:
                 except Exception:
                     pass
 
-        if (task.get("source_via") or "local") != "local":
-            await _log("⚠️ 随行字幕在云盘上，暂不支持子集化（按原字幕搬运）", "WARN",
-                       once="cloud-source")
-            info = {f: {"subset": "skipped", "reason": "云源字幕"} for f in files}
-            return overrides, info, work_root
-
         cfg = ConfigManager.get_config()
+
+        # 云盘源：字幕在云端 → 下载 → 本地子集化 → 传到源目录下的临时目录，再由整理流程搬走
+        if (task.get("source_via") or "local") == "cd2":
+            return await RelatedSubtitleSubsetter._prepare_cloud(
+                files, root, task, cfg=cfg, dry_run=dry_run, task_id=task_id, log=_log)
+
         ctx = await ss.resolve_context(cfg)
         if not ctx.ok:
             await _log(f"⚠️ 字幕子集化已跳过：{ctx.error}（按原字幕搬运）", "WARN",
@@ -241,6 +273,82 @@ class RelatedSubtitleSubsetter:
             _parts.append(f"失败 {counts['failed']}")
         _sys_log(f"随行字幕处理完成（{'、'.join(_parts)}，"
                  f"耗时 {int((time.monotonic() - started) * 1000)}ms）")
+        return overrides, info, work_root
+
+    @staticmethod
+    async def _prepare_cloud(files: List[str], root: str, task: Dict[str, Any], *,
+                             cfg: Dict[str, Any], dry_run: bool,
+                             task_id: Optional[str], log: LogFn):
+        """云盘源：下载 → 子集化 → 上传到源目录下的 .assfonts_tmp，交付仍由整理流程完成。"""
+        overrides: Dict[str, str] = {}
+        info: Dict[str, Dict[str, Any]] = {}
+
+        if dry_run:
+            for f in files:
+                info[f] = {"subset": "planned", "missing": [], "fonts": 0}
+                await log(f"☁️ [预览] 云端字幕将在正式执行时下载并子集化：{f}")
+            return overrides, info, ""
+
+        client = await RelatedSubtitleSubsetter._cd2_client(task)
+        if client is None or not await RelatedSubtitleSubsetter._ensure_login(client):
+            reason = "未找到可用的 CD2 客户端" if client is None else "CD2 未登录"
+            await log(f"⚠️ {reason}，随行字幕按原样搬运", "WARN", once=f"cd2:{reason}")
+            return overrides, {f: {"subset": "failed", "reason": reason} for f in files}, ""
+
+        ctx = await ss.resolve_context(cfg)
+        if not ctx.ok:
+            await log(f"⚠️ 字幕子集化已跳过：{ctx.error}（按原字幕搬运）", "WARN",
+                      once=f"noctx:{ctx.error}")
+            return overrides, {f: {"subset": "unavailable", "reason": ctx.error} for f in files}, ""
+
+        work_root = str(RelatedSubtitleSubsetter._work_root(cfg, task_id))
+        os.makedirs(work_root, exist_ok=True)
+        browser = client._file_browser
+        tmp_dir = f"{root.rstrip('/')}/{CLOUD_TMP_DIR}"
+        from organizer_core.executor import FileExecutor
+
+        for f in files:
+            cloud_src = f"{root.rstrip('/')}/{f}"
+            local = os.path.join(work_root, f)
+            try:
+                ok, msg = await asyncio.to_thread(browser.download_file, cloud_src, local)
+            except Exception as e:
+                ok, msg = False, str(e)
+            if not ok or not os.path.isfile(local):
+                info[f] = {"subset": "failed", "reason": f"云端下载失败：{msg}"}
+                await log(f"⚠️ 云端字幕下载失败，按原字幕搬运：{f}（{msg}）", "WARN")
+                continue
+
+            results = await ss.subset_files([local], work_dir=os.path.join(work_root, "sub"), ctx=ctx)
+            r = results.get(str(Path(local).resolve())) or {}
+            status = str(r.get("status") or "failed")
+            if status == "success":
+                cloud_dst = f"{tmp_dir}/{f}"
+                up = await FileExecutor._execute_cd2_via(
+                    client, str(r.get("output") or ""), cloud_dst, "cd2_copy", "overwrite",
+                    "local", "cd2")
+                if up != "success":
+                    info[f] = {"subset": "failed",
+                               "reason": f"上传云端失败：{FileExecutor.get_status_message(up)}"}
+                    await log(f"⚠️ 云端上传失败，按原字幕搬运：{f}", "WARN")
+                    continue
+                overrides[f] = cloud_dst
+                info[f] = {"subset": "success", "missing": [],
+                           "fonts": len(r.get("fonts") or []),
+                           "referenced": list(r.get("fonts") or [])}
+                await log(f"✂️ 云端子集化：{f}（引用 {info[f]['fonts']} 种字体）")
+            elif status == "missing":
+                info[f] = {"subset": "missing", "missing": r.get("missing") or [],
+                           "fonts": len(r.get("fonts") or [])}
+                await log(f"⚠️ 缺字体，按原字幕搬运：{f}"
+                           f"（{'、'.join(r.get('missing') or [])}）", "WARN")
+            elif status == "skipped":
+                info[f] = {"subset": "skipped", "reason": r.get("reason") or "已内嵌"}
+                await log(f"⏭️ 不子集化：{f}（{r.get('reason') or '已内嵌'}）")
+            else:
+                info[f] = {"subset": "failed", "reason": r.get("reason") or "子集化失败"}
+                await log(f"⚠️ 子集化失败，按原字幕搬运：{f}（{r.get('reason') or ''}）", "WARN")
+
         return overrides, info, work_root
 
     @staticmethod

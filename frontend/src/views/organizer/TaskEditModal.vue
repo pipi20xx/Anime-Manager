@@ -377,7 +377,7 @@ const onFolderSelected = (path: string) => {
               <div class="switch-row">
                 <v-switch
                   v-model="taskForm.subset_subtitles"
-                  :disabled="taskForm.action_type === 'hash_only' || taskForm.source_via === 'cd2'"
+                  :disabled="taskForm.action_type === 'hash_only'"
                   density="compact" hide-details color="primary"
                 />
                 <div>
@@ -385,7 +385,7 @@ const onFolderSelected = (path: string) => {
                   <div class="switch-desc">
                     整理时把随行的 .ass/.ssa 做字体子集化并内嵌，成品名带 .assfonts 标记；
                     缺字体或失败时按原字幕搬运
-                    <span v-if="taskForm.source_via === 'cd2'" class="text-medium-emphasis">（云盘源的字幕在云端，暂不支持）</span>
+                    <span v-if="taskForm.source_via === 'cd2'" class="text-medium-emphasis">（云盘源的字幕会先下载、子集化后再随视频搬走）</span>
                     <span v-if="taskForm.action_type === 'hash_only'" class="text-medium-emphasis">（仅记录哈希模式不搬运文件）</span>
                   </div>
                 </div>
