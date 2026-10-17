@@ -304,6 +304,7 @@ class FontSubsetHistory(SQLModel, table=True):
     source_path: str                          # 原路径（整理后可能已不存在）
     target_path: str = Field(index=True)      # 交付路径（成功=内嵌成品，回退=原字幕）
     target_name: str = Field(default="")
+    target_via: Optional[str] = Field(default="local")  # local / cd2：重试走本地文件还是 CD2 API
     status: str = Field(default="pending", index=True)  # success/missing/failed/skipped
     missing_fonts: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
     referenced_fonts: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)

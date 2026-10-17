@@ -276,7 +276,10 @@ onMounted(fetchHistory)
             <v-chip v-if="item.video_title" size="small" variant="tonal">
               {{ item.video_title }}<span v-if="episodeLabel(item)" class="ml-1">{{ episodeLabel(item) }}</span>
             </v-chip>
-            <v-chip v-if="!item.exists" size="x-small" variant="tonal" color="error" prepend-icon="mdi-link-off">
+            <v-chip v-if="item.target_via === 'cd2'" size="x-small" variant="tonal" color="info" prepend-icon="mdi-cloud-outline">
+              CD2
+            </v-chip>
+            <v-chip v-else-if="item.exists === false" size="x-small" variant="tonal" color="error" prepend-icon="mdi-link-off">
               文件已不在
             </v-chip>
             <v-chip v-if="item.attempts" size="x-small" variant="tonal" color="grey">

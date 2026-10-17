@@ -162,6 +162,7 @@ class FileProcessor:
                         row = FontSubsetHistory(
                             source_name=name, source_path=os.path.join(root, name),
                             target_path=target, target_name=os.path.basename(target))
+                    row.target_via = task.get("target_via") or "local"
                     row.status = status
                     row.missing_fonts = list((info or {}).get("missing") or [])
                     row.referenced_fonts = list((info or {}).get("referenced") or [])

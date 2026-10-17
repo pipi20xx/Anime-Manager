@@ -325,6 +325,8 @@ export interface FontSubsetHistoryItem {
   source_path: string
   target_path: string
   target_name: string
+  /** 目标归属域：local=本地文件 / cd2=云端（重试走 CD2 API 下载→子集化→上传） */
+  target_via: 'local' | 'cd2'
   status: 'success' | 'missing' | 'failed' | 'skipped'
   missing_fonts: string[]
   referenced_fonts: string[]
@@ -338,8 +340,8 @@ export interface FontSubsetHistoryItem {
   episode: string
   created_at: string
   updated_at: string
-  /** 交付文件当前是否还在（被移动/删除后不能直接重试） */
-  exists: boolean
+  /** 交付文件当前是否还在；云端记录为 null（本地无法判定，重试时再确认） */
+  exists: boolean | null
 }
 
 export interface FontSubsetHistoryList {

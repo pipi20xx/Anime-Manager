@@ -1522,12 +1522,18 @@ def _retry_work_dir(cfg: Dict[str, Any]) -> Path:
 
 def _history_to_dict(row) -> Dict[str, Any]:
     target = row.target_path or ""
-    try:
-        exists = bool(target) and Path(target).is_file()
-    except OSError:
-        exists = False
+    via = row.target_via or "local"
+    if via == "cd2":
+        # 云端路径没法用本地 stat 判断，交给前端显示成「未知」，重试时再走 CD2 API 确认
+        exists = None
+    else:
+        try:
+            exists = bool(target) and Path(target).is_file()
+        except OSError:
+            exists = False
     return {
         "id": row.id,
+        "target_via": via,
         "source_name": row.source_name,
         "source_path": row.source_path,
         "target_path": target,
@@ -1549,8 +1555,93 @@ def _history_to_dict(row) -> Dict[str, Any]:
     }
 
 
-async def _retry_one(history_id: int, cfg: Dict[str, Any]) -> Dict[str, Any]:
-    """按交付路径重新子集化一条记录（成功则替换原文件）。"""
+async def _ensure_cd2_login(client) -> bool:
+    """确保 CD2 已登录。
+
+    未登录时 file_browser 的 path_exists / list_dir 会静默失败（返回 False），
+    表现为「云端找不到文件」，所以这里必须显式登录一次。
+    """
+    if getattr(client, "logged_in", False):
+        return True
+    try:
+        ok = await asyncio.to_thread(client.login)
+    except Exception as e:
+        logger.warning(f"[字体管家] CD2 登录异常: {e}")
+        return False
+    return bool(ok)
+
+
+async def _cd2_client_for(path: str):
+    """按路径找到能访问它的 CD2 客户端（云路径或挂载路径都行）。"""
+    from clients.manager import ClientManager
+
+    try:
+        all_clients = await asyncio.to_thread(ClientManager.get_all_clients)
+    except Exception:
+        return None
+    cd2s = [c for c in all_clients if c.get("type") == "cd2"]
+    if not cd2s:
+        return None
+
+    # 1) 命中某个客户端的 mount_path（路径是挂载视图）
+    for c in cd2s:
+        mp = str(c.get("mount_path") or "").strip()
+        if mp and os.path.abspath(path).startswith(os.path.abspath(mp)):
+            return await asyncio.to_thread(ClientManager.get_client, c.get("id"))
+
+    # 2) 单实例直接用它
+    if len(cd2s) == 1:
+        return await asyncio.to_thread(ClientManager.get_client, cd2s[0].get("id"))
+
+    # 3) 多实例：谁认这个路径就用谁
+    for c in cd2s:
+        cli = await asyncio.to_thread(ClientManager.get_client, c.get("id"))
+        if not cli or not await _ensure_cd2_login(cli):
+            continue
+        try:
+            if await asyncio.to_thread(cli._file_browser.path_exists, path):
+                return cli
+        except Exception:
+            continue
+    return None
+
+
+async def _locate_cloud_subtitle(path: str, client) -> Optional[str]:
+    """云端定位交付字幕：先按记录路径，再在同目录按主干找（容忍改名）。"""
+    browser = client._file_browser
+    try:
+        if await asyncio.to_thread(browser.path_exists, path):
+            return path
+    except Exception:
+        pass
+
+    parent = os.path.dirname(path) or "/"
+    stem = _base_stem(os.path.basename(path))
+    try:
+        listing = await asyncio.to_thread(browser.list_dir, parent)
+    except Exception:
+        return None
+    if not listing.get("success"):
+        return None
+    cands = []
+    for entry in listing.get("entries") or []:
+        if entry.get("is_dir"):
+            continue
+        name = entry.get("name") or ""
+        if os.path.splitext(name)[1].lower() not in (".ass", ".ssa"):
+            continue
+        if _base_stem(name) == stem:
+            cands.append(name)
+    cands.sort(key=lambda n: (".assfonts." not in n, n))
+    if not cands:
+        return None
+    return f"{parent.rstrip('/')}/{cands[0]}"
+
+
+async def _apply_history_result(history_id: int, status: str, res: Dict[str, Any],
+                                target_path: str, target_name: str,
+                                file_size: int) -> Dict[str, Any]:
+    """把一次重试的结果写回记录。"""
     from models import FontSubsetHistory
 
     async with db.session_scope() as session:
@@ -1558,14 +1649,135 @@ async def _retry_one(history_id: int, cfg: Dict[str, Any]) -> Dict[str, Any]:
             select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
         )).scalars().first()
         if not row:
-            raise HTTPException(status_code=404, detail="记录不存在")
-        target_path = row.target_path
+            raise HTTPException(status_code=400, detail="处理历史记录不存在（可能已被清理）")
+        row.status = status if status in ("success", "missing", "skipped", "failed") else "failed"
+        row.attempts = int(row.attempts or 0) + 1
+        row.missing_fonts = list(res.get("missing") or [])
+        row.last_error = "" if row.status == "success" else (res.get("reason") or "")
+        if row.status == "success":
+            row.target_path = target_path
+            row.target_name = target_name
+            row.file_size = int(file_size or 0)
+        row.updated_at = datetime.now()
+        session.add(row)
+        await session.commit()
+        await session.refresh(row)
+        return _history_to_dict(row)
 
-    located = _locate_subtitle(Path(target_path or ""))
+
+async def _retry_local(history_id: int, target_path: str, work: Path,
+                       ctx) -> Dict[str, Any]:
+    """本地交付文件：就地重新子集化并替换。"""
+    located = _locate_subtitle(Path(target_path))
     if located is None:
         raise HTTPException(
-            status_code=404,
+            status_code=400,
             detail=f"找不到交付字幕：{target_path}（可能已被移动或删除）")
+
+    results = await subset_service.subset_files([str(located)], work_dir=str(work), ctx=ctx)
+    res = results.get(str(located.resolve())) or {}
+    status = str(res.get("status") or "failed")
+    if status == "skipped" and "已内嵌" in str(res.get("reason") or ""):
+        # 文件本身就是内嵌成品：这条记录其实已经处理好了
+        status = "success"
+        res["reason"] = "已内嵌字体，无需重复处理"
+
+    final = located
+    size = 0
+    if status == "success" and res.get("output"):
+        out = Path(str(res.get("output") or ""))
+        final = _assfonts_name(located)
+        try:
+            if final.exists() and final != located:
+                final.unlink()
+            shutil.move(str(out), str(final))
+            if located != final and located.exists():
+                located.unlink()
+            size = final.stat().st_size
+        except OSError as e:
+            status = "failed"
+            res["reason"] = f"成品落盘失败：{e}"
+    elif status == "success":
+        try:
+            size = located.stat().st_size
+        except OSError:
+            size = 0
+
+    return await _apply_history_result(history_id, status, res, str(final), final.name, size)
+
+
+async def _retry_cloud(history_id: int, target_path: str, work: Path,
+                       ctx) -> Dict[str, Any]:
+    """云端交付文件：CD2 下载 → 本地子集化 → 上传回去并替换。"""
+    from organizer_core.executor import FileExecutor
+
+    client = await _cd2_client_for(target_path)
+    if client is None:
+        raise HTTPException(status_code=400, detail=f"没有可用的 CD2 客户端能访问：{target_path}")
+    if not await _ensure_cd2_login(client):
+        raise HTTPException(status_code=400, detail="CD2 未登录，无法访问云端字幕")
+
+    cloud_path = await _locate_cloud_subtitle(target_path, client)
+    if not cloud_path:
+        raise HTTPException(status_code=400, detail=f"云端找不到交付字幕：{target_path}")
+
+    browser = client._file_browser
+    local_src = work / os.path.basename(cloud_path)
+    ok, msg = await asyncio.to_thread(browser.download_file, cloud_path, str(local_src))
+    if not ok or not local_src.is_file():
+        raise HTTPException(status_code=400, detail=f"云端字幕下载失败：{msg}")
+
+    results = await subset_service.subset_files([str(local_src)], work_dir=str(work / "sub"), ctx=ctx)
+    res = results.get(str(local_src.resolve())) or {}
+    status = str(res.get("status") or "failed")
+    if status == "skipped" and "已内嵌" in str(res.get("reason") or ""):
+        status = "success"
+        res["reason"] = "已内嵌字体，无需重复处理"
+
+    final_cloud = cloud_path
+    size = 0
+    if status == "success" and res.get("output"):
+        out = Path(str(res.get("output") or ""))
+        parent = os.path.dirname(cloud_path).rstrip("/") or "/"
+        ext = os.path.splitext(cloud_path)[1].lower() or ".ass"
+        final_cloud = f"{parent}/{_base_stem(os.path.basename(cloud_path))}.assfonts{ext}"
+        up = await FileExecutor._execute_cd2_via(
+            client, str(out), final_cloud, "cd2_copy", "overwrite", "local", "cd2")
+        if up != "success":
+            status = "failed"
+            res["reason"] = f"上传云端失败：{FileExecutor.get_status_message(up)}"
+        else:
+            try:
+                size = out.stat().st_size
+            except OSError:
+                size = 0
+            if final_cloud != cloud_path:
+                try:
+                    await asyncio.to_thread(browser.delete_files, [cloud_path])
+                except Exception as e:
+                    logger.warning(f"[字体管家] 重试后删除旧云端字幕失败: {cloud_path} | {e}")
+    elif status == "success":
+        try:
+            size = local_src.stat().st_size
+        except OSError:
+            size = 0
+
+    return await _apply_history_result(history_id, status, res, final_cloud,
+                                       os.path.basename(final_cloud), size)
+
+
+async def _retry_one(history_id: int, cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """按交付路径重新子集化一条记录：本地文件走文件系统，云端路径走 CD2 API。"""
+    from models import FontSubsetHistory
+
+    async with db.session_scope() as session:
+        row = (await session.execute(
+            select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
+        )).scalars().first()
+        if not row:
+            raise HTTPException(status_code=400, detail="处理历史记录不存在（可能已被清理）")
+        target_path = row.target_path or ""
+        target_via = row.target_via or "local"
 
     ctx = await subset_service.resolve_context(cfg)
     if not ctx.ok:
@@ -1573,48 +1785,10 @@ async def _retry_one(history_id: int, cfg: Dict[str, Any]) -> Dict[str, Any]:
 
     work = _retry_work_dir(cfg)
     try:
-        results = await subset_service.subset_files([str(located)], work_dir=str(work), ctx=ctx)
-        res = results.get(str(located.resolve())) or {}
-        status = str(res.get("status") or "failed")
-        if status == "skipped" and "已内嵌" in str(res.get("reason") or ""):
-            # 交付文件本身就是内嵌成品：对这条记录来说已经处理好了，
-            # 不该显示成「跳过」让用户以为还没处理。
-            status = "success"
-            res["reason"] = "已内嵌字体，无需重复处理"
-        final = located
-        if status == "success":
-            out = Path(str(res.get("output") or ""))
-            final = _assfonts_name(located)
-            try:
-                if final.exists() and final != located:
-                    final.unlink()
-                shutil.move(str(out), str(final))
-                if located != final and located.exists():
-                    located.unlink()
-            except OSError as e:
-                status = "failed"
-                res["reason"] = f"成品落盘失败：{e}"
-
-        async with db.session_scope() as session:
-            row = (await session.execute(
-                select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
-            )).scalars().first()
-            row.status = status if status in ("success", "missing", "skipped", "failed") else "failed"
-            row.attempts = int(row.attempts or 0) + 1
-            row.missing_fonts = list(res.get("missing") or [])
-            row.last_error = "" if status == "success" else (res.get("reason") or "")
-            if status == "success":
-                row.target_path = str(final)
-                row.target_name = final.name
-                try:
-                    row.file_size = final.stat().st_size
-                except OSError:
-                    row.file_size = 0
-            row.updated_at = datetime.now()
-            session.add(row)
-            await session.commit()
-            await session.refresh(row)
-            payload = _history_to_dict(row)
+        if target_via == "cd2":
+            payload = await _retry_cloud(history_id, target_path, work, ctx)
+        else:
+            payload = await _retry_local(history_id, target_path, work, ctx)
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
@@ -1707,7 +1881,7 @@ async def delete_history(history_id: int):
             select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
         )).scalars().first()
         if not row:
-            raise HTTPException(status_code=404, detail="记录不存在")
+            raise HTTPException(status_code=400, detail="处理历史记录不存在（可能已被清理）")
         await session.delete(row)
         await session.commit()
     return {"status": "success"}
