@@ -50,6 +50,7 @@ from config_manager import ConfigManager
 from database import db
 from event_broadcaster import EventBroadcaster
 from font_core import ass_parser, index_store, runner
+from font_core import subset_service
 from font_core import binary as af_binary
 from logger import log_audit
 from models import FontSubtitleJob
@@ -79,19 +80,8 @@ def _workspace(cfg: Optional[Dict[str, Any]] = None) -> Path:
 
 
 def _library_dirs(cfg: Optional[Dict[str, Any]] = None) -> List[str]:
-    fm = _fm(cfg)
-    dirs: List[str] = []
-    main = str(fm.get("library_dir") or "").strip()
-    if main:
-        dirs.append(main)
-    extra = fm.get("extra_library_dirs") or []
-    if isinstance(extra, str):
-        extra = [x.strip() for x in extra.split(",")]
-    for d in extra:
-        d = str(d or "").strip()
-        if d and d not in dirs:
-            dirs.append(d)
-    return dirs
+    # 口径统一：字体库目录解析收敛到 font_core.subset_service（整理联动复用同一套）
+    return subset_service.library_dirs(cfg)
 
 
 def _options(cfg: Optional[Dict[str, Any]] = None, *,
@@ -269,12 +259,12 @@ async def _resolve_index(binary: Path, cfg: Dict[str, Any]) -> Tuple[Path, Dict[
 
 def _temp_font_dir(cfg: Optional[Dict[str, Any]] = None) -> Path:
     """临时字体池目录（仅作为处理时的 -f 补充字体源，不进字体库）。"""
-    return Path(str(_fm(cfg).get("temp_font_dir") or "data/fonts/temp_fonts"))
+    return subset_service.temp_font_dir(cfg)
 
 
 def _temp_index_dir(cfg: Optional[Dict[str, Any]] = None) -> Path:
     """临时字体池的独立索引目录（用于缺字体判定，避免和主库索引混淆）。"""
-    return _temp_font_dir(cfg).parent / "temp_index"
+    return subset_service.temp_index_dir(cfg)
 
 
 def _list_temp_fonts(cfg: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -300,23 +290,12 @@ def _extra_font_dirs_for_run(cfg: Dict[str, Any], extra_font: str = "") -> List[
 
     实测：`-f` 与 `-d` 索引是叠加关系 —— 字体只在临时池、不在索引里也能被找到并内嵌。
     """
-    dirs = [extra_font] if extra_font else []
-    if _list_temp_fonts(cfg):
-        pool = str(_temp_font_dir(cfg))
-        if pool not in dirs:
-            dirs.append(pool)
-    return dirs
+    return subset_service.extra_font_dirs(cfg, extra_font)
 
 
 def _merged_known_fonts(main_faces: Any, cfg: Dict[str, Any]) -> Set[str]:
     """主库索引 + 临时字体索引 的字体名合集（缺字体判定要算上临时字体）。"""
-    names = index_store.font_name_set(main_faces or [])
-    try:
-        tinfo = index_store.read_index(_temp_index_dir(cfg))
-        names |= index_store.font_name_set(tinfo.get("fonts") or [])
-    except Exception:
-        pass
-    return names
+    return subset_service.merged_known_fonts(main_faces, cfg)
 
 
 async def _recheck_missing_after_temp_change(cfg: Dict[str, Any]) -> int:

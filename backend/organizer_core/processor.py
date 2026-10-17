@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import logging
+import shutil
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 from sqlmodel import select, and_
@@ -11,6 +12,7 @@ from .renamer import Renamer
 from config_manager import ConfigManager
 from clients.manager import ClientManager
 from .executor import FileExecutor
+from .subtitle_subset import RelatedSubtitleSubsetter
 from notification import notification_manager
 from utils.hash_calculator import HashCalculator, HashResult
 
@@ -71,7 +73,8 @@ class FileProcessor:
 
     @staticmethod
     def _related_files_payload(
-        related_files: List[str], related_targets: Dict[str, str], outcomes: Dict[str, str] = None
+        related_files: List[str], related_targets: Dict[str, str], outcomes: Dict[str, str] = None,
+        subset_info: Dict[str, Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """构造随行文件清单（字幕/音轨），用于 OrganizeHistory.related_files 与任务 stats"""
         payload = []
@@ -88,8 +91,44 @@ class FileProcessor:
                 "filename": f,
                 "target_path": (related_targets or {}).get(f),
                 "status": status,
+                # 子集化结论（success/skipped/missing/failed/unavailable），没开开关时为空
+                "subset": (subset_info or {}).get(f, {}).get("subset", ""),
+                "missing_fonts": (subset_info or {}).get(f, {}).get("missing", []) or [],
             })
         return payload
+
+    @staticmethod
+    def _with_assfonts_tag(path: str) -> str:
+        """给交付字幕名插入 .assfonts 标记（xxx.zh.ass → xxx.zh.assfonts.ass）。
+
+        子集化成品保留这个标记，媒体库里一眼能看出哪些字幕内嵌过字体；
+        后缀仍是 .ass，播放器照常识别。
+        """
+        stem, ext = os.path.splitext(path)
+        return f"{stem}.assfonts{ext}"
+
+    @staticmethod
+    def _display_source(src: str, temp_to_orig: Dict[str, str]) -> str:
+        """结果里展示原始路径：src 可能是子集化临时成品，对用户没意义。"""
+        return (temp_to_orig or {}).get(src, src)
+
+    @staticmethod
+    async def _drop_replaced_source(src: str, res: str, temp_to_orig: Dict[str, str],
+                                    action_type: str, video_ok: bool = True) -> None:
+        """子集化成品搬运成功后，删掉源目录里的原字幕（替换语义）。
+
+        只在「该字幕搬运成功 + move 类动作 + 视频也成功」时删；
+        跳过 / 失败一律保留原件，避免目标没写成却把源文件弄丢。
+        """
+        orig = (temp_to_orig or {}).get(src)
+        if not orig or not video_ok or res != "success" or action_type not in ("move", "cd2_move"):
+            return
+        try:
+            if os.path.isfile(orig):
+                await asyncio.to_thread(os.remove, orig)
+                logger.debug(f"已删除被替换的源字幕: {orig}")
+        except OSError as e:
+            logger.warning(f"删除源字幕失败（保留原件）: {orig} | {e}")
 
     @staticmethod
     async def _save_history_force(history: "OrganizeHistory"):
@@ -121,7 +160,11 @@ class FileProcessor:
         from database import db
 
         for related_file in related_files:
-            related_path = os.path.join(root, related_file)
+            src_path = os.path.join(root, related_file)
+            # 子集化替换后源文件已删，哈希改算交付物；交付物不在再退回源文件
+            related_path = (related_targets or {}).get(related_file) or src_path
+            if not os.path.isfile(related_path):
+                related_path = src_path
             if not os.path.isfile(related_path):
                 continue
 
@@ -296,6 +339,10 @@ class FileProcessor:
 
         results = []
         recog_task_id = None       # 单文件识别任务（覆盖识别+转移全流程）
+        subset_overrides: Dict[str, str] = {}   # {随行字幕文件名: 子集化成品路径}
+        subset_info: Dict[str, Dict[str, Any]] = {}
+        subset_work_dir: str = ""
+        subset_temp_to_orig: Dict[str, str] = {}
         recog_stats_base: Dict[str, Any] = {}  # 识别基础信息，各收口点 stats 公共部分
         cd2_client = None
 
@@ -404,6 +451,7 @@ class FileProcessor:
                         calculate_hash=task.get("calculate_hash", False),
                         clean_empty_dir=task.get("clean_empty_dir", False),
                         trigger_strm=task.get("trigger_strm", False),
+                        subset_subtitles=task.get("subset_subtitles", False),
                         task_id=recog_task_id
                     )
                     await FileProcessor._save_history_force(history)
@@ -472,6 +520,7 @@ class FileProcessor:
                                     calculate_hash=task.get("calculate_hash", False),
                                     clean_empty_dir=task.get("clean_empty_dir", False),
                                     trigger_strm=task.get("trigger_strm", False),
+                                    subset_subtitles=task.get("subset_subtitles", False),
                                     task_id=recog_task_id
                                 )
                                 await FileProcessor._save_history_force(history)
@@ -525,9 +574,21 @@ class FileProcessor:
             new_rel_path = Renamer.format_path(result_data, pattern, v_file)
             new_abs_path = os.path.join(target_dir, new_rel_path)
             
+            # --- 随行字幕子集化（高级选项开关）---
+            # 成功 → 用内嵌成品替换 src、交付名加 .assfonts 标记；失败/缺字体 → 原字幕照常搬。
+            async def _subset_log(msg: str, level: str = "INFO"):
+                await FileProcessor._log_both(task_id, recog_task_id, msg, level)
+
+            subset_overrides, subset_info, subset_work_dir = await RelatedSubtitleSubsetter.prepare(
+                related_files, root, task,
+                dry_run=dry_run, task_id=task_id, log=_subset_log,
+            )
+            subset_temp_to_orig = {tmp: os.path.join(root, name)
+                                   for name, tmp in subset_overrides.items()}
+
             # Prepare file list (video + related files)
             plan_items = [(v_path, new_abs_path)]
-            
+
             # Related files preparation (subtitles + audio tracks)
             related_targets: Dict[str, str] = {}  # {关联文件名: 整理后目标路径}
             for related_file in related_files:
@@ -536,6 +597,10 @@ class FileProcessor:
                 v_new_base = os.path.splitext(os.path.basename(new_rel_path))[0]
                 related_rel_path = os.path.join(v_new_dir, v_new_base + file_tag)
                 related_abs_old = os.path.join(root, related_file)
+                if related_file in subset_overrides:
+                    # 源换成内嵌成品；交付名带 .assfonts 标记，便于肉眼识别
+                    related_abs_old = subset_overrides[related_file]
+                    related_rel_path = FileProcessor._with_assfonts_tag(related_rel_path)
                 related_abs_new = os.path.join(target_dir, related_rel_path)
                 plan_items.append((related_abs_old, related_abs_new))
                 related_targets[related_file] = related_abs_new
@@ -656,6 +721,7 @@ class FileProcessor:
                             calculate_hash=task.get("calculate_hash", False),
                             clean_empty_dir=task.get("clean_empty_dir", False),
                             trigger_strm=task.get("trigger_strm", False),
+                            subset_subtitles=task.get("subset_subtitles", False),
                             task_id=recog_task_id
                         )
                         await FileProcessor._save_history_force(history)
@@ -714,6 +780,7 @@ class FileProcessor:
                             }
                         batch_res = "success"
                         any_skipped = False
+                        cd2_video_ok = False
                         related_outcomes = {}  # {关联文件名: 单项执行结果}
                         for src, dst in plan_items:
                             res = await FileExecutor.execute_action(
@@ -721,8 +788,12 @@ class FileProcessor:
                                 context.get("dir_cache"), source_via=source_via, target_via=target_via,
                                 rapid=rapid_cfg
                             )
-                            if src != v_path:
+                            if src == v_path:
+                                cd2_video_ok = res == "success"
+                            else:
                                 related_outcomes[os.path.basename(src)] = res
+                                await FileProcessor._drop_replaced_source(
+                                    src, res, subset_temp_to_orig, action_type, cd2_video_ok)
                             if res == "success":
                                 await FileProcessor._log_both(task_id, recog_task_id, f"📦 CD2 {action_label}成功: {os.path.basename(src)}")
                             elif res in ("skipped", "skipped_conflict"):
@@ -771,6 +842,10 @@ class FileProcessor:
                         await FileExecutor._ensure_cd2_dir(cd2_client, target_parent, context.get("dir_cache"))
                         batch_res = await FileExecutor._execute_cd2_batch(cd2_client, plan_items, action_type)
                         related_outcomes = {f: batch_res for f in related_files}
+                        if batch_res == "success" and subset_temp_to_orig:
+                            for _tmp in list(subset_temp_to_orig):
+                                await FileProcessor._drop_replaced_source(
+                                    _tmp, "success", subset_temp_to_orig, action_type, True)
                         if batch_res == "success":
                             await FileProcessor._log_both(task_id, recog_task_id, f"📦 CD2 {action_label}成功: {v_file} → {new_abs_path}")
                         elif batch_res == "skipped":
@@ -786,7 +861,8 @@ class FileProcessor:
                         # 添加识别信息到结果中
                         result_item = {
                             "type": "item", "status": item_status,
-                            "source": src, "target": dst, "action": action_type,
+                            "source": FileProcessor._display_source(src, subset_temp_to_orig),
+                            "target": dst, "action": action_type,
                             "source_via": source_via, "target_via": target_via,
                             "msg": FileExecutor.get_status_message(batch_res)
                         }
@@ -833,7 +909,7 @@ class FileProcessor:
                     if not dry_run and batch_res in ["success", "skipped"]:
                         from models import OrganizeHistory, FileHash
                         from database import db
-                        related_payload = FileProcessor._related_files_payload(related_files, related_targets, related_outcomes)
+                        related_payload = FileProcessor._related_files_payload(related_files, related_targets, related_outcomes, subset_info)
                         async with db.session_scope():
                             history = OrganizeHistory(
                                 source_path=v_path, target_path=new_abs_path,
@@ -859,6 +935,7 @@ class FileProcessor:
                                 calculate_hash=task.get("calculate_hash", False),
                                 clean_empty_dir=task.get("clean_empty_dir", False),
                                 trigger_strm=task.get("trigger_strm", False),
+                                subset_subtitles=task.get("subset_subtitles", False),
                                 task_id=recog_task_id
                             )
                             # 按 source_path 去重后保存
@@ -935,7 +1012,7 @@ class FileProcessor:
                     # recog 任务收口（覆盖成功/跳过/秒传未命中/失败四种批次结果）
                     if not dry_run:
                         _rf_stats = {**recog_stats_base, "target_path": new_abs_path,
-                                     "related_files": FileProcessor._related_files_payload(related_files, related_targets, related_outcomes)}
+                                     "related_files": FileProcessor._related_files_payload(related_files, related_targets, related_outcomes, subset_info)}
                         if batch_res == "success":
                             await FileProcessor._finish_recog(recog_task_id, "completed", {**_rf_stats, "success": 1})
                         elif batch_res == "skipped":
@@ -949,13 +1026,19 @@ class FileProcessor:
 
             # --- Standard Path ---
             related_outcomes: Dict[str, str] = {}  # {关联文件名: 单项执行结果}
+            video_ok = False
             for src, dst in plan_items:
                 v_res = "preview"
                 if not dry_run:
                     v_res = await FileExecutor.execute_action(src, dst, action_type, conflict_mode, context.get("dir_cache"))
 
-                if src != v_path:
+                if src == v_path:
+                    video_ok = v_res == "success"
+                else:
                     related_outcomes[os.path.basename(src)] = v_res
+                    # 内嵌成品搬成功后删掉源目录里的原字幕（替换语义）
+                    await FileProcessor._drop_replaced_source(
+                        src, v_res, subset_temp_to_orig, action_type, video_ok)
                 if v_res in ["success", "preview"]:
                     if src == v_path:
                         await FileProcessor._log_both(task_id, recog_task_id, f"📦 {action_label}成功: {v_file} → {dst}")
@@ -970,7 +1053,8 @@ class FileProcessor:
                 result_item = {
                     "type": "item",
                     "status": "success" if v_res in ["success", "preview"] else ("skip" if v_res in ["skipped", "skipped_conflict"] else "error"),
-                    "source": src, "target": dst, "action": action_type,
+                    "source": FileProcessor._display_source(src, subset_temp_to_orig),
+                    "target": dst, "action": action_type,
                     "source_via": source_via, "target_via": target_via,
                     "msg": FileExecutor.get_status_message(v_res)
                 }
@@ -1004,7 +1088,7 @@ class FileProcessor:
                             year=str(final.get("year")) if final.get("year") else None,
                             status="success" if v_res == "success" else ("skipped" if v_res in ["skipped", "skipped_conflict"] else "failed"),
                             message=None if v_res == "success" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}",
-                            related_files=FileProcessor._related_files_payload(related_files, related_targets, related_outcomes),
+                            related_files=FileProcessor._related_files_payload(related_files, related_targets, related_outcomes, subset_info),
                             rule_id=task.get("rule_id"),
                             source_dir=task.get("source_dir"),
                             target_dir=task.get("target_dir"),
@@ -1013,6 +1097,7 @@ class FileProcessor:
                             calculate_hash=task.get("calculate_hash", False),
                             clean_empty_dir=task.get("clean_empty_dir", False),
                             trigger_strm=task.get("trigger_strm", False),
+                            subset_subtitles=task.get("subset_subtitles", False),
                             task_id=recog_task_id
                         )
                         # 按 source_path 去重后保存
@@ -1108,7 +1193,7 @@ class FileProcessor:
                 _std_v_res = next((r for r in results if r.get("source") == v_path), None)
                 _std_res = (_std_v_res or {}).get("msg")
                 _rf_stats = {**recog_stats_base, "target_path": new_abs_path,
-                             "related_files": FileProcessor._related_files_payload(related_files, related_targets, related_outcomes)}
+                             "related_files": FileProcessor._related_files_payload(related_files, related_targets, related_outcomes, subset_info)}
                 if not dry_run and _std_v_res and _std_v_res.get("status") == "success":
                     await FileProcessor._finish_recog(recog_task_id, "completed", {**_rf_stats, "success": 1})
                 elif not dry_run and _std_v_res and _std_v_res.get("status") == "skip":
@@ -1129,7 +1214,11 @@ class FileProcessor:
                 await notification_manager.notify_organize_failed(v_path, err_msg)
             
             results.append({"type": "error", "source": v_path, "message": str(e)})
-        
+        finally:
+            # 子集化临时目录（输入副本 / 成品 / _subsetted）一律清掉，成功失败都不留
+            if subset_work_dir:
+                await asyncio.to_thread(RelatedSubtitleSubsetter.cleanup, subset_work_dir)
+
         return results
 
     @staticmethod

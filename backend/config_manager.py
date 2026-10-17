@@ -156,6 +156,7 @@ class ConfigManager:
             "extra_library_dirs": [],          # 额外字体库目录（可多个，索引构建时多次 -f 叠加）
             "index_dir": "data/fonts/index",   # assfonts 索引（fonts.json）存放目录
             "workspace_dir": "data/fonts/jobs",  # 上传字幕与成品的工作目录
+            "organize_tmp_dir": "data/fonts/organize_tmp",  # 整理任务随行字幕子集化的临时目录
             # ── 处理模式与方式（对齐 assfonts 全部命令行能力）──
             "mode": "default",                 # default/subset_only/embed_only/clean_embedded/combined_subset
             "extra_font_dir": "",              # 本次处理的额外字体目录（-f），用于「仅内嵌」等场景

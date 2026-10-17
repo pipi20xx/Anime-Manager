@@ -76,6 +76,7 @@ const taskForm = reactive({
   cd2_rapid_mode: 'off',
   cd2_rapid_interval: 60,
   cd2_rapid_max_retries: 6,
+  subset_subtitles: false,
 })
 
 function resetTaskForm() {
@@ -110,6 +111,7 @@ function resetTaskForm() {
   taskForm.cd2_rapid_mode = 'off'
   taskForm.cd2_rapid_interval = 60
   taskForm.cd2_rapid_max_retries = 6
+  taskForm.subset_subtitles = false
 }
 
 function openAddTask() {
@@ -157,6 +159,7 @@ function openEditTask(index: number) {
   if (rawData.cd2_rapid_mode === undefined) rawData.cd2_rapid_mode = 'off'
   if (rawData.cd2_rapid_interval === undefined) rawData.cd2_rapid_interval = 60
   if (rawData.cd2_rapid_max_retries === undefined) rawData.cd2_rapid_max_retries = 6
+  if (rawData.subset_subtitles === undefined) rawData.subset_subtitles = false
 
   Object.assign(taskForm, rawData)
   showTaskModal.value = true

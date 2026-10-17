@@ -285,6 +285,7 @@ class OrganizeHistory(SQLModel, table=True):
     calculate_hash: Optional[bool] = None
     clean_empty_dir: Optional[bool] = None
     trigger_strm: Optional[bool] = None
+    subset_subtitles: Optional[bool] = None  # 整理时是否对随行字幕做字体子集化
     # 关联识别任务的 task_id，用于查看对应的识别日志（任务中心「识别」模块）
     task_id: Optional[str] = Field(default=None, index=True)
 

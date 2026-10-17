@@ -67,6 +67,7 @@ const manualTask = reactive<any>({
   forced_season: null as string | null,
   ignore_history: true,
   retry_failed: true,
+  subset_subtitles: false,
 })
 
 // 正则标签输入
@@ -525,6 +526,21 @@ function handleRunBackground() {
                 <div>
                   <div class="switch-label">智能记忆</div>
                   <div class="switch-desc">自动记住系列特征，后续文件实现秒级识别</div>
+                </div>
+              </div>
+
+              <div class="switch-row">
+                <v-switch
+                  v-model="manualTask.subset_subtitles"
+                  :disabled="manualTask.action_type === 'hash_only' || manualTask.source_via === 'cd2'"
+                  density="compact" color="primary" hide-details
+                />
+                <div>
+                  <div class="switch-label">随行字幕子集化</div>
+                  <div class="switch-desc">
+                    整理时把随行的 .ass/.ssa 做字体子集化并内嵌，成品名带 .assfonts 标记；
+                    缺字体或失败时按原字幕搬运
+                  </div>
                 </div>
               </div>
             </div>

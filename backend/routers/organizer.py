@@ -941,6 +941,7 @@ async def _retry_history_runner(history_id: int, task_id: str):
                 "calculate_hash": history.calculate_hash if history.calculate_hash is not None else False,
                 "clean_empty_dir": history.clean_empty_dir if history.clean_empty_dir is not None else False,
                 "trigger_strm": history.trigger_strm if history.trigger_strm is not None else False,
+                "subset_subtitles": history.subset_subtitles if history.subset_subtitles is not None else False,
                 "source_via": history.source_via or _infer_path_via(source_path),
                 "target_via": history.target_via or _infer_path_via(history.target_dir),
                 "ignore_history": True,
