@@ -489,6 +489,14 @@ defineExpose({ fetchHistory })
               <span class="related-file-name">{{ rf.filename }}</span>
             </div>
             <div v-if="rf.target_path" class="related-file-target" :title="rf.target_path">→ {{ rf.target_path }}</div>
+            <div v-if="rf.subset === 'missing'" class="related-file-subset related-file-subset--warn">
+              <v-icon size="12" class="mr-1">mdi-format-font</v-icon>
+              未内嵌字体（缺：{{ (rf.missing_fonts || []).join('、') || '未知' }}）
+            </div>
+            <div v-else-if="rf.subset === 'success'" class="related-file-subset">
+              <v-icon size="12" class="mr-1">mdi-check-decagram-outline</v-icon>
+              已内嵌字体
+            </div>
           </div>
         </div>
 

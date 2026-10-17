@@ -34,6 +34,29 @@ _swept_roots: set = set()
 
 LogFn = Callable[..., Awaitable[Any]]
 
+# 同一进程内只写一次系统日志的提示（避免 CD2 任务每集刷屏）
+_syslog_once: set = set()
+
+
+def _sys_log(msg: str, level: str = "INFO", once: str = "") -> None:
+    """写系统日志（logger）。
+
+    整理任务大多在后半夜自动跑，没人盯着任务中心；缺字体这类提示如果只进
+    任务历史，事后在「系统日志」里完全看不到，所以这里双写一份。
+    """
+    if once:
+        if once in _syslog_once:
+            return
+        _syslog_once.add(once)
+    text = f"[字幕子集化] {msg}"
+    lvl = (level or "INFO").upper()
+    if lvl == "WARN":
+        logger.warning(text)
+    elif lvl == "ERROR":
+        logger.error(text)
+    else:
+        logger.info(text)
+
 
 def _human_size(size: int) -> str:
     try:
@@ -116,7 +139,9 @@ class RelatedSubtitleSubsetter:
         if not files:
             return overrides, info, work_root
 
-        async def _log(msg: str, level: str = "INFO") -> None:
+        async def _log(msg: str, level: str = "INFO", once: str = "") -> None:
+            # 双写：系统日志 + 任务中心（任务历史）
+            _sys_log(msg, level, once)
             if log is not None:
                 try:
                     await log(msg, level)
@@ -124,14 +149,16 @@ class RelatedSubtitleSubsetter:
                     pass
 
         if (task.get("source_via") or "local") != "local":
-            await _log("⚠️ 随行字幕在云盘上，暂不支持子集化（按原字幕搬运）", "WARN")
+            await _log("⚠️ 随行字幕在云盘上，暂不支持子集化（按原字幕搬运）", "WARN",
+                       once="cloud-source")
             info = {f: {"subset": "skipped", "reason": "云源字幕"} for f in files}
             return overrides, info, work_root
 
         cfg = ConfigManager.get_config()
         ctx = await ss.resolve_context(cfg)
         if not ctx.ok:
-            await _log(f"⚠️ 字幕子集化已跳过：{ctx.error}（按原字幕搬运）", "WARN")
+            await _log(f"⚠️ 字幕子集化已跳过：{ctx.error}（按原字幕搬运）", "WARN",
+                       once=f"noctx:{ctx.error}")
             info = {f: {"subset": "unavailable", "reason": ctx.error} for f in files}
             return overrides, info, work_root
 
@@ -199,9 +226,19 @@ class RelatedSubtitleSubsetter:
                 await _log(f"⚠️ 子集化失败，按原字幕搬运：{f}"
                            f"（{r.get('reason') or '未知原因'}）", "WARN")
 
-        if overrides:
-            logger.info(f"[字幕子集化] {len(overrides)}/{len(files)} 个字幕已内嵌，"
-                        f"耗时 {int((time.monotonic() - started) * 1000)}ms")
+        counts = {"success": 0, "skipped": 0, "missing": 0, "failed": 0}
+        for _v in info.values():
+            _k = _v.get("subset") or "failed"
+            counts[_k] = counts.get(_k, 0) + 1
+        _parts = [f"已内嵌 {counts['success']}"]
+        if counts["missing"]:
+            _parts.append(f"缺字体 {counts['missing']}")
+        if counts["skipped"]:
+            _parts.append(f"跳过 {counts['skipped']}")
+        if counts["failed"]:
+            _parts.append(f"失败 {counts['failed']}")
+        _sys_log(f"随行字幕处理完成（{'、'.join(_parts)}，"
+                 f"耗时 {int((time.monotonic() - started) * 1000)}ms）")
         return overrides, info, work_root
 
     @staticmethod

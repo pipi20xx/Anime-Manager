@@ -309,6 +309,18 @@
   color: rgb(var(--v-theme-primary));
 }
 
+/* 随行字幕的字体子集化结论（整理历史 / 执行日志共用） */
+.related-file-subset {
+  display: flex;
+  align-items: center;
+  padding-left: 22px;
+  font-size: 11px;
+  color: rgb(var(--v-theme-success));
+}
+.related-file-subset--warn {
+  color: rgb(var(--v-theme-warning));
+}
+
 /* ── 整理历史/秒传重试 筛选 chip 高度（自 OrganizeHistoryTab + RapidRetryTab scoped 收编） ── */
 .history-filter-chip {
   height: 40px !important;
