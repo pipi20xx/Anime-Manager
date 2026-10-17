@@ -16,7 +16,7 @@ const {
   success, showError, warning, showInfo,
   indexInfo,
   fonts, fontsTotal, fontsFormats, fontsLoading, fontsQuery, fontsFormat,
-  FONTS_LIMIT_MAX, fontsLimit, libraryFontCount, formatFilterItems,
+  FONTS_PAGE, fontsLimit, libraryFontCount, formatFilterItems,
   fetchFonts, loadMoreFonts, resetFontsLimit, refreshAll,
 } = useFontManager()
 
@@ -338,7 +338,7 @@ async function handleLibraryFontUpload(
           已显示前 {{ fonts.length }} / 共 {{ fontsTotal }} 个字体面（可用上方搜索框按名称查找）
         </span>
         <v-btn
-          v-if="fontsLimit < FONTS_LIMIT_MAX"
+          v-if="fontsTotal > fonts.length"
           size="small"
           variant="text"
           :loading="fontsLoading"
@@ -346,9 +346,7 @@ async function handleLibraryFontUpload(
         >
           加载更多
         </v-btn>
-        <span v-else class="text-caption text-medium-emphasis">
-          已达单次上限 {{ FONTS_LIMIT_MAX }} 条，请用搜索缩小范围
-        </span>
+        <span v-else class="text-caption text-medium-emphasis">已加载全部字体面</span>
       </div>
     </v-card-text>
   </v-card>

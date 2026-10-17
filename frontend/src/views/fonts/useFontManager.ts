@@ -371,9 +371,8 @@ function createFontManagerStore() {
   const fontsLoading = ref(false)
   const fontsQuery = ref('')
   const fontsFormat = ref<string>('')
-  /** 每次拉取的条数与当前上限（后端 limit 最大 2000） */
-  const FONTS_PAGE = 500
-  const FONTS_LIMIT_MAX = 2000
+  /** 每页条数（增量分页：每次只拉新的一页，追加到列表尾部） */
+  const FONTS_PAGE = 100
   const fontsLimit = ref(FONTS_PAGE)
 
   /** 索引里的字体库数量（Tab 徽标 / 面板标题） */
@@ -394,7 +393,7 @@ function createFontManagerStore() {
         q: fontsQuery.value.trim() || undefined,
         fmt: fontsFormat.value || undefined,
         scope: 'library',
-        limit: fontsLimit.value,
+        limit: FONTS_PAGE,
         offset: 0,
       })
       fonts.value = res?.data || []
@@ -407,10 +406,28 @@ function createFontManagerStore() {
     }
   }
 
+  /** 增量分页：只拉取下一页并追加，避免重复加载已有数据 */
   async function loadMoreFonts() {
-    if (fontsLimit.value >= FONTS_LIMIT_MAX) return
-    fontsLimit.value = Math.min(FONTS_LIMIT_MAX, fontsLimit.value + FONTS_PAGE)
-    await fetchFonts()
+    if (fontsLoading.value) return
+    if (fonts.value.length >= fontsTotal.value) return
+    fontsLoading.value = true
+    try {
+      const res = await fontManagerApi.listFonts({
+        q: fontsQuery.value.trim() || undefined,
+        fmt: fontsFormat.value || undefined,
+        scope: 'library',
+        limit: FONTS_PAGE,
+        offset: fonts.value.length,
+      })
+      const page = res?.data || []
+      fonts.value = fonts.value.concat(page)
+      fontsTotal.value = res?.total || fontsTotal.value
+      fontsFormats.value = res?.formats || fontsFormats.value
+    } catch (e: any) {
+      showError(e?.message || '读取字体列表失败')
+    } finally {
+      fontsLoading.value = false
+    }
   }
 
   function resetFontsLimit() {
@@ -823,7 +840,7 @@ function createFontManagerStore() {
     fontsLoading,
     fontsQuery,
     fontsFormat,
-    FONTS_LIMIT_MAX,
+    FONTS_PAGE,
     fontsLimit,
     libraryFontCount,
     formatFilterItems,
