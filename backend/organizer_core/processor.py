@@ -131,6 +131,57 @@ class FileProcessor:
             logger.warning(f"删除源字幕失败（保留原件）: {orig} | {e}")
 
     @staticmethod
+    async def _record_subset_history(related_files, related_targets, subset_info, outcomes,
+                                     root: str, task: Dict[str, Any], final: Dict[str, Any],
+                                     task_id: str = None) -> None:
+        """把随行字幕的子集化结果落「字体管家 · 处理历史」。
+
+        成功也记、回退也记：记录里保存「交付路径」，事后补齐字体就能按路径重试，
+        哪怕整理时字幕被改了名（比如多了 .assfonts 标记）也认得住。
+        """
+        if not subset_info or not related_targets:
+            return
+        try:
+            from models import FontSubsetHistory
+            from database import db
+            async with db.session_scope() as session:
+                for name, info in subset_info.items():
+                    status = str((info or {}).get("subset") or "")
+                    if status in ("", "unavailable"):
+                        continue
+                    target = related_targets.get(name) or ""
+                    if not target:
+                        continue
+                    transfer = (outcomes or {}).get(name)
+                    note = ""
+                    if transfer and transfer not in ("success", "preview"):
+                        note = f"搬运结果：{FileExecutor.get_status_message(transfer)}"
+                    stmt = select(FontSubsetHistory).where(FontSubsetHistory.target_path == target)
+                    row = await db.first(FontSubsetHistory, stmt)
+                    if row is None:
+                        row = FontSubsetHistory(
+                            source_name=name, source_path=os.path.join(root, name),
+                            target_path=target, target_name=os.path.basename(target))
+                    row.status = status
+                    row.missing_fonts = list((info or {}).get("missing") or [])
+                    row.referenced_fonts = list((info or {}).get("referenced") or [])
+                    row.last_error = note or ""
+                    row.task_id = task_id or None
+                    row.video_title = final.get("title")
+                    row.tmdb_id = str(final.get("tmdb_id")) if final.get("tmdb_id") else None
+                    row.season = final.get("season")
+                    row.episode = str(final.get("episode")) if final.get("episode") else None
+                    row.updated_at = datetime.now()
+                    try:
+                        row.file_size = os.path.getsize(target)
+                    except OSError:
+                        row.file_size = 0
+                    session.add(row)
+                await session.commit()
+        except Exception as e:
+            logger.debug(f"写字体管家处理历史失败（忽略）: {e}")
+
+    @staticmethod
     async def _save_history_force(history: "OrganizeHistory"):
         """
         保存整理历史记录，同一 source_path 只保留一条记录。
@@ -1022,6 +1073,11 @@ class FileProcessor:
                         else:
                             await FileProcessor._finish_recog(recog_task_id, "error", {**_rf_stats, "errors": 1, "message": FileExecutor.get_status_message(batch_res)})
 
+                    if not dry_run:
+                        await FileProcessor._record_subset_history(
+                            related_files, related_targets, subset_info, related_outcomes,
+                            root, task, final, task_id)
+
                     return results
 
             # --- Standard Path ---
@@ -1186,6 +1242,11 @@ class FileProcessor:
                         # [Notify Failure]
                         err_detail = FileExecutor.get_status_message(v_res)
                         await notification_manager.notify_organize_failed(v_path, f"操作失败: {err_detail}")
+
+            if not dry_run:
+                await FileProcessor._record_subset_history(
+                    related_files, related_targets, subset_info, related_outcomes,
+                    root, task, final, task_id)
 
             # --- Standard Path recog 任务收口（以视频项结果为准） ---
             # CD2 动作但客户端缺失时会落到标准路径，此处需一并收口

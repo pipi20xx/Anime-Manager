@@ -597,8 +597,8 @@ function createFontManagerStore() {
   }
 
   // ── 页面分区（Tab） ──
-  /** 当前 Tab：jobs=字幕任务 / library=字体库 / temp=临时字体 */
-  const activeTab = ref<'jobs' | 'library' | 'temp'>('jobs')
+  /** 当前 Tab：jobs=字幕任务 / library=字体库 / temp=临时字体 / history=处理历史 */
+  const activeTab = ref<'jobs' | 'library' | 'temp' | 'history'>('jobs')
   /** 临时字体池有字体时在 Tab 上给个提示徽标 */
   const tempTabBadge = computed(() => (tempFontActive.value ? tempFontFiles.value.length : 0))
   /** 从任务列表跳到临时字体 Tab（缺字体 → 去补字体） */

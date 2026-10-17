@@ -318,6 +318,39 @@ export interface FontIndexSummary {
   error?: string
 }
 
+/** 随行字幕子集化处理历史（整理任务联动） */
+export interface FontSubsetHistoryItem {
+  id: number
+  source_name: string
+  source_path: string
+  target_path: string
+  target_name: string
+  status: 'success' | 'missing' | 'failed' | 'skipped'
+  missing_fonts: string[]
+  referenced_fonts: string[]
+  file_size: number
+  attempts: number
+  last_error: string
+  task_id: string
+  video_title: string
+  tmdb_id: string
+  season: number | null
+  episode: string
+  created_at: string
+  updated_at: string
+  /** 交付文件当前是否还在（被移动/删除后不能直接重试） */
+  exists: boolean
+}
+
+export interface FontSubsetHistoryList {
+  status?: string
+  total: number
+  counts: Record<string, number>
+  limit: number
+  offset: number
+  data: FontSubsetHistoryItem[]
+}
+
 const BASE = '/api/font_manager'
 /** 下载走原生 fetch，需要自行拼接 base（apiFetch 会自动加 VITE_API_BASE_URL） */
 const RAW_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}${BASE}`
@@ -549,5 +582,38 @@ export const fontManagerApi = {
     api.post<{ status?: string; data: { success: boolean; version: string; message: string } }>(
       `${BASE}/update/apply`,
       body,
+    ),
+
+  // ── 处理历史（整理任务联动） ────────────────────────────
+
+  /** 随行字幕子集化处理历史（成功也记、缺字体也记） */
+  listSubsetHistory: (params?: { status?: string; q?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams()
+    if (params?.status) qs.set('status', params.status)
+    if (params?.q) qs.set('q', params.q)
+    if (params?.limit) qs.set('limit', String(params.limit))
+    if (params?.offset) qs.set('offset', String(params.offset))
+    const query = qs.toString()
+    return api.get<FontSubsetHistoryList>(`${BASE}/history${query ? `?${query}` : ''}`)
+  },
+
+  /** 按交付路径重新子集化一条记录（成功则替换原文件） */
+  retrySubsetHistory: (id: number) =>
+    api.post<{ status?: string; data: FontSubsetHistoryItem }>(`${BASE}/history/${id}/retry`),
+
+  /** 批量重新子集化（默认处理「缺字体」的记录） */
+  retrySubsetHistoryBulk: (status = 'missing', limit = 20) =>
+    api.post<{ status?: string; summary: Record<string, number>; data: FontSubsetHistoryItem[] }>(
+      `${BASE}/history/retry?status=${encodeURIComponent(status)}&limit=${limit}`,
+    ),
+
+  /** 删除一条处理历史 */
+  deleteSubsetHistory: (id: number) =>
+    api.delete<{ status?: string }>(`${BASE}/history/${id}`),
+
+  /** 清理处理历史（默认保留缺字体/失败，方便补完字体再重试） */
+  clearSubsetHistory: (keepUnresolved = true) =>
+    api.post<{ status?: string; removed: number }>(
+      `${BASE}/history/clear?keep_unresolved=${keepUnresolved}`,
     ),
 }

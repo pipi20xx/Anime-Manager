@@ -1460,3 +1460,270 @@ async def apply_update(payload: Optional[Dict[str, Any]] = None):
         raise HTTPException(status_code=400, detail=result.get("message") or "更新失败")
     log_audit("字体管家", "更新内核", result.get("message", ""))
     return {"status": "success", "data": result}
+
+
+# ── 处理历史（随行字幕子集化） ───────────────────────────────
+# 整理任务每处理一条随行字幕就落一行（成功也记、缺字体也记），
+# 关键是把「交付路径」存下来：事后字体补齐了，按路径就能重新子集化，
+# 哪怕当时字幕被改了名（多了 .assfonts 标记）也认得住。
+
+def _base_stem(name: str) -> str:
+    """去掉 .assfonts / .ass / .ssa 后缀，得到用于定位的主干。"""
+    n = name or ""
+    for suf in (".assfonts.ass", ".assfonts.ssa", ".ass", ".ssa"):
+        if n.lower().endswith(suf):
+            return n[: -len(suf)]
+    return n
+
+
+def _locate_subtitle(p: Path) -> Optional[Path]:
+    """定位交付字幕：先按记录的路径，找不到就在同目录按主干找同名 .ass/.ssa。
+
+    这样用户手动改名（去掉/加上 .assfonts、改语言后缀）后依然能重试。
+    """
+    if p and p.is_file():
+        return p
+    parent = p.parent if p else None
+    if not parent or not parent.is_dir():
+        return None
+    stem = _base_stem(p.name)
+    cands: List[Path] = []
+    try:
+        for e in parent.iterdir():
+            if not e.is_file() or e.suffix.lower() not in (".ass", ".ssa"):
+                continue
+            if _base_stem(e.name) == stem:
+                cands.append(e)
+    except OSError:
+        return None
+    # 已经是内嵌成品的优先（避免拿到旧的未内嵌副本）
+    cands.sort(key=lambda x: (".assfonts." not in x.name, x.name))
+    return cands[0] if cands else None
+
+
+def _assfonts_name(p: Path) -> Path:
+    """交付名：xxx.zh.ass → xxx.zh.assfonts.ass（已带标记则原样返回）。"""
+    name = p.name
+    for suf in (".ass", ".ssa"):
+        if name.lower().endswith(suf):
+            base = name[: -len(suf)]
+            if base.lower().endswith(".assfonts"):
+                return p
+            return p.with_name(f"{base}.assfonts{suf}")
+    return p
+
+
+def _retry_work_dir(cfg: Dict[str, Any]) -> Path:
+    base = Path(str(_fm(cfg).get("organize_tmp_dir") or "data/fonts/organize_tmp")) / "retry"
+    d = base / uuid.uuid4().hex[:8]
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _history_to_dict(row) -> Dict[str, Any]:
+    target = row.target_path or ""
+    try:
+        exists = bool(target) and Path(target).is_file()
+    except OSError:
+        exists = False
+    return {
+        "id": row.id,
+        "source_name": row.source_name,
+        "source_path": row.source_path,
+        "target_path": target,
+        "target_name": row.target_name or "",
+        "status": row.status,
+        "missing_fonts": list(row.missing_fonts or []),
+        "referenced_fonts": list(row.referenced_fonts or []),
+        "file_size": int(row.file_size or 0),
+        "attempts": int(row.attempts or 0),
+        "last_error": row.last_error or "",
+        "task_id": row.task_id or "",
+        "video_title": row.video_title or "",
+        "tmdb_id": row.tmdb_id or "",
+        "season": row.season,
+        "episode": row.episode or "",
+        "created_at": row.created_at.isoformat(timespec="seconds") if row.created_at else "",
+        "updated_at": row.updated_at.isoformat(timespec="seconds") if row.updated_at else "",
+        "exists": exists,
+    }
+
+
+async def _retry_one(history_id: int, cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """按交付路径重新子集化一条记录（成功则替换原文件）。"""
+    from models import FontSubsetHistory
+
+    async with db.session_scope() as session:
+        row = (await session.execute(
+            select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
+        )).scalars().first()
+        if not row:
+            raise HTTPException(status_code=404, detail="记录不存在")
+        target_path = row.target_path
+
+    located = _locate_subtitle(Path(target_path or ""))
+    if located is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"找不到交付字幕：{target_path}（可能已被移动或删除）")
+
+    ctx = await subset_service.resolve_context(cfg)
+    if not ctx.ok:
+        raise HTTPException(status_code=400, detail=ctx.error or "字体环境未就绪")
+
+    work = _retry_work_dir(cfg)
+    try:
+        results = await subset_service.subset_files([str(located)], work_dir=str(work), ctx=ctx)
+        res = results.get(str(located.resolve())) or {}
+        status = str(res.get("status") or "failed")
+        if status == "skipped" and "已内嵌" in str(res.get("reason") or ""):
+            # 交付文件本身就是内嵌成品：对这条记录来说已经处理好了，
+            # 不该显示成「跳过」让用户以为还没处理。
+            status = "success"
+            res["reason"] = "已内嵌字体，无需重复处理"
+        final = located
+        if status == "success":
+            out = Path(str(res.get("output") or ""))
+            final = _assfonts_name(located)
+            try:
+                if final.exists() and final != located:
+                    final.unlink()
+                shutil.move(str(out), str(final))
+                if located != final and located.exists():
+                    located.unlink()
+            except OSError as e:
+                status = "failed"
+                res["reason"] = f"成品落盘失败：{e}"
+
+        async with db.session_scope() as session:
+            row = (await session.execute(
+                select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
+            )).scalars().first()
+            row.status = status if status in ("success", "missing", "skipped", "failed") else "failed"
+            row.attempts = int(row.attempts or 0) + 1
+            row.missing_fonts = list(res.get("missing") or [])
+            row.last_error = "" if status == "success" else (res.get("reason") or "")
+            if status == "success":
+                row.target_path = str(final)
+                row.target_name = final.name
+                try:
+                    row.file_size = final.stat().st_size
+                except OSError:
+                    row.file_size = 0
+            row.updated_at = datetime.now()
+            session.add(row)
+            await session.commit()
+            await session.refresh(row)
+            payload = _history_to_dict(row)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+    log_audit("字体管家", "重新子集化",
+              f"{payload['source_name']} → {payload['status']}"
+              + (f"（{payload['last_error']}）" if payload["last_error"] else ""),
+              level="ERROR" if payload["status"] == "failed" else "INFO")
+    return payload
+
+
+@router.get("/history", summary="随行字幕子集化处理历史")
+async def list_history(
+    status: Optional[str] = Query(None, description="按结果筛选：success/missing/failed/skipped"),
+    q: Optional[str] = Query(None, description="搜索字幕名 / 目标路径 / 番剧名"),
+    limit: int = Query(200, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+):
+    from models import FontSubsetHistory
+
+    async with db.session_scope() as session:
+        rows = (await session.execute(
+            select(FontSubsetHistory).order_by(desc(FontSubsetHistory.created_at))
+        )).scalars().all()
+
+    counts = {"total": len(rows), "success": 0, "missing": 0, "failed": 0, "skipped": 0}
+    for r in rows:
+        counts[r.status] = counts.get(r.status, 0) + 1
+
+    items = [_history_to_dict(r) for r in rows]
+    if status:
+        items = [i for i in items if i["status"] == status]
+    if q:
+        needle = q.strip().lower()
+        items = [i for i in items
+                 if needle in " ".join([i["source_name"], i["target_name"],
+                                        i["target_path"], i["video_title"]]).lower()]
+    total = len(items)
+    return {"status": "success", "total": total, "counts": counts,
+            "limit": limit, "offset": offset, "data": items[offset:offset + limit]}
+
+
+@router.post("/history/{history_id}/retry", summary="重新子集化（按交付路径）")
+async def retry_history(history_id: int):
+    payload = await _retry_one(history_id, _cfg())
+    return {"status": "success", "data": payload}
+
+
+@router.post("/history/retry", summary="批量重新子集化")
+async def retry_history_bulk(
+    status: str = Query("missing", description="批量处理哪些状态的记录"),
+    limit: int = Query(20, ge=1, le=200),
+):
+    from models import FontSubsetHistory
+
+    cfg = _cfg()
+    async with db.session_scope() as session:
+        rows = (await session.execute(
+            select(FontSubsetHistory)
+            .where(FontSubsetHistory.status == status)
+            .order_by(desc(FontSubsetHistory.created_at))
+            .limit(limit)
+        )).scalars().all()
+        ids = [r.id for r in rows]
+
+    summary = {"total": 0, "success": 0, "missing": 0, "failed": 0, "skipped": 0}
+    out: List[Dict[str, Any]] = []
+    async with _RUN_LOCK:
+        for hid in ids:
+            summary["total"] += 1
+            try:
+                payload = await _retry_one(hid, cfg)
+                key = payload["status"] if payload["status"] in summary else "failed"
+                summary[key] += 1
+                out.append(payload)
+            except HTTPException as e:
+                summary["failed"] += 1
+                out.append({"id": hid, "status": "failed", "last_error": str(e.detail)})
+            except Exception as e:
+                summary["failed"] += 1
+                out.append({"id": hid, "status": "failed", "last_error": str(e)})
+    return {"status": "success", "summary": summary, "data": out}
+
+
+@router.delete("/history/{history_id}", summary="删除一条处理历史")
+async def delete_history(history_id: int):
+    from models import FontSubsetHistory
+
+    async with db.session_scope() as session:
+        row = (await session.execute(
+            select(FontSubsetHistory).where(FontSubsetHistory.id == history_id)
+        )).scalars().first()
+        if not row:
+            raise HTTPException(status_code=404, detail="记录不存在")
+        await session.delete(row)
+        await session.commit()
+    return {"status": "success"}
+
+
+@router.post("/history/clear", summary="清理处理历史")
+async def clear_history(keep_unresolved: bool = Query(True, description="保留缺字体/失败的记录")):
+    from models import FontSubsetHistory
+
+    drop = ["success", "skipped"] + ([] if keep_unresolved else ["missing", "failed"])
+    async with db.session_scope() as session:
+        rows = (await session.execute(select(FontSubsetHistory))).scalars().all()
+        removed = 0
+        for r in rows:
+            if r.status in drop:
+                await session.delete(r)
+                removed += 1
+        await session.commit()
+    return {"status": "success", "removed": removed}

@@ -174,6 +174,7 @@ class RelatedSubtitleSubsetter:
                     "subset": status,
                     "missing": r.get("missing") or [],
                     "fonts": len(r.get("fonts") or []),
+                    "referenced": list(r.get("fonts") or []),
                 }
                 if status == "missing":
                     await _log(f"⚠️ [预览] 缺字体，将按原字幕搬运：{f}"
@@ -205,6 +206,7 @@ class RelatedSubtitleSubsetter:
                 "subset": status,
                 "missing": r.get("missing") or [],
                 "fonts": len(r.get("fonts") or []),
+                "referenced": list(r.get("fonts") or []),
                 "duration_ms": r.get("duration_ms") or 0,
             }
             if status == "success":

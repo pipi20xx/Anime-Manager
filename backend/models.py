@@ -289,6 +289,36 @@ class OrganizeHistory(SQLModel, table=True):
     # 关联识别任务的 task_id，用于查看对应的识别日志（任务中心「识别」模块）
     task_id: Optional[str] = Field(default=None, index=True)
 
+class FontSubsetHistory(SQLModel, table=True):
+    """字体管家 — 随行字幕子集化处理历史
+
+    整理任务每处理一条随行字幕就落一行：成功记、缺字体也记。
+    关键字段是 target_path（交付路径）—— 事后即使字幕改了名，
+    也能按这条路径重新做一次子集化（补齐字体后重试）。
+    """
+    __tablename__ = "font_subset_history"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "字体管家处理历史"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    source_name: str = Field(index=True)      # 原随行字幕文件名
+    source_path: str                          # 原路径（整理后可能已不存在）
+    target_path: str = Field(index=True)      # 交付路径（成功=内嵌成品，回退=原字幕）
+    target_name: str = Field(default="")
+    status: str = Field(default="pending", index=True)  # success/missing/failed/skipped
+    missing_fonts: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    referenced_fonts: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    file_size: int = Field(default=0)
+    attempts: int = Field(default=0)          # 重新子集化尝试次数
+    last_error: Optional[str] = Field(default=None, sa_column=Column(Text))
+    task_id: Optional[str] = Field(default=None, index=True)   # 来源整理任务
+    video_title: Optional[str] = None
+    tmdb_id: Optional[str] = None
+    season: Optional[int] = None
+    episode: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
 class RapidUploadRetry(SQLModel, table=True):
     """CD2 秒传重试队列：秒传未命中的文件等待网盘哈希库更新后定时重试"""
     __tablename__ = "rapid_upload_retry"

@@ -21,6 +21,7 @@ import FontStatusBar from './FontStatusBar.vue'
 import JobsTab from './JobsTab.vue'
 import LibraryTab from './LibraryTab.vue'
 import TempFontsTab from './TempFontsTab.vue'
+import HistoryTab from './HistoryTab.vue'
 import FontSettingsDialog from './FontSettingsDialog.vue'
 import FontHelpDialog from './FontHelpDialog.vue'
 import {
@@ -144,6 +145,7 @@ registerHeaderTab({
     { title: '字幕任务', tab: 'jobs' },
     { title: '字体库', tab: 'library' },
     { title: '临时字体', tab: 'temp' },
+    { title: '处理历史', tab: 'history' },
   ],
   modelValue: activeTab,
 })
@@ -201,6 +203,9 @@ async function pickLibraryFolder(path: string) {
       </v-window-item>
       <v-window-item value="temp">
         <TempFontsTab />
+      </v-window-item>
+      <v-window-item value="history">
+        <HistoryTab />
       </v-window-item>
     </v-window>
 
