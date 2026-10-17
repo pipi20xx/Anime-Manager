@@ -12,12 +12,13 @@
  */
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { api, apiFetch } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useClipboard } from '@/composables'
 import AiMarkdownContent from './AiMarkdownContent.vue'
 import 'highlight.js/styles/github-dark.css'
 
 const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
+const { copy } = useClipboard()
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || ''
 const STORAGE_KEY = 'ai_lab_chat_messages_v1'
@@ -456,12 +457,7 @@ function regenerate() {
 }
 
 async function copyMessage(msg: ChatMessage) {
-  try {
-    await navigator.clipboard.writeText(messageText(msg))
-    success('已复制到剪贴板')
-  } catch {
-    showError('复制失败')
-  }
+  await copy(messageText(msg), '已复制到剪贴板')
 }
 
 async function clearChat() {
@@ -820,14 +816,13 @@ async function handleContentClick(e: MouseEvent) {
   if (!target) return
   const block = target.closest('.ai-code-block')
   const code = block?.querySelector('code')?.textContent || ''
-  try {
-    await navigator.clipboard.writeText(code)
+  if (!code) return
+  const ok = await copy(code, '代码已复制')
+  if (ok) {
     target.textContent = '已复制'
     setTimeout(() => {
       target.textContent = '复制'
     }, 1500)
-  } catch {
-    // 忽略复制失败
   }
 }
 

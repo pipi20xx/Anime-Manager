@@ -10,7 +10,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { cd2Api, recognitionApi, organizerApi, configApi } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useClipboard } from '@/composables'
 import RecognitionModal from '../organizer/RecognitionModal.vue'
 import ManualOrganizeModal from '../organizer/ManualOrganizeModal.vue'
 import FolderBrowserModal from '../organizer/FolderBrowserModal.vue'
@@ -22,6 +22,7 @@ defineOptions({ name: 'FilesTab' })
 
 const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
+const { copy } = useClipboard()
 
 const loading = ref(false)
 const currentPath = ref('/')
@@ -124,34 +125,10 @@ const menuAction = (action: string) => {
   else if (action === 'unlock_recursive') unlockEntry(entry, true)
 }
 
-const copyToClipboard = async (text: string) => {
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text)
-    } else {
-      // 内网 HTTP 环境下 Clipboard API 不可用，降级为 execCommand
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-    return true
-  } catch {
-    return false
-  }
-}
-
+// 复制统一走 useClipboard：内网 HTTP 下 Clipboard API 不可用，
+// composable 内部已含 execCommand 降级与统一提示，这里不再自己实现一套。
 const copyPath = async (entry: any) => {
-  const text = entry.path || ''
-  if (await copyToClipboard(text)) {
-    success(`已复制路径: ${text}`)
-  } else {
-    showError('复制失败，请手动复制')
-  }
+  await copy(entry.path || '', `已复制路径: ${entry.path || ''}`)
 }
 
 const copyOfflineLink = async (task: any) => {
@@ -160,11 +137,7 @@ const copyOfflineLink = async (task: any) => {
     showError('该任务没有可用链接')
     return
   }
-  if (await copyToClipboard(text)) {
-    success('链接已复制到剪贴板')
-  } else {
-    showError('复制失败，请手动复制')
-  }
+  await copy(text, '链接已复制到剪贴板')
 }
 
 // ---------- 新建文件夹 ----------

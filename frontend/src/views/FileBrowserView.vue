@@ -12,7 +12,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { organizerApi, recognitionApi, configApi } from '@/api'
-import { useNotification, useConfirm } from '@/composables'
+import { useNotification, useConfirm, useClipboard } from '@/composables'
 import FolderBrowserModal from './organizer/FolderBrowserModal.vue'
 import RecognitionModal from './organizer/RecognitionModal.vue'
 import ManualOrganizeModal from './organizer/ManualOrganizeModal.vue'
@@ -25,6 +25,7 @@ defineOptions({ name: 'FileBrowserView' })
 
 const { success, error: showError, warning } = useNotification()
 const { confirm } = useConfirm()
+const { copy } = useClipboard()
 
 // --- 状态 ---
 const currentPath = ref('/')
@@ -373,34 +374,10 @@ async function deleteItem(path: string) {
 }
 
 function copyPath(path: string) {
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(path).then(() => {
-      success('路径已复制到剪贴板')
-    }).catch(() => {
-      fallbackCopyText(path)
-    })
-  } else {
-    fallbackCopyText(path)
-  }
+  // 统一走 useClipboard：内网 HTTP 下 Clipboard API 不存在，
+  // composable 内部会降级到 execCommand，并在真失败时给出可操作的提示。
+  void copy(path || '', '路径已复制到剪贴板')
   closeContextMenu()
-}
-
-function fallbackCopyText(text: string) {
-  const textArea = document.createElement('textarea')
-  textArea.value = text
-  textArea.style.position = 'fixed'
-  textArea.style.left = '-9999px'
-  textArea.style.top = '0'
-  document.body.appendChild(textArea)
-  textArea.focus()
-  textArea.select()
-  try {
-    document.execCommand('copy')
-    success('路径已复制到剪贴板')
-  } catch {
-    showError('复制失败，请手动复制')
-  }
-  document.body.removeChild(textArea)
 }
 
 async function getFileInfo(path: string) {

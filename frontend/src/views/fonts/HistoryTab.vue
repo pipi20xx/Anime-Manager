@@ -10,11 +10,13 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { fontManagerApi } from '@/api'
 import type { FontSubsetHistoryItem } from '@/api/fontManager'
 import { useFontManager, formatFileSize, formatDateTime } from './useFontManager'
+import { useClipboard } from '@/composables'
 import { EmptyState } from '@/components/common'
 
 defineOptions({ name: 'FontManagerHistoryTab' })
 
 const { success, showError, warning, confirm } = useFontManager()
+const { copy } = useClipboard()
 
 const items = ref<FontSubsetHistoryItem[]>([])
 const counts = ref<Record<string, number>>({})
@@ -151,12 +153,9 @@ async function clearHistory(keepUnresolved: boolean) {
 
 async function copyPath(path: string) {
   if (!path) return
-  try {
-    await navigator.clipboard.writeText(path)
-    success('已复制路径')
-  } catch {
-    showError('复制失败，请手动选择文本')
-  }
+  // 统一走 useClipboard：内网 HTTP 下 navigator.clipboard 根本不存在，
+  // 直连 writeText 会抛 TypeError，表现就是「复制失败，请手动选择文本」。
+  await copy(path, '已复制路径')
 }
 
 function episodeLabel(item: FontSubsetHistoryItem): string {

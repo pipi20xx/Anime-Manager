@@ -8,12 +8,13 @@
  */
 import { ref, nextTick, watch, computed } from 'vue'
 import { taskHistoryApi } from '@/api'
-import { useNotification } from '@/composables'
+import { useNotification, useClipboard } from '@/composables'
 import { getStatusTag } from '@/utils/taskStatus'
 
 defineOptions({ name: 'ExecutionLogModal' })
 
 const { error: showError } = useNotification()
+const { copy } = useClipboard()
 
 const props = defineProps<{
   modelValue: boolean
@@ -91,7 +92,9 @@ function getRelatedColor(status: string | undefined): string {
 }
 
 function copyText(text: string) {
-  navigator.clipboard?.writeText(text).catch(() => {})
+  // 统一走 useClipboard：内网 HTTP 下 navigator.clipboard 是 undefined，
+  // 原来的可选链写法会静默失败（点了没反应，也没有任何提示）
+  void copy(text, '已复制到剪贴板')
 }
 
 // --- 流式整理模式 ---
