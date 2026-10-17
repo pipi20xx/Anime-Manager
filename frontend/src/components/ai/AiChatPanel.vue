@@ -857,10 +857,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <v-card
-    class="glass-card ai-chat-card"
-    style="height: calc(100vh - 280px); display: flex; flex-direction: column; position: relative"
-  >
+  <v-card class="glass-card ai-chat-card">
     <!-- 顶栏：历史会话 / 新对话 -->
     <div class="ai-chat-header px-3 py-1 d-flex align-center ga-1">
       <v-btn size="small" variant="text" prepend-icon="mdi-history" @click="openHistoryDrawer">历史会话</v-btn>
@@ -1140,6 +1137,28 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* ---------- 顶栏 / 会话 ---------- */
+/* 对话卡片高度：铺满可视区剩余空间。
+   原来写死 calc(100vh - 280px)，而实际占位只有「顶栏 96px + 容器上下 48px」≈ 144px，
+   等于白白少了 130 多像素，看起来就是「默认高度太低、下面一大片空白」。
+   这里用 Vuetify 写在 .v-main 上的 --v-layout-top（已含顶栏 + 动态 Tab 扩展高度）
+   做减法，有没有 Tab 扩展、换主题都能自适应；dvh 兼顾移动端地址栏伸缩。 */
+.ai-chat-card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: calc(100vh - var(--v-layout-top, 96px) - 48px);
+  height: calc(100dvh - var(--v-layout-top, 96px) - 48px);
+  min-height: 400px;
+}
+
+/* 小屏（< md）容器用的是 pa-4，上下各 16px */
+@media (max-width: 959px) {
+  .ai-chat-card {
+    height: calc(100vh - var(--v-layout-top, 96px) - 32px);
+    height: calc(100dvh - var(--v-layout-top, 96px) - 32px);
+  }
+}
+
 .ai-chat-header {
   flex: none;
 }
