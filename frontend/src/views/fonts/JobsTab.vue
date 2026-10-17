@@ -414,16 +414,6 @@ async function clearAllJobs() {
         <v-btn size="small" variant="tonal" color="info" prepend-icon="mdi-download-multiple-outline" :loading="downloadingAll" @click="downloadAll">
           全部下载
         </v-btn>
-        <v-btn
-          size="small"
-          variant="tonal"
-          color="warning"
-          prepend-icon="mdi-broom"
-          :loading="clearingJobs"
-          @click="clearJobs"
-        >
-          清理已完成
-        </v-btn>
         <v-menu location="bottom end">
           <template #activator="{ props: menuProps }">
             <v-btn
@@ -431,14 +421,17 @@ async function clearAllJobs() {
               size="small"
               variant="tonal"
               color="warning"
-              icon="mdi-chevron-down"
-              :disabled="clearingJobs || clearingAllJobs"
-              title="更多清理方式"
-            />
-          </template>
-          <v-list density="compact">
-            <v-list-item
               prepend-icon="mdi-broom"
+              :loading="clearingJobs || clearingAllJobs"
+              title="清理任务记录"
+            >
+              清理
+              <v-icon end size="16">mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+          <v-list density="compact" nav>
+            <v-list-item
+              prepend-icon="mdi-check-circle-outline"
               title="清理已完成"
               subtitle="清除成功 / 已跳过的任务，保留缺字体与待处理"
               @click="clearJobs"
@@ -446,7 +439,7 @@ async function clearAllJobs() {
             <v-list-item
               prepend-icon="mdi-delete-sweep-outline"
               title="清空全部"
-              subtitle="连同待处理、缺字体、失败的任务一起清除"
+              subtitle="连同待处理、缺字体、失败的任务一起清除（不可恢复）"
               base-color="error"
               @click="clearAllJobs"
             />

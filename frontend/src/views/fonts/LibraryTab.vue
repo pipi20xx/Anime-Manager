@@ -19,6 +19,42 @@ const {
   fetchFonts, loadMoreFonts, resetFontsLimit, refreshAll,
 } = useFontManager()
 
+// ── 下载（单个 / 按当前筛选打包） ──────────────────────────
+const downloadingAll = ref(false)
+const downloadingOne = ref('')
+
+/** 按当前搜索与格式筛选打包下载 */
+async function downloadFiltered() {
+  if (!fontsTotal.value) {
+    warning('当前筛选条件下没有可下载的字体')
+    return
+  }
+  downloadingAll.value = true
+  try {
+    await fontManagerApi.downloadFontsAll({
+      q: fontsQuery.value.trim() || undefined,
+      fmt: fontsFormat.value || undefined,
+    })
+    success(`已开始打包下载 ${fontsTotal.value} 个字体（当前筛选）`)
+  } catch (e: any) {
+    showError(e?.message || '打包下载失败')
+  } finally {
+    downloadingAll.value = false
+  }
+}
+
+async function downloadOne(filename: string) {
+  downloadingOne.value = filename
+  try {
+    await fontManagerApi.downloadFont(filename)
+    success(`已开始下载「${filename}」`)
+  } catch (e: any) {
+    showError(e?.message || '下载失败')
+  } finally {
+    downloadingOne.value = ''
+  }
+}
+
 // ── 上传字体到字体库（永久入库） ──────────────────────────
 const libraryFontInput = ref<HTMLInputElement | null>(null)
 const libraryFolderInput = ref<HTMLInputElement | null>(null)
@@ -183,6 +219,18 @@ async function handleLibraryFontUpload(
         <v-btn size="small" variant="tonal" prepend-icon="mdi-refresh" :loading="fontsLoading" @click="fetchFonts">
           刷新列表
         </v-btn>
+        <v-btn
+          size="small"
+          variant="tonal"
+          color="info"
+          prepend-icon="mdi-download-multiple-outline"
+          :loading="downloadingAll"
+          :disabled="!fontsTotal"
+          :title="fontsTotal ? `打包下载当前筛选的全部 ${fontsTotal} 个字体` : '当前没有可下载的字体'"
+          @click="downloadFiltered"
+        >
+          全部下载
+        </v-btn>
       </div>
 
       <v-progress-linear v-if="fontsLoading" indeterminate color="primary" class="mb-3" />
@@ -193,16 +241,30 @@ async function handleLibraryFontUpload(
             <th class="text-left">字体名 (family)</th>
             <th class="text-left">文件名</th>
             <th class="text-left">格式</th>
+            <th class="text-left">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(f, i) in fonts" :key="`${f.filename}-${i}`">
             <td class="text-body-2">{{ f.family || (f.families && f.families[0]) || '-' }}</td>
-            <td class="text-body-2 font-mono text-truncate" style="max-width: 380px" :title="f.filename">
+            <td class="text-body-2 font-mono text-truncate" style="max-width: 320px" :title="f.filename">
               {{ f.filename }}
             </td>
             <td>
               <v-chip size="x-small" variant="tonal">{{ (f.format || 'unknown').toUpperCase() }}</v-chip>
+            </td>
+            <td style="width: 90px">
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                color="info"
+                prepend-icon="mdi-download"
+                :loading="downloadingOne === f.filename"
+                title="下载该字体文件"
+                @click="downloadOne(f.filename)"
+              >
+                下载
+              </v-btn>
             </td>
           </tr>
         </tbody>

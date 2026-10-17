@@ -505,6 +505,28 @@ export const fontManagerApi = {
   downloadAllJobs: () =>
     downloadBlob(`${RAW_BASE}/jobs/download-all`, `font_subset_${zipStamp()}.zip`),
 
+  /** 下载字体库中的单个字体文件（原生 fetch + blob） */
+  downloadFont: (filename: string) =>
+    downloadBlob(
+      `${RAW_BASE}/fonts/download?filename=${encodeURIComponent(filename)}`,
+      filename,
+    ),
+
+  /**
+   * 按筛选条件打包下载字体库（zip，原生 fetch + blob）。
+   * q / fmt 与 /fonts 列表接口的筛选语义一致：下载当前筛选出的全部字体。
+   */
+  downloadFontsAll: (params?: { q?: string; fmt?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.q) qs.set('q', params.q)
+    if (params?.fmt) qs.set('fmt', params.fmt)
+    const query = qs.toString()
+    return downloadBlob(
+      `${RAW_BASE}/fonts/download-all${query ? `?${query}` : ''}`,
+      `font_library_${zipStamp()}.zip`,
+    )
+  },
+
   /** 检查 assfonts 上游更新 */
   checkUpdate: () =>
     api.get<{ status?: string; data: FontUpdateInfo }>(`${BASE}/update/check`),

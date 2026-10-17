@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import io
+import time
 import logging
 import os
 import re
@@ -41,6 +42,7 @@ from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, Response
+from urllib.parse import quote
 from pydantic import BaseModel, Field
 from sqlmodel import desc, select
 
@@ -610,6 +612,82 @@ async def list_fonts(
         "offset": offset,
         "data": page,
     }
+
+
+@router.get("/fonts/download", summary="下载单个字体文件")
+async def download_font(
+    filename: str = Query(..., description="索引中的字体文件名"),
+):
+    """按索引里的字体文件名下载字体库中的单个字体文件。"""
+    cfg = _cfg()
+    libs = [Path(d) for d in _library_dirs(cfg)]
+    if not libs:
+        raise HTTPException(status_code=400, detail="未配置字体库目录")
+
+    name = _sanitize_filename(filename)
+    idx = await asyncio.to_thread(index_store.read_index, None, cfg)
+    target: Optional[Path] = None
+    for face in idx.get("fonts", []) or []:
+        if face.get("filename") == name and face.get("path"):
+            try:
+                target = _assert_within(Path(face["path"]), libs)
+            except HTTPException:
+                continue
+            break
+    if target is None or not target.is_file():
+        raise HTTPException(status_code=404, detail=f"字体文件不存在或不在字体库目录内：{name}")
+
+    media = "font/ttf" if target.suffix.lower() == ".ttf" else "font/otf" if target.suffix.lower() == ".otf" else "application/octet-stream"
+    ascii_name = name.encode("ascii", "ignore").decode() or "font" + target.suffix
+    quoted = quote(name)
+    return Response(
+        content=target.read_bytes(),
+        media_type=media,
+        headers={"Content-Disposition": f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quoted}"},
+    )
+
+
+@router.get("/fonts/download-all", summary="打包下载字体库（支持筛选）")
+async def download_fonts_all(
+    q: Optional[str] = Query(None),
+    fmt: Optional[str] = Query(None),
+):
+    """按 /fonts 相同的筛选条件打包下载字体库中的字体文件（zip）。"""
+    cfg = _cfg()
+    libs = [Path(d) for d in _library_dirs(cfg)]
+    if not libs:
+        raise HTTPException(status_code=400, detail="未配置字体库目录")
+
+    idx = await asyncio.to_thread(index_store.read_index, None, cfg)
+    fonts = [f for f in idx.get("fonts", []) or []
+             if index_store.under_library(f.get("path", ""), libs)]
+
+    if q:
+        needle = q.strip().lower()
+        fonts = [f for f in fonts
+                 if needle in " ".join(f.get("families", []) + f.get("fullnames", []) + [f.get("filename", "")]).lower()]
+    if fmt:
+        want = fmt.strip().lstrip(".").lower()
+        fonts = [f for f in fonts if f.get("format") == want]
+
+    items: List[Tuple[str, Path, str]] = []
+    for f in fonts:
+        p_str = f.get("path") or ""
+        if not p_str:
+            continue
+        try:
+            p = _assert_within(Path(p_str), libs)
+        except HTTPException:
+            continue
+        if p.is_file():
+            items.append((f.get("filename") or p.name, p, "file"))
+    if not items:
+        raise HTTPException(status_code=400, detail="没有可下载的字体文件（检查筛选条件）")
+
+    blob = await asyncio.to_thread(_zip_payloads, items)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return Response(content=blob, media_type="application/zip",
+                    headers={"Content-Disposition": f"attachment; filename=\"font_library_{stamp}.zip\""})
 
 
 # ── 字体上传（永久入库 / 临时使用）────────────────────────────
@@ -1231,9 +1309,21 @@ async def clear_jobs(
 # ── 下载 ─────────────────────────────────────────────────────
 
 def _zip_payloads(items: List[Tuple[str, Path, str]]) -> bytes:
-    """把若干 (归档内名字, 路径, 类型) 打包为 zip；类型 ass=单文件 / zip=目录。"""
+    """把若干 (归档内名字, 路径, 类型) 打包为 zip；类型 ass=单文件 / zip=目录 / file=单文件。"""
     buf = io.BytesIO()
     used: Dict[str, int] = {}
+
+    def _safe_mtime(p: Path) -> Tuple[int, int, int, int, int, int]:
+        """ZIP 要求 mtime >= 1980；NAS 挂载的文件可能时间戳异常，越界时钳制到 1980-01-01。"""
+        try:
+            st = p.stat()
+            t = time.localtime(st.st_mtime)
+            y, mo, d, h, mi, sec = t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, min(t.tm_sec, 59)
+            if y < 1980:
+                return (1980, 1, 1, 0, 0, 0)
+            return (y, mo, d, h, mi, sec)
+        except Exception:
+            return (1980, 1, 1, 0, 0, 0)
 
     def _unique(name: str) -> str:
         if name in used:
@@ -1253,9 +1343,17 @@ def _zip_payloads(items: List[Tuple[str, Path, str]]) -> bytes:
                         for f in sorted(files):
                             full = Path(cur) / f
                             rel = full.relative_to(path)
-                            zf.write(full, arcname=str(Path(base) / rel).replace("\\", "/"))
+                            zi = zipfile.ZipInfo(str(Path(base) / rel).replace("\\", "/"),
+                                                 date_time=_safe_mtime(full))
+                            zi.compress_type = zipfile.ZIP_DEFLATED
+                            zi.external_attr = 0o644 << 16
+                            zf.writestr(zi, full.read_bytes())
                 elif path.is_file():
-                    zf.write(path, arcname=arc)
+                    zi = zipfile.ZipInfo(arc, date_time=_safe_mtime(path))
+                    zi.compress_type = zipfile.ZIP_DEFLATED
+                    zi.external_attr = 0o644 << 16
+                    with open(path, "rb") as fh:
+                        zf.writestr(zi, fh.read())
             except Exception as e:
                 logger.warning(f"[字体管家] 打包 {path} 失败: {e}")
     return buf.getvalue()
