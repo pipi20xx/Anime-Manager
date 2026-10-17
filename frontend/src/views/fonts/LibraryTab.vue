@@ -273,24 +273,26 @@ async function handleLibraryFontUpload(
           <tr>
             <th class="text-left">字体名 (family)</th>
             <th class="text-left">文件名</th>
-            <th class="text-left" style="width: 80px">格式</th>
-            <th class="text-left" style="width: 160px">操作</th>
+            <th class="text-left text-no-wrap" style="width: 1%">格式</th>
+            <th class="text-left text-no-wrap" style="width: 1%">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(f, i) in fonts" :key="`${f.filename}-${i}`">
             <td class="text-body-2">
-              {{ f.family || '-' }}
-              <v-chip
-                v-if="(f.face_index ?? 0) > 0"
-                size="x-small"
-                variant="tonal"
-                color="primary"
-                class="ml-1"
-                :title="`TTC/OTC 集合内第 ${(f.face_index ?? 0) + 1} 个 face`"
-              >
-                #{{ f.face_index }}
-              </v-chip>
+              <div class="family-cell d-flex align-center flex-nowrap ga-1">
+                <span class="text-truncate" :title="f.family || '-'">{{ f.family || '-' }}</span>
+                <v-chip
+                  v-if="(f.face_index ?? 0) > 0"
+                  size="x-small"
+                  variant="tonal"
+                  color="primary"
+                  class="flex-shrink-0"
+                  :title="`TTC/OTC 集合内第 ${(f.face_index ?? 0) + 1} 个 face`"
+                >
+                  #{{ f.face_index }}
+                </v-chip>
+              </div>
             </td>
             <td class="text-body-2 font-mono text-truncate" style="max-width: 320px" :title="f.filename">
               {{ f.filename }}
@@ -298,28 +300,29 @@ async function handleLibraryFontUpload(
             <td>
               <v-chip size="x-small" variant="tonal">{{ (f.format || 'unknown').toUpperCase() }}</v-chip>
             </td>
-            <td style="width: 160px">
-              <v-btn
-                size="x-small"
-                variant="tonal"
-                prepend-icon="mdi-information-outline"
-                title="查看该字体的全部名称与元数据"
-                @click="openDetail(f)"
-              >
-                详情
-              </v-btn>
-              <v-btn
-                size="x-small"
-                variant="tonal"
-                color="info"
-                prepend-icon="mdi-download"
-                class="ml-1"
-                :loading="downloadingOne === f.filename"
-                title="下载该字体文件"
-                @click="downloadOne(f.filename)"
-              >
-                下载
-              </v-btn>
+            <td class="text-no-wrap">
+              <div class="action-cell">
+                <v-btn
+                  size="x-small"
+                  variant="tonal"
+                  prepend-icon="mdi-information-outline"
+                  title="查看该字体的全部名称与元数据"
+                  @click="openDetail(f)"
+                >
+                  详情
+                </v-btn>
+                <v-btn
+                  size="x-small"
+                  variant="tonal"
+                  color="info"
+                  prepend-icon="mdi-download"
+                  :loading="downloadingOne === f.filename"
+                  title="下载该字体文件"
+                  @click="downloadOne(f.filename)"
+                >
+                  下载
+                </v-btn>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -432,6 +435,31 @@ export default { components: { EmptyState } }
 <style scoped>
 .fonts-table {
   background: transparent;
+}
+/* 「操作」列：按钮始终左右并排，列宽按内容收紧，避免被挤成上下两行 */
+.fonts-table :deep(th:last-child),
+.fonts-table :deep(td:last-child) {
+  width: 1%;
+  white-space: nowrap;
+}
+.fonts-table :deep(.action-cell) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+}
+.fonts-table :deep(.action-cell .v-btn) {
+  flex: 0 0 auto;
+  margin: 0;
+}
+/* 字体名过长时省略，避免把「格式 / 操作」列挤出可视区 */
+.fonts-table :deep(.family-cell) {
+  min-width: 0;
+}
+.fonts-table :deep(.family-cell > span) {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 280px;
 }
 .detail-grid {
   display: grid;

@@ -251,7 +251,7 @@ async def _resolve_index(binary: Path, cfg: Dict[str, Any]) -> Tuple[Path, Dict[
     if not info.get("exists") or not info.get("count"):
         raise HTTPException(status_code=400, detail=info.get("error") or "字体索引不可用，请重建索引")
     db_dir = Path(info.get("path", "")).parent
-    known = _merged_known_fonts(info.get("fonts", []), cfg)
+    known = await asyncio.to_thread(_merged_known_fonts, info.get("fonts", []), cfg)
     return db_dir, info, known
 
 
@@ -310,7 +310,8 @@ async def _recheck_missing_after_temp_change(cfg: Dict[str, Any]) -> int:
         idx_now = await asyncio.to_thread(index_store.read_index, None, cfg)
         if not idx_now.get("exists"):
             return 0
-        known_now = _merged_known_fonts(idx_now.get("fonts", []), cfg)
+        known_now = await asyncio.to_thread(
+            _merged_known_fonts, idx_now.get("fonts", []), cfg)
         if not known_now:
             return 0
         updated = 0
@@ -416,7 +417,10 @@ async def get_status():
     binfo = await asyncio.to_thread(af_binary.binary_info, cfg)
     idx = await asyncio.to_thread(index_store.read_index, None, cfg)
     libs = _library_dirs(cfg)
-    lib_stats = index_store.library_stats(idx.get("fonts", []) or [], libs)
+    # 3.8 万 face 的归属统计走线程：/status 会被前端每 1.5s 轮询一次，
+    # 放在事件循环里跑等于每轮都堵一次整个后端。
+    lib_stats = await asyncio.to_thread(
+        index_store.library_stats, idx.get("fonts", []) or [], libs)
 
     library_state = {
         "path": libs[0] if libs else "",
@@ -428,7 +432,7 @@ async def get_status():
     if libs and not library_state["exists"]:
         library_state["message"] = "存在不可访问的字体库目录"
 
-    temp_files = _list_temp_fonts(cfg)
+    temp_files = await asyncio.to_thread(_list_temp_fonts, cfg)
     temp_idx = await asyncio.to_thread(index_store.read_index, _temp_index_dir(cfg))
     opts = _options(cfg)
     od = opts.get("output_dir")
@@ -532,13 +536,55 @@ async def rebuild_index():
         raise HTTPException(status_code=400, detail=result.get("message") or "索引构建失败")
     log_audit("字体管家", "重建索引", result.get("message", ""))
     info = await asyncio.to_thread(index_store.read_index, None, cfg)
-    stats = index_store.library_stats(info.get("fonts", []) or [], libs)
+    stats = await asyncio.to_thread(
+        index_store.library_stats, info.get("fonts", []) or [], libs)
     return {"status": "success", "message": result.get("message", ""), "log": result.get("log", ""),
             "index": {"exists": info.get("exists"), "count": info.get("count"),
                       "file_count": info.get("file_count"),
                       "library_count": stats.get("library_count", 0),
                       "library_file_count": stats.get("library_file_count", 0),
                       "built_at": info.get("built_at")}}
+
+
+def _query_fonts(cfg: Dict[str, Any], libs: List[str], scope: str, q: Optional[str],
+                 fmt: Optional[str], limit: int, offset: int) -> Dict[str, Any]:
+    """字体列表查询（同步实现，端点统一丢线程跑）。
+
+    3.8 万 face 时「逐条判归属 + 格式统计 + 过滤」要几十到上百毫秒，
+    直接在事件循环里跑会和 /status 轮询叠在一起，把整个后端挤成卡顿。
+    """
+    idx = index_store.read_index(None, cfg)
+    faces = idx.get("fonts", []) or []
+    scoped: List[Dict[str, Any]] = list(faces)
+    if scope != "all":
+        scoped = [f for f in scoped if index_store.under_library(f.get("path", ""), libs)]
+
+    formats: Dict[str, int] = {}
+    for f in scoped:
+        key = f.get("format") or "unknown"
+        formats[key] = formats.get(key, 0) + 1
+
+    if q:
+        needle = q.strip().lower()
+        scoped = [f for f in scoped
+                  if needle in " ".join(f.get("families", []) + f.get("fullnames", []) + [f.get("filename", "")]).lower()]
+    if fmt:
+        want = fmt.strip().lstrip(".").lower()
+        scoped = [f for f in scoped if f.get("format") == want]
+
+    total = len(scoped)
+    page: List[Dict[str, Any]] = []
+    for face in scoped[offset:offset + limit]:
+        item = dict(face)
+        item["in_library"] = index_store.under_library(face.get("path", ""), libs)
+        page.append(item)
+    return {
+        "index": idx,
+        "stats": index_store.library_stats(faces, libs),
+        "formats": formats,
+        "total": total,
+        "data": page,
+    }
 
 
 @router.get("/fonts", summary="索引中的字体列表")
@@ -551,32 +597,9 @@ async def list_fonts(
 ):
     cfg = _cfg()
     libs = _library_dirs(cfg)
-    idx = await asyncio.to_thread(index_store.read_index, None, cfg)
-
-    fonts: List[Dict[str, Any]] = []
-    for face in idx.get("fonts", []) or []:
-        item = dict(face)
-        item["in_library"] = index_store.under_library(face.get("path", ""), libs)
-        fonts.append(item)
-    if scope != "all":
-        fonts = [f for f in fonts if f["in_library"]]
-
-    formats: Dict[str, int] = {}
-    for f in fonts:
-        key = f.get("format") or "unknown"
-        formats[key] = formats.get(key, 0) + 1
-
-    if q:
-        needle = q.strip().lower()
-        fonts = [f for f in fonts
-                 if needle in " ".join(f.get("families", []) + f.get("fullnames", []) + [f.get("filename", "")]).lower()]
-    if fmt:
-        want = fmt.strip().lstrip(".").lower()
-        fonts = [f for f in fonts if f.get("format") == want]
-
-    total = len(fonts)
-    page = fonts[offset:offset + limit]
-    stats = index_store.library_stats(idx.get("fonts", []) or [], libs)
+    res = await asyncio.to_thread(_query_fonts, cfg, libs, scope, q, fmt, limit, offset)
+    idx = res["index"]
+    stats = res["stats"]
     return {
         "status": "success",
         "index": {"exists": idx.get("exists", False), "count": idx.get("count", 0),
@@ -585,11 +608,11 @@ async def list_fonts(
                   "library_file_count": stats.get("library_file_count", 0),
                   "built_at": idx.get("built_at", ""), "error": idx.get("error", "")},
         "scope": scope,
-        "formats": formats,
-        "total": total,
+        "formats": res["formats"],
+        "total": res["total"],
         "limit": limit,
         "offset": offset,
-        "data": page,
+        "data": res["data"],
     }
 
 
@@ -619,28 +642,23 @@ async def download_font(
     media = "font/ttf" if target.suffix.lower() == ".ttf" else "font/otf" if target.suffix.lower() == ".otf" else "application/octet-stream"
     ascii_name = name.encode("ascii", "ignore").decode() or "font" + target.suffix
     quoted = quote(name)
+    # 字体文件动辄几十 MB，同步 read_bytes 会把事件循环钉住，整个项目跟着卡
+    content = await asyncio.to_thread(target.read_bytes)
     return Response(
-        content=target.read_bytes(),
+        content=content,
         media_type=media,
         headers={"Content-Disposition": f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quoted}"},
     )
 
 
-@router.get("/fonts/download-all", summary="打包下载字体库（支持筛选）")
-async def download_fonts_all(
-    q: Optional[str] = Query(None),
-    fmt: Optional[str] = Query(None),
-):
-    """按 /fonts 相同的筛选条件打包下载字体库中的字体文件（zip）。"""
-    cfg = _cfg()
-    libs = [Path(d) for d in _library_dirs(cfg)]
-    if not libs:
-        raise HTTPException(status_code=400, detail="未配置字体库目录")
+def _collect_download_items(faces: List[Dict[str, Any]], libs: List[Path],
+                            q: Optional[str], fmt: Optional[str]) -> List[Tuple[str, Path, str]]:
+    """筛选 + 逐文件校验归属，产出 zip 条目。
 
-    idx = await asyncio.to_thread(index_store.read_index, None, cfg)
-    fonts = [f for f in idx.get("fonts", []) or []
-             if index_store.under_library(f.get("path", ""), libs)]
-
+    2.8 万个字体每个都要 realpath/stat（防目录穿越），同步跑要秒级，
+    所以统一丢到线程里执行，别占事件循环。
+    """
+    fonts = [f for f in faces if index_store.under_library(f.get("path", ""), libs)]
     if q:
         needle = q.strip().lower()
         fonts = [f for f in fonts
@@ -660,6 +678,23 @@ async def download_fonts_all(
             continue
         if p.is_file():
             items.append((f.get("filename") or p.name, p, "file"))
+    return items
+
+
+@router.get("/fonts/download-all", summary="打包下载字体库（支持筛选）")
+async def download_fonts_all(
+    q: Optional[str] = Query(None),
+    fmt: Optional[str] = Query(None),
+):
+    """按 /fonts 相同的筛选条件打包下载字体库中的字体文件（zip）。"""
+    cfg = _cfg()
+    libs = [Path(d) for d in _library_dirs(cfg)]
+    if not libs:
+        raise HTTPException(status_code=400, detail="未配置字体库目录")
+
+    idx = await asyncio.to_thread(index_store.read_index, None, cfg)
+    items = await asyncio.to_thread(
+        _collect_download_items, idx.get("fonts", []) or [], libs, q, fmt)
     if not items:
         raise HTTPException(status_code=400, detail="没有可下载的字体文件（检查筛选条件）")
 
@@ -845,6 +880,17 @@ async def upload_subtitles(files: List[UploadFile] = File(...)):
     created: List[Dict[str, Any]] = []
     skipped: List[Dict[str, str]] = []
 
+    # 预检用的「已知字体名」整批只算一次：3.8 万 face 时每个文件重算一次，
+    # 一次上传 13 个字幕就是十几次全量遍历，接口会被拖成好几秒的同步阻塞。
+    known_now: Set[str] = set()
+    try:
+        idx_now = await asyncio.to_thread(index_store.read_index, None, cfg)
+        if idx_now.get("exists"):
+            known_now = await asyncio.to_thread(
+                _merged_known_fonts, idx_now.get("fonts", []), cfg)
+    except Exception as e:
+        logger.debug(f"[字体管家] 读取索引失败，跳过上传预检: {e}")
+
     for up in files:
         raw_name = _sanitize_filename(up.filename or "")
         if not ass_parser.is_subtitle_file(raw_name):
@@ -875,13 +921,8 @@ async def upload_subtitles(files: List[UploadFile] = File(...)):
         # 上传即预检：索引已建好时直接比对出缺失字体，用户不必等处理完才知道缺什么。
         # 注意只填 missing_fonts，status 仍为 pending（避免被 run-all 的 missing 目标误收）。
         pre_missing: List[str] = []
-        try:
-            idx_now = await asyncio.to_thread(index_store.read_index, None, cfg)
-            if idx_now.get("exists"):
-                known_now = _merged_known_fonts(idx_now.get("fonts", []), cfg)
-                pre_missing = runner.missing_by_index(summary.get("fonts", []), known_now)
-        except Exception as e:
-            logger.debug(f"[字体管家] 上传预检缺失字体失败（忽略）: {e}")
+        if known_now:
+            pre_missing = runner.missing_by_index(summary.get("fonts", []), known_now)
 
         job = FontSubtitleJob(
             job_id=job_id,

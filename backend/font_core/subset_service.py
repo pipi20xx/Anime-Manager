@@ -173,17 +173,19 @@ async def resolve_context(cfg: Optional[Dict[str, Any]] = None) -> SubsetContext
         ctx.error = f"字体库目录不可用：{bad[0]}"
         return ctx
 
-    info = read_index_cached(cfg)
+    # 索引读取/字体名归一化都是纯 CPU 活：3.8 万 face 时读一次 300~400ms、
+    # 归一化一次 100ms，放在事件循环里会让「整理字幕」把整个后端一起卡住。
+    info = await asyncio.to_thread(read_index_cached, cfg)
     if not (info.get("exists") and info.get("count")):
         info = await index_store.ensure_index(binary, cfg, libs)
         invalidate_index_cache()
-        info = read_index_cached(cfg) if info.get("exists") else info
+        info = (await asyncio.to_thread(read_index_cached, cfg)) if info.get("exists") else info
         if not (info.get("exists") and info.get("count")):
             ctx.error = info.get("error") or "字体索引不可用，请到字体管家重建索引"
             return ctx
 
     ctx.db_dir = Path(str(info.get("path") or "")).parent
-    ctx.known = merged_known_fonts(info.get("fonts") or [], cfg)
+    ctx.known = await asyncio.to_thread(merged_known_fonts, info.get("fonts") or [], cfg)
     if not ctx.known:
         ctx.error = "字体索引里没有可用字体，请到字体管家重建索引"
         return ctx
