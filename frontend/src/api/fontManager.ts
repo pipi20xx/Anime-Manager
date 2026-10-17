@@ -256,13 +256,26 @@ export interface FontJob {
 
 /** 索引中的字体 face */
 export interface FontFace {
+  /** 首选 family（families[0]，缺失时退回 fullname） */
   family: string
+  /** 全部 family 名（含本地化名，如日文/英文名） */
   families: string[]
+  /** 首选全名 */
+  fullname?: string
+  /** 全部全名 */
+  fullnames?: string[]
+  /** 首选 PostScript 名 */
+  psname?: string
+  /** 全部 PostScript 名 */
+  psnames?: string[]
   filename: string
   format: string
   in_library: boolean
   weight?: number | null
   slant?: number | null
+  /** TTC/OTC 集合内的 face 序号 */
+  face_index?: number
+  last_write_time?: string
 }
 
 /** 上游更新信息 */

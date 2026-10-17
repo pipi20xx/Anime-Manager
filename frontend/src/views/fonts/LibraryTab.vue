@@ -7,6 +7,7 @@
  */
 import { ref } from 'vue'
 import { fontManagerApi } from '@/api'
+import type { FontFace } from '@/api/fontManager'
 import { useFontManager, FONT_ACCEPT, FONT_RE } from './useFontManager'
 
 defineOptions({ name: 'FontManagerLibraryTab' })
@@ -18,6 +19,38 @@ const {
   FONTS_LIMIT_MAX, fontsLimit, libraryFontCount, formatFilterItems,
   fetchFonts, loadMoreFonts, resetFontsLimit, refreshAll,
 } = useFontManager()
+
+// ── 字体详情对话框 ─────────────────────────────────────────
+const showDetail = ref(false)
+const detailFont = ref<FontFace | null>(null)
+
+function openDetail(f: FontFace) {
+  detailFont.value = f
+  showDetail.value = true
+}
+
+/** families + fullnames + psnames 合并去重（详情对话框用） */
+function allNames(f: FontFace): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = []
+  const seen = new Set<string>()
+  const push = (label: string, v?: string) => {
+    const t = (v || '').trim()
+    if (!t || seen.has(t)) return
+    seen.add(t)
+    out.push({ label, value: t })
+  }
+  for (const v of f.families || []) push('Family', v)
+  for (const v of f.fullnames || []) push('Fullname', v)
+  for (const v of f.psnames || []) push('PostScript', v)
+  return out
+}
+
+function weightText(f: FontFace): string {
+  const parts: string[] = []
+  if (f.weight != null) parts.push(String(f.weight))
+  if (f.slant) parts.push('斜体')
+  return parts.join(' / ') || '-'
+}
 
 // ── 下载（单个 / 按当前筛选打包） ──────────────────────────
 const downloadingAll = ref(false)
@@ -240,25 +273,47 @@ async function handleLibraryFontUpload(
           <tr>
             <th class="text-left">字体名 (family)</th>
             <th class="text-left">文件名</th>
-            <th class="text-left">格式</th>
-            <th class="text-left">操作</th>
+            <th class="text-left" style="width: 80px">格式</th>
+            <th class="text-left" style="width: 160px">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(f, i) in fonts" :key="`${f.filename}-${i}`">
-            <td class="text-body-2">{{ f.family || (f.families && f.families[0]) || '-' }}</td>
+            <td class="text-body-2">
+              {{ f.family || '-' }}
+              <v-chip
+                v-if="(f.face_index ?? 0) > 0"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+                class="ml-1"
+                :title="`TTC/OTC 集合内第 ${(f.face_index ?? 0) + 1} 个 face`"
+              >
+                #{{ f.face_index }}
+              </v-chip>
+            </td>
             <td class="text-body-2 font-mono text-truncate" style="max-width: 320px" :title="f.filename">
               {{ f.filename }}
             </td>
             <td>
               <v-chip size="x-small" variant="tonal">{{ (f.format || 'unknown').toUpperCase() }}</v-chip>
             </td>
-            <td style="width: 90px">
+            <td style="width: 160px">
+              <v-btn
+                size="x-small"
+                variant="tonal"
+                prepend-icon="mdi-information-outline"
+                title="查看该字体的全部名称与元数据"
+                @click="openDetail(f)"
+              >
+                详情
+              </v-btn>
               <v-btn
                 size="x-small"
                 variant="tonal"
                 color="info"
                 prepend-icon="mdi-download"
+                class="ml-1"
                 :loading="downloadingOne === f.filename"
                 title="下载该字体文件"
                 @click="downloadOne(f.filename)"
@@ -297,6 +352,78 @@ async function handleLibraryFontUpload(
       </div>
     </v-card-text>
   </v-card>
+
+  <!-- ══ 字体详情对话框 ══ -->
+  <v-dialog v-model="showDetail" max-width="560" scrollable>
+    <v-card class="glass-card">
+      <DialogTitle
+        icon="mdi-information-outline"
+        icon-color="primary"
+        :title="detailFont?.family || '字体详情'"
+        @close="showDetail = false"
+      />
+      <v-divider />
+
+      <v-card-text class="pa-4" v-if="detailFont">
+        <!-- 基本信息 -->
+        <div class="detail-grid mb-4">
+          <div class="text-caption text-medium-emphasis">文件名</div>
+          <div class="text-body-2 font-mono text-break">{{ detailFont.filename }}</div>
+
+          <div class="text-caption text-medium-emphasis">格式</div>
+          <div>
+            <v-chip size="x-small" variant="tonal">{{ (detailFont.format || 'unknown').toUpperCase() }}</v-chip>
+            <v-chip
+              v-if="(detailFont.face_index ?? 0) > 0"
+              size="x-small"
+              variant="tonal"
+              color="primary"
+              class="ml-1"
+            >
+              face #{{ detailFont.face_index }}
+            </v-chip>
+          </div>
+
+          <div class="text-caption text-medium-emphasis">字重 / 斜体</div>
+          <div class="text-body-2">{{ weightText(detailFont) }}</div>
+
+          <div class="text-caption text-medium-emphasis">索引时间</div>
+          <div class="text-body-2 text-medium-emphasis">{{ detailFont.last_write_time || '-' }}</div>
+        </div>
+
+        <!-- 全部名称 -->
+        <div class="section-title mb-2">
+          <v-icon size="16" color="primary">mdi-format-quote-close</v-icon>
+          全部名称（{{ allNames(detailFont).length }} 个，字幕匹配按这些名字进行）
+        </div>
+        <div class="names-list">
+          <div
+            v-for="(n, idx) in allNames(detailFont)"
+            :key="`${n.label}-${idx}`"
+            class="d-flex align-start ga-2 py-1"
+          >
+            <v-chip size="x-small" variant="tonal" class="name-kind">{{ n.label }}</v-chip>
+            <span class="text-body-2 font-mono text-break" style="word-break: break-all">{{ n.value }}</span>
+          </div>
+        </div>
+      </v-card-text>
+
+      <v-divider />
+      <v-card-actions class="pa-4">
+        <v-btn
+          variant="tonal"
+          color="info"
+          prepend-icon="mdi-download"
+          :loading="downloadingOne === detailFont?.filename"
+          @click="detailFont && downloadOne(detailFont.filename)"
+        >
+          下载字体
+        </v-btn>
+        <v-spacer />
+        <v-btn variant="tonal" prepend-icon="mdi-close" @click="showDetail = false">关闭</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -307,5 +434,21 @@ export default { components: { EmptyState } }
 <style scoped>
 .fonts-table {
   background: transparent;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 16px;
+  align-items: start;
+}
+.names-list {
+  max-height: 34vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+.name-kind {
+  flex: 0 0 auto;
+  min-width: 78px;
+  justify-content: center;
 }
 </style>
