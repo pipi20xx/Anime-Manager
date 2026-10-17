@@ -1376,8 +1376,7 @@
 .switch-hint {
   font-size: 11px;
   line-height: 1.4;
-  color: rgb(var(--v-theme-on-surface));
-  opacity: 0.66;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   margin: 4px 0 0 52px;
 }
 .switch-label {
@@ -1664,7 +1663,7 @@
   border-left: 4px solid rgb(var(--v-theme-primary));
   padding-left: 12px;
   margin: 12px 0;
-  opacity: 0.8;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
 }
 .markdown-body hr {
   border: none;
@@ -1723,7 +1722,6 @@
   padding: 12px 16px;
   border-radius: 0 8px 8px 0;
   margin: 1rem 0;
-  opacity: 1;
   padding-left: 16px;
 }
 .markdown-body--guide blockquote p {
@@ -1819,8 +1817,7 @@
   margin: 0.4em 0;
   padding: 0.1em 0.8em;
   border-left: 3px solid rgba(var(--v-theme-primary), 0.5);
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  opacity: 1;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
 }
 .markdown-body--chat code:not(.hljs) {
   padding: 0.1em 0.4em;

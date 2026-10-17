@@ -353,7 +353,7 @@ function clearLogs() {
   gap: 8px;
   height: 100%;
   min-height: 200px;
-  color: rgba(var(--v-theme-on-surface), 0.5);
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
 }
 
 /* 分组：左侧时间列 + 右侧内容 */
@@ -413,7 +413,7 @@ function clearLogs() {
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.6;
-  color: rgba(var(--v-theme-on-surface), 0.88);
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   min-width: 0;
 }
 .log-line__level {

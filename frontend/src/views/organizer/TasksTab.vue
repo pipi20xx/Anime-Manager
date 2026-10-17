@@ -376,9 +376,12 @@ async function requestRunTask(task: any) {
         @dragend="onDragEnd"
       >
         <v-card class="glass-card manage-card cursor-pointer" :class="{ 'hover-lift': dragIndex === -1 }" @click="dragIndex === -1 && openEditTask(index)">
-          <!-- 标题行 -->
+          <!-- 标题行：图标与左侧导航「整理管理」保持一致（与链接同步卡片同款排版） -->
           <div class="manage-card__header">
-            <div class="manage-card__title">{{ task.name }}</div>
+            <div class="d-flex align-center ga-2 manage-card__title">
+              <v-icon start color="primary" size="20">mdi-folder-sync-outline</v-icon>
+              <span class="text-truncate">{{ task.name }}</span>
+            </div>
             <v-chip size="small" variant="tonal" color="info" class="manage-card__badge">{{ actionTypeLabel(task.action_type) }}</v-chip>
           </div>
 

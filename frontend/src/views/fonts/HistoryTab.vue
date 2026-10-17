@@ -355,13 +355,11 @@ onMounted(fetchHistory)
   margin-top: 8px;
   font-family: 'JetBrains Mono', 'Consolas', monospace;
   font-size: 12px;
-  color: rgb(var(--v-theme-on-surface));
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
   overflow-wrap: anywhere;
   cursor: pointer;
-  opacity: 0.85;
 }
 .history-path:hover {
   color: rgb(var(--v-theme-primary));
-  opacity: 1;
 }
 </style>
