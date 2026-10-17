@@ -13,7 +13,7 @@
  * Tab 通过 useDynamicHeaderTab 注册到顶栏，与订阅管理等页面一致。
  * 有任务处于 running 时每 1.5s 轮询任务列表。
  */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDynamicHeaderTab } from '@/composables/useDynamicHeaderTab'
 import { EmptyState } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
@@ -23,19 +23,116 @@ import LibraryTab from './LibraryTab.vue'
 import TempFontsTab from './TempFontsTab.vue'
 import FontSettingsDialog from './FontSettingsDialog.vue'
 import FontHelpDialog from './FontHelpDialog.vue'
-import { provideFontManager } from './useFontManager'
+import {
+  provideFontManager,
+  collectDroppedFiles,
+  SUBTITLE_RE,
+  FONT_RE,
+  MAX_DROP_FILES,
+} from './useFontManager'
 
 defineOptions({ name: 'FontManagerView' })
 
 // 共享状态：主视图创建一次，provide 给全部子组件
 const fm = provideFontManager()
 const {
-  status, statusLoading, binary, hasLibrary, indexReady,
+  success, showError, warning,
+  hasLibrary, librarySaving,
   activeTab, fetchFonts, refreshAll,
-  librarySaving,
+  jobsUploading, uploadSubtitles,
+  tempUploading, uploadTempFontsFiles,
   openSettings, openFolderPicker,
   showFolderBrowser, folderTitle, folderInitial, onFolderSelected,
 } = fm
+
+// ── 全局拖拽路由：按文件类型自动分流 ──────────────────────
+// 字幕(.ass/.ssa) → 切到「字幕任务」并建任务；字体(ttf/otf/…) → 切到「临时字体」并进临时池。
+// 监听挂在 document 上（本页激活期间），页面任意位置拖入都有效；
+// 卡片自己的 drop 会 preventDefault，这里通过 defaultPrevented 判断不重复处理。
+const pageDragActive = ref(false)
+const pageCollecting = ref(false)
+const pageDragging = computed(() => pageDragActive.value || pageCollecting.value)
+/** dragenter/dragleave 成对触发（子元素间移动也会触发），用计数器维持状态稳定 */
+let dragDepth = 0
+
+function hasFiles(e: DragEvent): boolean {
+  return Array.from(e.dataTransfer?.types || []).includes('Files')
+}
+
+function onDocDragEnter(e: DragEvent) {
+  if (!hasFiles(e)) return
+  dragDepth += 1
+  pageDragActive.value = true
+}
+
+function onDocDragOver(e: DragEvent) {
+  // 必须 prevent，否则浏览器会打开文件而不是触发 drop
+  if (hasFiles(e)) e.preventDefault()
+}
+
+function onDocDragLeave(e: DragEvent) {
+  if (!hasFiles(e)) return
+  dragDepth = Math.max(0, dragDepth - 1)
+  if (dragDepth === 0) pageDragActive.value = false
+}
+
+async function onDocDrop(e: DragEvent) {
+  dragDepth = 0
+  pageDragActive.value = false
+  // 上传卡片 / 临时字体卡片已处理过（它们调用过 preventDefault），不重复处理
+  if (e.defaultPrevented) return
+  const dt = e.dataTransfer
+  if (!dt) return
+  e.preventDefault()
+
+  // drop 时统一按扩展名分流
+  pageCollecting.value = true
+  try {
+    const collected = await collectDroppedFiles(e, /.*/)
+    const files = collected ? collected.files : Array.from(dt.files || [])
+
+    const subtitles = files.filter((f) => SUBTITLE_RE.test(f.name))
+    const fonts = files.filter((f) => FONT_RE.test(f.name))
+    const others = files.length - subtitles.length - fonts.length
+
+    if (collected?.truncated) {
+      warning(`拖入的文件过多，仅收集前 ${MAX_DROP_FILES} 个文件`)
+    }
+    if (others > 0) {
+      warning(`已忽略 ${others} 个不支持的文件（仅支持 .ass/.ssa 字幕与常见字体格式）`)
+    }
+
+    if (subtitles.length) {
+      activeTab.value = 'jobs'
+      await uploadSubtitles(subtitles)
+    }
+    if (fonts.length) {
+      activeTab.value = 'temp'
+      await uploadTempFontsFiles(fonts)
+    }
+    if (!files.length) {
+      warning('没有找到可处理的文件（支持 .ass/.ssa 字幕与字体文件）')
+    }
+  } catch (err: any) {
+    showError(err?.message || '读取拖入内容失败')
+  } finally {
+    pageCollecting.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('dragenter', onDocDragEnter)
+  document.addEventListener('dragover', onDocDragOver)
+  document.addEventListener('dragleave', onDocDragLeave)
+  document.addEventListener('drop', onDocDrop)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('dragenter', onDocDragEnter)
+  document.removeEventListener('dragover', onDocDragOver)
+  document.removeEventListener('dragleave', onDocDragLeave)
+  document.removeEventListener('drop', onDocDrop)
+})
 
 // 帮助对话框 ref（open 由子组件 expose；FontStatusBar 通过 emit 请求打开）
 const helpDialogRef = ref<InstanceType<typeof FontHelpDialog> | null>(null)
@@ -122,3 +219,26 @@ async function pickLibraryFolder(path: string) {
     />
   </v-container>
 </template>
+
+<style scoped>
+/* 页面级拖拽提示浮层：不拦截指针（drop 仍落到容器上） */
+.drag-hint-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-surface), 0.72);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+.drag-hint-card {
+  padding: 28px 40px;
+  border-radius: 16px;
+  border: 2px dashed rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-surface), 0.92);
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+</style>

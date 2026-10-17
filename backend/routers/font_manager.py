@@ -317,6 +317,56 @@ def _merged_known_fonts(main_faces: Any, cfg: Dict[str, Any]) -> Set[str]:
     return names
 
 
+async def _recheck_missing_after_temp_change(cfg: Dict[str, Any]) -> int:
+    """临时字体池变化后，重算 pending / missing 任务的缺失字体。
+
+    任务记录里的 missing_fonts 是预检快照：先传字幕、后补临时字体时，
+    旧记录仍显示缺字体。这里用「主库索引 + 临时字体索引」重新比对，
+    临时字体已覆盖的字体从缺失清单里去掉（status 同步在 missing→pending 间流转）。
+    返回更新的任务数。
+    """
+    try:
+        idx_now = await asyncio.to_thread(index_store.read_index, None, cfg)
+        if not idx_now.get("exists"):
+            return 0
+        known_now = _merged_known_fonts(idx_now.get("fonts", []), cfg)
+        if not known_now:
+            return 0
+        updated = 0
+        async with db.session_scope() as session:
+            rows = (await session.execute(
+                select(FontSubtitleJob).where(
+                    FontSubtitleJob.status.in_(["pending", "missing"])
+                )
+            )).scalars().all()
+            for job in rows:
+                refs = list(job.referenced_fonts or [])
+                if not refs:
+                    continue
+                miss = runner.missing_by_index(refs, known_now)
+                new_missing = list(miss)
+                if set(new_missing) == set(job.missing_fonts or []):
+                    continue
+                job.missing_fonts = new_missing
+                # 之前因缺字体被标 missing 的任务，字体补齐后回到 pending 可重试
+                if job.status == "missing" and not new_missing:
+                    job.status = "pending"
+                    job.error = ""
+                elif job.status == "pending" and new_missing:
+                    job.status = "missing"
+                    job.error = "缺失字体：" + "、".join(new_missing)
+                job.updated_at = datetime.now()
+                session.add(job)
+                updated += 1
+            await session.commit()
+        if updated:
+            logger.info(f"[字体管家] 临时字体变化，已重算 {updated} 个任务的缺失字体")
+        return updated
+    except Exception as e:
+        logger.debug(f"[字体管家] 临时字体变化重算缺失字体失败（忽略）: {e}")
+        return 0
+
+
 async def _refresh_temp_index(binary: Path, cfg: Dict[str, Any]) -> Dict[str, Any]:
     """临时字体池变化后重建其索引；池子为空时清掉索引目录。"""
     idx_dir = _temp_index_dir(cfg)
@@ -671,6 +721,7 @@ async def upload_temp_fonts(files: List[UploadFile] = File(...)):
     if saved:
         binary = _require_binary(cfg)
         index_info = await _refresh_temp_index(binary, cfg)
+        await _recheck_missing_after_temp_change(cfg)
         log_audit("字体管家", "上传临时字体",
                   f"临时字体 {len(saved)} 个（当前池内 {len(_list_temp_fonts(cfg))} 个）")
 
@@ -721,6 +772,7 @@ async def delete_temp_fonts(
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"清空失败：{e}")
     index_info = await _refresh_temp_index(binary, cfg)
+    await _recheck_missing_after_temp_change(cfg)
     return {"status": "success", "removed": removed, "count": len(_list_temp_fonts(cfg)),
             "index": index_info}
 

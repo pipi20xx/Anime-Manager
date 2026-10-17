@@ -16,12 +16,13 @@ defineOptions({ name: 'FontManagerTempFontsTab' })
 const {
   success, showError, warning, confirm,
   status, tempFonts, tempFontFiles, tempFontActive,
-  refreshAll,
+  refreshAll, tempUploading: uploadTempUploading, uploadTempFontsFiles,
 } = useFontManager()
 
 // ── 临时字体池交互状态 ────────────────────────────────────
 const tempFontInput = ref<HTMLInputElement | null>(null)
-const tempUploading = ref(false)
+/** 上传状态来自共享 store（页面级拖拽路由也会触发上传） */
+const tempUploading = uploadTempUploading
 const tempDragActive = ref(false)
 const tempDeleting = ref('')
 const clearingTemp = ref(false)
@@ -81,35 +82,9 @@ async function handleTempDrop(e: DragEvent) {
   }
 }
 
-async function handleTempFontUpload(
-  files: File[],
-  emptyHint = '没有可用的字体文件',
-) {
-  const valid = files.filter((f) => FONT_RE.test(f.name))
-  const ignored = files.length - valid.length
-  if (ignored > 0) warning(`已忽略 ${ignored} 个非字体文件（临时字体仅支持 ${FONT_ACCEPT}）`)
-  if (!valid.length) {
-    warning(emptyHint)
-    return
-  }
-
-  tempUploading.value = true
-  try {
-    const res = await fontManagerApi.uploadTempFonts(valid)
-    const rows = res?.data || []
-    const stored = rows.filter((r) => r.action !== 'duplicate').length || rows.length
-    success(`已加入临时字体池 ${stored} 个字体，本次处理会自动作为补充字体源`)
-    const skipped = res?.skipped || []
-    if (skipped.length) {
-      showError(`跳过 ${skipped.length} 个文件：${skipped.map((s) => `${s.filename}（${s.reason}）`).join('；')}`)
-    }
-    if (res?.temp?.index?.error) showError(`临时字体索引构建失败：${res.temp.index.error}`)
-    await refreshAll()
-  } catch (e: any) {
-    showError(e?.message || '上传临时字体失败')
-  } finally {
-    tempUploading.value = false
-  }
+/** 上传临时字体：统一走 store（页面级拖拽路由也调用同一实现） */
+function handleTempFontUpload(files: File[], emptyHint = '没有可用的字体文件') {
+  return uploadTempFontsFiles(files, emptyHint)
 }
 
 async function removeTempFont(file: TempFontFile) {
@@ -160,7 +135,7 @@ const statusRef = status
     @drop.prevent="onTempDrop"
   >
     <v-card-title class="pa-4 d-flex align-center flex-wrap ga-2">
-      <v-icon color="primary">mdi-clock-outline</v-icon>
+      <v-icon color="primary">mdi-timer-outline</v-icon>
       <span class="text-body-1 font-weight-medium">临时字体</span>
       <v-chip
         size="x-small"
@@ -227,7 +202,7 @@ const statusRef = status
           <tr>
             <th class="text-left">文件名</th>
             <th class="text-left" style="width: 120px">大小</th>
-            <th class="text-left" style="width: 90px">操作</th>
+            <th class="text-left" style="width: 120px">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -238,14 +213,16 @@ const statusRef = status
             <td class="text-body-2">{{ formatDbSize(f.size) }}</td>
             <td>
               <v-btn
-                size="x-small"
-                variant="text"
+                size="small"
+                variant="tonal"
                 color="error"
-                icon="mdi-delete"
-                title="删除该临时字体"
+                prepend-icon="mdi-delete-outline"
                 :loading="tempDeleting === f.filename"
+                title="删除该临时字体"
                 @click="removeTempFont(f)"
-              />
+              >
+                删除
+              </v-btn>
             </td>
           </tr>
         </tbody>

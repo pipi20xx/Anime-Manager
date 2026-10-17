@@ -421,6 +421,19 @@ function createFontManagerStore() {
   const tempFonts = computed<TempFontState | null>(() => status.value?.temp_fonts ?? null)
   const tempFontFiles = computed<TempFontFile[]>(() => tempFonts.value?.files ?? [])
   const tempFontActive = computed(() => !!tempFonts.value?.active)
+  /** 临时字体池内全部字体名（文件名去后缀 + 常见分隔符归一），用于前端兜底判断"缺的字体临时池里有没有" */
+  const tempFontNames = computed<string[]>(() => {
+    const names: string[] = []
+    for (const f of tempFontFiles.value) {
+      // 文件名主干：xxx.ttf → xxx（字体重命名后的 family 常与文件名一致）
+      const stem = f.filename.replace(/\.[^.]+$/, '')
+      if (stem) names.push(stem)
+      // 常见命名：family-weight / family Bold 等，取第一段也加进去
+      const first = stem.split(/[-_]/)[0]
+      if (first && first !== stem) names.push(first)
+    }
+    return names
+  })
 
   // ── 目录选择（复用 FolderBrowserModal，含多个目标） ──
   type FolderTarget =
@@ -503,6 +516,66 @@ function createFontManagerStore() {
       showError(e?.message || '设置字体库失败')
     } finally {
       librarySaving.value = false
+    }
+  }
+
+  // ── 上传（跨 Tab 共用：页面级拖拽路由也调用这两个方法） ──
+  const jobsUploading = ref(false)
+
+  /** 上传字幕建任务（.ass/.ssa；JobsTab 的上传区与主视图页面级拖拽路由共用） */
+  async function uploadSubtitles(files: File[]) {
+    const valid = files.filter((f) => SUBTITLE_RE.test(f.name))
+    const ignored = files.length - valid.length
+    if (ignored > 0) showError(`已忽略 ${ignored} 个非字幕文件（仅支持 .ass / .ssa）`)
+    if (!valid.length) return
+
+    jobsUploading.value = true
+    try {
+      const res = await fontManagerApi.upload(valid)
+      const created = res?.data || []
+      const skipped = res?.skipped || []
+      if (skipped.length) {
+        showError(`跳过 ${skipped.length} 个文件：${skipped.map((s) => `${s.filename}（${s.reason}）`).join('；')}`)
+      }
+      if (created.length) {
+        success(`已上传 ${created.length} 个字幕，可点击「执行」或「全部子集化」开始子集化`)
+      }
+      await Promise.all([fetchJobs(), fetchStatus()])
+    } catch (e: any) {
+      showError(e?.message || '上传失败')
+    } finally {
+      jobsUploading.value = false
+    }
+  }
+
+  const tempUploading = ref(false)
+
+  /** 上传临时字体（不入库，仅作为 -f 补充源；TempFontsTab 与页面级拖拽路由共用） */
+  async function uploadTempFontsFiles(files: File[], emptyHint = '没有可用的字体文件') {
+    const valid = files.filter((f) => FONT_RE.test(f.name))
+    const ignored = files.length - valid.length
+    if (ignored > 0) warning(`已忽略 ${ignored} 个非字体文件（临时字体仅支持 ${FONT_ACCEPT}）`)
+    if (!valid.length) {
+      warning(emptyHint)
+      return
+    }
+
+    tempUploading.value = true
+    try {
+      const res = await fontManagerApi.uploadTempFonts(valid)
+      const rows = res?.data || []
+      const stored = rows.filter((r) => r.action !== 'duplicate').length || rows.length
+      success(`已加入临时字体池 ${stored} 个字体，本次处理会自动作为补充字体源`)
+      const skipped = res?.skipped || []
+      if (skipped.length) {
+        showError(`跳过 ${skipped.length} 个文件：${skipped.map((s) => `${s.filename}（${s.reason}）`).join('；')}`)
+      }
+      if (res?.temp?.index?.error) showError(`临时字体索引构建失败：${res.temp.index.error}`)
+      await refreshAll()
+    } catch (e: any) {
+      showError(e?.message || '上传临时字体失败')
+    } finally {
+      tempUploading.value = false
     }
   }
 
@@ -761,6 +834,12 @@ function createFontManagerStore() {
     tempFonts,
     tempFontFiles,
     tempFontActive,
+    tempFontNames,
+    // 上传（跨 Tab / 页面级拖拽路由共用）
+    jobsUploading,
+    uploadSubtitles,
+    tempUploading,
+    uploadTempFontsFiles,
     // Tab
     activeTab,
     tempTabBadge,

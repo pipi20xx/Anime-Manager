@@ -15,18 +15,33 @@ defineOptions({ name: 'FontManagerJobsTab' })
 
 const {
   success, showError, warning, showInfo, confirm,
-  jobCounts, hasLibrary,
+  jobCounts,
   modeOptions, selectedMode, modeSaving, modeLabel, modeDescription, currentModeDescription, onModeChange,
   jobs, jobsTotal, jobsLoading, jobStatusFilter, jobSearch, busyIds, fontsExpanded,
   batchRunning, downloadingAll, clearingJobs, clearingAllJobs, statusFilterItems,
-  fetchJobs, fetchStatus, refreshAll, activeTab,
+  jobsUploading, uploadSubtitles,
+  fetchJobs, fetchStatus, refreshAll,
+  tempFontActive, tempFontNames,
 } = useFontManager()
+
+/**
+ * 任务真正缺失、且临时字体池也无法覆盖的字体。
+ * 预检快照（missing_fonts）在补临时字体后由后端重算；这里在前端再兜底过滤一层，
+ * 使「补了临时字体 → 任务立即不再显示缺失」无需等待后端刷新。
+ */
+function unresolvedMissing(job: FontJob): string[] {
+  if (job.status === 'success' || job.status === 'skipped') return []
+  const pool = tempFontActive.value ? tempFontNames.value : []
+  return (job.missing_fonts || []).filter(
+    (m) => !pool.some((t) => t.replace(/\s+/g, '').toLowerCase() === m.replace(/\s+/g, '').toLowerCase()),
+  )
+}
 
 // ── 上传（拖拽 / 点击选择） ───────────────────────────────
 const fileInput = ref<HTMLInputElement | null>(null)
 const dragActive = ref(false)
-const uploading = ref(false)
-/** 正在递归收集拖入文件夹中的字幕文件（与临时字体 Tab 共用收集状态提示） */
+/** 上传状态来自共享 store（页面级拖拽路由也会触发上传，指示灯保持一致） */
+const uploading = jobsUploading
 const collecting = ref(false)
 
 function pickFiles() {
@@ -84,77 +99,9 @@ async function onDrop(e: DragEvent) {
   }
 }
 
-async function handleUpload(files: File[]) {
-  const valid = files.filter((f) => SUBTITLE_RE.test(f.name))
-  const ignored = files.length - valid.length
-  if (ignored > 0) showError(`已忽略 ${ignored} 个非字幕文件（仅支持 .ass / .ssa）`)
-  if (!valid.length) return
-
-  uploading.value = true
-  try {
-    const res = await fontManagerApi.upload(valid)
-    const created = res?.data || []
-    const skipped = res?.skipped || []
-    if (skipped.length) {
-      showError(`跳过 ${skipped.length} 个文件：${skipped.map((s) => `${s.filename}（${s.reason}）`).join('；')}`)
-    }
-    if (created.length) {
-      success(`已上传 ${created.length} 个字幕，可点击「执行」或「全部子集化」开始子集化`)
-    }
-    await Promise.all([fetchJobs(), fetchStatus()])
-  } catch (e: any) {
-    showError(e?.message || '上传失败')
-  } finally {
-    uploading.value = false
-  }
-}
-
-// ── 页面级拖拽兜底（整页都是放置区域） ────────────────────
-function onPageDragEnter(e: DragEvent) {
-  const types = Array.from(e.dataTransfer?.types || [])
-  if (types.includes('Files')) dragActive.value = true
-}
-
-function onPageDragLeave(e: DragEvent) {
-  const related = e.relatedTarget as Node | null
-  const current = e.currentTarget as HTMLElement | null
-  if (related && current && current.contains(related)) return
-  dragActive.value = false
-}
-
-async function onPageDrop(e: DragEvent) {
-  dragActive.value = false
-  // 上传卡片 / 临时字体卡片已经处理过（它们调用过 preventDefault），此处不重复处理
-  if (e.defaultPrevented) return
-  if (!hasLibrary.value) {
-    warning('请先选择字体库文件夹，之后才能拖入字幕处理')
-    return
-  }
-  const dt = e.dataTransfer
-  if (!dt) return
-  collecting.value = true
-  try {
-    const collected = await collectDroppedFiles(e, SUBTITLE_RE)
-    const files = collected ? collected.files : Array.from(dt.files || [])
-    const subtitleFiles = files.filter((f) => SUBTITLE_RE.test(f.name))
-    if (subtitleFiles.length) {
-      await handleUpload(subtitleFiles)
-      return
-    }
-    const fontFiles = files.filter((f) => /\.(ttf|otf|ttc|otc|woff|woff2)$/i.test(f.name))
-    if (fontFiles.length) {
-      warning(
-        `检测到 ${fontFiles.length} 个字体文件：请切到「临时字体」Tab 拖入，` +
-          '或用字体库 Tab 的「上传字体到库 / 选择文件夹」按钮',
-      )
-      return
-    }
-    warning('没有找到 .ass / .ssa 字幕文件')
-  } catch (err: any) {
-    showError(err?.message || '读取拖入内容失败')
-  } finally {
-    collecting.value = false
-  }
+/** 上传字幕：统一走 store（页面级拖拽路由也调用同一实现） */
+function handleUpload(files: File[]) {
+  return uploadSubtitles(files)
 }
 
 // ── 任务展示辅助 ──────────────────────────────────────────
@@ -355,19 +302,10 @@ async function clearAllJobs() {
   }
 }
 
-/** 缺字体任务：跳到临时字体 Tab 去补字体 */
-function goTempFonts() {
-  activeTab.value = 'temp'
-}
 </script>
 
 <template>
-  <div
-    @dragenter.prevent="onPageDragEnter"
-    @dragover.prevent
-    @dragleave="onPageDragLeave"
-    @drop.prevent="onPageDrop"
-  >
+  <div>
     <!-- ══ 拖拽上传区 ══ -->
     <v-card
       class="glass-card upload-zone mb-4"
@@ -618,7 +556,7 @@ function goTempFonts() {
           </div>
 
           <!-- 引用字体 / 缺失字体 chips -->
-          <div v-if="job.referenced_fonts.length || job.missing_fonts.length" class="d-flex flex-wrap ga-1 mt-3">
+          <div v-if="job.referenced_fonts.length || unresolvedMissing(job).length" class="d-flex flex-wrap ga-1 mt-3">
             <v-chip v-for="f in visibleFonts(job)" :key="`ref-${f}`" size="x-small" variant="tonal" :title="f">
               {{ f }}
             </v-chip>
@@ -643,7 +581,7 @@ function goTempFonts() {
             </v-chip>
 
             <v-chip
-              v-for="f in job.missing_fonts"
+              v-for="f in unresolvedMissing(job)"
               :key="`miss-${f}`"
               size="x-small"
               variant="flat"
@@ -654,20 +592,10 @@ function goTempFonts() {
               {{ f }}
             </v-chip>
 
-            <v-btn
-              size="x-small"
-              variant="text"
-              color="warning"
-              prepend-icon="mdi-arrow-right-circle-outline"
-              title="跳转到「临时字体」上传缺失的字体，然后回来重试"
-              @click="goTempFonts"
-            >
-              去补字体
-            </v-btn>
           </div>
 
           <div
-            v-if="job.error"
+            v-if="job.error && !(job.status === 'missing' && unresolvedMissing(job).length)"
             class="text-caption mt-2"
             :class="job.status === 'skipped' ? 'text-medium-emphasis' : 'text-error'"
           >

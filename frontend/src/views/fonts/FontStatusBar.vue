@@ -119,7 +119,7 @@ async function applyUpdate() {
           size="small"
           variant="tonal"
           color="success"
-          prepend-icon="mdi-clock-outline"
+          prepend-icon="mdi-timer-outline"
           title="临时字体池已启用：当前处理会自动把它们作为补充字体源（-f）带上"
         >
           临时字体 {{ tempFonts?.count || 0 }}

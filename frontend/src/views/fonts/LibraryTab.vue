@@ -94,7 +94,7 @@ async function handleLibraryFontUpload(
 <template>
   <v-card class="glass-card" variant="flat">
     <v-card-title class="pa-4 d-flex align-center flex-wrap ga-2">
-      <v-icon start color="primary">mdi-format-list-bulleted-type</v-icon>
+      <v-icon start color="primary">mdi-database-outline</v-icon>
       <span class="text-body-1 font-weight-medium">字体库</span>
       <v-chip size="x-small" variant="tonal" title="来自字体索引">
         {{ libraryFontCount }} 个字体
@@ -180,7 +180,7 @@ async function handleLibraryFontUpload(
           hide-details
           style="max-width: 180px"
         />
-        <v-btn size="small" variant="text" prepend-icon="mdi-refresh" :loading="fontsLoading" @click="fetchFonts">
+        <v-btn size="small" variant="tonal" prepend-icon="mdi-refresh" :loading="fontsLoading" @click="fetchFonts">
           刷新列表
         </v-btn>
       </div>
