@@ -9,7 +9,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { fontManagerApi } from '@/api'
 import { jobDownloadName } from '@/api/fontManager'
 import type { FontDownloadKind, FontJob, FontJobStatus } from '@/api/fontManager'
-import { useFontManager, collectDroppedFiles, formatFileSize, formatDateTime, formatDuration, SUBTITLE_RE, MAX_DROP_FILES } from './useFontManager'
+import { useFontManager, formatFileSize, formatDateTime, formatDuration } from './useFontManager'
 
 defineOptions({ name: 'FontManagerJobsTab' })
 
@@ -37,12 +37,10 @@ function unresolvedMissing(job: FontJob): string[] {
   )
 }
 
-// ── 上传（拖拽 / 点击选择） ───────────────────────────────
+// ── 上传（按钮选择；拖拽由页面级全局路由处理） ────────────
 const fileInput = ref<HTMLInputElement | null>(null)
-const dragActive = ref(false)
 /** 上传状态来自共享 store（页面级拖拽路由也会触发上传，指示灯保持一致） */
 const uploading = jobsUploading
-const collecting = ref(false)
 
 function pickFiles() {
   fileInput.value?.click()
@@ -53,50 +51,6 @@ function onFileChange(e: Event) {
   const list = input.files ? Array.from(input.files) : []
   if (list.length) handleUpload(list)
   input.value = ''
-}
-
-function onDragEnter() {
-  dragActive.value = true
-}
-
-function onDragLeave(e: DragEvent) {
-  const related = e.relatedTarget as Node | null
-  const current = e.currentTarget as HTMLElement | null
-  if (related && current && current.contains(related)) return
-  dragActive.value = false
-}
-
-async function onDrop(e: DragEvent) {
-  dragActive.value = false
-  const dt = e.dataTransfer
-  if (!dt) return
-
-  collecting.value = true
-  try {
-    const collected = await collectDroppedFiles(e, SUBTITLE_RE)
-    if (!collected) {
-      // 降级：部分浏览器/非 HTTPS 环境没有 webkitGetAsEntry，此时无法读取文件夹
-      const list = Array.from(dt.files || [])
-      if (list.length) await handleUpload(list)
-      return
-    }
-    if (collected.truncated) {
-      warning(`拖入的文件过多，仅收集前 ${MAX_DROP_FILES} 个字幕文件`)
-    }
-    if (!collected.files.length) {
-      warning(
-        collected.sawDirectory
-          ? '该文件夹内没有找到 .ass / .ssa 字幕'
-          : '没有找到 .ass / .ssa 字幕文件',
-      )
-      return
-    }
-    await handleUpload(collected.files)
-  } catch (err: any) {
-    showError(err?.message || '读取拖入内容失败')
-  } finally {
-    collecting.value = false
-  }
 }
 
 /** 上传字幕：统一走 store（页面级拖拽路由也调用同一实现） */
@@ -306,42 +260,27 @@ async function clearAllJobs() {
 
 <template>
   <div>
-    <!-- ══ 拖拽上传区 ══ -->
-    <v-card
-      class="glass-card upload-zone mb-4"
-      :class="{ 'upload-zone--active': dragActive, 'upload-zone--busy': uploading || collecting }"
-      variant="flat"
-      @click="pickFiles"
-      @dragenter.prevent="onDragEnter"
-      @dragover.prevent="onDragEnter"
-      @dragleave.prevent="onDragLeave"
-      @drop.prevent="onDrop"
-    >
-      <v-card-text class="text-center pa-8">
-        <input
-          ref="fileInput"
-          type="file"
-          multiple
-          accept=".ass,.ssa"
-          class="d-none"
-          @click.stop
-          @change="onFileChange"
-        />
-        <v-progress-circular v-if="uploading || collecting" indeterminate color="primary" size="40" class="mb-2" />
-        <v-icon v-else size="52" :color="dragActive ? 'primary' : 'grey-lighten-1'">
-          {{ dragActive ? 'mdi-download-circle-outline' : 'mdi-cloud-upload-outline' }}
-        </v-icon>
-        <div class="text-subtitle-1 mt-2">
-          {{ collecting ? '正在收集文件…' : uploading ? '正在上传…' : '拖拽 ASS / SSA 字幕（或整个文件夹）到此处' }}
-        </div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          或点击选择文件（支持多选）· 拖入文件夹会递归收集其中的 .ass / .ssa
-        </div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          上传后选好处理模式，再点「执行」或「全部子集化」
-        </div>
-      </v-card-text>
-    </v-card>
+    <!-- ══ 上传字幕 ══ -->
+    <div class="upload-row mb-4">
+      <input
+        ref="fileInput"
+        type="file"
+        multiple
+        accept=".ass,.ssa"
+        class="d-none"
+        @change="onFileChange"
+      />
+      <v-btn
+        color="primary"
+        variant="tonal"
+        prepend-icon="mdi-cloud-upload-outline"
+        :loading="uploading"
+        @click="pickFiles"
+      >
+        上传字幕文件
+      </v-btn>
+      <span class="text-body-2 text-medium-emphasis">支持多选 .ass / .ssa，也可直接拖到页面任意位置</span>
+    </div>
 
     <!-- ══ 任务工具条 ══ -->
     <div class="list-toolbar">
@@ -612,7 +551,7 @@ async function clearAllJobs() {
       v-else
       icon="mdi-subtitles-outline"
       title="暂无字幕任务"
-      description="拖拽 ASS / SSA 字幕到上方区域，或点击上传区选择文件"
+      description="点击「上传字幕文件」选择，或直接拖拽 ASS / SSA 字幕到页面任意位置"
     />
   </div>
 </template>
@@ -625,20 +564,11 @@ export default { components: { EmptyState } }
 
 <style scoped>
 /* 拖拽上传区：悬停高亮 + 可点击 */
-.upload-zone {
-  cursor: pointer;
-  border: 2px dashed rgba(var(--v-theme-on-surface), 0.18);
-  transition: border-color 0.18s ease, background-color 0.18s ease;
-}
-.upload-zone:hover {
-  border-color: rgba(var(--v-theme-primary), 0.6);
-}
-.upload-zone--active {
-  border-color: rgb(var(--v-theme-primary));
-  background-color: rgba(var(--v-theme-primary), 0.08);
-}
-.upload-zone--busy {
-  cursor: progress;
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .mode-row {
   display: flex;
