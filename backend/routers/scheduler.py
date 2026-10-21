@@ -46,6 +46,64 @@ def _validate_cron(cron: str) -> str:
     return cron
 
 
+async def _ensure_module_idle(task_module: str) -> None:
+    """手动执行前的互斥检查：同一模块不允许并发执行。
+
+    表里的 running 记录分两类：
+    - started_at >= 本进程启动时刻 → 真正在跑，返回 409；
+    - started_at < 本进程启动时刻 → 上一个进程被中断时留下的孤儿记录，
+      顺手标记为 error 后放行，避免任务永久卡在「正在运行中」。
+    """
+    from task_history import process_started_at
+
+    boot_time = process_started_at()
+    async with db.session_scope(force_new=True):
+        result = await db.session.execute(
+            select(TaskRecord).where(
+                TaskRecord.module == task_module,
+                TaskRecord.status == "running",
+            )
+        )
+        records = result.scalars().all()
+
+        alive = []
+        orphans = []
+        for record in records:
+            if record.started_at and record.started_at >= boot_time:
+                alive.append(record)
+            else:
+                orphans.append(record)
+
+        if orphans:
+            now = datetime.now()
+            for record in orphans:
+                record.status = "error"
+                record.finished_at = now
+                db.session.add(record)
+            await db.session.commit()
+            log_audit(
+                "系统",
+                "任务计划",
+                f"回收 {len(orphans)} 条进程中断遗留的运行记录（{task_module}）",
+                level="WARN",
+            )
+
+        if alive:
+            record = alive[0]
+            started = record.started_at.strftime("%H:%M:%S") if record.started_at else "未知"
+            elapsed = (
+                int((datetime.now() - record.started_at).total_seconds())
+                if record.started_at else 0
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"该任务正在运行中（{record.task_id}，开始于 {started}，"
+                    f"已运行 {elapsed} 秒），请稍后再试"
+                ),
+            )
+
+
 class ToggleBody(BaseModel):
     enabled: bool
 
@@ -299,17 +357,9 @@ async def run_job(job_id: str):
 
     task_module = entry.get("task_module")
     if task_module:
-        async with db.session_scope(force_new=True):
-            stmt = (
-                select(TaskRecord)
-                .where(TaskRecord.module == task_module, TaskRecord.status == "running")
-                .limit(1)
-            )
-            result = await db.session.execute(stmt)
-            if result.scalar_one_or_none():
-                raise HTTPException(status_code=409, detail="该任务正在运行中，请稍后再试")
+        await _ensure_module_idle(task_module)
 
-    asyncio.create_task(_run_job_dispatch(job_id))
+    asyncio.create_task(_run_job_dispatch(job_id, force=True))
     log_audit("系统", "任务计划", f"手动触发定时任务: {entry['name']}")
     return {"status": "started", "job_id": job_id, "name": entry["name"]}
 
@@ -516,16 +566,8 @@ async def run_custom_job(job_id: int):
     registry = get_registry_entry(record.action)
     task_module = registry.get("task_module") if registry else None
     if task_module:
-        async with db.session_scope(force_new=True):
-            stmt = (
-                select(TaskRecord)
-                .where(TaskRecord.module == task_module, TaskRecord.status == "running")
-                .limit(1)
-            )
-            dup = await db.session.execute(stmt)
-            if dup.scalar_one_or_none():
-                raise HTTPException(status_code=409, detail="该任务正在运行中，请稍后再试")
+        await _ensure_module_idle(task_module)
 
-    asyncio.create_task(_run_job_dispatch(record.action, record.params))
+    asyncio.create_task(_run_job_dispatch(record.action, record.params, force=True))
     log_audit("系统", "任务计划", f"手动执行自定义定时任务: {record.name}")
     return {"status": "started", "name": record.name}

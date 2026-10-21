@@ -471,7 +471,11 @@ ENABLED_DEFAULTS: Dict[str, bool] = {
 # 手动触发入口（按 job_id 分发）
 # ---------------------------------------------------------------------------
 
-async def _run_job_dispatch(job_id: str, params: Optional[Dict[str, Any]] = None):
+async def _run_job_dispatch(
+    job_id: str,
+    params: Optional[Dict[str, Any]] = None,
+    force: bool = False,
+):
     if job_id == "rss_refresh_job":
         from rss_core.scheduler import refresh_all_feeds
         await refresh_all_feeds()
@@ -506,7 +510,8 @@ async def _run_job_dispatch(job_id: str, params: Optional[Dict[str, Any]] = None
         await instrumented_subscription_summary()
     elif job_id == "bgm_mapping_sync_job":
         from monitor import MonitorManager
-        await MonitorManager._auto_sync_bgm_mapping()
+        # force 仅在手动触发时为 True：手动执行应无视同步有效期
+        await MonitorManager._auto_sync_bgm_mapping(force=force)
     elif job_id == "discover_cache_warmup_job":
         await instrumented_discover_warmup()
     elif job_id == "daily_cleanup_job":

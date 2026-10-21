@@ -548,15 +548,26 @@ class MonitorManager:
             logger.warning(f"[TMDB] 发现页缓存预热失败: {e}")
 
     @staticmethod
-    async def _auto_sync_bgm_mapping():
-        """自动同步 BangumiData 条目表"""
+    async def _auto_sync_bgm_mapping(force: bool = False):
+        """同步 BangumiData 条目表
+
+        force=True：手动触发（任务计划页「立即执行」），跳过 7 天有效期检查，直接全量同步。
+        force=False：定时任务 / 启动预热，遵循同步间隔。
+        """
         task_id = f"bgm_mapping_{uuid.uuid4().hex[:8]}"
         try:
-            await start_task(task_id, "BangumiData同步", "BangumiData条目表自动同步")
+            await start_task(
+                task_id,
+                "BangumiData同步",
+                "BangumiData条目表手动同步" if force else "BangumiData条目表自动同步",
+            )
             
             from recognition.data_provider.bangumi.service import bangumi_data_service
             
-            should, reason = await bangumi_data_service.should_sync()
+            if force:
+                should, reason = True, "手动触发，已跳过同步有效期检查"
+            else:
+                should, reason = await bangumi_data_service.should_sync()
             if not should:
                 await log_task(task_id, f"⏭️ 跳过同步: {reason}")
                 stats = await bangumi_data_service.get_stats()

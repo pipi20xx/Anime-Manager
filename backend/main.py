@@ -409,6 +409,16 @@ async def startup_event():
         except Exception as e:
             logger.warning(f"加载特权规则失败: {e}")
 
+        # 回收上个进程被中断时遗留的 running 任务记录：
+        # 否则任务计划页的「立即执行」会永久返回 409（该任务正在运行中）
+        try:
+            from task_history import recover_orphan_running_tasks
+            recycled = await recover_orphan_running_tasks()
+            if recycled:
+                log_audit("系统", "任务记录", f"已回收 {recycled} 条上次进程遗留的运行记录")
+        except Exception as e:
+            logger.error(f"回收遗留运行记录失败: {e}")
+
         MonitorManager.start_all()
         
         log_audit("系统", "启动完成", "所有后台服务已启动。")

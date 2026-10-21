@@ -1,15 +1,66 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 
-from sqlalchemy import select, delete, or_
+from sqlalchemy import select, delete, or_, update
 from sqlalchemy.sql import func
 
 from database import db
 from models import TaskRecord
 
+logger = logging.getLogger("TaskHistory")
+
 _log_buffer: Dict[str, List[Dict]] = {}
 MAX_LOGS_PER_TASK = 500
+
+# 本进程的启动时刻：用于区分「本进程正在执行的任务」与「上一个进程遗留的孤儿记录」。
+# task_records.started_at 由 Python 侧 datetime.now() 写入（models.TaskRecord 的
+# default_factory），与本值同为本地时间，可直接比较；本模块在进程启动早期即被导入，
+# 因此该时间点早于任何任务记录。
+_PROCESS_STARTED_AT = datetime.now()
+
+
+def process_started_at() -> datetime:
+    """当前进程的启动时刻（判定孤儿运行记录的基准）"""
+    return _PROCESS_STARTED_AT
+
+
+async def recover_orphan_running_tasks(module: Optional[str] = None) -> int:
+    """回收上一个进程遗留的 running 记录（标记为 error 并补 finished_at）。
+
+    进程被杀（重启 / OOM / 部署 / 容器重启）时，正在执行的任务来不及写
+    finished_at，记录会永远停在 running。任务计划页据此判断「是否已在运行」，
+    于是任何一次手动执行都会被永久拒绝为 409「该任务正在运行中，请稍后再试」。
+
+    本进程刚启动，started_at 早于本进程启动时刻的记录不可能还在运行，
+    因此可以安全收尾。module 为空时回收全部模块。
+
+    :return: 被回收的记录条数
+    """
+    conditions = [
+        TaskRecord.status == "running",
+        or_(TaskRecord.started_at.is_(None), TaskRecord.started_at < _PROCESS_STARTED_AT),
+    ]
+    if module:
+        conditions.append(TaskRecord.module == module)
+
+    async with db.session_scope(force_new=True):
+        result = await db.session.execute(
+            update(TaskRecord)
+            .where(*conditions)
+            .values(status="error", finished_at=datetime.now())
+        )
+        await db.session.commit()
+        count = result.rowcount or 0
+
+    if count:
+        logger.warning(
+            f"[任务记录] ♻️ 已回收 {count} 条进程中断遗留的 running 记录"
+            f"（{module or '全部模块'}）→ error"
+        )
+    return count
+
 
 async def start_task(task_id: str, module: str, name: str = None):
     async with db.session_scope(force_new=True):
