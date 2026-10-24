@@ -15,7 +15,8 @@ logger = logging.getLogger("TelegramBot")
 ITEMS_PER_PAGE = 10
 
 # 会话状态持久化文件（对话历史 + 工具模式设置，重启不丢）
-TG_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tg_bot_state.json")
+# 放 data/ 挂载卷内：容器重建不丢失、宿主机可见（与 config.json 同目录）
+TG_STATE_FILE = os.path.join("data", "tg_bot_state.json")
 
 
 class TelegramBot:
@@ -1179,6 +1180,7 @@ class TelegramBot:
                 "sessions": {str(k): v[-20:] for k, v in self._user_sessions.items()},
                 "settings": {str(k): v for k, v in self._chat_settings.items()},
             }
+            os.makedirs(os.path.dirname(TG_STATE_FILE) or ".", exist_ok=True)
             tmp = TG_STATE_FILE + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False)
