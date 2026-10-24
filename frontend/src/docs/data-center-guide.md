@@ -40,6 +40,18 @@
 | **rss_detect_tasks** | RSS 探测订阅任务（按 URL 定时探测并自动订阅） |
 | **bangumi_data_item** | Bangumi 数据条目（Bangumi ID 到 TMDB/MAL/AniList/AniDB 的映射，含完整原始数据） |
 | **bangumi_raw_cache** | Bangumi 原始 API 响应缓存（完结番剧的 Subject/Episodes/Characters 原始响应，永久缓存） |
+| **bgm_user_mark** | Bangumi 用户手动标记（季度番剧表"已整理"等） |
+| **tmdb_blocklist** | TMDB 主动屏蔽列表 |
+| **emby_media_index** | Emby 库索引（媒体库定时同步） |
+| **rapid_upload_retry** | CD2 秒传重试队列：秒传未命中的文件按间隔自动重试（整理管理-秒传管理） |
+| **cd2_dir_cache** | CD2 目录锁定快照缓存：锁定的目录浏览/扫描/生成走本地快照（0 API），解锁即删除 |
+| **custom_scheduled_jobs** | 自定义定时任务（任务计划页创建的 cron/间隔任务） |
+| **notification_records** | 通知中心发送记录（Telegram 等渠道的消息渲染留档） |
+| **webhook_events** | 联动记录中心（Webhook 事件台账：CD2 联动成败、重试记录，并引用 task_records 保存全链路日志） |
+| **chat_sessions** | AI 助手对话会话（消息历史与上下文快照，清空后聊天记录不可恢复） |
+| **skill_enabled_state** | AI 技能启用/禁用开关状态 |
+| **font_subset_history** | 字体子集化处理历史（整理任务随行字幕的字体抽条记录） |
+| **font_subtitle_jobs** | 字体管家任务队列（字幕检查/子集化任务的执行状态） |
 
 ### metadata Schema
 存放 100w+ 级别的全球元数据资产。
@@ -69,24 +81,24 @@ CREATE TABLE metadata.tmdb_deep_meta (
     title VARCHAR,             -- 官方最新标题
     custom_title VARCHAR,       -- [永久固定标题] 用户修正后固化
     original_title VARCHAR,      -- 原始标题
-    origin_country VARCHAR,      -- 制作国家
+    origin_country VARCHAR[],    -- 制作国家代码数组 (如 {JP,CN})
     original_language VARCHAR,   -- 原始语言
-    first_air_date VARCHAR,     -- 首播日期
-    last_air_date VARCHAR,      -- 最后更新日期
-    
+    first_air_date VARCHAR,     -- 首播/上映日期
+    last_air_date VARCHAR,      -- 最后更新日期（剧集）
+
     poster_path VARCHAR,        -- 海报路径
     overview TEXT,             -- 剧情简介
-    
-    genre_ids VARCHAR,         -- 流派 ID 列表 (逗号分隔)
-    company_ids VARCHAR,        -- 制作公司 ID 列表
-    keyword_ids VARCHAR,        -- 关键词 ID 列表
-    
-    alias_pool JSONB,          -- 别名池
-    title_pool JSONB,          -- 标题池
+
+    genre_ids INTEGER[],        -- 流派 ID 数组 (如 {16,10749})
+    company_ids INTEGER[],      -- 制作公司 ID 数组
+    keyword_ids INTEGER[],      -- 关键词 ID 数组
+
+    alias_pool JSONB,          -- 别名池（alternative_titles 原始列表）
+    title_pool JSONB,          -- 标题池（全部标题去重列表）
     full_data JSONB,           -- TMDB 完整档案 (JSONB)
     is_custom BOOLEAN,          -- 用户修正保护标记
     updated_at TIMESTAMP,        -- 更新时间
-    
+
     PRIMARY KEY (tmdb_id, media_type)
 );
 ```
@@ -101,9 +113,10 @@ CREATE TABLE metadata.tmdb_deep_meta (
 | `full_data` | JSONB | 完整档案：存储 TMDB 的演职员、评分、高清海报等全部数据 |
 | `poster_path` | VARCHAR | 海报路径：用于前端展示和 Telegram 通知 |
 | `overview` | TEXT | 剧情简介：支持离线查看 |
-| `genre_ids` | VARCHAR | 流派 ID：逗号分隔的字符串，如 "16,10749" |
-| `company_ids` | VARCHAR | 制作公司 ID：用于二级分类规则匹配 |
-| `keyword_ids` | VARCHAR | 关键词 ID：用于标题匹配增强 |
+| `genre_ids` | INTEGER[] | 流派 ID：整数数组，如 `{16,10749}`，用于二级分类规则匹配 |
+| `company_ids` | INTEGER[] | 制作公司 ID：整数数组，用于二级分类规则匹配 |
+| `keyword_ids` | INTEGER[] | 关键词 ID：整数数组，用于标题匹配增强 |
+| `origin_country` | VARCHAR[] | 制作国家代码数组：同时作为二级分类"原始国家"条件的匹配对象 |
 
 #### 索引表：media_title_index
 
@@ -116,19 +129,18 @@ CREATE TABLE metadata.media_title_index (
     year VARCHAR,               -- 年份
     tmdb_id VARCHAR,           -- 关联 TMDB ID
     media_type VARCHAR,          -- 媒体类型
-    source VARCHAR,              -- 数据来源 (tmdb, sytmdb, user)
-    
-    INDEX (title),              -- 精确匹配索引
-    INDEX (year),
-    INDEX (tmdb_id),
-    INDEX (media_type)
+    source VARCHAR              -- 数据来源 (primary / original / translation / alias)
 );
+CREATE INDEX ON metadata.media_title_index (title);
+CREATE INDEX ON metadata.media_title_index (year);
+CREATE INDEX ON metadata.media_title_index (tmdb_id);
+CREATE INDEX ON metadata.media_title_index (media_type);
 ```
 
 **匹配策略：**
-1. **精确匹配**：优先尝试完全匹配标题和年份
-2. **模糊匹配**：使用 `pg_trgm` 的 `%` 操作符进行相似度搜索
-3. **评分算法**：多重结果时，动漫优先权重 + 相似度排序
+1. **精确匹配**：优先尝试完全匹配标题（可叠加年份、媒体类型条件）
+2. **模糊匹配**：使用 `pg_trgm` 的 `%` 操作符进行相似度搜索，按 `similarity()` 从高到低排序，限制候选 10 条
+3. **评分算法**：多重结果时，动漫优先权重 + 来源可靠度权重（见 TmdbFullMatcher）
 
 #### 参考表：标准化标签库
 
@@ -160,37 +172,46 @@ CREATE TABLE metadata.media_title_index (
 ```
 输入: 标题 + 年份 + 类型
   ↓
-1. 精确匹配 (media_title_index)
+1. 精确匹配 (media_title_index，可叠加年份/类型条件)
   ↓ (失败)
-2. 模糊匹配 (pg_trgm % 操作符)
+2. 模糊匹配 (pg_trgm % 操作符，按 similarity() 降序，限候选 10 条)
   ↓
 3. 多重结果评分算法
-  - 动漫优先权重 (+100)
-  - 相似度排序
-  - 年份匹配验证
+  - 动漫优先权重：流派含 16（动画）+100
+  - 日漫加权：原始语言为 ja 再 +50
+  - 来源可靠度：primary(30) > original(25) > translation(20) > alias(10)
   ↓
-4. 返回最佳匹配结果
+4. 按最佳候选回 tmdb_deep_meta 主表补全深层字段
+  （标题取 custom_title > title，固定名优先）
+  ↓
+5. 返回标准识别结果（source 标记为 offline_cache）
 ```
 
 **性能优化：**
-- 使用联合查询减少数据库往返
-- 限制候选数量防止性能抖动
+- 索引表与主表联合查询，减少数据库往返
+- 模糊匹配限制候选数量防止性能抖动
 - 支持动漫优先模式
 
 ### 2. TmdbFullClassifier - 二级分类处理器
 
-**职责：** 根据元数据特征计算二级分类路径
+**职责：** 根据元数据特征计算二级分类路径。同一套特征构建口径（`build_features`）也被 TMDB 屏蔽条目的"档案条件"复用，两边判定语义完全一致。
 
-**支持的匹配规则：**
-- `genre_ids`: 流派匹配 (如 "16" 代表动漫)
-- `company_ids`: 制作公司匹配
-- `keyword_ids`: 关键词匹配
-- `origin_country`: 制作国家匹配
-- `original_language`: 原始语言匹配
+**支持的匹配规则（criteria）：** 字段之间为 **与** 关系（填写的字段须全部满足才命中）；未填写的字段不参与判定。除 `year`/`title` 外，值支持逗号分隔多个，**命中任一即算满足**。
+
+| 字段 | 界面名称 | 匹配对象 | 判定方式 |
+|------|---------|---------|---------|
+| `genre_ids` | 流派 | 作品流派 ID | 条件值与作品流派 ID 集合**有交集**即命中（如 "16" 代表动漫） |
+| `company_ids` | 制作公司 | 制作公司 ID | 同上，集合交集 |
+| `keyword_ids` | 关键词 | 关键词 ID | 同上，集合交集 |
+| `origin_country` | 原始国家 | 国家/地区 | 集合交集；作品国家集合同时含代码（JP、CN）与 `full_data` 里的中文国家名（日本），两种写法都可作为条件值 |
+| `original_language` | 原始语言 | 原始语言代码 | **精确匹配**（如 ja、en），多值逗号分隔命中任一 |
+| `year` | 年份/范围 | 开播/上映年份 | 单值（`2024`）须精确相等；区间（`2020-2024`）按闭区间包含判断 |
+| `title` | 名称匹配 | 档案标题 | 多个关键词逗号分隔，**任一关键词以子串形式**出现在标题中即命中（忽略大小写）。标题取值优先级：`custom_title` > `title` > `name` |
 
 **智能字段提取：**
 - 自动兼容新旧字段名 (如 `genre_ids` vs `genres`)
-- 从 `full_data` JSONB 中提取中文国家名
+- 年份取 `first_air_date` / `release_date` 前 4 位
+- 从 `full_data` JSONB 中提取中文国家名并入国家集合
 - 支持列表和字符串两种格式
 
 **示例规则：**
@@ -201,18 +222,29 @@ CREATE TABLE metadata.media_title_index (
   "enabled": true,
   "criteria": {
     "genre_ids": "16",
-    "origin_country": "JP"
+    "origin_country": "JP",
+    "year": "2020-2026",
+    "title": "LIVE,演唱会"
   }
 }
 ```
+上例含义：流派含动漫 **且** 国家为日本 **且** 年份在 2020-2026 间 **且** 标题带 "LIVE" 或 "演唱会"（忽略大小写）的作品才命中。
 
 ### 3. TmdbFullIngestor - 数据抓取入库
 
-**职责：** 从 TMDB API 抓取数据并存入本地数据库
+**职责：** 从 TMDB API 抓取数据、格式化脱水后原子化写入数据库
 
-**智能更新策略：**
-- 检测空壳记录：只存在 ID 但无流派信息的记录
-- 避免重复抓取：流派信息完整时跳过
+**抓取：** 请求 `/3/{movie|tv}/{id}`，`language=zh-CN`，`append_to_response=alternative_titles,keywords,translations,credits`，支持按代理设置走代理。
+
+**脱水入库（save_to_db）：**
+- **华语优先**：标题/简介按 简中(CN) > 新加坡(SG) > 香港(HK) > 台湾(TW) > 默认 > 原始 的优先级挑选；原产地为中国大陆且原始语言为中文时直接用原始名称（通常是简体中文）
+- **永久名称锁定**：库中已有 `custom_title` 则继承不覆盖；没有则以本次标题固化。`is_custom` 默认开启锁定
+- **索引表重建**：`media_title_index` 按该 ID 先清空再批量插入，标题按来源分级 primary（主标题）/ original（原名）/ translation（翻译）/ alias（别名）
+- **参考表维护**：`ref_genres` / `ref_companies` / `ref_keywords` 以 ON CONFLICT DO UPDATE 批量 Upsert
+
+**智能更新策略（TmdbMateFullManager.fetch_and_ingest）：**
+- 检测空壳记录：只存在 ID 但无流派信息的记录，自动激活全量同步
+- 避免重复抓取：记录存在且流派信息完整时跳过
 - 保留用户修正：`custom_title` 和 `is_custom` 字段永不覆盖
 
 ### 4. TmdbFullBrowser - 数据浏览导出
@@ -220,9 +252,10 @@ CREATE TABLE metadata.media_title_index (
 **职责：** 提供数据浏览、搜索和导出功能
 
 **功能：**
-- 分页浏览：支持分页查询元数据
-- 全量导出：导出为字典格式
-- 模糊搜索：基于标题的快速搜索
+- 分页浏览：按 `updated_at` 倒序分页查询元数据
+- 全字段搜索：标题 / 原始标题 / 固定标题 / TMDB ID / 原始语言 模糊匹配，并反查流派、公司、关键词参考表（搜"动画"能命中流派含动画的条目）
+- 名称解析：浏览结果中的流派/公司/关键词 ID 自动解析为中文名称，`custom_title` 存在时以固定标题展示并标记 manual
+- 字典导出：导出流派 / 公司 / 关键词全量字典，以及库内已有的语言与国家列表（供二级分类规则填写条件值参考）
 
 ### 5. BangumiRawCache - 完结番剧原始响应缓存
 
@@ -286,7 +319,7 @@ TmdbFullMatcher.resolve()
 
 **手动修正标题后永久生效：**
 ```
-1. 首次入库: title="天穗之咲稻姬", custom_title=null
+1. 首次入库: title="天穗之咲稻姬", custom_title="天穗之咲稻姬"（首见即固化）
 2. 用户修正: custom_title="天穗之咲稻姬 (2024)", is_custom=true
 3. TMDB 更新: title="Sakuna: Rice and Ruin", custom_title 保持不变 ✅
 ```
@@ -296,9 +329,9 @@ TmdbFullMatcher.resolve()
 **自动计算分类路径：**
 ```
 元数据: {
-  "genre_ids": "16,10749",
-  "origin_country": "JP",
-  "company_ids": "141300"
+  "genre_ids": [16, 10749],
+  "origin_country": ["JP"],
+  "company_ids": [141300]
 }
   ↓
 TmdbFullClassifier.calculate()
@@ -321,7 +354,7 @@ TmdbFullClassifier.calculate()
 ### 2. 规则验证
 
 如果发现二级分类规则未生效：
-1. 在"数据中心浏览"中确认该条目的资料是否已固化
+1. 在数据中心页面的「元数据资产」标签中搜索该条目，确认资料是否已固化入库
 2. 检查 `genre_ids`、`company_ids` 等字段是否有值
 3. 验证规则的 `criteria` 配置是否正确
 
