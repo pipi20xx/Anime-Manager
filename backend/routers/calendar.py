@@ -7,7 +7,7 @@ from recognition.data_provider.tmdb.client import TMDBProvider
 from datetime import datetime
 import json
 
-router = APIRouter(prefix="/api/calendar", tags=["Watch Calendar"])
+router = APIRouter(prefix="/api/calendar", tags=["追番日历"])
 
 @router.get("/subjects", summary="获取日历追踪列表")
 async def get_subjects():

@@ -689,8 +689,11 @@ function truncateHash(hash: string | undefined, len = 20): string {
 }
 
 // vue-tsc 3.3.13 对 v-chip :href 表达式内引用 v-for 变量存在作用域 bug，链接改为函数生成
+// 档案里 media_type 可能存中文（电影/剧集）或英文（movie/tv），统一归一为 TMDB 路径段
 function tmdbLink(item: any): string {
-  return `https://www.themoviedb.org/${item.media_type || 'tv'}/${item.tmdb_id}`
+  const raw = String(item.media_type || '')
+  const type = raw.includes('影') || raw.toLowerCase() === 'movie' ? 'movie' : 'tv'
+  return `https://www.themoviedb.org/${type}/${item.tmdb_id}`
 }
 
 function formatDate(dateStr: string | undefined): string {

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/assistant", tags=["Assistant"])
+router = APIRouter(prefix="/api/assistant", tags=["AI 助手"])
 
 def _get_skills_dir() -> str:
     possible_paths = [
@@ -148,11 +148,11 @@ def save_assistant_config(new_config: Dict):
     current_config["assistant_config"].update(new_config)
     ConfigManager.update_config({"assistant_config": current_config["assistant_config"]})
 
-@router.get("/config")
+@router.get("/config", summary="读取 AI 助手配置")
 async def get_config():
     return get_assistant_config()
 
-@router.post("/config")
+@router.post("/config", summary="保存 AI 助手配置")
 async def update_config(config: ConfigUpdate):
     config_dict = config.dict(exclude_none=True)
     save_assistant_config(config_dict)
@@ -265,7 +265,7 @@ async def clear_model_capabilities():
     removed = llm_capabilities.clear_cached()
     return {"success": True, "removed": removed}
 
-@router.post("/chat")
+@router.post("/chat", summary="AI 对话（支持流式）")
 async def chat(request: ChatRequest):
     init_assistant()
 
@@ -492,7 +492,7 @@ async def _agent_chat_stream(messages: List[Dict], config: Dict, skill_id: Optio
         }
     )
 
-@router.get("/tools")
+@router.get("/tools", summary="获取工具列表")
 async def list_tools():
     init_assistant()
     
@@ -517,7 +517,7 @@ async def list_tools():
     
     return tools
 
-@router.get("/tools/categories")
+@router.get("/tools/categories", summary="获取工具分类列表")
 async def list_tool_categories():
     init_assistant()
     
@@ -532,7 +532,7 @@ async def list_tool_categories():
     
     return categories
 
-@router.get("/skills")
+@router.get("/skills", summary="获取技能列表")
 async def list_skills():
     init_assistant()
     
@@ -544,7 +544,7 @@ async def list_skills():
     
     return skills
 
-@router.get("/skills/{skill_id}")
+@router.get("/skills/{skill_id}", summary="获取技能详情")
 async def get_skill(skill_id: str):
     init_assistant()
     
@@ -556,7 +556,7 @@ async def get_skill(skill_id: str):
     
     return skill.to_dict(include_content=True)
 
-@router.put("/skills/{skill_id}/enabled")
+@router.put("/skills/{skill_id}/enabled", summary="启用或禁用技能")
 async def set_skill_enabled(skill_id: str, request: Request):
     """启用或禁用技能"""
     init_assistant()
@@ -574,7 +574,7 @@ async def set_skill_enabled(skill_id: str, request: Request):
     
     return {"success": True, "message": f"技能已{'启用' if enabled else '禁用'}"}
 
-@router.post("/skills/reload")
+@router.post("/skills/reload", summary="重新加载所有技能（从文件系统）")
 async def reload_skills():
     """重新加载所有技能（从文件系统）"""
     init_assistant()
@@ -589,7 +589,7 @@ async def reload_skills():
         "count": len(SkillEngine.list_skills())
     }
 
-@router.post("/skills/{skill_id}/execute")
+@router.post("/skills/{skill_id}/execute", summary="执行技能")
 async def execute_skill(skill_id: str, request: Request):
     init_assistant()
     
@@ -626,7 +626,7 @@ async def execute_skill(skill_id: str, request: Request):
         "events": events
     }
 
-@router.post("/tools/{tool_name}/execute")
+@router.post("/tools/{tool_name}/execute", summary="执行工具")
 async def execute_tool_directly(tool_name: str, request: Request):
     init_assistant()
 
@@ -653,7 +653,7 @@ async def execute_tool_directly(tool_name: str, request: Request):
 
 # ==================== 对话会话存储 ====================
 
-@router.get("/sessions")
+@router.get("/sessions", summary="会话列表（按更新时间倒序）")
 async def list_chat_sessions():
     """会话列表（按更新时间倒序）"""
     from assistant import chat_store
@@ -661,7 +661,7 @@ async def list_chat_sessions():
     return await chat_store.list_sessions()
 
 
-@router.get("/sessions/{session_id}")
+@router.get("/sessions/{session_id}", summary="获取会话详情")
 async def get_chat_session(session_id: str):
     from assistant import chat_store
 
@@ -671,7 +671,7 @@ async def get_chat_session(session_id: str):
     return data
 
 
-@router.put("/sessions/{session_id}")
+@router.put("/sessions/{session_id}", summary="保存会话（消息由前端维护，服务端只做存取与体积控制）")
 async def save_chat_session(session_id: str, request: Request):
     """保存会话（消息由前端维护，服务端只做存取与体积控制）"""
     from assistant import chat_store
@@ -690,7 +690,7 @@ async def save_chat_session(session_id: str, request: Request):
     return {"success": True, "session": meta}
 
 
-@router.delete("/sessions/{session_id}")
+@router.delete("/sessions/{session_id}", summary="删除会话")
 async def delete_chat_session(session_id: str):
     from assistant import chat_store
 

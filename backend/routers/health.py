@@ -14,17 +14,17 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/health", tags=["health"])
+router = APIRouter(prefix="/api/health", tags=["健康检查"])
 
-@router.get("/configs", response_model=List[HealthCheckConfig])
+@router.get("/configs", response_model=List[HealthCheckConfig], summary="获取健康检查配置列表")
 async def get_health_configs(session=Depends(get_session)):
     return await db.all(HealthCheckConfig)
 
-@router.post("/configs", response_model=HealthCheckConfig)
+@router.post("/configs", response_model=HealthCheckConfig, summary="新增健康检查配置")
 async def create_health_config(config: HealthCheckConfig, session=Depends(get_session)):
     return await db.save(config)
 
-@router.put("/configs/{config_id}", response_model=HealthCheckConfig)
+@router.put("/configs/{config_id}", response_model=HealthCheckConfig, summary="更新健康检查配置")
 async def update_health_config(config_id: int, config_data: HealthCheckConfig, session=Depends(get_session)):
     db_config = await db.get(HealthCheckConfig, config_id)
     if not db_config:
@@ -37,7 +37,7 @@ async def update_health_config(config_id: int, config_data: HealthCheckConfig, s
     
     return await db.save(db_config)
 
-@router.delete("/configs/{config_id}")
+@router.delete("/configs/{config_id}", summary="删除健康检查配置")
 async def delete_health_config(config_id: int, session=Depends(get_session)):
     db_config = await db.get(HealthCheckConfig, config_id)
     if not db_config:
@@ -176,12 +176,12 @@ async def run_single_check(config_id: int):
                 config.name, status, config.file_path
             )
 
-@router.post("/check/{config_id}")
+@router.post("/check/{config_id}", summary="立即执行单条配置巡检")
 async def trigger_health_check(config_id: int, background_tasks: BackgroundTasks, session=Depends(get_session)):
     background_tasks.add_task(run_single_check, config_id)
     return {"status": "triggered"}
 
-@router.post("/check_all")
+@router.post("/check_all", summary="立即执行全部配置巡检")
 async def trigger_all_health_checks(background_tasks: BackgroundTasks, session=Depends(get_session)):
     configs = await db.all(HealthCheckConfig, select(HealthCheckConfig).where(HealthCheckConfig.enabled == True))
     for config in configs:

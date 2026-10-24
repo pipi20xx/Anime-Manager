@@ -18,7 +18,7 @@ import uuid
 import re
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+router = APIRouter(prefix="/api/auth", tags=["认证与登录"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False)
 

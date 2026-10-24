@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, Response
 from config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/appearance", tags=["appearance"])
+router = APIRouter(prefix="/api/appearance", tags=["外观与壁纸"])
 
 APPEARANCE_DIR = os.path.join("data", "appearance")
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
@@ -25,14 +25,14 @@ def _ensure_dir():
     os.makedirs(APPEARANCE_DIR, exist_ok=True)
 
 
-@router.get("/config")
+@router.get("/config", summary="获取外观配置")
 async def get_appearance_config():
     """获取外观配置"""
     config = ConfigManager.get_config()
     return config.get("appearance", {})
 
 
-@router.put("/config")
+@router.put("/config", summary="更新外观配置（合并写入）")
 async def update_appearance_config(payload: dict):
     """更新外观配置（合并写入）"""
     current_config = ConfigManager.get_config()
@@ -58,7 +58,7 @@ async def update_appearance_config(payload: dict):
     return {"success": True, "appearance": merged}
 
 
-@router.post("/upload")
+@router.post("/upload", summary="上传背景图片")
 async def upload_image(file: UploadFile = File(...)):
     """上传背景图片"""
     await asyncio.to_thread(_ensure_dir)
@@ -86,7 +86,7 @@ async def upload_image(file: UploadFile = File(...)):
     return {"success": True, "filename": filename}
 
 
-@router.get("/image/{filename}")
+@router.get("/image/{filename}", summary="读取背景图片")
 async def get_image(filename: str):
     """读取背景图片"""
     filepath = os.path.join(APPEARANCE_DIR, filename)
@@ -95,7 +95,7 @@ async def get_image(filename: str):
     return FileResponse(filepath)
 
 
-@router.delete("/image/{filename}")
+@router.delete("/image/{filename}", summary="删除背景图片")
 async def delete_image(filename: str):
     """删除背景图片"""
     filepath = os.path.join(APPEARANCE_DIR, filename)
@@ -149,7 +149,7 @@ async def delete_image(filename: str):
     return {"success": True}
 
 
-@router.get("/images")
+@router.get("/images", summary="列出所有已上传的背景图片")
 async def list_images():
     """列出所有已上传的背景图片"""
     await asyncio.to_thread(_ensure_dir)
@@ -311,19 +311,19 @@ def _resolve_wallpaper_target_url() -> str:
     return "https://www.loliapi.com/acg/pc/"
 
 
-@router.get("/wallpaper/sources")
+@router.get("/wallpaper/sources", summary="获取可用的壁纸 API 源列表")
 async def get_wallpaper_sources():
     """获取可用的壁纸 API 源列表"""
     return {"sources": WALLPAPER_API_SOURCES}
 
 
-@router.get("/wallpaper/config")
+@router.get("/wallpaper/config", summary="获取当前壁纸配置")
 async def get_wallpaper_config():
     """获取当前壁纸配置"""
     return _get_wallpaper_config()
 
 
-@router.put("/wallpaper/config")
+@router.put("/wallpaper/config", summary="更新壁纸配置")
 async def update_wallpaper_config(payload: dict):
     """更新壁纸配置"""
     current = _get_wallpaper_config()
@@ -335,7 +335,7 @@ async def update_wallpaper_config(payload: dict):
     return {"success": True, "config": current}
 
 
-@router.get("/wallpaper/uploads")
+@router.get("/wallpaper/uploads", summary="列出所有已上传的壁纸图片（data/wallpaper 目录）")
 async def list_wallpaper_uploads():
     """列出所有已上传的壁纸图片（data/wallpaper 目录）"""
     wallpaper_dir = os.path.join("data", "wallpaper")
@@ -357,7 +357,7 @@ async def list_wallpaper_uploads():
     return await asyncio.to_thread(_list)
 
 
-@router.get("/wallpaper/uploads/{filename}")
+@router.get("/wallpaper/uploads/{filename}", summary="读取已上传的壁纸图片")
 async def get_wallpaper_upload(filename: str):
     """读取已上传的壁纸图片"""
     wallpaper_dir = os.path.join("data", "wallpaper")
@@ -384,7 +384,7 @@ async def get_wallpaper_upload(filename: str):
     )
 
 
-@router.post("/wallpaper/upload")
+@router.post("/wallpaper/upload", summary="上传壁纸图片到 data/wallpaper 目录")
 async def upload_wallpaper(file: UploadFile = File(...)):
     """上传壁纸图片到 data/wallpaper 目录"""
     wallpaper_dir = os.path.join("data", "wallpaper")
@@ -410,7 +410,7 @@ async def upload_wallpaper(file: UploadFile = File(...)):
     return {"success": True, "filename": filename}
 
 
-@router.delete("/wallpaper/uploads/{filename}")
+@router.delete("/wallpaper/uploads/{filename}", summary="删除已上传的壁纸图片")
 async def delete_wallpaper_upload(filename: str):
     """删除已上传的壁纸图片"""
     wallpaper_dir = os.path.join("data", "wallpaper")
@@ -430,7 +430,7 @@ async def delete_wallpaper_upload(filename: str):
     return {"success": True}
 
 
-@router.get("/wallpaper_proxy")
+@router.get("/wallpaper_proxy", summary="代理壁纸图片（解决 WebGL CORS）")
 async def proxy_wallpaper(
     url: str = Query("", description="要代理的壁纸 URL，为空时使用配置中的壁纸源"),
     refresh: bool = Query(False, description="强制刷新（跳过缓存），用于随机壁纸 API"),

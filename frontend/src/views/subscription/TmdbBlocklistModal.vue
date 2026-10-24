@@ -206,7 +206,7 @@ async function removeBlockItem(id: number) {
 
         <v-row v-else-if="blocklist.length > 0" density="compact">
           <v-col v-for="item in blocklist" :key="item.id" cols="12" sm="6">
-            <v-card class="glass-card manage-card">
+            <v-card class="glass-card manage-card hover-lift cursor-pointer" @click="openEdit(item)">
               <!-- 标题行 -->
               <div class="manage-card__header">
                 <div class="d-flex align-center ga-2 manage-card__title">
@@ -238,8 +238,7 @@ async function removeBlockItem(id: number) {
               <v-divider />
               <v-card-actions class="manage-card__actions">
                 <v-spacer />
-                <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-pencil-outline" @click="openEdit(item)">编辑</v-btn>
-                <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="removeBlockItem(item.id)">删除</v-btn>
+                <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="removeBlockItem(item.id)">删除</v-btn>
               </v-card-actions>
             </v-card>
           </v-col>
