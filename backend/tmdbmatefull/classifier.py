@@ -10,10 +10,19 @@ class TmdbFullClassifier:
     """
 
     @staticmethod
-    async def calculate_with_data(tmdb_id: str, media_type: str, secondary_rules: List[Dict[str, Any]], data: Dict[str, Any]) -> str:
-        if not data or not secondary_rules:
-            return ""
-        
+    def empty_features() -> Dict[str, Any]:
+        """空特征模板：档案缺失/未命中时使用，保证 _check_rule_match 键齐全、按不匹配处理。"""
+        return {
+            "title": "", "genres": set(), "companies": set(), "keywords": set(),
+            "lang": None, "countries": set(), "year": "",
+        }
+
+    @staticmethod
+    def build_features(data: Dict[str, Any]) -> Dict[str, Any]:
+        """从档案数据构建分类特征（流派/公司/关键词/国家/语言/年份/标题）。
+
+        二级分类计算与 TMDB 屏蔽的档案级条件共用此口径，保证语义一致。
+        """
         # 核心增强：全方位提取特征
         def _to_set(val):
             if not val: return set()
@@ -44,7 +53,7 @@ class TmdbFullClassifier:
             "countries": _to_set(_get_field(["origin_country", "original_country"])),
             "year": str(_get_field(["first_air_date", "release_date", "year"]) or "")[:4]
         }
-        
+
         # 额外加权：从 full_data 提取中文国家名（如：日本）
         if data.get("full_data") and isinstance(data["full_data"], dict):
             fd = data["full_data"]
@@ -54,6 +63,15 @@ class TmdbFullClassifier:
                 for pc in pcs:
                     if isinstance(pc, dict) and pc.get("name"):
                         meta_feat["countries"].add(pc["name"])
+
+        return meta_feat
+
+    @staticmethod
+    async def calculate_with_data(tmdb_id: str, media_type: str, secondary_rules: List[Dict[str, Any]], data: Dict[str, Any]) -> str:
+        if not data or not secondary_rules:
+            return ""
+
+        meta_feat = TmdbFullClassifier.build_features(data)
 
         matched_names = []
         for rule in secondary_rules:

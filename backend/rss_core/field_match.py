@@ -50,6 +50,13 @@ FIELD_MATCH_STRATEGY = {
     "audio_encode": "token",
 }
 
+# 档案级条件键（作品级属性，来自 TMDB 深度档案，语义同二级分类规则 criteria）。
+# 不参与资源规格匹配（check_conditions），由 TmdbFullClassifier._check_rule_match 评估。
+ARCHIVE_CONDITION_KEYS = {
+    "genre_ids", "company_ids", "keyword_ids",
+    "origin_country", "original_language", "year", "title",
+}
+
 
 def rule_targets(rule_val: str) -> list:
     return [t.strip() for t in rule_val.split(',') if t.strip()]

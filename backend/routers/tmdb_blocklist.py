@@ -5,20 +5,21 @@ from sqlmodel import select
 from models import TmdbBlocklist
 from database import db
 from logger import log_audit
-from rss_core.field_match import FIELD_MATCH_STRATEGY
+from rss_core.field_match import FIELD_MATCH_STRATEGY, ARCHIVE_CONDITION_KEYS
 from tmdbmatefull.models import TmdbDeepMeta
 
 router = APIRouter(tags=["TMDB屏蔽列表"])
 
 
 def _sanitize_conditions(conditions: Any) -> Dict[str, str]:
-    """只保留 field_match 支持的规格字段，剔除空白值；全部为空则返回空 dict。"""
+    """只保留 field_match 支持的规格字段与档案级条件键（同二级分类规则 criteria），剔除空白值；全部为空则返回空 dict。"""
     if not isinstance(conditions, dict):
         return {}
+    allowed = set(FIELD_MATCH_STRATEGY) | ARCHIVE_CONDITION_KEYS
     cleaned = {
         k: str(v).strip()
         for k, v in conditions.items()
-        if k in FIELD_MATCH_STRATEGY and str(v or "").strip()
+        if k in allowed and str(v or "").strip()
     }
     return cleaned
 

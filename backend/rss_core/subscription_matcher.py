@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from sqlmodel import select, and_
 from models import Subscription, Rule, FeedItem, DownloadHistory, Feed, FilterRule, QualityProfile, SubscribedEpisode
 from recognition.recognizer import MovieRecognizer
-from rss_core.field_match import check_conditions
+from rss_core.field_match import check_conditions, ARCHIVE_CONDITION_KEYS
 from config_manager import ConfigManager
 from rss_core.subscription_manager import SubscriptionManager
 from rss_core.manager import RssManager
@@ -94,25 +94,81 @@ class SubscriptionMatcher:
         return block_map, global_blocks
 
     @staticmethod
+    def blocklist_needs_archive(block_map: Dict[Tuple[str, str], Dict[str, Any]],
+                                global_blocks: List[Dict[str, Any]]) -> bool:
+        """是否有屏蔽条目使用档案级条件（流派/公司/关键词等，见 ARCHIVE_CONDITION_KEYS）"""
+        entries = list(block_map.values()) + list(global_blocks or [])
+        return any(
+            any(k in ARCHIVE_CONDITION_KEYS for k in (e.get("conditions") or {}))
+            for e in entries
+        )
+
+    @staticmethod
+    async def resolve_archive_features(tmdb_id: str, media_type: str,
+                                       cache: Dict[Tuple[str, str], Dict[str, Any]]) -> Dict[str, Any]:
+        """按 TMDB ID + 类型查数据中心档案，构建分类特征（流派/公司/关键词/国家/语言/年份/标题）。
+
+        与二级分类规则同一套特征口径（TmdbFullClassifier），保证语义一致；
+        无档案返回空 dict，档案条件按"特征缺失不匹配"处理。
+        """
+        key = (str(tmdb_id), media_type)
+        if key in cache:
+            return cache[key]
+        feats: Dict[str, Any] = {}
+        try:
+            from tmdbmatefull.models import TmdbDeepMeta
+            from tmdbmatefull.classifier import TmdbFullClassifier
+            async with db.session_scope():
+                meta_row = await db.get(TmdbDeepMeta, key)
+            if meta_row:
+                feats = TmdbFullClassifier.build_features(meta_row.model_dump()) or {}
+        except Exception as e:
+            logger.warning(f"[屏蔽匹配] 档案特征解析失败 (tmdb_id={tmdb_id}): {e}")
+        cache[key] = feats or TmdbFullClassifier.empty_features()
+        return cache[key]
+
+    @staticmethod
+    def _entry_conditions_met(entry: Dict[str, Any], meta: Dict[str, Any]) -> bool:
+        """
+        屏蔽条目条件评估，按两级分流：
+        - 资源规格键（team/resolution 等 8 项）走 field_match.check_conditions；
+        - 档案级键（genre_ids/company_ids/keyword_ids/origin_country/original_language/year/title，
+          同二级分类规则 criteria 语义）走 TmdbFullClassifier._check_rule_match，
+          对 meta["_archive"]（作品档案特征，由 resolve_archive_features 注入）评估。
+        """
+        conditions = entry.get("conditions") or {}
+        spec = {k: v for k, v in conditions.items() if k not in ARCHIVE_CONDITION_KEYS}
+        if spec and not check_conditions(spec, meta or {}):
+            return False
+        archive = {k: v for k, v in conditions.items() if k in ARCHIVE_CONDITION_KEYS}
+        if archive:
+            from tmdbmatefull.classifier import TmdbFullClassifier
+            # 档案特征缺失时用空模板兜底（按"不匹配"处理），避免缺键异常
+            feats = (meta or {}).get("_archive") or TmdbFullClassifier.empty_features()
+            if not TmdbFullClassifier._check_rule_match(archive, feats):
+                return False
+        return True
+
+    @staticmethod
     def match_tmdb_block(block_map: Dict[Tuple[str, str], Dict[str, Any]],
                          global_blocks: List[Dict[str, Any]],
                          tmdb_id: Optional[str], media_type: str, meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         查找命中的屏蔽条目。优先查精确表（锚定作品）；未命中再过全局条件表
         （tmdb_id 留空的条目，media_type=all 时对剧集/电影都生效）。
-        带 conditions 的条目走 field_match 统一匹配，条件不满足视为未命中。
+        带 conditions 的条目按 _entry_conditions_met 分流匹配，条件不满足视为未命中。
         """
         if tmdb_id:
             entry = block_map.get((str(tmdb_id), media_type))
             if entry:
                 conditions = entry.get("conditions") or {}
-                if not conditions or check_conditions(conditions, meta or {}):
+                if not conditions or SubscriptionMatcher._entry_conditions_met(entry, meta):
                     return entry
         for entry in global_blocks or []:
             if entry.get("media_type") not in (None, "", "all", media_type):
                 continue
             conditions = entry.get("conditions") or {}
-            if conditions and check_conditions(conditions, meta or {}):
+            if conditions and SubscriptionMatcher._entry_conditions_met(entry, meta):
                 return entry
         return None
 
@@ -211,6 +267,9 @@ class SubscriptionMatcher:
         feeds_cache = {}
         # 屏蔽列表整轮载入一次（全局，不受订阅源开关控制）
         block_map, global_blocks = await SubscriptionMatcher.load_tmdb_block_map()
+        # 档案级条件：轮内档案特征缓存（无条目用到时零开销）
+        need_archive = SubscriptionMatcher.blocklist_needs_archive(block_map, global_blocks)
+        archive_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
         recognized_count = 0
 
         for entry in entries:
@@ -306,8 +365,14 @@ class SubscriptionMatcher:
                     if final_result.get("tmdb_id"):
                         _block_type = final_result.get("category")
                         _block_media = "tv" if _block_type == "剧集" else "movie"
+                        # 档案特征挂在匹配专用副本上，避免随 final_result 流入持久化
+                        _block_meta = dict(final_result)
+                        if need_archive:
+                            _block_meta["_archive"] = await SubscriptionMatcher.resolve_archive_features(
+                                str(final_result.get("tmdb_id")), _block_media, archive_cache
+                            )
                         _block_entry = SubscriptionMatcher.match_tmdb_block(
-                            block_map, global_blocks, final_result.get("tmdb_id"), _block_media, final_result
+                            block_map, global_blocks, final_result.get("tmdb_id"), _block_media, _block_meta
                         )
                         if _block_entry:
                             _tmdb_blocked = True
@@ -442,6 +507,9 @@ class SubscriptionMatcher:
 
         # 屏蔽列表整轮载入一次，用于回溯拦截"识别之后才加入屏蔽"的条目
         block_map, global_blocks = await SubscriptionMatcher.load_tmdb_block_map()
+        # 档案级条件：轮内档案特征缓存（无条目用到时零开销）
+        need_archive = SubscriptionMatcher.blocklist_needs_archive(block_map, global_blocks)
+        archive_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
         rules_map = {}
         profiles_map = {}
@@ -507,6 +575,10 @@ class SubscriptionMatcher:
             # TMDB 屏蔽回溯检查：识别阶段后才加入屏蔽的条目在这里补拦。
             # 新识别条目已在 recognize_items 阶段写过 TmdbBlocked 历史，
             # 会被上方 is_downloaded 拦下，通常不会走到这里。
+            if need_archive:
+                item_data["_archive"] = await SubscriptionMatcher.resolve_archive_features(
+                    str(db_item.tmdb_id), db_item.media_type, archive_cache
+                )
             _block_entry = SubscriptionMatcher.match_tmdb_block(
                 block_map, global_blocks, str(db_item.tmdb_id), db_item.media_type, item_data
             )

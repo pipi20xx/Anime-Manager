@@ -15,3 +15,4 @@ export { default as FieldConditionSelect } from './FieldConditionSelect.vue'
 export { default as EmptyState } from "./EmptyState.vue"
 export { default as DialogTitle } from "./DialogTitle.vue"
 export { default as SectionHeader } from "./SectionHeader.vue"
+export { default as ArchiveCriteriaFields } from './ArchiveCriteriaFields.vue'

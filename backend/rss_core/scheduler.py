@@ -6,7 +6,7 @@ import httpx
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple, Any
 from sqlmodel import select, delete
 from database import db
 from models import Feed, FeedItem, Rule, DownloadHistory, Blacklist, SubscribedEpisode
@@ -184,6 +184,9 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
         skipped_count = 0
         # TMDB 屏蔽列表整轮载入一次（列表为空时无额外开销）
         block_map, global_blocks = await SubscriptionMatcher.load_tmdb_block_map()
+        # 档案级条件：轮内档案特征缓存（无条目用到时零开销）
+        need_archive = SubscriptionMatcher.blocklist_needs_archive(block_map, global_blocks)
+        archive_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
         for entry in check_list:
             guid = entry['guid']
@@ -201,6 +204,10 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
                         "video_encode": _fi.video_encode, "audio_encode": _fi.audio_encode,
                         "video_effect": _fi.video_effect, "subtitle": _fi.subtitle, "platform": _fi.platform,
                     }
+                    if need_archive:
+                        _fi_meta["_archive"] = await SubscriptionMatcher.resolve_archive_features(
+                            str(_fi.tmdb_id), _fi.media_type, archive_cache
+                        )
                     _block_entry = SubscriptionMatcher.match_tmdb_block(
                         block_map, global_blocks, str(_fi.tmdb_id), _fi.media_type, _fi_meta
                     )

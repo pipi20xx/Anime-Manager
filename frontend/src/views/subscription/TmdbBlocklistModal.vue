@@ -6,7 +6,8 @@
 import { ref, computed, watch, reactive } from 'vue'
 import { subscriptionApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import { DialogTitle, FieldConditionSelect } from '@/components/common'
+import { useMappingCache } from '@/composables/useDataCenter'
+import { DialogTitle, FieldConditionSelect, ArchiveCriteriaFields } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 
 const { success, error: showError } = useNotification()
 const { confirm } = useConfirm()
+const { translateIds, fetchMappingCache } = useMappingCache()
 
 const blocklist = ref<any[]>([])
 const loading = ref(false)
@@ -27,6 +29,8 @@ const showFormModal = ref(false)
 const editingId = ref<number | null>(null)
 const submitting = ref(false)
 const blockForm = reactive({ tmdb_id: '', media_type: 'all', team: '', resolution: '', source: '', video_encode: '', audio_encode: '', subtitle: '', platform: '', video_effect: '' })
+// 档案级条件（流派/公司/关键词等，键同二级分类规则 criteria），单独由 ArchiveCriteriaFields 维护
+const archiveCriteria = ref<Record<string, any>>({})
 
 // 锚定作品时必须二选一类型；留空 TMDB ID 的全局条件条目额外支持"全部"
 const typeOptions = computed(() =>
@@ -54,15 +58,34 @@ const CONDITION_FIELDS = [
   { key: 'platform', label: '发布平台' },
 ]
 
+// 档案级条件展示（键同二级分类规则 criteria；值经映射缓存翻译为名称）
+const ARCHIVE_FIELDS: { key: string; label: string; map?: 'genres' | 'companies' | 'keywords' | 'countries' | 'languages' }[] = [
+  { key: 'title', label: '标题' },
+  { key: 'genre_ids', label: '流派', map: 'genres' },
+  { key: 'company_ids', label: '公司', map: 'companies' },
+  { key: 'keyword_ids', label: '关键词', map: 'keywords' },
+  { key: 'origin_country', label: '国家', map: 'countries' },
+  { key: 'original_language', label: '语言', map: 'languages' },
+  { key: 'year', label: '年份' },
+]
+
 function getConditionLines(item: any): { label: string; value: string; unset: boolean }[] {
   const c = item.conditions || {}
-  return CONDITION_FIELDS.map(({ key, label }) => {
+  const lines = CONDITION_FIELDS.map(({ key, label }) => {
     const val = c[key] || ''
     return { label, value: val || '无', unset: !val }
   })
+  // 档案条件行：有条目才追加，值经映射缓存翻译为名称
+  if (ARCHIVE_FIELDS.some(f => c[f.key])) {
+    for (const f of ARCHIVE_FIELDS) {
+      const raw = c[f.key] || ''
+      lines.push({ label: f.label, value: (f.map ? translateIds(raw, f.map) : raw) || '无', unset: !raw })
+    }
+  }
+  return lines
 }
 
-// 表单可填的规格条件键，与 CONDITION_FIELDS / field_match.FIELD_MATCH_STRATEGY 一一对应
+// 表单可填的匹配条件键，与 CONDITION_FIELDS / field_match.FIELD_MATCH_STRATEGY 一一对应
 const FORM_CONDITION_KEYS = ['team', 'resolution', 'source', 'video_encode', 'audio_encode', 'subtitle', 'platform', 'video_effect']
 
 function buildConditions(): Record<string, string> {
@@ -71,7 +94,7 @@ function buildConditions(): Record<string, string> {
     const v = (blockForm as any)[k]?.trim()
     if (v) c[k] = v
   }
-  return c
+  return { ...c, ...archiveCriteria.value }
 }
 
 function resetForm() {
@@ -80,6 +103,7 @@ function resetForm() {
   for (const k of FORM_CONDITION_KEYS) {
     ;(blockForm as any)[k] = ''
   }
+  archiveCriteria.value = {}
 }
 
 function openAdd() {
@@ -96,6 +120,9 @@ function openEdit(item: any) {
   for (const k of FORM_CONDITION_KEYS) {
     ;(blockForm as any)[k] = c[k] || ''
   }
+  archiveCriteria.value = Object.fromEntries(
+    ARCHIVE_FIELDS.filter(f => c[f.key]).map(f => [f.key, c[f.key]])
+  )
   showFormModal.value = true
 }
 
@@ -109,7 +136,7 @@ function errDetail(e: any, fallback: string) {
   return e?.response?.data?.detail || fallback
 }
 
-watch(() => props.show, (v) => { if (v) fetchBlocklist(); else closeForm() })
+watch(() => props.show, (v) => { if (v) { fetchBlocklist(); fetchMappingCache() } else closeForm() })
 
 async function fetchBlocklist() {
   loading.value = true
@@ -248,9 +275,13 @@ async function removeBlockItem(id: number) {
           </v-col>
         </v-row>
 
+        <!-- 档案条件：按作品 TMDB 档案匹配（同二级分类规则的条件维度） -->
+        <div class="text-subtitle-2 font-weight-medium mb-2 mt-4">档案条件（按作品 TMDB 档案匹配）</div>
+        <ArchiveCriteriaFields v-model="archiveCriteria" />
+
         <div class="text-caption text-medium-emphasis mt-2">
           多个条件需同时满足；全部留空 = 屏蔽整部作品（订阅同步标记已下载）；
-          留空 TMDB ID 时至少填写一个条件，即全局条件屏蔽。
+          留空 TMDB ID 时至少填写一个条件，即全局条件屏蔽（档案条件按作品元数据判断，如屏蔽全部真人秀类作品）。
         </div>
       </v-card-text>
       <v-divider />
