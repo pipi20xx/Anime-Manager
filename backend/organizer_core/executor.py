@@ -249,6 +249,10 @@ class FileExecutor:
 
         # ---------- cd2 → cd2 ----------
         if source_via == "cd2" and target_via == "cd2":
+            # 同路径防护：新目标与当前位置相同（如重试识别未变化）时禁止任何删除/移动，
+            # 否则覆盖模式会先删掉目标（即文件本身）再移动已不存在的源，导致文件丢失
+            if os.path.abspath(src) == os.path.abspath(dst):
+                return "same_file"
             ok, msg = await asyncio.to_thread(browser.ensure_dir, dst_dir)
             if not ok: return f"cd2_failed: {msg}"
 

@@ -829,6 +829,7 @@ class FileProcessor:
 
                 if cd2_client:
                     related_outcomes: Dict[str, str] = {}  # {关联文件名: 单项执行结果}
+                    skip_reason = None  # 本批次跳过原因（same_file=目标未变化）
                     if source_via == "cd2" or target_via == "cd2":
                         # --- via 路由矩阵：逐项执行（视频 + 关联文件） ---
                         # 秒传配置：仅 local→cd2 且任务开启秒传模式时生效
@@ -868,6 +869,10 @@ class FileProcessor:
                                     source_via, cd2_client)
                             if res == "success":
                                 await FileProcessor._log_both(task_id, recog_task_id, f"📦 CD2 {action_label}成功: {os.path.basename(src)}")
+                            elif res == "same_file":
+                                any_skipped = True
+                                skip_reason = "same_file"
+                                await FileProcessor._log_both(task_id, recog_task_id, f"⏭️ 跳过（识别结果未变，新目标与当前位置相同）: {os.path.basename(src)}")
                             elif res in ("skipped", "skipped_conflict"):
                                 any_skipped = True
                                 await FileProcessor._log_both(task_id, recog_task_id, f"⏭️ {action_label}跳过（目标已存在，未开启覆盖模式）: {os.path.basename(src)}")
@@ -1000,7 +1005,7 @@ class FileProcessor:
                                 video_encode=final.get("video_encode"),
                                 year=str(final.get("year")) if final.get("year") else None,
                                 status="success" if batch_res == "success" else "skipped",
-                                message=None if batch_res == "success" else f"目标已存在 (跳过)",
+                                message=None if batch_res == "success" else ("目标未变化 (跳过)" if skip_reason == "same_file" else "目标已存在 (跳过)"),
                                 related_files=related_payload,
                                 rule_id=task.get("rule_id"),
                                 source_dir=task.get("source_dir"),
@@ -1127,13 +1132,15 @@ class FileProcessor:
                         await FileProcessor._log_both(task_id, recog_task_id, f"📎 {action_label}成功: {os.path.basename(src)} → {dst}")
                 elif v_res in ["skipped", "skipped_conflict"]:
                     await FileProcessor._log_both(task_id, recog_task_id, f"⏭️ {action_label}跳过（目标已存在，未开启覆盖模式）: {os.path.basename(src)}")
+                elif v_res == "same_file":
+                    await FileProcessor._log_both(task_id, recog_task_id, f"⏭️ 跳过（识别结果未变，新目标与当前位置相同）: {os.path.basename(src)}")
                 else:
                     await FileProcessor._log_both(task_id, recog_task_id, f"❌ {action_label}失败: {os.path.basename(src)} → {FileExecutor.get_status_message(v_res)}", "ERROR")
                 
                 # 添加识别信息到结果中
                 result_item = {
                     "type": "item",
-                    "status": "success" if v_res in ["success", "preview"] else ("skip" if v_res in ["skipped", "skipped_conflict"] else "error"),
+                    "status": "success" if v_res in ["success", "preview"] else ("skip" if v_res in ["skipped", "skipped_conflict", "same_file"] else "error"),
                     "source": FileProcessor._display_source(src, subset_temp_to_orig),
                     "target": dst, "action": action_type,
                     "source_via": source_via, "target_via": target_via,
@@ -1167,8 +1174,8 @@ class FileProcessor:
                             team=final.get("team"),
                             video_encode=final.get("video_encode"),
                             year=str(final.get("year")) if final.get("year") else None,
-                            status="success" if v_res == "success" else ("skipped" if v_res in ["skipped", "skipped_conflict"] else "failed"),
-                            message=None if v_res == "success" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}",
+                            status="success" if v_res == "success" else ("skipped" if v_res in ["skipped", "skipped_conflict", "same_file"] else "failed"),
+                            message=None if v_res == "success" else ("目标未变化 (跳过)" if v_res == "same_file" else f"物理操作失败: {FileExecutor.get_status_message(v_res)}"),
                             related_files=FileProcessor._related_files_payload(related_files, related_targets, related_outcomes, subset_info),
                             rule_id=task.get("rule_id"),
                             source_dir=task.get("source_dir"),

@@ -142,6 +142,7 @@ async function cleanupTaskCenter() {
           <v-btn-toggle v-model="taskCenterModule" mandatory density="compact" variant="outlined" divided>
             <v-btn size="small" :value="undefined" @click="filterTaskCenter()">全部</v-btn>
             <v-btn size="small" value="整理" @click="filterTaskCenter('整理')">整理</v-btn>
+            <v-btn size="small" value="重试整理" @click="filterTaskCenter('重试整理')">重试</v-btn>
             <v-btn size="small" value="STRM" @click="filterTaskCenter('STRM')">STRM</v-btn>
             <v-btn size="small" value="识别" @click="filterTaskCenter('识别')">识别</v-btn>
           </v-btn-toggle>

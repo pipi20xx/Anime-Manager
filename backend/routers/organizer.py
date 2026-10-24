@@ -945,7 +945,8 @@ async def _retry_history_runner(history_id: int, task_id: str):
             title_hint = history.title or v_file
 
         await start_task(task_id, "重试整理", f"{title_hint} ({v_file})")
-        await log_task(task_id, f"🔁 开始重试整理: {source_path}")
+        await log_task(task_id, f"🔁 开始重试整理 [历史#{history_id}]：{title_hint}（{v_file}）")
+        await log_task(task_id, f"📍 原源路径: {source_path}")
 
         # 1. 检查源文件是否存在（CD2 路径走 gRPC 检查）；
         #    移动类操作源文件必然已转移到目标路径，源缺失属预期，直接改用目标文件重试
@@ -953,10 +954,11 @@ async def _retry_history_runner(history_id: int, task_id: str):
         if not await _path_exists_via(source_path, source_via):
             if target_path and await _path_exists_via(target_path, target_via):
                 retry_from_target = True
-                await log_task(task_id, f"↪️ 移动类操作源文件已转移，改用目标路径的文件重试: {target_path}")
+                await log_task(task_id, f"↪️ 源文件已不在原位（移动/CD2移动），改用目标路径的文件重试: {target_path}")
             else:
                 await log_task(task_id, f"❌ 源文件已不存在: {source_path}", "ERROR")
                 await log_task(task_id, f"（且未能确认目标文件存在: {target_path or '记录无目标路径'}，可能已被再次移动/删除，或 CD2 检查失败）", "WARN")
+                await log_task(task_id, "🏁 重试结论：失败 — 源与目标文件均已不存在，无法重试", "ERROR")
                 await finish_task(task_id, "error")
                 return
 
@@ -992,6 +994,7 @@ async def _retry_history_runner(history_id: int, task_id: str):
             if not matched_task:
                 await log_task(task_id, "❌ 未找到源路径所属的整理任务配置", "ERROR")
                 await log_task(task_id, "（请在「整理任务」中配置包含此源路径的任务后重试）", "WARN")
+                await log_task(task_id, "🏁 重试结论：失败 — 旧记录无配置快照，且没有任何整理任务的源目录能匹配此路径", "ERROR")
                 await finish_task(task_id, "error")
                 return
             task = copy.deepcopy(matched_task)
@@ -1007,11 +1010,13 @@ async def _retry_history_runner(history_id: int, task_id: str):
 
         # 重试 = 重新识别：关闭智能记忆，避免命中上次落库的（可能是错误的）指纹缓存
         task["series_fingerprint"] = False
+        await log_task(task_id, "🧠 已关闭智能记忆，按源文件名重新识别（不沿用上次识别结果）")
 
         # 3. 加载上下文并执行
         context = FileProcessor.load_context(task)
         if not context["rule"]:
             await log_task(task_id, f"❌ 重命名规则未找到: {task.get('rule_id')}", "ERROR")
+            await log_task(task_id, "🏁 重试结论：失败 — 历史快照引用的重命名规则已不存在，请检查规则配置", "ERROR")
             await finish_task(task_id, "error")
             return
 
@@ -1039,28 +1044,64 @@ async def _retry_history_runner(history_id: int, task_id: str):
                 await log_task(task_id, f"❌ 失败: {r.get('msg', '未知错误')}", "ERROR")
 
         if error_count > 0 and success_count == 0:
+            await log_task(task_id, f"🏁 重试结论：失败 — {error_count} 项处理失败，详见上方错误日志", "ERROR")
             await finish_task(task_id, "error")
         elif success_count > 0:
-            # 改用目标文件重试成功：原记录（标题已证伪、target_path 已失效）被本次结果取代，
-            # 删除以保持一个文件一条记录且始终指向当前位置（与整理流程按 source_path 去重的语义一致）
-            if retry_from_target:
-                try:
-                    async with db.session_scope():
+            removed_old = False
+            try:
+                async with db.session_scope():
+                    from sqlmodel import select as _select
+                    # 标记本次重试产生的新记录（历史页据此显示「重试」徽标）
+                    new_source = target_path if retry_from_target else source_path
+                    stmt = _select(OrganizeHistory).where(
+                        OrganizeHistory.source_path == new_source
+                    ).order_by(OrganizeHistory.processed_at.desc())
+                    created = await db.first(OrganizeHistory, stmt)
+                    if created:
+                        created.is_retry = True
+                        await db.save(created, audit=False)
+                    # 改用目标文件重试成功：原记录（标题已证伪、target_path 已失效）被本次结果取代，
+                    # 删除以保持一个文件一条记录且始终指向当前位置（与整理流程按 source_path 去重的语义一致）
+                    if retry_from_target:
                         superseded = await db.get(OrganizeHistory, history_id)
                         if superseded:
                             await db.delete(superseded, audit=False)
-                    await log_task(task_id, f"🧹 已移除被本次重试取代的旧历史记录 (#{history_id})")
-                except Exception as e:
-                    logger.warning(f"移除旧整理历史 #{history_id} 失败: {e}")
+                            removed_old = True
+            except Exception as e:
+                logger.warning(f"重试后处理整理历史失败 (#{history_id}): {e}")
+            if removed_old:
+                await log_task(task_id, f"🧹 已移除被本次重试取代的旧历史记录 (#{history_id})")
             await log_task(task_id, f"✅ 重试完成: 成功 {success_count} 项，跳过 {skip_count} 项")
+            new_target = next((r.get("target") for r in results if r.get("status") == "success" and r.get("target")), None)
+            if new_target:
+                await log_task(task_id, f"🏁 重试结论：成功 — {title_hint} 现位于 {new_target}")
+            else:
+                await log_task(task_id, f"🏁 重试结论：成功 {success_count} 项")
             await finish_task(task_id, "completed")
+        elif skip_count > 0 and retry_from_target:
+            # 重试无变化（识别结果与当前一致，新目标即文件当前位置）：移除本次产生的冗余跳过记录，保留原记录
+            try:
+                async with db.session_scope():
+                    from sqlmodel import select as _select
+                    stmt = _select(OrganizeHistory).where(
+                        OrganizeHistory.source_path == target_path
+                    ).order_by(OrganizeHistory.processed_at.desc())
+                    redundant = await db.first(OrganizeHistory, stmt)
+                    if redundant and redundant.status == "skipped":
+                        await db.delete(redundant, audit=False)
+            except Exception as e:
+                logger.warning(f"清理重试产生的冗余跳过记录失败: {e}")
+            await log_task(task_id, "🏁 重试结论：无变化 — 识别结果与当前一致，文件无需移动，已保留原历史记录")
+            await finish_task(task_id, "skipped")
         else:
+            await log_task(task_id, "🏁 重试结论：无结果 — 本次未产生任何操作")
             await finish_task(task_id, "skipped")
 
     except Exception as e:
         logger.error(f"重试整理历史 {history_id} 时异常: {str(e)}", exc_info=True)
         try:
             await log_task(task_id, f"❌ 异常: {str(e)}", "ERROR")
+            await log_task(task_id, "🏁 重试结论：失败 — 执行过程发生异常，详见上方日志", "ERROR")
             await finish_task(task_id, "error")
         except Exception:
             pass
@@ -1111,7 +1152,7 @@ async def retry_organize_history(history_id: int):
         return {
             "success": True,
             "task_id": task_id,
-            "message": f"重试已启动: {title_hint}（操作方式: {action_type}）"
+            "message": f"重试已启动: {title_hint}（操作方式: {action_type}）— 进度与结论见「任务中心 → 重试」"
         }
     except HTTPException:
         raise

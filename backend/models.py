@@ -288,6 +288,8 @@ class OrganizeHistory(SQLModel, table=True):
     subset_subtitles: Optional[bool] = None  # 整理时是否对随行字幕做字体子集化
     # 关联识别任务的 task_id，用于查看对应的识别日志（任务中心「识别」模块）
     task_id: Optional[str] = Field(default=None, index=True)
+    # 是否由整理历史重试产生（历史页据此显示「重试」徽标）
+    is_retry: Optional[bool] = None
 
 class FontSubsetHistory(SQLModel, table=True):
     """字体管家 — 随行字幕子集化处理历史

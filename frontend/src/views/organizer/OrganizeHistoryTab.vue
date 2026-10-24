@@ -434,9 +434,14 @@ defineExpose({ fetchHistory })
               {{ item.team }}
             </v-chip>
           </div>
-          <v-chip size="small" :color="historyStatusColor(item.status)" variant="tonal" class="flex-shrink-0">
-            {{ historyStatusLabel(item.status) }}
-          </v-chip>
+          <div class="d-flex align-center ga-2 flex-shrink-0">
+            <v-chip v-if="item.is_retry" size="x-small" color="deep-purple" variant="tonal" class="flex-shrink-0">
+              <v-icon start size="x-small">mdi-refresh</v-icon>重试
+            </v-chip>
+            <v-chip size="small" :color="historyStatusColor(item.status)" variant="tonal" class="flex-shrink-0">
+              {{ historyStatusLabel(item.status) }}
+            </v-chip>
+          </div>
         </div>
 
         <!-- 跳过消息 -->
