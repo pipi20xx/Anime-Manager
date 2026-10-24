@@ -61,11 +61,11 @@ async def add_tmdb_blocklist(item: TmdbBlocklist):
             item.media_type = "tv"
         item.conditions = _sanitize_conditions(item.conditions)
 
-        # 全局条件条目（不锚定作品）必须至少有一个规格条件，否则会拦下一切资源
+        # 全局条件条目（不锚定作品）必须至少有一个匹配条件，否则会拦下一切资源
         if not item.tmdb_id and not item.conditions:
             raise HTTPException(
                 status_code=400,
-                detail="留空 TMDB ID 时必须至少填写一个规格条件（如制作组）"
+                detail="留空 TMDB ID 时必须至少填写一个匹配条件（如制作组）"
             )
 
         # 锚定作品的条目按 tmdb_id + media_type 去重；全局条件条目允许多条并存
@@ -106,11 +106,11 @@ async def update_tmdb_blocklist(item_id: int, data: TmdbBlocklist):
             existing.media_type = "tv"
         existing.conditions = _sanitize_conditions(data.conditions) or None
 
-        # 全局条件条目（不锚定作品）必须至少有一个规格条件，否则会拦下一切资源
+        # 全局条件条目（不锚定作品）必须至少有一个匹配条件，否则会拦下一切资源
         if not existing.tmdb_id and not existing.conditions:
             raise HTTPException(
                 status_code=400,
-                detail="留空 TMDB ID 时必须至少填写一个规格条件（如制作组）"
+                detail="留空 TMDB ID 时必须至少填写一个匹配条件（如制作组）"
             )
 
         # 锚定作品的条目按 tmdb_id + media_type 去重（排除自身）；全局条件条目允许多条并存

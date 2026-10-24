@@ -6,7 +6,7 @@
 import { ref, computed, watch, reactive } from 'vue'
 import { subscriptionApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import { DialogTitle } from '@/components/common'
+import { DialogTitle, FieldConditionSelect } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -42,16 +42,16 @@ function mediaTypeLabel(t: string) {
   return t === 'tv' ? '剧集' : t === 'movie' ? '电影' : '全部'
 }
 
-// 规格条件字段（键与 field_match.FIELD_MATCH_STRATEGY 对应），卡片信息区固定全部展示
+// 匹配条件字段：与订阅表单（SubEditModal）同一套字段与措辞，键同 field_match.FIELD_MATCH_STRATEGY
 const CONDITION_FIELDS = [
-  { key: 'team', label: '制作组' },
   { key: 'resolution', label: '分辨率' },
-  { key: 'source', label: '来源' },
+  { key: 'team', label: '制作组' },
+  { key: 'source', label: '介质来源' },
   { key: 'video_encode', label: '视频编码' },
   { key: 'audio_encode', label: '音频编码' },
-  { key: 'subtitle', label: '字幕' },
-  { key: 'platform', label: '平台' },
-  { key: 'video_effect', label: '特效' },
+  { key: 'subtitle', label: '字幕语言' },
+  { key: 'video_effect', label: '视频特效' },
+  { key: 'platform', label: '发布平台' },
 ]
 
 function getConditionLines(item: any): { label: string; value: string; unset: boolean }[] {
@@ -124,7 +124,7 @@ async function submitForm() {
   const tmdbId = blockForm.tmdb_id.trim()
   const conditions = buildConditions()
   if (!tmdbId && Object.keys(conditions).length === 0) {
-    showError('留空 TMDB ID 时需至少填写一个规格条件（如制作组）')
+    showError('留空 TMDB ID 时需至少填写一个匹配条件（如制作组）')
     return
   }
   const payload = { tmdb_id: tmdbId, media_type: blockForm.media_type, conditions }
@@ -167,7 +167,7 @@ async function removeBlockItem(id: number) {
       <v-card-text class="pa-4">
         <div class="text-body-2 text-medium-emphasis mb-4">
           命中屏蔽条目的资源，识别后直接标记已下载，跳过下载规则与追剧订阅。
-          支持三种粒度：整部作品、指定作品内满足规格条件的资源、以及不锚定作品的全局条件屏蔽（如屏蔽某制作组的全部发布）。
+          支持三种粒度：整部作品、指定作品内满足匹配条件的资源、以及不锚定作品的全局条件屏蔽（如屏蔽某制作组的全部发布）。
         </div>
 
         <div class="d-flex mb-4">
@@ -240,18 +240,16 @@ async function removeBlockItem(id: number) {
         <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID（可留空）" placeholder="留空 = 按条件全局屏蔽" variant="outlined" density="compact" class="mb-3" />
         <v-select v-model="blockForm.media_type" label="类型" :items="typeOptions" variant="outlined" density="compact" class="mb-3" />
 
-        <div class="text-subtitle-2 font-weight-medium mb-2">规格条件（可选，多条需同时满足）</div>
-        <v-text-field v-model="blockForm.team" label="制作组" placeholder="如 LoliHouse,Subz" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.resolution" label="分辨率" placeholder="如 2160p,1080p" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.source" label="来源" placeholder="如 Web,Blu-ray" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.video_encode" label="视频编码" placeholder="如 H265,H264" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.audio_encode" label="音频编码" placeholder="如 FLAC,EAC3" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.subtitle" label="字幕" placeholder="如 CHS,CHT" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.platform" label="平台" placeholder="如 Bilibili,Netflix" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.video_effect" label="特效" placeholder="如 Dolby Vision,HDR10+" variant="outlined" density="compact" class="mb-2" />
+        <!-- 匹配条件：弹框较窄，一行一个 -->
+        <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">匹配条件</div>
+        <v-row density="compact">
+          <v-col v-for="f in CONDITION_FIELDS" :key="f.key" cols="12">
+            <FieldConditionSelect v-model="(blockForm as any)[f.key]" :field="f.key" :label="f.label" />
+          </v-col>
+        </v-row>
 
-        <div class="text-caption text-medium-emphasis">
-          条件值支持逗号分隔多个；全部留空 = 屏蔽整部作品（订阅同步标记已下载）；
+        <div class="text-caption text-medium-emphasis mt-2">
+          多个条件需同时满足；全部留空 = 屏蔽整部作品（订阅同步标记已下载）；
           留空 TMDB ID 时至少填写一个条件，即全局条件屏蔽。
         </div>
       </v-card-text>
