@@ -1018,7 +1018,8 @@ async def _retry_history_runner(history_id: int, task_id: str):
         context["dir_cache"] = set()
 
         results = await FileProcessor.organize_video_file(
-            source_path, task, context, dry_run=False, task_id=task_id
+            target_path if retry_from_target else source_path,
+            task, context, dry_run=False, task_id=task_id
         )
 
         # 4. 汇总结果
