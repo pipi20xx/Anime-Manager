@@ -387,7 +387,7 @@ watch(
                 v-for="item in uploads"
                 :key="item.filename"
                 class="wallpaper-dialog__upload-item"
-                :class="{ 'wallpaper-dialog__upload-item--active': config.upload_filename === item.filename }"
+                :class="{ 'wallpaper-dialog__upload-item--active': config?.upload_filename === item.filename }"
               >
                 <img
                   :src="`/api/appearance/wallpaper/uploads/${item.filename}`"
@@ -399,7 +399,7 @@ watch(
                   <span class="wallpaper-dialog__upload-size">{{ formatSize(item.size) }}</span>
                   <div class="wallpaper-dialog__upload-actions">
                     <VIcon
-                      v-if="config.upload_filename === item.filename"
+                      v-if="config?.upload_filename === item.filename"
                       icon="mdi-check-circle"
                       color="primary"
                       size="18"

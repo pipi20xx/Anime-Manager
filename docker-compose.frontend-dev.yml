@@ -17,7 +17,6 @@ services:
     container_name: apm-backend
     volumes:
       - ./data:/app/data
-      - /vol1/1000/NVME:/202nvme
     environment:
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Shanghai

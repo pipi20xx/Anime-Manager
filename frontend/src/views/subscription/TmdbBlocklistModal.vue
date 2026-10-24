@@ -26,9 +26,7 @@ const loading = ref(false)
 const showFormModal = ref(false)
 const editingId = ref<number | null>(null)
 const submitting = ref(false)
-// 编辑时保留表单未覆盖的条件键（如经 API 设置的 audio_encode/subtitle 等）
-const editingExtra = ref<Record<string, string>>({})
-const blockForm = reactive({ tmdb_id: '', media_type: 'all', team: '', resolution: '', source: '', video_encode: '' })
+const blockForm = reactive({ tmdb_id: '', media_type: 'all', team: '', resolution: '', source: '', video_encode: '', audio_encode: '', subtitle: '', platform: '', video_effect: '' })
 
 // 锚定作品时必须二选一类型；留空 TMDB ID 的全局条件条目额外支持"全部"
 const typeOptions = computed(() =>
@@ -64,14 +62,14 @@ function getConditionLines(item: any): { label: string; value: string; unset: bo
   })
 }
 
-const FORM_CONDITION_KEYS = ['team', 'resolution', 'source', 'video_encode']
+// 表单可填的规格条件键，与 CONDITION_FIELDS / field_match.FIELD_MATCH_STRATEGY 一一对应
+const FORM_CONDITION_KEYS = ['team', 'resolution', 'source', 'video_encode', 'audio_encode', 'subtitle', 'platform', 'video_effect']
 
 function buildConditions(): Record<string, string> {
-  const c: Record<string, string> = { ...editingExtra.value }
+  const c: Record<string, string> = {}
   for (const k of FORM_CONDITION_KEYS) {
     const v = (blockForm as any)[k]?.trim()
     if (v) c[k] = v
-    else delete c[k]
   }
   return c
 }
@@ -79,15 +77,13 @@ function buildConditions(): Record<string, string> {
 function resetForm() {
   blockForm.tmdb_id = ''
   blockForm.media_type = 'all'
-  blockForm.team = ''
-  blockForm.resolution = ''
-  blockForm.source = ''
-  blockForm.video_encode = ''
+  for (const k of FORM_CONDITION_KEYS) {
+    ;(blockForm as any)[k] = ''
+  }
 }
 
 function openAdd() {
   editingId.value = null
-  editingExtra.value = {}
   resetForm()
   showFormModal.value = true
 }
@@ -97,20 +93,15 @@ function openEdit(item: any) {
   blockForm.tmdb_id = item.tmdb_id || ''
   blockForm.media_type = item.media_type || 'tv'
   const c = item.conditions || {}
-  blockForm.team = c.team || ''
-  blockForm.resolution = c.resolution || ''
-  blockForm.source = c.source || ''
-  blockForm.video_encode = c.video_encode || ''
-  editingExtra.value = Object.fromEntries(
-    Object.entries(c).filter(([k]) => !FORM_CONDITION_KEYS.includes(k))
-  ) as Record<string, string>
+  for (const k of FORM_CONDITION_KEYS) {
+    ;(blockForm as any)[k] = c[k] || ''
+  }
   showFormModal.value = true
 }
 
 function closeForm() {
   showFormModal.value = false
   editingId.value = null
-  editingExtra.value = {}
   resetForm()
 }
 
@@ -253,7 +244,11 @@ async function removeBlockItem(id: number) {
         <v-text-field v-model="blockForm.team" label="制作组" placeholder="如 LoliHouse,Subz" variant="outlined" density="compact" class="mb-3" />
         <v-text-field v-model="blockForm.resolution" label="分辨率" placeholder="如 2160p,1080p" variant="outlined" density="compact" class="mb-3" />
         <v-text-field v-model="blockForm.source" label="来源" placeholder="如 Web,Blu-ray" variant="outlined" density="compact" class="mb-3" />
-        <v-text-field v-model="blockForm.video_encode" label="视频编码" placeholder="如 H265,H264" variant="outlined" density="compact" class="mb-2" />
+        <v-text-field v-model="blockForm.video_encode" label="视频编码" placeholder="如 H265,H264" variant="outlined" density="compact" class="mb-3" />
+        <v-text-field v-model="blockForm.audio_encode" label="音频编码" placeholder="如 FLAC,EAC3" variant="outlined" density="compact" class="mb-3" />
+        <v-text-field v-model="blockForm.subtitle" label="字幕" placeholder="如 CHS,CHT" variant="outlined" density="compact" class="mb-3" />
+        <v-text-field v-model="blockForm.platform" label="平台" placeholder="如 Bilibili,Netflix" variant="outlined" density="compact" class="mb-3" />
+        <v-text-field v-model="blockForm.video_effect" label="特效" placeholder="如 Dolby Vision,HDR10+" variant="outlined" density="compact" class="mb-2" />
 
         <div class="text-caption text-medium-emphasis">
           条件值支持逗号分隔多个；全部留空 = 屏蔽整部作品（订阅同步标记已下载）；

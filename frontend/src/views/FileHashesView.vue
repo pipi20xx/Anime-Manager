@@ -688,6 +688,11 @@ function truncateHash(hash: string | undefined, len = 20): string {
   return hash.length > len ? hash.substring(0, len) + '...' : hash
 }
 
+// vue-tsc 3.3.13 对 v-chip :href 表达式内引用 v-for 变量存在作用域 bug，链接改为函数生成
+function tmdbLink(item: any): string {
+  return `https://www.themoviedb.org/${item.media_type || 'tv'}/${item.tmdb_id}`
+}
+
 function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return '-'
   try {
@@ -878,7 +883,7 @@ onUnmounted(() => {
               <v-chip
                 v-if="item.tmdb_id"
                 class="meta-tag meta-tag--tmdb"
-                :href="`https://www.themoviedb.org/${item.media_type || 'tv'}/${item.tmdb_id}`"
+                :href="tmdbLink(item)"
                 target="_blank"
                 size="x-small"
                 variant="flat"
