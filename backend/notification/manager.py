@@ -1137,7 +1137,11 @@ class NotificationManager:
             return
 
         from datetime import datetime
-        start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import sys as _sys
+        import socket as _socket
+        weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+        now = datetime.now()
+        start_time = f"{now.strftime('%Y-%m-%d')} {weekdays[now.weekday()]} {now.strftime('%H:%M:%S')}"
 
         try:
             from main import __version__
@@ -1180,6 +1184,8 @@ class NotificationManager:
             data={
                 "version": version,
                 "start_time": start_time,
+                "hostname": _socket.gethostname(),
+                "python": f"{_sys.version_info.major}.{_sys.version_info.minor}.{_sys.version_info.micro}",
                 "modules": modules,
                 "errors": errors,
             },

@@ -619,29 +619,38 @@ class NotificationRenderer:
         d = n.data
         version = d.get("version", "unknown")
         start_time = d.get("start_time", "")
+        hostname = d.get("hostname", "")
+        python = d.get("python", "")
         modules = d.get("modules", [])          # [(icon, name, value, detail), ...]
         errors = d.get("errors", [])
 
         lines = []
-        lines.append("<b>🚀 番剧管家 启动完成</b>")
-        lines.append("──────────────────")
-        lines.append(f"🏷 <b>版本：</b><code>v{version}</code>")
-        lines.append(f"🕓 <b>时间：</b>{start_time}")
+        lines.append(f"🚀 <b>番剧管家已启动</b> <code>v{version}</code>")
+        env_bits = []
+        if python:
+            env_bits.append(f"🐍 Python {python}")
+        if hostname:
+            env_bits.append(f"🖥 <code>{hostname}</code>")
+        if env_bits:
+            lines.append(" · ".join(env_bits))
+        lines.append("━━━━━━━━━━━━━━━━━━━━")
+        if start_time:
+            lines.append(f"🕓 {start_time}")
 
         if modules:
             lines.append("")
-            lines.append("<b>📋 服务状态</b>")
+            lines.append("📋 <b>服务状态</b>")
             for icon, name, value, detail in modules:
-                lines.append(f"· {icon} <b>{name}</b> — {value}{detail}")
+                lines.append(f"{icon} {name} — {value}{detail}")
 
         if errors:
             lines.append("")
-            lines.append("<b>⚠️ 启动警告</b>")
+            lines.append("⚠️ <b>启动警告</b>")
             for err in errors[:3]:
                 lines.append(f"• {err}")
 
         lines.append("")
-        lines.append("<i>💡 系统已就绪，等待任务调度...</i>")
+        lines.append("✅ <i>系统已就绪，等待任务调度…</i>")
         return "\n".join(lines)
 
 
