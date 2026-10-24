@@ -113,7 +113,7 @@ class RenderEngine:
                     parts = actual_line.split(" >> ", 1)
                     formula, locators = parts[1].strip(), parts[0].split(" <> ")
                     if len(locators) == 2:
-                        p = f"(?i){re.escape(locators[0].strip())}\s*(\d+)\s*{re.escape(locators[1].strip())}"
+                        p = rf"(?i){re.escape(locators[0].strip())}\s*(\d+)\s*{re.escape(locators[1].strip())}"
                         match = re.search(p, raw_filename)
                         if match:
                             captured_num = int(match.group(1))

@@ -23,7 +23,7 @@ RUN npm run build
 RUN sed -n 's/.*"version"\s*:\s*"\([^"]*\)".*/\1/p' package.json > /app/VERSION
 
 # --- Stage 2: Backend & Final Image ---
-FROM ${BASE_PREFIX}python:3.11-slim
+FROM ${BASE_PREFIX}python:3.14-slim
 # pip 包缓存（内网 devpi 只读代理，http 地址必须配 trusted-host）；
 # 内网外构建时用 --build-arg 覆盖
 ARG PIP_INDEX_URL=http://192.168.50.12:3141/root/pypi/+simple

@@ -2,7 +2,7 @@ import regex as re
 from typing import Optional, Tuple, List, Dict, Any
 
 class SpecialEpisodeHandler:
-    """
+    r"""
     特权提取器：针对特定命名格式，提取标题和集数。
     规则优先级极高，命中后集数直接锁定，标题作为优先搜索候选。
     

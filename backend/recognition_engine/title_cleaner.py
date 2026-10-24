@@ -79,7 +79,7 @@ class TitleCleaner:
                             locator_part, formula = word.split(">>", 1)
                             start_tag, end_tag = locator_part.split("<>", 1)
                             start_tag, end_tag, formula = start_tag.strip(), end_tag.strip(), formula.strip()
-                            pat = f"({re.escape(start_tag)})\s*(\d+)\s*({re.escape(end_tag)})"
+                            pat = rf"({re.escape(start_tag)})\s*(\d+)\s*({re.escape(end_tag)})"
                             match = re.search(pat, temp, flags=re.I)
                             if match:
                                 original_num = match.group(2)
