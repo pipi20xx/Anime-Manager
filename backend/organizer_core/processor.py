@@ -455,6 +455,11 @@ class FileProcessor:
             except ValueError:
                 rel_input_path = v_file
 
+            # 重试兜底（recog_name_override）：源文件已被移走时按历史保存的源文件名识别，
+            # original_input_path 必须同步替换，否则路径锁定会扫到目标库目录里的旧 tmdbid
+            recog_input = task.get("recog_name_override") or rel_input_path
+            recog_original_path = task.get("recog_original_path") or v_path
+
             f_tmdb = task.get("forced_tmdb_id")
             f_type = task.get("forced_type")
             f_season = task.get("forced_season")
@@ -463,7 +468,7 @@ class FileProcessor:
             logger.debug(f"正在处理文件: {v_path}")
 
             result_data, recog_logs = await MovieRecognizer.recognize_full(
-                rel_input_path, 
+                recog_input, 
                 all_noise=all_noise, 
                 all_groups=all_groups, 
                 api_key=context["api_key"], 
@@ -474,7 +479,7 @@ class FileProcessor:
                 forced_type=f_type, 
                 forced_season=f_season,
                 series_fingerprint=task.get("series_fingerprint", True),
-                original_input_path=v_path
+                original_input_path=recog_original_path
             )
             
             await FileProcessor._log_detail(task_id, f"📄 处理文件: {v_path}")

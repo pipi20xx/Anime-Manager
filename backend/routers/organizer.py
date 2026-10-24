@@ -914,6 +914,8 @@ async def _retry_history_runner(history_id: int, task_id: str):
                 await finish_task(task_id, "error")
                 return
             source_path = history.source_path
+            target_path = history.target_path
+            target_via = history.target_via
             v_file = history.filename
             action_type = history.action_type or "move"
             title_hint = history.title or v_file
@@ -921,12 +923,17 @@ async def _retry_history_runner(history_id: int, task_id: str):
         await start_task(task_id, "重试整理", f"{title_hint} ({v_file})")
         await log_task(task_id, f"🔁 开始重试整理: {source_path}")
 
-        # 1. 检查源文件是否存在
+        # 1. 检查源文件是否存在；移动类操作源文件已不在原位，退化为用目标文件重试
+        retry_from_target = False
         if not await asyncio.to_thread(os.path.exists, source_path):
-            await log_task(task_id, f"❌ 源文件不存在: {source_path}", "ERROR")
-            await log_task(task_id, "（可能已被移动或删除，无法重试）", "WARN")
-            await finish_task(task_id, "error")
-            return
+            if target_path and await asyncio.to_thread(os.path.exists, target_path):
+                retry_from_target = True
+                await log_task(task_id, f"↪️ 源文件已不在原位（移动/CD2移动），改用目标文件重试: {target_path}", "WARN")
+            else:
+                await log_task(task_id, f"❌ 源文件不存在: {source_path}", "ERROR")
+                await log_task(task_id, "（可能已被移动或删除，且目标文件也已不存在，无法重试）", "WARN")
+                await finish_task(task_id, "error")
+                return
 
         # 2. 构造 task —— 优先用历史记录里的快照，回退到配置匹配
         if history.rule_id and history.target_dir:
@@ -947,6 +954,12 @@ async def _retry_history_runner(history_id: int, task_id: str):
                 "ignore_history": True,
                 "name": f"重试整理 (历史#{history_id})"
             }
+            if retry_from_target:
+                # 文件实际位于原目标位置：源域/源目录切到该位置，识别输入换回源文件原名
+                task["source_via"] = target_via or _infer_path_via(target_path)
+                task["source_dir"] = os.path.dirname(target_path)
+                task["recog_name_override"] = v_file
+                task["recog_original_path"] = source_path
             await log_task(task_id, f"📋 使用历史快照配置 | 规则: {history.rule_id} | 目标: {history.target_dir} | 操作: {action_type}")
         else:
             # 旧数据：回退到 organize_tasks 配置匹配
@@ -960,7 +973,15 @@ async def _retry_history_runner(history_id: int, task_id: str):
             task["ignore_history"] = True
             if action_type:
                 task["action_type"] = action_type
+            if retry_from_target:
+                task["source_via"] = target_via or _infer_path_via(target_path)
+                task["source_dir"] = os.path.dirname(target_path)
+                task["recog_name_override"] = v_file
+                task["recog_original_path"] = source_path
             await log_task(task_id, f"📋 使用任务配置(回退匹配): {matched_task.get('name', '未命名')} | 操作: {action_type}")
+
+        # 重试 = 重新识别：关闭智能记忆，避免命中上次落库的（可能是错误的）指纹缓存
+        task["series_fingerprint"] = False
 
         # 3. 加载上下文并执行
         context = FileProcessor.load_context(task)
@@ -1027,15 +1048,17 @@ async def retry_organize_history(history_id: int):
             if not history:
                 raise HTTPException(status_code=404, detail="记录不存在")
             source_path = history.source_path
+            target_path = history.target_path
             action_type = history.action_type or "move"
             title_hint = history.title or history.filename
 
-        # 预检查：源文件必须存在（立即失败的场景）
+        # 预检查：源与目标文件都不存在时才立即失败（移动类操作可退化为用目标文件重试）
         if not await asyncio.to_thread(os.path.exists, source_path):
-            return {
-                "success": False,
-                "message": f"源文件不存在: {source_path}（可能已被移动或删除）"
-            }
+            if not (target_path and await asyncio.to_thread(os.path.exists, target_path)):
+                return {
+                    "success": False,
+                    "message": f"源文件不存在: {source_path}（可能已被移动或删除，目标文件也已不存在）"
+                }
 
         # 启动后台任务，任务配置匹配与执行统一在 runner 中完成
         task_id = f"retry_{uuid.uuid4().hex[:12]}"
