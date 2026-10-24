@@ -1,7 +1,8 @@
 import anitopy
-import traceback
-import sys
+import logging
 from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
 
 class AnitopyWrapper:
     @staticmethod
@@ -20,4 +21,6 @@ class AnitopyWrapper:
             return anitopy.parse(filename, options=options)
         except Exception:
             # If anitopy crashes, return empty dict to let fallback logic handle it
+            # [Fix] 崩溃必须留痕, 否则会被伪装成"解析成功但无结果"
+            logger.exception("Anitopy 内核解析崩溃: %s", filename)
             return {}
