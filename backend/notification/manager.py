@@ -472,6 +472,14 @@ class NotificationManager:
         except asyncio.CancelledError:
             return
 
+        # [保序] 入库事件先于它触发的 STRM 生成，但入库聚合窗口 (60s) 长于 STRM 窗口 (15s)，
+        # 若不提前冲出，STRM 通知会先于入库通知到达。发送前先把入库缓冲立即发出，保证因果顺序；
+        # 入库聚合窗口因此提前结束，后续入库条目重新计时聚合。
+        try:
+            await self.flush_organize_buffer()
+        except Exception as e:
+            logger.warning(f"STRM 通知发送前冲出入库缓冲失败: {e}")
+
         results = self._strm_link_buffer[:]
         self._strm_link_buffer.clear()
         if not results:

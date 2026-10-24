@@ -944,6 +944,11 @@ class FileProcessor:
                     
                     # STRM Linkage (only if batch succeeded)
                     if batch_res == "success":
+                        # [Notify] 入库通知必须第一时间发出：
+                        # 实时联动 (CD2 Webhook) 在文件落盘时即触发 STRM 生成，其通知路径与此并行，
+                        # 若入库通知排在空目录清理等耗时步骤之后，会出现"STRM 先到、入库后到"的乱序
+                        await notification_manager.notify_organize_complete(final)
+
                         # [New] 清理源空目录 (向上递归)
                         if task.get("clean_empty_dir", False) and action_type == "cd2_move":
                             if source_via == "local":
@@ -964,9 +969,6 @@ class FileProcessor:
                                             await FileProcessor._log_detail(task_id, f"🧹 已清理云盘源空目录 {_cleaned} 个")
                                     except Exception as _e:
                                         logger.warning(f"云盘源空目录清理失败: {_e}")
-
-                        # [Notify]
-                        await notification_manager.notify_organize_complete(final)
 
                         # [Always Trigger] 使用模拟 Webhook 方式触发 STRM
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
