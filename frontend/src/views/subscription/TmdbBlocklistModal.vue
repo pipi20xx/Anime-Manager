@@ -75,12 +75,10 @@ function getConditionLines(item: any): { label: string; value: string; unset: bo
     const val = c[key] || ''
     return { label, value: val || '无', unset: !val }
   })
-  // 档案条件行：有条目才追加，值经映射缓存翻译为名称
-  if (ARCHIVE_FIELDS.some(f => c[f.key])) {
-    for (const f of ARCHIVE_FIELDS) {
-      const raw = c[f.key] || ''
-      lines.push({ label: f.label, value: (f.map ? translateIds(raw, f.map) : raw) || '无', unset: !raw })
-    }
+  // 档案条件行：无条件全部展示，未设置显示「无」；值经映射缓存翻译为名称
+  for (const f of ARCHIVE_FIELDS) {
+    const raw = c[f.key] || ''
+    lines.push({ label: f.label, value: (f.map ? translateIds(raw, f.map) : raw) || '无', unset: !raw })
   }
   return lines
 }
@@ -218,7 +216,7 @@ async function removeBlockItem(id: number) {
                 </v-chip>
               </div>
 
-              <!-- 信息区：固定 8 个规格条件，未设置显示「无」 -->
+              <!-- 信息区：固定 8 个规格条件 + 7 个档案条件全部展示，未设置显示「无」 -->
               <div class="manage-card__body">
                 <div class="manage-card__info" v-for="line in getConditionLines(item)" :key="line.label">
                   <span class="manage-card__info-label">{{ line.label }}</span>
@@ -292,3 +290,13 @@ async function removeBlockItem(id: number) {
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+/* 屏蔽卡片：字段值完整展示，不做省略截断（仅本弹窗覆盖全局 .manage-card__info-value） */
+.manage-card__info-value {
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+}
+</style>
