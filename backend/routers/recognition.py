@@ -309,17 +309,17 @@ async def test_privilege_lock(request: PrivilegeTestRequest):
         "logs": spec_logs
     }
 
-@router.get("/api/privilege/rules", summary="获取内置特权规则列表")
+@router.get("/api/privilege/rules", summary="获取已加载的特权规则列表")
 async def get_privilege_rules():
     """
-    返回系统当前硬编码在 SpecialEpisodeHandler 中的特权正则规则。
+    返回当前已加载（本地 + 远程）的特权规则。
     """
     from recognition_engine.special_episode_handler import SpecialEpisodeHandler
     rules = []
-    for pattern, group_idx, desc in SpecialEpisodeHandler.RULES:
+    for pattern, meta, desc in SpecialEpisodeHandler.get_all_rules():
         rules.append({
             "pattern": pattern,
-            "group_index": group_idx,
+            "meta": meta,
             "description": desc
         })
     return rules

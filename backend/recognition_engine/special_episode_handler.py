@@ -36,6 +36,9 @@ class SpecialEpisodeHandler:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
+            # 剥离远程规则来源前缀（与渲染引擎一致），否则前缀会混入正则导致规则失效
+            if line.startswith("[REMOTE]"):
+                line = line[8:].strip()
             try:
                 # 提取规则描述（# 后面的内容）
                 desc = ""
