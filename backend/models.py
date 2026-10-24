@@ -756,3 +756,25 @@ class FontSubtitleJob(SQLModel, table=True):
     log: Optional[str] = Field(default=None, sa_column=Column(Text))
     created_at: datetime = Field(default_factory=datetime.now, index=True)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class ChatSession(SQLModel, table=True):
+    """AI 助手对话会话（消息由前端维护，服务端存取并做体积控制）"""
+    __tablename__ = "chat_sessions"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "AI对话会话"
+    id: str = Field(primary_key=True)
+    title: str = Field(default="新对话")
+    updated_at: float = Field(default=0, index=True)
+    message_count: int = Field(default=0)
+    messages: List[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    agent_history: List[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default_factory=list)
+
+
+class SkillEnabledState(SQLModel, table=True):
+    """AI 技能启用状态（skill_id 对应技能目录名）"""
+    __tablename__ = "skill_enabled_state"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "AI技能开关"
+    skill_id: str = Field(primary_key=True)
+    enabled: bool = Field(default=True)

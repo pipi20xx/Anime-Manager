@@ -1,36 +1,26 @@
 """
-AI 对话会话的本地文件存储
+AI 对话会话的数据库存储（PostgreSQL，chat_sessions 表）
 
-- 每个会话一个 JSON 文件，存放在 assistant/chat_sessions/ 下
 - 服务端只负责存取，消息内容仍由前端维护（/chat 端点保持无状态）
-- 存储时做体积控制：截断超长工具结果、限制消息条数，避免单文件膨胀
+- 存储时做体积控制：截断超长工具结果、限制消息条数，避免单行膨胀
 """
 import json
 import logging
-import os
 import time
 import uuid
 from typing import Dict, List, Optional
 
+from sqlmodel import select
+
+from database import db
+from models import ChatSession
+
 logger = logging.getLogger(__name__)
 
-SESSIONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chat_sessions")
 MAX_SESSIONS = 50
 MAX_MESSAGES = 200
 MAX_CONTENT_CHARS = 8000
 MAX_TOOL_RESULT_CHARS = 2000
-
-
-def _ensure_dir():
-    os.makedirs(SESSIONS_DIR, exist_ok=True)
-
-
-def _session_path(session_id: str) -> str:
-    # 只允许安全字符，防路径穿越
-    safe = "".join(c for c in str(session_id) if c.isalnum() or c in "-_")
-    if not safe:
-        safe = uuid.uuid4().hex[:16]
-    return os.path.join(SESSIONS_DIR, f"{safe}.json")
 
 
 def _new_id() -> str:
@@ -121,82 +111,83 @@ def _title_from_messages(messages) -> str:
     return "新对话"
 
 
-def _meta(data: Dict) -> Dict:
+def _meta_from_row(row: ChatSession) -> Dict:
     return {
-        "id": data.get("id"),
-        "title": data.get("title") or "新对话",
-        "updated_at": data.get("updated_at") or 0,
-        "message_count": data.get("message_count") or 0,
+        "id": row.id,
+        "title": row.title or "新对话",
+        "updated_at": row.updated_at or 0,
+        "message_count": row.message_count or 0,
     }
 
 
-def save_session(session_id: str, messages: List[Dict], title: str = "", agent_history: Optional[List[Dict]] = None) -> Dict:
-    _ensure_dir()
+async def save_session(session_id: str, messages: List[Dict], title: str = "", agent_history: Optional[List[Dict]] = None) -> Dict:
     if not session_id:
         session_id = _new_id()
 
     cleaned_messages = _sanitize_messages(messages)
-    data = {
+    new_title = (title or "").strip()[:50] or _title_from_messages(cleaned_messages)
+    cleaned_history = _sanitize_agent_history(agent_history)
+    now = time.time()
+
+    async with db.session_scope():
+        row = await db.get(ChatSession, session_id)
+        if row:
+            row.title = new_title
+            row.updated_at = now
+            row.message_count = len(cleaned_messages)
+            row.messages = cleaned_messages
+            row.agent_history = cleaned_history
+        else:
+            row = ChatSession(
+                id=session_id,
+                title=new_title,
+                updated_at=now,
+                message_count=len(cleaned_messages),
+                messages=cleaned_messages,
+                agent_history=cleaned_history,
+            )
+        await db.save(row, audit=False)
+
+        # 会话数超上限时清理最旧的
+        stmt = select(ChatSession).order_by(ChatSession.updated_at.desc())
+        rows = await db.all(ChatSession, stmt)
+        for old in rows[MAX_SESSIONS:]:
+            await db.delete(old, audit=False)
+
+    return {
         "id": session_id,
-        "title": (title or "").strip()[:50] or _title_from_messages(cleaned_messages),
-        "updated_at": time.time(),
+        "title": new_title,
+        "updated_at": now,
         "message_count": len(cleaned_messages),
-        "messages": cleaned_messages,
-        "agent_history": _sanitize_agent_history(agent_history),
     }
 
-    path = _session_path(session_id)
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False)
-    os.replace(tmp, path)
 
-    _enforce_session_cap()
-    return _meta(data)
-
-
-def get_session(session_id: str) -> Optional[Dict]:
-    path = _session_path(session_id)
-    if not os.path.exists(path):
-        return None
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.warning(f"[ChatStore] 读取会话失败 {session_id}: {e}")
-        return None
+async def get_session(session_id: str) -> Optional[Dict]:
+    async with db.session_scope():
+        row = await db.get(ChatSession, session_id)
+        if not row:
+            return None
+        return {
+            "id": row.id,
+            "title": row.title or "新对话",
+            "updated_at": row.updated_at or 0,
+            "message_count": row.message_count or 0,
+            "messages": row.messages or [],
+            "agent_history": row.agent_history or [],
+        }
 
 
-def list_sessions() -> List[Dict]:
-    _ensure_dir()
-    metas = []
-    for name in os.listdir(SESSIONS_DIR):
-        if not name.endswith(".json"):
-            continue
-        try:
-            with open(os.path.join(SESSIONS_DIR, name), "r", encoding="utf-8") as f:
-                metas.append(_meta(json.load(f)))
-        except Exception:
-            continue
-    metas.sort(key=lambda x: x.get("updated_at") or 0, reverse=True)
-    return metas
+async def list_sessions() -> List[Dict]:
+    async with db.session_scope():
+        stmt = select(ChatSession).order_by(ChatSession.updated_at.desc())
+        rows = await db.all(ChatSession, stmt)
+        return [_meta_from_row(r) for r in rows]
 
 
-def delete_session(session_id: str) -> bool:
-    path = _session_path(session_id)
-    if not os.path.exists(path):
-        return False
-    try:
-        os.remove(path)
+async def delete_session(session_id: str) -> bool:
+    async with db.session_scope():
+        row = await db.get(ChatSession, session_id)
+        if not row:
+            return False
+        await db.delete(row, audit=False)
         return True
-    except Exception as e:
-        logger.warning(f"[ChatStore] 删除会话失败 {session_id}: {e}")
-        return False
-
-
-def _enforce_session_cap():
-    metas = list_sessions()
-    for meta in metas[MAX_SESSIONS:]:
-        delete_session(meta["id"])
-    if len(metas) > MAX_SESSIONS:
-        logger.info(f"[ChatStore] 会话数超上限，已清理 {len(metas) - MAX_SESSIONS} 个最旧会话")

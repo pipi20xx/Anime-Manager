@@ -1,7 +1,7 @@
+import asyncio
 import os
 import re
 import yaml
-import json
 import logging
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
@@ -21,9 +21,6 @@ def _get_skills_dir() -> str:
     return "/app/skills"
 
 SKILLS_DIR = _get_skills_dir()
-
-# 技能启用状态持久化文件
-SKILLS_STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "skills_state.json")
 
 
 @dataclass
@@ -73,31 +70,45 @@ class SkillEngine:
         return cls._instance
 
     @classmethod
-    def _load_enabled_state(cls):
-        """从持久化文件加载技能启用状态"""
-        try:
-            if os.path.exists(SKILLS_STATE_FILE):
-                with open(SKILLS_STATE_FILE, "r", encoding="utf-8") as f:
-                    cls._enabled_state = json.load(f)
-        except Exception as e:
-            logger.warning(f"[SkillEngine] 加载技能状态失败: {e}")
-            cls._enabled_state = {}
+    async def hydrate_state_from_db(cls):
+        """启动时从数据库恢复技能启用状态到内存"""
+        from models import SkillEnabledState
+        from database import db
+        async with db.session_scope():
+            rows = await db.all(SkillEnabledState)
+            cls._enabled_state = {r.skill_id: bool(r.enabled) for r in rows}
 
     @classmethod
     def _save_enabled_state(cls):
-        """持久化技能启用状态"""
+        """把启用状态写入数据库（异步任务；调用方均在事件循环内）"""
         try:
-            with open(SKILLS_STATE_FILE, "w", encoding="utf-8") as f:
-                json.dump(cls._enabled_state, f, ensure_ascii=False, indent=2)
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        asyncio.create_task(cls._persist_state_db(dict(cls._enabled_state)))
+
+    @classmethod
+    async def _persist_state_db(cls, snapshot: Dict[str, bool]):
+        from models import SkillEnabledState
+        from database import db
+        try:
+            async with db.session_scope():
+                for skill_id, enabled in snapshot.items():
+                    row = await db.get(SkillEnabledState, skill_id)
+                    if row:
+                        row.enabled = enabled
+                    else:
+                        row = SkillEnabledState(skill_id=skill_id, enabled=enabled)
+                    await db.save(row, audit=False)
         except Exception as e:
-            logger.warning(f"[SkillEngine] 保存技能状态失败: {e}")
+            logger.warning(f"[SkillEngine] 技能状态写库失败: {e}")
 
     @classmethod
     def load_skills(cls, skills_dir: str = SKILLS_DIR, force: bool = False):
         if cls._loaded and not force:
             return
 
-        cls._load_enabled_state()
+        # 启用状态由 hydrate_state_from_db 在启动时载入 _enabled_state，此处直接使用
 
         if not os.path.exists(skills_dir):
             logger.warning(f"[SkillEngine] 技能目录不存在: {skills_dir}")

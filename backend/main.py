@@ -363,6 +363,14 @@ async def startup_event():
     except Exception as e:
         logger.error(f"主数据库初始化失败: {e}")
 
+    # AI 助手状态入库：会话与技能启用状态读写均走数据库
+    try:
+        from assistant.skill_engine import SkillEngine
+        await SkillEngine.hydrate_state_from_db()
+        logger.info("AI 助手会话与技能状态已就绪（数据库）。")
+    except Exception as e:
+        logger.error(f"AI 助手状态入库初始化失败: {e}")
+
     await MetaCacheManager.init_db()
     
     try:

@@ -332,7 +332,8 @@ class Agent:
                 raise Exception(f"LLM 摘要请求失败: {response.status_code}")
             data = response.json()
 
-        content = (data.get("choices", [{}])[0].get("message", {}) or {}).get("content", "")
+        # choices 可能为空列表（部分网关会补发无 choices 的 usage 尾包）
+        content = ((data.get("choices") or [{}])[0].get("message", {}) or {}).get("content", "")
         return (content or "").strip()
 
     def _get_system_prompt(self, tools: List = None) -> str:
@@ -779,7 +780,7 @@ class Agent:
             
             logger.debug(f"[Agent] LLM 响应: {json.dumps(response, ensure_ascii=False)[:1000]}")
             
-            choice = response.get("choices", [{}])[0]
+            choice = (response.get("choices") or [{}])[0]
             message = choice.get("message", {})
             
             content = message.get("content", "") or ""
@@ -1125,7 +1126,8 @@ class Agent:
             
             try:
                 async for chunk in self._call_llm_stream():
-                    choice = chunk.get("choices", [{}])[0]
+                    # choices 可能为空列表（部分网关在 finish_reason 后补发 usage 尾包）
+                    choice = (chunk.get("choices") or [{}])[0]
                     delta = choice.get("delta", {})
                     finish_reason = choice.get("finish_reason", "")
                     
