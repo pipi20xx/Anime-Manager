@@ -63,6 +63,9 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta, require_fallback_to
         ctx.log(f"┣ [AI 智能体] ❌ AI 未返回有效结果")
         return False
     
+    # 标记本次识别由 AI 参与: 维护阶段可据此跳过智能记忆写入 (ai_result_skip_memory)
+    ctx.ai_intervened = True
+    
     real_title = ai_result.get("real_title")
     original_name = ai_result.get("original_name")
     chinese_name = ai_result.get("chinese_name")

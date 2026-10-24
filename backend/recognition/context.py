@@ -59,6 +59,9 @@ class RecognitionContext:
         
         assistant_config = self.config.get("assistant_config", {})
         self.ai_fallback_enabled = assistant_config.get("ai_fallback_enabled", False)
+        self.ai_result_skip_memory = assistant_config.get("ai_result_skip_memory", False)
+        # AI 介入是否实际参与了本次识别 (供维护阶段决定是否跳过智能记忆写入)
+        self.ai_intervened = False
         
         # Initialize Providers
         self.tmdb_client = TMDBClient(self.api_key)

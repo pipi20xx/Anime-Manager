@@ -109,7 +109,7 @@
     │       ⬇️ 海报或简介缺失时 -> 联网补全展示资料
     │
     ├── 5. [MaintenanceStage] 维护阶段 (recognition/pipeline/maintenance.py)
-    │       ⬇️ 写入/刷新智能记忆 (Fingerprint)
+    │       ⬇️ 写入/刷新智能记忆 (Fingerprint)（AI 介入的识别 + 开关 ai_result_skip_memory 时跳过）
     │       ⬇️ 自动同步元数据到数据中心 (落库存档)
     │       ⬇️ 保护用户修正记录 (is_custom 不被覆盖)
     │
@@ -757,6 +757,7 @@ L1 内核不含任何数据库或网络代码。
 | `seriesFingerprint` | 智能记忆 | ON |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
 | `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
+| `aiResultSkipMemory` | AI 介入的识别结果不写入智能记忆（防止记忆命中短路后续集数的 AI 集数裁决） | ON |
 
 **请求级参数（`/api/recognize` 单次请求可覆盖，优先于全局配置）：**
 

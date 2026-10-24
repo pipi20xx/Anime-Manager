@@ -77,6 +77,7 @@ class ConfigManager:
             "max_history_tokens": 24000,  # 会话历史 token 预算（0 = 只按条数限制）
             "thinking_level": "auto",     # 思考深度 off/auto/minimal/low/medium/high/max/xhigh
             "ai_fallback_enabled": False,
+            "ai_result_skip_memory": True,  # AI 介入的识别结果不写入智能记忆 (防止记忆命中短路后续集数的 AI 裁决)
             "use_tools": True
         },
         "batch_enhancement": False,

@@ -59,6 +59,7 @@ const assistantConfig = reactive({
   max_history_tokens: 24000,
   thinking_level: 'auto',
   ai_fallback_enabled: false,
+  ai_result_skip_memory: true,
   use_tools: true,
   enable_dynamic_tools: true,
 })
@@ -810,7 +811,17 @@ registerHeaderTab({
               <v-switch v-model="assistantConfig.ai_fallback_enabled" density="compact" hide-details color="primary" />
               <div>
                 <div class="text-body-2 font-weight-medium">AI 智能介入</div>
-                <div class="text-caption text-medium-emphasis">识别失败时，让 AI 猜测标题并重新搜索</div>
+                <div class="text-caption text-medium-emphasis">识别失败时，让 AI 猜测标题并重新搜索（特权规则 ai=1 命中时优先触发，无需开启此项）</div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-3 mt-4">
+              <v-switch v-model="assistantConfig.ai_result_skip_memory" density="compact" hide-details color="primary" />
+              <div>
+                <div class="text-body-2 font-weight-medium">AI 识别结果不写入智能记忆</div>
+                <div class="text-caption text-medium-emphasis">
+                  开启：AI 介入（含特权规则 ai=1 触发）识别成功的文件不记入智能记忆，避免后续集数被记忆短路、错失 AI 集数裁决；代价是同一部剧每集都会调用一次 AI
+                </div>
               </div>
             </div>
           </v-card-text>

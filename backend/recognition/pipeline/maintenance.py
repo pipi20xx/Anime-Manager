@@ -12,11 +12,16 @@ class MaintenanceStage:
         m_type = ctx.tmdb_data.get("type", "tv")
         
         # 1. 自动维护指纹库
-        existing_fp = await ctx.cache_dao.get_fingerprint_match(ctx.filename, [])
-        if not existing_fp or str(existing_fp.get("id")) != m_id or str(existing_fp.get("type")) != str(m_type):
-            await ctx.cache_dao.save_fingerprint(
-                ctx.filename, ctx.tmdb_data, ctx.logs
-            )
+        # AI 介入的识别结果可选择不写入智能记忆: 记忆命中会短路匹配阶段,
+        # 导致后续集数既不触发 AI 裁决、又只能依赖常规解析 (对怪命名常出错), 得不偿失
+        if ctx.ai_result_skip_memory and ctx.ai_intervened:
+            ctx.log(f"┃ [智能记忆] ⏭️ 本次识别由 AI 介入完成，按配置跳过指纹写入")
+        else:
+            existing_fp = await ctx.cache_dao.get_fingerprint_match(ctx.filename, [])
+            if not existing_fp or str(existing_fp.get("id")) != m_id or str(existing_fp.get("type")) != str(m_type):
+                await ctx.cache_dao.save_fingerprint(
+                    ctx.filename, ctx.tmdb_data, ctx.logs
+                )
         
         # 2. 自动同步元数据到数据中心 (落库存档)
         # 逻辑：如果当前数据不是从存档中拿到的，或者虽然拿到了但需要补全

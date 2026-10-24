@@ -73,6 +73,8 @@ class ConfigUpdate(BaseModel):
     # 思考深度：off/auto/minimal/low/medium/high/max/xhigh
     thinking_level: Optional[str] = None
     ai_fallback_enabled: Optional[bool] = None
+    # AI 介入的识别结果不写入智能记忆 (防止记忆命中短路后续集数的 AI 裁决)
+    ai_result_skip_memory: Optional[bool] = None
     use_tools: Optional[bool] = None
     enable_dynamic_tools: Optional[bool] = None
     enable_llm_summary: Optional[bool] = None
@@ -100,6 +102,7 @@ def get_assistant_config() -> Dict:
         "max_history_tokens": 24000,
         "thinking_level": "auto",
         "ai_fallback_enabled": False,
+        "ai_result_skip_memory": True,
         "use_tools": True,
         "enable_dynamic_tools": True,
         "enable_llm_summary": True
