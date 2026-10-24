@@ -1041,6 +1041,17 @@ async def _retry_history_runner(history_id: int, task_id: str):
         if error_count > 0 and success_count == 0:
             await finish_task(task_id, "error")
         elif success_count > 0:
+            # 改用目标文件重试成功：原记录（标题已证伪、target_path 已失效）被本次结果取代，
+            # 删除以保持一个文件一条记录且始终指向当前位置（与整理流程按 source_path 去重的语义一致）
+            if retry_from_target:
+                try:
+                    async with db.session_scope():
+                        superseded = await db.get(OrganizeHistory, history_id)
+                        if superseded:
+                            await db.delete(superseded, audit=False)
+                    await log_task(task_id, f"🧹 已移除被本次重试取代的旧历史记录 (#{history_id})")
+                except Exception as e:
+                    logger.warning(f"移除旧整理历史 #{history_id} 失败: {e}")
             await log_task(task_id, f"✅ 重试完成: 成功 {success_count} 项，跳过 {skip_count} 项")
             await finish_task(task_id, "completed")
         else:
