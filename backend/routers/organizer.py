@@ -618,6 +618,29 @@ def _infer_path_via(path: Optional[str]) -> str:
     from path_utils import infer_path_via
     return infer_path_via(path)
 
+async def _path_exists_via(path: Optional[str], via: Optional[str] = None) -> bool:
+    """按路径归属检查文件是否存在：本地用 os.path.exists，CD2 走 gRPC 列父目录匹配。
+
+    CD2 挂载点对后端进程未必可见（Remote Upload 免挂载场景），不能直接 os.path.exists。
+    """
+    if not path:
+        return False
+    if (via or _infer_path_via(path)) != "cd2":
+        return await asyncio.to_thread(os.path.exists, path)
+    try:
+        from organizer_core.processor import FileProcessor
+        client = FileProcessor._resolve_cd2_client(path)
+        if client:
+            if not client.logged_in and not await asyncio.to_thread(client.login):
+                logger.warning(f"CD2 存在性检查失败（登录失败）: {path}")
+            else:
+                return await asyncio.to_thread(client._file_browser.path_exists, path)
+        else:
+            logger.warning(f"CD2 存在性检查失败（未匹配到 CD2 客户端）: {path}")
+    except Exception as e:
+        logger.warning(f"CD2 存在性检查异常，回退本地检查 {path}: {e}")
+    return await asyncio.to_thread(os.path.exists, path)
+
 def _with_via(data: dict) -> dict:
     """补全记录的 source_via/target_via：新记录取落库值，旧记录按挂载点推断"""
     data["source_via"] = data.get("source_via") or _infer_path_via(data.get("source_path"))
@@ -915,6 +938,7 @@ async def _retry_history_runner(history_id: int, task_id: str):
                 return
             source_path = history.source_path
             target_path = history.target_path
+            source_via = history.source_via
             target_via = history.target_via
             v_file = history.filename
             action_type = history.action_type or "move"
@@ -923,15 +947,16 @@ async def _retry_history_runner(history_id: int, task_id: str):
         await start_task(task_id, "重试整理", f"{title_hint} ({v_file})")
         await log_task(task_id, f"🔁 开始重试整理: {source_path}")
 
-        # 1. 检查源文件是否存在；移动类操作源文件已不在原位，退化为用目标文件重试
+        # 1. 检查源文件是否存在（CD2 路径走 gRPC 检查）；
+        #    移动类操作源文件必然已转移到目标路径，源缺失属预期，直接改用目标文件重试
         retry_from_target = False
-        if not await asyncio.to_thread(os.path.exists, source_path):
-            if target_path and await asyncio.to_thread(os.path.exists, target_path):
+        if not await _path_exists_via(source_path, source_via):
+            if target_path and await _path_exists_via(target_path, target_via):
                 retry_from_target = True
-                await log_task(task_id, f"↪️ 源文件已不在原位（移动/CD2移动），改用目标文件重试: {target_path}", "WARN")
+                await log_task(task_id, f"↪️ 移动类操作源文件已转移，改用目标路径的文件重试: {target_path}")
             else:
-                await log_task(task_id, f"❌ 源文件不存在: {source_path}", "ERROR")
-                await log_task(task_id, "（可能已被移动或删除，且目标文件也已不存在，无法重试）", "WARN")
+                await log_task(task_id, f"❌ 源文件已不存在: {source_path}", "ERROR")
+                await log_task(task_id, f"（且未能确认目标文件存在: {target_path or '记录无目标路径'}，可能已被再次移动/删除，或 CD2 检查失败）", "WARN")
                 await finish_task(task_id, "error")
                 return
 
@@ -1049,15 +1074,21 @@ async def retry_organize_history(history_id: int):
                 raise HTTPException(status_code=404, detail="记录不存在")
             source_path = history.source_path
             target_path = history.target_path
+            source_via = history.source_via
+            target_via = history.target_via
             action_type = history.action_type or "move"
             title_hint = history.title or history.filename
 
-        # 预检查：源与目标文件都不存在时才立即失败（移动类操作可退化为用目标文件重试）
-        if not await asyncio.to_thread(os.path.exists, source_path):
-            if not (target_path and await asyncio.to_thread(os.path.exists, target_path)):
+        # 预检查：源与目标都确认不到时才立即失败（移动类操作源缺失属预期，目标走 CD2 gRPC 检查）
+        if not await _path_exists_via(source_path, source_via):
+            if not (target_path and await _path_exists_via(target_path, target_via)):
                 return {
                     "success": False,
-                    "message": f"源文件不存在: {source_path}（可能已被移动或删除，目标文件也已不存在）"
+                    "message": (
+                        f"源文件已不存在: {source_path}，"
+                        f"且未能确认目标文件存在: {target_path or '记录无目标路径'}"
+                        f"（可能已被再次移动或删除；若是 CD2 路径，检查失败原因见后端日志）"
+                    )
                 }
 
         # 启动后台任务，任务配置匹配与执行统一在 runner 中完成
