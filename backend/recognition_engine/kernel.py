@@ -67,8 +67,10 @@ def core_recognize(
     from .special_episode_handler import SpecialEpisodeHandler
     current_logs.append(f"┃")
     sp_group, sp_title, sp_ep, sp_raw, sp_logs, sp_meta = SpecialEpisodeHandler.extract(input_name)
-    if sp_title is not None:
-        meta_obj.privileged_title = sp_title  # 存储特权标题，用于优先搜索
+    # sp_meta 非空但无标题: ai=1 规则仅凭命名特征触发, 不提取标题
+    if sp_title is not None or sp_meta:
+        if sp_title is not None:
+            meta_obj.privileged_title = sp_title  # 存储特权标题，用于优先搜索
         if sp_ep is not None:
             meta_obj.begin_episode = sp_ep
         if sp_group and not meta_obj.resource_team:
@@ -89,6 +91,11 @@ def core_recognize(
                 meta_obj.type = MediaType.AUTO
         if "year" in sp_meta:
             meta_obj.year = sp_meta["year"]
+        if sp_meta.get("ai"):
+            meta_obj.ai_required = True
+            # 规则未锁集数时, 集数全权交给 AI: 常规解析的集数不可信, 这正是触发 AI 的原因
+            if sp_ep is None:
+                meta_obj.ai_episode_takeover = True
         
         if sp_raw:
             pattern = rf"(?<!\d){re.escape(sp_raw)}(?!\d)"

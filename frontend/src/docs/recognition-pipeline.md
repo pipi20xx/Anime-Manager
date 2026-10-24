@@ -85,13 +85,15 @@
     ├── 3. [MatcherStage] 数据对撞匹配阶段 (recognition/pipeline/matcher.py)
     │       ❓ 检查 Context: 是否已有锁定 ID?
     │       ✅ 是 (来自智能记忆/路径锁定/强制参数) -> ⏩ 跳过耗时的数据库/API 搜索
+    │       ❓ 特权规则 ai=1 命中且无 ID 锁定? -> 🤖 AI 优先介入 (不受全局开关控制)
+    │           ⬇️ AI 失败时自动回退常规匹配流程 (集数仍按规则锁定)
     │       ❓ 强制 TMDB ID 锁定? -> 优先调取数据中心完整档案 (AUTO 类型按 tv -> movie 双探测)，未命中再联网
     │       ❌ 否 -> 进入常规匹配流程
     │           ⬇️ 特权标题三轮搜索: 原文 -> 清洗后 -> 普通标题 (特权标题含 "/" 时拆分多段，逐段搜索)
     │           ⬇️ 本地 DB (L2 Offline) -> 在线 API (TMDB/Bangumi) -> L1 对撞算法打分
     │           ⬇️ 类型 AUTO? -> 同时搜索 TV + Movie (smart_search_multi)，命中后按结果自动定型
     │           ⬇️ 模糊命中/全 0 分? -> 🛡️ 别名审核 (拉取 TMDB 别名表复核对撞) ⭐
-    │       ❓ 常规匹配失败?
+    │       ❓ 常规匹配失败? (且全局兜底开关打开)
     │       ✅ AI 智能介入 (recognition/ai_helper.py) ⭐
     │           ⬇️ 线程池调用 OpenAI 兼容 API 推断真实标题 (guess_title_variants)
     │           ⬇️ 用 AI 返回的标题变体重新搜索云端 -> 本地数据中心
@@ -594,11 +596,11 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **特点**: 每个 API 请求独立一个 Context，互不干扰
 
 ##### `ai_helper.py` - AI 智能介入 ⭐
-- **职责**: 常规识别失败时，调用 OpenAI 兼容 API 推断真实标题
-- **触发条件**: `ai_fallback_enabled` 开启且常规匹配未命中
+- **职责**: 常规识别失败时，调用 OpenAI 兼容 API 推断真实标题；也可由特权规则 `ai=1` 命中直接触发
+- **触发条件**: ① `ai_fallback_enabled` 开启且常规匹配未命中（全局兜底）；② 特权规则命中 `ai=1`（AI 优先，不受全局开关控制，失败自动回退常规流程）
 - **对外入口**: `guess_title_variants()`（单例模式；同步 httpx 调用丢线程池执行，避免阻塞事件循环）
 - **输出**: 真实标题、原名、中文名、备选标题、置信度、媒体类型，可附带季号/集数修正
-- **特点**: AI 可修正媒体类型/季号并补集数；标题变体先搜云端（AUTO 类型走多类型搜索）再搜本地数据中心
+- **特点**: AI 可修正媒体类型/季号并补集数；特权标题（若规则提供）作为参考线索传给 AI；标题变体先搜云端（AUTO 类型走多类型搜索）再搜本地数据中心
 
 ##### `pipeline/parser.py` (ParserStage) - 解析阶段
 - **职责**: 驱动 L1 内核进行文件名解析
@@ -610,10 +612,11 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **职责**: 核心调度器，实现数据对撞匹配
 - **决策树**:
   1. Context 已有锁定 ID（智能记忆/路径锁定/强制参数）→ 跳过搜索（短路发生在 ParserStage，此处仅判空跳过）
-  2. 强制 TMDB ID 锁定模式 → 优先调取数据中心完整档案（以 genre_ids 判定完整性），未命中再联网调取详情；AUTO 类型按 tv → movie 双探测自动定型
-  3. 特权标题三轮搜索（原文 → 清洗后 → 普通标题；特权标题含 `/` 时拆分多段逐段尝试），先本地数据库 (L2 Offline) 再云端；本地命中即跳过云端搜索
-  4. 云端顺序由 `bangumi_priority` / `bangumi_failover` 策略决定（TMDB/Bangumi），命中判定由 L1 对撞算法内核打分；类型 AUTO 时同时搜索 TV + Movie 并按命中结果自动定型
-  5. 常规匹配失败 → AI 智能介入 (ai_helper.py)
+  2. 特权规则 `ai=1` 命中且无 ID 锁定 → AI 优先介入（不受全局开关控制，失败回退常规流程；同时指定 `tmdbid` 时以 ID 锁定为准并跳过 AI）
+  3. 强制 TMDB ID 锁定模式 → 优先调取数据中心完整档案（以 genre_ids 判定完整性），未命中再联网调取详情；AUTO 类型按 tv → movie 双探测自动定型
+  4. 特权标题三轮搜索（原文 → 清洗后 → 普通标题；特权标题含 `/` 时拆分多段逐段尝试），先本地数据库 (L2 Offline) 再云端；本地命中即跳过云端搜索
+  5. 云端顺序由 `bangumi_priority` / `bangumi_failover` 策略决定（TMDB/Bangumi），命中判定由 L1 对撞算法内核打分；类型 AUTO 时同时搜索 TV + Movie 并按命中结果自动定型
+  6. 常规匹配失败 → AI 智能介入 (ai_helper.py，全局兜底；AI 优先已尝试过则不重复调用)
 - **别名审核**: TMDB 模糊命中或全 0 分时由 L2 tmdb 客户端拉取别名表复核对撞（见 `data_provider/tmdb/client.py`）
 
 ##### `pipeline/enricher.py` (EnrichmentStage) - 补全阶段
@@ -753,7 +756,7 @@ L1 内核不含任何数据库或网络代码。
 | `forceFilename` | 强制单文件模式，启用路径分隔符脱敏 | OFF |
 | `seriesFingerprint` | 智能记忆 | ON |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
-| `aiFallbackEnabled` | AI 智能介入（需配置 OpenAI 兼容 API） | OFF |
+| `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
 
 **请求级参数（`/api/recognize` 单次请求可覆盖，优先于全局配置）：**
 

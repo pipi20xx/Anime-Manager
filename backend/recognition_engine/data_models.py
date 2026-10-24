@@ -25,3 +25,5 @@ class MetaBase:
     processed_name: Optional[str] = None
     original_cn_name: Optional[str] = None
     privileged_title: Optional[str] = None  # 特权提取的标题 (优先搜索候选)
+    ai_required: bool = False  # 特权规则 ai=1 命中: 匹配阶段优先由 AI 识别标题
+    ai_episode_takeover: bool = False  # ai=1 且规则未写 e=: 集数全权交给 AI (覆盖常规解析结果)

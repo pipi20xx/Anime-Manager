@@ -68,6 +68,8 @@ class AIHelper:
 - 全角字符（如／）应转换为半角（/）
 - 剧场版、电影版、劇場版 → media_type: "movie"
 - 番剧、连续剧、TV 系列、有集数标记 → media_type: "tv"
+- 文件名可能同时出现季度内集数（如 [4th - 19]、S04E19）和绝对集数（如 總第85、全集85），episode 填与 season 对应的季度内集数，绝对集数仅作辅助
+- 季度标记如 [4th]、S4、第4季、IV 期 → season 填对应数字；无季度标记时不确定就填 null
 - 如果提供了已识别的标题或集数信息，作为参考但不一定正确"""
 
     def _guess_title_variants_openai(self, filename: str, current_title: str = None, current_episode: int = None) -> Optional[Dict[str, Any]]:

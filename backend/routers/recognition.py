@@ -302,10 +302,13 @@ async def test_privilege_lock(request: PrivilegeTestRequest):
             return {"hit": False, "logs": [f"正则语法错误: {str(e)}"], "episode": None, "error": True}
 
     # 2. 否则走系统内置规则
-    spec_group, spec_title, spec_ep, spec_raw, spec_logs, _ = SpecialEpisodeHandler.extract(filename)
+    spec_group, spec_title, spec_ep, spec_raw, spec_logs, spec_meta = SpecialEpisodeHandler.extract(filename)
     return {
-        "hit": spec_ep is not None,
+        # ai=1 规则可只命中命名特征 (不锁集数/不提取标题), 同样算命中
+        "hit": spec_ep is not None or bool(spec_title) or bool(spec_meta),
         "episode": spec_ep,
+        "title": spec_title,
+        "ai_required": bool(spec_meta.get("ai")),
         "logs": spec_logs
     }
 

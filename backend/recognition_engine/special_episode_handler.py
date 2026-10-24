@@ -16,10 +16,12 @@ class SpecialEpisodeHandler:
     - tmdbid: TMDB ID
     - type: 媒体类型 (tv/movie)
     - year: 年份
+    - ai: 命中后交由 AI 优先识别标题 (值为 1/true/yes/on)
     
     示例:
       Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]}
       ^\[([^\]]+)\]\s+(.+?)\s+-\s+(\d{1,4}) => {[group=\1;title=\2;e=\3]}
+      ^\[MHD\] => {[ai=1]} # MHD 命名无规律, 命中组名即交由 AI 识别
     """
     
     # 外部规则缓存
@@ -157,9 +159,20 @@ class SpecialEpisodeHandler:
                         if year and year.isdigit():
                             extra_meta["year"] = year
                     
+                    # 处理 AI 介入标记 (命中后匹配阶段优先由 AI 识别标题)
+                    ai_flag = False
+                    if "ai" in meta_dict:
+                        ai_val = SpecialEpisodeHandler._resolve_capture_group(match, meta_dict["ai"]).strip().lower()
+                        ai_flag = ai_val in ("1", "true", "yes", "on")
+                        if ai_flag:
+                            extra_meta["ai"] = True
+                    
                     # 校验标题有效性
-                    if not title or len(title) < 2:
+                    # ai=1 规则可省略 title: 标题正是提取不出的才交给 AI, 仅凭命名特征即可触发
+                    if (not title or len(title) < 2) and not ai_flag:
                         continue
+                    if not title:
+                        title = None  # ai 规则未提取标题时归一化为 None, 避免空串流向内核
 
                     # 记录日志 - 使用规则描述
                     rule_desc = desc if desc else "特权规则"
@@ -171,15 +184,20 @@ class SpecialEpisodeHandler:
                     logs.append(f"[规则][特权] {rule_desc}命中")
                     if group_name:
                         logs.append(f"┣ 字幕组: {group_name}")
-                    logs.append(f"┣ 标题: {title}")
+                    if title:
+                        logs.append(f"┣ 标题: {title}")
                     if season_stripped is not None:
                         logs.append(f"┣ [Shield] 特权标题季号已剥离: S{season_stripped}")
                     if "s" in extra_meta:
                         logs.append(f"┣ 季数: {extra_meta['s']}")
                     if episode is not None:
                         logs.append(f"┣ 集数: {episode}")
-                    else:
+                    elif title:
                         logs.append(f"┣ 集数: 未锁定 (仅标题提取)")
+                    else:
+                        logs.append(f"┣ 集数: 未锁定 (交由后续流程解析)")
+                    if ai_flag:
+                        logs.append(f"┣ 🤖 AI 介入标记: 匹配阶段将优先由 AI 识别标题")
                     
                     return group_name, title, episode, ep_str, logs, extra_meta
                 except (ValueError, IndexError):

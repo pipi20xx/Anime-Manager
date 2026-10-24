@@ -32,19 +32,25 @@ def _clean_privileged_title(title: str) -> str:
     
     return cleaned
 
-async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
+async def _ai_fallback_search(ctx: RecognitionContext, meta, require_fallback_toggle: bool = True) -> bool:
     """
-    AI 智能体介入：当常规识别失败时，让 AI 猜测标题并重新搜索
+    AI 智能体介入：让 AI 猜测标题并重新搜索
     返回是否成功匹配
+    两种触发方式:
+    - 全局兜底: 常规识别全部失败后触发 (require_fallback_toggle=True, 受全局开关控制)
+    - 规则触发: 特权规则 ai=1 命中, 优先触发, 不受全局开关控制 (require_fallback_toggle=False)
     """
     ai = AIHelper()
-    if not ai.is_available() or not ai.is_fallback_enabled():
+    if not ai.is_available():
+        return False
+    if require_fallback_toggle and not ai.is_fallback_enabled():
         return False
     
     ctx.log(f"┃")
     ctx.log(f"┃ [AI 智能体] 🤖 启动 AI 智能介入...")
     
-    current_title = meta.cn_name or meta.en_name or meta.processed_name
+    # 特权标题是规则作者给 AI 的最好线索 (正是标题提取困难才触发 AI), 优先作为参考
+    current_title = meta.privileged_title or meta.cn_name or meta.en_name or meta.processed_name
     current_episode = meta.begin_episode
     
     # AIHelper 内部是同步 httpx：直接在事件循环里调用会把整个后端按住
@@ -81,9 +87,16 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta) -> bool:
         meta.begin_season = ai_result["season"]
         ctx.log(f"┣ [AI 智能体] 🎬 季号修正: S{ai_result['season']}")
     
-    if ai_result.get("episode") is not None and not meta.begin_episode:
-        meta.begin_episode = ai_result["episode"]
-        ctx.log(f"┣ [AI 智能体] 📺 集数补充: E{ai_result['episode']}")
+    # 集数: 缺失时补充; ai=1 规则未写 e= 时全权由 AI 裁决 (覆盖常规解析的错误结果)
+    ai_ep = ai_result.get("episode")
+    if ai_ep is not None:
+        takeover = getattr(meta, "ai_episode_takeover", False)
+        if not meta.begin_episode:
+            meta.begin_episode = ai_ep
+            ctx.log(f"┣ [AI 智能体] 📺 集数补充: E{ai_ep}")
+        elif takeover and str(meta.begin_episode) != str(ai_ep):
+            ctx.log(f"┣ [AI 智能体] 📺 集数修正: E{meta.begin_episode} -> E{ai_ep} (AI 裁决)")
+            meta.begin_episode = ai_ep
     
     search_titles = []
     if original_name:
@@ -162,6 +175,19 @@ class MatcherStage:
         
         # 1. 只有在指纹未命中且当前数据仍为空时，才进行深度搜索
         if not ctx.tmdb_data:
+            # [AI 优先] 特权规则 ai=1 命中: 先让 AI 识别标题, 常规搜索降级为兜底
+            ai_required = getattr(meta, 'ai_required', False)
+            ai_attempted = False
+            if ai_required:
+                if meta.forced_tmdbid:
+                    ctx.log(f"[匹配] ⚠️ 规则同时命中 AI 介入与 tmdbid 锁定，以 ID 锁定为准，跳过 AI")
+                elif AIHelper().is_available():
+                    ctx.log(f"[匹配] 🤖 特权规则命中 AI 介入标记，优先由 AI 识别标题（常规搜索转为兜底）")
+                    ai_attempted = True
+                    await _ai_fallback_search(ctx, meta, require_fallback_toggle=False)
+                else:
+                    ctx.log(f"[匹配] ⚠️ 特权规则要求 AI 介入，但 AI 未配置或不可用，回退常规识别流程")
+
             # 2.1 强制 TMDB ID 锁定模式
             if meta.forced_tmdbid:
                 ctx.search_plan["skip_reason"] = "指定 TMDB ID，未按标题搜索"
@@ -288,7 +314,7 @@ class MatcherStage:
                 # 再用正常标题搜索
                 if not ctx.tmdb_data:
                     await search_offline(use_privileged=False)
-                if ctx.tmdb_data:
+                if ctx.tmdb_data and not ai_attempted:
                     ctx.log(f"[匹配] ⏭️ 已在本地阶段获取元数据，跳过云端搜索（标题分词不参与）")
                     if not ctx.search_plan["skip_reason"]:
                         ctx.search_plan["skip_reason"] = "本地数据中心命中"
@@ -306,7 +332,8 @@ class MatcherStage:
                         ctx.log(f"[匹配] 🔄 特权标题搜索失败，使用清洗后的标题继续搜索: {meta.cn_name or meta.en_name}")
                     await search_cloud(use_privileged=False)
             else:
-                ctx.log(f"[匹配] ☁️ 本地数据中心已关闭，直接启动云端深度搜索")
+                if not ctx.tmdb_data:
+                    ctx.log(f"[匹配] ☁️ 本地数据中心已关闭，直接启动云端深度搜索")
                 for i in range(len(privileged_titles)):
                     if ctx.tmdb_data: break
                     await search_cloud(use_privileged=True, title_index=i, clean_privileged=False)
@@ -320,7 +347,8 @@ class MatcherStage:
                         ctx.log(f"[匹配] 🔄 特权标题搜索失败，使用清洗后的标题继续搜索: {meta.cn_name or meta.en_name}")
                     await search_cloud(use_privileged=False)
             
-            if not ctx.tmdb_data and ctx.ai_fallback_enabled:
+            # 全局兜底: 常规流程失败且全局开关打开时触发 (AI 优先已尝试过则不重复调用)
+            if not ctx.tmdb_data and ctx.ai_fallback_enabled and not ai_attempted:
                 await _ai_fallback_search(ctx, meta)
         else:
             ctx.log(f"[匹配] ⏭️ 元数据已由前置阶段命中（智能记忆/锁定 ID），跳过云端搜索（标题分词不参与）")
