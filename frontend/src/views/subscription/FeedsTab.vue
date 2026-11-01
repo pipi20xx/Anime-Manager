@@ -7,6 +7,7 @@
  * - 订阅源详情弹窗（聚合浏览条目）
  * - Jackett 同步
  * - TMDB 屏蔽管理
+ * - 全局操作：全量刷新（触发所有源 RSS 抓取）、清空黑名单（识别缓存）
  */
 import { ref, onMounted } from 'vue'
 import { subscriptionApi, clientsApi, api } from '@/api'
@@ -23,6 +24,7 @@ const { confirm } = useConfirm()
 const feeds = ref<any[]>([])
 const loading = ref(false)
 const clients = ref<any[]>([])
+const syncing = ref(false)
 
 // Feed 编辑弹窗
 const showFeedModal = ref(false)
@@ -45,6 +47,23 @@ async function fetchFeeds() {
 
 async function fetchClients() {
   try { clients.value = (await clientsApi.getClients()) || [] } catch { /* */ }
+}
+
+// --- 全局操作（原顶栏按钮，收敛到本 Tab 操作栏） ---
+async function runNow() {
+  const ok = await confirm({ title: '确认触发', content: '将立即触发所有订阅源的 RSS 全量刷新，可能产生较大负载，确定要继续吗？', confirmColor: 'info' })
+  if (!ok) return
+  syncing.value = true
+  try { await subscriptionApi.runNow(); success('已触发 RSS 刷新') }
+  catch { showError('触发失败') }
+  finally { syncing.value = false }
+}
+
+async function clearRecognitionCache() {
+  const ok = await confirm({ title: '确认清空', content: '清空黑名单后，之前被识别引擎排除的条目将不再被屏蔽，可能导致已忽略的资源重新进入下载流程。确定要继续吗？', confirmColor: 'warning' })
+  if (!ok) return
+  try { await subscriptionApi.clearRecognitionCache(); success('识别缓存已清除') }
+  catch { showError('清除失败') }
 }
 
 // --- Feed CRUD ---
@@ -121,6 +140,8 @@ defineExpose({ fetchFeeds })
   <div>
     <!-- 操作栏 -->
     <div class="d-flex justify-end mb-4 ga-2 flex-wrap">
+      <v-btn variant="tonal" size="small" prepend-icon="mdi-refresh" color="info" :loading="syncing" @click="runNow">全量刷新</v-btn>
+      <v-btn variant="tonal" size="small" prepend-icon="mdi-eraser" color="warning" @click="clearRecognitionCache">清空黑名单</v-btn>
       <v-btn variant="tonal" size="small" prepend-icon="mdi-eye-outline" color="info" @click="showItemsModal = true">订阅源详情</v-btn>
       <v-btn variant="tonal" size="small" prepend-icon="mdi-database-sync-outline" color="info" @click="syncJackettFeeds">同步 Jackett 源</v-btn>
       <v-btn variant="tonal" size="small" prepend-icon="mdi-shield-off-outline" color="error" @click="showTmdbBlocklist = true">TMDB屏蔽管理</v-btn>
