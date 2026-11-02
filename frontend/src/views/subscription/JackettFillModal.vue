@@ -9,8 +9,8 @@
  * - 开始/停止控制
  */
 import { ref, watch, nextTick } from 'vue'
-import { subscriptionApi, clientsApi } from '@/api'
-import { useNotification } from '@/composables'
+import { clientsApi } from '@/api'
+import { apiStream } from '@/api/client'
 import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
@@ -23,8 +23,6 @@ const emit = defineEmits<{
   (e: 'update:show', v: boolean): void
   (e: 'finish'): void
 }>()
-
-const { success, error: showError } = useNotification()
 
 const logs = ref<{ type: string; message: string }[]>([])
 const progress = ref(0)
@@ -57,13 +55,21 @@ async function startProcess() {
   statusMsg.value = '正在建立连接...'
 
   try {
-    // 使用 fetch + ReadableStream 实现 SSE
-    const apiBase = (import.meta.env.VITE_API_BASE as string) || ''
-    const url = `${apiBase}/api/subscriptions/${props.subId}/fill?indexer=${selectedIndexerId.value}`
-    const response = await fetch(url, {
+    // 流式读取 NDJSON 日志；apiStream 会自动带上 Authorization 头（原生 fetch 漏带会被判 401）
+    const response = await apiStream(`/api/subscriptions/${props.subId}/fill`, {
       method: 'POST',
-      signal: abortController.signal
+      params: { indexer: selectedIndexerId.value },
+      signal: abortController.signal,
     })
+
+    if (!response.ok) {
+      let detail = `HTTP ${response.status}`
+      try {
+        const data = await response.json()
+        if (data?.detail) detail = data.detail
+      } catch { /* 非 JSON 响应 */ }
+      throw new Error(response.status === 401 ? '登录态已失效，请重新登录后再试' : detail)
+    }
 
     if (!response.body) throw new Error('ReadableStream not supported')
     const reader = response.body.getReader()

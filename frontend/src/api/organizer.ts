@@ -1,15 +1,7 @@
 /**
  * Organizer API — 文件整理接口
  */
-import { api, apiFetch } from './client'
-
-/** 获取认证头 */
-function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || ''
+import { api, apiFetch, apiStream } from './client'
 
 /**
  * 批量删除文件（按扩展名）请求体
@@ -140,17 +132,13 @@ startBackground: (body: any, opts?: { dry_run?: boolean }) =>
   // --- Stream-based execution (for FileBrowser) ---
   /** Ad-hoc 流式整理 (dry_run) — 返回 Response 流 */
   streamAdhoc: (body: any, params?: { dry_run?: boolean }) =>
-    fetch(`${API_BASE_URL}/api/organize/stream_adhoc?dry_run=${params?.dry_run ?? true}`, {
+    apiStream('/api/organize/stream_adhoc', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(body),
+      params: { dry_run: params?.dry_run ?? true },
+      body,
     }),
 
   /** 流式执行整理 (返回 Response 流) */
   streamExecute: (body: any) =>
-    fetch(`${API_BASE_URL}/api/organize/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(body),
-    }),
+    apiStream('/api/organize/execute', { method: 'POST', body }),
 }

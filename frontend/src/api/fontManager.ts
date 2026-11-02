@@ -11,7 +11,7 @@
  * 说明：下载端点返回二进制流，不能走 apiFetch（会按 JSON 解析），
  *       因此这里单独用原生 fetch + blob 实现。
  */
-import { api } from './client'
+import { api, authHeaders } from './client'
 
 // ── 类型定义 ──────────────────────────────────────────────
 
@@ -361,8 +361,7 @@ const RAW_BASE = `${import.meta.env.VITE_API_BASE_URL || ''}${BASE}`
 
 /** 下载二进制流并触发浏览器保存 */
 async function downloadBlob(url: string, filename: string): Promise<void> {
-  const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token') || ''
-  const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  const res = await fetch(url, { headers: authHeaders() })
   if (!res.ok) {
     const data: any = await res.json().catch(() => ({}))
     throw new Error(data?.detail || '下载失败')

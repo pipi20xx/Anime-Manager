@@ -12,6 +12,7 @@
  */
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { api, apiFetch } from '@/api'
+import { authHeaders } from '@/api/client'
 import { useNotification, useConfirm, useClipboard } from '@/composables'
 import AiMarkdownContent from './AiMarkdownContent.vue'
 import 'highlight.js/styles/github-dark.css'
@@ -332,11 +333,9 @@ async function readSseStream(res: Response, msg: ChatMessage) {
 }
 
 // ---------- 发送 / 停止 / 重新生成 ----------
+/** 流式聊天请求头（复用全局认证头，避免手写 token 逻辑走样） */
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('apm_access_token') || localStorage.getItem('apm_external_token')
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
-  return headers
+  return authHeaders({ 'Content-Type': 'application/json' })
 }
 
 async function submitUserMessage(text: string, skill?: { id: string; name?: string } | null) {
