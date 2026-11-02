@@ -75,10 +75,13 @@ const searchResults = ref<any[]>([])
 const tmdbSeasons = ref<any[]>([])
 const bangumiName = ref('')
 const availableFeeds = ref<any[]>([])
+/** 最近一次套用的预设名（仅用于界面提示，不参与保存） */
+const appliedPresetName = ref('')
 
 watch(() => props.show, (val) => {
   if (val) {
     loadModalData()
+    appliedPresetName.value = ''
     if (props.subData) {
       Object.keys(form).forEach(key => {
         if (props.subData[key] !== undefined) (form as any)[key] = props.subData[key]
@@ -109,6 +112,7 @@ function resetForm() {
   searchResults.value = []
   tmdbSeasons.value = []
   bangumiName.value = ''
+  appliedPresetName.value = ''
 }
 
 async function loadModalData() {
@@ -118,11 +122,15 @@ async function loadModalData() {
   } catch { /* */ }
 }
 
+/**
+ * 套用预设：与「探测任务」「订阅预设」表单同一套语义 ——
+ * 把预设的匹配条件 / 洗版策略 / 下载设置整体填进表单，之后可自由修改
+ * （仅覆盖配置类参数，保留标题、TMDB ID、海报等核心元数据）。
+ */
 function applyTemplate(tmplId: number | null) {
   if (!tmplId) return
   const tmpl = props.templates.find((t: any) => t.id === tmplId)
   if (!tmpl) return
-  // 仅覆盖配置类参数，保留标题、ID、海报等核心元数据
   form.filter_res = tmpl.filter_res || ''
   form.filter_team = tmpl.filter_team || ''
   form.filter_source = tmpl.filter_source || ''
@@ -137,12 +145,11 @@ function applyTemplate(tmplId: number | null) {
   form.save_path = tmpl.save_path || ''
   form.category = tmpl.category || 'Anime'
   form.auto_fill = tmpl.auto_fill !== false
-  if (tmpl.target_feeds) {
-    form.target_feeds = String(tmpl.target_feeds).split(',').filter(Boolean)
-  } else {
-    form.target_feeds = []
-  }
-  if (tmpl.quality_profile_id) form.quality_profile_id = tmpl.quality_profile_id
+  form.target_feeds = tmpl.target_feeds
+    ? String(tmpl.target_feeds).split(',').filter(Boolean)
+    : []
+  form.quality_profile_id = tmpl.quality_profile_id ?? null
+  appliedPresetName.value = tmpl.name
   success(`已套用预设: ${tmpl.name}`)
 }
 
@@ -207,29 +214,8 @@ function handleSave() {
       <v-divider />
 
       <v-card-text class="pa-4">
-        <!-- 预设 & 洗版 -->
-        <v-select
-          v-if="isNew && templates.length > 0"
-          :model-value="null"
-          label="套用预设"
-          :items="templates.map((t: any) => ({ title: t.name, value: t.id }))"
-          clearable
-          variant="outlined"
-          density="compact"
-          class="mb-3"
-          placeholder="快速选择已保存的订阅预设..."
-          @update:model-value="applyTemplate"
-        />
-        <v-select
-          v-if="profiles.length > 0"
-          v-model="form.quality_profile_id"
-          label="洗版策略"
-          :items="profiles.map((p: any) => ({ title: p.name, value: p.id }))"
-          clearable
-          variant="outlined"
-          density="compact"
-          class="mb-3"
-        />
+        <!-- ① 订阅信息 -->
+        <div class="text-subtitle-2 font-weight-medium mb-2">订阅信息</div>
 
         <!-- TMDB 搜索 -->
         <div class="mb-3">
@@ -238,8 +224,8 @@ function handleSave() {
               <v-btn variant="tonal" prepend-icon="mdi-magnify" :loading="searchLoading" @click="handleSearch">搜索</v-btn>
             </template>
           </v-text-field>
-<div v-if="searchResults.length > 0" class="sub-search-results">
-<div v-for="item in searchResults" :key="item.id" class="sub-search-result-item" @click="selectSearchResult(item)">
+          <div v-if="searchResults.length > 0" class="sub-search-results">
+            <div v-for="item in searchResults" :key="item.id" class="sub-search-result-item" @click="selectSearchResult(item)">
               <span class="font-weight-medium">{{ item.title || item.name }}</span>
               <span class="text-caption text-medium-emphasis ml-2">({{ item.year || '-' }}) ID:{{ item.id }}</span>
             </div>
@@ -251,49 +237,16 @@ function handleSave() {
           <v-col cols="12" sm="6">
             <v-select v-model="form.media_type" label="媒体类型" :items="[{ title: '剧集', value: 'tv' }, { title: '电影', value: 'movie' }]" variant="outlined" density="compact" />
           </v-col>
-        </v-row>
-
-        <v-text-field v-model="form.bangumi_id" label="Bangumi ID" variant="outlined" density="compact" class="mb-2">
-          <template #details><div v-if="bangumiName" class="text-primary text-caption font-weight-bold mt-1">📺 {{ bangumiName }}</div></template>
-        </v-text-field>
-        <v-text-field v-model="form.title" label="标题" variant="outlined" density="compact" class="mb-2" />
-
-        <!-- 匹配条件 -->
-        <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">匹配条件</div>
-        <v-row density="compact">
-          <v-col v-for="f in filterFields" :key="f.key" cols="6">
-            <FieldConditionSelect v-model="(form as any)[f.key]" :field="f.field" :label="f.label" />
+          <v-col cols="12" sm="6">
+            <v-text-field v-model="form.bangumi_id" label="Bangumi ID" variant="outlined" density="compact">
+              <template #details><div v-if="bangumiName" class="text-primary text-caption font-weight-bold mt-1">📺 {{ bangumiName }}</div></template>
+            </v-text-field>
           </v-col>
-        </v-row>
-
-        <v-row density="compact" class="mt-2">
-          <v-col cols="6"><v-text-field v-model="form.include_keywords" label="必须包含" variant="outlined" density="compact" /></v-col>
-          <v-col cols="6"><v-text-field v-model="form.exclude_keywords" label="排除关键词" variant="outlined" density="compact" /></v-col>
-          <v-col cols="6">
-            <v-text-field
-              v-model="form.save_path"
-              label="下载目录"
-              variant="outlined"
-              density="compact"
-              append-inner-icon="mdi-folder-open-outline"
-              @click:append-inner="openFolderBrowser"
-            />
-          </v-col>
-          <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" /></v-col>
-        </v-row>
-
-        <v-row density="compact">
-          <v-col cols="6">
-            <v-select v-model="form.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" />
-          </v-col>
-          <v-col cols="6">
-            <v-select v-model="form.target_feeds" label="监控订阅源" :items="availableFeeds.map((f: any) => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" placeholder="留空则监控所有" />
-          </v-col>
+          <v-col cols="12" sm="6"><v-text-field v-model="form.title" label="标题" variant="outlined" density="compact" /></v-col>
         </v-row>
 
         <!-- 剧集信息 -->
         <template v-if="form.media_type === 'tv'">
-          <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">剧集信息</div>
           <v-row density="compact">
             <v-col cols="4">
               <v-select v-model="form.season" label="订阅季度" :items="[{ title: '全部季度', value: 0 }, ...tmdbSeasons.map((s: any) => ({ title: `第${s.season_number}季(${s.episode_count}集)`, value: s.season_number }))]" variant="outlined" density="compact" />
@@ -303,10 +256,91 @@ function handleSave() {
           </v-row>
         </template>
 
-        <v-row density="compact" class="mt-3">
-          <v-col cols="6"><v-switch v-model="form.enabled" label="启用订阅" color="primary" density="compact" hide-details /></v-col>
-          <v-col cols="6"><v-switch v-model="form.auto_fill" label="定时补全" color="primary" density="compact" hide-details /></v-col>
+        <div class="d-flex align-center ga-3 py-1">
+          <v-switch v-model="form.enabled" label="启用订阅" color="primary" density="compact" hide-details />
+          <span class="text-caption text-medium-emphasis">{{ form.enabled ? '订阅将参与自动匹配与下载' : '订阅已暂停，不会自动下载' }}</span>
+        </div>
+
+        <v-divider class="my-3" />
+
+        <!-- 套用预设：一次性填充，填完可自由修改 -->
+        <div v-if="isNew && templates.length > 0" class="d-flex align-center ga-2 flex-wrap mb-3">
+          <v-select
+            :model-value="null"
+            label="套用预设"
+            :items="templates.map((t: any) => ({ title: t.name, value: t.id }))"
+            variant="outlined"
+            density="compact"
+            hide-details
+            style="max-width: 260px"
+            placeholder="选择预设，一键填入下方参数"
+            @update:model-value="applyTemplate"
+          />
+          <v-chip v-if="appliedPresetName" size="small" variant="tonal" color="accent" label>
+            <v-icon start size="14">mdi-check</v-icon>已套用 {{ appliedPresetName }}
+          </v-chip>
+          <span class="text-caption text-medium-emphasis">
+            仅把预设的匹配条件、洗版策略与下载设置填进下面的表单，之后按表单里的值保存，可任意修改。
+          </span>
+        </div>
+
+        <!-- ② 匹配条件 -->
+        <div class="text-subtitle-2 font-weight-medium mb-2">匹配条件</div>
+        <v-row density="compact">
+          <v-col v-for="f in filterFields" :key="f.key" cols="6">
+            <FieldConditionSelect v-model="(form as any)[f.key]" :field="f.field" :label="f.label" />
+          </v-col>
+          <v-col cols="12"><v-text-field v-model="form.include_keywords" label="必须包含" placeholder="包含这些关键词才下载" variant="outlined" density="compact" /></v-col>
+          <v-col cols="12"><v-text-field v-model="form.exclude_keywords" label="排除关键词" placeholder="包含这些关键词则跳过" variant="outlined" density="compact" /></v-col>
         </v-row>
+
+        <v-divider class="my-3" />
+
+        <!-- ③ 下载设置 -->
+        <div class="text-subtitle-2 font-weight-medium mb-2">下载设置</div>
+        <v-row density="compact">
+          <v-col cols="6">
+            <v-select v-model="form.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" placeholder="留空则使用默认客户端" />
+          </v-col>
+          <v-col cols="6">
+            <v-text-field
+              v-model="form.save_path"
+              label="下载目录"
+              variant="outlined"
+              density="compact"
+              placeholder="留空则使用客户端默认路径"
+              append-inner-icon="mdi-folder-open-outline"
+              @click:append-inner="openFolderBrowser"
+            />
+          </v-col>
+          <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
+          <v-col cols="12">
+            <v-select v-model="form.target_feeds" label="监控订阅源" :items="availableFeeds.map((f: any) => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" placeholder="留空则监控所有" />
+          </v-col>
+          <v-col cols="12">
+            <v-switch v-model="form.auto_fill" label="定时补全" color="primary" density="compact" hide-details />
+          </v-col>
+        </v-row>
+
+        <v-divider class="my-3" />
+
+        <!-- ④ 洗版设置 -->
+        <div class="text-subtitle-2 font-weight-medium mb-2">洗版设置</div>
+        <v-row density="compact">
+          <v-col cols="12">
+            <v-select
+              v-model="form.quality_profile_id"
+              label="洗版策略"
+              :items="profiles.map((p: any) => ({ title: p.name, value: p.id }))"
+              clearable
+              variant="outlined"
+              density="compact"
+              placeholder="留空则不洗版"
+              :no-data-text="'还没有洗版策略，可在「洗版规则管理」中创建'"
+            />
+          </v-col>
+        </v-row>
+        <div class="text-caption text-medium-emphasis">与「洗版规则管理」里的策略联动：决定高分版本是否替换已下载版本。</div>
       </v-card-text>
 
       <v-divider />

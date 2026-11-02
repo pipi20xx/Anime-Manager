@@ -288,11 +288,18 @@ class RssDetector:
         save_path: Optional[str] = None,
         category: str = "Anime",
         auto_fill: bool = True,
+        target_feeds: Optional[str] = None,
+        quality_profile_id: Optional[int] = None,
+        allow_default_template: bool = True,
         **filter_kwargs
     ) -> Dict[str, Any]:
         """
         探测 RSS 并自动创建订阅
-        
+
+        allow_default_template=False 时不再回退到「默认预设」：
+        探测任务执行时只认任务自己保存的参数（前端套用预设后参数已落在任务上），
+        避免界面上没显示的默认预设悄悄影响下载设置与匹配条件。
+
         返回统计结果
         """
         task_id = f"rss_detect_{datetime.now().strftime('%H%M%S')}"
@@ -320,7 +327,7 @@ class RssDetector:
         if template_id:
             async with db.session_scope():
                 tmpl = await db.get(SubscriptionTemplate, template_id)
-        if not tmpl:
+        if not tmpl and allow_default_template:
             async with db.session_scope():
                 stmt = select(SubscriptionTemplate).where(SubscriptionTemplate.is_default == True)
                 tmpl = await db.first(SubscriptionTemplate, stmt)
@@ -366,6 +373,8 @@ class RssDetector:
                     filter_platform=filter_kwargs.get('filter_platform') or (tmpl.filter_platform if tmpl else None),
                     include_keywords=filter_kwargs.get('include_keywords') or (tmpl.include_keywords if tmpl else None),
                     exclude_keywords=filter_kwargs.get('exclude_keywords') or (tmpl.exclude_keywords if tmpl else None),
+                    target_feeds=target_feeds or (tmpl.target_feeds if tmpl else None),
+                    quality_profile_id=quality_profile_id or (tmpl.quality_profile_id if tmpl else None),
                 )
                 
                 async with db.session_scope():
@@ -416,6 +425,8 @@ class RssDetector:
         save_path: Optional[str] = None,
         category: str = "Anime",
         auto_fill: bool = True,
+        target_feeds: Optional[str] = None,
+        quality_profile_id: Optional[int] = None,
         **filter_kwargs
     ) -> Dict[str, Any]:
         """
@@ -473,6 +484,10 @@ class RssDetector:
             filter_sub=filter_kwargs.get("filter_sub") or (tmpl.filter_sub if tmpl else None),
             filter_effect=filter_kwargs.get("filter_effect") or (tmpl.filter_effect if tmpl else None),
             filter_platform=filter_kwargs.get("filter_platform") or (tmpl.filter_platform if tmpl else None),
+            include_keywords=filter_kwargs.get("include_keywords") or (tmpl.include_keywords if tmpl else None),
+            exclude_keywords=filter_kwargs.get("exclude_keywords") or (tmpl.exclude_keywords if tmpl else None),
+            target_feeds=target_feeds or (tmpl.target_feeds if tmpl else None),
+            quality_profile_id=quality_profile_id or (tmpl.quality_profile_id if tmpl else None),
         )
 
         async with db.session_scope():
@@ -527,7 +542,10 @@ class RssDetector:
                     target_client_id=task.target_client_id,
                     save_path=task.save_path,
                     category=task.category or "Anime",
-                    auto_fill=task.auto_fill
+                    auto_fill=task.auto_fill,
+                    target_feeds=task.target_feeds,
+                    quality_profile_id=task.quality_profile_id,
+                    allow_default_template=False
                 )
                 ran_count += 1
             except Exception as e:
@@ -592,5 +610,8 @@ class RssDetector:
             target_client_id=task.target_client_id,
             save_path=task.save_path,
             category=task.category or "Anime",
-            auto_fill=task.auto_fill
+            auto_fill=task.auto_fill,
+            target_feeds=task.target_feeds,
+            quality_profile_id=task.quality_profile_id,
+            allow_default_template=False
         )

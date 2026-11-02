@@ -47,6 +47,8 @@ class DetectSubscribeRequest(BaseModel):
     save_path: Optional[str] = None
     category: str = "Anime"
     auto_fill: bool = True
+    target_feeds: Optional[str] = None
+    quality_profile_id: Optional[int] = None
 
 # --- Feeds ---
 @router.get("/feeds", response_model=List[Feed], summary="获取订阅源列表")
@@ -710,6 +712,8 @@ async def detect_and_subscribe(req: DetectSubscribeRequest):
             save_path=req.save_path,
             category=req.category,
             auto_fill=req.auto_fill,
+            target_feeds=req.target_feeds,
+            quality_profile_id=req.quality_profile_id,
             interval_minutes=req.interval_minutes
         )
         
@@ -733,7 +737,9 @@ async def detect_and_subscribe(req: DetectSubscribeRequest):
         target_client_id=req.target_client_id,
         save_path=req.save_path,
         category=req.category,
-        auto_fill=req.auto_fill
+        auto_fill=req.auto_fill,
+        target_feeds=req.target_feeds,
+        quality_profile_id=req.quality_profile_id
     )
     
     if not result.get("success") and "error" in result:
@@ -764,6 +770,8 @@ class DetectSubscribeShowRequest(BaseModel):
     save_path: Optional[str] = None
     category: str = "Anime"
     auto_fill: bool = True
+    target_feeds: Optional[str] = None
+    quality_profile_id: Optional[int] = None
 
 @router.post("/detect/subscribe-show", summary="从预览直接添加单个订阅")
 async def subscribe_show(req: DetectSubscribeShowRequest):
@@ -787,6 +795,8 @@ async def subscribe_show(req: DetectSubscribeShowRequest):
         save_path=req.save_path,
         category=req.category,
         auto_fill=req.auto_fill,
+        target_feeds=req.target_feeds,
+        quality_profile_id=req.quality_profile_id,
     )
     return result
 

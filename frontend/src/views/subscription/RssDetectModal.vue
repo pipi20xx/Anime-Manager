@@ -7,8 +7,9 @@
  * - 编辑表单（RSS 链接、任务名称、预设、匹配条件、客户端、关键词等）
  * - 测试 RSS 预览功能
  */
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
+import { api } from '@/api/client'
 import { useNotification, useConfirm } from '@/composables'
 import { FieldConditionSelect, DialogTitle } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
@@ -49,6 +50,8 @@ const isNewTask = ref(false)
 
 const templates = ref<any[]>([])
 const clients = ref<any[]>([])
+const feeds = ref<any[]>([])
+const profiles = ref<any[]>([])
 
 // 测试
 const testing = ref(false)
@@ -70,9 +73,11 @@ const form = reactive({
   filter_platform: '',
   include_keywords: '',
   exclude_keywords: '',
+  quality_profile_id: null as number | null,
   target_client_id: null as number | null,
   save_path: '',
   category: 'Anime',
+  target_feeds: [] as string[],
   auto_fill: true,
   interval_minutes: 360,
 })
@@ -82,6 +87,8 @@ watch(() => props.show, (val) => {
     fetchTasks()
     fetchTemplates()
     fetchClients()
+    fetchFeeds()
+    fetchProfiles()
   } else {
     showEdit.value = false
   }
@@ -110,17 +117,58 @@ async function fetchClients() {
   } catch { /* */ }
 }
 
+async function fetchFeeds() {
+  try { feeds.value = (await subscriptionApi.getFeeds()) || [] } catch { /* */ }
+}
+
+async function fetchProfiles() {
+  try { profiles.value = (await api.get<any[]>('/api/priority/profiles')) || [] } catch { /* */ }
+}
+
+// ---------- 订阅预设（仅作为“填充模板”，套用后即与预设脱钩） ----------
+const presetItems = computed(() =>
+  templates.value.map((t: any) => ({ title: t.name, value: t.id }))
+)
+
+/** 最近一次套用的预设名（仅用于界面提示，不参与保存） */
+const appliedPresetName = ref('')
+
+/**
+ * 套用预设：把预设里的匹配条件 + 关键词 + 洗版策略 + 下载设置整体写入表单，
+ * 之后就按表单里的值执行，可任意修改，不再回读预设。
+ */
+function applyPreset(id: number | null | undefined) {
+  if (!id) return
+  const t: any = templates.value.find((x: any) => x.id === id)
+  if (!t) return
+  for (const f of filterFields) (form as any)[f.key] = t[f.key] || ''
+  form.include_keywords = t.include_keywords || ''
+  form.exclude_keywords = t.exclude_keywords || ''
+  form.quality_profile_id = t.quality_profile_id ?? null
+  form.target_client_id = t.target_client_id ?? null
+  form.save_path = t.save_path || ''
+  form.category = t.category || 'Anime'
+  form.target_feeds = t.target_feeds ? String(t.target_feeds).split(',').filter(Boolean) : []
+  form.auto_fill = t.auto_fill !== false
+  appliedPresetName.value = t.name
+  success(`已套用预设「${t.name}」，下方参数可继续修改`)
+}
+
 function openAdd() {
   isNewTask.value = true
   testResult.value = null
+  appliedPresetName.value = ''
   Object.assign(form, {
     id: null, name: '', rss_url: '', enabled: true,
-    template_id: templates.value.find((t: any) => t.is_default)?.id || null,
+    // 任务不再引用预设：参数全部落在表单里，保存的就是最终生效值
+    template_id: null,
     filter_res: '', filter_team: '', filter_source: '', filter_codec: '',
     filter_audio: '', filter_sub: '', filter_effect: '', filter_platform: '',
     include_keywords: '', exclude_keywords: '',
+    quality_profile_id: null,
     target_client_id: clients.value.length > 0 ? clients.value[0].id : null,
-    save_path: '', category: 'Anime', auto_fill: true, interval_minutes: 360,
+    save_path: '', category: 'Anime',
+    target_feeds: [], auto_fill: true, interval_minutes: 360,
   })
   showEdit.value = true
 }
@@ -128,19 +176,48 @@ function openAdd() {
 function openEdit(task: any) {
   isNewTask.value = false
   testResult.value = null
+  appliedPresetName.value = ''
   Object.assign(form, { ...task })
+  // target_feeds 在库里是逗号串，表单里用数组
+  form.target_feeds = typeof task?.target_feeds === 'string' && task.target_feeds
+    ? task.target_feeds.split(',').filter(Boolean)
+    : (Array.isArray(task?.target_feeds) ? task.target_feeds.map(String) : [])
+  // 老任务若仍引用预设：把预设内容并入表单（任务自身已填的字段优先），
+  // 保存后任务即自带全部参数，不再依赖预设。
+  const tid = task?.template_id
+  if (tid) {
+    const t: any = templates.value.find((x: any) => x.id === tid)
+    if (t) {
+      for (const f of filterFields) {
+        if (!(form as any)[f.key]) (form as any)[f.key] = t[f.key] || ''
+      }
+      if (!form.include_keywords) form.include_keywords = t.include_keywords || ''
+      if (!form.exclude_keywords) form.exclude_keywords = t.exclude_keywords || ''
+      if (!form.quality_profile_id) form.quality_profile_id = t.quality_profile_id ?? null
+      if (!form.target_client_id) form.target_client_id = t.target_client_id ?? null
+      if (!form.save_path) form.save_path = t.save_path || ''
+      if (!form.category) form.category = t.category || 'Anime'
+      if (!form.target_feeds.length && t.target_feeds) {
+        form.target_feeds = String(t.target_feeds).split(',').filter(Boolean)
+      }
+      appliedPresetName.value = t.name
+      form.template_id = null
+    }
+  }
   showEdit.value = true
 }
 
 async function saveTask() {
   if (!form.rss_url.trim()) { warning('请输入 RSS 链接'); return }
   try {
-    const payload = { ...form }
+    const payload: any = { ...form }
     if (!payload.name) {
-      payload.name = `RSS探测-${new Date().toLocaleString()}`
+      payload.name = `RSS探测任务-${new Date().toLocaleString()}`
     }
+    // 监控订阅源入库为逗号串
+    if (Array.isArray(payload.target_feeds)) payload.target_feeds = payload.target_feeds.join(',')
     await subscriptionApi.saveDetectTask(payload)
-    success('任务保存成功')
+    success('探测任务已保存')
     showEdit.value = false
     fetchTasks()
   } catch { showError('保存失败') }
@@ -237,8 +314,8 @@ async function subscribeShow(show: any) {
   subscribingId.value = show.tmdb_id
   try {
     const specs = deriveSpecs(show.tmdb_id)
-    const tmpl = templates.value.find((t: any) => t.id === form.template_id)
-    const pick = (key: string) => specs[key] || (tmpl?.[key] ?? null)
+    // 规格优先取预览条目里实测出现最多的值，缺项回退到表单里当前可见的匹配条件
+    const pick = (specKey: string, formKey: string) => specs[specKey] || (form as any)[formKey] || null
     await subscriptionApi.subscribeDetectShow({
       tmdb_id: show.tmdb_id,
       title: show.title,
@@ -246,18 +323,20 @@ async function subscribeShow(show: any) {
       season: show.season || 1,
       poster_path: show.poster_path || null,
       year: show.year || null,
-      filter_res: pick('resolution'),
-      filter_team: pick('team'),
-      filter_source: pick('source'),
-      filter_codec: pick('video_encode'),
-      filter_audio: pick('audio_encode'),
-      filter_sub: pick('subtitle'),
-      filter_effect: pick('video_effect'),
-      filter_platform: pick('platform'),
+      filter_res: pick('resolution', 'filter_res'),
+      filter_team: pick('team', 'filter_team'),
+      filter_source: pick('source', 'filter_source'),
+      filter_codec: pick('video_encode', 'filter_codec'),
+      filter_audio: pick('audio_encode', 'filter_audio'),
+      filter_sub: pick('subtitle', 'filter_sub'),
+      filter_effect: pick('video_effect', 'filter_effect'),
+      filter_platform: pick('platform', 'filter_platform'),
       target_client_id: form.target_client_id,
       save_path: form.save_path || null,
       category: form.category || 'Anime',
       auto_fill: form.auto_fill,
+      target_feeds: form.target_feeds.length ? form.target_feeds.join(',') : null,
+      quality_profile_id: form.quality_profile_id,
     })
     show.is_subscribed = true
     success(`已订阅《${show.title}》`)
@@ -288,7 +367,7 @@ function formatDateTime(dateStr: string | null): string {
         <template v-if="!showEdit">
           <div class="d-flex justify-space-between align-center mb-4">
             <div class="text-body-2 text-medium-emphasis">配置 RSS 探测任务，系统会自动识别新番剧并创建订阅</div>
-            <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAdd">添加任务</v-btn>
+            <v-btn variant="tonal" color="primary" size="small" prepend-icon="mdi-plus" @click="openAdd">添加探测任务</v-btn>
           </div>
 
           <v-skeleton-loader v-if="loading" type="card@2" />
@@ -334,7 +413,7 @@ function formatDateTime(dateStr: string | null): string {
                   <v-divider />
                   <v-card-actions class="manage-card__actions">
                     <v-spacer />
-                    <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click.stop="runTask(task.id)">执行</v-btn>
+                    <v-btn size="small" variant="tonal" color="primary" prepend-icon="mdi-play" @click.stop="runTask(task.id)">立即执行</v-btn>
                     <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click.stop="deleteTask(task.id)">删除</v-btn>
                   </v-card-actions>
                 </v-card>
@@ -345,12 +424,14 @@ function formatDateTime(dateStr: string | null): string {
           <div v-else class="text-center pa-8">
             <v-icon size="48" color="accent" class="mb-3">mdi-radar</v-icon>
             <div class="text-body-2 text-medium-emphasis">暂无探测任务</div>
-            <v-btn color="primary" variant="tonal" class="mt-3" prepend-icon="mdi-plus" @click="openAdd">添加第一个任务</v-btn>
+            <v-btn color="primary" variant="tonal" class="mt-3" prepend-icon="mdi-plus" @click="openAdd">添加第一个探测任务</v-btn>
           </div>
         </template>
 
         <!-- 编辑视图 -->
         <template v-else>
+          <!-- ① 任务信息 -->
+          <div class="text-subtitle-2 font-weight-medium mb-2">任务信息</div>
           <v-row density="compact">
             <v-col cols="12">
               <v-text-field v-model="form.rss_url" label="RSS 链接" variant="outlined" density="compact" class="mb-2" hide-details>
@@ -360,44 +441,55 @@ function formatDateTime(dateStr: string | null): string {
               </v-text-field>
             </v-col>
             <v-col cols="12" sm="6"><v-text-field v-model="form.name" label="任务名称" variant="outlined" density="compact" placeholder="留空自动生成" /></v-col>
+            <v-col cols="12" sm="6"><v-text-field v-model="form.interval_minutes" label="执行间隔（分钟）" type="number" variant="outlined" density="compact" placeholder="例如 360" /></v-col>
           </v-row>
 
           <!-- 启用状态开关单独一行 -->
-          <v-row density="compact" class="mt-1">
-            <v-col cols="12">
-              <div class="d-flex align-center ga-3 py-1">
-                <v-switch v-model="form.enabled" label="启用状态" color="primary" density="compact" hide-details />
-                <span class="text-caption text-medium-emphasis">{{ form.enabled ? '任务将按计划自动执行' : '任务已暂停，不会自动执行' }}</span>
-              </div>
-            </v-col>
-          </v-row>
+          <div class="d-flex align-center ga-3 py-1">
+            <v-switch v-model="form.enabled" label="启用任务" color="primary" density="compact" hide-details />
+            <span class="text-caption text-medium-emphasis">{{ form.enabled ? '任务将按执行间隔自动运行' : '任务已暂停，不会自动执行' }}</span>
+          </div>
 
           <v-divider class="my-3" />
+
+          <!-- 套用预设：只做一次性填充，填完可自由修改 -->
+          <div class="d-flex align-center ga-2 flex-wrap mb-3">
+            <v-select
+              :model-value="null"
+              label="套用预设"
+              :items="presetItems"
+              variant="outlined"
+              density="compact"
+              hide-details
+              style="max-width: 260px"
+              placeholder="选择预设，一键填入下方参数"
+              @update:model-value="applyPreset"
+            />
+            <v-chip v-if="appliedPresetName" size="small" variant="tonal" color="accent" label>
+              <v-icon start size="14">mdi-check</v-icon>已套用 {{ appliedPresetName }}
+            </v-chip>
+            <span class="text-caption text-medium-emphasis">
+              仅把预设的匹配条件、洗版策略与下载设置填进下面的表单，之后按表单里的值执行，可任意修改；预设本身在「订阅预设管理」中维护。
+            </span>
+          </div>
+
+          <!-- ② 匹配条件 -->
+          <div class="text-subtitle-2 font-weight-medium mb-2">匹配条件</div>
+          <v-row density="compact">
+            <v-col v-for="f in filterFields" :key="f.key" cols="6">
+              <FieldConditionSelect v-model="(form as any)[f.key]" :field="f.field" :label="f.label" />
+            </v-col>
+          </v-row>
 
           <v-row density="compact">
-            <v-col cols="12">
-              <v-select
-                v-model="form.template_id"
-                label="预设选项"
-                :items="[{ title: '自定义筛选', value: null }, ...templates.map((t: any) => ({ title: t.name, value: t.id }))]"
-                clearable
-                variant="outlined"
-                density="compact"
-                placeholder="选择预设或自定义筛选"
-              />
-            </v-col>
+            <v-col cols="12"><v-text-field v-model="form.include_keywords" label="必须包含" variant="outlined" density="compact" placeholder="包含这些关键词才下载" /></v-col>
+            <v-col cols="12"><v-text-field v-model="form.exclude_keywords" label="排除关键词" variant="outlined" density="compact" placeholder="包含这些关键词则跳过" /></v-col>
           </v-row>
-
-          <template v-if="!form.template_id">
-            <v-row density="compact">
-              <v-col v-for="f in filterFields" :key="f.key" cols="6">
-                <FieldConditionSelect v-model="(form as any)[f.key]" :field="f.field" :label="f.label" />
-              </v-col>
-            </v-row>
-          </template>
 
           <v-divider class="my-3" />
 
+          <!-- ③ 下载设置（任务自动创建的订阅会沿用这里的设置） -->
+          <div class="text-subtitle-2 font-weight-medium mb-2">下载设置</div>
           <v-row density="compact">
             <v-col cols="6">
               <v-select
@@ -407,7 +499,7 @@ function formatDateTime(dateStr: string | null): string {
                 clearable
                 variant="outlined"
                 density="compact"
-                placeholder="默认客户端"
+                placeholder="留空则使用默认客户端"
               />
             </v-col>
             <v-col cols="6">
@@ -422,10 +514,40 @@ function formatDateTime(dateStr: string | null): string {
               />
             </v-col>
             <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
-            <v-col cols="6"><v-text-field v-model="form.interval_minutes" label="执行间隔（分钟）" type="number" variant="outlined" density="compact" /></v-col>
-            <v-col cols="12"><v-text-field v-model="form.include_keywords" label="必须包含" variant="outlined" density="compact" placeholder="包含这些关键词才下载" /></v-col>
-            <v-col cols="12"><v-text-field v-model="form.exclude_keywords" label="排除关键词" variant="outlined" density="compact" placeholder="包含这些关键词则跳过" /></v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="form.target_feeds"
+                label="监控订阅源"
+                :items="feeds.map((f: any) => ({ title: f.title || f.url, value: String(f.id) }))"
+                multiple chips clearable
+                variant="outlined"
+                density="compact"
+                placeholder="留空则监控所有"
+              />
+            </v-col>
+            <v-col cols="12"><v-switch v-model="form.auto_fill" color="primary" density="compact" hide-details label="定时补全" /></v-col>
           </v-row>
+          <div class="text-caption text-medium-emphasis">任务自动创建的订阅会沿用这里的客户端 / 目录 / 分类 / 监控源与定时补全。</div>
+
+          <v-divider class="my-3" />
+
+          <!-- ④ 洗版设置 -->
+          <div class="text-subtitle-2 font-weight-medium mb-2">洗版设置</div>
+          <v-row density="compact">
+            <v-col cols="12">
+              <v-select
+                v-model="form.quality_profile_id"
+                label="洗版策略"
+                :items="profiles.map((p: any) => ({ title: p.name, value: p.id }))"
+                clearable
+                variant="outlined"
+                density="compact"
+                placeholder="留空则不洗版"
+                :no-data-text="'还没有洗版策略，可在「洗版规则管理」中创建'"
+              />
+            </v-col>
+          </v-row>
+          <div class="text-caption text-medium-emphasis">与「洗版规则管理」里的策略联动：决定高分版本是否替换已下载版本。</div>
 
           <!-- 测试结果 -->
           <template v-if="testResult">
@@ -435,6 +557,9 @@ function formatDateTime(dateStr: string | null): string {
               <v-chip size="small" variant="tonal" label>总条目 {{ testResult.total_entries ?? 0 }}</v-chip>
               <v-chip size="small" variant="tonal" color="info" label>识别成功 {{ testResult.recognized_count ?? 0 }}</v-chip>
               <v-chip size="small" variant="tonal" color="error" label>识别失败 {{ testResult.failed_count ?? 0 }}</v-chip>
+              <v-chip size="small" variant="tonal" color="success" label title="通过当前匹配条件的条目数（含预设）">
+                匹配条件通过 {{ testResult.filter_passed_count ?? 0 }}
+              </v-chip>
             </div>
 
             <template v-if="testResult.detected_shows?.length > 0">
@@ -445,7 +570,7 @@ function formatDateTime(dateStr: string | null): string {
                     <th>番剧名称</th>
                     <th>TMDB ID</th>
                     <th>季度/集数</th>
-                    <th>条目数</th>
+                    <th title="通过匹配条件的条目 / 识别到的条目">命中/条目</th>
                     <th class="text-right">操作</th>
                   </tr>
                 </thead>
@@ -458,7 +583,11 @@ function formatDateTime(dateStr: string | null): string {
                         {{ show.total_episodes > 0 ? `S${show.season} E1-${show.total_episodes}` : `S${show.season}` }}
                       </span>
                     </td>
-                    <td>{{ show.entry_count }}</td>
+                    <td>
+                      <span class="text-caption" :class="(show.matched_entry_count ?? 0) > 0 ? 'text-success' : 'text-medium-emphasis'">
+                        {{ show.matched_entry_count ?? 0 }} / {{ show.entry_count }}
+                      </span>
+                    </td>
                     <td class="text-right">
                       <v-btn
                         v-if="!show.is_subscribed"
@@ -487,6 +616,7 @@ function formatDateTime(dateStr: string | null): string {
                       <th>原始标题</th>
                       <th>识别结果</th>
                       <th>规格</th>
+                      <th>筛选</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -502,6 +632,16 @@ function formatDateTime(dateStr: string | null): string {
                       <td>
                         <span class="text-caption">{{ [en.resolution, en.team, en.source].filter(Boolean).join(' · ') || '-' }}</span>
                       </td>
+                      <td>
+                        <v-chip
+                          v-if="en.recognized"
+                          size="x-small"
+                          variant="tonal"
+                          :color="en.filter_passed ? 'success' : 'warning'"
+                          :title="en.filter_reason || ''"
+                        >{{ en.filter_passed ? '命中' : '被过滤' }}</v-chip>
+                        <span v-else class="text-caption text-medium-emphasis">-</span>
+                      </td>
                     </tr>
                   </tbody>
                 </v-table>
@@ -516,7 +656,7 @@ function formatDateTime(dateStr: string | null): string {
         <template v-if="showEdit">
           <v-spacer />
           <v-btn variant="tonal" prepend-icon="mdi-arrow-left" @click="showEdit = false">返回列表</v-btn>
-          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveTask">保存任务</v-btn>
+          <v-btn variant="tonal" color="primary" prepend-icon="mdi-content-save-outline" @click="saveTask">保存探测任务</v-btn>
         </template>
         <template v-else>
           <v-spacer />

@@ -233,6 +233,7 @@ class SubscriptionTemplate(SQLModel, table=True):
     target_client_id: Optional[str] = None
     save_path: Optional[str] = None
     category: Optional[str] = Field(default="Anime")
+    quality_profile_id: Optional[int] = Field(foreign_key="public.quality_profiles.id", default=None) # 关联洗版策略
     auto_fill: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.now)
 
@@ -622,6 +623,7 @@ class RssDetectTask(SQLModel, table=True):
     target_client_id: Optional[str] = None
     save_path: Optional[str] = None
     category: Optional[str] = Field(default="Anime")
+    quality_profile_id: Optional[int] = Field(foreign_key="public.quality_profiles.id", default=None) # 关联洗版策略
     auto_fill: bool = Field(default=True)
     
     interval_minutes: int = Field(default=360)

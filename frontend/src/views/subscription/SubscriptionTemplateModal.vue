@@ -8,6 +8,7 @@
  */
 import { ref, reactive, watch } from 'vue'
 import { subscriptionApi, clientsApi } from '@/api'
+import { api } from '@/api/client'
 import { useNotification, useConfirm } from '@/composables'
 import { FieldConditionSelect, DialogTitle } from '@/components/common'
 import FolderBrowserModal from '@/views/organizer/FolderBrowserModal.vue'
@@ -38,6 +39,7 @@ const { confirm } = useConfirm()
 const templates = ref<any[]>([])
 const clients = ref<any[]>([])
 const feeds = ref<any[]>([])
+const profiles = ref<any[]>([])
 const loading = ref(false)
 const showEdit = ref(false)
 const isNew = ref(false)
@@ -51,12 +53,13 @@ const editModel = reactive({
   include_keywords: '', exclude_keywords: '',
   target_client_id: null as number | null,
   save_path: '', category: 'Anime',
+  quality_profile_id: null as number | null,
   target_feeds: [] as string[],
   auto_fill: true,
 })
 
 watch(() => props.show, (val) => {
-  if (val) { fetchTemplates(); fetchClients(); fetchFeeds() }
+  if (val) { fetchTemplates(); fetchClients(); fetchFeeds(); fetchProfiles() }
   else showEdit.value = false
 })
 
@@ -75,6 +78,19 @@ async function fetchFeeds() {
   try { feeds.value = (await subscriptionApi.getFeeds()) || [] } catch { /* */ }
 }
 
+function fetchProfiles() {
+  api.get<any[]>('/api/priority/profiles')
+    .then((data) => { profiles.value = data || [] })
+    .catch(() => { /* 洗版策略加载失败不阻塞预设编辑 */ })
+}
+
+/** 洗版策略名（策略被删掉时给出可读提示；策略列表未加载时返回空，避免闪现误报） */
+function profileName(id: number | null | undefined): string {
+  if (!id) return ''
+  if (!profiles.value.length) return ''
+  return profiles.value.find((p: any) => p.id === id)?.name || '策略已删除'
+}
+
 function openAdd() {
   isNew.value = true
   Object.assign(editModel, {
@@ -83,7 +99,8 @@ function openAdd() {
     filter_audio: '', filter_sub: '', filter_effect: '', filter_platform: '',
     include_keywords: '', exclude_keywords: '',
     target_client_id: clients.value.length > 0 ? clients.value[0].id : null,
-    save_path: '', category: 'Anime', target_feeds: [], auto_fill: true,
+    save_path: '', category: 'Anime', quality_profile_id: null,
+    target_feeds: [], auto_fill: true,
   })
   showEdit.value = true
 }
@@ -167,6 +184,9 @@ async function setDefault(row: any) {
                 <div class="manage-card__body">
                   <div class="manage-card__tags">
                     <v-chip v-if="row.category" size="x-small" variant="tonal" color="primary" label>{{ row.category }}</v-chip>
+                    <v-chip v-if="row.quality_profile_id && profileName(row.quality_profile_id)" size="x-small" variant="tonal" color="accent" label>
+                      <v-icon start size="12">mdi-trophy-outline</v-icon>{{ profileName(row.quality_profile_id) }}
+                    </v-chip>
                   </div>
                   <div v-if="row.include_keywords" class="manage-card__info">
                     <span class="manage-card__info-label">关键词</span>
@@ -198,27 +218,31 @@ async function setDefault(row: any) {
 
         <!-- 编辑视图 -->
         <template v-else>
+          <!-- ① 预设信息 -->
+          <div class="text-subtitle-2 font-weight-medium mb-2">预设信息</div>
           <v-text-field v-model="editModel.name" label="预设名称" placeholder="例如: 默认动漫预设" variant="outlined" density="compact" class="mb-3" />
 
+          <v-divider class="my-3" />
+
+          <!-- ② 匹配条件 -->
           <div class="text-subtitle-2 font-weight-medium mb-2">匹配条件</div>
           <v-row density="compact">
             <v-col v-for="f in filterFields" :key="f.key" cols="6">
               <FieldConditionSelect v-model="(editModel as any)[f.key]" :field="f.field" :label="f.label" />
             </v-col>
-          </v-row>
-
-          <v-divider class="my-3" />
-
-          <v-row density="compact">
             <v-col cols="12"><v-text-field v-model="editModel.include_keywords" label="必须包含" placeholder="包含这些关键词才下载" variant="outlined" density="compact" /></v-col>
             <v-col cols="12"><v-text-field v-model="editModel.exclude_keywords" label="排除关键词" placeholder="包含这些关键词则跳过" variant="outlined" density="compact" /></v-col>
           </v-row>
 
           <v-divider class="my-3" />
 
+          <!-- ③ 下载设置 -->
           <div class="text-subtitle-2 font-weight-medium mb-2">下载设置</div>
           <v-row density="compact">
-            <v-col cols="12">
+            <v-col cols="6">
+              <v-select v-model="editModel.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" placeholder="留空则使用默认客户端" />
+            </v-col>
+            <v-col cols="6">
               <v-text-field
                 v-model="editModel.save_path"
                 label="下载目录"
@@ -229,15 +253,32 @@ async function setDefault(row: any) {
                 @click:append-inner="openFolderBrowser"
               />
             </v-col>
-            <v-col cols="6">
-              <v-select v-model="editModel.target_client_id" label="下载客户端" :items="clients.map((c: any) => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" />
-            </v-col>
             <v-col cols="6"><v-text-field v-model="editModel.category" label="分类/标签" placeholder="例如: Anime" variant="outlined" density="compact" /></v-col>
             <v-col cols="12">
               <v-select v-model="editModel.target_feeds" label="监控订阅源" :items="feeds.map((f: any) => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" placeholder="留空则监控所有" />
             </v-col>
-            <v-col cols="6"><v-switch v-model="editModel.auto_fill" color="primary" density="compact" hide-details label="定时补全" /></v-col>
+            <v-col cols="12"><v-switch v-model="editModel.auto_fill" color="primary" density="compact" hide-details label="定时补全" /></v-col>
           </v-row>
+
+          <v-divider class="my-3" />
+
+          <!-- ④ 洗版设置 -->
+          <div class="text-subtitle-2 font-weight-medium mb-2">洗版设置</div>
+          <v-row density="compact">
+            <v-col cols="12">
+              <v-select
+                v-model="editModel.quality_profile_id"
+                label="洗版策略"
+                :items="profiles.map((p: any) => ({ title: p.name, value: p.id }))"
+                clearable
+                variant="outlined"
+                density="compact"
+                placeholder="留空则不洗版"
+                :no-data-text="'还没有洗版策略，可在「洗版规则管理」中创建'"
+              />
+            </v-col>
+          </v-row>
+          <div class="text-caption text-medium-emphasis">与「洗版规则管理」里的策略联动：决定高分版本是否替换已下载版本。</div>
         </template>
       </v-card-text>
 
