@@ -60,6 +60,53 @@ async def get_jackett_status():
         "has_api_key": bool(api_key),
     }
 
+class RecognizeTitleRequest(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+
+@router.post("/jackett/recognize", summary="识别单条资源标题")
+async def recognize_jackett_title(req: RecognizeTitleRequest):
+    """
+    资源搜索结果上的「识别」按钮：只做识别、不推送下载。
+
+    与订阅补全共用 search_service 里的同一套识别实现（同样的优先级配置），
+    因此这里识别出的番剧/季集与补全会得到的结论一致。
+    """
+    from search_service import SearchService
+
+    title = (req.title or "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="请提供需要识别的标题")
+
+    final, logs = await SearchService.recognize_title(title, req.description)
+    if not final:
+        return {"success": False, "message": "未识别到匹配的番剧", "logs": logs[-15:]}
+
+    return {
+        "success": True,
+        "result": {
+            "tmdb_id": final.get("tmdb_id"),
+            "title": final.get("title"),
+            "category": final.get("category"),
+            "media_type": "movie" if final.get("category") == "电影" else "tv",
+            "season": final.get("season"),
+            "episode": final.get("episode"),
+            "year": final.get("year"),
+            "poster_path": final.get("poster_path"),
+            "resolution": final.get("resolution"),
+            "team": final.get("team"),
+            "source": final.get("source"),
+            "video_encode": final.get("video_encode"),
+            "audio_encode": final.get("audio_encode"),
+            "video_effect": final.get("video_effect"),
+            "subtitle": final.get("subtitle"),
+            "platform": final.get("platform"),
+        },
+        "logs": logs[-15:],
+    }
+
+
 class ManualDownloadRequest(BaseModel):
     client_id: str
     url: str

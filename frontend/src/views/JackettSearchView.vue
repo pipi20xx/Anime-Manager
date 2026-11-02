@@ -70,6 +70,8 @@ async function handleSearch() {
   // clearable 清空后 keyword 为 null,axios 会直接丢弃 null 参数导致后端 422,归一化为空字符串
   const kw = (keyword.value ?? '').trim()
   loading.value = true
+  recognizedMap.value = {}
+  recognizingKey.value = null
   try {
     const data = await api.get<any[]>('/api/jackett/search', {
       params: { keyword: kw, indexer: selectedIndexerId.value },
@@ -109,6 +111,48 @@ async function handleDownload(item: any) {
     }
   } catch (e: any) {
     showError(e?.message || '请求失败')
+  }
+}
+
+// ---------- 单条识别（与订阅补全共用同一套识别实现） ----------
+const recognizingKey = ref<string | null>(null)
+const recognizedMap = ref<Record<string, any>>({})
+
+function itemKey(item: any): string {
+  return item.guid || item.link || item.title
+}
+
+function recognizedOf(item: any) {
+  return recognizedMap.value[itemKey(item)]
+}
+
+function isRecognizing(item: any): boolean {
+  return recognizingKey.value === itemKey(item)
+}
+
+function tmdbUrl(result: any): string {
+  const type = result?.media_type === 'movie' ? 'movie' : 'tv'
+  return `https://www.themoviedb.org/${type}/${result?.tmdb_id}`
+}
+
+async function handleRecognize(item: any) {
+  const key = itemKey(item)
+  recognizingKey.value = key
+  try {
+    const data = await api.post<any>('/api/jackett/recognize', {
+      title: item.title,
+      description: item.description || null,
+    })
+    if (data?.success && data.result) {
+      recognizedMap.value = { ...recognizedMap.value, [key]: data.result }
+    } else {
+      recognizedMap.value = { ...recognizedMap.value, [key]: { failed: true } }
+      showInfo(data?.message || '未识别到匹配的番剧')
+    }
+  } catch (e: any) {
+    showError('识别失败: ' + (e?.message || '未知错误'))
+  } finally {
+    recognizingKey.value = null
   }
 }
 
@@ -227,20 +271,66 @@ onMounted(() => {
               <div class="flex-grow-1 min-width-0">
                 <div class="text-subtitle-1 font-weight-bold text-truncate-2" :title="item.title">{{ item.title }}</div>
                 <div v-if="item.description" class="text-body-2 text-medium-emphasis mt-1" style="line-height: 1.5; word-break: break-all">{{ item.description }}</div>
-                <div class="d-flex ga-2 mt-2 flex-wrap">
-                  <v-chip v-if="item.indexer" size="small" color="info" variant="tonal">{{ item.indexer }}</v-chip>
-                  <v-chip size="small" color="info" variant="tonal">{{ formatSize(item.size) }}</v-chip>
+                <div class="meta-tags mt-2">
+                  <v-chip v-if="item.indexer" size="x-small" variant="flat" class="meta-tag meta-tag--feed">{{ item.indexer }}</v-chip>
+                  <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--size">{{ formatSize(item.size) }}</v-chip>
+                </div>
+
+                <!-- 识别结果（版式对齐「订阅源详情」：🎯标题行 + meta-tags 标签行） -->
+                <div v-if="recognizedOf(item)" class="mt-2">
+                  <template v-if="recognizedOf(item).failed">
+                    <div class="meta-tags">
+                      <v-chip size="x-small" variant="tonal" class="meta-tag meta-tag--miss">未识别</v-chip>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div class="text-caption font-weight-bold text-truncate">
+                      🎯 {{ recognizedOf(item).title || '-' }}<span v-if="recognizedOf(item).year" class="text-medium-emphasis">（{{ recognizedOf(item).year }}）</span>
+                    </div>
+                    <div class="meta-tags mt-1">
+                      <v-chip v-if="recognizedOf(item).tmdb_id" :href="tmdbUrl(recognizedOf(item))" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">
+                        ID: {{ recognizedOf(item).tmdb_id }}
+                      </v-chip>
+                      <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--type">
+                        {{ recognizedOf(item).media_type === 'movie' ? '电影' : '剧集' }}
+                      </v-chip>
+                      <v-chip v-if="recognizedOf(item).media_type !== 'movie'" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+                        S{{ recognizedOf(item).season || 1 }} E{{ recognizedOf(item).episode || '-' }}
+                      </v-chip>
+                      <v-chip v-if="recognizedOf(item).team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ recognizedOf(item).team }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).source" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ recognizedOf(item).source }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ recognizedOf(item).platform }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ recognizedOf(item).resolution }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).video_effect }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).video_encode }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).audio_encode }}</v-chip>
+                      <v-chip v-if="recognizedOf(item).subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).subtitle }}</v-chip>
+                    </div>
+                  </template>
                 </div>
               </div>
-              <v-btn
-                color="primary"
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-download"
-                @click="handleDownload(item)"
-              >
-                下载
-              </v-btn>
+
+              <div class="d-flex flex-column ga-2 flex-shrink-0">
+                <v-btn
+                  color="success"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-tag-search"
+                  :loading="isRecognizing(item)"
+                  @click="handleRecognize(item)"
+                >
+                  识别
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-download"
+                  @click="handleDownload(item)"
+                >
+                  下载
+                </v-btn>
+              </div>
             </div>
           </v-card-text>
         </v-card>
