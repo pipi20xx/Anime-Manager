@@ -51,12 +51,33 @@ _EN_ORDINAL = {
 }
 
 
+# 强证据：证据不足时不猜，可放心自动应用。on 模式下只自动应用这些理由。
+STRONG_REASONS = frozenset({
+    "single-season",
+    "name-match",
+    "title-suffix",
+    "marker",
+    "boundary:per-season",
+    "boundary:absolute",
+})
+
+
+def _confidence(reason: str) -> str:
+    """把判定理由映射成置信度，供 on 模式决定是否自动应用。"""
+    if reason in STRONG_REASONS:
+        return "high"
+    if reason == "latest-by-air-date":
+        return "low"
+    return "none"
+
+
 @dataclass
 class SeasonDecision:
     season: Optional[int] = None
     episode: Optional[int] = None
     reason: str = "ambiguous"
     detail: str = ""
+    confidence: str = "none"  # high / low / none（on 模式只自动应用 high）
 
     @property
     def ok(self) -> bool:
@@ -270,7 +291,7 @@ def resolve_season(
     def _decision(season, episode, reason, detail) -> SeasonDecision:
         if notes:
             detail = "；".join([*notes, detail])
-        return SeasonDecision(season, episode, reason, detail)
+        return SeasonDecision(season, episode, reason, detail, confidence=_confidence(reason))
 
     if not parsed:
         return _decision(None, raw_episode, "no-seasons", "TMDB 没有可用的季数据")

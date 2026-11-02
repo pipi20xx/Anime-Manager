@@ -31,6 +31,7 @@ watch([
   () => store.forceFilename,
   () => store.seriesFingerprint,
   () => store.batchEnhancement,
+  () => store.seasonResolveMode,
 ], () => {
   store.savePreferences()
 })
@@ -347,6 +348,35 @@ const filteredLogs = computed(() => {
                         </div>
                       </v-col>
                     </v-row>
+                  </v-card>
+
+                  <!-- ========== 季号校准 ========== -->
+                  <v-card v-if="store.data?.season_resolution" variant="flat" class="glass-card mb-4 pa-4">
+                    <div class="d-flex align-center mb-2 ga-2">
+                      <v-icon size="18" color="info">mdi-calendar-refresh</v-icon>
+                      <span class="text-subtitle-2 font-weight-bold">季号校准</span>
+                      <v-spacer />
+                      <v-chip v-if="store.data.season_resolution.applied" size="x-small" color="success" variant="tonal">✅ 已应用</v-chip>
+                      <v-chip v-else-if="store.data.season_resolution.applied_reason === '一致'" size="x-small" variant="tonal">一致</v-chip>
+                      <v-chip v-else size="x-small" color="warning" variant="tonal">未应用</v-chip>
+                    </div>
+                    <div class="recog-text-rows">
+                      <div class="recog-text-row">
+                        <span class="recog-text-label">依据:</span>
+                        <span class="recog-text-value">{{ store.data.season_resolution.reason_label || store.data.season_resolution.reason || '-' }}</span>
+                      </div>
+                      <div v-if="store.data.season_resolution.season !== null && store.data.season_resolution.season !== undefined" class="recog-text-row">
+                        <span class="recog-text-label">季号:</span>
+                        <span class="recog-text-value">
+                          S{{ store.data.season_resolution.before?.season ?? '?' }} → S{{ store.data.season_resolution.season }}
+                          <template v-if="store.data.season_resolution.applied_reason">（{{ store.data.season_resolution.applied_reason }}）</template>
+                        </span>
+                      </div>
+                      <div v-if="store.data.season_resolution.detail" class="recog-text-row">
+                        <span class="recog-text-label">详情:</span>
+                        <span class="recog-text-value">{{ store.data.season_resolution.detail }}</span>
+                      </div>
+                    </div>
                   </v-card>
 
                   <!-- ========== 本地解析元数据 + TMDB 原始详情 (并排) ========== -->
@@ -701,6 +731,25 @@ const filteredLogs = computed(() => {
                   <div class="pref-desc">支持解析 01-12 等合集，自动计算集数区间</div>
                 </div>
                 <v-switch v-model="store.batchEnhancement" density="compact" hide-details color="primary" />
+              </div>
+
+              <div class="pref-item">
+                <div class="pref-info">
+                  <div class="pref-label">季号校准</div>
+                  <div class="pref-desc">用 TMDB 季表校准季号/集数；季名/季标/边界等强证据才自动生效</div>
+                </div>
+                <v-select
+                  v-model="store.seasonResolveMode"
+                  :items="[
+                    { title: '自动校正', value: 'on' },
+                    { title: '仅记录', value: 'shadow' },
+                    { title: '关闭', value: 'off' },
+                  ]"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  style="max-width: 140px"
+                />
               </div>
             </div>
           </v-card-text>

@@ -440,6 +440,7 @@ const recognizeFile = async (entry: any, forcedParams: any = null) => {
       series_fingerprint: forcedParams?.series_fingerprint,
       batch_enhancement: forcedParams?.batch_enhancement,
       enable_title_segmentation: forcedParams?.enable_title_segmentation,
+      season_resolve_mode: forcedParams?.season_resolve_mode,
       force_filename: forcedParams?.force_filename,
     }
     const data = await recognitionApi.recognize(payload)

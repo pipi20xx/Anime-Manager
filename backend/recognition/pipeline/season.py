@@ -2,8 +2,8 @@
 
 三种模式（配置项 `season_resolve_mode`）：
 - `off`    ：完全不跑
-- `shadow` ：只做推算并写日志，**不修改任何结果**（默认，用于观察准确率）
-- `on`     ：推算结果与当前值不一致时采纳
+- `shadow` ：只做推算并写日志，**不修改任何结果**（观察准确率用）
+- `on`     ：强证据下不一致时采纳（默认；弱证据只记录不应用）
 
 放在 MatcherStage 之后：那时 `ctx.tmdb_data` 已就绪，多数情况下里面就带 `seasons`。
 """
@@ -18,6 +18,19 @@ from ..context import RecognitionContext
 from ..season_resolver import MIN_FRAGMENT, _name_fragment_score, resolve_season
 
 VALID_MODES = ("off", "shadow", "on")
+
+# 判定理由 → 中文标签（日志 / 前端展示用）
+_REASON_LABELS = {
+    "no-seasons": "无季表",
+    "single-season": "唯一季",
+    "name-match": "季名对齐",
+    "title-suffix": "标题尾数",
+    "marker": "季标",
+    "boundary:per-season": "季度内边界",
+    "boundary:absolute": "绝对集数换算",
+    "latest-by-air-date": "首播日期",
+    "ambiguous": "证据不足",
+}
 
 # 多语言季名缓存：{tmdb_id: (时间戳, seasons)}。
 # 补季名要额外两次请求（en-US / ja-JP），同一个剧集不该每次都补。
@@ -187,10 +200,14 @@ class SeasonStage:
             ref_date=ctx.kwargs.get("season_ref_date"),
         )
 
+        label = _REASON_LABELS.get(decision.reason, decision.reason)
+
         ctx.season_resolution = {
             "season": decision.season,
             "episode": decision.episode,
             "reason": decision.reason,
+            "reason_label": label,
+            "confidence": decision.confidence,
             "detail": decision.detail,
             "mode": mode,
             "before": {
@@ -198,24 +215,33 @@ class SeasonStage:
                 "episode": meta.begin_episode,
             },
             "applied": False,
+            "applied_reason": "",
         }
 
         if decision.season is None:
-            ctx.log(f"┗ [季号校准] 未定（{decision.reason}）：{decision.detail}")
+            ctx.log(f"┗ [季号校准] ⏭️ 未定（{label}）：{decision.detail}")
             return
 
         current = meta.begin_season
         if current == decision.season:
-            ctx.log(f"┗ [季号校准] 一致 S{decision.season}（{decision.reason}）：{decision.detail}")
+            ctx.season_resolution["applied_reason"] = "一致"
+            ctx.log(f"┗ [季号校准] ✅ 一致 S{decision.season}（{label}）：{decision.detail}")
             return
 
         ctx.log(
-            f"┣ [季号校准] 推算 S{current if current is not None else '?'} → "
-            f"S{decision.season}（{decision.reason}）：{decision.detail}"
+            f"┣ [季号校准] {label}({decision.reason}) → S{decision.season}"
+            f"（原 S{current if current is not None else '?'}）· {decision.detail}"
         )
 
         if mode != "on":
-            ctx.log("┗ [季号校准] 影子模式：本次不生效（配置 season_resolve_mode=shadow）")
+            ctx.season_resolution["applied_reason"] = "shadow"
+            ctx.log(f"┗ [季号校准] ⚙️ 仅记录不应用（season_resolve_mode={mode}）")
+            return
+
+        # on 模式：只自动应用强证据；弱证据（如首播日期推算）仍只记录，避免误改老季
+        if decision.confidence != "high":
+            ctx.season_resolution["applied_reason"] = "弱证据不应用"
+            ctx.log(f"┗ [季号校准] ⚙️ 弱证据（{label}）：仅记录不应用")
             return
 
         meta.begin_season = decision.season

@@ -103,8 +103,8 @@
     ├── 4. [SeasonStage] 季号校准阶段 (recognition/pipeline/season.py + season_resolver.py) ⭐
     │       ⬇️ 用 TMDB 季表（季名 zh/en/ja + 每季集数 + 首播日）确定性推算季号，**不调用模型**
     │       ⬇️ 判定顺序: 单季 → 季名对齐 → 标题尾数 → 季标 → 双假设边界 → 首播日期 → 不定
-    │       ⬇️ 模式: off / shadow（只算不生效，默认）/ on；不一致时按模式决定是否采纳
-    │       (Log: "[季号校准] 推算 S1 → S2（name-match）：季名命中 Cyberpunk: Edgerunners 2")
+    │       ⬇️ 模式: off / shadow（只算不生效）/ on（默认；强证据下不一致时采纳，弱证据仅记录）
+    │       (Log: "[季号校准] 季名对齐(name-match) → S2（原 S1）· 季名命中 Cyberpunk: Edgerunners 2")
     │
     ├── 5. [EnrichmentStage] 元数据补全阶段 (recognition/pipeline/enricher.py)
     │       ⬇️ 已知 ID, 请求详细信息
@@ -639,8 +639,8 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **标题候选**: `privileged_title` → `processed_name` → `en_name` → `cn_name` → 原始文件名（内核清理标题时会把尾部序号当噪声剥掉，只用一个字段会丢关键信息）
 - **判定顺序**: 只有一季 → 季名对齐（标题片段 + 序号词）→ 标题尾数（须季名佐证）→ 季标 → 双假设边界（per-season / absolute）→ 首播日期 → 不定
 - **并列处理**: 多季季名与标题等长匹配时判为「无区分度」，不采信，log 里写明并列情况
-- **三档模式**（`season_resolve_mode`）: `off` / `shadow`（只算并写日志，不改结果，默认）/ `on`（不一致时采纳）
-- **日志**: `[季号校准] 推算 S1 → S2（name-match）：季名命中 Cyberpunk: Edgerunners 2`
+- **三档模式**（`season_resolve_mode`）: `off` / `shadow`（只算并写日志，不改结果）/ `on`（强证据下不一致时采纳，默认；弱证据仅记录不应用）
+- **日志**: `[季号校准] 季名对齐(name-match) → S2（原 S1）· 季名命中 Cyberpunk: Edgerunners 2`
 - **为什么要它**: 内核只用正则抽数字当季号，抽不到默认 1；`Edgerunners 2`、`Act II S2` 这类“作品内第 N 部”靠正则永远判不出来，而 TMDB 季名里写着答案
 
 ##### `pipeline/enricher.py` (EnrichmentStage) - 补全阶段
@@ -1018,7 +1018,7 @@ L1 内核不含任何数据库或网络代码。
 | `bangumiFailover` | Bangumi 故障转移 | ON |
 | `forceFilename` | 强制单文件模式，启用路径分隔符脱敏 | OFF |
 | `seriesFingerprint` | 智能记忆 | ON |
-| `seasonResolveMode` | 季号校准：`off` 关闭 / `shadow` 只算不生效（默认，用于观察准确率）/ `on` 与当前值不一致时采纳 | `shadow` |
+| `seasonResolveMode` | 季号校准：`off` 关闭 / `shadow` 只算不生效（观察准确率）/ `on` 强证据下不一致时采纳（默认） | `on` |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
 | `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
 | `aiMode` | AI 介入的实现方式：`oneshot`（单次猜标题）\| `agent`（工具循环：查离线库 / 搜 TMDB / 核实季集） | `oneshot` |

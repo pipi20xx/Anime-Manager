@@ -79,12 +79,26 @@ export interface TmdbMatch {
   source?: string
 }
 
+export interface SeasonResolution {
+  season?: number | null
+  episode?: number | null
+  reason?: string
+  reason_label?: string
+  confidence?: string
+  detail?: string
+  mode?: string
+  before?: { season?: number | null; episode?: number | null }
+  applied?: boolean
+  applied_reason?: string
+}
+
 export interface RecognizeData {
   success: boolean
   logs: string[]
   final_result: FinalResult
   raw_meta: RawMeta
   tmdb_match?: TmdbMatch | null
+  season_resolution?: SeasonResolution | null
   search_plan?: {
     segmentation: boolean
     cloud_searched: boolean
@@ -111,6 +125,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
   const seriesFingerprint = ref(true)
   const batchEnhancement = ref(false)
   const titleSegmentation = ref(false)
+  const seasonResolveMode = ref<'off' | 'shadow' | 'on'>('on')
 
   // --- 高级参数（沙盒调试） ---
   const forcedTmdbId = ref('')
@@ -138,6 +153,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
       ['series_fingerprint', (v) => (seriesFingerprint.value = v === 'true')],
       ['batch_enhancement', (v) => (batchEnhancement.value = v === 'true')],
       ['enable_title_segmentation', (v) => (titleSegmentation.value = v === 'true')],
+      ['season_resolve_mode', (v) => { if (v === 'off' || v === 'shadow' || v === 'on') seasonResolveMode.value = v }],
     ]
     for (const [key, setter] of getters) {
       const saved = localStorage.getItem(key)
@@ -154,6 +170,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
     localStorage.setItem('series_fingerprint', String(seriesFingerprint.value))
     localStorage.setItem('batch_enhancement', String(batchEnhancement.value))
     localStorage.setItem('enable_title_segmentation', String(titleSegmentation.value))
+    localStorage.setItem('season_resolve_mode', seasonResolveMode.value)
   }
 
   async function performRecognition() {
@@ -175,6 +192,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
         series_fingerprint: seriesFingerprint.value,
         batch_enhancement: batchEnhancement.value,
         enable_title_segmentation: titleSegmentation.value,
+        season_resolve_mode: seasonResolveMode.value,
         forced_tmdb_id: forcedTmdbId.value || undefined,
         forced_type: forcedType.value || undefined,
         forced_season: forcedSeason.value || undefined,
@@ -252,6 +270,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
     forceFilename,
     seriesFingerprint,
     batchEnhancement,
+    seasonResolveMode,
     forcedTmdbId,
     forcedType,
     forcedSeason,

@@ -41,11 +41,11 @@ const { success, error: showError, warning } = useNotification()
 const STRATEGY_KEYS = [
   'anime_priority', 'offline_priority', 'bangumi_priority',
   'bangumi_failover', 'force_filename', 'series_fingerprint', 'batch_enhancement',
-  'enable_title_segmentation'
+  'enable_title_segmentation', 'season_resolve_mode'
 ] as const
 const STORAGE_KEY = 'recognition_strategy_prefs'
 
-function loadStrategyPrefs(): Record<string, boolean> {
+function loadStrategyPrefs(): Record<string, any> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw)
@@ -54,7 +54,7 @@ function loadStrategyPrefs(): Record<string, boolean> {
 }
 
 function saveStrategyPrefs(params: Record<string, any>) {
-  const prefs: Record<string, boolean> = {}
+  const prefs: Record<string, any> = {}
   for (const key of STRATEGY_KEYS) {
     prefs[key] = params[key]
   }
@@ -76,6 +76,7 @@ const forcedParams = reactive({
   series_fingerprint: savedPrefs.series_fingerprint ?? false,
   batch_enhancement: savedPrefs.batch_enhancement ?? false,
   enable_title_segmentation: savedPrefs.enable_title_segmentation ?? false,
+  season_resolve_mode: savedPrefs.season_resolve_mode ?? 'on',
 })
 
 // 策略开关变化时自动保存
@@ -243,6 +244,25 @@ watch(() => props.modelValue, (newVal) => {
               </v-card>
             </div>
 
+            <!-- 季号校准（三档） -->
+            <div class="mb-3">
+              <v-select
+                v-model="forcedParams.season_resolve_mode"
+                label="季号校准"
+                :items="[
+                  { title: '自动校正（强证据生效，推荐）', value: 'on' },
+                  { title: '仅记录不生效（观察准确率）', value: 'shadow' },
+                  { title: '关闭', value: 'off' },
+                ]"
+                density="compact"
+                variant="outlined"
+                hide-details
+              />
+              <div class="text-caption text-medium-emphasis mt-1">
+                用 TMDB 季表校准季号/集数：季名对齐、季标、边界校验等强证据才自动生效，首播日期等弱证据仅记录。
+              </div>
+            </div>
+
             <!-- 强制参数 -->
             <v-row density="compact" class="mb-2">
               <v-col cols="3">
@@ -406,6 +426,35 @@ watch(() => props.modelValue, (newVal) => {
                   </div>
                 </v-col>
               </v-row>
+            </v-card>
+
+            <!-- 季号校准结果 -->
+            <v-card v-if="data.season_resolution" variant="flat" class="glass-card pa-3 mb-3">
+              <div class="d-flex align-center mb-2 ga-2">
+                <v-icon size="16" color="info">mdi-calendar-refresh</v-icon>
+                <span class="text-subtitle-2 font-weight-bold">季号校准</span>
+                <v-spacer />
+                <v-chip v-if="data.season_resolution.applied" size="x-small" color="success" variant="tonal">✅ 已应用</v-chip>
+                <v-chip v-else-if="data.season_resolution.applied_reason === '一致'" size="x-small" variant="tonal">一致</v-chip>
+                <v-chip v-else size="x-small" color="warning" variant="tonal">未应用</v-chip>
+              </div>
+              <div class="recog-text-rows">
+                <div class="recog-text-row">
+                  <span class="recog-text-label">依据:</span>
+                  <span class="recog-text-value">{{ data.season_resolution.reason_label || data.season_resolution.reason || '-' }}</span>
+                </div>
+                <div v-if="data.season_resolution.season !== null && data.season_resolution.season !== undefined" class="recog-text-row">
+                  <span class="recog-text-label">季号:</span>
+                  <span class="recog-text-value">
+                    S{{ data.season_resolution.before?.season ?? '?' }} → S{{ data.season_resolution.season }}
+                    <template v-if="data.season_resolution.applied_reason">（{{ data.season_resolution.applied_reason }}）</template>
+                  </span>
+                </div>
+                <div v-if="data.season_resolution.detail" class="recog-text-row">
+                  <span class="recog-text-label">详情:</span>
+                  <span class="recog-text-value">{{ data.season_resolution.detail }}</span>
+                </div>
+              </div>
             </v-card>
 
             <!-- 重命名预览 -->

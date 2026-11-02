@@ -86,8 +86,8 @@ class ConfigManager:
         },
         "batch_enhancement": False,
         "series_fingerprint": True,
-        # 季号校准：off 关闭 / shadow 只算不生效（默认，用来看准确率）/ on 不一致时采纳
-        "season_resolve_mode": "shadow",
+        # 季号校准：off 关闭 / shadow 只算不生效 / on 强证据下不一致时采纳（默认）
+        "season_resolve_mode": "on",
         "custom_noise_words": [],
         "remote_noise_urls": [],
         "custom_release_groups": [],

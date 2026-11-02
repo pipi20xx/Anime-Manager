@@ -370,6 +370,26 @@ onMounted(() => {
             <div class="text-caption text-medium-emphasis">自动记住系列特征，后续文件实现秒级识别</div>
           </div>
         </div>
+
+        <v-divider class="my-4" />
+
+        <div>
+          <v-select
+            v-model="config.season_resolve_mode"
+            label="季号校准"
+            :items="[
+              { title: '自动校正（强证据生效，推荐）', value: 'on' },
+              { title: '仅记录不生效（观察准确率）', value: 'shadow' },
+              { title: '关闭', value: 'off' },
+            ]"
+            density="compact"
+            variant="outlined"
+            hide-details
+          />
+          <div class="text-caption text-medium-emphasis mt-1">
+            用 TMDB 季表校准季号/集数。判定顺序：唯一季 → 季名对齐 → 标题尾数 → 季标 → 边界校验 → 首播日期；其中季名对齐、季标、边界等强证据才会自动改季号，首播日期等弱证据仅记录不应用。
+          </div>
+        </div>
       </v-card-text>
     </v-card>
 

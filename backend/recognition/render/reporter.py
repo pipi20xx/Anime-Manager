@@ -41,5 +41,6 @@ class RenderReporter:
             ctx.log(f"{prefix} {line}")
 
         data_packet["search_plan"] = getattr(ctx, "search_plan", None)
+        data_packet["season_resolution"] = getattr(ctx, "season_resolution", None)
         data_packet["logs"] = ctx.logs
         return data_packet
