@@ -193,10 +193,8 @@ async def test_ai_parsing(request: AiTestRequest):
         return {"status": "error", "message": "AI 引擎不可用 (请检查日志/模型)"}
         
     try:
-        # AIHelper 走同步 httpx，直接调用会阻塞事件循环（连探测+重试可能十几秒，
-        # 足以让 APScheduler 报 "job was missed"），统一丢到线程里执行
-        result = await asyncio.to_thread(
-            ai.guess_title_variants,
+        # 入口自带模式切换：oneshot 在内部走线程池，agent 直接在主循环上跑
+        result = await ai.guess_title_variants(
             filename,
             request.current_title,
             request.current_episode,
@@ -242,9 +240,9 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
     try:
         import time as _time
         start = _time.time()
-        # 同上：同步 HTTP 必须离开事件循环，否则探测+重试期间整个后端的定时任务都会迟到
-        result = await asyncio.to_thread(
-            ai.guess_title_variants, filename, request.current_title, request.current_episode
+        # 同上：入口自带模式切换，oneshot 内部走线程池
+        result = await ai.guess_title_variants(
+            filename, request.current_title, request.current_episode
         )
         elapsed = round(_time.time() - start, 2)
 

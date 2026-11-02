@@ -1,4 +1,3 @@
-import asyncio
 import time
 from ..context import RecognitionContext
 from recognition_engine.constants import MediaType
@@ -53,10 +52,10 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta, require_fallback_to
     current_title = meta.privileged_title or meta.cn_name or meta.en_name or meta.processed_name
     current_episode = meta.begin_episode
     
-    # AIHelper 内部是同步 httpx：直接在事件循环里调用会把整个后端按住
-    # （AI 介入最长可能十几秒，含思考能力探测+重试），必须丢到线程池
-    ai_result = await asyncio.to_thread(
-        ai.guess_title_variants, ctx.filename, current_title, current_episode
+    # 入口是 async 的：oneshot 分支内部自己走线程池（同步 httpx 不能占住事件循环），
+    # agent 分支则直接在主事件循环上跑 —— 它的工具要复用主循环里的连接池，不能再套 to_thread
+    ai_result = await ai.guess_title_variants(
+        ctx.filename, current_title, current_episode, ctx=ctx
     )
     
     if not ai_result:

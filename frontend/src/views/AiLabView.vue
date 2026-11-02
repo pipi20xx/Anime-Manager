@@ -59,6 +59,7 @@ const assistantConfig = reactive({
   max_history_tokens: 24000,
   thinking_level: 'auto',
   ai_fallback_enabled: false,
+  ai_mode: 'oneshot',
   ai_result_skip_memory: true,
   use_tools: true,
   enable_dynamic_tools: true,
@@ -70,6 +71,12 @@ const availableModelIds = computed(() => availableModels.value.map(m => m.id))
 const modelsLoading = ref(false)
 const probeLoading = ref(false)
 const capability = ref<any>(null)
+
+// AI 介入的实现方式：只影响底下用哪种实现，不影响「要不要介入」的开关
+const AI_MODE_OPTIONS = [
+  { title: '一次性识别（oneshot，默认）', value: 'oneshot' },
+  { title: '智能体（agent，工具循环）', value: 'agent' },
+]
 
 const THINKING_LEVEL_OPTIONS = [
   { title: '跟随服务端默认（auto）', value: 'auto' },
@@ -816,6 +823,26 @@ registerHeaderTab({
             </div>
 
             <div class="d-flex align-center ga-3 mt-4">
+              <div style="min-width: 210px;">
+                <v-select
+                  v-model="assistantConfig.ai_mode"
+                  :items="AI_MODE_OPTIONS"
+                  item-title="title"
+                  item-value="value"
+                  density="compact"
+                  hide-details
+                  variant="outlined"
+                />
+              </div>
+              <div>
+                <div class="text-body-2 font-weight-medium">介入识别方式</div>
+                <div class="text-caption text-medium-emphasis">
+                  一次性识别：直接让模型猜标题，1 次调用，快但只能靠记忆；agent 模式：多轮调用工具（查离线库 / 搜 TMDB / 核实季集）再下结论，更准但每个文件多花几秒
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-3 mt-4">
               <v-switch v-model="assistantConfig.ai_result_skip_memory" density="compact" hide-details color="primary" />
               <div>
                 <div class="text-body-2 font-weight-medium">AI 识别结果不写入智能记忆</div>
@@ -835,7 +862,7 @@ registerHeaderTab({
           <v-divider />
           <v-card-text class="pa-4">
             <div class="text-body-2 text-medium-emphasis mb-4">
-              输入文件名，让 AI 推断真实标题。此功能模拟识别失败后 AI 介入猜测标题的行为，仅测试 AI 推断能力，不涉及 TMDB/Bangumi 搜索。
+              输入文件名，让 AI 推断真实标题。此功能与线上 AI 介入走同一个入口，因此受上面的「介入识别方式」影响：一次性识别只测模型推断能力；agent 模式会实际调用工具查 TMDB / 离线库并核实季集。
             </div>
 
             <!-- 输入区 -->

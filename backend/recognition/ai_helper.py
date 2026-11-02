@@ -1,3 +1,5 @@
+import asyncio
+import contextvars
 import json
 import logging
 import httpx
@@ -5,6 +7,14 @@ from typing import Optional, Dict, Any
 from config_manager import ConfigManager
 
 logger = logging.getLogger("AIHelper")
+
+# 递归闸门：agent 模式下，工具若间接再次触发识别，不允许在同一个任务里二次介入。
+# 用 ContextVar 而不是传参，是为了让 matcher / routers 里所有调用点都不必改动。
+# 注意：asyncio.to_thread 会复制 context，asyncio.run_coroutine_threadsafe 不会 ——
+# 将来若把 AI 介入改成后台派发，需要手动带上 context。
+_IN_AGENT: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "recognition_ai_in_agent", default=False
+)
 
 class AIHelper:
     _instance = None
@@ -38,12 +48,121 @@ class AIHelper:
     def is_fallback_enabled(self) -> bool:
         return self.ai_config.get("ai_fallback_enabled", False)
 
-    def guess_title_variants(self, filename: str, current_title: str = None, current_episode: int = None) -> Optional[Dict[str, Any]]:
+    @property
+    def ai_mode(self) -> str:
+        """AI 介入的实现方式：oneshot（一次性猜标题，默认）| agent（工具循环）"""
+        mode = str(
+            ConfigManager.get_config()
+            .get("assistant_config", {})
+            .get("ai_mode", "oneshot")
+        ).strip().lower()
+        return mode if mode in ("oneshot", "agent") else "oneshot"
+
+    def is_agent_mode(self) -> bool:
+        return self.ai_mode == "agent"
+
+    async def guess_title_variants(
+        self,
+        filename: str,
+        current_title: str = None,
+        current_episode: int = None,
+        *,
+        ctx=None,
+    ) -> Optional[Dict[str, Any]]:
+        """AI 介入的**唯一入口**。
+
+        4 个调用点（matcher 的 ai=1 / 全局兜底、AI 实验室两个测试端点）都走这里，
+        所以 ai_mode 开关只在本函数判断一次，调用方无需关心底下是哪种实现。
+
+        返回契约不变：{real_title, original_name, chinese_name, alternative_titles,
+        media_type, season, episode, confidence}（agent 模式会多带 tmdb_id / agent）。
+        """
+        # 递归闸门：agent 内部又绕回识别链路时，直接不介入
+        if _IN_AGENT.get():
+            logger.info("[AI-Fallback] 检测到 agent 内部嵌套调用，跳过本次 AI 介入")
+            return None
+
         if not self.is_available():
             logger.warning("[AI-Fallback] AI 不可用: base_url 或 model 未配置")
             return None
-        
-        return self._guess_title_variants_openai(filename, current_title, current_episode)
+
+        if self.is_agent_mode():
+            log = ctx.log if (ctx is not None and hasattr(ctx, "log")) else None
+            result = await self._guess_via_agent(
+                filename, current_title, current_episode, log=log
+            )
+            if result:
+                return result
+            logger.warning("[AI-Fallback] agent 未产出有效结果，降级为一次性识别")
+
+        # oneshot 是同步 httpx：必须离开事件循环，否则会按住整个后端
+        return await asyncio.to_thread(
+            self._guess_title_variants_openai, filename, current_title, current_episode
+        )
+
+    async def _guess_via_agent(
+        self,
+        filename: str,
+        current_title: str = None,
+        current_episode: int = None,
+        log=None,
+    ) -> Optional[Dict[str, Any]]:
+        """agent 模式：交给 RecognitionAgent，异常/失败一律返回 None 交给上层降级。"""
+        from .ai_agent import (
+            DEFAULT_MAX_ITERATIONS,
+            DEFAULT_TIMEOUT_SECONDS,
+            RecognitionAgent,
+        )
+
+        config = self.ai_config
+        base_url = config.get("openai_base_url", "")
+        api_key = config.get("openai_api_key", "sk-xxx")
+        model = config.get("openai_model", "")
+
+        # 关思考：与 oneshot 同一套能力缓存，只注入探测过、确认可用的参数
+        thinking_fragment: Dict[str, Any] = {}
+        try:
+            from assistant import llm_capabilities
+
+            thinking_fragment = (
+                llm_capabilities.thinking_payload_from_cache(base_url, model, "off") or {}
+            )
+        except Exception as e:
+            logger.debug(f"[AI-Fallback] 能力层不可用，agent 跳过思考参数注入: {e}")
+
+        assistant_config = ConfigManager.get_config().get("assistant_config", {})
+        try:
+            max_iterations = int(
+                assistant_config.get("ai_agent_max_iterations") or DEFAULT_MAX_ITERATIONS
+            )
+        except (TypeError, ValueError):
+            max_iterations = DEFAULT_MAX_ITERATIONS
+        try:
+            timeout_seconds = float(
+                assistant_config.get("ai_agent_timeout_seconds") or DEFAULT_TIMEOUT_SECONDS
+            )
+        except (TypeError, ValueError):
+            timeout_seconds = DEFAULT_TIMEOUT_SECONDS
+
+        agent = RecognitionAgent(
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            max_iterations=max_iterations,
+            timeout_seconds=timeout_seconds,
+            thinking_fragment=thinking_fragment,
+            log=log,
+            anime_priority=bool(ConfigManager.get_config().get("anime_priority", True)),
+        )
+
+        token = _IN_AGENT.set(True)
+        try:
+            return await agent.run(filename, current_title, current_episode)
+        except Exception as e:
+            logger.error(f"[AI-Fallback] agent 执行失败: {type(e).__name__}: {e}")
+            return None
+        finally:
+            _IN_AGENT.reset(token)
 
     def _get_fallback_system_prompt(self) -> str:
         return """你是影视剧数据库专家，精通中日英三语的影视动画作品名。根据用户给出的文件名，推断该文件对应的 TMDB 真实标题。

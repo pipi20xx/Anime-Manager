@@ -78,6 +78,10 @@ class ConfigManager:
             "thinking_level": "auto",     # 思考深度 off/auto/minimal/low/medium/high/max/xhigh
             "ai_fallback_enabled": False,
             "ai_result_skip_memory": True,  # AI 介入的识别结果不写入智能记忆 (防止记忆命中短路后续集数的 AI 裁决)
+            # AI 介入的实现方式：oneshot = 一次性猜标题（默认）；agent = 工具循环（查 TMDB/离线库再下结论）
+            "ai_mode": "oneshot",
+            "ai_agent_max_iterations": 3,      # agent 模式单文件最多几轮
+            "ai_agent_timeout_seconds": 25,    # agent 模式单文件墙钟预算（秒）
             "use_tools": True
         },
         "batch_enhancement": False,
