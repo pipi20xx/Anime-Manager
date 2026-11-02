@@ -81,6 +81,7 @@ class SeasonDecision:
     reason: str = "ambiguous"
     detail: str = ""
     confidence: str = "none"  # high / low / none（on 模式只自动应用 high）
+    align: str = ""  # 「标题候选 × 季名」比对明细（多行文本，供日志/前端展示）
 
     @property
     def ok(self) -> bool:
@@ -271,6 +272,16 @@ def _best_name(title_parts: Any, season_names: Iterable[str]) -> str:
     return best_name
 
 
+def _align_debug(candidates: List[str], parsed) -> str:
+    """「标题候选 × 季名」比对明细，方便人工核对季名对齐为什么命中/没命中。"""
+    lines = [f"标题候选: {' | '.join(candidates) if candidates else '—'}"]
+    for number, _count, names, _air in parsed:
+        names_str = " / ".join(names) if names else "—"
+        frag = _name_fragment_score(candidates, names)
+        lines.append(f"S{number} 季名: {names_str}（匹配分 {frag}）")
+    return "\n".join(lines)
+
+
 def resolve_season(
     seasons: Sequence[Dict[str, Any]],
     *,
@@ -302,11 +313,12 @@ def resolve_season(
     file_year = _coerce_year(file_year)
 
     notes: List[str] = []
+    align: str = ""
 
     def _decision(season, episode, reason, detail) -> SeasonDecision:
         if notes:
             detail = "；".join([*notes, detail])
-        return SeasonDecision(season, episode, reason, detail, confidence=_confidence(reason))
+        return SeasonDecision(season, episode, reason, detail, confidence=_confidence(reason), align=align)
 
     if not parsed:
         return _decision(None, raw_episode, "no-seasons", "TMDB 没有可用的季数据")
@@ -318,6 +330,7 @@ def resolve_season(
     if filename:
         candidates.append(filename)
     candidates = list(dict.fromkeys(item for item in candidates if item))
+    align = _align_debug(candidates, parsed)
 
     # 0. 只有一季：没有歧义。集数超出只提示，不否决（可能是 TMDB 数据滞后）
     if len(parsed) == 1:

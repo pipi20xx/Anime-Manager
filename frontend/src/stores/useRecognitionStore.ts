@@ -86,6 +86,7 @@ export interface SeasonResolution {
   reason_label?: string
   confidence?: string
   detail?: string
+  align?: string
   mode?: string
   before?: { season?: number | null; episode?: number | null }
   applied?: boolean

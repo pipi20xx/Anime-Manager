@@ -211,6 +211,7 @@ class SeasonStage:
             "reason_label": label,
             "confidence": decision.confidence,
             "detail": decision.detail,
+            "align": decision.align,
             "mode": mode,
             "before": {
                 "season": meta.begin_season,
@@ -219,6 +220,11 @@ class SeasonStage:
             "applied": False,
             "applied_reason": "",
         }
+
+        # 比对明细：把「标题候选 × 各季季名」都摆出来，方便人工核对
+        if decision.align:
+            for line in decision.align.splitlines():
+                ctx.log(f"┃   · {line}")
 
         if decision.season is None:
             ctx.log(f"┗ [季号校准] ⏭️ 未定（{label}）：{decision.detail}")

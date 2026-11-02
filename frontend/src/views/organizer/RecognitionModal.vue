@@ -455,6 +455,9 @@ watch(() => props.modelValue, (newVal) => {
                   <span class="recog-text-value">{{ data.season_resolution.detail }}</span>
                 </div>
               </div>
+              <div v-if="data.season_resolution.align" class="align-detail mt-2">
+                {{ data.season_resolution.align }}
+              </div>
             </v-card>
 
             <!-- 重命名预览 -->
@@ -541,6 +544,18 @@ watch(() => props.modelValue, (newVal) => {
 .strategy-desc { font-size: 12px; color: rgb(var(--v-theme-on-surface)); line-height: 1.4; }
 
 /* .recog-* 信息行与 .audit-log-* 审计日志已迁移至 styles/cards.css（与 HomeView 共用） */
+
+.align-detail {
+  white-space: pre-line;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  color: rgb(var(--v-theme-on-surface));
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
 
 .preview-path {
   font-family: monospace; font-size: 13px;

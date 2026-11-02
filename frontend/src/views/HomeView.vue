@@ -377,6 +377,9 @@ const filteredLogs = computed(() => {
                         <span class="recog-text-value">{{ store.data.season_resolution.detail }}</span>
                       </div>
                     </div>
+                    <div v-if="store.data.season_resolution.align" class="align-detail mt-2">
+                      {{ store.data.season_resolution.align }}
+                    </div>
                   </v-card>
 
                   <!-- ========== 本地解析元数据 + TMDB 原始详情 (并排) ========== -->
@@ -786,6 +789,18 @@ const filteredLogs = computed(() => {
 /* .recog-* 信息行与 .audit-log-* 审计日志已迁移至 styles/cards.css（与 RecognitionModal 共用） */
 .recog-filename {
   font-size: 11px;
+}
+
+.align-detail {
+  white-space: pre-line;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  color: rgb(var(--v-theme-on-surface));
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 6px;
+  padding: 8px 10px;
 }
 
 /* ===== 本地解析元数据 ===== */
