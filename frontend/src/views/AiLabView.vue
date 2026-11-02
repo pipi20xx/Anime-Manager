@@ -877,9 +877,14 @@ registerHeaderTab({
 
         <!-- 推理参数 -->
         <v-card class="glass-card mb-4">
-          <SectionHeader card-title icon="mdi-tune-vertical" title="推理参数" />
+          <SectionHeader card-title icon="mdi-tune-vertical" title="推理参数（AI 对话）" />
           <v-divider />
           <v-card-text class="pa-4">
+            <v-alert type="info" variant="tonal" density="compact" class="mb-4 text-caption">
+              这里的参数只作用于 <strong>AI 对话</strong>（AI 助手聊天、Telegram Bot）。
+              「AI 介入识别」不读这些值——它的温度固定 0.1、单轮输出上限固定 4096，由代码内置。
+              唯一的关联是下面的「探测能力」：它探出的「关闭思考」参数会被 AI 介入复用来省 token，换模型后仍建议点一次。
+            </v-alert>
             <div class="d-flex align-center ga-3 mb-4">
               <span class="text-body-2 text-medium-emphasis" style="min-width: 80px">温度</span>
               <v-slider v-model="assistantConfig.temperature" :min="0" :max="2" :step="0.1" hide-details thumb-label />
@@ -944,15 +949,29 @@ registerHeaderTab({
               </div>
             </div>
 
-            <div class="d-flex align-center ga-3">
+          </v-card-text>
+        </v-card>
+
+        <!-- AI 介入识别（识别链路专用，与上方 AI 对话配置无关） -->
+        <v-card class="glass-card mb-4">
+          <SectionHeader card-title icon="mdi-robot-outline" title="AI 介入识别" />
+          <v-divider />
+          <v-card-text class="pa-4">
+            <v-alert type="info" variant="tonal" density="compact" class="mb-4 text-caption">
+              这一组开关作用于<strong>识别链路</strong>，与上面的 AI 对话配置互不影响。修改后点页面右上角「保存全部修改」生效。
+            </v-alert>
+
+            <div class="d-flex align-center ga-3 mb-4">
               <v-switch v-model="assistantConfig.ai_fallback_enabled" density="compact" hide-details color="primary" />
               <div>
-                <div class="text-body-2 font-weight-medium">AI 智能介入</div>
-                <div class="text-caption text-medium-emphasis">识别失败时，让 AI 猜测标题并重新搜索（特权规则 ai=1 命中时优先触发，无需开启此项）</div>
+                <div class="text-body-2 font-weight-medium">AI 智能介入（全局兜底）</div>
+                <div class="text-caption text-medium-emphasis">
+                  开启：常规识别全部失败后，让 AI 重新推断标题并再搜一次。特权规则命中 ai=1 时无需开启此项，会优先触发。
+                </div>
               </div>
             </div>
 
-            <div class="d-flex align-center ga-3 mt-4">
+            <div class="d-flex align-center ga-3 mb-4">
               <div style="min-width: 210px;">
                 <v-select
                   v-model="assistantConfig.ai_mode"
@@ -972,7 +991,7 @@ registerHeaderTab({
               </div>
             </div>
 
-            <div class="d-flex align-center ga-3 mt-4">
+            <div class="d-flex align-center ga-3">
               <v-switch v-model="assistantConfig.ai_result_skip_memory" density="compact" hide-details color="primary" />
               <div>
                 <div class="text-body-2 font-weight-medium">AI 识别结果不写入智能记忆</div>
