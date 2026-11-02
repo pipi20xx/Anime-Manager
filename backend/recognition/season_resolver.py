@@ -259,6 +259,14 @@ def _coerce_year(value: Any) -> Optional[int]:
     return year if 1900 <= year <= 2100 else None
 
 
+def _air_year_matches(air: str, file_year: int) -> bool:
+    """该季首播日期的年份是否等于文件名年份。"""
+    try:
+        return date.fromisoformat(air[:10]).year == file_year
+    except (TypeError, ValueError):
+        return False
+
+
 def _best_name(title_parts: Any, season_names: Iterable[str]) -> str:
     """挑出与标题最贴近的季名，仅用于日志展示。"""
     norms = [normalize_text(item) for item in _candidate_list(title_parts)]
@@ -351,15 +359,20 @@ def resolve_season(
         if frag >= MIN_FRAGMENT or ordinal_hit:
             scored.append((frag, ordinal_hit, number, names))
     if scored:
+        def _year_bonus(item) -> int:
+            _frag, _o, number, _names = item
+            info = by_number.get(number)
+            return 1 if (file_year and info and _air_year_matches(info[3], file_year)) else 0
+
         def _rank(item):
             frag, ordinal_hit, _number, _names = item
             has_frag = frag >= MIN_FRAGMENT
-            # 标题片段与序号词同时命中 > 仅标题片段 > 仅序号词
+            # 标题片段与序号词同时命中 > 仅标题片段 > 仅序号词；三者同分时年份吻合者优先
             tier = 2 if (has_frag and ordinal_hit) else (1 if has_frag else 0)
-            return (tier, frag)
+            return (tier, frag, _year_bonus(item))
 
-        # 并列判定只看 (tier, frag)：季号大小不能用来「打破并列」，
-        # 否则「各季季名都能匹配同一段标题」这种无区分度的情况会被悄悄判成 S1。
+        # 并列判定看 (tier, frag, year)：季号大小不能用来「打破并列」（否则会把
+        # 无区分度的情况悄悄判成 S1），但文件名年份是真实证据，可只在同分时优先选年份吻合的季。
         scored.sort(key=lambda item: (_rank(item), -item[2]), reverse=True)
         top = scored[0]
         runner_up = scored[1] if len(scored) > 1 else None
@@ -373,9 +386,11 @@ def resolve_season(
                 mapped = _absolute_episode_map(raw_episode, parsed)
                 if mapped:
                     episode = mapped[1]
+            year_hit = bool(file_year and _air_year_matches(season_info[3], file_year))
             detail = (
                 f"季名命中（{_best_name(candidates, names)}）"
                 + ("+序号词" if ordinal_hit else "")
+                + (f"+年份佐证（{file_year}）" if year_hit else "")
                 + (f"，集数 {raw_episode}→{episode}" if episode != raw_episode else "")
             )
             return _decision(number, episode, "name-match", detail)
