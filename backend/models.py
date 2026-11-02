@@ -193,6 +193,7 @@ class Subscription(SQLModel, table=True):
     target_client_id: Optional[str] = None
     save_path: Optional[str] = None
     category: Optional[str] = None
+    tags: Optional[str] = None  # 下载器标签（与「下载规则」一致：分类、标签分开传）
     season: int = Field(default=1)
     start_episode: int = Field(default=1)
     end_episode: int = Field(default=0)
@@ -233,6 +234,7 @@ class SubscriptionTemplate(SQLModel, table=True):
     target_client_id: Optional[str] = None
     save_path: Optional[str] = None
     category: Optional[str] = Field(default="Anime")
+    tags: Optional[str] = None  # 下载器标签（与「下载规则」一致：分类、标签分开传）
     quality_profile_id: Optional[int] = Field(foreign_key="public.quality_profiles.id", default=None) # 关联洗版策略
     auto_fill: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.now)
@@ -623,6 +625,7 @@ class RssDetectTask(SQLModel, table=True):
     target_client_id: Optional[str] = None
     save_path: Optional[str] = None
     category: Optional[str] = Field(default="Anime")
+    tags: Optional[str] = None  # 下载器标签（与「下载规则」一致：分类、标签分开传）
     quality_profile_id: Optional[int] = Field(foreign_key="public.quality_profiles.id", default=None) # 关联洗版策略
     auto_fill: bool = Field(default=True)
     

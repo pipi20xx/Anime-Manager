@@ -3,7 +3,7 @@
  * RulesTab — 下载规则
  *
  * 对标旧前端 Rules Tab:
- * - 规则卡片（含关键词、排除词、匹配模式、下载器、保存路径）
+ * - 规则卡片（含关键词、排除词、匹配模式、下载客户端、下载目录）
  * - 复制规则
  * - 下载记录弹窗
  * - 规则预览
@@ -17,7 +17,7 @@ import { EmptyState, DialogTitle } from '@/components/common'
 
 defineOptions({ name: 'RulesTab' })
 
-// ---------- 保存路径浏览选择 ----------
+// ---------- 下载目录浏览选择 ----------
 const showFolderBrowser = ref(false)
 const openFolderBrowser = () => { showFolderBrowser.value = true }
 const onFolderSelected = (path: string) => { ruleForm.value.save_path = path }
@@ -194,15 +194,15 @@ defineExpose({ fetchRules })
               <span class="manage-card__info-value">{{ rule.use_regex ? '正则' : '普通' }}</span>
             </div>
             <div class="manage-card__info">
-              <span class="manage-card__info-label">下载器</span>
+              <span class="manage-card__info-label">客户端</span>
               <span class="manage-card__info-value">{{ clientNameMap[rule.target_client_id] || '默认' }}</span>
             </div>
             <div class="manage-card__info">
-              <span class="manage-card__info-label">路径</span>
+              <span class="manage-card__info-label">目录</span>
               <span class="manage-card__info-value" :title="rule.save_path">{{ rule.save_path || '默认' }}</span>
             </div>
             <div class="manage-card__info">
-              <span class="manage-card__info-label">作用范围</span>
+              <span class="manage-card__info-label">订阅源</span>
               <span class="manage-card__info-value" :title="getTargetFeedNames(rule.target_feeds)">{{ getTargetFeedNames(rule.target_feeds) }}</span>
             </div>
             <div class="manage-card__info">
@@ -245,11 +245,12 @@ defineExpose({ fetchRules })
           </div>
           <v-textarea v-model="ruleForm.must_contain" label="包含关键词" placeholder="普通模式: 空格=且, |=或" variant="outlined" density="compact" rows="2" auto-grow class="mb-3" />
           <v-text-field v-model="ruleForm.must_not_contain" label="排除关键词" placeholder="用 | 分隔" variant="outlined" density="compact" class="mb-3" />
-          <v-select v-model="ruleSelectedFeedIds" label="作用范围 (留空则监控所有源)" :items="feeds.map(f => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" class="mb-3" />
-          <v-select v-model="ruleForm.target_client_id" label="指定下载器" :items="clients.map(c => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" class="mb-3" />
+          <v-select v-model="ruleSelectedFeedIds" label="监控订阅源" placeholder="留空则监控所有" :items="feeds.map(f => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" class="mb-3" />
+          <v-select v-model="ruleForm.target_client_id" label="下载客户端" placeholder="留空则使用默认客户端" :items="clients.map(c => ({ title: c.name, value: c.id }))" clearable variant="outlined" density="compact" class="mb-3" />
           <v-text-field
             v-model="ruleForm.save_path"
-            label="保存路径"
+            label="下载目录"
+            placeholder="留空则使用客户端默认路径"
             variant="outlined"
             density="compact"
             class="mb-3"
@@ -257,8 +258,8 @@ defineExpose({ fetchRules })
             @click:append-inner="openFolderBrowser"
           />
           <v-row density="compact">
-            <v-col cols="6"><v-text-field v-model="ruleForm.category" label="分类" variant="outlined" density="compact" /></v-col>
-            <v-col cols="6"><v-text-field v-model="ruleForm.tags" label="标签" variant="outlined" density="compact" /></v-col>
+            <v-col cols="6"><v-text-field v-model="ruleForm.category" label="分类" placeholder="例如: Anime" variant="outlined" density="compact" /></v-col>
+            <v-col cols="6"><v-text-field v-model="ruleForm.tags" label="标签" placeholder="例如: 追番, 1080p" variant="outlined" density="compact" /></v-col>
           </v-row>
           <v-switch v-model="ruleForm.paused" color="primary" density="compact" hide-details class="mt-2" :label="ruleForm.paused ? '添加后暂停' : '自动开始'" />
           <v-switch v-model="ruleForm.enabled" color="primary" density="compact" hide-details class="mt-2" label="启用规则" />
@@ -300,11 +301,11 @@ defineExpose({ fetchRules })
     <!-- 下载记录弹窗 -->
     <DownloadHistoryModal v-model:show="showHistoryModal" :feeds="feeds" />
 
-    <!-- 保存路径浏览选择 -->
+    <!-- 下载目录浏览选择 -->
     <FolderBrowserModal
       v-model="showFolderBrowser"
       via="local"
-      title="选择保存路径"
+      title="选择下载目录"
       @select="onFolderSelected"
     />
   </div>

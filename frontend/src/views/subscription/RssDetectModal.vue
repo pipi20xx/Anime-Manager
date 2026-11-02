@@ -77,6 +77,7 @@ const form = reactive({
   target_client_id: null as number | null,
   save_path: '',
   category: 'Anime',
+  tags: '',
   target_feeds: [] as string[],
   auto_fill: true,
   interval_minutes: 360,
@@ -148,6 +149,7 @@ function applyPreset(id: number | null | undefined) {
   form.target_client_id = t.target_client_id ?? null
   form.save_path = t.save_path || ''
   form.category = t.category || 'Anime'
+  form.tags = t.tags || ''
   form.target_feeds = t.target_feeds ? String(t.target_feeds).split(',').filter(Boolean) : []
   form.auto_fill = t.auto_fill !== false
   appliedPresetName.value = t.name
@@ -167,7 +169,7 @@ function openAdd() {
     include_keywords: '', exclude_keywords: '',
     quality_profile_id: null,
     target_client_id: clients.value.length > 0 ? clients.value[0].id : null,
-    save_path: '', category: 'Anime',
+    save_path: '', category: 'Anime', tags: '',
     target_feeds: [], auto_fill: true, interval_minutes: 360,
   })
   showEdit.value = true
@@ -197,6 +199,7 @@ function openEdit(task: any) {
       if (!form.target_client_id) form.target_client_id = t.target_client_id ?? null
       if (!form.save_path) form.save_path = t.save_path || ''
       if (!form.category) form.category = t.category || 'Anime'
+      if (!form.tags) form.tags = t.tags || ''
       if (!form.target_feeds.length && t.target_feeds) {
         form.target_feeds = String(t.target_feeds).split(',').filter(Boolean)
       }
@@ -334,6 +337,7 @@ async function subscribeShow(show: any) {
       target_client_id: form.target_client_id,
       save_path: form.save_path || null,
       category: form.category || 'Anime',
+      tags: form.tags || null,
       auto_fill: form.auto_fill,
       target_feeds: form.target_feeds.length ? form.target_feeds.join(',') : null,
       quality_profile_id: form.quality_profile_id,
@@ -452,25 +456,27 @@ function formatDateTime(dateStr: string | null): string {
 
           <v-divider class="my-3" />
 
-          <!-- 套用预设：只做一次性填充，填完可自由修改 -->
-          <div class="d-flex align-center ga-2 flex-wrap mb-3">
-            <v-select
-              :model-value="null"
-              label="套用预设"
-              :items="presetItems"
-              variant="outlined"
-              density="compact"
-              hide-details
-              style="max-width: 260px"
-              placeholder="选择预设，一键填入下方参数"
-              @update:model-value="applyPreset"
-            />
-            <v-chip v-if="appliedPresetName" size="small" variant="tonal" color="accent" label>
-              <v-icon start size="14">mdi-check</v-icon>已套用 {{ appliedPresetName }}
-            </v-chip>
-            <span class="text-caption text-medium-emphasis">
+          <!-- 套用预设：下拉铺满整行，说明单独一行（填完可自由修改） -->
+          <div class="mb-3">
+            <div class="d-flex align-center ga-2">
+              <v-select
+                :model-value="null"
+                label="套用预设"
+                :items="presetItems"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="flex-grow-1"
+                placeholder="选择预设，一键填入下方参数"
+                @update:model-value="applyPreset"
+              />
+              <v-chip v-if="appliedPresetName" size="small" variant="tonal" color="accent" label class="flex-shrink-0">
+                <v-icon start size="14">mdi-check</v-icon>已套用 {{ appliedPresetName }}
+              </v-chip>
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
               仅把预设的匹配条件、洗版策略与下载设置填进下面的表单，之后按表单里的值执行，可任意修改；预设本身在「订阅预设管理」中维护。
-            </span>
+            </div>
           </div>
 
           <!-- ② 匹配条件 -->
@@ -513,7 +519,8 @@ function formatDateTime(dateStr: string | null): string {
                 @click:append-inner="openFolderBrowser"
               />
             </v-col>
-            <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
+            <v-col cols="6"><v-text-field v-model="form.category" label="分类" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
+            <v-col cols="6"><v-text-field v-model="form.tags" label="标签" variant="outlined" density="compact" placeholder="例如: 追番, 1080p" /></v-col>
             <v-col cols="12">
               <v-select
                 v-model="form.target_feeds"
@@ -525,9 +532,16 @@ function formatDateTime(dateStr: string | null): string {
                 placeholder="留空则监控所有"
               />
             </v-col>
-            <v-col cols="12"><v-switch v-model="form.auto_fill" color="primary" density="compact" hide-details label="定时补全" /></v-col>
+            <v-col cols="12">
+              <div class="d-flex align-center ga-3">
+                <v-switch v-model="form.auto_fill" color="primary" density="compact" hide-details label="定时补全" class="flex-shrink-0" />
+                <span class="text-caption text-medium-emphasis">
+                  任务自动创建的订阅是否参与「任务计划 → 订阅自动搜寻补全」的自动搜索（按小时周期去 Jackett 找缺失集数）。
+                </span>
+              </div>
+            </v-col>
           </v-row>
-          <div class="text-caption text-medium-emphasis">任务自动创建的订阅会沿用这里的客户端 / 目录 / 分类 / 监控源与定时补全。</div>
+          <div class="text-caption text-medium-emphasis">任务自动创建的订阅会沿用这里的客户端 / 目录 / 分类 / 标签 / 监控源与定时补全。</div>
 
           <v-divider class="my-3" />
 

@@ -227,6 +227,7 @@ async def one_click_subscribe(subject_id: int, template_id: Optional[int] = None
         target_client_id=target_tmpl.target_client_id if target_tmpl else default_client_id,
         save_path=target_tmpl.save_path if target_tmpl else None,
         category=target_tmpl.category if target_tmpl else "Anime",
+        tags=target_tmpl.tags if target_tmpl else None,
         auto_fill=target_tmpl.auto_fill if target_tmpl else True,
         filter_res=target_tmpl.filter_res if target_tmpl else None,
         filter_team=target_tmpl.filter_team if target_tmpl else None,

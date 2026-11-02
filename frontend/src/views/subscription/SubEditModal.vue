@@ -61,6 +61,7 @@ const form = reactive({
   target_client_id: null as number | null,
   save_path: '',
   category: 'Anime',
+  tags: '',
   enabled: true,
   auto_fill: true,
   bangumi_id: '',
@@ -105,7 +106,7 @@ function resetForm() {
     quality_profile_id: null, filter_res: '', filter_team: '', filter_source: '',
     filter_codec: '', filter_audio: '', filter_sub: '', filter_effect: '', filter_platform: '',
     include_keywords: '', exclude_keywords: '', target_feeds: [], target_client_id: null,
-    save_path: '', category: 'Anime', enabled: true, auto_fill: true, bangumi_id: '',
+    save_path: '', category: 'Anime', tags: '', enabled: true, auto_fill: true, bangumi_id: '',
     season: 1, start_episode: 1, end_episode: 0,
   })
   searchQuery.value = ''
@@ -144,6 +145,7 @@ function applyTemplate(tmplId: number | null) {
   form.target_client_id = tmpl.target_client_id || null
   form.save_path = tmpl.save_path || ''
   form.category = tmpl.category || 'Anime'
+  form.tags = tmpl.tags || ''
   form.auto_fill = tmpl.auto_fill !== false
   form.target_feeds = tmpl.target_feeds
     ? String(tmpl.target_feeds).split(',').filter(Boolean)
@@ -263,25 +265,27 @@ function handleSave() {
 
         <v-divider class="my-3" />
 
-        <!-- 套用预设：一次性填充，填完可自由修改 -->
-        <div v-if="isNew && templates.length > 0" class="d-flex align-center ga-2 flex-wrap mb-3">
-          <v-select
-            :model-value="null"
-            label="套用预设"
-            :items="templates.map((t: any) => ({ title: t.name, value: t.id }))"
-            variant="outlined"
-            density="compact"
-            hide-details
-            style="max-width: 260px"
-            placeholder="选择预设，一键填入下方参数"
-            @update:model-value="applyTemplate"
-          />
-          <v-chip v-if="appliedPresetName" size="small" variant="tonal" color="accent" label>
-            <v-icon start size="14">mdi-check</v-icon>已套用 {{ appliedPresetName }}
-          </v-chip>
-          <span class="text-caption text-medium-emphasis">
+        <!-- 套用预设：下拉铺满整行，说明单独一行（填完可自由修改） -->
+        <div v-if="isNew && templates.length > 0" class="mb-3">
+          <div class="d-flex align-center ga-2">
+            <v-select
+              :model-value="null"
+              label="套用预设"
+              :items="templates.map((t: any) => ({ title: t.name, value: t.id }))"
+              variant="outlined"
+              density="compact"
+              hide-details
+              class="flex-grow-1"
+              placeholder="选择预设，一键填入下方参数"
+              @update:model-value="applyTemplate"
+            />
+            <v-chip v-if="appliedPresetName" size="small" variant="tonal" color="accent" label class="flex-shrink-0">
+              <v-icon start size="14">mdi-check</v-icon>已套用 {{ appliedPresetName }}
+            </v-chip>
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
             仅把预设的匹配条件、洗版策略与下载设置填进下面的表单，之后按表单里的值保存，可任意修改。
-          </span>
+          </div>
         </div>
 
         <!-- ② 匹配条件 -->
@@ -313,12 +317,18 @@ function handleSave() {
               @click:append-inner="openFolderBrowser"
             />
           </v-col>
-          <v-col cols="6"><v-text-field v-model="form.category" label="分类/标签" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
+          <v-col cols="6"><v-text-field v-model="form.category" label="分类" variant="outlined" density="compact" placeholder="例如: Anime" /></v-col>
+          <v-col cols="6"><v-text-field v-model="form.tags" label="标签" variant="outlined" density="compact" placeholder="例如: 追番, 1080p" /></v-col>
           <v-col cols="12">
             <v-select v-model="form.target_feeds" label="监控订阅源" :items="availableFeeds.map((f: any) => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" placeholder="留空则监控所有" />
           </v-col>
           <v-col cols="12">
-            <v-switch v-model="form.auto_fill" label="定时补全" color="primary" density="compact" hide-details />
+            <div class="d-flex align-center ga-3">
+              <v-switch v-model="form.auto_fill" label="定时补全" color="primary" density="compact" hide-details class="flex-shrink-0" />
+              <span class="text-caption text-medium-emphasis">
+                开启后会被「任务计划 → 订阅自动搜寻补全」纳入自动搜索（按设定的小时周期去 Jackett 找缺失集数）；关闭则只在手动点「补全」时搜索。
+              </span>
+            </div>
           </v-col>
         </v-row>
 

@@ -738,7 +738,8 @@ class SubscriptionMatcher:
 
                     temp_rule = Rule(
                         name=f"Sub:{sub.title}", target_client_id=sub.target_client_id,
-                        save_path=sub.save_path, category=sub.category, enabled=True
+                        save_path=sub.save_path, category=sub.category,
+                        tags=getattr(sub, "tags", None), enabled=True
                     )
                     
                     action_log = "洗版" if is_upgrade else "命中"

@@ -298,7 +298,8 @@ async def run_subscription_fill(
                     continue
 
             success, _msg = await ClientManager.add_task(
-                sub.target_client_id, item["link"], save_path=sub.save_path, category=sub.category
+                sub.target_client_id, item["link"],
+                save_path=sub.save_path, category=sub.category, tags=getattr(sub, "tags", None)
             )
 
             if success:

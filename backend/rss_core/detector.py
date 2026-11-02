@@ -290,6 +290,7 @@ class RssDetector:
         auto_fill: bool = True,
         target_feeds: Optional[str] = None,
         quality_profile_id: Optional[int] = None,
+        tags: Optional[str] = None,
         allow_default_template: bool = True,
         **filter_kwargs
     ) -> Dict[str, Any]:
@@ -363,6 +364,7 @@ class RssDetector:
                     target_client_id=target_client_id or (tmpl.target_client_id if tmpl else default_client_id),
                     save_path=save_path or (tmpl.save_path if tmpl else None),
                     category=category or (tmpl.category if tmpl else "Anime"),
+                    tags=tags or (tmpl.tags if tmpl else None),
                     filter_res=filter_res or (tmpl.filter_res if tmpl else None),
                     filter_team=filter_team or (tmpl.filter_team if tmpl else None),
                     filter_source=filter_kwargs.get('filter_source') or (tmpl.filter_source if tmpl else None),
@@ -427,6 +429,7 @@ class RssDetector:
         auto_fill: bool = True,
         target_feeds: Optional[str] = None,
         quality_profile_id: Optional[int] = None,
+        tags: Optional[str] = None,
         **filter_kwargs
     ) -> Dict[str, Any]:
         """
@@ -476,6 +479,7 @@ class RssDetector:
             target_client_id=target_client_id or (tmpl.target_client_id if tmpl else None),
             save_path=save_path or (tmpl.save_path if tmpl else None),
             category=category or (tmpl.category if tmpl else "Anime"),
+            tags=tags or (tmpl.tags if tmpl else None),
             filter_res=filter_res or (tmpl.filter_res if tmpl else None),
             filter_team=filter_team or (tmpl.filter_team if tmpl else None),
             filter_source=filter_kwargs.get("filter_source") or (tmpl.filter_source if tmpl else None),
@@ -542,6 +546,7 @@ class RssDetector:
                     target_client_id=task.target_client_id,
                     save_path=task.save_path,
                     category=task.category or "Anime",
+                    tags=task.tags,
                     auto_fill=task.auto_fill,
                     target_feeds=task.target_feeds,
                     quality_profile_id=task.quality_profile_id,
@@ -610,6 +615,7 @@ class RssDetector:
             target_client_id=task.target_client_id,
             save_path=task.save_path,
             category=task.category or "Anime",
+            tags=task.tags,
             auto_fill=task.auto_fill,
             target_feeds=task.target_feeds,
             quality_profile_id=task.quality_profile_id,

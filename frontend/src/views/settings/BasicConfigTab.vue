@@ -658,7 +658,7 @@ onMounted(() => {
                 :items="qbClients"
                 item-title="name"
                 item-value="id"
-                label="指定下载器"
+                label="下载客户端"
                 variant="outlined"
                 density="compact"
                 hide-details

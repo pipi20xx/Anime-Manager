@@ -52,7 +52,7 @@ const editModel = reactive({
   filter_audio: '', filter_sub: '', filter_effect: '', filter_platform: '',
   include_keywords: '', exclude_keywords: '',
   target_client_id: null as number | null,
-  save_path: '', category: 'Anime',
+  save_path: '', category: 'Anime', tags: '',
   quality_profile_id: null as number | null,
   target_feeds: [] as string[],
   auto_fill: true,
@@ -99,7 +99,7 @@ function openAdd() {
     filter_audio: '', filter_sub: '', filter_effect: '', filter_platform: '',
     include_keywords: '', exclude_keywords: '',
     target_client_id: clients.value.length > 0 ? clients.value[0].id : null,
-    save_path: '', category: 'Anime', quality_profile_id: null,
+    save_path: '', category: 'Anime', tags: '', quality_profile_id: null,
     target_feeds: [], auto_fill: true,
   })
   showEdit.value = true
@@ -184,6 +184,7 @@ async function setDefault(row: any) {
                 <div class="manage-card__body">
                   <div class="manage-card__tags">
                     <v-chip v-if="row.category" size="x-small" variant="tonal" color="primary" label>{{ row.category }}</v-chip>
+                    <v-chip v-if="row.tags" size="x-small" variant="tonal" color="info" label :title="row.tags">{{ row.tags }}</v-chip>
                     <v-chip v-if="row.quality_profile_id && profileName(row.quality_profile_id)" size="x-small" variant="tonal" color="accent" label>
                       <v-icon start size="12">mdi-trophy-outline</v-icon>{{ profileName(row.quality_profile_id) }}
                     </v-chip>
@@ -253,11 +254,19 @@ async function setDefault(row: any) {
                 @click:append-inner="openFolderBrowser"
               />
             </v-col>
-            <v-col cols="6"><v-text-field v-model="editModel.category" label="分类/标签" placeholder="例如: Anime" variant="outlined" density="compact" /></v-col>
+            <v-col cols="6"><v-text-field v-model="editModel.category" label="分类" placeholder="例如: Anime" variant="outlined" density="compact" /></v-col>
+            <v-col cols="6"><v-text-field v-model="editModel.tags" label="标签" placeholder="例如: 追番, 1080p" variant="outlined" density="compact" /></v-col>
             <v-col cols="12">
               <v-select v-model="editModel.target_feeds" label="监控订阅源" :items="feeds.map((f: any) => ({ title: f.title || f.url, value: String(f.id) }))" multiple chips clearable variant="outlined" density="compact" placeholder="留空则监控所有" />
             </v-col>
-            <v-col cols="12"><v-switch v-model="editModel.auto_fill" color="primary" density="compact" hide-details label="定时补全" /></v-col>
+            <v-col cols="12">
+              <div class="d-flex align-center ga-3">
+                <v-switch v-model="editModel.auto_fill" color="primary" density="compact" hide-details label="定时补全" class="flex-shrink-0" />
+                <span class="text-caption text-medium-emphasis">
+                  套用该预设新建的订阅默认是否参与「任务计划 → 订阅自动搜寻补全」的自动搜索（按小时周期去 Jackett 找缺失集数）。
+                </span>
+              </div>
+            </v-col>
           </v-row>
 
           <v-divider class="my-3" />
