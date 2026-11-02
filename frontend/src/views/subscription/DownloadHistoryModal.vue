@@ -166,6 +166,18 @@ async function handleClearAll() {
   } catch { showError('清除请求失败') }
 }
 
+// --- 来源链接 ---
+/** 磁力链（magnet:?xt=...）与普通下载链接（http/https）走同一套按钮样式 */
+function isMagnetLink(link: string | null | undefined): boolean {
+  return typeof link === 'string' && /^magnet:/i.test(link.trim())
+}
+
+function openSource(link: string | null | undefined) {
+  if (!link) return
+  // 磁力链交给系统下载器，http(s) 用新标签页打开
+  window.open(link, '_blank', 'noopener,noreferrer')
+}
+
 // 筛选逻辑（前端过滤 feed_id，因为后端 history/all 不支持 feed_ids 筛选）
 const filteredItems = computed(() => {
   if (selectedFeedIds.value.length === 0) return items.value
@@ -176,7 +188,7 @@ const filteredItems = computed(() => {
 <template>
   <v-dialog :model-value="show" max-width="1200" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <DialogTitle icon="mdi-history-download" icon-color="primary" title="下载记录" @close="$emit('update:show', false)">
+      <DialogTitle icon="mdi-history" icon-color="primary" title="下载记录" @close="$emit('update:show', false)">
         <template #append>
           <v-chip size="small" variant="tonal" class="ml-3">{{ total }} 条</v-chip>
         </template>
@@ -281,9 +293,10 @@ const filteredItems = computed(() => {
               <div class="d-flex align-center ga-1 flex-shrink-0">
                 <v-btn
                   v-if="item.link"
-                  size="small" variant="tonal" color="info"
-                  prepend-icon="mdi-open-in-new"
-                  :href="item.link" target="_blank"
+                  size="small" variant="tonal"
+                  :prepend-icon="isMagnetLink(item.link) ? 'mdi-magnet' : 'mdi-open-in-new'"
+                  :title="item.link"
+                  @click="openSource(item.link)"
                 >来源</v-btn>
                 <v-btn
                   size="small" variant="tonal" color="error"

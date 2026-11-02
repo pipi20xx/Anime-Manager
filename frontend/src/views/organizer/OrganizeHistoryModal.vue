@@ -151,9 +151,11 @@ function historyStatusLabel(status: string): string {
             clearable
             hide-details
             class="org-search-field"
-            @keyup.enter="searchHistory"
+            enterkeyhint="search"
+            @keydown.enter.prevent="searchHistory"
             @click:clear="historySearch = ''; searchHistory()"
           />
+          <v-btn variant="tonal" size="small" prepend-icon="mdi-magnify" @click="searchHistory">搜索</v-btn>
           <v-btn-toggle v-model="historyStatusFilter" mandatory density="compact" variant="outlined" divided>
             <v-btn size="small" :value="undefined" @click="filterHistory()">全部</v-btn>
             <v-btn size="small" value="success" @click="filterHistory('success')">成功</v-btn>

@@ -324,9 +324,12 @@ defineExpose({ fetchHistory })
         clearable
         hide-details
         class="org-search-field"
-        @keyup.enter="searchHistory"
+        enterkeyhint="search"
+        @keydown.enter.prevent="searchHistory"
         @click:clear="historySearch = ''; searchHistory()"
       />
+      <!-- 移动端软键盘不一定触发 Enter 键事件，这里补一个可见的搜索按钮 -->
+      <v-btn variant="tonal" size="small" prepend-icon="mdi-magnify" @click="searchHistory">搜索</v-btn>
       <v-chip :color="historyStatusFilter === 'all' ? 'primary' : undefined" :variant="historyStatusFilter === 'all' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory()">全部</v-chip>
       <v-chip :color="historyStatusFilter === 'success' ? 'primary' : undefined" :variant="historyStatusFilter === 'success' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('success')">成功</v-chip>
       <v-chip :color="historyStatusFilter === 'failed' ? 'primary' : undefined" :variant="historyStatusFilter === 'failed' ? 'flat' : 'outlined'" size="small" label class="cursor-pointer history-filter-chip" @click="filterHistory('failed')">失败</v-chip>
