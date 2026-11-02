@@ -15,6 +15,8 @@ class AiTestRequest(BaseModel):
     filename: str
     current_title: Optional[str] = None
     current_episode: Optional[int] = None
+    # 仅测试页用：true 时跟随服务端默认思考行为，便于看到思维链（更慢、更贵）
+    show_thinking: bool = False
 
 class PrivilegeTestRequest(BaseModel):
     filename: str
@@ -25,6 +27,8 @@ class AiFallbackTestRequest(BaseModel):
     filename: str
     current_title: Optional[str] = None
     current_episode: Optional[int] = None
+    # 仅测试页用：true 时不注入「关闭思考」参数，跟随服务端默认，便于看到思维链（更慢、更贵）
+    show_thinking: bool = False
 
 class RecognizeRequest(BaseModel):
     filename: str
@@ -190,23 +194,30 @@ async def test_ai_parsing(request: AiTestRequest):
     ai = AIHelper()
     if not ai.is_available():
         log_audit("AI", "测试失败", "AI 引擎未就绪", level="ERROR")
-        return {"status": "error", "message": "AI 引擎不可用 (请检查日志/模型)"}
-        
+        return {"status": "error", "message": "AI 引擎不可用 (请检查日志/模型)", "trace": []}
+
+    trace: list = []
     try:
         # 入口自带模式切换：oneshot 在内部走线程池，agent 直接在主循环上跑
         result = await ai.guess_title_variants(
             filename,
             request.current_title,
             request.current_episode,
+            trace=trace,
+            thinking="auto" if getattr(request, "show_thinking", False) else "off",
         )
         if not result:
-            return {"status": "error", "message": "AI 解析未返回有效数据 (可能是配置错误或模型无响应)"}
+            return {
+                "status": "error",
+                "message": "AI 解析未返回有效数据 (可能是配置错误或模型无响应)",
+                "trace": trace,
+            }
 
         log_audit("AI", "测试成功", f"解析结论: {result.get('real_title')} S{result.get('season') or '-'}E{result.get('episode') or '-'}")
-        return {"status": "success", "result": result}
+        return {"status": "success", "result": result, "trace": trace}
     except Exception as e:
         log_audit("AI", "测试崩溃", str(e), level="ERROR")
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": str(e), "trace": trace}
 
 @router.post("/api/ai/fallback-test", summary="AI 智能介入测试")
 async def test_ai_fallback(request: AiFallbackTestRequest):
@@ -222,9 +233,27 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
 
     ai = AIHelper()
 
+    def _budget() -> float:
+        """测试页给足预算：手动跑一次，别卡在 25s 上导致看不到完整过程。"""
+        try:
+            configured = float(
+                ConfigManager.get_config()
+                .get("assistant_config", {})
+                .get("ai_agent_timeout_seconds")
+                or 25
+            )
+        except (TypeError, ValueError):
+            configured = 25.0
+        return max(configured, 60.0)
+
+    budget_seconds = _budget()
+    trace: list = []
     debug_info = {
         "is_available": ai.is_available(),
         "is_fallback_enabled": ai.is_fallback_enabled(),
+        "ai_mode": ai.ai_mode,
+        "show_thinking": bool(request.show_thinking),
+        "budget_seconds": budget_seconds,
         "model": ai.ai_config.get("openai_model", ""),
         "base_url": ai.ai_config.get("openai_base_url", ""),
     }
@@ -235,6 +264,7 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
             "status": "error",
             "message": "AI 引擎不可用，请先在「AI 实验室 → 助手配置」中配置 base_url 和 model",
             "debug": debug_info,
+            "trace": trace,
         }
 
     try:
@@ -242,7 +272,12 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
         start = _time.time()
         # 同上：入口自带模式切换，oneshot 内部走线程池
         result = await ai.guess_title_variants(
-            filename, request.current_title, request.current_episode
+            filename,
+            request.current_title,
+            request.current_episode,
+            trace=trace,
+            thinking="auto" if request.show_thinking else "off",
+            timeout_seconds=budget_seconds,
         )
         elapsed = round(_time.time() - start, 2)
 
@@ -252,6 +287,7 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
                 "message": "AI 未返回有效结果（可能是模型无响应或 JSON 解析失败，请检查后端日志）",
                 "debug": debug_info,
                 "elapsed": elapsed,
+                "trace": trace,
             }
 
         log_audit("AI", "介入测试成功",
@@ -262,10 +298,11 @@ async def test_ai_fallback(request: AiFallbackTestRequest):
             "result": result,
             "debug": debug_info,
             "elapsed": elapsed,
+            "trace": trace,
         }
     except Exception as e:
         log_audit("AI", "介入测试崩溃", str(e), level="ERROR")
-        return {"status": "error", "message": str(e), "debug": debug_info}
+        return {"status": "error", "message": str(e), "debug": debug_info, "trace": trace}
 
 @router.post("/api/privilege/test", summary="特权集数锁定测试")
 async def test_privilege_lock(request: PrivilegeTestRequest):

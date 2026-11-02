@@ -68,6 +68,10 @@ class AIHelper:
         current_episode: int = None,
         *,
         ctx=None,
+        trace: Optional[list] = None,
+        thinking: str = "off",
+        timeout_seconds: Optional[float] = None,
+        max_iterations: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """AI 介入的**唯一入口**。
 
@@ -76,28 +80,51 @@ class AIHelper:
 
         返回契约不变：{real_title, original_name, chinese_name, alternative_titles,
         media_type, season, episode, confidence}（agent 模式会多带 tmdb_id / agent）。
+
+        可选参数仅供 AI 实验室「看过程」用，生产路径不传：
+        - trace: 传入列表则把每一步结构化事件追加进去（两种模式都支持）
+        - thinking: "off"（生产默认，关闭思考）| "auto"（不注入参数，跟随服务端，可看到思维链）
+        - timeout_seconds / max_iterations: 覆盖本次预算
         """
+        from .ai_agent import event_emitter
+
+        emit = event_emitter(trace)
+
         # 递归闸门：agent 内部又绕回识别链路时，直接不介入
         if _IN_AGENT.get():
             logger.info("[AI-Fallback] 检测到 agent 内部嵌套调用，跳过本次 AI 介入")
+            emit("error", message="检测到 agent 内部嵌套调用，已跳过 AI 介入")
             return None
 
         if not self.is_available():
             logger.warning("[AI-Fallback] AI 不可用: base_url 或 model 未配置")
+            emit("error", message="AI 不可用：base_url 或 model 未配置")
             return None
 
         if self.is_agent_mode():
             log = ctx.log if (ctx is not None and hasattr(ctx, "log")) else None
             result = await self._guess_via_agent(
-                filename, current_title, current_episode, log=log
+                filename,
+                current_title,
+                current_episode,
+                log=log,
+                trace=trace,
+                thinking=thinking,
+                timeout_seconds=timeout_seconds,
+                max_iterations=max_iterations,
             )
             if result:
                 return result
             logger.warning("[AI-Fallback] agent 未产出有效结果，降级为一次性识别")
+            emit("fallback", message="agent 未产出有效结果，降级为一次性识别")
 
         # oneshot 是同步 httpx：必须离开事件循环，否则会按住整个后端
         return await asyncio.to_thread(
-            self._guess_title_variants_openai, filename, current_title, current_episode
+            self._guess_title_variants_openai,
+            filename,
+            current_title,
+            current_episode,
+            trace,
         )
 
     async def _guess_via_agent(
@@ -106,6 +133,10 @@ class AIHelper:
         current_title: str = None,
         current_episode: int = None,
         log=None,
+        trace: Optional[list] = None,
+        thinking: str = "off",
+        timeout_seconds: Optional[float] = None,
+        max_iterations: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """agent 模式：交给 RecognitionAgent，异常/失败一律返回 None 交给上层降级。"""
         from .ai_agent import (
@@ -119,30 +150,34 @@ class AIHelper:
         api_key = config.get("openai_api_key", "sk-xxx")
         model = config.get("openai_model", "")
 
-        # 关思考：与 oneshot 同一套能力缓存，只注入探测过、确认可用的参数
+        # 思考参数：默认按能力缓存关闭（省 token / 更快）；
+        # thinking="auto" 时不注入任何参数，跟随服务端默认（AI 实验室看思维链用）
         thinking_fragment: Dict[str, Any] = {}
-        try:
-            from assistant import llm_capabilities
+        if (thinking or "off").strip().lower() != "auto":
+            try:
+                from assistant import llm_capabilities
 
-            thinking_fragment = (
-                llm_capabilities.thinking_payload_from_cache(base_url, model, "off") or {}
-            )
-        except Exception as e:
-            logger.debug(f"[AI-Fallback] 能力层不可用，agent 跳过思考参数注入: {e}")
+                thinking_fragment = (
+                    llm_capabilities.thinking_payload_from_cache(base_url, model, "off") or {}
+                )
+            except Exception as e:
+                logger.debug(f"[AI-Fallback] 能力层不可用，agent 跳过思考参数注入: {e}")
 
         assistant_config = ConfigManager.get_config().get("assistant_config", {})
-        try:
-            max_iterations = int(
-                assistant_config.get("ai_agent_max_iterations") or DEFAULT_MAX_ITERATIONS
-            )
-        except (TypeError, ValueError):
-            max_iterations = DEFAULT_MAX_ITERATIONS
-        try:
-            timeout_seconds = float(
-                assistant_config.get("ai_agent_timeout_seconds") or DEFAULT_TIMEOUT_SECONDS
-            )
-        except (TypeError, ValueError):
-            timeout_seconds = DEFAULT_TIMEOUT_SECONDS
+        if max_iterations is None:
+            try:
+                max_iterations = int(
+                    assistant_config.get("ai_agent_max_iterations") or DEFAULT_MAX_ITERATIONS
+                )
+            except (TypeError, ValueError):
+                max_iterations = DEFAULT_MAX_ITERATIONS
+        if timeout_seconds is None:
+            try:
+                timeout_seconds = float(
+                    assistant_config.get("ai_agent_timeout_seconds") or DEFAULT_TIMEOUT_SECONDS
+                )
+            except (TypeError, ValueError):
+                timeout_seconds = DEFAULT_TIMEOUT_SECONDS
 
         agent = RecognitionAgent(
             base_url=base_url,
@@ -153,6 +188,7 @@ class AIHelper:
             thinking_fragment=thinking_fragment,
             log=log,
             anime_priority=bool(ConfigManager.get_config().get("anime_priority", True)),
+            events=trace,
         )
 
         token = _IN_AGENT.set(True)
@@ -191,7 +227,7 @@ class AIHelper:
 - 季度标记如 [4th]、S4、第4季、IV 期 → season 填对应数字；无季度标记时不确定就填 null
 - 如果提供了已识别的标题或集数信息，作为参考但不一定正确"""
 
-    def _guess_title_variants_openai(self, filename: str, current_title: str = None, current_episode: int = None) -> Optional[Dict[str, Any]]:
+    def _guess_title_variants_openai(self, filename: str, current_title: str = None, current_episode: int = None, events: Optional[list] = None) -> Optional[Dict[str, Any]]:
         base_url = self.ai_config.get("openai_base_url", "")
         api_key = self.ai_config.get("openai_api_key", "sk-xxx")
         model = self.ai_config.get("openai_model", "")
@@ -215,6 +251,22 @@ class AIHelper:
             {"role": "system", "content": self._get_fallback_system_prompt()},
             {"role": "user", "content": user_content}
         ]
+
+        from .ai_agent import event_emitter
+
+        emit = event_emitter(events)
+        emit(
+            "start",
+            mode="oneshot",
+            filename=filename,
+            current_title=current_title,
+            current_episode=current_episode,
+            model=model,
+            endpoint=target_url,
+            tools=[],
+            system_prompt=self._get_fallback_system_prompt(),
+            user_message=user_content,
+        )
 
         payload = {
             "model": model,
@@ -281,12 +333,23 @@ class AIHelper:
                     f"content={len(content)} 字符 | reasoning={len(reasoning)} 字符 | "
                     f"usage={data.get('usage')}"
                 )
+                emit(
+                    "llm_response",
+                    elapsed_ms=int(elapsed * 1000),
+                    finish_reason=finish_reason,
+                    usage=data.get("usage"),
+                    content=content[:4000],
+                    reasoning=reasoning[:4000],
+                    tool_calls=0,
+                )
 
                 if not content.strip():
                     if finish_reason == "length":
                         # 额度被思维链吃光：探测一次该 (base_url, model) 支持哪种关闭方式并重试
+                        emit("retry", message="正文为空且 finish_reason=length，探测关思考参数后重试")
                         retried = self._retry_with_thinking_off(base_url, api_key, model, target_url, messages)
                         if retried:
+                            emit("final", source="retry", result=retried)
                             return retried
                         logger.error(
                             f"[AI-Fallback] ❌ max_tokens 用尽仍未产出正文（模型: {model}，"
@@ -301,6 +364,7 @@ class AIHelper:
                         logger.error(
                             f"[AI-Fallback] ❌ 模型返回空响应，请确认模型名 '{model}' 在 {base_url} 上可用"
                         )
+                    emit("error", message="模型未产出正文（内容为空）", finish_reason=finish_reason)
                     return None
 
                 logger.debug(f"[AI-Fallback] 📥 原始响应: {content}")
@@ -313,17 +377,21 @@ class AIHelper:
                     logger.debug(f"[AI-Fallback] 🔢 置信度: {result.get('confidence', 0)}")
                 else:
                     logger.error(f"[AI-Fallback] ❌ JSON 解析失败")
+                emit("final", source="json", result=result, raw=content[:4000])
                 return result
 
         except httpx.TimeoutException:
             elapsed = time.time() - start_time
             logger.error(f"[AI-Fallback] ⏱️ 请求超时 ({elapsed:.1f}s)，模型响应过慢")
+            emit("error", message=f"请求超时（{elapsed:.1f}s）")
             return None
         except httpx.ConnectError as e:
             logger.error(f"[AI-Fallback] 🔌 连接失败: {e}")
+            emit("error", message=f"连接失败: {e}")
             return None
         except Exception as e:
             logger.error(f"[AI-Fallback] ❌ 未知错误: {type(e).__name__}: {e}")
+            emit("error", message=f"{type(e).__name__}: {e}")
             return None
 
     def _retry_with_thinking_off(

@@ -94,10 +94,11 @@
     │           ⬇️ 类型 AUTO? -> 同时搜索 TV + Movie (smart_search_multi)，命中后按结果自动定型
     │           ⬇️ 模糊命中/全 0 分? -> 🛡️ 别名审核 (拉取 TMDB 别名表复核对撞) ⭐
     │       ❓ 常规匹配失败? (且全局兜底开关打开)
-    │       ✅ AI 智能介入 (recognition/ai_helper.py) ⭐
-    │           ⬇️ 线程池调用 OpenAI 兼容 API 推断真实标题 (guess_title_variants)
+    │       ✅ AI 智能介入 -> 唯一入口 guess_title_variants (recognition/ai_helper.py) ⭐
+    │           ⬇️ 按 ai_mode 分流: oneshot (单次猜标题) / agent (工具循环)
+    │           ⬇️ agent 失败或无结果 -> 自动降级为 oneshot，行为不会比原来更差
     │           ⬇️ 用 AI 返回的标题变体重新搜索云端 -> 本地数据中心
-    │           (Log: "[AI 智能体] 🤖 启动 AI 智能介入...")
+    │           (Log: "[AI 智能体] 🤖 启动 AI 智能介入..." / "[AI-Agent] 🤖 agent 模式启动...")
     │
     ├── 4. [EnrichmentStage] 元数据补全阶段 (recognition/pipeline/enricher.py)
     │       ⬇️ 已知 ID, 请求详细信息
@@ -595,12 +596,19 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **内容**: 配置快照、策略开关、L2 Provider 实例、规则集、性能统计
 - **特点**: 每个 API 请求独立一个 Context，互不干扰
 
-##### `ai_helper.py` - AI 智能介入 ⭐
-- **职责**: 常规识别失败时，调用 OpenAI 兼容 API 推断真实标题；也可由特权规则 `ai=1` 命中直接触发
+##### `ai_helper.py` - AI 智能介入入口 ⭐
+- **职责**: AI 介入的**唯一入口**。`ai_mode` 决定底下用哪种实现；matcher 的两条触发路径与 AI 实验室的两个测试端点都只调它
 - **触发条件**: ① `ai_fallback_enabled` 开启且常规匹配未命中（全局兜底）；② 特权规则命中 `ai=1`（AI 优先，不受全局开关控制，失败自动回退常规流程）
-- **对外入口**: `guess_title_variants()`（单例模式；同步 httpx 调用丢线程池执行，避免阻塞事件循环）
-- **输出**: 真实标题、原名、中文名、备选标题、置信度、媒体类型，可附带季号/集数修正
+- **对外入口**: `guess_title_variants()`（async；单例模式。oneshot 分支内部仍把同步 httpx 丢线程池，agent 分支直接在主事件循环上跑）
+- **两种实现**: `oneshot`（默认，单次请求猜标题）| `agent`（工具循环，见下方「AI 介入识别详解」）
+- **递归闸门**: `_IN_AGENT` ContextVar —— agent 内部若因工具间接再次触发识别，入口直接返回 `None`，不会无限套娃
+- **输出**: 真实标题、原名、中文名、备选标题、置信度、媒体类型，可附带季号/集数修正（契约两种模式完全一致）
 - **特点**: AI 可修正媒体类型/季号并补集数；特权标题（若规则提供）作为参考线索传给 AI；标题变体先搜云端（AUTO 类型走多类型搜索）再搜本地数据中心
+
+##### `ai_agent.py` - agent 模式的识别智能体 ⭐
+- **职责**: 用「查证」代替「凭记忆猜」——多轮调用只读工具（离线库 / TMDB 搜索 / TMDB 详情）后再下结论
+- **刻意与 `assistant/Agent` 隔离**: 私有封闭工具集（不注册进全局 ToolRegistry）、独立提示词、轮数+墙钟双预算
+- **详见图文说明**: 见下方「AI 介入识别详解 (oneshot / agent)」
 
 ##### `pipeline/parser.py` (ParserStage) - 解析阶段
 - **职责**: 驱动 L1 内核进行文件名解析
@@ -705,6 +713,245 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 
 ---
 
+## 🤖 AI 介入识别详解 (oneshot / agent)
+
+> AI 介入**不是第二套识别流水线**，而是插在确定性流程失败之后的一次兜底：
+> 它不接管解析、不接管落盘，只回答「这个文件对应 TMDB 的哪部作品、第几季第几集」，
+> 然后把结论交回 `MatcherStage`，由原有流程重新搜索、匹配、补全、渲染。
+
+### 1. 两个开关，管两件事
+
+| 开关 | 位置 | 管什么 | 默认 |
+|---|---|---|---|
+| `ai_fallback_enabled` | AI 实验室 → 助手配置 | **要不要介入**（策略）：全局兜底是否启用。特权规则 `ai=1` 不受它控制 | OFF |
+| `ai_mode` | AI 实验室 → 助手配置 →「介入识别方式」 | **用哪种实现**（机制）：`oneshot` / `agent` | `oneshot` |
+
+两者互不影响：可以先用 oneshot 跑通，再切 agent 对比；切换不涉及任何规则、识别词或渲染词。
+
+### 2. 时序总览
+
+```
+RecognitionWorkflow (recognizer.py)
+  │
+  ├── 1. ParserStage    ── L1 内核解析 → MetaBase (标题/季/集)
+  │
+  ├── 2. MatcherStage
+  │     │
+  │     ├── ai=1 特权规则命中 ─────────────┐
+  │     └── 常规匹配全部失败 + 全局开关 ───┴──► AIHelper.guess_title_variants()  ← 唯一入口
+  │                                              │
+  │                                   ┌──────────┴──────────┐
+  │                                   │ ai_mode == oneshot  │  ai_mode == agent
+  │                                   │ 1 次请求 → JSON     │  最多 N 轮工具循环 → JSON
+  │                                   └──────────┬──────────┘
+  │                                              │ 返回 dict（契约一致）
+  │                                              ▼
+  │                         回填 meta：媒体类型 / 季号 / 集数（见 §6）
+  │                                              │
+  │                         用标题变体重新搜索：云端 → 本地数据中心
+  │
+  ├── 3. EnrichmentStage   ── 按命中 ID 补全元数据
+  ├── 4. MaintenanceStage  ── 写智能记忆（ai_result_skip_memory 时跳过）
+  └── 5. Renderer          ── 渲染 / 重命名 / 汇报
+```
+
+### 3. 触发点：4 个调用点 → 1 个入口
+
+| 调用点 | 位置 | 触发条件 | 是否受 `ai_fallback_enabled` 控制 |
+|---|---|---|---|
+| 特权 AI 优先 | `pipeline/matcher.py` `_ai_fallback_search(require_fallback_toggle=False)` | 特权规则命中 `ai=1`（且未锁定 tmdbid） | ❌ 否 |
+| 全局兜底 | `pipeline/matcher.py` `_ai_fallback_search()` | 常规匹配全部失败 | ✅ 是 |
+| 语义解析测试 | `POST /api/ai/test` | 手动 | ❌ 否 |
+| 介入测试 | `POST /api/ai/fallback-test` | 手动 | ❌ 否 |
+
+四个点最终都调 `AIHelper.guess_title_variants()`，所以 **`ai_mode` 只在入口判断一次**：AI 实验室的测试结果 = 线上真实行为，不需要另外适配。
+
+### 4. oneshot 模式（默认）
+
+1. `guess_title_variants()` → 可用性检查（`base_url` + `model`）→ `asyncio.to_thread(_guess_title_variants_openai)`
+2. 单次 `POST {base_url}/chat/completions`：`temperature=0.1`、`max_tokens=4096`，system prompt 要求「只输出一个 JSON 对象」，字段为 `real_title / original_name / chinese_name / alternative_titles / media_type / season / episode / confidence`
+3. 思考参数：只注入能力缓存里探测过、确认可关闭的风格（`llm_capabilities.thinking_payload_from_cache(..., "off")`）；没探测过就不注入，避免网关 400
+4. 若 `finish_reason == "length"` 且正文为空（推理型模型的思维链吃光额度）→ 探测思考参数并**重试一次**
+5. `_extract_json()` 兜底截取（`find('{')` ~ `rfind('}')`）
+6. 返回 dict；失败返回 `None`
+
+**成本特征**：1 次请求，约 1–3k token，实测 2–10s（含重试会更久）。
+
+### 5. agent 模式
+
+#### 5.1 预算（三道闸，任一触发即收尾）
+
+| 限制 | 默认 | 配置项 |
+|---|---|---|
+| 最大轮数 | 3 | `ai_agent_max_iterations` |
+| 墙钟预算 | 25s | `ai_agent_timeout_seconds` |
+| 工具调用总量 | 8 次（硬编码上限） | — |
+
+每次 LLM 请求用 `asyncio.wait_for(剩余预算)` 包住，`httpx` 自身超时 60s；预算不足时不再开新一轮，直接进入收尾。
+
+#### 5.2 单轮结构与消息流
+
+```
+messages = [ system(识别 SOP + 季号判定规则), user(文件名 + 规则层已识别标题/集数) ]
+loop:
+  payload = { model, messages, temperature=0.1, max_tokens=4096, +思考关闭片段, tools, tool_choice="auto" }
+  响应:
+    ├── 有 tool_calls → 追加 assistant(tool_calls) → 逐个执行工具 → 逐个追加 role=tool(tool_call_id, 结果)
+    └── 无 tool_calls → 视为收尾（见 §5.4）
+```
+
+> 同一轮的多个 `tool_call` 目前是**串行** `await`（一个工具执行完再下一个）。
+
+#### 5.3 工具集（私有封闭，不注册进全局 `ToolRegistry`）
+
+| 工具 | 参数 | 返回（摘要） | 说明 |
+|---|---|---|---|
+| `resolve_local` | `query` / `year?` / `media_type?` | `{title, tmdb_id, year, media_type}` 或 `null` | 查 PostgreSQL 离线镜像库，最快最省 |
+| `search_tmdb` | `query` | 最多 8 条候选：`tmdb_id/title/original_title/year/media_type/vote_average/popularity` | 走 `TMDBProvider.search_multi`（provider 级缓存） |
+| `get_tmdb_detail` | `tmdb_id` / `media_type` | 总季/总集 + 每季 `season_number / name(zh) / name_en / name_ja / episode_count / air_date`，整剧 `status / last_air_date` | 季号判定的唯一依据；内部并发取 zh-CN / en-US / ja-JP 三份 |
+
+**为什么季名要多语言**：TMDB 在 `zh-CN` 下季名常常只有「第 3 季 / 第 4 季」，而 `en-US` / `ja-JP` 才会写出真实季名（如 `Act II` / `actII -Second Season-`）。文件名里的 `S2`、`第2期`、`Act II S2` 必须靠季名对齐，否则模型只能瞎猜。
+
+#### 5.4 三种收尾方式
+
+| 情况 | 处理 | 结果 |
+|---|---|---|
+| 模型不再调工具，且正文是合法 JSON | 直接归一化 | 正常返回 |
+| 模型不再调工具，但正文不是 JSON | 追加「只输出 JSON 对象」再请求一次（**不带 tools**）；仍失败则返回 `None` | 最多 1 次补救 |
+| 轮数 / 墙钟 / 工具总量用尽 | `_ask_final()`：一次**不带 tools** 的收尾请求，要求直接给结论 | 失败返回 `None` |
+
+#### 5.5 归一化与季号校验（`_normalize`）
+
+1. `real_title` 必填，缺失 → 丢弃本次结果（返回 `None`）
+2. `media_type` 归一到 `tv` / `movie`；非法值置 `null`
+3. **`movie` 直接丢弃 `season`**（避免污染 `meta.begin_season`）
+4. `season` 过 `_verify_season()`：
+
+   | 情况 | 结果 |
+   |---|---|
+   | 本轮没调用过 `get_tmdb_detail` | `season = null`（无据可依，不采信） |
+   | TMDB 上没有该季号 | `season = null` |
+   | `episode > 该季 episode_count` | `season = null` |
+   | 通过 | 保留，`season_verified = true` |
+
+5. `confidence` 截断到 `0~1`，`alternative_titles` 去重
+
+> 季号回 `null` 时，matcher 会**保留规则层解析出的季号**——所以「没把握」比「猜错还覆盖」更安全。
+
+#### 5.6 降级链（任何一步失败都不比原来更差）
+
+```
+agent 正常返回 ────────────────────────────► 用 agent 结果
+  ├─ agent 返回 None（超预算 / JSON 解析失败 / 缺 real_title）
+  ├─ agent 抛异常
+  └─ 未配置 base_url/model
+        └─► 自动降级 oneshot（同一请求内），日志：
+            [AI-Fallback] agent 未产出有效结果，降级为一次性识别
+                  └─► oneshot 也失败 ──► 返回 None ──► matcher 按「匹配失败」继续走
+```
+
+另外入口有**递归闸门**：`_IN_AGENT` ContextVar 为真时 `guess_title_variants()` 直接返回 `None`。这样即使 agent 的工具间接触发了完整识别，也不会无限套娃。
+
+### 6. 结果如何回填（matcher 侧，两种模式完全一致）
+
+| AI 返回字段 | matcher 的处理 |
+|---|---|
+| `media_type` | 覆盖 `meta.type`（`movie` → MOVIE，`tv` → TV） |
+| `season` | 非 `null` 才覆盖 `meta.begin_season` |
+| `episode` | 规则层没有集数时补齐；特权规则 `ai=1` 且未写 `e=` 时（`ai_episode_takeover`）覆盖原解析结果 |
+| `real_title` / `original_name` / `chinese_name` / `alternative_titles` | 组成搜索顺序：`original_name → chinese_name → real_title → alternative_titles`，先云端（AUTO 走多类型搜索）再本地数据中心 |
+| `confidence` | 仅用于日志展示，**不参与**决策 |
+| `tmdb_id` / `agent`（agent 专有） | matcher 不读，仅调试/展示用 |
+
+命中后 `ctx.ai_intervened = True`，`MaintenanceStage` 据此决定是否跳过智能记忆写入（受 `ai_result_skip_memory` 控制）。
+
+### 7. 观测：日志与字段
+
+**日志前缀**（agent 的日志回调接到了 `ctx.log`，所以会出现在识别日志 / WebSocket 实时日志里）：
+
+| 日志 | 含义 |
+|---|---|
+| `[AI-Agent] 🤖 agent 模式启动` | 进入 agent 分支 |
+| `[AI-Agent] ↻ 第 N/M 轮` | 第 N 轮 LLM 请求开始 |
+| `[AI-Agent] 🔧 调用 xxx({...})` | 工具调用（参数截断 120 字符） |
+| `[AI-Agent] 📥 xxx → ...` | 工具结果（截断 160 字符） |
+| `[AI-Agent] ⏱️ 预算用尽 / 工具调用达到上限` | 提前收尾 |
+| `[AI-Agent] ⚠️ 收尾输出不是合法 JSON，催一次纯 JSON` | 走了补救请求 |
+| `[AI-Agent] ⚠️ 季号校验未通过: ...` | 季号被置 `null`，原因写在这里 |
+| `[AI-Agent] ❌ ...` | 执行失败 / 超时 / 无法解析 |
+| `[AI-Fallback] agent 未产出有效结果，降级为一次性识别` | 降级发生 |
+| `[AI-Fallback] 检测到 agent 内部嵌套调用，跳过本次 AI 介入` | 递归闸门生效 |
+
+**返回体里的附加字段**（仅 agent 模式，前端可直接展示）：
+
+```json
+"agent": { "tool_calls": 3, "mode": "agent", "season_verified": true, "note": null }
+```
+
+`tool_calls == 0` 是危险信号：说明模型一次工具都没用，结论纯靠记忆，此时季号会被校验置空。
+
+#### AI 实验室的「完整过程」回放
+
+`POST /api/ai/fallback-test` 除了结果，还会返回 `trace`：一条结构化事件流，前端在「AI 智能介入测试」页渲染成时间轴（可展开每一步、可一键复制 JSON）。两种模式都支持。
+
+| 事件 | 页面标题 | 内容 |
+|---|---|---|
+| `start` | 启动 · agent / oneshot | 模型、接口、预算、思考参数、工具清单、**system prompt 全文**、**user message 全文** |
+| `iteration` | 第 N/M 轮 | 轮次编号 |
+| `llm_response` | 模型响应 / 收尾响应 / 补发响应 | `finish_reason`、`usage`（含 total_tokens）、正文、思维链、本轮工具调用数 |
+| `tool_call` | 调用 X | 工具名 + 完整参数 |
+| `tool_result` | X 返回 | 工具原始返回（超 4000 字符截断）、耗时 |
+| `verify` | 季号校验通过 / 未通过 | 是否采信模型季号 + 原因 |
+| `repair` | 要求重发 JSON | 上一次的非 JSON 输出 |
+| `retry` | 重试 | oneshot 的「关思考」重试 |
+| `budget` | 预算耗尽 | 收尾原因（轮数/墙钟/工具上限） |
+| `fallback` | 降级 | agent 失败后转 oneshot |
+| `final` | 得出结论 | 归一化后的结果 + 原始输出 |
+| `error` | 错误 | 错误信息 |
+
+两个便利点：
+
+- 测试页的预算下限是 **60s**（线上仍按 `ai_agent_timeout_seconds`，默认 25s），避免手动测试时因截断看不到完整过程
+- 勾选「包含思考过程」只影响**本次测试**：不注入关闭思考的参数，跟随服务端默认，因此能看到 `reasoning` 字段；线上识别始终关思考
+
+### 8. 实测性能（本机 → `192.168.50.12:8788`，deepseek-v4.1-flash）
+
+| 场景 | 轮数 | 工具调用 | 耗时 |
+|---|---|---|---|
+| agent：`[LoliHouse] Ace of Diamond Act II S2 - 16 ...` | 3 | 3（resolve_local / search_tmdb / get_tmdb_detail） | ~3.5s |
+| oneshot 同文件 | 1 次请求 | — | ~2–4s |
+| 智能记忆命中（对照） | — | — | ~50ms |
+
+agent 的增量成本 ≈ 每次工具往返 0.3–0.6s + 每轮 LLM 0.8–1.5s。因为只跑在「失败样本」上，整体可接受；但**批量失败**时会线性放大（见 §9-7）。
+
+### 9. 优化空间（按收益/成本比排序）
+
+| # | 优化点 | 现状 | 收益 |
+|---|---|---|---|
+| 1 | **离线库高置信短路** | `resolve_local` 命中后仍要模型再决定 | 最省：命中且信息完整时可直接返回规则层结果，LLM 调用归零 |
+| 2 | **同轮工具并行** | 一轮内多个 `tool_call` 串行 `await` | 每次省级 0.3–0.6s |
+| 3 | **减少冗余首轮** | 常见第 1 轮同时调 `resolve_local` + `search_tmdb` | 可在 SOP 里要求「离线命中且信息完整则不必再搜」 |
+| 4 | **结构化出口** | 文本 JSON + 括号扫描，偶发需要催收尾 | 省一次补救请求；参数 schema 自带校验 |
+| 5 | **结果缓存** | 同一文件名重复识别会重复跑 | 按 `filename` 或指纹做 TTL 缓存 |
+| 6 | **季号对齐代码化** | 靠模型读多语言季名做对齐 | 把「季标 vs 季名」词级匹配写成确定性函数，模型只兜底 |
+| 7 | **批量并发闸门** | 无 semaphore；N 个文件 = N × (轮数) 次 LLM | 建议按队列限流，避免 RSS 刷新被拖住 |
+| 8 | **`tool_calls` 能力探测** | `llm_capabilities.probe` 只探测思考参数 | 网关不支持 function calling 时可提前降级，而不是空跑 |
+| 9 | **提示词分段注入** | 季号规则常驻 system prompt | 仅当文件名含季标时注入该段，省 token |
+| 10 | **质量回流** | `season_verified` / `note` 只做展示 | 统计「季号校验未通过率」作为 prompt 优化指标 |
+
+### 10. 排查手册
+
+| 现象 | 多半是 | 看哪一行 |
+|---|---|---|
+| `第 1/3 轮` 后直接出结果，没有 `🔧 调用` | 模型不支持 `tool_calls`，或返回了纯文本 | 该轮有无 `🔧` 行 |
+| `season` 为 `null`，但 `confidence` 正常 | 季号没过校验（没查详情 / 季不存在 / 集数超容） | `⚠️ 季号校验未通过: ...` |
+| 走了 oneshot（日志出现降级） | agent 超预算、JSON 解析失败或缺 `real_title` | `[AI-Fallback] agent 未产出有效结果` |
+| 单文件 20s+ | 工具慢或轮数用满 | `↻ 第 N/M 轮` + `⏱️` 行 |
+| 季号明显不对 | 季名无区分度（如全是「第 N 季」），只能按 `air_date` 猜 | `get_tmdb_detail` 返回的 `name_en` / `name_ja` |
+| 结果与规则层完全一致 | 模型给了 `season: null`，matcher 保留了规则层季号 | `season_verified: null` + `note` |
+
+---
+
 ## ⚙️ 特性亮点
 
 ### 特权提取 (Privileged Extraction)
@@ -757,6 +1004,9 @@ L1 内核不含任何数据库或网络代码。
 | `seriesFingerprint` | 智能记忆 | ON |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
 | `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
+| `aiMode` | AI 介入的实现方式：`oneshot`（单次猜标题）\| `agent`（工具循环：查离线库 / 搜 TMDB / 核实季集） | `oneshot` |
+| `aiAgentMaxIterations` | agent 模式单文件最大轮数 | 3 |
+| `aiAgentTimeoutSeconds` | agent 模式单文件墙钟预算（秒），超时即进入收尾 | 25 |
 | `aiResultSkipMemory` | AI 介入的识别结果不写入智能记忆（防止记忆命中短路后续集数的 AI 集数裁决） | ON |
 
 **请求级参数（`/api/recognize` 单次请求可覆盖，优先于全局配置）：**

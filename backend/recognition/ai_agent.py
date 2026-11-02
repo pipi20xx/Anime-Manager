@@ -153,6 +153,40 @@ def _chat_endpoint(base_url: str) -> str:
     return f"{base_url}/chat/completions"
 
 
+def event_emitter(events: Optional[List[Dict[str, Any]]], t0: Optional[float] = None):
+    """生成一个事件收集器：把 agent 的每一步追加进列表，供 AI 实验室页面回放。
+
+    events 为 None 时返回空实现（线上识别路径零开销）。
+    事件结构：{"type": "...", "t_ms": 相对开始的毫秒数, ...其余字段}
+    """
+    if events is None:
+        return lambda kind, **payload: None
+
+    start = t0 if t0 is not None else time.monotonic()
+
+    def emit(kind: str, **payload: Any) -> None:
+        try:
+            events.append(
+                {
+                    "type": kind,
+                    "t_ms": int((time.monotonic() - start) * 1000),
+                    **payload,
+                }
+            )
+        except Exception:  # 追踪失败绝不能影响识别
+            logger.debug("[AI-Agent] 追踪事件写入失败", exc_info=True)
+
+    return emit
+
+
+def _clip(text: Any, limit: int = 4000) -> str:
+    """事件里的长文本截断，避免把整页撑爆。"""
+    if text is None:
+        return ""
+    value = text if isinstance(text, str) else json.dumps(text, ensure_ascii=False, default=str)
+    return value if len(value) <= limit else value[:limit] + f"\n…（已截断，共 {len(value)} 字符）"
+
+
 class RecognitionAgent:
     """带封闭工具集的识别智能体。run() 返回与 oneshot 相同的 dict，失败返回 None。"""
 
@@ -167,6 +201,7 @@ class RecognitionAgent:
         thinking_fragment: Optional[Dict[str, Any]] = None,
         log: Optional[Callable[[str], None]] = None,
         anime_priority: bool = True,
+        events: Optional[List[Dict[str, Any]]] = None,
     ):
         self.base_url = base_url
         self.api_key = api_key
@@ -179,6 +214,9 @@ class RecognitionAgent:
         self.tool_calls_made = 0
         # get_tmdb_detail 的返回缓存：归一化阶段用它做季号/集数的确定性校验
         self._detail_cache: Dict[str, Dict[str, Any]] = {}
+        # 结构化追踪（仅 AI 实验室等需要回放的场景传入）
+        self.events = events
+        self._emit = event_emitter(events)
 
     # ------------------------------------------------------------ 基础设施
     def log(self, message: str):
@@ -387,6 +425,21 @@ class RecognitionAgent:
         ]
 
         self.log("[AI-Agent] 🤖 agent 模式启动（工具: resolve_local / search_tmdb / get_tmdb_detail）")
+        self._emit(
+            "start",
+            mode="agent",
+            filename=filename,
+            current_title=current_title,
+            current_episode=current_episode,
+            model=self.model,
+            endpoint=self.endpoint,
+            max_iterations=self.max_iterations,
+            timeout_seconds=self.timeout_seconds,
+            thinking=self.thinking_fragment or None,
+            tools=[schema["function"]["name"] for schema in TOOL_SCHEMAS],
+            system_prompt=SYSTEM_PROMPT,
+            user_message=user_content,
+        )
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
@@ -394,14 +447,28 @@ class RecognitionAgent:
                     remaining = deadline - time.monotonic()
                     if remaining <= 1.0:
                         self.log(f"[AI-Agent] ⏱️ 预算用尽（第 {iteration} 轮前），要求直接给结论")
+                        self._emit("budget", reason="deadline", iteration=iteration)
                         return await self._ask_final(client, messages, deadline)
 
                     self.log(f"[AI-Agent] ↻ 第 {iteration}/{self.max_iterations} 轮")
+                    self._emit("iteration", index=iteration, max=self.max_iterations)
+                    llm_started = time.monotonic()
                     data = await asyncio.wait_for(
                         self._post(client, messages, with_tools=True, timeout=remaining),
                         timeout=remaining,
                     )
                     _message, content, tool_calls = self._message_of(data)
+                    meta = self._response_meta(data)
+                    self._emit(
+                        "llm_response",
+                        iteration=iteration,
+                        elapsed_ms=int((time.monotonic() - llm_started) * 1000),
+                        finish_reason=meta["finish_reason"],
+                        usage=meta["usage"],
+                        content=_clip(content),
+                        reasoning=_clip(meta["reasoning"]),
+                        tool_calls=len(tool_calls),
+                    )
 
                     if tool_calls:
                         messages.append(
@@ -418,9 +485,20 @@ class RecognitionAgent:
                             except json.JSONDecodeError:
                                 arguments = {}
                             self.log(f"[AI-Agent] 🔧 调用 {name}({self._brief(arguments)})")
+                            self._emit(
+                                "tool_call", iteration=iteration, name=name, arguments=arguments
+                            )
+                            tool_started = time.monotonic()
                             remaining = deadline - time.monotonic()
                             result = await self._exec_tool(
                                 name, arguments, timeout=max(3.0, min(remaining, 15.0))
+                            )
+                            self._emit(
+                                "tool_result",
+                                iteration=iteration,
+                                name=name,
+                                elapsed_ms=int((time.monotonic() - tool_started) * 1000),
+                                result=_clip(result),
                             )
                             self.log(f"[AI-Agent] 📥 {name} → {self._brief_text(result)}")
                             messages.append(
@@ -434,16 +512,26 @@ class RecognitionAgent:
 
                         if self.tool_calls_made >= 8:  # 单文件工具调用总量上限
                             self.log("[AI-Agent] ⏱️ 工具调用达到上限，要求直接给结论")
+                            self._emit("budget", reason="tool_calls", iteration=iteration)
                             return await self._ask_final(client, messages, deadline)
                         continue
 
                     # 没有工具调用 = 它认为可以收尾了
                     parsed = self._extract_json_object(content)
                     if parsed:
-                        return self._normalize(parsed)
+                        normalized = self._normalize(parsed)
+                        self._emit(
+                            "final",
+                            source="json",
+                            iteration=iteration,
+                            result=normalized,
+                            raw=_clip(content),
+                        )
+                        return normalized
 
                     # 给了文字但不是 JSON：催一次纯 JSON
                     self.log("[AI-Agent] ⚠️ 收尾输出不是合法 JSON，催一次纯 JSON")
+                    self._emit("repair", iteration=iteration, raw=_clip(content))
                     messages.append({"role": "assistant", "content": content or ""})
                     messages.append(
                         {
@@ -459,17 +547,40 @@ class RecognitionAgent:
                         timeout=remaining,
                     )
                     _m, content2, _tc = self._message_of(data)
+                    meta2 = self._response_meta(data)
+                    self._emit(
+                        "llm_response",
+                        iteration=iteration,
+                        phase="repair",
+                        finish_reason=meta2["finish_reason"],
+                        usage=meta2["usage"],
+                        content=_clip(content2),
+                        reasoning=_clip(meta2["reasoning"]),
+                        tool_calls=0,
+                    )
                     parsed = self._extract_json_object(content2)
                     if parsed:
-                        return self._normalize(parsed)
+                        normalized = self._normalize(parsed)
+                        self._emit(
+                            "final",
+                            source="repair",
+                            iteration=iteration,
+                            result=normalized,
+                            raw=_clip(content2),
+                        )
+                        return normalized
+                    self._emit("error", message="收尾输出仍不是合法 JSON")
                     return None
 
+                self._emit("budget", reason="iterations")
                 return await self._ask_final(client, messages, deadline)
         except asyncio.TimeoutError:
             self.log("[AI-Agent] ⏱️ 请求超时")
+            self._emit("error", message="请求超时")
             return None
         except Exception as e:
             self.log(f"[AI-Agent] ❌ 执行失败: {type(e).__name__}: {e}")
+            self._emit("error", message=f"{type(e).__name__}: {e}")
             return None
 
     async def _ask_final(
@@ -481,6 +592,7 @@ class RecognitionAgent:
         """收尾：不再带工具，强制只输出 JSON。"""
         remaining = deadline - time.monotonic()
         if remaining <= 1.0:
+            self._emit("error", message="收尾阶段预算已耗尽")
             return None
         final_messages = messages + [
             {
@@ -495,13 +607,38 @@ class RecognitionAgent:
             )
         except Exception as e:
             self.log(f"[AI-Agent] ❌ 收尾请求失败: {type(e).__name__}: {e}")
+            self._emit("error", message=f"收尾请求失败: {type(e).__name__}: {e}")
             return None
         _m, content, _tc = self._message_of(data)
+        meta = self._response_meta(data)
+        self._emit(
+            "llm_response",
+            phase="final",
+            finish_reason=meta["finish_reason"],
+            usage=meta["usage"],
+            content=_clip(content),
+            reasoning=_clip(meta["reasoning"]),
+            tool_calls=0,
+        )
         parsed = self._extract_json_object(content)
         if not parsed:
             self.log(f"[AI-Agent] ❌ 收尾输出无法解析为 JSON（{len(content)} 字符）")
+            self._emit("error", message="收尾输出无法解析为 JSON", raw=_clip(content))
             return None
-        return self._normalize(parsed)
+        normalized = self._normalize(parsed)
+        self._emit("final", source="forced", result=normalized, raw=_clip(content))
+        return normalized
+
+    @staticmethod
+    def _response_meta(data: Dict[str, Any]) -> Dict[str, Any]:
+        """抽出追踪需要的响应元信息（finish_reason / usage / 思维链）。"""
+        choice = (data.get("choices") or [{}])[0]
+        message = choice.get("message") or {}
+        return {
+            "finish_reason": choice.get("finish_reason"),
+            "usage": data.get("usage"),
+            "reasoning": message.get("reasoning_content") or "",
+        }
 
     # ------------------------------------------------------------- 解析/归一
     @staticmethod
@@ -604,6 +741,15 @@ class RecognitionAgent:
         season, verify_note = self._verify_season(media_type, tmdb_id, season, episode)
         if verify_note:
             self.log(f"[AI-Agent] ⚠️ 季号校验未通过: {verify_note}")
+        if verify_note or (media_type == "tv" and season is not None):
+            self._emit(
+                "verify",
+                ok=verify_note is None,
+                note=verify_note,
+                season=season,
+                episode=episode,
+                tmdb_id=tmdb_id,
+            )
 
         return {
             "real_title": real_title,

@@ -32,6 +32,8 @@ const fallbackCurrentTitle = ref('')
 const fallbackCurrentEpisode = ref<number | null>(null)
 const fallbackLoading = ref(false)
 const fallbackResult = ref<any>(null)
+// 仅测试页：是否让模型正常思考（能看见思维链，但更慢更贵）；不影响线上识别
+const fallbackShowThinking = ref(false)
 
 const fallbackExamples = [
   '[LoliHouse] Spy x Family - 13 [1080p].mkv',
@@ -448,6 +450,7 @@ async function runFallbackTest() {
     const body: any = { filename: fallbackFilename.value.trim() }
     if (fallbackCurrentTitle.value.trim()) body.current_title = fallbackCurrentTitle.value.trim()
     if (fallbackCurrentEpisode.value) body.current_episode = fallbackCurrentEpisode.value
+    body.show_thinking = fallbackShowThinking.value
     const data = await apiFetch<any>('/api/ai/fallback-test', { method: 'POST', body })
     fallbackResult.value = data
     if (data.status === 'success') {
@@ -457,6 +460,133 @@ async function runFallbackTest() {
     fallbackResult.value = { status: 'error', message: e?.message || '请求失败' }
   } finally {
     fallbackLoading.value = false
+  }
+}
+
+// ---------- AI 完整推断过程（后端返回的 trace 事件流） ----------
+interface TraceEvent {
+  type: string
+  t_ms: number
+  [key: string]: any
+}
+
+const TRACE_META: Record<string, { icon: string; color: string; title: string }> = {
+  start: { icon: 'mdi-play-circle-outline', color: 'primary', title: '启动' },
+  iteration: { icon: 'mdi-autorenew', color: 'info', title: '请求' },
+  llm_response: { icon: 'mdi-message-text-outline', color: 'info', title: '模型响应' },
+  tool_call: { icon: 'mdi-wrench-outline', color: 'warning', title: '调用工具' },
+  tool_result: { icon: 'mdi-database-outline', color: 'success', title: '工具返回' },
+  verify: { icon: 'mdi-shield-check-outline', color: 'success', title: '季号校验' },
+  repair: { icon: 'mdi-alert-outline', color: 'warning', title: '要求重发 JSON' },
+  retry: { icon: 'mdi-restart', color: 'warning', title: '重试' },
+  budget: { icon: 'mdi-timer-off-outline', color: 'warning', title: '预算耗尽' },
+  fallback: { icon: 'mdi-swap-horizontal', color: 'warning', title: '降级' },
+  final: { icon: 'mdi-flag-checkered', color: 'success', title: '得出结论' },
+  error: { icon: 'mdi-alert-circle-outline', color: 'error', title: '错误' },
+}
+
+function traceMeta(ev: TraceEvent) {
+  return TRACE_META[ev.type] || { icon: 'mdi-circle-small', color: 'grey', title: ev.type }
+}
+
+function traceTitle(ev: TraceEvent): string {
+  if (ev.type === 'iteration') return `第 ${ev.index}/${ev.max} 轮`
+  if (ev.type === 'tool_call') return `调用 ${ev.name}`
+  if (ev.type === 'tool_result') return `${ev.name} 返回`
+  if (ev.type === 'llm_response') {
+    if (ev.phase === 'final') return '收尾响应'
+    if (ev.phase === 'repair') return '补发响应'
+    return '模型响应'
+  }
+  if (ev.type === 'start') return ev.mode === 'agent' ? '启动 · agent 模式' : '启动 · oneshot 模式'
+  if (ev.type === 'verify') return ev.ok ? '季号校验通过' : '季号校验未通过'
+  if (ev.type === 'final') return `得出结论（${ev.source}）`
+  return traceMeta(ev).title
+}
+
+function traceBody(ev: TraceEvent): string {
+  switch (ev.type) {
+    case 'start': {
+      const lines: string[] = []
+      if (ev.mode === 'agent') {
+        lines.push(`模型: ${ev.model}`)
+        lines.push(`接口: ${ev.endpoint}`)
+        lines.push(`预算: ${ev.max_iterations} 轮 / ${ev.timeout_seconds}s`)
+        lines.push(`思考参数: ${ev.thinking ? JSON.stringify(ev.thinking) : '未注入（关思考）'}`)
+        lines.push(`工具: ${(ev.tools || []).join(' / ')}`)
+      } else {
+        lines.push(`模型: ${ev.model}`)
+        lines.push(`接口: ${ev.endpoint}`)
+        lines.push('模式: 一次性识别（不调用工具）')
+      }
+      lines.push('', '───── system prompt ─────', ev.system_prompt || '')
+      lines.push('', '───── user message ─────', ev.user_message || '')
+      return lines.join('\n')
+    }
+    case 'llm_response': {
+      const lines: string[] = []
+      if (ev.finish_reason) lines.push(`finish_reason: ${ev.finish_reason}`)
+      if (ev.usage) lines.push(`usage: ${JSON.stringify(ev.usage)}`)
+      if (ev.tool_calls) lines.push(`本轮工具调用数: ${ev.tool_calls}`)
+      if (ev.reasoning) lines.push('', '───── 思考过程 ─────', ev.reasoning)
+      lines.push('', '───── 正文 ─────', ev.content || '（无正文，只返回了工具调用）')
+      return lines.join('\n')
+    }
+    case 'tool_call':
+      return JSON.stringify(ev.arguments ?? {}, null, 2)
+    case 'tool_result':
+      return ev.result || '（空）'
+    case 'verify':
+      return ev.ok
+        ? `第 ${ev.season} 季 / 第 ${ev.episode ?? '-'} 集 与 TMDB 第 ${ev.season} 季数据一致`
+        : `未采信模型的季号：${ev.note}`
+    case 'final':
+      return JSON.stringify(ev.result ?? {}, null, 2)
+    case 'budget':
+      return `收尾原因: ${ev.reason}`
+    case 'repair':
+      return ev.raw || '（模型收尾输出不是 JSON）'
+    case 'fallback':
+    case 'error':
+    case 'retry':
+      return ev.message || ''
+    default:
+      return ''
+  }
+}
+
+const traceEvents = computed<TraceEvent[]>(() => {
+  const trace = fallbackResult.value?.trace
+  return Array.isArray(trace) ? (trace as TraceEvent[]) : []
+})
+
+const traceTotalMs = computed<number>(() => {
+  const trace = traceEvents.value
+  if (!trace.length) return 0
+  return Number(trace[trace.length - 1]?.t_ms ?? 0)
+})
+
+async function copyTrace() {
+  const trace = fallbackResult.value?.trace
+  if (!Array.isArray(trace) || !trace.length) return
+  const text = JSON.stringify(trace, null, 2)
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      // 局域网 HTTP 下没有 clipboard API，退回 textarea + execCommand
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    success('完整过程已复制为 JSON')
+  } catch {
+    showError('复制失败，请手动展开查看')
   }
 }
 
@@ -919,6 +1049,19 @@ registerHeaderTab({
               </v-chip>
             </div>
 
+            <!-- 过程可见性 -->
+            <div class="d-flex align-center flex-wrap ga-4 mb-3">
+              <div class="d-flex align-center ga-2">
+                <v-switch v-model="fallbackShowThinking" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="text-body-2">包含思考过程（仅本次测试）</div>
+                  <div class="text-caption text-medium-emphasis">
+                    线上识别固定「关思考」以省 token；勾上后本次测试不注入关闭参数，能看到模型的思考链（更慢）
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 测试按钮 -->
             <div class="d-flex ga-2 mb-4">
               <v-btn
@@ -1119,6 +1262,79 @@ registerHeaderTab({
                   <span class="text-body-2 text-medium-emphasis" style="min-width: 120px">API 地址</span>
                   <code class="text-caption">{{ fallbackResult.debug.base_url || '-' }}</code>
                 </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- AI 完整推断过程 -->
+        <v-card v-if="traceEvents.length" class="glass-card mt-4">
+          <v-card-title class="pa-4 pb-2 d-flex align-center flex-wrap ga-2">
+            <v-icon size="22" color="primary">mdi-sitemap-outline</v-icon>
+            <span class="text-subtitle-1 font-weight-bold">AI 完整推断过程</span>
+            <v-chip size="x-small" variant="tonal" color="info">{{ traceEvents.length }} 步</v-chip>
+            <v-chip size="x-small" variant="tonal">{{ traceTotalMs }}ms</v-chip>
+            <v-chip
+              v-if="fallbackResult?.debug?.ai_mode"
+              size="x-small"
+              variant="tonal"
+              color="primary"
+            >
+              {{ fallbackResult.debug.ai_mode }}
+            </v-chip>
+            <v-spacer />
+            <v-btn size="small" variant="text" prepend-icon="mdi-content-copy" @click="copyTrace">
+              复制 JSON
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-4">
+            <div class="text-caption text-medium-emphasis mb-4">
+              每一步都在这里：发给模型的提示词、模型每轮的响应（含用量与思考）、工具调用与返回、季号校验、最终结论。
+            </div>
+
+            <div
+              v-for="(ev, i) in traceEvents"
+              :key="i"
+              class="d-flex ga-3 mb-3"
+            >
+              <!-- 时间轴 -->
+              <div class="d-flex flex-column align-center" style="width: 24px; flex: 0 0 24px;">
+                <v-icon :color="traceMeta(ev).color" size="18">{{ traceMeta(ev).icon }}</v-icon>
+                <div
+                  v-if="i < traceEvents.length - 1"
+                  style="flex: 1; width: 2px; min-height: 12px; background: rgba(var(--v-theme-on-surface), 0.12); margin-top: 4px;"
+                />
+              </div>
+
+              <!-- 内容 -->
+              <div class="flex-grow-1" style="min-width: 0;">
+                <div class="d-flex align-center flex-wrap ga-2">
+                  <span class="text-body-2 font-weight-bold">{{ traceTitle(ev) }}</span>
+                  <v-chip size="x-small" variant="text" color="info">+{{ ev.t_ms }}ms</v-chip>
+                  <v-chip
+                    v-if="ev.elapsed_ms != null"
+                    size="x-small"
+                    variant="tonal"
+                    color="info"
+                  >
+                    {{ ev.elapsed_ms }}ms
+                  </v-chip>
+                  <v-chip v-if="ev.finish_reason" size="x-small" variant="tonal">
+                    {{ ev.finish_reason }}
+                  </v-chip>
+                  <v-chip v-if="ev.usage?.total_tokens" size="x-small" variant="tonal" color="primary">
+                    {{ ev.usage.total_tokens }} tokens
+                  </v-chip>
+                </div>
+
+                <details v-if="traceBody(ev)" class="mt-1">
+                  <summary class="text-caption text-primary cursor-pointer">展开内容</summary>
+                  <pre
+                    class="pa-3 rounded text-caption mt-2"
+                    style="background: rgba(0,0,0,0.06); overflow-x: auto; max-height: 420px; white-space: pre-wrap; word-break: break-word;"
+                  >{{ traceBody(ev) }}</pre>
+                </details>
               </div>
             </div>
           </v-card-text>
