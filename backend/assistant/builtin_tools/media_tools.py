@@ -368,7 +368,7 @@ async def get_bangumi_subject(bangumi_id: int) -> ToolResult:
 
 @tool(
     name="search_jackett",
-    description="在 Jackett 中搜索资源种子。返回种子名称、大小、种子数、下载链接等信息。",
+    description="在 Jackett 中搜索资源种子。返回种子名称、大小、站点、下载链接等信息。",
     category="媒体搜索",
     parameters=[
         {"name": "query", "type": "string", "description": "搜索关键词", "required": True},
@@ -386,21 +386,16 @@ async def search_jackett(query: str, indexer: str = "") -> ToolResult:
                 message=f"找到 {len(cached)} 个资源（缓存）"
             )
         
-        from clients.jackett_client import JackettClient
+        from search_service import SearchService
         from config_manager import ConfigManager
         
         config = ConfigManager.get_config()
-        jackett_config = config.get("jackett", {})
         
-        if not jackett_config.get("host"):
+        if not config.get("jackett_url") or not config.get("jackett_api_key"):
             return ToolResult(success=False, error="Jackett 未配置，请先在设置中配置 Jackett")
         
-        client = JackettClient(
-            host=jackett_config.get("host"),
-            api_key=jackett_config.get("api_key")
-        )
-        
-        results = await client.search(query, indexer if indexer else None)
+        # 与「资源搜索」页、订阅补全共用同一个 search_service 搜索入口
+        results = await SearchService.search(query, indexer=indexer or "all")
         
         if not results:
             return ToolResult(success=True, data=[], message=f"未找到 '{query}' 的资源")
@@ -408,13 +403,11 @@ async def search_jackett(query: str, indexer: str = "") -> ToolResult:
         simplified = []
         for item in results[:20]:
             simplified.append({
-                "title": item.get("Title"),
-                "size": item.get("Size"),
-                "seeders": item.get("Seeders"),
-                "peers": item.get("Peers"),
-                "link": item.get("Link"),
-                "indexer": item.get("Tracker"),
-                "pub_date": item.get("PublishDate")
+                "title": item.get("title"),
+                "size": item.get("size"),
+                "link": item.get("link"),
+                "indexer": item.get("indexer"),
+                "description": (item.get("description") or "")[:200]
             })
         
         query_cache.set("jackett_search", simplified, CACHE_TTL["jackett_search"], query, indexer)

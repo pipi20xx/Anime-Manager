@@ -17,12 +17,25 @@ import requests
 router = APIRouter(tags=["下载与外部客户端"])
 
 @router.get("/jackett/search", summary="Jackett 资源搜索")
-async def search_jackett(keyword: str, indexer: Optional[str] = "all"):
+async def search_jackett(
+    keyword: str,
+    indexer: Optional[str] = "all",
+    recognize: bool = False,
+    limit: Optional[int] = None,
+):
     """
     通过 Jackett 聚合搜索资源。可选指定特定的 Indexer ID。
+
+    recognize=true 时顺带做识别（额外返回 tmdb_id / tmdb_title / season / episode 等字段），
+    与订阅补全共用 search_service 的同一套「搜索 + 识别」实现，只是不推送下载。
     """
-    results = await JackettClient.search(keyword, indexer=indexer)
-    return results
+    from search_service import SearchService
+
+    if recognize:
+        return await SearchService.search_with_recognition(
+            keyword, indexer=indexer or "all", limit=limit
+        )
+    return await SearchService.search(keyword, indexer=indexer or "all")
 
 @router.get("/jackett/indexers", summary="获取 Jackett 站点列表")
 async def get_jackett_indexers():
@@ -30,6 +43,22 @@ async def get_jackett_indexers():
     获取 Jackett 中已配置的可用站点列表。
     """
     return await JackettClient.get_indexers()
+
+
+@router.get("/jackett/status", summary="Jackett 配置状态")
+async def get_jackett_status():
+    """
+    资源搜索 / 订阅补全（手动、自动）/ AI 助手资源搜索 共用同一套 Jackett 配置，
+    前端据此提示「请先在 系统设置 → 基础配置 → Jackett 设置 中配置」。
+    """
+    config = ConfigManager.get_config()
+    url = (config.get("jackett_url") or "").strip()
+    api_key = (config.get("jackett_api_key") or "").strip()
+    return {
+        "configured": bool(url and api_key),
+        "url": url,
+        "has_api_key": bool(api_key),
+    }
 
 class ManualDownloadRequest(BaseModel):
     client_id: str

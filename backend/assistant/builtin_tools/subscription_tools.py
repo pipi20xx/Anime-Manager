@@ -201,11 +201,13 @@ async def operate_subscription(index: int, action: str) -> ToolResult:
                 return ToolResult(success=True, message=f"✅ 已启用订阅: {sub_title}")
             
             elif action == "fill":
-                result = await SubscriptionManager.fill_missing_episodes(sub.id)
-                if result.get("success"):
-                    return ToolResult(success=True, message=f"🔄 补全任务已启动: {sub_title}")
-                else:
-                    return ToolResult(success=False, error=result.get("message", "补全失败"))
+                from search_service import run_subscription_fill_in_background
+                task_id = await run_subscription_fill_in_background(sub)
+                return ToolResult(
+                    success=True,
+                    data={"task_id": task_id},
+                    message=f"🔄 补全已启动: {sub_title}（任务 {task_id}，进度可在任务历史查看）"
+                )
             
             else:
                 return ToolResult(success=False, error=f"未知操作: {action}")
@@ -558,29 +560,24 @@ async def fill_subscription(subscription_id: int) -> ToolResult:
     try:
         from database import db
         from models import Subscription
-        from rss_core.subscription_manager import SubscriptionManager
-        
+        from search_service import run_subscription_fill_in_background
+
         async with db.session_scope():
             sub = await db.get(Subscription, subscription_id)
             if not sub:
                 return ToolResult(success=False, error=f"订阅 ID {subscription_id} 不存在")
-            
+
             if not sub.enabled:
                 return ToolResult(success=False, error="订阅已禁用，请先启用")
-            
-            result = await SubscriptionManager.fill_missing_episodes(subscription_id)
-        
-        if result.get("success"):
-            return ToolResult(
-                success=True,
-                data=result,
-                message=f"补全任务已启动: {sub.title}"
-            )
-        else:
-            return ToolResult(
-                success=False,
-                error=result.get("message", "补全失败")
-            )
+
+        # 与手动补全共用 search_service.run_subscription_fill（搜索 → 识别 → 过滤 → 推送）
+        task_id = await run_subscription_fill_in_background(sub)
+
+        return ToolResult(
+            success=True,
+            data={"task_id": task_id},
+            message=f"补全已启动: {sub.title}（任务 {task_id}，进度可在任务历史查看）"
+        )
     except Exception as e:
         logger.error(f"[Tool] fill_subscription 失败: {e}")
         return ToolResult(success=False, error=str(e))

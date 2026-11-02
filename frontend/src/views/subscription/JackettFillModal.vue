@@ -9,7 +9,7 @@
  * - 开始/停止控制
  */
 import { ref, watch, nextTick } from 'vue'
-import { clientsApi } from '@/api'
+import { clientsApi, api } from '@/api'
 import { apiStream } from '@/api/client'
 import { DialogTitle } from '@/components/common'
 
@@ -36,6 +36,16 @@ const indexers = ref<{ id: string; name: string }[]>([])
 const selectedIndexerId = ref('all')
 
 let abortController: AbortController | null = null
+
+// Jackett 配置状态：补全的搜索来自 Jackett，未配置时只会得到空结果
+const jackettConfigured = ref(true)
+
+async function fetchJackettStatus() {
+  try {
+    const data = await api.get<any>('/api/jackett/status')
+    jackettConfigured.value = !!data?.configured
+  } catch { /* 状态查询失败不阻塞弹窗 */ }
+}
 
 async function fetchIndexers() {
   try {
@@ -177,6 +187,7 @@ watch(() => props.show, (val) => {
     pushedCount.value = 0
     isRunning.value = false
     statusMsg.value = '就绪，请选择搜寻范围'
+    fetchJackettStatus()
     if (indexers.value.length === 0) fetchIndexers()
   }
 })
@@ -194,6 +205,21 @@ watch(() => props.show, (val) => {
       <v-divider />
 
       <v-card-text class="pa-4">
+        <!-- Jackett 未配置提示 -->
+        <v-alert
+          v-if="!jackettConfigured"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+          icon="mdi-magnify-scan"
+        >
+          <div class="font-weight-medium">Jackett 未配置，补全搜不到资源</div>
+          <div class="text-caption mt-1">
+            补全与「资源搜索」用的是同一套 Jackett：请先在「系统设置 → 基础配置 → Jackett 设置」填写 Jackett URL 与 API Key。
+          </div>
+        </v-alert>
+
         <!-- 控制区 -->
         <v-card class="glass-card pa-3 mb-4" variant="flat">
           <div class="d-flex align-center justify-space-between mb-3">
@@ -213,7 +239,7 @@ watch(() => props.show, (val) => {
                 variant="tonal" color="primary"
                 size="small"
                 prepend-icon="mdi-play"
-                :disabled="!subId"
+                :disabled="!subId || !jackettConfigured"
                 @click="startProcess"
               >开始搜寻补全</v-btn>
               <v-btn

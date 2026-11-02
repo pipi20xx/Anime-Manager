@@ -5,6 +5,7 @@
  * 功能: 全网资源聚合搜索与下载
  */
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { clientsApi, api } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { useNavigationStore } from '@/stores'
@@ -14,6 +15,7 @@ defineOptions({ name: 'JackettSearchView' })
 const { success, error: showError, info: showInfo } = useNotification()
 const { confirm } = useConfirm()
 const navStore = useNavigationStore()
+const router = useRouter()
 
 const keyword = ref('')
 const loading = ref(false)
@@ -22,6 +24,22 @@ const clients = ref<any[]>([])
 const selectedClientId = ref<string | null>(null)
 const indexers = ref<any[]>([])
 const selectedIndexerId = ref<string>('all')
+
+// Jackett 配置状态：资源搜索 / 订阅补全 共用同一套配置，没配就搜不到东西
+const jackettConfigured = ref(true)
+const jackettUrl = ref('')
+
+async function fetchJackettStatus() {
+  try {
+    const data = await api.get<any>('/api/jackett/status')
+    jackettConfigured.value = !!data?.configured
+    jackettUrl.value = data?.url || ''
+  } catch { /* 状态查询失败不阻塞页面 */ }
+}
+
+function goJackettSettings() {
+  router.push('/settings')
+}
 
 async function fetchIndexers() {
   try {
@@ -114,6 +132,7 @@ watch(selectedClientId, (v) => {
 })
 
 onMounted(() => {
+  fetchJackettStatus()
   fetchClients()
   fetchIndexers()
   // 优先使用从详情页传递过来的搜索关键词（仅填入，不自动搜索）
@@ -132,6 +151,24 @@ onMounted(() => {
 
 <template>
   <v-container fluid class="pa-4 pa-md-6">
+    <!-- Jackett 未配置提示（资源搜索 / 订阅补全共用同一套 Jackett 配置） -->
+    <v-alert
+      v-if="!jackettConfigured"
+      type="warning"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+      icon="mdi-magnify-scan"
+    >
+      <div class="font-weight-medium">Jackett 未配置 —— 资源搜索、订阅补全都依赖它</div>
+      <div class="text-caption mt-1">
+        请到「系统设置 → 基础配置 → Jackett 设置」填写 Jackett URL 与 API Key；未配置时搜索只会返回空结果（不会报错）。
+      </div>
+      <template #append>
+        <v-btn size="small" variant="tonal" color="warning" prepend-icon="mdi-cog-outline" @click="goJackettSettings">去设置</v-btn>
+      </template>
+    </v-alert>
+
     <!-- 搜索栏 -->
     <v-card class="glass-card mb-4">
       <v-card-text class="pa-4">

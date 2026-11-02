@@ -378,6 +378,18 @@ onMounted(() => {
       <SectionHeader card-title icon="mdi-magnify-scan" title="Jackett 设置" />
       <v-divider />
       <v-card-text class="pa-4">
+        <v-alert type="info" variant="tonal" density="compact" class="mb-3" icon="mdi-information-outline">
+          <div class="text-caption">
+            这里是系统<b>唯一</b>的搜索来源：<b>资源搜索</b>、<b>订阅补全（手动 / 定时自动补全）</b>、<b>AI 助手资源搜索</b>
+            全部走这套 Jackett 配置。未填写时这些功能不会报错，但一律只能搜到空结果。
+          </div>
+          <div class="text-caption mt-1">
+            当前状态：
+            <span v-if="config.jackett_url && config.jackett_api_key" class="text-success font-weight-medium">已填写</span>
+            <span v-else class="text-warning font-weight-medium">未填写 —— 搜索 / 补全会返回空结果</span>
+          </div>
+        </v-alert>
+
         <v-text-field
           v-model="config.jackett_url"
           label="Jackett URL"
