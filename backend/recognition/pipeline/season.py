@@ -26,6 +26,7 @@ _REASON_LABELS = {
     "name-match": "季名对齐",
     "title-suffix": "标题尾数",
     "marker": "季标",
+    "year-match": "年份对齐",
     "boundary:per-season": "季度内边界",
     "boundary:absolute": "绝对集数换算",
     "latest-by-air-date": "首播日期",
@@ -198,6 +199,7 @@ class SeasonStage:
             title_parts=title_parts,
             raw_episode=meta.begin_episode,
             ref_date=ctx.kwargs.get("season_ref_date"),
+            file_year=getattr(meta, "year", None),
         )
 
         label = _REASON_LABELS.get(decision.reason, decision.reason)

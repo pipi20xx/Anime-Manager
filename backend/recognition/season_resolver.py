@@ -21,8 +21,9 @@
 1. 季名对齐（中/英/日三语）        → 强证据，唯一命中才采纳
 2. 标题尾数（"Edgerunners 2"）    → 必须有季名佐证，否则数字属于标题
 3. 季标 + 季名佐证                → 季标给序号，季名给对齐
-4. 双假设边界校验                 → per_season 优先，其次 absolute
-5. 首播日期                       → 取不晚于参考日期的最新一季
+3.5 年份对齐（文件名年份）         → 唯一命中才采纳（强）
+4. 双假设边界校验                 → per_season 优先；absolute 为弱证据（仅记录）
+5. 首播日期                       → 取不晚于参考日期的最新一季（弱证据）
 6. 都不成立                       → None（不猜）
 """
 
@@ -52,13 +53,15 @@ _EN_ORDINAL = {
 
 
 # 强证据：证据不足时不猜，可放心自动应用。on 模式下只自动应用这些理由。
+# 注意：boundary:absolute 不在此列——它假设「绝对集数编号」，证据不足时容易把
+# 漏标季号的文件误改，on 模式只记录不应用。
 STRONG_REASONS = frozenset({
     "single-season",
     "name-match",
     "title-suffix",
     "marker",
+    "year-match",
     "boundary:per-season",
-    "boundary:absolute",
 })
 
 
@@ -66,7 +69,7 @@ def _confidence(reason: str) -> str:
     """把判定理由映射成置信度，供 on 模式决定是否自动应用。"""
     if reason in STRONG_REASONS:
         return "high"
-    if reason == "latest-by-air-date":
+    if reason in ("latest-by-air-date", "boundary:absolute"):
         return "low"
     return "none"
 
@@ -246,6 +249,15 @@ def _coerce_episode(value: Any) -> Optional[int]:
     return int(number) if number.is_integer() and number > 0 else None
 
 
+def _coerce_year(value: Any) -> Optional[int]:
+    """文件名年份可能是 str / int，只接受 1900-2100 的整数。"""
+    try:
+        year = int(float(value))
+    except (TypeError, ValueError):
+        return None
+    return year if 1900 <= year <= 2100 else None
+
+
 def _best_name(title_parts: Any, season_names: Iterable[str]) -> str:
     """挑出与标题最贴近的季名，仅用于日志展示。"""
     norms = [normalize_text(item) for item in _candidate_list(title_parts)]
@@ -267,6 +279,7 @@ def resolve_season(
     title_part: str = "",
     raw_episode: Optional[int] = None,
     ref_date: Optional[str] = None,
+    file_year: Optional[int] = None,
 ) -> SeasonDecision:
     """根据 TMDB 季表推算季号（和必要时换算集数）。
 
@@ -277,6 +290,7 @@ def resolve_season(
     filename: 原始文件名，作为最后一个候选参与比对
     raw_episode: 文件名解析出的原始集数
     ref_date: "YYYY-MM-DD"，判断 air_date 时的参考日；缺省用今天
+    file_year: 文件名解析出的年份（如 2026），用于「年份对齐」判定；缺省不启用
 
     返回 season 为 None 表示「证据不足，不采信」。
     """
@@ -285,6 +299,7 @@ def resolve_season(
     parsed = [item for item in parsed if item[0] > 0]
     parsed.sort(key=lambda item: item[0])
     raw_episode = _coerce_episode(raw_episode)
+    file_year = _coerce_year(file_year)
 
     notes: List[str] = []
 
@@ -388,6 +403,25 @@ def resolve_season(
                     marker, raw_episode, "marker",
                     f"文件名季标 S{marker} 与 TMDB 季表一致",
                 )
+
+    # 3.5 年份对齐：文件名年份命中唯一一季（比纯集数边界更具体）
+    if file_year:
+        year_hits = []
+        for number, _count, _names, air in parsed:
+            try:
+                air_year = date.fromisoformat(air[:10]).year
+            except (TypeError, ValueError):
+                continue
+            if air_year == file_year:
+                year_hits.append((number, air))
+        if len(year_hits) == 1:
+            number, air = year_hits[0]
+            return _decision(
+                number, raw_episode, "year-match",
+                f"文件名年份 {file_year} 命中 S{number}（{air[:4]} 开播）",
+            )
+        if len(year_hits) > 1:
+            notes.append(f"年份 {file_year} 命中多季，不采信")
 
     # 4. 双假设边界校验：per_season 优先，其次 absolute
     if raw_episode:
