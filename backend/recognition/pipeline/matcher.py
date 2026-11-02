@@ -100,6 +100,27 @@ async def _ai_fallback_search(ctx: RecognitionContext, meta, require_fallback_to
             ctx.log(f"┣ [AI 智能体] 📺 集数修正: E{meta.begin_episode} -> E{ai_ep} (AI 裁决)")
             meta.begin_episode = ai_ep
     
+    # AI 给了确定的 TMDB ID（agent 模式才会带）→ 直接取详情，跳过按标题搜索
+    ai_tmdb_id = ai_result.get("tmdb_id")
+    if ai_tmdb_id and meta.type != MediaType.AUTO:
+        m_type = "movie" if meta.type == MediaType.MOVIE else "tv"
+        # 与「锁定 ID」同一套取数顺序：本地数据中心优先（快、免费），没有完整档案再联网
+        archive = await ctx.full_db.get_deep_meta(str(ai_tmdb_id), m_type)
+        if archive and archive.get("genre_ids"):
+            ctx.tmdb_data = {**archive, "id": str(ai_tmdb_id), "type": m_type}
+        else:
+            ctx.tmdb_data = await ctx.tmdb_client.get_details(
+                str(ai_tmdb_id), m_type, ctx.logs
+            )
+
+        if ctx.tmdb_data:
+            ctx.log(f"┣ [AI 智能体] 🆔 直接采用 TMDB ID: {ai_tmdb_id}（跳过标题搜索）")
+            ctx.log(f"┗ [AI 智能体] 🎉 AI 介入成功!")
+            return True
+
+        ctx.log(f"┣ [AI 智能体] ⚠️ ID {ai_tmdb_id} 直连无结果，回退标题搜索")
+        ctx.tmdb_data = None
+
     search_titles = []
     if original_name:
         search_titles.append(original_name)
