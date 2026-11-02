@@ -188,11 +188,7 @@ const filteredItems = computed(() => {
 <template>
   <v-dialog :model-value="show" max-width="1200" scrollable @update:model-value="$emit('update:show', $event)">
     <v-card class="glass-card">
-      <DialogTitle icon="mdi-history" icon-color="primary" title="下载记录" @close="$emit('update:show', false)">
-        <template #append>
-          <v-chip size="small" variant="tonal" class="ml-3">{{ total }} 条</v-chip>
-        </template>
-      </DialogTitle>
+      <DialogTitle icon="mdi-history" icon-color="primary" title="下载记录" @close="$emit('update:show', false)" />
       <v-divider />
 
       <v-card-text class="pa-4">
@@ -205,7 +201,8 @@ const filteredItems = computed(() => {
               prepend-inner-icon="mdi-magnify"
               density="compact" hide-details variant="outlined"
               class="search-field"
-              @keyup.enter="applyFilter"
+              enterkeyhint="search"
+              @keydown.enter.prevent="applyFilter"
             />
             <v-select
               v-model="selectedFeedIds"
@@ -217,7 +214,7 @@ const filteredItems = computed(() => {
             />
           </div>
           <div class="list-toolbar__actions">
-            <v-btn variant="tonal" size="small" prepend-icon="mdi-refresh" @click="fetchItems(false)">刷新</v-btn>
+            <span class="list-toolbar__total">共 {{ total }} 条</span>
             <v-spacer />
             <v-btn variant="tonal" size="small" color="error" prepend-icon="mdi-delete-sweep-outline" @click="handleClearAll">批量清除</v-btn>
           </div>

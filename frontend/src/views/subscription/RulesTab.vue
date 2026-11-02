@@ -261,8 +261,25 @@ defineExpose({ fetchRules })
             <v-col cols="6"><v-text-field v-model="ruleForm.category" label="分类" placeholder="例如: Anime" variant="outlined" density="compact" /></v-col>
             <v-col cols="6"><v-text-field v-model="ruleForm.tags" label="标签" placeholder="例如: 追番, 1080p" variant="outlined" density="compact" /></v-col>
           </v-row>
-          <v-switch v-model="ruleForm.paused" color="primary" density="compact" hide-details class="mt-2" :label="ruleForm.paused ? '添加后暂停' : '自动开始'" />
-          <v-switch v-model="ruleForm.enabled" color="primary" density="compact" hide-details class="mt-2" label="启用规则" />
+          <!-- 命中后的行为（说明放在开关下方） -->
+          <div class="mt-3">
+            <v-switch v-model="ruleForm.paused" color="primary" density="compact" hide-details :label="ruleForm.paused ? '添加后暂停' : '自动开始'" />
+            <div class="text-caption text-medium-emphasis">
+              {{ ruleForm.paused
+                ? '命中后只把种子加进下载器并保持暂停，需要你到客户端手动开始（适合先核对资源）。'
+                : '命中后立即推送给下载器并开始下载，不再人工确认。' }}
+            </div>
+          </div>
+
+          <!-- 规则状态 -->
+          <div class="mt-3">
+            <v-switch v-model="ruleForm.enabled" color="primary" density="compact" hide-details label="启用规则" />
+            <div class="text-caption text-medium-emphasis">
+              {{ ruleForm.enabled
+                ? '生效中：每次 RSS 刷新都会用这条规则参与匹配，命中即按上面的下载设置推送。'
+                : '未启用：配置会保留，但不参与匹配、也不会触发下载。' }}
+            </div>
+          </div>
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
