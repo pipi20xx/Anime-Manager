@@ -100,7 +100,13 @@
     │           ⬇️ 用 AI 返回的标题变体重新搜索云端 -> 本地数据中心
     │           (Log: "[AI 智能体] 🤖 启动 AI 智能介入..." / "[AI-Agent] 🤖 agent 模式启动...")
     │
-    ├── 4. [EnrichmentStage] 元数据补全阶段 (recognition/pipeline/enricher.py)
+    ├── 4. [SeasonStage] 季号校准阶段 (recognition/pipeline/season.py + season_resolver.py) ⭐
+    │       ⬇️ 用 TMDB 季表（季名 zh/en/ja + 每季集数 + 首播日）确定性推算季号，**不调用模型**
+    │       ⬇️ 判定顺序: 单季 → 季名对齐 → 标题尾数 → 季标 → 双假设边界 → 首播日期 → 不定
+    │       ⬇️ 模式: off / shadow（只算不生效，默认）/ on；不一致时按模式决定是否采纳
+    │       (Log: "[季号校准] 推算 S1 → S2（name-match）：季名命中 Cyberpunk: Edgerunners 2")
+    │
+    ├── 5. [EnrichmentStage] 元数据补全阶段 (recognition/pipeline/enricher.py)
     │       ⬇️ 已知 ID, 请求详细信息
     │    [L2 OfflineDAO] -> get_deep_meta(id) (统一从 MetaCacheManager 获取)
     │       ⬇️ 获取: 官方标题, 简介, 海报, 流派, 国家/语言, 评分 (缺 genre_ids 视为空壳记录)
@@ -109,12 +115,12 @@
     │       ⬇️ 计算二级分类 (TmdbFullClassifier, 档案特征: 流派/公司/关键词/国家/语言/年份/标题)
     │       ⬇️ 海报或简介缺失时 -> 联网补全展示资料
     │
-    ├── 5. [MaintenanceStage] 维护阶段 (recognition/pipeline/maintenance.py)
+    ├── 6. [MaintenanceStage] 维护阶段 (recognition/pipeline/maintenance.py)
     │       ⬇️ 写入/刷新智能记忆 (Fingerprint)（AI 介入的识别 + 开关 ai_result_skip_memory 时跳过）
     │       ⬇️ 自动同步元数据到数据中心 (落库存档)
     │       ⬇️ 保护用户修正记录 (is_custom 不被覆盖)
     │
-    └── 6. [Finalize] 渲染与输出 (recognition/renderer.py + render/)
+    └── 7. [Finalize] 渲染与输出 (recognition/renderer.py + render/)
             ⬇️ 应用用户自定义渲染规则 (RenderEngine)
             ⬇️ 应用重命名规则 (Renamer)
             ⬇️ 汇报最终结论 (RenderReporter)
@@ -588,7 +594,7 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 
 ##### `recognizer.py` - 编排主入口
 - **职责**: 定义 `RecognitionWorkflow`，串联五个阶段的执行顺序
-- **流程**: ParserStage → MatcherStage → EnrichmentStage → MaintenanceStage → ResultRenderer
+- **流程**: ParserStage → MatcherStage → SeasonStage → EnrichmentStage → MaintenanceStage → ResultRenderer
 - **入口**: `MovieRecognizer.recognize_full()` 静态方法
 
 ##### `context.py` - 状态容器
@@ -626,6 +632,16 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
   5. 云端顺序由 `bangumi_priority` / `bangumi_failover` 策略决定（TMDB/Bangumi），命中判定由 L1 对撞算法内核打分；类型 AUTO 时同时搜索 TV + Movie 并按命中结果自动定型
   6. 常规匹配失败 → AI 智能介入 (ai_helper.py，全局兜底；AI 优先已尝试过则不重复调用)
 - **别名审核**: TMDB 模糊命中或全 0 分时由 L2 tmdb 客户端拉取别名表复核对撞（见 `data_provider/tmdb/client.py`）
+
+##### `pipeline/season.py` (SeasonStage) + `season_resolver.py` - 季号校准 ⭐
+- **职责**: 匹配完成后，用 TMDB 季表把规则层解析出的季号/集数校一遍。**纯确定性，不调用模型**
+- **依据**: 每季的 `name` / `name_en` / `name_ja`、`episode_count`、`air_date`
+- **标题候选**: `privileged_title` → `processed_name` → `en_name` → `cn_name` → 原始文件名（内核清理标题时会把尾部序号当噪声剥掉，只用一个字段会丢关键信息）
+- **判定顺序**: 只有一季 → 季名对齐（标题片段 + 序号词）→ 标题尾数（须季名佐证）→ 季标 → 双假设边界（per-season / absolute）→ 首播日期 → 不定
+- **并列处理**: 多季季名与标题等长匹配时判为「无区分度」，不采信，log 里写明并列情况
+- **三档模式**（`season_resolve_mode`）: `off` / `shadow`（只算并写日志，不改结果，默认）/ `on`（不一致时采纳）
+- **日志**: `[季号校准] 推算 S1 → S2（name-match）：季名命中 Cyberpunk: Edgerunners 2`
+- **为什么要它**: 内核只用正则抽数字当季号，抽不到默认 1；`Edgerunners 2`、`Act II S2` 这类“作品内第 N 部”靠正则永远判不出来，而 TMDB 季名里写着答案
 
 ##### `pipeline/enricher.py` (EnrichmentStage) - 补全阶段
 - **职责**: 获取详细元数据，加载用户修正
@@ -1002,6 +1018,7 @@ L1 内核不含任何数据库或网络代码。
 | `bangumiFailover` | Bangumi 故障转移 | ON |
 | `forceFilename` | 强制单文件模式，启用路径分隔符脱敏 | OFF |
 | `seriesFingerprint` | 智能记忆 | ON |
+| `seasonResolveMode` | 季号校准：`off` 关闭 / `shadow` 只算不生效（默认，用于观察准确率）/ `on` 与当前值不一致时采纳 | `shadow` |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
 | `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
 | `aiMode` | AI 介入的实现方式：`oneshot`（单次猜标题）\| `agent`（工具循环：查离线库 / 搜 TMDB / 核实季集） | `oneshot` |

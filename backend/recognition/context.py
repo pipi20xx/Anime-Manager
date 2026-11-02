@@ -62,6 +62,8 @@ class RecognitionContext:
         self.ai_result_skip_memory = assistant_config.get("ai_result_skip_memory", False)
         # AI 介入是否实际参与了本次识别 (供维护阶段决定是否跳过智能记忆写入)
         self.ai_intervened = False
+        # 季号校准结果 (SeasonStage 写入，供日志/接口展示)
+        self.season_resolution: Optional[Dict[str, Any]] = None
         
         # Initialize Providers
         self.tmdb_client = TMDBClient(self.api_key)

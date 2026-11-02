@@ -45,6 +45,7 @@ class RecognizeRequest(BaseModel):
     series_fingerprint: Optional[bool] = None # 智能指纹覆盖
     batch_enhancement: Optional[bool] = None # 合集增强覆盖
     enable_title_segmentation: Optional[bool] = None # 标题分词覆盖
+    season_resolve_mode: Optional[str] = None # 季号校准：off / shadow / on
     description: Optional[str] = None # 副标题描述 (PT站副标题/RSS description)
     # 临时调试规则 (Debug Sandbox)
     temp_noise: Optional[List[str]] = None
@@ -100,6 +101,7 @@ async def recognize(req: RecognizeRequest):
             forced_type=req.forced_type,
             forced_season=req.forced_season,
             forced_episode=req.forced_episode,
+            season_resolve_mode=req.season_resolve_mode,
             description=req.description
         )
 

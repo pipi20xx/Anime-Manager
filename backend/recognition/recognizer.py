@@ -5,6 +5,7 @@ from typing import Tuple, Dict, Any, List
 from .context import RecognitionContext
 from .pipeline.parser import ParserStage
 from .pipeline.matcher import MatcherStage
+from .pipeline.season import SeasonStage
 from .pipeline.enricher import EnrichmentStage
 from .pipeline.maintenance import MaintenanceStage
 from .renderer import ResultRenderer
@@ -23,14 +24,17 @@ class RecognitionWorkflow:
         
         # 2. 元数据匹配阶段 (Fingerprint + FullDB + Cloud)
         await MatcherStage.run(self.ctx)
-        
-        # 3. 深度字段补全阶段 (Local Override + Enrichment + Auto-Ingest)
+
+        # 3. 季号校准阶段 (TMDB 季表 → 确定性推算，不依赖 AI；默认影子模式只写日志)
+        await SeasonStage.run(self.ctx)
+
+        # 4. 深度字段补全阶段 (Local Override + Enrichment + Auto-Ingest)
         await EnrichmentStage.run(self.ctx)
         
-        # 4. 后处理与维护阶段 (Fingerprint Sync + Cache Update)
+        # 5. 后处理与维护阶段 (Fingerprint Sync + Cache Update)
         await MaintenanceStage.run(self.ctx)
         
-        # 5. 渲染与汇报阶段
+        # 6. 渲染与汇报阶段
         return await ResultRenderer.apply_to_context(self.ctx)
 
 class MovieRecognizer:
