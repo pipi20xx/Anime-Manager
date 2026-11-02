@@ -33,6 +33,14 @@ _REASON_LABELS = {
     "ambiguous": "证据不足",
 }
 
+# 季名对齐单独解决不了、需要引用 BGM 别名的「兜底理由」
+_BGM_RETRY_REASONS = frozenset({
+    "boundary:per-season", "boundary:absolute", "latest-by-air-date", "ambiguous",
+})
+
+# TMDB genres 里出现这些体裁名即视为动画（BGM 只服务动画）
+_ANIMATION_GENRES = frozenset({"动画", "animation", "anime", "アニメ", "アニメーション"})
+
 # 多语言季名缓存：{tmdb_id: (时间戳, seasons)}。
 # 补季名要额外两次请求（en-US / ja-JP），同一个剧集不该每次都补。
 _NAME_CACHE: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
@@ -165,6 +173,48 @@ class SeasonStage:
         return merged
 
     @staticmethod
+    def _is_animation(ctx: RecognitionContext) -> bool:
+        """只有动画才引用 BGM。"""
+        genres = [str(g or "").strip().lower() for g in (ctx.tmdb_data.get("genres") or [])]
+        if any(g in _ANIMATION_GENRES for g in genres):
+            return True
+        if not genres:
+            return str(ctx.tmdb_data.get("original_language") or "") == "ja"
+        return False
+
+    @staticmethod
+    async def _bgm_aliases(ctx: RecognitionContext, title_parts: List[Any]) -> List[str]:
+        """用标题关键词去 BGM 拿「别名」（罗马音/汉字/英文等），跨文字桥接用。
+
+        搜索走 `discover()`：它内部有 MetaCacheManager 统一缓存（首页 24h）。
+        识别引擎里那个 `search_subject()` 是未缓存的裸 POST，不在这里用。
+        """
+        keyword = next(
+            (p for p in title_parts if isinstance(p, str) and p.strip()),
+            None,
+        )
+        if not keyword:
+            return []
+        try:
+            result = await ctx.bangumi_client.discover(
+                {"keyword": keyword, "page": 1, "sort_by": "match"}, ctx
+            )
+        except Exception as exc:
+            ctx.log(f"┃ [季号校准] ⚠️ BGM 搜索失败: {type(exc).__name__}")
+            return []
+        items = (result or {}).get("results") or []
+        if not items:
+            return []
+        subject_id = items[0].get("id")
+        if not subject_id:
+            return []
+        try:
+            return await ctx.bangumi_client.get_subject_aliases(subject_id, ctx)
+        except Exception as exc:
+            ctx.log(f"┃ [季号校准] ⚠️ BGM 取别名失败: {type(exc).__name__}")
+            return []
+
+    @staticmethod
     async def run(ctx: RecognitionContext):
         mode = SeasonStage._mode(ctx)
         if mode == "off":
@@ -192,7 +242,6 @@ class SeasonStage:
 
         seasons = await SeasonStage._ensure_season_names(ctx, seasons, title_parts)
 
-        # 标题候选：特权标题最贴近原文，processed_name/en_name/cn_name 可能已被
         decision = resolve_season(
             seasons,
             filename=ctx.filename,
@@ -201,6 +250,25 @@ class SeasonStage:
             ref_date=ctx.kwargs.get("season_ref_date"),
             file_year=getattr(meta, "year", None),
         )
+
+        # BGM 别名二次判定：TMDB 季名单独解决不了（落到边界/首播日期/模糊）且是动画时，
+        # 用标题去 BGM 拿「别名」，把罗马音/汉字/英文别名补进候选再跑一次。
+        if decision.reason in _BGM_RETRY_REASONS and SeasonStage._is_animation(ctx):
+            aliases = await SeasonStage._bgm_aliases(ctx, title_parts)
+            if aliases:
+                ctx.log(f"┃ [季号校准] 🪄 引用 BGM 别名（{len(aliases)} 条）二次判定")
+                ctx.log("┃   · BGM别名: " + " | ".join(aliases[:6]))
+                retry = resolve_season(
+                    seasons,
+                    filename=ctx.filename,
+                    title_parts=[*title_parts, *aliases],
+                    raw_episode=meta.begin_episode,
+                    ref_date=ctx.kwargs.get("season_ref_date"),
+                    file_year=getattr(meta, "year", None),
+                )
+                # 只有二次判定给出更「实」的证据（季名/季标/年份等）时才替换兜底结果
+                if retry.season is not None and retry.reason not in _BGM_RETRY_REASONS:
+                    decision = retry
 
         label = _REASON_LABELS.get(decision.reason, decision.reason)
 

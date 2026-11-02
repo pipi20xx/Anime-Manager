@@ -789,6 +789,26 @@ class BangumiProvider:
         return result
 
     @staticmethod
+    async def get_subject_aliases(subject_id: int, logs: Any = None) -> List[str]:
+        """
+        获取条目 infobox 里的「别名」列表（罗马音/汉字/英文/中文等）。
+        用于跨文字桥接：文件名是罗马音时，用别名的汉字名去撞 TMDB 季名。
+        """
+        data = await BangumiProvider._fetch_subject_raw(subject_id, logs=logs)
+        if not data:
+            return []
+        aliases: List[str] = []
+        for box in data.get("infobox", []) or []:
+            if not isinstance(box, dict) or box.get("key") != "别名":
+                continue
+            for item in box.get("value", []) or []:
+                if isinstance(item, dict) and item.get("v"):
+                    v = str(item["v"]).strip()
+                    if v:
+                        aliases.append(v)
+        return list(dict.fromkeys(aliases))
+
+    @staticmethod
     async def get_episodes(subject_id: int, logs: Any = None, episode_type: int = 0) -> Optional[Dict]:
         """
         获取条目的章节列表 (GET /v0/episodes)
