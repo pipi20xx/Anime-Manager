@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..context import RecognitionContext
 from ..season_resolver import MIN_FRAGMENT, _name_fragment_score, resolve_season
+from tmdbmatefull.manager import TmdbMateFullManager
 
 VALID_MODES = ("off", "shadow", "on")
 
@@ -58,6 +59,51 @@ class SeasonStage:
         return mode if mode in VALID_MODES else "shadow"
 
     @staticmethod
+    def _archive_seasons_stale(archive: Optional[Dict[str, Any]]) -> bool:
+        """判断档案里的季表是否可能过期：还在播/制作中的作品季表会持续增长。"""
+        if not isinstance(archive, dict):
+            return False
+        status = str(archive.get("status") or "").strip().lower()
+        if status in ("returning series", "in production", "planned"):
+            return True
+        return bool(archive.get("in_production"))
+
+    @staticmethod
+    def _seasons_signature(seasons: List[Dict[str, Any]]) -> tuple:
+        """季表指纹，用于判断档案季表是否真的变了（避免无谓写库）。"""
+        rows = []
+        for item in seasons or []:
+            try:
+                number = int(item.get("season_number"))
+            except (TypeError, ValueError):
+                number = -1
+            rows.append((
+                number,
+                item.get("episode_count"),
+                str(item.get("name") or ""),
+                str(item.get("name_en") or ""),
+                str(item.get("name_ja") or ""),
+                str(item.get("air_date") or ""),
+            ))
+        return tuple(sorted(rows))
+
+    @staticmethod
+    async def _refresh_archive(
+        ctx: RecognitionContext,
+        tmdb_id: str,
+        media_type: str,
+    ):
+        """走统一的全量刷新入口（与「元数据资产 → 刷新」同一条路）。
+
+        重新抓取 TMDB 全量数据并整行覆盖入库，只保留 custom_title（固定标题）。
+        """
+        try:
+            await TmdbMateFullManager.fetch_and_ingest(str(tmdb_id), media_type, force=True)
+            ctx.log("┣ [季号校准] 🔄 已通过统一入口全量刷新数据中心档案")
+        except Exception as exc:
+            ctx.log(f"┃ [季号校准] ⚠️ 全量刷新数据中心档案失败: {type(exc).__name__}: {exc}")
+
+    @staticmethod
     async def _get_seasons(ctx: RecognitionContext, mode: str):
         """拿到季表：已有 → 本地数据中心档案 → 联网详情（有缓存）。
 
@@ -78,24 +124,42 @@ class SeasonStage:
             archive = await ctx.full_db.get_deep_meta(str(tmdb_id), media_type)
         except Exception:
             archive = None
+        archive_seasons = None
         if isinstance(archive, dict):
-            seasons = archive.get("seasons")
-            if isinstance(seasons, list) and seasons:
-                ctx.tmdb_data["seasons"] = seasons
-                ctx.log("┣ [季号校准] 季表来自本地数据中心档案")
-                return seasons
+            archive_seasons = archive.get("seasons")
+            if not isinstance(archive_seasons, list):
+                archive_seasons = None
+
+        # 档案可信就直接用；但「还在播」的作品季表会随新一季开播而变旧，
+        # 这时走联网详情（7 天缓存，多数是 DB 命中，不会真打 API）刷新一次。
+        if archive_seasons and not SeasonStage._archive_seasons_stale(archive):
+            ctx.tmdb_data["seasons"] = archive_seasons
+            ctx.log("┣ [季号校准] 季表来自本地数据中心档案")
+            return archive_seasons
 
         # 2) 联网详情（MetaCacheManager 有缓存，重复调用不一定是网络请求）
         try:
             details = await ctx.tmdb_client.get_subject_details(str(tmdb_id), media_type)
         except Exception as exc:  # 网络异常不该影响识别
             ctx.log(f"┣ [季号校准] ⚠️ 拉取季表失败: {type(exc).__name__}: {exc}")
-            return None
-        seasons = (details or {}).get("seasons")
-        if isinstance(seasons, list) and seasons:
-            ctx.tmdb_data["seasons"] = seasons
-            ctx.log("┣ [季号校准] 已补取季表（前置阶段未提供）")
-            return seasons
+            details = None
+        online_seasons = (details or {}).get("seasons")
+        if isinstance(online_seasons, list) and online_seasons:
+            ctx.tmdb_data["seasons"] = online_seasons
+            if archive_seasons:
+                ctx.log("┣ [季号校准] 已联网刷新季表（档案疑似过期）")
+                if SeasonStage._seasons_signature(online_seasons) != SeasonStage._seasons_signature(archive_seasons):
+                    await SeasonStage._refresh_archive(ctx, str(tmdb_id), media_type)
+                    ctx.log("┣ [季号校准] 🔄 季表有变化，已触发统一全量刷新")
+            else:
+                ctx.log("┣ [季号校准] 已补取季表（前置阶段未提供）")
+            return online_seasons
+
+        # 3) 联网失败/无季表时，退回档案（过期季表总比没有强）
+        if archive_seasons:
+            ctx.tmdb_data["seasons"] = archive_seasons
+            ctx.log("┣ [季号校准] ⚠️ 联网刷新失败，回退本地数据中心档案（季表可能过期）")
+            return archive_seasons
         return None
 
     @staticmethod
