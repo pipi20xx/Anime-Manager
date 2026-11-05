@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import { clientsApi, api } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import { useNavigationStore } from '@/stores'
+import { MetaTag } from '@/components/common'
 
 defineOptions({ name: 'JackettSearchView' })
 
@@ -272,15 +273,15 @@ onMounted(() => {
                 <div class="text-subtitle-1 font-weight-bold text-truncate-2" :title="item.title">{{ item.title }}</div>
                 <div v-if="item.description" class="text-body-2 text-medium-emphasis mt-1" style="line-height: 1.5; word-break: break-all">{{ item.description }}</div>
                 <div class="meta-tags mt-2">
-                  <v-chip v-if="item.indexer" size="x-small" variant="flat" class="meta-tag meta-tag--feed">{{ item.indexer }}</v-chip>
-                  <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--size">{{ formatSize(item.size) }}</v-chip>
+                  <MetaTag v-if="item.indexer" label="索引站" class="meta-tag meta-tag--feed">{{ item.indexer }}</MetaTag>
+                  <MetaTag label="文件大小" class="meta-tag meta-tag--size">{{ formatSize(item.size) }}</MetaTag>
                 </div>
 
                 <!-- 识别结果（版式对齐「订阅源详情」：🎯标题行 + meta-tags 标签行） -->
                 <div v-if="recognizedOf(item)" class="mt-2">
                   <template v-if="recognizedOf(item).failed">
                     <div class="meta-tags">
-                      <v-chip size="x-small" variant="tonal" class="meta-tag meta-tag--miss">未识别</v-chip>
+                      <MetaTag label="识别状态" variant="tonal" class="meta-tag meta-tag--miss">未识别</MetaTag>
                     </div>
                   </template>
                   <template v-else>
@@ -288,23 +289,23 @@ onMounted(() => {
                       🎯 {{ recognizedOf(item).title || '-' }}<span v-if="recognizedOf(item).year" class="text-medium-emphasis">（{{ recognizedOf(item).year }}）</span>
                     </div>
                     <div class="meta-tags mt-1">
-                      <v-chip v-if="recognizedOf(item).tmdb_id" :href="tmdbUrl(recognizedOf(item))" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">
+                      <MetaTag v-if="recognizedOf(item).tmdb_id" label="TMDB ID" :href="tmdbUrl(recognizedOf(item))" target="_blank" class="meta-tag meta-tag--tmdb">
                         ID: {{ recognizedOf(item).tmdb_id }}
-                      </v-chip>
-                      <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--type">
+                      </MetaTag>
+                      <MetaTag label="媒体类型" class="meta-tag meta-tag--type">
                         {{ recognizedOf(item).media_type === 'movie' ? '电影' : '剧集' }}
-                      </v-chip>
-                      <v-chip v-if="recognizedOf(item).media_type !== 'movie'" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+                      </MetaTag>
+                      <MetaTag v-if="recognizedOf(item).media_type !== 'movie'" label="季集" class="meta-tag meta-tag--season">
                         S{{ recognizedOf(item).season || 1 }} E{{ recognizedOf(item).episode || '-' }}
-                      </v-chip>
-                      <v-chip v-if="recognizedOf(item).team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ recognizedOf(item).team }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).source" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ recognizedOf(item).source }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ recognizedOf(item).platform }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ recognizedOf(item).resolution }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).video_effect }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).video_encode }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).audio_encode }}</v-chip>
-                      <v-chip v-if="recognizedOf(item).subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ recognizedOf(item).subtitle }}</v-chip>
+                      </MetaTag>
+                      <MetaTag v-if="recognizedOf(item).team" label="制作组" class="meta-tag meta-tag--team">{{ recognizedOf(item).team }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).source" label="介质来源" class="meta-tag meta-tag--source">{{ recognizedOf(item).source }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).platform" label="发布平台" class="meta-tag meta-tag--source">{{ recognizedOf(item).platform }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).resolution" label="分辨率" class="meta-tag meta-tag--resolution">{{ recognizedOf(item).resolution }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).video_effect" label="视频特效" class="meta-tag meta-tag--encode">{{ recognizedOf(item).video_effect }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).video_encode" label="视频编码" class="meta-tag meta-tag--encode">{{ recognizedOf(item).video_encode }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).audio_encode" label="音频编码" class="meta-tag meta-tag--encode">{{ recognizedOf(item).audio_encode }}</MetaTag>
+                      <MetaTag v-if="recognizedOf(item).subtitle" label="字幕语言" class="meta-tag meta-tag--encode">{{ recognizedOf(item).subtitle }}</MetaTag>
                     </div>
                   </template>
                 </div>

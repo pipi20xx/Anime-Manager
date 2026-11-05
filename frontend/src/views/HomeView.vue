@@ -11,7 +11,7 @@
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRecognitionStore } from '@/stores'
-import { EmptyState } from '@/components/common'
+import { EmptyState, MetaTag } from '@/components/common'
 
 defineOptions({ name: 'HomeView' })
 
@@ -255,73 +255,73 @@ const filteredLogs = computed(() => {
                       <v-col cols="12" sm="9" md="10">
                         <div class="d-flex align-center ga-2 flex-wrap">
                           <div class="text-h6 font-weight-bold">{{ finalData.title || '未知标题' }}</div>
-                          <v-chip v-if="finalData.category" size="x-small" variant="flat" class="meta-tag meta-tag--type">
+                          <MetaTag v-if="finalData.category" label="媒体类型" class="meta-tag meta-tag--type">
                             {{ finalData.category === 'tv' ? '剧集' : finalData.category === 'movie' ? '电影' : finalData.category }}
-                          </v-chip>
+                          </MetaTag>
                         </div>
 
                         <!-- 文本信息行 -->
                         <div class="recog-text-rows mt-4">
                           <div class="recog-text-row">
                             <span class="recog-text-label">季 / 集:</span>
-                            <v-chip v-if="finalData.season !== undefined && finalData.season !== null || finalData.episode" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+                            <MetaTag v-if="finalData.season !== undefined && finalData.season !== null || finalData.episode" label="季集" class="meta-tag meta-tag--season">
                               <template v-if="finalData.season !== undefined && finalData.season !== null">S{{ String(finalData.season).padStart(2, '0') }}</template><template v-if="finalData.episode">E{{ String(finalData.episode).padStart(2, '0') }}</template>
-                            </v-chip>
+                            </MetaTag>
                             <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">无</v-chip>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">TMDB ID:</span>
-                            <v-chip v-if="tmdbUrl" :href="tmdbUrl" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">{{ finalData.tmdb_id }}</v-chip>
+                            <MetaTag v-if="tmdbUrl" label="TMDB ID" :href="tmdbUrl" target="_blank" class="meta-tag meta-tag--tmdb">{{ finalData.tmdb_id }}</MetaTag>
                             <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">N/A</v-chip>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">上映日期:</span>
-                            <v-chip v-if="finalData.release_date" size="x-small" variant="flat" class="meta-tag meta-tag--time">{{ finalData.release_date }}</v-chip>
+                            <MetaTag v-if="finalData.release_date" label="发布日期" class="meta-tag meta-tag--time">{{ finalData.release_date }}</MetaTag>
                             <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--miss">未知</v-chip>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">二级分类:</span>
-                            <v-chip v-if="finalData.secondary_category && finalData.secondary_category !== '123'" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">{{ finalData.secondary_category }}</v-chip>
+                            <MetaTag v-if="finalData.secondary_category && finalData.secondary_category !== '123'" label="二级分类" class="meta-tag meta-tag--subscribed">{{ finalData.secondary_category }}</MetaTag>
                             <span v-else class="recog-text-value">{{ finalData.secondary_category === '123' ? '未分类 (待修正)' : safeVal(finalData.secondary_category) }}</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">分辨率:</span>
-                            <v-chip v-if="finalData.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ finalData.resolution }}</v-chip>
+                            <MetaTag v-if="finalData.resolution" label="分辨率" class="meta-tag meta-tag--resolution">{{ finalData.resolution }}</MetaTag>
                             <span v-else class="recog-text-value">-</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">视频编码:</span>
-                            <v-chip v-if="finalData.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ finalData.video_encode }}</v-chip>
+                            <MetaTag v-if="finalData.video_encode" label="视频编码" class="meta-tag meta-tag--encode">{{ finalData.video_encode }}</MetaTag>
                             <span v-else class="recog-text-value">-</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">音频编码:</span>
-                            <v-chip v-if="finalData.audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ finalData.audio_encode }}</v-chip>
+                            <MetaTag v-if="finalData.audio_encode" label="音频编码" class="meta-tag meta-tag--encode">{{ finalData.audio_encode }}</MetaTag>
                             <span v-else class="recog-text-value">-</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">原产地:</span>
-                            <v-chip v-if="finalData.origin_country" size="x-small" variant="flat" class="meta-tag meta-tag--country">{{ finalData.origin_country }}</v-chip>
+                            <MetaTag v-if="finalData.origin_country" label="原产地国家" class="meta-tag meta-tag--country">{{ finalData.origin_country }}</MetaTag>
                             <span v-else class="recog-text-value">-</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">字幕语言:</span>
-                            <v-chip v-if="finalData.subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ finalData.subtitle }}</v-chip>
+                            <MetaTag v-if="finalData.subtitle" label="字幕语言" class="meta-tag meta-tag--encode">{{ finalData.subtitle }}</MetaTag>
                             <span v-else class="recog-text-value">无</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">制作组:</span>
-                            <v-chip v-if="finalData.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ finalData.team }}</v-chip>
+                            <MetaTag v-if="finalData.team" label="制作组" class="meta-tag meta-tag--team">{{ finalData.team }}</MetaTag>
                             <v-chip v-else size="x-small" variant="flat" class="meta-tag meta-tag--team">未知制作组</v-chip>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">发布平台:</span>
-                            <v-chip v-if="finalData.platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ finalData.platform }}</v-chip>
+                            <MetaTag v-if="finalData.platform" label="发布平台" class="meta-tag meta-tag--source">{{ finalData.platform }}</MetaTag>
                             <span v-else class="recog-text-value">-</span>
                           </div>
                           <div class="recog-text-row">
                             <span class="recog-text-label">视频特效:</span>
-                            <v-chip v-if="finalData.video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ finalData.video_effect }}</v-chip>
+                            <MetaTag v-if="finalData.video_effect" label="视频特效" class="meta-tag meta-tag--encode">{{ finalData.video_effect }}</MetaTag>
                             <span v-else class="recog-text-value">-</span>
                           </div>
                           <div class="recog-text-row">
@@ -474,9 +474,9 @@ const filteredLogs = computed(() => {
                             <div class="flex-grow-1" style="min-width: 0">
                               <div class="d-flex align-start justify-space-between ga-2 mb-1">
                                 <span class="tmdb-title">{{ tmdbData.title || '无标题' }}</span>
-                                <v-chip v-if="tmdbData.category" size="x-small" variant="flat" density="compact" class="meta-tag meta-tag--type">
+                                <MetaTag v-if="tmdbData.category" label="类型" density="compact" class="meta-tag meta-tag--type">
                                   {{ tmdbData.category }}
-                                </v-chip>
+                                </MetaTag>
                               </div>
                               <div class="tmdb-meta-line">
                                 <span>{{ safeVal(tmdbData.release_date, '未知日期') }}</span>

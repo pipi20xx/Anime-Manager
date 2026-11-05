@@ -14,7 +14,7 @@ import { ref, computed, onMounted } from 'vue'
 import { organizerApi, taskHistoryApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
 import ExecutionLogModal from './ExecutionLogModal.vue'
-import { EmptyState } from '@/components/common'
+import { EmptyState, MetaTag } from '@/components/common'
 
 defineOptions({ name: 'OrganizeHistoryTab' })
 
@@ -421,21 +421,21 @@ defineExpose({ fetchHistory })
             <span class="text-subtitle-1 font-weight-bold text-truncate">{{ item.title || item.filename || '-' }}</span>
             <span v-if="item.year" class="text-caption text-medium-emphasis">({{ item.year }})</span>
             <!-- 元数据 Tags -->
-            <v-chip v-if="item.season || item.episode" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+            <MetaTag v-if="item.season || item.episode" label="季集" class="meta-tag meta-tag--season">
               S{{ String(item.season || 0).padStart(2, '0') }}E{{ item.episode || '?' }}
-            </v-chip>
-            <v-chip v-if="item.media_type" size="x-small" variant="flat" class="meta-tag meta-tag--type">
+            </MetaTag>
+            <MetaTag v-if="item.media_type" label="媒体类型" class="meta-tag meta-tag--type">
               {{ item.media_type }}
-            </v-chip>
-            <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">
+            </MetaTag>
+            <MetaTag v-if="item.resolution" label="分辨率" class="meta-tag meta-tag--resolution">
               {{ item.resolution }}
-            </v-chip>
-            <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">
+            </MetaTag>
+            <MetaTag v-if="item.video_encode" label="视频编码" class="meta-tag meta-tag--encode">
               {{ item.video_encode }}
-            </v-chip>
-            <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">
+            </MetaTag>
+            <MetaTag v-if="item.team" label="制作组" class="meta-tag meta-tag--team">
               {{ item.team }}
-            </v-chip>
+            </MetaTag>
           </div>
           <div class="d-flex align-center ga-2 flex-shrink-0">
             <v-chip v-if="item.is_retry" size="x-small" color="deep-purple" variant="tonal" class="flex-shrink-0">
@@ -511,25 +511,24 @@ defineExpose({ fetchHistory })
         <!-- 3. Footer: Details + Actions -->
         <div class="d-flex align-center justify-space-between flex-wrap ga-2 mt-3">
           <div class="d-flex align-center ga-2 flex-wrap min-width-0">
-            <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--action" v-if="item.action_type">
+            <MetaTag label="操作类型" class="meta-tag meta-tag--action" v-if="item.action_type">
               {{ getActionLabel(item.action_type) }}
-            </v-chip>
-            <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--size" v-if="item.file_size">
+            </MetaTag>
+            <MetaTag label="文件大小" class="meta-tag meta-tag--size" v-if="item.file_size">
               {{ item.file_size }}
-            </v-chip>
-            <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--time" v-if="item.processed_at">
+            </MetaTag>
+            <MetaTag label="处理时间" class="meta-tag meta-tag--time" v-if="item.processed_at">
               {{ formatTime(item.processed_at) }}
-            </v-chip>
-            <v-chip
+            </MetaTag>
+            <MetaTag
               v-if="item.tmdb_id"
+              label="TMDB ID"
               :href="getTmdbUrl(item)"
               target="_blank"
-              size="x-small"
-              variant="flat"
               class="meta-tag meta-tag--tmdb"
             >
               TMDB: {{ item.tmdb_id }}
-            </v-chip>
+            </MetaTag>
           </div>
           <div class="d-flex align-center ga-1 flex-shrink-0">
             <v-btn

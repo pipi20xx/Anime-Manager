@@ -16,3 +16,4 @@ export { default as EmptyState } from "./EmptyState.vue"
 export { default as DialogTitle } from "./DialogTitle.vue"
 export { default as SectionHeader } from "./SectionHeader.vue"
 export { default as ArchiveCriteriaFields } from './ArchiveCriteriaFields.vue'
+export { default as MetaTag } from './MetaTag.vue'

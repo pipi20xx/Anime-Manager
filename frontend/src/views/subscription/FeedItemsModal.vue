@@ -13,7 +13,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { api } from '@/api/client'
 import { subscriptionApi, clientsApi } from '@/api'
 import { useNotification, useConfirm } from '@/composables'
-import { EmptyState, DialogTitle } from '@/components/common'
+import { EmptyState, DialogTitle, MetaTag } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -244,10 +244,10 @@ async function handleClearHistory() {
             <!-- 第一行：标签 + 序号 -->
             <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
               <div class="d-flex align-center ga-1 flex-wrap flex-grow-1 min-width-0">
-                <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--feed">{{ item.feed_name || '-' }}</v-chip>
-                <v-chip size="x-small" variant="flat" :class="['meta-tag', item.is_downloaded ? 'meta-tag--downloaded' : 'meta-tag--not-downloaded']">
+                <MetaTag label="订阅源" class="meta-tag meta-tag--feed">{{ item.feed_name || '-' }}</MetaTag>
+                <MetaTag label="下载状态" :class="['meta-tag', item.is_downloaded ? 'meta-tag--downloaded' : 'meta-tag--not-downloaded']">
                   {{ item.is_downloaded ? '已下载' : '未下载' }}
-                </v-chip>
+                </MetaTag>
                 <span v-if="item.tmdb_title" class="text-caption font-weight-bold text-truncate flex-grow-1 min-width-0">🎯 {{ item.tmdb_title }}</span>
               </div>
               <span class="text-caption text-medium-emphasis flex-shrink-0 font-mono">#{{ index + 1 }}</span>
@@ -261,41 +261,39 @@ async function handleClearHistory() {
               {{ cleanDescription(item.description) }}
             </div>
 
-            <!-- 元数据 Tags -->
+            <!-- 元数据 Tags（MetaTag 统一渲染 v-chip + 悬浮提示） -->
             <div class="meta-tags mt-2">
               <!-- 订阅状态标签 -->
-              <v-chip v-if="item.in_subscription" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">已订阅</v-chip>
-              <v-chip v-if="item.episode_collected" size="x-small" variant="flat" class="meta-tag meta-tag--collected">订阅已下载</v-chip>
+              <MetaTag v-if="item.in_subscription" label="订阅状态" class="meta-tag meta-tag--subscribed">已订阅</MetaTag>
+              <MetaTag v-if="item.episode_collected" label="集数下载状态" class="meta-tag meta-tag--collected">订阅已下载</MetaTag>
 
               <!-- 识别结果标签 -->
               <template v-if="item.recognition_done && item.tmdb_id">
-                <v-chip :href="getTmdbUrl(item)" target="_blank" size="x-small" variant="flat" class="meta-tag meta-tag--tmdb">ID: {{ item.tmdb_id }}</v-chip>
-                <v-chip size="x-small" variant="flat" class="meta-tag meta-tag--type">{{ getMediaTypeLabel(item.media_type) }}</v-chip>
-                <v-chip v-if="item.media_type === 'tv'" size="x-small" variant="flat" class="meta-tag meta-tag--season">
-                  S{{ item.season || 1 }} E{{ item.episode || '-' }}
-                </v-chip>
+                <MetaTag label="TMDB ID" :href="getTmdbUrl(item)" target="_blank" class="meta-tag meta-tag--tmdb">ID: {{ item.tmdb_id }}</MetaTag>
+                <MetaTag label="媒体类型" class="meta-tag meta-tag--type">{{ getMediaTypeLabel(item.media_type) }}</MetaTag>
+                <MetaTag v-if="item.media_type === 'tv'" label="季集" class="meta-tag meta-tag--season">S{{ item.season || 1 }} E{{ item.episode || '-' }}</MetaTag>
               </template>
-              <v-chip v-else-if="item.recognition_done" size="x-small" variant="tonal" class="meta-tag meta-tag--miss">未命中</v-chip>
+              <MetaTag v-else-if="item.recognition_done" label="识别状态" variant="tonal" class="meta-tag meta-tag--miss">未命中</MetaTag>
 
-              <!-- 字幕组 -->
-              <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ item.team }}</v-chip>
+              <!-- 制作组 -->
+              <MetaTag v-if="item.team" label="制作组" class="meta-tag meta-tag--team">{{ item.team }}</MetaTag>
 
               <!-- 来源/平台 -->
-              <v-chip v-if="item.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ item.source }}</v-chip>
-              <v-chip v-if="item.platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ item.platform }}</v-chip>
+              <MetaTag v-if="item.source" label="介质来源" class="meta-tag meta-tag--source">{{ item.source }}</MetaTag>
+              <MetaTag v-if="item.platform" label="发布平台" class="meta-tag meta-tag--source">{{ item.platform }}</MetaTag>
 
               <!-- 分辨率 -->
-              <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ item.resolution }}</v-chip>
+              <MetaTag v-if="item.resolution" label="分辨率" class="meta-tag meta-tag--resolution">{{ item.resolution }}</MetaTag>
 
               <!-- 视频特效/编码 -->
-              <v-chip v-if="item.video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.video_effect }}</v-chip>
-              <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.video_encode }}</v-chip>
+              <MetaTag v-if="item.video_effect" label="视频特效" class="meta-tag meta-tag--encode">{{ item.video_effect }}</MetaTag>
+              <MetaTag v-if="item.video_encode" label="视频编码" class="meta-tag meta-tag--encode">{{ item.video_encode }}</MetaTag>
 
               <!-- 音频编码 -->
-              <v-chip v-if="item.audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.audio_encode }}</v-chip>
+              <MetaTag v-if="item.audio_encode" label="音频编码" class="meta-tag meta-tag--encode">{{ item.audio_encode }}</MetaTag>
 
-              <!-- 字幕 -->
-              <v-chip v-if="item.subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ item.subtitle }}</v-chip>
+              <!-- 字幕语言 -->
+              <MetaTag v-if="item.subtitle" label="字幕语言" class="meta-tag meta-tag--encode">{{ item.subtitle }}</MetaTag>
             </div>
 
             <!-- 底部：时间 + 操作 -->

@@ -13,7 +13,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { fileHashApi } from '@/api'
 import { useNotification, useConfirm, useClipboard } from '@/composables'
-import { EmptyState, DialogTitle } from '@/components/common'
+import { EmptyState, DialogTitle, MetaTag } from '@/components/common'
 
 defineOptions({ name: 'FileHashesView' })
 
@@ -857,43 +857,42 @@ onUnmounted(() => {
           <!-- 第一行：标签 + 右侧时间 -->
           <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
             <div class="d-flex align-center ga-1 flex-wrap" style="min-width: 0; flex: 1;">
-              <v-chip v-if="item.media_type" size="x-small" variant="flat" class="meta-tag meta-tag--type">
+              <MetaTag v-if="item.media_type" label="媒体类型" class="meta-tag meta-tag--type">
                 {{ formatMediaType(item.media_type) }}
-              </v-chip>
-              <v-chip v-if="item.season !== null && item.season !== undefined" size="x-small" variant="flat" class="meta-tag meta-tag--season">
+              </MetaTag>
+              <MetaTag v-if="item.season !== null && item.season !== undefined" label="季集" class="meta-tag meta-tag--season">
                 S{{ String(item.season).padStart(2, '0') }}{{ item.episode ? 'E' + String(item.episode).padStart(2, '0') : '' }}
-              </v-chip>
-              <v-chip v-if="item.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">
+              </MetaTag>
+              <MetaTag v-if="item.resolution" label="分辨率" class="meta-tag meta-tag--resolution">
                 {{ item.resolution }}
-              </v-chip>
-              <v-chip v-if="item.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">
+              </MetaTag>
+              <MetaTag v-if="item.team" label="制作组" class="meta-tag meta-tag--team">
                 {{ item.team }}
-              </v-chip>
-              <v-chip v-if="item.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">
+              </MetaTag>
+              <MetaTag v-if="item.video_encode" label="视频编码" class="meta-tag meta-tag--encode">
                 {{ item.video_encode }}
-              </v-chip>
-              <v-chip v-if="item.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">
+              </MetaTag>
+              <MetaTag v-if="item.source" label="介质来源" class="meta-tag meta-tag--source">
                 {{ item.source }}
-              </v-chip>
-              <v-chip v-if="item.file_size" size="x-small" variant="flat" class="meta-tag meta-tag--size">
+              </MetaTag>
+              <MetaTag v-if="item.file_size" label="文件大小" class="meta-tag meta-tag--size">
                 {{ formatFileSize(item.file_size) }}
-              </v-chip>
-              <v-chip v-if="item.secondary_category" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">
+              </MetaTag>
+              <MetaTag v-if="item.secondary_category" label="二级分类" class="meta-tag meta-tag--subscribed">
                 {{ item.secondary_category }}
-              </v-chip>
+              </MetaTag>
             </div>
             <div class="d-flex align-center ga-2 flex-shrink-0">
-              <v-chip
+              <MetaTag
                 v-if="item.tmdb_id"
+                label="TMDB ID"
                 class="meta-tag meta-tag--tmdb"
                 :href="tmdbLink(item)"
                 target="_blank"
-                size="x-small"
-                variant="flat"
                 @click.stop
               >
                 TMDB: {{ item.tmdb_id }}
-              </v-chip>
+              </MetaTag>
               <span class="text-caption text-medium-emphasis font-mono">{{ formatDate(item.calculated_at) }}</span>
             </div>
           </div>
@@ -1009,16 +1008,16 @@ onUnmounted(() => {
               识别信息
             </div>
             <div class="meta-tags mb-2">
-              <v-chip v-if="detailItem.team" size="x-small" variant="flat" class="meta-tag meta-tag--team">{{ detailItem.team }}</v-chip>
-              <v-chip v-if="detailItem.resolution" size="x-small" variant="flat" class="meta-tag meta-tag--resolution">{{ detailItem.resolution }}</v-chip>
-              <v-chip v-if="detailItem.video_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ detailItem.video_encode }}</v-chip>
-              <v-chip v-if="detailItem.audio_encode" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ detailItem.audio_encode }}</v-chip>
-              <v-chip v-if="detailItem.video_effect" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ detailItem.video_effect }}</v-chip>
-              <v-chip v-if="detailItem.source" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ detailItem.source }}</v-chip>
-              <v-chip v-if="detailItem.subtitle" size="x-small" variant="flat" class="meta-tag meta-tag--encode">{{ detailItem.subtitle }}</v-chip>
-              <v-chip v-if="detailItem.platform" size="x-small" variant="flat" class="meta-tag meta-tag--source">{{ detailItem.platform }}</v-chip>
-              <v-chip v-if="detailItem.secondary_category" size="x-small" variant="flat" class="meta-tag meta-tag--subscribed">{{ detailItem.secondary_category }}</v-chip>
-              <v-chip v-if="detailItem.origin_country" size="x-small" variant="flat" class="meta-tag meta-tag--country">{{ detailItem.origin_country }}</v-chip>
+              <MetaTag v-if="detailItem.team" label="制作组" class="meta-tag meta-tag--team">{{ detailItem.team }}</MetaTag>
+              <MetaTag v-if="detailItem.resolution" label="分辨率" class="meta-tag meta-tag--resolution">{{ detailItem.resolution }}</MetaTag>
+              <MetaTag v-if="detailItem.video_encode" label="视频编码" class="meta-tag meta-tag--encode">{{ detailItem.video_encode }}</MetaTag>
+              <MetaTag v-if="detailItem.audio_encode" label="音频编码" class="meta-tag meta-tag--encode">{{ detailItem.audio_encode }}</MetaTag>
+              <MetaTag v-if="detailItem.video_effect" label="视频特效" class="meta-tag meta-tag--encode">{{ detailItem.video_effect }}</MetaTag>
+              <MetaTag v-if="detailItem.source" label="介质来源" class="meta-tag meta-tag--source">{{ detailItem.source }}</MetaTag>
+              <MetaTag v-if="detailItem.subtitle" label="字幕语言" class="meta-tag meta-tag--encode">{{ detailItem.subtitle }}</MetaTag>
+              <MetaTag v-if="detailItem.platform" label="发布平台" class="meta-tag meta-tag--source">{{ detailItem.platform }}</MetaTag>
+              <MetaTag v-if="detailItem.secondary_category" label="二级分类" class="meta-tag meta-tag--subscribed">{{ detailItem.secondary_category }}</MetaTag>
+              <MetaTag v-if="detailItem.origin_country" label="原产地国家" class="meta-tag meta-tag--country">{{ detailItem.origin_country }}</MetaTag>
             </div>
             <div class="kv-row" v-if="detailItem.release_date"><span class="kv-label">发布日期</span><span class="kv-value font-weight-medium">{{ detailItem.release_date }}</span></div>
 

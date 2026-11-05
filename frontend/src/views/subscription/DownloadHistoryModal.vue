@@ -12,7 +12,7 @@ import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { subscriptionApi } from '@/api'
 import { api } from '@/api/client'
 import { useNotification, useConfirm } from '@/composables'
-import { EmptyState, DialogTitle } from '@/components/common'
+import { EmptyState, DialogTitle, MetaTag } from '@/components/common'
 
 const props = defineProps<{
   show: boolean
@@ -229,25 +229,25 @@ const filteredItems = computed(() => {
             <div class="d-flex align-center justify-space-between ga-2 flex-wrap">
               <div class="d-flex align-center ga-1 flex-wrap flex-grow-1 min-width-0">
                 <!-- 状态标签 -->
-                <v-chip size="x-small" variant="flat" :class="['meta-tag', getStateInfo(item.state).tagClass]">
+                <MetaTag label="状态" :class="['meta-tag', getStateInfo(item.state).tagClass]">
                   {{ getStateInfo(item.state).label }}
-                </v-chip>
+                </MetaTag>
                 <!-- 规则名标签 -->
-                <v-chip v-if="item.rule_name" size="x-small" variant="flat" :class="['meta-tag', getRuleNameTagClass(item.rule_name)]">
+                <MetaTag v-if="item.rule_name" label="规则" :class="['meta-tag', getRuleNameTagClass(item.rule_name)]">
                   {{ item.rule_name }}
-                </v-chip>
+                </MetaTag>
                 <!-- 站点名 -->
-                <v-chip v-if="item.feed_id" size="x-small" variant="flat" class="meta-tag meta-tag--feed">
+                <MetaTag v-if="item.feed_id" label="订阅源" class="meta-tag meta-tag--feed">
                   {{ feedNameMap[item.feed_id] || `Feed #${item.feed_id}` }}
-                </v-chip>
+                </MetaTag>
                 <!-- 下载器 -->
-                <v-chip v-if="item.download_client_id" size="x-small" variant="flat" class="meta-tag meta-tag--source">
+                <MetaTag v-if="item.download_client_id" label="下载器" class="meta-tag meta-tag--source">
                   {{ item.download_client_id }}
-                </v-chip>
+                </MetaTag>
                 <!-- 失败次数 -->
-                <v-chip v-if="item.fail_count && item.fail_count > 0" size="x-small" variant="flat" class="meta-tag meta-tag--not-downloaded">
+                <MetaTag v-if="item.fail_count && item.fail_count > 0" label="失败次数" class="meta-tag meta-tag--not-downloaded">
                   失败 ×{{ item.fail_count }}
-                </v-chip>
+                </MetaTag>
               </div>
               <span class="text-caption text-medium-emphasis flex-shrink-0 font-mono">#{{ index + 1 }}</span>
             </div>
@@ -274,9 +274,9 @@ const filteredItems = computed(() => {
             <!-- 元数据行 -->
             <div class="meta-tags mt-1">
               <!-- info_hash -->
-              <v-chip v-if="item.info_hash" size="x-small" variant="flat" class="meta-tag meta-tag--size">
+              <MetaTag v-if="item.info_hash" label="Info Hash" class="meta-tag meta-tag--size">
                 <span class="font-mono text-truncate" style="max-width: 120px; display: inline-block;">{{ item.info_hash }}</span>
-              </v-chip>
+              </MetaTag>
             </div>
 
             <!-- 底部：时间 + 操作 -->
