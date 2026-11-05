@@ -340,15 +340,23 @@ def resolve_season(
     candidates = list(dict.fromkeys(item for item in candidates if item))
     align = _align_debug(candidates, parsed)
 
-    # 0. 只有一季：没有歧义。集数超出只提示，不否决（可能是 TMDB 数据滞后）
+    marker = extract_season_marker(filename) if filename else None
+
+    # 0. 只有一季：没有歧义。但 TMDB 常把多季合并成一季（如 Re:0 全集并到 S1），
+    #    文件名里明确的季标（第四季 / Season 4 / Part 4）就是冲突证据，不能强行压回 S1。
     if len(parsed) == 1:
         number, count, names, _air = parsed[0]
+        if marker is not None and marker != number:
+            return _decision(
+                None, raw_episode, "single-season-merge",
+                f"TMDB 只有一季（S{number}，{count or '?'} 集）但文件名明确标为 S{marker}，"
+                f"疑似 TMDB 合并季，保留原季号",
+            )
         detail = f"TMDB 只有一季（S{number}，{count or '?'} 集）"
         if raw_episode and count and raw_episode > count:
             detail += f"；集数 {raw_episode} 超出该季集数，请留意 TMDB 数据"
         return _decision(number, raw_episode, "single-season", detail)
 
-    marker = extract_season_marker(filename) if filename else None
     by_number = {number: (number, count, names, air) for number, count, names, air in parsed}
 
     # 1. 季名对齐（强证据）：标题片段 + 序号词，同时命中者优先

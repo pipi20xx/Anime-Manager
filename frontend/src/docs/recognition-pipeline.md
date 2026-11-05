@@ -638,6 +638,7 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **依据**: 每季的 `name` / `name_en` / `name_ja`、`episode_count`、`air_date`
 - **标题候选**: `privileged_title` → `processed_name` → `en_name` → `cn_name` → 原始文件名（内核清理标题时会把尾部序号当噪声剥掉，只用一个字段会丢关键信息）
 - **判定顺序**: 只有一季 → 季名对齐（标题片段 + 序号词）→ 标题尾数（须季名佐证）→ 季标 → 年份对齐 → 双假设边界（per-season / absolute，absolute 为弱证据）→ 首播日期 → 不定
+- **合并季防护**: 「只有一季」这条只在文件名没有明确季标冲突时才采纳。若 TMDB 只有一季（如 Re:0 全集并到 S1，85 集）但文件名写了 `第四季` / `Season 4` / `Part 4`，判为 `single-season-merge`（疑似合并季），**保留原季号**，避免 `S4 → S1` 这种误改
 - **并列处理**: 多季季名与标题等长匹配时判为「无区分度」，不采信，log 里写明并列情况
 - **三档模式**（`season_resolve_mode`）: `off` / `shadow`（只算并写日志，不改结果）/ `on`（强证据下不一致时采纳，默认；弱证据仅记录不应用）
 - **日志**: `[季号校准] 季名对齐(name-match) → S2（原 S1）· 季名命中 Cyberpunk: Edgerunners 2`

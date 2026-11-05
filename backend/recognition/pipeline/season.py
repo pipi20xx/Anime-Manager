@@ -23,6 +23,7 @@ VALID_MODES = ("off", "shadow", "on")
 _REASON_LABELS = {
     "no-seasons": "无季表",
     "single-season": "唯一季",
+    "single-season-merge": "疑似合并季",
     "name-match": "季名对齐",
     "title-suffix": "标题尾数",
     "marker": "季标",
