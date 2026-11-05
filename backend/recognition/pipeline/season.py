@@ -59,16 +59,6 @@ class SeasonStage:
         return mode if mode in VALID_MODES else "shadow"
 
     @staticmethod
-    def _archive_seasons_stale(archive: Optional[Dict[str, Any]]) -> bool:
-        """判断档案里的季表是否可能过期：还在播/制作中的作品季表会持续增长。"""
-        if not isinstance(archive, dict):
-            return False
-        status = str(archive.get("status") or "").strip().lower()
-        if status in ("returning series", "in production", "planned"):
-            return True
-        return bool(archive.get("in_production"))
-
-    @staticmethod
     def _seasons_signature(seasons: List[Dict[str, Any]]) -> tuple:
         """季表指纹，用于判断档案季表是否真的变了（避免无谓写库）。"""
         rows = []
@@ -105,10 +95,14 @@ class SeasonStage:
 
     @staticmethod
     async def _get_seasons(ctx: RecognitionContext, mode: str):
-        """拿到季表：已有 → 本地数据中心档案 → 联网详情（有缓存）。
+        """拿到季表：已有 → 联网详情(7 天缓存) → 本地数据中心档案兜底。
 
         指纹命中 / 锁定 ID 这两条路给到的 `ctx.tmdb_data` 只有 id + type，
         没有季表；不补取的话季号校准在「记忆加速」场景下等于不存在。
+
+        判断「档案是否过期」不依赖档案里的 status / in_production——那字段
+        本身就存在同一份过期档案里，Ended 之后又出新季会被漏掉。这里直接
+        拿 7 天缓存的云端季表做基准比对，不一致就触发统一全量刷新。
         """
         seasons = ctx.tmdb_data.get("seasons")
         if isinstance(seasons, list) and seasons:
@@ -119,7 +113,7 @@ class SeasonStage:
         if not tmdb_id:
             return None
 
-        # 1) 本地数据中心档案（免费）
+        # 1) 读本地永久档案（免费）
         try:
             archive = await ctx.full_db.get_deep_meta(str(tmdb_id), media_type)
         except Exception:
@@ -130,14 +124,7 @@ class SeasonStage:
             if not isinstance(archive_seasons, list):
                 archive_seasons = None
 
-        # 档案可信就直接用；但「还在播」的作品季表会随新一季开播而变旧，
-        # 这时走联网详情（7 天缓存，多数是 DB 命中，不会真打 API）刷新一次。
-        if archive_seasons and not SeasonStage._archive_seasons_stale(archive):
-            ctx.tmdb_data["seasons"] = archive_seasons
-            ctx.log("┣ [季号校准] 季表来自本地数据中心档案")
-            return archive_seasons
-
-        # 2) 联网详情（MetaCacheManager 有缓存，重复调用不一定是网络请求）
+        # 2) 联网详情作为「新鲜基准」——7 天缓存，多数是 DB 命中，不会真打 API。
         try:
             details = await ctx.tmdb_client.get_subject_details(str(tmdb_id), media_type)
         except Exception as exc:  # 网络异常不该影响识别
@@ -146,11 +133,10 @@ class SeasonStage:
         online_seasons = (details or {}).get("seasons")
         if isinstance(online_seasons, list) and online_seasons:
             ctx.tmdb_data["seasons"] = online_seasons
-            if archive_seasons:
-                ctx.log("┣ [季号校准] 已联网刷新季表（档案疑似过期）")
+            if archive_seasons is not None:
                 if SeasonStage._seasons_signature(online_seasons) != SeasonStage._seasons_signature(archive_seasons):
                     await SeasonStage._refresh_archive(ctx, str(tmdb_id), media_type)
-                    ctx.log("┣ [季号校准] 🔄 季表有变化，已触发统一全量刷新")
+                    ctx.log("┣ [季号校准] 🔄 档案季表与云端不一致，已触发统一全量刷新")
             else:
                 ctx.log("┣ [季号校准] 已补取季表（前置阶段未提供）")
             return online_seasons
@@ -158,7 +144,7 @@ class SeasonStage:
         # 3) 联网失败/无季表时，退回档案（过期季表总比没有强）
         if archive_seasons:
             ctx.tmdb_data["seasons"] = archive_seasons
-            ctx.log("┣ [季号校准] ⚠️ 联网刷新失败，回退本地数据中心档案（季表可能过期）")
+            ctx.log("┣ [季号校准] ⚠️ 联网取季表失败，回退本地数据中心档案（季表可能过期）")
             return archive_seasons
         return None
 
