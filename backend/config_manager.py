@@ -88,6 +88,8 @@ class ConfigManager:
         "series_fingerprint": True,
         # 季号校准：off 关闭 / shadow 只算不生效 / on 强证据下不一致时采纳（默认）
         "season_resolve_mode": "on",
+        # 强制 AI 识别：全局默认关。开启后所有未显式覆盖的识别都直接走 AI（等效特权规则 ai=1）
+        "force_ai": False,
         "custom_noise_words": [],
         "remote_noise_urls": [],
         "custom_release_groups": [],

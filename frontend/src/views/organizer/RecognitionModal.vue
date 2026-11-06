@@ -15,6 +15,7 @@ import { reactive, ref, watch } from 'vue'
 import { tmdbApi, fileHashApi } from '@/api'
 import { useNotification } from '@/composables'
 import { DialogTitle, MetaTag } from '@/components/common'
+import { getGlobalFlag } from '@/utils/globalConfig'
 
 const props = defineProps<{
   modelValue: boolean
@@ -77,6 +78,8 @@ const forcedParams = reactive({
   batch_enhancement: savedPrefs.batch_enhancement ?? false,
   enable_title_segmentation: savedPrefs.enable_title_segmentation ?? false,
   season_resolve_mode: savedPrefs.season_resolve_mode ?? 'on',
+  // 每次打开弹窗都重新取全局「强制 AI 识别」当默认（不持久化，避免旧快照压掉全局改动）
+  force_ai: undefined as boolean | undefined,
 })
 
 // 策略开关变化时自动保存
@@ -85,6 +88,12 @@ for (const key of STRATEGY_KEYS) {
     saveStrategyPrefs(forcedParams)
   })
 }
+
+// 每次打开弹窗：强制 AI 的默认值取全局设置（本次仍可在这里改）
+watch(() => props.modelValue, async (open) => {
+  if (!open) return
+  forcedParams.force_ai = await getGlobalFlag('force_ai', false)
+}, { immediate: true })
 
 // --- TMDB 搜索 ---
 const testSearch = reactive({ keyword: '', loading: false, results: [] as any[] })
@@ -231,6 +240,7 @@ watch(() => props.modelValue, (newVal) => {
                   { key: 'force_filename', title: '强制单文件模式', desc: '将完整输入作为文件名解析，无视路径干扰' },
                   { key: 'series_fingerprint', title: '智能记忆', desc: '自动记住系列特征，后续文件实现秒级识别' },
                   { key: 'batch_enhancement', title: '合集识别增强', desc: '支持解析 01-12 等合集，自动计算集数区间' },
+                  { key: 'force_ai', title: '强制 AI 识别', desc: '跳过常规搜索直接由 AI 推断标题/季/集（等效 ai=1）；默认取全局设置，可本次改' },
                 ]"
                 :key="item.key"
                 class="glass-card pa-3 d-flex align-center justify-space-between"

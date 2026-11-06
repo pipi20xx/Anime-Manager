@@ -371,6 +371,16 @@ onMounted(() => {
           </div>
         </div>
 
+        <div class="d-flex align-center ga-3 mt-4">
+          <v-switch v-model="config.force_ai" density="compact" hide-details color="primary" />
+          <div>
+            <div class="text-body-2 font-weight-medium">强制 AI 识别</div>
+            <div class="text-caption text-medium-emphasis">
+              跳过智能记忆与常规搜索，直接由 AI 推断标题/季/集（等效特权规则 ai=1）。需先在「AI 实验室」配好模型；每个文件都会调用一次 AI，注意耗时与费用。
+            </div>
+          </div>
+        </div>
+
         <v-divider class="my-4" />
 
         <div>

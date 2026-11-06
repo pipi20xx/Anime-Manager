@@ -205,11 +205,11 @@ class MatcherStage:
                 if meta.forced_tmdbid:
                     ctx.log(f"[匹配] ⚠️ 规则同时命中 AI 介入与 tmdbid 锁定，以 ID 锁定为准，跳过 AI")
                 elif AIHelper().is_available():
-                    ctx.log(f"[匹配] 🤖 特权规则命中 AI 介入标记，优先由 AI 识别标题（常规搜索转为兜底）")
+                    ctx.log(f"[匹配] 🤖 AI 介入已触发（特权规则 ai=1 / 调试开关），优先由 AI 识别标题（常规搜索转为兜底）")
                     ai_attempted = True
                     await _ai_fallback_search(ctx, meta, require_fallback_toggle=False)
                 else:
-                    ctx.log(f"[匹配] ⚠️ 特权规则要求 AI 介入，但 AI 未配置或不可用，回退常规识别流程")
+                    ctx.log(f"[匹配] ⚠️ 已要求 AI 介入（特权规则 ai=1 / 调试开关），但 AI 未配置或不可用，回退常规识别流程")
 
             # 2.1 强制 TMDB ID 锁定模式
             if meta.forced_tmdbid:

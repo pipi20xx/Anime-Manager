@@ -374,6 +374,17 @@ const onFolderSelected = (path: string) => {
                 </div>
               </div>
 
+              <div class="switch-row">
+                <v-switch v-model="taskForm.force_ai" density="compact" hide-details color="primary" />
+                <div>
+                  <div class="switch-label">强制 AI 识别</div>
+                  <div class="switch-desc">
+                    本任务跳过智能记忆与常规搜索，直接由 AI 推断标题/季/集（等效特权规则 ai=1）。
+                    新建任务时默认取全局设置；需先在「AI 实验室」配好模型。
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <div class="switch-row">
                   <v-switch

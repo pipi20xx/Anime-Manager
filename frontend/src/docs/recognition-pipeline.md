@@ -1037,6 +1037,7 @@ L1 内核不含任何数据库或网络代码。
 | `forced_type` / `forced_season` / `forced_episode` | 强制媒体类型 / 季数 / 集数 |
 | `anime_priority` / `offline_priority` / `bangumi_priority` / `bangumi_failover` / `series_fingerprint` / `batch_enhancement` / `enable_title_segmentation` | 单次请求覆盖同名全局策略 |
 | `description` | PT 站副标题 / RSS 描述，用于 STEP 2.6 合集特征注入 |
+| `force_ai` | 强制 AI 识别，等效命中一条 `ai=1` 特权规则（跳过智能记忆与常规搜索，AI 先推断标题/季/集；显式 `forced_episode` 时 AI 不改集数）。不传则跟随全局设置「识别偏好 → 强制 AI 识别」（`config.force_ai`，默认关） |
 | `temp_noise` / `temp_groups` / `temp_render` / `temp_privilege` | 临时规则沙盒（替换词 / 制作组 / 渲染词 / 特权规则，仅本次请求生效） |
 
 

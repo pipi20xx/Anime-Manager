@@ -8,6 +8,7 @@
 import { ref, reactive } from 'vue'
 import { organizerApi } from '@/api'
 import { useNotification, useConfirm, useDragSort } from '@/composables'
+import { getGlobalFlag } from '@/utils/globalConfig'
 import TaskEditModal from './TaskEditModal.vue'
 import ExecutionLogModal from './ExecutionLogModal.vue'
 import { EmptyState } from '@/components/common'
@@ -73,6 +74,7 @@ const taskForm = reactive({
   calculate_hash: false,
   clean_empty_dir: false,
   series_fingerprint: true,
+  force_ai: false,
   cd2_rapid_mode: 'off',
   cd2_rapid_interval: 60,
   cd2_rapid_max_retries: 6,
@@ -108,21 +110,24 @@ function resetTaskForm() {
   taskForm.calculate_hash = false
   taskForm.clean_empty_dir = false
   taskForm.series_fingerprint = true
+  taskForm.force_ai = false
   taskForm.cd2_rapid_mode = 'off'
   taskForm.cd2_rapid_interval = 60
   taskForm.cd2_rapid_max_retries = 6
   taskForm.subset_subtitles = false
 }
 
-function openAddTask() {
+async function openAddTask() {
   resetTaskForm()
+  // 新任务默认取全局「强制 AI 识别」的值，之后可在任务里单独覆盖
+  taskForm.force_ai = await getGlobalFlag('force_ai', false)
   taskForm.id = 'task_' + Date.now()
   isNewTask.value = true
   editingTaskIndex.value = -1
   showTaskModal.value = true
 }
 
-function openEditTask(index: number) {
+async function openEditTask(index: number) {
   resetTaskForm()
   isNewTask.value = false
   editingTaskIndex.value = index
@@ -162,6 +167,10 @@ function openEditTask(index: number) {
   if (rawData.subset_subtitles === undefined) rawData.subset_subtitles = false
 
   Object.assign(taskForm, rawData)
+  // 老任务没存过 force_ai：用全局设置作默认，避免一律覆盖成「关」
+  if (rawData.force_ai === undefined) {
+    taskForm.force_ai = await getGlobalFlag('force_ai', false)
+  }
   showTaskModal.value = true
 }
 

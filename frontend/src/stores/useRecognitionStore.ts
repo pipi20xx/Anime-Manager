@@ -127,6 +127,8 @@ export const useRecognitionStore = defineStore('recognition', () => {
   const batchEnhancement = ref(false)
   const titleSegmentation = ref(false)
   const seasonResolveMode = ref<'off' | 'shadow' | 'on'>('on')
+  // 调试：强制 AI 识别（等效特权规则 ai=1），默认关闭
+  const forceAi = ref(false)
 
   // --- 高级参数（沙盒调试） ---
   const forcedTmdbId = ref('')
@@ -155,10 +157,23 @@ export const useRecognitionStore = defineStore('recognition', () => {
       ['batch_enhancement', (v) => (batchEnhancement.value = v === 'true')],
       ['enable_title_segmentation', (v) => (titleSegmentation.value = v === 'true')],
       ['season_resolve_mode', (v) => { if (v === 'off' || v === 'shadow' || v === 'on') seasonResolveMode.value = v }],
+      ['force_ai', (v) => (forceAi.value = v === 'true')],
     ]
     for (const [key, setter] of getters) {
       const saved = localStorage.getItem(key)
       if (saved !== null) setter(saved)
+    }
+    // 强制 AI 识别：本地没存过就跟一次全局设置（设置 → 识别偏好）。
+    // 采用后即写回本地，之后本页开关就是「单次覆盖」的固定选择，不再回头同步
+    // （与同页其它策略开关一致）。
+    if (localStorage.getItem('force_ai') === null) {
+      api.get<any>('/api/config')
+        .then((cfg) => {
+          if (localStorage.getItem('force_ai') !== null) return
+          forceAi.value = !!cfg?.force_ai
+          localStorage.setItem('force_ai', String(forceAi.value))
+        })
+        .catch(() => {})
     }
   }
 
@@ -172,6 +187,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
     localStorage.setItem('batch_enhancement', String(batchEnhancement.value))
     localStorage.setItem('enable_title_segmentation', String(titleSegmentation.value))
     localStorage.setItem('season_resolve_mode', seasonResolveMode.value)
+    localStorage.setItem('force_ai', String(forceAi.value))
   }
 
   async function performRecognition() {
@@ -194,6 +210,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
         batch_enhancement: batchEnhancement.value,
         enable_title_segmentation: titleSegmentation.value,
         season_resolve_mode: seasonResolveMode.value,
+        force_ai: forceAi.value,
         forced_tmdb_id: forcedTmdbId.value || undefined,
         forced_type: forcedType.value || undefined,
         forced_season: forcedSeason.value || undefined,
@@ -272,6 +289,7 @@ export const useRecognitionStore = defineStore('recognition', () => {
     seriesFingerprint,
     batchEnhancement,
     seasonResolveMode,
+    forceAi,
     forcedTmdbId,
     forcedType,
     forcedSeason,

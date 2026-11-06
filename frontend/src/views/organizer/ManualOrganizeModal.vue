@@ -15,6 +15,7 @@ import { useLocalStorage } from '@/composables/useStorage'
 import { GlassDialog } from '@/glass'
 import FolderBrowserModal from './FolderBrowserModal.vue'
 import { getActionTypeHint } from '@/utils/organizeActions'
+import { getGlobalFlag } from '@/utils/globalConfig'
 import { DialogTitle } from '@/components/common'
 
 const props = defineProps<{
@@ -62,6 +63,8 @@ const manualTask = reactive<any>({
   check_emby_exists: false,
   calculate_hash: false,
   series_fingerprint: true,
+  // 未设置（undefined）= 跟随全局「设置 → 识别偏好 → 强制 AI 识别」
+  force_ai: undefined as boolean | undefined,
   forced_tmdb_id: '',
   forced_type: null as string | null,
   forced_season: null as string | null,
@@ -148,14 +151,19 @@ function snapshotManualSettings() {
 }
 
 // --- 弹窗打开时，合并默认配置 ---
-watch(() => props.modelValue, (newVal) => {
+watch(() => props.modelValue, async (newVal) => {
   if (newVal) {
+    // 强制 AI 识别：没存过就用全局设置当默认（先取，再合并记忆/模板）
+    const globalForceAi = await getGlobalFlag('force_ai', false)
     // 优先使用浏览器记忆的上次配置；首次使用时取整理任务的第一个作为默认
     const saved = manualOrganizeMemory.value
     if (saved && Object.keys(saved).length > 0) {
       Object.assign(manualTask, saved)
     } else if (props.defaultTask) {
       Object.assign(manualTask, JSON.parse(JSON.stringify(props.defaultTask)))
+    }
+    if (manualTask.force_ai === undefined || manualTask.force_ai === null) {
+      manualTask.force_ai = globalForceAi
     }
     manualTask.name = `手动整理 (${props.currentPath})`
     manualTask.source_via = props.sourceVia || 'local'
@@ -526,6 +534,17 @@ function handleRunBackground() {
                 <div>
                   <div class="switch-label">智能记忆</div>
                   <div class="switch-desc">自动记住系列特征，后续文件实现秒级识别</div>
+                </div>
+              </div>
+
+              <div class="switch-row">
+                <v-switch v-model="manualTask.force_ai" density="compact" color="primary" hide-details />
+                <div>
+                  <div class="switch-label">强制 AI 识别</div>
+                  <div class="switch-desc">
+                    跳过智能记忆与常规搜索，直接由 AI 推断标题/季/集（等效特权规则 ai=1）；
+                    不设置时跟随「设置 → 识别偏好」的全局开关
+                  </div>
                 </div>
               </div>
 

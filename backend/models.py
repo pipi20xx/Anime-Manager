@@ -71,6 +71,7 @@ class Feed(SQLModel, table=True):
     for_subscription: bool = Field(default=True) # 是否用于订阅匹配
     for_rules: bool = Field(default=True)        # 是否用于规则匹配
     anime_priority: bool = Field(default=True)   # 是否动漫优先
+    force_ai: Optional[bool] = Field(default=None)  # 强制 AI 识别该源条目；None = 从未设置过（跟随全局）
     check_emby_exists: bool = Field(default=False) # 检查 Emby 库是否存在
     batch_enhance: bool = Field(default=False)     # 是否启用副标题合集提取
     include_keywords: Optional[str] = None # 前置包含词

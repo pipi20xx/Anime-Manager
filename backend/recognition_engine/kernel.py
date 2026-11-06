@@ -73,6 +73,7 @@ def core_recognize(
             meta_obj.privileged_title = sp_title  # 存储特权标题，用于优先搜索
         if sp_ep is not None:
             meta_obj.begin_episode = sp_ep
+            meta_obj.episode_locked = True  # 规则锁定的集数, AI 不得覆盖
         if sp_group and not meta_obj.resource_team:
             meta_obj.resource_team = sp_group  # 也提取字幕组
         

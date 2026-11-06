@@ -423,6 +423,7 @@ async function recognizeFile(item: any, forcedParams: any = null) {
       batch_enhancement: forcedParams?.batch_enhancement,
       enable_title_segmentation: forcedParams?.enable_title_segmentation,
       season_resolve_mode: forcedParams?.season_resolve_mode,
+      force_ai: forcedParams?.force_ai,
       force_filename: forcedParams?.force_filename,
     }
     const data = await recognitionApi.recognize(payload)

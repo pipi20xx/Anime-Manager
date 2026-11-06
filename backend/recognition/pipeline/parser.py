@@ -105,6 +105,8 @@ class ParserStage:
         p_failover = "ON" if ctx.bangumi_failover else "OFF"
         p_force_file = "ON" if is_force_file else "OFF"
         p_segment = "ON" if ctx.enable_title_segmentation else "OFF"
+        force_ai = bool(ctx.force_ai)
+        p_force_ai = "ON" if force_ai else "OFF"
 
         # 加载临时特权规则
         from recognition_engine.special_episode_handler import SpecialEpisodeHandler
@@ -117,11 +119,14 @@ class ParserStage:
         # [NEW] 显示原始完整路径（若与待处理条目不同）
         if ctx.original_input and ctx.original_input != ctx.filename:
             ctx.log(f"┃ [原始路径]: {ctx.original_input}")
-        ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 智能记忆[{p_fp}] | 标题分词[{p_segment}] | 搜索顺序[{p_off}] | BGM数据源优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}]")
+        ctx.log(f"┃ [配置] 策略状态: 动漫优化[{p_anime}] | 合集增强[{p_batch}] | 智能记忆[{p_fp}] | 标题分词[{p_segment}] | 搜索顺序[{p_off}] | BGM数据源优先[{p_bgm}] | BGM故障转移[{p_failover}] | 强制单文件[{p_force_file}] | 强制AI[{p_force_ai}]")
 
         # 1. 检查系列指纹 (Pre-match Acceleration)
         # 只有在启用指纹且当前还未获取到数据时执行
-        if ctx.use_fingerprint and not ctx.tmdb_data:
+        # 强制 AI 模式要绕过指纹：记忆命中会直接短路整个匹配阶段，AI 根本不会跑
+        if force_ai and ctx.use_fingerprint:
+            ctx.log("┣ [调试] 🤖 强制 AI 模式：已跳过智能记忆加速（否则记忆命中会短路 AI）")
+        if ctx.use_fingerprint and not ctx.tmdb_data and not force_ai:
             fp_match = await ctx.cache_dao.get_fingerprint_match(ctx.filename, ctx.logs)
             if fp_match:
                 ctx.tmdb_data = {
@@ -169,8 +174,35 @@ class ParserStage:
         
         # 3. 处理参数覆盖
         ParserStage._apply_forced_params(ctx)
+        # 4. 调试开关: 强制 AI 识别 (识别测试页)
+        ParserStage._apply_force_ai(ctx)
 
         ctx.add_perf("本地解析", start)
+
+    @staticmethod
+    def _apply_force_ai(ctx: RecognitionContext):
+        """调试开关：强制走 AI 识别（等效于命中一条 `ai=1` 的特权规则）。
+
+        `ai=1` 的语义（见 docs/privileged-rules.md §10）：
+        - 匹配阶段先让 AI 推断标题并搜索，常规搜索降级为兜底；
+        - 规则没锁集数时，集数全权交给 AI 裁决。
+        这里照搬同样的语义，只是触发源换成全局开关（设置 → 识别偏好）或单次请求参数，
+        方便在识别测试页/整理弹窗里按次调试。
+        """
+        if not ctx.force_ai or ctx.meta is None:
+            return
+        meta = ctx.meta
+        forced_ep = ctx.kwargs.get("forced_episode")
+        has_forced_ep = forced_ep is not None and str(forced_ep) != ""
+        meta.ai_required = True
+        # 集数有更硬的来源时（请求强制集号 / 特权规则 e= 锁定）就不让 AI 再改
+        locked = has_forced_ep or bool(getattr(meta, "episode_locked", False))
+        meta.ai_episode_takeover = not locked
+        ctx.log("┣ [调试] 🤖 已强制 AI 识别（等效特权规则 ai=1）：AI 先推断标题/季/集，常规搜索降级为兜底")
+        if has_forced_ep:
+            ctx.log("┃ [调试] 已强制集号，AI 不覆盖集数")
+        elif locked:
+            ctx.log("┃ [调试] 特权规则已锁定集数，AI 不覆盖集数")
 
     @staticmethod
     def _apply_forced_params(ctx: RecognitionContext):

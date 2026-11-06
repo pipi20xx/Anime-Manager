@@ -281,6 +281,7 @@ class SubscriptionMatcher:
             feed_anime_prio = global_anime_prio
             feed_check_emby = False
             feed_batch_enhance = False
+            feed_force_ai = None
             
             async with db.session_scope():
                 stmt = select(FeedItem).where(FeedItem.guid == guid)
@@ -293,11 +294,13 @@ class SubscriptionMatcher:
                             feeds_cache[db_item.feed_id] = {
                                 'anime_priority': feed.anime_priority if feed else global_anime_prio,
                                 'check_emby_exists': feed.check_emby_exists if feed else False,
-                                'batch_enhance': feed.batch_enhance if feed else False
+                                'batch_enhance': feed.batch_enhance if feed else False,
+                                'force_ai': feed.force_ai if feed else None
                             }
                         feed_anime_prio = feeds_cache[db_item.feed_id]['anime_priority']
                         feed_check_emby = feeds_cache[db_item.feed_id]['check_emby_exists']
                         feed_batch_enhance = feeds_cache[db_item.feed_id]['batch_enhance']
+                        feed_force_ai = feeds_cache[db_item.feed_id].get('force_ai')
 
             if not db_item: continue
 
@@ -318,6 +321,7 @@ class SubscriptionMatcher:
                     anime_priority=feed_anime_prio, bangumi_priority=bgm_prio,
                     bangumi_failover=bgm_failover,
                     batch_enhancement=True,
+                    force_ai=feed_force_ai,
                     description=db_item.description if feed_batch_enhance else None
                 )
                 

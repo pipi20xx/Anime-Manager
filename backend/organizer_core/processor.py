@@ -479,6 +479,7 @@ class FileProcessor:
                 forced_type=f_type, 
                 forced_season=f_season,
                 series_fingerprint=task.get("series_fingerprint", True),
+                force_ai=task.get("force_ai"),  # None → 跟随全局 config.force_ai
                 original_input_path=recog_original_path
             )
             

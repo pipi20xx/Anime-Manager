@@ -15,6 +15,7 @@ import { useNotification, useConfirm } from '@/composables'
 import TmdbBlocklistModal from './TmdbBlocklistModal.vue'
 import FeedItemsModal from './FeedItemsModal.vue'
 import { EmptyState, DialogTitle } from '@/components/common'
+import { getGlobalFlag } from '@/utils/globalConfig'
 
 defineOptions({ name: 'FeedsTab' })
 
@@ -67,22 +68,27 @@ async function clearRecognitionCache() {
 }
 
 // --- Feed CRUD ---
-function openAddFeed() {
+async function openAddFeed() {
   isNewFeed.value = true
   feedForm.value = {
     title: '', url: '', enabled: true, for_subscription: true, for_rules: true,
     anime_priority: true, check_emby_exists: false, batch_enhance: false,
+    force_ai: await getGlobalFlag('force_ai', false),
     include_keywords: '', exclude_keywords: '',
   }
   showFeedModal.value = true
 }
 
-function openEditFeed(feed: any) {
+async function openEditFeed(feed: any) {
   isNewFeed.value = false
   feedForm.value = { ...feed }
   if (feedForm.value.for_subscription === undefined) feedForm.value.for_subscription = true
   if (feedForm.value.for_rules === undefined) feedForm.value.for_rules = true
   if (feedForm.value.anime_priority === undefined) feedForm.value.anime_priority = true
+  // 历史数据没有该字段（null）→ 用全局设置填充；保存后即成为该源的明确选择
+  if (feedForm.value.force_ai === undefined || feedForm.value.force_ai === null) {
+    feedForm.value.force_ai = await getGlobalFlag('force_ai', false)
+  }
   showFeedModal.value = true
 }
 
@@ -256,6 +262,13 @@ defineExpose({ fetchFeeds })
               <div>
                 <div class="switch-label">动漫识别优化</div>
                 <div class="switch-desc">提升动画匹配精度，过滤同名真人剧</div>
+              </div>
+            </div>
+            <div class="switch-row">
+              <v-switch v-model="feedForm.force_ai" color="primary" density="compact" hide-details />
+              <div>
+                <div class="switch-label">强制 AI 识别</div>
+                <div class="switch-desc">该源的条目跳过常规搜索，直接由 AI 推断标题/季/集（等效 ai=1）；关闭即该源不走 AI（覆盖全局设置）</div>
               </div>
             </div>
             <div class="switch-row">

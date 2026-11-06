@@ -32,6 +32,7 @@ watch([
   () => store.seriesFingerprint,
   () => store.batchEnhancement,
   () => store.seasonResolveMode,
+  () => store.forceAi,
 ], () => {
   store.savePreferences()
 })
@@ -753,6 +754,14 @@ const filteredLogs = computed(() => {
                   hide-details
                   style="max-width: 140px"
                 />
+              </div>
+
+              <div class="pref-item">
+                <div class="pref-info">
+                  <div class="pref-label">强制 AI 识别</div>
+                  <div class="pref-desc">默认跟随全局设置；开启后跳过智能记忆与常规搜索，直接由 AI 推断标题/季/集（等效 ai=1）</div>
+                </div>
+                <v-switch v-model="store.forceAi" density="compact" hide-details color="primary" />
               </div>
             </div>
           </v-card-text>

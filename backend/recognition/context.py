@@ -48,6 +48,8 @@ class RecognitionContext:
         self.batch_enhance = get_pref("batch_enhancement", "batch_enhancement", False)
         self.use_fingerprint = get_pref("series_fingerprint", "series_fingerprint", True)
         self.enable_title_segmentation = get_pref("enable_title_segmentation", "enable_title_segmentation", False)
+        # 强制 AI 识别（等效特权规则 ai=1）：全局默认关，识别测试页/整理弹窗可单次覆盖
+        self.force_ai = get_pref("force_ai", "force_ai", False)
         # 搜索查询计划（供识别测试页"搜索查询计划"卡片展示）
         self.search_plan = {
             "segmentation": bool(self.enable_title_segmentation),
