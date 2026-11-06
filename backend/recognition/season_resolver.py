@@ -18,11 +18,11 @@
 判定顺序（先强证据，后弱证据）
 ------------------------------
 0. 只有一季                       → 直接采用
-1. 季名对齐（中/英/日三语）        → 强证据，唯一命中才采纳
+1. 季名对齐（中/英/日三语）        → 强证据，唯一命中才采纳；序号由季标或标题尾数给出
 2. 标题尾数（"Edgerunners 2"）    → 必须有季名佐证，否则数字属于标题
 3. 季标 + 季名佐证                → 季标给序号，季名给对齐
 3.5 年份对齐（文件名年份）         → 唯一命中才采纳（强）
-4. 双假设边界校验                 → per_season 优先；absolute 为弱证据（仅记录）
+4. 集数边界校验                   → 有季标才走 per_season；无季标只做 absolute（弱证据，仅记录）
 5. 首播日期                       → 取不晚于参考日期的最新一季（弱证据）
 6. 都不成立                       → None（不猜）
 """
@@ -55,6 +55,8 @@ _EN_ORDINAL = {
 # 强证据：证据不足时不猜，可放心自动应用。on 模式下只自动应用这些理由。
 # 注意：boundary:absolute 不在此列——它假设「绝对集数编号」，证据不足时容易把
 # 漏标季号的文件误改，on 模式只记录不应用。
+# boundary:per-season 在列，但前提是文件名真的给了季标（见 resolve_season 第 4 步）：
+# 没有季标时「默认 base=1」只是把待验假设当结论，不能算证据。
 STRONG_REASONS = frozenset({
     "single-season",
     "name-match",
@@ -131,6 +133,29 @@ def extract_season_marker(filename: str) -> Optional[int]:
             return _ROMAN[raw]
         if raw.isdigit():
             return int(raw)
+    return None
+
+
+# 标题里的「季序号」不是季标，而是标题的一部分：
+#   'Cyberpunk Edgerunners 2'            → 结尾的裸数字
+#   '[ANi] 冰劍的魔術師將要統一世界 2 - 05'  → 紧跟集数之前的裸数字
+# 只在 2-9 里找：1 和「压根没标季号」没法区分。
+_TITLE_TAIL_RE = re.compile(r"(?<=[^\d\s])\s+([2-9])$")
+_TITLE_BEFORE_EP_RE = re.compile(r"(?<=[^\d\s])\s+([2-9])\s*[-–—~]\s*\d{1,4}(?!\d)")
+
+
+def _title_suffix_number(candidates: Iterable[str]) -> Optional[int]:
+    """候选标题里作为「季序号」出现的尾数（区别于集数、也区别于季标）。
+
+    命中之后仍不算数：还要 TMDB 季表里真有这一季、且该季季名带同一序号
+    （见 resolve_season 第 1 步），才当作证据。
+    """
+    for candidate in candidates:
+        text = unicodedata.normalize("NFKC", str(candidate or ""))
+        for pattern in (_TITLE_TAIL_RE, _TITLE_BEFORE_EP_RE):
+            match = pattern.search(text)
+            if match:
+                return int(match.group(1))
     return None
 
 
@@ -220,7 +245,11 @@ def _ordinal_in_names(number: int, season_names: Iterable[str]) -> bool:
             return True
         # 序数词（second / 2nd / ii …）
         for form in _ordinal_forms(number):
-            if len(form) >= 3 and form in norm:
+            if form in _ROMAN:
+                # 罗马数字太短，只认结尾（"…World II" 结尾是 II；"…World" 不是）
+                if len(form) >= 2 and norm.endswith(form):
+                    return True
+            elif len(form) >= 3 and form in norm:
                 return True
     return False
 
@@ -359,11 +388,20 @@ def resolve_season(
 
     by_number = {number: (number, count, names, air) for number, count, names, air in parsed}
 
+    # 序号线索：文件名季标最硬；没有季标时退一步用「标题尾数」（…世界 2 - 05 / Edgerunners 2）。
+    # 两者都只是「线索」——必须由 TMDB 某一季的季名自己带同一序号才算该季的证据，
+    # 否则光凭一个数字就定季号跟瞎猜没区别。
+    ordinal_hint = marker if marker is not None else _title_suffix_number(candidates)
+
     # 1. 季名对齐（强证据）：标题片段 + 序号词，同时命中者优先
     scored = []
     for number, count, names, _air in parsed:
         frag = _name_fragment_score(candidates, names)
-        ordinal_hit = bool(marker and _ordinal_in_names(marker, names))
+        ordinal_hit = bool(
+            ordinal_hint is not None
+            and ordinal_hint == number
+            and _ordinal_in_names(number, names)
+        )
         if frag >= MIN_FRAGMENT or ordinal_hit:
             scored.append((frag, ordinal_hit, number, names))
     if scored:
@@ -389,15 +427,27 @@ def resolve_season(
             season_info = by_number[number]
             count = season_info[1]
             episode = raw_episode
-            # 季名命中 + 集数超出 + 无季标 → 多半是绝对集数，换算成季度内
-            if marker is None and raw_episode and count and raw_episode > count:
+            # 集数边界校验：超界不能默默放过（也不该硬猜）。
+            # 判断依据是「文件自己有没有说这是哪一季」：
+            # - 说了（季标 / 标题尾数）→ 集数按季度内理解，超界多半是 TMDB 集数没跟上，
+            #   集数原样保留，别把 E14 猜成 E02；
+            # - 没说 → 集数可能是绝对编号，但只有换算结果仍落在同一季才采纳，
+            #   否则（季名说 S2、绝对集数却指向 S1）只记录，不擅自改集数。
+            if raw_episode and count and raw_episode > count:
                 mapped = _absolute_episode_map(raw_episode, parsed)
-                if mapped:
+                if ordinal_hint is None and mapped and mapped[0] == number:
                     episode = mapped[1]
+                else:
+                    notes.append(
+                        f"集数 {raw_episode} 超出 S{number} 的 {count} 集（集数原样保留）"
+                    )
             year_hit = bool(file_year and _air_year_matches(season_info[3], file_year))
+            hint_label = ""
+            if ordinal_hit:
+                hint_label = "+序号词(季标)" if marker is not None else "+序号词(标题尾数)"
             detail = (
                 f"季名命中（{_best_name(candidates, names)}）"
-                + ("+序号词" if ordinal_hit else "")
+                + hint_label
                 + (f"+年份佐证（{file_year}）" if year_hit else "")
                 + (f"，集数 {raw_episode}→{episode}" if episode != raw_episode else "")
             )
@@ -407,11 +457,9 @@ def resolve_season(
         tied = "、".join(f"S{number}={frag}" for frag, _o, number, _n in scored[:3])
         notes.append(f"季名对齐并列（{tied}），不采信")
 
-    # 2. 标题尾数：只有当某一季的季名与标题高度重合时才采纳
+    # 2. 标题尾数：只有当某一季的季名与标题高度重合时才采纳（序号词命中已在第 1 步处理）
     for candidate in candidates:
-        tail = re.search(
-            r"(?<=[^\d\s])\s+([2-9])$", unicodedata.normalize("NFKC", candidate or "")
-        )
+        tail = _TITLE_TAIL_RE.search(unicodedata.normalize("NFKC", candidate or ""))
         if not tail:
             continue
         number = int(tail.group(1))
@@ -421,11 +469,11 @@ def resolve_season(
         if _name_fragment_score(candidates, season_info[2]) < MIN_FRAGMENT:
             continue
         count = season_info[1]
-        episode = raw_episode
         if raw_episode and count and raw_episode > count:
-            episode = None  # 尾数当季号但集数越界：只定季号，集数交给调用方
+            # 尾数只用来定季号；集数越界时原样保留，别把 E14 猜成 E02
+            notes.append(f"集数 {raw_episode} 超出 S{number} 的 {count} 集（集数原样保留）")
         return _decision(
-            number, episode if episode is not None else raw_episode,
+            number, raw_episode,
             "title-suffix", f"标题尾数 {number} 被季名证实",
         )
 
@@ -459,15 +507,20 @@ def resolve_season(
         if len(year_hits) > 1:
             notes.append(f"年份 {file_year} 命中多季，不采信")
 
-    # 4. 双假设边界校验：per_season 优先，其次 absolute
+    # 4. 集数边界校验：per_season 只在「文件名确实给了季标」时才成立。
+    #    没有季标时不能默认 base=1——那等于把待验假设直接当结论：任何集数 ≤ S1 集数
+    #    的文件都会被判成 S1（S1/S2 集数相同时这条约束永远无法区分两季），
+    #    会把前置阶段（记忆/锁定 ID）给的季号无谓地压回 S1。这种情况只能退回
+    #    绝对集数换算（boundary:absolute 是弱证据，on 模式只记录不应用）。
     if raw_episode:
-        base = marker or 1
-        season_info = by_number.get(base)
-        if season_info and (not season_info[1] or raw_episode <= season_info[1]):
-            return _decision(
-                base, raw_episode, "boundary:per-season",
-                f"按季度内集数成立（S{base} 共 {season_info[1] or '?'} 集）",
-            )
+        if marker is not None:
+            # 有季标且集数在界内时，第 3 步已经返回；这里只是同一规则的兜底
+            season_info = by_number.get(marker)
+            if season_info and (not season_info[1] or raw_episode <= season_info[1]):
+                return _decision(
+                    marker, raw_episode, "boundary:per-season",
+                    f"按季度内集数成立（S{marker} 共 {season_info[1] or '?'} 集）",
+                )
         mapped = _absolute_episode_map(raw_episode, parsed)
         if mapped:
             number, episode = mapped
