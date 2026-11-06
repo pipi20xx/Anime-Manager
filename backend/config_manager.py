@@ -103,7 +103,15 @@ class ConfigManager:
         "season_split_exclude_patterns": ["总集篇", "recap", r"\bOVA\b"],
         "season_split_priority": "tvdb, bangumi",
         "season_split_source": "",             # CureTMDb 规则表地址（默认不启用，需要自己在高级页填）
+        "season_split_use_source": False,      # 生成方案时是否使用规则表
+        "season_split_force_reference": False, # 跳过「日本动画 + 季数 1~2」的门槛
         "season_split_gap_days": 45,           # 间隔切分阈值（天）
+        "season_split_ref_genre_ids": [16],      # 参照门槛：视为「动画」的 TMDB genre id 列表
+        "season_split_ref_countries": ["JP"],    # 参照门槛：视为「日本动画」的出品国家代码
+        "season_split_ref_season_min": 1,        # 参照门槛：自动参照的有效季数下限
+        "season_split_ref_season_max": 2,        # 参照门槛：自动参照的有效季数上限
+        "season_split_fixed_sizes": [12, 13],    # 固定集数兜底：每 N 集切一季
+        "season_split_gap_mark_days": 21,        # 原始季列表「播出间隔」虚线的显示阈值（天）
         "tvdb_api_key": "",                    # 空 = 使用官方共用 Key
         "custom_noise_words": [],
         "remote_noise_urls": [],

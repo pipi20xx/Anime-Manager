@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 import httpx
 
 from . import compiler, grouping, store
+from .constants import ANIME_GENRE_ID
 from .models import SeriesEntry
 from .reference import BangumiSeasonChain, TMDBAdapter, TVDBClient, load_cure_source
 from .splitter import SeasonSplitter, remove_duplicate_episodes
@@ -29,6 +30,21 @@ def _priority(cfg: dict) -> List[str]:
     if text.startswith("仅"):
         return [text.replace("仅", "").strip()]
     return [x.strip() for x in text.split(",") if x.strip()]
+
+
+def _cfg_list(cfg: dict, key: str, default: list) -> list:
+    """读 list 配置：区分「未设置」与「显式设成空列表」。"""
+    val = cfg.get(key)
+    return list(val) if isinstance(val, list) else default
+
+
+def _cfg_int(cfg: dict, key: str, default: int) -> int:
+    """读 int 配置，缺失/非法时回退默认。"""
+    val = cfg.get(key)
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
 
 
 def _log_collector(bucket: List[str]) -> Callable:
@@ -110,47 +126,123 @@ def _is_volatile(tv_show: dict) -> bool:
 # 参照源
 # ---------------------------------------------------------------------------
 
-async def _pick_reference(structure: dict, opts: dict, log: Callable) -> Optional[SeriesEntry]:
+async def _collect_references(structure: dict, opts: dict, log: Callable) -> dict:
+    """一次性把可用的分季定义全部取回来：{basis: SeriesEntry}。
+
+    和 Lens 的「按优先级取第一个」不同：这里 TVDB / Bangumi / 规则表 都尝试，
+    结果全部作为候选交给页面，由人决定用哪一个（右侧「自动生成」可切换）。
+    """
     cfg = _cfg()
     tmdb = structure["tmdb"]
     tv_show = structure["tv_show"]
+    entries: dict = {}
 
-    source_data: dict = {}
-    if opts.get("use_source"):
+    splitter = SeasonSplitter(tmdb, log)
+
+    # 1) CureTMDb 规则表（命中即用，不依赖后面的国家/季数门槛）
+    use_source = opts.get("use_source")
+    if use_source is None:
+        use_source = bool(cfg.get("season_split_use_source"))
+    if use_source:
         source = (opts.get("source") or cfg.get("season_split_source") or "").strip()
         if not source:
-            log("WARN", "勾选了规则表但没配置地址，已跳过（可在「高级 → 默认参数」里填写）")
+            log("WARN", "启用了规则表但没配置地址，已跳过（高级 → 默认参数里填写）")
         else:
             log("INFO", f"加载 CureTMDb 规则表: {source}")
             try:
                 source_data = await load_cure_source(source)
                 log("INFO", f"规则表条目数: {len(source_data)}")
+                entry = splitter.fetch_cure_tmdb_entry(source_data, int(tv_show.get("id")))
+                if entry is not None:
+                    entries["curetmdb"] = entry
             except Exception as e:
-                log("WARN", f"规则表加载失败，按空表继续: {e}")
-                source_data = {}
+                log("WARN", f"规则表加载失败，跳过: {e}")
 
-    priority = opts.get("priority") or _priority(cfg)
-    if isinstance(priority, str):
-        priority = [x.strip() for x in priority.split(",") if x.strip()]
+    force = opts.get("force_reference")
+    if force is None:
+        force = bool(cfg.get("season_split_force_reference"))
 
-    splitter = SeasonSplitter(tmdb, log)
-    entry = await splitter.fetch_series_entries_sequentially(
-        tv_show,
-        source_data,
-        priority,
-        TVDBClient(cfg.get("tvdb_api_key") or "", log=log),
-        BangumiSeasonChain(log=log),
-        bool(opts.get("force_reference")),
-    )
-    structure["reference_name"] = splitter.last_reference_name or ""
-    return entry
+    # 2) 自动参照门槛：动画类型 / 出品国家 / 有效季数范围（高级里可配置，force 可整体跳过）
+    ref_genre_ids = {
+        int(x) for x in _cfg_list(cfg, "season_split_ref_genre_ids", [ANIME_GENRE_ID])
+        if str(x).strip().lstrip("-").isdigit()
+    }
+    ref_countries = {
+        str(c or "").strip().upper()
+        for c in _cfg_list(cfg, "season_split_ref_countries", ["JP"])
+        if str(c or "").strip()
+    }
+    season_min = _cfg_int(cfg, "season_split_ref_season_min", 1)
+    season_max = _cfg_int(cfg, "season_split_ref_season_max", 2)
 
+    genre_ids = [g.get("id") for g in (tv_show.get("genres") or []) if isinstance(g, dict)]
+    if not genre_ids:
+        genre_ids = tv_show.get("_genre_ids") or []
+    genre_ids = {
+        int(g) for g in genre_ids
+        if isinstance(g, (int, str)) and str(g).strip().lstrip("-").isdigit()
+    }
+    origin = {str(c or "").strip().upper() for c in (tv_show.get("origin_country") or [])}
+
+    is_anime = bool(ref_genre_ids & genre_ids) if ref_genre_ids else True
+    is_country = bool(ref_countries & origin) if ref_countries else True
+    valid_seasons = len(SeasonSplitter._valid_seasons(tv_show))
+
+    if not force and not (is_anime and is_country):
+        log("INFO", "未通过「动画类型 + 出品国家」参照门槛，跳过 TVDB / Bangumi（高级里可改门槛或开「强制参照」）")
+        structure["reference_name"] = next(iter(entries), "")
+        return entries
+    if not force and not (season_min <= valid_seasons <= season_max):
+        log("INFO", f"有效季数={valid_seasons}，不在 {season_min}~{season_max} 范围，跳过 TVDB / Bangumi（高级里可改或强制）")
+        structure["reference_name"] = next(iter(entries), "")
+        return entries
+
+    # 3) TVDB（独立尝试，失败不影响 Bangumi）
+    tvdb_id = int(((tv_show.get("external_ids") or {}).get("tvdb_id")) or 0)
+    if tvdb_id > 0:
+        log("INFO", f"TVDB 参照尝试: tvdbID={tvdb_id}")
+        try:
+            entry = await splitter.fetch_tvdb_entry(TVDBClient(cfg.get("tvdb_api_key") or "", log=log), tvdb_id)
+            if entry is not None and entry.seasons:
+                entries["tvdb"] = entry
+                log("INFO", f"TVDB 参照命中: {len(entry.seasons)} 季定义")
+            else:
+                log("INFO", "TVDB 参照未返回结果")
+        except Exception as e:
+            log("WARN", f"TVDB 参照失败: {e}")
+    else:
+        log("INFO", "TMDB 没有关联 tvdb_id，跳过 TVDB 参照")
+
+    # 4) Bangumi（续集链 → 分季定义）
+    log("INFO", "Bangumi 参照尝试")
+    try:
+        entry = await splitter.fetch_bangumi_entry(BangumiSeasonChain(log=log), tv_show)
+        if entry is not None and entry.seasons:
+            entries["bangumi"] = entry
+            log("INFO", f"Bangumi 参照命中: {len(entry.seasons)} 季定义")
+        else:
+            log("INFO", "Bangumi 参照未返回结果（单条目或未匹配到）")
+    except Exception as e:
+        log("WARN", f"Bangumi 参照失败: {e}")
+
+    structure["reference_name"] = next(iter(entries), "")
+    return entries
 
 # ---------------------------------------------------------------------------
 # 候选分组
 # ---------------------------------------------------------------------------
 
-def _candidates(structure: dict, entry: Optional[SeriesEntry], gap_days: int) -> Dict[str, dict]:
+# 参照源的固定展示顺序（与「参照优先级」设置无关，只影响候选按钮排列）
+_REF_ORDER = ("curetmdb", "tvdb", "bangumi")
+
+
+def _candidates(structure: dict, entries: dict, gap_days: int,
+                fixed_sizes: Optional[list] = None) -> Dict[str, dict]:
+    """所有候选分组：每个参照源一套 + 算法兜底。
+
+    参照源不再「按优先级只取第一个」——TVDB / Bangumi / 规则表 各出一套，
+    页面右侧「自动生成」里逐个可切换比较；固定集数兜底的每季集数可在高级里改。
+    """
     flat = structure["flat"]
     out: Dict[str, dict] = {}
 
@@ -159,27 +251,37 @@ def _candidates(structure: dict, entry: Optional[SeriesEntry], gap_days: int) ->
             return
         out[name] = {"groups": groups, "warnings": grouping.validate(groups, flat)}
 
-    if entry is not None and entry.seasons:
-        ref = structure.get("reference_name") or "reference"
-        add(ref, grouping.from_reference_entry(entry, flat))
+    for basis in _REF_ORDER:
+        entry = entries.get(basis)
+        if entry is not None and entry.seasons:
+            add(basis, grouping.from_reference_entry(entry, flat))
+
     add("gap", grouping.from_gap(flat, gap_days))
     add("year", grouping.from_year(flat))
     add("finale", grouping.from_finale(flat))
-    add("fixed12", grouping.from_fixed(flat, 12))
-    add("fixed13", grouping.from_fixed(flat, 13))
+    for size in (fixed_sizes or [12, 13]):
+        try:
+            size = int(size)
+        except (TypeError, ValueError):
+            continue
+        if size > 0:
+            add(f"fixed{size}", grouping.from_fixed(flat, size))
     add("whole", grouping.from_fixed(flat, max(1, len(flat))))
     return out
 
 
-def _pick_default(candidates: Dict[str, dict], need_split: bool, reference_name: str) -> str:
-    if need_split and reference_name in candidates:
-        return reference_name
+def _pick_default(candidates: Dict[str, dict], split_bases: list, priority: list) -> str:
+    """默认选中哪个依据：按「参照优先级」里第一个既有候选又能拆分的源；
+    都不行时退到算法依据（gap / year / finale 里第一个能拆的）。"""
+    for key in priority:
+        if key in split_bases and key in candidates:
+            return key
+    if split_bases:
+        return split_bases[0]
     for name in ("gap", "year", "finale"):
         item = candidates.get(name)
         if item and len(item["groups"]) > 1:
             return name
-    if need_split and candidates:
-        return next(iter(candidates))
     return "whole" if "whole" in candidates else (next(iter(candidates)) if candidates else "")
 
 
@@ -236,12 +338,24 @@ def compile_rule(tmdb_id: int, flat: list, groups: list,
 # ---------------------------------------------------------------------------
 
 async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
-    """预览：拉结构 + 挑参照 + 出候选分组 + 编译默认方案。不落库。"""
+    """预览：拉结构 + 取全部参照源 + 出候选分组 + 编译默认方案。不落库。
+
+    参照源不再「按优先级只取第一个」：TVDB / Bangumi / 规则表 能找到的全部返回，
+    页面右侧「自动生成」里逐个切换比较；「参照优先级」只决定默认选中哪一个。
+    """
     opts = opts or {}
     logs: List[str] = []
     log = _log_collector(logs)
     cfg = _cfg()
     gap_days = int(cfg.get("season_split_gap_days") or DEFAULT_GAP_DAYS)
+    gap_mark_days = _cfg_int(cfg, "season_split_gap_mark_days", 21)
+    fixed_sizes = [
+        int(x) for x in _cfg_list(cfg, "season_split_fixed_sizes", [12, 13])
+        if str(x).strip().isdigit()
+    ] or [12, 13]
+    priority = opts.get("priority") or _priority(cfg)
+    if isinstance(priority, str):
+        priority = [x.strip() for x in priority.split(",") if x.strip()]
 
     log("INFO", f"开始分析 TMDB {tmdb_id}")
     structure = await _fetch_structure(tmdb_id, log)
@@ -250,18 +364,29 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
     if not flat:
         raise ValueError("TMDB 没有返回任何剧集数据")
 
-    entry = await _pick_reference(structure, opts, log)
-    reference_name = structure.get("reference_name") or ""
-    need_split = bool(entry is not None and entry.has_inconsistent(structure["actual_counts"]))
-    if entry is None:
-        log("INFO", "未取得分季参照（TVDB/Bangumi/规则表均无结果），仅提供算法候选")
-    elif need_split:
-        log("INFO", f"分季依据 {reference_name} 与 TMDB 结构不一致 → 需要拆分")
-    else:
-        log("INFO", "TMDB 结构与分季定义一致 → 不需要拆分")
+    entries = await _collect_references(structure, opts, log)
 
-    candidates = _candidates(structure, entry, gap_days)
-    default_basis = _pick_default(candidates, need_split, reference_name)
+    split_bases = [
+        name for name, entry in entries.items()
+        if entry is not None and entry.has_inconsistent(structure["actual_counts"])
+    ]
+    need_split = bool(split_bases)
+
+    if not entries:
+        log("INFO", "未取得任何分季参照（TVDB / Bangumi / 规则表），仅提供算法候选")
+    else:
+        for name in _REF_ORDER:
+            entry = entries.get(name)
+            if entry is None:
+                continue
+            counts = " + ".join(
+                str(s.episode_count) for s in sorted(entry.seasons, key=lambda s: s.season_number)
+            )
+            verdict = "需要拆分" if name in split_bases else "与 TMDB 结构一致"
+            log("INFO", f"参照 {name}: {counts} 集 → {verdict}")
+
+    candidates = _candidates(structure, entries, gap_days, fixed_sizes)
+    default_basis = _pick_default(candidates, split_bases, priority)
     title = tv_show.get("name") or tv_show.get("original_name") or f"TMDB {tmdb_id}"
 
     compiled = {"mapping": {}, "render_words": "", "group_json": {}, "rows": [], "warnings": []}
@@ -271,7 +396,10 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
             reference=default_basis, title=title,
         )
 
+    # 分季定义明细：展示默认选中的那个参照源
     definition = []
+    definition_source = default_basis if default_basis in entries else next(iter(entries), "")
+    entry = entries.get(definition_source)
     if entry is not None:
         for season in sorted(entry.seasons, key=lambda s: s.season_number):
             definition.append({
@@ -285,13 +413,28 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
                 ],
             })
 
+    references = {
+        name: {
+            "name": item.name or "",
+            "split": name in split_bases,
+            "seasons": [
+                {"season_number": s.season_number, "episode_count": s.episode_count,
+                 "name": s.name or f"第 {s.season_number} 季"}
+                for s in sorted(item.seasons, key=lambda s: s.season_number)
+            ],
+        }
+        for name, item in entries.items()
+        if item is not None
+    }
+
     existing = await store.get_rule(tmdb_id)
     structure_hash = _structure_hash(tv_show)
 
     return {
         "tmdb_id": tmdb_id,
         "title": title,
-        "reference": reference_name,
+        "reference": definition_source,
+        "references": references,
         "need_split": need_split,
         "volatile": _is_volatile(tv_show),
         "status": tv_show.get("status") or "",
@@ -305,7 +448,8 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
             "first_air_date": tv_show.get("first_air_date") or "",
         },
         "episodes": flat,
-        "gaps": grouping.gaps(flat),
+        "gaps": grouping.gaps(flat, gap_mark_days),
+        "gap_mark_days": gap_mark_days,
         "definition": definition,
         "candidates": candidates,
         "default_basis": default_basis,
@@ -314,7 +458,6 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
         "gap_days": gap_days,
         "logs": logs,
     }
-
 
 async def compile_only(payload: dict) -> dict:
     """按前端提交的分组重新编译（不落库）。"""
@@ -446,8 +589,16 @@ def settings_snapshot() -> dict:
         "blacklist": cfg.get("season_split_blacklist") or [],
         "exclude_patterns": cfg.get("season_split_exclude_patterns") or [],
         "priority": cfg.get("season_split_priority") or "tvdb, bangumi",
+        "use_source": bool(cfg.get("season_split_use_source")),
+        "force_reference": bool(cfg.get("season_split_force_reference")),
         "source": cfg.get("season_split_source") or "",
         "gap_days": cfg.get("season_split_gap_days") or DEFAULT_GAP_DAYS,
+        "ref_genre_ids": _cfg_list(cfg, "season_split_ref_genre_ids", [16]),
+        "ref_countries": _cfg_list(cfg, "season_split_ref_countries", ["JP"]),
+        "ref_season_min": _cfg_int(cfg, "season_split_ref_season_min", 1),
+        "ref_season_max": _cfg_int(cfg, "season_split_ref_season_max", 2),
+        "fixed_sizes": _cfg_list(cfg, "season_split_fixed_sizes", [12, 13]),
+        "gap_mark_days": _cfg_int(cfg, "season_split_gap_mark_days", 21),
         "tvdb_key_configured": bool((cfg.get("tvdb_api_key") or "").strip()),
         "cache": store.cache_stats(),
     }
@@ -459,7 +610,11 @@ def settings_update(payload: dict) -> dict:
     allowed = {
         "season_split_mode", "season_split_scope", "season_split_blacklist",
         "season_split_exclude_patterns", "season_split_priority", "season_split_source",
-        "season_split_gap_days", "tvdb_api_key",
+        "season_split_gap_days", "season_split_use_source", "season_split_force_reference",
+        "season_split_ref_genre_ids", "season_split_ref_countries",
+        "season_split_ref_season_min", "season_split_ref_season_max",
+        "season_split_fixed_sizes", "season_split_gap_mark_days",
+        "tvdb_api_key",
     }
     patch = {k: v for k, v in (payload or {}).items() if k in allowed}
     if "season_split_mode" in patch:

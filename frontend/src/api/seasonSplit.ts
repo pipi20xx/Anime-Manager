@@ -77,10 +77,17 @@ export interface SplitRule {
   updated_at?: string
 }
 
+export interface ReferenceSummary {
+  name: string
+  split: boolean
+  seasons: Array<{ season_number: number; episode_count: number; name: string }>
+}
+
 export interface PreviewResult {
   tmdb_id: number
   title: string
   reference: string
+  references: Record<string, ReferenceSummary>
   need_split: boolean
   volatile: boolean
   status: string
@@ -105,6 +112,7 @@ export interface PreviewResult {
   suggested: CompileResult
   existing_rule: SplitRule | null
   gap_days: number
+  gap_mark_days: number
   logs: string[]
 }
 
@@ -115,7 +123,15 @@ export interface SeasonSplitSettings {
   exclude_patterns: string[]
   priority: string
   source: string
+  use_source: boolean
+  force_reference: boolean
   gap_days: number
+  ref_genre_ids: number[]
+  ref_countries: string[]
+  ref_season_min: number
+  ref_season_max: number
+  fixed_sizes: number[]
+  gap_mark_days: number
   tvdb_key_configured: boolean
   cache: { count: number; version: string; loaded_at: string | null; mode: string }
 }

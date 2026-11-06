@@ -188,8 +188,9 @@ def from_cuts(flat: list, cut_after: list) -> list:
 # 辅助
 # ---------------------------------------------------------------------------
 
-def gaps(flat: list) -> list:
+def gaps(flat: list, mark_days: int = 21) -> list:
     """给前端画「间隔虚线」用：[{after: {s,e}, days: n}, ...]"""
+    mark_days = int(mark_days or 21)
     out = []
     prev = None
     prev_ep = None
@@ -197,7 +198,7 @@ def gaps(flat: list) -> list:
         cur = _air_date(ep)
         if prev is not None and cur is not None and prev_ep is not None:
             delta = (cur - prev).days
-            if delta > 21:
+            if delta > mark_days:
                 out.append({"after": _bound(prev_ep), "days": delta})
         if cur is not None:
             prev = cur

@@ -20,9 +20,9 @@ router = APIRouter(prefix="/season-split", tags=["番剧分季"])
 class PreviewRequest(BaseModel):
     tmdb_id: int
     priority: Optional[str] = Field(default=None, description="tvdb, bangumi / bangumi, tvdb / 仅 tvdb / 仅 bangumi")
-    use_source: bool = Field(default=False, description="启用 CureTMDb 外部分季规则表")
+    use_source: Optional[bool] = Field(default=None, description="启用 CureTMDb 外部分季规则表（空则用系统设置）")
     source: Optional[str] = Field(default=None, description="规则表地址（空则用系统设置）")
-    force_reference: bool = Field(default=False, description="忽略「仅日本动画 / 季数 1~2」的自动参照门槛")
+    force_reference: Optional[bool] = Field(default=None, description="忽略「仅日本动画 / 季数 1~2」的自动参照门槛（空则用系统设置）")
 
 
 class CompileRequest(BaseModel):
@@ -45,7 +45,15 @@ class SettingsRequest(BaseModel):
     season_split_exclude_patterns: Optional[List[str]] = None
     season_split_priority: Optional[str] = None
     season_split_source: Optional[str] = None
+    season_split_use_source: Optional[bool] = None
+    season_split_force_reference: Optional[bool] = None
     season_split_gap_days: Optional[int] = None
+    season_split_ref_genre_ids: Optional[List[int]] = None
+    season_split_ref_countries: Optional[List[str]] = None
+    season_split_ref_season_min: Optional[int] = None
+    season_split_ref_season_max: Optional[int] = None
+    season_split_fixed_sizes: Optional[List[int]] = None
+    season_split_gap_mark_days: Optional[int] = None
     tvdb_api_key: Optional[str] = None
 
 

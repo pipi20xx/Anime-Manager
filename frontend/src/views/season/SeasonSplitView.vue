@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 /**
  * 番剧分季拆分
  *
@@ -12,6 +12,7 @@ import {
   type CompileResult,
   type PreviewResult,
   type SeasonSplitSettings,
+  type ReferenceSummary,
   type SplitEpisode,
   type SplitGroup,
   type SplitRule,
@@ -43,8 +44,16 @@ const settings = reactive<SeasonSplitSettings>({
   blacklist: [],
   exclude_patterns: [],
   priority: 'tvdb, bangumi',
+  use_source: false,
+  force_reference: false,
   source: '',
   gap_days: 45,
+  ref_genre_ids: [16],
+  ref_countries: ['JP'],
+  ref_season_min: 1,
+  ref_season_max: 2,
+  fixed_sizes: [12, 13],
+  gap_mark_days: 21,
   tvdb_key_configured: false,
   cache: { count: 0, version: '', loaded_at: null, mode: 'off' },
 })
@@ -68,6 +77,15 @@ async function loadSettings() {
     const data = await seasonSplitApi.getSettings()
     Object.assign(settings, data)
     settings.scope = { organize: true, subscription: false, recognition_test: false, ...(data.scope || {}) }
+    settings.ref_genre_ids = Array.isArray(data.ref_genre_ids) ? data.ref_genre_ids : [16]
+    settings.ref_countries = Array.isArray(data.ref_countries) ? data.ref_countries : ['JP']
+    settings.fixed_sizes = Array.isArray(data.fixed_sizes) ? data.fixed_sizes : [12, 13]
+    settings.ref_season_min = data.ref_season_min ?? 1
+    settings.ref_season_max = data.ref_season_max ?? 2
+    settings.gap_mark_days = data.gap_mark_days ?? 21
+    refGenreIdsText.value = (settings.ref_genre_ids || []).join(', ')
+    refCountriesText.value = (settings.ref_countries || []).join(', ')
+    fixedSizesText.value = (settings.fixed_sizes || []).join(', ')
   } catch (e: any) {
     showError(`读取设置失败: ${e.message}`)
   }
@@ -80,8 +98,16 @@ async function saveSettings() {
       season_split_scope: settings.scope,
       season_split_blacklist: settings.blacklist,
       season_split_priority: settings.priority,
+      season_split_use_source: settings.use_source,
+      season_split_force_reference: settings.force_reference,
       season_split_source: settings.source,
       season_split_gap_days: settings.gap_days,
+      season_split_ref_genre_ids: settings.ref_genre_ids,
+      season_split_ref_countries: settings.ref_countries,
+      season_split_ref_season_min: settings.ref_season_min,
+      season_split_ref_season_max: settings.ref_season_max,
+      season_split_fixed_sizes: settings.fixed_sizes,
+      season_split_gap_mark_days: settings.gap_mark_days,
     })
     settings.cache = data.cache
     success('设置已保存')
@@ -124,7 +150,64 @@ function addBlacklist() {
   }
   if (!settings.blacklist.includes(id)) settings.blacklist.push(id)
   blacklistInput.value = ''
+}
+
+// 高级：参照门槛 / 兜底的列表型输入（逗号分隔，blur 时解析并保存）
+const refGenreIdsText = ref('')
+const refCountriesText = ref('')
+const fixedSizesText = ref('')
+
+function parseIntList(text: string): number[] {
+  return text
+    .split(/[,，\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => Number(s))
+    .filter((n) => Number.isInteger(n) && n > 0)
+}
+
+function parseStrList(text: string): string[] {
+  return text
+    .split(/[,，\s]+/)
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean)
+}
+
+function parseListTextsToSettings() {
+  settings.ref_genre_ids = parseIntList(refGenreIdsText.value)
+  settings.ref_countries = parseStrList(refCountriesText.value)
+  settings.fixed_sizes = parseIntList(fixedSizesText.value)
+}
+
+function saveAdvanced() {
+  parseListTextsToSettings()
   saveSettings()
+}
+
+async function resetReferenceDefaults() {
+  settings.ref_genre_ids = [16]
+  settings.ref_countries = ['JP']
+  settings.ref_season_min = 1
+  settings.ref_season_max = 2
+  settings.fixed_sizes = [12, 13]
+  settings.gap_mark_days = 21
+  refGenreIdsText.value = '16'
+  refCountriesText.value = 'JP'
+  fixedSizesText.value = '12, 13'
+  try {
+    const data = await seasonSplitApi.updateSettings({
+      season_split_ref_genre_ids: [16],
+      season_split_ref_countries: ['JP'],
+      season_split_ref_season_min: 1,
+      season_split_ref_season_max: 2,
+      season_split_fixed_sizes: [12, 13],
+      season_split_gap_mark_days: 21,
+    })
+    settings.cache = data.cache
+    success('已恢复默认并保存')
+  } catch (e: any) {
+    showError(`恢复默认失败: ${e.message}`)
+  }
 }
 
 // ---------------------------------------------------------------- 规则库
@@ -219,7 +302,6 @@ async function pushGroup(rule: SplitRule | null | undefined) {
 
 // ---------------------------------------------------------------- 工作台
 const tmdbId = ref('')
-const runOptions = reactive({ priority: 'tvdb, bangumi', use_source: false, force_reference: false })
 const preview = ref<PreviewResult | null>(null)
 const compileResult = ref<CompileResult | null>(null)
 const groups = ref<SplitGroup[]>([])
@@ -251,13 +333,15 @@ const basisLabel: Record<string, string> = {
   gap: '播出间隔',
   year: '播出年份',
   finale: '季结局标记',
-  fixed12: '每 12 集',
-  fixed13: '每 13 集',
   whole: '整季（不拆）',
   manual: '手动',
 }
 
 function labelOf(key: string) {
+  if (key.startsWith('fixed')) {
+    const n = key.slice(5)
+    return /^\d+$/.test(n) ? `每 ${n} 集` : key
+  }
   return basisLabel[key] || key || '—'
 }
 
@@ -291,10 +375,10 @@ const candidateList = computed(() =>
 )
 
 const recommendedCandidates = computed(() =>
-  candidateList.value.filter((c) => !['fixed12', 'fixed13', 'whole'].includes(c.key)),
+  candidateList.value.filter((c) => c.key !== 'whole' && !c.key.startsWith('fixed')),
 )
 const manualCandidates = computed(() =>
-  candidateList.value.filter((c) => ['fixed12', 'fixed13', 'whole'].includes(c.key)),
+  candidateList.value.filter((c) => c.key === 'whole' || c.key.startsWith('fixed')),
 )
 
 const coveredEpisodes = computed(() => compileResult.value?.episode_total ?? 0)
@@ -307,12 +391,7 @@ async function runPreview() {
   }
   loading.value = true
   try {
-    const data = await seasonSplitApi.preview({
-      tmdb_id: id,
-      priority: runOptions.priority,
-      use_source: runOptions.use_source,
-      force_reference: runOptions.force_reference,
-    })
+    const data = await seasonSplitApi.preview({ tmdb_id: id })
     preview.value = data
     const basis = data.default_basis && data.candidates?.[data.default_basis] ? data.default_basis : 'whole'
     reference.value = basis
@@ -494,6 +573,11 @@ const mappingRows = computed(() => compileResult.value?.rows || [])
 const renderWords = computed(() => compileResult.value?.render_words || '')
 const groupJsonText = computed(() => JSON.stringify(compileResult.value?.group_json || {}, null, 2))
 
+/** 参照源季集数摘要，如 12 + 14 */
+function refSummary(ref: ReferenceSummary) {
+  return (ref.seasons || []).map((s) => s.episode_count).join(' + ')
+}
+
 /** 两位补零（模板里用） */
 function pad2(value: number | string) {
   return String(value ?? '').padStart(2, '0')
@@ -610,11 +694,12 @@ onMounted(async () => {
 
           <div class="section-title mb-1">拆分流程</div>
           <ol class="text-body-2 pl-5 mb-3">
-            <li>勾选并已填「规则表地址」时：命中该 TMDB ID 就直接作为分季定义</li>
-            <li>否则（日本动画且有效季数 1~2）按参照优先级尝试 TVDB / Bangumi</li>
-            <li>仅当 TMDB 某季实际集数 &gt; 定义集数，才认为「需要拆分」</li>
+            <li>规则表（高级里启用时）命中该 TMDB ID → 出一套候选</li>
+            <li>TVDB、Bangumi <b>各出一套候选</b>（默认只对「日本动画且有效季数 1~2」，高级里可强制）</li>
+            <li>三套候选并列在右侧「自动生成」里，可逐个切换对比；「参照优先级」只决定默认选中哪一个</li>
+            <li>仅当某套参照的集数 &lt; TMDB 实际集数，才认为这套「需要拆分」（列表上方 chip 会标出来）</li>
             <li>拉全原始季 → 同日跨季去重 → 按播出日期摊平</li>
-            <li>按定义逐季重灌：集号从 1 重排，切出虚拟季</li>
+            <li>按选定定义逐季重灌：集号从 1 重排，切出虚拟季</li>
             <li>编译成渲染词 + 剧集组；没有参照时可用「播出间隔 / 年份 / finale / 固定集数」自动分组</li>
             <li>保存为「生效」后整理时自动套用；Emby 显示还要另外点「写 SYTMDB」</li>
           </ol>
@@ -746,17 +831,6 @@ onMounted(async () => {
             style="max-width: 160px"
             @keyup.enter="runPreview"
           />
-          <v-select
-            v-model="runOptions.priority"
-            :items="priorityOptions"
-            label="参照优先级"
-            density="compact"
-            variant="outlined"
-            hide-details
-            style="max-width: 190px"
-          />
-          <v-checkbox v-model="runOptions.use_source" label="CureTMDb 规则表" density="compact" hide-details />
-          <v-checkbox v-model="runOptions.force_reference" label="强制参照" density="compact" hide-details />
           <v-btn color="primary" variant="tonal" prepend-icon="mdi-auto-fix" :loading="loading" @click="runPreview">
             生成方案
           </v-btn>
@@ -767,13 +841,23 @@ onMounted(async () => {
             <v-chip v-else size="small" variant="tonal">结构一致</v-chip>
             <v-chip v-if="preview.volatile" size="small" color="warning" variant="tonal">连载中</v-chip>
             <v-chip v-if="preview.stale" size="small" color="error" variant="tonal">方案已过期</v-chip>
+            <v-chip
+              v-for="(ref, key) in preview.references"
+              :key="key"
+              size="small"
+              variant="tonal"
+              :color="ref.split ? 'info' : undefined"
+              :title="ref.split ? '该参照源与 TMDB 结构不一致，需要拆分' : '该参照源与 TMDB 结构一致'"
+            >
+              {{ String(key).toUpperCase() }} {{ refSummary(ref) }}
+            </v-chip>
           </template>
         </div>
 
         <div class="text-caption text-medium-emphasis mb-3 px-1">
-          参照顺序：规则表命中 → 直接采用，不再走 TVDB / Bangumi；未勾选或未填地址则按优先级尝试 TVDB、Bangumi。
-          自动参照默认只处理「日本动画且有效季数 1~2」的剧集，勾「强制参照」后不满足条件也强制尝试。
-          右侧数字是该依据会切成的集数（如 <code>12 + 14</code>）。
+          「生成方案」会同时拉取 TVDB 与 Bangumi（启用规则表时再加一份），右侧「自动生成」里逐个切换比较；
+          <b>参照优先级 / 规则表 / 强制参照</b> 统一在「高级 → 默认参数」里设置。
+          候选卡片右侧的数字是该依据会切成的集数（如 <code>12 + 14</code>）。
         </div>
 
         <v-card v-if="!preview" class="glass-card">
@@ -814,7 +898,7 @@ onMounted(async () => {
                     </div>
                     <div v-if="gapSet.has(`${ep.season_number}-${ep.episode_number}`)" class="gap-line text-caption">
                       <v-icon size="x-small">mdi-arrow-down-thin</v-icon>
-                      播出间隔 &gt; 21 天
+                      播出间隔 &gt; {{ preview.gap_mark_days }} 天
                     </div>
                   </template>
                 </div>
@@ -1082,6 +1166,13 @@ onMounted(async () => {
 
       <!-- ============================================================ 高级 -->
       <div v-else-if="activeTab === 'advanced'">
+        <div class="d-flex align-center ga-2 mb-4">
+          <span class="section-title">高级设置</span>
+          <v-spacer />
+          <v-btn color="primary" variant="tonal" prepend-icon="mdi-content-save" @click="saveAdvanced">
+            保存设置
+          </v-btn>
+        </div>
         <v-row>
           <v-col cols="12" md="6">
             <v-card class="glass-card mb-4">
@@ -1091,19 +1182,33 @@ onMounted(async () => {
                 <v-select
                   v-model="settings.priority"
                   :items="priorityOptions"
-                  label="参照优先级"
+                  label="参照优先级（只决定默认选中哪个）"
                   density="compact"
                   variant="outlined"
                   hide-details
-                  @update:model-value="saveSettings"
                 />
+                <div class="d-flex flex-wrap ga-4">
+                  <v-switch
+                    v-model="settings.use_source"
+                    label="启用 CureTMDb 规则表"
+                    density="compact"
+                    hide-details
+                    color="primary"
+                  />
+                  <v-switch
+                    v-model="settings.force_reference"
+                    label="强制参照（跳过「日本动画 + 季数 1~2」门槛）"
+                    density="compact"
+                    hide-details
+                    color="primary"
+                  />
+                </div>
                 <v-text-field
                   v-model="settings.source"
                   label="CureTMDb 规则表地址（留空 = 不使用）"
                   density="compact"
                   variant="outlined"
                   hide-details
-                  @blur="saveSettings"
                 />
                 <div class="text-caption text-medium-emphasis">
                   规则表命中会直接作为分季定义；留空时「生成方案」里勾了也不会去拉取。
@@ -1115,7 +1220,6 @@ onMounted(async () => {
                   density="compact"
                   variant="outlined"
                   hide-details
-                  @blur="saveSettings"
                 />
                 <div class="text-caption text-medium-emphasis">
                   「播出间隔」作为切分依据时，相邻两集首播日期相差超过这个天数就切一刀。默认 45 天。
@@ -1138,6 +1242,72 @@ onMounted(async () => {
               </div>
             </v-card>
 
+            <v-card class="glass-card mb-4">
+              <v-card-title class="text-subtitle-2 d-flex align-center">
+                参照门槛与自动生成
+                <v-spacer />
+                <v-btn size="small" variant="text" prepend-icon="mdi-restore" @click="resetReferenceDefaults">
+                  恢复默认
+                </v-btn>
+              </v-card-title>
+              <v-divider />
+              <div class="pa-3 d-flex flex-column ga-3">
+                <div class="text-caption text-medium-emphasis">
+                  自动拉取 TVDB / Bangumi 时的门槛（未开「强制参照」时生效）；列表留空表示不限制该项。
+                </div>
+                <v-text-field
+                  v-model="refGenreIdsText"
+                  label="动画类型（TMDB genre id，逗号分隔）"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                />
+                <v-text-field
+                  v-model="refCountriesText"
+                  label="出品国家（ISO 代码，逗号分隔）"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                />
+                <div class="d-flex ga-2">
+                  <v-text-field
+                    v-model.number="settings.ref_season_min"
+                    type="number"
+                    label="有效季数下限"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                  />
+                  <v-text-field
+                    v-model.number="settings.ref_season_max"
+                    type="number"
+                    label="有效季数上限"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                  />
+                </div>
+                <v-text-field
+                  v-model="fixedSizesText"
+                  label="固定集数兜底（每季集数，逗号分隔）"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                />
+                <v-text-field
+                  v-model.number="settings.gap_mark_days"
+                  type="number"
+                  label="间隔虚线显示阈值（天）"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                />
+                <div class="text-caption text-medium-emphasis">
+                  固定集数兜底会出现在右侧「自动生成」里；间隔虚线阈值只影响原始季列表的虚线显示，不影响切分。
+                </div>
+              </div>
+            </v-card>
+
             <v-card class="glass-card">
               <v-card-title class="text-subtitle-2">番剧黑名单</v-card-title>
               <v-divider />
@@ -1150,7 +1320,7 @@ onMounted(async () => {
                     size="small"
                     closable
                     variant="tonal"
-                    @click:close="settings.blacklist.splice(i, 1); saveSettings()"
+                    @click:close="settings.blacklist.splice(i, 1)"
                   >
                     {{ id }}
                   </v-chip>
