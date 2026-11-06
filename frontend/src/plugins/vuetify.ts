@@ -6,11 +6,12 @@
  * - 暗色：纯黑底 #121212 + 主强调色
  * - 主色调可通过主题定制器（PrimaryColorDialog）动态切换，不分白天/夜晚
  * - ACG / 液态玻璃主题通过 CSS 覆盖实现
- * - 图标：全部使用 MDI (@mdi/js)
+ * - 图标：使用 MDI 字体（@mdi/font，本地自托管，不依赖 CDN）
  */
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
+import '@mdi/font/css/materialdesignicons.min.css'
 import 'vuetify/styles'
 
 import { isThemeDark, readStoredAppTheme } from '@/composables/useThemeStore'

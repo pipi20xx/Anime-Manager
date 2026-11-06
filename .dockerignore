@@ -1,0 +1,39 @@
+# 关键：不要把本机（Windows/SMB）的 node_modules 拷进镜像。
+# Docker 构建在 Linux 容器内自行 `npm install`；若 COPY frontend/ 把
+# 本机 node_modules 一起拷进去，会覆盖容器内刚装好的 Linux node_modules，
+# 而 Windows 下 npm 生成的 bin 是 shell shim，导致 `vue-tsc`/`vite` 等
+# 在容器里报 "basedir=$(dirname..." 语法错误。
+**/node_modules
+frontend/dist
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+**/__pycache__
+**/*.py[cod]
+.venv
+venv
+env
+ENV
+.pytest_cache
+
+# 密钥 / 环境
+.env
+.env.*
+
+# 运行时数据（镜像内会重新创建 data 目录）
+data
+aadata
+meta_cache.db
+shibie/data
+
+# IDE / 系统
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

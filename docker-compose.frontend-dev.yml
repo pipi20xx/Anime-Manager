@@ -33,6 +33,10 @@ services:
     working_dir: /app/frontend
     volumes:
       - ./frontend:/app/frontend
+      # 关键：node_modules 用独立命名卷，避免宿主机（Windows/SMB）npm 生成的
+      # 坏 bin（shell shim）被挂进容器，导致 vite/vue-tsc 报 basedir=... 语法错误。
+      # 该卷由容器内 Linux 的 npm install 自行填充，bin 是正确格式。
+      - frontend_node_modules:/app/frontend/node_modules
     ports:
       - "5174:5173"   # Vite 开发服务器
     environment:
@@ -41,3 +45,6 @@ services:
     depends_on:
       - apm-backend
     restart: unless-stopped
+
+volumes:
+  frontend_node_modules:
