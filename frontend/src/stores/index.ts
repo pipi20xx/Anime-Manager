@@ -2,4 +2,5 @@
 export { useSystemStore } from './useSystemStore'
 export { useRecognitionStore } from './useRecognitionStore'
 export { useNavigationStore } from './useNavigationStore'
+export { useSeasonSplitStore } from './useSeasonSplitStore'
 export { useThemeStore } from '@/composables/useThemeStore'
