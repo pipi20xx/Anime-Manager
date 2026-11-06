@@ -102,7 +102,7 @@
     │
     ├── 4. [SeasonStage] 季号校准阶段 (recognition/pipeline/season.py + season_resolver.py) ⭐
     │       ⬇️ 用 TMDB 季表（季名 zh/en/ja + 每季集数 + 首播日）确定性推算季号，**不调用模型**
-    │       ⬇️ 判定顺序: 单季 → 季名对齐 → 标题尾数 → 季标 → 年份对齐 → 双假设边界 → 首播日期 → 不定
+    │       ⬇️ 判定顺序: 单季 → 季名对齐 → 标题尾数 → 季标 → 年份对齐 → 双假设边界 → 首播日期 → 跨年续播偏移 → 不定
     │       ⬇️ 模式: off / shadow（只算不生效）/ on（默认；强证据下不一致时采纳，弱证据仅记录）
     │       (Log: "[季号校准] 季名对齐(name-match) → S2（原 S1）· 季名命中 Cyberpunk: Edgerunners 2")
     │
@@ -637,11 +637,14 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **职责**: 匹配完成后，用 TMDB 季表把规则层解析出的季号/集数校一遍。**纯确定性，不调用模型**
 - **依据**: 每季的 `name` / `name_en` / `name_ja`、`episode_count`、`air_date`
 - **标题候选**: `privileged_title` → `processed_name` → `en_name` → `cn_name` → 原始文件名（内核清理标题时会把尾部序号当噪声剥掉，只用一个字段会丢关键信息）
-- **判定顺序**: 只有一季 → 季名对齐（标题片段 + 序号词）→ 标题尾数（须季名佐证）→ 季标 → 年份对齐 → 双假设边界（per-season / absolute，absolute 为弱证据）→ 首播日期 → 不定
+- **判定顺序**: 只有一季 → 季名对齐（标题片段 + 序号词）→ 标题尾数（须季名佐证）→ 季标 → 年份对齐 → 双假设边界（per-season / absolute，absolute 为弱证据）→ 首播日期 → **跨年续播偏移** → 不定
 - **合并季防护**: 「只有一季」这条只在文件名没有明确季标冲突时才采纳。若 TMDB 只有一季（如 Re:0 全集并到 S1，85 集）但文件名写了 `第四季` / `Season 4` / `Part 4`，判为 `single-season-merge`（疑似合并季），**保留原季号**，避免 `S4 → S1` 这种误改
 - **季表来源与过期刷新**: 季表优先取 `ctx.tmdb_data["seasons"]` → 联网详情（7 天缓存）→ 本地数据中心档案兜底。判断档案是否过期**不依赖档案里的 `status`/`in_production`**（那字段本身也存在同一份过期档案里，`Ended` 之后又出新季会漏掉），而是直接拿 7 天缓存的云端季表做基准比对，季表指纹（季号/集数/季名/首播日）不一致就触发统一全量刷新 `fetch_and_ingest(force=True)`（整行覆盖，保留 `custom_title`），并继续用云端季表判定本次季号。解决「智能记忆命中 → 用旧档案季表 → 判错季」的问题
 - **并列处理**: 多季季名与标题等长匹配时判为「无区分度」，不采信，log 里写明并列情况
 - **三档模式**（`season_resolve_mode`）: `off` / `shadow`（只算并写日志，不改结果）/ `on`（强证据下不一致时采纳，默认；弱证据仅记录不应用）
+- **跨年续播偏移**: 季号已定 + 文件名带年份 + 有集数时，按需拉 `/tv/{id}/season/{n}` 的逐集数据（6h 缓存，且只查「首播年早于文件年份」的季）。**分段边界优先取 TMDB 的 `episode_type`**：`mid_season`（季中结局）/ `finale`（本季大结局）之后的第一集才是下一 cour 的起点（要求该集播出年 = 文件名年份）；整季没有任何分段标记时才退回「`air_date` 落在文件名年份的第一集」。随后 `文件集数 + (k-1)` 就是该季的真实集号——典型如 TMDB 把两个 cour 并成一季（S1 共 24 集，ep13 标季中结局），`(2026) [03]` 实为 S1E16
+  - 有分段标记 → `boundary:year-offset`，**强证据，直接应用**
+  - 整季无标记、只按日历跨年推 → `boundary:year-calendar`，弱证据仅记录；打开 `season_year_offset_apply` 后才应用
 - **日志**: `[季号校准] 季名对齐(name-match) → S2（原 S1）· 季名命中 Cyberpunk: Edgerunners 2`
 - **为什么要它**: 内核只用正则抽数字当季号，抽不到默认 1；`Edgerunners 2`、`Act II S2` 这类“作品内第 N 部”靠正则永远判不出来，而 TMDB 季名里写着答案
 
@@ -1021,6 +1024,7 @@ L1 内核不含任何数据库或网络代码。
 | `forceFilename` | 强制单文件模式，启用路径分隔符脱敏 | OFF |
 | `seriesFingerprint` | 智能记忆 | ON |
 | `seasonResolveMode` | 季号校准：`off` 关闭 / `shadow` 只算不生效（观察准确率）/ `on` 强证据下不一致时采纳（默认） | `on` |
+| `seasonYearOffsetApply` | 跨年续播集数偏移：有「季中结局/本季大结局」标记的偏移自动应用；此开关只控制没有标记时是否也按日历跨年推断并应用 | OFF |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
 | `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
 | `aiMode` | AI 介入的实现方式：`oneshot`（单次猜标题）\| `agent`（工具循环：查离线库 / 搜 TMDB / 核实季集） | `oneshot` |

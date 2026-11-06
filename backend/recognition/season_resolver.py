@@ -24,7 +24,8 @@
 3.5 年份对齐（文件名年份）         → 唯一命中才采纳（强）
 4. 集数边界校验                   → 有季标才走 per_season；无季标只做 absolute（弱证据，仅记录）
 5. 首播日期                       → 取不晚于参考日期的最新一季（弱证据）
-6. 都不成立                       → None（不猜）
+6. 跨年续播偏移                   → 季中结局/大结局后的第一集起算，换算成该季连续集号（弱证据，需逐集数据）
+7. 都不成立                       → None（不猜）
 """
 
 from __future__ import annotations
@@ -57,6 +58,7 @@ _EN_ORDINAL = {
 # 漏标季号的文件误改，on 模式只记录不应用。
 # boundary:per-season 在列，但前提是文件名真的给了季标（见 resolve_season 第 4 步）：
 # 没有季标时「默认 base=1」只是把待验假设当结论，不能算证据。
+# boundary:year-calendar（整季没有分段标记，只按日历跨年推的）同样不在列：日历不等于 cour 边界。
 STRONG_REASONS = frozenset({
     "single-season",
     "name-match",
@@ -64,6 +66,9 @@ STRONG_REASONS = frozenset({
     "marker",
     "year-match",
     "boundary:per-season",
+    # 跨年续播：靠 TMDB 的「季中结局 / 本季大结局」分段标记 + 该段首集播出年份，
+    # 且只有季号已定、文件名带年份才走到这一步，证据链完整
+    "boundary:year-offset",
 })
 
 
@@ -71,7 +76,7 @@ def _confidence(reason: str) -> str:
     """把判定理由映射成置信度，供 on 模式决定是否自动应用。"""
     if reason in STRONG_REASONS:
         return "high"
-    if reason in ("latest-by-air-date", "boundary:absolute"):
+    if reason in ("latest-by-air-date", "boundary:absolute", "boundary:year-calendar"):
         return "low"
     return "none"
 
@@ -319,6 +324,135 @@ def _align_debug(candidates: List[str], parsed) -> str:
     return "\n".join(lines)
 
 
+def _episode_year(episode: Dict[str, Any]) -> Optional[int]:
+    """单集的播出年份；没有/不是合法日期时返回 None。"""
+    air = str((episode or {}).get("air_date") or "")
+    try:
+        return date.fromisoformat(air[:10]).year
+    except (TypeError, ValueError):
+        return None
+
+
+# TMDB episode_type 里表示「这一段播完了」的标记：季中结局 / 本季大结局。
+# 它们后面的第一集才是下一段（下一 cour）的起点——这才是番剧分段的真实边界。
+_SEASON_BREAK_TYPES = ("mid_season", "finale")
+
+
+def _year_offset_start(
+    episodes: List[Dict[str, Any]], file_year: int
+) -> Optional[Tuple[int, str]]:
+    """该季在 file_year 年续播的起始集号，返回 (起始集号, 依据说明)。
+
+    **先看 TMDB 的 episode_type**：`mid_season`（季中结局）/ `finale`（本季大结局）
+    之后的第一集就是下一段的起点。日历跨年只是它的副产品——2025-10 开播的半年番
+    因为停播周多，新年第一集往往并不是 cour 起点，只有分段标记对得上才是真的换段。
+
+    整季都没有可用的分段标记时，才退回「air_date 落在文件年份的第一集」这个日历判据
+    （仍要求第 k-1 集属于上一年，挡掉断档/特别篇造成的假边界），依据说明返回空串，
+    由调用方降级为弱证据。
+    """
+    by_number: Dict[int, Dict[str, Any]] = {}
+    for episode in episodes or []:
+        number = _coerce_episode((episode or {}).get("episode"))
+        if number is None:
+            continue
+        by_number[number] = episode or {}
+    if not by_number:
+        return None
+    ordered = sorted(by_number)
+    last = ordered[-1]
+
+    saw_break_marker = False
+    for number in ordered:
+        marker = str(by_number[number].get("episode_type") or "").lower()
+        if marker not in _SEASON_BREAK_TYPES:
+            continue
+        if number >= last:  # 最后一集的大结局不算分段
+            continue
+        saw_break_marker = True
+        start = number + 1
+        # 分段后的第一集必须落在文件年份，否则说明文件名年份和这段续播无关
+        if _episode_year(by_number.get(start) or {}) == file_year:
+            label = "季中结局" if marker == "mid_season" else "本季大结局"
+            return start, f"第 {number} 集{label}"
+    if saw_break_marker:
+        # 有分段标记、但对不上文件年份 → 证据互相矛盾，不猜
+        return None
+
+    # 兜底：整季没有分段标记时，按日历跨年判断
+    start = next(
+        (number for number in ordered if _episode_year(by_number[number]) == file_year),
+        None,
+    )
+    if start is None or start <= 1:
+        return None
+    if _episode_year(by_number.get(start - 1) or {}) != file_year - 1:
+        return None
+    return start, ""
+
+
+def _season_episode_count(seasons: Sequence[Dict[str, Any]], number: int) -> int:
+    for item in seasons or []:
+        try:
+            if int(item.get("season_number")) == number:
+                return int(item.get("episode_count") or 0)
+        except (TypeError, ValueError):
+            continue
+    return 0
+
+
+def _shift_episode_for_year(
+    decision: SeasonDecision,
+    seasons: Sequence[Dict[str, Any]],
+    season_episodes: Optional[Dict[int, List[Dict[str, Any]]]],
+    file_year: Optional[int],
+    raw_episode: Optional[int],
+) -> Optional[SeasonDecision]:
+    """跨年续播偏移：某一季被 TMDB 并成一季、新年份续播时集数又从 1 数起。
+
+    例：S1 共 24 集，第 13 集是季中结局，第 14 集起 2026 年续播；
+    文件名 `… (2026) [03]` 实际是该季第 16 集 → 03 + (14-1)。
+
+    只改集数、不改季号：季号仍由前面的规则决定，这里做的只是同一季内的集号校正。
+
+    可信度分两档（走这条路本身已经很窄）：
+    - 有 TMDB 分段标记（季中结局/本季大结局）且标记后第一集播于文件年份 → 强证据；
+    - 整季没标记、只能按日历跨年推断 → 弱证据，只记录。
+    """
+    if not season_episodes or decision.season is None:
+        return None
+    year = _coerce_year(file_year)
+    episode = _coerce_episode(raw_episode)
+    if year is None or episode is None:
+        return None
+    # 集数已经被别的规则换算过（如绝对集数映射）就不再叠加，避免双重偏移
+    if decision.episode is not None and _coerce_episode(decision.episode) != episode:
+        return None
+    episodes = season_episodes.get(decision.season)
+    found = _year_offset_start(episodes, year)
+    if not found:
+        return None
+    start, source = found
+    total = _season_episode_count(seasons, decision.season) or len(episodes or [])
+    shifted = episode + start - 1
+    if total and shifted > total:
+        return None
+    reason = "boundary:year-offset" if source else "boundary:year-calendar"
+    basis = f"分段标记：{source}" if source else "整季无分段标记，按日历跨年推断"
+    detail = (
+        f"跨年续播偏移：{year} 年第 {episode} 集按该季连续编号应为第 {shifted} 集"
+        f"（该季自第 {start} 集起才是 {year} 年续播的那一段；{basis}）；原判定：{decision.reason}"
+    )
+    return SeasonDecision(
+        decision.season,
+        shifted,
+        reason,
+        detail,
+        confidence=_confidence(reason),
+        align=decision.align,
+    )
+
+
 def resolve_season(
     seasons: Sequence[Dict[str, Any]],
     *,
@@ -328,6 +462,7 @@ def resolve_season(
     raw_episode: Optional[int] = None,
     ref_date: Optional[str] = None,
     file_year: Optional[int] = None,
+    season_episodes: Optional[Dict[int, List[Dict[str, Any]]]] = None,
 ) -> SeasonDecision:
     """根据 TMDB 季表推算季号（和必要时换算集数）。
 
@@ -339,9 +474,35 @@ def resolve_season(
     raw_episode: 文件名解析出的原始集数
     ref_date: "YYYY-MM-DD"，判断 air_date 时的参考日；缺省用今天
     file_year: 文件名解析出的年份（如 2026），用于「年份对齐」判定；缺省不启用
+    season_episodes: {季号: [{episode, air_date, ...}]}，来自 /tv/{id}/season/{n}。
+                 传了才启用「跨年续播偏移」，不传就完全不用——纯函数部分不自己发请求。
 
     返回 season 为 None 表示「证据不足，不采信」。
     """
+    decision = _resolve_season_core(
+        seasons,
+        filename=filename,
+        title_parts=title_parts,
+        title_part=title_part,
+        raw_episode=raw_episode,
+        ref_date=ref_date,
+        file_year=file_year,
+    )
+    shifted = _shift_episode_for_year(decision, seasons, season_episodes, file_year, raw_episode)
+    return shifted or decision
+
+
+def _resolve_season_core(
+    seasons: Sequence[Dict[str, Any]],
+    *,
+    filename: str = "",
+    title_parts: Any = None,
+    title_part: str = "",
+    raw_episode: Optional[int] = None,
+    ref_date: Optional[str] = None,
+    file_year: Optional[int] = None,
+) -> SeasonDecision:
+    """判定主体（只读季表与文件名）。跨年续播的集号校正见 resolve_season。"""
     parsed = [_season_fields(s) for s in (seasons or [])]
     # 特别篇（S0）不参与季号判定
     parsed = [item for item in parsed if item[0] > 0]

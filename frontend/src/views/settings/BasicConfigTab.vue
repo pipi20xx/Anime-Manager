@@ -400,6 +400,17 @@ onMounted(() => {
             用 TMDB 季表校准季号/集数。判定顺序：唯一季 → 季名对齐 → 标题尾数 → 季标 → 边界校验 → 首播日期；其中季名对齐、季标、边界等强证据才会自动改季号，首播日期等弱证据仅记录不应用。
           </div>
         </div>
+
+        <div class="d-flex align-center ga-3 mt-4">
+          <v-switch v-model="config.season_year_offset_apply" density="compact" hide-details color="primary" />
+          <div>
+            <div class="text-body-2 font-weight-medium">跨年续播集数偏移</div>
+            <div class="text-caption text-medium-emphasis">
+              有 TMDB「季中结局 / 本季大结局」分段标记的偏移会直接应用（如 (2026) [03] 实为该季第 16 集）；
+              此开关只控制「整季没有分段标记、纯按日历跨年推断」的那部分是否也应用（默认关闭，只写日志）。
+            </div>
+          </div>
+        </div>
       </v-card-text>
     </v-card>
 

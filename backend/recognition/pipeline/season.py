@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import time
+from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..context import RecognitionContext
@@ -31,6 +32,8 @@ _REASON_LABELS = {
     "year-match": "年份对齐",
     "boundary:per-season": "季度内边界",
     "boundary:absolute": "绝对集数换算",
+    "boundary:year-offset": "跨年续播偏移",
+    "boundary:year-calendar": "跨年续播偏移(日历)",
     "latest-by-air-date": "首播日期",
     "ambiguous": "证据不足",
 }
@@ -147,6 +150,59 @@ class SeasonStage:
             ctx.log("┣ [季号校准] ⚠️ 联网取季表失败，回退本地数据中心档案（季表可能过期）")
             return archive_seasons
         return None
+
+    @staticmethod
+    async def _season_episodes(
+        ctx: RecognitionContext,
+        seasons: List[Dict[str, Any]],
+        file_year: Any,
+    ) -> Dict[int, List[Dict[str, Any]]]:
+        """拉「首播年早于文件名年份」的季的逐集数据（跨年续播只可能发生在这些季里）。
+
+        只在需要时调用（季号已定 + 有年份 + 有集数），且带 6 小时缓存。
+        为避免老剧一次拉一堆，只看最近两年内的季，最多 3 季。
+        """
+        try:
+            year = int(float(file_year))
+        except (TypeError, ValueError):
+            return {}
+        tmdb_id = str(ctx.tmdb_data.get("id") or getattr(ctx.meta, "forced_tmdbid", "") or "")
+        if not tmdb_id:
+            return {}
+
+        result: Dict[int, List[Dict[str, Any]]] = {}
+        ordered = sorted(
+            seasons or [],
+            key=lambda item: (item.get("season_number") or 0),
+        )
+        for item in ordered:
+            try:
+                number = int(item.get("season_number"))
+            except (TypeError, ValueError):
+                continue
+            if number <= 0:
+                continue
+            air = str(item.get("air_date") or "")
+            try:
+                season_year = date.fromisoformat(air[:10]).year
+            except (TypeError, ValueError):
+                continue
+            # 首播年不早于文件年份 → 不存在「续播」，跳过
+            if season_year >= year or year - season_year > 2:
+                continue
+            try:
+                data = await ctx.tmdb_client.get_season_episodes(tmdb_id, number, ctx.logs)
+            except Exception as exc:  # 逐集数据拿不到不该影响识别
+                ctx.log(f"┃ [季号校准] ⚠️ 拉取 S{number} 逐集数据失败: {type(exc).__name__}")
+                continue
+            episodes = (data or {}).get("episodes") or []
+            if episodes:
+                result[number] = episodes
+            if len(result) >= 3:
+                break
+        if result:
+            ctx.log(f"┃ [季号校准] 🔎 已补取逐集播出日期（{'、'.join(f'S{n}' for n in sorted(result))}），用于跨年续播判定")
+        return result
 
     @staticmethod
     def _needs_multilingual_names(
@@ -321,6 +377,33 @@ class SeasonStage:
                 if retry.season is not None and retry.reason not in _BGM_RETRY_REASONS:
                     decision = retry
 
+        # 跨年续播偏移：TMDB 把 split cour 并成一季时，新年份续播的集数又会从 1 数起。
+        # 需要逐集 air_date（/tv/{id}/season/{n}，6h 缓存），只在「已定季 + 有文件名年份 +
+        # 有集数」时才补一步，避免无谓请求。
+        if decision.season is not None and getattr(meta, "year", None) and meta.begin_episode:
+            episodes_map = await SeasonStage._season_episodes(ctx, seasons, meta.year)
+            if episodes_map:
+                retry = resolve_season(
+                    seasons,
+                    filename=ctx.filename,
+                    title_parts=title_parts,
+                    raw_episode=meta.begin_episode,
+                    ref_date=ctx.kwargs.get("season_ref_date"),
+                    file_year=getattr(meta, "year", None),
+                    season_episodes=episodes_map,
+                )
+                if retry.reason in ("boundary:year-offset", "boundary:year-calendar"):
+                    ctx.log(f"┃ [季号校准] 🧮 {retry.detail}")
+                    decision = retry
+                    # 有 TMDB 分段标记的偏移本身就是强证据（会直接应用）；
+                    # 只有「整季没标记、纯按日历跨年推」的才默认只记录，
+                    # 需要显式打开 season_year_offset_apply 才应用。
+                    if retry.reason == "boundary:year-calendar" and bool(
+                        ctx.config.get("season_year_offset_apply", False)
+                    ):
+                        decision.confidence = "high"
+                        ctx.log("┃ [季号校准] ⚙️ 已按配置把「日历跨年推断」也视为强证据（会改集数）")
+
         label = _REASON_LABELS.get(decision.reason, decision.reason)
 
         ctx.season_resolution = {
@@ -350,14 +433,25 @@ class SeasonStage:
             return
 
         current = meta.begin_season
-        if current == decision.season:
+        current_episode = meta.begin_episode
+        # 集数也可能被校正（跨年续播偏移 / 绝对集数换算），所以「季号不变」不等于「无需应用」
+        episode_change = (
+            decision.episode is not None
+            and current_episode is not None
+            and decision.episode != current_episode
+        )
+        if current == decision.season and not episode_change:
             ctx.season_resolution["applied_reason"] = "一致"
             ctx.log(f"┗ [季号校准] ✅ 一致 S{decision.season}（{label}）：{decision.detail}")
             return
 
+        target = f"S{decision.season}" + (f"E{decision.episode}" if episode_change else "")
+        origin = f"S{current if current is not None else '?'}" + (
+            f"E{current_episode}" if current_episode is not None else ""
+        )
         ctx.log(
-            f"┣ [季号校准] {label}({decision.reason}) → S{decision.season}"
-            f"（原 S{current if current is not None else '?'}）· {decision.detail}"
+            f"┣ [季号校准] {label}({decision.reason}) → {target}"
+            f"（原 {origin}）· {decision.detail}"
         )
 
         if mode != "on":
