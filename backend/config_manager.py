@@ -112,6 +112,7 @@ class ConfigManager:
         "season_split_ref_season_max": 2,        # 参照门槛：自动参照的有效季数上限
         "season_split_fixed_sizes": [12, 13],    # 固定集数兜底：每 N 集切一季
         "season_split_gap_mark_days": 21,        # 原始季列表「播出间隔」虚线的显示阈值（天）
+        "season_split_use_includes_rules": True, # 生成渲染词时是否追加 includes=年份 规则
         "tvdb_api_key": "",                    # 空 = 使用官方共用 Key
         "custom_noise_words": [],
         "remote_noise_urls": [],

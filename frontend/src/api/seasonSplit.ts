@@ -132,6 +132,7 @@ export interface SeasonSplitSettings {
   ref_season_max: number
   fixed_sizes: number[]
   gap_mark_days: number
+  use_includes_rules: boolean
   tvdb_key_configured: boolean
   cache: { count: number; version: string; loaded_at: string | null; mode: string }
 }
@@ -144,6 +145,7 @@ export interface SavePayload {
   names?: Record<string, string>
   reference?: string
   status?: 'draft' | 'active' | 'disabled'
+  render_words?: string
 }
 
 export const seasonSplitApi = {

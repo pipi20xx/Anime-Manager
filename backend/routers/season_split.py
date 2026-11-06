@@ -37,6 +37,7 @@ class CompileRequest(BaseModel):
 
 class SaveRequest(CompileRequest):
     status: str = Field(default="draft", description="draft / active / disabled")
+    render_words: Optional[str] = Field(default=None, description="手动渲染词覆盖（留空则按分组重新编译）")
 
 
 class SettingsRequest(BaseModel):
@@ -55,6 +56,7 @@ class SettingsRequest(BaseModel):
     season_split_ref_season_max: Optional[int] = None
     season_split_fixed_sizes: Optional[List[int]] = None
     season_split_gap_mark_days: Optional[int] = None
+    season_split_use_includes_rules: Optional[bool] = None
     tvdb_api_key: Optional[str] = None
 
 

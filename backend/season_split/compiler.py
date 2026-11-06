@@ -49,7 +49,8 @@ def includes_rule_lines(tmdb_id: int, season_years: dict) -> list:
 
 
 def generate_render_words(tmdb_id: int, title: str, reference: str, org_map: dict,
-                          season_years: Optional[dict] = None) -> str:
+                          season_years: Optional[dict] = None,
+                          use_includes: bool = True) -> str:
     """把逐集映射转换为渲染词(专家规则)文本块，含来源注释头。
 
     条件默认不带季号(s=)：文件名里的季前缀不可靠（存在 S2E25 这类
@@ -123,7 +124,7 @@ def generate_render_words(tmdb_id: int, title: str, reference: str, org_map: dic
     if ambiguous_any:
         lines.append("# 注意: 存在跨季重叠的集号区间,冲突段已保留季限定(s=)")
     lines.extend(rules)
-    if season_years:
+    if season_years and use_includes:
         lines.extend(includes_rule_lines(tmdb_id, season_years))
     return "\n".join(lines)
 
@@ -218,7 +219,8 @@ def groups_to_group_json(groups: list, tmdb_id: int) -> dict:
     return {"description": "", "groups": out_groups, "id": str(tmdb_id)}
 
 
-def generate_group_render_words(tmdb_id: int, title: str, reference: str, groups: list) -> str:
+def generate_group_render_words(tmdb_id: int, title: str, reference: str, groups: list,
+                                use_includes: bool = True) -> str:
     """按剧集组生成渲染词:第 i 组(i>0)的集号绝对窗口 [cum+1, cum+n] → [s=order;e=EP-cum]。
 
     窗口为全作累计集序,组间天然不重叠,因此条件无需季号限定,
@@ -253,7 +255,7 @@ def generate_group_render_words(tmdb_id: int, title: str, reference: str, groups
             if year:
                 season_years[order] = year
                 break
-    if season_years:
+    if season_years and use_includes:
         lines.extend(includes_rule_lines(tmdb_id, season_years))
     return "\n".join(lines) if len(lines) > 1 else ""
 

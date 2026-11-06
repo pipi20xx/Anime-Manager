@@ -6,11 +6,12 @@
  * 执行方式：分组 → 编译成渲染词 → 由现有 RenderEngine 在识别最后一步执行，
  * 所以「预览正确」= 「整理结果正确」，不需要往整理流程里插代码。
  */
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import {
   seasonSplitApi,
   type CompileResult,
   type PreviewResult,
+  type SavePayload,
   type SeasonSplitSettings,
   type ReferenceSummary,
   type SplitEpisode,
@@ -54,6 +55,7 @@ const settings = reactive<SeasonSplitSettings>({
   ref_season_max: 2,
   fixed_sizes: [12, 13],
   gap_mark_days: 21,
+  use_includes_rules: true,
   tvdb_key_configured: false,
   cache: { count: 0, version: '', loaded_at: null, mode: 'off' },
 })
@@ -83,6 +85,7 @@ async function loadSettings() {
     settings.ref_season_min = data.ref_season_min ?? 1
     settings.ref_season_max = data.ref_season_max ?? 2
     settings.gap_mark_days = data.gap_mark_days ?? 21
+    settings.use_includes_rules = data.use_includes_rules ?? true
     refGenreIdsText.value = (settings.ref_genre_ids || []).join(', ')
     refCountriesText.value = (settings.ref_countries || []).join(', ')
     fixedSizesText.value = (settings.fixed_sizes || []).join(', ')
@@ -108,6 +111,7 @@ async function saveSettings() {
       season_split_ref_season_max: settings.ref_season_max,
       season_split_fixed_sizes: settings.fixed_sizes,
       season_split_gap_mark_days: settings.gap_mark_days,
+      season_split_use_includes_rules: settings.use_includes_rules,
     })
     settings.cache = data.cache
     success('设置已保存')
@@ -311,6 +315,7 @@ const reference = ref('manual')
 const outputTab = ref('map')
 const excludeInput = ref('')
 let compileTimer: ReturnType<typeof setTimeout> | null = null
+let suppressAutoCompile = false
 
 const flatIndex = computed(() => {
   const map = new Map<string, number>()
@@ -398,6 +403,7 @@ async function runPreview() {
     groups.value = normalizeGroups(data.candidates?.[basis]?.groups || [])
     excluded.value = []
     names.value = {}
+    manualRenderWords.value = false
     compileResult.value = data.suggested || null
     activeTab.value = 'workbench'
     if (!groups.value.length) {
@@ -438,6 +444,7 @@ async function recompile() {
 }
 
 function scheduleCompile() {
+  if (suppressAutoCompile) return
   if (compileTimer) clearTimeout(compileTimer)
   compileTimer = setTimeout(recompile, 500)
 }
@@ -519,7 +526,7 @@ async function applySave(status: 'draft' | 'active') {
     if (!ok) return
   }
   try {
-    const saved = await seasonSplitApi.saveRule({
+    const payload: SavePayload = {
       tmdb_id: preview.value.tmdb_id,
       groups: groups.value,
       overrides: {},
@@ -527,9 +534,15 @@ async function applySave(status: 'draft' | 'active') {
       names: names.value,
       reference: reference.value,
       status,
-    })
+    }
+    if (manualRenderWords.value) {
+      payload.render_words = renderWordsText.value
+    }
+    const saved = await seasonSplitApi.saveRule(payload)
     // 保存后把刚存下的规则回填，让「写 SYTMDB」立刻可用（否则要重新生成一次）
     preview.value.existing_rule = saved as unknown as SplitRule
+    manualRenderWords.value = false
+    compileResult.value = buildSavedCompileResult(saved as unknown as SplitRule, preview.value?.episodes || [])
     await reloadCache()
     await loadRules()
     success(status === 'active' ? '已保存并启用' : '已保存为草稿')
@@ -538,25 +551,67 @@ async function applySave(status: 'draft' | 'active') {
   }
 }
 
+/** 用「已保存规则」构造工作台展示的编译结果：渲染词 / 映射 / 剧集组都取库里的原文，
+ *  逐集明细 rows 由已存 mapping + TMDB 剧集列表补齐（标题/日期只是展示用）。 */
+function buildSavedCompileResult(rule: SplitRule, episodes: SplitEpisode[]): CompileResult {
+  const epByKey = new Map<string, SplitEpisode>()
+  for (const ep of episodes) {
+    epByKey.set(`${ep.season_number}-${ep.episode_number}`, ep)
+  }
+  const mapping = rule.mapping || {}
+  const rows: CompileResult['rows'] = []
+  for (const [s, eps] of Object.entries(mapping)) {
+    for (const [e, dst] of Object.entries(eps)) {
+      const raw = epByKey.get(`${s}-${e}`)
+      rows.push({
+        season: Number(dst?.season ?? 0),
+        episode: Number(dst?.episode ?? 0),
+        org_season: Number(s),
+        org_episode: Number(e),
+        air_date: raw?.air_date || '',
+        name: raw?.name || '',
+        episode_type: raw?.episode_type || '',
+      })
+    }
+  }
+  rows.sort((a, b) => a.season - b.season || a.episode - b.episode)
+  return {
+    mapping,
+    mapping_raw: {},
+    render_words: rule.render_words || '',
+    group_json: rule.group_json || { groups: [] },
+    rows,
+    season_years: {},
+    warnings: [],
+    replay_bad: [],
+    episode_total: rule.episode_total || rows.length,
+  }
+}
+
 async function editRule(rule: SplitRule) {
   tmdbId.value = String(rule.tmdb_id)
   activeTab.value = 'workbench'
   loading.value = true
   try {
-    // 只拉 TMDB 结构 + 编译已存分组，不重新取 TVDB / Bangumi、不重生成候选
+    // 只拉 TMDB 结构（左侧剧集列表需要），不重新取参照源、不重编译渲染词
     const data = await seasonSplitApi.preview({ tmdb_id: rule.tmdb_id, skip_references: true })
     preview.value = data
+    suppressAutoCompile = true
     groups.value = normalizeGroups(rule.groups || [])
     names.value = rule.names || {}
     excluded.value = (rule.excluded || []).map((item: any) =>
       Array.isArray(item) ? { s: Number(item[0]), e: Number(item[1]) } : { s: Number(item.s), e: Number(item.e) },
     )
     reference.value = rule.reference || 'manual'
-    compileResult.value = data.suggested || null
-    success('已载入规则（未重新生成方案）')
+    manualRenderWords.value = false
+    compileResult.value = buildSavedCompileResult(rule, data.episodes || [])
+    await nextTick()
+    suppressAutoCompile = false
+    success('已载入规则（当前渲染词为已保存内容）')
   } catch (e: any) {
     showError(`载入规则失败: ${e.message}`)
   } finally {
+    suppressAutoCompile = false
     loading.value = false
   }
 }
@@ -580,8 +635,27 @@ async function runDebug() {
 }
 
 const mappingRows = computed(() => compileResult.value?.rows || [])
-const renderWords = computed(() => compileResult.value?.render_words || '')
 const groupJsonText = computed(() => JSON.stringify(compileResult.value?.group_json || {}, null, 2))
+
+// 渲染词默认跟随编译结果；用户手动改过后锁定，直到「重新生成 / 重新载入」
+const renderWordsText = ref('')
+const manualRenderWords = ref(false)
+
+watch(compileResult, () => {
+  if (!manualRenderWords.value) {
+    renderWordsText.value = compileResult.value?.render_words || ''
+  }
+}, { immediate: true })
+
+function onRenderWordsInput(val: string) {
+  renderWordsText.value = val
+  manualRenderWords.value = true
+}
+
+async function regenerateRenderWords() {
+  manualRenderWords.value = false
+  await recompile()
+}
 
 /** 参照源季集数摘要，如 12 + 14 */
 function refSummary(ref: ReferenceSummary) {
@@ -1109,7 +1183,7 @@ onMounted(async () => {
             </v-tabs>
             <v-spacer />
             <v-chip size="small" variant="tonal">覆盖 {{ compileResult?.episode_total || 0 }} 集</v-chip>
-            <v-btn size="small" variant="tonal" prepend-icon="mdi-content-copy" @click="copy(renderWords, '渲染词已复制')">
+            <v-btn size="small" variant="tonal" prepend-icon="mdi-content-copy" @click="copy(renderWordsText, '渲染词已复制')">
               复制渲染词
             </v-btn>
             <v-btn size="small" variant="tonal" prepend-icon="mdi-file-code-outline" @click="copy(groupJsonText, '剧集组 JSON 已复制')">
@@ -1161,7 +1235,31 @@ onMounted(async () => {
                 <div class="text-caption text-medium-emphasis px-2 pb-2">
                   由识别引擎在最后一步执行，比你自己的「自定义渲染词」晚一步；命中后季集号会直接写进识别结果。
                 </div>
-                <pre class="code-block">{{ renderWords || '（分组为恒等映射，无需生成规则）' }}</pre>
+                <div v-if="manualRenderWords" class="d-flex align-center ga-2 px-2 pb-2">
+                  <v-chip size="small" color="warning" variant="tonal">
+                    已手动修改（保存时按此文本入库）
+                  </v-chip>
+                  <v-spacer />
+                  <v-btn
+                    size="small"
+                    variant="text"
+                    prepend-icon="mdi-refresh"
+                    @click="regenerateRenderWords"
+                  >
+                    从分组重新生成
+                  </v-btn>
+                </div>
+                <v-textarea
+                  :model-value="renderWordsText"
+                  @update:model-value="onRenderWordsInput"
+                  class="render-words-editor"
+                  variant="outlined"
+                  density="compact"
+                  rows="12"
+                  hide-details
+                  spellcheck="false"
+                  placeholder="（分组为恒等映射，无需生成规则）"
+                />
               </v-window-item>
               <v-window-item value="json">
                 <div class="text-caption text-medium-emphasis px-2 pb-2">
@@ -1212,6 +1310,16 @@ onMounted(async () => {
                     hide-details
                     color="primary"
                   />
+                  <v-switch
+                    v-model="settings.use_includes_rules"
+                    label="使用 includes 年份渲染词"
+                    density="compact"
+                    hide-details
+                    color="primary"
+                  />
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  includes 渲染词按虚拟季首播年份做文件名包含匹配（例：<code>includes=2016</code>）；关闭后只生成集号/季号规则。
                 </div>
                 <v-text-field
                   v-model="settings.source"
@@ -1402,6 +1510,13 @@ onMounted(async () => {
 
 .ep-row:hover {
   background: rgba(var(--v-theme-primary), 0.06);
+}
+
+.render-words-editor :deep(textarea) {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .ep-name {

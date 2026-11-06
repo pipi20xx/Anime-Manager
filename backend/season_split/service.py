@@ -47,6 +47,16 @@ def _cfg_int(cfg: dict, key: str, default: int) -> int:
         return default
 
 
+def _cfg_bool(cfg: dict, key: str, default: bool) -> bool:
+    """读 bool 配置，缺失/非法时回退默认。"""
+    val = cfg.get(key)
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, str):
+        return val.strip().lower() in ("1", "true", "yes", "on")
+    return default
+
+
 def _log_collector(bucket: List[str]) -> Callable:
     def _log(level: str, message: str) -> None:
         bucket.append(f"{level}: {message}")
@@ -292,12 +302,13 @@ def _pick_default(candidates: Dict[str, dict], split_bases: list, priority: list
 def compile_rule(tmdb_id: int, flat: list, groups: list,
                  overrides: Optional[dict] = None, excluded: Optional[list] = None,
                  names: Optional[dict] = None, reference: str = "",
-                 title: str = "") -> dict:
+                 title: str = "", use_includes: bool = True) -> dict:
     """分组 → 映射表 / 渲染词 / 剧集组 / 逐集明细 / 告警。"""
     names = {int(k): v for k, v in (names or {}).items() if str(k).isdigit()}
     mapping = compiler.mapping_from_groups(groups, flat, overrides, excluded)
     years = compiler.season_years_from_mapping(mapping, flat)
-    words = compiler.generate_render_words(tmdb_id, title, reference, mapping, years)
+    words = compiler.generate_render_words(tmdb_id, title, reference, mapping, years,
+                                           use_includes=use_includes)
     air_dates = {
         (int(ep.get("season_number") or 0), int(ep.get("episode_number") or 0)): ep.get("air_date") or ""
         for ep in (flat or [])
@@ -353,6 +364,7 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
         int(x) for x in _cfg_list(cfg, "season_split_fixed_sizes", [12, 13])
         if str(x).strip().isdigit()
     ] or [12, 13]
+    use_includes = _cfg_bool(cfg, "season_split_use_includes_rules", True)
     priority = opts.get("priority") or _priority(cfg)
     if isinstance(priority, str):
         priority = [x.strip() for x in priority.split(",") if x.strip()]
@@ -381,6 +393,7 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
                 names=existing.get("names") or {},
                 reference=existing.get("reference") or "manual",
                 title=title,
+                use_includes=use_includes,
             )
         return {
             "tmdb_id": tmdb_id,
@@ -440,6 +453,7 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
         compiled = compile_rule(
             tmdb_id, flat, candidates[default_basis]["groups"],
             reference=default_basis, title=title,
+            use_includes=use_includes,
         )
 
     # 分季定义明细：展示默认选中的那个参照源
@@ -506,6 +520,8 @@ async def compile_only(payload: dict) -> dict:
     """按前端提交的分组重新编译（不落库）。"""
     tmdb_id = int(payload["tmdb_id"])
     logs: List[str] = []
+    cfg = _cfg()
+    use_includes = _cfg_bool(cfg, "season_split_use_includes_rules", True)
     structure = await _fetch_structure(tmdb_id, _log_collector(logs))
     title = structure["tv_show"].get("name") or f"TMDB {tmdb_id}"
     out = compile_rule(
@@ -516,6 +532,7 @@ async def compile_only(payload: dict) -> dict:
         names=payload.get("names"),
         reference=payload.get("reference") or "manual",
         title=title,
+        use_includes=use_includes,
     )
     out.update({"tmdb_id": tmdb_id, "title": title, "logs": logs})
     return out
@@ -525,6 +542,8 @@ async def save(payload: dict) -> dict:
     """保存规则：重新编译一次再落库，保证库里的 render_words 与分组一致。"""
     tmdb_id = int(payload["tmdb_id"])
     logs: List[str] = []
+    cfg = _cfg()
+    use_includes = _cfg_bool(cfg, "season_split_use_includes_rules", True)
     structure = await _fetch_structure(tmdb_id, _log_collector(logs))
     tv_show = structure["tv_show"]
     title = tv_show.get("name") or f"TMDB {tmdb_id}"
@@ -537,9 +556,12 @@ async def save(payload: dict) -> dict:
         names=payload.get("names"),
         reference=payload.get("reference") or "manual",
         title=title,
+        use_includes=use_includes,
     )
     if not compiled["mapping"]:
         raise ValueError("分组为空，无法保存（至少要有 1 集被覆盖）")
+
+    manual_words = (payload.get("render_words") or "").strip()
 
     record = await store.upsert_rule({
         "tmdb_id": tmdb_id,
@@ -552,7 +574,7 @@ async def save(payload: dict) -> dict:
         "names_json": payload.get("names") or {},
         "mapping_json": compiled["mapping"],
         "group_json": compiled["group_json"],
-        "render_words": compiled["render_words"],
+        "render_words": manual_words or compiled["render_words"],
         "tmdb_hash": _structure_hash(tv_show),
         "episode_total": compiled["episode_total"],
     })
@@ -642,6 +664,7 @@ def settings_snapshot() -> dict:
         "ref_season_max": _cfg_int(cfg, "season_split_ref_season_max", 2),
         "fixed_sizes": _cfg_list(cfg, "season_split_fixed_sizes", [12, 13]),
         "gap_mark_days": _cfg_int(cfg, "season_split_gap_mark_days", 21),
+        "use_includes_rules": bool(cfg.get("season_split_use_includes_rules", True)),
         "tvdb_key_configured": bool((cfg.get("tvdb_api_key") or "").strip()),
         "cache": store.cache_stats(),
     }
@@ -657,6 +680,7 @@ def settings_update(payload: dict) -> dict:
         "season_split_ref_genre_ids", "season_split_ref_countries",
         "season_split_ref_season_min", "season_split_ref_season_max",
         "season_split_fixed_sizes", "season_split_gap_mark_days",
+        "season_split_use_includes_rules",
         "tvdb_api_key",
     }
     patch = {k: v for k, v in (payload or {}).items() if k in allowed}
