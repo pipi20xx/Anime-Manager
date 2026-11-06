@@ -125,6 +125,7 @@ export interface SeasonSplitSettings {
   source: string
   use_source: boolean
   force_reference: boolean
+  auto_generate: boolean
   gap_days: number
   ref_genre_ids: number[]
   ref_countries: string[]
@@ -146,6 +147,16 @@ export interface SavePayload {
   reference?: string
   status?: 'draft' | 'active' | 'disabled'
   render_words?: string
+}
+
+export interface BlacklistItem {
+  tmdb_id: number
+  title: string
+  year: string | null
+  poster_path: string
+  is_custom: boolean
+  source: string | null
+  has_meta: boolean
 }
 
 export const seasonSplitApi = {
@@ -185,6 +196,8 @@ export const seasonSplitApi = {
 
   updateSettings: (payload: Record<string, unknown>) =>
     api.put<SeasonSplitSettings>('/api/season-split/settings', payload),
+
+  blacklistMeta: () => api.get<{ items: BlacklistItem[] }>('/api/season-split/blacklist/meta'),
 
   debug: (params: { tmdb_id: number; season: number; episode: number; filename?: string }) =>
     api.get<{

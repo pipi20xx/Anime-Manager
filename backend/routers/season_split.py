@@ -49,6 +49,7 @@ class SettingsRequest(BaseModel):
     season_split_source: Optional[str] = None
     season_split_use_source: Optional[bool] = None
     season_split_force_reference: Optional[bool] = None
+    season_split_auto_generate: Optional[bool] = None
     season_split_gap_days: Optional[int] = None
     season_split_ref_genre_ids: Optional[List[int]] = None
     season_split_ref_countries: Optional[List[str]] = None
@@ -162,3 +163,8 @@ async def update_settings(req: SettingsRequest):
         raise HTTPException(status_code=400, detail=str(e))
     await store.reload()
     return data
+
+
+@router.get("/blacklist/meta", summary="黑名单条目元数据（永久缓存 / 数据中心）")
+async def blacklist_meta():
+    return await service.blacklist_meta()

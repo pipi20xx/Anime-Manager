@@ -8,6 +8,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import {
   seasonSplitApi,
+  type BlacklistItem,
   type CompileResult,
   type PreviewResult,
   type SavePayload,
@@ -36,6 +37,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     priority: 'tvdb, bangumi',
     use_source: false,
     force_reference: false,
+    auto_generate: false,
     source: '',
     gap_days: 45,
     ref_genre_ids: [16],
@@ -75,6 +77,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       settings.ref_season_max = data.ref_season_max ?? 2
       settings.gap_mark_days = data.gap_mark_days ?? 21
       settings.use_includes_rules = data.use_includes_rules ?? true
+      settings.auto_generate = data.auto_generate ?? false
       refGenreIdsText.value = (settings.ref_genre_ids || []).join(', ')
       refCountriesText.value = (settings.ref_countries || []).join(', ')
       fixedSizesText.value = (settings.fixed_sizes || []).join(', ')
@@ -92,6 +95,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
         season_split_priority: settings.priority,
         season_split_use_source: settings.use_source,
         season_split_force_reference: settings.force_reference,
+        season_split_auto_generate: settings.auto_generate,
         season_split_source: settings.source,
         season_split_gap_days: settings.gap_days,
         season_split_ref_genre_ids: settings.ref_genre_ids,
@@ -134,8 +138,22 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
   }
 
   const blacklistInput = ref('')
+  const blacklistItems = ref<BlacklistItem[]>([])
+  const blacklistLoading = ref(false)
 
-  function addBlacklist() {
+  async function loadBlacklistMeta() {
+    blacklistLoading.value = true
+    try {
+      const data = await seasonSplitApi.blacklistMeta()
+      blacklistItems.value = data.items
+    } catch (e: any) {
+      showError(`读取黑名单失败: ${e.message}`)
+    } finally {
+      blacklistLoading.value = false
+    }
+  }
+
+  async function addBlacklist() {
     const id = Number(blacklistInput.value)
     if (!id) {
       warning('请输入 TMDB 数字 ID')
@@ -143,6 +161,20 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     }
     if (!settings.blacklist.includes(id)) settings.blacklist.push(id)
     blacklistInput.value = ''
+    await saveSettings()
+    await loadBlacklistMeta()
+  }
+
+  async function removeBlacklist(id: number) {
+    const ok = await confirm({
+      title: '移除黑名单',
+      content: `把 TMDB ${id} 移出黑名单？移出后下次识别会重新评估。`,
+    })
+    if (!ok) return
+    const idx = settings.blacklist.indexOf(id)
+    if (idx >= 0) settings.blacklist.splice(idx, 1)
+    await saveSettings()
+    await loadBlacklistMeta()
   }
 
   // 高级：参照门槛 / 兜底的列表型输入（逗号分隔，blur 时解析并保存）
@@ -710,7 +742,11 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     reloadCache,
     tvdbInput,
     blacklistInput,
+    blacklistItems,
+    blacklistLoading,
     addBlacklist,
+    removeBlacklist,
+    loadBlacklistMeta,
     refGenreIdsText,
     refCountriesText,
     fixedSizesText,

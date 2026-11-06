@@ -105,6 +105,7 @@ class ConfigManager:
         "season_split_source": "",             # CureTMDb 规则表地址（默认不启用，需要自己在高级页填）
         "season_split_use_source": False,      # 生成方案时是否使用规则表
         "season_split_force_reference": False, # 跳过「日本动画 + 季数 1~2」的门槛
+        "season_split_auto_generate": False,  # 识别时自动生成并启用分季规则（命中门槛且需要拆分时）
         "season_split_gap_days": 45,           # 间隔切分阈值（天）
         "season_split_ref_genre_ids": [16],      # 参照门槛：视为「动画」的 TMDB genre id 列表
         "season_split_ref_countries": ["JP"],    # 参照门槛：视为「日本动画」的出品国家代码

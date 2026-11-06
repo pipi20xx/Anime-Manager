@@ -583,6 +583,70 @@ async def save(payload: dict) -> dict:
     return record
 
 
+async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[dict]:
+    """识别链路调用：满足条件时自动生成并保存一条 active 分季规则。
+
+    生成条件（全部满足才生成）：
+    - season_split_auto_generate 开关开启
+    - season_split_mode == on
+    - season_split_scope 允许当前 entry
+    - 不在番剧黑名单
+    - 库里还没有该番的规则
+    - 参照门槛通过，且确实「需要拆分」（TVDB / Bangumi / 规则表 与 TMDB 结构不一致）
+
+    生成依据与页面「生成方案」默认选中一致（参照优先级），保存后立即重载内存快照，
+    由调用方把返回的 render_words 追加进本次识别的渲染词列表，做到当场生效。
+
+    判定「无需拆分」时返回 {"blacklisted": True} 并把该番直接加入黑名单（持久化），
+    之后不再重复拉参照源，也避免规则库被无意义的规则刷屏。
+    """
+    cfg = _cfg()
+    if not _cfg_bool(cfg, "season_split_auto_generate", False):
+        return None
+    if str(cfg.get("season_split_mode") or "off").strip().lower() != "on":
+        return None
+    scope = cfg.get("season_split_scope") or {}
+    if isinstance(scope, dict) and scope and not scope.get(entry, True):
+        return None
+
+    tmdb_id = int(tmdb_id)
+
+    blocked = set()
+    for item in cfg.get("season_split_blacklist") or []:
+        try:
+            blocked.add(int(item))
+        except (TypeError, ValueError):
+            continue
+    if tmdb_id in blocked:
+        return None
+
+    if await store.get_rule(tmdb_id):
+        return None
+
+    data = await preview(tmdb_id)
+    if not data.get("need_split"):
+        from config_manager import ConfigManager
+
+        blacklist = list(cfg.get("season_split_blacklist") or [])
+        if tmdb_id not in blacklist:
+            blacklist.append(tmdb_id)
+            ConfigManager.update_config({"season_split_blacklist": blacklist})
+        return {"blacklisted": True, "tmdb_id": tmdb_id}
+
+    basis = data.get("default_basis") or ""
+    groups = ((data.get("candidates") or {}).get(basis) or {}).get("groups") or []
+    if not groups:
+        return None
+
+    record = await save({
+        "tmdb_id": tmdb_id,
+        "groups": groups,
+        "reference": basis or "tvdb",
+        "status": "active",
+    })
+    return record
+
+
 async def push_episode_group(tmdb_id: int) -> dict:
     """把规则里的剧集组写入 SYTMDB（先探活，404 则创建，再整体覆盖）。"""
     rule = await store.get_rule(tmdb_id)
@@ -656,6 +720,7 @@ def settings_snapshot() -> dict:
         "priority": cfg.get("season_split_priority") or "tvdb, bangumi",
         "use_source": bool(cfg.get("season_split_use_source")),
         "force_reference": bool(cfg.get("season_split_force_reference")),
+        "auto_generate": bool(cfg.get("season_split_auto_generate")),
         "source": cfg.get("season_split_source") or "",
         "gap_days": cfg.get("season_split_gap_days") or DEFAULT_GAP_DAYS,
         "ref_genre_ids": _cfg_list(cfg, "season_split_ref_genre_ids", [16]),
@@ -677,6 +742,7 @@ def settings_update(payload: dict) -> dict:
         "season_split_mode", "season_split_scope", "season_split_blacklist",
         "season_split_exclude_patterns", "season_split_priority", "season_split_source",
         "season_split_gap_days", "season_split_use_source", "season_split_force_reference",
+        "season_split_auto_generate",
         "season_split_ref_genre_ids", "season_split_ref_countries",
         "season_split_ref_season_min", "season_split_ref_season_max",
         "season_split_fixed_sizes", "season_split_gap_mark_days",
@@ -692,3 +758,38 @@ def settings_update(payload: dict) -> dict:
     if patch:
         ConfigManager.update_config(patch)
     return settings_snapshot()
+
+
+async def blacklist_meta() -> dict:
+    """给黑名单里的 tmdb_id 补全名称 / 年份 / 海报（读项目内永久缓存 + 数据中心元数据资产）。
+
+    数据统一来自 MetaCacheManager（TmdbDeepMeta 超级表），即本地永久缓存与
+    数据中心离线档案的合并结果；不联网。tv 查不到再回退 movie。
+    """
+    cfg = _cfg()
+    ids: List[int] = []
+    for item in cfg.get("season_split_blacklist") or []:
+        try:
+            ids.append(int(item))
+        except (TypeError, ValueError):
+            continue
+
+    from metadata.meta_cache import MetaCacheManager
+
+    items: List[dict] = []
+    for tmdb_id in ids:
+        meta = await MetaCacheManager.get(f"tv:{tmdb_id}")
+        if not meta:
+            meta = await MetaCacheManager.get(f"movie:{tmdb_id}")
+        m = meta or {}
+        year = m.get("year") or ""
+        items.append({
+            "tmdb_id": tmdb_id,
+            "title": m.get("title") or m.get("name") or "",
+            "year": str(year)[:4] if year else None,
+            "poster_path": m.get("poster_path") or "",
+            "is_custom": bool(m.get("is_custom")),
+            "source": "data_center" if meta else None,
+            "has_meta": bool(meta),
+        })
+    return {"items": items}

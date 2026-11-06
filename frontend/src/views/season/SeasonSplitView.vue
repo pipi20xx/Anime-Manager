@@ -16,6 +16,7 @@ import { useSeasonSplitStore } from '@/stores'
 import RuleLibraryTab from './RuleLibraryTab.vue'
 import WorkbenchTab from './WorkbenchTab.vue'
 import AdvancedTab from './AdvancedTab.vue'
+import BlacklistTab from './BlacklistTab.vue'
 
 defineOptions({ name: 'SeasonSplitView' })
 
@@ -29,6 +30,7 @@ registerHeaderTab({
     { title: '规则库', icon: 'mdi-format-list-bulleted', tab: 'library' },
     { title: '分组工作台', icon: 'mdi-vector-polyline-edit', tab: 'workbench' },
     { title: '高级', icon: 'mdi-tune-variant', tab: 'advanced' },
+    { title: '黑名单', icon: 'mdi-shield-off-outline', tab: 'blacklist' },
   ],
   modelValue: activeTab,
 })
@@ -140,6 +142,7 @@ onMounted(() => {
       <RuleLibraryTab v-if="store.activeTab === 'library'" />
       <WorkbenchTab v-else-if="store.activeTab === 'workbench'" />
       <AdvancedTab v-else-if="store.activeTab === 'advanced'" />
+      <BlacklistTab v-else-if="store.activeTab === 'blacklist'" />
     </div>
   </v-container>
 </template>

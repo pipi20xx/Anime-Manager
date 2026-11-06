@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * AdvancedTab — 番剧分季「高级」子 Tab（默认参数 / 参照门槛 / 黑名单 / 调试器）
+ * AdvancedTab — 番剧分季「高级」子 Tab（默认参数 / 参照门槛 / 调试器）
  */
 import { useSeasonSplitStore } from '@/stores'
 
@@ -32,31 +32,55 @@ const store = useSeasonSplitStore()
               variant="outlined"
               hide-details
             />
-            <div class="d-flex flex-wrap ga-4">
-              <v-switch
-                v-model="store.settings.use_source"
-                label="启用 CureTMDb 规则表"
-                density="compact"
-                hide-details
-                color="primary"
-              />
-              <v-switch
-                v-model="store.settings.force_reference"
-                label="强制参照（跳过「日本动画 + 季数 1~2」门槛）"
-                density="compact"
-                hide-details
-                color="primary"
-              />
-              <v-switch
-                v-model="store.settings.use_includes_rules"
-                label="使用 includes 年份渲染词"
-                density="compact"
-                hide-details
-                color="primary"
-              />
-            </div>
-            <div class="text-caption text-medium-emphasis">
-              includes 渲染词按虚拟季首播年份做文件名包含匹配（例：<code>includes=2016</code>）；关闭后只生成集号/季号规则。
+            <div class="d-flex flex-column ga-3">
+              <div>
+                <v-switch
+                  v-model="store.settings.use_source"
+                  label="启用 CureTMDb 规则表"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+                <div class="text-caption text-medium-emphasis ml-8">
+                  规则表命中会直接作为分季定义；需在下方填写规则表地址，留空则不拉取。
+                </div>
+              </div>
+              <div>
+                <v-switch
+                  v-model="store.settings.force_reference"
+                  label="强制参照（跳过「日本动画 + 季数 1~2」门槛）"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+                <div class="text-caption text-medium-emphasis ml-8">
+                  开启后对所有番都尝试拉取 TVDB / Bangumi，不再按类型、国家、季数过滤。
+                </div>
+              </div>
+              <div>
+                <v-switch
+                  v-model="store.settings.use_includes_rules"
+                  label="使用 includes 年份渲染词"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+                <div class="text-caption text-medium-emphasis ml-8">
+                  按虚拟季首播年份生成文件名包含匹配（例：<code>includes=2016</code>）；关闭后只生成集号/季号规则。
+                </div>
+              </div>
+              <div>
+                <v-switch
+                  v-model="store.settings.auto_generate"
+                  label="自动生成规则"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+                <div class="text-caption text-medium-emphasis ml-8">
+                  识别到无规则的番时，按下方参照门槛自动拉取参照——需要拆分就自动生成并启用规则（当场生效），无需拆分就自动加入「黑名单」；仅在顶部「启用」模式下生效。
+                </div>
+              </div>
             </div>
             <v-text-field
               v-model="store.settings.source"
@@ -159,39 +183,6 @@ const store = useSeasonSplitStore()
             />
             <div class="text-caption text-medium-emphasis">
               固定集数兜底会出现在右侧「自动生成」里；间隔虚线阈值只影响原始季列表的虚线显示，不影响切分。
-            </div>
-          </div>
-        </v-card>
-
-        <v-card class="glass-card">
-          <v-card-title class="text-subtitle-2">番剧黑名单</v-card-title>
-          <v-divider />
-          <div class="pa-3 d-flex flex-column ga-2">
-            <div class="text-caption text-medium-emphasis">黑名单里的番永远不会套用分季规则（规则可保留）。</div>
-            <div class="d-flex flex-wrap ga-2">
-              <v-chip
-                v-for="(id, i) in store.settings.blacklist"
-                :key="id"
-                size="small"
-                closable
-                variant="tonal"
-                @click:close="store.settings.blacklist.splice(i, 1)"
-              >
-                {{ id }}
-              </v-chip>
-              <span v-if="!store.settings.blacklist.length" class="text-caption">（空）</span>
-            </div>
-            <div class="d-flex ga-2">
-              <v-text-field
-                v-model="store.blacklistInput"
-                label="添加 TMDB ID"
-                density="compact"
-                variant="outlined"
-                hide-details
-                style="max-width: 200px"
-                @keyup.enter="store.addBlacklist"
-              />
-              <v-btn variant="tonal" @click="store.addBlacklist">添加</v-btn>
             </div>
           </div>
         </v-card>
