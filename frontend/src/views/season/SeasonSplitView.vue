@@ -541,14 +541,24 @@ async function applySave(status: 'draft' | 'active') {
 async function editRule(rule: SplitRule) {
   tmdbId.value = String(rule.tmdb_id)
   activeTab.value = 'workbench'
-  await runPreview()
-  groups.value = normalizeGroups(rule.groups || [])
-  names.value = rule.names || {}
-  excluded.value = (rule.excluded || []).map((item: any) =>
-    Array.isArray(item) ? { s: Number(item[0]), e: Number(item[1]) } : { s: Number(item.s), e: Number(item.e) },
-  )
-  reference.value = rule.reference || 'manual'
-  scheduleCompile()
+  loading.value = true
+  try {
+    // 只拉 TMDB 结构 + 编译已存分组，不重新取 TVDB / Bangumi、不重生成候选
+    const data = await seasonSplitApi.preview({ tmdb_id: rule.tmdb_id, skip_references: true })
+    preview.value = data
+    groups.value = normalizeGroups(rule.groups || [])
+    names.value = rule.names || {}
+    excluded.value = (rule.excluded || []).map((item: any) =>
+      Array.isArray(item) ? { s: Number(item[0]), e: Number(item[1]) } : { s: Number(item.s), e: Number(item.e) },
+    )
+    reference.value = rule.reference || 'manual'
+    compileResult.value = data.suggested || null
+    success('已载入规则（未重新生成方案）')
+  } catch (e: any) {
+    showError(`载入规则失败: ${e.message}`)
+  } finally {
+    loading.value = false
+  }
 }
 
 // ---------------------------------------------------------------- 高级 / 调试

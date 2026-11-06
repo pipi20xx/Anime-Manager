@@ -364,6 +364,53 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
     if not flat:
         raise ValueError("TMDB 没有返回任何剧集数据")
 
+    title = tv_show.get("name") or tv_show.get("original_name") or f"TMDB {tmdb_id}"
+    structure_hash = _structure_hash(tv_show)
+    existing = await store.get_rule(tmdb_id)
+
+    # 编辑已有规则：不再拉 TVDB / Bangumi / 规则表，也不重生成候选
+    if opts.get("skip_references"):
+        log("INFO", "跳过参照源获取（编辑已有规则，仅载入 TMDB 结构 + 已存分组）")
+        compiled = {"mapping": {}, "render_words": "", "group_json": {}, "rows": [], "warnings": []}
+        if existing and existing.get("groups"):
+            compiled = compile_rule(
+                tmdb_id, flat,
+                existing.get("groups") or [],
+                overrides=existing.get("overrides") or {},
+                excluded=existing.get("excluded") or [],
+                names=existing.get("names") or {},
+                reference=existing.get("reference") or "manual",
+                title=title,
+            )
+        return {
+            "tmdb_id": tmdb_id,
+            "title": title,
+            "reference": (existing or {}).get("reference") or "",
+            "references": {},
+            "need_split": False,
+            "volatile": _is_volatile(tv_show),
+            "status": tv_show.get("status") or "",
+            "tmdb_hash": structure_hash,
+            "stale": bool(existing and existing.get("tmdb_hash")
+                          and existing["tmdb_hash"] != structure_hash),
+            "tmdb": {
+                "number_of_seasons": structure["max_season"],
+                "seasons": tv_show.get("seasons") or [],
+                "poster_path": tv_show.get("poster_path") or "",
+                "first_air_date": tv_show.get("first_air_date") or "",
+            },
+            "episodes": flat,
+            "gaps": grouping.gaps(flat, gap_mark_days),
+            "gap_mark_days": gap_mark_days,
+            "definition": [],
+            "candidates": {},
+            "default_basis": "",
+            "suggested": compiled,
+            "existing_rule": existing,
+            "gap_days": gap_days,
+            "logs": logs,
+        }
+
     entries = await _collect_references(structure, opts, log)
 
     split_bases = [
@@ -387,7 +434,6 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
 
     candidates = _candidates(structure, entries, gap_days, fixed_sizes)
     default_basis = _pick_default(candidates, split_bases, priority)
-    title = tv_show.get("name") or tv_show.get("original_name") or f"TMDB {tmdb_id}"
 
     compiled = {"mapping": {}, "render_words": "", "group_json": {}, "rows": [], "warnings": []}
     if default_basis and default_basis in candidates:
@@ -426,9 +472,6 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
         for name, item in entries.items()
         if item is not None
     }
-
-    existing = await store.get_rule(tmdb_id)
-    structure_hash = _structure_hash(tv_show)
 
     return {
         "tmdb_id": tmdb_id,

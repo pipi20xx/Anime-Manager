@@ -162,6 +162,7 @@ export const seasonSplitApi = {
     use_source?: boolean
     source?: string
     force_reference?: boolean
+    skip_references?: boolean
   }) => api.post<PreviewResult>('/api/season-split/preview', payload),
 
   compile: (payload: {

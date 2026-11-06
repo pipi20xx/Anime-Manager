@@ -834,6 +834,30 @@ class BangumiProvider:
         return data
 
     @staticmethod
+    async def get_related_subjects(subject_id: int, logs: Any = None) -> Optional[List[Dict]]:
+        """
+        获取条目相关条目列表 (GET /v0/subjects/{subject_id}/subjects)。
+        带 7 天缓存；用于续集/前传等关系链遍历。
+        """
+        def _log(msg):
+            if hasattr(logs, "log"): logs.log(msg)
+            elif isinstance(logs, list): logs.append(msg)
+
+        cache_key = f"bangumi:related:{subject_id}"
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached is not None:
+            _log(f"┃ [BGM] ⚡️ 相关条目缓存命中 (ID:{subject_id})")
+            return cached
+
+        data = await BangumiProvider._fetch(
+            "GET", f"{BangumiProvider.BASE_URL}/v0/subjects/{subject_id}/subjects", logs=logs
+        )
+        if not data:
+            return None
+        await MetaCacheManager.set_discover_cache(cache_key, data, expire_hours=24 * 7)
+        return data
+
+    @staticmethod
     async def search_subject(keyword: str, logs: Any, current_episode: Optional[int] = None, expected_type: str = "tv") -> Optional[dict]:
         """
         用于识别引擎的搜索逻辑 (增强日志版)

@@ -33,6 +33,16 @@ def _log_noop(level: str, message: str) -> None:
     print(f"[{level}] {message}")
 
 
+class _ProviderLog:
+    """把 season_split 的 log(level, msg) 适配成 Provider 期望的 .log(msg)。"""
+
+    def __init__(self, log: Callable):
+        self._log = log
+
+    def log(self, message: str) -> None:
+        self._log("INFO", message)
+
+
 def _proxy_for(service: str = "tmdb") -> Optional[str]:
     """按服务名取代理（复用项目 ConfigManager 的 proxy_services 配置）。"""
     try:
@@ -130,69 +140,48 @@ class TMDBAdapter:
 # ---------------------------------------------------------------------------
 
 class TVDBClient:
+    """把项目统一入口 `TVDBProvider` 的输出适配成分季用的 `SeriesEntry`（每季集数）。"""
+
     def __init__(self, api_key: str = "", base: str = "", log: Callable = None,
                  proxy: Optional[str] = None):
+        # api_key/base/proxy 保留参数以兼容旧调用；实际网络由 TVDBProvider 统一处理
         self.api_key = (api_key or "").strip() or DEFAULT_TVDB_KEY
         self.base = (base or DEFAULT_TVDB_BASE).rstrip("/")
         self.log = log or _log_noop
         self.proxy = proxy if proxy is not None else _proxy_for("tmdb")
         self._token: str = ""
 
-    async def _login(self, client: httpx.AsyncClient) -> None:
-        resp = await client.post(f"{self.base}/login", json={"apikey": self.api_key})
-        resp.raise_for_status()
-        token = (resp.json().get("data") or {}).get("token")
-        if not token:
-            raise ValueError("TVDB 登录响应缺少 token")
-        self._token = token
-        self.log("INFO", "TVDB token 获取成功")
-
     async def get_series_entry(self, tvdb_id: int) -> Optional[SeriesEntry]:
         if not tvdb_id or tvdb_id <= 0:
             return None
-        async with httpx.AsyncClient(timeout=TIMEOUT, proxy=self.proxy,
-                                     headers={"User-Agent": UA}) as client:
-            if not self._token:
-                await self._login(client)
-            headers = {"Authorization": f"Bearer {self._token}"}
-            episodes: list = []
-            series_name = ""
-            page = 0
-            while page < 10:  # TVDB 每页 500 集，正常番剧一页足够
-                resp = await client.get(
-                    f"{self.base}/series/{tvdb_id}/episodes/official/eng",
-                    params={"page": str(page)},
-                    headers=headers,
-                )
-                resp.raise_for_status()
-                data = (resp.json() or {}).get("data") or {}
-                series_name = data.get("name") or series_name
-                batch = data.get("episodes") or []
-                episodes.extend(batch)
-                links = data.get("links") or {}
-                if not batch or not links.get("next"):
-                    break
-                page += 1
+        from recognition.data_provider.tvdb.client import TVDBProvider
 
-            if not episodes:
-                self.log("INFO", f"TVDB {tvdb_id} 未返回剧集数据")
-                return None
+        result = await TVDBProvider.get_series_episodes(int(tvdb_id), logs=_ProviderLog(self.log))
+        if not result:
+            self.log("INFO", f"TVDB {tvdb_id} 未返回剧集数据")
+            return None
 
-            counts: dict = {}
-            for ep in episodes:
-                season_number = int(ep.get("seasonNumber") or 0)
-                number = int(ep.get("number") or 0)
-                if season_number <= 0 or number <= 0:
-                    continue
-                counts[season_number] = counts.get(season_number, 0) + 1
-            if not counts:
-                self.log("WARN", f"TVDB {tvdb_id} 返回 {len(episodes)} 集但没有可用季信息")
-                return None
+        series_name = result.get("name") or ""
+        episodes = result.get("episodes") or []
+        if not episodes:
+            self.log("INFO", f"TVDB {tvdb_id} 未返回剧集数据")
+            return None
 
-            seasons = [SeasonEntry(season_number=n, episode_count=c) for n, c in sorted(counts.items())]
-            for s in seasons:
-                self.log("INFO", f"TVDB {series_name} 季 {s.season_number}，集数: {s.episode_count}")
-            return SeriesEntry(name=series_name, seasons=seasons)
+        counts: dict = {}
+        for ep in episodes:
+            season_number = int(ep.get("seasonNumber") or 0)
+            number = int(ep.get("number") or 0)
+            if season_number <= 0 or number <= 0:
+                continue
+            counts[season_number] = counts.get(season_number, 0) + 1
+        if not counts:
+            self.log("WARN", f"TVDB {tvdb_id} 返回 {len(episodes)} 集但没有可用季信息")
+            return None
+
+        seasons = [SeasonEntry(season_number=n, episode_count=c) for n, c in sorted(counts.items())]
+        for s in seasons:
+            self.log("INFO", f"TVDB {series_name} 季 {s.season_number}，集数: {s.episode_count}")
+        return SeriesEntry(name=series_name, seasons=seasons)
 
 
 # ---------------------------------------------------------------------------
@@ -290,40 +279,32 @@ def extract_season_number(name_cn: str, name: str) -> int:
 
 
 class BangumiSeasonChain:
-    """Bangumi 续集链 → 分季定义（移植 Lens `BangumiClient` 的 season_info 部分）。"""
+    """Bangumi 续集链 → 分季定义（移植 Lens `BangumiClient` 的 season_info 部分）。
+
+    BGM 请求统一走 `recognition.data_provider.bangumi.client.BangumiProvider`，
+    复用项目的 MetaCacheManager / bangumi_raw_cache 缓存与代理、鉴权逻辑。
+    """
 
     def __init__(self, base: str = "", log: Callable = None, proxy: Optional[str] = None):
+        # base / proxy 保留参数以兼容旧调用；实际网络由 BangumiProvider 统一处理
         self.base = (base or DEFAULT_BANGUMI_BASE).rstrip("/")
         self.log = log or _log_noop
         self.proxy = proxy if proxy is not None else _proxy_for("bangumi")
 
     # -- 底层 ---------------------------------------------------------------
 
-    def _headers(self) -> dict:
-        headers = {"User-Agent": UA}
-        try:
-            from config_manager import ConfigManager
-            token = (ConfigManager.get_config() or {}).get("bangumi_token") or ""
-            if token:
-                headers["Authorization"] = f"Bearer {token}"
-        except Exception:
-            pass
-        return headers
+    @staticmethod
+    def _provider():
+        from recognition.data_provider.bangumi.client import BangumiProvider
+        return BangumiProvider
 
-    async def _get(self, client: httpx.AsyncClient, path: str, params: dict = None):
-        resp = await client.get(f"{self.base}{path}", params=params, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
-
-    async def _post(self, client: httpx.AsyncClient, path: str, body: dict):
-        resp = await client.post(f"{self.base}{path}", json=body, headers=self._headers())
-        resp.raise_for_status()
-        return resp.json()
+    def _sink(self) -> _ProviderLog:
+        return _ProviderLog(self.log)
 
     # -- 语义 ---------------------------------------------------------------
 
     async def search(self, title: str, air_date: str) -> list:
-        """按原名 + 首播日期 ±10 天窗口搜索动画条目。"""
+        """按原名 + 首播日期 ±10 天窗口搜索动画条目（带 24h 缓存）。"""
         if not title or not air_date:
             return []
         from datetime import date, timedelta
@@ -333,17 +314,33 @@ class BangumiSeasonChain:
             return []
         start = (d - timedelta(days=10)).isoformat()
         end = (d + timedelta(days=10)).isoformat()
+        keyword = strip_punctuations_spaces(title)
         body = {
-            "keyword": strip_punctuations_spaces(title),
+            "keyword": keyword,
             "sort": "match",
             "filter": {"type": [2], "air_date": [f">={start}", f"<={end}"]},
         }
-        async with httpx.AsyncClient(timeout=TIMEOUT, proxy=self.proxy) as client:
-            data = await self._post(client, "/v0/search/subjects", body)
+
+        import hashlib
+        from metadata.meta_cache import MetaCacheManager
+
+        provider = self._provider()
+        cache_key = "bangumi:seasonsplit:search:" + hashlib.md5(
+            f"{keyword}|{start}|{end}".encode("utf-8")
+        ).hexdigest()
+        cached = await MetaCacheManager.get_discover_cache(cache_key)
+        if cached is not None:
+            return cached
+
+        data = await provider._fetch(
+            "POST", f"{provider.BASE_URL}/v0/search/subjects", logs=self._sink(), json=body
+        )
         items = (data or {}).get("data")
         if not isinstance(items, list):
             raise ValueError("Bangumi 搜索响应 data 字段格式错误")
-        return [item for item in items if isinstance(item, dict)]
+        result = [item for item in items if isinstance(item, dict)]
+        await MetaCacheManager.set_discover_cache(cache_key, result, expire_hours=24)
+        return result
 
     @staticmethod
     def extract_season_number(name_cn: str, name: str) -> int:
@@ -351,8 +348,8 @@ class BangumiSeasonChain:
 
     async def is_first_episode_sequential(self, sid: int) -> bool:
         """首集的 sort 与 ep 是否相等（不等说明该条目不是从第 1 集开始）。"""
-        async with httpx.AsyncClient(timeout=TIMEOUT, proxy=self.proxy) as client:
-            resp = await self._get(client, "/v0/episodes", {"subject_id": sid})
+        provider = self._provider()
+        resp = await provider.get_episodes(int(sid), logs=self._sink())
         data = (resp or {}).get("data")
         if not isinstance(data, list) or not data:
             raise ValueError(f"Bangumi ID '{sid}' 剧集列表为空")
@@ -362,8 +359,9 @@ class BangumiSeasonChain:
             return False
         return int(sort_val) == int(ep_val)
 
-    async def _all_sequels(self, client: httpx.AsyncClient, bid: int) -> list:
+    async def _all_sequels(self, bid: int) -> list:
         """沿「续集」关系递归收集整个系列的条目 ID（前序遍历）。"""
+        provider = self._provider()
         seen: set = set()
         sequence: list = []
 
@@ -373,7 +371,7 @@ class BangumiSeasonChain:
             seen.add(current)
             sequence.append(current)
             try:
-                related = await self._get(client, f"/v0/subjects/{current}/subjects")
+                related = await provider.get_related_subjects(current, logs=self._sink())
             except Exception as e:
                 self.log("ERROR", f"获取 Bangumi {current} 相关条目失败: {e}")
                 return
@@ -389,67 +387,67 @@ class BangumiSeasonChain:
 
     async def season_info(self, item: dict) -> Optional[SeriesEntry]:
         """把 Bangumi 系列条目转成分季定义。"""
+        provider = self._provider()
         bid = item.get("id")
         if not isinstance(bid, (int, float)):
             return None
 
-        async with httpx.AsyncClient(timeout=TIMEOUT, proxy=self.proxy) as client:
-            sids = await self._all_sequels(client, int(bid))
-            if len(sids) < 2:
-                self.log("INFO", "Bangumi 系列仅一个条目，不进行拆分")
-                return None
+        sids = await self._all_sequels(int(bid))
+        if len(sids) < 2:
+            self.log("INFO", "Bangumi 系列仅一个条目，不进行拆分")
+            return None
 
-            bgm_seasons: dict = {}
-            for sid in sids:
-                try:
-                    d = await self._get(client, f"/v0/subjects/{sid}")
-                except Exception as e:
-                    self.log("ERROR", f"获取 Bangumi ID {sid} 详情失败: {e}")
-                    continue
-                if not d:
-                    self.log("WARN", f"Bangumi ID {sid} 详情为空")
-                    continue
-                platform = d.get("platform")
-                if platform in ("剧场版", "OVA"):
-                    self.log("INFO", f"{d.get('name_cn')} ID={sid} platform={platform}，跳过处理")
-                    continue
+        bgm_seasons: dict = {}
+        for sid in sids:
+            try:
+                d = await provider._fetch_subject_raw(int(sid), logs=self._sink())
+            except Exception as e:
+                self.log("ERROR", f"获取 Bangumi ID {sid} 详情失败: {e}")
+                continue
+            if not d:
+                self.log("WARN", f"Bangumi ID {sid} 详情为空")
+                continue
+            platform = d.get("platform")
+            if platform in ("剧场版", "OVA"):
+                self.log("INFO", f"{d.get('name_cn')} ID={sid} platform={platform}，跳过处理")
+                continue
 
-                name_cn = d.get("name_cn") if isinstance(d.get("name_cn"), str) else ""
-                name = d.get("name") if isinstance(d.get("name"), str) else ""
-                num = extract_season_number(name_cn, name)
+            name_cn = d.get("name_cn") if isinstance(d.get("name_cn"), str) else ""
+            name = d.get("name") if isinstance(d.get("name"), str) else ""
+            num = extract_season_number(name_cn, name)
 
-                eps = 12
-                for key in ("eps", "total_episodes"):
-                    val = d.get(key)
-                    if isinstance(val, (int, float)) and val > 0:
-                        eps = int(val)
-                        break
+            eps = 12
+            for key in ("eps", "total_episodes"):
+                val = d.get(key)
+                if isinstance(val, (int, float)) and val > 0:
+                    eps = int(val)
+                    break
 
-                if num not in bgm_seasons:
-                    bgm_seasons[num] = SeasonEntry(season_number=num, episode_count=eps, name=name_cn)
-                    continue
+            if num not in bgm_seasons:
+                bgm_seasons[num] = SeasonEntry(season_number=num, episode_count=eps, name=name_cn)
+                continue
 
-                try:
-                    resp = await self._get(client, "/v0/episodes", {"subject_id": sid})
-                    data = (resp or {}).get("data") or []
-                    ep0 = data[0] if data else {}
-                    sequential = (isinstance(ep0.get("sort"), (int, float))
-                                  and isinstance(ep0.get("ep"), (int, float))
-                                  and int(ep0["sort"]) == int(ep0["ep"]))
-                except Exception as e:
-                    self.log("ERROR", f"{e}")
-                    bgm_seasons[num].episode_count += eps
-                    continue
-                if sequential:
-                    new_num = max(bgm_seasons) + 1
-                    bgm_seasons[new_num] = SeasonEntry(season_number=new_num, episode_count=eps, name=name_cn)
-                else:
-                    bgm_seasons[num].episode_count += eps
+            try:
+                resp = await provider.get_episodes(int(sid), logs=self._sink())
+                data = (resp or {}).get("data") or []
+                ep0 = data[0] if data else {}
+                sequential = (isinstance(ep0.get("sort"), (int, float))
+                              and isinstance(ep0.get("ep"), (int, float))
+                              and int(ep0["sort"]) == int(ep0["ep"]))
+            except Exception as e:
+                self.log("ERROR", f"{e}")
+                bgm_seasons[num].episode_count += eps
+                continue
+            if sequential:
+                new_num = max(bgm_seasons) + 1
+                bgm_seasons[new_num] = SeasonEntry(season_number=new_num, episode_count=eps, name=name_cn)
+            else:
+                bgm_seasons[num].episode_count += eps
 
-            if not bgm_seasons:
-                return None
-            seasons = [bgm_seasons[k] for k in sorted(bgm_seasons)]
-            return SeriesEntry(name=item.get("name_cn"), seasons=seasons)
+        if not bgm_seasons:
+            return None
+        seasons = [bgm_seasons[k] for k in sorted(bgm_seasons)]
+        return SeriesEntry(name=item.get("name_cn"), seasons=seasons)
 
 
 # ---------------------------------------------------------------------------

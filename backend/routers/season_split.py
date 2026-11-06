@@ -23,6 +23,7 @@ class PreviewRequest(BaseModel):
     use_source: Optional[bool] = Field(default=None, description="启用 CureTMDb 外部分季规则表（空则用系统设置）")
     source: Optional[str] = Field(default=None, description="规则表地址（空则用系统设置）")
     force_reference: Optional[bool] = Field(default=None, description="忽略「仅日本动画 / 季数 1~2」的自动参照门槛（空则用系统设置）")
+    skip_references: Optional[bool] = Field(default=None, description="编辑已有规则时跳过参照源获取与候选生成")
 
 
 class CompileRequest(BaseModel):
