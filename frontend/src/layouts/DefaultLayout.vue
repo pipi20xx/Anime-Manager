@@ -77,6 +77,7 @@ const navGroups = [
     label: '工具',
     items: [
       { title: '识别测试', icon: 'mdi-head-cog-outline', to: '/' },
+      { title: '番剧分季', icon: 'mdi-call-split', to: '/season-split' },
       { title: '追剧日历', icon: 'mdi-calendar-month-outline', to: '/calendar' },
       { title: '资源搜索', icon: 'mdi-magnify-scan', to: '/jackett' },
       { title: '文件浏览', icon: 'mdi-file-tree-outline', to: '/files' },

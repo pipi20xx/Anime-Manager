@@ -57,7 +57,7 @@ __version__ = _get_version()
 # Import Routers
 from routers import (
     recognition, organizer, cache, strm, config,
-    system, clients, rss, subscriptions, tmdb, bangumi, webhook, webhook_ledger, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, scheduler, assistant, sytmdb, file_hashes, appearance, font_manager, tmdb_blocklist, cd2, notifications
+    system, clients, rss, subscriptions, tmdb, bangumi, webhook, webhook_ledger, tmdb_full, explore, priority, calendar, auth, health, user_mapping, task_history, scheduler, assistant, sytmdb, file_hashes, appearance, font_manager, tmdb_blocklist, cd2, notifications, season_split
 )
 
 app = FastAPI(
@@ -103,6 +103,7 @@ app.include_router(assistant.router)
 app.include_router(file_hashes.router)
 app.include_router(appearance.router)
 app.include_router(font_manager.router)
+app.include_router(season_split.router, prefix="/api")
 
 # --- API Audit & Security Middleware ---
 SENSITIVE_KEY_MARKERS = ("password", "token", "apikey", "api_key", "secret", "otp")
@@ -380,6 +381,14 @@ async def startup_event():
     except Exception as e:
         logger.error(f"初始化本地数据中心失败: {e}")
 
+    # 番剧分季：把生效规则预编译进内存，并启动 30s 版本轮询（多 worker 一致）
+    try:
+        from season_split import store as season_split_store
+        await season_split_store.reload()
+        await season_split_store.start_watcher()
+    except Exception as e:
+        logger.warning(f"分季规则缓存初始化失败: {e}")
+
     await asyncio.to_thread(ConfigManager.init_config)
     
     try:
@@ -539,6 +548,11 @@ async def startup_event():
 async def shutdown_event():
     from logger import log_audit
     log_audit("系统", "停止", "正在关闭服务...")
+    try:
+        from season_split import store as season_split_store
+        await season_split_store.stop_watcher()
+    except Exception:
+        pass
     MonitorManager.stop_all()
     log_audit("系统", "停止", "服务已安全关闭。")
 

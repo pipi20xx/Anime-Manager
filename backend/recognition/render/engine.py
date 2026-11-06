@@ -5,6 +5,27 @@ from config_manager import ConfigManager
 from metadata.meta_cache import MetaCacheManager
 from ..data_provider.tmdb import TMDBClient
 
+# 分季规则可能上千条：先按 tmdbid 取提示位，避免每个文件逐条做完整解析。
+# 缓存以规则原文为键（规则串很短且稳定），命中只需一次字典查找。
+_TMDBID_RE = re.compile(r"tmdbid\s*=\s*(\d+)", re.I)
+_RULE_HINT_CACHE: Dict[str, Optional[str]] = {}
+_RULE_HINT_CACHE_MAX = 20000
+_HINT_MISS = object()
+
+
+def _rule_tmdb_hint(rule: str) -> Optional[str]:
+    cached = _RULE_HINT_CACHE.get(rule, _HINT_MISS)
+    if cached is not _HINT_MISS:
+        return cached
+    if "tmdbid" not in rule.lower():
+        hint: Optional[str] = None
+    else:
+        m = _TMDBID_RE.search(rule)
+        hint = m.group(1) if m else None
+    if len(_RULE_HINT_CACHE) < _RULE_HINT_CACHE_MAX:
+        _RULE_HINT_CACHE[rule] = hint
+    return hint
+
 class RenderEngine:
     """
     核心规则引擎：负责执行各种复杂的自定义渲染逻辑。
@@ -98,14 +119,31 @@ class RenderEngine:
                 except Exception as e:
                     logger_logs.append(f"┃  => [Error] TMDB fetch failed: {e}")
 
+        hints = [_rule_tmdb_hint(r) for r in rules]
+        series_skipped = 0
+
         for idx, rule in enumerate(rules):
             rule = rule.strip()
             if not rule or rule.startswith("#"): continue
-            
+
+            # 分季规则带 tmdbid 前缀：先按当前剧集 ID 粗筛，跳过其他番的规则
+            hint = hints[idx]
+            if hint is not None:
+                current_id = str(tmdb_match.get("id")) if tmdb_match else ""
+                if hint != current_id:
+                    series_skipped += 1
+                    continue
+
             # 判定规则来源
             is_remote = rule.startswith("[REMOTE]")
-            source_tag = "[社区]" if is_remote else "[私有]"
-            actual_line = rule[8:] if is_remote else rule
+            # [SPLIT] 是「番剧分季」注入的规则标记：日志来源显示为 [分季]，便于区分
+            is_split = rule.startswith("[SPLIT]")
+            if is_remote:
+                source_tag, actual_line = "[社区]", rule[8:]
+            elif is_split:
+                source_tag, actual_line = "[分季]", rule[7:]
+            else:
+                source_tag, actual_line = "[私有]", rule
 
             try:
                 # --- Mode: Offset Locator (A <> B >> Expr) ---
@@ -235,4 +273,5 @@ class RenderEngine:
                 logger_logs.append(f"┣ ❌ [Error]{source_tag} 规则 #{idx+1} 异常: {str(e)}")
 
         if skip_count > 0: logger_logs.append(f"┣ ⏩ 跳过 {skip_count} 条不匹配的自定义渲染词")
+        if series_skipped > 0: logger_logs.append(f"┣ ⏩ 跳过 {series_skipped} 条其他番的分季规则")
         return data

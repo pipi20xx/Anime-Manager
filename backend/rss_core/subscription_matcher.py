@@ -322,6 +322,7 @@ class SubscriptionMatcher:
                     bangumi_failover=bgm_failover,
                     batch_enhancement=True,
                     force_ai=feed_force_ai,
+                    entry="subscription",
                     description=db_item.description if feed_batch_enhance else None
                 )
                 

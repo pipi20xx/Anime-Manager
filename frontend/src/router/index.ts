@@ -65,6 +65,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/OrganizerView.vue'),
       },
 
+      // === 番剧分季 ===
+      {
+        path: '/season-split',
+        name: 'SeasonSplit',
+        component: () => import('@/views/season/SeasonSplitView.vue'),
+      },
+
       // === 文件哈希记录 ===
       {
         path: '/file-hashes',

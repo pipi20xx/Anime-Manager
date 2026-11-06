@@ -786,3 +786,31 @@ class SkillEnabledState(SQLModel, table=True):
     __admin_name__ = "AI技能开关"
     skill_id: str = Field(primary_key=True)
     enabled: bool = Field(default=True)
+
+
+class SeasonSplitRule(SQLModel, table=True):
+    """番剧分季拆分规则（一部番一条）。
+
+    `groups_json` 是人写的分组定义，`render_words` 是保存时编译好的渲染词文本；
+    识别热路径只读内存里编译好的文本，不做任何计算。
+    """
+    __tablename__ = "season_split_rules"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "分季规则"
+    # tmdb_id 是外部给的天然主键，不能用 SERIAL 自增（避免建出无意义的序列）
+    tmdb_id: int = Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=False))
+    title: Optional[str] = None
+    status: str = Field(default="draft", index=True)      # draft / active / disabled
+    reference: Optional[str] = None                        # tvdb / bangumi / curetmdb / gap / year / finale / fixed / manual
+    groups_json: List[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    overrides_json: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
+    excluded_json: List[Any] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    names_json: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
+    mapping_json: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
+    group_json: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
+    render_words: Optional[str] = Field(default=None, sa_column=Column(Text))
+    tmdb_hash: Optional[str] = None
+    episode_total: int = Field(default=0)
+    last_compiled_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)

@@ -94,6 +94,17 @@ class ConfigManager:
         "season_year_offset_apply": False,
         # 强制 AI 识别：全局默认关。开启后所有未显式覆盖的识别都直接走 AI（等效特权规则 ai=1）
         "force_ai": False,
+        # ---- 番剧分季拆分（Season Splitter）----
+        # off 关闭 / preview 只预览（不注入识别）/ on 启用
+        "season_split_mode": "off",
+        # 哪些入口生效：整理 / 订阅匹配 / 识别测试页
+        "season_split_scope": {"organize": True, "subscription": False, "recognition_test": False},
+        "season_split_blacklist": [],          # [tmdb_id, ...] 永不套用
+        "season_split_exclude_patterns": ["总集篇", "recap", r"\bOVA\b"],
+        "season_split_priority": "tvdb, bangumi",
+        "season_split_source": "",             # CureTMDb 规则表地址（默认不启用，需要自己在高级页填）
+        "season_split_gap_days": 45,           # 间隔切分阈值（天）
+        "tvdb_api_key": "",                    # 空 = 使用官方共用 Key
         "custom_noise_words": [],
         "remote_noise_urls": [],
         "custom_release_groups": [],

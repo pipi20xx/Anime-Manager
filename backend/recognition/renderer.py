@@ -1,4 +1,4 @@
-import time
+﻿import time
 from typing import Dict, Any
 from .context import RecognitionContext
 from .render.engine import RenderEngine
@@ -80,6 +80,8 @@ class ResultRenderer:
         
         # 2. 执行专家渲染规则 (Expert Rules Engine)
         render_start = time.time()
+        before_se = (data_packet["final_result"].get("season"),
+                     data_packet["final_result"].get("episode"))
         if ctx.all_render:
             ctx.log("[DEBUG][Step 8: 自定义渲染词处理]: 启动子流程审计")
             r_logs = []
@@ -88,7 +90,15 @@ class ResultRenderer:
             )
             for l in r_logs: ctx.log(l)
             ctx.log("✅ 渲染流程结束")
-        
+
+        # 2.5 季集号被规则改过（自定义专家规则 / 分季映射）→ 只做日志标注
+        #     processed_name 保持"内核清洗后的原文件名"语义，不掺入季集号：
+        #     落盘名由改名模板的 {season}/{episode} 决定，二者互不影响。
+        after_se = (data_packet["final_result"].get("season"),
+                    data_packet["final_result"].get("episode"))
+        if after_se != before_se:
+            ctx.log(f"🔀 季集号已变更: S{before_se[0]}E{before_se[1]} → S{after_se[0]}E{after_se[1]}")
+
         ctx.add_perf("规则渲染", render_start)
 
         # 3. 同步并修正最终渲染名 (processed_name)

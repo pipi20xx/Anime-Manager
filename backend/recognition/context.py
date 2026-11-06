@@ -86,11 +86,28 @@ class RecognitionContext:
 
         local_render = self.config.get("custom_render_words", [])
         remote_render = [f"[REMOTE]{r}" for r in cached_rules.get("render", [])]
-        self.all_render = kwargs.get("all_render") or (local_render + remote_render)
+        # 保持原有 `or` 语义：调用方传空列表时仍回落到本地+远程规则
+        base_render = kwargs.get("all_render") or (local_render + remote_render)
+        # 番剧分季规则放最后：用户规则是按 TMDB 坐标书写的，分季是自动归一化，
+        # 放前面会把用户规则的条件前提打乱（详见 docs/season-split-plan.md）
+        self.entry = kwargs.get("entry") or "organize"
+        self.all_render = list(base_render) + self._season_split_render()
 
         local_privilege = self.config.get("custom_privileged_rules", [])
         remote_privilege = [f"[REMOTE]{r}" for r in cached_rules.get("privilege", [])]
         self.all_privilege = kwargs.get("all_privilege") or (local_privilege + remote_privilege)
+
+    def _season_split_render(self) -> list:
+        """取当前生效的分季渲染词（纯内存快照，无 I/O；未启用时返回空）。"""
+        try:
+            from season_split import store as season_split_store
+            rules = season_split_store.as_render_words(self.config, entry=self.entry)
+            if rules:
+                self.log(f"┃ [分季] 🔀 已注入 {sum(1 for r in rules if r.startswith('[SPLIT]'))} 条分季规则")
+            return rules
+        except Exception as e:
+            self.log(f"┃ [分季] ⚠️ 规则注入失败（已忽略）: {e}")
+            return []
 
     def log(self, message: str, level: str = "INFO"):
         self.logs.append(message)

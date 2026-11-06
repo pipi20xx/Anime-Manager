@@ -104,7 +104,8 @@ async def recognize(req: RecognizeRequest):
             forced_episode=req.forced_episode,
             season_resolve_mode=req.season_resolve_mode,
             force_ai=req.force_ai,
-            description=req.description
+            description=req.description,
+            entry="recognition_test"
         )
 
         if task_id:
