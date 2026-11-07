@@ -644,7 +644,7 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
 - **三档模式**（`season_resolve_mode`）: `off` / `shadow`（只算并写日志，不改结果）/ `on`（强证据下不一致时采纳，默认；弱证据仅记录不应用）
 - **跨年续播偏移**: 季号已定 + 文件名带年份 + 有集数时，按需拉 `/tv/{id}/season/{n}` 的逐集数据（6h 缓存，且只查「首播年早于文件年份」的季）。**分段边界优先取 TMDB 的 `episode_type`**：`mid_season`（季中结局）/ `finale`（本季大结局）之后的第一集才是下一 cour 的起点（要求该集播出年 = 文件名年份）；整季没有任何分段标记时才退回「`air_date` 落在文件名年份的第一集」。随后 `文件集数 + (k-1)` 就是该季的真实集号——典型如 TMDB 把两个 cour 并成一季（S1 共 24 集，ep13 标季中结局），`(2026) [03]` 实为 S1E16
   - 有分段标记 → `boundary:year-offset`，**强证据，直接应用**
-  - 整季无标记、只按日历跨年推 → `boundary:year-calendar`，弱证据仅记录；打开 `season_year_offset_apply` 后才应用
+  - 整季无标记、只按日历跨年推 → `boundary:year-calendar`，弱证据，**永远只记录不应用**（日历不等于 cour 边界；原来控制这一档的 `season_year_offset_apply` 已移除，行为固定为只记录）
 - **日志**: `[季号校准] 季名对齐(name-match) → S2（原 S1）· 季名命中 Cyberpunk: Edgerunners 2`
 - **为什么要它**: 内核只用正则抽数字当季号，抽不到默认 1；`Edgerunners 2`、`Act II S2` 这类“作品内第 N 部”靠正则永远判不出来，而 TMDB 季名里写着答案
 
@@ -1024,7 +1024,6 @@ L1 内核不含任何数据库或网络代码。
 | `forceFilename` | 强制单文件模式，启用路径分隔符脱敏 | OFF |
 | `seriesFingerprint` | 智能记忆 | ON |
 | `seasonResolveMode` | 季号校准：`off` 关闭 / `shadow` 只算不生效（观察准确率）/ `on` 强证据下不一致时采纳（默认） | `on` |
-| `seasonYearOffsetApply` | 跨年续播集数偏移：有「季中结局/本季大结局」标记的偏移自动应用；此开关只控制没有标记时是否也按日历跨年推断并应用 | OFF |
 | `enableTitleSegmentation` | 标题分词搜索：开启后云端搜索在完整标题外追加分词查询词（评分 targets 始终用完整分词） | OFF |
 | `aiFallbackEnabled` | AI 智能介入全局兜底（需配置 OpenAI 兼容 API）；特权规则 `ai=1` 命中可优先触发 AI 介入，不受此开关控制 | OFF |
 | `aiMode` | AI 介入的实现方式：`oneshot`（单次猜标题）\| `agent`（工具循环：查离线库 / 搜 TMDB / 核实季集） | `oneshot` |

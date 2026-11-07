@@ -380,6 +380,9 @@ class SeasonStage:
         # 跨年续播偏移：TMDB 把 split cour 并成一季时，新年份续播的集数又会从 1 数起。
         # 需要逐集 air_date（/tv/{id}/season/{n}，6h 缓存），只在「已定季 + 有文件名年份 +
         # 有集数」时才补一步，避免无谓请求。
+        # 只有靠 TMDB 分段标记（季中结局 / 本季大结局）算出来的 `boundary:year-offset` 是强证据；
+        # `boundary:year-calendar`（整季没标记、只按日历跨年推）**永远只记录不应用**——日历不等于
+        # cour 边界，猜错就是把集数改大，所以不留配置开关（原来的 season_year_offset_apply 已移除）。
         if decision.season is not None and getattr(meta, "year", None) and meta.begin_episode:
             episodes_map = await SeasonStage._season_episodes(ctx, seasons, meta.year)
             if episodes_map:
@@ -395,14 +398,6 @@ class SeasonStage:
                 if retry.reason in ("boundary:year-offset", "boundary:year-calendar"):
                     ctx.log(f"┃ [季号校准] 🧮 {retry.detail}")
                     decision = retry
-                    # 有 TMDB 分段标记的偏移本身就是强证据（会直接应用）；
-                    # 只有「整季没标记、纯按日历跨年推」的才默认只记录，
-                    # 需要显式打开 season_year_offset_apply 才应用。
-                    if retry.reason == "boundary:year-calendar" and bool(
-                        ctx.config.get("season_year_offset_apply", False)
-                    ):
-                        decision.confidence = "high"
-                        ctx.log("┃ [季号校准] ⚙️ 已按配置把「日历跨年推断」也视为强证据（会改集数）")
 
         label = _REASON_LABELS.get(decision.reason, decision.reason)
 

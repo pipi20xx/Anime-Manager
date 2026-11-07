@@ -88,10 +88,6 @@ class ConfigManager:
         "series_fingerprint": True,
         # 季号校准：off 关闭 / shadow 只算不生效 / on 强证据下不一致时采纳（默认）
         "season_resolve_mode": "on",
-        # 跨年续播偏移：TMDB 把 split cour 并成一季时，新年份续播的集数会从 1 重新数。
-        # 有「季中结局 / 本季大结局」分段标记的偏移默认直接应用（强证据）；
-        # 这个开关只额外控制「整季没有分段标记、纯按日历跨年推」的那部分是否也应用
-        "season_year_offset_apply": False,
         # 强制 AI 识别：全局默认关。开启后所有未显式覆盖的识别都直接走 AI（等效特权规则 ai=1）
         "force_ai": False,
         # ---- 番剧分季拆分（Season Splitter）----
