@@ -81,6 +81,18 @@ const store = useSeasonSplitStore()
                   识别到无规则的番时，按下方参照门槛自动拉取参照——需要拆分就自动生成并启用规则（当场生效），无需拆分就自动加入「黑名单」；仅在顶部「启用」模式下生效。
                 </div>
               </div>
+              <div>
+                <v-switch
+                  v-model="store.settings.auto_push_sytmdb"
+                  label="自动写入 SYTMDB 剧集组"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+                <div class="text-caption text-medium-emphasis ml-8">
+                  自动生成规则后，顺带把剧集组推送到 SYTMDB，让 Emby 按多季显示；写入失败只记日志，不会中断本次识别。
+                </div>
+              </div>
             </div>
             <v-text-field
               v-model="store.settings.source"

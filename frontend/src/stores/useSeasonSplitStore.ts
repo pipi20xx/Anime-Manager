@@ -38,6 +38,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     use_source: false,
     force_reference: false,
     auto_generate: false,
+    auto_push_sytmdb: false,
     source: '',
     gap_days: 45,
     ref_genre_ids: [16],
@@ -78,6 +79,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       settings.gap_mark_days = data.gap_mark_days ?? 21
       settings.use_includes_rules = data.use_includes_rules ?? true
       settings.auto_generate = data.auto_generate ?? false
+      settings.auto_push_sytmdb = data.auto_push_sytmdb ?? false
       refGenreIdsText.value = (settings.ref_genre_ids || []).join(', ')
       refCountriesText.value = (settings.ref_countries || []).join(', ')
       fixedSizesText.value = (settings.fixed_sizes || []).join(', ')
@@ -96,6 +98,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
         season_split_use_source: settings.use_source,
         season_split_force_reference: settings.force_reference,
         season_split_auto_generate: settings.auto_generate,
+        season_split_auto_push_sytmdb: settings.auto_push_sytmdb,
         season_split_source: settings.source,
         season_split_gap_days: settings.gap_days,
         season_split_ref_genre_ids: settings.ref_genre_ids,

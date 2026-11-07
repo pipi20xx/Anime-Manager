@@ -644,6 +644,18 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[
         "reference": basis or "tvdb",
         "status": "active",
     })
+
+    # 可选：自动写入 SYTMDB 剧集组（闭环；写入失败不中断识别）
+    pushed = False
+    push_error = ""
+    if _cfg_bool(cfg, "season_split_auto_push_sytmdb", False):
+        try:
+            await push_episode_group(tmdb_id)
+            pushed = True
+        except Exception as e:
+            push_error = str(e)
+    record["pushed_sytmdb"] = pushed
+    record["push_error"] = push_error
     return record
 
 
@@ -721,6 +733,7 @@ def settings_snapshot() -> dict:
         "use_source": bool(cfg.get("season_split_use_source")),
         "force_reference": bool(cfg.get("season_split_force_reference")),
         "auto_generate": bool(cfg.get("season_split_auto_generate")),
+        "auto_push_sytmdb": bool(cfg.get("season_split_auto_push_sytmdb")),
         "source": cfg.get("season_split_source") or "",
         "gap_days": cfg.get("season_split_gap_days") or DEFAULT_GAP_DAYS,
         "ref_genre_ids": _cfg_list(cfg, "season_split_ref_genre_ids", [16]),
@@ -742,7 +755,7 @@ def settings_update(payload: dict) -> dict:
         "season_split_mode", "season_split_scope", "season_split_blacklist",
         "season_split_exclude_patterns", "season_split_priority", "season_split_source",
         "season_split_gap_days", "season_split_use_source", "season_split_force_reference",
-        "season_split_auto_generate",
+        "season_split_auto_generate", "season_split_auto_push_sytmdb",
         "season_split_ref_genre_ids", "season_split_ref_countries",
         "season_split_ref_season_min", "season_split_ref_season_max",
         "season_split_fixed_sizes", "season_split_gap_mark_days",

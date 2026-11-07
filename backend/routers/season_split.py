@@ -50,6 +50,7 @@ class SettingsRequest(BaseModel):
     season_split_use_source: Optional[bool] = None
     season_split_force_reference: Optional[bool] = None
     season_split_auto_generate: Optional[bool] = None
+    season_split_auto_push_sytmdb: Optional[bool] = None
     season_split_gap_days: Optional[int] = None
     season_split_ref_genre_ids: Optional[List[int]] = None
     season_split_ref_countries: Optional[List[str]] = None

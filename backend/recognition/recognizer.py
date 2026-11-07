@@ -76,6 +76,10 @@ class RecognitionWorkflow:
                 f"┃ [分季] ⚡ 自动生成规则已生效（TMDB {tmdb_id}，"
                 f"依据 {record.get('reference') or '-'}，{len(record.get('groups') or [])} 季）"
             )
+            if record.get("pushed_sytmdb"):
+                self.ctx.log(f"┃ [分季] 📡 已自动写入 SYTMDB 剧集组（TMDB {tmdb_id}）")
+            elif record.get("push_error"):
+                self.ctx.log(f"┃ [分季] ⚠️ SYTMDB 剧集组写入失败（已忽略）: {record.get('push_error')}")
         except Exception as e:
             self.ctx.log(f"┃ [分季] ⚠️ 自动生成失败（已忽略）: {e}")
 

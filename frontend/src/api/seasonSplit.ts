@@ -126,6 +126,7 @@ export interface SeasonSplitSettings {
   use_source: boolean
   force_reference: boolean
   auto_generate: boolean
+  auto_push_sytmdb: boolean
   gap_days: number
   ref_genre_ids: number[]
   ref_countries: string[]
