@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import httpx
 
-from . import compiler, grouping, store
+from . import compiler, grouping, store, sytmdb_source
 from .constants import ANIME_GENRE_ID
 from .models import SeriesEntry
 from .reference import BangumiSeasonChain, TMDBAdapter, TVDBClient, load_cure_source
@@ -702,6 +702,114 @@ def _sytmdb_url(addr: str, tmdb_id: int) -> str:
     if addr and not addr.startswith("http"):
         return f"http://{addr}:8121/api/tv/{tmdb_id}/episodegroup"
     return f"{addr}/api/tv/{tmdb_id}/episodegroup"
+
+
+# ---------------------------------------------------------------------------
+# SYTMDB 一键导入（直接吃那边的剧集组，不拿 TMDB 重新生成）
+# ---------------------------------------------------------------------------
+
+def _sytmdb_conn() -> tuple[str, str]:
+    cfg = _cfg()
+    return (cfg.get("sytmdb_host") or "").strip(), (cfg.get("sytmdb_token") or "").strip()
+
+
+async def sytmdb_candidates() -> dict:
+    """列出 SYTMDB 里所有「带剧集组」的番，并标注是否已有规则 / 是否需要拆分。"""
+    addr, token = _sytmdb_conn()
+    if not addr:
+        raise ValueError("未配置 SYTMDB 地址（系统设置 → SYTMDB）")
+
+    rows, scanned, errors = await sytmdb_source.collect_candidates(addr, token)
+    existing = {int(r["tmdb_id"]): r for r in await store.list_rules()}
+    for row in rows:
+        rule = existing.get(int(row["tmdb_id"])) or {}
+        row["existing"] = bool(rule)
+        row["existing_status"] = rule.get("status") or ""
+        row["existing_reference"] = rule.get("reference") or ""
+    # 可导入的排前面，其次是没有规则的，再按年份倒序
+    rows.sort(key=lambda r: (
+        not r["need_split"], not r["existing"], -int(r.get("year") or 0), r["title"]
+    ))
+    return {
+        "source": addr,
+        "scanned": scanned,
+        "matched": len(rows),
+        "importable": sum(1 for r in rows if r["need_split"]),
+        "existing": sum(1 for r in rows if r["existing"]),
+        "errors": errors,
+        "items": rows,
+    }
+
+
+async def sytmdb_import(tmdb_ids: Optional[List[int]] = None, status: str = "active",
+                        overwrite: bool = False) -> dict:
+    """把 SYTMDB 的剧集组直接落成规则库条目（不经过 TMDB 重新生成）。
+
+    - ``tmdb_ids`` 为空 = 导入全部「需要拆分」的条目
+    - ``overwrite`` False 时跳过库中已存在的番
+    - 每条规则同时写入 mapping / group_json / render_words，写完统一 reload 一次
+    """
+    addr, token = _sytmdb_conn()
+    if not addr:
+        raise ValueError("未配置 SYTMDB 地址（系统设置 → SYTMDB）")
+    if status not in ("draft", "active", "disabled"):
+        status = "active"
+
+    rows, scanned, errors = await sytmdb_source.collect_candidates(addr, token)
+    meta = {int(r["tmdb_id"]): r for r in rows}
+    if tmdb_ids:
+        ids = [int(x) for x in tmdb_ids if int(x) in meta]
+        missing = [int(x) for x in tmdb_ids if int(x) not in meta]
+    else:
+        ids = [tid for tid, row in meta.items() if row["need_split"]]
+        missing = []
+
+    existing = {int(r["tmdb_id"]): r for r in await store.list_rules()}
+    sem = asyncio.Semaphore(8)
+    imported = 0
+    skipped: List[dict] = [{"tmdb_id": tid, "reason": "SYTMDB 里没有这部剧集组"} for tid in missing]
+    failed: List[dict] = []
+    items: List[dict] = []
+
+    async def build_one(tmdb_id: int) -> Optional[dict]:
+        if tmdb_id in existing and not overwrite:
+            skipped.append({"tmdb_id": tmdb_id, "reason": "规则库里已有该番"})
+            return None
+        try:
+            async with sem:
+                raw = await sytmdb_source.fetch_episode_group(addr, token, tmdb_id)
+            row = meta[tmdb_id]
+            built = sytmdb_source.build_rule(
+                {"id": tmdb_id, "name": row["title"], "year": row.get("year"), "source": row.get("source")},
+                raw, status,
+            )
+        except Exception as e:
+            failed.append({"tmdb_id": tmdb_id, "error": str(e)})
+            return None
+        try:
+            await store.upsert_rule(built["payload"], reload_cache=False)
+        except Exception as e:
+            failed.append({"tmdb_id": tmdb_id, "error": f"写库失败: {e}"})
+            return None
+        return built["stats"]
+
+    for stats in await asyncio.gather(*[build_one(tid) for tid in ids]):
+        if stats:
+            imported += 1
+            items.append(stats)
+
+    if imported:
+        await store.reload()
+
+    return {
+        "imported": imported,
+        "skipped": skipped,
+        "failed": failed,
+        "items": items,
+        "scanned": scanned,
+        "fetch_errors": errors,
+        "cache": store.cache_stats(),
+    }
 
 
 async def debug_episode(tmdb_id: int, season: int, episode: int, filename: str = "") -> dict:

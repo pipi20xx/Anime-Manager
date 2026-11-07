@@ -401,3 +401,57 @@ cd backend && python -m season_split.integration_check     # 24/24 通过
 3. 在识别测试页跑一个第 13 集的文件，看日志出现 `🔀 季集号已变更: S1E13 → S2E1`；
 4. 确认无误后把开关切到 `启用`，再跑整理预览看落盘路径 `Season 2/S02E01`；
 5. Emby 显示需要额外点「写 SYTMDB」（写剧集组），二者配套才生效。
+
+---
+
+## SYTMDB 一键导入（规则库 → 直接用那边的剧集组）
+
+规则库里多了一个「导入 SYTMDB」按钮：把 SYTMDB 上**已经画好**的剧集组直接搬成规则，
+**不拿 TMDB ID 重新生成**——季号、集号、组名都按 SYTMDB 的数据来。
+
+### 用到的 SYTMDB 接口
+
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| GET | `/api/items/tmdb-tv?has_episode_group=yes&page=&limit=` | 列出所有条目；新版本原生支持 `has_episode_group` 筛选，老版本静默忽略该参数 |
+| GET | `/api/tv/{tmdb_id}/episodegroup` | 读单部番的剧集组 JSON |
+
+老版本 SYTMDB（`routers/items.py` 只认 `search_term` / `source` / `poster_status` /
+`genre` / `year` / `month` / `sort_by` / `page` / `limit`）会忽略 `has_episode_group`，
+所以 `sytmdb_source.fetch_tmdb_tv_items()` 翻完全部分页后再按响应里的
+`has_episode_group` 字段兜底过滤一次——新老版本都能正确取到候选。
+
+### Anime-Manager 侧新增端点
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/season-split/sytmdb/candidates` | 候选列表：组数 / 集数 / 是否已有规则 / 是否需要拆分 |
+| POST | `/api/season-split/sytmdb/import` | `{tmdb_ids?: [..], status: "active"\|"draft", overwrite: bool}`，`tmdb_ids` 留空 = 全部需要拆分的 |
+
+### 转换规则（`backend/season_split/sytmdb_source.py`）
+
+1. **剧集组 → 映射表**：组内 `episodes[].order` 就是组内最终集号，因此
+   `(season_number, episode_number) → (group.order, order+1)`，与 SYTMDB 完全一致。
+2. 跳过 **S0 特别篇**（渲染词的 `s=` 表达不了季 0）与**重复集**（源里同一集出现两次）。
+3. **映射表 → 渲染词**，三层递进，每层都用 `compiler.apply_rules_to_episode` 做回放自检：
+   - 紧凑写法（Lens 同款 `e=a-b => [s=VS;e=EP-off]`）；
+   - 带季号 + 按季号倒序（源里含跨季重叠时用，避免规则互相二次改写）；
+   - 逐集精确（源是自定义观看顺序时用，按「谁的条件等于谁的结果」做拓扑排序）。
+   有环的置换（如 `1→2→3→1`）现有规则引擎表达不了，此时规则**强制存为草稿**并给出提示。
+4. **落库字段**：`groups_json` 是编辑器能改的区间分组，`mapping_json` 是逐集真值，
+   `group_json` 保留 SYTMDB 原文（「写回 SYTMDB」直接可用）；当区间表达不了源数据时，
+   额外写 `overrides_json`（扁平 `"季-集"` 键）保证再保存一次也不会改形。
+5. 导入不依赖 TMDB（不需要 API Key），写完统一 `store.reload()` 一次。
+
+### 已知边界
+
+- 源剧集组若把大多数内容放在 S0（例如《物语系列》44 集特别篇），导入的规则只覆盖 S1~S5 的普通集；
+- 有 2 条条目 `has_episode_group=true` 但剧集组文件为空（恶魔高校、未来日记），会以「无分组」跳过；
+- 与 TMDB 原始季结构完全一致的分组不会产生任何规则（`rule_count=0`），列表里会提示；
+- 循环置换（自定义观看顺序，如《桃子男孩渡海而来》）现有规则引擎表达不了，导入时**强制存为草稿**。
+
+离线自测（不联网、不接库，27 项）：
+
+```bash
+cd backend && python -m season_split.sytmdb_selftest
+```

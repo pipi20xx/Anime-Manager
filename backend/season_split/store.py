@@ -225,7 +225,8 @@ async def get_rule(tmdb_id: int) -> Optional[dict]:
     return data
 
 
-async def upsert_rule(payload: dict) -> dict:
+async def upsert_rule(payload: dict, reload_cache: bool = True) -> dict:
+    """写入/更新一条规则。批量导入时传 reload_cache=False，最后统一 reload 一次。"""
     from database import db
     from models import SeasonSplitRule
 
@@ -250,7 +251,8 @@ async def upsert_rule(payload: dict) -> dict:
         await db.session.refresh(record)
         data = _to_dict(record)
 
-    await reload()
+    if reload_cache:
+        await reload()
     return data
 
 

@@ -17,6 +17,8 @@ import {
   type SplitEpisode,
   type SplitGroup,
   type SplitRule,
+  type SytmdbCandidate,
+  type SytmdbImportResult,
 } from '@/api/seasonSplit'
 import { useConfirm, useNotification, useClipboard } from '@/composables'
 
@@ -325,6 +327,111 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       success(`SYTMDB 已写入 ${res.groups} 个剧集组`)
     } catch (e: any) {
       showError(`写入失败: ${e.message}`)
+    }
+  }
+
+  // ---------------------------------------------------------------- SYTMDB 一键导入
+  const sytmdbOpen = ref(false)
+  const sytmdbLoading = ref(false)
+  const sytmdbImporting = ref(false)
+  const sytmdbSource = ref('')
+  const sytmdbScanned = ref(0)
+  const sytmdbItems = ref<SytmdbCandidate[]>([])
+  const sytmdbSelected = ref<number[]>([])
+  const sytmdbStatus = ref<'active' | 'draft'>('active')
+  const sytmdbOverwrite = ref(false)
+  const sytmdbResult = ref<SytmdbImportResult | null>(null)
+  const sytmdbError = ref('')
+
+  /** 可勾选的行：需要拆分，且（没有规则 或 允许覆盖） */
+  const sytmdbSelectable = computed(() =>
+    sytmdbItems.value.filter((row) => row.need_split && (sytmdbOverwrite.value || !row.existing)),
+  )
+  const sytmdbImportable = computed(() => sytmdbItems.value.filter((row) => row.need_split).length)
+  const sytmdbExisting = computed(() => sytmdbItems.value.filter((row) => row.existing).length)
+
+  function openSytmdbImport() {
+    sytmdbOpen.value = true
+    sytmdbResult.value = null
+    sytmdbError.value = ''
+    if (!sytmdbItems.value.length) loadSytmdbCandidates()
+  }
+
+  function closeSytmdbImport() {
+    sytmdbOpen.value = false
+  }
+
+  async function loadSytmdbCandidates() {
+    sytmdbLoading.value = true
+    sytmdbError.value = ''
+    sytmdbResult.value = null
+    try {
+      const data = await seasonSplitApi.sytmdbCandidates()
+      sytmdbSource.value = data.source
+      sytmdbScanned.value = data.scanned
+      sytmdbItems.value = data.items || []
+      // 默认全选「能导入且不会覆盖」的
+      sytmdbSelected.value = sytmdbSelectable.value.map((row) => row.tmdb_id)
+      if (!sytmdbItems.value.length) {
+        warning('SYTMDB 上没有找到任何剧集组，先在那边把番分好季再回来导入')
+      }
+    } catch (e: any) {
+      sytmdbItems.value = []
+      sytmdbSelected.value = []
+      sytmdbError.value = e?.message || String(e)
+      showError(`读取 SYTMDB 剧集组失败: ${sytmdbError.value}`)
+    } finally {
+      sytmdbLoading.value = false
+    }
+  }
+
+  function toggleSytmdbAll(checked: boolean) {
+    sytmdbSelected.value = checked ? sytmdbSelectable.value.map((row) => row.tmdb_id) : []
+  }
+
+  function toggleSytmdbItem(tmdbId: number, checked: boolean) {
+    const set = new Set(sytmdbSelected.value)
+    if (checked) set.add(tmdbId)
+    else set.delete(tmdbId)
+    sytmdbSelected.value = [...set]
+  }
+
+  watch(sytmdbOverwrite, () => {
+    // 关掉「覆盖已有规则」时，把已有规则的行从选择里剔除
+    const allowed = new Set(sytmdbSelectable.value.map((row) => row.tmdb_id))
+    sytmdbSelected.value = sytmdbSelected.value.filter((id) => allowed.has(id))
+  })
+
+  async function runSytmdbImport() {
+    if (!sytmdbSelected.value.length) {
+      warning('先勾选要导入的番')
+      return
+    }
+    sytmdbImporting.value = true
+    try {
+      const data = await seasonSplitApi.importSytmdb({
+        tmdb_ids: sytmdbSelected.value,
+        status: sytmdbStatus.value,
+        overwrite: sytmdbOverwrite.value,
+      })
+      sytmdbResult.value = data
+      settings.cache = data.cache
+      await loadRules()
+      const parts = [`导入 ${data.imported} 条`]
+      if (data.skipped.length) parts.push(`跳过 ${data.skipped.length} 条`)
+      if (data.failed.length) parts.push(`失败 ${data.failed.length} 条`)
+      if (data.failed.length) warning(parts.join('，'))
+      else success(parts.join('，'))
+      // 导入过的行标记成「已有规则」
+      const imported = new Set(data.items.map((item) => item.tmdb_id))
+      sytmdbItems.value = sytmdbItems.value.map((row) =>
+        imported.has(row.tmdb_id) ? { ...row, existing: true, existing_status: sytmdbStatus.value } : row,
+      )
+      sytmdbSelected.value = sytmdbSelected.value.filter((id) => !imported.has(id))
+    } catch (e: any) {
+      showError(`导入失败: ${e.message}`)
+    } finally {
+      sytmdbImporting.value = false
     }
   }
 
@@ -768,6 +875,28 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     toggleRule,
     removeRule,
     pushGroup,
+
+    // SYTMDB 一键导入
+    sytmdbOpen,
+    sytmdbLoading,
+    sytmdbImporting,
+    sytmdbSource,
+    sytmdbScanned,
+    sytmdbItems,
+    sytmdbSelected,
+    sytmdbStatus,
+    sytmdbOverwrite,
+    sytmdbResult,
+    sytmdbError,
+    sytmdbSelectable,
+    sytmdbImportable,
+    sytmdbExisting,
+    openSytmdbImport,
+    closeSytmdbImport,
+    loadSytmdbCandidates,
+    toggleSytmdbAll,
+    toggleSytmdbItem,
+    runSytmdbImport,
 
     // 工作台
     tmdbId,

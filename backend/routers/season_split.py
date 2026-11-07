@@ -40,6 +40,13 @@ class SaveRequest(CompileRequest):
     render_words: Optional[str] = Field(default=None, description="手动渲染词覆盖（留空则按分组重新编译）")
 
 
+class SytmdbImportRequest(BaseModel):
+    tmdb_ids: Optional[List[int]] = Field(
+        default=None, description="要导入的 TMDB ID；留空 = 导入 SYTMDB 全部需要拆分的条目")
+    status: str = Field(default="active", description="导入后的规则状态：active / draft / disabled")
+    overwrite: bool = Field(default=False, description="规则库里已存在时是否覆盖")
+
+
 class SettingsRequest(BaseModel):
     season_split_mode: Optional[str] = None
     season_split_scope: Optional[Dict[str, Any]] = None
@@ -137,6 +144,34 @@ async def push_episode_group(tmdb_id: int):
 async def reload_cache():
     count = await store.reload()
     return {"ok": True, "count": count, "cache": store.cache_stats()}
+
+
+# ---------------------------------------------------------------------------
+# SYTMDB 一键导入（直接使用 SYTMDB 的剧集组，不重新生成）
+# ---------------------------------------------------------------------------
+
+@router.get("/sytmdb/candidates", summary="列出 SYTMDB 里所有带剧集组的番")
+async def sytmdb_candidates():
+    try:
+        return await service.sytmdb_candidates()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"读取 SYTMDB 失败: {e}")
+
+
+@router.post("/sytmdb/import", summary="把 SYTMDB 的剧集组一键导入成规则")
+async def sytmdb_import(req: SytmdbImportRequest):
+    try:
+        return await service.sytmdb_import(
+            tmdb_ids=req.tmdb_ids,
+            status=req.status,
+            overwrite=req.overwrite,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"导入失败: {e}")
 
 
 @router.get("/debug", summary="映射调试器：回放某集的规则")

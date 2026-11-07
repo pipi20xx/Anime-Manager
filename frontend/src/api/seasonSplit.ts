@@ -150,6 +150,53 @@ export interface SavePayload {
   render_words?: string
 }
 
+/** SYTMDB 里一条「带剧集组」的番（导入对话框用） */
+export interface SytmdbCandidate {
+  tmdb_id: number
+  title: string
+  year: number | null
+  source: string | null
+  /** 剧集组数量（>1 才有拆分意义） */
+  group_count: number
+  /** 剧集组覆盖的集数 */
+  episode_total: number
+  /** 组里被跳过的 S0 特别篇数量（渲染词表达不了） */
+  skipped_specials: number
+  need_split: boolean
+  existing: boolean
+  existing_status: string
+  existing_reference: string
+}
+
+export interface SytmdbCandidatesResult {
+  source: string
+  scanned: number
+  matched: number
+  importable: number
+  existing: number
+  errors: Array<{ tmdb_id: number; title: string; error: string }>
+  items: SytmdbCandidate[]
+}
+
+export interface SytmdbImportResult {
+  imported: number
+  skipped: Array<{ tmdb_id: number; reason: string }>
+  failed: Array<{ tmdb_id: number; error: string }>
+  items: Array<{
+    tmdb_id: number
+    title: string
+    group_count: number
+    episode_total: number
+    rule_count: number
+    skipped_specials: number
+    needs_overrides: boolean
+    warnings: string[]
+  }>
+  scanned: number
+  fetch_errors: Array<{ tmdb_id: number; title: string; error: string }>
+  cache: SeasonSplitSettings['cache']
+}
+
 export interface BlacklistItem {
   tmdb_id: number
   title: string
@@ -192,6 +239,13 @@ export const seasonSplitApi = {
     api.post<{ groups: number; message: string }>(`/api/season-split/push-episodegroup/${tmdbId}`),
 
   reload: () => api.post<{ ok: boolean; count: number; cache: SeasonSplitSettings['cache'] }>('/api/season-split/reload'),
+
+  /** 列出 SYTMDB 上所有带剧集组的番（导入前体检） */
+  sytmdbCandidates: () => api.get<SytmdbCandidatesResult>('/api/season-split/sytmdb/candidates'),
+
+  /** 把 SYTMDB 的剧集组一键导入成规则（tmdb_ids 留空 = 全部需要拆分的） */
+  importSytmdb: (payload: { tmdb_ids?: number[]; status?: string; overwrite?: boolean }) =>
+    api.post<SytmdbImportResult>('/api/season-split/sytmdb/import', payload),
 
   getSettings: () => api.get<SeasonSplitSettings>('/api/season-split/settings'),
 
