@@ -244,6 +244,8 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
   const rules = ref<SplitRule[]>([])
   const ruleSearch = ref('')
   const ruleStatus = ref('')
+  /** 来源过滤：'' 全部 / manual 手动 / sytmdb 导入 / auto 自动生成 / legacy 历史未知 */
+  const ruleOrigin = ref('')
 
   async function loadRules() {
     loading.value = true
@@ -251,6 +253,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       const data = await seasonSplitApi.listRules({
         status: ruleStatus.value || undefined,
         q: ruleSearch.value || undefined,
+        origin: ruleOrigin.value || undefined,
       })
       rules.value = data.items || []
       settings.cache = data.cache
@@ -269,6 +272,48 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
 
   function statusOf(rule: SplitRule) {
     return statusMeta[rule.status] || { label: rule.status, color: 'grey' }
+  }
+
+  /** 规则来源（创建方式）：手动 / SYTMDB 导入 / 识别时自动生成 / 升级前的老数据 */
+  const originMeta: Record<string, { label: string; short: string; color: string; icon: string; hint: string }> = {
+    manual: {
+      label: '手动生成',
+      short: '手动',
+      color: 'primary',
+      icon: 'mdi-account-edit-outline',
+      hint: '在「分组工作台」里手动生成并保存的规则',
+    },
+    sytmdb: {
+      label: 'SYTMDB 导入',
+      short: 'SYTMDB',
+      color: 'info',
+      icon: 'mdi-cloud-download-outline',
+      hint: '点「导入 SYTMDB」，直接把那边的剧集组搬过来的规则',
+    },
+    auto: {
+      label: '自动生成',
+      short: '自动',
+      color: 'secondary',
+      icon: 'mdi-robot-outline',
+      hint: '识别时按「自动生成分季规则」开关自己生成的规则',
+    },
+  }
+
+  const legacyOriginMeta = {
+    label: '历史（未知来源）',
+    short: '历史',
+    color: 'grey',
+    icon: 'mdi-help-circle-outline',
+    hint: '升级前保存的规则，当时还没有记录来源，无法区分手动 / 自动',
+  }
+
+  function originMetaOf(key?: string | null) {
+    const k = String(key || '').trim().toLowerCase()
+    return originMeta[k] || legacyOriginMeta
+  }
+
+  function originOf(rule: SplitRule) {
+    return originMetaOf(rule?.origin)
   }
 
   async function toggleRule(rule: SplitRule) {
@@ -870,8 +915,11 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     rules,
     ruleSearch,
     ruleStatus,
+    ruleOrigin,
     loadRules,
     statusOf,
+    originOf,
+    originMetaOf,
     toggleRule,
     removeRule,
     pushGroup,

@@ -186,11 +186,30 @@ candidates = index.get("*", []) + index.get(current_tmdb_id, [])
 
 ### 5.2 Tab 1 · 规则库
 
-表格：番名 / TMDB / 参照源 / 分组 `12+14` / 规则数 / 状态 / 更新时间 / 操作。
+表格：番名 / TMDB / 来源 / 参照源 / 分组 `12+14` / 规则数 / 状态 / 更新时间 / 操作。
 
 - 状态：`草稿 / 生效 / 停用 / ⚠结构已变`（`tmdb_hash`）
+- 来源：`手动 / SYTMDB / 自动 / 历史`（见 5.2.1）
 - **批量扫描候选**：扫库内已识别的 TMDB 剧集，比对 `TMDB 季结构 vs TVDB 定义`，列出疑似需分季的番，一键加入待办。
 - 操作：编辑 / 启停 / 删除 / 写剧集组 / 复制规则文本
+
+### 5.2.1 规则来源（手动 / SYTMDB 导入 / 自动生成）
+
+规则库卡片上除了状态，还有一个「来源」标签，用来回答「这条规则是谁写进来的」。
+落库字段是 `season_split_rules.origin`，**只在创建时写一次，之后不再改**（启停、工作台再编辑都保留原值）：
+
+| 值 | 卡片显示 | 写入路径 |
+|---|---|---|
+| `manual` | 手动 | `PUT /api/season-split/rules`（分组工作台「保存」/「保存并启用」） |
+| `sytmdb` | SYTMDB | `POST /api/season-split/sytmdb/import`（规则库「导入 SYTMDB」，由 `sytmdb_source.build_rule` 写入） |
+| `auto` | 自动 | 识别链路 `service.auto_generate_rule()`（开关 `season_split_auto_generate` 打开时现场生成并启用） |
+| `NULL` | 历史 | 升级前保存的老规则，当时没有这一列，无法追溯（不臆测成手动/自动） |
+
+- 与 `reference`（依据：tvdb / bangumi / curetmdb / gap / year / finale / fixed / sytmdb）正交：
+  `reference` 回答「按什么依据分的季」，`origin` 回答「谁写进来的」。自动生成与手动保存都可能用 `tvdb` 依据，
+  所以只靠 `reference` 分不出来——这正是新增 `origin` 的原因。
+- 列表接口支持过滤：`GET /api/season-split/rules?origin=manual|sytmdb|auto|legacy`（`legacy` = `origin IS NULL`）。
+- 存量数据回填：启动迁移只把 `reference='sytmdb'` 的老数据标成 `sytmdb`（这是唯一可靠的信号），其余保持 `NULL`。
 
 ### 5.3 Tab 2 · 分组工作台
 
@@ -251,6 +270,8 @@ class SeasonSplitRule(SQLModel, table=True):
     tmdb_id: int = Field(primary_key=True)
     title: str = ""
     status: str = "draft"            # draft / active / disabled
+    reference: str = ""              # 依据：tvdb / bangumi / curetmdb / gap / year / finale / fixed
+    origin: str | None = None        # 来源：manual / sytmdb / auto（老数据 NULL）
 
     groups_json: str = "[]"          # 人写的：[{order, name, start, end}]
     overrides_json: str = "{}"       # {"1-13": {"s":2,"e":1}} 逐集覆盖

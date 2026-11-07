@@ -64,6 +64,8 @@ export interface SplitRule {
   title: string
   status: 'draft' | 'active' | 'disabled'
   reference: string
+  /** 创建来源：manual（工作台手动）/ sytmdb（一键导入）/ auto（识别时自动生成）/ ''（升级前的老数据，未知） */
+  origin?: string | null
   groups: SplitGroup[]
   overrides: Record<string, unknown>
   excluded: Array<{ s: number; e: number } | [number, number]>
@@ -148,6 +150,8 @@ export interface SavePayload {
   reference?: string
   status?: 'draft' | 'active' | 'disabled'
   render_words?: string
+  /** 创建来源：留空 = 保留库里原值（新建时按 manual），一般不用传 */
+  origin?: string
 }
 
 /** SYTMDB 里一条「带剧集组」的番（导入对话框用） */
@@ -171,6 +175,8 @@ export interface SytmdbCandidate {
   existing: boolean
   existing_status: string
   existing_reference: string
+  /** 已有规则的创建来源：manual / sytmdb / auto / ''（未知） */
+  existing_origin: string
 }
 
 export interface SytmdbCandidatesResult {
@@ -219,7 +225,7 @@ export interface BlacklistItem {
 }
 
 export const seasonSplitApi = {
-  listRules: (params?: { status?: string; q?: string }) =>
+  listRules: (params?: { status?: string; q?: string; origin?: string }) =>
     api.get<{ items: SplitRule[]; cache: SeasonSplitSettings['cache'] }>('/api/season-split/rules', { params }),
 
   getRule: (tmdbId: number) => api.get<SplitRule>(`/api/season-split/rules/${tmdbId}`),

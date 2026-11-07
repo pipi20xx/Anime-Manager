@@ -40,6 +40,21 @@ const store = useSeasonSplitStore()
         style="max-width: 150px"
         @update:model-value="store.loadRules"
       />
+      <v-select
+        v-model="store.ruleOrigin"
+        :items="[
+          { title: '全部来源', value: '' },
+          { title: '手动生成', value: 'manual' },
+          { title: 'SYTMDB 导入', value: 'sytmdb' },
+          { title: '自动生成', value: 'auto' },
+          { title: '历史未知', value: 'legacy' },
+        ]"
+        density="compact"
+        variant="outlined"
+        hide-details
+        style="max-width: 150px"
+        @update:model-value="store.loadRules"
+      />
       <v-btn variant="tonal" prepend-icon="mdi-refresh" :loading="store.loading" @click="store.loadRules">刷新</v-btn>
       <v-btn variant="tonal" prepend-icon="mdi-cloud-download-outline" @click="store.openSytmdbImport">
         导入 SYTMDB
@@ -51,7 +66,8 @@ const store = useSeasonSplitStore()
 
     <div class="text-caption text-medium-emphasis mb-3 px-1">
       共 {{ store.rules.length }} 条。只有状态为 <b>生效</b> 的规则会被注入识别；草稿/停用只是保存着不动。
-      规则不会自动从别处生成——只有你点「导入 SYTMDB」或在工作台保存时才会写入。
+      卡片上的小标签就是「这条规则怎么来的」：<b>手动</b> = 工作台生成、<b>SYTMDB</b> = 一键导入、
+      <b>自动</b> = 识别时自动生成、<b>历史</b> = 升级前保存（当时没记来源，无法区分）。
     </div>
 
     <v-skeleton-loader v-if="store.loading && !store.rules.length" type="card@3" />
@@ -60,9 +76,26 @@ const store = useSeasonSplitStore()
       <v-card v-for="rule in store.rules" :key="rule.tmdb_id" class="glass-card manage-card">
         <div class="manage-card__header">
           <div class="manage-card__title" :title="rule.title">{{ rule.title }}</div>
-          <v-chip class="manage-card__badge" size="x-small" :color="store.statusOf(rule).color" variant="tonal" label>
-            {{ store.statusOf(rule).label }}
-          </v-chip>
+          <div class="d-flex align-center ga-1 flex-shrink-0">
+            <v-tooltip :text="store.originOf(rule).hint" location="top">
+              <template #activator="{ props }">
+                <v-chip
+                  v-bind="props"
+                  class="manage-card__badge"
+                  size="x-small"
+                  :color="store.originOf(rule).color"
+                  :prepend-icon="store.originOf(rule).icon"
+                  variant="tonal"
+                  label
+                >
+                  {{ store.originOf(rule).short }}
+                </v-chip>
+              </template>
+            </v-tooltip>
+            <v-chip class="manage-card__badge" size="x-small" :color="store.statusOf(rule).color" variant="tonal" label>
+              {{ store.statusOf(rule).label }}
+            </v-chip>
+          </div>
         </div>
 
         <div class="manage-card__body">
@@ -205,8 +238,9 @@ const store = useSeasonSplitStore()
                   <v-chip v-else-if="!row.will_change" size="x-small" variant="tonal" color="grey" label>
                     无改动
                   </v-chip>
-                  <v-chip v-else-if="row.existing" size="x-small" variant="tonal" color="warning" label>
-                    已有 · {{ row.existing_status || '已存在' }}
+                  <v-chip v-else-if="row.existing" size="x-small" variant="tonal" color="warning" label
+                    :title="`已有规则：${row.existing_status || '已存在'}`">
+                    已有 · {{ store.originMetaOf(row.existing_origin).short }}
                   </v-chip>
                   <v-chip v-else size="x-small" variant="tonal" color="success" label>可导入</v-chip>
                 </td>

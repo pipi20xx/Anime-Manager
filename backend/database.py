@@ -309,6 +309,17 @@ async def init_db():
     except Exception as e:
         print(f"[AutoMigrate] webhook_events 来源标签更名跳过: {e}")
 
+    # [数据迁移] 番剧分季规则来源（season_split_rules.origin）：升级前没有这一列。
+    # 只有「导入 SYTMDB」能从 reference 可靠认出来，其余保持 NULL（页面显示为「历史」，不臆测手动/自动）。
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text(
+                "UPDATE public.season_split_rules SET origin = 'sytmdb' "
+                "WHERE origin IS NULL AND reference = 'sytmdb';"
+            ))
+    except Exception as e:
+        print(f"[AutoMigrate] season_split_rules 来源回填跳过: {e}")
+
     async with engine.begin() as conn:
 
         # 4. 清理已废弃的表
@@ -340,6 +351,9 @@ async def init_db():
         # [性能增强] RSS 条目标题模糊搜索
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_feed_items_title_trgm ON public.feed_items USING gin (title gin_trgm_ops);"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_feed_items_tmdb_title_trgm ON public.feed_items USING gin (tmdb_title gin_trgm_ops);"))
+
+        # [性能增强] 番剧分季规则库按来源筛选（规则库卡片「手动 / SYTMDB 导入 / 自动生成」过滤器）
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_season_split_rules_origin ON public.season_split_rules (origin);"))
 
         # [性能增强] 元数据参考字典表名称搜索
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ref_genre_zh_trgm ON metadata.ref_genres USING gin (name_zh gin_trgm_ops);"))

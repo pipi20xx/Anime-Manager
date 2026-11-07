@@ -27,6 +27,15 @@ REFRESH_INTERVAL = 30
 # 便于和用户自己的「自定义渲染词（私有）」区分开。
 SPLIT_MARKER = "[SPLIT]"
 
+# 规则「创建来源」（落库在 season_split_rules.origin），用于规则库卡片上区分：
+# manual = 工作台手动生成并保存 / sytmdb = 「导入 SYTMDB」一键导入 / auto = 识别链路自动生成
+ORIGIN_MANUAL = "manual"
+ORIGIN_SYTMDB = "sytmdb"
+ORIGIN_AUTO = "auto"
+ORIGINS = (ORIGIN_MANUAL, ORIGIN_SYTMDB, ORIGIN_AUTO)
+# 升级前保存的老规则没有来源列（NULL），查询/展示时用这个值代表「历史未知」
+LEGACY_ORIGIN = "legacy"
+
 
 def _config() -> Dict[str, Any]:
     try:
@@ -191,7 +200,8 @@ async def stop_watcher() -> None:
 # CRUD
 # ---------------------------------------------------------------------------
 
-async def list_rules(status: Optional[str] = None, q: str = "") -> List[dict]:
+async def list_rules(status: Optional[str] = None, q: str = "",
+                     origin: Optional[str] = None) -> List[dict]:
     from sqlalchemy import or_, select
 
     from database import db
@@ -200,6 +210,11 @@ async def list_rules(status: Optional[str] = None, q: str = "") -> List[dict]:
     stmt = select(SeasonSplitRule)
     if status:
         stmt = stmt.where(SeasonSplitRule.status == status)
+    if origin:
+        if origin == LEGACY_ORIGIN:
+            stmt = stmt.where(SeasonSplitRule.origin.is_(None))
+        else:
+            stmt = stmt.where(SeasonSplitRule.origin == origin)
     if q:
         keyword = f"%{q}%"
         cond = or_(SeasonSplitRule.title.ilike(keyword))
@@ -239,6 +254,10 @@ async def upsert_rule(payload: dict, reload_cache: bool = True) -> dict:
         for field in ("title", "status", "reference", "render_words", "tmdb_hash"):
             if field in payload:
                 setattr(record, field, payload[field])
+        # 来源只在「新建 / 显式指定」时写入；留空 = 不动原值（启停、工作台编辑都不会改掉它）
+        origin = (payload.get("origin") or "").strip().lower()
+        if origin in ORIGINS:
+            record.origin = origin
         for field in ("groups_json", "overrides_json", "excluded_json", "names_json",
                       "mapping_json", "group_json"):
             if field in payload and payload[field] is not None:
@@ -276,6 +295,7 @@ def _to_dict(record) -> dict:
         "title": record.title or "",
         "status": record.status or "draft",
         "reference": record.reference or "",
+        "origin": record.origin or "",
         "groups": record.groups_json or [],
         "overrides": record.overrides_json or {},
         "excluded": record.excluded_json or [],

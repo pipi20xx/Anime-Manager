@@ -563,11 +563,21 @@ async def save(payload: dict) -> dict:
 
     manual_words = (payload.get("render_words") or "").strip()
 
+    # 来源：显式传入优先；否则沿用库里已有的（启停 / 工作台再编辑不会把「SYTMDB 导入」改成「手动」）；
+    # 两者都没有（老数据首次被编辑）时按「手动」记。
+    origin = str(payload.get("origin") or "").strip().lower()
+    if origin not in store.ORIGINS:
+        existing = await store.get_rule(tmdb_id)
+        origin = str((existing or {}).get("origin") or "").strip().lower()
+    if origin not in store.ORIGINS:
+        origin = store.ORIGIN_MANUAL
+
     record = await store.upsert_rule({
         "tmdb_id": tmdb_id,
         "title": title,
         "status": payload.get("status") or "draft",
         "reference": payload.get("reference") or "manual",
+        "origin": origin,
         "groups_json": payload.get("groups") or [],
         "overrides_json": payload.get("overrides") or {},
         "excluded_json": payload.get("excluded") or [],
@@ -643,6 +653,7 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[
         "groups": groups,
         "reference": basis or "tvdb",
         "status": "active",
+        "origin": store.ORIGIN_AUTO,
     })
 
     # 可选：自动写入 SYTMDB 剧集组（闭环；写入失败不中断识别）
@@ -725,6 +736,7 @@ async def sytmdb_candidates() -> dict:
         row["existing"] = bool(rule)
         row["existing_status"] = rule.get("status") or ""
         row["existing_reference"] = rule.get("reference") or ""
+        row["existing_origin"] = rule.get("origin") or ""
     # 会改动季号的排前面，其次是没有规则的，再按年份倒序
     rows.sort(key=lambda r: (
         not r["will_change"], not r["existing"], -int(r.get("year") or 0), r["title"]

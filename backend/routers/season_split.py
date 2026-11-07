@@ -38,6 +38,8 @@ class CompileRequest(BaseModel):
 class SaveRequest(CompileRequest):
     status: str = Field(default="draft", description="draft / active / disabled")
     render_words: Optional[str] = Field(default=None, description="手动渲染词覆盖（留空则按分组重新编译）")
+    origin: Optional[str] = Field(
+        default=None, description="创建来源：manual / sytmdb / auto（留空 = 保留库里原值，新建时按 manual）")
 
 
 class SytmdbImportRequest(BaseModel):
@@ -74,8 +76,12 @@ class SettingsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.get("/rules", summary="分季规则列表")
-async def list_rules(status: Optional[str] = None, q: str = ""):
-    return {"items": await store.list_rules(status=status, q=q), "cache": store.cache_stats()}
+async def list_rules(status: Optional[str] = None, q: str = "", origin: Optional[str] = None):
+    """`origin` 过滤：manual / sytmdb / auto / legacy（历史未知，升级前没有来源列的老数据）。"""
+    return {
+        "items": await store.list_rules(status=status, q=q, origin=origin),
+        "cache": store.cache_stats(),
+    }
 
 
 @router.get("/rules/{tmdb_id}", summary="单条规则详情")

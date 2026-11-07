@@ -472,6 +472,8 @@ def build_rule(item: dict, raw: dict, status: str = "active") -> dict:
         "title": title,
         "status": status,
         "reference": "sytmdb",
+        # 创建来源：规则库卡片上显示成「SYTMDB 导入」，与手动 / 自动生成区分开
+        "origin": "sytmdb",
         "groups_json": groups,
         "names_json": {str(k): v for k, v in names.items()},
         "overrides_json": flat_overrides(mapping) if needs_overrides(mapping) else {},

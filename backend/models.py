@@ -793,6 +793,9 @@ class SeasonSplitRule(SQLModel, table=True):
 
     `groups_json` 是人写的分组定义，`render_words` 是保存时编译好的渲染词文本；
     识别热路径只读内存里编译好的文本，不做任何计算。
+
+    `origin` 只记「创建来源」（manual / sytmdb / auto），用来在规则库里区分卡片是怎么来的；
+    后续无论被谁编辑都保持不变，编辑痕迹看 `updated_at`。
     """
     __tablename__ = "season_split_rules"
     __table_args__ = {"schema": get_public_schema()}
@@ -802,6 +805,10 @@ class SeasonSplitRule(SQLModel, table=True):
     title: Optional[str] = None
     status: str = Field(default="draft", index=True)      # draft / active / disabled
     reference: Optional[str] = None                        # tvdb / bangumi / curetmdb / gap / year / finale / fixed / manual
+    # 这条规则是怎么来的（创建来源，写入后不再改）：
+    # manual = 工作台手动生成/save，sytmdb = 「导入 SYTMDB」一键导入，auto = 识别链路自动生成
+    # 升级前的老数据为 NULL（无法追溯，页面上显示为「历史」）
+    origin: Optional[str] = Field(default=None, index=True)
     groups_json: List[Dict[str, Any]] = Field(sa_column=Column(get_json_type()), default_factory=list)
     overrides_json: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
     excluded_json: List[Any] = Field(sa_column=Column(get_json_type()), default_factory=list)
