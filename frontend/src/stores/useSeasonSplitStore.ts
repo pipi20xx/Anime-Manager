@@ -343,11 +343,11 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
   const sytmdbResult = ref<SytmdbImportResult | null>(null)
   const sytmdbError = ref('')
 
-  /** 可勾选的行：需要拆分，且（没有规则 或 允许覆盖） */
+  /** 可勾选的行：会改动季号，且（没有规则 或 允许覆盖） */
   const sytmdbSelectable = computed(() =>
-    sytmdbItems.value.filter((row) => row.need_split && (sytmdbOverwrite.value || !row.existing)),
+    sytmdbItems.value.filter((row) => row.will_change && (sytmdbOverwrite.value || !row.existing)),
   )
-  const sytmdbImportable = computed(() => sytmdbItems.value.filter((row) => row.need_split).length)
+  const sytmdbImportable = computed(() => sytmdbItems.value.filter((row) => row.will_change).length)
   const sytmdbExisting = computed(() => sytmdbItems.value.filter((row) => row.existing).length)
 
   function openSytmdbImport() {

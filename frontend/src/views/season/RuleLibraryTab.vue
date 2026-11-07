@@ -123,7 +123,8 @@ const store = useSeasonSplitStore()
             <div class="text-caption">
               <div>
                 直接把 SYTMDB 上已经画好的<b>剧集组</b>搬进规则库：不拿 TMDB ID 重新生成，
-                季号 / 集号 / 组名都按那边的数据来，渲染词由剧集组反推并做回放自检。
+                季号 / 集号 / 组名都按那边的数据来；<b>S0 特别篇也照搬</b>（放进哪组就落到哪季），
+                只有重复集会被去重。渲染词由剧集组反推，并逐集回放自检。
               </div>
               <div class="mt-1">
                 导入后仍可用「剧集组」按钮把结果写回 SYTMDB——两边内容一致，不会互相打架。
@@ -170,32 +171,39 @@ const store = useSeasonSplitStore()
                 </th>
                 <th>番名</th>
                 <th style="width: 100px">TMDB</th>
-                <th style="width: 130px">剧集组</th>
-                <th style="width: 120px">状态</th>
+                <th style="width: 150px">剧集组 / 改动</th>
+                <th style="width: 130px">状态</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in store.sytmdbItems" :key="row.tmdb_id">
                 <td>
                   <v-checkbox :model-value="store.sytmdbSelected.includes(row.tmdb_id)"
-                    :disabled="!row.need_split || (row.existing && !store.sytmdbOverwrite)" density="compact"
+                    :disabled="!row.will_change || (row.existing && !store.sytmdbOverwrite)" density="compact"
                     hide-details @update:model-value="store.toggleSytmdbItem(row.tmdb_id, !!$event)" />
                 </td>
                 <td>
                   <div class="text-body-2">{{ row.title }}</div>
                   <div class="text-caption text-medium-emphasis">
                     {{ row.year || '—' }}
-                    <span v-if="row.skipped_specials"> · 跳过 {{ row.skipped_specials }} 集特别篇</span>
+                    <span v-if="row.specials"> · 含 {{ row.specials }} 集 S0 特别篇</span>
+                    <span v-if="row.duplicates"> · {{ row.duplicates }} 处重复集</span>
                   </div>
                 </td>
                 <td class="font-mono text-caption">{{ row.tmdb_id }}</td>
                 <td class="text-caption">
-                  <template v-if="row.group_count">{{ row.group_count }} 组 / {{ row.episode_total }} 集</template>
+                  <template v-if="row.group_count">
+                    {{ row.group_count }} 组 / {{ row.episode_total }} 集
+                    <span class="text-medium-emphasis">· 改 {{ row.changed_episodes }} 集</span>
+                  </template>
                   <template v-else>无分组</template>
                 </td>
                 <td>
-                  <v-chip v-if="!row.need_split" size="x-small" variant="tonal" color="grey" label>
-                    无需拆分
+                  <v-chip v-if="!row.group_count" size="x-small" variant="tonal" color="grey" label>
+                    空分组
+                  </v-chip>
+                  <v-chip v-else-if="!row.will_change" size="x-small" variant="tonal" color="grey" label>
+                    无改动
                   </v-chip>
                   <v-chip v-else-if="row.existing" size="x-small" variant="tonal" color="warning" label>
                     已有 · {{ row.existing_status || '已存在' }}

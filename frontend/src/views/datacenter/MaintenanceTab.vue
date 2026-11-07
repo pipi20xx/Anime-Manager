@@ -103,6 +103,7 @@ const tableDescriptions: Record<string, string> = {
   'public.filter_rules': 'RSS 过滤规则',
   'public.rules': '识别引擎规则',
   'public.secondary_rules': '自动分类规则',
+  'public.season_split_rules': '番剧分季规则库（每部番一条：分组定义 / 逐集映射 / 渲染词 / 写回 SYTMDB 的剧集组 JSON）。可在「工具 → 番剧分季 → 规则库」从 SYTMDB 一键导入，清空后需重新导入或手写',
   'public.download_history': '下载器任务执行历史',
   'public.blacklist': '识别排除黑名单',
   'public.tmdb_blocklist': 'TMDB 主动屏蔽列表',

@@ -156,13 +156,18 @@ export interface SytmdbCandidate {
   title: string
   year: number | null
   source: string | null
-  /** 剧集组数量（>1 才有拆分意义） */
+  /** 剧集组数量 */
   group_count: number
-  /** 剧集组覆盖的集数 */
+  /** 剧集组覆盖的集数（含 S0 特别篇） */
   episode_total: number
-  /** 组里被跳过的 S0 特别篇数量（渲染词表达不了） */
-  skipped_specials: number
-  need_split: boolean
+  /** 会被改写的集数（原坐标 ≠ 目标坐标） */
+  changed_episodes: number
+  /** 其中放进某个季的 S0 特别篇数量（会照搬，不丢弃） */
+  specials: number
+  /** 源里的重复集数量（保留第一次出现） */
+  duplicates: number
+  /** 会不会改动季号；false = 与 TMDB 原生结构一致，导入没有意义 */
+  will_change: boolean
   existing: boolean
   existing_status: string
   existing_reference: string
@@ -174,6 +179,7 @@ export interface SytmdbCandidatesResult {
   matched: number
   importable: number
   existing: number
+  specials: number
   errors: Array<{ tmdb_id: number; title: string; error: string }>
   items: SytmdbCandidate[]
 }
@@ -187,8 +193,13 @@ export interface SytmdbImportResult {
     title: string
     group_count: number
     episode_total: number
+    changed_episodes: number
+    specials: number
+    duplicates: number
     rule_count: number
-    skipped_specials: number
+    replay_ok: boolean
+    status: string
+    will_change: boolean
     needs_overrides: boolean
     warnings: string[]
   }>

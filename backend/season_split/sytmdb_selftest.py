@@ -3,6 +3,7 @@
 
 不联网、不接数据库：只验证「SYTMDB 剧集组 → 映射表 → 渲染词」这段纯函数，
 以及导入后规则能否 1:1 回放、编辑器再保存一次会不会改形。
+重点覆盖：S0 特别篇照搬、自定义顺序、环形置换（两阶段）、重复集、无改动判定。
 """
 
 from __future__ import annotations
@@ -29,6 +30,19 @@ def group(order: int, name: str, episodes, season: int = 1):
         "episodes": [
             {"season_number": season, "episode_number": ep, "order": i}
             for i, ep in enumerate(episodes)
+        ],
+    }
+
+
+def raw_group(order: int, name: str, coords):
+    """coords = [(season, episode), ...]，按给定顺序写进 order 字段。"""
+    return {
+        "name": name,
+        "order": order,
+        "air_date": "",
+        "episodes": [
+            {"season_number": s, "episode_number": e, "order": i}
+            for i, (s, e) in enumerate(coords)
         ],
     }
 
@@ -80,6 +94,7 @@ def case_two_seasons():
     eq("映射: S1E24 → S2E12", mapping_of(payload)[(1, 24)], (2, 12))
     eq("覆盖面", stats["episode_total"], 24)
     eq("规则条数", stats["rule_count"], 1)
+    check("会改动", stats["will_change"])
     check("渲染词回放 1:1", replay_ok(payload))
     check("再保存一次不变形", resave_matches(payload))
     eq("组名沿用 SYTMDB", payload["groups_json"][1]["name"], "第 2 季")
@@ -99,19 +114,19 @@ def case_three_seasons():
     check("渲染词回放 1:1", replay_ok(payload))
 
 
-def case_specials_and_order():
-    print("\n[3] 组里混了 S0 特别篇 + 组内顺序被打乱")
+def case_specials_included():
+    print("\n[3] 组里混了 S0 特别篇（必须照搬，不能丢）")
     raw = episode_group(
         group(1, "第 1 季", range(1, 13)),
-        {"name": "第 2 季", "order": 2, "air_date": "", "episodes": [
-            {"season_number": 1, "episode_number": 13, "order": 0},
-            {"season_number": 0, "episode_number": 1, "order": 1},
-            {"season_number": 1, "episode_number": 14, "order": 2},
-        ]},
+        raw_group(2, "第 2 季", [(1, 13), (0, 1), (1, 14)]),
     )
-    payload, stats = payload_of(raw)["payload"], payload_of(raw)["stats"]
-    eq("跳过 1 集 S0", stats["skipped_specials"], 1)
-    eq("S1E14 → S2E2", mapping_of(payload)[(1, 14)], (2, 2))
+    built = payload_of(raw)
+    payload, stats = built["payload"], built["stats"]
+    eq("特别篇计数", stats["specials"], 1)
+    eq("S1E13 → S2E1", mapping_of(payload)[(1, 13)], (2, 1))
+    eq("S0E1 也进了第 2 季（顺序里排第 2）", mapping_of(payload)[(0, 1)], (2, 2))
+    eq("S1E14 → S2E3", mapping_of(payload)[(1, 14)], (2, 3))
+    eq("总集数含特别篇", stats["episode_total"], 15)
     check("渲染词回放 1:1", replay_ok(payload))
     check("再保存一次不变形（overrides 兜底）", resave_matches(payload))
 
@@ -119,43 +134,53 @@ def case_specials_and_order():
 def case_duplicates():
     print("\n[4] 源里同一集出现两次（SYTMDB 手滑）")
     raw = episode_group(
-        {"name": "第 1 季", "order": 1, "air_date": "", "episodes": [
-            {"season_number": 1, "episode_number": 1, "order": 0},
-            {"season_number": 1, "episode_number": 1, "order": 1},
-            {"season_number": 1, "episode_number": 2, "order": 2},
-        ]},
+        raw_group(1, "第 1 季", [(1, 1), (1, 1), (1, 2)]),
         group(2, "第 2 季", [3, 4]),
     )
     payload, stats = payload_of(raw)["payload"], payload_of(raw)["stats"]
     eq("去重后集数", stats["episode_total"], 4)
+    eq("重复集计数", stats["duplicates"], 1)
     eq("S1E2 → S1E2（重复集不占编号）", mapping_of(payload)[(1, 2)], (1, 2))
     eq("S1E3 → S2E1", mapping_of(payload)[(1, 3)], (2, 1))
     check("渲染词回放 1:1", replay_ok(payload))
 
 
+def case_single_group_reorder():
+    print("\n[5] 只有一个组，只是 DIY 调了顺序（旧实现会误判「无需拆分」）")
+    raw = episode_group(raw_group(1, "第 1 季", [(1, 2), (1, 1), (1, 3)]))
+    built = payload_of(raw)
+    payload, stats = built["payload"], built["stats"]
+    eq("组数", stats["group_count"], 1)
+    check("仍然判定「会改动」", stats["will_change"])
+    eq("S1E2 → S1E1", mapping_of(payload)[(1, 2)], (1, 1))
+    eq("S1E1 → S1E2", mapping_of(payload)[(1, 1)], (1, 2))
+    check("渲染词回放 1:1", replay_ok(payload))
+
+
 def case_cyclic_order():
-    print("\n[5] 循环置换（自定义观看顺序，规则引擎表达不了）")
-    raw = episode_group({"name": "第 1 季", "order": 1, "air_date": "", "episodes": [
-        {"season_number": 1, "episode_number": 2, "order": 0},
-        {"season_number": 1, "episode_number": 1, "order": 1},
-        {"season_number": 1, "episode_number": 3, "order": 2},
-    ]})
-    stats = payload_of(raw, status="active")["stats"]
-    eq("强制降级为草稿", stats["status"], "draft")
-    check("有明确提示", any("草稿" in w or "环" in w for w in stats["warnings"]),
-          str(stats["warnings"]))
+    print("\n[6] 环形置换（1→3→2→1，单遍规则表达不了，用临时季号两阶段）")
+    raw = episode_group(raw_group(1, "第 1 季", [(1, 2), (1, 3), (1, 1)]))
+    built = payload_of(raw, status="active")
+    payload, stats = built["payload"], built["stats"]
+    check("没有降级成草稿", stats["status"] == "active", stats["status"])
+    eq("S1E2 → S1E1", mapping_of(payload)[(1, 2)], (1, 1))
+    eq("S1E3 → S1E2", mapping_of(payload)[(1, 3)], (1, 2))
+    eq("S1E1 → S1E3", mapping_of(payload)[(1, 1)], (1, 3))
+    eq("两阶段 → 规则翻倍", stats["rule_count"], 6)
+    check("渲染词回放 1:1", replay_ok(payload))
 
 
 def case_identity():
-    print("\n[6] 剧集组与 TMDB 原始季一致（不该产生偏移）")
+    print("\n[7] 剧集组与 TMDB 原始季一致（不该产生偏移）")
     raw = episode_group(group(1, "第 1 季", range(1, 13)), group(2, "第 2 季", range(1, 13), season=2))
     stats = payload_of(raw)["stats"]
+    check("判定为无改动", not stats["will_change"])
     eq("无规则", stats["rule_count"], 0)
     check("给出提示", any("一致" in w for w in stats["warnings"]), str(stats["warnings"]))
 
 
 def case_normalize():
-    print("\n[7] 剧集组清洗（写回 SYTMDB 时用）")
+    print("\n[8] 剧集组清洗（写回 SYTMDB 时用）")
     raw = episode_group(group(1, "第一季", [3, 1, 2]), group(2, "第二季", [4]))
     normalized = sytmdb_source.normalize_group_json(raw, 42)
     eq("episodes 顺序遵循源 order（自定义观看顺序不能被排序覆盖）",
@@ -167,8 +192,9 @@ def case_normalize():
 
 def main():
     for case in (
-        case_two_seasons, case_three_seasons, case_specials_and_order,
-        case_duplicates, case_cyclic_order, case_identity, case_normalize,
+        case_two_seasons, case_three_seasons, case_specials_included,
+        case_duplicates, case_single_group_reorder, case_cyclic_order,
+        case_identity, case_normalize,
     ):
         case()
     print(f"\n通过 {len(_OK)} 项，失败 {len(_FAIL)} 项")

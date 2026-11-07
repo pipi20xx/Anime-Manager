@@ -714,7 +714,7 @@ def _sytmdb_conn() -> tuple[str, str]:
 
 
 async def sytmdb_candidates() -> dict:
-    """列出 SYTMDB 里所有「带剧集组」的番，并标注是否已有规则 / 是否需要拆分。"""
+    """列出 SYTMDB 里所有「带剧集组」的番，并标注是否已有规则 / 会不会改动季号。"""
     addr, token = _sytmdb_conn()
     if not addr:
         raise ValueError("未配置 SYTMDB 地址（系统设置 → SYTMDB）")
@@ -726,16 +726,17 @@ async def sytmdb_candidates() -> dict:
         row["existing"] = bool(rule)
         row["existing_status"] = rule.get("status") or ""
         row["existing_reference"] = rule.get("reference") or ""
-    # 可导入的排前面，其次是没有规则的，再按年份倒序
+    # 会改动季号的排前面，其次是没有规则的，再按年份倒序
     rows.sort(key=lambda r: (
-        not r["need_split"], not r["existing"], -int(r.get("year") or 0), r["title"]
+        not r["will_change"], not r["existing"], -int(r.get("year") or 0), r["title"]
     ))
     return {
         "source": addr,
         "scanned": scanned,
         "matched": len(rows),
-        "importable": sum(1 for r in rows if r["need_split"]),
+        "importable": sum(1 for r in rows if r["will_change"]),
         "existing": sum(1 for r in rows if r["existing"]),
+        "specials": sum(1 for r in rows if r.get("specials")),
         "errors": errors,
         "items": rows,
     }
@@ -745,7 +746,7 @@ async def sytmdb_import(tmdb_ids: Optional[List[int]] = None, status: str = "act
                         overwrite: bool = False) -> dict:
     """把 SYTMDB 的剧集组直接落成规则库条目（不经过 TMDB 重新生成）。
 
-    - ``tmdb_ids`` 为空 = 导入全部「需要拆分」的条目
+    - ``tmdb_ids`` 为空 = 导入全部「会改动季号」的条目
     - ``overwrite`` False 时跳过库中已存在的番
     - 每条规则同时写入 mapping / group_json / render_words，写完统一 reload 一次
     """
@@ -761,7 +762,7 @@ async def sytmdb_import(tmdb_ids: Optional[List[int]] = None, status: str = "act
         ids = [int(x) for x in tmdb_ids if int(x) in meta]
         missing = [int(x) for x in tmdb_ids if int(x) not in meta]
     else:
-        ids = [tid for tid, row in meta.items() if row["need_split"]]
+        ids = [tid for tid, row in meta.items() if row["will_change"]]
         missing = []
 
     existing = {int(r["tmdb_id"]): r for r in await store.list_rules()}
@@ -775,12 +776,16 @@ async def sytmdb_import(tmdb_ids: Optional[List[int]] = None, status: str = "act
         if tmdb_id in existing and not overwrite:
             skipped.append({"tmdb_id": tmdb_id, "reason": "规则库里已有该番"})
             return None
+        row_meta = meta[tmdb_id]
+        if not row_meta.get("will_change"):
+            skipped.append({"tmdb_id": tmdb_id, "reason": "与 TMDB 原生季结构一致，无需导入"})
+            return None
         try:
             async with sem:
                 raw = await sytmdb_source.fetch_episode_group(addr, token, tmdb_id)
-            row = meta[tmdb_id]
             built = sytmdb_source.build_rule(
-                {"id": tmdb_id, "name": row["title"], "year": row.get("year"), "source": row.get("source")},
+                {"id": tmdb_id, "name": row_meta["title"], "year": row_meta.get("year"),
+                 "source": row_meta.get("source")},
                 raw, status,
             )
         except Exception as e:
