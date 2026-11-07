@@ -286,8 +286,22 @@ onMounted(() => {
       <SectionHeader card-title icon="mdi-sync-circle-outline" title="SYTMDB 设置" />
       <v-divider />
       <v-card-text class="pa-4">
-        <v-alert type="warning" variant="tonal" density="compact" class="mb-4">
-          作者的另一个项目，用于同步修正后的元数据，非必要无需填写。
+        <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+          <div class="text-caption">
+            同作者的另一个<b>开源</b>项目，一套可选的元数据增强服务。接上以后「数据中心 → 元数据」能一键拉取你在那边手动修正过的元数据，
+            「番剧分季」也能直接读写那边的剧集组，让 Emby 按多季显示；留空则只用 TMDB，识别功能不受任何影响。
+          </div>
+          <div class="text-caption mt-1">
+            项目地址：
+            <a
+              href="https://github.com/pipi20xx/sy1024"
+              target="_blank"
+              class="text-primary text-decoration-none font-weight-medium"
+            >
+              github.com/pipi20xx/sy1024
+            </a>
+            （部署方式见仓库 README）
+          </div>
         </v-alert>
         <v-text-field
           v-model="config.sytmdb_host"
@@ -297,7 +311,9 @@ onMounted(() => {
           class="mb-2"
           hide-details
         />
-        <div class="text-caption text-medium-emphasis mb-3">SYTMDB 服务地址，用于同步修正后的元数据</div>
+        <div class="text-caption text-medium-emphasis mb-3">
+          例如 192.168.1.10:8121；只写 IP 或主机名时自动补 http:// 与默认端口 8121。留空即不启用。
+        </div>
 
         <PasswordInput
           v-model="config.sytmdb_token"
@@ -306,7 +322,7 @@ onMounted(() => {
           density="compact"
           hide-details
         />
-        <div class="text-caption text-medium-emphasis mt-1">如果 SYTMDB 服务配置了认证，请填写 Token</div>
+        <div class="text-caption text-medium-emphasis mt-1">SYTMDB 那边开启了认证才需要填；留空按匿名访问。</div>
       </v-card-text>
     </v-card>
 

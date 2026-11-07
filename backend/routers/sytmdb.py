@@ -7,6 +7,7 @@ from metadata.meta_cache import MetaCacheManager
 from recognition_engine.tmdb_matcher.logic import TMDBMatcher
 from logger import log_audit
 from config_manager import ConfigManager
+from season_split.sytmdb_source import base_url as _sytmdb_base_url
 
 router = APIRouter(prefix="/sytmdb", tags=["SYTMDB 同步"])
 
@@ -28,16 +29,12 @@ def _set_episode_group_cache(key: str, data: Any):
     _episode_group_cache[key] = (data, datetime.now() + _episode_group_cache_ttl)
 
 def _build_url(addr: str) -> str:
-    addr = addr.rstrip("/")
-    if addr and not addr.startswith("http"):
-        return f"http://{addr}:8121/api/items/override/metadata"
-    return f"{addr}/api/items/override/metadata"
+    """元数据同步地址。地址补全统一走 season_split.sytmdb_source.base_url：
+    只写 IP / 主机名时补 http:// 与默认端口 8121；已带端口或完整 URL 则原样保留。"""
+    return f"{_sytmdb_base_url(addr)}/api/items/override/metadata"
 
 def _build_episode_group_url(addr: str, series_id: str) -> str:
-    addr = addr.rstrip("/")
-    if addr and not addr.startswith("http"):
-        return f"http://{addr}:8121/api/tv/{series_id}/episodegroup"
-    return f"{addr}/api/tv/{series_id}/episodegroup"
+    return f"{_sytmdb_base_url(addr)}/api/tv/{series_id}/episodegroup"
 
 def _get_sytmdb_config() -> tuple[str, str]:
     config = ConfigManager.get_config()

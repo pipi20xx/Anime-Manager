@@ -698,10 +698,9 @@ async def push_episode_group(tmdb_id: int) -> dict:
 
 
 def _sytmdb_url(addr: str, tmdb_id: int) -> str:
-    addr = addr.rstrip("/")
-    if addr and not addr.startswith("http"):
-        return f"http://{addr}:8121/api/tv/{tmdb_id}/episodegroup"
-    return f"{addr}/api/tv/{tmdb_id}/episodegroup"
+    """剧集组写回地址。补全逻辑与读取侧一致（sytmdb_source.base_url），
+    避免「ip:8121」被拼成 ip:8121:8121。"""
+    return f"{sytmdb_source.base_url(addr)}/api/tv/{tmdb_id}/episodegroup"
 
 
 # ---------------------------------------------------------------------------

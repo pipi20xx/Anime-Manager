@@ -58,7 +58,8 @@ def base_url(addr: str) -> str:
     host = rest.split("/", 1)[0]
     tail = rest[len(host):]
     has_port = ":" in host.rsplit("]", 1)[-1]  # 兼容 IPv6 字面量
-    if not has_port:
+    # 只有 http / 裸主机名才补 SYTMDB 默认端口；https 不补（多半是反代在 443 上）
+    if not has_port and scheme.lower() != "https":
         host = f"{host}:{DEFAULT_PORT}"
     return f"{scheme}://{host}{tail}"
 
