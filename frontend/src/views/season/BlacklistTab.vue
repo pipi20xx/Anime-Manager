@@ -37,10 +37,30 @@ onMounted(() => {
       <v-btn variant="text" prepend-icon="mdi-refresh" @click="store.loadBlacklistMeta">刷新</v-btn>
     </div>
 
-    <div class="text-caption text-medium-emphasis mb-3 px-1">
-      黑名单里的番永远不会套用分季规则。开启「自动生成规则」后，判定无需拆分的番会自动加进来；
-      名称与海报读取自本地永久缓存 / 数据中心元数据资产，不联网，查不到就显示「未收录」。
-    </div>
+    <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+      <div class="text-caption">
+        <div>
+          <b>黑名单里的番永远不会套用分季规则</b>：识别注入时直接跳过，也不会再自动生成规则
+          （自动流程第一步就绕过它）。和「停用规则」不同——停用是规则还在、只是不生效。
+        </div>
+        <div class="mt-2">以下两种情况会被<b>自动加进来</b>（需要「启用」模式 + 高级里打开「自动生成规则」）：</div>
+        <ol class="pl-5 mt-1">
+          <li>
+            <b>TMDB 只有一季且集数 &lt; 15</b>：既拆不出两季，也没有可折算的跨季边界，
+            这种番在拉参照源之前就直接判定，不进规则库；
+          </li>
+          <li>
+            <b>判定「无需拆分」，又生成不出「连番号折算」规则</b>：折算开关没打开，
+            或者拿到的集列表构不出跨季边界（例如某一季没有集数据）。
+          </li>
+        </ol>
+        <div class="mt-2">
+          反过来，只要该番能生成规则（拆分类或连番号折算），就<b>不会</b>进黑名单。
+          移出后下次识别会重新判定一次，结论仍是「不需要处理」就会再次加入。
+          名称 / 年份 / 海报来自本地永久缓存与数据中心元数据，不联网；查不到显示「未收录」。
+        </div>
+      </div>
+    </v-alert>
 
     <v-skeleton-loader v-if="store.blacklistLoading" type="card@3" />
 

@@ -124,6 +124,16 @@ onMounted(() => {
             <li>保存为「生效」后整理时自动套用；Emby 显示还要另外点「写 SYTMDB」</li>
           </ol>
 
+          <div class="section-title mb-1">无需分季时</div>
+          <ul class="text-body-2 pl-5 mb-3">
+            <li>
+              TMDB 本身已经是多季（例如 S1 12 集 + S2 12 集），但发布侧仍按「第 1~24 话」连续编号：打开
+              高级里的「<b>无需分季时附带连番号折算</b>」后，会按 TMDB 季边界多生成一段规则
+              （第 13 话 → S2E1），<b>只写渲染词、不写 SYTMDB</b>。
+            </li>
+            <li>其它情况（单季、或生成不出跨季规则）：该番自动进「黑名单」，之后不再重复判定。</li>
+          </ul>
+
           <div class="section-title mb-1">执行顺序</div>
           <div class="text-body-2 mb-3">
             你自己的「自定义渲染词」先执行 → 分季规则最后执行。两者冲突时以分季结果为准；

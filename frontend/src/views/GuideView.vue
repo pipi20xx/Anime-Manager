@@ -17,6 +17,7 @@ import pipelineMd from '@/docs/recognition-pipeline.md?raw'
 import recognitionMd from '@/docs/recognition-rules.md?raw'
 import privilegedMd from '@/docs/privileged-rules.md?raw'
 import renderMd from '@/docs/render-rules.md?raw'
+import seasonSplitMd from '@/docs/season-split-guide.md?raw'
 import rssMd from '@/docs/rss-rule-guide.md?raw'
 import subscriptionMd from '@/docs/subscription-guide.md?raw'
 import strmMd from '@/docs/strm-guide.md?raw'
@@ -57,6 +58,7 @@ const tabs = [
   { value: 'recognition', label: '自定义识别词 (预处理)', icon: 'mdi-filter-outline', md: recognitionMd },
   { value: 'privileged', label: '自定义特权规则 (优先提取)', icon: 'mdi-crown-outline', md: privilegedMd },
   { value: 'render', label: '自定义渲染词 (后处理)', icon: 'mdi-palette-outline', md: renderMd },
+  { value: 'season-split', label: '番剧分季 (拆分 / 连番号)', icon: 'mdi-call-split', md: seasonSplitMd },
   { value: 'rss', label: '下载规则配置 (RSS)', icon: 'mdi-rss', md: rssMd },
   { value: 'subscription', label: '追剧订阅配置 (TMDB)', icon: 'mdi-television-classic', md: subscriptionMd },
   { value: 'strm', label: '虚拟库 (STRM)', icon: 'mdi-link-variant', md: strmMd },
