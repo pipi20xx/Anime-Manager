@@ -57,12 +57,20 @@ class RecognitionWorkflow:
             from season_split import service as season_split_service
             from season_split import store as season_split_store
 
-            record = await season_split_service.auto_generate_rule(int(tmdb_id), entry=self.ctx.entry)
+            record = await season_split_service.auto_generate_rule(
+                int(tmdb_id), entry=self.ctx.entry,
+                seasons=(self.ctx.tmdb_data or {}).get("seasons"),
+            )
             if not record:
                 return
 
             if record.get("blacklisted"):
-                self.ctx.log(f"┃ [分季] 🚫 该番无需拆分，已自动加入黑名单（TMDB {tmdb_id}）")
+                if record.get("reason") == "single-season-short":
+                    self.ctx.log(
+                        f"┃ [分季] 🚫 TMDB 只有一季且集数很少，无需分季/折算，已加入黑名单（TMDB {tmdb_id}）"
+                    )
+                else:
+                    self.ctx.log(f"┃ [分季] 🚫 该番无需拆分，已自动加入黑名单（TMDB {tmdb_id}）")
                 return
 
             words = (record.get("render_words") or "").strip()

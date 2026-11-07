@@ -77,10 +77,14 @@ class SettingsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.get("/rules", summary="分季规则列表")
-async def list_rules(status: Optional[str] = None, q: str = "", origin: Optional[str] = None):
-    """`origin` 过滤：manual / sytmdb / auto / legacy（历史未知，升级前没有来源列的老数据）。"""
+async def list_rules(status: Optional[str] = None, q: str = "", origin: Optional[str] = None,
+                     kind: Optional[str] = None):
+    """`origin` 过滤：manual / sytmdb / auto / legacy（历史未知，升级前没有来源列的老数据）。
+
+    `kind` 过滤：split（分季拆分）/ absolute（连番号折算，只写渲染词、不写剧集组）。
+    """
     return {
-        "items": await store.list_rules(status=status, q=q, origin=origin),
+        "items": await store.list_rules(status=status, q=q, origin=origin, kind=kind),
         "cache": store.cache_stats(),
     }
 

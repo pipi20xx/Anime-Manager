@@ -332,8 +332,9 @@ def compile_rule(tmdb_id: int, flat: list, groups: list,
                                            use_includes=use_includes)
     # 连番号折算（开关）：分组仍是 TMDB 原生坐标，这里只往渲染词后面追加一段
     # 「按 TMDB 季边界把 1..N 折回 (s,e)」的规则；映射表 / 剧集组不受影响。
+    # 只在「分组是恒等映射」时追加——需要拆分的番（合并季）不该混进连番号规则。
     absolute_rules: list = []
-    if use_absolute:
+    if use_absolute and mapping and all(src == dst for src, dst in mapping.items()):
         absolute_rules = compiler.absolute_rule_lines(tmdb_id, flat)
         if absolute_rules:
             words = "\n".join([words, *absolute_rules]) if words else "\n".join(absolute_rules)
@@ -676,7 +677,18 @@ async def _save_absolute_rule(tmdb_id: int, data: dict, cfg: dict) -> Optional[d
     return record
 
 
-async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[dict]:
+def _add_to_blacklist(cfg: dict, tmdb_id: int) -> None:
+    """把该番加入分季黑名单（持久化到配置）。"""
+    from config_manager import ConfigManager
+
+    blacklist = list(cfg.get("season_split_blacklist") or [])
+    if tmdb_id not in blacklist:
+        blacklist.append(tmdb_id)
+        ConfigManager.update_config({"season_split_blacklist": blacklist})
+
+
+async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
+                             seasons: Optional[list] = None) -> Optional[dict]:
     """识别链路调用：满足条件时自动生成并保存一条 active 分季规则。
 
     生成条件（全部满足才生成）：
@@ -694,6 +706,10 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[
     - `season_split_use_absolute_rules` 开着 → 尝试生成「连番号折算」规则（见
       `_save_absolute_rule`），成功就返回（不拉黑、不写剧集组）；生成不出来才继续往下；
     - 否则返回 {"blacklisted": True} 并加入黑名单（持久化），之后不再重复拉参照源。
+
+    `seasons`（可选，识别链路传 ctx.tmdb_data["seasons"]）用于**快速拉黑**：
+    TMDB 只有一季且集数 < `SINGLE_SEASON_BLACKLIST_MAX` 时，既拆不出两季也没有跨季
+    边界，直接进黑名单，省掉一次 TVDB / Bangumi 拉取。
     """
     cfg = _cfg()
     if not _cfg_bool(cfg, "season_split_auto_generate", False):
@@ -718,18 +734,18 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[
     if await store.get_rule(tmdb_id):
         return None
 
+    # 快速拉黑：TMDB 单季 + 集数很少 → 怎么处理都一样，不必再拉参照源。
+    if grouping.single_season_too_short(seasons):
+        _add_to_blacklist(cfg, tmdb_id)
+        return {"blacklisted": True, "tmdb_id": tmdb_id, "reason": "single-season-short"}
+
     data = await preview(tmdb_id)
     if not data.get("need_split"):
         absolute = await _save_absolute_rule(tmdb_id, data, cfg)
         if absolute:
             return absolute
 
-        from config_manager import ConfigManager
-
-        blacklist = list(cfg.get("season_split_blacklist") or [])
-        if tmdb_id not in blacklist:
-            blacklist.append(tmdb_id)
-            ConfigManager.update_config({"season_split_blacklist": blacklist})
+        _add_to_blacklist(cfg, tmdb_id)
         return {"blacklisted": True, "tmdb_id": tmdb_id}
 
     basis = data.get("default_basis") or ""
@@ -764,6 +780,9 @@ async def push_episode_group(tmdb_id: int) -> dict:
     rule = await store.get_rule(tmdb_id)
     if not rule:
         raise ValueError("该番还没有保存过分季规则")
+    if (rule.get("reference") or "") == "tmdb":
+        # 连番号折算的源坐标（1..N）不在 TMDB 里，推上去会让 Emby 把 S1E13 当成第 2 季
+        raise ValueError("连番号折算规则只写渲染词，不写剧集组")
     groups = (rule.get("group_json") or {}).get("groups") or []
     if not groups:
         raise ValueError("规则里没有剧集组数据")

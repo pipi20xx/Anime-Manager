@@ -249,6 +249,8 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
   const ruleStatus = ref('')
   /** 来源过滤：'' 全部 / manual 手动 / sytmdb 导入 / auto 自动生成 / legacy 历史未知 */
   const ruleOrigin = ref('')
+  /** 类型过滤：'' 全部 / split 分季拆分 / absolute 连番号折算（只写渲染词） */
+  const ruleKind = ref('')
 
   async function loadRules() {
     loading.value = true
@@ -257,6 +259,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
         status: ruleStatus.value || undefined,
         q: ruleSearch.value || undefined,
         origin: ruleOrigin.value || undefined,
+        kind: ruleKind.value || undefined,
       })
       rules.value = data.items || []
       settings.cache = data.cache
@@ -319,6 +322,11 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     return originMetaOf(rule?.origin)
   }
 
+  /** 连番号折算规则：只写渲染词、不写剧集组（reference 固定为 tmdb） */
+  function isAbsoluteRule(rule: SplitRule | null | undefined) {
+    return String(rule?.reference || '') === 'tmdb'
+  }
+
   async function toggleRule(rule: SplitRule) {
     const next = rule.status === 'active' ? 'disabled' : 'active'
     try {
@@ -358,6 +366,10 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
   async function pushGroup(rule: SplitRule | null | undefined) {
     if (!rule) {
       warning('请先保存规则，再写入 SYTMDB')
+      return
+    }
+    if (isAbsoluteRule(rule)) {
+      warning('连番号折算规则只写渲染词，不写 SYTMDB 剧集组')
       return
     }
     const groupCount = (rule.groups || []).length
@@ -920,10 +932,12 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     ruleSearch,
     ruleStatus,
     ruleOrigin,
+    ruleKind,
     loadRules,
     statusOf,
     originOf,
     originMetaOf,
+    isAbsoluteRule,
     toggleRule,
     removeRule,
     pushGroup,

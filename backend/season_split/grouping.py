@@ -16,7 +16,35 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
+from .constants import SINGLE_SEASON_BLACKLIST_MAX
+
 DEFAULT_GAP_DAYS = 45
+
+
+def single_season_too_short(seasons, limit: int = SINGLE_SEASON_BLACKLIST_MAX) -> bool:
+    """TMDB 只有一季且集数 < limit → 既拆不出两季，也没有可折算的跨季边界。
+
+    这种番无论开关怎么设都做不出有意义的规则，自动流程里直接进黑名单即可，
+    省掉一次 TVDB / Bangumi 拉取（`auto_generate_rule` 的快速判定）。
+    seasons: [{season_number, episode_count}, ...]
+    """
+    rows = []
+    for item in seasons or []:
+        if not isinstance(item, dict):
+            continue
+        try:
+            number = int(item.get("season_number") or 0)
+        except (TypeError, ValueError):
+            continue
+        if number >= 1:
+            rows.append(item)
+    if len(rows) != 1:
+        return False
+    try:
+        count = int(rows[0].get("episode_count") or 0)
+    except (TypeError, ValueError):
+        return False
+    return 0 < count < int(limit)
 
 
 def _air_date(ep: dict) -> Optional[date]:

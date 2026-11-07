@@ -229,7 +229,7 @@ export interface BlacklistItem {
 }
 
 export const seasonSplitApi = {
-  listRules: (params?: { status?: string; q?: string; origin?: string }) =>
+  listRules: (params?: { status?: string; q?: string; origin?: string; kind?: string }) =>
     api.get<{ items: SplitRule[]; cache: SeasonSplitSettings['cache'] }>('/api/season-split/rules', { params }),
 
   getRule: (tmdbId: number) => api.get<SplitRule>(`/api/season-split/rules/${tmdbId}`),

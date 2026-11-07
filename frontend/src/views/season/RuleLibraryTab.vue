@@ -55,6 +55,19 @@ const store = useSeasonSplitStore()
         style="max-width: 150px"
         @update:model-value="store.loadRules"
       />
+      <v-select
+        v-model="store.ruleKind"
+        :items="[
+          { title: '全部类型', value: '' },
+          { title: '分季拆分', value: 'split' },
+          { title: '连番号折算', value: 'absolute' },
+        ]"
+        density="compact"
+        variant="outlined"
+        hide-details
+        style="max-width: 150px"
+        @update:model-value="store.loadRules"
+      />
       <v-btn variant="tonal" prepend-icon="mdi-refresh" :loading="store.loading" @click="store.loadRules">刷新</v-btn>
       <v-btn variant="tonal" prepend-icon="mdi-cloud-download-outline" @click="store.openSytmdbImport">
         导入 SYTMDB
@@ -68,6 +81,7 @@ const store = useSeasonSplitStore()
       共 {{ store.rules.length }} 条。只有状态为 <b>生效</b> 的规则会被注入识别；草稿/停用只是保存着不动。
       卡片上的小标签就是「这条规则怎么来的」：<b>手动</b> = 工作台生成、<b>SYTMDB</b> = 一键导入、
       <b>自动</b> = 识别时自动生成、<b>历史</b> = 升级前保存（当时没记来源，无法区分）。
+      <b>只写渲染词</b> = 连番号折算（TMDB 已分季、发布侧按 1..N 连编），不会写 SYTMDB 剧集组。
     </div>
 
     <v-skeleton-loader v-if="store.loading && !store.rules.length" type="card@3" />
@@ -95,6 +109,17 @@ const store = useSeasonSplitStore()
             <v-chip class="manage-card__badge" size="x-small" :color="store.statusOf(rule).color" variant="tonal" label>
               {{ store.statusOf(rule).label }}
             </v-chip>
+            <v-tooltip
+              v-if="store.isAbsoluteRule(rule)"
+              text="按 TMDB 季边界折算连番号：只写渲染词，不写 SYTMDB 剧集组"
+              location="top"
+            >
+              <template #activator="{ props }">
+                <v-chip v-bind="props" class="manage-card__badge" size="x-small" color="deep-purple" variant="tonal" label>
+                  只写渲染词
+                </v-chip>
+              </template>
+            </v-tooltip>
           </div>
         </div>
 
@@ -127,7 +152,8 @@ const store = useSeasonSplitStore()
           <v-btn size="small" variant="tonal" prepend-icon="mdi-power" @click="store.toggleRule(rule)">
             {{ rule.status === 'active' ? '停用' : '启用' }}
           </v-btn>
-          <v-btn size="small" variant="tonal" prepend-icon="mdi-cloud-upload-outline" @click="store.pushGroup(rule)">
+          <v-btn size="small" variant="tonal" prepend-icon="mdi-cloud-upload-outline"
+            :disabled="store.isAbsoluteRule(rule)" @click="store.pushGroup(rule)">
             剧集组
           </v-btn>
           <v-btn size="small" variant="tonal" color="error" prepend-icon="mdi-delete-outline" @click="store.removeRule(rule)">

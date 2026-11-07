@@ -354,13 +354,29 @@ def case_absolute():
     eq("恒等分组回编译 = 恒等映射", compiler.mapping_from_groups(groups, flat), identity)
 
 
+def case_scope():
+    print("\n[11] 快速拉黑：TMDB 只有一季且集数很少（拆不了也折不了）")
+    one = lambda n: [{"season_number": 1, "episode_count": n}]
+    eq("单季 12 集 → 拉黑", grouping.single_season_too_short(one(12)), True)
+    eq("单季 14 集 → 拉黑", grouping.single_season_too_short(one(14)), True)
+    eq("单季 15 集 → 不拉黑（边界）", grouping.single_season_too_short(one(15)), False)
+    eq("单季 24 集 → 不拉黑", grouping.single_season_too_short(one(24)), False)
+    eq("两季 → 不拉黑", grouping.single_season_too_short(
+        [{"season_number": 1, "episode_count": 12},
+         {"season_number": 2, "episode_count": 12}]), False)
+    eq("S0 不参与计数", grouping.single_season_too_short(
+        [{"season_number": 0, "episode_count": 3}, {"season_number": 1, "episode_count": 12}]), True)
+    eq("集数未知 → 不拉黑", grouping.single_season_too_short([{"season_number": 1}]), False)
+    eq("没有季表 → 不拉黑", grouping.single_season_too_short(None), False)
+
+
 def main():
     print("=" * 72)
     print("番剧分季 · 离线自测")
     print("=" * 72)
     for fn in (case_lens_pipeline, case_consistent, case_gap_grouping, case_includes_year,
                case_exclusion, case_three_seasons, case_dedupe, case_finale_and_year,
-               case_roundtrip, case_overflow, case_absolute):
+               case_roundtrip, case_overflow, case_absolute, case_scope):
         fn()
 
     print("\n" + "=" * 72)

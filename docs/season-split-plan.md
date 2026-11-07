@@ -534,6 +534,31 @@ cd backend && python -m season_split.sytmdb_selftest
 - 自动生成的路径根本不调用 `push_episode_group()`；
 - 在工作台里重新保存也不会丢这段（开关还在，`compile_rule` 会重新追加）。
 
+### 与黑名单的关系
+
+开关只对「TMDB ≥ 2 季」的番生效，所以黑名单并没有消失，只是范围缩小了：
+
+| 情况 | 结果 |
+|---|---|
+| TMDB ≥ 2 季 | 生成一条「只写渲染词」的规则，**不进黑名单**（下次 `auto_generate_rule()` 第一步就被 `get_rule` 短路） |
+| TMDB 单季、集数 ≥ 15 | 拆不出两季、也没有跨季边界 → 进黑名单（原状态） |
+| TMDB 单季、集数 < 15 | **快速拉黑**：`grouping.single_season_too_short()`，连 TVDB / Bangumi 都不拉（省一次网络往返） |
+| 开关关着 | 完全维持旧行为 |
+
+- 阈值在 `constants.SINGLE_SEASON_BLACKLIST_MAX = 15`，判定是 `episode_count < 15`（正好 15 集不拉黑）；
+- 快速拉黑用的是识别链路已经拿到的 `ctx.tmdb_data["seasons"]`，零额外请求；
+  那会儿没有季表（智能记忆只给了 id + type）时退回原来的 preview 流程；
+- 历史上已经被拉黑的番不会自动补，要在「黑名单」页删掉才会重新触发。
+
+### 规则库里的「只写渲染词」
+
+这类规则 `reference = tmdb`，在规则库里是独立的一类：
+
+- 卡片上有 **只写渲染词** 标签（悬停提示「不写 SYTMDB 剧集组」）；
+- 「剧集组」按钮禁用；即使绕过 UI 直接调接口，`push_episode_group()` 也会拒绝写入；
+- 顶部工具栏多了 **类型** 筛选：`全部类型 / 分季拆分 / 连番号折算`
+  （接口 `GET /api/season-split/rules?kind=split|absolute`），需要单独查看或清理这一批时用它。
+
 ### 边界
 
 - 文件名带季标（`S2E01`）→ 不命中 13-24，保持原值；带季标又问连号（`S2E13`）→ 命中，能救回来；
@@ -543,6 +568,8 @@ cd backend && python -m season_split.sytmdb_selftest
   来源=自动），停用/删除即可；
 - 需要拆分的番（TMDB 合并季）不会走这里：`need_split=true` 时既不建 `tmdb` 候选，也不进折算分支。
 
-离线自测已覆盖（`case_absolute`，8 项）：规则文本、13→S2E1、24→S2E12、12 不变、
-S2E1 不被二次改写、单季不生成、三季两条、恒等分组回编译仍是恒等映射。
+离线自测已覆盖：
+`case_absolute`（14 项）—— 规则文本、13→S2E1、24→S2E12、12 不变、S2E1 不被二次改写、
+单季不生成、三季两条、恒等分组回编译仍是恒等映射；
+`case_scope`（8 项）—— 单季 12/14 集拉黑、15/24 集不拉黑、两季不拉黑、S0 不计数、集数未知/无季表不拉黑。
 

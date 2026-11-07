@@ -201,7 +201,8 @@ async def stop_watcher() -> None:
 # ---------------------------------------------------------------------------
 
 async def list_rules(status: Optional[str] = None, q: str = "",
-                     origin: Optional[str] = None) -> List[dict]:
+                     origin: Optional[str] = None,
+                     kind: Optional[str] = None) -> List[dict]:
     from sqlalchemy import or_, select
 
     from database import db
@@ -210,6 +211,12 @@ async def list_rules(status: Optional[str] = None, q: str = "",
     stmt = select(SeasonSplitRule)
     if status:
         stmt = stmt.where(SeasonSplitRule.status == status)
+    if kind == "absolute":
+        # 连番号折算：只写渲染词、不写剧集组的那一类（reference 固定为 tmdb）
+        stmt = stmt.where(SeasonSplitRule.reference == "tmdb")
+    elif kind == "split":
+        stmt = stmt.where(or_(SeasonSplitRule.reference.is_(None),
+                              SeasonSplitRule.reference != "tmdb"))
     if origin:
         if origin == LEGACY_ORIGIN:
             stmt = stmt.where(SeasonSplitRule.origin.is_(None))

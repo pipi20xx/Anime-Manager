@@ -17,3 +17,7 @@ ANIME_GENRE_ID = 16
 
 # 生成规则时用的版本标记（写进规则注释头，便于人工辨认来源）
 AUTO_HEADER_PREFIX = "# [自动分季]"
+
+# TMDB 只有一季、且集数少于这个值时：既拆不出两季，也没有可折算的跨季边界，
+# 属于「怎么处理都一样」的番——直接进黑名单，不再去拉 TVDB / Bangumi。
+SINGLE_SEASON_BLACKLIST_MAX = 15
