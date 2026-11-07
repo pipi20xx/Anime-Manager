@@ -314,13 +314,53 @@ def case_overflow():
     check("validate 不报未覆盖", grouping.validate(groups, flat) == [], grouping.validate(groups, flat))
 
 
+def case_absolute():
+    print("\n[10] 连番号折算（TMDB 已分季，发布侧按 1..N 连续编号）")
+    flat = grouping.flatten([weekly("2024-01-05", 12, season=1),
+                             weekly("2025-01-10", 12, season=2)])
+
+    lines = compiler.absolute_rule_lines(TMDB_ID, flat)
+    eq("只生成 1 条跨季规则", len(lines), 1)
+    eq("规则文本", lines[0], f"@?{{[tmdbid={TMDB_ID};type=tv;e=13-24]}} => {{[s=2;e=EP-12]}}")
+
+    rules = "\n".join(lines)
+    eq("第 13 集 → S2E1", simulate(rules, 1, 13), (2, 1))
+    eq("第 24 集 → S2E12", simulate(rules, 1, 24), (2, 12))
+    eq("第 12 集 不变", simulate(rules, 1, 12), (1, 12))
+    eq("S2E1 不被二次改写", simulate(rules, 2, 1), (2, 1))
+    eq("第 25 集 不变（TMDB 没有这一集）", simulate(rules, 1, 25), (1, 25))
+
+    # 单季：连番号与 TMDB 坐标一致，不该生成任何规则
+    flat_one = grouping.flatten([weekly("2024-01-05", 24, season=1)])
+    eq("单季 → 不生成规则", compiler.absolute_rule_lines(TMDB_ID, flat_one), [])
+
+    # 三季：第二条规则
+    flat_three = grouping.flatten([weekly("2024-01-05", 12, season=1),
+                                   weekly("2024-10-04", 12, season=2),
+                                   weekly("2025-10-03", 12, season=3)])
+    lines_three = compiler.absolute_rule_lines(TMDB_ID, flat_three)
+    eq("三季 → 2 条规则", len(lines_three), 2)
+    eq("三季第 25 集 → S3E1", simulate("\n".join(lines_three), 1, 25), (3, 1))
+
+    # 自动生成用的是「恒等分组 + 追加渲染词」，所以分组回编译必须还是恒等映射
+    identity = {(int(e["season_number"]), int(e["episode_number"])):
+                (int(e["season_number"]), int(e["episode_number"])) for e in flat}
+    groups = compiler.groups_from_mapping(identity)
+    eq("恒等分组 = 2 段", len(groups), 2)
+    eq("第 1 段起止", (groups[0]["start"], groups[0]["end"]),
+       ({"s": 1, "e": 1}, {"s": 1, "e": 12}))
+    eq("第 2 段起止", (groups[1]["start"], groups[1]["end"]),
+       ({"s": 2, "e": 1}, {"s": 2, "e": 12}))
+    eq("恒等分组回编译 = 恒等映射", compiler.mapping_from_groups(groups, flat), identity)
+
+
 def main():
     print("=" * 72)
     print("番剧分季 · 离线自测")
     print("=" * 72)
     for fn in (case_lens_pipeline, case_consistent, case_gap_grouping, case_includes_year,
                case_exclusion, case_three_seasons, case_dedupe, case_finale_and_year,
-               case_roundtrip, case_overflow):
+               case_roundtrip, case_overflow, case_absolute):
         fn()
 
     print("\n" + "=" * 72)

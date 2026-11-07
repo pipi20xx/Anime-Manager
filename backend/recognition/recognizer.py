@@ -72,10 +72,16 @@ class RecognitionWorkflow:
                 stripped = line.strip()
                 if stripped and not stripped.startswith("#"):
                     self.ctx.all_render.append(season_split_store.SPLIT_MARKER + stripped)
-            self.ctx.log(
-                f"┃ [分季] ⚡ 自动生成规则已生效（TMDB {tmdb_id}，"
-                f"依据 {record.get('reference') or '-'}，{len(record.get('groups') or [])} 季）"
-            )
+            if record.get("absolute"):
+                self.ctx.log(
+                    f"┃ [分季] 🧮 该番无需分季，已按 TMDB 季边界生成「连番号折算」规则并生效"
+                    f"（TMDB {tmdb_id}，{len(record.get('groups') or [])} 季；不写 SYTMDB）"
+                )
+            else:
+                self.ctx.log(
+                    f"┃ [分季] ⚡ 自动生成规则已生效（TMDB {tmdb_id}，"
+                    f"依据 {record.get('reference') or '-'}，{len(record.get('groups') or [])} 季）"
+                )
             if record.get("pushed_sytmdb"):
                 self.ctx.log(f"┃ [分季] 📡 已自动写入 SYTMDB 剧集组（TMDB {tmdb_id}）")
             elif record.get("push_error"):

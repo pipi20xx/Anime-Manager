@@ -280,6 +280,26 @@ def _candidates(structure: dict, entries: dict, gap_days: int,
     return out
 
 
+def _identity_groups(flat: list) -> list:
+    """TMDB 自己的季边界（恒等映射）→ 分组。
+
+    用于「连番号折算」：分组是恒等的，所以 mapping / 剧集组仍是 TMDB 原生坐标，
+    只有在渲染词里追加的那一段才把 1..N 折回 (s,e)。
+    单季番返回 []（没有跨季边界，不需要换算）。
+    """
+    items = []
+    for ep in flat or []:
+        try:
+            key = (int(ep.get("season_number") or 0), int(ep.get("episode_number") or 0))
+        except (TypeError, ValueError):
+            continue
+        if key[0] >= 1 and key[1] >= 1:
+            items.append(key)
+    if len(items) < 2 or len({s for s, _ in items}) < 2:
+        return []
+    return compiler.groups_from_mapping({key: key for key in items})
+
+
 def _pick_default(candidates: Dict[str, dict], split_bases: list, priority: list) -> str:
     """默认选中哪个依据：按「参照优先级」里第一个既有候选又能拆分的源；
     都不行时退到算法依据（gap / year / finale 里第一个能拆的）。"""
@@ -302,13 +322,21 @@ def _pick_default(candidates: Dict[str, dict], split_bases: list, priority: list
 def compile_rule(tmdb_id: int, flat: list, groups: list,
                  overrides: Optional[dict] = None, excluded: Optional[list] = None,
                  names: Optional[dict] = None, reference: str = "",
-                 title: str = "", use_includes: bool = True) -> dict:
+                 title: str = "", use_includes: bool = True,
+                 use_absolute: bool = False) -> dict:
     """分组 → 映射表 / 渲染词 / 剧集组 / 逐集明细 / 告警。"""
     names = {int(k): v for k, v in (names or {}).items() if str(k).isdigit()}
     mapping = compiler.mapping_from_groups(groups, flat, overrides, excluded)
     years = compiler.season_years_from_mapping(mapping, flat)
     words = compiler.generate_render_words(tmdb_id, title, reference, mapping, years,
                                            use_includes=use_includes)
+    # 连番号折算（开关）：分组仍是 TMDB 原生坐标，这里只往渲染词后面追加一段
+    # 「按 TMDB 季边界把 1..N 折回 (s,e)」的规则；映射表 / 剧集组不受影响。
+    absolute_rules: list = []
+    if use_absolute:
+        absolute_rules = compiler.absolute_rule_lines(tmdb_id, flat)
+        if absolute_rules:
+            words = "\n".join([words, *absolute_rules]) if words else "\n".join(absolute_rules)
     air_dates = {
         (int(ep.get("season_number") or 0), int(ep.get("episode_number") or 0)): ep.get("air_date") or ""
         for ep in (flat or [])
@@ -335,6 +363,7 @@ def compile_rule(tmdb_id: int, flat: list, groups: list,
         "mapping": compiler.dump_mapping(mapping),
         "mapping_raw": {f"{s}-{e}": [vs, ve] for (s, e), (vs, ve) in mapping.items()},
         "render_words": words,
+        "absolute_rules": absolute_rules,
         "group_json": group_json,
         "rows": compiler.episode_rows(mapping, raw_lookup),
         "season_years": years,
@@ -365,6 +394,7 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
         if str(x).strip().isdigit()
     ] or [12, 13]
     use_includes = _cfg_bool(cfg, "season_split_use_includes_rules", True)
+    use_absolute = _cfg_bool(cfg, "season_split_use_absolute_rules", False)
     priority = opts.get("priority") or _priority(cfg)
     if isinstance(priority, str):
         priority = [x.strip() for x in priority.split(",") if x.strip()]
@@ -394,6 +424,7 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
                 reference=existing.get("reference") or "manual",
                 title=title,
                 use_includes=use_includes,
+                use_absolute=use_absolute,
             )
         return {
             "tmdb_id": tmdb_id,
@@ -446,7 +477,18 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
             log("INFO", f"参照 {name}: {counts} 集 → {verdict}")
 
     candidates = _candidates(structure, entries, gap_days, fixed_sizes)
-    default_basis = _pick_default(candidates, split_bases, priority)
+    # 「连番号折算」开关开着且确实不需要拆分时，多给一个「TMDB 季边界」候选（恒等分组），
+    # 并默认选中它：保存后渲染词里会附带按连番号折算的那一段。
+    absolute_groups = _identity_groups(flat) if (use_absolute and not need_split) else []
+    if absolute_groups:
+        candidates = {
+            "tmdb": {"groups": absolute_groups,
+                     "warnings": grouping.validate(absolute_groups, flat)},
+            **candidates,
+        }
+        default_basis = "tmdb"
+    else:
+        default_basis = _pick_default(candidates, split_bases, priority)
 
     compiled = {"mapping": {}, "render_words": "", "group_json": {}, "rows": [], "warnings": []}
     if default_basis and default_basis in candidates:
@@ -454,6 +496,7 @@ async def preview(tmdb_id: int, opts: Optional[dict] = None) -> dict:
             tmdb_id, flat, candidates[default_basis]["groups"],
             reference=default_basis, title=title,
             use_includes=use_includes,
+            use_absolute=use_absolute,
         )
 
     # 分季定义明细：展示默认选中的那个参照源
@@ -522,6 +565,7 @@ async def compile_only(payload: dict) -> dict:
     logs: List[str] = []
     cfg = _cfg()
     use_includes = _cfg_bool(cfg, "season_split_use_includes_rules", True)
+    use_absolute = _cfg_bool(cfg, "season_split_use_absolute_rules", False)
     structure = await _fetch_structure(tmdb_id, _log_collector(logs))
     title = structure["tv_show"].get("name") or f"TMDB {tmdb_id}"
     out = compile_rule(
@@ -533,6 +577,7 @@ async def compile_only(payload: dict) -> dict:
         reference=payload.get("reference") or "manual",
         title=title,
         use_includes=use_includes,
+        use_absolute=use_absolute,
     )
     out.update({"tmdb_id": tmdb_id, "title": title, "logs": logs})
     return out
@@ -544,6 +589,7 @@ async def save(payload: dict) -> dict:
     logs: List[str] = []
     cfg = _cfg()
     use_includes = _cfg_bool(cfg, "season_split_use_includes_rules", True)
+    use_absolute = _cfg_bool(cfg, "season_split_use_absolute_rules", False)
     structure = await _fetch_structure(tmdb_id, _log_collector(logs))
     tv_show = structure["tv_show"]
     title = tv_show.get("name") or f"TMDB {tmdb_id}"
@@ -557,6 +603,7 @@ async def save(payload: dict) -> dict:
         reference=payload.get("reference") or "manual",
         title=title,
         use_includes=use_includes,
+        use_absolute=use_absolute,
     )
     if not compiled["mapping"]:
         raise ValueError("分组为空，无法保存（至少要有 1 集被覆盖）")
@@ -593,6 +640,42 @@ async def save(payload: dict) -> dict:
     return record
 
 
+async def _save_absolute_rule(tmdb_id: int, data: dict, cfg: dict) -> Optional[dict]:
+    """「无需分季」时，按开关生成一条只做「连番号折算」的规则。
+
+    场景：TMDB 自己就是 S1 12 集 + S2 12 集（`need_split=False`，本来不需要分季），
+    但发布侧按「第 1 话…第 24 话」连续编号 → 文件名里的 13 在 TMDB 里不存在，其实是 S2E1。
+
+    - 分组仍用 TMDB 自己的季边界（恒等映射），所以 `mapping_json` / `group_json`
+      都是 TMDB 原生坐标，推 SYTMDB 也不会写错；
+    - 连番号那段只进渲染词（`use_absolute` 在 compile_rule 里追加）；
+    - 开关关闭 / 单季 / 生成不出跨季规则 → 返回 None，调用方继续走原来的黑名单逻辑。
+    """
+    if not _cfg_bool(cfg, "season_split_use_absolute_rules", False):
+        return None
+    flat = data.get("episodes") or []
+    if not flat:
+        return None
+    groups = _identity_groups(flat)
+    if not groups:
+        return None          # 单季：连番号与 TMDB 坐标一致，没有可折算的边界
+    if not compiler.absolute_rule_lines(tmdb_id, flat):
+        return None          # 两季边界一致时不会产生规则，不必落库
+
+    record = await save({
+        "tmdb_id": tmdb_id,
+        "groups": groups,
+        "overrides": {},
+        "excluded": [],
+        "names": {},
+        "reference": "tmdb",
+        "status": "active",
+        "origin": store.ORIGIN_AUTO,
+    })
+    record["absolute"] = True
+    return record
+
+
 async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[dict]:
     """识别链路调用：满足条件时自动生成并保存一条 active 分季规则。
 
@@ -607,8 +690,10 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[
     生成依据与页面「生成方案」默认选中一致（参照优先级），保存后立即重载内存快照，
     由调用方把返回的 render_words 追加进本次识别的渲染词列表，做到当场生效。
 
-    判定「无需拆分」时返回 {"blacklisted": True} 并把该番直接加入黑名单（持久化），
-    之后不再重复拉参照源，也避免规则库被无意义的规则刷屏。
+    判定「无需拆分」时：
+    - `season_split_use_absolute_rules` 开着 → 尝试生成「连番号折算」规则（见
+      `_save_absolute_rule`），成功就返回（不拉黑、不写剧集组）；生成不出来才继续往下；
+    - 否则返回 {"blacklisted": True} 并加入黑名单（持久化），之后不再重复拉参照源。
     """
     cfg = _cfg()
     if not _cfg_bool(cfg, "season_split_auto_generate", False):
@@ -635,6 +720,10 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize") -> Optional[
 
     data = await preview(tmdb_id)
     if not data.get("need_split"):
+        absolute = await _save_absolute_rule(tmdb_id, data, cfg)
+        if absolute:
+            return absolute
+
         from config_manager import ConfigManager
 
         blacklist = list(cfg.get("season_split_blacklist") or [])
@@ -867,6 +956,7 @@ def settings_snapshot() -> dict:
         "fixed_sizes": _cfg_list(cfg, "season_split_fixed_sizes", [12, 13]),
         "gap_mark_days": _cfg_int(cfg, "season_split_gap_mark_days", 21),
         "use_includes_rules": bool(cfg.get("season_split_use_includes_rules", True)),
+        "use_absolute_rules": bool(cfg.get("season_split_use_absolute_rules", False)),
         "tvdb_key_configured": bool((cfg.get("tvdb_api_key") or "").strip()),
         "cache": store.cache_stats(),
     }
@@ -884,6 +974,7 @@ def settings_update(payload: dict) -> dict:
         "season_split_ref_season_min", "season_split_ref_season_max",
         "season_split_fixed_sizes", "season_split_gap_mark_days",
         "season_split_use_includes_rules",
+        "season_split_use_absolute_rules",
         "tvdb_api_key",
     }
     patch = {k: v for k, v in (payload or {}).items() if k in allowed}

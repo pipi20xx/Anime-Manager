@@ -68,6 +68,7 @@ class SettingsRequest(BaseModel):
     season_split_fixed_sizes: Optional[List[int]] = None
     season_split_gap_mark_days: Optional[int] = None
     season_split_use_includes_rules: Optional[bool] = None
+    season_split_use_absolute_rules: Optional[bool] = None
     tvdb_api_key: Optional[str] = None
 
 

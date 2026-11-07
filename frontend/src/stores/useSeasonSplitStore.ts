@@ -50,6 +50,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     fixed_sizes: [12, 13],
     gap_mark_days: 21,
     use_includes_rules: true,
+    use_absolute_rules: false,
     tvdb_key_configured: false,
     cache: { count: 0, version: '', loaded_at: null, mode: 'off' },
   })
@@ -80,6 +81,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       settings.ref_season_max = data.ref_season_max ?? 2
       settings.gap_mark_days = data.gap_mark_days ?? 21
       settings.use_includes_rules = data.use_includes_rules ?? true
+      settings.use_absolute_rules = data.use_absolute_rules ?? false
       settings.auto_generate = data.auto_generate ?? false
       settings.auto_push_sytmdb = data.auto_push_sytmdb ?? false
       refGenreIdsText.value = (settings.ref_genre_ids || []).join(', ')
@@ -110,6 +112,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
         season_split_fixed_sizes: settings.fixed_sizes,
         season_split_gap_mark_days: settings.gap_mark_days,
         season_split_use_includes_rules: settings.use_includes_rules,
+        season_split_use_absolute_rules: settings.use_absolute_rules,
       })
       settings.cache = data.cache
       success('设置已保存')
@@ -516,6 +519,7 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     finale: '季结局标记',
     whole: '整季（不拆）',
     manual: '手动',
+    tmdb: 'TMDB 季边界',
   }
 
   function labelOf(key: string) {

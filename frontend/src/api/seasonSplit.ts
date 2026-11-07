@@ -34,6 +34,8 @@ export interface CompileResult {
   mapping: Record<string, Record<string, { season: number; episode: number }>>
   mapping_raw: Record<string, number[]>
   render_words: string
+  /** 「连番号折算」追加的规则行（开关开启且 TMDB 有多季时才有） */
+  absolute_rules?: string[]
   group_json: {
     id?: string
     description?: string
@@ -137,6 +139,8 @@ export interface SeasonSplitSettings {
   fixed_sizes: number[]
   gap_mark_days: number
   use_includes_rules: boolean
+  /** 无需分季时按 TMDB 季边界附带「连番号折算」渲染词（不写 SYTMDB） */
+  use_absolute_rules: boolean
   tvdb_key_configured: boolean
   cache: { count: number; version: string; loaded_at: string | null; mode: string }
 }

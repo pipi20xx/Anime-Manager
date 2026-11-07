@@ -356,6 +356,11 @@ const store = useSeasonSplitStore()
                 从分组重新生成
               </v-btn>
             </div>
+            <div v-if="store.compileResult?.absolute_rules?.length" class="d-flex align-center ga-2 px-2 pb-2">
+              <v-chip size="small" color="secondary" variant="tonal" prepend-icon="mdi-numeric">
+                已附带 {{ store.compileResult.absolute_rules.length }} 条连番号折算规则（不写 SYTMDB）
+              </v-chip>
+            </div>
             <v-textarea
               :model-value="store.renderWordsText"
               @update:model-value="store.onRenderWordsInput"

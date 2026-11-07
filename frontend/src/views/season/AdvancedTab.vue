@@ -71,6 +71,20 @@ const store = useSeasonSplitStore()
               </div>
               <div>
                 <v-switch
+                  v-model="store.settings.use_absolute_rules"
+                  label="无需分季时附带「连番号折算」"
+                  density="compact"
+                  hide-details
+                  color="primary"
+                />
+                <div class="text-caption text-medium-emphasis ml-8">
+                  发布侧按「第 1 话…第 N 话」连续编号、TMDB 却是分季时：按 TMDB 自己的季边界多生成一段
+                  <code>e=13-24 =&gt; s=2;e=EP-12</code> 的渲染词（例：第 13 集 → S2E1）。
+                  分组与剧集组仍是 TMDB 原生结构，<b>不会写入 SYTMDB</b>；单季番自动跳过。
+                </div>
+              </div>
+              <div>
+                <v-switch
                   v-model="store.settings.auto_generate"
                   label="自动生成规则"
                   density="compact"

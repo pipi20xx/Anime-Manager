@@ -129,6 +129,40 @@ def generate_render_words(tmdb_id: int, title: str, reference: str, org_map: dic
     return "\n".join(lines)
 
 
+def absolute_rule_lines(tmdb_id: int, flat_eps: list) -> list:
+    """TMDB 自己的季边界 → 「连番号折算」规则行（只返回 @? 行，不含注释头）。
+
+    发布侧常把一部番按「第 1 话…第 N 话」连续编号，而 TMDB 是分季的：
+    文件名里的 13 在 TMDB 里并不存在（S1 只有 12 集），它其实是 S2E1。
+    这里把「连番号 i」映射到「摊平后第 i 集」的 TMDB 坐标，产出：
+
+        @?{[tmdbid=123;type=tv;e=13-24]} => {[s=2;e=EP-12]}
+
+    只用于识别（源坐标 `(1, i)` 不在 TMDB 里），**不要写进剧集组**。
+    - S0 / 集号非法的条目跳过（不占连番号）；
+    - 单季番自然返回空（没有跨季边界）；
+    - offset==0 的段落不生成规则（交给 generate_render_words 判断）。
+    """
+    mapping: dict = {}
+    index = 0
+    for ep in flat_eps or []:
+        if not isinstance(ep, dict):
+            continue
+        try:
+            season = int(ep.get("season_number") or 0)
+            number = int(ep.get("episode_number") or 0)
+        except (TypeError, ValueError):
+            continue
+        if season < 1 or number < 1:
+            continue
+        index += 1
+        mapping[(1, index)] = (season, number)
+    if not mapping:
+        return []
+    text = generate_render_words(tmdb_id, "", "tmdb", mapping, use_includes=False)
+    return [line for line in text.splitlines() if line.startswith("@?")]
+
+
 # ---------------------------------------------------------------------------
 # 剧集组 JSON（移植 Lens，逻辑不变）
 # ---------------------------------------------------------------------------
