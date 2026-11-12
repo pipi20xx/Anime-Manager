@@ -190,6 +190,11 @@ class CD2TransferMonitor:
                 cached_paths = set(self.last_scan_cache.keys())
                 vanished_paths = cached_paths - current_scan_paths
 
+                # 失败终态（Error=9 / FatalError=10）的上传任务：会话已经死了、不会再推进，
+                # 留在列表里会占住目标路径，让同路径后续上传直接 "Upload session not found" 秒败。
+                # 进程重启/kill 打断传输留下的孤儿任务也靠这一步清场（那种情况没有代码路径做收尾）。
+                self._cancel_stale_uploads(result.uploadFiles)
+
                 for path in vanished_paths:
                     info = self.last_scan_cache[path]
 
@@ -251,6 +256,45 @@ class CD2TransferMonitor:
 
         if self.conn and self.conn.channel:
             self.conn.channel.close()
+
+    # Error(9) / FatalError(10)：终态失败，任务不可能再推进
+    _STALE_STATUS = {9, 10}
+
+    def _cancel_stale_uploads(self, upload_files) -> None:
+        """取消失败终态的上传任务，避免残留条目占住目标路径。
+
+        为什么必须清：条目占着 destPath 时，同路径再发起远程上传会话会直接
+        拿到 "Upload session not found" 而秒败（0 字节），一次失败会让该路径
+        永久传不上去。项目重启/kill 打断传输留下的孤儿任务，只有这里能清。
+        只对 9/10 下手——终态失败不可恢复，取消不会丢任何数据。
+        """
+        keys, names = [], []
+        for f in upload_files:
+            if int(getattr(f, "statusEnum", -1)) not in self._STALE_STATUS:
+                continue
+            key = getattr(f, "key", "")
+            if not key:
+                continue
+            path = getattr(f, "destPath", "") or ""
+            keys.append(key)
+            names.append(os.path.basename(path) if path else key)
+            if path:
+                # 先登记：条目随后从列表消失时不要被当成"任务完成"去触发 STRM 联动
+                self._ignored_vanished.add(path)
+
+        if not keys:
+            return
+        try:
+            req = self.conn.pb2.MultpleUploadFileKeyRequest(keys=keys)
+            self.conn.stub.CancelUploadFiles(req, metadata=self.conn.get_metadata(), timeout=15)
+            preview = ", ".join(names[:5]) + (" 等" if len(names) > 5 else "")
+            log_audit(
+                "CD2监控", "清理残留任务",
+                f"已取消 {len(keys)} 个失败的上传任务（残留会占住目标路径，导致同路径上传秒败）: {preview}",
+                level="WARN",
+            )
+        except Exception as e:
+            logger.warning(f"取消失败的上传任务出错: {e}")
 
     def _send_webhook(self, cd2_path: str):
         """发送内部 Webhook 通知 (延迟 5 秒)"""
