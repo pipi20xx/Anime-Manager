@@ -89,6 +89,11 @@ class RecognitionWorkflow:
                     f"┃ [分季] 🧮 该番无需分季，已按 TMDB 季边界生成「连番号折算」规则并生效"
                     f"（TMDB {tmdb_id}，{len(record.get('groups') or [])} 季；不写 SYTMDB）"
                 )
+            elif record.get("refreshed"):
+                self.ctx.log(
+                    f"┃ [分季] ♻️ TMDB 结构已变化，自动规则已按最新结构重排（TMDB {tmdb_id}，"
+                    f"依据 {record.get('reference') or '-'}，{len(record.get('groups') or [])} 季）"
+                )
             else:
                 self.ctx.log(
                     f"┃ [分季] ⚡ 自动生成规则已生效（TMDB {tmdb_id}，"

@@ -258,7 +258,7 @@ async def upsert_rule(payload: dict, reload_cache: bool = True) -> dict:
         if record is None:
             record = SeasonSplitRule(tmdb_id=tmdb_id)
             db.session.add(record)
-        for field in ("title", "status", "reference", "render_words", "tmdb_hash"):
+        for field in ("title", "status", "reference", "render_words", "tmdb_hash", "structure_fp"):
             if field in payload:
                 setattr(record, field, payload[field])
         # 来源只在「新建 / 显式指定」时写入；留空 = 不动原值（启停、工作台编辑都不会改掉它）
@@ -311,6 +311,7 @@ def _to_dict(record) -> dict:
         "group_json": record.group_json or {},
         "render_words": record.render_words or "",
         "tmdb_hash": record.tmdb_hash or "",
+        "structure_fp": record.structure_fp or "",
         "episode_total": int(record.episode_total or 0),
         "created_at": record.created_at.isoformat(sep=" ", timespec="seconds") if record.created_at else None,
         "updated_at": record.updated_at.isoformat(sep=" ", timespec="seconds") if record.updated_at else None,

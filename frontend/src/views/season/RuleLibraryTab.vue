@@ -82,6 +82,9 @@ const store = useSeasonSplitStore()
       卡片上的小标签就是「这条规则怎么来的」：<b>手动</b> = 工作台生成、<b>SYTMDB</b> = 一键导入、
       <b>自动</b> = 识别时自动生成、<b>历史</b> = 升级前保存（当时没记来源，无法区分）。
       <b>只写渲染词</b> = 连番号折算（TMDB 已分季、发布侧按 1..N 连编），不会写 SYTMDB 剧集组。
+      <br />
+      <b>自动</b>规则会自己跟着 TMDB 结构走：季数 / 集数变了，下次识别按最新结构重排（不变时零开销）。
+      你在工作台改过它的分组并保存后，来源会变成<b>手动</b>，之后不再被自动重排覆盖。
     </div>
 
     <v-skeleton-loader v-if="store.loading && !store.rules.length" type="card@3" />

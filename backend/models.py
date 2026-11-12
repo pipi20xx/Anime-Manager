@@ -817,6 +817,9 @@ class SeasonSplitRule(SQLModel, table=True):
     group_json: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
     render_words: Optional[str] = Field(default=None, sa_column=Column(Text))
     tmdb_hash: Optional[str] = None
+    # 保存时的季表指纹 `1:12,2:12`（季号:集数）：识别链路拿它和当前季表免费比对，
+    # 结构变了才重排自动规则；老数据为 NULL，回退用 mapping_json 反推。
+    structure_fp: Optional[str] = Field(default=None, sa_column=Column(Text))
     episode_total: int = Field(default=0)
     last_compiled_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)

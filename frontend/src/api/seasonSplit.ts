@@ -76,6 +76,8 @@ export interface SplitRule {
   group_json: CompileResult['group_json']
   render_words: string
   tmdb_hash: string
+  /** 保存时的季表指纹 `1:12,2:12`，识别时用它判断自动规则要不要重排（老规则可能为空） */
+  structure_fp?: string
   episode_total: number
   created_at?: string
   updated_at?: string

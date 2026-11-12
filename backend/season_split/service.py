@@ -610,14 +610,22 @@ async def save(payload: dict) -> dict:
         raise ValueError("分组为空，无法保存（至少要有 1 集被覆盖）")
 
     manual_words = (payload.get("render_words") or "").strip()
+    existing = await store.get_rule(tmdb_id)
 
     # 来源：显式传入优先；否则沿用库里已有的（启停 / 工作台再编辑不会把「SYTMDB 导入」改成「手动」）；
     # 两者都没有（老数据首次被编辑）时按「手动」记。
     origin = str(payload.get("origin") or "").strip().lower()
     if origin not in store.ORIGINS:
-        existing = await store.get_rule(tmdb_id)
         origin = str((existing or {}).get("origin") or "").strip().lower()
     if origin not in store.ORIGINS:
+        origin = store.ORIGIN_MANUAL
+
+    # 工作台改动了自动规则的分组 → 这条改由用户维护：来源改成「手动」，
+    # 之后 TMDB 结构变化时不会被自动重排覆盖。只切启停、内容没变则仍是「自动」。
+    if (origin == store.ORIGIN_AUTO
+            and not str(payload.get("origin") or "").strip()
+            and existing
+            and _rule_content_changed(payload, existing)):
         origin = store.ORIGIN_MANUAL
 
     record = await store.upsert_rule({
@@ -634,6 +642,7 @@ async def save(payload: dict) -> dict:
         "group_json": compiled["group_json"],
         "render_words": manual_words or compiled["render_words"],
         "tmdb_hash": _structure_hash(tv_show),
+        "structure_fp": _fp_text(_seasons_fingerprint(tv_show.get("seasons"))),
         "episode_total": compiled["episode_total"],
     })
     # 建/存规则 = 明确「这部要分季」：顺手把它从黑名单里移出来（手动条目也移）。
@@ -896,6 +905,89 @@ def _blacklist_reason_text(entry: dict) -> str:
     return label
 
 
+# ---------------------------------------------------------------------------
+# 自动规则的结构自愈
+#
+# 自动生成的分季规则只代表「保存那一刻的 TMDB 结构」。之后 TMDB 加了季 / 改了集数，
+# 旧规则的映射就会错位。这里给它记一份季表指纹（`structure_fp`，形如 `1:12,2:12`），
+# 识别链路每次免费比一次：结构变了才重排（等于「删掉再自动生成」，但自动完成）。
+# 手动 / SYTMDB 导入 / 历史来源的规则一律不动 —— 那是用户或外部源维护的内容。
+# ---------------------------------------------------------------------------
+
+def _fp_text(fp: Optional[List[List[int]]]) -> str:
+    """季表指纹的紧凑文本（落库 / 比较用）：`1:12,2:12`。"""
+    return ",".join(f"{number}:{count}" for number, count in (fp or []))
+
+
+def _fp_text_from_mapping(mapping: Any) -> str:
+    """老规则没有 `structure_fp` 时，从 `mapping_json` 反推当时的结构。
+
+    mapping 的 key 是原始季号、value 是「集号 → 目标坐标」，所以 key 的数量就是
+    当时那一季的集数。反推值可能比 TMDB 少（去重 / 排除过的集），第一次比对若判成
+    「变了」就会重排一次，重排后存的是真实季表指纹，之后不会再抖。
+    """
+    if not isinstance(mapping, dict):
+        return ""
+    counts: Dict[int, int] = {}
+    for season_key, episodes in mapping.items():
+        try:
+            number = int(season_key)
+        except (TypeError, ValueError):
+            continue
+        if number < 1 or not isinstance(episodes, dict):
+            continue
+        counts[number] = len(episodes)
+    if not counts:
+        return ""
+    return ",".join(f"{number}:{counts[number]}" for number in sorted(counts))
+
+
+def _rule_structure_fp(rule: dict) -> str:
+    """规则保存时的结构指纹；没有就回退从 mapping 反推。"""
+    stored = str((rule or {}).get("structure_fp") or "").strip()
+    return stored or _fp_text_from_mapping((rule or {}).get("mapping"))
+
+
+def _json_key(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, default=str)
+
+
+def _rule_content_changed(payload: dict, existing: dict) -> bool:
+    """工作台这次保存有没有改动规则内容（只切启停 / 只重存不算）。"""
+    for field, default in (("groups", []), ("overrides", {}),
+                           ("excluded", []), ("names", {})):
+        current = payload.get(field)
+        current = default if current is None else current
+        if _json_key(current) != _json_key((existing or {}).get(field) or default):
+            return True
+    reference = str(payload.get("reference") or "").strip()
+    if reference and reference != str((existing or {}).get("reference") or "").strip():
+        return True
+    words = (payload.get("render_words") or "").strip()
+    if words and words != str((existing or {}).get("render_words") or "").strip():
+        return True
+    return False
+
+
+def _auto_rule_needs_refresh(rule: dict, seasons: Any) -> bool:
+    """系统托管的自动规则，TMDB 结构变了没有？纯比较，不联网。
+
+    - 只认「自动生成 + 生效中」：手动 / SYTMDB / 历史规则永远 False；
+    - 没有季表、或规则连指纹都推不出来 → False（保守不动）。
+    """
+    if str((rule or {}).get("origin") or "") != store.ORIGIN_AUTO:
+        return False
+    if str((rule or {}).get("status") or "") != "active":
+        return False
+    current = _fp_text(_seasons_fingerprint(seasons))
+    if not current:
+        return False
+    stored = _rule_structure_fp(rule)
+    if not stored:
+        return False
+    return current != stored
+
+
 async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
                              seasons: Optional[list] = None,
                              force: bool = False,
@@ -946,8 +1038,14 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
         if tmdb_id in _blacklist_ids(cfg):
             return None
 
-    if await store.get_rule(tmdb_id):
-        return {"existing_rule": True, "released": bool(released)} if force else None
+    rule = await store.get_rule(tmdb_id)
+    if rule:
+        if force:
+            return {"existing_rule": True, "released": bool(released)}
+        if not _auto_rule_needs_refresh(rule, seasons):
+            return None
+        # 系统托管的自动规则结构过期了：按最新结构重排（见 _refresh_auto_rule）
+        return await _refresh_auto_rule(tmdb_id, cfg, seasons)
 
     use_absolute = _cfg_bool(cfg, "season_split_use_absolute_rules", False)
 
@@ -984,8 +1082,11 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
         "status": "active",
         "origin": store.ORIGIN_AUTO,
     })
+    return await _auto_push_if_enabled(cfg, tmdb_id, record)
 
-    # 可选：自动写入 SYTMDB 剧集组（闭环；写入失败不中断识别）
+
+async def _auto_push_if_enabled(cfg: dict, tmdb_id: int, record: dict) -> dict:
+    """自动生成/重排后按开关顺带写 SYTMDB 剧集组（失败不中断识别）。"""
     pushed = False
     push_error = ""
     if _cfg_bool(cfg, "season_split_auto_push_sytmdb", False):
@@ -997,6 +1098,45 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
     record["pushed_sytmdb"] = pushed
     record["push_error"] = push_error
     return record
+
+
+async def _refresh_auto_rule(tmdb_id: int, cfg: dict,
+                             seasons: Any = None) -> Optional[dict]:
+    """自动规则的结构过期了：按最新结构重排一次（等于「删掉再自动生成」）。
+
+    - 仍需要拆分 → 覆盖保存（origin 仍是 auto，渲染词当场生效）；
+    - 不再需要拆分 → 能出「连番号折算」就换成折算规则，否则删掉这条过期规则并进黑名单；
+    - 拉不到参照源 / 算不出分组 → 返回 None，保留旧规则（别把还能用的删了）。
+    """
+    data = await preview(tmdb_id)
+    use_absolute = _cfg_bool(cfg, "season_split_use_absolute_rules", False)
+
+    if not data.get("need_split"):
+        absolute = await _save_absolute_rule(tmdb_id, data, cfg)
+        if absolute:
+            absolute["refreshed"] = True
+            return absolute
+        await store.delete_rule(tmdb_id)   # 过期规则留着只会错配集号，删掉再拉黑
+        _add_to_blacklist(cfg, tmdb_id, BLACKLIST_REASON_NO_SPLIT,
+                          seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
+                          use_absolute=use_absolute)
+        return {"blacklisted": True, "tmdb_id": tmdb_id,
+                "reason": BLACKLIST_REASON_NO_SPLIT, "refreshed": True}
+
+    basis = data.get("default_basis") or ""
+    groups = ((data.get("candidates") or {}).get(basis) or {}).get("groups") or []
+    if not groups:
+        return None
+
+    record = await save({
+        "tmdb_id": tmdb_id,
+        "groups": groups,
+        "reference": basis or "tvdb",
+        "status": "active",
+        "origin": store.ORIGIN_AUTO,
+    })
+    record["refreshed"] = True
+    return await _auto_push_if_enabled(cfg, tmdb_id, record)
 
 
 async def recheck_blacklist(tmdb_id: int) -> dict:
