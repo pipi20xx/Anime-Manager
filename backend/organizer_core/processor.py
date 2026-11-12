@@ -985,6 +985,13 @@ class FileProcessor:
                         # 不再检查 trigger_strm 开关，交由 STRM 任务自身的 Webhook 响应开关控制
                         cd2_path = new_abs_path if target_via == "cd2" else cd2_client._to_cd2_path(new_abs_path)
                         asyncio.create_task(FileProcessor._simulate_cd2_webhook(cd2_path))
+                    elif batch_res not in ("skipped", "cd2_rapid_miss"):
+                        # CD2 分支原先失败是静默的：既不写历史也不发通知，用户只能翻任务日志。
+                        # 与标准路径保持一致，补一条失败通知（开关由 notify_on_organize_error 控制）
+                        await notification_manager.notify_organize_failed(
+                            v_path,
+                            f"CD2 {action_label}失败: {FileExecutor.get_status_message(batch_res)}"
+                        )
                     
                     # [Record History] - 无论 success 还是 skipped 都保存历史记录
                     if not dry_run and batch_res in ["success", "skipped"]:

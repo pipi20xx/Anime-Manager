@@ -48,6 +48,12 @@ _UPLOAD_RETRY_DELAY = 30     # 首次重试间隔（秒），后续翻倍
 # CD2 上传任务列表中的非终态状态（Wait/Preprocessing/Transfer/Pause/Inqueue）
 _NON_TERMINAL_UPLOAD_STATUS = {0, 1, 3, 4, 7}
 
+# 收尾时需要主动取消的任务状态：除进行中外还包含 Error(9)/FatalError(10)。
+# CD2 会把失败任务留在上传任务列表里（GetUploadFileList 非 getAll 也能查到），
+# 条目占着目标路径时同路径再次发起会话会直接拿到 "Upload session not found" 秒败，
+# 于是一次失败会让该路径永久传不上去。所以失败收尾必须把条目取消掉。
+_STALE_UPLOAD_STATUS = _NON_TERMINAL_UPLOAD_STATUS | {9, 10}
+
 
 def _get_device_id() -> str:
     """持久化 device_id。协议要求跨重启复用，服务器借此替换通道并重放未完成请求。"""
@@ -211,6 +217,14 @@ class RemoteUploadManager:
             if result.get("success") or result.get("rapid_miss") or result.get("status_text") == "已取消":
                 return result
             last_result = result
+            if result.get("status_text") == "致命错误":
+                # 致命错误不是网络抖动：多为 CD2 侧上传会话已失效（"Upload session not found"）
+                # 或服务端拒绝，重试只会再堆一条残留任务、并让整批整理白等 90 秒。
+                # 收尾已在 _upload_local_file_once 做过清场，这里直接判失败交给上层。
+                logger.error(
+                    f"远程上传致命错误，放弃重试: {result.get('error') or '致命错误'}: {cloud_file_path}"
+                )
+                return result
             if attempt < _UPLOAD_ATTEMPTS:
                 delay = _UPLOAD_RETRY_DELAY * (2 ** (attempt - 1))
                 logger.warning(
@@ -222,10 +236,11 @@ class RemoteUploadManager:
         return last_result
 
     def cancel_cloud_tasks(self, conn, cloud_path: str) -> int:
-        """取消 CD2 上传任务列表中指定目标路径的残留（非终态）任务，返回取消数量。
+        """取消 CD2 上传任务列表中指定目标路径的残留任务，返回取消数量。
 
-        上传中断后 CD2 端会留下 FatalError/传输中的任务，占住目标路径，
-        导致后续重试在覆盖检测/删除环节异常。
+        上传中断/失败后 CD2 端会留下传输中或 FatalError/Error 的条目，占住目标路径，
+        导致同路径后续会话直接 "Upload session not found"、重试与覆盖检测异常。
+        因此这里把 _STALE_UPLOAD_STATUS（进行中 + 失败态）一并取消。
         """
         try:
             req = conn.pb2.GetUploadFileListRequest(itemsPerPage=100, pageNumber=0, filter="")
@@ -233,7 +248,7 @@ class RemoteUploadManager:
             keys = [
                 f.key for f in result.uploadFiles
                 if getattr(f, "destPath", "") == cloud_path
-                and int(getattr(f, "statusEnum", -1)) in _NON_TERMINAL_UPLOAD_STATUS
+                and int(getattr(f, "statusEnum", -1)) in _STALE_UPLOAD_STATUS
             ]
             if not keys:
                 return 0
@@ -251,6 +266,16 @@ class RemoteUploadManager:
         except Exception as e:
             logger.warning(f"清理残留上传任务失败 {cloud_path}: {grpc_error_details(e)}")
             return 0
+
+    def _abort_upload(self, conn, upload_id: str, cloud_path: str) -> None:
+        """失败收尾：取消会话并清掉 CD2 端该目标路径的残留任务条目。
+
+        不做这一步的话，失败任务会永久留在 CD2 的上传任务列表里（面板显示"致命错误"），
+        占住目标路径后同路径再上传一律秒败 "Upload session not found"，
+        表现为"越跑越传不上去"。
+        """
+        self._safe_cancel(upload_id)
+        self.cancel_cloud_tasks(conn, cloud_path)
 
     def _upload_local_file_once(self, conn, local_path: str, cloud_file_path: str, stop_event: threading.Event = None, rapid_mode: str = "off") -> Dict[str, Any]:
         """
@@ -317,8 +342,9 @@ class RemoteUploadManager:
                                         "status_text": "秒传未命中", "error": None}
                             if found and st in (2, 9, 10):  # Cancelled/Error/FatalError
                                 logger.error(f"远程上传任务异常({err_msg}): {cloud_file_path}")
-                                self._safe_cancel(upload_id)
-                                return {"success": False, "status_text": "错误",
+                                self._abort_upload(conn, upload_id, cloud_file_path)
+                                return {"success": False,
+                                        "status_text": "致命错误" if st == 10 else "错误",
                                         "error": err_msg or "上传任务异常"}
                             if not found and task_seen:
                                 # 任务已从列表消失：先等通道推送终态（错误任务也会消失），
@@ -355,8 +381,9 @@ class RemoteUploadManager:
                                     return self._finish_local_session(upload_id, session, "完成")
                                 if found and st in (2, 9, 10):  # Cancelled/Error/FatalError
                                     logger.error(f"远程上传任务异常({err_msg}): {cloud_file_path}")
-                                    self._safe_cancel(upload_id)
-                                    return {"success": False, "status_text": "错误",
+                                    self._abort_upload(conn, upload_id, cloud_file_path)
+                                    return {"success": False,
+                                            "status_text": "致命错误" if st == 10 else "错误",
                                             "error": err_msg or "上传任务异常"}
                                 if not found:
                                     # 任务已从实时任务列表消失：以云端目标文件为准下结论。
@@ -372,7 +399,7 @@ class RemoteUploadManager:
                                             f"上传任务已从 CD2 列表消失但云端目标文件未就绪，"
                                             f"判定为失败/被取消: {cloud_file_path}"
                                         )
-                                        self._safe_cancel(upload_id)
+                                        self._abort_upload(conn, upload_id, cloud_file_path)
                                         return {"success": False, "status_text": "错误",
                                                 "error": "上传任务已消失且云端目标文件未就绪（判定为失败/被取消）"}
                                     # verdict == "unknown"：云端查询失败，继续等待（受硬上限约束）
@@ -383,7 +410,7 @@ class RemoteUploadManager:
                                         f"上传会话已 {int(time.time() - session.last_msg_at)} 秒未收到服务端"
                                         f"任务/状态且无法确认结果，放弃本次上传: {cloud_file_path}"
                                     )
-                                    self._safe_cancel(upload_id)
+                                    self._abort_upload(conn, upload_id, cloud_file_path)
                                     return {"success": False, "status_text": "错误",
                                             "error": f"等待服务端任务/状态超时({_STALL_LIMIT} 秒)"}
                                 # 任务仍在（传输中/排队/暂停）：提示可能停滞并重置告警计时
@@ -418,17 +445,22 @@ class RemoteUploadManager:
         except Exception as e:
             details = grpc_error_details(e)
             logger.error(f"磁盘源远程上传失败 {local_path}: {details}")
-            self._safe_cancel(upload_id)
+            self._abort_upload(conn, upload_id, cloud_file_path)
             return {"success": False, "status_text": "错误", "error": details}
 
         status_text = _STATUS_TEXT.get(session.status or -1, "未知")
         success = session.status == 5  # Finish
+        if success:
+            self._finish_local_session(upload_id, session, "完成")
+            log_audit("CD2上传", "完成", f"远程上传完成: {cloud_file_path}")
+            return {"success": True, "status_text": status_text, "error": None, "rapid": True}
+        # 失败/取消/跳过：必须清掉 CD2 端这条任务，否则它会一直挂在传输任务列表里
+        # （面板显示"致命错误"），并占住目标路径让后续同路径上传永久秒败
         with self._sessions_lock:
             self._sessions.pop(upload_id, None)
-        if success:
-            log_audit("CD2上传", "完成", f"秒传命中: {cloud_file_path}")
-        return {"success": success, "status_text": status_text, "error": session.error,
-                "rapid": success}
+        self.cancel_cloud_tasks(conn, cloud_file_path)
+        return {"success": False, "status_text": status_text,
+                "error": session.error or status_text, "rapid": False}
 
     def _safe_cancel(self, upload_id: str):
         """取消会话；无论服务端取消是否成功（如任务已被服务端结束、连接断开），
@@ -623,7 +655,13 @@ class RemoteUploadManager:
             s = reply.status_changed
             session.status = int(s.status)
             session.error = s.error_message
-            logger.info(f"远程上传 {reply.upload_id[:8]}... 状态: {_STATUS_TEXT.get(session.status, session.status)}")
+            _st_text = _STATUS_TEXT.get(session.status, session.status)
+            if session.error:
+                # 服务端给的原因（如 "Upload session not found"）必须落到日志里，
+                # 否则 UI 上只剩一个"致命错误"，无从定位
+                logger.warning(f"远程上传 {reply.upload_id[:8]}... 状态: {_st_text} | 原因: {session.error}")
+            else:
+                logger.info(f"远程上传 {reply.upload_id[:8]}... 状态: {_st_text}")
             if session.status in _TERMINAL_STATUS:
                 session.terminal = True
                 with session.cond:
