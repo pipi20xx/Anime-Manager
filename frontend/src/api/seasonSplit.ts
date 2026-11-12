@@ -222,7 +222,6 @@ export interface BlacklistItem {
   tmdb_id: number
   title: string
   year: string | null
-  poster_path: string
   is_custom: boolean
   source: string | null
   has_meta: boolean

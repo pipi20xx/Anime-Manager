@@ -1008,10 +1008,11 @@ def settings_update(payload: dict) -> dict:
 
 
 async def blacklist_meta() -> dict:
-    """给黑名单里的 tmdb_id 补全名称 / 年份 / 海报（读项目内永久缓存 + 数据中心元数据资产）。
+    """给黑名单里的 tmdb_id 补全名称 / 年份（读项目内永久缓存 + 数据中心元数据资产）。
 
     数据统一来自 MetaCacheManager（TmdbDeepMeta 超级表），即本地永久缓存与
     数据中心离线档案的合并结果；不联网。tv 查不到再回退 movie。
+    不返回 poster_path：黑名单只是维护 ID 的清单，前端也不再渲染海报。
     """
     cfg = _cfg()
     ids: List[int] = []
@@ -1034,7 +1035,6 @@ async def blacklist_meta() -> dict:
             "tmdb_id": tmdb_id,
             "title": m.get("title") or m.get("name") or "",
             "year": str(year)[:4] if year else None,
-            "poster_path": m.get("poster_path") or "",
             "is_custom": bool(m.get("is_custom")),
             "source": "data_center" if meta else None,
             "has_meta": bool(meta),
