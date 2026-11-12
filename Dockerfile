@@ -3,14 +3,15 @@
 #   --build-arg BASE_PREFIX=    （置空即走官方 Docker Hub）
 ARG BASE_PREFIX=192.168.50.12:5000/library/
 FROM ${BASE_PREFIX}node:22-alpine AS frontend-builder
-# npm 包缓存（内网 Verdaccio 只读代理）；内网外构建时用 --build-arg 覆盖
-ARG NPM_REGISTRY=http://192.168.50.12:4873
+# npm 包源：默认公网 npmmirror（不再走内网 Verdaccio 缓存）；
+# 需要换源（官方源 / 其它镜像 / 私有 registry）时用 --build-arg NPM_REGISTRY=... 覆盖
+ARG NPM_REGISTRY=https://registry.npmmirror.com
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 # 删除 lock 文件以避免 npm 可选依赖跨架构 bug (npm/cli#4828)
 # 锁文件在 x64 上生成时不含 arm64 的 @rolldown/binding 原生包
 RUN rm -f package-lock.json && \
-    npm config set registry ${NPM_REGISTRY} && \
+    if [ -n "${NPM_REGISTRY}" ]; then npm config set registry "${NPM_REGISTRY}"; fi && \
     npm install --legacy-peer-deps \
         --fetch-retries=5 \
         --fetch-retry-mintimeout=20000 \

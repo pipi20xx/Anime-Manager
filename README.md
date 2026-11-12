@@ -293,14 +293,18 @@
    - **Stage 1**: Node 22 构建前端（Vite 8 + Vuetify 4）
    - **Stage 2**: Python 3.11 运行后端，挂载前端构建产物
 
-3. ⚠️ **Fork 后自行构建注意**：Dockerfile 中的基础镜像与 npm / pip 源默认指向作者的**内网构建缓存**（`192.168.50.12:5000`、`http://192.168.50.12:4873` 与 `http://192.168.50.12:3141`），Fork 之后你的环境访问不到这些地址，构建会失败或卡住。自行构建时请通过 `--build-arg` 覆盖为公网源：
+3. ⚠️ **Fork 后自行构建注意**：Dockerfile 的 **npm 源默认已是公网** `https://registry.npmmirror.com`（不再使用作者内网 Verdaccio 缓存）；但**基础镜像**（`192.168.50.12:5000`）与 **pip 源**（`http://192.168.50.12:3141`）仍默认指向作者的**内网构建缓存**，Fork 之后你的环境访问不到这些地址，构建会失败或卡住。自行构建时请通过 `--build-arg` 覆盖：
    ```bash
    docker build \
      --build-arg BASE_PREFIX= \
-     --build-arg NPM_REGISTRY=https://registry.npmmirror.com \
      --build-arg PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
      --build-arg PIP_TRUSTED_HOST=mirrors.aliyun.com \
      -t anime-manager .
+   ```
+
+   如需改用 npm 官方源（或私有 registry），再加一条：
+   ```bash
+   --build-arg NPM_REGISTRY=https://registry.npmjs.org
    ```
 
    使用 Compose 构建则在 `build:` 段加 `args`：
