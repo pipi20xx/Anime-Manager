@@ -41,7 +41,7 @@ onMounted(() => {
       <div class="text-caption">
         <div>
           <b>黑名单里的番永远不会套用分季规则</b>：识别注入时直接跳过，也不会再自动生成规则
-          （自动流程第一步就绕过它）。和「停用规则」不同——停用是规则还在、只是不生效。
+          （自动流程遇到它直接绕过）。和「停用规则」不同——停用是规则还在、只是不生效。
         </div>
         <div class="mt-2">以下两种情况会被<b>自动加进来</b>（需要「启用」模式 + 高级里打开「自动生成规则」）：</div>
         <ol class="pl-5 mt-1">
@@ -55,9 +55,15 @@ onMounted(() => {
           </li>
         </ol>
         <div class="mt-2">
-          反过来，只要该番能生成规则（拆分类或连番号折算），就<b>不会</b>进黑名单。
-          移出后下次识别会重新判定一次，结论仍是「不需要处理」就会再次加入。
-          名称 / 年份来自本地永久缓存与数据中心元数据，不联网；查不到显示「未收录」。
+          <b>自动加入的条目会自己出来</b>：系统记下了当时的判定前提（TMDB 季表 +「连番号折算」开关），
+          之后每次识别到这部番都会免费比对一次——前提变了（多了新季、集数变了、刚打开折算开关）
+          就自动解除并重新判定；前提没变则什么都不做，也不会去拉参照源。
+          <b>手动加入的条目（以及升级前没有判定记录的老条目）永远不会被自动解除。</b>
+        </div>
+        <div class="mt-2">
+          反过来，只要该番能生成规则（拆分类或连番号折算），就<b>不会</b>进黑名单；
+          在工作台给这部番建/存一条规则，也会顺手把它移出黑名单。
+          名称 / 年份 / 判定原因来自本地永久缓存与数据中心元数据，不联网；查不到显示「未收录」。
         </div>
       </div>
     </v-alert>
@@ -92,16 +98,40 @@ onMounted(() => {
               <span class="manage-card__info-value">{{ item.year || '—' }}</span>
             </div>
             <div class="manage-card__info">
-              <span class="manage-card__info-label">来源</span>
+              <span class="manage-card__info-label">判定</span>
               <span class="manage-card__info-value">
-                {{ item.has_meta ? '永久缓存 / 数据中心' : '未收录（仅显示 ID）' }}
+                <v-chip size="x-small" :color="item.auto ? 'info' : 'grey'" variant="tonal" label class="mr-1">
+                  {{ item.auto ? '自动' : '手动' }}
+                </v-chip>
+                <span class="text-medium-emphasis">
+                  {{ item.auto ? '前提变了会自动解除' : '只有人能删' }}
+                </span>
               </span>
+            </div>
+            <div v-if="item.auto && item.reason_label" class="manage-card__info">
+              <span class="manage-card__info-label">原因</span>
+              <span class="manage-card__info-value">{{ item.reason_label }}</span>
+            </div>
+            <div v-if="item.auto && item.at" class="manage-card__info">
+              <span class="manage-card__info-label">加入</span>
+              <span class="manage-card__info-value">{{ item.at }}</span>
             </div>
           </div>
         </div>
 
         <v-card-actions class="manage-card__actions">
           <v-spacer />
+          <v-btn
+            size="small"
+            variant="tonal"
+            color="primary"
+            prepend-icon="mdi-shield-refresh-outline"
+            :loading="store.blacklistRechecking === item.tmdb_id"
+            :disabled="store.blacklistRechecking !== null && store.blacklistRechecking !== item.tmdb_id"
+            @click="store.recheckBlacklist(item.tmdb_id)"
+          >
+            重新评估
+          </v-btn>
           <v-btn
             size="small"
             variant="tonal"

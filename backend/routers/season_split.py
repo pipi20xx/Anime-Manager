@@ -49,6 +49,10 @@ class SytmdbImportRequest(BaseModel):
     overwrite: bool = Field(default=False, description="规则库里已存在时是否覆盖")
 
 
+class BlacklistAddRequest(BaseModel):
+    tmdb_id: int
+
+
 class SettingsRequest(BaseModel):
     season_split_mode: Optional[str] = None
     season_split_scope: Optional[Dict[str, Any]] = None
@@ -215,3 +219,25 @@ async def update_settings(req: SettingsRequest):
 @router.get("/blacklist/meta", summary="黑名单条目元数据（永久缓存 / 数据中心）")
 async def blacklist_meta():
     return await service.blacklist_meta()
+
+
+@router.post("/blacklist", summary="手动加入黑名单（永久条目，不会被自动解除）")
+async def blacklist_add(req: BlacklistAddRequest):
+    return await service.blacklist_add_manual(req.tmdb_id)
+
+
+@router.delete("/blacklist/{tmdb_id}", summary="移出黑名单")
+async def blacklist_remove(tmdb_id: int):
+    return await service.blacklist_remove(tmdb_id)
+
+
+@router.post("/blacklist/{tmdb_id}/recheck", summary="重新评估黑名单条目（当场判定一次）")
+async def recheck_blacklist(tmdb_id: int):
+    """手动重判：不看「自动生成规则」开关，直接按参照源判一次。
+
+    需要分季 → 生成并启用规则、移出黑名单；仍不需要 → 留在黑名单（带走新指纹）。
+    """
+    try:
+        return await service.recheck_blacklist(tmdb_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

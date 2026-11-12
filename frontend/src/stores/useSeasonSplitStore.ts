@@ -97,7 +97,8 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       const data = await seasonSplitApi.updateSettings({
         season_split_mode: settings.mode,
         season_split_scope: settings.scope,
-        season_split_blacklist: settings.blacklist,
+        // 黑名单不走这里：增删用专用接口（POST/DELETE /blacklist），避免把
+        // 「页面加载之后自动加进来的条目」用本地旧列表覆盖掉
         season_split_priority: settings.priority,
         season_split_use_source: settings.use_source,
         season_split_force_reference: settings.force_reference,
@@ -148,6 +149,8 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
   const blacklistInput = ref('')
   const blacklistItems = ref<BlacklistItem[]>([])
   const blacklistLoading = ref(false)
+  /** 正在重新评估的 TMDB ID（按钮 loading / 防连点） */
+  const blacklistRechecking = ref<number | null>(null)
 
   async function loadBlacklistMeta() {
     blacklistLoading.value = true
@@ -161,16 +164,37 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     }
   }
 
+  async function recheckBlacklist(id: number) {
+    blacklistRechecking.value = id
+    try {
+      const data = await seasonSplitApi.recheckBlacklist(id)
+      await Promise.all([loadBlacklistMeta(), loadRules()])
+      if (data.action === 'blacklisted') warning(data.message)
+      else success(data.message)
+    } catch (e: any) {
+      showError(`重新评估失败: ${e.message}`)
+    } finally {
+      blacklistRechecking.value = null
+    }
+  }
+
   async function addBlacklist() {
     const id = Number(blacklistInput.value)
     if (!id) {
       warning('请输入 TMDB 数字 ID')
       return
     }
-    if (!settings.blacklist.includes(id)) settings.blacklist.push(id)
-    blacklistInput.value = ''
-    await saveSettings()
-    await loadBlacklistMeta()
+    try {
+      // 走专用接口：只改服务器上的名单，不重发整份设置（否则会把手动加载之后
+      // 自动加进来的条目一起覆盖掉）
+      const data = await seasonSplitApi.addBlacklist(id)
+      blacklistItems.value = data.items
+      if (!settings.blacklist.includes(id)) settings.blacklist.push(id)
+      blacklistInput.value = ''
+      success(`已加入黑名单：TMDB ${id}（手动条目，不会被自动解除）`)
+    } catch (e: any) {
+      showError(`加入黑名单失败: ${e.message}`)
+    }
   }
 
   async function removeBlacklist(id: number) {
@@ -179,10 +203,14 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       content: `把 TMDB ${id} 移出黑名单？移出后下次识别会重新评估。`,
     })
     if (!ok) return
-    const idx = settings.blacklist.indexOf(id)
-    if (idx >= 0) settings.blacklist.splice(idx, 1)
-    await saveSettings()
-    await loadBlacklistMeta()
+    try {
+      const data = await seasonSplitApi.removeBlacklist(id)
+      blacklistItems.value = data.items
+      settings.blacklist = settings.blacklist.filter((item) => item !== id)
+      success(`已移出黑名单：TMDB ${id}`)
+    } catch (e: any) {
+      showError(`移出黑名单失败: ${e.message}`)
+    }
   }
 
   // 高级：参照门槛 / 兜底的列表型输入（逗号分隔，blur 时解析并保存）
@@ -737,7 +765,10 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
       compileResult.value = buildSavedCompileResult(saved as unknown as SplitRule, preview.value?.episodes || [])
       await reloadCache()
       await loadRules()
-      success(status === 'active' ? '已保存并启用' : '已保存为草稿')
+      // 建规则 = 明确要分季：后端会顺手把这部番移出黑名单
+      if (saved.blacklist_released) await loadBlacklistMeta()
+      const savedMsg = status === 'active' ? '已保存并启用' : '已保存为草稿'
+      success(saved.blacklist_released ? `${savedMsg}，已同时移出黑名单` : savedMsg)
     } catch (e: any) {
       showError(`保存失败: ${e.message}`)
     }
@@ -915,8 +946,10 @@ export const useSeasonSplitStore = defineStore('seasonSplit', () => {
     blacklistInput,
     blacklistItems,
     blacklistLoading,
+    blacklistRechecking,
     addBlacklist,
     removeBlacklist,
+    recheckBlacklist,
     loadBlacklistMeta,
     refGenreIdsText,
     refCountriesText,

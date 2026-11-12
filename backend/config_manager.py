@@ -95,7 +95,10 @@ class ConfigManager:
         "season_split_mode": "off",
         # 哪些入口生效：整理 / 订阅匹配 / 识别测试页
         "season_split_scope": {"organize": True, "subscription": False, "recognition_test": False},
-        "season_split_blacklist": [],          # [tmdb_id, ...] 永不套用
+        "season_split_blacklist": [],          # [tmdb_id, ...] 永不套用（手动 + 自动）
+        # 自动加入黑名单的判定记录：[{tmdb_id, reason, at, seasons, use_absolute}]；
+        # 前提（季表 / 折算开关）变了会自动解除并重判；手动条目与老条目没有记录、永不自动解除
+        "season_split_blacklist_auto": [],
         "season_split_exclude_patterns": ["总集篇", "recap", r"\bOVA\b"],
         "season_split_priority": "tvdb, bangumi",
         "season_split_source": "",             # CureTMDb 规则表地址（默认不启用，需要自己在高级页填）

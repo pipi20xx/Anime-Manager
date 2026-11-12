@@ -25,11 +25,15 @@ class RecognitionWorkflow:
         # 2. 元数据匹配阶段 (Fingerprint + FullDB + Cloud)
         await MatcherStage.run(self.ctx)
 
-        # 2.5 番剧分季自动生成（开关开启且需要拆分时，自动生成并启用规则，当场注入渲染词）
-        await self._auto_season_split()
-
         # 3. 季号校准阶段 (TMDB 季表 → 确定性推算，不依赖 AI；默认影子模式只写日志)
         await SeasonStage.run(self.ctx)
+
+        # 3.5 番剧分季自动生成
+        #     放在季号校准之后：此时 `ctx.tmdb_data["seasons"]` 已补齐（季表缺失时
+        #     校准阶段会补取/回退档案），「单季快速拉黑」和「前提变了自动解除黑名单」
+        #     才能用真实季表判断，也才不会白跑一次参照源。渲染词在最后一步才消费，
+        #     所以挪到这里的注入时机不变。
+        await self._auto_season_split()
 
         # 4. 深度字段补全阶段 (Local Override + Enrichment + Auto-Ingest)
         await EnrichmentStage.run(self.ctx)

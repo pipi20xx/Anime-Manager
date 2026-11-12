@@ -79,6 +79,8 @@ export interface SplitRule {
   episode_total: number
   created_at?: string
   updated_at?: string
+  /** 保存这条规则时是否顺手把它从分季黑名单里移了出来（手动条目也会移） */
+  blacklist_released?: boolean
 }
 
 export interface ReferenceSummary {
@@ -225,6 +227,22 @@ export interface BlacklistItem {
   is_custom: boolean
   source: string | null
   has_meta: boolean
+  /** true = 系统自动判定加入（前提变了会自动解除）；false = 手动 / 升级前的老条目 */
+  auto: boolean
+  /** 判定原因代码：single-season-short / no-split（手动条目为空） */
+  reason: string
+  /** 原因的人话说明，连带当时的结构，如「TMDB 单季且集数 < 15（当时 12 集）」 */
+  reason_label: string
+  /** 自动加入的时间；手动条目为空 */
+  at: string | null
+}
+
+export interface BlacklistRecheckResult {
+  tmdb_id: number
+  released: boolean
+  was_auto: boolean
+  action: 'split' | 'absolute' | 'blacklisted' | 'existing_rule' | 'released'
+  message: string
 }
 
 export const seasonSplitApi = {
@@ -273,6 +291,18 @@ export const seasonSplitApi = {
     api.put<SeasonSplitSettings>('/api/season-split/settings', payload),
 
   blacklistMeta: () => api.get<{ items: BlacklistItem[] }>('/api/season-split/blacklist/meta'),
+
+  /** 手动加入黑名单（永久条目，不会被自动解除） */
+  addBlacklist: (tmdbId: number) =>
+    api.post<{ items: BlacklistItem[] }>('/api/season-split/blacklist', { tmdb_id: tmdbId }),
+
+  /** 移出黑名单（手动 / 自动都移） */
+  removeBlacklist: (tmdbId: number) =>
+    api.delete<{ items: BlacklistItem[] }>(`/api/season-split/blacklist/${tmdbId}`),
+
+  /** 重新评估一条黑名单（立即按参照源判一次） */
+  recheckBlacklist: (tmdbId: number) =>
+    api.post<BlacklistRecheckResult>(`/api/season-split/blacklist/${tmdbId}/recheck`),
 
   debug: (params: { tmdb_id: number; season: number; episode: number; filename?: string }) =>
     api.get<{
