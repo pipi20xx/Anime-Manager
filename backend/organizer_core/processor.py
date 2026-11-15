@@ -447,6 +447,20 @@ class FileProcessor:
                                 f_ext = os.path.splitext(f)[1].lower()
                                 if f_ext in FileProcessor.RELATED_EXTS and f.startswith(v_base):
                                     related_files.append(f)
+                            # 字体包采集（云源）：带 size/write_time 记账，worker 里用 CD2 接口
+                            # 把包下到临时目录再走同一条流水线；同样只投递、不阻塞整理。
+                            try:
+                                from font_core.collector import submit_font_archives
+                                submit_font_archives(
+                                    "cd2", os.path.dirname(v_path) or "/",
+                                    [e.get("name", "") for e in listing.get("entries", [])
+                                     if not e.get("is_dir")],
+                                    task_id=str(task.get("id") or ""),
+                                    cloud_entries=listing.get("entries", []),
+                                    cd2_client_id=str(task.get("cd2_client_id") or ""),
+                                )
+                            except Exception:
+                                pass
                 except Exception as disc_e:
                     logger.warning(f"云源关联文件枚举失败: {disc_e}")
 

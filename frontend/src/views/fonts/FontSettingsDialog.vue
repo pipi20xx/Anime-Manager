@@ -128,8 +128,8 @@ const importedInsideLibrary = computed(() => {
                 <br />
                 判定规则：后缀是 <code>zip / rar / 7z / tar(.gz/.bz2/.xz)</code>
                 且文件名含 <code>font</code>、<code>fonts</code> 或 <code>字体</code>（按词边界匹配，
-                <code>fzlantinghei.zip</code> 这类不会误命中）；只看本次整理任务所在目录这一层，不递归子目录；
-                云盘源（CD2）不采集。
+                <code>fzlantinghei.zip</code> 这类不会误命中）；只看本次整理任务所在目录这一层，不递归子目录。
+                云盘源（CD2）同样支持：后台先把包下载到临时目录，采集完即删。
               </div>
             </div>
           </div>

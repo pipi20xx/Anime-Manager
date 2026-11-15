@@ -28,6 +28,7 @@ import os
 import re
 import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -155,13 +156,21 @@ def _looks_like_font_archive(name: str) -> bool:
     return archive.is_archive_name(name) and bool(NAME_RE.search(name))
 
 
+def _key_cloud(v_dir: str, name: str, size: int, write_time: int) -> str:
+    """云源账本 key：路径 + 大小 + 云端修改时间（对应本地的 path+size+mtime）。"""
+    return f"cd2:{str(v_dir).rstrip('/')}/{name}|{int(size or 0)}|{int(write_time or 0)}"
+
+
 def submit_font_archives(source_via: str, root: str, names: List[str],
-                         task_id: str = "") -> Dict[str, Any]:
+                         task_id: str = "", *,
+                         cloud_entries: Optional[List[Dict[str, Any]]] = None,
+                         cd2_client_id: str = "") -> Dict[str, Any]:
     """整理流程调用：把同目录里"看起来是字体包"的文件丢进采集队列。
 
     - 只做名字过滤 + 账本去重 + `put_nowait`，不 stat、不解压、不 await；
-    - 云源（`source_via != "local"`）直接跳过：文件不在本地，复制要走下载，
-      属于额外开销，默认不做（日志里记一条）。
+    - 本地源：直接拿本地文件处理；
+    - 云源（cd2）：先按云端条目（size / write_time）记账，worker 里再用 CD2 接口
+      把包下载到临时目录，之后走同一条流水线（下载完即删临时文件）。
     """
     out: Dict[str, Any] = {"accepted": [], "skipped": [], "reason": ""}
     try:
@@ -171,41 +180,57 @@ def submit_font_archives(source_via: str, root: str, names: List[str],
             return out
         if not names:
             return out
-        if source_via != "local":
-            out["reason"] = f"云源({source_via})不做自动采集（本地无文件，需先下载）"
-            if any(_looks_like_font_archive(n) for n in names):
-                logger.info(f"[字体采集] {out['reason']}：task={task_id}")
-            return out
 
+        is_cloud = source_via == "cd2"
+        entries = {(e.get("name") or ""): e for e in (cloud_entries or []) if not e.get("is_dir")}
         _load_state(cfg)
         queued: List[Dict[str, Any]] = []
         for name in names:
             if not _looks_like_font_archive(name):
                 continue
-            path = Path(root) / name
-            try:
-                st = path.stat()
-            except OSError:
-                continue
-            key = _key(path, st.st_size, int(st.st_mtime))
+
+            if is_cloud:
+                entry = entries.get(name) or {}
+                size = int(entry.get("size") or 0)
+                wtime = int(entry.get("write_time") or 0)
+                key = _key_cloud(root, name, size, wtime)
+                path_label = f"{str(root).rstrip('/')}/{name}"
+            else:
+                path = Path(root) / name
+                try:
+                    st = path.stat()
+                except OSError:
+                    continue
+                size = st.st_size
+                key = _key(path, size, int(st.st_mtime))
+                path_label = str(path)
+
             if key in (_STATE["done"] or {}):
-                out["skipped"].append({"path": str(path), "reason": "已处理过"})
+                out["skipped"].append({"path": path_label, "reason": "已处理过"})
                 continue
             if key in _PENDING:
                 # 已在队列里/正在处理：同一集多个视频、或 worker 还在跑，都不重复投
-                out["skipped"].append({"path": str(path), "reason": "正在处理中"})
+                out["skipped"].append({"path": path_label, "reason": "正在处理中"})
                 continue
+
             _PENDING.add(key)
-            queued.append({"path": str(path), "key": key, "task_id": task_id, "at": time.time()})
+            item: Dict[str, Any] = {"key": key, "task_id": task_id, "at": time.time(),
+                                    "size": size, "via": "cd2" if is_cloud else "local"}
+            if is_cloud:
+                item.update({"v_dir": str(root), "name": name, "client_id": cd2_client_id})
+            else:
+                item["path"] = str(Path(root) / name)
+            queued.append(item)
 
         if queued:
             _ensure_worker()
             for item in queued:
                 _QUEUE.put_nowait(item)
             _STATE["last_submit"] = time.strftime("%Y-%m-%d %H:%M:%S")
-            out["accepted"] = [item["path"] for item in queued]
+            out["accepted"] = [item.get("path") or f"{item.get('v_dir')}/{item.get('name')}"
+                               for item in queued]
             logger.info(f"[字体采集] 投递 {len(queued)} 个字体包（task={task_id or '-'}）："
-                        f"{', '.join(Path(item['path']).name for item in queued)}")
+                        f"{', '.join(Path(str(x)).name for x in out['accepted'])}")
         return out
     except Exception as e:      # 绝不影响整理
         logger.warning(f"[字体采集] 投递异常（忽略）: {type(e).__name__} {e}")
@@ -256,68 +281,170 @@ async def stop_worker() -> None:
     _STOP = False
 
 
+def _mark_done(item: Dict[str, Any], cfg: Dict[str, Any]) -> None:
+    """记账本：本地用 path+size+mtime，云源用 v_dir+name+size+write_time（由调用方放进 key）。"""
+    key = str(item.get("key") or "")
+    if not key:
+        return
+    _STATE.setdefault("done", {})[key] = time.time()
+    _save_state(cfg)
+
+
+def _release(item: Dict[str, Any]) -> None:
+    """处理没走完就释放占位，等下一次整理枚举时还能重试。"""
+    _PENDING.discard(str(item.get("key") or ""))
+
+
+def _binary_of(cfg: Dict[str, Any]) -> Path:
+    from font_core import binary as af_binary
+    binary_path, _ = af_binary.resolve_binary(cfg)
+    return Path(binary_path) if binary_path else Path("__assfonts_unavailable__")
+
+
 async def _handle(item: Dict[str, Any]) -> Dict[str, Any]:
+    if str(item.get("via") or "local") == "cd2":
+        return await _handle_cloud(item)
+    return await _handle_local(item)
+
+
+async def _handle_local(item: Dict[str, Any]) -> Dict[str, Any]:
     path = Path(str(item.get("path") or ""))
     cfg = _cfg_now()
     out: Dict[str, Any] = {"job_id": "", "source": str(path), "success": False,
                            "counts": {}, "committed": 0, "message": ""}
 
-    def _mark_done() -> None:
-        try:
-            st = path.stat()
-            _STATE.setdefault("done", {})[_key(path, st.st_size, int(st.st_mtime))] = time.time()
-        except OSError:
-            key = str(item.get("key") or "")
-            if key:
-                _STATE.setdefault("done", {})[key] = time.time()
-        _save_state(cfg)
-
-    def _release() -> None:
-        """处理没走完就释放占位，等下一次整理枚举时还能重试。"""
-        _PENDING.discard(str(item.get("key") or ""))
-        try:
-            st = path.stat()
-            _PENDING.discard(_key(path, st.st_size, int(st.st_mtime)))
-        except OSError:
-            pass
-
     if not enabled(cfg):
         out["message"] = "已停用，丢弃本次任务"
-        _release()
+        _release(item)
         return out
 
     if not await _wait_stable(path, settle_seconds(cfg), settle_timeout(cfg)):
         out["message"] = "文件迟迟不稳定（可能仍在下载），本次跳过，下次整理会再试"
         logger.info(f"[字体采集] {path} {out['message']}")
-        _release()
+        _release(item)
         return out
 
     try:
         st = path.stat()
     except OSError as e:
         out["message"] = f"文件不可读：{e}"
-        _release()
+        _release(item)
         return out
     if st.st_size > importer.limits(cfg).max_archive_bytes:
         out["message"] = "超过单包大小上限"
-        _mark_done()
-        _release()
+        _mark_done(item, cfg)
+        _release(item)
         return out
 
     job = await _enqueue(cfg, path)
     if not job.get("ok"):
         out["message"] = job.get("message", "投递失败")
-        _release()
+        _release(item)
         return out
-    _mark_done()
-    _PENDING.discard(str(item.get("key") or ""))
+    _mark_done(item, cfg)
+    _release(item)
 
-    from font_core import binary as af_binary
-    binary_path, _ = af_binary.resolve_binary(cfg)
-    binary = Path(binary_path) if binary_path else Path("__assfonts_unavailable__")
-    processed = await _process(cfg, binary, job["job_id"], path)
+    processed = await _process(cfg, _binary_of(cfg), job["job_id"], path, allow_cleanup=True)
     processed["job_id"] = job["job_id"]
     return processed
+
+
+async def _handle_cloud(item: Dict[str, Any]) -> Dict[str, Any]:
+    """云源（CD2）：先把包下载到临时目录，再走与本地完全相同的流水线。
+
+    为什么不在整理流程里下载：那会把网络 IO 塞进整理队列。放这里异步串行做，
+    下载完立刻删临时文件，不占额外的持久空间。
+    """
+    cfg = _cfg_now()
+    v_dir = str(item.get("v_dir") or "").rstrip("/")
+    name = str(item.get("name") or "")
+    label = f"{v_dir}/{name}"
+    out: Dict[str, Any] = {"job_id": "", "source": label, "success": False,
+                           "counts": {}, "committed": 0, "message": ""}
+
+    if not enabled(cfg):
+        out["message"] = "已停用，丢弃本次任务"
+        _release(item)
+        return out
+    try:
+        if int(item.get("size") or 0) > importer.limits(cfg).max_archive_bytes:
+            out["message"] = "超过单包大小上限"
+            _mark_done(item, cfg)
+            _release(item)
+            return out
+    except (TypeError, ValueError):
+        pass
+
+    local, err = await _download_cloud(cfg, item)
+    if local is None:
+        out["message"] = err or "云端下载失败"
+        logger.info(f"[字体采集] {label} {out['message']}（下次整理会再试）")
+        _release(item)
+        return out
+
+    try:
+        job = await _enqueue(cfg, local)
+        if not job.get("ok"):
+            out["message"] = job.get("message", "投递失败")
+            _release(item)
+            return out
+        _mark_done(item, cfg)
+        _release(item)
+        processed = await _process(cfg, _binary_of(cfg), job["job_id"], None, allow_cleanup=False)
+        processed["job_id"] = job["job_id"]
+        return processed
+    finally:
+        shutil.rmtree(local.parent, ignore_errors=True)      # 临时目录整体清掉
+
+
+def _resolve_cd2_client(v_path: str, cd2_client_id: str = ""):
+    """按「显式 id > 挂载路径前缀 > 单实例兜底」找 CD2 客户端（与字幕子集化一致）。"""
+    try:
+        from clients.manager import ClientManager
+    except Exception:
+        return None
+    all_clients = ClientManager.get_all_clients() or []
+    cds = [c for c in all_clients if c.get("type") == "cd2"]
+    if not cds:
+        return None
+    if cd2_client_id and any(c.get("id") == cd2_client_id for c in cds):
+        return ClientManager.get_client(cd2_client_id)
+    for conf in cds:
+        mount = str(conf.get("mount_path") or "").rstrip("/")
+        if mount and str(v_path).startswith(mount):
+            return ClientManager.get_client(conf.get("id"))
+    if len(cds) == 1:
+        return ClientManager.get_client(cds[0].get("id"))
+    return None
+
+
+async def _download_cloud(cfg: Dict[str, Any], item: Dict[str, Any]) -> tuple:
+    """把云端的字体包下到临时目录，返回 (本地路径, 错误说明)。"""
+    v_dir = str(item.get("v_dir") or "").rstrip("/")
+    name = str(item.get("name") or "")
+    dest_dir = importer.temp_staging_root(cfg) / "cloud" / uuid.uuid4().hex[:12]
+    dest = dest_dir / name
+    try:
+        client = await asyncio.to_thread(_resolve_cd2_client, v_dir, str(item.get("client_id") or ""))
+        if client is None:
+            return None, "未找到可用的 CD2 客户端"
+        try:
+            logged = await asyncio.to_thread(client.login)
+        except Exception as e:
+            return None, f"CD2 登录异常：{type(e).__name__} {e}"
+        if not logged:
+            return None, "CD2 未登录"
+        browser = getattr(client, "_file_browser", None)
+        if browser is None:
+            return None, "CD2 客户端缺少 file_browser"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        ok, msg = await asyncio.to_thread(browser.download_file, f"{v_dir}/{name}", str(dest))
+        if not ok or not dest.is_file():
+            return None, f"云端下载失败：{msg}"
+        return dest, ""
+    except Exception as e:
+        shutil.rmtree(dest_dir, ignore_errors=True)
+        return None, f"云端下载异常：{type(e).__name__} {e}"
 
 
 async def _wait_stable(path: Path, settle: int, timeout: int) -> bool:
@@ -361,7 +488,8 @@ async def _enqueue(cfg: Optional[Dict[str, Any]], path: Path) -> Dict[str, Any]:
 
 
 async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
-                   job_id: str, source: Path) -> Dict[str, Any]:
+                   job_id: str, source: Optional[Path], *,
+                   allow_cleanup: bool = True) -> Dict[str, Any]:
     """analyze →（auto_commit 时）commit → 调度索引重建。
 
     主库索引过期时（新增字体后还没重建），比对会把已有字体全判成「新增」→ 重复入库。
@@ -390,7 +518,7 @@ async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
             if out["committed"]:
                 importer.schedule_rebuild(cfg, binary)
                 logger.info(f"[字体采集] {job_id} 入库 {out['committed']} 个字体 → {committed.get('target')}")
-                if cleanup_after(cfg):
+                if allow_cleanup and source is not None and cleanup_after(cfg):
                     try:
                         source.unlink()
                         out["cleaned"] = True
