@@ -474,7 +474,12 @@ async def _wait_stable(path: Path, settle: int, timeout: int) -> bool:
 async def _enqueue(cfg: Optional[Dict[str, Any]], path: Path) -> Dict[str, Any]:
     """建 job 并把压缩包复制（优先硬链）进 incoming/。"""
     try:
-        job = importer.create_job(cfg)
+        # 顺手清理过期工作区：自动采集也会产生 job，不能只靠网页上传那条路径清理
+        try:
+            await asyncio.to_thread(importer.cleanup_expired, cfg)
+        except Exception:
+            pass
+        job = importer.create_job(cfg, origin="collect")
         paths = importer.job_paths(cfg, job["job_id"])
         target = paths["incoming"] / path.name
         try:
@@ -498,13 +503,13 @@ async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
     out: Dict[str, Any] = {"job_id": job_id, "source": str(source), "success": False,
                            "counts": {}, "committed": 0, "message": ""}
     try:
-        report = await importer.analyze(cfg, binary, job_id)
+        report = await importer.analyze(cfg, binary, job_id, keep_extracted=True)
         if report.get("success") and (report.get("library") or {}).get("stale"):
             rebuilt = await importer.rebuild_now(cfg, binary)
             if rebuilt.get("success"):
                 logger.info(f"[字体采集] {job_id} 主库索引已过期，重建后重新比对")
                 out["reindexed"] = True
-                report = await importer.analyze(cfg, binary, job_id)
+                report = await importer.analyze(cfg, binary, job_id, keep_extracted=True)
 
         out["success"] = bool(report.get("success"))
         out["counts"] = report.get("counts") or {}
@@ -524,6 +529,8 @@ async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
                 except Exception as e:
                     logger.warning(f"[字体采集] 增量索引探测失败（下次分析会兜底）: {e}")
                 importer.schedule_rebuild(cfg, binary)
+                await importer.record_job(cfg, job_id)
+                importer.purge_job_files(cfg, job_id)
                 logger.info(f"[字体采集] {job_id} 入库 {out['committed']} 个字体 → {committed.get('target')}")
                 if allow_cleanup and source is not None and cleanup_after(cfg):
                     try:

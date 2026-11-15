@@ -248,17 +248,17 @@ const importedInsideLibrary = computed(() => {
             <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="configForm.import_job_ttl_hours"
-                label="导入记录保留时长 (import_job_ttl_hours)"
+                label="原始压缩包保留 (import_job_ttl_hours)"
                 type="number"
                 suffix="小时"
-                min="1"
-                max="720"
+                min="0"
+                max="8760"
                 variant="outlined"
                 density="compact"
                 hide-details
-                hint="从最后一次操作算起；过期后下次上传压缩包时清理，已入库的字体不受影响"
+                hint="超过这个小时数的原始压缩包会被删除；0 = 不清理（始终保留）。导入记录与已入库字体永久保留"
                 persistent-hint
-                @update:model-value="(v: string) => (configForm.import_job_ttl_hours = Number(v) || 24)"
+                @update:model-value="(v: string) => (configForm.import_job_ttl_hours = Math.max(0, Math.min(8760, Number(v) || 0)))"
               />
             </v-col>
           </v-row>

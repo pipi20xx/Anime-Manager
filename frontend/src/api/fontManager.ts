@@ -522,11 +522,18 @@ export interface FontImportCommitResult {
 export interface FontImportJobSummary {
   job_id: string
   created_at?: string
+  /** web=网页上传 / collect=整理时自动采集 */
+  origin?: 'web' | 'collect' | string
   archives?: string[]
   counts?: Record<string, number>
   analyzed?: boolean
   committed?: boolean
   committed_count?: number
+  /** analyzed / committed / failed */
+  status?: string
+  /** 原始压缩包是否还在（被保留策略清理后为 false，下载按钮置灰） */
+  has_archive?: boolean
+  target?: string
 }
 
 export interface FontImportInfo {
@@ -844,9 +851,18 @@ export const fontManagerApi = {
       `${BASE}/import/${encodeURIComponent(jobId)}/analyze`,
     ),
 
-  /** 最近的导入任务 */
-  listImportJobs: (limit = 20) =>
-    api.get<{ status?: string; data: FontImportJobSummary[] }>(`${BASE}/import/jobs?limit=${limit}`),
+  /** 下载该任务上传/采集到的原始压缩包（已被保留策略清理则返回 404） */
+  downloadImportArchive: (jobId: string, name?: string) =>
+    downloadBlob(
+      `${RAW_BASE}/import/${encodeURIComponent(jobId)}/archive${name ? `?name=${encodeURIComponent(name)}` : ''}`,
+      name || `${jobId}.zip`,
+    ),
+
+  /** 最近的导入任务（分页：默认每页 20 条） */
+  listImportJobs: (limit = 20, offset = 0) =>
+    api.get<{ status?: string; data: FontImportJobSummary[]; total?: number; limit?: number; offset?: number }>(
+      `${BASE}/import/jobs?limit=${limit}&offset=${offset}`,
+    ),
 
   /** 删除导入任务（含工作区） */
   deleteImportJob: (jobId: string) =>

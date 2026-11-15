@@ -11,6 +11,7 @@
  * 状态与方法来自 useFontManager()（主视图 provide 的共享 store）。
  */
 import { computed, ref, watch } from 'vue'
+import { fontManagerApi } from '@/api'
 import { formatDbSize } from '@/composables'
 import { EmptyState } from '@/components/common'
 import type { FontImportItem } from '@/api/fontManager'
@@ -29,7 +30,8 @@ defineOptions({ name: 'FontManagerImportTab' })
 const {
   success, showError, warning, confirm, openSettings,
   importUploading, importCommitting, importJobId, importReport, importInfo,
-  importJobs, importJobsLoading, importSelection,
+  importJobs, importJobsLoading, importJobsTotal, importJobsOffset, IMPORT_PAGE_SIZE,
+  importJobsPrev, importJobsNext, importSelection,
   uploadImportFiles, commitImport, removeImportJob, loadImportJob, reanalyzeImport,
   fetchImportInfo, fetchImportJobs,
 } = useFontManager()
@@ -189,6 +191,15 @@ function conflictExisting(item: FontImportItem): string {
     for (const e of c.existing || []) if (e.path) paths.add(e.path)
   }
   return Array.from(paths).join('\n')
+}
+
+/** 下载该任务采集/上传的原始压缩包（被清理时后端返回 404） */
+async function downloadArchive(job: { job_id: string; archives?: string[] }) {
+  try {
+    await fontManagerApi.downloadImportArchive(job.job_id, (job.archives || [])[0])
+  } catch (e: any) {
+    showError(e?.message || '压缩包已不存在（可能已被保留策略清理）')
+  }
 }
 
 const openPanels = ref<string[]>(['new'])
@@ -602,8 +613,28 @@ void fetchImportInfo()
       <v-card-title class="pa-4 d-flex align-center flex-wrap ga-2">
         <v-icon icon="mdi-history" class="mr-1" />
         最近导入任务
-        <v-chip v-if="importJobs.length" size="x-small" variant="text">共 {{ importJobs.length }} 条</v-chip>
+        <v-chip v-if="importJobsTotal" size="x-small" variant="text">共 {{ importJobsTotal }} 条</v-chip>
         <v-spacer />
+        <v-btn
+          size="x-small"
+          variant="text"
+          icon="mdi-chevron-left"
+          :disabled="importJobsOffset <= 0"
+          title="上一页"
+          @click="importJobsPrev()"
+        />
+        <span class="text-caption text-medium-emphasis">
+          {{ Math.floor(importJobsOffset / IMPORT_PAGE_SIZE) + 1 }} /
+          {{ Math.max(1, Math.ceil(importJobsTotal / IMPORT_PAGE_SIZE)) }}
+        </span>
+        <v-btn
+          size="x-small"
+          variant="text"
+          icon="mdi-chevron-right"
+          :disabled="importJobsOffset + IMPORT_PAGE_SIZE >= importJobsTotal"
+          title="下一页"
+          @click="importJobsNext()"
+        />
         <v-btn
           size="small"
           variant="tonal"
@@ -637,7 +668,19 @@ void fetchImportInfo()
           </thead>
           <tbody>
             <tr v-for="job in importJobs" :key="job.job_id">
-              <td class="text-caption">{{ job.job_id }}</td>
+              <td class="text-caption">
+                <v-chip
+                  v-if="job.origin === 'collect'"
+                  size="x-small"
+                  variant="tonal"
+                  color="info"
+                  class="mr-1"
+                  title="整理流程自动采集的字体包"
+                >
+                  自动采集
+                </v-chip>
+                {{ job.job_id }}
+              </td>
               <td class="text-caption">{{ job.created_at || '—' }}</td>
               <td class="text-caption">{{ (job.archives || []).join('、') || '—' }}</td>
               <td class="text-caption">
@@ -661,6 +704,19 @@ void fetchImportInfo()
                     @click="loadImportJob(job.job_id)"
                   >
                     详情
+                  </v-btn>
+                  <v-btn
+                    size="small"
+                    variant="tonal"
+                    color="info"
+                    prepend-icon="mdi-download"
+                    :disabled="job.has_archive === false"
+                    :title="job.has_archive === false
+                      ? '原始压缩包已被保留策略清理'
+                      : '下载该任务采集到的原始压缩包'"
+                    @click="downloadArchive(job)"
+                  >
+                    下载
                   </v-btn>
                   <v-btn
                     size="small"

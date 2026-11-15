@@ -60,6 +60,7 @@ from font_core import subset_service
 from font_core import archive as font_archive
 from font_core import collector as font_collector
 from font_core import importer as font_importer
+from font_core import import_store as font_import_store
 from font_core import binary as af_binary
 from logger import log_audit
 from models import FontSubtitleJob
@@ -153,7 +154,7 @@ class FontManagerConfig(BaseModel):
     import_subfolder: Optional[bool] = Field(None, description="每次导入是否建 <时间戳>-<任务号> 子目录")
     import_default_policy: Optional[str] = Field(None, description="默认冲突策略：keep/replace/skip")
     import_rebuild_debounce: Optional[int] = Field(None, ge=0, le=3600, description="入库后重建索引的延迟秒数")
-    import_job_ttl_hours: Optional[int] = Field(None, ge=1, le=720, description="导入工作区保留时长（小时），下次上传时清理")
+    import_job_ttl_hours: Optional[int] = Field(None, ge=0, le=8760, description="原始压缩包保留小时数（0=不清理，始终保留）")
     import_max_archive_mb: Optional[int] = Field(None, ge=1, le=8192, description="单压缩包上限（MB）")
     import_max_extract_mb: Optional[int] = Field(None, ge=1, le=65536, description="解压总量上限（MB）")
     import_max_font_mb: Optional[int] = Field(None, ge=1, le=1024, description="单字体上限（MB）")
@@ -927,9 +928,39 @@ async def import_info():
     }}
 
 
-@router.get("/import/jobs", summary="导入任务列表")
-async def import_jobs(limit: int = Query(20, ge=1, le=100)):
-    return {"status": "success", "data": font_importer.list_jobs(_cfg(), limit=limit)}
+@router.get("/import/jobs", summary="导入任务列表（分页，读数据库台账）")
+async def import_jobs(limit: int = Query(20, ge=1, le=100),
+                      offset: int = Query(0, ge=0)):
+    data, total = await font_import_store.page(limit, offset)
+    # 记录只以数据库为准：表里没有就是没有，不再回退磁盘扫描
+    db_error = data is None
+    return {"status": "success", "data": data or [], "total": total,
+            "limit": limit, "offset": offset, "db_error": db_error}
+
+
+@router.get("/import/{job_id}/archive", summary="下载该任务上传/采集到的原始压缩包")
+async def import_download_archive(job_id: str,
+                                  name: Optional[str] = Query(None, description="多个包时指定文件名")):
+    cfg = _cfg()
+    record = await font_import_store.get(job_id) or {}
+    paths = [str(p) for p in (record.get("archive_paths") or [])]
+    if not paths:
+        # 台账里没有（老任务）：直接看工作目录
+        found = font_importer.find_job(cfg, job_id)
+        if found:
+            try:
+                paths = [str(p) for p in found["incoming"].iterdir() if p.is_file()]
+            except OSError:
+                paths = []
+    if name:
+        paths = [p for p in paths if Path(p).name == name]
+    existing = [p for p in paths if Path(p).is_file()]
+    if not existing:
+        raise HTTPException(status_code=404,
+                            detail="压缩包已被清理（超过保留时长）或任务不存在")
+    target = _assert_within(Path(existing[0]), [font_importer.import_root(cfg)])
+    return FileResponse(str(target), filename=target.name,
+                        media_type="application/octet-stream")
 
 
 @router.post("/import/upload", summary="上传压缩包并分析（不入库）")
@@ -1013,6 +1044,17 @@ async def import_upload(files: List[UploadFile] = File(...)):
 async def import_report(job_id: str):
     report = font_importer.get_report(_cfg(), job_id)
     if not report:
+        # 已入库的任务只留压缩包，明细看数据库台账
+        record = await font_import_store.get(job_id)
+        if record:
+            return {"status": "success", "data": {
+                "job_id": job_id, "success": True, "archived": True,
+                "counts": record.get("counts") or {},
+                "archives": [{"name": n} for n in (record.get("archives") or [])],
+                "target": record.get("target", ""), "message": record.get("message", ""),
+                "new": [], "duplicate": [], "conflict": [], "invalid": [],
+                "note": "该任务已入库，明细已归档到数据库，仅保留原始压缩包",
+            }}
         raise HTTPException(status_code=404, detail="导入任务不存在或尚未分析")
     return {"status": "success", "data": report}
 
@@ -1061,6 +1103,8 @@ async def import_commit(job_id: str, payload: ImportCommitPayload):
     schedule: Dict[str, Any] = {"scheduled": False}
     if result.get("count"):
         binary = _optional_binary(cfg)
+        await font_importer.record_job(cfg, job_id)
+        font_importer.purge_job_files(cfg, job_id)
         if binary.is_file():
             # 连续导入的关键：只探测「本批新增」的字体，并入比对基线（秒级）；
             # 全库重建仍走 debounce，一批导入只重建一次。
@@ -1085,6 +1129,7 @@ async def import_delete(job_id: str):
     result = font_importer.delete_job(_cfg(), job_id)
     if not result.get("success"):
         raise HTTPException(status_code=404, detail=result.get("message") or "删除失败")
+    await font_import_store.delete(job_id)
     return {"status": "success", "message": result.get("message", "")}
 
 

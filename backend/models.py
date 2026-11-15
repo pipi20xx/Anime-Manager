@@ -848,3 +848,27 @@ class SeasonSplitBlacklist(SQLModel, table=True):
     use_absolute: Optional[bool] = None                    # 判定时的「连番号折算」开关
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class FontImportJob(SQLModel, table=True):
+    """字体管家 — 字体压缩包导入记录（导入任务的长期台账）
+
+    每次「网页上传压缩包」或「整理时自动采集」都会在 data/fonts/import/<job_id>/
+    下建一个工作目录（压缩包就存在它的 incoming/ 里，避免同名冲突）；
+    这张表只记元信息与结果，工作目录里的原始压缩包可按保留策略清理。
+    """
+    __tablename__ = "font_import_jobs"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "字体导入记录"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    job_id: str = Field(unique=True, index=True)
+    origin: str = Field(default="web", index=True)      # web=网页上传 / collect=整理自动采集
+    status: str = Field(default="analyzed", index=True)  # analyzed/committed/failed
+    archive_names: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    archive_paths: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
+    counts: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
+    committed_count: int = Field(default=0)
+    target: str = Field(default="")
+    message: str = Field(default="", sa_column=Column(Text))
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
+    updated_at: datetime = Field(default_factory=datetime.now)

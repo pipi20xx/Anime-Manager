@@ -99,6 +99,7 @@ const tableDescriptions: Record<string, string> = {
   'public.subscribed_episodes': '已执行下载的剧集记录',
   'public.organize_history': '文件整理重命名的历史记录',
   'public.rapid_upload_retry': 'CD2 秒传重试队列：秒传未命中的文件按间隔自动重试，可在整理管理-秒传管理中查看和维护',
+  'public.font_import_jobs': '字体压缩包导入记录（来源：网页上传/整理自动采集；含比对结果、已入库数量、压缩包位置；压缩包按保留策略清理，记录长期保留）',
   'public.series_fingerprint': '智能记忆',
   'public.filter_rules': 'RSS 过滤规则',
   'public.rules': '识别引擎规则',

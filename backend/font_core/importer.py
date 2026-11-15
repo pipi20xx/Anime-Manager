@@ -96,17 +96,25 @@ def debounce_seconds(cfg: Optional[Dict[str, Any]] = None) -> int:
 
 
 def ttl_hours(cfg: Optional[Dict[str, Any]] = None) -> int:
-    """导入工作区（最近导入任务）的保留时长，单位小时。
+    """原始压缩包的保留时长（小时）。0 = 不清理（始终保留）。
 
-    计时基准是 job 根目录的 mtime —— 建 job、写 report.json（分析）、写 commit.json
-    （入库）都会刷新它，所以「保留时长」是从**最后一次操作**算起，不是从上传时刻。
-    清理是惰性的：只在下次上传压缩包时顺带执行，不会自己到点消失。
+    注意：这里只清理工作目录里的**压缩包**；任务目录里的 report.json / commit.json
+    和数据库记录永久保留（用于「最近导入任务」的长期查询与“压缩包在哪”）。
     """
     try:
-        v = int(_fm(cfg).get("import_job_ttl_hours") or JOB_TTL_HOURS)
+        v = int(_fm(cfg).get("import_job_ttl_hours") or 0)
     except (TypeError, ValueError):
-        v = JOB_TTL_HOURS
-    return max(1, min(720, v))
+        v = 0
+    return max(0, min(8760, v))
+
+
+async def record_job(cfg: Optional[Dict[str, Any]], job_id: str) -> bool:
+    """把任务元信息写进 PostgreSQL 台账（分析完成 / 入库完成时调用）。失败不影响流程。"""
+    try:
+        from font_core import import_store
+        return await import_store.save(cfg, job_id)
+    except Exception:
+        return False
 
 
 def imported_dir_active(cfg: Optional[Dict[str, Any]] = None) -> Optional[str]:
@@ -147,14 +155,19 @@ def find_job(cfg: Optional[Dict[str, Any]], job_id: str) -> Optional[Dict[str, P
     return paths if paths["root"].is_dir() else None
 
 
-def create_job(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """新建一个导入 job（只建目录，不解析）。"""
+def create_job(cfg: Optional[Dict[str, Any]] = None, origin: str = "web") -> Dict[str, Any]:
+    """新建一个导入 job（只建目录，不解析）。
+
+    :param origin: web=网页上传 / collect=整理时自动采集（列表里会标出来）
+    """
     job_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
     paths = job_paths(cfg, job_id)
     for key in ("incoming", "extracted"):
         paths[key].mkdir(parents=True, exist_ok=True)
-    logger.info(f"[字体导入] 新建 job {job_id} → {paths['root']}")
-    return {"job_id": job_id, "dir": str(paths["root"]), "created_at": _now()}
+    _write_json(paths["root"] / "meta.json", {"origin": origin, "created_at": _now()})
+    logger.info(f"[字体导入] 新建 job {job_id}（{origin}）→ {paths['root']}")
+    return {"job_id": job_id, "dir": str(paths["root"]), "created_at": _now(),
+            "origin": origin}
 
 
 def _now() -> str:
@@ -334,10 +347,13 @@ async def ensure_extracted(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[s
             "message": f"已按需重新解压 {len(names)} 个字体"}
 
 
-async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> Dict[str, Any]:
+async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str, *,
+                  keep_extracted: bool = False) -> Dict[str, Any]:
     """解压 + 探测 + 比对，产出 report.json（不动字体库）。
 
     每次调用都会先清空 extracted/ 再重放解压，所以可以反复调用（「重新分析」）。
+    keep_extracted=False（默认）时分析完就删掉解压产物：压缩包还在任务目录里，
+    之后要入库会由 ensure_extracted() 按需重新解压，没必要长期占空间。
     """
     paths = find_job(cfg, job_id)
     if not paths:
@@ -353,6 +369,7 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
                   "skipped_count": len(skipped),
                   "counts": {"new": 0, "duplicate": 0, "conflict": 0, "invalid": 0}}
         _write_json(paths["report"], {**report, "created_at": _now()})
+        _drop_work_dirs(paths)
         return report
 
     # 3) assfonts 探测（给这批字体建临时索引）
@@ -406,11 +423,36 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
         "target": target_dir_label(cfg),
     }
     _write_json(paths["report"], report)
+    await record_job(cfg, job_id)
+    if not keep_extracted:
+        _drop_work_dirs(paths)
     logger.info(f"[字体导入] {job_id} 分析完成：新增 {report['counts'].get('new', 0)} / "
                 f"重复 {report['counts'].get('duplicate', 0)} / "
                 f"冲突 {report['counts'].get('conflict', 0)} / "
                 f"无效 {report['counts'].get('invalid', 0)}")
     return report
+
+
+def purge_job_files(cfg: Optional[Dict[str, Any]], job_id: str) -> None:
+    """入库归档后清掉工作目录里的 JSON，只保留 incoming/ 里的压缩包。
+
+    记录的长期存储已经交给 PostgreSQL（统计、来源、压缩包路径都在表里），
+    这里再留 report/commit/meta 纯属重复占用。
+    """
+    paths = find_job(cfg, job_id)
+    if not paths:
+        return
+    for name in ("report.json", "commit.json", "meta.json"):
+        try:
+            (paths["root"] / name).unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+def _drop_work_dirs(paths: Dict[str, Path]) -> None:
+    """删掉解压产物与探测索引（压缩包仍在 incoming/，需要时可重新解压）。"""
+    for key in ("extracted", "probe"):
+        shutil.rmtree(paths[key], ignore_errors=True)
 
 
 def _compare_hash_only(incoming: List[Dict[str, Any]],
@@ -762,7 +804,16 @@ def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
 
 # ── job 列表 / 清理 ─────────────────────────────────────────
 
-def list_jobs(cfg: Optional[Dict[str, Any]] = None, limit: int = 20) -> List[Dict[str, Any]]:
+def count_jobs(cfg: Optional[Dict[str, Any]] = None) -> int:
+    """导入任务总数（磁盘目录计数，用于分页）。"""
+    try:
+        return len([d for d in import_root(cfg).iterdir() if d.is_dir()])
+    except OSError:
+        return 0
+
+
+def list_jobs(cfg: Optional[Dict[str, Any]] = None, limit: int = 20,
+              offset: int = 0) -> List[Dict[str, Any]]:
     root = import_root(cfg)
     out: List[Dict[str, Any]] = []
     try:
@@ -770,12 +821,15 @@ def list_jobs(cfg: Optional[Dict[str, Any]] = None, limit: int = 20) -> List[Dic
     except OSError:
         return out
     entries.sort(key=lambda d: d.name, reverse=True)
-    for d in entries[: max(1, int(limit))]:
+    start = max(0, int(offset))
+    for d in entries[start: start + max(1, int(limit))]:
         report = _read_json(d / "report.json") or {}
         commit_info = _read_json(d / "commit.json") or {}
+        meta = _read_json(d / "meta.json") or {}
         out.append({
             "job_id": d.name,
-            "created_at": report.get("created_at", ""),
+            "created_at": report.get("created_at") or meta.get("created_at", ""),
+            "origin": meta.get("origin", "web"),
             "archives": [a.get("name") for a in (report.get("archives") or [])],
             "counts": report.get("counts") or {},
             "analyzed": bool(report),
@@ -795,26 +849,37 @@ def delete_job(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
 
 def cleanup_expired(cfg: Optional[Dict[str, Any]] = None,
                     hours: Optional[int] = None) -> int:
-    """清理过期的导入工作区（默认取配置 import_job_ttl_hours，24 小时）。
+    """删除超过保留时长的**原始压缩包**（工作目录里的 report/commit 保留）。
 
-    返回删掉的 job 数。惰性调用点：每次上传压缩包时（见路由 /import/upload）。
+    - 保留时长取 `import_job_ttl_hours`，**0 = 不启用清理**（始终保留）；
+    - 惰性触发：每次上传压缩包 / 每次自动采集投递时顺手跑一次；
+    - 返回删除的压缩包数量。
     """
+    ttl = int(hours if hours is not None else ttl_hours(cfg))
+    if ttl <= 0:
+        return 0
     root = import_root(cfg)
-    cutoff = datetime.now() - timedelta(hours=int(hours if hours is not None else ttl_hours(cfg)))
+    cutoff = time.time() - ttl * 3600
     removed = 0
     try:
-        for d in root.iterdir():
-            if not d.is_dir():
-                continue
+        jobs = [d for d in root.iterdir() if d.is_dir()]
+    except OSError:
+        return 0
+    for job in jobs:
+        incoming = job / "incoming"
+        try:
+            files = [p for p in incoming.iterdir() if p.is_file()]
+        except OSError:
+            continue
+        for f in files:
             try:
-                mtime = datetime.fromtimestamp(d.stat().st_mtime)
+                if f.stat().st_mtime < cutoff:
+                    f.unlink()
+                    removed += 1
             except OSError:
                 continue
-            if mtime < cutoff:
-                shutil.rmtree(d, ignore_errors=True)
-                removed += 1
-    except OSError:
-        return removed
+    if removed:
+        logger.info(f"[字体导入] 已清理 {removed} 个超期压缩包（保留 {ttl} 小时）")
     return removed
 
 

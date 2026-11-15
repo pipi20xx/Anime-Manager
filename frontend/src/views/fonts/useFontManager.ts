@@ -620,6 +620,10 @@ function createFontManagerStore() {
   const importInfo = ref<FontImportInfo | null>(null)
   const importJobs = ref<FontImportJobSummary[]>([])
   const importJobsLoading = ref(false)
+  /** 每页条数 / 当前偏移 / 总数（导入任务是磁盘目录，后端按 offset 分页） */
+  const IMPORT_PAGE_SIZE = 20
+  const importJobsTotal = ref(0)
+  const importJobsOffset = ref(0)
   /** 报告里被勾选待入库的文件名（默认全选「新增」） */
   const importSelection = ref<string[]>([])
 
@@ -633,16 +637,31 @@ function createFontManagerStore() {
     }
   }
 
-  async function fetchImportJobs() {
+  async function fetchImportJobs(reset = false) {
+    if (reset) importJobsOffset.value = 0
     importJobsLoading.value = true
     try {
-      const res = await fontManagerApi.listImportJobs()
+      const res = await fontManagerApi.listImportJobs(IMPORT_PAGE_SIZE, importJobsOffset.value)
       importJobs.value = res?.data || []
+      importJobsTotal.value = Number(res?.total || 0)
     } catch (e: any) {
       showError(e?.message || '读取导入任务失败')
     } finally {
       importJobsLoading.value = false
     }
+  }
+
+  /** 翻页（上一页 / 下一页） */
+  function importJobsPrev() {
+    if (importJobsOffset.value <= 0) return
+    importJobsOffset.value = Math.max(0, importJobsOffset.value - IMPORT_PAGE_SIZE)
+    void fetchImportJobs()
+  }
+
+  function importJobsNext() {
+    if (importJobsOffset.value + IMPORT_PAGE_SIZE >= importJobsTotal.value) return
+    importJobsOffset.value += IMPORT_PAGE_SIZE
+    void fetchImportJobs()
   }
 
   /** 应用一份新报告：重置勾选（默认全选新增项） */
@@ -919,7 +938,7 @@ function createFontManagerStore() {
       imported_dir: '',
       import_subfolder: true,
       import_default_policy: 'keep',
-      import_job_ttl_hours: 24,
+      import_job_ttl_hours: 720,
       import_rebuild_debounce: 120,
       // 字体包自动采集（跟随整理流程投递 + 异步处理）
       collect_enabled: false,
@@ -1018,7 +1037,7 @@ function createFontManagerStore() {
         import_default_policy: ['keep', 'replace', 'skip'].includes(form.import_default_policy || '')
           ? (form.import_default_policy as 'keep' | 'replace' | 'skip')
           : 'keep',
-        import_job_ttl_hours: Math.max(1, Math.min(720, Number(form.import_job_ttl_hours) || 24)),
+        import_job_ttl_hours: Math.max(0, Math.min(8760, Number(form.import_job_ttl_hours) || 0)),
         import_rebuild_debounce: Math.max(
           0,
           Math.min(3600, Number(form.import_rebuild_debounce ?? 120) || 0),
@@ -1131,6 +1150,11 @@ function createFontManagerStore() {
     importInfo,
     importJobs,
     importJobsLoading,
+    importJobsTotal,
+    importJobsOffset,
+    IMPORT_PAGE_SIZE,
+    importJobsPrev,
+    importJobsNext,
     importSelection,
     fetchImportInfo,
     fetchImportJobs,
