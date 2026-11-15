@@ -71,15 +71,31 @@ def library_dirs(cfg: Optional[Dict[str, Any]]) -> List[str]:
     # 网页「压缩包/字体上传」导入的字体落在独立目录，也要进索引、也要能被 -f 找到。
     # 仅在目录已存在时追加：assfonts 的 -f 遇到不存在的目录会直接报错，而
     # 「还没导入过任何字体」是常态。
+    # 另外要避开「已被现有库目录覆盖」的情况：如果主库配成了 data/fonts，而导入目录是
+    # data/fonts/imported，再挂一次 -f 就会把同一批字体扫两遍（列表里每条都重复）。
     if str(fm.get("import_target") or "separate").strip().lower() != "primary":
         imported = str(fm.get("imported_dir") or "data/fonts/imported").strip()
-        if imported and imported not in dirs:
+        if imported and imported not in dirs and not any(under_dir(imported, d) for d in dirs):
             try:
                 if Path(imported).is_dir():
                     dirs.append(imported)
             except OSError:
                 pass
     return dirs
+
+
+def under_dir(path: str, parent: str) -> bool:
+    """path 是否等于/位于 parent 之内（按 realpath 比较，软链接也判得对）。
+
+    用途：判断「导入落库目录」是否已经被某个字体库目录覆盖 —— 覆盖了就不用再挂 -f，
+    否则 assfonts 会把同一批字体扫两遍。
+    """
+    try:
+        p = os.path.normpath(os.path.realpath(str(path)))
+        q = os.path.normpath(os.path.realpath(str(parent)))
+    except Exception:
+        return False
+    return p == q or p.startswith(q + os.sep)
 
 
 def temp_font_dir(cfg: Optional[Dict[str, Any]]) -> Path:

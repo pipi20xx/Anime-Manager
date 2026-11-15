@@ -140,6 +140,15 @@ export interface FontManagerConfig {
   // 内核
   binary_path: string
   proxy_for_update: boolean
+  // 压缩包导入
+  /** 导入字体的落库目录（留空 = data/fonts/imported） */
+  imported_dir?: string
+  /** 每次导入是否建 <时间戳>-<任务号> 子目录（关闭=直接放进落库目录） */
+  import_subfolder?: boolean
+  /** 导入工作区（最近导入任务）保留时长（小时） */
+  import_job_ttl_hours?: number
+  /** 入库后索引合并重建的延迟秒数 */
+  import_rebuild_debounce?: number
 }
 
 /** 索引重建结果（POST /fonts/upload 的 index 字段；未自动重建时为空对象） */
@@ -275,6 +284,8 @@ export interface FontFace {
   slant?: number | null
   /** TTC/OTC 集合内的 face 序号 */
   face_index?: number
+  /** 字体文件绝对路径（用于区分「同一文件被列两遍」和「两份不同文件」） */
+  path?: string
   last_write_time?: string
 }
 
@@ -495,6 +506,9 @@ export interface FontImportCommitResult {
   replaced_backup?: string
   message?: string
   index?: { scheduled: boolean; delay?: number; message?: string }
+  /** 入库前是否按需重新解压了原始压缩包（从历史任务进来时会 true） */
+  reextracted?: boolean
+  prepare_message?: string
 }
 
 export interface FontImportJobSummary {
@@ -514,7 +528,15 @@ export interface FontImportInfo {
   limits: Record<string, number>
   target: string
   target_mode: string
+  /** 落库目录是否已被某个字体库目录覆盖（覆盖则无需再关联 -f） */
+  target_in_library?: boolean
+  /** 每次导入是否建 <时间戳>-<任务号> 子目录 */
+  import_subfolder?: boolean
   rebuild_debounce: number
+  /** 导入工作区（最近导入任务）保留时长（小时） */
+  job_ttl_hours?: number
+  /** 清理触发方式说明 */
+  cleanup_trigger?: string
   library_dirs: string[]
   temp_font_dir: string
 }
@@ -767,6 +789,12 @@ export const fontManagerApi = {
       files,
       policy,
     }),
+
+  /** 重新分析某个任务（重新解压原始压缩包 + 与当前字体库重新比对，覆盖旧报告） */
+  reanalyzeImport: (jobId: string) =>
+    api.post<{ status?: string; job_id?: string; report: FontImportReport }>(
+      `${BASE}/import/${encodeURIComponent(jobId)}/analyze`,
+    ),
 
   /** 最近的导入任务 */
   listImportJobs: (limit = 20) =>

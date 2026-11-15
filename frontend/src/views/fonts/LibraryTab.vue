@@ -64,6 +64,7 @@ function faceTitle(f: FontFace): string {
   if (f.psname) parts.push(`psname: ${f.psname}`)
   if ((f.psnames || []).length > 1) parts.push(`psnames: ${(f.psnames || []).join(' / ')}`)
   parts.push(`文件: ${f.filename}`)
+  if (f.path) parts.push(`路径: ${f.path}`)
   return parts.join('\n')
 }
 
@@ -385,6 +386,11 @@ async function handleLibraryFontUpload(
         <div class="detail-grid mb-4">
           <div class="text-caption text-medium-emphasis">文件名</div>
           <div class="text-body-2 font-mono text-break">{{ detailFont.filename }}</div>
+
+          <template v-if="detailFont.path">
+            <div class="text-caption text-medium-emphasis">路径</div>
+            <div class="text-body-2 font-mono text-break">{{ detailFont.path }}</div>
+          </template>
 
           <div class="text-caption text-medium-emphasis">格式</div>
           <div>

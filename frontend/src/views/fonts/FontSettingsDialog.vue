@@ -5,6 +5,7 @@
  * 字体来源 / 字幕处理（模式 + 处理参数） / 内核与网络 三段分组；
  * 目录浏览复用 FolderBrowserModal（由主视图挂载，事件走 store）。
  */
+import { computed } from 'vue'
 import { EmptyState, DialogTitle } from '@/components/common'
 import { useFontManager } from './useFontManager'
 
@@ -17,6 +18,21 @@ const {
   addExtraLibraryDir, removeExtraLibraryDir, setExtraLibraryDir,
   openSettings, saveSettings, openFolderPicker,
 } = useFontManager()
+
+/**
+ * 落库目录是否在字体库目录之内（含主库与额外库）。
+ *
+ * 在库内 → 建索引时通过库目录的 -f 已经能扫到，不需要再单独关联；
+ * 在库外 → 会自动作为额外字体目录参与索引（后端 library_dirs() 负责，且不会重复挂）。
+ */
+const importedInsideLibrary = computed(() => {
+  const target = ((configForm.value as any).imported_dir || '').trim() || 'data/fonts/imported'
+  const norm = (d: string) => d.replace(/[\\/]+$/, '')
+  const libs = [configForm.value.library_dir, ...(configForm.value.extra_library_dirs || [])]
+    .map((d) => norm((d || '').trim()))
+    .filter(Boolean)
+  return libs.some((lib) => target === lib || target.startsWith(`${lib}/`) || target.startsWith(`${lib}\\`))
+})
 </script>
 
 <template>
@@ -90,6 +106,96 @@ const {
           <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" class="mb-3" @click="addExtraLibraryDir">
             添加目录
           </v-btn>
+
+          <!-- ── 压缩包导入 ── -->
+          <v-divider class="my-3" />
+          <div class="section-title mb-2">
+            <v-icon size="16" color="primary">mdi-package-variant-closed</v-icon>
+            压缩包导入
+          </div>
+          <div class="d-flex align-center ga-2 mb-1">
+            <v-text-field
+              :model-value="configForm.imported_dir"
+              label="导入字体的落库目录 (imported_dir)"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+              placeholder="留空 = data/fonts/imported"
+              @update:model-value="(v: string) => (configForm.imported_dir = v || '')"
+            />
+            <v-btn
+              variant="tonal"
+              color="info"
+              prepend-icon="mdi-folder-search-outline"
+              @click="openFolderPicker({ type: 'imported' })"
+            >
+              浏览
+            </v-btn>
+          </div>
+          <div class="text-caption text-medium-emphasis mb-2">
+            解压比对后，非重复字体会被<strong>移动</strong>到
+            <template v-if="configForm.import_subfolder !== false">
+              该目录下的 <code>&lt;时间戳&gt;-&lt;任务号&gt;</code> 子目录
+            </template>
+            <template v-else>
+              该目录（不建子目录）
+            </template>
+            ，跨文件系统时自动退化为复制+删除。
+            <template v-if="importedInsideLibrary">
+              该目录位于字体库目录之内，建索引时会被自动扫到，无需额外关联。
+            </template>
+            <template v-else>
+              不在字体库目录内时会自动作为额外字体目录参与索引。
+            </template>
+          </div>
+          <div class="d-flex align-center flex-wrap ga-3 mb-3">
+            <v-switch
+              :model-value="configForm.import_subfolder !== false"
+              color="primary"
+              density="compact"
+              hide-details
+              label="每次导入建独立子目录"
+              @update:model-value="(v: any) => (configForm.import_subfolder = !!v)"
+            />
+            <span class="text-caption text-medium-emphasis">
+              关闭后字体直接放进落库目录（适合已按番剧分好目录的用法），同名自动加 _1 序号
+            </span>
+          </div>
+          <v-row density="compact" class="mb-1">
+            <v-col cols="12" sm="6">
+              <v-text-field
+                :model-value="configForm.import_job_ttl_hours"
+                label="导入工作区保留 (import_job_ttl_hours)"
+                type="number"
+                suffix="小时"
+                min="1"
+                max="720"
+                variant="outlined"
+                density="compact"
+                hide-details
+                hint="从最后一次操作算起，到期后在下一次上传压缩包时清理"
+                persistent-hint
+                @update:model-value="(v: string) => (configForm.import_job_ttl_hours = Number(v) || 24)"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                :model-value="configForm.import_rebuild_debounce"
+                label="入库后索引重建延迟 (import_rebuild_debounce)"
+                type="number"
+                suffix="秒"
+                min="0"
+                max="3600"
+                variant="outlined"
+                density="compact"
+                hide-details
+                hint="合并窗口：窗口内多次入库只重建一次索引"
+                persistent-hint
+                @update:model-value="(v: string) => (configForm.import_rebuild_debounce = Number(v) || 0)"
+              />
+            </v-col>
+          </v-row>
 
           <v-row density="compact" class="mb-1">
             <v-col cols="12" sm="6">

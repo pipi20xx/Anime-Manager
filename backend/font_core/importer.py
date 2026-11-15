@@ -94,6 +94,20 @@ def debounce_seconds(cfg: Optional[Dict[str, Any]] = None) -> int:
     return max(0, min(3600, v))
 
 
+def ttl_hours(cfg: Optional[Dict[str, Any]] = None) -> int:
+    """导入工作区（最近导入任务）的保留时长，单位小时。
+
+    计时基准是 job 根目录的 mtime —— 建 job、写 report.json（分析）、写 commit.json
+    （入库）都会刷新它，所以「保留时长」是从**最后一次操作**算起，不是从上传时刻。
+    清理是惰性的：只在下次上传压缩包时顺带执行，不会自己到点消失。
+    """
+    try:
+        v = int(_fm(cfg).get("import_job_ttl_hours") or JOB_TTL_HOURS)
+    except (TypeError, ValueError):
+        v = JOB_TTL_HOURS
+    return max(1, min(720, v))
+
+
 def imported_dir_active(cfg: Optional[Dict[str, Any]] = None) -> Optional[str]:
     """需要额外挂进 -f 的独立入库目录；未启用或目录还没建时返回 None。
 
@@ -197,21 +211,23 @@ def _unique_name(dest: Path, name: str, used: set) -> str:
 
 # ── 分析 ────────────────────────────────────────────────────
 
-async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> Dict[str, Any]:
-    """解压 + 探测 + 比对，产出 report.json（不动字体库）。"""
-    paths = find_job(cfg, job_id)
-    if not paths:
-        return {"success": False, "message": "导入任务不存在或已过期"}
-    lim = limits(cfg)
+async def _prepare_extracted(cfg: Optional[Dict[str, Any]], paths: Dict[str, Path],
+                             lim: archive.Limits, *, force: bool) -> tuple:
+    """把 incoming/ 里的压缩包解压、字体复制进 extracted/，返回 (archives_info, skipped, incoming)。
+
+    force=True 时先清空 extracted/（并清掉探测索引），保证重复调用不会产生 _1 副本。
+    返回的 incoming 每项：{name, source, size, sha256, path}
+    """
     extracted = paths["extracted"]
+    if force:
+        shutil.rmtree(extracted, ignore_errors=True)
+        shutil.rmtree(paths["probe"], ignore_errors=True)
     extracted.mkdir(parents=True, exist_ok=True)
 
     archives_info: List[Dict[str, Any]] = []
     skipped: List[Dict[str, str]] = []
-    incoming: List[Dict[str, Any]] = []
     used: set = set()
 
-    # 1) 处理 incoming：压缩包解压，字体直接搬进 extracted
     try:
         entries = sorted(paths["incoming"].iterdir())
     except OSError:
@@ -252,7 +268,7 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
             skipped.append({"archive": "", "name": entry.name, "reason": f"复制失败：{e}"})
             continue
 
-    # 2) 清点 extracted，算 sha256
+    incoming: List[Dict[str, Any]] = []
     for f in sorted(extracted.iterdir()):
         if not f.is_file() or not ass_parser.is_font_file(f.name):
             continue
@@ -262,11 +278,78 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
             continue
         incoming.append({"name": f.name, "source": f.name, "size": size,
                          "sha256": _sha256(f), "path": str(f)})
+    return archives_info, skipped, incoming
+
+
+def report_file_names(report: Optional[Dict[str, Any]]) -> List[str]:
+    """报告里「待入库」的文件名（new + conflict）。"""
+    if not report:
+        return []
+    names: List[str] = []
+    for key in ("new", "conflict"):
+        for entry in report.get(key) or []:
+            name = str(entry.get("name") or "")
+            if name and name not in names:
+                names.append(name)
+    return names
+
+
+async def ensure_extracted(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
+    """确保 report 里列出的字体仍在 extracted/ 里；不在就按需重新解压。
+
+    背景：入库成功后我们会删掉 extracted/（字体已搬走、省空间），
+    所以「从历史任务再次入库」必须先按需重放一遍解压，否则每个文件都会报
+    「源文件不存在」。原始压缩包留在 incoming/ 里直到任务过期（TTL），够用。
+    """
+    paths = find_job(cfg, job_id)
+    if not paths:
+        return {"ok": False, "reextracted": False, "message": "导入任务不存在或已过期"}
+    report = _read_json(paths["report"])
+    if not report:
+        return {"ok": False, "reextracted": False, "message": "该任务还没有分析报告，请先重新分析"}
+    names = report_file_names(report)
+    if not names:
+        return {"ok": True, "reextracted": False, "missing": [], "message": ""}
+
+    extracted = paths["extracted"]
+    missing = [n for n in names if not (extracted / n).is_file()]
+    if not missing:
+        return {"ok": True, "reextracted": False, "missing": [], "message": ""}
+
+    try:
+        has_source = paths["incoming"].is_dir() and any(paths["incoming"].iterdir())
+    except OSError:
+        has_source = False
+    if not has_source:
+        return {"ok": False, "reextracted": False, "missing": missing,
+                "message": "原始压缩包已随任务清理，无法重新解压；请重新上传该压缩包"}
+
+    await _prepare_extracted(cfg, paths, limits(cfg), force=True)
+    still = [n for n in names if not (extracted / n).is_file()]
+    if still:
+        return {"ok": False, "reextracted": True, "missing": still,
+                "message": f"重新解压后仍缺少 {len(still)} 个文件（压缩包内容可能已变化），建议重新分析"}
+    return {"ok": True, "reextracted": True, "missing": [],
+            "message": f"已按需重新解压 {len(names)} 个字体"}
+
+
+async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> Dict[str, Any]:
+    """解压 + 探测 + 比对，产出 report.json（不动字体库）。
+
+    每次调用都会先清空 extracted/ 再重放解压，所以可以反复调用（「重新分析」）。
+    """
+    paths = find_job(cfg, job_id)
+    if not paths:
+        return {"success": False, "message": "导入任务不存在或已过期"}
+    lim = limits(cfg)
+    archives_info, skipped, incoming = await _prepare_extracted(cfg, paths, lim, force=True)
+    extracted = paths["extracted"]
 
     if not incoming:
         report = {"success": False, "job_id": job_id,
                   "message": "没有从上传内容里发现字体文件",
                   "archives": archives_info, "skipped": skipped[:500],
+                  "skipped_count": len(skipped),
                   "counts": {"new": 0, "duplicate": 0, "conflict": 0, "invalid": 0}}
         _write_json(paths["report"], {**report, "created_at": _now()})
         return report
@@ -444,6 +527,56 @@ def get_report(cfg: Optional[Dict[str, Any]], job_id: str) -> Optional[Dict[str,
     return _read_json(paths["report"])
 
 
+def target_dir_base(cfg: Optional[Dict[str, Any]] = None) -> Path:
+    """导入字体的落库根目录（每次导入在其下建一个 <时间戳>-<job> 子目录）。"""
+    if import_target_mode(cfg) == "primary":
+        libs = subset_service.library_dirs(cfg)
+        return (Path(libs[0]) / "imported") if libs else imported_root(cfg)
+    return imported_root(cfg)
+
+
+def _configured_library_dirs(cfg: Optional[Dict[str, Any]] = None) -> List[str]:
+    """用户配置的字体库目录（主库 + 额外库），不含导入目录。
+
+    不能用 subset_service.library_dirs()：那个函数会把导入目录也算进去，
+    拿来判断「导入目录是否在库内」会变成自己跟自己比。
+    """
+    fm = _fm(cfg)
+    dirs: List[str] = []
+    main = str(fm.get("library_dir") or "").strip()
+    if main:
+        dirs.append(main)
+    extra = fm.get("extra_library_dirs") or []
+    if isinstance(extra, str):
+        extra = [x.strip() for x in extra.split(",")]
+    for d in extra:
+        d = str(d or "").strip()
+        if d and d not in dirs:
+            dirs.append(d)
+    return dirs
+
+
+def target_in_library(cfg: Optional[Dict[str, Any]] = None) -> bool:
+    """落库目录是否已被某个字体库目录覆盖。
+
+    True 表示：assfonts 建索引时通过库目录的 -f 已经能扫到它，
+    **不需要**再把它单独作为 -f 关联（否则同一批字体被扫两遍）。
+    """
+    base = str(target_dir_base(cfg))
+    return any(subset_service.under_dir(base, d) for d in _configured_library_dirs(cfg))
+
+
+def subfolder_enabled(cfg: Optional[Dict[str, Any]] = None) -> bool:
+    """每次导入是否在落库目录下建 `<时间戳>-<任务号>` 子目录。
+
+    开启（默认）：每次导入一个独立子目录，便于按批次整体回滚/清理；
+    关闭：字体直接放进落库目录，同名靠序号避让（`_unique_name`），
+          适合「落库目录本身就是按番剧分好的目录」这种用法。
+    """
+    value = _fm(cfg).get("import_subfolder")
+    return True if value is None else bool(value)
+
+
 def target_dir_label(cfg: Optional[Dict[str, Any]]) -> str:
     if import_target_mode(cfg) == "primary":
         libs = subset_service.library_dirs(cfg)
@@ -454,15 +587,13 @@ def target_dir_label(cfg: Optional[Dict[str, Any]]) -> str:
 # ── 入库 ────────────────────────────────────────────────────
 
 def _target_dir(cfg: Optional[Dict[str, Any]], job_id: str) -> Path:
+    """本次入库的落盘目录：开子目录开关时按 <时间戳>-<任务号> 建，否则直接用落库根目录。"""
+    base = target_dir_base(cfg)
+    if not subfolder_enabled(cfg):
+        return base
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     short = job_id.split("-")[-1][:6] or job_id[:6]
-    folder = f"{stamp}-{short}"
-    if import_target_mode(cfg) == "primary":
-        libs = subset_service.library_dirs(cfg)
-        base = (Path(libs[0]) / "imported") if libs else imported_root(cfg)
-    else:
-        base = imported_root(cfg)
-    return base / folder
+    return base / f"{stamp}-{short}"
 
 
 def _move_into(src: Path, dest_dir: Path, name: str, used: set) -> Dict[str, Any]:
@@ -529,7 +660,8 @@ def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
             skipped.append({"name": name, "reason": "路径解析失败"})
             continue
         if extracted not in src_resolved.parents or not src_resolved.is_file():
-            skipped.append({"name": name, "reason": "源文件不存在或路径非法"})
+            skipped.append({"name": name,
+                            "reason": "源文件不存在（原始压缩包已清理，无法重新解压；请重新上传）"})
             continue
 
         is_conflict = name in conflict_by_name
@@ -576,6 +708,21 @@ def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
     # 一个都没入库（全是冲突/失败）时保留 extracted，方便换策略重试；
     # 真入库了才清理，避免把还没搬走的字体删掉。
     if committed:
+        # 报告里去掉已入库的条目：再点一次「入库」不会重复导入，
+        # 「详情」也只显示还没入库的部分（报告因此可以安全地反复使用）。
+        done = {str(c.get("name") or "") for c in committed}
+        report["new"] = [e for e in (report.get("new") or []) if str(e.get("name") or "") not in done]
+        report["conflict"] = [e for e in (report.get("conflict") or [])
+                              if str(e.get("name") or "") not in done]
+        report["counts"] = {
+            "new": len(report["new"]),
+            "duplicate": len(report.get("duplicate") or []),
+            "conflict": len(report["conflict"]),
+            "invalid": len(report.get("invalid") or []),
+        }
+        report["last_commit"] = {"at": _now(), "count": len(committed),
+                                 "target": str(target_dir)}
+        _write_json(paths["report"], report)
         _write_json(paths["commit"], {"committed_at": _now(), **result})
         shutil.rmtree(paths["extracted"], ignore_errors=True)
         shutil.rmtree(paths["probe"], ignore_errors=True)
@@ -616,10 +763,13 @@ def delete_job(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
 
 
 def cleanup_expired(cfg: Optional[Dict[str, Any]] = None,
-                    hours: int = JOB_TTL_HOURS) -> int:
-    """清理过期的导入工作区（默认 24 小时）。"""
+                    hours: Optional[int] = None) -> int:
+    """清理过期的导入工作区（默认取配置 import_job_ttl_hours，24 小时）。
+
+    返回删掉的 job 数。惰性调用点：每次上传压缩包时（见路由 /import/upload）。
+    """
     root = import_root(cfg)
-    cutoff = datetime.now() - timedelta(hours=max(1, int(hours)))
+    cutoff = datetime.now() - timedelta(hours=int(hours if hours is not None else ttl_hours(cfg)))
     removed = 0
     try:
         for d in root.iterdir():

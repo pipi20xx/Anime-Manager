@@ -464,6 +464,7 @@ function createFontManagerStore() {
     | { type: 'settings-library' }
     | { type: 'extra-library'; index: number }
     | { type: 'extra-font' }
+    | { type: 'imported' }
     | { type: 'output' }
 
   const showFolderBrowser = ref(false)
@@ -478,6 +479,8 @@ function createFontManagerStore() {
         return '选择额外字体库目录'
       case 'extra-font':
         return '选择额外字体目录 (-f)'
+      case 'imported':
+        return '选择导入字体落库目录'
       case 'output':
         return '选择输出目录 (-o)'
       default:
@@ -496,6 +499,8 @@ function createFontManagerStore() {
         return configForm.value.extra_library_dirs[target.index] || configForm.value.library_dir || '/'
       case 'extra-font':
         return configForm.value.extra_font_dir || configForm.value.library_dir || '/'
+      case 'imported':
+        return configForm.value.imported_dir || configForm.value.library_dir || '/'
       case 'output':
         return configForm.value.output_dir || configForm.value.workspace_dir || '/'
       default:
@@ -526,6 +531,10 @@ function createFontManagerStore() {
     }
     if (target.type === 'output') {
       configForm.value.output_dir = path
+      return
+    }
+    if (target.type === 'imported') {
+      configForm.value.imported_dir = path
       return
     }
     // 引导流程：保存字体库 → 自动重建索引 → 刷新
@@ -699,6 +708,7 @@ function createFontManagerStore() {
       if (res?.count) {
         success(
           `已入库 ${res.count} 个字体 → ${res.target || ''}` +
+            (res.reextracted ? '（已按需重新解压原始压缩包）' : '') +
             (res.index?.scheduled ? `，索引将在 ${res.index.delay}s 后合并重建` : ''),
         )
       } else {
@@ -743,6 +753,38 @@ function createFontManagerStore() {
       activeTab.value = 'import'
     } catch (e: any) {
       showError(e?.message || '读取报告失败')
+    }
+  }
+
+  /**
+   * 重新分析当前任务：重新解压原始压缩包 + 与「当前」字体库重新比对。
+   *
+   * 为什么需要：字体库在这一单之后可能变过（补了字体、删了重复、重建了索引），
+   * 旧报告就过期了；而且入库成功后会清掉解压目录，旧报告不能直接再入库。
+   */
+  async function reanalyzeImport() {
+    const jobId = importJobId.value
+    if (!jobId) {
+      warning('没有可重新分析的任务')
+      return
+    }
+    importUploading.value = true
+    try {
+      const res = await fontManagerApi.reanalyzeImport(jobId)
+      applyImportReport(res?.report || null)
+      const counts = res?.report?.counts || {}
+      if (res?.report?.success) {
+        success(
+          `重新分析完成：新增 ${counts.new || 0} / 重复 ${counts.duplicate || 0} / 冲突 ${counts.conflict || 0} / 无效 ${counts.invalid || 0}`,
+        )
+      } else {
+        showError(res?.report?.message || '重新分析未发现字体')
+      }
+      await fetchImportJobs()
+    } catch (e: any) {
+      showError(e?.message || '重新分析失败')
+    } finally {
+      importUploading.value = false
     }
   }
 
@@ -831,6 +873,11 @@ function createFontManagerStore() {
       // 内核
       binary_path: '',
       proxy_for_update: false,
+      // 压缩包导入
+      imported_dir: '',
+      import_subfolder: true,
+      import_job_ttl_hours: 24,
+      import_rebuild_debounce: 120,
     }
   }
 
@@ -918,6 +965,14 @@ function createFontManagerStore() {
         delete_source: form.delete_source,
         binary_path: form.binary_path.trim(),
         proxy_for_update: form.proxy_for_update,
+        // 压缩包导入：留空 = data/fonts/imported；TTL 1~720 小时；重建延迟 0~3600 秒
+        imported_dir: (form.imported_dir || '').trim(),
+        import_subfolder: form.import_subfolder !== false,
+        import_job_ttl_hours: Math.max(1, Math.min(720, Number(form.import_job_ttl_hours) || 24)),
+        import_rebuild_debounce: Math.max(
+          0,
+          Math.min(3600, Number(form.import_rebuild_debounce ?? 120) || 0),
+        ),
       }
       const res = await fontManagerApi.updateConfig(payload)
       const data: Partial<FontManagerConfig> = res?.data || {}
@@ -935,6 +990,8 @@ function createFontManagerStore() {
       success('设置已保存')
       showSettings.value = false
       await refreshAll()
+      // 导入落库目录 / TTL 可能刚改过，刷新导入页的能力信息
+      void fetchImportInfo()
     } catch (e: any) {
       showError(e?.message || '保存失败')
     } finally {
@@ -1026,6 +1083,7 @@ function createFontManagerStore() {
     commitImport,
     removeImportJob,
     loadImportJob,
+    reanalyzeImport,
     // Tab
     activeTab,
     tempTabBadge,

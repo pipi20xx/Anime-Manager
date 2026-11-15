@@ -149,7 +149,9 @@ class FontManagerConfig(BaseModel):
     imported_dir: Optional[str] = Field(None, description="导入字体的独立落库目录")
     replaced_dir: Optional[str] = Field(None, description="冲突替换时的旧文件备份目录")
     import_target: Optional[str] = Field(None, description="入库目标：separate / primary")
+    import_subfolder: Optional[bool] = Field(None, description="每次导入是否建 <时间戳>-<任务号> 子目录")
     import_rebuild_debounce: Optional[int] = Field(None, ge=0, le=3600, description="入库后重建索引的延迟秒数")
+    import_job_ttl_hours: Optional[int] = Field(None, ge=1, le=720, description="导入工作区保留时长（小时），下次上传时清理")
     import_max_archive_mb: Optional[int] = Field(None, ge=1, le=8192, description="单压缩包上限（MB）")
     import_max_extract_mb: Optional[int] = Field(None, ge=1, le=65536, description="解压总量上限（MB）")
     import_max_font_mb: Optional[int] = Field(None, ge=1, le=1024, description="单字体上限（MB）")
@@ -901,7 +903,11 @@ async def import_info():
         "limits": lim.as_dict(),
         "target": font_importer.target_dir_label(cfg),
         "target_mode": font_importer.import_target_mode(cfg),
+        "target_in_library": font_importer.target_in_library(cfg),
+        "import_subfolder": font_importer.subfolder_enabled(cfg),
         "rebuild_debounce": font_importer.debounce_seconds(cfg),
+        "job_ttl_hours": font_importer.ttl_hours(cfg),
+        "cleanup_trigger": "下次上传压缩包时清理过期工作区（不是定时任务）",
         "library_dirs": _library_dirs(cfg),
         "temp_font_dir": str(_temp_font_dir(cfg)),
     }}
@@ -997,12 +1003,41 @@ async def import_report(job_id: str):
     return {"status": "success", "data": report}
 
 
-@router.post("/import/{job_id}/commit", summary="把选中的字体入库")
-async def import_commit(job_id: str, payload: ImportCommitPayload):
-    """按报告选择落库；冲突按 policy 处理；入库后延迟合并重建索引。"""
+@router.post("/import/{job_id}/analyze", summary="重新分析该任务（重新解压 + 比对）")
+async def import_reanalyze(job_id: str):
+    """对已有任务重跑分析：重新解压原始压缩包、重新与当前字体库比对。
+
+    用途：字体库在这一单之后变过（补了字体 / 删了重复 / 重建了索引），
+    旧报告已经不准了 —— 重新分析会生成一份新报告，旧报告被覆盖。
+    """
     cfg = _cfg()
     if not font_importer.find_job(cfg, job_id):
         raise HTTPException(status_code=404, detail="导入任务不存在或已过期")
+    binary = _optional_binary(cfg)
+    report = await font_importer.analyze(cfg, binary, job_id)
+    counts = report.get("counts") or {}
+    log_audit("字体管家", "导入重新分析",
+              f"{job_id}：新增 {counts.get('new', 0)} / 重复 {counts.get('duplicate', 0)} / "
+              f"冲突 {counts.get('conflict', 0)} / 无效 {counts.get('invalid', 0)}")
+    if not report.get("success"):
+        return {"status": "failed", "job_id": job_id, "report": report}
+    return {"status": "success", "job_id": job_id, "report": report}
+
+
+@router.post("/import/{job_id}/commit", summary="把选中的字体入库")
+async def import_commit(job_id: str, payload: ImportCommitPayload):
+    """按报告选择落库；冲突按 policy 处理；入库后延迟合并重建索引。
+
+    从历史任务进来时 extracted/ 可能已被清理 —— 这里会先按需重新解压原始压缩包
+    （仍在 incoming/ 里），所以旧报告也能继续用；压缩包已被 TTL 清掉时才报错。
+    """
+    cfg = _cfg()
+    if not font_importer.find_job(cfg, job_id):
+        raise HTTPException(status_code=404, detail="导入任务不存在或已过期")
+    prepared = await font_importer.ensure_extracted(cfg, job_id)
+    if not prepared.get("ok"):
+        raise HTTPException(status_code=400, detail=prepared.get("message") or "无法准备待入库文件")
+
     result = await asyncio.to_thread(
         font_importer.commit, cfg, job_id,
         select=payload.files, policy=payload.policy)
@@ -1020,7 +1055,9 @@ async def import_commit(job_id: str, payload: ImportCommitPayload):
                   f"{job_id} 入库 {result['count']} 个字体 → {result.get('target', '')}"
                   + (f"；索引 {schedule.get('delay')}s 后合并重建"
                      if schedule.get("scheduled") else "；索引未调度"))
-    return {"status": "success", **result, "index": schedule}
+    return {"status": "success", **result, "index": schedule,
+            "reextracted": bool(prepared.get("reextracted")),
+            "prepare_message": prepared.get("message", "")}
 
 
 @router.delete("/import/{job_id}", summary="删除导入任务（含工作区）")

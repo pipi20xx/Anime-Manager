@@ -27,10 +27,10 @@ import {
 defineOptions({ name: 'FontManagerImportTab' })
 
 const {
-  success, showError, warning, confirm,
+  success, showError, warning, confirm, openSettings,
   importUploading, importCommitting, importJobId, importReport, importInfo,
   importJobs, importJobsLoading, importSelection,
-  uploadImportFiles, commitImport, removeImportJob, loadImportJob,
+  uploadImportFiles, commitImport, removeImportJob, loadImportJob, reanalyzeImport,
   fetchImportInfo, fetchImportJobs,
 } = useFontManager()
 
@@ -57,6 +57,9 @@ const allNewSelected = computed({
     importSelection.value = val ? newItems.value.map((i) => i.name) : []
   },
 })
+
+/** 工作区保留时长文案（配置项 import_job_ttl_hours，默认 24 小时） */
+const jobTtlText = computed(() => `${importInfo.value?.job_ttl_hours ?? 24} 小时`)
 
 /** 限额展示（MB → 人话） */
 const limitText = computed(() => {
@@ -242,8 +245,35 @@ void fetchImportInfo()
 
         <div v-if="importInfo" class="text-caption text-medium-emphasis mt-3">
           入库目标：<code>{{ importInfo.target }}</code>
-          （{{ importInfo.target_mode === 'separate' ? '独立目录' : '主库 imported 子目录' }}，
-          索引合并重建延迟 {{ importInfo.rebuild_debounce }}s）
+          <template v-if="importInfo.target_in_library">
+            （在字体库目录内，建索引时自动扫到，无需额外关联）
+          </template>
+          <template v-else>
+            （不在字体库内，已自动作为额外字体目录参与索引）
+          </template>
+          ，
+          <template v-if="importInfo.import_subfolder !== false">
+            每次导入建独立子目录
+          </template>
+          <template v-else>
+            直接放入该目录（不建子目录）
+          </template>
+          ，
+          索引合并重建延迟 {{ importInfo.rebuild_debounce }}s
+          <v-btn
+            size="x-small"
+            variant="text"
+            class="ml-1"
+            prepend-icon="mdi-cog-outline"
+            @click="openSettings()"
+          >
+            修改
+          </v-btn>
+        </div>
+        <div class="text-caption text-medium-emphasis mt-1">
+          导入工作区（原始压缩包、报告）保留 {{ jobTtlText }}：从<strong>最后一次操作</strong>算起
+          （上传/分析/入库都会刷新计时），到期后在下一次上传压缩包时自动清理；
+          已入库的字体不受影响，字体库里的文件也不会被删。
         </div>
       </v-card-text>
     </v-card>
@@ -267,6 +297,16 @@ void fetchImportInfo()
           hide-details
           style="max-width: 240px"
         />
+        <v-btn
+          size="small"
+          variant="tonal"
+          prepend-icon="mdi-refresh"
+          :loading="importUploading"
+          title="重新解压原始压缩包，并与当前字体库重新比对（覆盖旧报告）"
+          @click="reanalyzeImport()"
+        >
+          重新分析
+        </v-btn>
         <v-btn
           size="small"
           variant="tonal"
@@ -307,6 +347,12 @@ void fetchImportInfo()
             探测 face {{ importReport?.probe?.faces || 0 }} ·
             库内 face {{ importReport?.library?.faces || 0 }}
           </v-chip>
+        </div>
+
+        <div class="text-caption text-medium-emphasis mb-3">
+          报告是分析那一刻的快照：从「最近导入任务」进来再入库时，会按需重新解压原始压缩包
+          （压缩包随任务过期清理后才需要重新上传）；若字体库在这之后变过（补了字体 / 删了重复 / 重建了索引），
+          点「重新分析」生成新报告。已入库过的条目会自动从报告里移除，重复点入库不会重复导入。
         </div>
 
         <v-alert
@@ -543,11 +589,15 @@ void fetchImportInfo()
         </v-btn>
       </v-card-title>
       <v-card-text>
+        <div class="text-caption text-medium-emphasis mb-2">
+          任务记录保留 {{ jobTtlText }}（自最后一次操作起算），到期后在下一次上传压缩包时自动清理；
+          列表最多显示最近 20 条，已入库的字体与字体库文件都不受影响。
+        </div>
         <EmptyState
           v-if="!importJobs.length"
           icon="mdi-package-variant-closed"
           title="还没有导入记录"
-          description="上传一个字体压缩包，解压比对后任务会出现在这里（工作区保留 24 小时）"
+          description="上传一个字体压缩包，解压比对后任务会出现在这里"
         />
         <v-table v-else density="compact">
           <thead>

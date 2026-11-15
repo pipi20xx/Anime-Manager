@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import tempfile
+import time
 import unittest
 import zipfile
 from pathlib import Path
@@ -27,7 +29,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
-from font_core import archive, font_probe, importer  # noqa: E402
+from font_core import archive, font_probe, importer, index_store, subset_service  # noqa: E402
 
 
 # ── 工具 ────────────────────────────────────────────────────
@@ -439,6 +441,104 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(importer.import_target_mode(
             {"font_manager": {"import_target": "nonsense"}}), "separate")
 
+    def test_target_in_library(self):
+        """落库目录在字体库内 → 不需要额外关联；在库外 → 需要自动挂 -f。"""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "fonts"
+            (root / "imported").mkdir(parents=True)
+            inside = {"font_manager": {"library_dir": str(root),
+                                       "imported_dir": str(root / "imported")}}
+            self.assertTrue(importer.target_in_library(inside))
+            self.assertEqual(importer.target_dir_base(inside), root / "imported")
+
+            other = Path(td) / "elsewhere"
+            other.mkdir()
+            outside = {"font_manager": {"library_dir": str(root), "imported_dir": str(other)}}
+            self.assertFalse(importer.target_in_library(outside))
+            self.assertIn(str(other), subset_service.library_dirs(outside))
+
+    def test_subfolder_switch(self):
+        """import_subfolder 开关：开=每次一个子目录，关=直接放进落库根目录。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            base = importer.imported_root(cfg)
+            self.assertTrue(importer.subfolder_enabled(cfg))
+            d = importer._target_dir(cfg, "20261115-150151-2fa7e7")
+            self.assertEqual(d.parent, base)
+            self.assertIn("2fa7e7", d.name)          # 子目录名带任务号后缀
+
+            cfg["font_manager"]["import_subfolder"] = False
+            self.assertFalse(importer.subfolder_enabled(cfg))
+            self.assertEqual(importer._target_dir(cfg, "20261115-150151-2fa7e7"), base)
+
+    def test_commit_without_subfolder_lands_in_base(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            cfg["font_manager"]["import_subfolder"] = False
+            job = importer.create_job(cfg)
+            paths = importer.job_paths(cfg, job["job_id"])
+            (paths["extracted"] / "a.ttf").write_bytes(b"x")
+            paths["report"].write_text(json.dumps(
+                {"new": [{"name": "a.ttf", "size": 1, "faces": []}], "conflict": []},
+                ensure_ascii=False), encoding="utf-8")
+
+            res = importer.commit(cfg, job["job_id"])
+            self.assertEqual(res["count"], 1)
+            self.assertEqual(Path(res["target"]), importer.imported_root(cfg))
+            self.assertTrue((importer.imported_root(cfg) / "a.ttf").is_file())
+
+            # 再来一次同名不同内容 → 直接落在同一目录并用序号避让
+            job2 = importer.create_job(cfg)
+            p2 = importer.job_paths(cfg, job2["job_id"])
+            (p2["extracted"] / "a.ttf").write_bytes(b"y")
+            p2["report"].write_text(json.dumps(
+                {"new": [{"name": "a.ttf", "size": 1, "faces": []}], "conflict": []},
+                ensure_ascii=False), encoding="utf-8")
+            res2 = importer.commit(cfg, job2["job_id"])
+            self.assertEqual(res2["committed"][0]["stored"], "a_1.ttf")
+            self.assertEqual((importer.imported_root(cfg) / "a_1.ttf").read_bytes(), b"y")
+
+    def test_ttl_default_and_clamp(self):
+        self.assertEqual(importer.ttl_hours({}), 24)
+        self.assertEqual(importer.ttl_hours({"font_manager": {"import_job_ttl_hours": 6}}), 6)
+        self.assertEqual(importer.ttl_hours({"font_manager": {"import_job_ttl_hours": 0}}), 24)
+        self.assertEqual(importer.ttl_hours({"font_manager": {"import_job_ttl_hours": 99999}}), 720)
+        self.assertEqual(importer.ttl_hours({"font_manager": {"import_job_ttl_hours": "x"}}), 24)
+
+
+class TestJobTtl(unittest.TestCase):
+
+    def test_cleanup_only_removes_expired_jobs(self):
+        """过期判定用 job 根目录 mtime；只删过期的，未过期的保留。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            old = importer.create_job(cfg)
+            fresh = importer.create_job(cfg)
+            old_root = importer.job_paths(cfg, old["job_id"])["root"]
+            # 把「旧任务」的目录时间拨到 3 天前
+            past = time.time() - 3 * 24 * 3600
+            os.utime(old_root, (past, past))
+
+            removed = importer.cleanup_expired(cfg, hours=24)
+            self.assertEqual(removed, 1)
+            self.assertFalse(old_root.exists())
+            self.assertTrue(importer.job_paths(cfg, fresh["job_id"])["root"].exists())
+
+    def test_cleanup_respects_configured_ttl(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            cfg["font_manager"]["import_job_ttl_hours"] = 720      # 30 天
+            job = importer.create_job(cfg)
+            root = importer.job_paths(cfg, job["job_id"])["root"]
+            past = time.time() - 3 * 24 * 3600
+            os.utime(root, (past, past))
+            self.assertEqual(importer.cleanup_expired(cfg), 0)     # 3 天 < 30 天
+            self.assertEqual(importer.cleanup_expired(cfg, hours=1), 1)
+
 
 # ── 5. 端到端（无内核时降级）─────────────────────────────────
 
@@ -475,6 +575,83 @@ class TestAnalyzePipeline(unittest.TestCase):
             self.assertEqual((Path(res["target"]) / "new.ttf").read_bytes(), b"fresh-font-bytes")
             self.assertEqual((lib / "already.ttf").read_bytes(), b"old-font-bytes")
 
+    def test_recommit_after_commit_is_noop(self):
+        """入库成功后报告里的条目会被移除 → 再点一次入库不会重复导入。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            job = importer.create_job(cfg)
+            paths = importer.job_paths(cfg, job["job_id"])
+            _make_zip(paths["incoming"] / "Fonts.zip", [("a.ttf", b"aaa")])
+            report = _run(importer.analyze(cfg, td / "no-kernel", job["job_id"]))
+            self.assertEqual(report["counts"]["new"], 1)
+
+            first = importer.commit(cfg, job["job_id"])
+            self.assertEqual(first["count"], 1)
+            after = importer.get_report(cfg, job["job_id"])
+            self.assertEqual(after["new"], [])
+            self.assertEqual(after["counts"]["new"], 0)
+            self.assertEqual(after["last_commit"]["count"], 1)
+
+            second = importer.commit(cfg, job["job_id"])
+            self.assertEqual(second["count"], 0)
+            self.assertIn("没有需要入库", second["message"])
+
+    def test_ensure_extracted_restores_after_commit(self):
+        """入库后 extracted 被清理；从历史任务再入库前会按需重新解压。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            job = importer.create_job(cfg)
+            paths = importer.job_paths(cfg, job["job_id"])
+            _make_zip(paths["incoming"] / "Fonts.zip", [("b.ttf", b"bbb"), ("c.ttf", b"ccc")])
+            _run(importer.analyze(cfg, td / "no-kernel", job["job_id"]))
+
+            # 只入库一个，报告里还剩一个
+            first = importer.commit(cfg, job["job_id"], select=["b.ttf"])
+            self.assertEqual(first["count"], 1)
+            self.assertFalse(paths["extracted"].exists())          # 入库后已清理
+
+            prepared = _run(importer.ensure_extracted(cfg, job["job_id"]))
+            self.assertTrue(prepared["ok"], prepared.get("message"))
+            self.assertTrue(prepared["reextracted"])
+            self.assertTrue((paths["extracted"] / "c.ttf").is_file())
+
+            # 剩下的这次能正常入库（不会再报「源文件不存在」）
+            rest = importer.commit(cfg, job["job_id"])
+            self.assertEqual(rest["count"], 1)
+            self.assertEqual(rest["skipped"], [])
+
+    def test_ensure_extracted_fails_without_archive(self):
+        """报告还有待入库条目、但原始压缩包已随 TTL 清理 → 明确报错，而不是逐个说「源文件不存在」。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            job = importer.create_job(cfg)
+            paths = importer.job_paths(cfg, job["job_id"])
+            paths["report"].write_text(json.dumps({
+                "new": [{"name": "d.ttf", "size": 3, "faces": []}],
+                "conflict": [], "duplicate": [], "invalid": [],
+            }, ensure_ascii=False), encoding="utf-8")
+            # incoming/ 为空 = 压缩包已被清理
+            prepared = _run(importer.ensure_extracted(cfg, job["job_id"]))
+            self.assertFalse(prepared["ok"])
+            self.assertIn("原始压缩包", prepared["message"])
+
+    def test_analyze_is_repeatable(self):
+        """重复 analyze 会先清空 extracted，不会产生 _1 副本。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            job = importer.create_job(cfg)
+            paths = importer.job_paths(cfg, job["job_id"])
+            _make_zip(paths["incoming"] / "Fonts.zip", [("e.ttf", b"eee")])
+            _run(importer.analyze(cfg, td / "no-kernel", job["job_id"]))
+            report2 = _run(importer.analyze(cfg, td / "no-kernel", job["job_id"]))
+            self.assertEqual(report2["counts"]["new"], 1)
+            names = sorted(p.name for p in paths["extracted"].iterdir())
+            self.assertEqual(names, ["e.ttf"])
+
     def test_analyze_reports_no_fonts(self):
         with tempfile.TemporaryDirectory() as td:
             td = Path(td)
@@ -485,6 +662,53 @@ class TestAnalyzePipeline(unittest.TestCase):
             report = _run(importer.analyze(cfg, td / "no-kernel", job["job_id"]))
             self.assertFalse(report["success"])
             self.assertIn("没有", report["message"])
+
+
+# ── 5. 字体库目录与索引去重 ──────────────────────────────────
+
+class TestLibraryDirsAndDedupe(unittest.TestCase):
+
+    def test_imported_dir_skipped_when_inside_library(self):
+        """主库配成父目录时，不能再单独挂 imported 子目录（否则同一批字体被扫两遍）。"""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "fonts"
+            (root / "imported").mkdir(parents=True)
+            cfg = {"font_manager": {"library_dir": str(root),
+                                    "imported_dir": str(root / "imported")}}
+            dirs = subset_service.library_dirs(cfg)
+            self.assertEqual(dirs, [str(root)])
+
+    def test_imported_dir_appended_when_separate(self):
+        with tempfile.TemporaryDirectory() as td:
+            lib = Path(td) / "lib"
+            imp = Path(td) / "imported"
+            lib.mkdir()
+            imp.mkdir()
+            cfg = {"font_manager": {"library_dir": str(lib), "imported_dir": str(imp)}}
+            self.assertEqual(subset_service.library_dirs(cfg), [str(lib), str(imp)])
+
+    def test_imported_dir_absent_not_appended(self):
+        with tempfile.TemporaryDirectory() as td:
+            lib = Path(td) / "lib"
+            lib.mkdir()
+            cfg = {"font_manager": {"library_dir": str(lib),
+                                    "imported_dir": str(Path(td) / "nope")}}
+            self.assertEqual(subset_service.library_dirs(cfg), [str(lib)])
+
+    def test_normalize_faces_keeps_duplicates(self):
+        """索引是内核原始输出，展示层不折叠：同 path 出现两次就保留两条。
+
+        重复的病因在 `-f` 传了父子重叠目录（已在 library_dirs() 修），
+        不靠展示层遮掩，否则看不出「同一批字体被扫了两遍」。
+        """
+        data = [
+            {"families": ["A"], "psnames": ["A-Regular"], "path": "/x/a.ttf", "index": 0},
+            {"families": ["A"], "psnames": ["A-Regular"], "path": "/x/a.ttf", "index": 0},
+            {"families": ["B"], "psnames": ["B-Regular"], "path": "/x/b.ttf", "index": 0},
+        ]
+        faces = index_store._normalize_faces(data)
+        self.assertEqual(len(faces), 3)
+        self.assertEqual(sum(1 for f in faces if f["path"] == "/x/a.ttf"), 2)
 
 
 if __name__ == "__main__":

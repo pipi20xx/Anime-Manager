@@ -236,6 +236,10 @@ def _normalize_faces(data: Any) -> List[Dict[str, Any]]:
                             _push(face, str(path_key))
                 else:
                     _push(val, str(path_key))
+    # 刻意「不」按 path 去重：索引是内核的原始输出，展示层照实呈现。
+    # 同一文件出现多次只可能是 assfonts 自己扫了两遍（例如 -f 传了父子重叠目录），
+    # 那属于配置/调用侧的问题，应该在 library_dirs() 里修，而不是在这里折叠掉——
+    # 折叠会掩盖「同一批字体被扫两次」，也让人误以为索引与内核口径不一致。
     return faces
 
 
