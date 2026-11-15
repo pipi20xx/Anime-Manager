@@ -98,6 +98,13 @@ export default defineConfig(({ command, mode }) => {
     server: {
       host: '0.0.0.0',
       port: 5173,
+      // 前端源码经 SMB/NFS 挂载进容器时 inotify 不触发，HMR 会漏掉改动。
+      // 改用轮询监听，保证在 192.168.50.252 的 docker-compose.frontend-dev 场景下
+      // 修改 scss/ts/vue 后浏览器能自动刷新。
+      watch: {
+        usePolling: true,
+        interval: 300,
+      },
       proxy: {
         // 图片代理：不改 Origin，让浏览器原始 Host/Referer 保持一致，通过后端鉴权
         '/api/system/img': { target: 'http://apm-backend:8000' },
