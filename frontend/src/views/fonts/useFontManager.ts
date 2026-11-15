@@ -13,6 +13,9 @@ import type {
   FontJob,
   FontManagerStatus,
   FontModeOption,
+  FontImportInfo,
+  FontImportJobSummary,
+  FontImportReport,
   TempFontFile,
   TempFontState,
 } from '@/api/fontManager'
@@ -21,6 +24,9 @@ import { useNotification, useConfirm } from '@/composables'
 /** 字体文件后缀（上传字体库 / 临时字体时使用） */
 export const FONT_ACCEPT = '.ttf,.otf,.ttc,.otc,.woff,.woff2'
 export const FONT_RE = /\.(ttf|otf|ttc|otc|woff|woff2)$/i
+/** 压缩包后缀（字体包导入用；与后端 font_core.archive.ARCHIVE_SUFFIXES 对齐） */
+export const ARCHIVE_ACCEPT = '.zip,.rar,.7z,.tar,.tar.gz,.tgz,.tar.bz2,.tbz2,.tar.xz,.txz'
+export const ARCHIVE_RE = /\.(zip|rar|7z|tar|tar\.gz|tgz|tar\.bz2|tbz2|tar\.xz|txz)$/i
 /** 字幕后缀（上传任务用） */
 export const SUBTITLE_RE = /\.(ass|ssa)$/i
 /** 单次拖拽最多收集的文件数（防御性上限，避免拖入超大目录卡住） */
@@ -596,9 +602,153 @@ function createFontManagerStore() {
     }
   }
 
+  // ── 压缩包导入（字体包 → 解压 → 比对 → 入库）─────────────
+  // 分析（upload）与入库（commit）分离：先出报告让人看，勾选后再落库。
+  const importUploading = ref(false)
+  const importCommitting = ref(false)
+  const importJobId = ref('')
+  const importReport = ref<FontImportReport | null>(null)
+  const importInfo = ref<FontImportInfo | null>(null)
+  const importJobs = ref<FontImportJobSummary[]>([])
+  const importJobsLoading = ref(false)
+  /** 报告里被勾选待入库的文件名（默认全选「新增」） */
+  const importSelection = ref<string[]>([])
+
+  async function fetchImportInfo() {
+    try {
+      const res = await fontManagerApi.getImportInfo()
+      importInfo.value = res?.data || null
+    } catch {
+      // 仅用于展示限额/解压器可用性，失败不打扰用户
+      importInfo.value = null
+    }
+  }
+
+  async function fetchImportJobs() {
+    importJobsLoading.value = true
+    try {
+      const res = await fontManagerApi.listImportJobs()
+      importJobs.value = res?.data || []
+    } catch (e: any) {
+      showError(e?.message || '读取导入任务失败')
+    } finally {
+      importJobsLoading.value = false
+    }
+  }
+
+  /** 应用一份新报告：重置勾选（默认全选新增项） */
+  function applyImportReport(report: FontImportReport | null) {
+    importReport.value = report
+    importSelection.value = (report?.new || []).map((i) => i.name)
+  }
+
+  /** 上传压缩包（或字体）→ 解压 → 探测 → 比对；**不动字体库** */
+  async function uploadImportFiles(files: File[], emptyHint = '没有可导入的压缩包或字体') {
+    const valid = files.filter((f) => ARCHIVE_RE.test(f.name) || FONT_RE.test(f.name))
+    const ignored = files.length - valid.length
+    if (ignored > 0) {
+      warning(`已忽略 ${ignored} 个不支持的文件（仅支持压缩包与 ${FONT_ACCEPT}）`)
+    }
+    if (!valid.length) {
+      warning(emptyHint)
+      return
+    }
+
+    importUploading.value = true
+    try {
+      const res = await fontManagerApi.uploadImportFiles(valid)
+      importJobId.value = res?.job_id || ''
+      applyImportReport(res?.report || null)
+      const rejected = res?.rejected || []
+      if (rejected.length) {
+        showError(
+          `跳过 ${rejected.length} 个文件：${rejected.map((r) => `${r.filename}（${r.reason}）`).join('；')}`,
+        )
+      }
+      const counts = res?.report?.counts || {}
+      if (res?.report?.success) {
+        success(
+          `分析完成：新增 ${counts.new || 0} / 重复 ${counts.duplicate || 0} / 冲突 ${counts.conflict || 0} / 无效 ${counts.invalid || 0}`,
+        )
+      } else {
+        showError(res?.report?.message || '没有从上传内容里发现字体')
+      }
+      await fetchImportJobs()
+    } catch (e: any) {
+      showError(e?.message || '导入分析失败')
+    } finally {
+      importUploading.value = false
+    }
+  }
+
+  /** 把勾选的字体入库；冲突按 policy 处理（keep=保留库内） */
+  async function commitImport(policy: 'keep' | 'replace' | 'skip' = 'keep') {
+    const jobId = importJobId.value
+    if (!jobId) {
+      warning('请先上传压缩包并分析')
+      return
+    }
+    const selected = importSelection.value
+    if (!selected.length) {
+      warning('没有勾选任何字体')
+      return
+    }
+    importCommitting.value = true
+    try {
+      const res = await fontManagerApi.commitImport(jobId, selected, policy)
+      if (res?.count) {
+        success(
+          `已入库 ${res.count} 个字体 → ${res.target || ''}` +
+            (res.index?.scheduled ? `，索引将在 ${res.index.delay}s 后合并重建` : ''),
+        )
+      } else {
+        warning(res?.message || '没有入库任何字体')
+      }
+      const skipped = res?.skipped || []
+      if (skipped.length) {
+        showError(
+          `跳过 ${skipped.length} 个：${skipped.map((s) => `${s.name}（${s.reason}）`).join('；')}`,
+        )
+      }
+      applyImportReport(null)
+      importJobId.value = ''
+      await Promise.all([fetchImportJobs(), refreshAll()])
+    } catch (e: any) {
+      showError(e?.message || '入库失败')
+    } finally {
+      importCommitting.value = false
+    }
+  }
+
+  async function removeImportJob(jobId: string) {
+    try {
+      await fontManagerApi.deleteImportJob(jobId)
+      if (importJobId.value === jobId) {
+        importJobId.value = ''
+        applyImportReport(null)
+      }
+      success('已删除导入任务')
+      await fetchImportJobs()
+    } catch (e: any) {
+      showError(e?.message || '删除失败')
+    }
+  }
+
+  /** 载入某个历史导入任务的报告，回到预览态 */
+  async function loadImportJob(jobId: string) {
+    try {
+      const res = await fontManagerApi.getImportReport(jobId)
+      importJobId.value = jobId
+      applyImportReport(res?.data || null)
+      activeTab.value = 'import'
+    } catch (e: any) {
+      showError(e?.message || '读取报告失败')
+    }
+  }
+
   // ── 页面分区（Tab） ──
-  /** 当前 Tab：jobs=字幕任务 / library=字体库 / temp=临时字体 / history=处理历史 */
-  const activeTab = ref<'jobs' | 'library' | 'temp' | 'history'>('jobs')
+  /** 当前 Tab：jobs=字幕任务 / library=字体库 / temp=临时字体 / import=压缩包导入 / history=处理历史 */
+  const activeTab = ref<'jobs' | 'library' | 'temp' | 'import' | 'history'>('jobs')
   /** 临时字体池有字体时在 Tab 上给个提示徽标 */
   const tempTabBadge = computed(() => (tempFontActive.value ? tempFontFiles.value.length : 0))
   /** 从任务列表跳到临时字体 Tab（缺字体 → 去补字体） */
@@ -608,6 +758,10 @@ function createFontManagerStore() {
   /** 切到字体库 Tab 时拉取明细（首屏已预取，避免闪空表/过期数据） */
   watch(activeTab, (t) => {
     if (t === 'library') fetchFonts()
+    if (t === 'import') {
+      fetchImportInfo()
+      fetchImportJobs()
+    }
   })
 
   // ── 防抖搜索 ──
@@ -857,6 +1011,21 @@ function createFontManagerStore() {
     uploadSubtitles,
     tempUploading,
     uploadTempFontsFiles,
+    // 压缩包导入
+    importUploading,
+    importCommitting,
+    importJobId,
+    importReport,
+    importInfo,
+    importJobs,
+    importJobsLoading,
+    importSelection,
+    fetchImportInfo,
+    fetchImportJobs,
+    uploadImportFiles,
+    commitImport,
+    removeImportJob,
+    loadImportJob,
     // Tab
     activeTab,
     tempTabBadge,

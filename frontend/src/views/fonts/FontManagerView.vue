@@ -8,6 +8,7 @@
  * - JobsTab:       字幕任务（拖拽上传 + 工具条 + 任务列表）
  * - LibraryTab:    字体库（索引明细 + 搜索/筛选 + 上传入库）
  * - TempFontsTab:  临时字体（-f 补充源，不入库）
+ * - ImportTab:     压缩包导入（解压 → 比对 → 入库，落独立目录）
  * - FontSettingsDialog: 设置（字体来源 / 字幕处理 / 内核与网络）
  * - FontHelpDialog:     内核参数帮助（-h 原文 + 对照表）
  * Tab 通过 useDynamicHeaderTab 注册到顶栏，与订阅管理等页面一致。
@@ -21,6 +22,7 @@ import FontStatusBar from './FontStatusBar.vue'
 import JobsTab from './JobsTab.vue'
 import LibraryTab from './LibraryTab.vue'
 import TempFontsTab from './TempFontsTab.vue'
+import ImportTab from './ImportTab.vue'
 import HistoryTab from './HistoryTab.vue'
 import FontSettingsDialog from './FontSettingsDialog.vue'
 import FontHelpDialog from './FontHelpDialog.vue'
@@ -29,6 +31,7 @@ import {
   collectDroppedFiles,
   SUBTITLE_RE,
   FONT_RE,
+  ARCHIVE_RE,
   MAX_DROP_FILES,
 } from './useFontManager'
 
@@ -42,6 +45,7 @@ const {
   activeTab, fetchFonts, refreshAll,
   jobsUploading, uploadSubtitles,
   tempUploading, uploadTempFontsFiles,
+  importUploading, uploadImportFiles,
   openSettings, openFolderPicker,
   showFolderBrowser, folderTitle, folderInitial, onFolderSelected,
 } = fm
@@ -94,25 +98,31 @@ async function onDocDrop(e: DragEvent) {
 
     const subtitles = files.filter((f) => SUBTITLE_RE.test(f.name))
     const fonts = files.filter((f) => FONT_RE.test(f.name))
-    const others = files.length - subtitles.length - fonts.length
+    const archives = files.filter((f) => ARCHIVE_RE.test(f.name))
+    const others = files.length - subtitles.length - fonts.length - archives.length
 
     if (collected?.truncated) {
       warning(`拖入的文件过多，仅收集前 ${MAX_DROP_FILES} 个文件`)
     }
     if (others > 0) {
-      warning(`已忽略 ${others} 个不支持的文件（仅支持 .ass/.ssa 字幕与常见字体格式）`)
+      warning(`已忽略 ${others} 个不支持的文件（支持 .ass/.ssa 字幕、字体与字体压缩包）`)
     }
 
     if (subtitles.length) {
       activeTab.value = 'jobs'
       await uploadSubtitles(subtitles)
     }
+    if (archives.length) {
+      // 压缩包走「导入」Tab：解压 + 比对 + 入库是独立的两步流程
+      activeTab.value = 'import'
+      await uploadImportFiles(archives)
+    }
     if (fonts.length) {
       activeTab.value = 'temp'
       await uploadTempFontsFiles(fonts)
     }
     if (!files.length) {
-      warning('没有找到可处理的文件（支持 .ass/.ssa 字幕与字体文件）')
+      warning('没有找到可处理的文件（支持 .ass/.ssa 字幕、字体与字体压缩包）')
     }
   } catch (err: any) {
     showError(err?.message || '读取拖入内容失败')
@@ -145,6 +155,7 @@ registerHeaderTab({
     { title: '字幕任务', tab: 'jobs' },
     { title: '字体库', tab: 'library' },
     { title: '临时字体', tab: 'temp' },
+    { title: '压缩包导入', tab: 'import' },
     { title: '处理历史', tab: 'history' },
   ],
   modelValue: activeTab,
@@ -203,6 +214,9 @@ async function pickLibraryFolder(path: string) {
       </v-window-item>
       <v-window-item value="temp">
         <TempFontsTab />
+      </v-window-item>
+      <v-window-item value="import">
+        <ImportTab />
       </v-window-item>
       <v-window-item value="history">
         <HistoryTab />

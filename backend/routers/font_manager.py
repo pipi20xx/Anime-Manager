@@ -23,6 +23,12 @@
     GET    /jobs/download-all   打包下载全部成品
     GET    /update/check        检查 assfonts 上游更新
     POST   /update/apply        应用更新
+    GET    /import/info         压缩包导入：支持格式 / 可用解压器 / 限额 / 落库目标
+    GET    /import/jobs         导入任务列表
+    POST   /import/upload       上传压缩包 → 解压 → 比对（**不入库**）
+    GET    /import/{id}         导入任务详情（比对报告）
+    POST   /import/{id}/commit  把选中的字体入库（冲突按策略处理）+ 延迟合并重建索引
+    DELETE /import/{id}         删除导入任务（含工作区）
 """
 from __future__ import annotations
 
@@ -51,6 +57,8 @@ from database import db
 from event_broadcaster import EventBroadcaster
 from font_core import ass_parser, index_store, runner
 from font_core import subset_service
+from font_core import archive as font_archive
+from font_core import importer as font_importer
 from font_core import binary as af_binary
 from logger import log_audit
 from models import FontSubtitleJob
@@ -136,6 +144,17 @@ class FontManagerConfig(BaseModel):
     # 内核
     binary_path: Optional[str] = Field(None, description="自定义 assfonts 路径")
     proxy_for_update: Optional[bool] = Field(None, description="更新时走系统代理")
+    # 压缩包导入
+    import_dir: Optional[str] = Field(None, description="导入工作区目录")
+    imported_dir: Optional[str] = Field(None, description="导入字体的独立落库目录")
+    replaced_dir: Optional[str] = Field(None, description="冲突替换时的旧文件备份目录")
+    import_target: Optional[str] = Field(None, description="入库目标：separate / primary")
+    import_rebuild_debounce: Optional[int] = Field(None, ge=0, le=3600, description="入库后重建索引的延迟秒数")
+    import_max_archive_mb: Optional[int] = Field(None, ge=1, le=8192, description="单压缩包上限（MB）")
+    import_max_extract_mb: Optional[int] = Field(None, ge=1, le=65536, description="解压总量上限（MB）")
+    import_max_font_mb: Optional[int] = Field(None, ge=1, le=1024, description="单字体上限（MB）")
+    import_max_entries: Optional[int] = Field(None, ge=1, le=100000, description="单包条目数上限")
+    import_max_fonts: Optional[int] = Field(None, ge=1, le=20000, description="单包字体数上限")
 
 
 @router.get("/config", summary="读取字体管家配置")
@@ -820,6 +839,196 @@ async def upload_temp_fonts(files: List[UploadFile] = File(...)):
     return {"status": "success", "data": saved, "skipped": skipped,
             "temp": {"dir": str(pool), "count": len(_list_temp_fonts(cfg)),
                      "files": _list_temp_fonts(cfg), "index": index_info, "active": True}}
+
+
+# ── 压缩包导入（上传 → 解压 → 比对 → 入库）────────────────────
+#
+# 流程与职责划分：
+#   1) POST /import/upload        上传压缩包/字体 → 建 job → 解压 → assfonts 探测
+#                                 → 与主库比对 → 出报告（**不动字体库**）
+#   2) POST /import/{job}/commit  按报告里的选择落库到独立目录 → 延迟合并重建索引
+#   3) 解压/探测/比对的具体实现在 font_core.archive / font_probe / importer
+
+class ImportCommitPayload(BaseModel):
+    files: Optional[List[str]] = Field(None, description="要入库的文件名（留空=全部新增）")
+    policy: str = Field("keep", description="冲突处理：keep 保留库内 / replace 备份后替换 / skip 跳过")
+
+
+def _upload_name(name: str) -> str:
+    """上传文件名清洗：只取 basename，去掉危险字符，保留扩展名。"""
+    raw = str(name or "").replace("\\", "/").split("/")[-1]
+    base = _UNSAFE_RE.sub("_", raw).strip().strip(".")
+    return base[:180]
+
+
+def _incoming_path(paths: Dict[str, Path], name: str) -> Path:
+    """job 的 incoming 目录里取一个不冲突的文件名。"""
+    dest = paths["incoming"]
+    dest.mkdir(parents=True, exist_ok=True)
+    stem, ext = os.path.splitext(name)
+    candidate = dest / name
+    i = 1
+    while candidate.exists():
+        candidate = dest / f"{stem}_{i}{ext}"
+        i += 1
+        if i > 999:
+            candidate = dest / f"{stem}_{uuid.uuid4().hex[:8]}{ext}"
+            break
+    return candidate
+
+
+async def _index_state(state: str, payload: Dict[str, Any]) -> None:
+    """索引重建状态广播（前端复用既有的 font_index 事件）。"""
+    await _broadcast("font_index", {"state": state, "source": "import", **(payload or {})})
+
+
+def _optional_binary(cfg: Dict[str, Any]) -> Path:
+    """拿内核路径；没有内核不报错 —— 分析会降级为「同名 + 哈希」比对。"""
+    try:
+        return _require_binary(cfg)
+    except HTTPException:
+        return Path("__assfonts_unavailable__")
+
+
+@router.get("/import/info", summary="压缩包导入：支持格式 / 限额 / 入库目标")
+async def import_info():
+    cfg = _cfg()
+    lim = font_importer.limits(cfg)
+    return {"status": "success", "data": {
+        "formats": list(font_archive.ARCHIVE_SUFFIXES),
+        "font_formats": list(ass_parser.FONT_EXTENSIONS),
+        "extractors": font_archive.available_extractors(),
+        "limits": lim.as_dict(),
+        "target": font_importer.target_dir_label(cfg),
+        "target_mode": font_importer.import_target_mode(cfg),
+        "rebuild_debounce": font_importer.debounce_seconds(cfg),
+        "library_dirs": _library_dirs(cfg),
+        "temp_font_dir": str(_temp_font_dir(cfg)),
+    }}
+
+
+@router.get("/import/jobs", summary="导入任务列表")
+async def import_jobs(limit: int = Query(20, ge=1, le=100)):
+    return {"status": "success", "data": font_importer.list_jobs(_cfg(), limit=limit)}
+
+
+@router.post("/import/upload", summary="上传压缩包并分析（不入库）")
+async def import_upload(files: List[UploadFile] = File(...)):
+    """上传压缩包（rar/7z/zip/tar…）或单个字体，解压并与字体库比对后返回报告。
+
+    - 只解字体文件，其它条目丢弃并记账；
+    - 与主库比对得到 新增/重复/冲突/无效 四类；
+    - **本步不动字体库**，入库要再调 /import/{job_id}/commit。
+    """
+    cfg = _cfg()
+    lim = font_importer.limits(cfg)
+    binary = _optional_binary(cfg)
+    # 顺手清理过期工作区（默认 24h），避免 import/ 目录无限增长
+    try:
+        await asyncio.to_thread(font_importer.cleanup_expired, cfg)
+    except Exception:
+        pass
+    job = font_importer.create_job(cfg)
+    job_id = job["job_id"]
+    paths = font_importer.job_paths(cfg, job_id)
+
+    saved: List[Dict[str, Any]] = []
+    rejected: List[Dict[str, str]] = []
+    for up in files:
+        name = _upload_name(up.filename or "")
+        if not name:
+            rejected.append({"filename": up.filename or "", "reason": "文件名为空"})
+            continue
+        is_arch = font_archive.is_archive_name(name)
+        is_font = ass_parser.is_font_file(name)
+        if not is_arch and not is_font:
+            rejected.append({"filename": name,
+                             "reason": "既不是压缩包也不是字体文件（支持 "
+                                       + " / ".join(font_archive.ARCHIVE_SUFFIXES) + "）"})
+            continue
+        cap = lim.max_archive_bytes if is_arch else min(lim.max_font_bytes, MAX_FONT_BYTES)
+        target = _incoming_path(paths, name)
+        total = 0
+        try:
+            with open(target, "wb") as fh:
+                while True:
+                    chunk = await up.read(1024 * 1024)     # 分块落盘，防大包吃内存
+                    if not chunk:
+                        break
+                    total += len(chunk)
+                    if total > cap:
+                        raise ValueError(f"超过大小上限（{cap // 1024 // 1024}MB）")
+                    fh.write(chunk)
+            if total <= 0:
+                raise ValueError("文件为空")
+        except Exception as e:
+            try:
+                target.unlink(missing_ok=True)
+            except OSError:
+                pass
+            rejected.append({"filename": name, "reason": str(e)})
+            continue
+        saved.append({"filename": name, "stored": target.name, "size": total,
+                      "kind": "archive" if is_arch else "font"})
+
+    if not saved:
+        font_importer.delete_job(cfg, job_id)
+        reason = rejected[0]["reason"] if rejected else "没有可处理的上传内容"
+        raise HTTPException(status_code=400, detail=reason)
+
+    report = await font_importer.analyze(cfg, binary, job_id)
+    counts = (report.get("counts") or {})
+    log_audit("字体管家", "导入分析",
+              f"{job_id}：{len(saved)} 个上传，新增 {counts.get('new', 0)} / "
+              f"重复 {counts.get('duplicate', 0)} / 冲突 {counts.get('conflict', 0)} / "
+              f"无效 {counts.get('invalid', 0)}")
+    if not report.get("success"):
+        return {"status": "failed", "job_id": job_id, "uploaded": saved,
+                "rejected": rejected, "report": report}
+    return {"status": "success", "job_id": job_id, "uploaded": saved,
+            "rejected": rejected, "report": report}
+
+
+@router.get("/import/{job_id}", summary="导入任务详情（比对报告）")
+async def import_report(job_id: str):
+    report = font_importer.get_report(_cfg(), job_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="导入任务不存在或尚未分析")
+    return {"status": "success", "data": report}
+
+
+@router.post("/import/{job_id}/commit", summary="把选中的字体入库")
+async def import_commit(job_id: str, payload: ImportCommitPayload):
+    """按报告选择落库；冲突按 policy 处理；入库后延迟合并重建索引。"""
+    cfg = _cfg()
+    if not font_importer.find_job(cfg, job_id):
+        raise HTTPException(status_code=404, detail="导入任务不存在或已过期")
+    result = await asyncio.to_thread(
+        font_importer.commit, cfg, job_id,
+        select=payload.files, policy=payload.policy)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message") or "入库失败")
+
+    schedule: Dict[str, Any] = {"scheduled": False}
+    if result.get("count"):
+        binary = _optional_binary(cfg)
+        if binary.is_file():
+            schedule = font_importer.schedule_rebuild(cfg, binary, on_state=_index_state)
+        else:
+            schedule = {"scheduled": False, "message": "未找到 assfonts 内核，跳过索引重建（装好内核后请手动重建）"}
+        log_audit("字体管家", "导入入库",
+                  f"{job_id} 入库 {result['count']} 个字体 → {result.get('target', '')}"
+                  + (f"；索引 {schedule.get('delay')}s 后合并重建"
+                     if schedule.get("scheduled") else "；索引未调度"))
+    return {"status": "success", **result, "index": schedule}
+
+
+@router.delete("/import/{job_id}", summary="删除导入任务（含工作区）")
+async def import_delete(job_id: str):
+    result = font_importer.delete_job(_cfg(), job_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("message") or "删除失败")
+    return {"status": "success", "message": result.get("message", "")}
 
 
 @router.get("/fonts/temp", summary="临时字体列表")

@@ -404,6 +404,108 @@ export function jobDownloadName(job: FontJob, kind: FontDownloadKind = 'main'): 
     : `${subtitleStem(job.filename)}.assfonts.ass`
 }
 
+// ── 压缩包导入（字体包 → 解压 → 比对 → 入库）──────────────
+
+/** 一个待入库字体里的 face 摘要（来自 assfonts 探测索引） */
+export interface FontImportFace {
+  family: string
+  psname: string
+  weight?: number | string | null
+  slant?: number | string | null
+  face_index?: number
+}
+
+/** 比对报告里的单个字体条目 */
+export interface FontImportItem {
+  /** 解压后的落盘名（重名会加 _1 后缀），也是入库时提交的标识 */
+  name: string
+  /** 压缩包内的原始路径 */
+  source?: string
+  size: number
+  faces?: FontImportFace[]
+  reason?: string
+  /** duplicate：库里已存在的文件路径 */
+  existing?: string
+  existing_family?: string
+  /** conflict：逐 face 的冲突明细 */
+  conflicts?: Array<{
+    face?: FontImportFace
+    existing?: Array<{ path: string; family?: string; psname?: string }>
+    reason?: string
+  }>
+  note?: string
+}
+
+export interface FontImportArchive {
+  name: string
+  format?: string
+  success?: boolean
+  message?: string
+  extractor?: string
+  fonts?: number
+  skipped?: number
+}
+
+export interface FontImportReport {
+  success: boolean
+  job_id?: string
+  message?: string
+  created_at?: string
+  archives?: FontImportArchive[]
+  skipped?: Array<{ archive?: string; name: string; reason: string }>
+  skipped_count?: number
+  probe?: { success: boolean; faces: number; message?: string }
+  library?: { index_available: boolean; faces: number; dirs?: string[]; error?: string }
+  probe_error?: string
+  counts?: { new?: number; duplicate?: number; conflict?: number; invalid?: number }
+  new?: FontImportItem[]
+  duplicate?: FontImportItem[]
+  conflict?: FontImportItem[]
+  invalid?: FontImportItem[]
+  target?: string
+}
+
+export interface FontImportCommitResult {
+  status?: string
+  success: boolean
+  job_id?: string
+  target?: string
+  count: number
+  committed?: Array<{
+    name: string
+    stored: string
+    size: number
+    faces?: FontImportFace[]
+    replaced?: boolean
+  }>
+  skipped?: Array<{ name: string; reason: string }>
+  replaced_backup?: string
+  message?: string
+  index?: { scheduled: boolean; delay?: number; message?: string }
+}
+
+export interface FontImportJobSummary {
+  job_id: string
+  created_at?: string
+  archives?: string[]
+  counts?: Record<string, number>
+  analyzed?: boolean
+  committed?: boolean
+  committed_count?: number
+}
+
+export interface FontImportInfo {
+  formats: string[]
+  font_formats: string[]
+  extractors: Array<{ tool: string; kind: string; path?: string; formats?: string[] }>
+  limits: Record<string, number>
+  target: string
+  target_mode: string
+  rebuild_debounce: number
+  library_dirs: string[]
+  temp_font_dir: string
+}
+
 // ── API 调用 ──────────────────────────────────────────────
 
 export const fontManagerApi = {
@@ -616,5 +718,50 @@ export const fontManagerApi = {
   clearSubsetHistory: (keepUnresolved = true) =>
     api.post<{ status?: string; removed: number }>(
       `${BASE}/history/clear?keep_unresolved=${keepUnresolved}`,
+    ),
+
+  // ── 压缩包导入（字体包 → 解压 → 比对 → 入库）─────────────
+
+  /** 导入能力信息：支持格式 / 可用解压器 / 限额 / 落库目标 */
+  getImportInfo: () => api.get<{ status?: string; data: FontImportInfo }>(`${BASE}/import/info`),
+
+  /** 上传压缩包（或单个字体）并分析，**不入库** */
+  uploadImportFiles: (files: File[]) => {
+    const formData = new FormData()
+    files.forEach((f) => formData.append('files', f))
+    return api.post<{
+      status?: string
+      job_id?: string
+      uploaded?: Array<{ filename: string; stored: string; size: number; kind: string }>
+      rejected?: Array<{ filename: string; reason: string }>
+      report: FontImportReport
+    }>(`${BASE}/import/upload`, formData)
+  },
+
+  /** 读取某个导入任务的比对报告 */
+  getImportReport: (jobId: string) =>
+    api.get<{ status?: string; data: FontImportReport }>(
+      `${BASE}/import/${encodeURIComponent(jobId)}`,
+    ),
+
+  /** 把选中的字体入库（files 留空=全部新增；policy=keep/replace/skip） */
+  commitImport: (
+    jobId: string,
+    files: string[] | null,
+    policy: 'keep' | 'replace' | 'skip' = 'keep',
+  ) =>
+    api.post<FontImportCommitResult>(`${BASE}/import/${encodeURIComponent(jobId)}/commit`, {
+      files,
+      policy,
+    }),
+
+  /** 最近的导入任务 */
+  listImportJobs: (limit = 20) =>
+    api.get<{ status?: string; data: FontImportJobSummary[] }>(`${BASE}/import/jobs?limit=${limit}`),
+
+  /** 删除导入任务（含工作区） */
+  deleteImportJob: (jobId: string) =>
+    api.delete<{ status?: string; message?: string }>(
+      `${BASE}/import/${encodeURIComponent(jobId)}`,
     ),
 }

@@ -203,6 +203,17 @@ class ConfigManager:
             # ── 字体上传 ──
             "temp_font_dir": "data/fonts/temp_fonts",  # 临时字体池（只作为处理时的 -f 补充源，不进字体库）
             "auto_rebuild_after_upload": True,  # 上传字体到字体库后自动重建索引
+            # ── 压缩包导入（字体包 → 解压 → 比对 → 入库）──
+            "import_dir": "data/fonts/import",           # 导入工作区（解压/探测/报告，不属于字体库）
+            "imported_dir": "data/fonts/imported",       # 导入字体的独立落库目录（自动进 -f）
+            "replaced_dir": "data/fonts/replaced",       # 冲突替换时旧文件的备份目录（不直接删）
+            "import_target": "separate",                 # separate=独立目录 / primary=主库的 imported 子目录
+            "import_rebuild_debounce": 120,              # 入库后延迟合并重建索引的秒数（0=立即）
+            "import_max_archive_mb": 512,                # 单压缩包上限（MB）
+            "import_max_extract_mb": 2048,               # 单包解压总量上限（MB）
+            "import_max_font_mb": 256,                   # 单字体上限（MB）
+            "import_max_entries": 5000,                  # 单包条目数上限
+            "import_max_fonts": 2000,                    # 单包字体数上限
             # ── 内核 ──
             "binary_path": "",                 # 自定义 assfonts 路径（留空=自动：data/bin > 镜像内置）
             "proxy_for_update": True           # 检查/下载内核更新时是否走系统 http_proxy

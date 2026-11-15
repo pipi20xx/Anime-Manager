@@ -55,7 +55,7 @@ def _fm(cfg: Optional[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def library_dirs(cfg: Optional[Dict[str, Any]]) -> List[str]:
-    """字体库目录列表（主库 + 额外库），去空去重。"""
+    """字体库目录列表（主库 + 额外库 + 网页导入目录），去空去重。"""
     fm = _fm(cfg)
     dirs: List[str] = []
     main = str(fm.get("library_dir") or "").strip()
@@ -68,6 +68,17 @@ def library_dirs(cfg: Optional[Dict[str, Any]]) -> List[str]:
         d = str(d or "").strip()
         if d and d not in dirs:
             dirs.append(d)
+    # 网页「压缩包/字体上传」导入的字体落在独立目录，也要进索引、也要能被 -f 找到。
+    # 仅在目录已存在时追加：assfonts 的 -f 遇到不存在的目录会直接报错，而
+    # 「还没导入过任何字体」是常态。
+    if str(fm.get("import_target") or "separate").strip().lower() != "primary":
+        imported = str(fm.get("imported_dir") or "data/fonts/imported").strip()
+        if imported and imported not in dirs:
+            try:
+                if Path(imported).is_dir():
+                    dirs.append(imported)
+            except OSError:
+                pass
     return dirs
 
 

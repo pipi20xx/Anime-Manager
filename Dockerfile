@@ -36,6 +36,9 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
+    unar \
+    p7zip-full \
+    libarchive-tools \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt .
