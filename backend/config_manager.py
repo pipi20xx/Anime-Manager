@@ -212,6 +212,10 @@ class ConfigManager:
             "import_default_policy": "keep",             # 默认冲突策略：keep 保留库内 / replace 备份后替换 / skip 跳过
             "import_rebuild_debounce": 120,              # 入库后延迟合并重建索引的秒数（0=立即）
             "import_job_ttl_hours": 24,                  # 导入工作区（最近导入任务）保留时长（小时），下次上传时清理
+            # ── 字体包自动采集（跟随整理流程投递 + 异步处理；与子集化无关联）──
+            "collect_enabled": False,                    # 是否启用（整理时识别到字体包就投递）
+            "collect_mode": "auto_commit",               # auto_commit=自动入库 new / report_only=只出报告
+            "collect_cleanup": False,                    # 采集成功后删除原压缩包（默认保留给 qB 做种）
             "import_max_archive_mb": 512,                # 单压缩包上限（MB）
             "import_max_extract_mb": 2048,               # 单包解压总量上限（MB）
             "import_max_font_mb": 256,                   # 单字体上限（MB）

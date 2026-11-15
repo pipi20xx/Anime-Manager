@@ -921,6 +921,10 @@ function createFontManagerStore() {
       import_default_policy: 'keep',
       import_job_ttl_hours: 24,
       import_rebuild_debounce: 120,
+      // 字体包自动采集（跟随整理流程投递 + 异步处理）
+      collect_enabled: false,
+      collect_mode: 'auto_commit',
+      collect_cleanup: false,
     }
   }
 
@@ -1019,6 +1023,10 @@ function createFontManagerStore() {
           0,
           Math.min(3600, Number(form.import_rebuild_debounce ?? 120) || 0),
         ),
+        // 自动采集（跟随整理流程投递 + 异步处理）
+        collect_enabled: !!form.collect_enabled,
+        collect_mode: form.collect_mode === 'report_only' ? 'report_only' : 'auto_commit',
+        collect_cleanup: !!form.collect_cleanup,
       }
       const res = await fontManagerApi.updateConfig(payload)
       const data: Partial<FontManagerConfig> = res?.data || {}

@@ -265,6 +265,14 @@ void fetchImportInfo()
           </div>
         </div>
 
+        <div v-if="importInfo?.collect?.enabled" class="text-caption text-medium-emphasis mt-1">
+          自动采集：已启用（整理时识别到字体包即异步投递）
+          · 模式 {{ importInfo.collect.mode === 'report_only' ? '只出报告' : '自动入库新增' }}
+          <span v-if="importInfo.collect.queued"> · 队列 {{ importInfo.collect.queued }}</span>
+          <span v-if="importInfo.collect.last_submit"> · 上次投递 {{ importInfo.collect.last_submit }}</span>
+          <span v-if="importInfo.collect.processed"> · 已处理 {{ importInfo.collect.processed }} 个包</span>
+        </div>
+
         <div v-if="importInfo" class="text-caption text-medium-emphasis mt-3">
           入库目标：<code>{{ importInfo.target }}</code>
           <template v-if="importInfo.target_in_library">

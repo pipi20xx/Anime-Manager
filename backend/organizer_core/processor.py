@@ -422,6 +422,14 @@ class FileProcessor:
                         f_ext = os.path.splitext(f)[1].lower()
                         if f_ext in FileProcessor.RELATED_EXTS and f.startswith(v_base):
                             related_files.append(f)
+                    # 字体包采集：复用这次目录列举的结果，命中就丢给字体管家（异步、不阻塞）。
+                    # 只做名字判断与投递，不认识"哪一集"，与子集化无关；云源跳过。
+                    try:
+                        from font_core.collector import submit_font_archives
+                        submit_font_archives(source_via, root, all_files_in_dir,
+                                             task_id=str(task.get("id") or ""))
+                    except Exception:
+                        pass
                 except Exception: pass # 目录可能不存在或无法读取
             else:
                 # 云盘源：通过 CD2 gRPC 枚举视频同目录的关联文件，规则与本地一致

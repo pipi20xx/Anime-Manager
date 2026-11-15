@@ -553,6 +553,11 @@ async def shutdown_event():
         await season_split_store.stop_watcher()
     except Exception:
         pass
+    try:
+        from font_core.collector import stop_worker
+        await stop_worker()
+    except Exception:
+        pass
     MonitorManager.stop_all()
     log_audit("系统", "停止", "服务已安全关闭。")
 

@@ -151,6 +151,12 @@ export interface FontManagerConfig {
   import_job_ttl_hours?: number
   /** 入库后索引合并重建的延迟秒数 */
   import_rebuild_debounce?: number
+  // 字体包自动采集（跟随整理流程投递 + 异步处理）
+  collect_enabled?: boolean
+  /** auto_commit=自动入库 new / report_only=只出报告 */
+  collect_mode?: 'auto_commit' | 'report_only'
+  /** 采集成功后删除原压缩包 */
+  collect_cleanup?: boolean
 }
 
 /** 索引重建结果（POST /fonts/upload 的 index 字段；未自动重建时为空对象） */
@@ -543,6 +549,18 @@ export interface FontImportInfo {
   cleanup_trigger?: string
   library_dirs: string[]
   temp_font_dir: string
+  /** 自动采集（跟随整理流程投递 + 异步处理）状态 */
+  collect?: {
+    enabled: boolean
+    mode: 'auto_commit' | 'report_only'
+    cleanup: boolean
+    last_submit?: string
+    last_result?: Record<string, unknown>
+    processed?: number
+    pending?: number
+    queued?: number
+    worker_running?: boolean
+  }
 }
 
 // ── API 调用 ──────────────────────────────────────────────

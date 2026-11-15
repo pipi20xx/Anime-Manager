@@ -107,7 +107,69 @@ const importedInsideLibrary = computed(() => {
             添加目录
           </v-btn>
 
-          <!-- ── 压缩包导入 ── -->
+          <!-- ── 字体包自动采集（跟随整理流程投递） ── -->
+          <v-divider class="my-3" />
+          <div class="section-title mb-2">
+            <v-icon size="16" color="primary">mdi-folder-search-outline</v-icon>
+            字体包自动采集
+          </div>
+          <div class="switch-row mb-3">
+            <v-switch
+              :model-value="configForm.collect_enabled === true"
+              color="primary"
+              hide-details
+              density="compact"
+              @update:model-value="(v: any) => (configForm.collect_enabled = !!v)"
+            />
+            <div>
+              <div class="switch-label">整理时识别到字体包就交给字体管家</div>
+              <div class="text-caption text-medium-emphasis">
+                复用整理流程已列出的目录结果，命中「字体包」就异步投递；不做轮询，也不关心它属于哪一集，与字幕子集化无关。
+                <br />
+                判定规则：后缀是 <code>zip / rar / 7z / tar(.gz/.bz2/.xz)</code>
+                且文件名含 <code>font</code>、<code>fonts</code> 或 <code>字体</code>（按词边界匹配，
+                <code>fzlantinghei.zip</code> 这类不会误命中）；只看本次整理任务所在目录这一层，不递归子目录；
+                云盘源（CD2）不采集。
+              </div>
+            </div>
+          </div>
+          <v-row density="compact" class="mb-1">
+            <v-col cols="12">
+              <v-select
+                :model-value="configForm.collect_mode || 'auto_commit'"
+                :items="[
+                  { title: '自动入库新增（auto_commit）', value: 'auto_commit' },
+                  { title: '只出报告（report_only）', value: 'report_only' },
+                ]"
+                label="采集后动作 (collect_mode)"
+                variant="outlined"
+                density="compact"
+                hide-details
+              />
+            </v-col>
+          </v-row>
+          <div class="text-caption text-medium-emphasis mb-3">
+            <strong>自动入库新增</strong>：只把比对出来的「新增」写进字体库，与库内同 face 的冲突项一律保留库内，
+            之后可在「压缩包导入 → 最近导入任务」里人工挑；
+            <strong>只出报告</strong>：不动字体库，只在那边留一份比对报告，等你确认后再手动入库。
+          </div>
+          <div class="switch-row mb-2">
+            <v-switch
+              :model-value="configForm.collect_cleanup === true"
+              color="warning"
+              hide-details
+              density="compact"
+              @update:model-value="(v: any) => (configForm.collect_cleanup = !!v)"
+            />
+            <div>
+              <div class="switch-label">采集成功后删除原压缩包 (collect_cleanup)</div>
+              <div class="text-caption text-medium-emphasis">
+                默认关闭：原包留着给 qB 继续做种。开启后只要这一单采集成功，就删掉下载目录里的原压缩包
+                （投递用的是硬链/复制，不影响正在处理的那份）。
+              </div>
+            </div>
+          </div>
+
           <v-divider class="my-3" />
           <div class="section-title mb-2">
             <v-icon size="16" color="primary">mdi-package-variant-closed</v-icon>

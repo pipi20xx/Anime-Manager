@@ -58,6 +58,7 @@ from event_broadcaster import EventBroadcaster
 from font_core import ass_parser, index_store, runner
 from font_core import subset_service
 from font_core import archive as font_archive
+from font_core import collector as font_collector
 from font_core import importer as font_importer
 from font_core import binary as af_binary
 from logger import log_audit
@@ -158,6 +159,10 @@ class FontManagerConfig(BaseModel):
     import_max_font_mb: Optional[int] = Field(None, ge=1, le=1024, description="单字体上限（MB）")
     import_max_entries: Optional[int] = Field(None, ge=1, le=100000, description="单包条目数上限")
     import_max_fonts: Optional[int] = Field(None, ge=1, le=20000, description="单包字体数上限")
+    # 字体包自动采集（跟随整理流程投递 + 异步处理）
+    collect_enabled: Optional[bool] = Field(None, description="启用：整理时识别到字体包就投递")
+    collect_mode: Optional[str] = Field(None, description="auto_commit / report_only")
+    collect_cleanup: Optional[bool] = Field(None, description="采集成功后删除原压缩包")
 
 
 @router.get("/config", summary="读取字体管家配置")
@@ -912,6 +917,13 @@ async def import_info():
         "cleanup_trigger": "下次上传压缩包时清理过期工作区（不是定时任务）",
         "library_dirs": _library_dirs(cfg),
         "temp_font_dir": str(_temp_font_dir(cfg)),
+        # 自动采集（跟随整理流程投递 + 异步处理，与整理/子集化无关联）
+        "collect": {
+            "enabled": font_collector.enabled(cfg),
+            "mode": font_collector.collect_mode(cfg),
+            "cleanup": font_collector.cleanup_after(cfg),
+            **font_collector.state_snapshot(),
+        },
     }}
 
 
