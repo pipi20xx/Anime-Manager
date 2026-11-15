@@ -646,7 +646,7 @@ async def save(payload: dict) -> dict:
         "episode_total": compiled["episode_total"],
     })
     # 建/存规则 = 明确「这部要分季」：顺手把它从黑名单里移出来（手动条目也移）。
-    record["blacklist_released"] = bool(_remove_from_blacklist(cfg, tmdb_id))
+    record["blacklist_released"] = bool(await store.delete_blacklist(tmdb_id))
     record["compile"] = compiled
     record["logs"] = logs
     return record
@@ -689,14 +689,16 @@ async def _save_absolute_rule(tmdb_id: int, data: dict, cfg: dict) -> Optional[d
 
 
 # ---------------------------------------------------------------------------
-# 番剧黑名单：手动条目 + 自动判定记录
+# 番剧黑名单（public.season_split_blacklist，一部番一条）
 #
-# 名单本身仍是 `season_split_blacklist: [tmdb_id, ...]`（注入时按它跳过）；
-# 自动加入的条目额外在 `season_split_blacklist_auto` 里记一份「当时凭什么判定」：
+# origin = manual（人加的，只有人能删）/ auto（判定加的，带判定记录）。
+# 自动条目在 reason / decided_at / seasons_fp / use_absolute 里记一份「当时凭什么判定」：
 # 原因、入榜时间、TMDB 季表指纹、当时的「连番号折算」开关。
 # 之后每次识别到这部番都会拿当前季表/开关免费比一次（纯比较，不联网）：
 # 前提变了就解除黑名单并重新判定，前提没变则什么都不做。
-# 手动条目（以及升级前没有判定记录的老条目）永远不会被自动解除。
+#
+# 读路径只看 store 的内存快照（`store.is_blocked` / `store.blocked_ids`），
+# 写路径走单行 CRUD —— 不再整表重写 config.json。
 # ---------------------------------------------------------------------------
 
 BLACKLIST_REASON_SINGLE_SHORT = "single-season-short"
@@ -705,38 +707,6 @@ BLACKLIST_REASON_LABELS = {
     BLACKLIST_REASON_SINGLE_SHORT: "TMDB 单季且集数 < 15",
     BLACKLIST_REASON_NO_SPLIT: "判定无需拆分",
 }
-
-
-def _blacklist_ids(cfg: dict) -> List[int]:
-    """有效名单（手动 + 自动），顺序即配置里的顺序。"""
-    ids: List[int] = []
-    for item in cfg.get("season_split_blacklist") or []:
-        try:
-            ids.append(int(item))
-        except (TypeError, ValueError):
-            continue
-    return ids
-
-
-def _blacklist_auto_entries(cfg: dict) -> List[dict]:
-    """自动条目的判定记录（坏数据直接忽略）。"""
-    entries: List[dict] = []
-    for item in cfg.get("season_split_blacklist_auto") or []:
-        if not isinstance(item, dict):
-            continue
-        try:
-            tmdb_id = int(item.get("tmdb_id"))
-        except (TypeError, ValueError):
-            continue
-        entries.append({**item, "tmdb_id": tmdb_id})
-    return entries
-
-
-def _blacklist_auto_entry(cfg: dict, tmdb_id: int) -> Optional[dict]:
-    for entry in _blacklist_auto_entries(cfg):
-        if entry["tmdb_id"] == int(tmdb_id):
-            return entry
-    return None
 
 
 def _seasons_fingerprint(seasons: Any) -> Optional[List[List[int]]]:
@@ -766,130 +736,83 @@ def _seasons_fingerprint(seasons: Any) -> Optional[List[List[int]]]:
     return rows
 
 
-def _normalize_fingerprint(value: Any) -> Optional[List[List[int]]]:
-    """把配置里读回来的指纹收敛成 `[[季号, 集数], ...]`（字符串数字也吃）。"""
-    rows: List[List[int]] = []
-    for item in value or []:
-        if not isinstance(item, (list, tuple)) or len(item) < 2:
-            continue
-        try:
-            rows.append([int(item[0]), int(item[1])])
-        except (TypeError, ValueError):
-            continue
-    if not rows:
-        return None
-    rows.sort()
-    return rows
-
-
-def _write_blacklist(ids: List[int], entries: List[dict]) -> None:
-    """整表写回。
-
-    判定记录用 list 而不是 dict 存，是因为 `ConfigManager._deep_merge` 对 dict 只做
-    递归合并、删不掉键；list 是整表替换，解除条目才写得干净。
-    """
-    from config_manager import ConfigManager
-
-    ConfigManager.update_config({
-        "season_split_blacklist": list(ids),
-        "season_split_blacklist_auto": list(entries),
-    })
-
-
-def _remove_from_blacklist(cfg: dict, tmdb_id: int) -> Optional[dict]:
-    """把某条（手动或自动）移出黑名单；不在名单里返回 None。"""
-    tmdb_id = int(tmdb_id)
-    ids = _blacklist_ids(cfg)
-    entries = _blacklist_auto_entries(cfg)
-    entry = next((e for e in entries if e["tmdb_id"] == tmdb_id), None)
-    if tmdb_id not in ids and entry is None:
-        return None
-    _write_blacklist(
-        [i for i in ids if i != tmdb_id],
-        [e for e in entries if e["tmdb_id"] != tmdb_id],
-    )
-    return entry or {"tmdb_id": tmdb_id, "reason": ""}
+def _fp_counts(text: str) -> List[int]:
+    """`1:12,2:12` → [12, 12]（只给人话说明用）。"""
+    counts: List[int] = []
+    for part in str(text or "").split(","):
+        _, _, count = part.partition(":")
+        count = count.strip()
+        if count.isdigit():
+            counts.append(int(count))
+    return counts
 
 
 def _blacklist_release_reason(cfg: dict, tmdb_id: int, seasons: Any) -> str:
-    """自动条目该不该解除？返回原因代码，`""` = 不动。纯比较，不联网、不写配置。
+    """自动条目该不该解除？返回原因代码，`""` = 不动。纯比较：不联网、不写库、不读库。
 
     - 「单季且集数<15」：前提就是季表本身，每次识别都能免费复算；
     - 「判定无需拆分」：结论依赖 TVDB / Bangumi，重算要联网，所以比落库的指纹
       （季表 + 当时的连番号折算开关），前提没变就不重拉参照源；
-    - 手动 / 历史 / 原因不明：永远返回 ""（只有人能删）。
+    - 手动 / 没有判定记录 / 原因不明：永远返回 ""（只有人能删）。
+
+    判定记录来自 store 的内存快照（`store.get_blocked_row`），所以识别链路每遇到
+    一部已拉黑的番也只多一次字典查询，不会为它多打一次数据库。
     """
     tmdb_id = int(tmdb_id)
-    if tmdb_id not in _blacklist_ids(cfg):
-        return ""
-    entry = _blacklist_auto_entry(cfg, tmdb_id)
-    if not entry:
+    entry = store.get_blocked_row(tmdb_id)
+    if not entry or entry.get("origin") != store.ORIGIN_AUTO:
         return ""
     reason = str(entry.get("reason") or "")
-    current = _seasons_fingerprint(seasons)
+    current_fp = _fp_text(_seasons_fingerprint(seasons))
     if reason == BLACKLIST_REASON_SINGLE_SHORT:
-        if not current:
+        if not current_fp:
             return ""          # 没有季表判断不了，保守不动
         if grouping.single_season_too_short(seasons):
             return ""          # 前提仍成立
         return reason
     if reason == BLACKLIST_REASON_NO_SPLIT:
-        if not current:
+        if not current_fp:
             return ""
-        stored = _normalize_fingerprint(entry.get("seasons"))
-        if not stored:
-            return ""          # 老条目没有指纹，保守不动
+        stored_fp = str(entry.get("seasons_fp") or "")
+        if not stored_fp:
+            return ""          # 没有落库指纹，保守不动
         use_absolute_now = _cfg_bool(cfg, "season_split_use_absolute_rules", False)
-        if current == stored and bool(entry.get("use_absolute")) == use_absolute_now:
+        if current_fp == stored_fp and bool(entry.get("use_absolute")) == use_absolute_now:
             return ""
         return reason
     return ""
 
 
-def release_blacklist_if_stale(cfg: dict, tmdb_id: int, seasons: Any) -> Optional[dict]:
+async def release_blacklist_if_stale(cfg: dict, tmdb_id: int, seasons: Any) -> Optional[dict]:
     """识别链路调用：前提变了就解除自动条目，返回被解除的条目；没解除返回 None。"""
     reason = _blacklist_release_reason(cfg, tmdb_id, seasons)
     if not reason:
         return None
-    removed = _remove_from_blacklist(cfg, tmdb_id) or {"tmdb_id": int(tmdb_id)}
+    removed = await store.delete_blacklist(tmdb_id) or {"tmdb_id": int(tmdb_id)}
     removed["released"] = True
     removed["released_reason"] = reason
     return removed
 
 
-def _add_to_blacklist(cfg: dict, tmdb_id: int, reason: str = "",
-                      seasons: Any = None, use_absolute: bool = False,
-                      manual: bool = False) -> None:
-    """把该番加入分季黑名单（持久化）。
+async def _add_to_blacklist(tmdb_id: int, reason: str = "",
+                            seasons: Any = None, use_absolute: bool = False,
+                            manual: bool = False) -> None:
+    """把该番加入分季黑名单（单行落库）。
 
-    `manual=True` 只进名单、不写判定记录：手动条目重新评估后仍无需分季时保持
-    「手动」属性，避免它又变成能被自动解除的条目。
+    `manual=True` 只落 origin=manual、不写判定记录：人工条目永远不会被自动解除
+    （「重新评估」后仍无需分季时也按手动放回，避免它又变成能被自动解除的条目）。
     """
-    tmdb_id = int(tmdb_id)
-    ids = _blacklist_ids(cfg)
-    if tmdb_id not in ids:
-        ids.append(tmdb_id)
-    entries = [e for e in _blacklist_auto_entries(cfg) if e["tmdb_id"] != tmdb_id]
-    if not manual:
-        entries.append({
-            "tmdb_id": tmdb_id,
-            "reason": reason or "",
-            "at": datetime.now().isoformat(sep=" ", timespec="seconds"),
-            "seasons": _seasons_fingerprint(seasons),
-            "use_absolute": bool(use_absolute),
-        })
-    _write_blacklist(ids, entries)
-
-
-def _prune_blacklist_auto() -> None:
-    """名单被前端增删后，清掉不再对应的判定记录（否则重新加回同一个 ID 会「复活」旧结论）。"""
-    cfg = _cfg()
-    ids = _blacklist_ids(cfg)
-    entries = _blacklist_auto_entries(cfg)
-    keep = set(ids)
-    kept = [e for e in entries if e["tmdb_id"] in keep]
-    if len(kept) != len(entries):
-        _write_blacklist(ids, kept)
+    if manual:
+        await store.upsert_blacklist(int(tmdb_id), origin=store.ORIGIN_MANUAL)
+        return
+    await store.upsert_blacklist(
+        int(tmdb_id),
+        origin=store.ORIGIN_AUTO,
+        reason=reason or "",
+        decided_at=datetime.now(),
+        seasons_fp=_fp_text(_seasons_fingerprint(seasons)),
+        use_absolute=bool(use_absolute),
+    )
 
 
 def _blacklist_reason_text(entry: dict) -> str:
@@ -898,10 +821,9 @@ def _blacklist_reason_text(entry: dict) -> str:
         return ""
     reason = str(entry.get("reason") or "")
     label = BLACKLIST_REASON_LABELS.get(reason, "原因未知")
-    fp = _normalize_fingerprint(entry.get("seasons")) or []
-    if fp:
-        counts = " + ".join(str(count) for _, count in fp)
-        return f"{label}（当时 {counts} 集）"
+    counts = _fp_counts(entry.get("seasons_fp"))
+    if counts:
+        return f"{label}（当时 {' + '.join(str(count) for count in counts)} 集）"
     return label
 
 
@@ -1023,9 +945,7 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
     cfg = _cfg()
 
     # 先做「前提变了就解除」：不管开关是否开启都执行——这是纯状态修正，不联网。
-    released = release_blacklist_if_stale(cfg, tmdb_id, seasons)
-    if released:
-        cfg = _cfg()  # 名单刚被改过，重新读（get_config 带 mtime 缓存，会拿到新值）
+    released = await release_blacklist_if_stale(cfg, tmdb_id, seasons)
 
     if not force:
         if not _cfg_bool(cfg, "season_split_auto_generate", False):
@@ -1035,7 +955,7 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
         scope = cfg.get("season_split_scope") or {}
         if isinstance(scope, dict) and scope and not scope.get(entry, True):
             return None
-        if tmdb_id in _blacklist_ids(cfg):
+        if store.is_blocked(tmdb_id):
             return None
 
     rule = await store.get_rule(tmdb_id)
@@ -1051,9 +971,9 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
 
     # 快速拉黑：TMDB 单季 + 集数很少 → 怎么处理都一样，不必再拉参照源。
     if grouping.single_season_too_short(seasons):
-        _add_to_blacklist(cfg, tmdb_id, BLACKLIST_REASON_SINGLE_SHORT,
-                          seasons=seasons, use_absolute=use_absolute,
-                          manual=manual_readd)
+        await _add_to_blacklist(tmdb_id, BLACKLIST_REASON_SINGLE_SHORT,
+                                seasons=seasons, use_absolute=use_absolute,
+                                manual=manual_readd)
         return {"blacklisted": True, "tmdb_id": tmdb_id,
                 "reason": BLACKLIST_REASON_SINGLE_SHORT}
 
@@ -1063,10 +983,10 @@ async def auto_generate_rule(tmdb_id: int, entry: str = "organize",
         if absolute:
             return absolute
 
-        _add_to_blacklist(cfg, tmdb_id, BLACKLIST_REASON_NO_SPLIT,
-                          seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
-                          use_absolute=use_absolute,
-                          manual=manual_readd)
+        await _add_to_blacklist(tmdb_id, BLACKLIST_REASON_NO_SPLIT,
+                                seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
+                                use_absolute=use_absolute,
+                                manual=manual_readd)
         return {"blacklisted": True, "tmdb_id": tmdb_id,
                 "reason": BLACKLIST_REASON_NO_SPLIT}
 
@@ -1117,9 +1037,9 @@ async def _refresh_auto_rule(tmdb_id: int, cfg: dict,
             absolute["refreshed"] = True
             return absolute
         await store.delete_rule(tmdb_id)   # 过期规则留着只会错配集号，删掉再拉黑
-        _add_to_blacklist(cfg, tmdb_id, BLACKLIST_REASON_NO_SPLIT,
-                          seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
-                          use_absolute=use_absolute)
+        await _add_to_blacklist(tmdb_id, BLACKLIST_REASON_NO_SPLIT,
+                                seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
+                                use_absolute=use_absolute)
         return {"blacklisted": True, "tmdb_id": tmdb_id,
                 "reason": BLACKLIST_REASON_NO_SPLIT, "refreshed": True}
 
@@ -1148,12 +1068,11 @@ async def recheck_blacklist(tmdb_id: int) -> dict:
     按手动条目放回（之后不会被自动解除）。
     """
     tmdb_id = int(tmdb_id)
-    cfg = _cfg()
-    if tmdb_id not in _blacklist_ids(cfg):
+    if not store.is_blocked(tmdb_id):
         raise ValueError("该番不在黑名单中")
 
-    entry = _blacklist_auto_entry(cfg, tmdb_id)
-    was_auto = entry is not None
+    entry = await store.get_blacklist_entry(tmdb_id)
+    was_auto = bool(entry and entry.get("origin") == store.ORIGIN_AUTO)
 
     record = await auto_generate_rule(
         tmdb_id, entry="organize", seasons=None,
@@ -1179,7 +1098,7 @@ async def recheck_blacklist(tmdb_id: int) -> dict:
 
     if action != "blacklisted":
         # 重判结果不是「留在黑名单」→ 名单里这条彻底删掉（含判定记录）。
-        _remove_from_blacklist(_cfg(), tmdb_id)
+        await store.delete_blacklist(tmdb_id)
 
     return {
         "tmdb_id": tmdb_id,
@@ -1192,13 +1111,13 @@ async def recheck_blacklist(tmdb_id: int) -> dict:
 
 async def blacklist_add_manual(tmdb_id: int) -> dict:
     """手动加入黑名单：用户显式操作 → 不写判定记录，永远不会被自动解除。"""
-    _add_to_blacklist(_cfg(), int(tmdb_id), manual=True)
+    await _add_to_blacklist(int(tmdb_id), manual=True)
     return await blacklist_meta()
 
 
 async def blacklist_remove(tmdb_id: int) -> dict:
     """移出黑名单（手动 / 自动都移），返回最新列表。"""
-    _remove_from_blacklist(_cfg(), int(tmdb_id))
+    await store.delete_blacklist(int(tmdb_id))
     return await blacklist_meta()
 
 
@@ -1386,7 +1305,8 @@ def settings_snapshot() -> dict:
     return {
         "mode": cfg.get("season_split_mode") or "off",
         "scope": cfg.get("season_split_scope") or {},
-        "blacklist": cfg.get("season_split_blacklist") or [],
+        # 黑名单存 PG 表，这里只给内存快照的 ID 列表（前端用于「是否已在名单里」的判断）
+        "blacklist": store.blocked_ids(),
         "exclude_patterns": cfg.get("season_split_exclude_patterns") or [],
         "priority": cfg.get("season_split_priority") or "tvdb, bangumi",
         "use_source": bool(cfg.get("season_split_use_source")),
@@ -1411,8 +1331,17 @@ def settings_snapshot() -> dict:
 def settings_update(payload: dict) -> dict:
     from config_manager import ConfigManager
 
+    payload = payload or {}
+    if "season_split_blacklist" in payload:
+        # 名单已经是独立的表，整表覆盖会悄无声息地删掉别人刚加进来的条目，所以直接拒绝：
+        # 增删请走 POST /season-split/blacklist 和 DELETE /season-split/blacklist/{id}。
+        raise ValueError(
+            "黑名单已改为独立数据表，不再通过设置接口修改；"
+            "请用 POST /season-split/blacklist 或 DELETE /season-split/blacklist/{tmdb_id}"
+        )
+
     allowed = {
-        "season_split_mode", "season_split_scope", "season_split_blacklist",
+        "season_split_mode", "season_split_scope",
         "season_split_exclude_patterns", "season_split_priority", "season_split_source",
         "season_split_gap_days", "season_split_use_source", "season_split_force_reference",
         "season_split_auto_generate", "season_split_auto_push_sytmdb",
@@ -1423,7 +1352,7 @@ def settings_update(payload: dict) -> dict:
         "season_split_use_absolute_rules",
         "tvdb_api_key",
     }
-    patch = {k: v for k, v in (payload or {}).items() if k in allowed}
+    patch = {k: v for k, v in payload.items() if k in allowed}
     if "season_split_mode" in patch:
         mode = str(patch["season_split_mode"]).lower()
         if mode not in ("off", "preview", "on"):
@@ -1431,35 +1360,31 @@ def settings_update(payload: dict) -> dict:
         patch["season_split_mode"] = mode
     if patch:
         ConfigManager.update_config(patch)
-        if "season_split_blacklist" in patch:
-            # 前端增删过名单：清掉不再对应的自动判定记录，避免重新加回同一个 ID 时
-            # 「复活」一个早就过期的结论。
-            _prune_blacklist_auto()
     return settings_snapshot()
 
 
 async def blacklist_meta() -> dict:
     """给黑名单补全名称 / 年份 + 判定来源（读项目内永久缓存 + 数据中心元数据资产）。
 
-    数据统一来自 MetaCacheManager（TmdbDeepMeta 超级表），即本地永久缓存与
-    数据中心离线档案的合并结果；不联网。tv 查不到再回退 movie。
+    名单本身从 PG 表 `public.season_split_blacklist` 读；名称 / 年份来自
+    MetaCacheManager（TmdbDeepMeta 超级表），即本地永久缓存与数据中心离线档案的
+    合并结果；不联网。tv 查不到再回退 movie。
     不返回 poster_path：黑名单只是维护 ID 的清单，前端也不再渲染海报。
     自动条目额外带上 reason / reason_label / at，供页面解释「为什么在、什么时候进的」。
     """
-    cfg = _cfg()
-    ids = _blacklist_ids(cfg)
-    auto_map = {entry["tmdb_id"]: entry for entry in _blacklist_auto_entries(cfg)}
+    rows = await store.list_blacklist()
 
     from metadata.meta_cache import MetaCacheManager
 
     items: List[dict] = []
-    for tmdb_id in ids:
+    for row in rows:
+        tmdb_id = int(row["tmdb_id"])
         meta = await MetaCacheManager.get(f"tv:{tmdb_id}")
         if not meta:
             meta = await MetaCacheManager.get(f"movie:{tmdb_id}")
         m = meta or {}
         year = m.get("year") or ""
-        entry = auto_map.get(tmdb_id) or {}
+        is_auto = row.get("origin") == store.ORIGIN_AUTO
         items.append({
             "tmdb_id": tmdb_id,
             "title": m.get("title") or m.get("name") or "",
@@ -1467,9 +1392,9 @@ async def blacklist_meta() -> dict:
             "is_custom": bool(m.get("is_custom")),
             "source": "data_center" if meta else None,
             "has_meta": bool(meta),
-            "auto": bool(entry),
-            "reason": str(entry.get("reason") or ""),
-            "reason_label": _blacklist_reason_text(entry),
-            "at": entry.get("at") or None,
+            "auto": is_auto,
+            "reason": str(row.get("reason") or ""),
+            "reason_label": _blacklist_reason_text(row) if is_auto else "",
+            "at": row.get("decided_at") or None,
         })
     return {"items": items}

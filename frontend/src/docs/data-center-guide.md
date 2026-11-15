@@ -42,6 +42,8 @@
 | **bangumi_raw_cache** | Bangumi 原始 API 响应缓存（完结番剧的 Subject/Episodes/Characters 原始响应，永久缓存） |
 | **bgm_user_mark** | Bangumi 用户手动标记（季度番剧表"已整理"等） |
 | **tmdb_blocklist** | TMDB 主动屏蔽列表 |
+| **season_split_rules** | 番剧分季规则库（每部番一条：分组 / 逐集映射 / 编译好的渲染词 / 写回 SYTMDB 的剧集组） |
+| **season_split_blacklist** | 番剧分季黑名单（每部番一条：`origin=manual` 手动 / `auto` 自动判定，自动条目带判定原因、入榜时间与季表指纹；清空后识别时会重新判定） |
 | **emby_media_index** | Emby 库索引（媒体库定时同步） |
 | **rapid_upload_retry** | CD2 秒传重试队列：秒传未命中的文件按间隔自动重试（整理管理-秒传管理） |
 | **cd2_dir_cache** | CD2 目录锁定快照缓存：锁定的目录浏览/扫描/生成走本地快照（0 API），解锁即删除 |

@@ -56,7 +56,11 @@ class BlacklistAddRequest(BaseModel):
 class SettingsRequest(BaseModel):
     season_split_mode: Optional[str] = None
     season_split_scope: Optional[Dict[str, Any]] = None
-    season_split_blacklist: Optional[List[Any]] = None
+    season_split_blacklist: Optional[List[Any]] = Field(
+        default=None,
+        description="已废弃：黑名单是独立表 public.season_split_blacklist，传了会返回 400；"
+                    "增删请走 POST /season-split/blacklist 与 DELETE /season-split/blacklist/{tmdb_id}",
+    )
     season_split_exclude_patterns: Optional[List[str]] = None
     season_split_priority: Optional[str] = None
     season_split_source: Optional[str] = None
@@ -206,7 +210,7 @@ async def get_settings():
     return service.settings_snapshot()
 
 
-@router.put("/settings", summary="更新开关 / 黑名单 / 默认参数")
+@router.put("/settings", summary="更新开关 / 默认参数（黑名单已独立成表，不再走这里）")
 async def update_settings(req: SettingsRequest):
     try:
         data = service.settings_update(req.model_dump(exclude_none=True))

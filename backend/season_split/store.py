@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
-"""番剧分季拆分 · 规则存储（PostgreSQL）与进程内编译缓存。
+"""番剧分季拆分 · 规则与黑名单存储（PostgreSQL）与进程内编译缓存。
 
 识别热路径（`recognition/context.py`）只调用 `as_render_words()`：同步、纯内存、零 I/O。
-数据库只在三种时机访问：启动、保存规则、后台 30s 版本轮询。
+数据库只在三种时机访问：启动、保存规则 / 增删黑名单、后台 30s 版本轮询。
+
+两张表各管一件事：
+- `season_split_rules`：生效规则 → 编译好的渲染词文本；
+- `season_split_blacklist`：永不套用分季的番（黑名单），快照按 tmdb_id 存整行（判定记录也在里面）。
+两者的 `updated_at` 最大值 + 行数一起构成版本号，轮询时任一表变了就整体重载。
 """
 
 from __future__ import annotations
@@ -17,6 +22,10 @@ logger = logging.getLogger("SeasonSplit")
 
 # 内存快照：[{"tmdb_id": 123, "render_words": "..."}]
 _ROWS: List[Dict[str, Any]] = []
+# 黑名单快照：{tmdb_id: 行数据}（与 _ROWS 同一次 reload 刷新）
+# 存整行而不是只存 ID：识别链路判断「前提变了没」要读 reason / seasons_fp / use_absolute，
+# 走内存就不必为每集识别多打一次库。
+_BLOCKED: Dict[int, Dict[str, Any]] = {}
 _VERSION: str = ""
 _LOADED_AT: Optional[datetime] = None
 _LOCK = threading.Lock()
@@ -36,6 +45,10 @@ ORIGINS = (ORIGIN_MANUAL, ORIGIN_SYTMDB, ORIGIN_AUTO)
 # 升级前保存的老规则没有来源列（NULL），查询/展示时用这个值代表「历史未知」
 LEGACY_ORIGIN = "legacy"
 
+# 黑名单的两种来源（season_split_blacklist.origin）：
+# manual = 人加的（只有人能删）/ auto = 判定加的（前提变了会自动解除）
+BLACKLIST_ORIGINS = (ORIGIN_MANUAL, ORIGIN_AUTO)
+
 
 def _config() -> Dict[str, Any]:
     try:
@@ -51,15 +64,33 @@ def mode(config: Optional[dict] = None) -> str:
     return str(cfg.get("season_split_mode") or "off").strip().lower()
 
 
-def _blacklist(config: Optional[dict] = None) -> set:
-    cfg = config if isinstance(config, dict) else _config()
-    out = set()
-    for item in cfg.get("season_split_blacklist") or []:
-        try:
-            out.add(int(item))
-        except (TypeError, ValueError):
-            continue
-    return out
+def blocked_ids() -> List[int]:
+    """当前黑名单快照（排好序，给设置快照 / 页面用）。读内存，不碰数据库。"""
+    with _LOCK:
+        return sorted(_BLOCKED)
+
+
+def blocked_rows() -> Dict[int, Dict[str, Any]]:
+    """黑名单快照的浅拷贝（调试 / 页面用）。"""
+    with _LOCK:
+        return {key: dict(value) for key, value in _BLOCKED.items()}
+
+
+def get_blocked_row(tmdb_id: Any) -> Optional[Dict[str, Any]]:
+    """热路径用：黑名单里这一条的判定记录（没有这一条返回 None）。纯内存。"""
+    try:
+        row = _BLOCKED.get(int(tmdb_id))
+    except (TypeError, ValueError):
+        return None
+    return dict(row) if row else None
+
+
+def is_blocked(tmdb_id: Any) -> bool:
+    """热路径用：这部番是不是在黑名单里（纯内存 dict 查询）。"""
+    try:
+        return int(tmdb_id) in _BLOCKED
+    except (TypeError, ValueError):
+        return False
 
 
 def as_render_words(config: Optional[dict] = None, entry: str = "organize") -> List[str]:
@@ -79,10 +110,9 @@ def as_render_words(config: Optional[dict] = None, entry: str = "organize") -> L
                 return []
         if not _ROWS:
             return []
-        blocked = _blacklist(cfg)
         lines: List[str] = []
         for row in _ROWS:
-            if row["tmdb_id"] in blocked:
+            if row["tmdb_id"] in _BLOCKED:
                 continue
             text = row.get("render_words") or ""
             if not text:
@@ -102,6 +132,7 @@ def as_render_words(config: Optional[dict] = None, entry: str = "organize") -> L
 def cache_stats() -> Dict[str, Any]:
     return {
         "count": len(_ROWS),
+        "blacklist_count": len(_BLOCKED),
         "version": _VERSION,
         "loaded_at": _LOADED_AT.isoformat(sep=" ", timespec="seconds") if _LOADED_AT else None,
         "mode": mode(),
@@ -113,30 +144,47 @@ def cache_stats() -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 async def _fetch_version() -> str:
+    """两张表的「最大 updated_at + 行数」拼成版本号。
+
+    行数也参与比较：删行不会改变 max(updated_at)，只看时间戳的话多 worker 部署里
+    「删了一条规则 / 解除了一条黑名单」要等重启才会被别的进程看到。
+    """
     from sqlalchemy import func, select
 
     from database import db
-    from models import SeasonSplitRule
+    from models import SeasonSplitBlacklist, SeasonSplitRule
 
     async with db.session_scope(force_new=True):
-        result = await db.session.execute(select(func.max(SeasonSplitRule.updated_at)))
-        value = result.scalar()
-    return value.isoformat() if isinstance(value, datetime) else ""
+        rules = (await db.session.execute(
+            select(func.max(SeasonSplitRule.updated_at), func.count())
+        )).first()
+        blocked = (await db.session.execute(
+            select(func.max(SeasonSplitBlacklist.updated_at), func.count())
+        )).first()
+
+    def _part(row) -> str:
+        stamp, count = (row if row else (None, 0))
+        text = stamp.isoformat() if isinstance(stamp, datetime) else ""
+        return f"{text}|{int(count or 0)}"
+
+    return _part(rules) + "#" + _part(blocked)
 
 
 async def reload() -> int:
-    """强制重载全部生效规则到内存。"""
-    global _ROWS, _VERSION, _LOADED_AT
+    """强制重载全部生效规则 + 黑名单到内存。"""
+    global _ROWS, _BLOCKED, _VERSION, _LOADED_AT
     from sqlalchemy import select
 
     from database import db
-    from models import SeasonSplitRule
+    from models import SeasonSplitBlacklist, SeasonSplitRule
 
     async with db.session_scope(force_new=True):
         result = await db.session.execute(
             select(SeasonSplitRule).where(SeasonSplitRule.status == "active")
         )
         records = list(result.scalars().all())
+        blocked_res = await db.session.execute(select(SeasonSplitBlacklist))
+        blocked = {int(r.tmdb_id): _blacklist_row(r) for r in blocked_res.scalars().all()}
 
     rows = [
         {
@@ -151,9 +199,12 @@ async def reload() -> int:
     version = max([r["updated_at"] for r in rows], default="")
     with _LOCK:
         _ROWS = rows
+        _BLOCKED = blocked
         _VERSION = version
         _LOADED_AT = datetime.now()
-    logger.info(f"[分季] 规则缓存已加载: {len(rows)} 条（version={version or '-'}）")
+    logger.info(
+        f"[分季] 缓存已加载: 规则 {len(rows)} 条 / 黑名单 {len(blocked)} 条（version={version or '-'}）"
+    )
     return len(rows)
 
 
@@ -316,3 +367,108 @@ def _to_dict(record) -> dict:
         "created_at": record.created_at.isoformat(sep=" ", timespec="seconds") if record.created_at else None,
         "updated_at": record.updated_at.isoformat(sep=" ", timespec="seconds") if record.updated_at else None,
     }
+
+
+# ---------------------------------------------------------------------------
+# CRUD · 黑名单（public.season_split_blacklist）
+#
+# 一部番一条，`origin` 区分「人加的」和「判定加的」；判定字段（reason /
+# decided_at / seasons_fp / use_absolute）整体覆盖写入，手动条目写 None 即清空。
+# 每条写完都 reload 一次内存快照，识别链路下一部番就能看到（不用等 30s 轮询）。
+# ---------------------------------------------------------------------------
+
+def _blacklist_row(record) -> Dict[str, Any]:
+    return {
+        "tmdb_id": int(record.tmdb_id),
+        "origin": record.origin or ORIGIN_MANUAL,
+        "reason": record.reason or "",
+        "decided_at": record.decided_at.isoformat(sep=" ", timespec="seconds") if record.decided_at else None,
+        "seasons_fp": record.seasons_fp or "",
+        "use_absolute": record.use_absolute,
+        "created_at": record.created_at.isoformat(sep=" ", timespec="seconds") if record.created_at else None,
+        "updated_at": record.updated_at.isoformat(sep=" ", timespec="seconds") if record.updated_at else None,
+    }
+
+
+async def list_blacklist() -> List[dict]:
+    """整份名单，按入榜时间排（页面展示顺序稳定）。"""
+    from sqlalchemy import select
+
+    from database import db
+    from models import SeasonSplitBlacklist
+
+    async with db.session_scope(force_new=True):
+        result = await db.session.execute(
+            select(SeasonSplitBlacklist).order_by(
+                SeasonSplitBlacklist.created_at.asc(),
+                SeasonSplitBlacklist.tmdb_id.asc(),
+            )
+        )
+        records = list(result.scalars().all())
+    return [_blacklist_row(r) for r in records]
+
+
+async def get_blacklist_entry(tmdb_id: int) -> Optional[dict]:
+    from database import db
+    from models import SeasonSplitBlacklist
+
+    async with db.session_scope(force_new=True):
+        record = await db.session.get(SeasonSplitBlacklist, int(tmdb_id))
+        if record is None:
+            return None
+        data = _blacklist_row(record)
+    return data
+
+
+async def upsert_blacklist(tmdb_id: int, origin: str = ORIGIN_MANUAL,
+                           reason: Optional[str] = None,
+                           decided_at: Optional[datetime] = None,
+                           seasons_fp: Optional[str] = None,
+                           use_absolute: Optional[bool] = None,
+                           reload_cache: bool = True) -> dict:
+    """写入/更新一条黑名单。批量导入时传 reload_cache=False，最后统一 reload 一次。"""
+    from database import db
+    from models import SeasonSplitBlacklist
+
+    tmdb_id = int(tmdb_id)
+    origin = str(origin or "").strip().lower()
+    if origin not in BLACKLIST_ORIGINS:
+        raise ValueError(f"origin 只能是 {' / '.join(BLACKLIST_ORIGINS)}")
+
+    async with db.session_scope(force_new=True):
+        record = await db.session.get(SeasonSplitBlacklist, tmdb_id)
+        if record is None:
+            record = SeasonSplitBlacklist(tmdb_id=tmdb_id)
+            db.session.add(record)
+        record.origin = origin
+        # 判定字段整体覆盖：手动条目传 None 就等于「没有判定记录」
+        record.reason = (reason or None)
+        record.decided_at = decided_at
+        record.seasons_fp = (seasons_fp or None)
+        record.use_absolute = use_absolute
+        record.updated_at = datetime.now()
+        await db.session.commit()
+        await db.session.refresh(record)
+        data = _blacklist_row(record)
+
+    if reload_cache:
+        await reload()
+    return data
+
+
+async def delete_blacklist(tmdb_id: int) -> Optional[dict]:
+    """把某条（手动 / 自动）移出黑名单；不在名单里返回 None。"""
+    from database import db
+    from models import SeasonSplitBlacklist
+
+    tmdb_id = int(tmdb_id)
+    async with db.session_scope(force_new=True):
+        record = await db.session.get(SeasonSplitBlacklist, tmdb_id)
+        if record is None:
+            return None
+        data = _blacklist_row(record)
+        await db.session.delete(record)
+        await db.session.commit()
+
+    await reload()
+    return data

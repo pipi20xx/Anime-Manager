@@ -95,10 +95,9 @@ class ConfigManager:
         "season_split_mode": "off",
         # 哪些入口生效：整理 / 订阅匹配 / 识别测试页
         "season_split_scope": {"organize": True, "subscription": False, "recognition_test": False},
-        "season_split_blacklist": [],          # [tmdb_id, ...] 永不套用（手动 + 自动）
-        # 自动加入黑名单的判定记录：[{tmdb_id, reason, at, seasons, use_absolute}]；
-        # 前提（季表 / 折算开关）变了会自动解除并重判；手动条目与老条目没有记录、永不自动解除
-        "season_split_blacklist_auto": [],
+        # 黑名单已迁移到 PG 表 public.season_split_blacklist（见 models.SeasonSplitBlacklist），
+        # 不再作为配置项存在；旧版本遗留的 season_split_blacklist / season_split_blacklist_auto
+        # 两个键会在 init_config() 里被清掉（名单从表里读，配置里留空壳只会误导）。
         "season_split_exclude_patterns": ["总集篇", "recap", r"\bOVA\b"],
         "season_split_priority": "tvdb, bangumi",
         "season_split_source": "",             # CureTMDb 规则表地址（默认不启用，需要自己在高级页填）
@@ -335,6 +334,17 @@ class ConfigManager:
                     # 如果主文件坏了但备份文件还没试，继续循环
                     continue
         
+        # 黑名单搬进了 PG 表（public.season_split_blacklist），配置里不再保留这两个键。
+        # 上面的合并循环会把 DEFAULT_CONFIG 里没有的键当「自定义字段」原样保留，所以必须显式清掉，
+        # 否则旧名单会一直躺在 config.json 里冒充有效配置。旧文件本身还有 .bak 兜底。
+        for legacy_key in ("season_split_blacklist", "season_split_blacklist_auto"):
+            legacy_value = config.pop(legacy_key, None)
+            if legacy_value:
+                logger.warning(
+                    f"[分季] 已废弃配置项 {legacy_key}（{len(legacy_value)} 条）——"
+                    f"黑名单现在存 PG 表 public.season_split_blacklist，本次升级从空名单开始"
+                )
+
         # 如果文件存在但全部加载失败，这说明真的坏了，为了安全起见，不要盲目覆盖！
         if os.path.exists(CONFIG_PATH) and not load_success:
             msg = "配置文件已损坏且无法从备份恢复！请手动检查 data/config.json。程序将停止以防止数据丢失。"

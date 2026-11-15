@@ -824,3 +824,27 @@ class SeasonSplitRule(SQLModel, table=True):
     last_compiled_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class SeasonSplitBlacklist(SQLModel, table=True):
+    """番剧分季黑名单（一部番一条）。
+
+    `origin` 两个值：manual = 人加的（永不自动解除），auto = 判定加的（带判定记录）。
+    自动条目把「当时凭什么判定」写在 `reason` / `decided_at` / `seasons_fp` / `use_absolute` 里：
+    识别链路每次遇到它会拿当前季表 / 折算开关免费比一次（纯比较，不联网），前提变了才解除。
+
+    `seasons_fp` 是季表指纹的紧凑文本（`1:12,2:12`，与 `season_split_rules.structure_fp` 同格式），
+    只记季号 + 集数——季名、首播日不影响「要不要分季」，带进来只会让判定反复失效。
+    """
+    __tablename__ = "season_split_blacklist"
+    __table_args__ = {"schema": get_public_schema()}
+    __admin_name__ = "分季黑名单"
+    # 同 season_split_rules：tmdb_id 是外部给的天然主键，不建自增序列
+    tmdb_id: int = Field(sa_column=Column(BigInteger, primary_key=True, autoincrement=False))
+    origin: str = Field(default="manual", index=True)      # manual / auto
+    reason: Optional[str] = Field(default=None, sa_column=Column(Text))   # single-season-short / no-split
+    decided_at: Optional[datetime] = None                  # 入榜时间（自动条目才有）
+    seasons_fp: Optional[str] = Field(default=None, sa_column=Column(Text))  # 1:12,2:12
+    use_absolute: Optional[bool] = None                    # 判定时的「连番号折算」开关
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)

@@ -54,11 +54,11 @@ def make_packet(season: int = 1, episode: int = 13) -> dict:
 
 
 def case_table() -> None:
-    print("\n[1] SeasonSplitRule 表定义（PG 方言）")
+    print("\n[1] 分季两张表的定义（PG 方言）")
     from sqlalchemy.dialects import postgresql
     from sqlalchemy.schema import CreateTable
 
-    from models import SeasonSplitRule
+    from models import SeasonSplitBlacklist, SeasonSplitRule
 
     ddl = str(CreateTable(SeasonSplitRule.__table__).compile(dialect=postgresql.dialect()))
     check("表名 season_split_rules", "season_split_rules" in ddl)
@@ -66,6 +66,14 @@ def case_table() -> None:
           "tmdb_id BIGINT" in ddl and "SERIAL" not in ddl, ddl[:200])
     check("JSONB 列", "JSONB" in ddl)
     check("render_words 为 TEXT", "render_words TEXT" in ddl)
+
+    block_ddl = str(CreateTable(SeasonSplitBlacklist.__table__).compile(dialect=postgresql.dialect()))
+    check("黑名单表名 season_split_blacklist", "season_split_blacklist" in block_ddl)
+    check("黑名单 tmdb_id 天然主键（不是 SERIAL）",
+          "tmdb_id BIGINT" in block_ddl and "SERIAL" not in block_ddl, block_ddl[:200])
+    check("黑名单判定字段齐全",
+          all(col in block_ddl for col in ("origin", "reason", "decided_at", "seasons_fp", "use_absolute")),
+          block_ddl[:400])
 
 
 def case_engine() -> None:
@@ -150,9 +158,9 @@ def case_switches() -> None:
     rule = "@?{[tmdbid=100001;type=tv;e=13-26]} => {[s=2;e=EP-12]}"
     marked = store.SPLIT_MARKER + rule
     store._ROWS = [{"tmdb_id": 100001, "render_words": "# 注释会被过滤\n" + rule}]
+    store._BLOCKED = set()
     base = {"season_split_mode": "on",
-            "season_split_scope": {"organize": True, "subscription": False, "recognition_test": False},
-            "season_split_blacklist": []}
+            "season_split_scope": {"organize": True, "subscription": False, "recognition_test": False}}
 
     check("on + organize → 注入（带 [SPLIT] 标记、去掉注释）",
           store.as_render_words(base, entry="organize") == [marked],
@@ -160,8 +168,14 @@ def case_switches() -> None:
     check("scope 关的入口 → 不注入", store.as_render_words(base, entry="subscription") == [])
     check("preview → 不注入", store.as_render_words({**base, "season_split_mode": "preview"}) == [])
     check("off → 不注入", store.as_render_words({**base, "season_split_mode": "off"}) == [])
-    check("黑名单 → 不注入",
-          store.as_render_words({**base, "season_split_blacklist": [100001]}) == [])
+    # 黑名单现在来自 PG 表的内存快照（store._BLOCKED，键=tmdb_id，值=整行），与 config 无关
+    store._BLOCKED = {100001: {"tmdb_id": 100001, "origin": "auto"}}
+    check("黑名单（快照命中）→ 不注入", store.as_render_words(base, entry="organize") == [])
+    check("is_blocked 认得字符串 ID", store.is_blocked("100001"))
+    check("blocked_ids 与快照一致", store.blocked_ids() == [100001])
+    check("get_blocked_row 拿到判定记录",
+          (store.get_blocked_row(100001) or {}).get("origin") == "auto")
+    store._BLOCKED = {}
     store._ROWS = []
 
 
