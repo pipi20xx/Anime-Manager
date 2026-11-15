@@ -497,6 +497,31 @@ async def startup_event():
     LogBroadcaster.set_loop(asyncio.get_running_loop())
     asyncio.create_task(async_init_tasks())
 
+    async def _rebuild_delta_on_startup():
+        """上次进程退出时如果还有「已入库但未登记进索引」的字体，启动后补一次重建。
+
+        增量缓存（index_delta）只在内存里排队等 debounce；进程重启会丢掉那次计时，
+        不补的话字体管家列表/缺字体预检会一直看不到这些字体（子集化不受影响）。
+        """
+        try:
+            await asyncio.sleep(30)          # 让启动流程先跑完
+            from pathlib import Path as _Path
+            from config_manager import ConfigManager as _CM
+            from font_core import binary as _afb, importer as _imp, index_delta as _delta
+
+            cfg = _CM.get_config() or {}
+            if not _delta.load(cfg).get("files"):
+                return
+            bp, _ = _afb.resolve_binary(cfg)
+            if not bp:
+                return
+            _imp.schedule_rebuild(cfg, _Path(bp), delay=0)
+            logger.info("[字体管家] 检测到未登记的增量字体，已安排一次索引重建")
+        except Exception as _e:
+            logger.warning(f"[字体管家] 启动补建索引失败（忽略）: {_e}")
+
+    asyncio.create_task(_rebuild_delta_on_startup())
+
     async def warm_up_meta():
         try:
             from recognition.data_provider.bangumi.client import BangumiProvider

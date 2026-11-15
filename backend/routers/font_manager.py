@@ -1062,6 +1062,12 @@ async def import_commit(job_id: str, payload: ImportCommitPayload):
     if result.get("count"):
         binary = _optional_binary(cfg)
         if binary.is_file():
+            # 连续导入的关键：只探测「本批新增」的字体，并入比对基线（秒级）；
+            # 全库重建仍走 debounce，一批导入只重建一次。
+            try:
+                await font_importer.index_delta.refresh(cfg, binary, result.get("paths") or [])
+            except Exception as e:
+                logger.warning(f"[字体导入] 增量索引探测失败（下次分析会兜底）: {e}")
             schedule = font_importer.schedule_rebuild(cfg, binary, on_state=_index_state)
         else:
             schedule = {"scheduled": False, "message": "未找到 assfonts 内核，跳过索引重建（装好内核后请手动重建）"}

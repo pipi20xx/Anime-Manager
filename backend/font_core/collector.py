@@ -516,6 +516,13 @@ async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
             out["committed"] = int(committed.get("count") or 0)
             out["message"] = committed.get("message", "")
             if out["committed"]:
+                # 连续导入的关键：只对「本批新增的那几个字体」做增量探测（秒级），
+                # 把它们并入比对基线；全库重建交给 debounce，一批导入只重建一次。
+                try:
+                    from font_core import index_delta
+                    await index_delta.refresh(cfg, binary, committed.get("paths") or [])
+                except Exception as e:
+                    logger.warning(f"[字体采集] 增量索引探测失败（下次分析会兜底）: {e}")
                 importer.schedule_rebuild(cfg, binary)
                 logger.info(f"[字体采集] {job_id} 入库 {out['committed']} 个字体 → {committed.get('target')}")
                 if allow_cleanup and source is not None and cleanup_after(cfg):

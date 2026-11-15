@@ -149,7 +149,7 @@ export interface FontManagerConfig {
   import_default_policy?: 'keep' | 'replace' | 'skip'
   /** 导入工作区（最近导入任务）保留时长（小时） */
   import_job_ttl_hours?: number
-  /** 入库后索引合并重建的延迟秒数 */
+  /** 索引重建防抖：最后一次入库后静默多少秒再重建一次（0=立即） */
   import_rebuild_debounce?: number
   // 字体包自动采集（跟随整理流程投递 + 异步处理）
   collect_enabled?: boolean

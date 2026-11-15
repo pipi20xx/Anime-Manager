@@ -27,12 +27,13 @@ import json
 import logging
 import os
 import shutil
+import time
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from font_core import archive, ass_parser, font_probe, index_store, subset_service
+from font_core import archive, ass_parser, font_probe, index_delta, index_store, subset_service
 
 logger = logging.getLogger(__name__)
 
@@ -363,7 +364,14 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
     # 4) 与主库比对
     libs = subset_service.library_dirs(cfg)
     lib = await asyncio.to_thread(font_probe.library_faces, cfg, libs)
+    # 连续导入时主索引还没重建：把「刚入库、还没进索引」的 face 从增量缓存并进来，
+    # 否则上一个包刚入库的字体在这里「看不见」，会被判成新增 → 重复入库。
+    lib = {**lib, "faces": index_delta.merged_faces(lib.get("faces") or [], cfg)}
     fresh = await asyncio.to_thread(_library_freshness, libs, lib.get("built_at", ""))
+    # 如果「看起来过期」是因为我们自己刚导入还没重建（delta 已覆盖），那不算过期，不需要重建
+    if fresh.get("stale") and index_delta.covers(cfg, fresh.get("newest_ts") or 0):
+        fresh["stale"] = False
+        fresh["covered_by_delta"] = True
     if probe.get("success"):
         compared = font_probe.compare(incoming, probe, lib)
     else:
@@ -386,6 +394,7 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
                     "error": compared.get("library_index_error", ""),
                     "built_at": lib.get("built_at", ""),
                     "stale": bool(fresh.get("stale")),
+                    "covered_by_delta": bool(fresh.get("covered_by_delta")),
                     "newest": fresh.get("newest", ""),
                     "truncated": bool(fresh.get("truncated"))},
         "counts": compared.get("counts", {}),
@@ -496,6 +505,7 @@ def _library_freshness(library_dirs: List[str], built_at: str,
     out["scanned"] = scanned
     if newest:
         out["newest"] = datetime.fromtimestamp(newest).isoformat(timespec="seconds")
+        out["newest_ts"] = newest
         out["stale"] = bool(built_ts and newest > built_ts + 1)
     return out
 
@@ -719,6 +729,8 @@ def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
         "target": str(target_dir),
         "count": len(committed),
         "committed": committed,
+        # 入库后的文件路径：调用方拿去做「增量索引探测」，避免全量重建
+        "paths": [str(target_dir / str(c.get("stored") or "")) for c in committed],
         "skipped": skipped,
         "replaced_backup": str(replaced_dir) if backed_up else "",
         "message": f"入库 {len(committed)} 个字体"
@@ -968,6 +980,7 @@ async def _do_rebuild(cfg: Optional[Dict[str, Any]], binary: Path,
         return {"success": False, "message": "未配置字体库目录"}
     fm = _fm(cfg)
     await _notify(on_state, "running", {})
+    started = time.time()
     try:
         result = await index_store.build_index(
             binary, libs, index_store.index_dir(cfg),
@@ -976,6 +989,9 @@ async def _do_rebuild(cfg: Optional[Dict[str, Any]], binary: Path,
     except Exception as e:      # 对外不抛
         result = {"success": False, "message": f"索引重建异常：{type(e).__name__} {e}"}
     await _notify(on_state, "done" if result.get("success") else "failed", result)
+    if result.get("success"):
+        # 重建开始后又有新字体的，保留在 delta 里继续当比对基线
+        index_delta.prune(cfg, started)
     return result
 
 

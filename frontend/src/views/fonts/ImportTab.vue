@@ -289,7 +289,7 @@ void fetchImportInfo()
             直接放入该目录（不建子目录）
           </template>
           ，
-          索引合并重建延迟 {{ importInfo.rebuild_debounce }}s
+          索引重建防抖 {{ importInfo.rebuild_debounce }}s
           <v-btn
             size="x-small"
             variant="text"

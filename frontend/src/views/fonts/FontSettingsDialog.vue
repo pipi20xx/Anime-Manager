@@ -141,7 +141,7 @@ const importedInsideLibrary = computed(() => {
                   { title: '自动入库新增（auto_commit）', value: 'auto_commit' },
                   { title: '只出报告（report_only）', value: 'report_only' },
                 ]"
-                label="采集后动作 (collect_mode)"
+                label="采集后怎么处理 (collect_mode)"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -178,7 +178,7 @@ const importedInsideLibrary = computed(() => {
           <div class="d-flex align-center ga-2 mb-1">
             <v-text-field
               :model-value="configForm.imported_dir"
-              label="导入字体的落库目录 (imported_dir)"
+              label="导入字体的保存位置 (imported_dir)"
               variant="outlined"
               density="compact"
               hide-details
@@ -211,18 +211,21 @@ const importedInsideLibrary = computed(() => {
               不在字体库目录内时会自动作为额外字体目录参与索引。
             </template>
           </div>
-          <div class="d-flex align-center flex-wrap ga-3 mb-3">
+          <div class="switch-row mb-3">
             <v-switch
               :model-value="configForm.import_subfolder !== false"
               color="primary"
-              density="compact"
               hide-details
-              label="每次导入建独立子目录"
+              density="compact"
               @update:model-value="(v: any) => (configForm.import_subfolder = !!v)"
             />
-            <span class="text-caption text-medium-emphasis">
-              关闭后字体直接放进落库目录（适合已按番剧分好目录的用法），同名自动加 _1 序号
-            </span>
+            <div>
+              <div class="switch-label">按批次建子目录 (import_subfolder)</div>
+              <div class="text-caption text-medium-emphasis">
+                开启：每次导入落到 <code>&lt;时间戳&gt;-&lt;任务号&gt;</code> 子目录，便于按批次整体回滚；
+                关闭：直接放进保存位置（适合「保存位置本来就按番剧分好目录」的用法），同名自动加 <code>_1</code> 序号。
+              </div>
+            </div>
           </div>
           <v-row density="compact" class="mb-1">
             <v-col cols="12" sm="6">
@@ -233,7 +236,7 @@ const importedInsideLibrary = computed(() => {
                   { title: '备份旧文件后替换（replace）', value: 'replace' },
                   { title: '跳过冲突项（skip）', value: 'skip' },
                 ]"
-                label="默认冲突策略 (import_default_policy)"
+                label="冲突时默认怎么处理 (import_default_policy)"
                 variant="outlined"
                 density="compact"
                 hide-details
@@ -245,7 +248,7 @@ const importedInsideLibrary = computed(() => {
             <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="configForm.import_job_ttl_hours"
-                label="导入工作区保留 (import_job_ttl_hours)"
+                label="导入记录保留时长 (import_job_ttl_hours)"
                 type="number"
                 suffix="小时"
                 min="1"
@@ -253,7 +256,7 @@ const importedInsideLibrary = computed(() => {
                 variant="outlined"
                 density="compact"
                 hide-details
-                hint="从最后一次操作算起，到期后在下一次上传压缩包时清理"
+                hint="从最后一次操作算起；过期后下次上传压缩包时清理，已入库的字体不受影响"
                 persistent-hint
                 @update:model-value="(v: string) => (configForm.import_job_ttl_hours = Number(v) || 24)"
               />
@@ -263,7 +266,7 @@ const importedInsideLibrary = computed(() => {
             <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="configForm.import_rebuild_debounce"
-                label="入库后索引重建延迟 (import_rebuild_debounce)"
+                label="索引重建防抖 (import_rebuild_debounce)"
                 type="number"
                 suffix="秒"
                 min="0"
@@ -271,7 +274,7 @@ const importedInsideLibrary = computed(() => {
                 variant="outlined"
                 density="compact"
                 hide-details
-                hint="合并窗口：窗口内多次入库只重建一次索引"
+                hint="最后一次入库后静默这么多秒再重建一次；连续导入只在结尾重建一次，0 = 立即重建"
                 persistent-hint
                 @update:model-value="(v: string) => (configForm.import_rebuild_debounce = Number(v) || 0)"
               />

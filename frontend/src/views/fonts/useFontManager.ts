@@ -751,7 +751,7 @@ function createFontManagerStore() {
         success(
           `已入库 ${res.count} 个字体 → ${res.target || ''}` +
             (res.reextracted ? '（已按需重新解压原始压缩包）' : '') +
-            (res.index?.scheduled ? `，索引将在 ${res.index.delay}s 后合并重建` : ''),
+            (res.index?.scheduled ? `，索引将在静默 ${res.index.delay}s 后重建` : ''),
         )
       } else {
         warning(res?.message || '没有入库任何字体')
