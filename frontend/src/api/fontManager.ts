@@ -455,7 +455,20 @@ export interface FontImportReport {
   skipped?: Array<{ archive?: string; name: string; reason: string }>
   skipped_count?: number
   probe?: { success: boolean; faces: number; message?: string }
-  library?: { index_available: boolean; faces: number; dirs?: string[]; error?: string }
+  library?: {
+    index_available: boolean
+    faces: number
+    dirs?: string[]
+    error?: string
+    /** 主库索引的构建时间 */
+    built_at?: string
+    /** 索引比库内最新字体文件更旧（比对会把已有字体判成新增） */
+    stale?: boolean
+    /** 库内最新字体文件的 mtime */
+    newest?: string
+    /** 扫描是否被条目上限截断 */
+    truncated?: boolean
+  }
   probe_error?: string
   counts?: { new?: number; duplicate?: number; conflict?: number; invalid?: number }
   new?: FontImportItem[]

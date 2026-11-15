@@ -104,7 +104,7 @@ def _face_keys(ident: Dict[str, Any]) -> Tuple[Tuple[Any, ...], Tuple[Any, ...]]
 
 def library_faces(cfg: Optional[Dict[str, Any]] = None,
                   library_dirs: Optional[Iterable[str]] = None) -> Dict[str, Any]:
-    """主库 face 快照：{exists, faces, files, error}。
+    """主库 face 快照：{exists, faces, files, built_at, error}。
 
     只保留落在字体库目录内的 face（assfonts 建索引时会连系统字体一起扫）。
     """
@@ -116,6 +116,7 @@ def library_faces(cfg: Optional[Dict[str, Any]] = None,
         "exists": bool(info.get("exists")),
         "faces": faces,
         "files": len({f.get("path") for f in faces if f.get("path")}),
+        "built_at": info.get("built_at", ""),
         "error": info.get("error", ""),
         "path": info.get("path", ""),
     }
@@ -124,6 +125,7 @@ def library_faces(cfg: Optional[Dict[str, Any]] = None,
 def _build_library_index(faces: List[Dict[str, Any]]) -> Dict[str, Any]:
     by_name: Dict[str, List[Dict[str, Any]]] = {}
     by_strong: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    by_psname: Dict[str, List[Dict[str, Any]]] = {}
     by_weak: Dict[str, List[Dict[str, Any]]] = {}
     for raw in faces:
         ident = face_identity(raw)
@@ -135,7 +137,10 @@ def _build_library_index(faces: List[Dict[str, Any]]) -> Dict[str, Any]:
             by_strong.setdefault(s, entry)
         for w in weak:
             by_weak.setdefault(w, []).append(entry)
-    return {"by_name": by_name, "by_strong": by_strong, "by_weak": by_weak}
+        for ps in ident["psname_keys"]:
+            by_psname.setdefault(ps, []).append(entry)
+    return {"by_name": by_name, "by_strong": by_strong,
+            "by_psname": by_psname, "by_weak": by_weak}
 
 
 # ── 内容级（L1）比对 ────────────────────────────────────────
@@ -297,6 +302,20 @@ def compare(incoming: List[Dict[str, Any]],
                         if s in lib_index["by_strong"]), None)
             if hit is not None:
                 matched_strong.append(hit)
+                continue
+            # psname 是 OpenType 里的唯一标识：family 命名不同（一个英文名、一个中文名）
+            # 但 psname 一致 → 同一字体的不同来源/版本，按「冲突」处理而不是当新字体导进来
+            ps_hits = [lib_index["by_psname"][p] for p in ident["psname_keys"]
+                       if p in lib_index["by_psname"]]
+            if ps_hits:
+                flat = {e["ident"]["path"]: e for group in ps_hits for e in group}
+                conflicts.append({
+                    "face": face_summary(face),
+                    "existing": [{"path": p, "family": e["ident"]["family"],
+                                  "psname": e["ident"]["psname"]}
+                                 for p, e in flat.items()],
+                    "reason": "同 PostScript 名（psname）但 family 命名不同：疑似同一字体的不同来源",
+                })
                 continue
             same_family = [lib_index["by_weak"][w] for w in weak if w in lib_index["by_weak"]]
             if same_family:

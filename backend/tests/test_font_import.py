@@ -256,6 +256,25 @@ class TestCompare(unittest.TestCase):
         self.assertEqual(rep["counts"]["new"], 1)
         self.assertEqual(len(rep["new"][0]["faces"]), 2)
 
+    def test_same_psname_diff_family_is_conflict(self):
+        """同 psname、family 命名不同（一个英文名一个中文名）→ 冲突，不能当新字体入库。
+
+        这是实测踩到的坑：方正 GBK 字体（方正兰亭大黑_GBK.ttf）内部同时有中文 family
+        与英文 PostScript 名，不同来源的同一字体 family 可能正好相反。
+        """
+        f = self.td / "extracted" / "方正兰亭大黑_GBK.ttf"
+        f.parent.mkdir()
+        f.write_bytes(b"another-source")
+        incoming = [{"name": f.name, "source": f.name, "size": f.stat().st_size,
+                     "sha256": importer._sha256(f), "path": str(f)}]
+        probe = self._probe({f: [_font_face("方正兰亭大黑_GBK", "FZLanTingHei-EB-GBK", f)]})
+        lib_faces = [_font_face("FZLanTingHei-EB-GBK", "FZLanTingHei-EB-GBK", self.existing)]
+        rep = font_probe.compare(incoming, probe, {"exists": True, "faces": lib_faces})
+        self.assertEqual(rep["counts"]["conflict"], 1)
+        self.assertIn("PostScript", rep["conflict"][0]["reason"])
+        self.assertEqual(rep["conflict"][0]["conflicts"][0]["existing"][0]["path"],
+                         str(self.existing))
+
     def test_library_index_missing_degrades(self):
         f = self.td / "extracted" / "x.ttf"
         f.parent.mkdir()

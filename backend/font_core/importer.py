@@ -280,6 +280,7 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
     # 4) 与主库比对
     libs = subset_service.library_dirs(cfg)
     lib = await asyncio.to_thread(font_probe.library_faces, cfg, libs)
+    fresh = await asyncio.to_thread(_library_freshness, libs, lib.get("built_at", ""))
     if probe.get("success"):
         compared = font_probe.compare(incoming, probe, lib)
     else:
@@ -299,7 +300,11 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str) -> D
         "library": {"index_available": compared.get("library_index_available", False),
                     "faces": compared.get("compared_faces", 0),
                     "dirs": libs,
-                    "error": compared.get("library_index_error", "")},
+                    "error": compared.get("library_index_error", ""),
+                    "built_at": lib.get("built_at", ""),
+                    "stale": bool(fresh.get("stale")),
+                    "newest": fresh.get("newest", ""),
+                    "truncated": bool(fresh.get("truncated"))},
         "counts": compared.get("counts", {}),
         "new": compared.get("new", []),
         "duplicate": compared.get("duplicate", []),
@@ -357,6 +362,59 @@ def _compare_hash_only(incoming: List[Dict[str, Any]],
             "compared_faces": len(lib.get("faces") or []),
             "library_index_available": bool(lib.get("exists")),
             "library_index_error": lib.get("error", "")}
+
+
+def _library_freshness(library_dirs: List[str], built_at: str,
+                       max_entries: int = 20000) -> Dict[str, Any]:
+    """主库索引是否比字体库里的文件更旧。
+
+    索引过期时比对会把「其实已经在库里」的字体全判成新增，导入后就成了重复文件。
+    这里只扫字体库目录（不含系统字体），entries 有上限，避免 NAS 上拖太久。
+    """
+    out: Dict[str, Any] = {"built_at": built_at, "newest": "", "stale": False,
+                           "scanned": 0, "truncated": False}
+    try:
+        built_ts = datetime.fromisoformat(built_at).timestamp() if built_at else 0.0
+    except (TypeError, ValueError):
+        built_ts = 0.0
+    newest = 0.0
+    scanned = 0
+    for d in library_dirs or []:
+        root = Path(str(d or ""))
+        try:
+            if not root.is_dir():
+                continue
+        except OSError:
+            continue
+        stack = [root]
+        while stack and scanned < max_entries:
+            cur = stack.pop()
+            try:
+                it = os.scandir(cur)
+            except OSError:
+                continue
+            with it:
+                for entry in it:
+                    scanned += 1
+                    if scanned >= max_entries:
+                        out["truncated"] = True
+                        break
+                    try:
+                        if entry.is_dir():
+                            stack.append(Path(entry.path))
+                            continue
+                        if not ass_parser.is_font_file(entry.name):
+                            continue
+                        mtime = entry.stat().st_mtime
+                    except OSError:
+                        continue
+                    if mtime > newest:
+                        newest = mtime
+    out["scanned"] = scanned
+    if newest:
+        out["newest"] = datetime.fromtimestamp(newest).isoformat(timespec="seconds")
+        out["stale"] = bool(built_ts and newest > built_ts + 1)
+    return out
 
 
 def _scan_library_names(library_dirs: List[str],

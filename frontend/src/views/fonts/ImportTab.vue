@@ -327,6 +327,18 @@ void fetchImportInfo()
         >
           主库索引不存在，本次未做 face 级比对（建议先在字体库页重建索引）。
         </v-alert>
+        <v-alert
+          v-else-if="importReport?.library?.stale"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+        >
+          主库索引（{{ importReport.library.built_at || '—' }}）比库内最新字体文件（{{
+            importReport.library.newest || '—'
+          }}）旧，比对可能把「其实已在库里」的字体判成新增。建议先到「字体库」页点「重建索引」，
+          再重新上传分析。
+        </v-alert>
 
         <!-- 压缩包处理结果 -->
         <div v-if="importReport?.archives?.length" class="mb-3">

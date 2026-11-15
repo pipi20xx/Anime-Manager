@@ -52,6 +52,21 @@ function weightText(f: FontFace): string {
   return parts.join(' / ') || '-'
 }
 
+/**
+ * 字体名列的悬停提示：把 family / fullname / PostScript 名一起列出来。
+ *
+ * 为什么需要：同一字体不同来源（或 GBK 老字体）内部可能同时有英文名与中文名，
+ * 表格里只显示 families[0]，看起来就像「两个不同的字体」——把三个名字都摊开就能对得上。
+ */
+function faceTitle(f: FontFace): string {
+  const parts = [`family: ${f.family || '-'}`]
+  if (f.fullname) parts.push(`fullname: ${f.fullname}`)
+  if (f.psname) parts.push(`psname: ${f.psname}`)
+  if ((f.psnames || []).length > 1) parts.push(`psnames: ${(f.psnames || []).join(' / ')}`)
+  parts.push(`文件: ${f.filename}`)
+  return parts.join('\n')
+}
+
 // ── 下载（单个 / 按当前筛选打包） ──────────────────────────
 const downloadingAll = ref(false)
 const downloadingOne = ref('')
@@ -281,7 +296,7 @@ async function handleLibraryFontUpload(
           <tr v-for="(f, i) in fonts" :key="`${f.filename}-${i}`">
             <td class="text-body-2">
               <div class="family-cell d-flex align-center flex-nowrap ga-1">
-                <span class="text-truncate" :title="f.family || '-'">{{ f.family || '-' }}</span>
+                <span class="text-truncate" :title="faceTitle(f)">{{ f.family || '-' }}</span>
                 <v-chip
                   v-if="(f.face_index ?? 0) > 0"
                   size="x-small"
