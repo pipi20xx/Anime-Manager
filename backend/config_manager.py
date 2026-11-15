@@ -209,6 +209,7 @@ class ConfigManager:
             "replaced_dir": "data/fonts/replaced",       # 冲突替换时旧文件的备份目录（不直接删）
             "import_target": "separate",                 # separate=独立目录 / primary=主库的 imported 子目录
             "import_subfolder": True,                    # 每次导入是否建 <时间戳>-<任务号> 子目录（关闭=直接放进落库目录）
+            "import_default_policy": "keep",             # 默认冲突策略：keep 保留库内 / replace 备份后替换 / skip 跳过
             "import_rebuild_debounce": 120,              # 入库后延迟合并重建索引的秒数（0=立即）
             "import_job_ttl_hours": 24,                  # 导入工作区（最近导入任务）保留时长（小时），下次上传时清理
             "import_max_archive_mb": 512,                # 单压缩包上限（MB）

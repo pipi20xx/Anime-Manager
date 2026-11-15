@@ -145,6 +145,8 @@ export interface FontManagerConfig {
   imported_dir?: string
   /** 每次导入是否建 <时间戳>-<任务号> 子目录（关闭=直接放进落库目录） */
   import_subfolder?: boolean
+  /** 默认冲突策略：keep 保留库内 / replace 备份后替换 / skip 跳过 */
+  import_default_policy?: 'keep' | 'replace' | 'skip'
   /** 导入工作区（最近导入任务）保留时长（小时） */
   import_job_ttl_hours?: number
   /** 入库后索引合并重建的延迟秒数 */
@@ -532,6 +534,8 @@ export interface FontImportInfo {
   target_in_library?: boolean
   /** 每次导入是否建 <时间戳>-<任务号> 子目录 */
   import_subfolder?: boolean
+  /** 设置里的默认冲突策略（导入页可覆盖） */
+  default_policy?: 'keep' | 'replace' | 'skip'
   rebuild_debounce: number
   /** 导入工作区（最近导入任务）保留时长（小时） */
   job_ttl_hours?: number

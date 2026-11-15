@@ -918,6 +918,7 @@ function createFontManagerStore() {
       // 压缩包导入
       imported_dir: '',
       import_subfolder: true,
+      import_default_policy: 'keep',
       import_job_ttl_hours: 24,
       import_rebuild_debounce: 120,
     }
@@ -1010,6 +1011,9 @@ function createFontManagerStore() {
         // 压缩包导入：留空 = data/fonts/imported；TTL 1~720 小时；重建延迟 0~3600 秒
         imported_dir: (form.imported_dir || '').trim(),
         import_subfolder: form.import_subfolder !== false,
+        import_default_policy: ['keep', 'replace', 'skip'].includes(form.import_default_policy || '')
+          ? (form.import_default_policy as 'keep' | 'replace' | 'skip')
+          : 'keep',
         import_job_ttl_hours: Math.max(1, Math.min(720, Number(form.import_job_ttl_hours) || 24)),
         import_rebuild_debounce: Math.max(
           0,

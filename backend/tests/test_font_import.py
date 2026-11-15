@@ -457,6 +457,39 @@ class TestConfig(unittest.TestCase):
             self.assertFalse(importer.target_in_library(outside))
             self.assertIn(str(other), subset_service.library_dirs(outside))
 
+    def test_default_policy(self):
+        self.assertEqual(importer.default_policy({}), "keep")
+        self.assertEqual(importer.default_policy(
+            {"font_manager": {"import_default_policy": "REPLACE"}}), "replace")
+        self.assertEqual(importer.default_policy(
+            {"font_manager": {"import_default_policy": "nonsense"}}), "keep")
+        self.assertEqual(importer.normalize_policy(None), "keep")
+
+    def test_commit_uses_configured_default_policy(self):
+        """commit 不传 policy 时取设置里的默认策略（replace 生效：旧文件被备份走）。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = _cfg(td)
+            cfg["font_manager"]["import_default_policy"] = "replace"
+            lib = Path(cfg["font_manager"]["library_dir"])
+            lib.mkdir(parents=True, exist_ok=True)
+            old = lib / "x.otf"
+            old.write_bytes(b"old")
+            job = importer.create_job(cfg)
+            paths = importer.job_paths(cfg, job["job_id"])
+            (paths["extracted"] / "x.otf").write_bytes(b"new")
+            paths["report"].write_text(json.dumps({
+                "new": [], "conflict": [{
+                    "name": "x.otf", "size": 3, "reason": "同 face 不同版本",
+                    "conflicts": [{"existing": [{"path": str(old), "family": "F", "psname": "P"}]}],
+                }],
+            }, ensure_ascii=False), encoding="utf-8")
+
+            res = importer.commit(cfg, job["job_id"], select=["x.otf"])
+            self.assertEqual(res["count"], 1)
+            self.assertTrue(res["committed"][0]["replaced"])
+            self.assertEqual((Path(res["replaced_backup"]) / "x.otf").read_bytes(), b"old")
+
     def test_subfolder_switch(self):
         """import_subfolder 开关：开=每次一个子目录，关=直接放进落库根目录。"""
         with tempfile.TemporaryDirectory() as td:

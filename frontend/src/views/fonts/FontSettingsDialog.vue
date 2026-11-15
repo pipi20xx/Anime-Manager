@@ -164,6 +164,23 @@ const importedInsideLibrary = computed(() => {
           </div>
           <v-row density="compact" class="mb-1">
             <v-col cols="12" sm="6">
+              <v-select
+                :model-value="configForm.import_default_policy || 'keep'"
+                :items="[
+                  { title: '保留库内已有版本（keep）', value: 'keep' },
+                  { title: '备份旧文件后替换（replace）', value: 'replace' },
+                  { title: '跳过冲突项（skip）', value: 'skip' },
+                ]"
+                label="默认冲突策略 (import_default_policy)"
+                variant="outlined"
+                density="compact"
+                hide-details
+                hint="导入页可对单次导入临时覆盖"
+                persistent-hint
+                @update:model-value="(v: any) => (configForm.import_default_policy = v)"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="configForm.import_job_ttl_hours"
                 label="导入工作区保留 (import_job_ttl_hours)"
@@ -179,6 +196,8 @@ const importedInsideLibrary = computed(() => {
                 @update:model-value="(v: string) => (configForm.import_job_ttl_hours = Number(v) || 24)"
               />
             </v-col>
+          </v-row>
+          <v-row density="compact" class="mb-1">
             <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="configForm.import_rebuild_debounce"

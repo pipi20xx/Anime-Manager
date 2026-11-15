@@ -10,7 +10,7 @@
  * 关键点：**分析不动字体库**，入库是第二步动作；冲突默认保留库内版本。
  * 状态与方法来自 useFontManager()（主视图 provide 的共享 store）。
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { formatDbSize } from '@/composables'
 import { EmptyState } from '@/components/common'
 import type { FontImportItem } from '@/api/fontManager'
@@ -41,6 +41,26 @@ const dragActive = ref(false)
 const collecting = ref(false)
 const policy = ref<'keep' | 'replace' | 'skip'>('keep')
 const removeTarget = ref('')
+
+/** 冲突策略选项：设置里的默认策略打上「（默认）」标记（本次导入仍可临时改） */
+const policyItems = computed(() => {
+  const def = importInfo.value?.default_policy || 'keep'
+  const tag = (v: string) => (v === def ? '（默认）' : '')
+  return [
+    { title: `冲突：保留库内版本${tag('keep')}`, value: 'keep' },
+    { title: `冲突：备份旧文件后替换${tag('replace')}`, value: 'replace' },
+    { title: `冲突：跳过${tag('skip')}`, value: 'skip' },
+  ]
+})
+
+// 设置里的默认策略变化/首次加载后，同步为本页的初始选择
+watch(
+  () => importInfo.value?.default_policy,
+  (v) => {
+    if (v === 'keep' || v === 'replace' || v === 'skip') policy.value = v
+  },
+  { immediate: true },
+)
 
 const counts = computed(() => importReport.value?.counts || {})
 const hasReport = computed(() => !!importReport.value)
@@ -289,15 +309,11 @@ void fetchImportInfo()
         <v-spacer />
         <v-select
           v-model="policy"
-          :items="[
-            { title: '冲突：保留库内版本', value: 'keep' },
-            { title: '冲突：备份旧文件后替换', value: 'replace' },
-            { title: '冲突：跳过', value: 'skip' },
-          ]"
+          :items="policyItems"
           density="compact"
           variant="outlined"
           hide-details
-          style="max-width: 240px"
+          style="max-width: 260px"
         />
         <v-btn
           size="small"

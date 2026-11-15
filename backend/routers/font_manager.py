@@ -150,6 +150,7 @@ class FontManagerConfig(BaseModel):
     replaced_dir: Optional[str] = Field(None, description="冲突替换时的旧文件备份目录")
     import_target: Optional[str] = Field(None, description="入库目标：separate / primary")
     import_subfolder: Optional[bool] = Field(None, description="每次导入是否建 <时间戳>-<任务号> 子目录")
+    import_default_policy: Optional[str] = Field(None, description="默认冲突策略：keep/replace/skip")
     import_rebuild_debounce: Optional[int] = Field(None, ge=0, le=3600, description="入库后重建索引的延迟秒数")
     import_job_ttl_hours: Optional[int] = Field(None, ge=1, le=720, description="导入工作区保留时长（小时），下次上传时清理")
     import_max_archive_mb: Optional[int] = Field(None, ge=1, le=8192, description="单压缩包上限（MB）")
@@ -853,7 +854,7 @@ async def upload_temp_fonts(files: List[UploadFile] = File(...)):
 
 class ImportCommitPayload(BaseModel):
     files: Optional[List[str]] = Field(None, description="要入库的文件名（留空=全部新增）")
-    policy: str = Field("keep", description="冲突处理：keep 保留库内 / replace 备份后替换 / skip 跳过")
+    policy: Optional[str] = Field(None, description="冲突处理：keep 保留库内 / replace 备份后替换 / skip 跳过；留空=用设置里的默认策略")
 
 
 def _upload_name(name: str) -> str:
@@ -905,6 +906,7 @@ async def import_info():
         "target_mode": font_importer.import_target_mode(cfg),
         "target_in_library": font_importer.target_in_library(cfg),
         "import_subfolder": font_importer.subfolder_enabled(cfg),
+        "default_policy": font_importer.default_policy(cfg),
         "rebuild_debounce": font_importer.debounce_seconds(cfg),
         "job_ttl_hours": font_importer.ttl_hours(cfg),
         "cleanup_trigger": "下次上传压缩包时清理过期工作区（不是定时任务）",

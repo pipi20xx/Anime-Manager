@@ -566,6 +566,27 @@ def target_in_library(cfg: Optional[Dict[str, Any]] = None) -> bool:
     return any(subset_service.under_dir(base, d) for d in _configured_library_dirs(cfg))
 
 
+POLICY_KEEP = "keep"
+POLICY_REPLACE = "replace"
+POLICY_SKIP = "skip"
+POLICIES = (POLICY_KEEP, POLICY_REPLACE, POLICY_SKIP)
+
+
+def normalize_policy(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    return text if text in POLICIES else POLICY_KEEP
+
+
+def default_policy(cfg: Optional[Dict[str, Any]] = None) -> str:
+    """设置里配置的默认冲突策略（导入页可以按单次覆盖）。
+
+    keep    = 保留库内已有版本（默认，最安全）
+    replace = 把旧文件移到 replaced/ 后替换
+    skip    = 与 keep 同效，但语义上是「显式跳过」
+    """
+    return normalize_policy(_fm(cfg).get("import_default_policy"))
+
+
 def subfolder_enabled(cfg: Optional[Dict[str, Any]] = None) -> bool:
     """每次导入是否在落库目录下建 `<时间戳>-<任务号>` 子目录。
 
@@ -611,11 +632,11 @@ def _move_into(src: Path, dest_dir: Path, name: str, used: set) -> Dict[str, Any
 
 def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
            select: Optional[List[str]] = None,
-           policy: str = "keep") -> Dict[str, Any]:
+           policy: Optional[str] = None) -> Dict[str, Any]:
     """把报告里选中的字体落库。
 
     :param select: 要入库的文件名（对应 report 里的 name）；None=全部 new
-    :param policy: 冲突处理 keep（保留库内，默认）/ replace（备份旧文件后替换）/ skip
+    :param policy: 冲突处理 keep/replace/skip；None=取设置里的默认策略
     """
     paths = find_job(cfg, job_id)
     if not paths:
@@ -623,9 +644,7 @@ def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
     report = _read_json(paths["report"])
     if not report:
         return {"success": False, "message": "还没有分析报告，请先执行分析"}
-    policy = str(policy or "keep").lower()
-    if policy not in ("keep", "replace", "skip"):
-        policy = "keep"
+    policy = normalize_policy(policy or default_policy(cfg))
 
     new_entries = list(report.get("new") or [])
     conflict_entries = list(report.get("conflict") or [])
