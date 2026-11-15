@@ -9,17 +9,19 @@ import { ref } from 'vue'
 import { fontManagerApi } from '@/api'
 import type { TempFontFile } from '@/api/fontManager'
 import { formatDbSize } from '@/composables'
-import { useFontManager, collectDroppedFiles, FONT_ACCEPT, FONT_RE, MAX_DROP_FILES } from './useFontManager'
+import { useFontManager, collectDroppedFiles, ARCHIVE_ACCEPT, FONT_ACCEPT, FONT_RE, ARCHIVE_RE, MAX_DROP_FILES } from './useFontManager'
 
 defineOptions({ name: 'FontManagerTempFontsTab' })
 
 const {
   success, showError, warning, confirm,
   status, tempFonts, tempFontFiles, tempFontActive,
-  refreshAll, tempUploading: uploadTempUploading, uploadTempFontsFiles,
+  refreshAll, tempUploading: uploadTempUploading, uploadTempFontsFiles, uploadTempArchiveFiles,
 } = useFontManager()
 
 // ── 临时字体池交互状态 ────────────────────────────────────
+/** 临时池既接受单个字体，也接受字体压缩包（解压后入池，不入库） */
+const TEMP_ACCEPT = `${ARCHIVE_ACCEPT},${FONT_ACCEPT}`
 const tempFontInput = ref<HTMLInputElement | null>(null)
 /** 上传状态来自共享 store（页面级拖拽路由也会触发上传） */
 const tempUploading = uploadTempUploading
@@ -37,7 +39,7 @@ function onTempFontChange(e: Event) {
   const input = e.target as HTMLInputElement
   const list = input.files ? Array.from(input.files) : []
   input.value = ''
-  if (list.length) handleTempFontUpload(list)
+  if (list.length) void dispatchTempFiles(list)
 }
 
 function onTempDragEnter() {
@@ -56,30 +58,42 @@ function onTempDrop(e: DragEvent) {
   void handleTempDrop(e)
 }
 
-/** 临时字体拖拽：支持字体文件与整个文件夹（递归收集），只接受字体后缀 */
+/** 临时字体拖拽：支持字体文件、字体压缩包与整个文件夹（递归收集） */
 async function handleTempDrop(e: DragEvent) {
   const dt = e.dataTransfer
   if (!dt) return
   collecting.value = true
   try {
-    const collected = await collectDroppedFiles(e, FONT_RE)
+    const collected = await collectDroppedFiles(
+      e,
+      new RegExp(`${ARCHIVE_RE.source}|${FONT_RE.source}`, 'i'),
+    )
     if (!collected) {
       // 降级：没有 webkitGetAsEntry 时无法读取文件夹，只能用 dataTransfer.files
       const list = Array.from(dt.files || [])
-      if (list.length) await handleTempFontUpload(list)
+      if (list.length) await dispatchTempFiles(list)
       return
     }
-    if (collected.truncated) warning(`拖入的文件过多，仅收集前 ${MAX_DROP_FILES} 个字体文件`)
+    if (collected.truncated) warning(`拖入的文件过多，仅收集前 ${MAX_DROP_FILES} 个文件`)
     if (!collected.files.length) {
-      warning(collected.sawDirectory ? '该文件夹内没有找到字体文件' : '没有找到字体文件')
+      warning(collected.sawDirectory ? '该文件夹内没有找到字体或压缩包' : '没有找到字体或压缩包')
       return
     }
-    await handleTempFontUpload(collected.files)
+    await dispatchTempFiles(collected.files)
   } catch (err: any) {
     showError(err?.message || '读取拖入内容失败')
   } finally {
     collecting.value = false
   }
+}
+
+/** 按类型分流：字体文件直接进池，压缩包解压后进池 */
+async function dispatchTempFiles(files: File[]) {
+  const fonts = files.filter((f) => FONT_RE.test(f.name))
+  const archives = files.filter((f) => ARCHIVE_RE.test(f.name))
+  if (fonts.length) await handleTempFontUpload(fonts)
+  if (archives.length) await uploadTempArchiveFiles(archives)
+  if (!fonts.length && !archives.length) warning('没有找到字体或压缩包')
 }
 
 /** 上传临时字体：统一走 store（页面级拖拽路由也调用同一实现） */
@@ -161,7 +175,7 @@ const statusRef = status
         ref="tempFontInput"
         type="file"
         multiple
-        :accept="FONT_ACCEPT"
+        :accept="TEMP_ACCEPT"
         class="d-none"
         @change="onTempFontChange"
       />
@@ -183,8 +197,9 @@ const statusRef = status
       <div class="text-caption text-medium-emphasis mb-3" style="line-height: 1.45">
         临时字体只在内核处理时作为补充字体源（<code>-f</code>）使用，<strong>不会写入字体库</strong>；
         上传后立即参与「执行 / 全部子集化」与缺字体预检；不用了可一键清空。
-        也可以直接把<strong>字体文件或整个文件夹</strong>拖到本卡片（只接受字体后缀，其它文件会被忽略）。
-        字体库入库请切到「字体库」Tab，避免拖拽误把字体永久写进库里。
+        也可以直接把<strong>字体文件、字体压缩包或整个文件夹</strong>拖到本卡片
+        （压缩包会解压后入池，非字体内容会被丢弃）。
+        要把压缩包里的字体<strong>永久入库</strong>，请到「压缩包导入」Tab 用它自己的拖拽区。
       </div>
 
       <div v-if="collecting" class="d-flex align-center ga-2 text-body-2 mb-2">

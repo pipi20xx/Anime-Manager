@@ -711,5 +711,48 @@ class TestLibraryDirsAndDedupe(unittest.TestCase):
         self.assertEqual(sum(1 for f in faces if f["path"] == "/x/a.ttf"), 2)
 
 
+# ── 6. 压缩包 → 临时字体池 ──────────────────────────────────
+
+class TestTempPool(unittest.TestCase):
+
+    def _cfg_with_pool(self, td: Path) -> dict:
+        cfg = _cfg(td)
+        cfg["font_manager"]["temp_font_dir"] = str(td / "temp_fonts")
+        return cfg
+
+    def test_archive_goes_to_temp_pool(self):
+        """拖入压缩包 → 解压后进临时池（不入库、不比对），非字体条目丢弃。"""
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = self._cfg_with_pool(td)
+            zp = _make_zip(td / "Fonts.zip", [
+                ("a.ttf", b"aaa"), ("b.otf", b"bbb"),
+                ("readme.txt", b"hi"), ("__MACOSX/._x.ttf", b"junk"),
+            ])
+            res = _run(importer.add_archives_to_temp_pool(cfg, td / "no-kernel", [zp]))
+            self.assertEqual(res["added"], 2)
+            pool = td / "temp_fonts"
+            self.assertEqual(sorted(p.name for p in pool.iterdir()), ["a.ttf", "b.otf"])
+            self.assertEqual(res["temp"]["count"], 2)
+            self.assertFalse(importer.imported_root(cfg).exists())   # 完全没碰字体库
+            self.assertEqual(len(res["skipped"]), 2)                 # txt + __MACOSX
+
+            # 同一个包再传一次：同名同内容 → duplicate，不新增
+            again = _run(importer.add_archives_to_temp_pool(cfg, td / "no-kernel", [zp]))
+            self.assertEqual(again["added"], 0)
+            self.assertEqual(sum(1 for f in again["fonts"] if f["action"] == "duplicate"), 2)
+            self.assertEqual(len(list(pool.iterdir())), 2)
+
+    def test_non_archive_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            cfg = self._cfg_with_pool(td)
+            plain = td / "a.ttf"
+            plain.write_bytes(b"x")
+            res = _run(importer.add_archives_to_temp_pool(cfg, td / "no-kernel", [plain]))
+            self.assertEqual(res["added"], 0)
+            self.assertIn("不是压缩包", res["skipped"][0]["reason"])
+
+
 if __name__ == "__main__":
     unittest.main()

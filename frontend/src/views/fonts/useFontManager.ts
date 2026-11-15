@@ -690,6 +690,48 @@ function createFontManagerStore() {
     }
   }
 
+  /** 上传压缩包 → 解压后进临时字体池（拖入压缩包的默认落点；不入库） */
+  async function uploadTempArchiveFiles(files: File[], emptyHint = '没有可解压的字体压缩包') {
+    const valid = files.filter((f) => ARCHIVE_RE.test(f.name))
+    const ignored = files.length - valid.length
+    if (ignored > 0) warning(`已忽略 ${ignored} 个非压缩包文件（拖入压缩包只走解压入池）`)
+    if (!valid.length) {
+      warning(emptyHint)
+      return
+    }
+
+    tempUploading.value = true
+    try {
+      const res = await fontManagerApi.uploadTempFontsArchive(valid)
+      const added = res?.added || 0
+      const rows = res?.data || []
+      const dup = rows.filter((r) => r.action === 'duplicate').length
+      if (added > 0) {
+        success(
+          `已从压缩包解出 ${added} 个字体加入临时字体池` + (dup ? `（${dup} 个已在池中）` : ''),
+        )
+      } else {
+        warning(`压缩包里没有新字体可用${dup ? `（${dup} 个已在池中）` : ''}`)
+      }
+      const failed = (res?.archives || []).filter((a) => !a.success)
+      for (const a of failed) {
+        showError(`${a.name} 解压失败：${a.message || '未知原因'}`)
+      }
+      const skipped = res?.skipped || []
+      if (skipped.length) {
+        showError(
+          `丢弃 ${skipped.length} 项：${skipped.slice(0, 5).map((s) => `${s.name}（${s.reason}）`).join('；')}`
+            + (skipped.length > 5 ? ' …' : ''),
+        )
+      }
+      await refreshAll()
+    } catch (e: any) {
+      showError(e?.message || '压缩包入临时池失败')
+    } finally {
+      tempUploading.value = false
+    }
+  }
+
   /** 把勾选的字体入库；冲突按 policy 处理（keep=保留库内） */
   async function commitImport(policy: 'keep' | 'replace' | 'skip' = 'keep') {
     const jobId = importJobId.value
@@ -1068,6 +1110,7 @@ function createFontManagerStore() {
     uploadSubtitles,
     tempUploading,
     uploadTempFontsFiles,
+    uploadTempArchiveFiles,
     // 压缩包导入
     importUploading,
     importCommitting,

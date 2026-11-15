@@ -586,6 +586,32 @@ export const fontManagerApi = {
     return api.post<TempFontUploadResult>(`${BASE}/fonts/temp/upload`, formData)
   },
 
+  /**
+   * 上传字体压缩包 → 解压后加入临时字体池（不入库、不比对）。
+   * 页面任意位置拖入压缩包就走这里；要入库请到「压缩包导入」页。
+   */
+  uploadTempFontsArchive: (files: File[]) => {
+    const formData = new FormData()
+    files.forEach((f) => formData.append('files', f))
+    return api.post<{
+      status?: string
+      rejected?: Array<{ filename: string; reason: string }>
+      data?: Array<{ filename: string; size: number; action: string; archive?: string }>
+      skipped?: Array<{ archive?: string; name: string; reason: string }>
+      archives?: Array<{
+        name: string
+        format?: string
+        success?: boolean
+        message?: string
+        extractor?: string
+        fonts?: number
+        skipped?: number
+      }>
+      added?: number
+      temp?: { dir: string; count: number; index?: Record<string, unknown> }
+    }>(`${BASE}/fonts/temp/upload/archive`, formData)
+  },
+
   /** 临时字体列表 */
   listTempFonts: () =>
     api.get<TempFontState>(`${BASE}/fonts/temp`),

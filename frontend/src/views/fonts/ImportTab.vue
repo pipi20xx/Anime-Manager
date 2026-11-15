@@ -225,7 +225,9 @@ void fetchImportInfo()
             {{ importUploading ? '正在解压与比对…' : '把字体压缩包拖到这里，或点击选择文件' }}
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
-            支持 {{ importInfo?.formats?.join(' / ') || ARCHIVE_ACCEPT }}，也可混选单个字体
+            支持 {{ importInfo?.formats?.join(' / ') || ARCHIVE_ACCEPT }}，也可混选单个字体。
+            <strong>注意</strong>：页面任意位置拖入压缩包默认进「临时字体」（能用不入库），
+            要入库必须拖到本框内或点这里选择文件。
           </div>
           <div v-if="limitText" class="text-caption text-medium-emphasis mt-1">{{ limitText }}</div>
           <div v-if="extractorText" class="text-caption mt-2">

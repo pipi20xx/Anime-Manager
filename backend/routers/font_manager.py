@@ -1068,6 +1068,70 @@ async def import_delete(job_id: str):
     return {"status": "success", "message": result.get("message", "")}
 
 
+@router.post("/fonts/temp/upload/archive", summary="上传字体压缩包 → 解压后加入临时字体池")
+async def upload_temp_archive(files: List[UploadFile] = File(...)):
+    """压缩包解压后，把字体放进**临时字体池**（不入库、不比对）。
+
+    对应页面交互：任意位置拖入压缩包 → 进临时池（本次处理可用）；
+    要入库请到「压缩包导入」页拖入或点选择文件。
+    """
+    cfg = _cfg()
+    if not _library_dirs(cfg) and not _temp_font_dir(cfg):
+        raise HTTPException(status_code=400, detail="请先配置字体库目录")
+    lim = font_importer.limits(cfg)
+    staging = font_importer.temp_staging_root(cfg) / ("in_" + uuid.uuid4().hex[:8])
+    saved_paths: List[Path] = []
+    rejected: List[Dict[str, str]] = []
+    try:
+        staging.mkdir(parents=True, exist_ok=True)
+        for up in files:
+            name = _upload_name(up.filename or "")
+            if not font_archive.is_archive_name(name):
+                rejected.append({"filename": name or (up.filename or ""),
+                                 "reason": "不是压缩包（临时字体池请直接上传字体文件）"})
+                continue
+            target = staging / name
+            total = 0
+            try:
+                with open(target, "wb") as fh:
+                    while True:
+                        chunk = await up.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > lim.max_archive_bytes:
+                            raise ValueError(f"超过大小上限（{lim.max_archive_bytes // 1024 // 1024}MB）")
+                        fh.write(chunk)
+                if total <= 0:
+                    raise ValueError("文件为空")
+            except Exception as e:
+                try:
+                    target.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                rejected.append({"filename": name, "reason": str(e)})
+                continue
+            saved_paths.append(target)
+
+        if not saved_paths:
+            reason = rejected[0]["reason"] if rejected else "没有可处理的压缩包"
+            raise HTTPException(status_code=400, detail=reason)
+
+        binary = _optional_binary(cfg)
+        result = await font_importer.add_archives_to_temp_pool(cfg, binary, saved_paths, limits_override=lim)
+        if result.get("added"):
+            await _recheck_missing_after_temp_change(cfg)
+        log_audit("字体管家", "压缩包入临时池",
+                  f"{len(saved_paths)} 个压缩包 → 新增 {result.get('added', 0)} 个字体"
+                  + (f"，跳过 {len(result.get('skipped') or [])} 项" if result.get("skipped") else ""))
+        return {"status": "success", "rejected": rejected,
+                "data": result.get("fonts") or [], "skipped": result.get("skipped") or [],
+                "archives": result.get("archives") or [], "added": result.get("added", 0),
+                "temp": result.get("temp") or {}}
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
 @router.get("/fonts/temp", summary="临时字体列表")
 async def list_temp_font_endpoint():
     cfg = _cfg()

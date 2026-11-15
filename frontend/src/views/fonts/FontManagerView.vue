@@ -44,14 +44,16 @@ const {
   hasLibrary, librarySaving,
   activeTab, fetchFonts, refreshAll,
   jobsUploading, uploadSubtitles,
-  tempUploading, uploadTempFontsFiles,
-  importUploading, uploadImportFiles,
+  tempUploading, uploadTempFontsFiles, uploadTempArchiveFiles,
   openSettings, openFolderPicker,
   showFolderBrowser, folderTitle, folderInitial, onFolderSelected,
 } = fm
 
 // ── 全局拖拽路由：按文件类型自动分流 ──────────────────────
-// 字幕(.ass/.ssa) → 切到「字幕任务」并建任务；字体(ttf/otf/…) → 切到「临时字体」并进临时池。
+// 字幕(.ass/.ssa) → 切到「字幕任务」并建任务；
+// 字体(ttf/otf/…)     → 切到「临时字体」进临时池；
+// 压缩包(zip/rar/7z…) → 解压后同样进**临时字体池**（能用但不入库）。
+// 要入库请到「压缩包导入」页自己的拖拽区/选择文件 —— 全局拖拽不碰字体库。
 // 监听挂在 document 上（本页激活期间），页面任意位置拖入都有效；
 // 卡片自己的 drop 会 preventDefault，这里通过 defaultPrevented 判断不重复处理。
 const pageDragActive = ref(false)
@@ -113,9 +115,10 @@ async function onDocDrop(e: DragEvent) {
       await uploadSubtitles(subtitles)
     }
     if (archives.length) {
-      // 压缩包走「导入」Tab：解压 + 比对 + 入库是独立的两步流程
-      activeTab.value = 'import'
-      await uploadImportFiles(archives)
+      // 压缩包走「临时字体」：解压后直接进临时池（能用但不入库）；
+      // 入库流程在「压缩包导入」页自己的拖拽区里。
+      activeTab.value = 'temp'
+      await uploadTempArchiveFiles(archives)
     }
     if (fonts.length) {
       activeTab.value = 'temp'

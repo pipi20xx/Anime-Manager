@@ -787,6 +787,121 @@ def cleanup_expired(cfg: Optional[Dict[str, Any]] = None,
     return removed
 
 
+# ── 压缩包 → 临时字体池 ─────────────────────────────────────
+#
+# 与「导入入库」完全分开：这里只解压、把字体丢进临时池（data/fonts/temp_fonts），
+# 不比对、不写字体库 —— 对应页面上「拖进压缩包 = 先进临时池、能用但不入库」。
+
+def temp_staging_root(cfg: Optional[Dict[str, Any]] = None) -> Path:
+    """临时字体导入的解压暂存区（在 import/ 同级，随用随删）。"""
+    return import_root(cfg).parent / "temp_archive"
+
+
+def _duplicate_in_pool(dest: Path, name: str, sha256: str = "") -> bool:
+    """目标池里是否已有同名同内容的字体。"""
+    cand = dest / name
+    if not cand.is_file():
+        return False
+    if sha256:
+        return _sha256(cand) == sha256
+    return False
+
+
+def _move_font_into(src: Path, dest: Path, used: set) -> str:
+    """把字体搬进池子里，重名加序号，绝不覆盖。"""
+    dest.mkdir(parents=True, exist_ok=True)
+    name = _unique_name(dest, src.name, used)
+    try:
+        shutil.move(str(src), str(dest / name))
+    except Exception as e:
+        raise OSError(f"搬运失败：{type(e).__name__} {e}") from e
+    return name
+
+
+async def add_archives_to_temp_pool(cfg: Optional[Dict[str, Any]], binary: Path,
+                                    archive_paths: List[Path], *,
+                                    limits_override: Optional[archive.Limits] = None) -> Dict[str, Any]:
+    """解压一批压缩包，把里面的字体放进临时字体池，并刷新临时索引。
+
+    返回 {"fonts": [{filename,size,action}], "skipped": [...], "archives": [...],
+          "added": int, "temp": {dir,count,index}}
+    """
+    cfg = cfg or {}
+    lim = limits_override or limits(cfg)
+    pool = subset_service.temp_font_dir(cfg)
+    pool.mkdir(parents=True, exist_ok=True)
+    staging = temp_staging_root(cfg) / uuid.uuid4().hex[:12]
+
+    fonts: List[Dict[str, Any]] = []
+    skipped: List[Dict[str, str]] = []
+    archives: List[Dict[str, Any]] = []
+    used: set = set()
+
+    try:
+        for idx, path in enumerate(archive_paths):
+            path = Path(path)
+            if not archive.is_archive_name(path.name):
+                skipped.append({"archive": path.name, "name": path.name,
+                                "reason": "不是压缩包（临时字体池只接受压缩包或字体文件）"})
+                continue
+            out_dir = staging / f"x{idx}"
+            result = await archive.extract_archive(path, out_dir, limits=lim)
+            archives.append({
+                "name": path.name,
+                "format": archive.sniff_format(path.name),
+                "success": bool(result.get("success")),
+                "message": result.get("message", ""),
+                "extractor": result.get("extractor", ""),
+                "fonts": len(result.get("fonts") or []),
+                "skipped": result.get("skipped_count", 0),
+            })
+            for item in result.get("skipped") or []:
+                skipped.append({"archive": path.name, **item})
+            for item in result.get("fonts") or []:
+                src = out_dir / str(item.get("name") or "")
+                if not src.is_file():
+                    continue
+                if _duplicate_in_pool(pool, src.name, str(item.get("sha256") or "")):
+                    fonts.append({"filename": src.name, "size": int(item.get("size") or 0),
+                                  "action": "duplicate", "archive": path.name})
+                    continue
+                try:
+                    stored = _move_font_into(src, pool, used)
+                except OSError as e:
+                    skipped.append({"archive": path.name, "name": src.name, "reason": str(e)})
+                    continue
+                fonts.append({"filename": stored, "size": int(item.get("size") or 0),
+                              "action": "added", "archive": path.name})
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+    added = [f for f in fonts if f.get("action") == "added"]
+    index_info: Dict[str, Any] = {}
+    if added and Path(str(binary)).is_file():
+        fm = _fm(cfg)
+        built = await index_store.build_index(
+            Path(binary), [str(pool)], subset_service.temp_index_dir(cfg),
+            threads=int(fm.get("internal_threads") or 0),
+            verbose=int(fm.get("verbose_level", 3) or 3))
+        if built.get("success"):
+            info = index_store.read_index(subset_service.temp_index_dir(cfg))
+            index_info = {"exists": info.get("exists", False), "count": info.get("count", 0),
+                          "file_count": info.get("file_count", 0)}
+        else:
+            index_info = {"exists": False, "count": 0, "error": built.get("message", "")}
+
+    return {
+        "fonts": fonts,
+        "skipped": skipped,
+        "archives": archives,
+        "added": len(added),
+        "temp": {"dir": str(pool),
+                 "count": len([p for p in pool.glob("*")
+                               if p.is_file() and ass_parser.is_font_file(p.name)]),
+                 "index": index_info},
+    }
+
+
 # ── 索引重建（debounce）─────────────────────────────────────
 
 def schedule_rebuild(cfg: Optional[Dict[str, Any]], binary: Path, *,
