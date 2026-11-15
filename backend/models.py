@@ -855,7 +855,9 @@ class FontImportJob(SQLModel, table=True):
 
     每次「网页上传压缩包」或「整理时自动采集」都会在 data/fonts/import/<job_id>/
     下建一个工作目录（压缩包就存在它的 incoming/ 里，避免同名冲突）；
-    这张表只记元信息与结果，工作目录里的原始压缩包可按保留策略清理。
+    这张表是导入记录的唯一事实来源：origin / 分析报告 / 入库结果都在这里，
+    工作目录里不再写 meta.json / report.json / commit.json，
+    只保留原始压缩包（可按保留策略清理）。
     """
     __tablename__ = "font_import_jobs"
     __table_args__ = {"schema": get_public_schema()}
@@ -863,12 +865,16 @@ class FontImportJob(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: str = Field(unique=True, index=True)
     origin: str = Field(default="web", index=True)      # web=网页上传 / collect=整理自动采集
-    status: str = Field(default="analyzed", index=True)  # analyzed/committed/failed
+    status: str = Field(default="created", index=True)  # created/analyzed/committed/failed
     archive_names: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
     archive_paths: List[str] = Field(sa_column=Column(get_json_type()), default_factory=list)
     counts: Dict[str, Any] = Field(sa_column=Column(get_json_type()), default_factory=dict)
     committed_count: int = Field(default=0)
     target: str = Field(default="")
     message: str = Field(default="", sa_column=Column(Text))
+    # 分析报告（new/duplicate/conflict/invalid + 丢弃清单 + 探测/库信息），入库时同步更新
+    report: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
+    # 最近一次入库结果（committed/skipped/paths 等），替代旧的 commit.json
+    commit_result: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
     created_at: datetime = Field(default_factory=datetime.now, index=True)
     updated_at: datetime = Field(default_factory=datetime.now)

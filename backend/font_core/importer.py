@@ -4,13 +4,16 @@
 
     data/fonts/import/<job_id>/            # 工作区，不属于字体库
         incoming/    压缩包 / 直接上传的字体（原始留存，便于重跑）
-        extracted/   解压出来的字体（入库的唯一来源）
-        probe_index/ assfonts 给这批字体建的临时索引（fonts.json）
-        report.json  比对报告（new/duplicate/conflict/invalid + 丢弃清单）
-        commit.json  入库结果（可选）
+        extracted/   解压出来的字体（入库的唯一来源，分析/入库后即清理）
+        probe_index/ assfonts 给这批字体建的临时索引（fonts.json，分析/入库后即清理）
 
     data/fonts/imported/<时间戳>-<job>/     # 入库目标（独立目录，自动进 -f）
     data/fonts/replaced/<job>/             # 冲突替换时旧文件的备份（绝不直接删）
+
+记录约定：
+- origin / 分析报告 / 入库结果全部落 PostgreSQL（font_import_jobs），
+  工作目录里**不再写** meta.json / report.json / commit.json；
+- 工作目录只保留 incoming/ 里的原始压缩包，供重跑与下载，按 TTL 清理。
 
 设计要点：
 1. 分析（analyze）与入库（commit）分离：先出报告让人看，再落库；天然支持 dry-run。
@@ -23,7 +26,6 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import logging
 import os
 import shutil
@@ -98,8 +100,8 @@ def debounce_seconds(cfg: Optional[Dict[str, Any]] = None) -> int:
 def ttl_hours(cfg: Optional[Dict[str, Any]] = None) -> int:
     """原始压缩包的保留时长（小时）。0 = 不清理（始终保留）。
 
-    注意：这里只清理工作目录里的**压缩包**；任务目录里的 report.json / commit.json
-    和数据库记录永久保留（用于「最近导入任务」的长期查询与“压缩包在哪”）。
+    注意：这里只清理工作目录里的**压缩包**；导入记录都在 PostgreSQL 表里永久保留
+    （用于「最近导入任务」的长期查询与“压缩包在哪”）。
     """
     try:
         v = int(_fm(cfg).get("import_job_ttl_hours") or 0)
@@ -108,11 +110,12 @@ def ttl_hours(cfg: Optional[Dict[str, Any]] = None) -> int:
     return max(0, min(8760, v))
 
 
-async def record_job(cfg: Optional[Dict[str, Any]], job_id: str) -> bool:
-    """把任务元信息写进 PostgreSQL 台账（分析完成 / 入库完成时调用）。失败不影响流程。"""
+async def _save_report(cfg: Optional[Dict[str, Any]], job_id: str,
+                       report: Dict[str, Any]) -> bool:
+    """把分析报告写进 PostgreSQL 台账（分析完成时调用）。失败不影响流程。"""
     try:
         from font_core import import_store
-        return await import_store.save(cfg, job_id)
+        return await import_store.save_report(cfg, job_id, report)
     except Exception:
         return False
 
@@ -141,8 +144,6 @@ def job_paths(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Path]:
         "incoming": root / "incoming",
         "extracted": root / "extracted",
         "probe": root / "probe_index",
-        "report": root / "report.json",
-        "commit": root / "commit.json",
     }
 
 
@@ -164,7 +165,7 @@ def create_job(cfg: Optional[Dict[str, Any]] = None, origin: str = "web") -> Dic
     paths = job_paths(cfg, job_id)
     for key in ("incoming", "extracted"):
         paths[key].mkdir(parents=True, exist_ok=True)
-    _write_json(paths["root"] / "meta.json", {"origin": origin, "created_at": _now()})
+    # origin / created_at 不再落 meta.json，由调用方写入 import_store（PostgreSQL）
     logger.info(f"[字体导入] 新建 job {job_id}（{origin}）→ {paths['root']}")
     return {"job_id": job_id, "dir": str(paths["root"]), "created_at": _now(),
             "origin": origin}
@@ -172,27 +173,6 @@ def create_job(cfg: Optional[Dict[str, Any]] = None, origin: str = "web") -> Dic
 
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
-
-
-def _write_json(path: Path, data: Any) -> bool:
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(data, fh, ensure_ascii=False, indent=2)
-        os.replace(tmp, path)
-        return True
-    except Exception as e:
-        logger.warning(f"[字体导入] 写 JSON 失败 {path}: {type(e).__name__} {e}")
-        return False
-
-
-def _read_json(path: Path) -> Optional[Dict[str, Any]]:
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            return json.load(fh)
-    except (OSError, json.JSONDecodeError):
-        return None
 
 
 def _sha256(path: Path) -> str:
@@ -308,17 +288,23 @@ def report_file_names(report: Optional[Dict[str, Any]]) -> List[str]:
     return names
 
 
-async def ensure_extracted(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
+async def ensure_extracted(cfg: Optional[Dict[str, Any]], job_id: str,
+                           report: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """确保 report 里列出的字体仍在 extracted/ 里；不在就按需重新解压。
 
     背景：入库成功后我们会删掉 extracted/（字体已搬走、省空间），
     所以「从历史任务再次入库」必须先按需重放一遍解压，否则每个文件都会报
     「源文件不存在」。原始压缩包留在 incoming/ 里直到任务过期（TTL），够用。
+
+    报告默认从 PostgreSQL 台账读取（新记录不再有 report.json）；调用方手里已有
+    报告时直接传入，省一次查询。
     """
     paths = find_job(cfg, job_id)
     if not paths:
         return {"ok": False, "reextracted": False, "message": "导入任务不存在或已过期"}
-    report = _read_json(paths["report"])
+    if report is None:
+        from font_core import import_store
+        report = await import_store.get_report(job_id)
     if not report:
         return {"ok": False, "reextracted": False, "message": "该任务还没有分析报告，请先重新分析"}
     names = report_file_names(report)
@@ -349,7 +335,7 @@ async def ensure_extracted(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[s
 
 async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str, *,
                   keep_extracted: bool = False) -> Dict[str, Any]:
-    """解压 + 探测 + 比对，产出 report.json（不动字体库）。
+    """解压 + 探测 + 比对，产出比对报告并落 PostgreSQL（不动字体库）。
 
     每次调用都会先清空 extracted/ 再重放解压，所以可以反复调用（「重新分析」）。
     keep_extracted=False（默认）时分析完就删掉解压产物：压缩包还在任务目录里，
@@ -364,11 +350,12 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str, *,
 
     if not incoming:
         report = {"success": False, "job_id": job_id,
+                  "created_at": _now(),
                   "message": "没有从上传内容里发现字体文件",
                   "archives": archives_info, "skipped": skipped[:500],
                   "skipped_count": len(skipped),
                   "counts": {"new": 0, "duplicate": 0, "conflict": 0, "invalid": 0}}
-        _write_json(paths["report"], {**report, "created_at": _now()})
+        await _save_report(cfg, job_id, report)
         _drop_work_dirs(paths)
         return report
 
@@ -422,8 +409,7 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str, *,
         "probe_error": compared.get("probe_error", ""),
         "target": target_dir_label(cfg),
     }
-    _write_json(paths["report"], report)
-    await record_job(cfg, job_id)
+    await _save_report(cfg, job_id, report)
     if not keep_extracted:
         _drop_work_dirs(paths)
     logger.info(f"[字体导入] {job_id} 分析完成：新增 {report['counts'].get('new', 0)} / "
@@ -431,22 +417,6 @@ async def analyze(cfg: Optional[Dict[str, Any]], binary: Path, job_id: str, *,
                 f"冲突 {report['counts'].get('conflict', 0)} / "
                 f"无效 {report['counts'].get('invalid', 0)}")
     return report
-
-
-def purge_job_files(cfg: Optional[Dict[str, Any]], job_id: str) -> None:
-    """入库归档后清掉工作目录里的 JSON，只保留 incoming/ 里的压缩包。
-
-    记录的长期存储已经交给 PostgreSQL（统计、来源、压缩包路径都在表里），
-    这里再留 report/commit/meta 纯属重复占用。
-    """
-    paths = find_job(cfg, job_id)
-    if not paths:
-        return
-    for name in ("report.json", "commit.json", "meta.json"):
-        try:
-            (paths["root"] / name).unlink(missing_ok=True)
-        except OSError:
-            pass
 
 
 def _drop_work_dirs(paths: Dict[str, Path]) -> None:
@@ -572,13 +542,6 @@ def _scan_library_names(library_dirs: List[str],
     return out
 
 
-def get_report(cfg: Optional[Dict[str, Any]], job_id: str) -> Optional[Dict[str, Any]]:
-    paths = find_job(cfg, job_id)
-    if not paths:
-        return None
-    return _read_json(paths["report"])
-
-
 def target_dir_base(cfg: Optional[Dict[str, Any]] = None) -> Path:
     """导入字体的落库根目录（每次导入在其下建一个 <时间戳>-<job> 子目录）。"""
     if import_target_mode(cfg) == "primary":
@@ -682,18 +645,22 @@ def _move_into(src: Path, dest_dir: Path, name: str, used: set) -> Dict[str, Any
     return {"action": "added", "stored": stored, "note": ""}
 
 
-def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
+def commit(cfg: Optional[Dict[str, Any]], job_id: str, report: Dict[str, Any], *,
            select: Optional[List[str]] = None,
            policy: Optional[str] = None) -> Dict[str, Any]:
     """把报告里选中的字体落库。
 
+    报告由调用方从 PostgreSQL 台账读出并传入（本函数不再读写 report.json）。
+    入库成功后会就地更新传入的 report（去掉已入库条目），并放进返回值的
+    `report` 字段，由调用方持久化回台账。
+
+    :param report: 分析报告（import_store.get_report 或 analyze 的返回值）
     :param select: 要入库的文件名（对应 report 里的 name）；None=全部 new
     :param policy: 冲突处理 keep/replace/skip；None=取设置里的默认策略
     """
     paths = find_job(cfg, job_id)
     if not paths:
         return {"success": False, "message": "导入任务不存在或已过期"}
-    report = _read_json(paths["report"])
     if not report:
         return {"success": False, "message": "还没有分析报告，请先执行分析"}
     policy = normalize_policy(policy or default_policy(cfg))
@@ -795,49 +762,13 @@ def commit(cfg: Optional[Dict[str, Any]], job_id: str, *,
         }
         report["last_commit"] = {"at": _now(), "count": len(committed),
                                  "target": str(target_dir)}
-        _write_json(paths["report"], report)
-        _write_json(paths["commit"], {"committed_at": _now(), **result})
+        result["report"] = report
         shutil.rmtree(paths["extracted"], ignore_errors=True)
         shutil.rmtree(paths["probe"], ignore_errors=True)
     return result
 
 
 # ── job 列表 / 清理 ─────────────────────────────────────────
-
-def count_jobs(cfg: Optional[Dict[str, Any]] = None) -> int:
-    """导入任务总数（磁盘目录计数，用于分页）。"""
-    try:
-        return len([d for d in import_root(cfg).iterdir() if d.is_dir()])
-    except OSError:
-        return 0
-
-
-def list_jobs(cfg: Optional[Dict[str, Any]] = None, limit: int = 20,
-              offset: int = 0) -> List[Dict[str, Any]]:
-    root = import_root(cfg)
-    out: List[Dict[str, Any]] = []
-    try:
-        entries = [d for d in root.iterdir() if d.is_dir()]
-    except OSError:
-        return out
-    entries.sort(key=lambda d: d.name, reverse=True)
-    start = max(0, int(offset))
-    for d in entries[start: start + max(1, int(limit))]:
-        report = _read_json(d / "report.json") or {}
-        commit_info = _read_json(d / "commit.json") or {}
-        meta = _read_json(d / "meta.json") or {}
-        out.append({
-            "job_id": d.name,
-            "created_at": report.get("created_at") or meta.get("created_at", ""),
-            "origin": meta.get("origin", "web"),
-            "archives": [a.get("name") for a in (report.get("archives") or [])],
-            "counts": report.get("counts") or {},
-            "analyzed": bool(report),
-            "committed": bool(commit_info),
-            "committed_count": int(commit_info.get("count") or 0),
-        })
-    return out
-
 
 def delete_job(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
     paths = find_job(cfg, job_id)
@@ -849,10 +780,11 @@ def delete_job(cfg: Optional[Dict[str, Any]], job_id: str) -> Dict[str, Any]:
 
 def cleanup_expired(cfg: Optional[Dict[str, Any]] = None,
                     hours: Optional[int] = None) -> int:
-    """删除超过保留时长的**原始压缩包**（工作目录里的 report/commit 保留）。
+    """删除超过保留时长的**原始压缩包**。
 
     - 保留时长取 `import_job_ttl_hours`，**0 = 不启用清理**（始终保留）；
     - 惰性触发：每次上传压缩包 / 每次自动采集投递时顺手跑一次；
+    - 只删 incoming/ 里的压缩包；导入记录都在 PostgreSQL，不受影响；
     - 返回删除的压缩包数量。
     """
     ttl = int(hours if hours is not None else ttl_hours(cfg))

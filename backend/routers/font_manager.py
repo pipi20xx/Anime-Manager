@@ -1024,9 +1024,12 @@ async def import_upload(files: List[UploadFile] = File(...)):
 
     if not saved:
         font_importer.delete_job(cfg, job_id)
+        await font_import_store.delete(job_id)
         reason = rejected[0]["reason"] if rejected else "没有可处理的上传内容"
         raise HTTPException(status_code=400, detail=reason)
 
+    # 记录台账（origin / created_at 落 PostgreSQL，替代旧的 meta.json）
+    await font_import_store.create(cfg, job_id, job["origin"])
     report = await font_importer.analyze(cfg, binary, job_id)
     counts = (report.get("counts") or {})
     log_audit("字体管家", "导入分析",
@@ -1042,9 +1045,9 @@ async def import_upload(files: List[UploadFile] = File(...)):
 
 @router.get("/import/{job_id}", summary="导入任务详情（比对报告）")
 async def import_report(job_id: str):
-    report = font_importer.get_report(_cfg(), job_id)
+    report = await font_import_store.get_report(job_id)
     if not report:
-        # 已入库的任务只留压缩包，明细看数据库台账
+        # 老任务：明细只剩台账摘要（新记录都在 report 列里）
         record = await font_import_store.get(job_id)
         if record:
             return {"status": "success", "data": {
@@ -1090,12 +1093,15 @@ async def import_commit(job_id: str, payload: ImportCommitPayload):
     cfg = _cfg()
     if not font_importer.find_job(cfg, job_id):
         raise HTTPException(status_code=404, detail="导入任务不存在或已过期")
-    prepared = await font_importer.ensure_extracted(cfg, job_id)
+    report = await font_import_store.get_report(job_id)
+    if not report:
+        raise HTTPException(status_code=400, detail="还没有分析报告，请先执行分析")
+    prepared = await font_importer.ensure_extracted(cfg, job_id, report=report)
     if not prepared.get("ok"):
         raise HTTPException(status_code=400, detail=prepared.get("message") or "无法准备待入库文件")
 
     result = await asyncio.to_thread(
-        font_importer.commit, cfg, job_id,
+        font_importer.commit, cfg, job_id, report,
         select=payload.files, policy=payload.policy)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message") or "入库失败")
@@ -1103,8 +1109,7 @@ async def import_commit(job_id: str, payload: ImportCommitPayload):
     schedule: Dict[str, Any] = {"scheduled": False}
     if result.get("count"):
         binary = _optional_binary(cfg)
-        await font_importer.record_job(cfg, job_id)
-        font_importer.purge_job_files(cfg, job_id)
+        await font_import_store.save_commit(cfg, job_id, result, result.get("report") or report)
         if binary.is_file():
             # 连续导入的关键：只探测「本批新增」的字体，并入比对基线（秒级）；
             # 全库重建仍走 debounce，一批导入只重建一次。

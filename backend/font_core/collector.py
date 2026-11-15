@@ -32,7 +32,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from font_core import archive, importer
+from font_core import archive, importer, import_store
 
 logger = logging.getLogger(__name__)
 
@@ -486,6 +486,7 @@ async def _enqueue(cfg: Optional[Dict[str, Any]], path: Path) -> Dict[str, Any]:
             os.link(path, target)          # 同盘硬链：瞬时、不占空间
         except OSError:
             await asyncio.to_thread(shutil.copy2, str(path), str(target))
+        await import_store.create(cfg, job["job_id"], "collect")
         return {"ok": True, "job_id": job["job_id"]}
     except Exception as e:
         logger.warning(f"[字体采集] 投递失败 {path}: {type(e).__name__} {e}")
@@ -517,7 +518,7 @@ async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
         if not report.get("success"):
             return out
         if collect_mode(cfg) == "auto_commit":
-            committed = await asyncio.to_thread(importer.commit, cfg, job_id)
+            committed = await asyncio.to_thread(importer.commit, cfg, job_id, report)
             out["committed"] = int(committed.get("count") or 0)
             out["message"] = committed.get("message", "")
             if out["committed"]:
@@ -529,8 +530,8 @@ async def _process(cfg: Optional[Dict[str, Any]], binary: Path,
                 except Exception as e:
                     logger.warning(f"[字体采集] 增量索引探测失败（下次分析会兜底）: {e}")
                 importer.schedule_rebuild(cfg, binary)
-                await importer.record_job(cfg, job_id)
-                importer.purge_job_files(cfg, job_id)
+                await import_store.save_commit(cfg, job_id, committed,
+                                               committed.get("report") or report)
                 logger.info(f"[字体采集] {job_id} 入库 {out['committed']} 个字体 → {committed.get('target')}")
                 if allow_cleanup and source is not None and cleanup_after(cfg):
                     try:
