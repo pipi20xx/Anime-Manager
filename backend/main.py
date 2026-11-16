@@ -391,6 +391,13 @@ async def startup_event():
 
     await asyncio.to_thread(ConfigManager.init_config)
     
+    # 壁纸后台预取：启动即预取当前源，之后按 refresh_interval 定时换图（避免打开页面实时下载卡顿）
+    try:
+        from wallpaper_service import wallpaper_prefetch_loop
+        asyncio.create_task(wallpaper_prefetch_loop())
+    except Exception as e:
+        logger.warning(f"壁纸后台预取启动失败: {e}")
+    
     try:
         from recognition_engine.builtin_group_loader import BuiltinGroupLoader
         await asyncio.to_thread(BuiltinGroupLoader.load)
