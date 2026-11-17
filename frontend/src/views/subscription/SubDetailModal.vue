@@ -468,11 +468,11 @@ watch(() => props.show, (val) => {
   background: rgba(var(--v-theme-on-surface), 0.04);
   border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  transition: var(--am-hover-transition);
 }
 .detail-episode-card:hover {
   border-color: rgb(var(--v-theme-primary));
-  transform: translateY(-2px);
+  transform: var(--am-surface-hover-transform);
 }
 .detail-episode-card.is-selected {
   border-color: rgb(var(--v-theme-primary));

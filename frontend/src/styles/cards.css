@@ -56,7 +56,7 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--am-hover-transition);
 }
 .sub-detail-episode-btn.pushed {
   background: rgba(var(--v-theme-primary), 0.15);
@@ -71,15 +71,15 @@
 }
 
 /* ── Feed 条目列表 / 订阅源详情卡片 ── */
+/* 悬浮过渡统一在 visual.css §1（.feed-item-card 在共享过渡列表内），此处只留结构与阴影 */
 .feed-item-card {
   border: var(--am-content-border);
   border-radius: 12px;
   padding: 12px;
-  transition: all 0.2s ease;
 }
 .feed-item-card:hover {
   border-color: rgba(var(--v-theme-primary), 0.4);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--am-surface-hover-shadow);
 }
 
 /* ── OrganizerView 整理管理 ── */
@@ -151,10 +151,9 @@
 /* ── 整理历史条目 ── */
 .org-history-item {
   border-radius: 12px !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .org-history-item:hover {
-  transform: translateY(-1px);
+  transform: var(--am-hover-lift-xs);
 }
 
 /* ── 整理历史：路径容器（源→目标 竖向布局） ── */
@@ -426,10 +425,9 @@
 /* ── GuideView 使用指南 ── */
 .guide-card {
   height: 100%;
-  transition: transform 0.2s ease;
 }
 .guide-card:hover {
-  transform: translateY(-2px);
+  transform: var(--am-surface-hover-transform);
 }
 
 /* ── CalendarView 日历 ── */
@@ -497,14 +495,15 @@
 @media (min-width: 1264px) { .media-card-grid { grid-template-columns: repeat(6, 1fr); } }
 @media (min-width: 1904px) { .media-card-grid { grid-template-columns: repeat(8, 1fr); } }
 
-/* ── 33b. 媒体卡片主体 ── */
+/* ── 33b. 媒体卡片主体 ──
+ * 悬浮过渡在 visual.css §1（.media-card 在共享过渡列表内）；
+ * 阴影走主题令牌 --am-surface-hover-shadow，不再硬编码黑色投影 */
 .media-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
 .media-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: var(--am-hover-lift-lg);
+  box-shadow: var(--am-surface-hover-shadow);
 }
 
 /* ── 33b. 海报区域 ── */
@@ -819,14 +818,14 @@
 @media (min-width: 1264px) { .track-card-grid { grid-template-columns: repeat(6, 1fr); } }
 @media (min-width: 1904px) { .track-card-grid { grid-template-columns: repeat(8, 1fr); } }
 
-/* ── 34b. 卡片主体 ── */
+/* ── 34b. 卡片主体 ──
+ * 同上：过渡在 visual.css §1，阴影走主题令牌 */
 .track-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
 }
 .track-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: var(--am-hover-lift-lg);
+  box-shadow: var(--am-surface-hover-shadow);
 }
 
 /* ── 34c. 海报区域 (固定 2:3 比例) ── */
@@ -903,7 +902,7 @@
  *   （自 HomeView + RecognitionModal scoped 收编，两处原本逐字相同；
  *     RecognitionModal 的 log-p/d/s/w/i 短类名已统一为 getLogClass 长类名） ── */
 .recog-poster {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--am-surface-shadow);
 }
 .recog-text-rows {
   display: flex;
@@ -1113,7 +1112,7 @@
 }
 .log-jump .v-btn {
   pointer-events: auto;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--am-overlay-shadow);
 }
 
 /* SchedulerView 调度中心：Cron 快捷切换按钮 */
@@ -1493,12 +1492,9 @@
  * ============================================================ */
 
 /* ── 37a. 技能卡片 ── */
-.skill-card {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
 .skill-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: var(--am-hover-lift-xs);
+  box-shadow: var(--am-surface-hover-shadow);
 }
 
 /* ── 37a-2. 工具卡片 ── */

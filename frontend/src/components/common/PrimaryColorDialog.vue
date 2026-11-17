@@ -215,16 +215,16 @@ function isLightColor(hex: string): boolean {
   cursor: pointer;
   outline: none;
   padding: 0;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: var(--am-hover-transition);
 
   &:hover {
     transform: scale(1.08);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--am-hover-lift-shadow);
   }
 
   &--active {
     border-color: rgb(var(--v-theme-on-surface));
-    box-shadow: 0 0 0 3px rgba(var(--v-theme-surface), 0.6), 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 0 3px rgba(var(--v-theme-surface), 0.6), var(--am-surface-hover-shadow);
   }
 }
 
@@ -281,7 +281,7 @@ function isLightColor(hex: string): boolean {
   block-size: 36px;
   inline-size: 36px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--am-surface-shadow);
 }
 
 .primary-color-dialog__current-value {

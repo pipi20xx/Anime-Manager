@@ -27,8 +27,8 @@ html.glass-theme-liquid {
   --lg-blur: 22px;
   --lg-sat: 190%;
   --lg-r-pill: 999px;
-  --lg-spring: cubic-bezier(.34, 1.42, .64, 1);
-  --lg-ease: cubic-bezier(.32, .72, 0, 1);
+  /* 悬浮/交互动效统一由 tokens.css 的 --am-hover-* 提供（三主题共用），
+     液态皮肤只负责材质与阴影，不再自带弹簧曲线和位移。 */
 
   --lg-rim:
       inset 0 1px 0 var(--lg-spec-top),
@@ -178,16 +178,14 @@ html.glass-theme-liquid .v-card-item {
 
 
 /* ================================================================
- * 按钮：顶缘弧光 + 弹簧形变 + 胶囊内边距
+ * 按钮：顶缘弧光 + 胶囊内边距
+ * 注：hover 位移与按下缩放属统一交互，已收归 visual.css（--am-hover-*），
+ *     液态皮肤不再单独实现弹簧上浮，避免同一按钮在不同皮肤下手感不同。
  * ================================================================ */
 
 html.glass-theme-liquid .v-btn {
   padding-left: 18px !important;
   padding-right: 18px !important;
-  transition: transform .34s var(--lg-spring),
-              background-color .2s var(--lg-ease),
-              box-shadow .28s var(--lg-ease),
-              color .2s var(--lg-ease) !important;
 }
 
 html.glass-theme-liquid .v-btn::before {
@@ -206,15 +204,6 @@ html.glass-theme-liquid .v-btn__prepend,
 html.glass-theme-liquid .v-btn__append {
   position: relative;
   z-index: 1;
-}
-
-html.glass-theme-liquid .v-btn:hover {
-  transform: translateY(-1px) !important;
-}
-
-html.glass-theme-liquid .v-btn:active {
-  transform: scale(.95) !important;
-  transition-duration: .08s !important;
 }
 
 html.glass-theme-liquid .v-btn--icon {
@@ -322,7 +311,7 @@ html.glass-theme-liquid .v-combobox .v-list-item,
 html.glass-theme-liquid .v-menu .v-list-item {
   border-radius: 14px !important;
   margin: 2px 4px !important;
-  transition: background-color .2s var(--lg-ease) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 html.glass-theme-liquid.glass-light .v-menu .v-list-item:hover {
@@ -431,7 +420,7 @@ html.glass-theme-liquid .v-card-title {
 
 html.glass-theme-liquid .v-tab {
   position: relative;
-  transition: background-color .2s var(--lg-ease), color .2s var(--lg-ease), box-shadow .28s var(--lg-ease) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 html.glass-theme-liquid .v-tab::after {
@@ -455,7 +444,7 @@ html.glass-theme-liquid.glass-dark .v-tab:not(.v-tab--selected):hover {
 
 /* 筛选芯片 — 液态玻璃 hover */
 html.glass-theme-liquid .filter-bar .v-chip {
-  transition: background-color .2s var(--lg-ease), color .2s var(--lg-ease), box-shadow .28s var(--lg-ease) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 
@@ -490,15 +479,9 @@ html.glass-theme-liquid .search-results-box {
   -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
 }
 
-/* liquid-avatar */
 html.glass-theme-liquid .liquid-avatar {
   backdrop-filter: blur(10px) saturate(170%) !important;
   -webkit-backdrop-filter: blur(10px) saturate(170%) !important;
-  transition: all .5s ease-out;
-}
-
-html.glass-theme-liquid .liquid-avatar:hover {
-  box-shadow: 0 0 16px rgba(var(--v-theme-primary), 0.3) !important;
 }
 
 
@@ -573,12 +556,6 @@ html.glass-theme-liquid.glass-light .log-entry--warning {
   html.glass-theme-liquid .v-card,
   html.glass-theme-liquid .v-btn {
     transition: background-color .2s linear, color .2s linear !important;
-  }
-
-  html.glass-theme-liquid .v-card:hover,
-  html.glass-theme-liquid .v-btn:hover,
-  html.glass-theme-liquid .v-btn:active {
-    transform: none !important;
   }
 }
 
@@ -670,14 +647,7 @@ html.glass-theme-liquid.glass-light .log-entry--warning {
     display: none !important;
   }
 
-  /* 8. hover/active 变形去掉 */
-  html.glass-theme-liquid .v-card:hover,
-  html.glass-theme-liquid .v-btn:hover,
-  html.glass-theme-liquid .v-btn:active,
-  html.glass-theme-liquid .v-tab:hover,
-  html.glass-theme-liquid .hover-lift:hover {
-    transform: none !important;
-  }
+  /* 8. hover/active 变形统一由 visual.css §21 的共享守卫关闭，此处不再重复 */
 
   /* 9. 弹窗动画简化 */
   html.glass-theme-liquid .dialog-transition-enter-active,
@@ -727,10 +697,6 @@ html.glass-theme-liquid.glass-light .log-entry--warning {
   /* 14. 图标按钮 */
   html.glass-theme-liquid .v-btn--icon {
     transition: background-color .15s ease, color .15s ease !important;
-  }
-  html.glass-theme-liquid .v-btn--icon:hover,
-  html.glass-theme-liquid .v-btn--icon:active {
-    transform: none !important;
   }
 
   /* 15. liquid-avatar */

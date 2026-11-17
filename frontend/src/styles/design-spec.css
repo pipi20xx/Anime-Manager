@@ -178,12 +178,12 @@
   background: rgba(var(--v-theme-on-surface), 0.03);
   cursor: pointer;
   outline: none;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: var(--am-hover-transition);
 }
 
 .theme-dialog__option:hover {
   background: rgba(var(--v-theme-on-surface), 0.06);
-  transform: translateY(-2px);
+  transform: var(--am-surface-hover-transform);
 }
 
 .theme-dialog__option--active {

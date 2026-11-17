@@ -846,7 +846,7 @@ const filteredLogs = computed(() => {
 
 /* ===== TMDB 原始详情 ===== */
 .tmdb-small-poster {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--am-surface-shadow);
 }
 /* 底色/居中/虚线边框来自全局 .poster-placeholder(--dashed)，此处仅固定尺寸与字号 */
 .tmdb-no-poster {

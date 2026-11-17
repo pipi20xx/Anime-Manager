@@ -349,17 +349,7 @@ html.glass-theme-classic .page-subtitle {
 
 /* ================================================================
  * 13. 移动端优化
+ * 悬浮位移与减少动画的关闭条件属于统一交互，已收归
+ * visual.css §21（--am-hover-* / 共享守卫），三个皮肤共用同一套，
+ * 此处不再按主题单独开关，避免同一张卡片在不同皮肤下行为不一致。
  * ================================================================ */
-
-@media (max-width: 960px) {
-  html.glass-theme-classic .hover-lift:hover,
-  html.glass-theme-classic .v-card--link:hover {
-    transform: none !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.glass-theme-classic .hover-lift:hover {
-    transform: none !important;
-  }
-}

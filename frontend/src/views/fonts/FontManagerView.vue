@@ -261,6 +261,6 @@ async function pickLibraryFolder(path: string) {
   border: 2px dashed rgb(var(--v-theme-primary));
   background: rgba(var(--v-theme-surface), 0.92);
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--am-overlay-shadow);
 }
 </style>

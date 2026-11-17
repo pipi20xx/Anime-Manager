@@ -1462,7 +1462,7 @@ onBeforeUnmount(() => {
   right: 20px;
   bottom: 150px;
   z-index: 3;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--am-overlay-shadow);
 }
 
 .ai-fade-enter-active,
@@ -1533,7 +1533,7 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   background: rgb(var(--v-theme-surface));
   border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--am-overlay-shadow);
   z-index: 4;
   padding: 6px;
 }

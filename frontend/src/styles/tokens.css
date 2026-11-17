@@ -24,6 +24,22 @@
   --am-transition: all 0.3s ease;
   --am-transition-fast: all 0.2s ease;
 
+  /* ── 悬浮交互（三主题共用，任何主题块都不得覆盖） ──
+   * 约定：皮肤只允许决定 hover 时的阴影/边框/颜色（走各自的阴影令牌），
+   * 不允许决定 hover 的手感（时长、曲线、位移）。
+   * 第 4 层主题若要写 transition，必须引用这里的令牌，
+   * 不得写自己的时长或贝塞尔曲线，否则同一张卡片在不同皮肤下会“动得不一样”。 */
+  --am-hover-duration: 0.2s;
+  --am-hover-ease: cubic-bezier(0.2, 0, 0, 1);
+  --am-hover-transition: all var(--am-hover-duration) var(--am-hover-ease);
+
+  /* 悬浮位移档位 — 全站共用四档，数值不随主题变化
+   * xs 轻量行 / 小卡     sm 可点击卡片    base 浮起卡    lg 海报卡 */
+  --am-hover-lift-xs: translateY(-1px);
+  --am-hover-lift-sm: translateY(-2px);
+  --am-hover-lift: translateY(-3px);
+  --am-hover-lift-lg: translateY(-4px);
+
   /* 禁用态 */
   --am-disabled-opacity: 0.5;
 
@@ -41,8 +57,8 @@
   --am-switch-thumb-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   --am-slider-thumb-bg: #fff;
 
-  /* 卡片悬浮位移 */
-  --am-surface-hover-transform: translateY(-2px);
+  /* 卡片悬浮位移（= 悬浮档位 sm 的别名，保留旧名以兼容既有引用） */
+  --am-surface-hover-transform: var(--am-hover-lift-sm);
 
   /* 折叠面板（引用 surface-radius，自动随主题） */
   --am-panel-radius: var(--am-surface-radius);

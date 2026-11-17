@@ -32,6 +32,22 @@
   border: var(--am-surface-border) !important;
 }
 
+/* 可点击卡片 / 会浮起的卡片：hover 手感统一走 --am-hover-transition（不随主题变化）。
+   注意顺序：本规则必须在上面 .v-card 的 !important 过渡之后，
+   否则会被 .v-card 的 --am-transition 覆盖（历史上 .media-card 的 0.2s 就是这样一直没生效的）。
+   阴影值来自各主题的 --am-surface-hover-shadow / --am-hover-lift-shadow 令牌。 */
+.v-card--link,
+.v-card[link],
+.hover-lift,
+.media-card,
+.track-card,
+.guide-card,
+.skill-card,
+.feed-item-card,
+.org-history-item {
+  transition: var(--am-hover-transition) !important;
+}
+
 .v-card--link:hover,
 .v-card[link]:hover {
   transform: var(--am-surface-hover-transform);
@@ -380,7 +396,7 @@
   border: var(--am-tab-border) !important;
   box-shadow: var(--am-tab-shadow) !important;
   border-radius: var(--am-tab-radius) !important;
-  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 .v-tab--selected {
@@ -408,7 +424,7 @@
   border-radius: var(--am-btn-radius) !important;
   color: var(--am-btn-text-color) !important;
   font-weight: var(--am-btn-font-weight);
-  transition: var(--am-transition) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 .v-btn--variant-flat:hover {
@@ -424,7 +440,7 @@
   border: var(--am-btn-border) !important;
   border-radius: var(--am-btn-radius) !important;
   font-weight: 500;
-  transition: var(--am-transition) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 /* tonal 有 color — 只保留结构性样式，让 Vuetify 根据 color 计算 tonal 背景色 */
@@ -447,7 +463,7 @@
   border: var(--am-btn-border) !important;
   border-radius: var(--am-btn-radius) !important;
   font-weight: 500;
-  transition: var(--am-transition) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 /* tonal 无 color — hover 用主题背景 */
@@ -486,7 +502,7 @@
   -webkit-backdrop-filter: var(--am-btn-blur) !important;
   border: var(--am-btn-border) !important;
   border-radius: var(--am-btn-radius) !important;
-  transition: var(--am-transition) !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 .v-btn--variant-outlined:hover {
@@ -538,7 +554,7 @@
 
 /* 图标按钮 */
 .v-btn--icon {
-  transition: all 0.3s ease-out !important;
+  transition: var(--am-hover-transition) !important;
   border-radius: 50% !important;
 }
 
@@ -736,11 +752,11 @@
   -webkit-backdrop-filter: var(--am-avatar-blur) !important;
   border: var(--am-avatar-border) !important;
   color: var(--am-avatar-color) !important;
-  transition: all 0.5s ease-out;
+  transition: var(--am-hover-transition);
 }
 
 .liquid-avatar:hover {
-  box-shadow: 0 0 16px rgba(var(--v-theme-primary), 0.3) !important;
+  box-shadow: var(--am-hover-lift-shadow) !important;
 }
 
 /* Tooltip */
@@ -763,7 +779,7 @@
   border-radius: var(--am-tab-radius) !important;
   backdrop-filter: var(--am-chip-blur) !important;
   -webkit-backdrop-filter: var(--am-chip-blur) !important;
-  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+  transition: var(--am-hover-transition) !important;
   --v-hover-opacity: 0 !important;
   --v-focus-opacity: 0 !important;
   --v-activated-opacity: 0 !important;
@@ -833,15 +849,15 @@
 
 /* ============================================================
  * 16. Hover Lift
+ *    过渡由 §1 的统一规则提供（.hover-lift 已在共享过渡列表内）
  * ============================================================ */
 
 .hover-lift {
   cursor: pointer;
-  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
 }
 
 .hover-lift:hover {
-  transform: translateY(-3px);
+  transform: var(--am-hover-lift);
   box-shadow: var(--am-hover-lift-shadow) !important;
 }
 
@@ -884,7 +900,7 @@ code {
 .log-entry__level[data-level='success'] { color: var(--am-log-success); }
 
 .glass-btn {
-  transition: all 0.5s ease-out !important;
+  transition: var(--am-hover-transition) !important;
 }
 
 /* ============================================================
@@ -1016,13 +1032,70 @@ html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover,
 }
 
 /* ============================================================
- * 21. Reduced Motion
+ * 21. 悬浮动作统一守卫
+ *
+ * 悬浮位移/形变的开关只在这里统一处理：三个主题不再各自写一套，
+ * 否则同一张卡片会在 A 皮肤浮起、在 B 皮肤不浮（历史遗留问题）。
+ * 主题层只负责阴影/边框/颜色，不负责动作。
  * ============================================================ */
 
+/* 21a. 窄屏/触屏：不播放悬浮位移动画（按下缩放属于触屏主要反馈，保留），
+ *      过渡也一并压掉——否则会出现「液态/ACG 窄屏瞬变、经典窄屏平滑」
+ *      这种按皮肤分叉的观感。 */
+@media (max-width: 960px) {
+  .hover-lift:hover,
+  .v-card--link:hover,
+  .v-card[link]:hover,
+  .media-card:hover,
+  .track-card:hover,
+  .guide-card:hover,
+  .skill-card:hover,
+  .org-history-item:hover,
+  .feed-item-card:hover,
+  .theme-dialog__option:hover,
+  .detail-episode-card:hover,
+  .sub-detail-episode-btn:hover,
+  .v-btn:hover,
+  .v-btn--icon:hover,
+  .v-tab:hover {
+    transform: none !important;
+  }
+
+  .hover-lift,
+  .v-card--link,
+  .v-card[link],
+  .media-card,
+  .track-card,
+  .guide-card,
+  .skill-card,
+  .org-history-item,
+  .feed-item-card {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 21b. 减少动画偏好：hover 不再位移/缩放 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .hover-lift:hover,
+  .v-card--link:hover,
+  .v-card[link]:hover,
+  .media-card:hover,
+  .track-card:hover,
+  .guide-card:hover,
+  .skill-card:hover,
+  .org-history-item:hover,
+  .feed-item-card:hover,
+  .theme-dialog__option:hover,
+  .detail-episode-card:hover,
+  .sub-detail-episode-btn:hover,
+  .v-btn--icon:hover,
+  .v-tab:hover {
+    transform: none !important;
   }
 }

@@ -535,10 +535,11 @@ html.glass-theme-acg {
   // ═══════════════════════════════════════════════════════════════
   .v-btn {
     letter-spacing: 0;
+    // hover 反馈的时长/曲线归共享令牌（tokens.css --am-hover-*），ACG 不另立一套
     transition:
-      background-color var(--glass-motion),
-      border-color var(--glass-motion),
-      box-shadow var(--glass-motion);
+      background-color var(--am-hover-duration) var(--am-hover-ease),
+      border-color var(--am-hover-duration) var(--am-hover-ease),
+      box-shadow var(--am-hover-duration) var(--am-hover-ease);
   }
 
   .v-btn:not(.v-btn--variant-text, .v-btn--variant-plain) {
@@ -695,15 +696,17 @@ html.glass-theme-acg {
 
   // ═══════════════════════════════════════════════════════════════
   // 过渡动效（照搬 glass.scss 91 + 807-809）
-  // transform 加入过渡列表，使 hover 上浮动画平滑（非 ACG 主题由 visual.css/cards.css 各自处理）
+  // hover 相关属性（transform/边框/阴影）使用共享的 --am-hover-* 令牌，
+  // 与 classic / liquid 完全同速同步；background-color 仍用 ACG 自己的
+  // --glass-motion，保留换肤时的材质过渡感。
   // ═══════════════════════════════════════════════════════════════
   .v-card,
   .v-sheet:not(.v-snackbar__wrapper),
   .v-expansion-panel {
     transition:
-      transform var(--glass-motion),
-      border-color var(--glass-motion),
-      box-shadow var(--glass-motion),
+      transform var(--am-hover-duration) var(--am-hover-ease),
+      border-color var(--am-hover-duration) var(--am-hover-ease),
+      box-shadow var(--am-hover-duration) var(--am-hover-ease),
       background-color var(--glass-motion) !important;
   }
 
@@ -1615,15 +1618,7 @@ html.glass-theme-acg .login-glass-panel .v-btn--variant-flat.v-btn--bg-primary {
     transition: background-color .15s ease !important;
   }
 
-  /* 2. hover/active 变形去掉 */
-  html.glass-theme-acg .v-card:hover,
-  html.glass-theme-acg .v-btn:hover,
-  html.glass-theme-acg .v-btn:active,
-  html.glass-theme-acg .v-tab:hover,
-  html.glass-theme-acg .v-btn--icon:hover,
-  html.glass-theme-acg .v-btn--icon:active {
-    transform: none !important;
-  }
+  /* 2. hover/active 变形统一由 visual.css §21 的共享守卫关闭，此处不再重复 */
 
   /* 3. 弹窗动画简化 */
   html.glass-theme-acg .dialog-transition-enter-active,
