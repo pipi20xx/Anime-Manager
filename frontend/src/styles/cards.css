@@ -152,8 +152,9 @@
 .org-history-item {
   border-radius: 12px !important;
 }
+/* hover 不做位移（--am-hover-lift-* 为 none），只提升阴影 */
 .org-history-item:hover {
-  transform: var(--am-hover-lift-xs);
+  box-shadow: var(--am-surface-hover-shadow);
 }
 
 /* ── 整理历史：路径容器（源→目标 竖向布局） ── */
@@ -422,12 +423,14 @@
 /* ── StrmView STRM 生成 ── */
 /* 注：原 .task-card / .info-row 系列已废弃并删除（无使用者）；键值行请用 utilities.css 的 .kv-row / .manage-card__info 系列 */
 
-/* ── GuideView 使用指南 ── */
+/* ── GuideView 使用指南 ──
+ * 注：当前没有任何视图使用 .guide-card，规则为空转；保留结构与阴影反馈，
+ *     避免将来复用时 hover 变成无反馈 */
 .guide-card {
   height: 100%;
 }
 .guide-card:hover {
-  transform: var(--am-surface-hover-transform);
+  box-shadow: var(--am-surface-hover-shadow);
 }
 
 /* ── CalendarView 日历 ── */

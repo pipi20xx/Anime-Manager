@@ -37,6 +37,8 @@
  *     悬浮/按下/浮起的手感（时长、曲线、位移）只由 tokens.css 的
  *     --am-hover-* 决定，第 4 层主题禁止覆盖这些令牌，也禁止自写
  *     transition 的时长/曲线；主题只负责阴影、边框、颜色。
+ *     当前 --am-hover-lift-* 全为 none：hover 不上浮、不位移，
+ *     仅改变阴影/边框/颜色；需要恢复时只改 tokens.css 一处。
  *     阴影一律走令牌（--am-surface-shadow / --am-surface-hover-shadow /
  *     --am-hover-lift-shadow / --am-overlay-shadow …），由各主题块给值，
  *     共享样式里不出现硬编码的黑色投影。

@@ -24,7 +24,7 @@
   --am-transition: all 0.3s ease;
   --am-transition-fast: all 0.2s ease;
 
-  /* ── 悬浮交互（三主题共用，任何主题块都不得覆盖） ──
+  /* 悬浮交互（三主题共用，任何主题块都不得覆盖）
    * 约定：皮肤只允许决定 hover 时的阴影/边框/颜色（走各自的阴影令牌），
    * 不允许决定 hover 的手感（时长、曲线、位移）。
    * 第 4 层主题若要写 transition，必须引用这里的令牌，
@@ -34,11 +34,15 @@
   --am-hover-transition: all var(--am-hover-duration) var(--am-hover-ease);
 
   /* 悬浮位移档位 — 全站共用四档，数值不随主题变化
-   * xs 轻量行 / 小卡     sm 可点击卡片    base 浮起卡    lg 海报卡 */
-  --am-hover-lift-xs: translateY(-1px);
-  --am-hover-lift-sm: translateY(-2px);
-  --am-hover-lift: translateY(-3px);
-  --am-hover-lift-lg: translateY(-4px);
+   * xs 轻量行 / 小卡     sm 可点击卡片    base 浮起卡    lg 海报卡
+   *
+   * 当前策略：hover 不做位移（四档统一为 none），只改变阴影 / 边框 / 颜色。
+   * 想恢复上浮效果，把对应档位改回 translateY(-1px) ~ translateY(-4px) 即可，
+   * 所有卡片、守卫与过渡都已按这个令牌接好，不需要再动主题层。 */
+  --am-hover-lift-xs: none;
+  --am-hover-lift-sm: none;
+  --am-hover-lift: none;
+  --am-hover-lift-lg: none;
 
   /* 禁用态 */
   --am-disabled-opacity: 0.5;
@@ -57,7 +61,8 @@
   --am-switch-thumb-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   --am-slider-thumb-bg: #fff;
 
-  /* 卡片悬浮位移（= 悬浮档位 sm 的别名，保留旧名以兼容既有引用） */
+  /* 卡片悬浮位移（= 悬浮档位 sm 的别名，保留旧名以兼容既有引用）
+   * 同一开关：改 --am-hover-lift-sm 即可，此处自动跟随 */
   --am-surface-hover-transform: var(--am-hover-lift-sm);
 
   /* 折叠面板（引用 surface-radius，自动随主题） */

@@ -35,7 +35,8 @@
 /* 可点击卡片 / 会浮起的卡片：hover 手感统一走 --am-hover-transition（不随主题变化）。
    注意顺序：本规则必须在上面 .v-card 的 !important 过渡之后，
    否则会被 .v-card 的 --am-transition 覆盖（历史上 .media-card 的 0.2s 就是这样一直没生效的）。
-   阴影值来自各主题的 --am-surface-hover-shadow / --am-hover-lift-shadow 令牌。 */
+   阴影值来自各主题的 --am-surface-hover-shadow / --am-hover-lift-shadow 令牌。
+   位移来自 --am-hover-lift-*：当前为 none（hover 只换阴影/边框，不上浮）。 */
 .v-card--link,
 .v-card[link],
 .hover-lift,
@@ -1037,6 +1038,10 @@ html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover,
  * 悬浮位移/形变的开关只在这里统一处理：三个主题不再各自写一套，
  * 否则同一张卡片会在 A 皮肤浮起、在 B 皮肤不浮（历史遗留问题）。
  * 主题层只负责阴影/边框/颜色，不负责动作。
+ *
+ * 注：--am-hover-lift-* 当前全为 none（hover 不上浮），因此下面针对卡片的
+ *     位移守卫暂时是空操作；保留它们是为了将来把档位改回 translateY 时，
+ *     窄屏 / 减少动画偏好的行为立刻仍然正确。
  * ============================================================ */
 
 /* 21a. 窄屏/触屏：不播放悬浮位移动画（按下缩放属于触屏主要反馈，保留），
