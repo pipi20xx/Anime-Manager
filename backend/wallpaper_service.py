@@ -723,8 +723,10 @@ async def prefetch_once(device: str = DEVICE_PC) -> bool:
         st = "api"
     source_id = cfg.get("api_source_id", "") if st == "api" else ""
     source_url = target if st == "url" else ""
-    filename = record_history(
-        content, st, source_id, source_url, content_type, device=device
+    # 落盘 + 图库索引是同步文件 I/O（图片可到 MB 级、library.json 几十 KB）：
+    # 丢到线程池，别卡事件循环（与 /wallpaper_proxy 里的调用方式保持一致）。
+    filename = await asyncio.to_thread(
+        record_history, content, st, source_id, source_url, content_type, device
     )
     if filename:
         _fail_streak[device] = 0
