@@ -183,6 +183,7 @@ from wallpaper_service import (
     SUPPORTED_DEVICES,
     WALLPAPER_API_SOURCES,
     WALLPAPER_DIR,
+    describe_bad_image_response,
     find_latest_history_for_source,
     get_wallpaper_config,
     is_valid_image,
@@ -427,7 +428,9 @@ async def proxy_wallpaper(
                     },
                 )
             else:
-                raise HTTPException(status_code=502, detail="壁纸源返回无效数据")
+                detail = describe_bad_image_response(resp)
+                logger.warning(f"[壁纸] 代理下载失败：{detail}")
+                raise HTTPException(status_code=502, detail=f"壁纸源没有返回图片：{detail}")
     except UnsafeURLError as e:
         logger.warning(f"壁纸代理拒绝 URL: {e}")
         raise HTTPException(status_code=400, detail=f"URL 不被允许: {e}")

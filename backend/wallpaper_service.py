@@ -21,6 +21,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from typing import Dict, List, Optional, Tuple
@@ -605,23 +606,99 @@ def read_local_image(filename: str) -> Optional[Tuple[bytes, str]]:
 
 # ── 后台预取 ──────────────────────────────────────────────
 
-async def _download_online(url: str) -> Optional[Tuple[bytes, str]]:
-    """下载在线壁纸并校验，返回 (内容, content_type)。"""
-    if not url.startswith(("http://", "https://")):
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await safe_get(client, url)
-    except UnsafeURLError as e:
-        logger.warning(f"[壁纸] 预取 URL 被拒绝: {e}")
-        return None
-    except httpx.RequestError as e:
-        logger.warning(f"[壁纸] 预取请求失败: {e}")
-        return None
+# 随机图源（loliapi 之类）一般是「302 跳到一个随机 CDN 上的随机图」：
+# 单次抽签可能正好 404、或撞上 CDN 的反爬/人机校验页，所以失败再抽一次。
+FETCH_ATTEMPTS = 2
 
-    if resp.status_code == 200 and is_valid_image(resp.content):
-        return resp.content, resp.headers.get("content-type", "image/jpeg")
-    return None
+# 各设备连续预取失败次数（只影响日志频率，不影响行为）
+_fail_streak: Dict[str, int] = {device: 0 for device in SUPPORTED_DEVICES}
+
+
+class WallpaperSourceError(Exception):
+    """壁纸源没能给出可用图片。消息本身就是给日志 / 接口看的人话原因。"""
+
+
+def _html_title(body: bytes) -> str:
+    """从 HTML 响应里抠 <title>，用来判断对面回的是 404 页还是反爬校验页。"""
+    try:
+        text = (body or b"")[:4000].decode("utf-8", "replace")
+    except Exception:
+        return ""
+    match = re.search(r"<title[^>]*>(.*?)</title>", text, re.IGNORECASE | re.DOTALL)
+    if not match:
+        return ""
+    return re.sub(r"\s+", " ", match.group(1)).strip()[:60]
+
+
+def describe_bad_image_response(resp) -> str:
+    """把「不是可用图片」的响应翻译成人话：状态码 / 类型 / 体积 / 头部字节 / 网页标题 / 最终 URL。
+
+    日志与接口报错共用，避免只抛一句「返回无效数据」让人没法排查。
+    """
+    body = resp.content or b""
+    status = resp.status_code
+    content_type = (resp.headers.get("content-type") or "").split(";")[0].strip() or "(无)"
+    size = len(body)
+    url = str(resp.url)
+    head = " ".join(f"{byte:02x}" for byte in body[:12]) or "(空)"
+
+    if status != 200:
+        extra = ""
+        if "html" in content_type.lower():
+            title = _html_title(body)
+            extra = f"，页面标题「{title}」" if title else ""
+        return f"源站返回 HTTP {status}（{content_type}，{size} 字节{extra}）：{url}"
+
+    if "html" in content_type.lower() or body[:1] == b"<":
+        title = _html_title(body)
+        hint = ("，像是 CDN 的反爬/人机校验页"
+                if (b"__tst_status" in body or b"EO_Bot" in body) else "，像是错误页")
+        return (f"返回的是网页而不是图片（{content_type}，{size} 字节"
+                f"{'，标题「' + title + '」' if title else ''}{hint}）：{url}")
+
+    if size == 0:
+        return f"响应为空（{content_type}）：{url}"
+
+    return f"响应不是可识别的图片（{content_type}，{size} 字节，头部 {head}）：{url}"
+
+
+def _log_prefetch_failure(device: str, detail: str) -> None:
+    """同一设备连续失败只在第 1 次与每 10 次打 WARNING，其余降 DEBUG（源站抽风时别刷屏）。"""
+    streak = _fail_streak.get(device, 0) + 1
+    _fail_streak[device] = streak
+    text = f"[壁纸] {DEVICE_LABELS[device]}预取失败（连续 {streak} 次）：{detail}"
+    if streak == 1 or streak % 10 == 0:
+        logger.warning(text)
+    else:
+        logger.debug(text)
+
+
+async def _download_online(url: str) -> Tuple[bytes, str]:
+    """下载在线壁纸并校验，返回 (内容, content_type)；失败抛 `WallpaperSourceError`。
+
+    失败会按 `FETCH_ATTEMPTS` 重抽（随机源换一次抽签常常就好了）；
+    被安全校验拒绝（内网地址 / 协议不对）不重试，直接抛。
+    """
+    if not url.startswith(("http://", "https://")):
+        raise WallpaperSourceError(f"不支持的地址（只允许 http/https）：{url}")
+
+    problems: List[str] = []
+    for _ in range(FETCH_ATTEMPTS):
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await safe_get(client, url)
+        except UnsafeURLError as e:
+            raise WallpaperSourceError(f"URL 被安全校验拒绝：{e}") from e
+        except httpx.RequestError as e:
+            problems.append(f"请求失败（{type(e).__name__}: {e}）")
+            continue
+
+        if resp.status_code == 200 and is_valid_image(resp.content):
+            return resp.content, resp.headers.get("content-type", "image/jpeg")
+        problems.append(describe_bad_image_response(resp))
+
+    # 两次结果常常一模一样，去重后更好读
+    raise WallpaperSourceError("；".join(dict.fromkeys(problems)))
 
 
 async def prefetch_once(device: str = DEVICE_PC) -> bool:
@@ -631,14 +708,15 @@ async def prefetch_once(device: str = DEVICE_PC) -> bool:
     target = resolve_wallpaper_target(cfg, device)
 
     if target.startswith("local:"):
+        _fail_streak[device] = 0
         return True
 
-    downloaded = await _download_online(target)
-    if not downloaded:
-        logger.warning(f"[壁纸] {DEVICE_LABELS[device]}预取失败：壁纸源返回无效数据")
+    try:
+        content, content_type = await _download_online(target)
+    except WallpaperSourceError as e:
+        _log_prefetch_failure(device, str(e))
         return False
 
-    content, content_type = downloaded
     st = cfg.get("source_type", "api")
     # 本地图缺失时 resolve_wallpaper_target 已回落在在线源，这里同步修正来源类型
     if st not in ("api", "url"):
@@ -649,8 +727,10 @@ async def prefetch_once(device: str = DEVICE_PC) -> bool:
         content, st, source_id, source_url, content_type, device=device
     )
     if filename:
+        _fail_streak[device] = 0
         logger.info(f"[壁纸] {DEVICE_LABELS[device]}后台预取完成并收录历史: {filename}")
         return True
+    logger.warning(f"[壁纸] {DEVICE_LABELS[device]}预取到的图片未能收录（历史图落盘失败）")
     return False
 
 
@@ -667,7 +747,7 @@ async def _prefetch_device(device: str):
     try:
         await prefetch_once(device)
     except Exception as e:
-        logger.warning(f"[壁纸] {DEVICE_LABELS[device]}预取异常: {e}")
+        logger.warning(f"[壁纸] {DEVICE_LABELS[device]}预取异常: {type(e).__name__}: {e}")
     finally:
         _last_prefetch_at[device] = time.monotonic()
 
