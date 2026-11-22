@@ -1,10 +1,18 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useThemeStore } from '@/composables/useThemeStore'
 import { useEffectiveGlassSettings, applyStoredThemeCustomizerAppearance, themeCustomizerPrimaryColors } from '@/composables/useThemeCustomizer'
+import { useWallpaperDevice } from '@/composables/useWallpaperDevice'
 import { normalizeThemeMaterialAccent } from '../utils/glassColor'
 import { loadGlassWallpaperTone, DEFAULT_GLASS_WALLPAPER_TONE_PROFILE, type GlassWallpaperToneProfile } from '../utils/glassWallpaperTone'
 import { useTheme } from 'vuetify'
-import { appearanceApi, type WallpaperConfig, type WallpaperApiSource, type WallpaperHistory, type WallpaperUpload } from '@/api/appearance'
+import {
+  appearanceApi,
+  type WallpaperConfig,
+  type WallpaperDevice,
+  type WallpaperApiSource,
+  type WallpaperHistory,
+  type WallpaperUpload,
+} from '@/api/appearance'
 import { createBackgroundCandidateOrderResolver, normalizeBackgroundRotationIntervalSeconds } from '../utils/backgroundRotation'
 import { createBackgroundTimer, type BackgroundTimerHandle } from '@/utils/backgroundManager'
 
@@ -37,30 +45,35 @@ function isRandomWallpaperUrl(url: string): boolean {
 /**
  * 构建代理 URL。对随机壁纸 API 添加时间戳 cache-buster，
  * 使每次页面加载都能获取新图片。
- * 不传 sourceUrl 时，后端自动从配置读取壁纸源。
+ * 不传 sourceUrl 时，后端按 device 从配置读取对应设备的壁纸源。
  */
-function buildProxyUrl(sourceUrl?: string): string {
+function buildProxyUrl(sourceUrl: string | undefined, device: WallpaperDevice): string {
+  const deviceQuery = `device=${device}`
   if (!sourceUrl) {
     // 不传 URL 时后端自动从配置解析，随机壁纸仍需 cache-buster
-    return `/api/appearance/wallpaper_proxy?_ts=${Date.now()}`
+    return `/api/appearance/wallpaper_proxy?_ts=${Date.now()}&${deviceQuery}`
   }
   const encodedUrl = encodeURIComponent(sourceUrl)
   if (isRandomWallpaperUrl(sourceUrl)) {
-    return `/api/appearance/wallpaper_proxy?url=${encodedUrl}&_ts=${Date.now()}`
+    return `/api/appearance/wallpaper_proxy?url=${encodedUrl}&_ts=${Date.now()}&${deviceQuery}`
   }
-  return `/api/appearance/wallpaper_proxy?url=${encodedUrl}`
+  return `/api/appearance/wallpaper_proxy?url=${encodedUrl}&${deviceQuery}`
 }
 
 /**
- * 玻璃壁纸管理：
+ * 玻璃壁纸管理（按访问设备区分）：
  *
- * 壁纸源由后端 config.json 的 wallpaper 字段统一管理：
+ * 壁纸源由后端 config.json 的 wallpaper.devices.<device> 字段统一管理：
  * - source_type="api": 从预设 API 源列表中选择（loliapi 等）
  * - source_type="url": 自定义固定 URL
  * - source_type="upload": 本地上传图片
+ * - source_type="history": 历史图库中选中的图片
+ *
+ * 电脑端（pc）与移动端（mobile）各自读取自己的配置与历史图库；
+ * 视口跨过移动端断点时自动切换，无需刷新页面。
  *
  * 前端通过 /api/appearance/wallpaper_proxy 不带 url 参数请求时，
- * 后端自动从配置读取壁纸源。
+ * 后端按 device 从配置读取对应设备的壁纸源。
  *
  * WebGL 纹理加载需要 CORS 支持，外部壁纸通过后端代理。
  * 壁纸色调分析（tone profile）用于材质亮度调节。
@@ -69,6 +82,8 @@ export function useGlassWallpaper() {
   const themeStore = useThemeStore()
   const vuetifyTheme = useTheme()
   const effectiveGlassSettings = useEffectiveGlassSettings()
+  /** 当前访问设备：电脑端 / 移动端，决定读取哪一份壁纸配置与历史图库 */
+  const wallpaperDevice = useWallpaperDevice()
 
   // 后端壁纸配置
   const wallpaperConfig = ref<WallpaperConfig | null>(null)
@@ -143,12 +158,13 @@ export function useGlassWallpaper() {
     // auto 模式由 loadWallpaperTone 重新写入，不在此覆盖
   })
 
-  /** 从后端加载壁纸配置和 API 源列表 */
+  /** 从后端加载当前设备的壁纸配置和 API 源列表 */
   async function loadWallpaperConfig() {
+    const device = wallpaperDevice.value
     try {
       const [configRes, sourcesRes] = await Promise.all([
-        appearanceApi.getConfig(),
-        appearanceApi.getSources(),
+        appearanceApi.getConfig(device),
+        appearanceApi.getSources(device),
       ])
       wallpaperConfig.value = configRes
       wallpaperSources.value = sourcesRes.sources
@@ -156,7 +172,7 @@ export function useGlassWallpaper() {
       // 后端不可用时使用默认值
       wallpaperConfig.value = {
         source_type: 'api',
-        api_source_id: 'loliapi_acg_pc',
+        api_source_id: device === 'mobile' ? 'loliapi_acg_pe' : 'loliapi_acg_pc',
         custom_url: '',
         upload_filename: '',
         history_filename: '',
@@ -166,14 +182,16 @@ export function useGlassWallpaper() {
         rotation_include_history: true,
         rotation_include_uploads: false,
       }
+      wallpaperSources.value = []
     }
   }
 
   /** 根据当前配置构建代理 URL（随机源加 cache-buster，固定源不加）。 */
   function proxyUrlForConfiguredSource() {
+    const deviceQuery = `&device=${wallpaperDevice.value}`
     return isCurrentSourceRandom.value
-      ? `/api/appearance/wallpaper_proxy?_ts=${Date.now()}`
-      : `/api/appearance/wallpaper_proxy?_v=${Date.now()}`
+      ? `/api/appearance/wallpaper_proxy?_ts=${Date.now()}${deviceQuery}`
+      : `/api/appearance/wallpaper_proxy?_v=${Date.now()}${deviceQuery}`
   }
 
   /** 应用当前配置对应的壁纸；api 源默认 = 历史图库最新一张，轮播模式则由轮播范围决定。 */
@@ -203,7 +221,7 @@ export function useGlassWallpaper() {
   /** 设置壁纸源 URL（兼容旧接口，内部转换为代理 URL） */
   function setWallpaperUrl(url: string) {
     if (!url) return
-    applyWallpaperUrl(buildProxyUrl(url))
+    applyWallpaperUrl(buildProxyUrl(url, wallpaperDevice.value))
   }
 
   /** 将壁纸 URL 同步到 CSS 变量 */
@@ -275,7 +293,7 @@ export function useGlassWallpaper() {
 
   async function loadHistoryItems(): Promise<WallpaperHistory[]> {
     try {
-      return await appearanceApi.listHistory()
+      return await appearanceApi.listHistory(wallpaperDevice.value)
     } catch {
       return []
     }
@@ -427,6 +445,11 @@ export function useGlassWallpaper() {
     { immediate: true },
   )
 
+  // 视口跨过移动端断点时，切换为对应设备的壁纸配置与历史图库
+  watch(wallpaperDevice, () => {
+    if (isGlassTheme.value) void applyConfiguredWallpaper()
+  })
+
   onMounted(() => {
     if (isGlassTheme.value) {
       applyStoredThemeCustomizerAppearance()
@@ -458,6 +481,7 @@ export function useGlassWallpaper() {
     wallpaperBrightness,
     wallpaperConfig,
     wallpaperSources,
+    wallpaperDevice,
     setWallpaperUrl,
     refreshWallpaper,
     loadWallpaperConfig,

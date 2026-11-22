@@ -2,17 +2,26 @@
 /**
  * WallpaperDialog — 壁纸管理对话框
  *
- * 三个 TAB：
- * 1. 在线壁纸：API 随机源 + 自定义 URL（后端后台自动预取，打开秒加载）
- * 2. 上传壁纸：手动上传的图片
- * 3. 历史壁纸：系统自动收录的历史使用图
+ * 按访问设备（电脑端 / 移动端）分别配置，弹窗顶部可切换正在编辑的设备档案：
+ * 1. 在线壁纸：API 随机源（按设备过滤）+ 自定义 URL（后端后台自动预取，打开秒加载）
+ * 2. 上传壁纸：手动上传的图片（图库两端共用，选中项按设备保存）
+ * 3. 历史壁纸：系统自动收录的历史使用图（按设备分离）
  *
- * 配置保存到后端 config.json 的 wallpaper 字段，持久化且跨设备同步。
+ * 配置保存到后端 config.json 的 wallpaper.devices.<device> 字段，两端互不影响。
  */
 import { computed, ref, watch } from 'vue'
-import { appearanceApi, type WallpaperConfig, type WallpaperApiSource, type WallpaperUpload, type WallpaperHistory, type WallpaperDisplayMode } from '@/api/appearance'
+import {
+  appearanceApi,
+  type WallpaperConfig,
+  type WallpaperApiSource,
+  type WallpaperUpload,
+  type WallpaperHistory,
+  type WallpaperDisplayMode,
+  type WallpaperDevice,
+} from '@/api/appearance'
 import { useGlassWallpaper } from '@/glass'
 import { useDisplay } from 'vuetify'
+import { useWallpaperDevice, wallpaperDeviceLabel, WALLPAPER_DEVICE_OPTIONS } from '@/composables/useWallpaperDevice'
 import {
   persistPartialThemeCustomizerSettings,
   useThemeCustomizer,
@@ -95,6 +104,12 @@ const history = ref<WallpaperHistory[]>([])
 const uploadProgress = ref(false)
 const customUrlInput = ref('')
 
+// 当前访问设备（只读展示）与正在编辑的设备档案
+const currentDevice = useWallpaperDevice()
+const editingDevice = ref<WallpaperDevice>(currentDevice.value)
+const currentDeviceLabel = computed(() => wallpaperDeviceLabel(currentDevice.value))
+const editingDeviceIsCurrent = computed(() => editingDevice.value === currentDevice.value)
+
 // 当前浏览的 TAB：只决定弹窗里展示哪个面板，切换 TAB 不改变已应用的壁纸
 const activeTab = ref<WallpaperTab>('online')
 
@@ -135,26 +150,39 @@ const currentRotationInterval = computed(() => config.value?.rotation_interval ?
 
 // ── 数据加载 ──────────────────────────────────────────────
 
-async function loadAll() {
+// 防止快速切换设备时旧请求覆盖新档案
+let loadGeneration = 0
+
+async function loadAll(options?: { preserveTab?: boolean }) {
+  const generation = ++loadGeneration
+  const device = editingDevice.value
   loading.value = true
   try {
     const [configRes, sourcesRes, uploadsRes, historyRes] = await Promise.all([
-      appearanceApi.getConfig(),
-      appearanceApi.getSources(),
+      appearanceApi.getConfig(device),
+      appearanceApi.getSources(device),
       appearanceApi.listUploads(),
-      appearanceApi.listHistory(),
+      appearanceApi.listHistory(device),
     ])
+    if (generation !== loadGeneration) return
     config.value = configRes
     sources.value = sourcesRes.sources
     uploads.value = uploadsRes
     history.value = historyRes
     customUrlInput.value = configRes.custom_url || ''
-    activeTab.value = tabFromSourceType(configRes.source_type)
+    if (!options?.preserveTab) activeTab.value = tabFromSourceType(configRes.source_type)
   } catch (e) {
-    console.error('加载壁纸配置失败', e)
+    if (generation === loadGeneration) console.error('加载壁纸配置失败', e)
   } finally {
-    loading.value = false
+    if (generation === loadGeneration) loading.value = false
   }
+}
+
+/** 切换正在编辑的设备档案：只改变编辑对象，不影响当前设备已生效的壁纸。 */
+async function selectDevice(device: WallpaperDevice) {
+  if (device === editingDevice.value || saving.value) return
+  editingDevice.value = device
+  await loadAll({ preserveTab: true })
 }
 
 async function reloadUploads() {
@@ -167,7 +195,7 @@ async function reloadUploads() {
 
 async function reloadHistory() {
   try {
-    history.value = await appearanceApi.listHistory()
+    history.value = await appearanceApi.listHistory(editingDevice.value)
   } catch {
     // ignore
   }
@@ -243,9 +271,9 @@ async function saveConfig() {
   if (!config.value) return
   saving.value = true
   try {
-    const res = await appearanceApi.updateConfig(config.value)
+    const res = await appearanceApi.updateConfig(config.value, editingDevice.value)
     config.value = res.config
-    // 递增全局刷新信号，触发 App.vue 重新加载壁纸
+    // 递增全局刷新信号，触发 App.vue 按当前访问设备重新加载壁纸
     glass.wallpaperRefreshSignal.value++
     emit('changed')
   } catch (e) {
@@ -319,6 +347,8 @@ watch(
   () => props.modelValue,
   (value) => {
     if (value) {
+      // 每次打开默认编辑当前访问设备的档案
+      editingDevice.value = currentDevice.value
       void loadAll()
     }
   },
@@ -357,6 +387,36 @@ watch(
         </div>
 
         <template v-else-if="config">
+          <!-- 配置对象：电脑端 / 移动端独立配置 -->
+          <section>
+            <h3 class="theme-dialog__label">配置对象</h3>
+            <VBtnToggle
+              :model-value="editingDevice"
+              mandatory
+              color="primary"
+              variant="text"
+              class="wallpaper-dialog__device-toggle"
+              @update:model-value="selectDevice"
+            >
+              <VBtn
+                v-for="option in WALLPAPER_DEVICE_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+                class="wallpaper-dialog__source-type-option"
+              >
+                <VIcon start size="18">{{ option.icon }}</VIcon>
+                {{ option.label }}
+              </VBtn>
+            </VBtnToggle>
+            <p class="theme-dialog__hint">
+              当前访问设备：{{ currentDeviceLabel }}。电脑端与移动端的壁纸来源、下载间隔、显示方式与历史图库各自独立，
+              按访问设备的窗口宽度自动匹配。
+            </p>
+            <p v-if="!editingDeviceIsCurrent" class="theme-dialog__hint wallpaper-dialog__hint-warn">
+              正在编辑{{ wallpaperDeviceLabel(editingDevice) }}配置；当前设备仍使用{{ currentDeviceLabel }}壁纸。
+            </p>
+          </section>
+
           <!-- TAB 选择 -->
           <section>
             <h3 class="theme-dialog__label">壁纸来源</h3>
@@ -426,7 +486,8 @@ watch(
                     <span class="wallpaper-dialog__source-name">{{ source.name }}</span>
                     <span class="wallpaper-dialog__source-meta">
                       {{ source.category === 'acg' ? 'ACG' : '综合' }} ·
-                      {{ source.orientation === 'landscape' ? '横屏' : source.orientation === 'portrait' ? '竖屏' : '任意' }}
+                      {{ source.orientation === 'landscape' ? '横屏' : source.orientation === 'portrait' ? '竖屏' : '任意' }} ·
+                      {{ wallpaperDeviceLabel(source.device) }}
                     </span>
                   </div>
                   <VIcon
@@ -595,13 +656,19 @@ watch(
                 </div>
               </div>
             </div>
+
+            <p class="theme-dialog__hint">
+              上传图库为两端共用；选择哪一张作为壁纸按设备分别保存。
+            </p>
           </section>
 
           <!-- 历史壁纸 -->
           <section v-if="activeTab === 'history'">
             <div class="wallpaper-dialog__upload-header">
               <h3 class="theme-dialog__label">历史壁纸</h3>
-              <span class="wallpaper-dialog__history-count">共 {{ history.length }} 张</span>
+              <span class="wallpaper-dialog__history-count">
+                共 {{ history.length }} 张 · {{ wallpaperDeviceLabel(editingDevice) }}
+              </span>
             </div>
 
             <div v-if="history.length === 0" class="wallpaper-dialog__empty">
@@ -623,7 +690,9 @@ watch(
                   @click="selectHistory(item.filename)"
                 />
                 <div class="wallpaper-dialog__upload-meta">
-                  <span class="wallpaper-dialog__upload-size">{{ formatDate(item.created_at) }}</span>
+                  <span class="wallpaper-dialog__upload-size">
+                    {{ formatDate(item.created_at) }} · {{ wallpaperDeviceLabel(item.device) }}
+                  </span>
                   <div class="wallpaper-dialog__upload-actions">
                     <VIcon
                       v-if="config?.history_filename === item.filename"
@@ -642,6 +711,10 @@ watch(
                 </div>
               </div>
             </div>
+
+            <p class="theme-dialog__hint">
+              历史图库按设备分别收录与清理；标记为「通用」的条目为旧版本迁移或两端共用。
+            </p>
           </section>
 
           <!-- 壁纸亮度 -->
@@ -731,6 +804,18 @@ watch(
   .v-btn {
     flex: 1;
   }
+}
+
+.wallpaper-dialog__device-toggle {
+  width: 100%;
+
+  .v-btn {
+    flex: 1;
+  }
+}
+
+.wallpaper-dialog__hint-warn {
+  color: rgb(var(--v-theme-warning));
 }
 
 .wallpaper-dialog__rotation-scope {

@@ -136,7 +136,7 @@
 
 ### 🎨 外观定制
 - **主题系统**: 支持自定义主题配色与经典主题
-- **壁纸定制**: 支持自定义壁纸设置
+- **壁纸定制**: 电脑端 / 移动端独立壁纸源、轮播与历史图库
 - **实例定制**: 自定义实例名称、图标等
 - **页面定制**: 灵活的页面级外观配置（圆角、阴影、边框等）
 - **PWA 支持**: 可安装为渐进式 Web 应用
@@ -631,7 +631,7 @@ Anime-Manager/
 │   │   │       ├── SecretField.vue       # 密钥字段
 │   │   │       ├── PasswordInput.vue     # 密码输入
 │   │   │       ├── BorderDialog.vue      # 边框弹窗（圆角/颜色/阴影配置）
-│   │   │       ├── WallpaperDialog.vue   # 壁纸设置弹窗
+│   │   │       ├── WallpaperDialog.vue   # 壁纸设置弹窗（电脑端 / 移动端独立配置）
 │   │   │       └── ...                   # 其他公共组件
 │   │   ├── glass/                  # 玻璃拟态渲染引擎
 │   │   │   ├── components/         # GlassDialog、AppGlassCard 等玻璃组件
@@ -651,6 +651,7 @@ Anime-Manager/
 │   │   │   ├── useClipboard.ts     # 剪贴板
 │   │   │   ├── useDragScroll.ts    # 拖拽滚动
 │   │   │   ├── useDragSort.ts      # 拖拽排序
+│   │   │   ├── useWallpaperDevice.ts # 壁纸设备识别（电脑端/移动端）
 │   │   │   └── useDataCenter.ts    # 数据中心工具函数
 │   │   ├── stores/                 # Pinia 状态管理
 │   │   │   ├── useSystemStore.ts   # 系统状态（认证/WebSocket）

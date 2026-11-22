@@ -8,7 +8,7 @@ import os
 import uuid
 import logging
 import asyncio
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from config_manager import ConfigManager
 
@@ -168,17 +168,19 @@ async def list_images():
 
 
 # ── 壁纸管理 ───────────────────────────────────────────────
-# 完整的壁纸管理系统：
-# - 在线源：API 随机 / 自定义 URL（后端后台自动预取，proxy 秒回就绪图）
-# - 本地上传：手动上传的图（data/wallpaper，origin=upload）
-# - 历史壁纸：系统自动收录的历史使用图（data/wallpaper，origin=auto）
-# - 配置持久化到 config.json 的 wallpaper 字段
+# 完整的壁纸管理系统（按访问设备分电脑端 pc / 移动端 mobile 两套配置）：
+# - 在线源：API 随机 / 自定义 URL（后端按设备分别后台预取，proxy 秒回就绪图）
+# - 本地上传：手动上传的图（data/wallpaper，origin=upload，两端共用图库）
+# - 历史壁纸：系统自动收录的历史使用图（data/wallpaper，origin=auto，按设备分离）
+# - 配置持久化到 config.json 的 wallpaper.devices.<device> 字段
 
 import httpx
-from fastapi import Query
 from url_guard import safe_get, UnsafeURLError
 from wallpaper_service import (
     DEFAULT_WALLPAPER_CONFIG,
+    DEVICE_ANY,
+    DEVICE_LABELS,
+    SUPPORTED_DEVICES,
     WALLPAPER_API_SOURCES,
     WALLPAPER_DIR,
     find_latest_history_for_source,
@@ -190,27 +192,56 @@ from wallpaper_service import (
     read_local_image,
     record_history,
     remove_library_entry,
+    resolve_device,
     resolve_wallpaper_target,
     save_wallpaper_config,
 )
 
 
+def _clear_profile_reference(field: str, filename: str) -> bool:
+    """删除图库文件后，清理所有设备配置里对它的引用。"""
+    cleared = False
+    for device in SUPPORTED_DEVICES:
+        cfg = get_wallpaper_config(device)
+        if cfg.get(field) == filename:
+            cfg[field] = ""
+            save_wallpaper_config(device, cfg)
+            cleared = True
+    return cleared
+
+
 @router.get("/wallpaper/sources", summary="获取可用的壁纸 API 源列表")
-async def get_wallpaper_sources():
-    """获取可用的壁纸 API 源列表"""
-    return {"sources": WALLPAPER_API_SOURCES}
+async def get_wallpaper_sources(device: str = Query("", description="访问设备：pc / mobile，留空返回全部")):
+    """获取可用的壁纸 API 源列表（按设备过滤：设备专属源 + 两端通用源）"""
+    if device in SUPPORTED_DEVICES:
+        sources = [
+            source for source in WALLPAPER_API_SOURCES
+            if source.get("device") in (device, DEVICE_ANY)
+        ]
+    else:
+        sources = WALLPAPER_API_SOURCES
+    return {"sources": sources}
 
 
-@router.get("/wallpaper/config", summary="获取当前壁纸配置")
-async def get_wallpaper_config_route():
-    """获取当前壁纸配置"""
-    return get_wallpaper_config()
+@router.get("/wallpaper/config", summary="获取某设备的壁纸配置")
+async def get_wallpaper_config_route(
+    request: Request,
+    device: str = Query("", description="访问设备：pc / mobile；留空时按 User-Agent 推断"),
+):
+    """获取某设备的壁纸配置（另一设备不受影响）"""
+    target = resolve_device(device, request.headers.get("user-agent", ""))
+    return get_wallpaper_config(target)
 
 
-@router.put("/wallpaper/config", summary="更新壁纸配置")
-async def update_wallpaper_config_route(payload: dict):
-    """更新壁纸配置"""
-    current = get_wallpaper_config()
+@router.put("/wallpaper/config", summary="更新某设备的壁纸配置")
+async def update_wallpaper_config_route(
+    request: Request,
+    payload: dict,
+    device: str = Query("", description="访问设备：pc / mobile；留空时按 User-Agent 推断"),
+):
+    """更新某设备的壁纸配置（只写该设备的档案）"""
+    target = resolve_device(device, request.headers.get("user-agent", ""))
+    current = get_wallpaper_config(target)
     for key in DEFAULT_WALLPAPER_CONFIG:
         if key in payload:
             current[key] = payload[key]
@@ -220,22 +251,23 @@ async def update_wallpaper_config_route(payload: dict):
             current["refresh_interval"] = int(payload["cache_ttl"])
         except (TypeError, ValueError):
             pass
-    save_wallpaper_config(current)
-    notify_wallpaper_config_changed()
-    logger.info(f"壁纸配置已更新: {current}")
+    save_wallpaper_config(target, current)
+    notify_wallpaper_config_changed(target)
+    logger.info(f"壁纸配置已更新（{DEVICE_LABELS.get(target, target)}）: {current}")
     return {"success": True, "config": current}
 
 
 @router.get("/wallpaper/uploads", summary="列出手动上传的壁纸图片")
 async def list_wallpaper_uploads():
-    """列出手动上传的壁纸图片"""
+    """列出手动上传的壁纸图片（两端共用图库）"""
     return await asyncio.to_thread(list_uploads)
 
 
 @router.get("/wallpaper/history", summary="列出自动收录的历史壁纸图片")
-async def list_wallpaper_history():
-    """列出自动收录的历史壁纸图片"""
-    return await asyncio.to_thread(list_history)
+async def list_wallpaper_history(device: str = Query("", description="访问设备：pc / mobile，留空返回全部")):
+    """列出自动收录的历史壁纸图片（按设备过滤，保留通用条目）"""
+    wanted = device if device in SUPPORTED_DEVICES else None
+    return await asyncio.to_thread(list_history, wanted)
 
 
 @router.get("/wallpaper/uploads/{filename}", summary="读取本地壁纸图片（上传/历史通用）")
@@ -289,11 +321,8 @@ async def delete_wallpaper_upload(filename: str):
 
     await asyncio.to_thread(remove_library_entry, filename, "upload")
 
-    # 如果当前配置正在使用这张图片，清除引用
-    wp_config = get_wallpaper_config()
-    if wp_config.get("upload_filename") == filename:
-        wp_config["upload_filename"] = ""
-        save_wallpaper_config(wp_config)
+    # 如果有设备正在使用这张图片，清除所有设备配置里的引用
+    if _clear_profile_reference("upload_filename", filename):
         notify_wallpaper_config_changed()
 
     logger.info(f"壁纸图片已删除: {filename}")
@@ -309,10 +338,7 @@ async def delete_wallpaper_history(filename: str):
 
     await asyncio.to_thread(remove_library_entry, filename, "auto")
 
-    wp_config = get_wallpaper_config()
-    if wp_config.get("history_filename") == filename:
-        wp_config["history_filename"] = ""
-        save_wallpaper_config(wp_config)
+    if _clear_profile_reference("history_filename", filename):
         notify_wallpaper_config_changed()
 
     logger.info(f"历史壁纸已删除: {filename}")
@@ -321,19 +347,22 @@ async def delete_wallpaper_history(filename: str):
 
 @router.get("/wallpaper_proxy", summary="代理壁纸图片（解决 WebGL CORS）")
 async def proxy_wallpaper(
+    request: Request,
     url: str = Query("", description="要代理的壁纸 URL，为空时使用配置中的壁纸源"),
     refresh: bool = Query(False, description="强制刷新（跳过就绪缓存）"),
+    device: str = Query("", description="访问设备：pc / mobile；留空时按 User-Agent 推断"),
 ):
     """
     代理壁纸图片。
 
     - 本地图（上传/历史）：直接读 data/wallpaper 返回。
-    - 在线源：优先返回后台预取好的最新就绪图（秒开），
+    - 在线源：按访问设备取配置，优先返回后台预取好的最新就绪图（秒开），
       只有预取尚未完成或显式传 url 时才实时下载（超时 10s）。
     """
-    cfg = get_wallpaper_config()
+    device = resolve_device(device, request.headers.get("user-agent", ""))
+    cfg = get_wallpaper_config(device)
     explicit_url = url.strip()
-    target_url = explicit_url if explicit_url else resolve_wallpaper_target(cfg)
+    target_url = explicit_url if explicit_url else resolve_wallpaper_target(cfg, device)
 
     # 本地图模式
     if target_url.startswith("local:"):
@@ -354,9 +383,9 @@ async def proxy_wallpaper(
     if not target_url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="无效的 URL")
 
-    # 在线源：优先返回后台预取好的就绪图
+    # 在线源：优先返回该设备后台预取好的就绪图
     if not explicit_url and not refresh:
-        ready = await asyncio.to_thread(find_latest_history_for_source, cfg)
+        ready = await asyncio.to_thread(find_latest_history_for_source, cfg, device)
         if ready:
             result = await asyncio.to_thread(read_local_image, ready.get("filename"))
             if result is not None:
@@ -368,6 +397,7 @@ async def proxy_wallpaper(
                         "Cache-Control": "no-store",
                         "Access-Control-Allow-Origin": "*",
                         "X-Wallpaper-Source": "prefetched",
+                        "X-Wallpaper-Device": device,
                     },
                 )
 
@@ -379,15 +409,21 @@ async def proxy_wallpaper(
                 content_type = resp.headers.get("content-type", "image/jpeg")
                 if not explicit_url:
                     st = cfg.get("source_type", "api")
+                    # 本地图缺失时 resolve_wallpaper_target 已回落在在线源
+                    if st not in ("api", "url"):
+                        st = "api"
                     source_id = cfg.get("api_source_id", "") if st == "api" else ""
                     source_url = target_url if st == "url" else ""
-                    await asyncio.to_thread(record_history, resp.content, st, source_id, source_url, content_type)
+                    await asyncio.to_thread(
+                        record_history, resp.content, st, source_id, source_url, content_type, device
+                    )
                 return Response(
                     content=resp.content,
                     media_type=content_type,
                     headers={
                         "Cache-Control": "no-store",
                         "Access-Control-Allow-Origin": "*",
+                        "X-Wallpaper-Device": device,
                     },
                 )
             else:

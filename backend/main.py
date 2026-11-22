@@ -391,7 +391,7 @@ async def startup_event():
 
     await asyncio.to_thread(ConfigManager.init_config)
     
-    # 壁纸后台预取：启动即预取当前源，之后按 refresh_interval 定时换图（避免打开页面实时下载卡顿）
+    # 壁纸后台预取：电脑端 / 移动端各自按 refresh_interval 定时换图（避免打开页面实时下载卡顿）
     try:
         from wallpaper_service import wallpaper_prefetch_loop
         asyncio.create_task(wallpaper_prefetch_loop())
