@@ -2,6 +2,7 @@ import asyncio
 import os
 import logging
 import json
+import re
 from datetime import datetime
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +10,68 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.types import Scope
 from config_manager import ConfigManager
+
+
+# --- 静态资源缓存策略 -------------------------------------------------------
+# 入口 HTML / PWA 文件：必须每次向服务端求证，否则升级后拿到的还是旧入口。
+_NO_STORE_VALUE = "no-store, no-cache, must-revalidate, max-age=0"
+
+# 入口（含 SPA 深链接兜底）与 Service Worker 文件名。
+_NO_STORE_PATHS = frozenset({"/", "/index.html", "/sw.js"})
+_NO_STORE_BASENAMES = frozenset({"index.html", "sw.js", "registerSW.js"})
+
+# Vite/Rolldown 构建产物带内容哈希（如 index-Bm3xY9z1.js），文件名变即内容变。
+_HASHED_ASSET_RE = re.compile(r"-[A-Za-z0-9_-]{8,}\.[A-Za-z0-9]+$")
+
+# 带扩展名的一律视为静态文件：缺失时必须是真 404，绝不能回落成 index.html。
+# 不限扩展名长度，否则 manifest.webmanifest / javascript 这类会被误判成页面。
+# 本项目前端路由不含带点的路径段（router/index.ts 只有 /:pathMatch(.*)* 一个通配），
+# 所以这条规则不会误伤页面。
+_FILE_EXT_RE = re.compile(r"\.[A-Za-z0-9]+$")
+
+# 这些前缀下的路径缺失时不能回落成 SPA 入口。
+_SPA_FALLBACK_DENY_PREFIXES = ("/api", "/assets/")
+
+
+def _apply_no_store(response):
+    """给入口类响应统一打上禁缓存头（含 SPA 深链接兜底）。"""
+    response.headers["Cache-Control"] = _NO_STORE_VALUE
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
+def _apply_asset_cache(response, request_path: str) -> None:
+    """哈希文件名可安全长缓存；其余静态文件保持 servlet 默认，不乱加头。"""
+    if not request_path.startswith("/assets/"):
+        return
+    if response.status_code not in (200, 304):
+        return
+    basename = request_path.rsplit("/", 1)[-1]
+    if not _HASHED_ASSET_RE.search(basename):
+        return
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+
+
+def _is_spa_navigation(request: Request) -> bool:
+    """只有"浏览器在请求一个页面"时才允许回落 index.html。
+
+    旧实现只排除了 /api，于是 /assets/<旧哈希>.js 缺失也会返回 200 + HTML：
+    浏览器报的是 MIME 错误（既误导），响应还会被启发式缓存（普通刷新修不好）。
+    """
+    if request.method not in ("GET", "HEAD"):
+        return False
+    path = request.url.path
+    if path.startswith(_SPA_FALLBACK_DENY_PREFIXES):
+        return False
+    if _FILE_EXT_RE.search(path.rsplit("/", 1)[-1] or ""):
+        return False
+    accept = request.headers.get("accept")
+    # 明确只要非 HTML（如 application/json 的脚本调用）就不当导航；
+    # 缺省或 */* 仍按导航处理，避免 curl、链接预览等客户端拿不到页面。
+    if accept and "text/html" not in accept and "*/*" not in accept:
+        return False
+    return True
 
 
 class NoCacheStaticFiles(StaticFiles):
@@ -23,14 +86,16 @@ class NoCacheStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope: Scope):
         response = await super().get_response(path, scope)
         request_path = scope.get("path", "")
+        basename = request_path.rsplit("/", 1)[-1]
         if (
             path in ("", "/", "index.html")
-            or request_path in ("/", "/index.html", "/sw.js")
+            or request_path in _NO_STORE_PATHS
+            or basename in _NO_STORE_BASENAMES
             or request_path.startswith("/workbox-")
         ):
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
+            _apply_no_store(response)
+        else:
+            _apply_asset_cache(response, request_path)
         return response
 from monitor import MonitorManager
 from logger import init_logging, LogBroadcaster
@@ -598,8 +663,11 @@ if os.path.exists(DIST_DIR):
 
     @app.exception_handler(404)
     async def spa_fallback(request, exc):
-        if not request.url.path.startswith("/api"):
-            return FileResponse(os.path.join(DIST_DIR, "index.html"))
+        # 只有页面导航才回落入口 HTML；/assets/*、/workbox-*、/api/* 等一律真 404。
+        # 回落响应必须禁缓存：否则浏览器会启发式缓存这份旧入口，
+        # 升级后普通刷新拿到的还是旧哈希，必须 Ctrl+F5 才能恢复。
+        if _is_spa_navigation(request):
+            return _apply_no_store(FileResponse(os.path.join(DIST_DIR, "index.html")))
         return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
 if __name__ == "__main__":
