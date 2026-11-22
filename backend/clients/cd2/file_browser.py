@@ -7,6 +7,16 @@ import fnmatch
 from typing import Dict, Any, List, Optional
 
 from logger import log_audit
+from organizer_core.batch_delete_rules import (
+    KEEP_ORIGINAL,
+    MODE_DUPLICATE,
+    MODE_EXT,
+    MODE_NAME,
+    build_duplicate_plan,
+    make_exclude_matcher,
+    make_matcher,
+    normalize_mode,
+)
 from .errors import grpc_error_details
 
 logger = logging.getLogger(__name__)
@@ -30,44 +40,6 @@ _BATCH_DELETE_PREVIEW_LIMIT = 2000
 # 单次 DeleteFiles 提交的文件数上限
 _BATCH_DELETE_CHUNK = 200
 
-
-def _normalize_extensions(extensions: Optional[List[str]]) -> List[str]:
-    """
-    归一化扩展名列表，兼容多种写法：
-    '.jpg' / 'jpg' / 'JPG' / '*.jpg' → '.jpg'；多项可用 ; , ， ； 分隔。
-    '*' / '.*' / 'all' → '*'（匹配所有文件）。返回空列表表示"不限制扩展名"。
-    """
-    result: List[str] = []
-    for raw in (extensions or []):
-        text = str(raw).replace('；', ';').replace('，', ',').replace(',', ';')
-        for part in text.split(';'):
-            ext = part.strip().lower()
-            if not ext:
-                continue
-            if ext in ('*', '.*', 'all'):
-                ext = '*'
-            elif ext.startswith('*.'):
-                ext = ext[1:]
-            elif not ext.startswith('.'):
-                ext = '.' + ext
-            if ext not in result:
-                result.append(ext)
-    return result
-
-
-def _extension_matches(name: str, extensions: List[str]) -> bool:
-    """文件名是否命中扩展名规则；extensions 为空视为命中所有文件"""
-    if not extensions:
-        return True
-    lower = name.lower()
-    return any(lower.endswith(ext) or fnmatch.fnmatch(lower, ext) for ext in extensions)
-
-
-def _should_delete_file(name: str, delete_exts: List[str], exclude_exts: List[str]) -> bool:
-    """优先级：不想删除的扩展名（exclude）> 要删除的扩展名（delete）"""
-    if exclude_exts and _extension_matches(name, exclude_exts):
-        return False
-    return _extension_matches(name, delete_exts)
 
 
 class CD2FileBrowser:
@@ -775,7 +747,7 @@ class CD2FileBrowser:
 
         return {"success": True, "count": len(removed), "deleted": removed, "failed": failed}
 
-    # ---------- 批量按扩展名删除文件 ----------
+    # ---------- 批量删除文件（按扩展名 / 按文件名 / 重复副本） ----------
 
     def iter_files(self, path: str, recursive: bool = True):
         """
@@ -805,85 +777,167 @@ class CD2FileBrowser:
                 else:
                     yield entry
 
-    def scan_files_by_ext(self, path: str, delete_extensions: Optional[List[str]] = None,
-                          exclude_extensions: Optional[List[str]] = None,
-                          recursive: bool = True) -> Dict[str, Any]:
+    def _batch_targets(self, path: str, mode: str,
+                       delete_extensions: Optional[List[str]] = None,
+                       exclude_extensions: Optional[List[str]] = None,
+                       delete_names: Optional[List[str]] = None,
+                       duplicate_options: Optional[Dict[str, Any]] = None,
+                       recursive: bool = True):
         """
-        扫描云目录（可含子目录）中符合扩展名规则的文件，仅预览不删除。
-        规则：delete_extensions 为空=所有文件；exclude_extensions 优先，命中则永不删除。
+        生成批量删除目标（扫描与删除共用同一套规则，避免预览和实际删除不一致）。
+        :return: (mode, targets, skipped, group_count)，targets 项含 path/name/size/mtime
+        """
+        def _entries():
+            for entry in self.iter_files(path, recursive):
+                yield {
+                    "path": entry["path"],
+                    "name": entry["name"],
+                    "size": int(entry.get("size") or 0),
+                    "mtime": entry.get("write_time", 0) or 0,
+                }
+
+        if mode == MODE_DUPLICATE:
+            options = duplicate_options or {}
+            is_excluded = make_exclude_matcher(exclude_extensions)
+            entries = [e for e in _entries() if not is_excluded(e["name"])]
+            plan = build_duplicate_plan(
+                entries,
+                keep_policy=options.get("keep_policy") or KEEP_ORIGINAL,
+                require_original=bool(options.get("require_original", True)),
+                same_size_only=bool(options.get("same_size_only", True)),
+            )
+            return mode, plan["items"], plan["skipped"], plan["group_count"]
+
+        matcher = make_matcher(
+            delete_extensions, exclude_extensions,
+            delete_names if mode == MODE_NAME else None)
+        targets = [e for e in _entries() if matcher(e["name"])]
+        return mode, targets, [], 0
+
+    def scan_files_batch(self, path: str, mode: Optional[str] = MODE_EXT,
+                         delete_extensions: Optional[List[str]] = None,
+                         exclude_extensions: Optional[List[str]] = None,
+                         delete_names: Optional[List[str]] = None,
+                         duplicate_options: Optional[Dict[str, Any]] = None,
+                         recursive: bool = True) -> Dict[str, Any]:
+        """
+        扫描云目录（可含子目录）中符合批量删除规则的文件，仅预览不删除。
+        mode：ext=按扩展名（默认），name=按文件名，duplicate=重复副本。
+        exclude_extensions 在三种模式下都生效（优先级最高）。
         """
         try:
-            delete_exts = _normalize_extensions(delete_extensions)
-            exclude_exts = _normalize_extensions(exclude_extensions)
+            mode = normalize_mode(mode)
+            limit = _BATCH_DELETE_PREVIEW_LIMIT
 
-            items: List[Dict[str, Any]] = []
-            count = 0
-            total_size = 0
-            for entry in self.iter_files(path, recursive):
-                name = entry["name"]
-                if not _should_delete_file(name, delete_exts, exclude_exts):
-                    continue
-                size = int(entry.get("size") or 0)
-                count += 1
-                total_size += size
-                if len(items) < _BATCH_DELETE_PREVIEW_LIMIT:
-                    items.append({
-                        "path": entry["path"],
-                        "name": name,
-                        "size": size,
-                        "mtime": entry.get("write_time", 0),
-                    })
+            if mode != MODE_DUPLICATE:
+                # 按扩展名/文件名：流式统计，只保留预览条目，避免大目录占用大量内存
+                matcher = make_matcher(
+                    delete_extensions, exclude_extensions,
+                    delete_names if mode == MODE_NAME else None)
+                items: List[Dict[str, Any]] = []
+                count = 0
+                total_size = 0
+                for entry in self.iter_files(path, recursive):
+                    if not matcher(entry["name"]):
+                        continue
+                    size = int(entry.get("size") or 0)
+                    count += 1
+                    total_size += size
+                    if len(items) < limit:
+                        items.append({
+                            "path": entry["path"],
+                            "name": entry["name"],
+                            "size": size,
+                            "mtime": entry.get("write_time", 0) or 0,
+                        })
+                return {
+                    "success": True,
+                    "mode": mode,
+                    "count": count,
+                    "items": items,
+                    "total_size": total_size,
+                    "truncated": count > len(items),
+                    "preview_limit": limit,
+                    "skipped": [],
+                    "skipped_count": 0,
+                    "group_count": 0,
+                }
 
+            _mode, targets, skipped, group_count = self._batch_targets(
+                path, mode, delete_extensions, exclude_extensions,
+                delete_names, duplicate_options, recursive)
+
+            items = targets[:limit]
             return {
                 "success": True,
-                "count": count,
+                "mode": mode,
+                "count": len(targets),
                 "items": items,
-                "total_size": total_size,
-                "truncated": count > len(items),
-                "preview_limit": _BATCH_DELETE_PREVIEW_LIMIT,
+                "total_size": sum(int(e.get("size") or 0) for e in targets),
+                "truncated": len(targets) > len(items),
+                "preview_limit": limit,
+                "skipped": skipped[:limit],
+                "skipped_count": len(skipped),
+                "group_count": group_count,
             }
         except Exception as e:
             details = grpc_error_details(e)
             logger.error(f"[{self.connection.name}] 扫描待删除文件失败 {path}: {details}")
-            return {"success": False, "message": details, "count": 0, "items": [], "total_size": 0}
+            return {"success": False, "message": details, "count": 0, "items": [],
+                    "total_size": 0, "skipped": [], "skipped_count": 0}
 
-    def delete_files_by_ext(self, path: str, delete_extensions: Optional[List[str]] = None,
-                            exclude_extensions: Optional[List[str]] = None,
-                            recursive: bool = True) -> Dict[str, Any]:
+    def delete_files_batch(self, path: str, mode: Optional[str] = MODE_EXT,
+                           delete_extensions: Optional[List[str]] = None,
+                           exclude_extensions: Optional[List[str]] = None,
+                           delete_names: Optional[List[str]] = None,
+                           duplicate_options: Optional[Dict[str, Any]] = None,
+                           recursive: bool = True) -> Dict[str, Any]:
         """
-        批量删除云目录（可含子目录）中符合扩展名规则的文件（走回收站）。
-        只删文件、不动文件夹；分批提交 DeleteFiles，单批失败只影响该批。
+        按批量删除规则删除云目录（可含子目录）中的文件（走回收站）。
+        只删文件、不动文件夹；删除前重新按同一套规则生成目标，分批提交 DeleteFiles。
         """
         try:
-            delete_exts = _normalize_extensions(delete_extensions)
-            exclude_exts = _normalize_extensions(exclude_extensions)
-
-            targets: List[str] = []
-            freed = 0
-            for entry in self.iter_files(path, recursive):
-                if not _should_delete_file(entry["name"], delete_exts, exclude_exts):
-                    continue
-                targets.append(entry["path"])
-                freed += int(entry.get("size") or 0)
+            mode = normalize_mode(mode)
+            _mode, targets, _skipped, _groups = self._batch_targets(
+                path, mode, delete_extensions, exclude_extensions,
+                delete_names, duplicate_options, recursive)
 
             deleted: List[str] = []
             failed: List[Dict[str, str]] = []
+            freed = 0
             for i in range(0, len(targets), _BATCH_DELETE_CHUNK):
                 chunk = targets[i:i + _BATCH_DELETE_CHUNK]
-                ok, msg = self.delete_files(chunk)
+                ok, msg = self.delete_files([p["path"] for p in chunk])
                 if ok:
-                    deleted.extend(chunk)
+                    deleted.extend(p["path"] for p in chunk)
+                    freed += sum(int(p.get("size") or 0) for p in chunk)
                 else:
-                    failed.extend({"path": p, "error": msg} for p in chunk)
+                    failed.extend({"path": p["path"], "error": msg} for p in chunk)
 
             if deleted:
                 log_audit("CD2文件", "批量删除文件",
                           f"{path} 删除 {len(deleted)} 个文件"
                           + (f"，{len(failed)} 个失败" if failed else ""))
 
-            return {"success": True, "count": len(deleted), "deleted": deleted,
+            return {"success": True, "mode": mode, "count": len(deleted), "deleted": deleted,
                     "failed": failed, "freed_bytes": freed}
         except Exception as e:
             details = grpc_error_details(e)
             logger.error(f"[{self.connection.name}] 批量删除文件失败 {path}: {details}")
             return {"success": False, "message": details, "count": 0, "deleted": [], "failed": []}
+
+    # ---- 兼容旧接口：按扩展名 ----
+
+    def scan_files_by_ext(self, path: str, delete_extensions: Optional[List[str]] = None,
+                          exclude_extensions: Optional[List[str]] = None,
+                          recursive: bool = True) -> Dict[str, Any]:
+        """按扩展名扫描云目录（兼容旧接口，等价于 scan_files_batch(mode='ext')）"""
+        return self.scan_files_batch(
+            path, MODE_EXT, delete_extensions, exclude_extensions, None, None, recursive)
+
+    def delete_files_by_ext(self, path: str, delete_extensions: Optional[List[str]] = None,
+                            exclude_extensions: Optional[List[str]] = None,
+                            recursive: bool = True) -> Dict[str, Any]:
+        """按扩展名批量删除云目录文件（兼容旧接口，等价于 delete_files_batch(mode='ext')）"""
+        return self.delete_files_batch(
+            path, MODE_EXT, delete_extensions, exclude_extensions, None, None, recursive)

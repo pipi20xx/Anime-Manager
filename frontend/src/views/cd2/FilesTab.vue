@@ -361,7 +361,7 @@ const cancelUpload = () => {
 // ---------- 清理空文件夹 ----------
 const showCleanEmptyModal = ref(false)
 
-// ---------- 批量删除文件（按扩展名） ----------
+// ---------- 批量删除文件（按扩展名 / 文件名 / 重复副本） ----------
 const showBatchDeleteModal = ref(false)
 
 // ---------- 手动整理（源自动为当前 CD2 云目录） ----------
@@ -716,7 +716,7 @@ onMounted(() => {
         />
         <v-btn icon="mdi-folder-plus-outline" size="small" variant="text" title="新建文件夹" @click="openCreateModal" />
         <v-btn icon="mdi-delete-sweep" size="small" variant="text" title="清理空文件夹" :disabled="currentPath === '/'" @click="showCleanEmptyModal = true" />
-        <v-btn icon="mdi-file-remove-outline" size="small" variant="text" title="批量删除文件（按扩展名）" @click="showBatchDeleteModal = true" />
+        <v-btn icon="mdi-file-remove-outline" size="small" variant="text" title="批量删除文件" @click="showBatchDeleteModal = true" />
         <v-btn icon="mdi-refresh" size="small" variant="text" :loading="loading" title="刷新" @click="loadEntries()" />
         <v-btn
           icon="mdi-sync"

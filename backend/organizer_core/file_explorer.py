@@ -6,6 +6,19 @@ from fnmatch import fnmatch
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
+from organizer_core.batch_delete_rules import (
+    KEEP_ORIGINAL,
+    MODE_DUPLICATE,
+    MODE_EXT,
+    MODE_NAME,
+    build_duplicate_plan,
+    extension_matches,
+    make_exclude_matcher,
+    make_matcher,
+    normalize_extensions,
+    normalize_mode,
+)
+
 logger = logging.getLogger(__name__)
 
 class FileItem(BaseModel):
@@ -341,67 +354,41 @@ class FileExplorer:
 
         return {"count": len(deleted), "deleted": deleted, "failed": failed}
 
-    # ---------- 批量按扩展名删除文件 ----------
+    # ---------- 批量删除文件（按扩展名 / 按文件名 / 重复副本） ----------
 
     # 预览列表最多返回的条目数（实际删除不受此限制）
     BATCH_DELETE_PREVIEW_LIMIT = 2000
 
     @staticmethod
     def _normalize_extensions(extensions: Optional[List[str]]) -> List[str]:
-        """
-        归一化扩展名列表，兼容多种写法：
-        '.jpg' / 'jpg' / 'JPG' / '*.jpg' → '.jpg'；多项可用 ; , ， ； 分隔。
-        '*' / '.*' / 'all' → '*'（匹配所有文件）。返回空列表表示"不限制扩展名"。
-        """
-        result: List[str] = []
-        for raw in (extensions or []):
-            text = str(raw).replace('；', ';').replace('，', ',').replace(',', ';')
-            for part in text.split(';'):
-                ext = part.strip().lower()
-                if not ext:
-                    continue
-                if ext in ('*', '.*', 'all'):
-                    ext = '*'
-                elif ext.startswith('*.'):
-                    ext = ext[1:]
-                elif not ext.startswith('.'):
-                    ext = '.' + ext
-                if ext not in result:
-                    result.append(ext)
-        return result
+        """兼容旧调用：归一化扩展名列表（实现见 batch_delete_rules）"""
+        return normalize_extensions(extensions)
 
     @staticmethod
     def _extension_matches(name: str, extensions: List[str]) -> bool:
-        """文件名是否命中扩展名规则；extensions 为空视为命中所有文件"""
-        if not extensions:
-            return True
-        lower = name.lower()
-        return any(lower.endswith(ext) or fnmatch(lower, ext) for ext in extensions)
+        """兼容旧调用：文件名是否命中扩展名规则"""
+        return extension_matches(name, extensions)
 
     @staticmethod
     def _should_delete_file(name: str, delete_exts: List[str], exclude_exts: List[str]) -> bool:
         """
-        判定文件是否应被批量删除。
+        兼容旧调用：判定文件是否应被批量删除。
         优先级：不想删除的扩展名（exclude）> 要删除的扩展名（delete）。
         """
-        if exclude_exts and FileExplorer._extension_matches(name, exclude_exts):
-            return False
-        return FileExplorer._extension_matches(name, delete_exts)
+        return make_matcher(delete_exts, exclude_exts)(name)
 
     @staticmethod
-    def _iter_matching_files(path: str, delete_exts: List[str], exclude_exts: List[str], recursive: bool = True):
-        """生成器：产出目录（可含子目录）中所有命中规则的文件 (full_path, name, size, mtime)"""
+    def _iter_files(path: str, recursive: bool = True):
+        """生成器：产出目录（可含子目录）中所有文件 {path, name, size, mtime}"""
         if recursive:
             for root, _dirs, files in os.walk(path):
                 for name in files:
-                    if not FileExplorer._should_delete_file(name, delete_exts, exclude_exts):
-                        continue
                     full = os.path.join(root, name)
                     try:
                         st = os.stat(full)
                     except OSError:
                         continue
-                    yield full, name, st.st_size, st.st_mtime
+                    yield {"path": full, "name": name, "size": st.st_size, "mtime": st.st_mtime}
             return
 
         try:
@@ -412,83 +399,163 @@ class FileExplorer:
             try:
                 if not entry.is_file():
                     continue
-            except OSError:
-                continue
-            if not FileExplorer._should_delete_file(entry.name, delete_exts, exclude_exts):
-                continue
-            try:
                 st = entry.stat()
             except OSError:
                 continue
-            yield entry.path, entry.name, st.st_size, st.st_mtime
+            yield {"path": entry.path, "name": entry.name, "size": st.st_size, "mtime": st.st_mtime}
+
+    @staticmethod
+    def _validate_scan_path(path: str) -> None:
+        """校验批量删除的目录：必须在允许根目录内、存在且为目录"""
+        FileExplorer._ensure_allowed(path)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Path not found: {path}")
+        if not os.path.isdir(path):
+            raise NotADirectoryError(f"Path is not a directory: {path}")
+
+    @staticmethod
+    def _normalize_mode(mode: Optional[str]) -> str:
+        """兼容旧调用：校验批量删除模式（实现见 batch_delete_rules）"""
+        return normalize_mode(mode)
+
+    @staticmethod
+    def _batch_targets(path: str, mode: str,
+                       delete_extensions: Optional[List[str]] = None,
+                       exclude_extensions: Optional[List[str]] = None,
+                       delete_names: Optional[List[str]] = None,
+                       duplicate_options: Optional[Dict[str, Any]] = None,
+                       recursive: bool = True):
+        """
+        生成批量删除目标（扫描与删除共用同一套规则，避免预览和实际删除不一致）。
+        :return: (mode, targets, skipped, group_count)
+        """
+        if mode == MODE_DUPLICATE:
+            options = duplicate_options or {}
+            is_excluded = make_exclude_matcher(exclude_extensions)
+            entries = [e for e in FileExplorer._iter_files(path, recursive)
+                       if not is_excluded(e["name"])]
+            plan = build_duplicate_plan(
+                entries,
+                keep_policy=options.get("keep_policy") or KEEP_ORIGINAL,
+                require_original=bool(options.get("require_original", True)),
+                same_size_only=bool(options.get("same_size_only", True)),
+            )
+            return mode, plan["items"], plan["skipped"], plan["group_count"]
+
+        matcher = make_matcher(
+            delete_extensions, exclude_extensions,
+            delete_names if mode == MODE_NAME else None)
+        targets = [e for e in FileExplorer._iter_files(path, recursive) if matcher(e["name"])]
+        return mode, targets, [], 0
+
+    @staticmethod
+    def scan_files_batch(path: str, mode: Optional[str] = MODE_EXT,
+                         delete_extensions: Optional[List[str]] = None,
+                         exclude_extensions: Optional[List[str]] = None,
+                         delete_names: Optional[List[str]] = None,
+                         duplicate_options: Optional[Dict[str, Any]] = None,
+                         recursive: bool = True) -> Dict[str, Any]:
+        """
+        扫描目录（可含子目录）中符合批量删除规则的文件，仅预览不删除。
+        mode：ext=按扩展名（默认），name=按文件名，duplicate=重复副本。
+        exclude_extensions 在三种模式下都生效（优先级最高）。
+        """
+        FileExplorer._validate_scan_path(path)
+        mode = FileExplorer._normalize_mode(mode)
+        limit = FileExplorer.BATCH_DELETE_PREVIEW_LIMIT
+
+        if mode != MODE_DUPLICATE:
+            # 按扩展名/文件名：流式统计，只保留预览条目，避免大目录占用大量内存
+            matcher = make_matcher(
+                delete_extensions, exclude_extensions,
+                delete_names if mode == MODE_NAME else None)
+            items: List[Dict[str, Any]] = []
+            count = 0
+            total_size = 0
+            for entry in FileExplorer._iter_files(path, recursive):
+                if not matcher(entry["name"]):
+                    continue
+                count += 1
+                total_size += int(entry.get("size") or 0)
+                if len(items) < limit:
+                    items.append(entry)
+            return {
+                "mode": mode,
+                "count": count,
+                "items": items,
+                "total_size": total_size,
+                "truncated": count > len(items),
+                "preview_limit": limit,
+                "skipped": [],
+                "skipped_count": 0,
+                "group_count": 0,
+            }
+
+        _mode, targets, skipped, group_count = FileExplorer._batch_targets(
+            path, mode, delete_extensions, exclude_extensions,
+            delete_names, duplicate_options, recursive)
+        items = targets[:limit]
+        return {
+            "mode": mode,
+            "count": len(targets),
+            "items": items,
+            "total_size": sum(int(e.get("size") or 0) for e in targets),
+            "truncated": len(targets) > len(items),
+            "preview_limit": limit,
+            "skipped": skipped[:limit],
+            "skipped_count": len(skipped),
+            "group_count": group_count,
+        }
+
+    @staticmethod
+    def delete_files_batch(path: str, mode: Optional[str] = MODE_EXT,
+                           delete_extensions: Optional[List[str]] = None,
+                           exclude_extensions: Optional[List[str]] = None,
+                           delete_names: Optional[List[str]] = None,
+                           duplicate_options: Optional[Dict[str, Any]] = None,
+                           recursive: bool = True) -> Dict[str, Any]:
+        """
+        按批量删除规则删除目录（可含子目录）中的文件。
+        只删文件、不动文件夹；删除前重新按同一套规则生成目标，单个文件失败不影响其余。
+        """
+        FileExplorer._validate_scan_path(path)
+        mode = FileExplorer._normalize_mode(mode)
+        _mode, targets, _skipped, _groups = FileExplorer._batch_targets(
+            path, mode, delete_extensions, exclude_extensions,
+            delete_names, duplicate_options, recursive)
+
+        deleted: List[str] = []
+        failed: List[Dict[str, str]] = []
+        freed = 0
+        for entry in targets:
+            full = entry["path"]
+            try:
+                # 删除前确认仍是文件（生成目标后可能已被删除/改名）
+                if not os.path.isfile(full):
+                    continue
+                os.remove(full)
+                deleted.append(full)
+                freed += int(entry.get("size") or 0)
+            except OSError as e:
+                failed.append({"path": full, "error": str(e)})
+
+        return {"mode": mode, "count": len(deleted), "deleted": deleted,
+                "failed": failed, "freed_bytes": freed}
+
+    # ---- 兼容旧接口：按扩展名 ----
 
     @staticmethod
     def scan_files_by_ext(path: str, delete_extensions: Optional[List[str]] = None,
                           exclude_extensions: Optional[List[str]] = None,
                           recursive: bool = True) -> Dict[str, Any]:
-        """
-        扫描目录（可含子目录）中符合扩展名规则的文件，仅预览不删除。
-        规则：delete_extensions 为空=所有文件；exclude_extensions 优先，命中则永不删除。
-        """
-        FileExplorer._ensure_allowed(path)
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Path not found: {path}")
-        if not os.path.isdir(path):
-            raise NotADirectoryError(f"Path is not a directory: {path}")
-
-        delete_exts = FileExplorer._normalize_extensions(delete_extensions)
-        exclude_exts = FileExplorer._normalize_extensions(exclude_extensions)
-
-        limit = FileExplorer.BATCH_DELETE_PREVIEW_LIMIT
-        items: List[Dict[str, Any]] = []
-        count = 0
-        total_size = 0
-        for full, name, size, mtime in FileExplorer._iter_matching_files(path, delete_exts, exclude_exts, recursive):
-            count += 1
-            total_size += size
-            if len(items) < limit:
-                items.append({"path": full, "name": name, "size": size, "mtime": mtime})
-
-        return {
-            "count": count,
-            "items": items,
-            "total_size": total_size,
-            "truncated": count > len(items),
-            "preview_limit": limit,
-        }
+        """按扩展名扫描目录（兼容旧接口，等价于 scan_files_batch(mode='ext')）"""
+        return FileExplorer.scan_files_batch(
+            path, MODE_EXT, delete_extensions, exclude_extensions, None, None, recursive)
 
     @staticmethod
     def delete_files_by_ext(path: str, delete_extensions: Optional[List[str]] = None,
                             exclude_extensions: Optional[List[str]] = None,
                             recursive: bool = True) -> Dict[str, Any]:
-        """
-        批量删除目录（可含子目录）中符合扩展名规则的文件。
-        只删文件、不动文件夹；每个文件删除前重新校验规则与存在性（防扫描后变动）；
-        单个文件失败不影响其余。
-        """
-        FileExplorer._ensure_allowed(path)
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Path not found: {path}")
-        if not os.path.isdir(path):
-            raise NotADirectoryError(f"Path is not a directory: {path}")
-
-        delete_exts = FileExplorer._normalize_extensions(delete_extensions)
-        exclude_exts = FileExplorer._normalize_extensions(exclude_extensions)
-
-        deleted: List[str] = []
-        failed: List[Dict[str, str]] = []
-        freed = 0
-        for full, _name, size, _mtime in FileExplorer._iter_matching_files(path, delete_exts, exclude_exts, recursive):
-            try:
-                # 重新校验：扫描后文件可能已被删除/改名
-                if not os.path.isfile(full):
-                    continue
-                if not FileExplorer._should_delete_file(os.path.basename(full), delete_exts, exclude_exts):
-                    continue
-                os.remove(full)
-                deleted.append(full)
-                freed += size
-            except OSError as e:
-                failed.append({"path": full, "error": str(e)})
-
-        return {"count": len(deleted), "deleted": deleted, "failed": failed, "freed_bytes": freed}
+        """按扩展名批量删除文件（兼容旧接口，等价于 delete_files_batch(mode='ext')）"""
+        return FileExplorer.delete_files_batch(
+            path, MODE_EXT, delete_extensions, exclude_extensions, None, None, recursive)

@@ -151,43 +151,68 @@ async def clean_empty_dirs(request: FileCleanEmptyRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class BatchDeleteDuplicateOptions(BaseModel):
+    """重复副本清理选项（mode=duplicate 时生效）"""
+    # 保留策略：original=优先保留无副本标记的原文件；newest/oldest=按修改时间；largest=按体积
+    keep_policy: str = "original"
+    # 仅当同目录确实存在"去掉副本标记后的原文件"时才清理（更安全）
+    require_original: bool = True
+    # 仅当文件大小与原文件一致时才删除（更安全，大小不同可能是不同内容）
+    same_size_only: bool = True
+
 class BatchDeleteFilesRequest(BaseModel):
     path: str
-    # 要删除的文件扩展名，如 ['.jpg', '.png']；为空表示删除所有文件
+    # 删除模式：ext=按扩展名（默认） name=按文件名 duplicate=重复副本
+    mode: str = "ext"
+    # 要删除的文件扩展名，如 ['.jpg', '.png']；为空表示删除所有文件（仅 ext 模式）
     delete_extensions: Optional[List[str]] = None
-    # 不想删除的文件扩展名，如 ['.mkv', '.mp4']；优先级高于 delete_extensions，为空表示不排除任何文件
+    # 要删除的文件名（仅 name 模式），支持 * ? 通配符；无通配符时按完整文件名匹配
+    delete_names: Optional[List[str]] = None
+    # 不想删除的文件扩展名，如 ['.mkv', '.mp4']；三种模式都生效，优先级最高，为空表示不排除任何文件
     exclude_extensions: Optional[List[str]] = None
+    # 重复副本清理选项（仅 duplicate 模式）
+    duplicate_options: Optional[BatchDeleteDuplicateOptions] = None
     # 是否递归处理子文件夹
     recursive: bool = True
 
 @router.post("/api/files/scan_files_by_ext", summary="扫描待批量删除的文件")
 async def scan_files_by_ext(request: BatchDeleteFilesRequest):
-    """按扩展名规则扫描目录（可含子目录）中待删除的文件，仅预览不删除"""
+    """按扩展名 / 文件名 / 重复副本规则扫描目录（可含子目录）中待删除的文件，仅预览不删除"""
     try:
         data = await asyncio.to_thread(
-            FileExplorer.scan_files_by_ext, request.path,
-            request.delete_extensions, request.exclude_extensions, request.recursive)
+            FileExplorer.scan_files_batch, request.path, request.mode,
+            request.delete_extensions, request.exclude_extensions,
+            request.delete_names,
+            request.duplicate_options.model_dump() if request.duplicate_options else None,
+            request.recursive)
         return {"status": "success", "data": data}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="路径不存在")
     except PermissionError:
         raise HTTPException(status_code=403, detail="权限不足")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/files/delete_files_by_ext", summary="批量删除指定扩展名的文件")
+@router.post("/api/files/delete_files_by_ext", summary="批量删除文件")
 async def delete_files_by_ext(request: BatchDeleteFilesRequest):
-    """按扩展名规则批量删除目录（可含子目录）中的文件，只删文件不动文件夹"""
+    """按扩展名 / 文件名 / 重复副本规则批量删除目录（可含子目录）中的文件，只删文件不动文件夹"""
     try:
         data = await asyncio.to_thread(
-            FileExplorer.delete_files_by_ext, request.path,
-            request.delete_extensions, request.exclude_extensions, request.recursive)
-        logger.info(f"批量删除文件: {request.path} 删除 {data['count']} 个")
+            FileExplorer.delete_files_batch, request.path, request.mode,
+            request.delete_extensions, request.exclude_extensions,
+            request.delete_names,
+            request.duplicate_options.model_dump() if request.duplicate_options else None,
+            request.recursive)
+        logger.info(f"批量删除文件（{data.get('mode')}）: {request.path} 删除 {data['count']} 个")
         return {"status": "success", "data": data}
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="路径不存在")
     except PermissionError:
         raise HTTPException(status_code=403, detail="权限不足")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -4,14 +4,32 @@
 import { api, apiFetch, apiStream } from './client'
 
 /**
- * 批量删除文件（按扩展名）请求体
- * - delete_extensions 为空 → 删除所有文件
- * - exclude_extensions 优先级最高，命中的文件永不删除；为空 → 不排除任何文件
+ * 批量删除文件请求体
+ * - mode=ext：delete_extensions 为空 → 删除所有文件
+ * - mode=name：delete_names 支持 * ? 通配符，无通配符时按完整文件名匹配（不区分大小写）
+ * - mode=duplicate：清理重复副本（去掉 (1)、- 副本 等标记后与原文件同名者）
+ * - exclude_extensions 三种模式都生效，优先级最高；为空 → 不排除任何文件
  */
+export type BatchDeleteMode = 'ext' | 'name' | 'duplicate'
+
+/** 重复副本清理选项（仅 mode=duplicate 生效） */
+export interface BatchDeleteDuplicateOptions {
+  /** 保留策略：original=保留原文件（推荐）；newest/oldest=按修改时间；largest=按体积 */
+  keep_policy?: 'original' | 'newest' | 'oldest' | 'largest'
+  /** 仅当同目录确实存在去掉副本标记后的原文件时才清理（推荐开启） */
+  require_original?: boolean
+  /** 仅删除与原文件大小一致的副本（推荐开启） */
+  same_size_only?: boolean
+}
+
 export interface BatchDeleteFilesBody {
   path: string
+  /** 删除模式，默认 ext */
+  mode?: BatchDeleteMode
   delete_extensions?: string[]
+  delete_names?: string[]
   exclude_extensions?: string[]
+  duplicate_options?: BatchDeleteDuplicateOptions
   /** 是否递归处理子文件夹，默认 true */
   recursive?: boolean
 }
@@ -49,11 +67,11 @@ export const organizerApi = {
   cleanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
     api.post<any>('/api/files/clean_empty_dirs', body),
 
-  /** 批量删除：按扩展名扫描待删除的文件（预览，不删除） */
+  /** 批量删除：按扩展名 / 文件名 / 重复副本扫描待删除的文件（预览，不删除） */
   scanFilesByExt: (body: BatchDeleteFilesBody) =>
     api.post<any>('/api/files/scan_files_by_ext', body),
 
-  /** 批量删除：按扩展名删除文件 */
+  /** 批量删除：按扩展名 / 文件名 / 重复副本删除文件 */
   deleteFilesByExt: (body: BatchDeleteFilesBody) =>
     api.post<any>('/api/files/delete_files_by_ext', body),
 

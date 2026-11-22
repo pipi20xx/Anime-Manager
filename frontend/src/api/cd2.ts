@@ -62,11 +62,11 @@ export const cd2Api = {
   cleanEmptyDirs: (body: { path: string; ignore_patterns?: string[] }) =>
     api.post<any>('/api/cd2/files/clean-empty-dirs', body),
 
-  /** 批量删除：按扩展名扫描云盘待删除的文件（预览，不删除） */
+  /** 批量删除：按扩展名 / 文件名 / 重复副本扫描云盘待删除的文件（预览，不删除） */
   scanFilesByExt: (body: BatchDeleteFilesBody) =>
     api.post<any>('/api/cd2/files/scan-files-by-ext', body),
 
-  /** 批量删除：按扩展名删除云盘文件 */
+  /** 批量删除：按扩展名 / 文件名 / 重复副本删除云盘文件 */
   deleteFilesByExt: (body: BatchDeleteFilesBody) =>
     api.post<any>('/api/cd2/files/delete-files-by-ext', body),
 

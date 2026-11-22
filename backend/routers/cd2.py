@@ -348,12 +348,25 @@ async def cd2_clean_empty_dirs(req: CleanEmptyDirsRequest):
     return result
 
 
+class BatchDeleteDuplicateOptions(BaseModel):
+    """重复副本清理选项（mode=duplicate 时生效）"""
+    keep_policy: str = "original"       # original | newest | oldest | largest
+    require_original: bool = True       # 仅当同目录存在原文件时才清理
+    same_size_only: bool = True         # 仅删除与原文件大小一致的副本
+
+
 class BatchDeleteFilesRequest(BaseModel):
     path: str
-    # 要删除的文件扩展名，如 ['.jpg', '.png']；为空表示删除所有文件
+    # 删除模式：ext=按扩展名（默认） name=按文件名 duplicate=重复副本
+    mode: str = "ext"
+    # 要删除的文件扩展名，如 ['.jpg', '.png']；为空表示删除所有文件（仅 ext 模式）
     delete_extensions: Optional[List[str]] = None
-    # 不想删除的文件扩展名，如 ['.mkv', '.mp4']；优先级高于 delete_extensions，为空表示不排除任何文件
+    # 要删除的文件名（仅 name 模式），支持 * ? 通配符
+    delete_names: Optional[List[str]] = None
+    # 不想删除的文件扩展名；三种模式都生效，优先级最高
     exclude_extensions: Optional[List[str]] = None
+    # 重复副本清理选项（仅 duplicate 模式）
+    duplicate_options: Optional[BatchDeleteDuplicateOptions] = None
     # 是否递归处理子文件夹
     recursive: bool = True
     client_id: Optional[str] = None
@@ -361,23 +374,29 @@ class BatchDeleteFilesRequest(BaseModel):
 
 @router.post("/cd2/files/scan-files-by-ext", summary="扫描云盘待批量删除的文件")
 async def cd2_scan_files_by_ext(req: BatchDeleteFilesRequest):
-    """按扩展名规则扫描云目录（可含子目录）中待删除的文件，仅预览不删除"""
+    """按扩展名 / 文件名 / 重复副本规则扫描云目录（可含子目录）中待删除的文件，仅预览不删除"""
     client = _get_cd2_client(req.client_id)
     result = await asyncio.to_thread(
-        client.scan_files_by_ext, req.path,
-        req.delete_extensions, req.exclude_extensions, req.recursive)
+        client.scan_files_batch, req.path, req.mode,
+        req.delete_extensions, req.exclude_extensions,
+        req.delete_names,
+        req.duplicate_options.model_dump() if req.duplicate_options else None,
+        req.recursive)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "扫描失败"))
     return result
 
 
-@router.post("/cd2/files/delete-files-by-ext", summary="批量删除云盘指定扩展名的文件")
+@router.post("/cd2/files/delete-files-by-ext", summary="批量删除云盘文件")
 async def cd2_delete_files_by_ext(req: BatchDeleteFilesRequest):
-    """按扩展名规则批量删除云目录（可含子目录）中的文件（回收站删除），只删文件不动文件夹"""
+    """按扩展名 / 文件名 / 重复副本规则批量删除云目录（可含子目录）中的文件（回收站删除），只删文件不动文件夹"""
     client = _get_cd2_client(req.client_id)
     result = await asyncio.to_thread(
-        client.delete_files_by_ext, req.path,
-        req.delete_extensions, req.exclude_extensions, req.recursive)
+        client.delete_files_batch, req.path, req.mode,
+        req.delete_extensions, req.exclude_extensions,
+        req.delete_names,
+        req.duplicate_options.model_dump() if req.duplicate_options else None,
+        req.recursive)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "批量删除失败"))
     log_audit("CD2文件", "批量删除文件",
