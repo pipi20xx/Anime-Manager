@@ -716,9 +716,12 @@ Yami.Shibai.+?(\d+).+?(\d+).+?^[A-Za-z]+$ => {[tmdbid=56559;type=tv;s=\1;e=\2]} 
     │           资源规格键 (team/resolution/video_encode 等) -> field_match.check_conditions
     │           档案级键 (genre_ids/company_ids/keyword_ids/origin_country/
     │                    original_language/year/title) -> TmdbFullClassifier._check_rule_match
+    │       ⬇️ 命中判定 (_entry_hit): 默认条件满足即命中；
+    │           negate=True（反向匹配）则条件不满足才命中（白名单写法）
     │       ⬇️ 档案级条件按作品 TMDB 档案评估 (resolve_archive_features):
     │           查数据中心 TmdbDeepMeta 构建 build_features 特征（流派/公司/关键词/国家/
     │           语言/年份/标题，与二级分类规则同口径），轮内缓存，档案缺失按"不匹配"处理
+    │           （反向匹配下即视为命中 -> 会被拦下）
     │       ✅ 命中 -> apply_tmdb_block:
     │           写 state=TmdbBlocked 下载历史 (幂等)，使订阅匹配与规则匹配都按"已下载"跳过
     │           整部作品级 (锚定 ID 且无条件) -> 同步标记订阅对应集已下载

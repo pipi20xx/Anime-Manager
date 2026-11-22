@@ -195,7 +195,8 @@ async def run_auto_match_for_feed(feed_id: int, entries: List[Dict], task_id: st
             # TMDB 屏蔽回溯检查：识别/订阅阶段之后才加入屏蔽的条目在这里补拦。
             # 新识别条目已写过 TmdbBlocked 历史，下方 is_downloaded 本就会跳过；
             # 带规格条件（如制作组）的屏蔽条目只拦满足条件的资源，其余照常匹配规则。
-            if block_map:
+            # 全局条件条目（含反向匹配）也要走这里，不能只看精确表是否为空。
+            if block_map or global_blocks:
                 _fi = await db.first(FeedItem, select(FeedItem).where(FeedItem.guid == guid))
                 if _fi and _fi.tmdb_id:
                     _fi_meta = {

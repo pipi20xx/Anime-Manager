@@ -24,6 +24,25 @@ def _sanitize_conditions(conditions: Any) -> Dict[str, str]:
     return cleaned
 
 
+def _describe_conditions(conditions: Any, negate: bool = False) -> str:
+    """条件摘要（审计日志用）；反向条目加「反向」前缀，避免日志里看成普通条件。"""
+    cond = ", ".join(f"{k}={v}" for k, v in (conditions or {}).items())
+    if cond and negate:
+        return f"反向[{cond}]"
+    return cond
+
+
+def _check_negate(conditions: Dict[str, str], negate: bool):
+    """反向匹配必须有条件：无条件本身已是整部作品屏蔽，反向会变成"什么都没屏蔽"或误拦一切。"""
+    if not negate:
+        return
+    if not conditions:
+        raise HTTPException(
+            status_code=400,
+            detail="开启反向匹配时必须至少填写一个匹配条件（条件不满足才命中屏蔽）"
+        )
+
+
 @router.get("/tmdb-blocklist", summary="获取 TMDB 屏蔽列表")
 async def get_tmdb_blocklist():
     """获取屏蔽列表，并关联数据中心查出对应的名称。"""
@@ -61,6 +80,7 @@ async def add_tmdb_blocklist(item: TmdbBlocklist):
         if item.media_type not in ("tv", "movie", "all"):
             item.media_type = "tv"
         item.conditions = _sanitize_conditions(item.conditions)
+        item.negate = bool(item.negate)
 
         # 全局条件条目（不锚定作品）必须至少有一个匹配条件，否则会拦下一切资源
         if not item.tmdb_id and not item.conditions:
@@ -68,6 +88,7 @@ async def add_tmdb_blocklist(item: TmdbBlocklist):
                 status_code=400,
                 detail="留空 TMDB ID 时必须至少填写一个匹配条件（如制作组）"
             )
+        _check_negate(item.conditions, item.negate)
 
         # 锚定作品的条目按 tmdb_id + media_type 去重；全局条件条目允许多条并存
         if item.tmdb_id:
@@ -84,7 +105,7 @@ async def add_tmdb_blocklist(item: TmdbBlocklist):
         item.id = None
         item.conditions = item.conditions or None
         saved = await db.save(item)
-        cond_desc = ", ".join(f"{k}={v}" for k, v in (item.conditions or {}).items())
+        cond_desc = _describe_conditions(item.conditions, item.negate)
         scope = f"tmdb_id={item.tmdb_id}, 类型={item.media_type}" if item.tmdb_id else "全局条件(不锚定作品)"
         log_audit("TMDB屏蔽", "添加", f"添加屏蔽: {scope}, 条件={cond_desc or '整部作品'}, 备注={item.title or ''}")
         return saved
@@ -106,6 +127,7 @@ async def update_tmdb_blocklist(item_id: int, data: TmdbBlocklist):
         else:
             existing.media_type = "tv"
         existing.conditions = _sanitize_conditions(data.conditions) or None
+        existing.negate = bool(data.negate)
 
         # 全局条件条目（不锚定作品）必须至少有一个匹配条件，否则会拦下一切资源
         if not existing.tmdb_id and not existing.conditions:
@@ -113,6 +135,7 @@ async def update_tmdb_blocklist(item_id: int, data: TmdbBlocklist):
                 status_code=400,
                 detail="留空 TMDB ID 时必须至少填写一个匹配条件（如制作组）"
             )
+        _check_negate(existing.conditions or {}, existing.negate)
 
         # 锚定作品的条目按 tmdb_id + media_type 去重（排除自身）；全局条件条目允许多条并存
         if existing.tmdb_id:
@@ -128,7 +151,7 @@ async def update_tmdb_blocklist(item_id: int, data: TmdbBlocklist):
                 )
 
         saved = await db.save(existing)
-        cond_desc = ", ".join(f"{k}={v}" for k, v in (existing.conditions or {}).items())
+        cond_desc = _describe_conditions(existing.conditions, existing.negate)
         scope = f"tmdb_id={existing.tmdb_id}, 类型={existing.media_type}" if existing.tmdb_id else "全局条件(不锚定作品)"
         log_audit("TMDB屏蔽", "编辑", f"编辑屏蔽 #{item_id}: {scope}, 条件={cond_desc or '整部作品'}")
         return saved

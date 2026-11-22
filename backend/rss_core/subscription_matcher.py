@@ -74,6 +74,7 @@ class SubscriptionMatcher:
         返回 (精确表, 全局条件表)：
         - 精确表键为 (tmdb_id, media_type)，锚定具体作品；
         - tmdb_id 留空的条目进入全局条件表，对所有作品按规格条件匹配（如屏蔽某制作组全部发布）。
+        negate=True 的条目为反向匹配（条件不满足才命中，白名单写法），随 payload 一起带出。
         均为普通 dict/list，不受会话生命周期影响。
         """
         from models import TmdbBlocklist
@@ -86,6 +87,7 @@ class SubscriptionMatcher:
                 "tmdb_id": str(e.tmdb_id or "").strip(),
                 "media_type": e.media_type or "tv",
                 "conditions": e.conditions or {},
+                "negate": bool(getattr(e, "negate", False)),
             }
             if payload["tmdb_id"]:
                 block_map[(payload["tmdb_id"], payload["media_type"])] = payload
@@ -150,25 +152,42 @@ class SubscriptionMatcher:
         return True
 
     @staticmethod
+    def _entry_hit(entry: Dict[str, Any], meta: Dict[str, Any]) -> bool:
+        """
+        条目是否命中屏蔽（含反向匹配）：
+        - 无条件 -> 恒命中（整部作品级屏蔽）；
+        - negate=False（默认）-> 条件满足即命中；
+        - negate=True（反向）-> 条件【不】满足才命中，用于"只放行某类作品"的白名单写法，
+          如 {genre_ids:"16"} + 反向 = 不含动画流派的作品全部屏蔽。
+        档案特征缺失时 _entry_conditions_met 按"不满足"处理，反向匹配下即视为命中
+        （无档案 = 无法证明它属于白名单，按拦下处理）。
+        """
+        conditions = entry.get("conditions") or {}
+        if not conditions:
+            return True
+        met = SubscriptionMatcher._entry_conditions_met(entry, meta)
+        return (not met) if entry.get("negate") else met
+
+    @staticmethod
     def match_tmdb_block(block_map: Dict[Tuple[str, str], Dict[str, Any]],
                          global_blocks: List[Dict[str, Any]],
                          tmdb_id: Optional[str], media_type: str, meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         查找命中的屏蔽条目。优先查精确表（锚定作品）；未命中再过全局条件表
         （tmdb_id 留空的条目，media_type=all 时对剧集/电影都生效）。
-        带 conditions 的条目按 _entry_conditions_met 分流匹配，条件不满足视为未命中。
+        带 conditions 的条目按 _entry_hit 判定（含反向匹配），条件不满足视为未命中。
         """
         if tmdb_id:
             entry = block_map.get((str(tmdb_id), media_type))
-            if entry:
-                conditions = entry.get("conditions") or {}
-                if not conditions or SubscriptionMatcher._entry_conditions_met(entry, meta):
-                    return entry
+            if entry and SubscriptionMatcher._entry_hit(entry, meta):
+                return entry
         for entry in global_blocks or []:
             if entry.get("media_type") not in (None, "", "all", media_type):
                 continue
-            conditions = entry.get("conditions") or {}
-            if conditions and SubscriptionMatcher._entry_conditions_met(entry, meta):
+            # 全局条目必须有条件（接口层已校验），无条件条目不应拦下一切
+            if not (entry.get("conditions") or {}):
+                continue
+            if SubscriptionMatcher._entry_hit(entry, meta):
                 return entry
         return None
 
@@ -178,8 +197,9 @@ class SubscriptionMatcher:
         cond = ", ".join(f"{k}={v}" for k, v in conditions.items() if str(v or "").strip())
         if not cond:
             return ""
-        prefix = "全局条件" if not entry.get("tmdb_id") else "条件"
-        return f"{prefix}: {cond}"
+        prefix = "全局" if not entry.get("tmdb_id") else ""
+        label = f"{prefix}反向条件" if entry.get("negate") else f"{prefix}条件"
+        return f"{label}: {cond}"
 
     @staticmethod
     async def apply_tmdb_block(entry: Dict[str, Any], meta: Dict[str, Any], guid: str, title: str,
@@ -187,7 +207,8 @@ class SubscriptionMatcher:
         """
         屏蔽命中后的统一动作（幂等，已有 TmdbBlocked 记录则跳过）：
         - 无规格条件（整部作品级）：同步把启用订阅的对应集标记已下载，订阅不再追；
-        - 带规格条件（资源级）：只拦本条资源，同作品其他组的资源照常匹配；
+        - 带规格条件（资源级，含反向匹配条目——反向必须带条件）：只拦本条资源，
+          同作品其他组的资源照常匹配；
         最后写 state=TmdbBlocked 的下载历史（rule_id 为空 = 全局），
         使后续订阅匹配与规则匹配两个阶段都按"已下载"跳过。
         """

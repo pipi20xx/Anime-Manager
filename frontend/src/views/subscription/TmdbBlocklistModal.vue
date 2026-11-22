@@ -28,7 +28,7 @@ const loading = ref(false)
 const showFormModal = ref(false)
 const editingId = ref<number | null>(null)
 const submitting = ref(false)
-const blockForm = reactive({ tmdb_id: '', media_type: 'all', team: '', resolution: '', source: '', video_encode: '', audio_encode: '', subtitle: '', platform: '', video_effect: '' })
+const blockForm = reactive({ tmdb_id: '', media_type: 'all', negate: false, team: '', resolution: '', source: '', video_encode: '', audio_encode: '', subtitle: '', platform: '', video_effect: '' })
 // 档案级条件（流派/公司/关键词等，键同二级分类规则 criteria），单独由 ArchiveCriteriaFields 维护
 const archiveCriteria = ref<Record<string, any>>({})
 
@@ -98,6 +98,7 @@ function buildConditions(): Record<string, string> {
 function resetForm() {
   blockForm.tmdb_id = ''
   blockForm.media_type = 'all'
+  blockForm.negate = false
   for (const k of FORM_CONDITION_KEYS) {
     ;(blockForm as any)[k] = ''
   }
@@ -114,6 +115,7 @@ function openEdit(item: any) {
   editingId.value = item.id
   blockForm.tmdb_id = item.tmdb_id || ''
   blockForm.media_type = item.media_type || 'tv'
+  blockForm.negate = !!item.negate
   const c = item.conditions || {}
   for (const k of FORM_CONDITION_KEYS) {
     ;(blockForm as any)[k] = c[k] || ''
@@ -152,7 +154,11 @@ async function submitForm() {
     showError('留空 TMDB ID 时需至少填写一个匹配条件（如制作组）')
     return
   }
-  const payload = { tmdb_id: tmdbId, media_type: blockForm.media_type, conditions }
+  if (blockForm.negate && Object.keys(conditions).length === 0) {
+    showError('开启反向匹配时需至少填写一个条件（条件不满足才命中屏蔽）')
+    return
+  }
+  const payload = { tmdb_id: tmdbId, media_type: blockForm.media_type, conditions, negate: blockForm.negate }
   submitting.value = true
   try {
     if (editingId.value != null) {
@@ -193,6 +199,7 @@ async function removeBlockItem(id: number) {
         <div class="text-body-2 text-medium-emphasis mb-4">
           命中屏蔽条目的资源，识别后直接标记已下载，跳过下载规则与追剧订阅。
           支持三种粒度：整部作品、指定作品内满足匹配条件的资源、以及不锚定作品的全局条件屏蔽（如屏蔽某制作组的全部发布）。
+          条目可开启<b>反向匹配</b>：条件不满足才命中，用于白名单（如「流派不含 16（动画）」= 屏蔽所有非动画作品）。
         </div>
 
         <div class="d-flex mb-4">
@@ -209,7 +216,7 @@ async function removeBlockItem(id: number) {
               <div class="manage-card__header">
                 <div class="d-flex align-center ga-2 manage-card__title">
                   <v-icon color="error" size="18">mdi-shield-off-outline</v-icon>
-                  <span class="text-truncate">{{ item.resolved_title || item.title || (item.tmdb_id ? `TMDB ${item.tmdb_id}` : '全局条件屏蔽') }}</span>
+                  <span class="text-truncate">{{ item.resolved_title || item.title || (item.tmdb_id ? `TMDB ${item.tmdb_id}` : (item.negate ? '全局反向屏蔽' : '全局条件屏蔽')) }}</span>
                 </div>
                 <v-chip size="x-small" variant="tonal" :color="item.media_type === 'tv' ? 'primary' : item.media_type === 'movie' ? 'info' : 'deep-purple'" label class="manage-card__badge">
                   {{ mediaTypeLabel(item.media_type) }}
@@ -226,6 +233,9 @@ async function removeBlockItem(id: number) {
                 <div class="manage-card__tags">
                   <v-chip v-if="item.tmdb_id" size="x-small" variant="tonal" color="secondary" label>
                     TMDB {{ item.tmdb_id }}
+                  </v-chip>
+                  <v-chip v-if="item.negate" size="x-small" variant="tonal" color="warning" label>
+                    反向匹配
                   </v-chip>
                   <v-chip v-if="!item.conditions || !Object.keys(item.conditions).length" size="x-small" variant="tonal" color="error" label>
                     整部作品
@@ -264,6 +274,21 @@ async function removeBlockItem(id: number) {
         <v-text-field v-model="blockForm.tmdb_id" label="TMDB ID（可留空）" placeholder="留空 = 按条件全局屏蔽" variant="outlined" density="compact" class="mb-3" />
         <v-select v-model="blockForm.media_type" label="类型" :items="typeOptions" variant="outlined" density="compact" class="mb-3" />
 
+        <!-- 反向匹配：条件不满足才命中（白名单写法） -->
+        <v-switch
+          v-model="blockForm.negate"
+          color="warning"
+          density="compact"
+          hide-details
+          label="反向匹配（条件不满足才命中）"
+          class="mb-1"
+        />
+        <div class="text-caption text-medium-emphasis mb-3">
+          关闭 = 满足全部条件即屏蔽；开启 = <b>不</b>满足全部条件即屏蔽。
+          例：类型选「全部」、只填流派 16 并开启反向，即屏蔽所有非动画作品（白名单）。
+          档案（流派/公司等）缺失时按条件不满足处理，因此反向匹配下会被拦下。
+        </div>
+
         <!-- 匹配条件：弹框较窄，一行一个 -->
         <div class="text-subtitle-2 font-weight-medium mb-2 mt-3">匹配条件</div>
         <v-row density="compact">
@@ -279,6 +304,7 @@ async function removeBlockItem(id: number) {
         <div class="text-caption text-medium-emphasis mt-2">
           多个条件需同时满足；全部留空 = 屏蔽整部作品（订阅同步标记已下载）；
           留空 TMDB ID 时至少填写一个条件，即全局条件屏蔽（档案条件按作品元数据判断，如屏蔽全部真人秀类作品）。
+          开启反向匹配后语义取反：条件不满足才屏蔽，且必须至少填一个条件。
         </div>
       </v-card-text>
       <v-divider />

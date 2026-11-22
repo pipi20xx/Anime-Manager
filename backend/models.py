@@ -152,7 +152,8 @@ class Blacklist(SQLModel, table=True):
 
 class TmdbBlocklist(SQLModel, table=True):
     """TMDB 主动屏蔽列表：填 tmdb_id + 类型（+ 可选规格条件）屏蔽特定作品/资源；
-    tmdb_id 留空则为全局条件屏蔽（如屏蔽某制作组的全部发布），识别命中后标记已下载，跳过下载规则/追剧订阅"""
+    tmdb_id 留空则为全局条件屏蔽（如屏蔽某制作组的全部发布），识别命中后标记已下载，跳过下载规则/追剧订阅；
+    negate=True 时条件反向（不满足条件才命中），用于"只放行某类作品"的白名单场景"""
     __tablename__ = "tmdb_blocklist"
     __table_args__ = {"schema": get_public_schema()}
     __admin_name__ = "TMDB屏蔽列表"
@@ -167,6 +168,10 @@ class TmdbBlocklist(SQLModel, table=True):
     # 同作品其他组的资源照常走订阅/规则。
     # tmdb_id 为空时：conditions 必填，对所有作品按条件做资源级屏蔽。
     conditions: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(get_json_type()))
+    # 反向匹配：条件【不满足】才视为命中（白名单写法）。
+    # 例：conditions={genre_ids:"16"} + negate=True -> 不含流派 16（动画）的作品全部屏蔽。
+    # 反向条目必须至少有一个条件（无条件本就等于整部作品屏蔽，反向无意义）。
+    negate: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.now)
 
 
