@@ -384,7 +384,7 @@ async def startup_event():
     # 番剧分季：把生效规则预编译进内存，并启动 30s 版本轮询（多 worker 一致）
     try:
         from season_split import store as season_split_store
-        await season_split_store.reload()
+        await season_split_store.reload(trigger="启动")
         await season_split_store.start_watcher()
     except Exception as e:
         logger.warning(f"分季规则缓存初始化失败: {e}")

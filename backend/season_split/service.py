@@ -644,9 +644,16 @@ async def save(payload: dict) -> dict:
         "tmdb_hash": _structure_hash(tv_show),
         "structure_fp": _fp_text(_seasons_fingerprint(tv_show.get("seasons"))),
         "episode_total": compiled["episode_total"],
-    })
+    }, reload_cache=False)
     # 建/存规则 = 明确「这部要分季」：顺手把它从黑名单里移出来（手动条目也移）。
-    record["blacklist_released"] = bool(await store.delete_blacklist(tmdb_id))
+    # 两步写合成一次重载（放在 finally 里：即便解除黑名单失败，新规则也该立刻进快照），
+    # 保存完立刻刷新，识别链路当场就能用到这条规则。
+    released = False
+    try:
+        released = bool(await store.delete_blacklist(tmdb_id, reload_cache=False))
+    finally:
+        await store.reload(trigger="保存规则")
+    record["blacklist_released"] = released
     record["compile"] = compiled
     record["logs"] = logs
     return record
@@ -796,14 +803,16 @@ async def release_blacklist_if_stale(cfg: dict, tmdb_id: int, seasons: Any) -> O
 
 async def _add_to_blacklist(tmdb_id: int, reason: str = "",
                             seasons: Any = None, use_absolute: bool = False,
-                            manual: bool = False) -> None:
+                            manual: bool = False, reload_cache: bool = True) -> None:
     """把该番加入分季黑名单（单行落库）。
 
     `manual=True` 只落 origin=manual、不写判定记录：人工条目永远不会被自动解除
     （「重新评估」后仍无需分季时也按手动放回，避免它又变成能被自动解除的条目）。
+    `reload_cache=False` 给「同一次操作里还有别的写」的调用方用（收尾统一重载一次）。
     """
     if manual:
-        await store.upsert_blacklist(int(tmdb_id), origin=store.ORIGIN_MANUAL)
+        await store.upsert_blacklist(int(tmdb_id), origin=store.ORIGIN_MANUAL,
+                                     reload_cache=reload_cache)
         return
     await store.upsert_blacklist(
         int(tmdb_id),
@@ -812,6 +821,7 @@ async def _add_to_blacklist(tmdb_id: int, reason: str = "",
         decided_at=datetime.now(),
         seasons_fp=_fp_text(_seasons_fingerprint(seasons)),
         use_absolute=bool(use_absolute),
+        reload_cache=reload_cache,
     )
 
 
@@ -1036,10 +1046,14 @@ async def _refresh_auto_rule(tmdb_id: int, cfg: dict,
         if absolute:
             absolute["refreshed"] = True
             return absolute
-        await store.delete_rule(tmdb_id)   # 过期规则留着只会错配集号，删掉再拉黑
-        await _add_to_blacklist(tmdb_id, BLACKLIST_REASON_NO_SPLIT,
-                                seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
-                                use_absolute=use_absolute)
+        # 删规则 + 拉黑合成一次重载（finally：任一步失败也要让快照跟上已提交的部分）
+        try:
+            await store.delete_rule(tmdb_id, reload_cache=False)   # 过期规则留着只会错配集号，删掉再拉黑
+            await _add_to_blacklist(tmdb_id, BLACKLIST_REASON_NO_SPLIT,
+                                    seasons=seasons or (data.get("tmdb") or {}).get("seasons"),
+                                    use_absolute=use_absolute, reload_cache=False)
+        finally:
+            await store.reload(trigger="自动规则重排")
         return {"blacklisted": True, "tmdb_id": tmdb_id,
                 "reason": BLACKLIST_REASON_NO_SPLIT, "refreshed": True}
 
@@ -1269,7 +1283,7 @@ async def sytmdb_import(tmdb_ids: Optional[List[int]] = None, status: str = "act
             items.append(stats)
 
     if imported:
-        await store.reload()
+        await store.reload(trigger="导入 SYTMDB")
 
     return {
         "imported": imported,

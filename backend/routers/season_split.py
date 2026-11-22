@@ -161,7 +161,7 @@ async def push_episode_group(tmdb_id: int):
 
 @router.post("/reload", summary="强制重载规则缓存")
 async def reload_cache():
-    count = await store.reload()
+    count = await store.reload(trigger="手动")
     return {"ok": True, "count": count, "cache": store.cache_stats()}
 
 
@@ -216,7 +216,7 @@ async def update_settings(req: SettingsRequest):
         data = service.settings_update(req.model_dump(exclude_none=True))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    await store.reload()
+    await store.reload(trigger="保存设置")
     return data
 
 

@@ -2,7 +2,8 @@
 """番剧分季拆分 · 规则与黑名单存储（PostgreSQL）与进程内编译缓存。
 
 识别热路径（`recognition/context.py`）只调用 `as_render_words()`：同步、纯内存、零 I/O。
-数据库只在三种时机访问：启动、保存规则 / 增删黑名单、后台 30s 版本轮询。
+数据库只在三种时机访问：启动、保存规则 / 增删黑名单（同一次操作里的多次写合并成一次重载）、
+后台 30s 版本轮询（版本号没变就直接跳过，不重载、不打日志）。
 
 两张表各管一件事：
 - `season_split_rules`：生效规则 → 编译好的渲染词文本；
@@ -26,7 +27,12 @@ _ROWS: List[Dict[str, Any]] = []
 # 存整行而不是只存 ID：识别链路判断「前提变了没」要读 reason / seasons_fp / use_absolute，
 # 走内存就不必为每集识别多打一次库。
 _BLOCKED: Dict[int, Dict[str, Any]] = {}
+# 展示用：快照里规则表最新的 updated_at（页面「缓存」卡片看的那个时间）
 _VERSION: str = ""
+# 判重用的版本号：`_fetch_version()` 的复合串（两表「最大 updated_at + 行数」），
+# 必须和 `_fetch_version()` 的返回值同构，否则 `refresh_if_stale()` 永远判定「过期」，
+# 30s 轮询就会每次都全量重载一遍。
+_VERSION_KEY: str = ""
 _LOADED_AT: Optional[datetime] = None
 _LOCK = threading.Lock()
 _WATCHER: Optional[asyncio.Task] = None
@@ -164,19 +170,36 @@ async def _fetch_version() -> str:
 
     def _part(row) -> str:
         stamp, count = (row if row else (None, 0))
-        text = stamp.isoformat() if isinstance(stamp, datetime) else ""
+        text = stamp.isoformat() if isinstance(stamp, datetime) else str(stamp or "")
         return f"{text}|{int(count or 0)}"
 
     return _part(rules) + "#" + _part(blocked)
 
 
-async def reload() -> int:
-    """强制重载全部生效规则 + 黑名单到内存。"""
-    global _ROWS, _BLOCKED, _VERSION, _LOADED_AT
+async def reload(version_key: Optional[str] = None, trigger: str = "") -> int:
+    """强制重载全部生效规则 + 黑名单到内存。
+
+    `version_key` 由调用方（轮询）顺手传进来，省掉一次重复的版本查询；不传时自己查一次。
+    版本号一律在**读表之前**取：宁可让 key 比快照旧一点（下一轮轮询会补一次重载），
+    也不能让 key 比快照新（轮询会误判「没变」，进程永远停在旧快照上）。
+    `trigger` 只进日志，方便回头看「这次为什么重载」。
+    """
+    global _ROWS, _BLOCKED, _VERSION, _VERSION_KEY, _LOADED_AT
     from sqlalchemy import select
 
     from database import db
     from models import SeasonSplitBlacklist, SeasonSplitRule
+
+    # 先取版本号、再读表：这中间若别人刚好写入，落地的 key 只会「偏旧」，
+    # 下一轮轮询会发现不一致并再重载一次（多一次重载，但快照一定能收敛）。
+    # 反过来（先读表后取版本号）会把偏新的 key 配给旧快照，轮询就永远认为「没变」，
+    # 进程会一直停在旧快照上。
+    if version_key is None:
+        try:
+            version_key = await _fetch_version()
+        except Exception as e:  # 取不到就留空：下一轮轮询会再重载一次，不影响正确性
+            logger.debug(f"[分季] 版本号取值失败（下一轮轮询会再试）: {e}")
+            version_key = ""
 
     async with db.session_scope(force_new=True):
         result = await db.session.execute(
@@ -201,9 +224,11 @@ async def reload() -> int:
         _ROWS = rows
         _BLOCKED = blocked
         _VERSION = version
+        _VERSION_KEY = version_key
         _LOADED_AT = datetime.now()
+    reason = f"（{trigger}）" if trigger else ""
     logger.info(
-        f"[分季] 缓存已加载: 规则 {len(rows)} 条 / 黑名单 {len(blocked)} 条（version={version or '-'}）"
+        f"[分季] 缓存已加载{reason}: 规则 {len(rows)} 条 / 黑名单 {len(blocked)} 条（version={version or '-'}）"
     )
     return len(rows)
 
@@ -212,9 +237,9 @@ async def refresh_if_stale(force: bool = False) -> bool:
     """版本变了才重载。返回是否发生了重载。"""
     try:
         version = await _fetch_version()
-        if not force and version and version == _VERSION:
+        if not force and version and version == _VERSION_KEY:
             return False
-        await reload()
+        await reload(version_key=version, trigger="检测到变更")
         return True
     except Exception as e:
         logger.warning(f"[分季] 规则缓存刷新失败: {e}")
@@ -222,7 +247,10 @@ async def refresh_if_stale(force: bool = False) -> bool:
 
 
 async def start_watcher() -> None:
-    """后台轮询（多 worker / 多容器部署时保证 30s 内一致）。"""
+    """后台轮询（多 worker / 多容器部署时保证 30s 内一致）。
+
+    只查版本号、不做重载：`refresh_if_stale()` 命中变化才真正读表。
+    """
     global _WATCHER
     if _WATCHER and not _WATCHER.done():
         return
@@ -233,7 +261,7 @@ async def start_watcher() -> None:
             await refresh_if_stale()
 
     _WATCHER = asyncio.create_task(_loop())
-    logger.info(f"[分季] 缓存轮询已启动（{REFRESH_INTERVAL}s）")
+    logger.info(f"[分季] 缓存轮询已启动（{REFRESH_INTERVAL}s，仅版本变化时重载）")
 
 
 async def stop_watcher() -> None:
@@ -329,11 +357,11 @@ async def upsert_rule(payload: dict, reload_cache: bool = True) -> dict:
         data = _to_dict(record)
 
     if reload_cache:
-        await reload()
+        await reload(trigger="写库后")
     return data
 
 
-async def delete_rule(tmdb_id: int) -> bool:
+async def delete_rule(tmdb_id: int, reload_cache: bool = True) -> bool:
     from database import db
     from models import SeasonSplitRule
 
@@ -343,7 +371,8 @@ async def delete_rule(tmdb_id: int) -> bool:
             return False
         await db.session.delete(record)
         await db.session.commit()
-    await reload()
+    if reload_cache:
+        await reload(trigger="写库后")
     return True
 
 
@@ -452,11 +481,11 @@ async def upsert_blacklist(tmdb_id: int, origin: str = ORIGIN_MANUAL,
         data = _blacklist_row(record)
 
     if reload_cache:
-        await reload()
+        await reload(trigger="写库后")
     return data
 
 
-async def delete_blacklist(tmdb_id: int) -> Optional[dict]:
+async def delete_blacklist(tmdb_id: int, reload_cache: bool = True) -> Optional[dict]:
     """把某条（手动 / 自动）移出黑名单；不在名单里返回 None。"""
     from database import db
     from models import SeasonSplitBlacklist
@@ -470,5 +499,6 @@ async def delete_blacklist(tmdb_id: int) -> Optional[dict]:
         await db.session.delete(record)
         await db.session.commit()
 
-    await reload()
+    if reload_cache:
+        await reload(trigger="写库后")
     return data

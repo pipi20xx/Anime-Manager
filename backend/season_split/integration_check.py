@@ -6,7 +6,7 @@
 与 `selftest.py` 的分工：
 - `selftest.py` 只跑纯函数内核（零依赖，任何地方都能跑）；
 - 本文件验证「接进项目之后」的链路：表定义、真实 RenderEngine 执行编译出的渲染词、
-  `all_render` 合流语义、开关 / scope / 黑名单。
+  `all_render` 合流语义、开关 / scope / 黑名单、缓存版本判重与写库后的重载合并。
 
 不连数据库（只编译 DDL），不发起网络请求。
 """
@@ -197,12 +197,141 @@ def case_context() -> None:
           len(RecognitionContext("x.mkv", all_render=[]).all_render) >= len(local))
 
 
+def case_cache_staleness() -> None:
+    """版本号判重：没变就不重载（曾有个 bug：比较双方格式不同 → 30s 白重载一次）。"""
+    print("\n[7] 缓存版本判重 / 不重复重载")
+    import inspect
+
+    from season_split import store
+
+    real_fetch, real_reload = store._fetch_version, store.reload
+    key = {"value": "A|1#B|1"}
+    calls: list = []
+
+    async def fake_fetch() -> str:
+        return key["value"]
+
+    async def fake_reload(version_key=None, trigger=""):
+        calls.append((version_key, trigger))
+        store._VERSION_KEY = version_key if version_key is not None else key["value"]
+        return 0
+
+    sig = inspect.signature(real_reload).parameters
+    check("reload 接受 version_key / trigger（轮询与写路径都靠它）",
+          "version_key" in sig and "trigger" in sig, list(sig))
+
+    store._fetch_version, store.reload = fake_fetch, fake_reload
+    store._VERSION_KEY = ""
+    try:
+        check("首次轮询 → 重载", asyncio.run(store.refresh_if_stale()) is True)
+        check("重载后版本号落地", store._VERSION_KEY == key["value"], store._VERSION_KEY)
+        check("轮询算好的 key 直接传给 reload（不重复查库）",
+              calls[-1][0] == key["value"], calls[-1])
+        check("重载原因标为「检测到变更」", calls[-1][1] == "检测到变更", calls[-1])
+
+        before = len(calls)
+        check("版本没变 → 不重载", asyncio.run(store.refresh_if_stale()) is False)
+        check("版本没变 → 连 reload 都不调用", len(calls) == before, calls)
+
+        key["value"] = "A|2#B|1"
+        check("版本变化 → 重载", asyncio.run(store.refresh_if_stale()) is True)
+        check("重载后跟上新版本", store._VERSION_KEY == key["value"], store._VERSION_KEY)
+
+        before = len(calls)
+        check("force=True → 版本没变也重载",
+              asyncio.run(store.refresh_if_stale(force=True)) is True and len(calls) == before + 1,
+              calls)
+    finally:
+        store._fetch_version, store.reload = real_fetch, real_reload
+        store._VERSION_KEY = ""
+
+
+def case_write_coalescing() -> None:
+    """同一次操作里的多次写只重载一次（保存规则 / 自动规则重排）。"""
+    print("\n[8] 写库后的重载合并（一次操作只重载一次）")
+    from season_split import service, store
+
+    names = ("delete_rule", "upsert_blacklist", "upsert_rule",
+             "delete_blacklist", "get_rule", "reload")
+    real = {name: getattr(store, name) for name in names}
+    real_preview, real_structure = service.preview, service._fetch_structure
+    calls: list = []
+
+    async def fake_preview(tmdb_id, options=None):
+        return {"need_split": False,
+                "tmdb": {"seasons": [{"season_number": 1, "episode_count": 12}]}}
+
+    async def fake_structure(tmdb_id, log=None):
+        flat = [{"season_number": 1, "episode_number": ep,
+                 "air_date": f"2024-01-{ep:02d}", "name": f"第{ep}集"} for ep in range(1, 13)]
+        return {"tv_show": {"id": tmdb_id, "name": "t",
+                            "seasons": [{"season_number": 1, "episode_count": 12}]},
+                "flat": flat}
+
+    async def fake_get_rule(tmdb_id):
+        calls.append(("get_rule", None))
+        return None
+
+    async def fake_reload(version_key=None, trigger=""):
+        calls.append(("reload", trigger))
+        return 0
+
+    async def fake_delete_rule(tmdb_id, reload_cache=True):
+        calls.append(("delete_rule", reload_cache))
+        return True
+
+    async def fake_upsert_blacklist(tmdb_id, **kwargs):
+        calls.append(("upsert_blacklist", kwargs.get("reload_cache")))
+        return {"tmdb_id": tmdb_id}
+
+    async def fake_upsert_rule(payload, reload_cache=True):
+        calls.append(("upsert_rule", reload_cache))
+        return {"tmdb_id": payload["tmdb_id"], "render_words": "x"}
+
+    async def fake_delete_blacklist(tmdb_id, reload_cache=True):
+        calls.append(("delete_blacklist", reload_cache))
+        return {"tmdb_id": tmdb_id}
+
+    try:
+        service.preview, service._fetch_structure = fake_preview, fake_structure
+        store.get_rule, store.reload = fake_get_rule, fake_reload
+        store.delete_rule, store.upsert_blacklist = fake_delete_rule, fake_upsert_blacklist
+        store.upsert_rule, store.delete_blacklist = fake_upsert_rule, fake_delete_blacklist
+
+        calls.clear()
+        asyncio.run(service._refresh_auto_rule(
+            100001, {}, seasons=[{"season_number": 1, "episode_count": 12}]))
+        check("自动重排：删规则 → 拉黑 → 只重载 1 次",
+              [c[0] for c in calls] == ["delete_rule", "upsert_blacklist", "reload"], calls)
+        check("自动重排：两次写都不各自重载",
+              calls[0][1] is False and calls[1][1] is False, calls[:2])
+        check("自动重排：重载原因 = 自动规则重排", calls[-1][1] == "自动规则重排", calls[-1])
+
+        calls.clear()
+        asyncio.run(service.save({
+            "tmdb_id": 100002,
+            "groups": [{"order": 1, "start": {"s": 1, "e": 1}, "end": {"s": 1, "e": 12}}],
+            "status": "active",
+        }))
+        check("保存：读旧规则 → 写规则 → 解除黑名单 → 只重载 1 次",
+              [c[0] for c in calls] == ["get_rule", "upsert_rule", "delete_blacklist", "reload"],
+              calls)
+        check("保存：两次写都不各自重载",
+              calls[1][1] is False and calls[2][1] is False, calls[1:3])
+        check("保存：重载原因 = 保存规则", calls[-1][1] == "保存规则", calls[-1])
+    finally:
+        for name, fn in real.items():
+            setattr(store, name, fn)
+        service.preview, service._fetch_structure = real_preview, real_structure
+
+
 def main() -> None:
     print("=" * 60)
     print("番剧分季 · 真实链路自检")
     print("=" * 60)
     for fn in (case_table, case_engine, case_processed_name,
-               case_compile_replay, case_switches, case_context):
+               case_compile_replay, case_switches, case_context,
+               case_cache_staleness, case_write_coalescing):
         try:
             fn()
         except Exception as e:  # 单例失败不阻断其余
