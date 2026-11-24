@@ -1913,3 +1913,326 @@
 }
 
 
+/* ============================================================
+ * §38. 放送时间表 — Weekly Schedule
+ *     番剧探索 › 播出时间表（views/explore/ScheduleTab.vue）
+ *     整周 7 天全部展开在同一页，无需 Tab 切换；海报卡片沿用 §33 媒体卡片网格，
+ *     本段只负责其上的今日概览、播出时间轴，以及逐日分块标题与卡片增强。
+ *
+ *     布局约定:
+ *     ┌────────────────────────────────────────────────┐
+ *     │ 今日放送 [8 部]                            [⟳] │  ← .schedule-head
+ *     │ 11/24 周二 · 已播 1 · 待播 7                    │
+ *     ├────────────────────────────────────────────────┤
+ *     │ ──●────●───●─────●── 现在 14:04 · 已播1·待播7   │  ← .schedule-ruler
+ *     │ 18:00   20:00   22:00   24:00                  │
+ *     ├────────────────────────────────────────────────┤
+ *     │ 周二 11/24 [今天]                        8 部   │  ← .schedule-section
+ *     │ [海报] [海报] [海报] [海报] [海报] [海报]       │  ← §33 .media-card-grid
+ *     │ 周三 11/25                              11 部   │
+ *     │ [海报] [海报] …                                │
+ *     └────────────────────────────────────────────────┘
+ * ============================================================ */
+
+/* ── 38a. 顶部标题区 ── */
+.schedule-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.schedule-head__text {
+  min-width: 0;
+}
+.schedule-head__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.4px;
+  color: rgb(var(--v-theme-on-surface));
+}
+.schedule-head__count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: inherit;
+  opacity: 0.75;
+  background: rgba(var(--v-theme-on-surface), 0.1);
+}
+.schedule-head__sub {
+  margin-top: 3px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+.schedule-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 38b. 日期跳转（整周已展开，点击滚动到对应那天） ── */
+.schedule-daystrip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--v-theme-on-surface), 0.2) transparent;
+}
+.schedule-daystrip::-webkit-scrollbar {
+  height: 4px;
+}
+.schedule-daystrip::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: rgba(var(--v-theme-on-surface), 0.2);
+}
+.schedule-day {
+  flex: 0 0 auto;
+  min-width: 74px;
+  padding: 6px 12px 7px;
+  border: var(--am-content-border);
+  border-radius: 10px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  color: inherit;
+  font: inherit;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--am-transition);
+}
+.schedule-day:hover {
+  background: rgba(var(--v-theme-on-surface), 0.09);
+}
+.schedule-day--active {
+  border-color: rgba(var(--v-theme-on-surface), 0.45);
+  background: rgba(var(--v-theme-on-surface), 0.12);
+}
+.schedule-day__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+}
+.schedule-day--today .schedule-day__label {
+  font-weight: 800;
+}
+.schedule-day__date {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+.schedule-day__count {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 38c. 今日播出时间轴（小时刻度 + 播出时刻圆点 + 现在游标） ── */
+.schedule-ruler {
+  padding: 10px 12px 8px;
+  border: var(--am-content-border);
+  border-radius: 12px;
+  background: rgba(var(--v-theme-on-surface), 0.03);
+}
+.schedule-ruler__axis {
+  position: relative;
+  padding: 10px 4px 0;
+}
+.schedule-ruler__track {
+  position: relative;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(var(--v-theme-on-surface), 0.14);
+}
+.schedule-ruler__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 2px;
+  background: rgba(var(--v-theme-primary), 0.5);
+}
+.schedule-ruler__tick {
+  position: absolute;
+  bottom: -3px;
+  width: 1px;
+  height: 9px;
+  transform: translateX(-50%);
+  background: rgba(var(--v-theme-on-surface), 0.3);
+}
+.schedule-ruler__dot {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgb(var(--v-theme-primary));
+}
+.schedule-ruler__dot--multi {
+  width: 9px;
+  height: 9px;
+}
+.schedule-ruler__now {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: rgb(var(--v-theme-error));
+}
+.schedule-ruler__labels {
+  position: relative;
+  height: 14px;
+  margin-top: 9px;
+}
+.schedule-ruler__label {
+  position: absolute;
+  top: 0;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+.schedule-ruler__legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+.schedule-ruler__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.schedule-ruler__legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--v-theme-primary));
+}
+.schedule-ruler__legend-dot--aired {
+  background: rgba(var(--v-theme-on-surface), 0.35);
+}
+.schedule-ruler__legend-range {
+  margin-left: auto;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 38d. 逐日分块（整周铺开，无需切换） ── */
+.schedule-section {
+  margin-bottom: 26px;
+}
+.schedule-section:last-child {
+  margin-bottom: 0;
+}
+.schedule-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 7px;
+  border-bottom: var(--am-content-border);
+}
+.schedule-section__title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgb(var(--v-theme-on-surface));
+}
+.schedule-section__date {
+  font-size: 12px;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+}
+.schedule-section__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: rgb(var(--v-theme-on-surface));
+  background: rgba(var(--v-theme-on-surface), 0.1);
+}
+.schedule-section__tag--today {
+  font-weight: 800;
+  background: rgba(var(--v-theme-on-surface), 0.18);
+}
+.schedule-section__count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.55;
+}
+.schedule-section__empty {
+  padding: 4px 0 12px;
+  font-size: 12px;
+  opacity: 0.4;
+}
+
+/* ── 38e. 卡片增强：播出时间角标放大 + 「下一部」角标 ──
+ *     只作用于本页（.schedule-card），不影响其它使用 media-card 的页面 */
+.schedule-card .media-card__broadcast {
+  padding: 3px 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  gap: 4px;
+}
+.schedule-card__next {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  color: #fff;
+  background: rgb(var(--v-theme-primary));
+}
+
+/* ── 38f. 响应式 ── */
+@media (max-width: 959px) {
+  .schedule-head__title {
+    font-size: 18px;
+  }
+}
+@media (max-width: 599px) {
+  .schedule-head__title {
+    font-size: 17px;
+  }
+  .schedule-section__title {
+    font-size: 14px;
+  }
+  .schedule-section {
+    margin-bottom: 20px;
+  }
+  .schedule-ruler__legend-range {
+    margin-left: 0;
+  }
+  .schedule-card .media-card__broadcast {
+    padding: 2px 7px;
+    font-size: 11.5px;
+  }
+  .schedule-card__next {
+    padding: 2px 7px;
+    font-size: 10px;
+  }
+}

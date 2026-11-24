@@ -39,7 +39,7 @@ const currentTab = computed({
 
 const tabs = [
   { value: 'seasonal', title: '季度番剧表', icon: 'mdi-calendar-month-outline' },
-  { value: 'recommend', title: '播出时间表', icon: 'mdi-star-outline' },
+  { value: 'recommend', title: '播出时间表', icon: 'mdi-timetable' },
   { value: 'discover', title: '探索', icon: 'mdi-compass-outline' },
   { value: 'search', title: '搜索', icon: 'mdi-magnify' },
 ]
