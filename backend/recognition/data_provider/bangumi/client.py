@@ -565,12 +565,14 @@ class BangumiProvider:
         - 过滤已完结（end < 今天）的番剧，仍保留在分组中以 END 标签展示
         - 按今天起未来7天的星期分组
         - 对每个 bgm_id 按需查 subject 详情获取海报和评分（有7天缓存）
+        - 每项附带 episode / total_episodes：按「首播日期 + 周更」推算该天播的是第几集
         """
         import datetime as _dt
         import os
         from .service import bangumi_data_service
 
-        cache_key = "bangumi:calendar_local"
+        # v2: item 增加 episode / total_episodes（按首播日期推算第几集），旧缓存结构不兼容
+        cache_key = "bangumi:calendar_local:v2"
         cached = await MetaCacheManager.get_discover_cache(cache_key)
         if cached:
             today_iso = _dt.date.today().isoformat()
@@ -639,6 +641,8 @@ class BangumiProvider:
         # 2. 计算每部番剧的播出星期（1-7）和播出时间字符串
         weekday_to_items: Dict[int, List[Dict]] = {i: [] for i in range(1, 8)}
         bgm_ids_need_details: List[int] = []
+        # bgm_id -> { first_date: 首播日期, total_eps: 总集数 }，用于按天推算「第几集」
+        item_meta: Dict[int, Dict[str, Any]] = {}
 
         for row in rows:
             info = bangumi_data_service._parse_broadcast_info(row.broadcast, row.begin, row.end)
@@ -648,6 +652,20 @@ class BangumiProvider:
             weekday = info["weekday"]
             if weekday is None or not (1 <= weekday <= 7):
                 continue
+
+            # 总集数优先取 bangumi-data 的 eps（本地表里就有，不用额外请求）
+            total_eps: Optional[int] = None
+            raw = row.raw_data
+            if isinstance(raw, dict):
+                raw_eps = raw.get("eps")
+                if isinstance(raw_eps, int) and raw_eps > 0:
+                    total_eps = raw_eps
+
+            item_meta[row.bgm_id] = {
+                "first_date": info.get("first_date"),
+                "total_eps": total_eps,
+            }
+
             bgm_ids_need_details.append(row.bgm_id)
             weekday_to_items[weekday].append({
                 "id": row.bgm_id,
@@ -703,6 +721,16 @@ class BangumiProvider:
             day_date = today + _dt.timedelta(days=offset)
             weekday = day_date.isoweekday()
             items = weekday_to_items.get(weekday, [])
+
+            # 这一天播的是第几集（首播日期 + 周更推算）。
+            # 7 天窗口内每个星期只出现一次，所以同一部番剧只会被算一次。
+            for it in items:
+                meta = item_meta.get(it["id"]) or {}
+                it["episode"] = bangumi_data_service.estimate_episode(
+                    meta.get("first_date"), day_date, meta.get("total_eps")
+                )
+                it["total_episodes"] = meta.get("total_eps")
+
             label = "今天" if offset == 0 else ("明天" if offset == 1 else "")
             result.append({
                 "date": day_date.isoformat(),

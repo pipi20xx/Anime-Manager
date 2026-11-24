@@ -6,6 +6,8 @@
  *   - 顶部：今日概览（已播 / 待播）+ 今日播出时间轴
  *   - 下方：逐日分块（周二 11/24 [今天] 8 部 → 海报卡片网格）
  *   - 卡片：海报 + 平台 / 评分角标 + 放大的播出时间角标
+ *   - 集数：后端按「首播日期 + 周更」推算该天播第几集，卡片副标题显示
+ *           「待播出 · 第8集」（数据不足时只显示状态）
  *   - 状态：未播出写「待播出」，已播出写「已播出」；全周下一部播出的那张卡片
  *           额外挂一个「下一部」角标
  *
@@ -53,6 +55,10 @@ interface ScheduleItem {
   ended: boolean
   /** 今天已过播出时刻（往日全部视为已播） */
   aired: boolean
+  /** 该天播出的是第几集；数据不足时为 null */
+  episode: number | null
+  /** 卡片副标题，如 "待播出 · 第8集" */
+  statusLine: string
 }
 
 /** 视图模型：单日 */
@@ -209,6 +215,10 @@ const days = computed<ScheduleDay[]>(() => {
       const minutes = ended ? null : toMinutes(it.broadcast_time)
       const aired =
         ended || offset < 0 || (offset === 0 && minutes !== null && minutes <= nowMin)
+      // 后端按「首播日期 + 周更」推算的集数（数据不足时为 null）
+      const ep = Number(it.episode)
+      const episode = Number.isInteger(ep) && ep > 0 ? ep : null
+      const status = ended ? '已完结' : aired ? '已播出' : '待播出'
       return {
         id: Number(it.id),
         title: it.title || it.original_title || '未知番剧',
@@ -219,6 +229,8 @@ const days = computed<ScheduleDay[]>(() => {
         timeText: ended ? 'END' : minutes === null ? '待定' : toHHMM(minutes),
         ended,
         aired,
+        episode,
+        statusLine: episode === null ? status : `${status} · 第${episode}集`,
       }
     })
 
@@ -536,9 +548,7 @@ function jumpToDay(date: string) {
             </div>
             <div class="media-card__info">
               <div class="media-card__title">{{ item.title }}</div>
-              <div class="media-card__year">
-                {{ item.ended ? '已完结' : item.aired ? '已播出' : '待播出' }}
-              </div>
+              <div class="media-card__year">{{ item.statusLine }}</div>
             </div>
           </v-card>
         </div>

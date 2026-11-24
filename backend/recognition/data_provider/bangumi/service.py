@@ -587,6 +587,7 @@ class BangumiDataItemService:
         - weekday: 1~7 (本地时区)，None 表示无 broadcast/begin 数据
         - time_str: "周X HH:MM" 或 "END" 或 None
         - is_ended: bool，end < 今天
+        - first_date: date，首播日期（本地时区），用于按周更周期推算第几集
         """
         import os as _os
         try:
@@ -610,11 +611,11 @@ class BangumiDataItemService:
                 pass
 
         if is_ended:
-            return {"weekday": None, "time_str": "END", "is_ended": True}
+            return {"weekday": None, "time_str": "END", "is_ended": True, "first_date": None}
 
         raw = broadcast or begin
         if not raw:
-            return {"weekday": None, "time_str": None, "is_ended": False}
+            return {"weekday": None, "time_str": None, "is_ended": False, "first_date": None}
 
         try:
             dt_str = raw
@@ -635,11 +636,34 @@ class BangumiDataItemService:
             return {
                 "weekday": weekday,
                 "time_str": f"{weekday_cn} {local_dt.strftime('%H:%M')}",
-                "is_ended": False
+                "is_ended": False,
+                "first_date": local_dt.date()
             }
         except Exception as e:
             logger.warning(f"[BangumiData] ⚠️ 解析播出信息失败 ({raw}): {e}")
-            return {"weekday": None, "time_str": None, "is_ended": False}
+            return {"weekday": None, "time_str": None, "is_ended": False, "first_date": None}
+
+    @staticmethod
+    def estimate_episode(first_date: Any, air_date: Any, total_eps: Optional[int] = None) -> Optional[int]:
+        """
+        按「首播日期 + 周更(7天)」推算 air_date 那天播出的是第几集。
+
+        - first_date 为空 / 该日期早于首播 → None（不显示集数）
+        - 已知总集数且推算结果超出 → None（该周已播完，或数据不准）
+        - 每周固定更新，忽略中途停播带来的偏差（无逐集播出时间来源时这是最稳的近似）
+        """
+        if not first_date or not air_date:
+            return None
+        try:
+            delta = (air_date - first_date).days
+        except TypeError:
+            return None
+        if delta < 0:
+            return None
+        ep = delta // 7 + 1
+        if total_eps and total_eps > 0 and ep > total_eps:
+            return None
+        return ep
 
     @staticmethod
     async def get_raw_cache(bgm_id: int) -> Optional[BangumiRawCache]:
