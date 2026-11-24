@@ -1088,7 +1088,11 @@ class NotificationManager:
                 # broadcast_time 自带「周五 00:00」这类星期前缀，标题行已含星期，去掉避免重复
                 time_str = re.sub(r"^周[一二三四五六日]\s*", "", str(item.get("broadcast_time") or ""))
                 platform = item.get("platform") or ""
-                tail = f" · {time_str}" if time_str and time_str != "END" else ""
+                # 集数：由后端按「首播日期 + 周更」推算，取不到就整段省略
+                episode = item.get("episode")
+                ep_str = f"第{episode}集" if isinstance(episode, int) and episode > 0 else ""
+                tail = f" · {ep_str}" if ep_str else ""
+                tail += f" · {time_str}" if time_str and time_str != "END" else ""
                 tail += f" · {platform}" if platform else ""
                 char = "└──" if i == len(sorted_items) - 1 else "├──"
                 lines.append(f"{char} <b>{title}</b>{tail}")
